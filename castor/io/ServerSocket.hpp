@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/10/25 13:15:13 $ $Author: itglp $
+ * @(#)$RCSfile: ServerSocket.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/16 15:42:25 $ $Author: sponcec3 $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -34,7 +34,7 @@
 #include <netinet/in.h>
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
-#include "AbstractSocket.hpp"
+#include "AbstractTCPSocket.hpp"
 
 namespace castor {
 
@@ -47,7 +47,7 @@ namespace castor {
      * A dedicated socket class, able to deal with socket manipulation
      * and to handle sending and receiving of IObjects
      */
-    class ServerSocket : public AbstractSocket {
+    class ServerSocket : public AbstractTCPSocket {
 
     public:
 
@@ -69,7 +69,6 @@ namespace castor {
        * Constructor building a socket on a given local port
        * @param port the local port for this socket. Use 0 if
        * you want the system to allocate a port
-       * @param doListen whether to start listening on the socket.
        * @param reusable whether the socket should be reusable
        */
       ServerSocket(const unsigned short port,
@@ -99,16 +98,6 @@ namespace castor {
                    const unsigned long ip,
                    const bool reusable)
         throw (castor::exception::Exception);
-
-      /**
-       * destructor
-       */
-      ~ServerSocket() throw();
-
-      /**
-       * Sets the SO_REUSEADDR option on the socket
-       */
-      void setReusable() throw (castor::exception::Exception);
 
       /**
        * Start listening on the socket.
@@ -141,11 +130,6 @@ namespace castor {
        * Tells whether listen was already called
        */
       bool m_listening;
-      
-      /**
-       * Tells whether the socket's address is reusable
-       */
-      bool m_reusable;
       
       /**
        * Low and high value in the port range

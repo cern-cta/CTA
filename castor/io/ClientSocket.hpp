@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ClientSocket.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2004/07/19 10:22:25 $ $Author: bcouturi $
+ * @(#)$RCSfile: ClientSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/16 15:42:25 $ $Author: sponcec3 $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -33,7 +33,7 @@
 #include <string>
 #include <netinet/in.h>
 #include "castor/exception/Exception.hpp"
-#include "castor/io/AbstractSocket.hpp"
+#include "castor/io/AbstractTCPSocket.hpp"
 
 namespace castor {
 
@@ -46,7 +46,7 @@ namespace castor {
      * A dedicated socket class, able to deal with socket manipulation
      * and to handle sending and receiving of IObjects
      */
-    class ClientSocket : public AbstractSocket {
+    class ClientSocket : public AbstractTCPSocket {
 
     public:
 
@@ -75,11 +75,6 @@ namespace castor {
       ClientSocket(const unsigned short port,
              const unsigned long ip)
         throw (castor::exception::Exception);
-
-      /**
-       * destructor
-       */
-      ~ClientSocket() throw();
 
       /**
        * connects the socket to the given address

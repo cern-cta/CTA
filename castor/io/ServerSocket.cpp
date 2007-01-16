@@ -61,10 +61,12 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(int socket) throw () :
+  AbstractTCPSocket(socket),
   m_listening(false) {
   srand(time(NULL));
-  m_socket = socket;
   m_lowPort = m_highPort = -1;
+  createSocket();
+  setReusable();
 }
 
 
@@ -73,14 +75,13 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () :
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false), m_reusable(reusable) {
-  srand(time(NULL));
-  m_socket = -1;
-  createSocket();
-  setReusable();
-  m_saddr = buildAddress(0);
-  m_lowPort = m_highPort = -1;
-}
+  AbstractTCPSocket(reusable),
+  m_listening(false) {
+    srand(time(NULL));
+    m_lowPort = m_highPort = -1;
+    createSocket();
+    setReusable();
+  }
 
 //------------------------------------------------------------------------------
 // constructor
@@ -88,15 +89,14 @@ castor::io::ServerSocket::ServerSocket(const bool reusable)
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false), m_reusable(reusable) {
-  srand(time(NULL));
-  m_lowPort = m_highPort = -1;
-  m_socket = -1;
-  createSocket();
-  setReusable();
-  m_saddr = buildAddress(port);
-  bind(port, port);
-}
+  AbstractTCPSocket(port, reusable),
+  m_listening(false) {
+    srand(time(NULL));
+    m_lowPort = m_highPort = -1;
+    createSocket();
+    setReusable();
+    bind(port, port);
+  }
 
 //------------------------------------------------------------------------------
 // constructor
@@ -105,15 +105,14 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const std::string host,
                                        const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false), m_reusable(reusable) {
-  srand(time(NULL));
-  m_lowPort = m_highPort = -1;
-  m_socket = -1;
-  createSocket();
-  setReusable();
-  m_saddr = buildAddress(port, host);
-  bind(port, port);
-}
+  AbstractTCPSocket(port, host, reusable),
+  m_listening(false) {
+    srand(time(NULL));
+    m_lowPort = m_highPort = -1;
+    createSocket();
+    setReusable();
+    bind(port, port);
+  }
 
 //------------------------------------------------------------------------------
 // constructor
@@ -122,41 +121,14 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const unsigned long ip,
                                        const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false), m_reusable(reusable) {
-  m_socket = -1;
-  m_lowPort = m_highPort = -1;
-  srand(time(NULL));
-  createSocket();
-  setReusable();
-  m_saddr = buildAddress(port, ip);
-  bind(port, port);
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::io::ServerSocket::~ServerSocket() throw () {
-#if !defined(_WIN32)
-  close(m_socket);
-#else
-  closesocket(m_socket);
-#endif
-}
-
-//------------------------------------------------------------------------------
-// Sets the socket to reusable address
-//------------------------------------------------------------------------------
-void castor::io::ServerSocket::setReusable()
-  throw (castor::exception::Exception) {
-  if(!m_reusable) return;
-  int on = 1;
-  if (setsockopt (m_socket, SOL_SOCKET, SO_REUSEADDR,
-                  (char *)&on, sizeof(on)) < 0) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to set socket to reusable";
-    throw ex;
+  AbstractTCPSocket(port, ip, reusable),
+  m_listening(false) {
+    m_lowPort = m_highPort = -1;
+    srand(time(NULL));
+    createSocket();
+    setReusable();
+    bind(port, port);
   }
-}
 
 //------------------------------------------------------------------------------
 // listen
@@ -168,12 +140,7 @@ void castor::io::ServerSocket::listen()
   // error code  EADDRINUSE
 
   if (::listen(m_socket, STG_CALLBACK_BACKLOG) < 0) {
-#if !defined(_WIN32)
-    close(m_socket);
-#else
-    closesocket(m_socket);
-#endif
-    m_socket = -1;
+    this->close();
 
     if(errno == EADDRINUSE && m_lowPort > 0) {
       /* it may happen that another bind() successfully got the same port at the
@@ -181,7 +148,7 @@ void castor::io::ServerSocket::listen()
          just reinit, rebind again and recursively retry */
       createSocket();
       setReusable();
-      bind(); 
+      bind();
       listen();
     }
     else {
@@ -238,7 +205,7 @@ void castor::io::ServerSocket::bind(int lowPort, int highPort)
   }
   m_lowPort = lowPort;
   m_highPort = highPort;
-  
+
   bind();
 }
 
@@ -249,7 +216,7 @@ void castor::io::ServerSocket::bind()
   throw (castor::exception::Exception) {
   int rc = -1;
   int port;
-  
+
   if(m_lowPort == -1 || m_highPort == -1) {
     // it won't happen, bind() is private!
     castor::exception::Exception ex(errno);
@@ -262,7 +229,7 @@ void castor::io::ServerSocket::bind()
     port=(rand() % (m_highPort-m_lowPort+1)) + m_lowPort;
     m_saddr.sin_port = htons(port);
     rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
-    
+
     if(0 != rc && errno == EADDRINUSE && m_lowPort == m_highPort) {
       // this is a server-side daemon trying to bind to an used port
       // don't retry and fire exception

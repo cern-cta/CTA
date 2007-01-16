@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Socket.cpp
+ *                      AbstractSocket.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +19,7 @@
  *
  * @(#)AbstractSocket.cpp,v 1.6 $Release$ 2006/01/17 09:52:22 itglp
  *
- *
+ * Implementation of an abtract socket interface
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -31,7 +31,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 #else
 #include <winsock2.h>
 #endif
@@ -39,12 +38,9 @@
 #include <serrno.h>
 #include <sys/types.h>
 #include <string>
-#include "castor/IObject.hpp"
-#include "castor/Constants.hpp"
-#include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/biniostream.h"
+#include "castor/Services.hpp"
 #include "castor/io/StreamAddress.hpp"
 
 // Local Includes
@@ -53,6 +49,59 @@
 // definition of some constants
 #define STG_CALLBACK_BACKLOG 2
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::AbstractSocket::AbstractSocket(int socket) throw () :
+  m_socket(socket) {}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::AbstractSocket::AbstractSocket(const bool reusable)
+  throw (castor::exception::Exception) :
+  m_socket(-1), m_reusable(reusable) {
+    m_saddr = buildAddress(0);
+  }
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
+                                           const bool reusable)
+  throw (castor::exception::Exception) :
+  m_socket(-1), m_reusable(reusable) {
+    m_saddr = buildAddress(port);
+  }
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
+                                           const std::string host,
+                                           const bool reusable)
+  throw (castor::exception::Exception) :
+  m_socket(-1), m_reusable(reusable) {
+    m_saddr = buildAddress(port, host);
+  }
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
+                                           const unsigned long ip,
+                                           const bool reusable)
+  throw (castor::exception::Exception) :
+  m_socket(-1), m_reusable(reusable) {
+    m_saddr = buildAddress(port, ip);
+  }
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::io::AbstractSocket::~AbstractSocket() throw () {
+  this->close();
+}
 
 //------------------------------------------------------------------------------
 // getPortIp
@@ -101,6 +150,20 @@ void castor::io::AbstractSocket::getPeerIp(unsigned short& port,
   ip = ntohl(sout.sin_addr.s_addr);
 }
 
+//------------------------------------------------------------------------------
+// Sets the socket to reusable address
+//------------------------------------------------------------------------------
+void castor::io::AbstractSocket::setReusable()
+  throw (castor::exception::Exception) {
+  if(!m_reusable) return;
+  int on = 1;
+  if (setsockopt (m_socket, SOL_SOCKET, SO_REUSEADDR,
+                  (char *)&on, sizeof(on)) < 0) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to set socket to reusable";
+    throw ex;
+  }
+}
 
 //------------------------------------------------------------------------------
 // sendObject
@@ -138,22 +201,24 @@ castor::IObject* castor::io::AbstractSocket::readObject()
 }
 
 //------------------------------------------------------------------------------
-// createAbstractSocket
+// isDataAvailable
 //------------------------------------------------------------------------------
-void castor::io::AbstractSocket::createSocket()
-  throw (castor::exception::Exception) {
-  // creates the socket
-  if ((m_socket = ::socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Can't create socket";
-    throw ex;
+bool castor::io::AbstractSocket::isDataAvailable() throw() {
+  // which socket to check
+  fd_set rd_setcp;
+  FD_ZERO(&rd_setcp);
+  FD_SET(m_socket,&rd_setcp);
+  // setup timeout to 0
+  struct timeval timeout;
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 0;
+  // the check
+  if (select(1,&rd_setcp,NULL,NULL,&timeout) <= 0) {
+    // case whether nothing can be read or where an error occured
+    // so we ignore errors
+    return false;
   }
-  int yes = 1;
-  if (setsockopt(m_socket,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Can't set socket in TCP_NODELAY mode.";
-    throw ex;
-  }
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -181,9 +246,9 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
   struct hostent *hp;
   if ((hp = gethostbyname(host.c_str())) == 0) {
 #if !defined(_WIN32)
-	errno = EHOSTUNREACH;
+    errno = EHOSTUNREACH;
 #else
-	errno = WSAEHOSTUNREACH;
+    errno = WSAEHOSTUNREACH;
 #endif
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unknown host " << host << " (h_errno = " << h_errno << ")";
@@ -214,86 +279,13 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 }
 
 //------------------------------------------------------------------------------
-// sendBuffer
+// close
 //------------------------------------------------------------------------------
-void castor::io::AbstractSocket::sendBuffer(const unsigned int magic,
-                                            const char* buf,
-                                            const int n)
-  throw (castor::exception::Exception) {
-  // Sends the buffer with a header (magic number + size)
-  if (netwrite(m_socket,
-               (char*)(&magic),
-               sizeof(unsigned int)) != sizeof(unsigned int) ||
-      netwrite(m_socket,
-               (char*)(&n),
-               sizeof(unsigned int)) != sizeof(unsigned int) ||
-      netwrite(m_socket, (char *)buf, n) != n) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Unable to send data";
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// readBuffer
-//------------------------------------------------------------------------------
-void castor::io::AbstractSocket::readBuffer(const unsigned int magic,
-                                            char** buf,
-                                            int& n)
-  throw (castor::exception::Exception) {
-  // First read the header
-  unsigned int header[2];
-  int ret = netread(m_socket,
-                    (char*)&header,
-                    2*sizeof(unsigned int));
-  if (ret != 2*sizeof(unsigned int)) {
-    if (0 == ret) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Unable to receive header\n"
-                      << "The connection was closed by remote end";
-      throw ex;
-    } else if (-1 == ret) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage() << "Unable to receive header";
-      throw ex;
-    } else {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Received header is too short : only "
-                      << ret << " bytes";
-      throw ex;
-    }
-  }
-  if (header[0] != magic) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Bad magic number : " << std::ios::hex
-                    << header[0] << " instead of "
-                    << std::ios::hex << magic;
-    throw ex;
-  }
-  // Now read the data
-  n = header[1];
-  *buf = (char*) malloc(n);
-  ssize_t readBytes = 0;
-  while (readBytes < n) {
+void castor::io::AbstractSocket::close() throw () {
 #if !defined(_WIN32)
-    ssize_t nb = ::read(m_socket, (*buf)+readBytes, n - readBytes);
+  ::close(m_socket);
 #else
-    ssize_t nb = ::recv(m_socket, (*buf)+readBytes, n - readBytes, 0);
+  closesocket(m_socket);
 #endif
-    if (nb == -1) {
-      if (errno == EAGAIN) {
-        continue;
-      } else {
-        break;
-      }
-    }
-    readBytes += nb;
-  }
-  if (readBytes < n) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Unable to receive all data. "
-		    << "Got " << readBytes << " bytes instead of "
-		    << n << ".";
-    throw ex;
-  }
+  m_socket = -1;
 }

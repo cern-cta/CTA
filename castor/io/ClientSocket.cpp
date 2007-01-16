@@ -44,6 +44,7 @@
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/Communication.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamAddress.hpp"
 
@@ -54,43 +55,24 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::ClientSocket::ClientSocket(int socket) throw () {
-  m_socket = socket;
-}
+castor::io::ClientSocket::ClientSocket(int socket) throw () :
+  AbstractTCPSocket(socket) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
-                           const std::string host)
-  throw (castor::exception::Exception) {
-  m_socket = -1;
-  createSocket();
-  m_saddr = buildAddress(port, host);
-}
+                                       const std::string host)
+  throw (castor::exception::Exception) :
+  AbstractTCPSocket(port, host, false) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
-                           const unsigned long ip)
-  throw (castor::exception::Exception) {
-  m_socket = -1; 
-  createSocket();
-  m_saddr = buildAddress(port, ip);
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::io::ClientSocket::~ClientSocket() throw () {
-#if !defined(_WIN32)
-	close(m_socket);
-#else
-	closesocket(m_socket);
-#endif
-}
-
+                                       const unsigned long ip)
+  throw (castor::exception::Exception) :
+  AbstractTCPSocket(port, ip, false) {}
 
 //------------------------------------------------------------------------------
 // connect
@@ -104,28 +86,24 @@ void castor::io::ClientSocket::connect()
 #if !defined(_WIN32)
     if (errno != ECONNREFUSED) {
 #else
-    if (WSAGetLastError() != WSAECONNREFUSED) {
+      if (WSAGetLastError() != WSAECONNREFUSED) {
 #endif
-      tmpserrno = SECOMERR;
+        tmpserrno = SECOMERR;
+      }
+      castor::exception::Communication ex(0, tmpserrno);
+      ex.getMessage() << "Unable to connect socket";
+      if (m_saddr.sin_family == AF_INET) {
+        unsigned long ip = m_saddr.sin_addr.s_addr;
+        ex.getMessage() << " to "
+                        << (ip%256) << "."
+                        << ((ip >> 8)%256) << "."
+                        << ((ip >> 16)%256) << "."
+                        << (ip >> 24) << ":"
+                        << ntohs(m_saddr.sin_port);
+      }
+      this->close();
+      errno = tmperrno;
+      throw ex;
     }
-    castor::exception::Exception ex(tmpserrno);
-    ex.getMessage() << "Unable to connect socket";
-    if (m_saddr.sin_family == AF_INET) {
-      unsigned long ip = m_saddr.sin_addr.s_addr;
-      ex.getMessage() << " to "
-                      << (ip%256) << "."
-                      << ((ip >> 8)%256) << "."
-                      << ((ip >> 16)%256) << "."
-                      << (ip >> 24) << ":"
-                      << ntohs(m_saddr.sin_port);
-    }
-#if !defined(_WIN32)
-    close(m_socket);
-#else
-    closesocket(m_socket);
-#endif
-    errno = tmperrno;
-    throw ex;
   }
-}
 
