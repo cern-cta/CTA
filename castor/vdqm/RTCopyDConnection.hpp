@@ -29,7 +29,7 @@
 // Include Files
 #include <string>
 
-#include "castor/io/AbstractSocket.hpp"
+#include "castor/io/AbstractTCPSocket.hpp"
 
 
 namespace castor {
@@ -43,7 +43,7 @@ namespace castor {
      * A dedicated socket class, able to deal with socket manipulation
      * and to handle sending of messages to the RTCopy daemon.
      */
-    class RTCopyDConnection : public castor::io::AbstractSocket {
+    class RTCopyDConnection : public castor::io::AbstractTCPSocket {
 
     public:
 

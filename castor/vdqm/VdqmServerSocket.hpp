@@ -27,7 +27,7 @@
 #ifndef _VDQMSERVERSOCKET_HPP_
 #define _VDQMSERVERSOCKET_HPP_
 
-#include "castor/io/AbstractSocket.hpp"
+#include "castor/io/AbstractTCPSocket.hpp"
 
 namespace castor {
 
@@ -42,7 +42,7 @@ namespace castor {
      * function to check the magic number of an incoming request and to deal the
      * old VDQM protocol.
      */
-    class VdqmServerSocket : public castor::io::AbstractSocket {
+    class VdqmServerSocket : public castor::io::AbstractTCPSocket {
 
     public:
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: VdqmServerSocket.cpp  Revision: 1.0  Release Date: Apr 12, 2005  Author: mbraeger 
+ * @(#)RCSfile: VdqmServerSocket.cpp  Revision: 1.0  Release Date: Apr 12, 2005  Author: mbraeger
  *
  *
  *
@@ -51,57 +51,33 @@
 #define STG_CALLBACK_BACKLOG 2
 #define VDQMSERV 1
 
- 
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServerSocket::VdqmServerSocket(int socket) throw () :
-  m_listening(false) {
-  	
-  m_socket = socket;
-}
+  AbstractTCPSocket(socket), m_listening(false) {}
 
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServerSocket::VdqmServerSocket(const unsigned short port,
-                                       const bool reusable)
+                                                 const bool reusable)
   throw (castor::exception::Exception) :
-  m_listening(false) {
-  	
-  m_socket = 0;
-  createSocket();
-  if (reusable) this->reusable();
-  m_saddr = buildAddress(port);
-  bind(m_saddr);
-}
+  AbstractTCPSocket(port, reusable), m_listening(false) {
+    createSocket();
+    setReusable();
+    bind(m_saddr);
+  }
 
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServerSocket::~VdqmServerSocket() throw () {
-	close(m_socket);
+  this->close();
 }
-
-
-
-//------------------------------------------------------------------------------
-// Sets the socket to Reusable address
-//------------------------------------------------------------------------------
-void castor::vdqm::VdqmServerSocket::reusable()
-  throw (castor::exception::Exception) {
-
-  int on = 1;
-	if (setsockopt (m_socket, SOL_SOCKET, SO_REUSEADDR, 
-                  (char *)&on, sizeof(on)) < 0) {
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unable to set socket to reusable";
-    throw ex;    
-  }
-}
-
 
 //------------------------------------------------------------------------------
 // bind
@@ -112,7 +88,7 @@ void castor::vdqm::VdqmServerSocket::bind(sockaddr_in saddr)
   if (::bind(m_socket, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to bind socket";
-    close(m_socket);
+    this->close();
     throw ex;
   }
 }
@@ -122,56 +98,56 @@ void castor::vdqm::VdqmServerSocket::bind(sockaddr_in saddr)
 // readMagicNumber
 //------------------------------------------------------------------------------
 unsigned int castor::vdqm::VdqmServerSocket::readMagicNumber()
-	throw (castor::exception::Exception) {
-  
-	char buffer[sizeof(unsigned int)];
-	char *p;
-//	std::string message;
+  throw (castor::exception::Exception) {
+
+  char buffer[sizeof(unsigned int)];
+  char *p;
+  // std::string message;
   int ret;
   unsigned int magic;
-  
+
   // Read the magic number from the socket
   ret = netread(m_socket, buffer, sizeof(unsigned int));
-                    
+
   if (ret != sizeof(unsigned int)) {
     if (0 == ret) {
       castor::exception::Internal ex;
       ex.getMessage() << "VdqmServerSocket::readMagicNumber(): "
-      								<< "Unable to receive Magic Number" << std::endl
+                      << "Unable to receive Magic Number" << std::endl
                       << "The connection was closed by remote end";
       throw ex;
     } else if (-1 == ret) {
       castor::exception::Exception ex(serrno);
       ex.getMessage() << "VdqmServerSocket::readMagicNumber(): "
-      								<< "Unable to receive Magic Number: " 
-      								<< errno << " - " << strerror(errno) << std::endl;
+                      << "Unable to receive Magic Number: "
+                      << errno << " - " << strerror(errno) << std::endl;
       throw ex;
     } else {
       castor::exception::Internal ex;
       ex.getMessage() << "VdqmServerSocket::readMagicNumber(): "
-      								<< "Received Magic Number is too short : only "
+                      << "Received Magic Number is too short : only "
                       << ret << " bytes";
       throw ex;
     }
   }
-  
-  
+
+
   /**
    * This is code for the C++ world, which is not compatible with the
    * C Marshalling of the magic number.
    */
-//  message = std::string(buffer, sizeof(unsigned int));
-//  castor::io::biniostream rcvStream(message);
-//	castor::io::biniostream& addrPointer = rcvStream;
-//	
-//	/**
-//	 * Do the unmarshalling of the message
-//	 */
-//  addrPointer >> magic;
+  //  message = std::string(buffer, sizeof(unsigned int));
+  //  castor::io::biniostream rcvStream(message);
+  // castor::io::biniostream& addrPointer = rcvStream;
+  //
+  // /**
+  //  * Do the unmarshalling of the message
+  //  */
+  //  addrPointer >> magic;
 
-	p = buffer;
-	DO_MARSHALL(LONG, p, magic, ReceiveFrom);
-  
+  p = buffer;
+  DO_MARSHALL(LONG, p, magic, ReceiveFrom);
+
   return magic;
 }
 
@@ -183,8 +159,7 @@ void castor::vdqm::VdqmServerSocket::listen()
   if (::listen(m_socket, STG_CALLBACK_BACKLOG) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to listen on socket";
-    (void) close(m_socket);
-    m_socket = 0;
+    this->close();
     throw ex;
   }
   m_listening = true;
@@ -225,61 +200,61 @@ castor::vdqm::VdqmServerSocket* castor::vdqm::VdqmServerSocket::accept()
 //------------------------------------------------------------------------------
 // vdqmNetwrite
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServerSocket::vdqmNetwrite(void* hdrbuf) 
-	throw (castor::exception::Exception) {
+void castor::vdqm::VdqmServerSocket::vdqmNetwrite(void* hdrbuf)
+  throw (castor::exception::Exception) {
   int rc;
-  
+
   rc = netwrite_timeout(m_socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
   switch (rc) {
-		case -1: 
-				{
-					serrno = SECOMERR;
-	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket: "
-												<< "netwrite(HDR): " 
-												<< neterror() << std::endl;
-					throw ex;	
-				}
-				break;
-	  case 0:
-	  		{
-	  			serrno = SECONNDROP;
-	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket: "
-												<< "netwrite(HDR): connection dropped" 
-												<< std::endl;
-					throw ex;	
-	  		}
-	}	
+  case -1:
+    {
+      serrno = SECOMERR;
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "VdqmServerSocket: "
+                      << "netwrite(HDR): "
+                      << neterror() << std::endl;
+      throw ex;
+    }
+    break;
+  case 0:
+    {
+      serrno = SECONNDROP;
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "VdqmServerSocket: "
+                      << "netwrite(HDR): connection dropped"
+                      << std::endl;
+      throw ex;
+    }
+  }
 }
 
 
 //------------------------------------------------------------------------------
 // vdqmNetread
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServerSocket::vdqmNetread(void* hdrbuf) 
-	throw (castor::exception::Exception) {
+void castor::vdqm::VdqmServerSocket::vdqmNetread(void* hdrbuf)
+  throw (castor::exception::Exception) {
   int rc;
-  
+
   rc = netread_timeout(m_socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
   switch (rc) {
-  	case -1: 
-	  		{
-	  			serrno = SECOMERR;
-	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket: "
-													<< "netread(HDR): " 
-													<< neterror() << std::endl;
-					throw ex;	
-	  		}
-     case 0:
-     		{
-	  			serrno = SECONNDROP;
-	      	castor::exception::Exception ex(serrno);
-					ex.getMessage() << "VdqmServerSocket: "
-													<< "netread(HDR): connection dropped" 
-													<< std::endl;
-					throw ex;	
-	  		}
-  }		
+  case -1:
+    {
+      serrno = SECOMERR;
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "VdqmServerSocket: "
+                      << "netread(HDR): "
+                      << neterror() << std::endl;
+      throw ex;
+    }
+  case 0:
+    {
+      serrno = SECONNDROP;
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "VdqmServerSocket: "
+                      << "netread(HDR): connection dropped"
+                      << std::endl;
+      throw ex;
+    }
+  }
 }
