@@ -115,11 +115,11 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/castor/expert
 mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
-%ifarch x86_64
-mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib64
-%else
+#%ifarch x86_64
+#mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib64
+#%else
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib
-%endif
+#%endif
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/etc
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
 # Note: Only castor-job subpackage have a cron job
