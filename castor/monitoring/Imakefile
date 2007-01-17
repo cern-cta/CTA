@@ -36,7 +36,6 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
 STGLIB_SRCS = ClusterStatus.cpp \
               DiskServerStatus.cpp \
               FileSystemStatus.cpp \
-              AdminStatusCodes.cpp \
               ClusterStatusBlockKey.cpp \
               DiskServerMetricsReport.cpp \
               DiskServerStateReport.cpp \
