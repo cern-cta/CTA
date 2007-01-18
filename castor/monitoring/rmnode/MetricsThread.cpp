@@ -39,6 +39,7 @@
 #include "getconfent.h"
 #include <sys/vfs.h>
 #include "errno.h"
+#include <mntent.h>      /* To get partition table */
 
 /// The XFS stat file
 #define XFS_STAT_FILE "/proc/fs/xfs/stat"
@@ -799,7 +800,7 @@ void *_allfs_cthread_structure = NULL; /* Cthread structure for restart mutex */
 struct Crm_filesystem *allfs = NULL;
 
 int castor::monitoring::rmnode::MetricsThread::Crm_util_io_wrapper
-(const char* part, u_signed64 *rdRate, u_signed64 *wrRate,
+(const char* mountPoint, u_signed64 *rdRate, u_signed64 *wrRate,
  u_signed64 nr, u_signed64 nrw, u_signed64 nw) {
   // very bad way of having some memory...
   static u_signed64 previous_rd = 0;
@@ -807,8 +808,13 @@ int castor::monitoring::rmnode::MetricsThread::Crm_util_io_wrapper
   static u_signed64 previous_precise_time = 0;
   static u_signed64 previous_precise_microtime = 0;
   char* func = "Crm_util_io_wrapper";
+  char part[CA_MAXPATHLEN+1];
   u_signed64 rd, wr;
-
+  if (Crm_util_find_partition((char*)mountPoint,part,sizeof(part)) != 0) {
+    log(LOG_ERR,"%s: %s : Crm_util_find_partition error, %s\n", func, allfs[nfilesystems-1].name, sstrerror(serrno));
+    log(LOG_INFO,"%s: Exiting. Please fix partitions declaration in config file!\n", func);
+    return -1;
+  }
   if (Crm_util_io(part,&rd,&wr) != 0) {
     log(LOG_ERR,"%s: Crm_util_io error, %s\n", func, sstrerror(serrno));
     /* Reset */
@@ -897,4 +903,54 @@ int castor::monitoring::rmnode::MetricsThread::Crm_util_io_wrapper
     previous_precise_microtime = current_precise_microtime;
     return 0;
   }
+}
+
+int castor::monitoring::rmnode::MetricsThread::Crm_util_find_partition
+(char* mountPoint, char* partition, int maxlen) {
+  int rc = -1;
+  FILE *fd;
+  struct mntent *cthis;
+  int found = 0;
+  int have_leading_slash = 0;
+  /* WARNING : THIS FUNCTION IS NOT THREAD-SAFE */
+  if ((strcmp(mountPoint,"/") != 0) && (mountPoint[strlen(mountPoint)-1] == '/')) {
+    have_leading_slash = 1;
+    mountPoint[strlen(mountPoint)-1] = '\0';
+  }
+  if ((fd = setmntent(MOUNTED, "r")) == NULL) {
+    serrno = errno;
+  } else {
+    while ((cthis = getmntent(fd)) != NULL) {
+      if (strcmp(cthis->mnt_dir,mountPoint) == 0) {
+	strncpy(partition,cthis->mnt_fsname,maxlen-1);
+	partition[maxlen-1] = '\0';
+	if (strcmp(partition,cthis->mnt_fsname) != 0) {
+	  /* Not enough room... */
+	  found = -1;
+	  serrno = SENAMETOOLONG;
+	} else {
+	  found = 1;
+	}
+	break;
+      }
+    }
+    endmntent(fd);
+    switch (found) {
+    case -1:
+      break;
+    case 0:
+      serrno = ENOENT;
+      break;
+    case 1:
+      rc = 0;
+      break;
+    default:
+      serrno = SEINTERNAL;
+      break;
+    }
+  }
+  if (have_leading_slash) {
+    mountPoint[strlen(mountPoint)] = '/';
+  }
+  return(rc);
 }

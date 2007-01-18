@@ -94,9 +94,12 @@ namespace castor {
         int Crm_util_countstream(const char* fs, int*nr, int*nrw, int*nw);
         int Crm_util_io(const char* part,
                         u_signed64 *rd, u_signed64 *wr);
-        int Crm_util_io_wrapper(const char* part,
+        int Crm_util_io_wrapper(const char* mountPoint,
                                 u_signed64 *rd, u_signed64 *wr,
                                 u_signed64 nr, u_signed64 brw, u_signed64 nw);
+	int Crm_util_find_partition(char* mountPoint,
+				    char* partition,
+				    int maxlen);
 
       private:
       
