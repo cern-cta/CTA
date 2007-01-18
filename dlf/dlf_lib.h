@@ -21,7 +21,7 @@
  * @file  lib.h
  * @brief definitions and structures for api internals
  *
- * $Id: dlf_lib.h,v 1.2 2006/12/13 18:36:55 waldron Exp $
+ * $Id: dlf_lib.h,v 1.3 2007/01/18 07:09:24 waldron Exp $
  */
 
 #ifndef _API_H
@@ -57,6 +57,7 @@ typedef struct target_t   target_t;
 
 struct target_t {
 	char               path[1024];      /**< path to the log file                              */
+	int                perm;            /**< access permissions for files                      */
 	char               server[64];      /**< url to the server                                 */
 	int                port;            /**< port to connect to on remote host                 */
 	int                socket;          /**< file descriptor for socket communications         */

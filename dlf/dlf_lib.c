@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.11 2006/12/15 18:50:19 waldron Exp $
+ * $Id: dlf_lib.c,v 1.12 2007/01/18 07:09:24 waldron Exp $
  */
 
 /* headers */
@@ -487,11 +487,10 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 			fflush(stdout);
 		} else {
 #ifdef O_LARGEFILE
-  			fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT|O_LARGEFILE, 0644);
+  			fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT|O_LARGEFILE, targets[i]->perm);
 #else
-        		fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT, 0644);
+        		fd = open(targets[i]->path, O_APPEND|O_WRONLY|O_CREAT, targets[i]->perm);
 #endif
-
 			if (fd < 0) {
 				continue;
 			}
@@ -1169,6 +1168,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	int        j;
 	int        rv;
 	int        port;
+	int        perm;
 	int        found;
 	int        queue_size;
 	char       *value;
@@ -1271,17 +1271,27 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			}
 
 			/* determine server port */
-			if (sscanf(buffer, "%1023[^:]:%d", tmp, &port) == 2) {
-				strcpy(buffer, tmp);
-				port = port;
-			} else if (getenv("DLF_PORT") != NULL) {
-				port = atoi(getenv("DLF_PORT"));
-			} else if (getconfent("DLF", "PORT", 0) != NULL) {
-				port = atoi(getconfent("DLF", "PORT", 0));
-			} else if ((servent = getservbyname("dlf", "tcp"))) {
-				port = servent->s_port;
-			} else {
-				port = DEFAULT_SERVER_PORT;
+			if (!strcasecmp(uri, "x-dlf")) {
+				if (sscanf(buffer, "%1023[^:]:%d", tmp, &port) == 2) {
+					strcpy(buffer, tmp);
+				} else if (getenv("DLF_PORT") != NULL) {
+					port = atoi(getenv("DLF_PORT"));
+				} else if (getconfent("DLF", "PORT", 0) != NULL) {
+					port = atoi(getconfent("DLF", "PORT", 0));
+				} else if ((servent = getservbyname("dlf", "tcp"))) {
+					port = servent->s_port;
+				} else {
+					port = DEFAULT_SERVER_PORT;
+				}
+			} 
+			
+			/* determine permissions for files */
+			else {
+				if (sscanf(buffer, "%1023[^:]:%o", tmp, &perm) == 2) {
+					strcpy(buffer, tmp);
+				} else {
+					perm = 0644;
+				}
 			}
 
 			/* lookup the server and port or filepath and alter the severity mask accordingly
@@ -1298,11 +1308,14 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 					if (strcmp(targets[j]->path, buffer))
 						continue;
 				}
-				/* servers have an additional port attribute to consider */
+
+				/* take into account additional attributes */
 				if (IsServer(targets[j]->mode)) {
-					if (targets[j]->port != port) {
-						continue;                    /* incorrect port */
-					}
+					if (targets[j]->port != port)
+						continue;                    /* incorrect port        */
+				} else {
+					if (targets[j]->perm != perm)
+						continue;                    /* incorrect permissions */
 				}
 
 				/* alter severity mask */
@@ -1355,6 +1368,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			t->fac_no     = -1;
 			t->sevmask    = severitylist[i].sevmask;
 			t->path[0]    = '\0';
+			t->perm       = perm;
 			t->shutdown   = 0;
 		     
 			/* set the type */

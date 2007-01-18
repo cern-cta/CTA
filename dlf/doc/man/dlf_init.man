@@ -67,9 +67,9 @@ The
 .I destination
 is the target or location to where the log message should be record or transmitted too. For writing too files the destination format is
 
-.B file://<full_path_to_file>
+.B file://<full_path_to_file>:[permissions]
 
-and for servers:
+If the permissions for creating and opening a file are not specified the default 0644 will be chosen. For servers the format is:
 
 .B x-dlf://<hostname>:[port]
 
