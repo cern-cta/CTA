@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache" />
 <meta http-equiv="Default-Style" content="compact" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
-<!-- $Id: index.html,v 1.11 2006/11/29 13:41:48 waldron Exp $ -->
+<!-- $Id: index.html,v 1.12 2007/01/18 10:34:58 waldron Exp $ -->
 <title>Distributed Logging Facility - Documentation</title>
 <style type="text/css">
 
@@ -258,7 +258,7 @@ TR.subheader {
     <td><p>&nbsp;</p>
       <p><strong>Question: How do I add a new facility to DLF?</strong></p>
       <p><span class="style2">Answer:</span> There is no tool which allows a client to self-register itself or for a user to run a command to enter a facility into the schema. This must be done by manually using a query such as</p>
-      <p>INSERT INTO dlf_facilities (fac_name, fac_name) VALUES (X, 'facility_name');</p>
+      <p>INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (X, 'facility_name');</p>
       <p><strong>Question: Can I use an old client with the new server?</strong></p>
       <p><span class="style2">Answer:</span> No, the new server is not backwards compatible with older client versions. </p>
       <p><strong>Question: How do I change a message text for a given facility ? </strong></p>
