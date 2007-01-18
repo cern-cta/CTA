@@ -90,7 +90,7 @@ void castor::io::ClientSocket::connect()
 #endif
         tmpserrno = SECOMERR;
       }
-      castor::exception::Communication ex(0, tmpserrno);
+      castor::exception::Communication ex("", tmpserrno);
       ex.getMessage() << "Unable to connect socket";
       if (m_saddr.sin_family == AF_INET) {
         unsigned long ip = m_saddr.sin_addr.s_addr;
