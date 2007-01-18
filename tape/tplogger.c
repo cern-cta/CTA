@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.1 2007/01/18 09:08:19 wiebalck Exp $
+** $Id: tplogger.c,v 1.2 2007/01/18 16:38:01 wiebalck Exp $
 */
 
 #include <string.h>
@@ -54,6 +54,12 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
 
         int   err = 0, rv, i;
         char  error[CA_MAXLINELEN + 1];
+
+        {
+                FILE *fp = fopen( "/tmp/init.tst", "w+" );
+                fprintf( fp, "in init" );
+                fclose( fp );                
+        }
 
         if( NULL == self ) {
 
@@ -227,6 +233,30 @@ int DLL_DECL tl_exit_dlf( tplogger_t *self, int exit ) {
 
 
 /**
+ * Check the validity of a messag number
+ *
+ * @returns    : the index in message table on success
+ *               a value < 0 otherwise
+ */
+static int chk_msg_no( tplogger_t *self, unsigned int msg_no ) {
+
+        int err = -1;
+        int i;
+        
+        /* do we have a valid msg_no? */
+        for( i=0; i<self->tl_msg_entries; i++ ) {
+                
+                if( self->tl_msg[i].tm_no == msg_no ) {
+                        
+                        return i;
+                }
+        }
+
+        return err;
+}
+
+
+/**
  * Log a message using the DLF implementation. Mostly a copy of dlf_write.
  *
  * @param self       : reference to the tplogger struct
@@ -245,6 +275,7 @@ int DLL_DECL tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params
 	int		  rv;
 	int               ok;
         int               err = 0;
+        int               ndx = -1;
 	va_list           ap;
   	Cuuid_t           req_id;
 
@@ -254,7 +285,8 @@ int DLL_DECL tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params
                 goto err_out;
         }
 
-        if( (self->tl_msg_entries - 1) < msg_no ) {
+        ndx = chk_msg_no( self, msg_no ); 
+        if(  ndx < 0 ) {
 
                 err = -2;
                 goto err_out;
@@ -308,7 +340,7 @@ int DLL_DECL tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params
 	if (ok == 1) {
 		
                 Cthread_mutex_lock( &api_mutex );
-		rv = dlf_writep( req_id, self->tl_msg[msg_no].tm_lvl, msg_no, NULL, num_params, plist );
+		rv = dlf_writep( req_id, self->tl_msg[ndx].tm_lvl, msg_no, NULL, num_params, plist );
 		Cthread_mutex_unlock( &api_mutex );
 
 	} else {
@@ -350,6 +382,7 @@ int DLL_DECL tl_llog_dlf( tplogger_t *self, int lvl, unsigned short msg_no, int 
 	int               i;
 	int		  rv;
 	int               ok;
+        int               ndx = -1;
         int               err = 0;
 	va_list           ap;
   	Cuuid_t           req_id;
@@ -360,7 +393,9 @@ int DLL_DECL tl_llog_dlf( tplogger_t *self, int lvl, unsigned short msg_no, int 
                 goto err_out;
         }
 
-        if( (self->tl_msg_entries - 1) < msg_no ) {
+        /* do we have a valid msg_no? */
+        ndx = chk_msg_no( self, msg_no ); 
+        if(  ndx < 0 ) {
 
                 err = -2;
                 goto err_out;
@@ -449,6 +484,7 @@ int DLL_DECL tl_llog_dlf( tplogger_t *self, int lvl, unsigned short msg_no, int 
 int tl_get_lvl_dlf( tplogger_t *self, unsigned short msg_no ) {
 
         int err = 0;
+        int ndx = -1;
 
         if( NULL == self ) {
 
@@ -456,14 +492,15 @@ int tl_get_lvl_dlf( tplogger_t *self, unsigned short msg_no ) {
                 goto err_out;
         }
 
-        if( self->tl_msg_entries < msg_no ) {
+        /* do we have a valid msg_no? */
+        ndx = chk_msg_no( self, msg_no ); 
+        if(  ndx < 0 ) {
 
-                printf( "%d %d\n", self->tl_msg_entries, msg_no );
                 err = -2;
                 goto err_out;
         }
 
-        return self->tl_msg[msg_no].tm_lvl;
+        return self->tl_msg[ndx].tm_lvl;
 
  err_out:
         return err;
@@ -483,6 +520,7 @@ int tl_get_lvl_dlf( tplogger_t *self, unsigned short msg_no ) {
 int DLL_DECL tl_set_lvl_dlf( tplogger_t *self, unsigned short msg_no, int lvl ) {
 
         int err = 0;
+        int ndx = -1;
 
         if( NULL == self ) {
 
@@ -490,7 +528,9 @@ int DLL_DECL tl_set_lvl_dlf( tplogger_t *self, unsigned short msg_no, int lvl ) 
                 goto err_out;
         }
 
-        if( self->tl_msg_entries < msg_no ) {
+        /* do we have a valid msg_no? */
+        ndx = chk_msg_no( self, msg_no ); 
+        if(  ndx < 0 ) {
 
                 err = -2;
                 goto err_out;
@@ -502,7 +542,7 @@ int DLL_DECL tl_set_lvl_dlf( tplogger_t *self, unsigned short msg_no, int lvl ) 
                 goto err_out;                
         }
 
-        self->tl_msg[msg_no].tm_lvl = lvl;        
+        self->tl_msg[ndx].tm_lvl = lvl;        
 
  err_out:
         return err;

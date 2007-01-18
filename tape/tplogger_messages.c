@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.1 2007/01/18 09:08:20 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.2 2007/01/18 16:38:01 wiebalck Exp $
 */
 
 
@@ -135,12 +135,23 @@ tplogger_message_t tplogger_messages[] = {
                                                                                     /* what      */
         {  63, TL_LVL_ERROR,  "TP063 - invalid user"                            },  /* user      */
         {  64, TL_LVL_ERROR,  "TP064 - invalid method for this label type"      },
-        {  65, TL_LVL_ERROR,  "TP065 - tape has bad MIR"                        }   /* tape      */
+        {  65, TL_LVL_ERROR,  "TP065 - tape has bad MIR"                        },  /* tape      */
                                                                                     /* labels    */
                                                                                     /* drive     */
                                                                                     /* host      */
                                                                                     /* name      */
                                                                                     /* pid       */
+        { 101, TL_LVL_EMERGENCY , "TP101 - General Emergency Message"           },  
+        { 102, TL_LVL_ALERT     , "TP102 - General Alert Message"               },
+        { 103, TL_LVL_ERROR     , "TP103 - General Error Message"               },
+        { 104, TL_LVL_WARNING   , "TP104 - General Warning Message"             },
+        { 105, TL_LVL_AUTH      , "TP105 - General Auth Message"                },
+        { 106, TL_LVL_SECURITY  , "TP106 - General Security Message"            },
+        { 107, TL_LVL_USAGE     , "TP107 - General Usage Message"               },
+        { 108, TL_LVL_SYSTEM    , "TP108 - General System Message"              },
+        { 109, TL_LVL_IMPORTANT , "TP109 - General Important Message"           },
+        { 110, TL_LVL_MONITORING, "TP110 - General Monitoring Message"          },
+        { 111, TL_LVL_DEBUG     , "TP111 - General Debug Message"               }
 };
 
 
