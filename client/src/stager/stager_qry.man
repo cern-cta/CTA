@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.15 $ $Date: 2006/05/02 10:17:21 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.16 $ $Date: 2007/01/18 17:05:40 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2006/05/02 10:17:21 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2007/01/18 17:05:40 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -104,6 +104,7 @@ If the hsmfile begins with 'regexp:', it is considered as a POSIX regular expres
 If the hsmfile ends with '/', or if it's a directory according to the nameserver, the query is performed recursively on the status of all files into it.
 Note that the number of responses for a given file is limited on the server side. In case the limitation
 is reached, nothing is returned and an error message is displayed.
+Also note that you may have more files listed here than in the nameserver in case the stager still has a copy of a file that was manually removed from the nameserver using the nsrm or rfrm command.
 .TP
 .BI \-E,\ \-\-regexp " regular_expression"
 specifies the CASTOR HSM file to be queried for. This option is equivalent to the
