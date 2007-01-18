@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Release$ $Date: 2006/04/04 16:41:29 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2007/01/18 11:02:52 $ $Author: sponcec3 $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -38,7 +38,7 @@ INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,demo) -I FileName($(ORACLE_HOME)/rdb
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORASTAGERCONFIGFILE=\"OraStagerConfigFile\" -DORACDBC=1
 
 ORALIB_SRCS = OraCnvSvc.cpp \
-    	    OraStatement.cpp \
+            OraStatement.cpp \
             OraResultSet.cpp \
             OraCommonSvc.cpp \
             ../ora/OraStagerSvc.cpp \
@@ -47,7 +47,8 @@ ORALIB_SRCS = OraCnvSvc.cpp \
             ../ora/OraGCSvc.cpp \
             ../ora/OraFSSvc.cpp \
             ../ora/OraQuerySvc.cpp \
-            ../ora/OraCleanSvc.cpp
+            ../ora/OraCleanSvc.cpp \
+            ../ora/OraRmMasterSvc.cpp
 
 ORALIB_OBJS = $(ORALIB_SRCS:.cpp=.Osuf)
 COMMONLIB = LibraryTargetName(castorCommonOra)
