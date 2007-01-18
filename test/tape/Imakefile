@@ -1,4 +1,4 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2004/06/09 16:10:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2007/01/18 09:10:17 $ CERN IT-PDP/DM Jean-Philippe Baud
 COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
@@ -31,14 +31,16 @@ LIBS = -L../../lib -lshift
 #endif
 #endif
 
-PROGS = ProgramTargetName(Ctape_test1)
+PROGS = ProgramTargetName(tplogger_test) ProgramTargetName(Ctape_test1)
 
 CFLAGS = -I$(INCLUDES)
+LDFLAGS = $(MTLDFLAGS)
 
 GLOBLIB = DepLibraryTargetName(FileName(..,lib),shift)
 
 all: $(PROGS)
 
+NormalProgramTarget(tplogger_test,tplogger_test.Osuf,$(GLOBLIB),$(LIBS))
 NormalProgramTarget(Ctape_test1,Ctape_test1.Osuf,$(GLOBLIB),$(LIBS))
 
 MakeDepLibrary(FileName(..,lib),shift)
