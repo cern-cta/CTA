@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2006/06/21 12:58:06 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2007/01/18 09:08:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM 	Make tape daemon programs. 
 
@@ -309,7 +309,9 @@ TPLIB_OBJS	=	Ctape_config.Osuf \
 			usrtperror.Osuf \
 			usrusrmsg.Osuf \
 			usrwritelbl.Osuf \
-			usrwrttpmrk.Osuf
+			usrwrttpmrk.Osuf \
+                        tplogger.Osuf \
+                        tplogger_messages.Osuf
 
 #if BuildTapeLibrary
 LIB = LibraryTargetName(tape)
