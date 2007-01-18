@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/18 10:34:59 $ $Author: obarring $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/18 15:56:34 $ $Author: fuji $
  *
  * 
  *
@@ -62,43 +62,41 @@ struct tm timestamp;
 
 const enum RunOptions
 {
-  Noop,
-  PathName,
-  LogFile,
-  BufferSize,
-  FileSize,
-  NbLoops,
-  SleepTime,
-  IOSleepTime,
-  Foreground
+	Noop,
+	PathName,
+	LogFile,
+	BufferSize,
+	FileSize,
+	NbLoops,
+	SleepTime,
+	IOSleepTime,
+	Foreground
 } runOptions;
 
 const struct option longopts[] = 
 {
-  {"help",no_argument,&help_flag,'h'},
-  {"PathName",required_argument,NULL,PathName},
-  {"LogFile",required_argument,NULL,LogFile},
-  {"BufferSize",required_argument,NULL,BufferSize},
-  {"FileSize",required_argument,NULL,FileSize},
-  {"NbLoops",required_argument,NULL,NbLoops},
-  {"SleepTime",required_argument,NULL,SleepTime},
-  {"IOSleepTime",required_argument,NULL,IOSleepTime},
-  {"Foreground",no_argument,&runInForeground,Foreground},
-  {NULL, 0, NULL, 0}
+	{"help",no_argument,&help_flag,'h'},
+	{"PathName",required_argument,NULL,PathName},
+	{"LogFile",required_argument,NULL,LogFile},
+	{"BufferSize",required_argument,NULL,BufferSize},
+	{"FileSize",required_argument,NULL,FileSize},
+	{"NbLoops",required_argument,NULL,NbLoops},
+	{"SleepTime",required_argument,NULL,SleepTime},
+	{"IOSleepTime",required_argument,NULL,IOSleepTime},
+	{"Foreground",no_argument,&runInForeground,Foreground},
+	{NULL, 0, NULL, 0}
 };
 
-void usage(
-           cmd
-           )
-     char *cmd;
+void usage(char *cmd)
 {
-  int i;
-  fprintf(stdout,"Usage: %s \n",cmd);
-  for (i=0; longopts[i].name != NULL; i++) {
-    fprintf(stdout,"\t--%s %s\n",longopts[i].name,
-            (longopts[i].has_arg == no_argument ? "" : longopts[i].name));
-  }
-  return;
+	int i;
+	
+	fprintf(stdout,"Usage: %s \n",cmd);
+	for (i=0; longopts[i].name != NULL; i++) {
+		fprintf(stdout,"\t--%s %s\n",longopts[i].name,
+		(longopts[i].has_arg == no_argument ? "" : longopts[i].name));
+	}
+	return;
 }
 
 void prepareTimeStamp(void)
@@ -117,12 +115,12 @@ void myLog(char *str)
 	
 	if ( str == NULL ) return;
 	prepareTimeStamp();
-  if ( (runInForeground != 0) && (strcmp(logFileName,"stderr") == 0) ) {
-    fd = 2;
-  } else {
-    fd = open(logFileName,O_WRONLY|O_CREAT|O_APPEND,0644);
-  }
-  
+	if ( (runInForeground != 0) && (strcmp(logFileName,"stderr") == 0) ) {
+		fd = 2;
+	} else {
+		fd = open(logFileName,O_WRONLY|O_CREAT|O_APPEND,0644);
+	}
+
 	if ( fd == -1 ) {
 		fprintf(stderr, "%s %s", timebuf, str);
 		return;
@@ -194,7 +192,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe 0.2007011802 operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.3 $ operational.\n");
 	myLog(logbuf);
 	return(0);
 }
@@ -285,10 +283,11 @@ int checkFile()
 				continue;
 			}
 			diffCount++;
-			sprintf(logbuf, "diff: bufpos %d offset %llu expected %02x got %02x\n",
-              i, bytesRead+i, 
-              (unsigned char)*(buffer+i), 
-              (unsigned char)*(readBuffer+i) );
+			sprintf(logbuf, "diff: bufpos %d offset %llu expected 0x%02x got 0x%02x\n",
+				i,
+				bytesRead+i, 
+				(unsigned char)*(buffer+i), 
+				(unsigned char)*(readBuffer+i) );
 			myLog(logbuf);
 		}
 		if ( diffCount ) {
@@ -327,45 +326,45 @@ int main(int argc, char *argv[])
 {
 	struct stat64 st;
 	int rc;
-  long cycle;
-  char corruptPathName[1024];
-  char *cmd, ch;
-  
-  optind = 1;
-  opterr = 1;
-  cmd = argv[0];
-  while ((ch = getopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
-    switch (ch) {
-    case PathName:
-      pathName = strdup(optarg);
-      break;
-    case LogFile:
-      logFileName = strdup(optarg);
-      break;
-    case BufferSize:
-      bufferSize = atoi(optarg);
-      break;
-    case FileSize:
-      fileSize = atoll(optarg);
-      break;
-    case NbLoops:
-      nbLoops = atol(optarg);
-      break;
-    case SleepTime:
-      sleepTime = atoi(optarg);
-      break;
-    case IOSleepTime:
-      sleepBetweenBuffers = atoi(optarg);
-      break;
-    case 'h':
-      usage(cmd);
-    default:
-      break;
-    }
-  }
+	long cycle;
+	char corruptPathName[1024];
+	char *cmd, ch;
+
+	optind = 1;
+	opterr = 1;
+	cmd = argv[0];
+	while ((ch = getopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
+		switch (ch) {
+			case PathName:
+				pathName = strdup(optarg);
+				break;
+			case LogFile:
+				logFileName = strdup(optarg);
+				break;
+			case BufferSize:
+				bufferSize = atoi(optarg);
+				break;
+			case FileSize:
+				fileSize = atoll(optarg);
+				break;
+			case NbLoops:
+				nbLoops = atol(optarg);
+				break;
+			case SleepTime:
+				sleepTime = atoi(optarg);
+				break;
+			case IOSleepTime:
+				sleepBetweenBuffers = atoi(optarg);
+				break;
+			case 'h':
+				usage(cmd);
+			default:
+				break;
+		}
+	}
 	if ( pathName == NULL ) {
 		fprintf(stderr,"Please provide a directory name with --PathName!!!\n");
-    usage(cmd);
+		usage(cmd);
 		exit(1);
 	}
 
@@ -398,25 +397,26 @@ int main(int argc, char *argv[])
 	rc = initBuffers();
 	if ( rc == -1 ) exit(1);
 
-  if ( runInForeground == 0 ) {
-    rc = putInBackground();
-    if ( rc == -1 ) exit(1);
-  }
+	if ( runInForeground == 0 ) {
+		rc = putInBackground();
+		if ( rc == -1 ) exit(1);
+	}
 
-  cycle=0;
+	cycle=0;
 	while ( (nbLoops == 0) || (cycle<nbLoops) ) {
-    cycle++;
+		cycle++;
 		rc = writeFile();
 		if ( rc == 0 ) {
 			rc = checkFile();
-      if ( rc == -2 ) {      /* diff found */
-        sprintf(corruptPathName,"%s.%lu",pathName,cycle);
-        (void)rename(pathName,corruptPathName);
-      }
+			if ( rc == -2 ) {      /* diff found */
+				sprintf(corruptPathName,"%s.%lu",pathName,cycle);
+				(void)rename(pathName,corruptPathName);
+			}
 		}
-    (void)unlink(pathName);
+		(void)unlink(pathName);
 		sleep(sleepTime);
 	}
 	exit(0);
 }
 
+/* End of file. */
