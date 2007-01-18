@@ -64,7 +64,9 @@ castor::io::ClientSocket::ClientSocket(int socket) throw () :
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
                                        const std::string host)
   throw (castor::exception::Exception) :
-  AbstractTCPSocket(port, host, false) {}
+  AbstractTCPSocket(port, host, false) {
+  createSocket();
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -72,7 +74,9 @@ castor::io::ClientSocket::ClientSocket(const unsigned short port,
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
                                        const unsigned long ip)
   throw (castor::exception::Exception) :
-  AbstractTCPSocket(port, ip, false) {}
+  AbstractTCPSocket(port, ip, false) {
+  createSocket();
+}
 
 //------------------------------------------------------------------------------
 // connect
@@ -81,29 +85,19 @@ void castor::io::ClientSocket::connect()
   throw (castor::exception::Exception) {
   // Connects the socket
   if (::connect(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr)) < 0) {
-    int tmpserrno = errno;
-    int tmperrno = errno;
-#if !defined(_WIN32)
-    if (errno != ECONNREFUSED) {
-#else
-      if (WSAGetLastError() != WSAECONNREFUSED) {
-#endif
-        tmpserrno = SECOMERR;
-      }
-      castor::exception::Communication ex("", tmpserrno);
-      ex.getMessage() << "Unable to connect socket";
-      if (m_saddr.sin_family == AF_INET) {
-        unsigned long ip = m_saddr.sin_addr.s_addr;
-        ex.getMessage() << " to "
-                        << (ip%256) << "."
-                        << ((ip >> 8)%256) << "."
-                        << ((ip >> 16)%256) << "."
-                        << (ip >> 24) << ":"
-                        << ntohs(m_saddr.sin_port);
-      }
-      this->close();
-      errno = tmperrno;
-      throw ex;
+    castor::exception::Communication ex("", serrno);
+    ex.getMessage() << "Unable to connect socket";
+    if (m_saddr.sin_family == AF_INET) {
+      unsigned long ip = m_saddr.sin_addr.s_addr;
+      ex.getMessage() << " to "
+		      << (ip%256) << "."
+		      << ((ip >> 8)%256) << "."
+		      << ((ip >> 16)%256) << "."
+		      << (ip >> 24) << ":"
+		      << ntohs(m_saddr.sin_port);
     }
+    this->close();
+    throw ex;
   }
+}
 
