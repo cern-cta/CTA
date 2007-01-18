@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/18 10:14:43 $ $Author: obarring $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/18 10:34:59 $ $Author: obarring $
  *
  * 
  *
@@ -364,7 +364,7 @@ int main(int argc, char *argv[])
     }
   }
 	if ( pathName == NULL ) {
-		fprintf(stderr,"Please provide a directory name with --FileName!!!\n");
+		fprintf(stderr,"Please provide a directory name with --PathName!!!\n");
     usage(cmd);
 		exit(1);
 	}
