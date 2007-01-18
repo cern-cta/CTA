@@ -17,12 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/18 15:56:34 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/18 16:25:39 $ $Author: fuji $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
+
+#define _GNU_SOURCE
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -33,12 +35,10 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-#define _GNU_SOURCE
 #include <getopt.h>
 
 extern char *optarg;
 extern int optind, opterr, optopt;
-
 
 char *buffer = NULL;
 char *readBuffer = NULL;
@@ -48,6 +48,7 @@ char *logFileName = "/tmp/fsprobe.log";
 int bufferSize = 1024*1024;
 unsigned long long fileSize = (unsigned long long )
 		 (2*((unsigned long long )1024*1024*1024));
+unsigned long cycle;
 int sleepTime = 3600;
 int sleepBetweenBuffers = 1;
 int runInForeground = 0;
@@ -131,9 +132,22 @@ void myLog(char *str)
 	return;
 }
 
+#ifndef USE_RANDOMIZED_BUFFERS
+void prepareBuffer(void)
+{
+	if ( cycle && 1UL ) {
+		memset((void *)buffer, 0x55, (size_t)bufferSize);
+	} else {
+		memset((void *)buffer, 0xAA, (size_t)bufferSize);
+	}
+}
+#endif
+
 int initBuffers()
 {
+#ifdef USE_RANDOMIZED_BUFFERS
 	int fdRandom = -1, i, randSize, rcRandom;
+#endif
 	
 	buffer = (char *)malloc(bufferSize);
 	if ( buffer == NULL ) {
@@ -147,6 +161,7 @@ int initBuffers()
 				    strerror(errno));
 		return(-1);
 	}
+#ifdef USE_RANDOMIZED_BUFFERS
 	fdRandom = open("/dev/urandom",O_RDONLY,0644);
 	if ( fdRandom < 0 ) {
 		fprintf(stderr,"open(/dev/urandom): %s\n",strerror(errno));
@@ -164,6 +179,7 @@ int initBuffers()
 		randSize += 512;
 	}
 	close(fdRandom);
+#endif
 	
 	return(0);
 }
@@ -192,7 +208,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.3 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.4 $ operational.\n");
 	myLog(logbuf);
 	return(0);
 }
@@ -283,7 +299,8 @@ int checkFile()
 				continue;
 			}
 			diffCount++;
-			sprintf(logbuf, "diff: bufpos %d offset %llu expected 0x%02x got 0x%02x\n",
+			sprintf(logbuf, "diff: cycle %lu bufpos %d offset %llu expected 0x%02x got 0x%02x\n",
+				cycle,
 				i,
 				bytesRead+i, 
 				(unsigned char)*(buffer+i), 
@@ -326,7 +343,6 @@ int main(int argc, char *argv[])
 {
 	struct stat64 st;
 	int rc;
-	long cycle;
 	char corruptPathName[1024];
 	char *cmd, ch;
 
@@ -402,9 +418,12 @@ int main(int argc, char *argv[])
 		if ( rc == -1 ) exit(1);
 	}
 
-	cycle=0;
+	cycle = 0;
 	while ( (nbLoops == 0) || (cycle<nbLoops) ) {
 		cycle++;
+#ifndef USE_RANDOMIZED_BUFFERS
+		prepareBuffer();
+#endif
 		rc = writeFile();
 		if ( rc == 0 ) {
 			rc = checkFile();
