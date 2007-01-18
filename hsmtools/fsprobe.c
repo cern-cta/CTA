@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/18 16:25:39 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/18 17:25:36 $ $Author: fuji $
  *
  * 
  *
@@ -52,6 +52,7 @@ unsigned long cycle;
 int sleepTime = 3600;
 int sleepBetweenBuffers = 1;
 int runInForeground = 0;
+int useRndBuf = 0;
 long nbLoops = 0;
 int help_flag = 0;
 
@@ -71,7 +72,8 @@ const enum RunOptions
 	NbLoops,
 	SleepTime,
 	IOSleepTime,
-	Foreground
+	Foreground,
+	RndBuf
 } runOptions;
 
 const struct option longopts[] = 
@@ -85,6 +87,7 @@ const struct option longopts[] =
 	{"SleepTime",required_argument,NULL,SleepTime},
 	{"IOSleepTime",required_argument,NULL,IOSleepTime},
 	{"Foreground",no_argument,&runInForeground,Foreground},
+	{"RndBuf",no_argument,&useRndBuf,RndBuf},
 	{NULL, 0, NULL, 0}
 };
 
@@ -132,22 +135,9 @@ void myLog(char *str)
 	return;
 }
 
-#ifndef USE_RANDOMIZED_BUFFERS
-void prepareBuffer(void)
-{
-	if ( cycle && 1UL ) {
-		memset((void *)buffer, 0x55, (size_t)bufferSize);
-	} else {
-		memset((void *)buffer, 0xAA, (size_t)bufferSize);
-	}
-}
-#endif
-
 int initBuffers()
 {
-#ifdef USE_RANDOMIZED_BUFFERS
 	int fdRandom = -1, i, randSize, rcRandom;
-#endif
 	
 	buffer = (char *)malloc(bufferSize);
 	if ( buffer == NULL ) {
@@ -161,25 +151,26 @@ int initBuffers()
 				    strerror(errno));
 		return(-1);
 	}
-#ifdef USE_RANDOMIZED_BUFFERS
-	fdRandom = open("/dev/urandom",O_RDONLY,0644);
-	if ( fdRandom < 0 ) {
-		fprintf(stderr,"open(/dev/urandom): %s\n",strerror(errno));
-		return(-1);
-	}
-	i = randSize = 0;
-	
-	while ( randSize < bufferSize ) {
-		rcRandom = read(fdRandom,buffer+i*512,512);
-		if ( rcRandom < 0 ) {
-			fprintf(stderr,"read(): %s\n",strerror(errno));
+
+	if ( useRndBuf ) {
+		fdRandom = open("/dev/urandom",O_RDONLY,0644);
+		if ( fdRandom < 0 ) {
+			fprintf(stderr,"open(/dev/urandom): %s\n",strerror(errno));
 			return(-1);
 		}
-		i++;
-		randSize += 512;
+		i = randSize = 0;
+		
+		while ( randSize < bufferSize ) {
+			rcRandom = read(fdRandom,buffer+i*512,512);
+			if ( rcRandom < 0 ) {
+				fprintf(stderr,"read(): %s\n",strerror(errno));
+				return(-1);
+			}
+			i++;
+			randSize += 512;
+		}
+		close(fdRandom);
 	}
-	close(fdRandom);
-#endif
 	
 	return(0);
 }
@@ -208,7 +199,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.4 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.5 $ operational.\n");
 	myLog(logbuf);
 	return(0);
 }
@@ -421,9 +412,13 @@ int main(int argc, char *argv[])
 	cycle = 0;
 	while ( (nbLoops == 0) || (cycle<nbLoops) ) {
 		cycle++;
-#ifndef USE_RANDOMIZED_BUFFERS
-		prepareBuffer();
-#endif
+		if ( ! useRndBuf ) {
+			if ( cycle && 1UL ) {
+				memset((void *)buffer, 0x55, (size_t)bufferSize);
+			} else {
+				memset((void *)buffer, 0xAA, (size_t)bufferSize);
+			}
+		}
 		rc = writeFile();
 		if ( rc == 0 ) {
 			rc = checkFile();
