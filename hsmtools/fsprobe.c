@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/19 07:52:54 $ $Author: obarring $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/19 09:30:22 $ $Author: obarring $
  *
  * 
  *
@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <syslog.h>
 #include <getopt.h>
 
 extern char *optarg;
@@ -44,6 +45,7 @@ char *buffer = NULL;
 char *readBuffer = NULL;
 char *directoryName = NULL;
 char *pathName = NULL;
+char *mailTo = NULL;
 char *logFileName = "/tmp/fsprobe.log";
 int bufferSize = 1024*1024;
 unsigned long long fileSize = (unsigned long long )
@@ -53,6 +55,7 @@ int sleepTime = 3600;
 int sleepBetweenBuffers = 1;
 int runInForeground = 0;
 int useRndBuf = 0;
+int useSyslog = 0;
 long nbLoops = 0;
 int help_flag = 0;
 
@@ -73,7 +76,9 @@ const enum RunOptions
 	SleepTime,
 	IOSleepTime,
 	Foreground,
-	RndBuf
+	RndBuf,
+	MailTo,
+	Syslog
 } runOptions;
 
 const struct option longopts[] = 
@@ -88,6 +93,8 @@ const struct option longopts[] =
 	{"IOSleepTime",required_argument,NULL,IOSleepTime},
 	{"Foreground",no_argument,&runInForeground,Foreground},
 	{"RndBuf",no_argument,&useRndBuf,RndBuf},
+	{"MailTo",required_argument,NULL,MailTo},
+	{"Syslog",no_argument,&useSyslog,Syslog},
 	{NULL, 0, NULL, 0}
 };
 
@@ -200,7 +207,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.6 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.7 $ operational.\n");
 	myLog(logbuf);
 	return(0);
 }
@@ -310,11 +317,16 @@ int checkFile()
 				      pathName,bytesRead);
 			myLog(logbuf);
 			close(fd);
-			sprintf(logbuf,
-				      "tail /tmp/fsprobe.log |"
-				      "mail -s corruption Olof.Barring@cern.ch Peter.Kelemen@cern.ch"
-				      );
-			system(logbuf);
+			if ( useSyslog != 0 ) {
+				syslog(LOG_ALERT,"fsprobe %s",logbuf);
+			}
+			if ( mailTo != NULL ) {
+				sprintf(logbuf,
+					"tail /tmp/fsprobe.log |"
+					"mail -s corruption %s",
+					mailTo);
+				system(logbuf);
+			}
 			return(-2);
 		}
 
@@ -363,6 +375,9 @@ int main(int argc, char *argv[])
 				break;
 			case IOSleepTime:
 				sleepBetweenBuffers = atoi(optarg);
+				break;
+			case MailTo:
+				mailTo = strdup(optarg);
 				break;
 			case 'h':
 				usage(cmd);
