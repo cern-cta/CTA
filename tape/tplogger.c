@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.2 2007/01/18 16:38:01 wiebalck Exp $
+** $Id: tplogger.c,v 1.3 2007/01/19 11:48:26 wiebalck Exp $
 */
 
 #include <string.h>
@@ -38,6 +38,40 @@
 /* mutexes */
 static int api_mutex;
 
+/*
+** DLF-initialized default tploggers.
+*/
+tplogger_t tl_tpdaemon = {
+
+        .tl_init         = tl_init_dlf,
+        .tl_log          = tl_log_dlf,
+        .tl_llog         = tl_llog_dlf,
+        .tl_get_lvl      = tl_get_lvl_dlf,
+        .tl_set_lvl      = tl_set_lvl_dlf,
+        .tl_fork_prepare = tl_fork_prepare_dlf, 
+        .tl_fork_child   = tl_fork_child_dlf,
+        .tl_fork_parent  = tl_fork_parent_dlf, 
+        .tl_exit         = tl_exit_dlf                
+};
+
+tplogger_t tl_rtcpd = {
+
+        .tl_init         = tl_init_dlf,
+        .tl_log          = tl_log_dlf,
+        .tl_llog         = tl_llog_dlf,
+        .tl_get_lvl      = tl_get_lvl_dlf,
+        .tl_set_lvl      = tl_set_lvl_dlf,
+        .tl_fork_prepare = tl_fork_prepare_dlf, 
+        .tl_fork_child   = tl_fork_child_dlf,
+        .tl_fork_parent  = tl_fork_parent_dlf, 
+        .tl_exit         = tl_exit_dlf                
+};
+
+/*
+** Generic tplogger.
+*/
+tplogger_t tl_gen;
+
 
 /**
  * Initialization of the DLF implementation.
@@ -54,12 +88,6 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
 
         int   err = 0, rv, i;
         char  error[CA_MAXLINELEN + 1];
-
-        {
-                FILE *fp = fopen( "/tmp/init.tst", "w+" );
-                fprintf( fp, "in init" );
-                fclose( fp );                
-        }
 
         if( NULL == self ) {
 
@@ -790,12 +818,6 @@ int DLL_DECL tl_fork_parent_stdio( tplogger_t *self ) {}
 int tl_init_handle( tplogger_t *self, const char *type ) {
 
         int err = 0;
-
-        if( NULL == self ) {
-
-                err = -1;
-                goto err_out;
-        }
 
         /* which implementation?       */
         if( 0 == strcmp( type, "dlf" ) ) {
