@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_api.h,v 1.1 2007/01/18 09:07:16 wiebalck Exp $
+** $Id: tplogger_api.h,v 1.2 2007/01/19 11:47:08 wiebalck Exp $
 */
 
 
@@ -132,6 +132,11 @@ extern tplogger_message_t tplogger_messages_tpdaemon[];
 
 extern tplogger_message_t tplogger_messages_rtcpd[];
 
+extern tplogger_t tl_tpdaemon;
+
+extern tplogger_t tl_rtcpd;
+
+extern tplogger_t tl_gen;
 
 /*
 ** Map the levels to the DLF levels
@@ -201,6 +206,5 @@ EXTERN_C int DLL_DECL tl_fork_parent_stdio  _PROTO(( tplogger_t *self ));
 ** Currently supported types: "dlf", "stdio"
 */
 EXTERN_C int DLL_DECL tl_init_handle _PROTO(( tplogger_t *self, const char *type ));
-
 
 #endif  /* TPLOGGER_H */
