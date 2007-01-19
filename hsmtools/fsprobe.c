@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/18 17:25:36 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/19 07:52:54 $ $Author: obarring $
  *
  * 
  *
@@ -115,11 +115,12 @@ void prepareTimeStamp(void)
 
 void myLog(char *str) 
 {
-	int fd;
+	int fd, dontClose = 0;
 	
 	if ( str == NULL ) return;
 	prepareTimeStamp();
 	if ( (runInForeground != 0) && (strcmp(logFileName,"stderr") == 0) ) {
+		dontClose = 1;
 		fd = 2;
 	} else {
 		fd = open(logFileName,O_WRONLY|O_CREAT|O_APPEND,0644);
@@ -131,7 +132,7 @@ void myLog(char *str)
 	}
 	(void) write(fd, timebuf, timebuflen);
 	write(fd,str,strlen(str));
-	close(fd);
+	if ( dontClose == 0 ) close(fd);
 	return;
 }
 
@@ -199,7 +200,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.5 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.6 $ operational.\n");
 	myLog(logbuf);
 	return(0);
 }
