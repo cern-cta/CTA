@@ -65,8 +65,6 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () :
   m_listening(false) {
   srand(time(NULL));
   m_lowPort = m_highPort = -1;
-  createSocket();
-  setReusable();
 }
 
 
