@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/19 09:30:22 $ $Author: obarring $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/21 16:30:42 $ $Author: fuji $
  *
  * 
  *
@@ -207,7 +207,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.7 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.8 $ operational.\n");
 	myLog(logbuf);
 	return(0);
 }
@@ -429,7 +429,7 @@ int main(int argc, char *argv[])
 	while ( (nbLoops == 0) || (cycle<nbLoops) ) {
 		cycle++;
 		if ( ! useRndBuf ) {
-			if ( cycle && 1UL ) {
+			if ( cycle & 1UL ) {
 				memset((void *)buffer, 0x55, (size_t)bufferSize);
 			} else {
 				memset((void *)buffer, 0xAA, (size_t)bufferSize);
