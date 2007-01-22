@@ -4,7 +4,7 @@
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
  *
- * Copyright (C) 2003  CERN
+ * Copyright (C) 2007  CERN
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/01/22 17:11:03 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.11 $ $Release$ $Date: 2007/01/22 20:42:12 $ $Author: fuji $
  *
  * 
  *
@@ -215,7 +215,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.10 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.11 $ operational.\n");
 	myLog(logbuf);
 	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
 		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
@@ -334,6 +334,44 @@ int checkFile()
 				*(buffer+i), 
 				*(readBuffer+i) );
 			myLog(logbuf);
+		}
+		if ( diffCount ) {
+			sprintf(logbuf, "total %u differing bytes found\n", diffCount);
+			myLog(logbuf);
+			diffFound++;
+		}
+
+		rc = memcmp(buffer,readBuffer,bytesToRead);
+		if ( rc != 0 ) {
+			sprintf(logbuf,"Corruption found in %s after %llu bytes\n",
+				      pathName,bytesRead);
+			myLog(logbuf);
+		}
+
+		/* NOTE(fuji): Only do accounting here so that offsets are
+		 * correct in any messages logged in above code. */
+		bytesRead += bytesToRead;
+
+		if ( rc == 0 && diffCount != 0 ) {
+			sprintf(logbuf, "OUCH, memcmp() missed some differences!\n");
+			myLog(logbuf);
+		}
+		if ( rc != 0 && diffCount == 0 ) {
+			sprintf(logbuf, "OUCH, only memcmp() thinks there are differences!\n");
+			myLog(logbuf);
+		}
+
+		if ( rc != 0 || diffCount != 0 ) {
+			if ( useSyslog != 0 ) {
+				syslog(LOG_ALERT,"fsprobe %s",logbuf);
+			}
+			if ( mailTo != NULL ) {
+				sprintf(logbuf,
+					"tail /tmp/fsprobe.log |"
+					"mail -s corruption %s",
+					mailTo);
+				system(logbuf);
+			}
 			if ( dumpBuffers ) {
 				dumpCount++;
 				sprintf(dumpPathName, "%s.%u.%u.ob", pathName, cycle, dumpCount);
@@ -357,39 +395,17 @@ int checkFile()
 					myLog(logbuf);
 				}
 			}
-		}
-		if ( diffCount ) {
-			sprintf(logbuf, "total %u differing bytes found\n", diffCount);
-			myLog(logbuf);
-			diffFound++;
-		}
-
-		rc = memcmp(buffer,readBuffer,bytesToRead);
-		if ( rc != 0 ) {
-			sprintf(logbuf,"Corruption found in %s after %llu bytes\n",
-				      pathName,bytesRead);
-			myLog(logbuf);
-			if ( useSyslog != 0 ) {
-				syslog(LOG_ALERT,"fsprobe %s",logbuf);
-			}
-			if ( mailTo != NULL ) {
-				sprintf(logbuf,
-					"tail /tmp/fsprobe.log |"
-					"mail -s corruption %s",
-					mailTo);
-				system(logbuf);
-			}
 			if ( !continueOnDiff ) break;
 		}
 
-		/* NOTE(fuji): Only do accounting here so that offsets are
-		 * correct in any messages logged in above code. */
-		bytesRead += bytesToRead;
 	}
 	rc = close(fd);
 	if ( rc == -1 ) {
 		sprintf(logbuf,"close(%s): %s\n",pathName,strerror(errno));
 		myLog(logbuf);
+		if ( diffFound ) {
+			return (-2);
+		}
 		return(-1);
 	}
 	if ( diffFound ) {
