@@ -26,7 +26,7 @@ BEGIN
     done := done + 500;
     UPDATE CleanupLogTable
        SET message = 'Cleanup old stage rm that were never deleted' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 0;
     COMMIT;
     DBMS_LOCK.sleep(seconds => 1.0);
@@ -61,7 +61,7 @@ BEGIN
     done := done + nbRowsUpdated;
     UPDATE CleanupLogTable
        SET message = 'Cleaning DiskCopies stuck in BEINGDELETED status' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 1;
     COMMIT;
     IF nbRowsUpdated = 0 THEN
@@ -179,7 +179,7 @@ BEGIN
     done := done + 1000;
     UPDATE CleanupLogTable
        SET message = 'Cleaning the GC candidates that have no filesystem' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 2;
     COMMIT;
     DBMS_LOCK.sleep(seconds => 1.0);
@@ -230,7 +230,7 @@ BEGIN
         done := done + i - 1;
         UPDATE CleanupLogTable
            SET message = 'Cleaning failed diskCopies' ||
-               TO_CHAR(100*done/(totalCount+1), '99.99') || '% diskCopies cleaned, ' ||
+               TO_CHAR(100*done/(totalCount+1), '999.99') || '% diskCopies cleaned, ' ||
                TO_CHAR(dsCount) || ' of ' || TO_CHAR(totalDsCount) || ' diskServers scanned', logDate = getTime()
          WHERE fac = 3;
         COMMIT;
@@ -278,16 +278,18 @@ BEGIN
         DELETE FROM Id2Type WHERE id = s.id;
         DELETE FROM Segment WHERE id = s.id;
       END LOOP;
-      -- delete corresponding subrequests
-      FOR s in (SELECT id FROM subrequest WHERE castorfile = tc.c) LOOP
-        archiveSubReq(s.id);
-      END LOOP;
+      -- delete corresponding subrequests if castorfile is not 0
+      IF (tc.c != 0) THEN
+        FOR s in (SELECT id FROM subrequest WHERE castorfile = tc.c) LOOP
+          archiveSubReq(s.id);
+        END LOOP;
+      END IF;
     END LOOP;
     -- commit between each bunch of 10
     done := done + 10;
     UPDATE CleanupLogTable
        SET message = 'Cleaning tapeCopies with no DiskCopies' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 4;
     COMMIT;
     DBMS_LOCK.sleep(seconds => .5);
@@ -331,7 +333,7 @@ BEGIN
     done := done + 1;
     UPDATE CleanupLogTable
        SET message = 'Cleanup FilesDeleted requests' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 5;
     COMMIT;
   END LOOP;
@@ -372,7 +374,7 @@ BEGIN
     done := done + 1;
     UPDATE CleanupLogTable
        SET message = 'Cleanup FilesDeletionFailed requests' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 6;
     COMMIT;
   END LOOP;
@@ -406,7 +408,7 @@ BEGIN
     done := done + 100;
     UPDATE CleanupLogTable
        SET message = 'Cleaning old subrequests stuck in status READY' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 7;
     COMMIT;
     IF nothingLeft = 1 THEN
@@ -447,7 +449,7 @@ BEGIN
    done := done + 100;
    UPDATE CleanupLogTable
       SET message = 'Cleaning SubRequests stuck in WAITSUBREQ' ||
-          TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+          TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
     WHERE fac = 8;
    COMMIT;
    IF nothingLeft = 1 THEN
@@ -493,7 +495,7 @@ BEGIN
     done := done + 100;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stageGetRequest having no subrequest' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 9;
     COMMIT;
     IF nothingLeft = 1 THEN
@@ -539,7 +541,7 @@ BEGIN
     done := done + 100;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stagePrepareToGetRequest having no subrequest' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 10;
     COMMIT;
     IF nothingLeft = 1 THEN
@@ -585,7 +587,7 @@ BEGIN
     done := done + 100;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stagePutRequest having no subrequest' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 11;
     COMMIT;
     IF nothingLeft = 1 THEN
@@ -631,7 +633,7 @@ BEGIN
     done := done + 100;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stagePutDoneRequest having no subrequest' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 12;
     COMMIT;
     IF nothingLeft = 1 THEN
@@ -668,7 +670,7 @@ BEGIN
     done := done + 100;
     UPDATE CleanupLogTable
        SET message = 'Cleaning old subrequests' ||
-           TO_CHAR(100*done/(totalCount+1), '99.99') || '% done', logDate = getTime()
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
      WHERE fac = 13;
     COMMIT;
     DBMS_LOCK.sleep(seconds => 1.0);
