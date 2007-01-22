@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.9 $ $Release$ $Date: 2007/01/22 15:51:32 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/01/22 17:11:03 $ $Author: fuji $
  *
  * 
  *
@@ -215,9 +215,9 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.9 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.10 $ operational.\n");
 	myLog(logbuf);
-	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u",
+	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
 		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
 	myLog(logbuf);
 	return(0);
