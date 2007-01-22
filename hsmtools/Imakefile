@@ -214,6 +214,10 @@ EPERL = $(EXPORTPERL)/castor_tools.pm
 
 all: $(PROGS_TO_KEEP) $(PROGS_TO_CLEAN)
 
+fsprobe.Osuf: fsprobe.c
+	$(CC) -Wall -O0 -c fsprobe.c
+
+
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(tapetohsm,tapetohsm.Osuf,$(DEPLIB),$(LIBS))
 NormalProgramTarget(enterFileClass,enterFileClass.Osuf,$(DEPLIB2),$(LIBS2))
