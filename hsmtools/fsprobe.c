@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/21 16:30:42 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.9 $ $Release$ $Date: 2007/01/22 15:51:32 $ $Author: fuji $
  *
  * 
  *
@@ -41,23 +41,25 @@
 extern char *optarg;
 extern int optind, opterr, optopt;
 
-char *buffer = NULL;
-char *readBuffer = NULL;
+unsigned char *buffer = NULL;
+unsigned char *readBuffer = NULL;
 char *directoryName = NULL;
 char *pathName = NULL;
 char *mailTo = NULL;
 char *logFileName = "/tmp/fsprobe.log";
-int bufferSize = 1024*1024;
-unsigned long long fileSize = (unsigned long long )
-		 (2*((unsigned long long )1024*1024*1024));
-unsigned long cycle;
+size_t cycle, dumpCount;
+size_t bufferSize = 1024*1024;
+off64_t fileSize = (2*((off64_t)1024*1024*1024));
 int sleepTime = 3600;
 int sleepBetweenBuffers = 1;
 int runInForeground = 0;
 int useRndBuf = 0;
 int useSyslog = 0;
-long nbLoops = 0;
+size_t nbLoops = 0;
 int help_flag = 0;
+int dumpBuffers = 0;
+int continueOnDiff = 0;
+int rndWait = 0;
 
 #define MAXTIMEBUFLEN 128
 char timebuf[MAXTIMEBUFLEN];
@@ -78,7 +80,10 @@ const enum RunOptions
 	Foreground,
 	RndBuf,
 	MailTo,
-	Syslog
+	Syslog,
+	DumpBuffers,
+	ContinueOnDiff,
+	RndWait
 } runOptions;
 
 const struct option longopts[] = 
@@ -95,6 +100,9 @@ const struct option longopts[] =
 	{"RndBuf",no_argument,&useRndBuf,RndBuf},
 	{"MailTo",required_argument,NULL,MailTo},
 	{"Syslog",no_argument,&useSyslog,Syslog},
+	{"DumpBuffers",no_argument,&dumpBuffers,DumpBuffers},
+	{"ContinueOnDiff",no_argument,&continueOnDiff,ContinueOnDiff},
+	{"RndWait",no_argument,&rndWait,RndWait},
 	{NULL, 0, NULL, 0}
 };
 
@@ -147,15 +155,15 @@ int initBuffers()
 {
 	int fdRandom = -1, i, randSize, rcRandom;
 	
-	buffer = (char *)malloc(bufferSize);
+	buffer = (unsigned char *)malloc(bufferSize);
 	if ( buffer == NULL ) {
-		fprintf(stderr,"Cannot initialize buffer: malloc(%d) -> %s\n",bufferSize,
+		fprintf(stderr,"Cannot initialize buffer: malloc(%u) -> %s\n",bufferSize,
 				    strerror(errno));
 		return(-1);
 	}
-	readBuffer = (char *)malloc(bufferSize);
+	readBuffer = (unsigned char *)malloc(bufferSize);
 	if ( readBuffer == NULL ) {
-		fprintf(stderr,"Cannot initialize buffer: malloc(%d) -> %s\n",bufferSize,
+		fprintf(stderr,"Cannot initialize buffer: malloc(%u) -> %s\n",bufferSize,
 				    strerror(errno));
 		return(-1);
 	}
@@ -207,15 +215,19 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.8 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.9 $ operational.\n");
+	myLog(logbuf);
+	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u",
+		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
 	myLog(logbuf);
 	return(0);
 }
 
 int writeFile() 
 {
-	int fd, rc, j, bytesToWrite;
-	unsigned long long bytesWritten;
+	int fd, rc;
+	size_t j, bytesToWrite;
+	off64_t bytesWritten;
 	char logbuf[2048];
 	
 	fd = open64(pathName,O_WRONLY|O_TRUNC|O_CREAT,0644);
@@ -225,25 +237,32 @@ int writeFile()
 		return(-1);
 	}
 
-	bytesWritten = 0;
+	bytesWritten = 0ULL;
 	while ( bytesWritten < fileSize ) {
 		sleep(sleepBetweenBuffers);
-		j = 0;
 		bytesToWrite = bufferSize;
-		if ( fileSize-bytesWritten < (unsigned long long)bufferSize ) {
-			bytesToWrite = (int)(fileSize-bytesWritten);
+		if ( fileSize < bytesWritten+bufferSize ) {
+			bytesToWrite = (size_t)(fileSize-bytesWritten);
+			sprintf(logbuf, "tail write: cycle %u bytes %u\n", cycle, bytesToWrite);
+			myLog(logbuf);
 		}
-		while ( j<bytesToWrite ) {
-			rc = write(fd,buffer + j,bytesToWrite - j);
+		j = 0;
+		while ( j < bytesToWrite ) {
+			rc = write(fd, buffer+j, bytesToWrite-j);
 			if ( rc == -1 ) {
 				sprintf(logbuf,"write(%s): %s\n",pathName,strerror(errno));
 				myLog(logbuf);
 				close(fd);
 				return(-1);
 			}
-			j+=rc;
+			if ( rc != bytesToWrite-j ) {
+				sprintf(logbuf, "partial write: cycle %u bufpos %u offset %llu req %u got %u\n",
+					cycle, j, bytesWritten+j, bytesToWrite-j, rc);
+				myLog(logbuf);
+			}
+			j += rc;
 		}
-		bytesWritten += (unsigned long long)bytesToWrite;
+		bytesWritten += bytesToWrite;
 	}
 	rc = close(fd);
 	if ( rc == -1 ) {
@@ -262,9 +281,12 @@ int writeFile()
  */
 int checkFile() 
 {
-	int fd, rc, i, j, bytesToRead, diffCount;
-	unsigned long long bytesRead;
+	int fd, rc, dumpfd;
+	size_t i, j, bytesToRead, diffCount;
+	off64_t bytesRead;
 	char logbuf[2048];
+	char dumpPathName[1024];
+	int diffFound = 0;
 	
 	fd = open64(pathName,O_RDONLY,0644);
 	if ( fd == -1 ) {
@@ -273,23 +295,30 @@ int checkFile()
 		return(-1);
 	}
 
-	bytesRead = 0;
+	bytesRead = 0ULL;
 	while ( bytesRead < fileSize ) {
 		sleep(sleepBetweenBuffers);
-		j = 0;
 		bytesToRead = bufferSize;
-		if ( fileSize-bytesRead < (unsigned long long)bufferSize ) {
-			bytesToRead = (int)(fileSize-bytesRead);
+		if ( fileSize < bytesRead+bufferSize ) {
+			bytesToRead = (size_t)(fileSize-bytesRead);
+			sprintf(logbuf, "tail read: cycle %u bytes %u\n", cycle, bytesToRead);
+			myLog(logbuf);
 		}
-		while ( j<bytesToRead ) {
-			rc = read(fd,readBuffer + j,bytesToRead - j);
+		j = 0;
+		while ( j < bytesToRead ) {
+			rc = read(fd, readBuffer+j, bytesToRead-j);
 			if ( rc == -1 ) {
 				sprintf(logbuf,"read(%s): %s\n",pathName,strerror(errno));
 				myLog(logbuf);
 				close(fd);
 				return(-1);
 			}
-			j+=rc;
+			if ( rc != bytesToRead-j ) {
+				sprintf(logbuf, "partial read: cycle %u bufpos %u offset %llu req %u got %u\n",
+					cycle, j, bytesRead+j, bytesToRead-j, rc);
+				myLog(logbuf);
+			}
+			j += rc;
 		}
 
 		diffCount = 0;
@@ -298,17 +327,41 @@ int checkFile()
 				continue;
 			}
 			diffCount++;
-			sprintf(logbuf, "diff: cycle %lu bufpos %d offset %llu expected 0x%02x got 0x%02x\n",
+			sprintf(logbuf, "diff: cycle %u bufpos %u offset %llu expected 0x%02x got 0x%02x\n",
 				cycle,
 				i,
 				bytesRead+i, 
-				(unsigned char)*(buffer+i), 
-				(unsigned char)*(readBuffer+i) );
+				*(buffer+i), 
+				*(readBuffer+i) );
 			myLog(logbuf);
+			if ( dumpBuffers ) {
+				dumpCount++;
+				sprintf(dumpPathName, "%s.%u.%u.ob", pathName, cycle, dumpCount);
+				dumpfd = open(dumpPathName, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+				if ( dumpfd ) {
+					write(dumpfd, buffer, bufferSize);
+					close(dumpfd);
+				} else {
+					sprintf(logbuf, "dump failed: %s, error %d (%s)\n",
+						dumpPathName, errno, strerror(errno));
+					myLog(logbuf);
+				}
+				sprintf(dumpPathName, "%s.%u.%u.rb", pathName, cycle, dumpCount);
+				dumpfd = open(dumpPathName, O_WRONLY|O_TRUNC|O_CREAT, 0644);
+				if ( dumpfd ) {
+					write(dumpfd, readBuffer, bufferSize);
+					close(dumpfd);
+				} else {
+					sprintf(logbuf, "dump failed: %s, error %d (%s)\n",
+						dumpPathName, errno, strerror(errno));
+					myLog(logbuf);
+				}
+			}
 		}
 		if ( diffCount ) {
-			sprintf(logbuf, "total %d differing bytes found\n", diffCount);
+			sprintf(logbuf, "total %u differing bytes found\n", diffCount);
 			myLog(logbuf);
+			diffFound++;
 		}
 
 		rc = memcmp(buffer,readBuffer,bytesToRead);
@@ -316,7 +369,6 @@ int checkFile()
 			sprintf(logbuf,"Corruption found in %s after %llu bytes\n",
 				      pathName,bytesRead);
 			myLog(logbuf);
-			close(fd);
 			if ( useSyslog != 0 ) {
 				syslog(LOG_ALERT,"fsprobe %s",logbuf);
 			}
@@ -327,18 +379,21 @@ int checkFile()
 					mailTo);
 				system(logbuf);
 			}
-			return(-2);
+			if ( !continueOnDiff ) break;
 		}
 
 		/* NOTE(fuji): Only do accounting here so that offsets are
 		 * correct in any messages logged in above code. */
-		bytesRead += (unsigned long long)bytesToRead;
+		bytesRead += bytesToRead;
 	}
 	rc = close(fd);
 	if ( rc == -1 ) {
 		sprintf(logbuf,"close(%s): %s\n",pathName,strerror(errno));
 		myLog(logbuf);
 		return(-1);
+	}
+	if ( diffFound ) {
+		return (-2);
 	}
 	return(0);
 }
@@ -368,7 +423,7 @@ int main(int argc, char *argv[])
 				fileSize = atoll(optarg);
 				break;
 			case NbLoops:
-				nbLoops = atol(optarg);
+				nbLoops = atoi(optarg);
 				break;
 			case SleepTime:
 				sleepTime = atoi(optarg);
@@ -425,6 +480,12 @@ int main(int argc, char *argv[])
 		if ( rc == -1 ) exit(1);
 	}
 
+	if ( rndWait ) {
+		srandom(1);
+		sleep(random() % 30);
+	}
+
+	dumpCount = 0;
 	cycle = 0;
 	while ( (nbLoops == 0) || (cycle<nbLoops) ) {
 		cycle++;
@@ -439,7 +500,7 @@ int main(int argc, char *argv[])
 		if ( rc == 0 ) {
 			rc = checkFile();
 			if ( rc == -2 ) {      /* diff found */
-				sprintf(corruptPathName,"%s.%lu",pathName,cycle);
+				sprintf(corruptPathName,"%s.%u",pathName,cycle);
 				(void)rename(pathName,corruptPathName);
 			}
 		}
