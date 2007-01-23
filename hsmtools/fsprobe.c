@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.11 $ $Release$ $Date: 2007/01/22 20:42:12 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.12 $ $Release$ $Date: 2007/01/23 10:28:34 $ $Author: fuji $
  *
  * 
  *
@@ -60,6 +60,7 @@ int help_flag = 0;
 int dumpBuffers = 0;
 int continueOnDiff = 0;
 int rndWait = 0;
+int useSync = 0;
 
 #define MAXTIMEBUFLEN 128
 char timebuf[MAXTIMEBUFLEN];
@@ -83,7 +84,8 @@ const enum RunOptions
 	Syslog,
 	DumpBuffers,
 	ContinueOnDiff,
-	RndWait
+	RndWait,
+	Sync
 } runOptions;
 
 const struct option longopts[] = 
@@ -103,6 +105,7 @@ const struct option longopts[] =
 	{"DumpBuffers",no_argument,&dumpBuffers,DumpBuffers},
 	{"ContinueOnDiff",no_argument,&continueOnDiff,ContinueOnDiff},
 	{"RndWait",no_argument,&rndWait,RndWait},
+	{"Sync",no_argument,&useSync,Sync},
 	{NULL, 0, NULL, 0}
 };
 
@@ -215,7 +218,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.11 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.12 $ operational.\n");
 	myLog(logbuf);
 	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
 		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
@@ -255,6 +258,15 @@ int writeFile()
 				close(fd);
 				return(-1);
 			}
+			if ( useSync ) {
+				rc = fdatasync(fd);
+				if ( rc == -1 ) {
+					sprintf(logbuf,"fdatasync(%s): %s\n",pathName,strerror(errno));
+					myLog(logbuf);
+					close(fd);
+					return(-1);
+				}
+			}
 			if ( rc != bytesToWrite-j ) {
 				sprintf(logbuf, "partial write: cycle %u bufpos %u offset %llu req %u got %u\n",
 					cycle, j, bytesWritten+j, bytesToWrite-j, rc);
@@ -263,6 +275,15 @@ int writeFile()
 			j += rc;
 		}
 		bytesWritten += bytesToWrite;
+	}
+	if ( useSync ) {
+		rc = fsync(fd);
+		if ( rc == -1 ) {
+			sprintf(logbuf,"fsync(%s): %s\n",pathName,strerror(errno));
+			myLog(logbuf);
+			close(fd);
+			return(-1);
+		}
 	}
 	rc = close(fd);
 	if ( rc == -1 ) {
