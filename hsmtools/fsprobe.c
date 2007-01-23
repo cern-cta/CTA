@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.12 $ $Release$ $Date: 2007/01/23 10:28:34 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/23 13:33:03 $ $Author: fuji $
  *
  * 
  *
@@ -61,6 +61,7 @@ int dumpBuffers = 0;
 int continueOnDiff = 0;
 int rndWait = 0;
 int useSync = 0;
+int forceCacheFlush = 0;
 
 #define MAXTIMEBUFLEN 128
 char timebuf[MAXTIMEBUFLEN];
@@ -79,13 +80,14 @@ const enum RunOptions
 	SleepTime,
 	IOSleepTime,
 	Foreground,
-	RndBuf,
-	MailTo,
-	Syslog,
-	DumpBuffers,
-	ContinueOnDiff,
-	RndWait,
-	Sync
+	RndBuf,				/* Use buffers w/random data	*/
+	MailTo,				/* Notify who?			*/
+	Syslog,				/* Mark corruption in syslog	*/
+	DumpBuffers,			/* Dump both buffers on diff	*/
+	ContinueOnDiff,			/* Continue checking until EOF	*/
+	RndWait,			/* Wait random 0-30s at startup	*/
+	Sync,				/* Use fdatasync()/fsync()	*/
+	ForceCacheFlush			/* malloc() how many megabytes	*/
 } runOptions;
 
 const struct option longopts[] = 
@@ -106,6 +108,7 @@ const struct option longopts[] =
 	{"ContinueOnDiff",no_argument,&continueOnDiff,ContinueOnDiff},
 	{"RndWait",no_argument,&rndWait,RndWait},
 	{"Sync",no_argument,&useSync,Sync},
+	{"ForceCacheFlush",required_argument,NULL,ForceCacheFlush},
 	{NULL, 0, NULL, 0}
 };
 
@@ -218,10 +221,13 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.12 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.13 $ operational.\n");
 	myLog(logbuf);
 	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
 		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
+	myLog(logbuf);
+	sprintf(logbuf, "rndbuf %u syslog %u dumpbuf %u cont %u rndwait %u sync %u flush %u\n",
+		useRndBuf, useSyslog, dumpBuffers, continueOnDiff, rndWait, useSync, forceCacheFlush);
 	myLog(logbuf);
 	return(0);
 }
@@ -242,7 +248,9 @@ int writeFile()
 
 	bytesWritten = 0ULL;
 	while ( bytesWritten < fileSize ) {
-		sleep(sleepBetweenBuffers);
+		if ( sleepBetweenBuffers ) {
+			sleep(sleepBetweenBuffers);
+		}
 		bytesToWrite = bufferSize;
 		if ( fileSize < bytesWritten+bufferSize ) {
 			bytesToWrite = (size_t)(fileSize-bytesWritten);
@@ -318,7 +326,9 @@ int checkFile()
 
 	bytesRead = 0ULL;
 	while ( bytesRead < fileSize ) {
-		sleep(sleepBetweenBuffers);
+		if ( sleepBetweenBuffers ) {
+			sleep(sleepBetweenBuffers);
+		}
 		bytesToRead = bufferSize;
 		if ( fileSize < bytesRead+bufferSize ) {
 			bytesToRead = (size_t)(fileSize-bytesRead);
@@ -441,6 +451,7 @@ int main(int argc, char *argv[])
 	int rc;
 	char corruptPathName[1024];
 	char *cmd, ch;
+	void *cacheflush;
 
 	optind = 1;
 	opterr = 1;
@@ -470,6 +481,9 @@ int main(int argc, char *argv[])
 				break;
 			case MailTo:
 				mailTo = strdup(optarg);
+				break;
+			case ForceCacheFlush:
+				forceCacheFlush = atoi(optarg);
 				break;
 			case 'h':
 				usage(cmd);
@@ -528,9 +542,9 @@ int main(int argc, char *argv[])
 		cycle++;
 		if ( ! useRndBuf ) {
 			if ( cycle & 1UL ) {
-				memset((void *)buffer, 0x55, (size_t)bufferSize);
+				memset(buffer, 0x55, (size_t)bufferSize);
 			} else {
-				memset((void *)buffer, 0xAA, (size_t)bufferSize);
+				memset(buffer, 0xAA, (size_t)bufferSize);
 			}
 		}
 		rc = writeFile();
@@ -542,7 +556,18 @@ int main(int argc, char *argv[])
 			}
 		}
 		(void)unlink(pathName);
-		sleep(sleepTime);
+		if ( forceCacheFlush ) {
+			cacheflush = malloc(forceCacheFlush*1024UL*1024);
+			if ( cacheflush ) {
+				memset(cacheflush, 0xCC, forceCacheFlush*1024UL*1024);
+				free(cacheflush);
+			} else {
+				perror("malloc");
+			}
+		}
+		if ( sleepTime ) {
+			sleep(sleepTime);
+		}
 	}
 	exit(0);
 }
