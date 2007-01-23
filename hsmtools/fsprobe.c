@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/23 13:33:03 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.14 $ $Release$ $Date: 2007/01/23 15:45:11 $ $Author: fuji $
  *
  * 
  *
@@ -62,6 +62,7 @@ int continueOnDiff = 0;
 int rndWait = 0;
 int useSync = 0;
 int forceCacheFlush = 0;
+int useMultiPattern = 0;
 
 #define MAXTIMEBUFLEN 128
 char timebuf[MAXTIMEBUFLEN];
@@ -87,7 +88,8 @@ const enum RunOptions
 	ContinueOnDiff,			/* Continue checking until EOF	*/
 	RndWait,			/* Wait random 0-30s at startup	*/
 	Sync,				/* Use fdatasync()/fsync()	*/
-	ForceCacheFlush			/* malloc() how many megabytes	*/
+	ForceCacheFlush,		/* malloc() how many megabytes	*/
+	MultiPattern			/* use more than 2 bit patterns */
 } runOptions;
 
 const struct option longopts[] = 
@@ -109,6 +111,7 @@ const struct option longopts[] =
 	{"RndWait",no_argument,&rndWait,RndWait},
 	{"Sync",no_argument,&useSync,Sync},
 	{"ForceCacheFlush",required_argument,NULL,ForceCacheFlush},
+	{"MultiPattern",no_argument,&useMultiPattern,MultiPattern},
 	{NULL, 0, NULL, 0}
 };
 
@@ -221,13 +224,13 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.13 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.14 $ operational.\n");
 	myLog(logbuf);
 	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
 		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
 	myLog(logbuf);
-	sprintf(logbuf, "rndbuf %u syslog %u dumpbuf %u cont %u rndwait %u sync %u flush %u\n",
-		useRndBuf, useSyslog, dumpBuffers, continueOnDiff, rndWait, useSync, forceCacheFlush);
+	sprintf(logbuf, "rndbuf %u syslog %u dumpbuf %u cont %u rndwait %u sync %u flush %u multi %u\n",
+		useRndBuf, useSyslog, dumpBuffers, continueOnDiff, rndWait, useSync, forceCacheFlush, useMultiPattern);
 	myLog(logbuf);
 	return(0);
 }
@@ -445,6 +448,24 @@ int checkFile()
 	return(0);
 }
 
+#define MAXPATTERN 6
+
+void
+prepareBitPatternBuffer(void)
+{
+	unsigned char patterns[MAXPATTERN] = { 0x55, 0xAA, 0x33, 0xCC, 0x0F, 0xF0 };
+
+	if ( useMultiPattern ) {
+		memset(buffer, patterns[cycle % MAXPATTERN], bufferSize);
+	} else {
+		if ( cycle & 1UL ) {
+			memset(buffer, 0xAA, bufferSize);
+		} else {
+			memset(buffer, 0x55, bufferSize);
+		}
+	}
+}
+
 int main(int argc, char *argv[]) 
 {
 	struct stat64 st;
@@ -539,13 +560,8 @@ int main(int argc, char *argv[])
 	dumpCount = 0;
 	cycle = 0;
 	while ( (nbLoops == 0) || (cycle<nbLoops) ) {
-		cycle++;
 		if ( ! useRndBuf ) {
-			if ( cycle & 1UL ) {
-				memset(buffer, 0x55, (size_t)bufferSize);
-			} else {
-				memset(buffer, 0xAA, (size_t)bufferSize);
-			}
+			prepareBitPatternBuffer();
 		}
 		rc = writeFile();
 		if ( rc == 0 ) {
@@ -559,7 +575,7 @@ int main(int argc, char *argv[])
 		if ( forceCacheFlush ) {
 			cacheflush = malloc(forceCacheFlush*1024UL*1024);
 			if ( cacheflush ) {
-				memset(cacheflush, 0xCC, forceCacheFlush*1024UL*1024);
+				memset(cacheflush, 0xFF, forceCacheFlush*1024UL*1024);
 				free(cacheflush);
 			} else {
 				perror("malloc");
@@ -568,6 +584,7 @@ int main(int argc, char *argv[])
 		if ( sleepTime ) {
 			sleep(sleepTime);
 		}
+		cycle++;
 	}
 	exit(0);
 }
