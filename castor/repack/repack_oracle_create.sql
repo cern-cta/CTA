@@ -7,9 +7,8 @@ CREATE TABLE RepackSegment (fileid INTEGER, compression NUMBER, segsize INTEGER,
 /* SQL statements for type RepackRequest */
 CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), creationTime NUMBER, serviceclass VARCHAR2(2048), pid INTEGER, command NUMBER, pool VARCHAR2(2048), stager VARCHAR2(2048), groupid NUMBER, userid NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
-
 /* SQL statements for Castor_Version */
-CREATE TABLE castor_version (version VARCHAR2(2048));
+CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -17,3 +16,11 @@ CREATE SEQUENCE ids_seq CACHE 300;
 /* SQL statements for object types */
 CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
 CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
+
+/* get current time as a time_t. Not that easy in ORACLE */
+CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
+  ret NUMBER;
+BEGIN
+  SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60) INTO ret FROM DUAL;
+  RETURN ret;
+END;
