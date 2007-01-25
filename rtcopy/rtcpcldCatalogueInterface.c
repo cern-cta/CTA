@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.156 $ $Release$ $Date: 2006/11/06 10:36:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.157 $ $Release$ $Date: 2007/01/25 09:15:52 $ $Author: obarring $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.156 $ $Release$ $Date: 2006/11/06 10:36:38 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.157 $ $Release$ $Date: 2007/01/25 09:15:52 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -607,6 +607,8 @@ int rtcpcld_getTapesToDo(
       Cstager_Tape_vid(tpArray[i],(CONST char **)&vid);
       if ( vid == NULL ) continue;
       Cstager_Tape_tpmode(tpArray[i],&mode);
+      /* We only allow for read requests here. The streams are handled later */
+      if ( mode != WRITE_DISABLE ) continue;
       Cstager_Tape_side(tpArray[i],&side);
       rc = rtcp_NewTapeList(&tape,&tl,mode);
       if ( rc == -1 ) break;
