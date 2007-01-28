@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.14 $ $Release$ $Date: 2007/01/23 15:45:11 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.15 $ $Release$ $Date: 2007/01/28 14:03:20 $ $Author: timbell $
  *
  * 
  *
@@ -224,7 +224,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.14 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.15 $ operational.\n");
 	myLog(logbuf);
 	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
 		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
@@ -401,8 +401,9 @@ int checkFile()
 			}
 			if ( mailTo != NULL ) {
 				sprintf(logbuf,
-					"tail /tmp/fsprobe.log |"
+					"tail %s |"
 					"mail -s corruption %s",
+				        logFileName,
 					mailTo);
 				system(logbuf);
 			}
