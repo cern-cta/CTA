@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.366 $ $Release$ $Date: 2007/01/19 16:00:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.367 $ $Release$ $Date: 2007/01/29 17:24:57 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.366 $ $Date: 2007/01/19 16:00:35 $');
+INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.367 $ $Date: 2007/01/29 17:24:57 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1079,6 +1079,19 @@ BEGIN
                  nsHost), CONCAT('.', TO_CHAR(dcid)));
 END;
 
+/* TO BE REMOVED. Temporary hack to avoid losing file modifications in case of update */
+CREATE OR REPLACE PROCEDURE fixUpdateRequestProblem(dcid IN INTEGER,
+                                                    cfid IN INTEGER) AS
+BEGIN
+  -- invalidate all diskcopies
+  UPDATE DiskCopy SET status = 7 -- INVALID 
+   WHERE castorFile  = cfId
+     AND status IN (0, 10);
+  -- except the one we are dealing with that goes to STAGEOUT
+  UPDATE DiskCopy SET status = 6 -- STAGEOUT
+   WHERE id = dcid;
+END;
+
 /* PL/SQL method implementing getUpdateStart */
 CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
@@ -1105,8 +1118,8 @@ BEGIN
     AND SubRequest.id = srId FOR UPDATE;
  -- Try to find local DiskCopy
  dci := 0;
- SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
-  INTO dci, rpath, rstatus
+ SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskCopy.castorfile
+  INTO dci, rpath, rstatus, cfId
   FROM DiskCopy, SubRequest
   WHERE SubRequest.id = srId
     AND SubRequest.castorfile = DiskCopy.castorfile
@@ -1118,6 +1131,14 @@ BEGIN
    dci := 0;
    rpath := '';
  END IF;
+ -- No wait, so we are settled and we'll use the local copy. However,
+ -- in case of an update, we should update it to STAGEOUT and make the
+ -- other copies INVALID.
+ -- We should NOT do so, and we should wait for the first byte to be
+ -- written in the file to do so, but for now, we do it now...
+ -- Note that we do the same in Disk2DiskCopyDone for the case of
+ -- replication due to the update
+ fixUpdateRequestProblem(dci, cfId);
 EXCEPTION WHEN NO_DATA_FOUND THEN
  -- No disk copy found on selected FileSystem, look in others
  BEGIN
@@ -1303,15 +1324,23 @@ END;
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
 (dcId IN INTEGER, dcStatus IN INTEGER) AS
   srid INTEGER;
+  cfId INTEGER;
 BEGIN
   -- update DiskCopy
-  UPDATE DiskCopy set status = dcStatus WHERE id = dcId;
+  UPDATE DiskCopy set status = dcStatus WHERE id = dcId RETURNING CastorFile INTO cfId;
   -- update SubRequest
   UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId
   RETURNING id INTO srid;
+  -- In case of an update, we should update the new copy to STAGEOUT,
+  -- independently of the original status make the other copies INVALID.
+  -- We should NOT do so, and we should wait for the first byte to be
+  -- written in the file to do so, but for now, we do it now...
+  -- Note that we do the same in GetUpdateStart for the case with no
+  -- replication due to the update request.
+  fixUpdateRequestProblem(dcId, cfId);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
    WHERE parent = srid; -- SUBREQUEST_RESTART
