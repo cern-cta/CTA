@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.15 $ $Release$ $Date: 2007/01/28 14:03:20 $ $Author: timbell $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.16 $ $Release$ $Date: 2007/01/30 10:53:47 $ $Author: fuji $
  *
  * 
  *
- * @author Olof Barring
+ * @author Olof Barring, Peter Kelemen
  *****************************************************************************/
 
 #define _GNU_SOURCE
@@ -50,6 +50,8 @@ char *logFileName = "/tmp/fsprobe.log";
 size_t cycle, dumpCount;
 size_t bufferSize = 1024*1024;
 off64_t fileSize = (2*((off64_t)1024*1024*1024));
+off64_t globalBufCount = 0;
+off64_t bufCountStartPerFile;
 int sleepTime = 3600;
 int sleepBetweenBuffers = 1;
 int runInForeground = 0;
@@ -63,12 +65,16 @@ int rndWait = 0;
 int useSync = 0;
 int forceCacheFlush = 0;
 int useMultiPattern = 0;
+int useBufCount = 0;
+int useDirectIO = 0;
 
 #define MAXTIMEBUFLEN 128
 char timebuf[MAXTIMEBUFLEN];
 size_t timebuflen;
 time_t now;
 struct tm timestamp;
+
+#define BUFCNTLEN	(sizeof(globalBufCount))
 
 const enum RunOptions
 {
@@ -89,7 +95,9 @@ const enum RunOptions
 	RndWait,			/* Wait random 0-30s at startup	*/
 	Sync,				/* Use fdatasync()/fsync()	*/
 	ForceCacheFlush,		/* malloc() how many megabytes	*/
-	MultiPattern			/* use more than 2 bit patterns */
+	MultiPattern,			/* use more than 2 bit patterns */
+	BufCount,			/* use buffer counters		*/
+	DirectIO			/* O_DIRECT			*/
 } runOptions;
 
 const struct option longopts[] = 
@@ -112,6 +120,8 @@ const struct option longopts[] =
 	{"Sync",no_argument,&useSync,Sync},
 	{"ForceCacheFlush",required_argument,NULL,ForceCacheFlush},
 	{"MultiPattern",no_argument,&useMultiPattern,MultiPattern},
+	{"BufCount",no_argument,&useBufCount,BufCount},
+	{"DirectIO",no_argument,&useDirectIO,DirectIO},
 	{NULL, 0, NULL, 0}
 };
 
@@ -164,17 +174,31 @@ int initBuffers()
 {
 	int fdRandom = -1, i, randSize, rcRandom;
 	
-	buffer = (unsigned char *)malloc(bufferSize);
-	if ( buffer == NULL ) {
-		fprintf(stderr,"Cannot initialize buffer: malloc(%u) -> %s\n",bufferSize,
-				    strerror(errno));
-		return(-1);
-	}
-	readBuffer = (unsigned char *)malloc(bufferSize);
-	if ( readBuffer == NULL ) {
-		fprintf(stderr,"Cannot initialize buffer: malloc(%u) -> %s\n",bufferSize,
-				    strerror(errno));
-		return(-1);
+	if ( useDirectIO ) {
+		i = posix_memalign((void *)&buffer, getpagesize(), bufferSize);
+		if ( i ) {
+			fprintf(stderr, "posix_memalign(%u): error %d\n", bufferSize, i);
+			return (-1);
+		}
+		
+		i = posix_memalign((void *)&readBuffer, getpagesize(), bufferSize);
+		if ( i ) {
+			fprintf(stderr, "posix_memalign(%u): error %d\n", bufferSize, i);
+			return (-1);
+		}
+	} else {
+		buffer = (unsigned char *)malloc(bufferSize);
+		if ( buffer == NULL ) {
+			fprintf(stderr,"Cannot initialize buffer: malloc(%u) -> %s\n",bufferSize,
+					    strerror(errno));
+			return(-1);
+		}
+		readBuffer = (unsigned char *)malloc(bufferSize);
+		if ( readBuffer == NULL ) {
+			fprintf(stderr,"Cannot initialize buffer: malloc(%u) -> %s\n",bufferSize,
+					    strerror(errno));
+			return(-1);
+		}
 	}
 
 	if ( useRndBuf ) {
@@ -224,30 +248,44 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.15 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.16 $ operational.\n");
 	myLog(logbuf);
+
 	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
 		fileSize, bufferSize, sleepTime, sleepBetweenBuffers, nbLoops);
 	myLog(logbuf);
-	sprintf(logbuf, "rndbuf %u syslog %u dumpbuf %u cont %u rndwait %u sync %u flush %u multi %u\n",
-		useRndBuf, useSyslog, dumpBuffers, continueOnDiff, rndWait, useSync, forceCacheFlush, useMultiPattern);
+
+	sprintf(logbuf, "rndbuf %u syslog %u dumpbuf %u cont %u rndwait %u sync %u flush %u\n",
+		useRndBuf, useSyslog, dumpBuffers, continueOnDiff, rndWait, useSync, forceCacheFlush);
+	myLog(logbuf);
+
+	sprintf(logbuf, "multi %u bufcnt %u directio %u\n",
+		useMultiPattern, useBufCount, useDirectIO);
 	myLog(logbuf);
 	return(0);
 }
 
 int writeFile() 
 {
-	int fd, rc;
+	int fd, rc, flags;
 	size_t j, bytesToWrite;
 	off64_t bytesWritten;
+	off64_t *bc;
 	char logbuf[2048];
 	
-	fd = open64(pathName,O_WRONLY|O_TRUNC|O_CREAT,0644);
+	flags = O_WRONLY|O_TRUNC|O_CREAT;
+	if ( useDirectIO ) {
+		flags |= O_DIRECT;
+	}
+	fd = open64(pathName, flags, 0644);
 	if ( fd == -1 ) {
-		sprintf(logbuf,"open(%s) for write: %s\n",pathName,strerror(errno));
+		sprintf(logbuf,"open(%s, %d) for write: %s\n",
+			pathName, flags, strerror(errno));
 		myLog(logbuf);
 		return(-1);
 	}
+
+	bc = (off64_t *)buffer;
 
 	bytesWritten = 0ULL;
 	while ( bytesWritten < fileSize ) {
@@ -257,10 +295,12 @@ int writeFile()
 		bytesToWrite = bufferSize;
 		if ( fileSize < bytesWritten+bufferSize ) {
 			bytesToWrite = (size_t)(fileSize-bytesWritten);
-			sprintf(logbuf, "tail write: cycle %u bytes %u\n", cycle, bytesToWrite);
+			sprintf(logbuf, "tail write: cycle %u bufcnt %llu bytes %u\n",
+				cycle, globalBufCount, bytesToWrite);
 			myLog(logbuf);
 		}
 		j = 0;
+		if ( useBufCount ) *bc = globalBufCount;
 		while ( j < bytesToWrite ) {
 			rc = write(fd, buffer+j, bytesToWrite-j);
 			if ( rc == -1 ) {
@@ -269,6 +309,12 @@ int writeFile()
 				close(fd);
 				return(-1);
 			}
+			if ( rc != bytesToWrite-j ) {
+				sprintf(logbuf, "partial write: cycle %u bufcnt %llu bufpos %u offset %llu req %u got %u\n",
+					cycle, globalBufCount, j, bytesWritten+j, bytesToWrite-j, rc);
+				myLog(logbuf);
+			}
+			j += rc;
 			if ( useSync ) {
 				rc = fdatasync(fd);
 				if ( rc == -1 ) {
@@ -278,14 +324,9 @@ int writeFile()
 					return(-1);
 				}
 			}
-			if ( rc != bytesToWrite-j ) {
-				sprintf(logbuf, "partial write: cycle %u bufpos %u offset %llu req %u got %u\n",
-					cycle, j, bytesWritten+j, bytesToWrite-j, rc);
-				myLog(logbuf);
-			}
-			j += rc;
 		}
 		bytesWritten += bytesToWrite;
+		globalBufCount++;
 	}
 	if ( useSync ) {
 		rc = fsync(fd);
@@ -313,29 +354,39 @@ int writeFile()
  */
 int checkFile() 
 {
-	int fd, rc, dumpfd;
+	int fd, rc, flags, dumpfd;
 	size_t i, j, bytesToRead, diffCount;
-	off64_t bytesRead;
+	off64_t bytesRead, bufCount;
+	off64_t *bc;
 	char logbuf[2048];
 	char dumpPathName[1024];
 	int diffFound = 0;
+	int bufStart;
 	
-	fd = open64(pathName,O_RDONLY,0644);
+	flags = O_RDONLY;
+	if ( useDirectIO ) {
+		flags |= O_DIRECT;
+	}
+	fd = open64(pathName, flags, 0644);
 	if ( fd == -1 ) {
-		sprintf(logbuf,"open(%s) for read: %s\n",pathName,strerror(errno));
+		sprintf(logbuf,"open(%s, %d) for read: %s\n",
+			pathName, flags, strerror(errno));
 		myLog(logbuf);
 		return(-1);
 	}
 
 	bytesRead = 0ULL;
+	bufCount = bufCountStartPerFile;
 	while ( bytesRead < fileSize ) {
 		if ( sleepBetweenBuffers ) {
 			sleep(sleepBetweenBuffers);
 		}
+		
 		bytesToRead = bufferSize;
 		if ( fileSize < bytesRead+bufferSize ) {
 			bytesToRead = (size_t)(fileSize-bytesRead);
-			sprintf(logbuf, "tail read: cycle %u bytes %u\n", cycle, bytesToRead);
+			sprintf(logbuf, "tail read: cycle %u bufcnt %llu bytes %u\n",
+				cycle, bufCount, bytesToRead);
 			myLog(logbuf);
 		}
 		j = 0;
@@ -348,22 +399,42 @@ int checkFile()
 				return(-1);
 			}
 			if ( rc != bytesToRead-j ) {
-				sprintf(logbuf, "partial read: cycle %u bufpos %u offset %llu req %u got %u\n",
-					cycle, j, bytesRead+j, bytesToRead-j, rc);
+				sprintf(logbuf, "partial read: cycle %u bufcnt %llu bufpos %u offset %llu req %u got %u\n",
+					cycle, bufCount, j, bytesRead+j, bytesToRead-j, rc);
 				myLog(logbuf);
 			}
 			j += rc;
 		}
 
 		diffCount = 0;
-		for (i = 0; i < bytesToRead; i++) {
+		if ( useBufCount ) {
+			bc = (off64_t *)readBuffer;
+			if ( bufCount != *bc ) {
+				sprintf(logbuf, "cntdiff: cycle %u expected %llu (0x%08llX) got %llu (0x%08llX)\n",
+					cycle, bufCount, bufCount, *bc, *bc);
+				myLog(logbuf);
+				for (i = 0; i < BUFCNTLEN; i++) {
+					if ( *(buffer+i) == *(readBuffer+i) ) {
+						continue;
+					}
+					diffCount++;
+				}
+			}
+			bufStart = BUFCNTLEN;	/* compare pattern bytes after the counter */
+		} else {
+			bufStart = 0;
+		}
+		for (i = bufStart; i < bytesToRead; i++) {
 			if ( *(buffer+i) == *(readBuffer+i) ) {
 				continue;
 			}
 			diffCount++;
-			sprintf(logbuf, "diff: cycle %u bufpos %u offset %llu expected 0x%02x got 0x%02x\n",
+			sprintf(logbuf, "diff: cycle %u bufcnt %llu bufpos %08X %u offset %08llX %llu expected 0x%02X got 0x%02X\n",
 				cycle,
+				bufCount,
 				i,
+				i,
+				bytesRead+i, 
 				bytesRead+i, 
 				*(buffer+i), 
 				*(readBuffer+i) );
@@ -375,7 +446,7 @@ int checkFile()
 			diffFound++;
 		}
 
-		rc = memcmp(buffer,readBuffer,bytesToRead);
+		rc = memcmp(buffer+bufStart, readBuffer+bufStart, bytesToRead-bufStart);
 		if ( rc != 0 ) {
 			sprintf(logbuf,"Corruption found in %s after %llu bytes\n",
 				      pathName,bytesRead);
@@ -385,6 +456,7 @@ int checkFile()
 		/* NOTE(fuji): Only do accounting here so that offsets are
 		 * correct in any messages logged in above code. */
 		bytesRead += bytesToRead;
+		bufCount++;
 
 		if ( rc == 0 && diffCount != 0 ) {
 			sprintf(logbuf, "OUCH, memcmp() missed some differences!\n");
@@ -403,8 +475,7 @@ int checkFile()
 				sprintf(logbuf,
 					"tail %s |"
 					"mail -s corruption %s",
-				        logFileName,
-					mailTo);
+				        logFileName, mailTo);
 				system(logbuf);
 			}
 			if ( dumpBuffers ) {
@@ -519,6 +590,32 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if ( bufferSize < 2*BUFCNTLEN ) {
+		fprintf(stderr, "BufferSize must be larger than %u bytes!\n",
+			2*BUFCNTLEN);
+		exit(1);
+	}
+	if ( fileSize % bufferSize != 0 ) {
+		if ( fileSize % bufferSize < 2*BUFCNTLEN ) {
+			fprintf(stderr, "FileSize(%llu) %% BufferSize(%u) < 2*%u\n",
+				fileSize, bufferSize, BUFCNTLEN);
+			exit(1);
+		}
+	}
+
+	if ( useDirectIO ) {
+		if ( (bufferSize % getpagesize()) != 0 ) {
+			fprintf(stderr, "BufferSize(%u) must be multiple of page size (%u) for direct I/O!\n",
+				bufferSize, getpagesize() );
+			exit(1);
+		}
+		if ( (fileSize % getpagesize()) != 0 ) {
+			fprintf(stderr, "FileSize(%llu) must be multiple of page size (%u) for direct I/O!\n",
+				fileSize, getpagesize() );
+			exit(1);
+		}
+	}
+
 	/*
 	 * Check that we can use the provided path
 	 */
@@ -560,10 +657,11 @@ int main(int argc, char *argv[])
 
 	dumpCount = 0;
 	cycle = 0;
-	while ( (nbLoops == 0) || (cycle<nbLoops) ) {
+	while ( (nbLoops == 0) || (cycle < nbLoops) ) {
 		if ( ! useRndBuf ) {
 			prepareBitPatternBuffer();
 		}
+		bufCountStartPerFile = globalBufCount;
 		rc = writeFile();
 		if ( rc == 0 ) {
 			rc = checkFile();
@@ -590,4 +688,5 @@ int main(int argc, char *argv[])
 	exit(0);
 }
 
+/* vim: set number nowrap: */
 /* End of file. */
