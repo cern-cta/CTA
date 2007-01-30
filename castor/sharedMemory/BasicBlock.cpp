@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BasicBlock.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BasicBlock.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
  *
  * A basic shared memory block, with a key and a static
  * table of attached addresses
@@ -26,6 +26,7 @@
  *****************************************************************************/
 
 #include "castor/sharedMemory/BasicBlock.hpp"
+#include "castor/exception/Internal.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -33,7 +34,8 @@
 castor::sharedMemory::BasicBlock::BasicBlock
 (BlockKey& key, void* rawMem)
   throw (castor::exception::Exception) :
-  m_key(key), m_sharedMemoryBlock(rawMem) {}
+  m_key(key), m_sharedMemoryBlock(rawMem),
+m_mallocMethod(0), m_freeMethod(0) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -44,3 +46,30 @@ castor::sharedMemory::BasicBlock::~BasicBlock () throw () {}
 // attached blocks static member
 //------------------------------------------------------------------------------
 std::map<int, void*> castor::sharedMemory::BasicBlock::s_attachedBlocks;
+
+//------------------------------------------------------------------------------
+// malloc
+//------------------------------------------------------------------------------
+void* castor::sharedMemory::BasicBlock::malloc(size_t nbBytes)
+  throw (castor::exception::Exception) {
+  if (0 == m_mallocMethod) {
+    castor::exception::Internal e;
+    e.getMessage() << "Tried to malloc bytes in an abstract block";
+    throw e;
+  }
+  return m_mallocMethod(this, nbBytes);
+}
+
+//------------------------------------------------------------------------------
+// free
+//------------------------------------------------------------------------------
+void castor::sharedMemory::BasicBlock::free
+(void* pointer, size_t nbBytes)
+  throw (castor::exception::Exception) {
+  if (0 == m_freeMethod) {
+    castor::exception::Internal e;
+    e.getMessage() << "Tried to free bytes in an abstract block";
+    throw e;
+  }
+  return m_freeMethod(this, pointer, nbBytes);
+}

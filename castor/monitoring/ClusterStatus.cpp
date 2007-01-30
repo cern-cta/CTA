@@ -28,7 +28,7 @@
 #include "castor/sharedMemory/BlockDict.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/ClusterStatusBlockKey.hpp"
-#include "castor/monitoring/SharedMemoryAllocator.hpp"
+#include "castor/sharedMemory/Allocator.hpp"
 #include <iostream>
 #include <iomanip>
 
@@ -43,16 +43,18 @@ castor::monitoring::ClusterStatus::getClusterStatus() {
   if (0 == smStatus) {
     // get the ClusterStatus Object
     castor::sharedMemory::BlockKey key =
-      castor::monitoring::getClusterStatusBlockKey();
+      castor::monitoring::ClusterStatusBlockKey::getBlockKey();
     castor::sharedMemory::SingletonBlock
       <castor::monitoring::ClusterStatus,
-      castor::monitoring::SharedMemoryAllocator
-      <castor::sharedMemory::SharedNode> > *b =
+      castor::sharedMemory::Allocator
+      <castor::sharedMemory::SharedNode,
+      castor::monitoring::ClusterStatusBlockKey> > *b =
       castor::sharedMemory::BlockDict::getBlock
       <castor::sharedMemory::SingletonBlock
       <castor::monitoring::ClusterStatus,
-      castor::monitoring::SharedMemoryAllocator
-      <castor::sharedMemory::SharedNode> > >(key);
+      castor::sharedMemory::Allocator
+      <castor::sharedMemory::SharedNode,
+      castor::monitoring::ClusterStatusBlockKey> > >(key);
     smStatus = b->getSingleton();
     // Note that we don't delete the SingletonBlock.
     // This is because it will register itself in the
@@ -73,8 +75,10 @@ void castor::monitoring::ClusterStatus::print
   } else {
     std::string dsIndent = indentation + "   ";
     for (const_iterator it = begin(); it != end(); it++) {
-      out << dsIndent << std::setw(20)
-          << "name" << ": " << it->first << "\n";
+      out << dsIndent;
+      out << std::setw(20);
+      out << "name" << ": ";
+      out << it->first << "\n";
       it->second.print(out, dsIndent);
     }
   }

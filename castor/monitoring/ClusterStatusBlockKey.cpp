@@ -35,7 +35,7 @@
 // getBlockKey
 //------------------------------------------------------------------------------
 castor::sharedMemory::BlockKey
-castor::monitoring::getClusterStatusBlockKey() throw() {
+castor::monitoring::ClusterStatusBlockKey::getBlockKey() throw() {
   castor::sharedMemory::BlockKey b(SHARED_MEMORY_KEY,
                                    SHARED_MEMORY_SIZE,
                                    (void*)SHARED_MEMORY_ADDRESS);

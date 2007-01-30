@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -27,7 +27,7 @@
 
 #include <map>
 #include "castor/dlf/Dlf.hpp"
-#include "castor/sharedMemory/IBlock.hpp"
+#include "castor/sharedMemory/BasicBlock.hpp"
 #include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/sharedMemory/BlockDict.hpp"
 #include "castor/exception/Internal.hpp"
@@ -39,17 +39,17 @@
 //------------------------------------------------------------------------------
 // s_blockDict
 //------------------------------------------------------------------------------
-std::map<castor::sharedMemory::BlockKey, castor::sharedMemory::IBlock*>
+std::map<castor::sharedMemory::BlockKey, castor::sharedMemory::BasicBlock*>
 castor::sharedMemory::BlockDict::s_blockDict;
 
 //------------------------------------------------------------------------------
-// getIBlock
+// getBasicBlock
 //------------------------------------------------------------------------------
-castor::sharedMemory::IBlock*
-castor::sharedMemory::BlockDict::getIBlock
+castor::sharedMemory::BasicBlock*
+castor::sharedMemory::BlockDict::getBasicBlock
 (castor::sharedMemory::BlockKey &key) {
   // try to find the block in existing ones
-  std::map<BlockKey, IBlock*>::const_iterator it =
+  std::map<BlockKey, BasicBlock*>::const_iterator it =
     s_blockDict.find(key);
   if (it != s_blockDict.end()) {
     return it->second;
@@ -111,7 +111,7 @@ bool castor::sharedMemory::BlockDict::createBlock
 bool
 castor::sharedMemory::BlockDict::insertBlock
 (castor::sharedMemory::BlockKey &key,
- castor::sharedMemory::IBlock *block) {
+ castor::sharedMemory::BasicBlock *block) {
   return s_blockDict.insert
-    (std::pair<BlockKey, IBlock*>(key, block)).second;
+    (std::pair<BlockKey, BasicBlock*>(key, block)).second;
 }

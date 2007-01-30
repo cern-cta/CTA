@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/12/21 15:37:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the Shared memory part
  *
@@ -44,6 +44,8 @@ castor::sharedMemory::DLFInit::DLFInit () {
      { 3, "Unable to get pointer to shared memory. Giving up"},
      { 4, "Not enough space for header in shared memory. Giving up"},
      { 5, "Found block of bad type in BlockDict"},
+     { 6, "Exception caught in allocate"},
+     { 7, "Exception caught in deallocate"},
      { -1, ""} };
   castor::dlf::dlf_addMessages(DLF_BASE_SHAREDMEMORY, messages);
 }

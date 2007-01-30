@@ -33,11 +33,16 @@ namespace castor {
 
   namespace monitoring {
 
-    /**
-     * static key used for the shared memory block used by
-     * the ClusterStatus singleton
-     */
-    castor::sharedMemory::BlockKey getClusterStatusBlockKey() throw();
+    class ClusterStatusBlockKey {
+
+    public:
+      /**
+       * static key used for the shared memory block used by
+       * the ClusterStatus singleton
+       */
+      static castor::sharedMemory::BlockKey getBlockKey() throw();
+
+    };
 
   } // namespace monitoring
 

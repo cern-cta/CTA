@@ -28,19 +28,22 @@
 #define MONITORING_SHAREDMEMORYSTRING_HPP 1
 
 #include <string>
-#include "castor/monitoring/SharedMemoryAllocator.hpp"
+#include "castor/sharedMemory/Allocator.hpp"
+#include "castor/monitoring/ClusterStatusBlockKey.hpp"
 
 namespace castor {
 
   namespace monitoring {
 
     /**
-     * a string using the SharedMemoryAllocator allocator
+     * a string using the sharedMemory allocator
      */
     typedef std::basic_string
     <char,
      std::char_traits<char>,
-     castor::monitoring::SharedMemoryAllocator<char> >
+     castor::sharedMemory::Allocator
+     <char,
+      castor::monitoring::ClusterStatusBlockKey> >
     SharedMemoryString;
 
   } // end monitoring

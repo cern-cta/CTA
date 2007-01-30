@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -78,23 +78,25 @@ namespace castor {
       /**
        * Destructor
        */
-      virtual ~Block() throw ();
+      ~Block() throw ();
 
-    public:
+    private:
 
       /**
        * allocates a new chunk of memory
+       * @param obj the Block object to use (to be casted into Block*)
        * @param nbBytes the number of bytes needed
        */
-      virtual void* malloc(size_t nbBytes)
+      static void* internalMalloc(BasicBlock* obj, size_t nbBytes)
         throw (castor::exception::Exception);
 
       /**
        * deallocate some memory
+       * @param obj the Block object to use (to be casted into Block*)
        * @param pointer a pointer to the space to deallocate
        * @param nbBytes the number of bytes freed
        */
-      virtual void free(void* pointer, size_t nbBytes)
+      static void internalFree(BasicBlock* obj, void* pointer, size_t nbBytes)
         throw (castor::exception::Exception);
 
     private:
@@ -139,6 +141,9 @@ castor::sharedMemory::Block<A>::Block
 (BlockKey& key, void* rawMem)
   throw (castor::exception::Exception) :
   BasicBlock(key, rawMem), m_initializing(0) {
+  // First define free and malloc
+  setFreeMethod(Block::internalFree);
+  setMallocMethod(Block::internalMalloc);
   // Register block in the dictionnary before it's fully
   // created since the SharedMap creation will use it
   castor::sharedMemory::BlockDict::insertBlock(key, this);
@@ -167,26 +172,30 @@ template <typename A>
 castor::sharedMemory::Block<A>::~Block () throw () {}
 
 //------------------------------------------------------------------------------
-// malloc
+// internalMalloc
 //------------------------------------------------------------------------------
-template <typename A>
-void* castor::sharedMemory::Block<A>::malloc(size_t nbBytes)
+template <class A>
+void* castor::sharedMemory::Block<A>::internalMalloc
+(BasicBlock* rawObj, size_t nbBytes)
   throw (castor::exception::Exception) {
-  if (m_initializing) {
+  // This can only be done because no virtual inheritance
+  // is implied and because there is no virtual table
+  Block* obj = (Block*) rawObj;
+  if (obj->m_initializing) {
     // Very special case where we are "recursively" called
     // for the creation of the first node of the map Btree.
     // We return straight the space dedicated to it, which
     // is located at the very beginning of the block
-    void* res = (void*) (((char*)m_sharedMemoryBlock) +
-                         ((m_initializing-1) *
+    void* res = (void*) (((char*)obj->m_sharedMemoryBlock) +
+                         ((obj->m_initializing-1) *
 			  sizeof(std::_Rb_tree_node<SharedNode>)));
-    m_initializing++;
+    obj->m_initializing++;
     return res;
   }
   // loop over free regions to find a suitable one
   for (typename SharedMap::iterator it =
-         m_freeRegions->begin();
-       it != m_freeRegions->end();
+         obj->m_freeRegions->begin();
+       it != obj->m_freeRegions->end();
        it++) {
     // Take the first one large enough
     if (it->second >= nbBytes) {
@@ -195,7 +204,7 @@ void* castor::sharedMemory::Block<A>::malloc(size_t nbBytes)
       // remove from the free regions
       if (it->second == nbBytes) {
         // the perfect match
-        m_freeRegions->erase(it);
+        obj->m_freeRegions->erase(it);
       } else {
         // Let's reduce the region
         it->second -= nbBytes;
@@ -212,18 +221,21 @@ void* castor::sharedMemory::Block<A>::malloc(size_t nbBytes)
 }
 
 //------------------------------------------------------------------------------
-// free
+// internalFree
 //------------------------------------------------------------------------------
-template <typename A>
-void castor::sharedMemory::Block<A>::free
-(void* pointer, size_t nbBytes)
+template <class A>
+void castor::sharedMemory::Block<A>::internalFree
+(BasicBlock* rawObj, void* pointer, size_t nbBytes)
   throw (castor::exception::Exception) {
+  // This can only be done because no virtual inheritance
+  // is implied and because there is no virtual table
+  Block* obj = (Block*) rawObj;
   // Update free space
-  typename SharedMap::iterator it = m_freeRegions->begin();
+  typename SharedMap::iterator it = obj->m_freeRegions->begin();
   // First find the surrounding free regions (if any)
   std::pair<void*, size_t> previousRegion(0, 0);
-  it = m_freeRegions->begin();
-  while ((it != m_freeRegions->end()) && // end of iteration
+  it = obj->m_freeRegions->begin();
+  while ((it != obj->m_freeRegions->end()) && // end of iteration
          (it->first <= pointer)) { // found the right one
     previousRegion = *it;
     it++;
@@ -236,23 +248,23 @@ void castor::sharedMemory::Block<A>::free
                previousRegion.second)) == pointer) {
     pointer = previousRegion.first;
     size += previousRegion.second;
-    (*m_freeRegions)[pointer] = size;
+    (*obj->m_freeRegions)[pointer] = size;
     merged = true;
   }
   // Merge with the next one ?
-  if (it != m_freeRegions->end() &&
+  if (it != obj->m_freeRegions->end() &&
       it->first == (void*)((char*)pointer + size)) {
-    (*m_freeRegions)[pointer] = size + it->second;
-    m_freeRegions->erase(it);
+    (*obj->m_freeRegions)[pointer] = size + it->second;
+    obj->m_freeRegions->erase(it);
     merged = true;
   }
   if (!merged) {
     // No merge, create a new free Region
     // Note that this will trigger an allocation of memory
     // for the cell of the new free region within the
-    // m_freeRegions container. Thus malloc will be called
+    // obj->m_freeRegions container. Thus malloc will be called
     // at some point inside free !
-    (*m_freeRegions)[pointer] = size;
+    (*obj->m_freeRegions)[pointer] = size;
   }
 }
 

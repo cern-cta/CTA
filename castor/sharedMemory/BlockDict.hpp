@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/12/21 15:37:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -36,7 +36,7 @@ namespace castor {
   namespace sharedMemory {
 
     // Forward declaration
-    class IBlock;
+    class BasicBlock;
 
     /**
      * Just a container for the dictionnary,
@@ -49,11 +49,14 @@ namespace castor {
        * retrieves any a block by key. Does not create any new block
        * @return a pointer to the block or 0 if not found
        */
-      static IBlock* getIBlock(BlockKey &key);
+      static BasicBlock* getBasicBlock(BlockKey &key);
 
       /**
        * retrieves any kind of block by key
        * In case the block does not yet exist, creates it
+       * This method is to be used with care since it does
+       * a static cast of the block found for key into the
+       * desired type, without any further check
        */
       template<typename T>
       static T* getBlock(BlockKey &key);
@@ -61,7 +64,7 @@ namespace castor {
       /**
        * add a block
        */
-      static bool insertBlock(BlockKey &key, IBlock* block);
+      static bool insertBlock(BlockKey &key, BasicBlock* block);
 
     private:
 
@@ -78,7 +81,7 @@ namespace castor {
       /**
        * the dictionnary of existing blocks
        */
-      static std::map<BlockKey, IBlock*> s_blockDict;
+      static std::map<BlockKey, BasicBlock*> s_blockDict;
 
     }; // class BlockDict
 
@@ -100,19 +103,9 @@ namespace castor {
 template <typename T>
 T* castor::sharedMemory::BlockDict::getBlock
 (castor::sharedMemory::BlockKey &key) {
-  IBlock* block = getIBlock(key);
+  BasicBlock* block = getBasicBlock(key);
   if (0 != block) {
-    T* tblock = dynamic_cast<T*>(block);
-    if (0 == tblock) {
-      // "Found block of bad type in BlockDict"
-      castor::dlf::Param initParams[] =
-	{castor::dlf::Param("Key", key.key())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 1, initParams);
-      castor::exception::Internal e;
-      e.getMessage() << "Found block of bad type in BlockDict.";
-      throw e;
-    }
-    return tblock;
+    return (T*)block;
   }
   // here we will have to create a new block and register it
   // we need to assure that we create the shared memory only once

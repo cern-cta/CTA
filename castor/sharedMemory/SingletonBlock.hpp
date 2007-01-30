@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/09 16:21:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
  *
  * 
  *
@@ -60,7 +60,7 @@ namespace castor {
       /**
        * Destructor
        */
-      virtual ~SingletonBlock() throw ();
+      ~SingletonBlock() throw ();
 
       /**
        * accessor to tyhe singleton object

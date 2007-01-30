@@ -30,8 +30,9 @@
 #include "castor/monitoring/FileSystemStatus.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
-#include "castor/monitoring/SharedMemoryAllocator.hpp"
+#include "castor/sharedMemory/Allocator.hpp"
 #include "castor/monitoring/SharedMemoryString.hpp"
+#include "castor/monitoring/ClusterStatusBlockKey.hpp"
 #include <map>
 
 namespace castor {
@@ -46,9 +47,10 @@ namespace castor {
       public std::map<castor::monitoring::SharedMemoryString,
                       castor::monitoring::FileSystemStatus,
                       std::less<castor::monitoring::SharedMemoryString>,
-                      castor::monitoring::SharedMemoryAllocator
+                      castor::sharedMemory::Allocator
                       <std::pair<castor::monitoring::SharedMemoryString,
-                                 castor::monitoring::FileSystemStatus> > > {
+                                 castor::monitoring::FileSystemStatus>,
+                       castor::monitoring::ClusterStatusBlockKey> > {
 
     public:
 

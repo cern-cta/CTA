@@ -28,8 +28,9 @@
 #define MONITORING_CLUSTERSTATUS_HPP 1
 
 #include "castor/monitoring/DiskServerStatus.hpp"
-#include "castor/monitoring/SharedMemoryAllocator.hpp"
+#include "castor/sharedMemory/Allocator.hpp"
 #include "castor/monitoring/SharedMemoryString.hpp"
+#include "castor/monitoring/ClusterStatusBlockKey.hpp"
 #include <map>
 
 namespace castor {
@@ -44,9 +45,10 @@ namespace castor {
       public std::map<castor::monitoring::SharedMemoryString,
                       castor::monitoring::DiskServerStatus,
                       std::less<castor::monitoring::SharedMemoryString>,
-                      castor::monitoring::SharedMemoryAllocator
+                      castor::sharedMemory::Allocator
                       <std::pair<castor::monitoring::SharedMemoryString,
-                                 castor::monitoring::DiskServerStatus> > > {
+                                 castor::monitoring::DiskServerStatus>,
+                       castor::monitoring::ClusterStatusBlockKey> > {
 
     public:
 

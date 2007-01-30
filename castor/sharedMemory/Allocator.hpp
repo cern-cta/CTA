@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/01/09 16:21:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -29,23 +29,24 @@
 
 #include <memory>
 #include "castor/sharedMemory/BlockKey.hpp"
+#include "castor/dlf/Dlf.hpp"
 
 namespace castor {
 
   namespace sharedMemory {
 
+    // Forward declaration
+    class BasicBlock;
+
     /**
      * A shared memory allocator to be used for allocating
      * space in shared memory in all STL containers.
-     * Note that this is an abstract class and that the
-     * non abstract children have to implement the getKey
-     * method. This will bind them to a given shared memory
-     * block while this class is generic.
-     * The reason for this is that the STL creates allocator
-     * with the empty constructor and imposes thus to store
-     * the block key in the type of the allocator itself.
+     * @param T the type of objects to be allocated
+     * @param BK a small class that should implement a static method
+     * getBlockKey returning a BlockKey identifying the shared memory
+     * Block to be used
      */
-    template<typename T>
+    template<typename T, typename BK>
     class Allocator : public std::allocator<T> {
 
     public:
@@ -58,7 +59,7 @@ namespace castor {
       /**
        * templated constructor
        */
-      template <class U> Allocator(const Allocator<U>& a) throw() :
+      template <class U> Allocator(const Allocator<U, BK>& a) throw() :
         std::allocator<T>(a), m_smBlock(a.m_smBlock) {}
 
       /**
@@ -78,7 +79,7 @@ namespace castor {
        * @return pointer to the allocated memory
        */
       T* allocate(std::allocator<void>::size_type numObjects,
-                  std::allocator<void>::const_pointer hint = 0);
+                  std::allocator<void>::const_pointer hint = 0) throw();
 
       /**
        * deallocates objects in the shared memory
@@ -86,12 +87,7 @@ namespace castor {
        * @param numObjects the number of objects to deallocate
        */
       void deallocate(std::allocator<void>::pointer ptrToMemory,
-                      std::allocator<void>::size_type numObjects);
-
-      /**
-       * returns the key for the shared memory block to be used
-       */
-      virtual BlockKey getBlockKey() = 0;
+                      std::allocator<void>::size_type numObjects) throw();
 
     private:
 
@@ -100,13 +96,13 @@ namespace castor {
        * or create it and register it in the block
        * disctionnary if necessary
        */
-      castor::sharedMemory::IBlock* getBlock();
+      castor::sharedMemory::BasicBlock* getBlock();
 
     // should be private but the templated constructor would not compile
     public:
 
       /// the shared memory block to be used by this allocator
-      castor::sharedMemory::IBlock* m_smBlock;
+      castor::sharedMemory::BasicBlock* m_smBlock;
 
     }; // class Allocator
 
@@ -120,54 +116,71 @@ namespace castor {
 
 #include <memory>
 #include "castor/sharedMemory/Allocator.hpp"
-#include "castor/sharedMemory/IBlock.hpp"
+#include "castor/sharedMemory/BasicBlock.hpp"
 #include "castor/sharedMemory/BlockDict.hpp"
 #include "castor/exception/Internal.hpp"
 
 //------------------------------------------------------------------------------
 // operator new
 //------------------------------------------------------------------------------
-template<class T>
-void* castor::sharedMemory::Allocator<T>::operator new
+template<class T, class BK>
+void* castor::sharedMemory::Allocator<T, BK>::operator new
 (unsigned int num_bytes, void*) {
-  castor::sharedMemory::IBlock* smBlock = getBlock();
+  castor::sharedMemory::BasicBlock* smBlock = getBlock();
   return smBlock->malloc(num_bytes);
 }
 
 //------------------------------------------------------------------------------
 // allocate
 //------------------------------------------------------------------------------
-template<class T>
-T* castor::sharedMemory::Allocator<T>::allocate
+template<class T, class BK>
+T* castor::sharedMemory::Allocator<T, BK>::allocate
 (std::allocator<void>::size_type numObjects,
- std::allocator<void>::const_pointer hint) {
-  if (0 == m_smBlock) m_smBlock = getBlock();
-  return static_cast<T*>
-    (m_smBlock->malloc(numObjects*sizeof(T)));
+ std::allocator<void>::const_pointer hint) throw() {
+  try {
+    if (0 == m_smBlock) m_smBlock = getBlock();
+    return static_cast<T*>
+      (m_smBlock->malloc(numObjects*sizeof(T)));
+  } catch (castor::exception::Exception e) {
+    // Log exception "Exception caught in allocate"
+    castor::dlf::Param initParams[] =
+      {castor::dlf::Param("Original error", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
+			    DLF_BASE_SHAREDMEMORY + 6, 1, initParams);
+    return 0;
+  }
 }
 
 
 //------------------------------------------------------------------------------
 // deallocate
 //------------------------------------------------------------------------------
-template<class T>
-void castor::sharedMemory::Allocator<T>::deallocate
+template<class T, class BK>
+void castor::sharedMemory::Allocator<T, BK>::deallocate
 (std::allocator<void>::pointer ptrToMemory,
- std::allocator<void>::size_type numObjects) {
-  if (0 == m_smBlock) m_smBlock = getBlock();
-  m_smBlock->free(ptrToMemory, numObjects*sizeof(T));
+ std::allocator<void>::size_type numObjects) throw() {
+  try {
+    if (0 == m_smBlock) m_smBlock = getBlock();
+    m_smBlock->free(ptrToMemory, numObjects*sizeof(T));
+  } catch (castor::exception::Exception e) {
+    // Log exception "Exception caught in allocate"
+    castor::dlf::Param initParams[] =
+      {castor::dlf::Param("Original error", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
+			    DLF_BASE_SHAREDMEMORY + 6, 1, initParams);
+  }
 }
 
 //------------------------------------------------------------------------------
 // getBlock
 //------------------------------------------------------------------------------
-template<class T>
-castor::sharedMemory::IBlock*
-castor::sharedMemory::Allocator<T>::getBlock() {
+template<class T, class BK>
+castor::sharedMemory::BasicBlock*
+castor::sharedMemory::Allocator<T, BK>::getBlock() {
   // try to get an existing block
-  BlockKey key = getBlockKey();
-  castor::sharedMemory::IBlock* smBlock =
-    castor::sharedMemory::BlockDict::getIBlock(key);
+  BlockKey key = BK::getBlockKey();
+  castor::sharedMemory::BasicBlock* smBlock =
+    castor::sharedMemory::BlockDict::getBlock(key);
   if (0 == smBlock) {
     castor::exception::Internal e;
     e.getMessage() << "No block found for key " << key.key();
