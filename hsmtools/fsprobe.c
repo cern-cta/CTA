@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.16 $ $Release$ $Date: 2007/01/30 10:53:47 $ $Author: fuji $
+ * @(#)$RCSfile: fsprobe.c,v $ $Revision: 1.17 $ $Release$ $Date: 2007/01/30 19:05:53 $ $Author: timbell $
  *
  * 
  *
@@ -46,6 +46,7 @@ unsigned char *readBuffer = NULL;
 char *directoryName = NULL;
 char *pathName = NULL;
 char *mailTo = NULL;
+char *mailSubject = "corruption";
 char *logFileName = "/tmp/fsprobe.log";
 size_t cycle, dumpCount;
 size_t bufferSize = 1024*1024;
@@ -89,6 +90,7 @@ const enum RunOptions
 	Foreground,
 	RndBuf,				/* Use buffers w/random data	*/
 	MailTo,				/* Notify who?			*/
+	MailSubject,			/* Subject of mail              */
 	Syslog,				/* Mark corruption in syslog	*/
 	DumpBuffers,			/* Dump both buffers on diff	*/
 	ContinueOnDiff,			/* Continue checking until EOF	*/
@@ -113,6 +115,7 @@ const struct option longopts[] =
 	{"Foreground",no_argument,&runInForeground,Foreground},
 	{"RndBuf",no_argument,&useRndBuf,RndBuf},
 	{"MailTo",required_argument,NULL,MailTo},
+	{"MailSubject",required_argument,NULL,MailSubject},
 	{"Syslog",no_argument,&useSyslog,Syslog},
 	{"DumpBuffers",no_argument,&dumpBuffers,DumpBuffers},
 	{"ContinueOnDiff",no_argument,&continueOnDiff,ContinueOnDiff},
@@ -248,7 +251,7 @@ int putInBackground()
 			if ( i != fdnull ) close(i);
 		}
 	}
-	sprintf(logbuf, "fsprobe $Revision: 1.16 $ operational.\n");
+	sprintf(logbuf, "fsprobe $Revision: 1.17 $ operational.\n");
 	myLog(logbuf);
 
 	sprintf(logbuf, "filesize %llu bufsize %u sleeptime %u iosleeptime %u loops %u\n",
@@ -474,8 +477,8 @@ int checkFile()
 			if ( mailTo != NULL ) {
 				sprintf(logbuf,
 					"tail %s |"
-					"mail -s corruption %s",
-				        logFileName, mailTo);
+					"mail -s \"%s\" %s",
+				        logFileName, mailSubject, mailTo);
 				system(logbuf);
 			}
 			if ( dumpBuffers ) {
@@ -574,6 +577,9 @@ int main(int argc, char *argv[])
 				break;
 			case MailTo:
 				mailTo = strdup(optarg);
+				break;
+			case MailSubject:
+				mailSubject = strdup(optarg);
 				break;
 			case ForceCacheFlush:
 				forceCacheFlush = atoi(optarg);
