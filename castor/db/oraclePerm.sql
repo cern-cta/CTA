@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.367 $ $Release$ $Date: 2007/01/29 17:24:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.368 $ $Release$ $Date: 2007/01/30 16:02:42 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.367 $ $Date: 2007/01/29 17:24:57 $');
+INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.368 $ $Date: 2007/01/30 16:02:42 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1081,8 +1081,29 @@ END;
 
 /* TO BE REMOVED. Temporary hack to avoid losing file modifications in case of update */
 CREATE OR REPLACE PROCEDURE fixUpdateRequestProblem(dcid IN INTEGER,
-                                                    cfid IN INTEGER) AS
+                                                    cfid IN INTEGER,
+                                                    srid IN INTEGER) AS
+  nbres NUMBER;
+  unused NUMBER;
 BEGIN
+  -- we only want to do something for updates
+  BEGIN
+    SELECT r.id INTO unused
+      FROM stageUpdateRequest r, SubRequest s
+     WHERE s.request = r.id
+       AND s.id = srId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN;
+  END;
+  -- First check that the file is not busy, i.e. that we are not
+  -- in the middle of migrating it. If we are, just stop and raise
+  -- a user exception
+  SELECT count(*) INTO nbRes FROM TapeCopy
+    WHERE status = 3 -- TAPECOPY_SELECTED
+    AND castorFile = cfId;
+  IF nbRes > 0 THEN
+    raise_application_error(-20106, 'Trying to update a busy file');
+  END IF;
   -- invalidate all diskcopies
   UPDATE DiskCopy SET status = 7 -- INVALID 
    WHERE castorFile  = cfId
@@ -1090,6 +1111,12 @@ BEGIN
   -- except the one we are dealing with that goes to STAGEOUT
   UPDATE DiskCopy SET status = 6 -- STAGEOUT
    WHERE id = dcid;
+  -- Suppress all Tapecopies (avoid migration of previous version of the file)
+  DELETE from Stream2TapeCopy WHERE child IN
+    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
+  DELETE FROM Id2Type WHERE id IN 
+    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
+  DELETE from TapeCopy WHERE castorFile = cfId;
 END;
 
 /* PL/SQL method implementing getUpdateStart */
@@ -1138,7 +1165,7 @@ BEGIN
  -- written in the file to do so, but for now, we do it now...
  -- Note that we do the same in Disk2DiskCopyDone for the case of
  -- replication due to the update
- fixUpdateRequestProblem(dci, cfId);
+ fixUpdateRequestProblem(dci, cfId, srId);
 EXCEPTION WHEN NO_DATA_FOUND THEN
  -- No disk copy found on selected FileSystem, look in others
  BEGIN
@@ -1340,7 +1367,7 @@ BEGIN
   -- written in the file to do so, but for now, we do it now...
   -- Note that we do the same in GetUpdateStart for the case with no
   -- replication due to the update request.
-  fixUpdateRequestProblem(dcId, cfId);
+  fixUpdateRequestProblem(dcId, cfId, srId);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
    WHERE parent = srid; -- SUBREQUEST_RESTART
