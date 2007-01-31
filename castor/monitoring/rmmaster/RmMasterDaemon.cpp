@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
         new castor::monitoring::rmmaster::CollectorThread
         (daemon.clusterStatus()),
         port));
-    daemon.getThreadPool('C')->setNbThreads(5);
+    daemon.getThreadPool('C')->setNbThreads(1);
 
     daemon.parseCommandLine(argc, argv);
     daemon.start();
@@ -180,12 +180,18 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
      {18, "Bad port value in configuration file"},
      {19, "Thread Update started."},
      {20, "Caught exception in UpdateThread"},
+     {21, "Ignored state report for machine with empty name"},
+     {22, "Ignored metrics report for machine with empty name"},
+     {23, "Ignored admin diskserver report for machine with empty name"},
+     {24, "Ignored admin filesystem report for machine with empty name"},
+     {25, "Ignored admin filesystem report for filesystem with empty name"},
+     {26, "Ignored metrics report for filesystem with empty name"},
+     {27, "Ignored state report for filesystem with empty name"},
      {-1, ""}};
   castor::dlf::dlf_init("newrmmaster", messages);
 
   // get the cluster status singleton
   m_clusterStatus = castor::monitoring::ClusterStatus::getClusterStatus();
-  m_clusterStatus->clear();
 
 }
 

@@ -150,6 +150,21 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
 void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
 (castor::monitoring::DiskServerStateReport* state)
   throw (castor::exception::Exception) {
+  // Throw away reports with no name cause the build of
+  // a shared memory string fails for empty strings. This
+  // is due to an optimization inside the string implementation
+  // that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided
+  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+  // but the default version distributed does not have this
+  // The consequence of accepting this is a seg fault in any
+  // process attempting to read it (other than the one that
+  // created the empty string).
+  if (state->name().size() == 0) {
+    // "Ignored state report for machine with empty name"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 21);
+    return;
+  }
   // Take care of DiskServer creation
   const castor::monitoring::SharedMemoryString
     smMachineName(state->name().c_str());
@@ -181,6 +196,23 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
          itFs = state->FileSystemStatesReports().begin();
        itFs != state->FileSystemStatesReports().end();
        itFs++) {
+    // Throw away reports fro filesystems with no name cause the build of
+    // a shared memory string fails for empty strings. This
+    // is due to an optimization inside the string implementation
+    // that tries to delay memory allocation when not needed
+    // (typically for empty strings). This could be avoided
+    // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+    // but the default version distributed does not have this
+    // The consequence of accepting this is a seg fault in any
+    // process attempting to read it (other than the one that
+    // created the empty string).
+    if ((*itFs)->mountPoint().size() == 0) {
+      // "Ignored state report for filesystem with empty name"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Machine", state->name())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
+      continue;
+    }
     // Take care of the FileSystem creation
     const castor::monitoring::SharedMemoryString smMountPoint
       ((*itFs)->mountPoint().c_str());
@@ -215,6 +247,21 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
 void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
 (castor::monitoring::DiskServerMetricsReport* metrics)
   throw (castor::exception::Exception) {
+  // Throw away reports with no name cause the build of
+  // a shared memory string fails for empty strings. This
+  // is due to an optimization inside the string implementation
+  // that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided
+  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+  // but the default version distributed does not have this
+  // The consequence of accepting this is a seg fault in any
+  // process attempting to read it (other than the one that
+  // created the empty string).
+  if (metrics->name().size() == 0) {
+    // "Ignored metrics report for machine with empty name"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 22);
+    return;
+  }
   // Take care of DiskServer creation
   const castor::monitoring::SharedMemoryString
     smMachineName(metrics->name().c_str());
@@ -238,6 +285,23 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
          itFs = metrics->fileSystemMetricsReports().begin();
        itFs != metrics->fileSystemMetricsReports().end();
        itFs++) {
+    // Throw away reports fro filesystems with no name cause the build of
+    // a shared memory string fails for empty strings. This
+    // is due to an optimization inside the string implementation
+    // that tries to delay memory allocation when not needed
+    // (typically for empty strings). This could be avoided
+    // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+    // but the default version distributed does not have this
+    // The consequence of accepting this is a seg fault in any
+    // process attempting to read it (other than the one that
+    // created the empty string).
+    if ((*itFs)->mountPoint().size() == 0) {
+      // "Ignored metrics report for filesystem with empty name"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Machine", metrics->name())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 26, 1, params);
+      continue;
+    }
     // Take care of the FileSystem creation
     const castor::monitoring::SharedMemoryString smMountPoint
       ((*itFs)->mountPoint().c_str());
@@ -273,6 +337,21 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
 void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
 (castor::monitoring::admin::DiskServerAdminReport* admin)
   throw (castor::exception::Exception) {
+  // Throw away reports with no name cause the build of
+  // a shared memory string fails for empty strings. This
+  // is due to an optimization inside the string implementation
+  // that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided
+  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+  // but the default version distributed does not have this
+  // The consequence of accepting this is a seg fault in any
+  // process attempting to read it (other than the one that
+  // created the empty string).
+  if (admin->diskServerName().size() == 0) {
+    // "Ignored admin diskserver report for machine with empty name"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 23);
+    return;
+  }
   // Take care of DiskServer creation
   const castor::monitoring::SharedMemoryString
     smMachineName(admin->diskServerName().c_str());
@@ -301,6 +380,26 @@ void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
 void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
 (castor::monitoring::admin::FileSystemAdminReport* admin)
   throw (castor::exception::Exception) {
+  // Throw away reports with no name cause the build of
+  // a shared memory string fails for empty strings. This
+  // is due to an optimization inside the string implementation
+  // that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided
+  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+  // but the default version distributed does not have this
+  // The consequence of accepting this is a seg fault in any
+  // process attempting to read it (other than the one that
+  // created the empty string).
+  if (admin->diskServerName().size() == 0) {
+    // "Ignored admin filesystem report for machine with empty name"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 24);
+    return;
+  }
+  if (admin->mountPoint().size() == 0) {
+    // "Ignored admin filesystem report for filesystem with empty name"
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 25);
+    return;
+  }
   // Take care of FileSystem creation
   const castor::monitoring::SharedMemoryString
     smMachineName(admin->diskServerName().c_str());
