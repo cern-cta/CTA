@@ -335,7 +335,7 @@ sub TransferManager()
       my ($ID, $STATUS, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
 
       if ($active < 10) {
-        open(EXECUTE, "stager_get -S $SVCCLASS -M $URL |"); 
+        open(EXECUTE, "stager_get -S $SVCCLASS -M $URL 2>&1|"); 
         $working_files[$active++] = $ID;
 
 	my $output = <EXECUTE>;
