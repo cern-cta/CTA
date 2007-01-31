@@ -339,7 +339,7 @@ sub TransferManager()
         $working_files[$active++] = $ID;
 
 	my $output = <EXECUTE>;
-	until ($output =~ /\n$/) {
+	until ($output =~ /\\n$/) {
 	    sleep (1);
 	    $output = <EXECUTE>;		      
 	}
