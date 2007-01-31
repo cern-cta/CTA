@@ -193,11 +193,12 @@ sub wait_for_input()
 
 sub check_progress () {
 #################################################################################
-    my @ary = @_;    
+    my @ary  = @_;    
     my $i;
     my $total = 0;
     my $filepath;
     
+    print "checking $#ary files\n";
     for ($i =0; $i <= $#ary; $i++) {
 	
 	$filepath = `nsGetPath castorns $ary[$i]`;
@@ -214,7 +215,7 @@ sub check_progress () {
 	}
     }
     
-    if ($total != 10) { 
+    if ($total !=10) { 
 	print $total . "\n"; 
 	sleep ($DELAY);
     } else { sleep(2); }
@@ -257,8 +258,8 @@ sub create_file () {
                 $filepath = `nsGetPath castorns $line[0]`;
                 if (length($filepath) != 0 ) {
 			print FILE $_ . " ". $filepath;
+			$count++;
 		}
-		$count++;
 		if ($count % 100 == 0) {print ".";}
 		if ($count % 1000 == 0) {print " $count files processed.\n";}
         }
@@ -266,7 +267,7 @@ sub create_file () {
     close(FILE);
     print "List of files to move has been created with $count entries.\n";
 
-    return $file;
+    return $file,$count;
 }
 
 #################################################################################
@@ -323,8 +324,9 @@ sub TransferManager()
     my $active_transfers = 0;
     my $active = 0;
     my $total_done = 0;
+    my $count = 0;
 
-    $file = &create_file($NODE);
+    ($file,$count) = &create_file($NODE);
 
     open(FILE, $file) or die "Problem opening file $file for reading\n";
     print "Do you want to start the transfer?.\n"; 
@@ -334,7 +336,21 @@ sub TransferManager()
     foreach (<FILE>){
       my ($ID, $STATUS, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
 
-      if ($active < 10) {
+
+      if ($active == 10) {
+	print "End of 10 file ops. Checking progress before continuing.\n";
+	do { 
+	  $active_transfers = &check_progress(@working_files); 
+	} while ($active_transfers != $active); 
+	
+	@working_files = ();
+	$active = 0;	
+	$total_done += 10;
+	print "$total_done files of $count processed. \n"; 
+
+      } #end else COUNT !=10
+
+
         open(EXECUTE, "/usr/bin/stager_get -S $SVCCLASS -M $URL 2>&1|"); 
         $working_files[$active++] = $ID;
 
@@ -344,19 +360,26 @@ sub TransferManager()
 	    $output = <EXECUTE>;		      
 	}
 	print $output; 
-	#if ($output =~ /\\n$/){print $output;}	
+	if ($output =~ /Error/){
+		print <EXECUTE>;
+		print "\nerror on $URL retrying once...\n\n";
+		open(EXECUTE, "/usr/bin/stager_get -S $SVCCLASS -M $URL 2>&1|");
+		my $output = <EXECUTE>;
+		until (length($output) > 0) {
+			sleep (1);
+			$output = <EXECUTE>;
+			}
+		}	
+	print <EXECUTE>;
         close (EXECUTE);
-    } else {
-	print "End of 10 file ops. Checking progress before continuing.\n";
+
+      if ($total_done+$active==$count) {
+
+	print "End of file list.\n";
 	do { 
 	  $active_transfers = &check_progress(@working_files); 
-	} while ($active_transfers != 10); 
-	
-	$active = 0;	
-	$total_done += 10;
-	print "$total_done files of $count processed. \n"; 
-	   
-      } #end else COUNT !=10
+	} while ($active_transfers != $active); 
+	}
 
     }#END FOREACH
     close(FILE);
@@ -408,7 +431,7 @@ sub TransferManager()
 
   &send_email();	
 
-  foreach (@NODES) {	
+  foreach (@NODES) {
     &TransferManager($_); #now start transfering file
   }
 
