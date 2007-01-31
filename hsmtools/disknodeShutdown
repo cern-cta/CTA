@@ -343,8 +343,8 @@ sub TransferManager()
 	    sleep (1);
 	    $output = <EXECUTE>;		      
 	}
-	print $output; 
-	if ($output =~ /\\n$/){print <EXECUTE>;}	
+#	print $output; 
+	if ($output =~ /\\n$/){print $output;}	
         close (EXECUTE);
     } else {
 	print "End of 10 file ops. Checking progress before continuing.\n";
