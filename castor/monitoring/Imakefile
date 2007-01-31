@@ -54,8 +54,8 @@ STGLIB_SRCS = ClusterStatus.cpp \
 
 RMGETNODESBIN_SRCS = RmGetNodes.cpp
 RMGETNODESBIN_OBJS = $(RMGETNODESBIN_SRCS:.cpp=.Osuf)
-RMADMINNODESBIN_SRCS = RmAdminNode.cpp
-RMADMINNODESBIN_OBJS = $(RMADMINNODEBIN_SRCS:.cpp=.Osuf)
+RMADMINNODESBIN_SRCS = admin/RmAdminNode.cpp
+RMADMINNODESBIN_OBJS = $(RMADMINNODESBIN_SRCS:.cpp=.Osuf)
 
 LIBS = $(OSLIBS) $(MTLDLIBS) -lcastorMonitor -lshift
 DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor) \
@@ -74,7 +74,7 @@ MakeDepSharedLibrary(shlib,shift)
 NormalLibraryTarget(castorMonitor,$(STGLIB_OBJS))
 
 NormalProgramTarget(rmGetNodes,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
-NormalProgramTarget(rmAdminNode,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
+NormalProgramTarget(rmAdminNode,$(RMADMINNODESBIN_OBJS),$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(FileName(..,shlib),castorMonitor)
 MakeDepSharedLibrary(FileName(..,shlib),shift)

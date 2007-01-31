@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 16:14:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/31 17:18:06 $ $Author: sponcec3 $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -98,10 +98,10 @@ int main(int argc, char *argv[]) {
 	return 0;
       case 'o':
 	rmHostName = Coptarg;
-	return 0;
+	break;
       case 'p':
 	rmPort = atoi(Coptarg);
-	return 0;
+	break;
       case 'n':
 	nodeName = Coptarg;
 	break;
@@ -131,10 +131,8 @@ int main(int argc, char *argv[]) {
     // Parse the arguments
     argc -= Coptind;
     argv += Coptind;
-    if (argc != 1) {
-      std::cerr << "Error : wrong number of arguments." << std::endl;
-      usage(progName);
-      return(1);
+    if (argc != 0) {
+      std::cerr << "Error : arguments were given and will be ignored" << std::endl;
     }
     if (0 == nodeName) {
       std::cerr << "Missing node name. Please use -n,--node option !" << std::endl;
@@ -241,7 +239,7 @@ int main(int argc, char *argv[]) {
 
     // build request
     castor::IObject* obj;
-    if (0 != mountPoint) {
+    if (0 == mountPoint) {
       castor::monitoring::admin::DiskServerAdminReport* report =
 	new castor::monitoring::admin::DiskServerAdminReport();
       obj = report;
@@ -275,8 +273,11 @@ int main(int argc, char *argv[]) {
     }
 
   } catch (castor::exception::Exception e) {
-    std::cerr << "Caught exception :\n"
+    std::cerr << "Caught exception : "
               << e.getMessage().str() << std::endl;    
+  } catch (std::exception e) {
+    std::cerr << "Caught standard exception : "
+              << e.what() << std::endl;    
   } catch (...) {
     std::cerr << "Caught unknown exception !";
   }
