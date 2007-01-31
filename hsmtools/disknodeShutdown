@@ -202,7 +202,7 @@ sub check_progress () {
 	
 	$filepath = `nsGetPath castorns $ary[$i]`;
 	if (length($filepath) != 0 ) {
-	    open (CHECK, "stager_qry -S $SVCCLASS  -M $filepath |");
+	    open (CHECK, "/usr/bin/stager_qry -S $SVCCLASS  -M $filepath |");
 	    
 	    while (<CHECK>) {
 		print $_;
@@ -335,7 +335,7 @@ sub TransferManager()
       my ($ID, $STATUS, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
 
       if ($active < 10) {
-        open(EXECUTE, "stager_get -S $SVCCLASS -M $URL 2>&1|"); 
+        open(EXECUTE, "/usr/bin/stager_get -S $SVCCLASS -M $URL 2>&1|"); 
         $working_files[$active++] = $ID;
 
 	my $output = <EXECUTE>;
