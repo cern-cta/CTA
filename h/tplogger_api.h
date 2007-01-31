@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_api.h,v 1.2 2007/01/19 11:47:08 wiebalck Exp $
+** $Id: tplogger_api.h,v 1.3 2007/01/31 08:45:06 wiebalck Exp $
 */
 
 
@@ -117,13 +117,17 @@ typedef struct tplogger_s {
 
 
 /* Parameter types, 'inspired' by DLF */
-#define TL_MSG_PARAM_DOUBLE  1                 /**< double precision floating point value    */
-#define TL_MSG_PARAM_INT64   2                 /**< 64 bit integers                          */
-#define TL_MSG_PARAM_STR     3                 /**< general purpose string                   */
-#define TL_MSG_PARAM_TPVID   4                 /**< tape visual identifier string            */
-#define TL_MSG_PARAM_UUID    5                 /**< subrequest identifier                    */
-#define TL_MSG_PARAM_FLOAT   6                 /**< single precision floating point value    */
-#define TL_MSG_PARAM_INT     7                 /**< integer parameter                        */
+#define TL_MSG_PARAM_DOUBLE   1                 /**< double precision floating point value    */
+#define TL_MSG_PARAM_INT64    2                 /**< 64 bit integers                          */
+#define TL_MSG_PARAM_STR      3                 /**< general purpose string                   */
+#define TL_MSG_PARAM_TPVID    4                 /**< tape visual identifier string            */
+#define TL_MSG_PARAM_UUID     5                 /**< subrequest identifier                    */
+#define TL_MSG_PARAM_FLOAT    6                 /**< single precision floating point value    */
+#define TL_MSG_PARAM_INT      7                 /**< integer parameter                        */
+#define TL_MSG_PARAM_UID      8                 /**< user id                                  */
+#define TL_MSG_PARAM_GID      9                 /**< group id                                 */
+#define TL_MSG_PARAM_STYPE   10                 /**< e.g KRB5, GSI                            */
+#define TL_MSG_PARAM_SNAME   11                 /**< e.g DN, Krb principal                    */
 
 
 extern tplogger_message_t tplogger_messages[];
@@ -138,22 +142,13 @@ extern tplogger_t tl_rtcpd;
 
 extern tplogger_t tl_gen;
 
-/*
-** Map the levels to the DLF levels
-*/
-static void tl_map_defs2dlf( void );
-
-
-/*
-** Assign a message table to a tplogger
-*/
-static int tl_set_msg_tbl_dlf( struct tplogger_s *self, tplogger_message_t tl_msg[] );
-
 
 /*
 ** Determine the number of elements in an array 
 */
 #define ARRAY_ENTRIES(arr) (sizeof(arr))/(sizeof((arr)[0]))
+
+EXTERN_C int DLL_DECL tplogger_nb_messages _PROTO(( tplogger_t *self ));
 
 
 /*
