@@ -335,15 +335,16 @@ sub TransferManager()
       my ($ID, $STATUS, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
 
       if ($active < 10) {
-        open(EXECUTE, "stager_get -S $SVCCLASS -M $URL |"); 
+        open(EXECUTE, "sstager_get -S $SVCCLASS -M $URL |"); 
         $working_files[$active++] = $ID;
 
 	my $output = <EXECUTE>;
-	until ($output =~ /\\n$/) {
+	until (length($output) > 0) {
 	    sleep (1);
 	    $output = <EXECUTE>;		      
 	}
 	print $output; 
+	if ($output =~ /\\n$/){print <EXECUTE>;}	
         close (EXECUTE);
     } else {
 	print "End of 10 file ops. Checking progress before continuing.\n";
