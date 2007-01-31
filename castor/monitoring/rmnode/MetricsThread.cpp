@@ -26,15 +26,16 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/monitoring/rmnode/MetricsThread.hpp"
-#include "castor/monitoring/rmnode/RmNodeConfig.hpp"
 #include "castor/monitoring/DiskServerMetricsReport.hpp"
 #include "castor/monitoring/FileSystemMetricsReport.hpp"
+#include "castor/monitoring/rmnode/MetricsThread.hpp"
+#include "castor/monitoring/rmnode/RmNodeConfig.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/MessageAck.hpp"
 #include "castor/IObject.hpp"
+#include "castor/System.hpp"
 #include <sys/sysinfo.h>
 #include "getconfent.h"
 #include <sys/vfs.h>
@@ -128,6 +129,8 @@ castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
   throw(castor::exception::Exception) {
   castor::monitoring::DiskServerMetricsReport* metrics =
     new castor::monitoring::DiskServerMetricsReport();
+  // set diskServer name
+  metrics->setName(castor::System::getHostName());
   // use sysinfo to get all data
   struct sysinfo si;
   if (0 == sysinfo(&si)) {
@@ -184,6 +187,8 @@ castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   throw(castor::exception::Exception) {
   castor::monitoring::FileSystemMetricsReport* metrics =
     new castor::monitoring::FileSystemMetricsReport();
+  // set mountpoint
+  metrics->setMountPoint(mountPoint);
   // Set streams
   int nr, nrw, nw;
   if (Crm_util_countstream(mountPoint.c_str(), &nr, &nrw, &nw) < 0) {
