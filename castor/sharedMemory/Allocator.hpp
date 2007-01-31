@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/01/31 15:58:24 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -65,7 +65,7 @@ namespace castor {
       /**
        * destructor
        */
-      virtual ~Allocator() throw() {};
+      ~Allocator() throw() {};
 
       /**
        * new operator, so that this goes always to shared memory
@@ -88,6 +88,13 @@ namespace castor {
        */
       void deallocate(std::allocator<void>::pointer ptrToMemory,
                       std::allocator<void>::size_type numObjects) throw();
+
+      /**
+       * some complicated way to define a needed typedef
+       * See section 19.4.1 of Stroustrup
+       */
+      template <class U>
+      struct rebind {typedef Allocator<U, BK> other; };
 
     private:
 
@@ -180,7 +187,7 @@ castor::sharedMemory::Allocator<T, BK>::getBlock() {
   // try to get an existing block
   BlockKey key = BK::getBlockKey();
   castor::sharedMemory::BasicBlock* smBlock =
-    castor::sharedMemory::BlockDict::getBlock(key);
+    castor::sharedMemory::BlockDict::getBasicBlock(key);
   if (0 == smBlock) {
     castor::exception::Internal e;
     e.getMessage() << "No block found for key " << key.key();
