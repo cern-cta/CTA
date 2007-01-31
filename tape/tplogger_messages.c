@@ -19,9 +19,10 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.2 2007/01/18 16:38:01 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.3 2007/01/31 08:46:52 wiebalck Exp $
 */
 
+#include <string.h>
 
 #include "tplogger_api.h" 
 
@@ -119,7 +120,7 @@ tplogger_message_t tplogger_messages[] = {
                                                                                     /* par_req   */
                                                                                     /* par_TMS   */
 
-        {  56, TL_LVL_ERROR,  "TP056 - request"                                 },  /* type      */
+        {  56, TL_LVL_MONITORING,  "TP056 - request"                                 },  /* type      */
                                                                                     /* uid       */
                                                                                     /* gid       */
                                                                                     /* clienthost*/

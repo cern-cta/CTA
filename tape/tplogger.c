@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.3 2007/01/19 11:48:26 wiebalck Exp $
+** $Id: tplogger.c,v 1.4 2007/01/31 08:46:52 wiebalck Exp $
 */
 
 #include <string.h>
@@ -71,6 +71,119 @@ tplogger_t tl_rtcpd = {
 ** Generic tplogger.
 */
 tplogger_t tl_gen;
+
+
+/**
+ * Set the tplogger msg table.
+ *
+ * @param self   : reference to the tplogger struct
+ * @param tl_msg : reference to the message table 
+ *
+ * @returns      : 0 on success
+ *                 <0 on failure
+ */ 
+static int  tl_set_msg_tbl_dlf( struct tplogger_s *self, tplogger_message_t tl_msg[] ) {
+
+        int err = 0;
+
+        if( NULL == self ) {
+
+                err = -1;
+                goto err_out;
+        }
+
+        if( NULL == tl_msg ) {
+
+                err = -2;
+                goto err_out;
+        }
+
+        self->tl_msg         = tl_msg;
+        self->tl_msg_entries = tplogger_nb_messages( self );
+        
+ err_out:
+        return err;
+}
+
+
+/**
+ * Map the generic tplogger log levels to DLF log levels 
+ */
+static void tl_map_defs2dlf( void ) {
+
+#if     TL_LVL_EMERGENCY  != DLF_LVL_EMERGENCY 
+#define TL_LVL_EMERGENCY     DLF_LVL_EMERGENCY
+#endif
+     
+#if     TL_LVL_ALERT      != DLF_LVL_ALERT 
+#define TL_LVL_ALERT         DLF_LVL_ALERT         
+#endif
+
+#if     TL_LVL_ERROR      != DLF_LVL_ERROR 
+#define TL_LVL_ERROR         DLF_LVL_ERROR         
+#endif
+
+#if     TL_LVL_WARNING    != DLF_LVL_WARNING 
+#define TL_LVL_WARNING       DLF_LVL_WARNING       
+#endif
+
+#if     TL_LVL_AUTH       != DLF_LVL_AUTH
+#define TL_LVL_AUTH          DLF_LVL_AUTH          
+#endif
+
+#if     TL_LVL_SECURITY   != DLF_LVL_SECURITY      
+#define TL_LVL_SECURITY      DLF_LVL_SECURITY      
+#endif
+
+#if     TL_LVL_USAGE      != DLF_LVL_USAGE         
+#define TL_LVL_USAGE         DLF_LVL_USAGE         
+#endif
+
+#if     TL_LVL_SYSTEM     != DLF_LVL_SYSTEM        
+#define TL_LVL_SYSTEM        DLF_LVL_SYSTEM        
+#endif
+
+#if     TL_LVL_IMPORTANT  != DLF_LVL_IMPORTANT     
+#define TL_LVL_IMPORTANT     DLF_LVL_IMPORTANT     
+#endif
+
+#if     TL_LVL_MONITORING != DLF_LVL_MONITORING    
+#define TL_LVL_MONITORING    DLF_LVL_MONITORING    
+#endif
+
+#if     TL_LVL_DEBUG      != DLF_LVL_DEBUG         
+#define TL_LVL_DEBUG         DLF_LVL_DEBUG         
+#endif
+
+#if     TL_MSG_PARAM_DOUBLE  != DLF_MSG_PARAM_DOUBLE  
+#define TL_MSG_PARAM_DOUBLE     DLF_MSG_PARAM_DOUBLE  
+#endif
+
+#if     Tl_MSG_PARAM_INT64   != DLF_MSG_PARAM_INT64   
+#define Tl_MSG_PARAM_INT64      DLF_MSG_PARAM_INT64   
+#endif
+
+#if     TL_MSG_PARAM_STR     != DLF_MSG_PARAM_STR     
+#define TL_MSG_PARAM_STR        DLF_MSG_PARAM_STR     
+#endif
+
+#if     TL_MSG_PARAM_TPVID   != DLF_MSG_PARAM_TPVID   
+#define TL_MSG_PARAM_TPVID      DLF_MSG_PARAM_TPVID   
+#endif
+
+#if     TL_MSG_PARAM_UUID    != DLF_MSG_PARAM_UUID    
+#define TL_MSG_PARAM_UUID       DLF_MSG_PARAM_UUID    
+#endif
+
+#if     TL_MSG_PARAM_FLOAT   != DLF_MSG_PARAM_FLOAT   
+#define TL_MSG_PARAM_FLOAT      DLF_MSG_PARAM_FLOAT   
+#endif
+
+#if     TL_MSG_PARAM_INT     != DLF_MSG_PARAM_INT     
+#define TL_MSG_PARAM_INT        DLF_MSG_PARAM_INT     
+#endif
+
+}
 
 
 /**
@@ -334,7 +447,9 @@ int DLL_DECL tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params
 		plist[i].type = va_arg(ap, int);
 
 		/* process type */
-		if( (plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) ) {
+		if( (plist[i].type == DLF_MSG_PARAM_TPVID) || (plist[i].type == DLF_MSG_PARAM_STR) ||
+                    (plist[i].type == DLF_MSG_PARAM_STYPE) || (plist[i].type == DLF_MSG_PARAM_SNAME) ) {
+
 			string = va_arg(ap, char *);
 			if( string == NULL ) {
 				plist[i].par.par_string = NULL;
@@ -342,7 +457,10 @@ int DLL_DECL tl_log_dlf( tplogger_t *self, unsigned short msg_no, int num_params
 				plist[i].par.par_string = strdup( string );
 			}
 		}
-		else if( plist[i].type == DLF_MSG_PARAM_INT ) {
+		else if( (plist[i].type == DLF_MSG_PARAM_INT) ||
+			 (plist[i].type == DLF_MSG_PARAM_UID) || 
+			 (plist[i].type == DLF_MSG_PARAM_GID) ){
+
 			plist[i].par.par_int = va_arg(ap, int);
 		}
 		else if( plist[i].type == DLF_MSG_PARAM_INT64 ) {
@@ -577,119 +695,6 @@ int DLL_DECL tl_set_lvl_dlf( tplogger_t *self, unsigned short msg_no, int lvl ) 
 }
 
 
-/**
- * Map the generic tplogger log levels to DLF log levels 
- */
-static void tl_map_defs2dlf( void ) {
-
-#if     TL_LVL_EMERGENCY  != DLF_LVL_EMERGENCY 
-#define TL_LVL_EMERGENCY     DLF_LVL_EMERGENCY
-#endif
-     
-#if     TL_LVL_ALERT      != DLF_LVL_ALERT 
-#define TL_LVL_ALERT         DLF_LVL_ALERT         
-#endif
-
-#if     TL_LVL_ERROR      != DLF_LVL_ERROR 
-#define TL_LVL_ERROR         DLF_LVL_ERROR         
-#endif
-
-#if     TL_LVL_WARNING    != DLF_LVL_WARNING 
-#define TL_LVL_WARNING       DLF_LVL_WARNING       
-#endif
-
-#if     TL_LVL_AUTH       != DLF_LVL_AUTH
-#define TL_LVL_AUTH          DLF_LVL_AUTH          
-#endif
-
-#if     TL_LVL_SECURITY   != DLF_LVL_SECURITY      
-#define TL_LVL_SECURITY      DLF_LVL_SECURITY      
-#endif
-
-#if     TL_LVL_USAGE      != DLF_LVL_USAGE         
-#define TL_LVL_USAGE         DLF_LVL_USAGE         
-#endif
-
-#if     TL_LVL_SYSTEM     != DLF_LVL_SYSTEM        
-#define TL_LVL_SYSTEM        DLF_LVL_SYSTEM        
-#endif
-
-#if     TL_LVL_IMPORTANT  != DLF_LVL_IMPORTANT     
-#define TL_LVL_IMPORTANT     DLF_LVL_IMPORTANT     
-#endif
-
-#if     TL_LVL_MONITORING != DLF_LVL_MONITORING    
-#define TL_LVL_MONITORING    DLF_LVL_MONITORING    
-#endif
-
-#if     TL_LVL_DEBUG      != DLF_LVL_DEBUG         
-#define TL_LVL_DEBUG         DLF_LVL_DEBUG         
-#endif
-
-#if     TL_MSG_PARAM_DOUBLE  != DLF_MSG_PARAM_DOUBLE  
-#define TL_MSG_PARAM_DOUBLE     DLF_MSG_PARAM_DOUBLE  
-#endif
-
-#if     Tl_MSG_PARAM_INT64   != DLF_MSG_PARAM_INT64   
-#define Tl_MSG_PARAM_INT64      DLF_MSG_PARAM_INT64   
-#endif
-
-#if     TL_MSG_PARAM_STR     != DLF_MSG_PARAM_STR     
-#define TL_MSG_PARAM_STR        DLF_MSG_PARAM_STR     
-#endif
-
-#if     TL_MSG_PARAM_TPVID   != DLF_MSG_PARAM_TPVID   
-#define TL_MSG_PARAM_TPVID      DLF_MSG_PARAM_TPVID   
-#endif
-
-#if     TL_MSG_PARAM_UUID    != DLF_MSG_PARAM_UUID    
-#define TL_MSG_PARAM_UUID       DLF_MSG_PARAM_UUID    
-#endif
-
-#if     TL_MSG_PARAM_FLOAT   != DLF_MSG_PARAM_FLOAT   
-#define TL_MSG_PARAM_FLOAT      DLF_MSG_PARAM_FLOAT   
-#endif
-
-#if     TL_MSG_PARAM_INT     != DLF_MSG_PARAM_INT     
-#define TL_MSG_PARAM_INT        DLF_MSG_PARAM_INT     
-#endif
-
-}
-
-
-/**
- * Set the tplogger msg table.
- *
- * @param self   : reference to the tplogger struct
- * @param tl_msg : reference to the message table 
- *
- * @returns      : 0 on success
- *                 <0 on failure
- */ 
-static int  tl_set_msg_tbl_dlf( struct tplogger_s *self, tplogger_message_t tl_msg[] ) {
-
-        int err = 0;
-
-        if( NULL == self ) {
-
-                err = -1;
-                goto err_out;
-        }
-
-        if( NULL == tl_msg ) {
-
-                err = -2;
-                goto err_out;
-        }
-
-        self->tl_msg         = tl_msg;
-        self->tl_msg_entries = tplogger_nb_messages( self );
-        
- err_out:
-        return err;
-}
-
-
 /*
 ** END DLF implementation of the tplogger interface
 */
@@ -789,17 +794,35 @@ int DLL_DECL tl_log_stdio( tplogger_t *self, unsigned short msg_no, int num_para
         return err;
 }
 
-int DLL_DECL tl_llog_stdio( tplogger_t *self, int sev, unsigned short msg_no, int num_params, ... ) {}
+int DLL_DECL tl_llog_stdio( tplogger_t *self, int sev, unsigned short msg_no, int num_params, ... ) {
 
-int DLL_DECL tl_get_lvl_stdio( tplogger_t *self, unsigned short msg_no ) {}
+        return -1;
+}
 
-int DLL_DECL tl_set_lvl_stdio( tplogger_t *self, unsigned short msg_no, int lvl ) {}
+int DLL_DECL tl_get_lvl_stdio( tplogger_t *self, unsigned short msg_no ) {
 
-int DLL_DECL tl_fork_prepare_stdio( tplogger_t *self ) {}
+        return -1;
+}
 
-int DLL_DECL tl_fork_child_stdio( tplogger_t *self ) {}
+int DLL_DECL tl_set_lvl_stdio( tplogger_t *self, unsigned short msg_no, int lvl ) {
 
-int DLL_DECL tl_fork_parent_stdio( tplogger_t *self ) {}
+        return -1;
+}
+
+int DLL_DECL tl_fork_prepare_stdio( tplogger_t *self ) {
+
+        return -1;
+}
+
+int DLL_DECL tl_fork_child_stdio( tplogger_t *self ) {
+
+        return -1;
+}
+
+int DLL_DECL tl_fork_parent_stdio( tplogger_t *self ) {
+
+        return -1;
+}
 
 /*
 ** END Stdio implementation of the tplogger interface 
