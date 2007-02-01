@@ -106,7 +106,7 @@ sub init_vars()
     $DEF_EMAIL  = $opt{a} if $opt{a};
     $USER_EMAIL = $opt{m} if $opt{m};
     $VALUES     = $opt{v} if $opt{v} 
-}#end init_vars
+}
 
 #################################################################################
 #sub usage() 
@@ -131,19 +131,23 @@ sub usage()
     print STDERR  "                     Default is DISKCOPY_STAGED|DISKCOPY_CANBEMIGR\n\n\n";
     print STDERR  "example: $0 -n node001 -m name.surname\@cern.ch\n\n";
 
-    exit;    
-}#end usage
+    exit 0;    
+}
 
 
 #################################################################################
 # sub send_email()
 # simple subroutine to send email to castor ops / user as needed
-# INPUT  : none / globals
-# OUTPUT : none
+# INPUT  : @ of nodes
+# OUTPUT : 0 (ok) | -1 (BAD)
 #
-sub send_email ()
+sub send_email (@)
 #################################################################################
 {
+    my @NODES = @_;
+
+    return -1 if $#NODES < 0;
+
     foreach $NODE (@NODES){
 	
 	my $message ="### This is an automatic mail. Please do not reply. ###\n\n";
@@ -151,74 +155,90 @@ sub send_email ()
 	$message .="\n\nRegards,\n\ndisknodeShutdown\n";
 
     open (SENDMAIL, "| /usr/sbin/sendmail -t -oi -f disknodeShutdown\@spam.cern.ch");
+
 print SENDMAIL <<End_of_Mail;
 To: $DEF_EMAIL
-Cc: $USER_EMAIL
-Reply-to:disknodeShutdown\@cern.ch
+Reply-to:disknodeShutdown\@spam.cern.ch
 Subject: Server being taken out of production
 $message
 End_of_Mail
 close(SENDMAIL);
-  
 
-     }#end foreach node
+     }
 
-}#end send_email
+    return 0;
+}
 
 #################################################################################
 # sub wait_for_input()
 # simple subroutine to pause program while waiting for user to agree to continuing
-# INPUT  : none (direct) | command line interaction
-# OUTPUT : none
+# INPUT  : none (direct) but command line interaction
+# OUTPUT : 0 as exit or return
 #
 #
 sub wait_for_input()
 #################################################################################
 {
-    my $data = "";
+    my $data;
+
     do {
-	print "Please enter y(es) to continue or q(uit) to quit program and then enter.\n";
+	print "\n\nPlease enter y(es) to continue or q(uit) to quit program and then enter.\n";
 	chomp ($data = <STDIN>);
     }while ($data !~ m/^(y|yes|q|quit)$/i);
-    if ($data =~ m/^(y|yes)$/i) { return 1; }
-    if ($data =~ m/^(quit|q)$/i) { exit; }
+
+    if ($data =~ m/^(y|yes)$/i)  { return 0; }
+    if ($data =~ m/^(quit|q)$/i) { exit 0;   }
+
 }
 
 #################################################################################
 # sub check_progress () 
-# INPUT  :
-# OUTPUT :
+# INPUT  : array
+# OUTPUT : -1 PROBLEM | 0 ok | >0 count
 #
-# todo nsls
 
-sub check_progress () {
+sub check_progress (@) {
 #################################################################################
+
     my @ary  = @_;    
-    my $i;
-    my $total = 0;
-    my $filepath;
+
+    return -1 if $#ary < 0;
+
+    my ($i, $total) = 0;
     
-    print "checking $#ary files\n";
-    for ($i =0; $i <= $#ary; $i++) {
+    print "Checking " . ($#ary + 1) . " files\n";
+
+    for ($i = 0; $i <= $#ary; $i++) {
+
+        if (not $ary[$i] ){
+	    print "Blank value in file migration array. Skipping to next value.\n";
+	    next;
+	}
 	
-	$filepath = `nsGetPath castorns $ary[$i]`;
+	my $filepath = `nsGetPath castorns $ary[$i]`;
+
 	if (length($filepath) != 0 ) {
 	    open (CHECK, "/usr/bin/stager_qry -S $SVCCLASS  -M $filepath |");
-	    
 	    while (<CHECK>) {
-		print $_;
-		if ($_ =~ m/($VALUES|CANBEMIGR|STAGED)/i ){ print $_; $total++;}
+		#print $_;
+		if ($_ =~ m/($VALUES|CANBEMIGR|STAGED)/i ){ 
+		    print "[MATCH] $_\n"; 
+		    $total++;
+		}
 	    }
 	    close(CHECK);
 	} else {
-	    print $_; $total++;
+	    print "[FILEPATH=0] $_"; 
+	    $total++;
 	}
     }
     
-    if ($total !=10) { 
-	print $total . "\n"; 
+    if ($total != 10) { 
+	print "Currently transfering $total files. Sleeping for $DELAY seconds.\n"; 
 	sleep ($DELAY);
-    } else { sleep(2); }
+    } else { 
+	sleep(2); 
+    }
     
     return $total;
 }
@@ -226,7 +246,7 @@ sub check_progress () {
 
 #################################################################################
 # INPUT  : node name
-# OUTPUT : filename as string
+# OUTPUT : filename as string / -1 for error
 #
 # This produced a file in the format  - FileID State localpath castorpath
 #
@@ -234,77 +254,104 @@ sub create_file () {
 #################################################################################
 
     my ($NODE) = shift;
-    my ($line);	
+
+    if (not $NODE) {
+	print "[ERR] Node name not supplied to sub create_file.\n";
+	return -1;
+    }
+
     my $file = "/tmp/recov.$NODE" . time();
     my $count = 0;
-    my $filepath;
 
-    print "Creating file to contain list of files to move.\n"; 
+    print "Creating file - $file - to contain list of files to move.\n"; 
 
-    system("/bin/touch $file");
+    if (system("/bin/touch $file") != 0) {
+	print "[ERR] Unable to touch file - $file\n";
+	return -1;
+    }
 
     print "Creating a list of files to move - this should not take long\n";
 
-    open(FILE, ">$file") or die "Problem opening file $file for writing\n";
+    eval {open(FILE, ">$file"); }; 
 
-    open(CMD, "diskServer_qry -i $NODE |"); # egrep '$VALUES' | awk \'{print \$1}\' |");
+    if ($@) {
+	print "Problem opening file $file for writing : $@\n";
+	return -1;
+    }
+
+    open(CMD, "diskServer_qry -i $NODE |"); 
+
     <CMD>;
 
-        foreach (<CMD>) { #was while ($line = <CMD>) {
-		chomp;
-		next if /^FileId/;
-		next if ! /($VALUES)/;
-                my @line = split (/\s+/);
-                $filepath = `nsGetPath castorns $line[0]`;
-                if (length($filepath) != 0 ) {
-			print FILE $_ . " ". $filepath;
-			$count++;
-		}
-		if ($count % 100 == 0) {print ".";}
-		if ($count % 1000 == 0) {print " $count files processed.\n";}
-        }
+    foreach (<CMD>) { 
+	chomp;
+	next if /^FileId/;
+	next if ! /($VALUES)/;
+	my @line = split (/\s+/);
+	my $filepath = `nsGetPath castorns $line[0] 2> /dev/null `; #suppress castorns error output
+	if (length($filepath) != 0 ) {
+	    print FILE $_ . " ". $filepath;
+	    $count++;
+	}
+	if ($count % 100 == 0 && $count != 0) {print ".";}
+	if ($count % 1000 == 0 && $count != 0) {print "$count files to be processed.\n";}
+    }
     close(CMD);
     close(FILE);
-    print "List of files to move has been created with $count entries.\n";
 
+    print "List of files to move has been created with $count entries.\n";
+    
     return $file,$count;
 }
 
 #################################################################################
 # sub final_check
-#
-#
+# input : nodename, filepath
+# output: none
 #
 #################################################################################
 
 sub final_check() {
     my $node = shift;
     my $file = shift;
+
     my $outfile = "/tmp/error_${node}_" . time();
    
-    open (F, $file) or die "Unable to open $file for final check";
+    eval { open (F, "<$file"); }; 
 
-    open (O, ">$outfile");
+    if ($@){
+	print "[ERR] Unable to open $file for final check : $@\n";
+	exit -1;
+    }
+    
+    eval {open (O, ">$outfile"); };
+
+    if ($@){
+	print "[ERR] Unable to open $outfile for final check : $@\n";
+	exit -1;
+    }
 
     foreach (<F>) {
 	my @tmp = split(/\s+/);
         my $filepath = `nsGetPath castorns $tmp[0]`;
 
         if (length($filepath) != 0 ) {
-		open (X, "/usr/bin/stager_qry -S $SVCCLASS -M $filepath |");
+	    open (X, "/usr/bin/stager_qry -S $SVCCLASS -M $filepath |");
 		foreach (<X>) {
- 	 		chomp;
-	    		next if /^Received/;
-	    		last if /(CANBEMIGR|STAGED)/;
-	    		print "Problem with $tmp[2]\n";
-	    		print O "$tmp[2]\n";
+		    chomp;
+		    next if /^Received/;
+		    last if /(CANBEMIGR|STAGED)/;
+		    print "Problem with $tmp[2]\n";
+		    print O "$tmp[2]\n";
 		}
-		close (X);
+	    close (X);
 	}
     }
     close (F);
     print "File name for errors is $outfile\n";
     close (O);
+
+    return 0;
 }
 #################################################################################
 # sub TransferManager()
@@ -313,47 +360,60 @@ sub final_check() {
 # potentially be moved from the current node to others.
 #
 #      notes: log into castorscheduler and run bhoststo get current status
-#
+# input: nodename 
+# output : -1 error, 0 ok
 #
 sub TransferManager()
 #################################################################################
 {
     my ($NODE) = shift;
+
     my @working_files; 		#an array of the files currently being worked on
-    my $file;			#file name for list of files on node
+    
     my $active_transfers = 0;
     my $active = 0;
     my $total_done = 0;
-    my $count = 0;
+    
+    my ($file,$count) = &create_file($NODE);
+    
+    unless (-e $file) {
+	print "[ERR] File - $file - does not exist\n";
+	return -1;
+    }
 
-    ($file,$count) = &create_file($NODE);
+    eval { open(FILE, "<$file");};
+    if ($@) {
+	print "[ERR] Problem opening file $file for reading : $@\n";
+	print "[WARN] Going to try next node ...\n";
+	return -1;
+    }
 
-    open(FILE, $file) or die "Problem opening file $file for reading\n";
     print "Do you want to start the transfer?.\n"; 
     &wait_for_input();
-   
-    $active = 0;
+    
     foreach (<FILE>){
-      my ($ID, $STATUS, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
 
+	my ($ID, $STATUS, $LOCAL, $Notsure, $URL) = split /\s+/, $_;
+		
+	if ($active == 10) {
 
-      if ($active == 10) {
-	print "End of 10 file ops. Checking progress before continuing.\n";
-	do { 
-	  $active_transfers = &check_progress(@working_files); 
-	} while ($active_transfers != $active); 
+	    print "End of 10 file ops. Checking progress before continuing.\n";
+	    do { 
+		$active_transfers = &check_progress(@working_files); 
+
+	    } while ($active_transfers != $active); 
+	    
+	    @working_files = ();
+	    $active = 0;	
+	    $total_done += 10;
+	    print "$total_done files of $count processed. \n"; 
+	    
+	} 
 	
-	@working_files = ();
-	$active = 0;	
-	$total_done += 10;
-	print "$total_done files of $count processed. \n"; 
-
-      } #end else COUNT !=10
-
-
+	
         open(EXECUTE, "/usr/bin/stager_get -S $SVCCLASS -M $URL 2>&1|"); 
         $working_files[$active++] = $ID;
-
+	
 	my $output = <EXECUTE>;
 	until (length($output) > 0) {
 	    sleep (1);
@@ -361,37 +421,37 @@ sub TransferManager()
 	}
 	print $output; 
 	if ($output =~ /Error/){
-		print <EXECUTE>;
-		print "\nerror on $URL retrying once...\n\n";
-		open(EXECUTE, "/usr/bin/stager_get -S $SVCCLASS -M $URL 2>&1|");
-		my $output = <EXECUTE>;
-		until (length($output) > 0) {
-			sleep (1);
-			$output = <EXECUTE>;
-			}
-		}	
+	    print <EXECUTE>;
+	    print "\nerror on $URL retrying once...\n\n";
+	    open(EXECUTE, "/usr/bin/stager_get -S $SVCCLASS -M $URL 2>&1|");
+	    my $output = <EXECUTE>;
+	    until (length($output) > 0) {
+		sleep (1);
+		$output = <EXECUTE>;
+	    }
+	}	
 	print <EXECUTE>;
         close (EXECUTE);
-
-      if ($total_done+$active==$count) {
-
-	print "End of file list.\n";
-	do { 
-	  $active_transfers = &check_progress(@working_files); 
-	} while ($active_transfers != $active); 
+	
+	if ( ($total_done+$active) == $count ) {
+	    
+	    print "End of file list.\n";
+	    do { 
+		$active_transfers = &check_progress(@working_files); 
+	    } while ($active_transfers != $active); 
 	}
-
+	
     }#END FOREACH
-    close(FILE);
-
+	close(FILE);
+    
     &final_check($NODE, $file);
-
+    
     print "Finished!\n";
-    return; #RETURN TO MAIN
-
-}#end transfermanager
-
-
+    return 0; 
+    
+}
+    
+    
 #################################################################################
 # start of main code
 #
@@ -400,39 +460,79 @@ sub TransferManager()
 #       This was the best work around we could find. 
 
 
-     &init_vars();                 #sort out the getopts arguments for node name and email addresses
+    init_vars();          
 
+if ($#NODES < 0){ 
+    print "[ERR] You need to supply the name of at least one node to be taken out of service.\n"; 
+    usage();
+} 
+if ($USER_EMAIL && $USER_EMAIL !~ /@/) { 
+    print "[ERR] Your email address - $USER_EMAIL - needs a \@ somewhere in it.\n"; 
+    usage();
+} 	
+if ($DEF_EMAIL !~ /@/) { 
+    print "[ERR] Your default email address - $DEF_EMAIL - needs a \@ somewhere in it!\n"; 
+    usage();
+}
+if (not $SVCCLASS){
+    print "[ERR] You need to supply a service class to move the node(s) into";
+    usage();
+}
+if (not -x "/usr/bin/nsGetPath") {
+    print "[ERR] Unable to execute - /usr/bin/nsGetPath - as user - $ENV{'USERNAME'} -. Exiting. "; 
+    exit 1;
+}
+if (not -x "/usr/sbin/sendmail"){
+    print "[ERR] Unable to execute - /usr/sbin/sendmail - as user - $ENV{'USERNAME'} -. Exiting. "; 
+    exit 1;
+} 
+if (not -x "/usr/bin/stager_qry"){
+    print "[ERR] Unable to execute - /usr/bin/stager_qry - as user - $ENV{'USERNAME'} -. Exiting. "; 
+    exit 1;
+}
+if (not -x "/usr/bin/stager_get"){
+    print "[ERR] Unable to execute - /usr/bin/stager_get - as user - $ENV{'USERNAME'} -. Exiting. "; 
+    exit 1;
+}
+if (not -x "/bin/touch"){
+    print "[ERR] Unable to execute - /bin/touch - as user - $ENV{'USERNAME'} -. Exiting. "; 
+    exit 1;
+}
+#here we check each node for files, prompt the user to continue, and then move the node to recovery
 
-  for (0 .. $#NODES){ $NODES[$_] =~ tr/A-Z/a-z/; }
-#  $USER_EMAIL =~ s/@/\\@/;
+foreach my $NODE (@NODES){
 
-  if (!@NODES){ print "You need to supply the name of a node to be taken out of service.\n"; exit;} 
-  if ($USER_EMAIL && $USER_EMAIL !~ /@/) { print "Your email address - $USER_EMAIL - needs an \@ somewhere.\n"; exit;} 	
-  if ($DEF_EMAIL !~ /@/) { print "Your email address - $DEF_EMAIL - needs an \@ somewhere!\n"; exit;}
+    $NODE =~ tr/A-Z/a-z/;
 
-  foreach $NODE (@NODES){
-
-    open(JUNKVAL, "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT' |"); close (JUNKVAL); 
-
+    open(JUNKVAL, "diskServer_qry $NODE | egrep 'DISKCOPY_WAIT|DISKCOPY_STAGEOUT' |"); 
+    close (JUNKVAL); 
+    
     print "If there are active transfers for $NODE please decide if you wish to continue.\n";	
     &wait_for_input();		
-
+    
     print "Moving $NODE to recovery pool.\n";
-  
+    
     if (system("/usr/bin/moveDiskServer recovery $NODE") == 0) {
-#          if !~ /has been moved to recovery/ exit
 	print "$NODE has been moved to recovery.\n";
     } else {
 	print "Failed to move $NODE to recovery. Now exiting.\n";
-	exit;
+	exit 1;
     }
+    
+}
 
-  }#end foreach
+#send an email to say which machines are being taken out of production    
+    &send_email(@NODES);	
 
-  &send_email();	
+#clean each machine sequentially
+foreach (@NODES) {
+    my $ret = &TransferManager($_);
+    if ($ret != 0) {
+	print "[WARN] Problem transfering files from node $_\n";
+	next;
+    }
+}
 
-  foreach (@NODES) {
-    &TransferManager($_); #now start transfering file
-  }
+print "Finished running $0\n";
 
-  1;
+exit 0;
