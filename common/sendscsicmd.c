@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.16 $ $Date: 2006/02/15 18:49:49 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.17 $ $Date: 2007/02/01 15:29:49 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -17,6 +17,8 @@ static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.16 $ $Date:
  *		>0	number of bytes transferred
  */
 /*	currently implemented on SOLARIS25, sgi, hpux, Digital Unix and linux */
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -75,7 +77,7 @@ static char tp_err_msgbuf[132];
 #else
 #define USRMSG(fmt,p,f,msg) {}
 #endif
-static char nosensekey[] = "no sense key available";
+/*static char nosensekey[] = "no sense key available";*/
 static char notsupp[] = "send_scsi_cmd not supported on this platform";
 static char *sk_msg[] = {
         "No sense",
@@ -195,7 +197,7 @@ struct scsi_info scsi_codmsg[] = {
 };
 static char err_msgbuf[132];
 #define PROCBUFSZ 80
-send_scsi_cmd (tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense, senselen, timeout, flags, nb_sense_ret, msgaddr)
+int send_scsi_cmd (tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense, senselen, timeout, flags, nb_sense_ret, msgaddr)
 int tapefd;
 char *path;
 int do_not_open;
@@ -210,7 +212,7 @@ int flags;
 int *nb_sense_ret;
 char **msgaddr;
 {
-	int i;
+	/* int i;*/
 #if defined(SOLARIS25)
 	struct uscsi_cmd ucmd;
 
@@ -350,7 +352,7 @@ char **msgaddr;
 	if (! do_not_open) close (fd);
 	*nb_sense_ret = dsreq.ds_sensesent;
 	if (dsreq.ds_ret && dsreq.ds_ret != DSRT_SENSE && dsreq.ds_ret != DSRT_SHORT) {
-		for (i = 0; i < 256; i++) {
+		for (int i = 0; i < 256; i++) {
 			if (ds_ret_codmsg[i].ret == 0xFF) {
 				sprintf (err_msgbuf,
 				    "Undefined CAM status %02X", dsreq.ds_ret);
@@ -605,11 +607,11 @@ char **msgaddr;
 
 	if (sizeof(struct sg_header) + cdblen + buflen > sg_big_buff_val) {
 #if defined(TAPE)
-		sprintf (tp_err_msgbuf, "blocksize too large (max %d)\n",
+		sprintf (tp_err_msgbuf, "blocksize too large (max %ld)\n",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = tp_err_msgbuf;
 #else
-		sprintf (err_msgbuf, "blocksize too large (max %d)",
+		sprintf (err_msgbuf, "blocksize too large (max %ld)",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = err_msgbuf;
 #endif
@@ -774,7 +776,7 @@ char **msgaddr;
 }
 #endif
 
-get_ss_msg(scsi_status, msgaddr)
+void get_ss_msg(scsi_status, msgaddr)
 int scsi_status;
 char **msgaddr;
 {
