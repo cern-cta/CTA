@@ -98,9 +98,11 @@ setcookie("style", $_GET['style']);
 	if (DB_LAYER == 'mysql') {
 		$limit = "LIMIT ".(($_GET['page'] - 1) * $_GET['limit']).", ".$_GET['limit'];
 	} else {
+		$s_timestamp = $schema_version > 1 ? "timestamp" : "a.timestamp";
+		$s_timeusec  = $schema_version > 1 ? "timeusec"  : "a.timeusec";
 		$limit = "SELECT * FROM (
-					 SELECT p.*, ROWNUM RNUM 
-					 FROM (subquery ORDER BY a.timestamp DESC, a.timeusec DESC) p
+					 SELECT p.*, ROWNUM RNUM
+					 FROM (subquery ORDER BY $s_timestamp DESC, $s_timeusec DESC) p
 				  ) 
 				  WHERE (RNUM >  ".($_GET['page'] - 1) * $_GET['limit']."
 				  AND    RNUM <= ".($_GET['page'])     * $_GET['limit'].")";	
