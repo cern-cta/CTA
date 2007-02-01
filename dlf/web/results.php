@@ -100,7 +100,7 @@ setcookie("style", $_GET['style']);
 	} else {
 		$limit = "SELECT * FROM (
 					 SELECT p.*, ROWNUM RNUM 
-					 FROM (subquery) p
+					 FROM (subquery ORDER BY a.timestamp DESC, a.timeusec DESC) p
 				  ) 
 				  WHERE (RNUM >  ".($_GET['page'] - 1) * $_GET['limit']."
 				  AND    RNUM <= ".($_GET['page'])     * $_GET['limit'].")";	
