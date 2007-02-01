@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.189 $ $Release$ $Date: 2006/12/05 18:05:28 $ $Author: felixehm $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.190 $ $Release$ $Date: 2007/02/01 10:54:27 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -240,8 +240,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       }
       stmtString
         << ") RETURNING id, retryCounter, fileName, "
-        << "protocol, xsize, priority, status, modeBits, flags"
-        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9 ";
+        << "protocol, xsize, priority, status, modeBits, flags, subReqId"
+        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9, :10 ";
 
       m_subRequestToDoStatement =
         createStatement(stmtString.str());
@@ -263,6 +263,8 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (8, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (10, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
     // build the list of
@@ -287,6 +289,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
        m_subRequestToDoStatement->getInt(7));
     result->setModeBits(m_subRequestToDoStatement->getInt(8));
     result->setFlags(m_subRequestToDoStatement->getInt(9));
+    result->setSubreqId(m_subRequestToDoStatement->getString(10));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
