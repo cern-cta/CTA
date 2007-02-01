@@ -4,16 +4,17 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: wsacct.c,v $ $Revision: 1.6 $ $Date: 2003/10/29 13:06:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: wsacct.c,v $ $Revision: 1.7 $ $Date: 2007/02/01 15:39:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
-
+#include <unistd.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <time.h>
 #include "../h/sacct.h"
-wsacct(package, acctstruct, len)
+void wsacct(package, acctstruct, len)
 int package;
 char *acctstruct;
 int len;
