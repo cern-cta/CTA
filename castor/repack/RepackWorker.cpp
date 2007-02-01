@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/01/15 12:35:39 $ $Author: riojac3 $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/02/01 10:25:07 $ $Author: waldron $
  *
  *
  *
@@ -458,7 +458,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 		else {
       tape = rreq->subRequest().begin();
       while ( tape != rreq->subRequest().end() ){
-      /** throws exception if tape is already in cue or has invalid status, as
+      /** throws exception if tape is already in queue or has invalid status, as
           well as in any other error cases 
         */
         if ( !checkTapeForRepack((*tape)->vid()) ){
@@ -483,10 +483,10 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 //------------------------------------------------------------------------------
 bool RepackWorker::checkTapeForRepack(std::string tapename) throw (castor::exception::Internal)
 {
-  /** checks if already in cue */
+  /** checks if already in queue */
   if  ( m_databasehelper->is_stored(tapename)  ){
     castor::exception::Internal ex;
-    ex.getMessage() << "Tape " << tapename << " already in repack cue." << std::endl;
+    ex.getMessage() << "Tape " << tapename << " already in repack queue." << std::endl;
     throw ex;
   }
   
