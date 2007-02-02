@@ -6,7 +6,7 @@ REPACK_DIR=CASTOR_HOME+'/castor/repack'
 
 
 module1 = Extension('wrapcns',
-                    include_dirs=['.',CASTOR_HOME+'/h'],
+                    include_dirs=[CASTOR_HOME+'/h',CASTOR_HOME],
                     sources = [REPACK_DIR+'/repackUndo/WrapCns.cpp'], library_dirs=['/usr/lib'],
                     extra_objects=[CNV_DIR+'/DbRepackRequestCnv.o',CNV_DIR+'/DbRepackSegmentCnv.o',CNV_DIR+'/DbRepackSubRequestCnv.o', REPACK_DIR+'/RepackSubRequest.o',REPACK_DIR+'/RepackRequest.o',REPACK_DIR+'/RepackSegment.o',REPACK_DIR+'/DatabaseHelper.o',REPACK_DIR+'/Tools.o'],
                     libraries=['shift', 'castorCnvs'])

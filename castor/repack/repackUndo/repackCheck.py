@@ -204,7 +204,7 @@ for tape in listOfTape:
   minResult=repackCursor.fetchall()
   fileidMin=minResult[0][0]
 
-  minFileName=((os.popen("nsGetPath lxs5012 %i"% (fileidMin)).read()).split())[0]
+  minFileName=((os.popen("nsGetPath castorns %i"% (fileidMin)).read()).split())[0]
   print  "   "+minFileName
 
   queryMax="select fileid,fileseq from repacksegment where vid = :1 and fileseq in (select max(fileseq) from repacksegment where vid=:1)"
@@ -212,7 +212,7 @@ for tape in listOfTape:
   maxResult=repackCursor.fetchall()
   fileidMax=maxResult[0][0]
 
-  maxFileName=((os.popen("nsGetPath lxs5012 %i"% (fileidMax)).read()).split())[0]
+  maxFileName=((os.popen("nsGetPath castorns %i"% (fileidMax)).read()).split())[0]
   print "   "+maxFileName
 
   
@@ -223,7 +223,7 @@ for tape in listOfTape:
   middleResult=repackCursor.fetchall()
   fileidMiddle= middleResult[0][0]
 
-  middleFileName=((os.popen("nsGetPath lxs5012 %i"% (fileidMiddle)).read()).split())[0]
+  middleFileName=((os.popen("nsGetPath castorns %i"% (fileidMiddle)).read()).split())[0]
   print  "   "+middleFileName
   if ((os.popen4("stager_get -M "+ maxFileName+" -M "+minFileName+" -M "+middleFileName))[1].read()).count("SUBREQUEST_READY") != 3:
       print "Error for the stager_get  of one of the file"

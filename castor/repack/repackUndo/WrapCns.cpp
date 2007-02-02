@@ -17,7 +17,7 @@ static PyObject* wrap_cns_getsegattrs(PyObject* self, PyObject* args) {
   struct Cns_fileid file_uniqueid;
   memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
 
-  sprintf(file_uniqueid.server,"%s","lxs5012");
+  sprintf(file_uniqueid.server,"%s","castorns");
   int copyNum; 
 
   if (!PyArg_ParseTuple(args,"ii",&file_uniqueid.fileid,&copyNum)) return NULL;
@@ -86,7 +86,7 @@ static PyObject* wrap_cns_setsegattrs(PyObject* self, PyObject* args) {
 
   struct Cns_fileid file_uniqueid;
   memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
-  sprintf(file_uniqueid.server,"%s","lxs5012");
+  sprintf(file_uniqueid.server,"%s","castorns");
   unsigned  int repackBlockid;
   char* repackVidString;
   int i,ret,ok;
