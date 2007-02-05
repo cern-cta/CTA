@@ -30,7 +30,7 @@ LIBS = -L../../dlf -ldlf -L../../common -lcommon
 #endif
 #endif
 
-CFLAGS  = -I$(INCLUDES) -I../../dlf/
+CFLAGS  = -pedantic -Wno-long-long -I$(INCLUDES) -I../../dlf/
 LDFLAGS = $(MTLDFLAGS)
 PROGS   = ProgramTargetName(dlftest)
 
