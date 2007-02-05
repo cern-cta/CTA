@@ -321,7 +321,7 @@ int main (int argc, char **argv) {
 
 	/* create the thread pool */
 	for (i = 0; i < threads; i++) {
-		tid[i] = Cthread_create((void *)worker, NULL);
+		tid[i] = Cthread_create((void *(*)(void *))worker, NULL);
 		if (tid[i] == -1) {
 			printf("Failed to Cthread_create_detached() - %s\n", strerror(errno));
 		} 
