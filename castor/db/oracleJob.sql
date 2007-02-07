@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.368 $ $Release$ $Date: 2007/01/30 16:02:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.369 $ $Release$ $Date: 2007/02/07 14:59:54 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.368 $ $Date: 2007/01/30 16:02:42 $');
+INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.369 $ $Date: 2007/02/07 14:59:54 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1128,28 +1128,33 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   cfid INTEGER;
   fid INTEGER;
   nh VARCHAR2(2048);
-  unused CastorFile%ROWTYPE;
+  realFileSize INTEGER;
+  srSvcClass INTEGER;
+  reserved INTEGER;
 BEGIN
  -- Get and uid, gid
- SELECT euid, egid INTO reuid, regid FROM SubRequest,
-      (SELECT id, euid, egid from StageGetRequest UNION ALL
-       SELECT id, euid, egid from StagePrepareToGetRequest UNION ALL
-       SELECT id, euid, egid from StageRepackRequest UNION ALL
-       SELECT id, euid, egid from StageUpdateRequest UNION ALL
-       SELECT id, euid, egid from StagePrepareToUpdateRequest) Request
+ SELECT euid, egid, svcClass, xsize
+   INTO reuid, regid, srSvcClass, reserved
+   FROM SubRequest,
+      (SELECT id, euid, egid, svcClass from StageGetRequest UNION ALL
+       SELECT id, euid, egid, svcClass from StagePrepareToGetRequest UNION ALL
+       SELECT id, euid, egid, svcClass from StageRepackRequest UNION ALL
+       SELECT id, euid, egid, svcClass from StageUpdateRequest UNION ALL
+       SELECT id, euid, egid, svcClass from StagePrepareToUpdateRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- Take a lock on the CastorFile. Associated with triggers,
  -- this guarantee we are the only ones dealing with its copies
- SELECT CastorFile.* INTO unused FROM CastorFile, SubRequest
+ SELECT CastorFile.fileSize, CastorFile.id
+   INTO realFileSize, cfId
+   FROM CastorFile, SubRequest
   WHERE CastorFile.id = SubRequest.castorFile
     AND SubRequest.id = srId FOR UPDATE;
  -- Try to find local DiskCopy
  dci := 0;
- SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskCopy.castorfile
-  INTO dci, rpath, rstatus, cfId
-  FROM DiskCopy, SubRequest
-  WHERE SubRequest.id = srId
-    AND SubRequest.castorfile = DiskCopy.castorfile
+ SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
+  INTO dci, rpath, rstatus
+  FROM DiskCopy
+  WHERE DiskCopy.castorfile = cfId
     AND DiskCopy.filesystem = fileSystemId
     AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
  -- If found local one, check whether to wait on it
@@ -1166,15 +1171,51 @@ BEGIN
  -- Note that we do the same in Disk2DiskCopyDone for the case of
  -- replication due to the update
  fixUpdateRequestProblem(dci, cfId, srId);
+ -- It could be that we end up here, while we were supposed to do
+ -- a file replication, i.e. a disk2diskcopy. The reason is that
+ -- the selected filesytem in such a case can be any, including
+ -- the one(s) already having a valid diskcopy. We have to detect that
+ -- and call updateFSFileClose in such a case.
+ DECLARE
+   maxNbRepl NUMBER;
+   repPolicy VARCHAR2(2048);
+   curNbRepl NUMBER;
+ BEGIN
+   IF rstatus IN (0, 10) THEN
+     -- see maxNbReplicas for the svcclass
+     SELECT maxReplicaNb, replicationPolicy INTO maxNbRepl, repPolicy
+       FROM SvcClass WHERE id = srSvcClass;
+     -- only deal with replication
+     IF maxNbRepl = 0 OR maxNbRepl > 1 THEN
+       -- see current nb of copies
+       SELECT count(*) INTO curNbRepl
+         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+        WHERE DiskCopy.castorfile = cfId
+          AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+          AND FileSystem.id = DiskCopy.fileSystem
+          AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+          AND DiskServer.id = FileSystem.diskServer
+          AND DiskServer.status IN (0, 1)
+          AND DiskPool2SvcClass.parent = FileSystem.diskPool
+          AND DiskPool2SvcClass.child = srSvcClass;
+       -- compare the 2
+       IF curNbRepl < maxNbRepl OR
+          (maxNbRepl = 0 AND repPolicy IS NULL) THEN
+         -- update filesystem status, take care of 0 filesizes
+         IF reserved = 0 THEN reserved := realFilXeSize; END IF;
+         updateFSFileClosed(fileSystemId, reserved, reserved);
+       END IF;
+     END IF;
+   END IF;
+ END;
 EXCEPTION WHEN NO_DATA_FOUND THEN
  -- No disk copy found on selected FileSystem, look in others
  BEGIN
   -- Try to see whether we should wait on some DiskCopy
   SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
   INTO dci, rpath, rstatus
-  FROM DiskCopy, SubRequest, FileSystem, DiskServer
-  WHERE SubRequest.id = srId
-    AND SubRequest.castorfile = DiskCopy.castorfile
+  FROM DiskCopy, FileSystem, DiskServer
+  WHERE DiskCopy.castorfile = cfId
     AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, WAITFS_SCHEDULING, STAGEOUT
     AND FileSystem.id(+) = DiskCopy.fileSystem
     AND FileSystem.status(+) = 0 -- PRODUCTION
@@ -1191,9 +1232,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
    -- Check whether there are any diskcopy available
    SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
    INTO dci, rpath, rstatus
-   FROM DiskCopy, SubRequest, FileSystem, DiskServer
-   WHERE SubRequest.id = srId
-     AND SubRequest.castorfile = DiskCopy.castorfile
+   FROM DiskCopy, FileSystem, DiskServer
+   WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
      AND FileSystem.id = DiskCopy.fileSystem
      AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
@@ -1205,9 +1245,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                FileSystem.weight, FileSystem.mountPoint,
                DiskServer.name
-    FROM DiskCopy, SubRequest, FileSystem, DiskServer
-    WHERE SubRequest.id = srId
-      AND SubRequest.castorfile = DiskCopy.castorfile
+    FROM DiskCopy, FileSystem, DiskServer
+    WHERE DiskCopy.castorfile = cfId
       AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
       AND FileSystem.id = DiskCopy.fileSystem
       AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
@@ -1350,17 +1389,20 @@ END;
 /* PL/SQL method implementing disk2DiskCopyDone */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
 (dcId IN INTEGER, dcStatus IN INTEGER) AS
-  srid INTEGER;
+  srId INTEGER;
   cfId INTEGER;
+  fsId INTEGER;
+  reserved INTEGER;
 BEGIN
   -- update DiskCopy
-  UPDATE DiskCopy set status = dcStatus WHERE id = dcId RETURNING CastorFile INTO cfId;
+  UPDATE DiskCopy set status = dcStatus WHERE id = dcId
+  RETURNING CastorFile, FileSystem INTO cfId, fsId;
   -- update SubRequest
   UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId
-  RETURNING id INTO srid;
+  RETURNING id, xsize INTO srId, reserved;
   -- In case of an update, we should update the new copy to STAGEOUT,
   -- independently of the original status make the other copies INVALID.
   -- We should NOT do so, and we should wait for the first byte to be
@@ -1370,7 +1412,12 @@ BEGIN
   fixUpdateRequestProblem(dcId, cfId, srId);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
-   WHERE parent = srid; -- SUBREQUEST_RESTART
+   WHERE parent = srId; -- SUBREQUEST_RESTART
+  -- update filesystem status, take care of 0 filesizes
+  IF reserved = 0 THEN
+    SELECT fileSize INTO reserved FROM CastorFile WHERE id = cfId;
+  END IF;
+  updateFsFileClosed(fsId, reserved, reserved);
 END;
 
 /* PL/SQL method implementing recreateCastorFile */
@@ -1612,6 +1659,8 @@ BEGIN
  IF contextPIPP != 0 THEN
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
+   -- In case reserved space is 0, it was changed to 2G by default
+   IF 0 = reservedSpace THEN reservedSpace := 2147483648; END IF;
    updateFsFileClosed(fsId, reservedSpace, fs);
  END IF;
  -- archive Subrequest
