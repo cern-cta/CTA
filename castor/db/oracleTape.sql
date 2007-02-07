@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.369 $ $Release$ $Date: 2007/02/07 14:59:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.370 $ $Release$ $Date: 2007/02/07 17:17:26 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.369 $ $Date: 2007/02/07 14:59:54 $');
+INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.370 $ $Date: 2007/02/07 17:17:26 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2454,8 +2454,9 @@ BEGIN
   BEGIN
     SELECT UNIQUE svcClass.gcPolicy
            BULK COLLECT INTO policies
-      FROM SvcClass, DiskPool2SvcClass
-     WHERE DiskPool2SvcClass.Parent = dpId
+      FROM SvcClass, DiskPool2SvcClass, FileSystem
+     WHERE FileSystem.id = fsId
+       AND DiskPool2SvcClass.Parent = FileSystem.diskPool
        AND SvcClass.Id = DiskPool2SvcClass.Child
        AND SvcClass.gcPolicy IS NOT NULL;
   EXCEPTION WHEN NO_DATA_FOUND THEN
