@@ -5,7 +5,7 @@
 #
 # @author Castor dev team, castor-dev@cern.ch
 #
-# @(#)$RCSfile: gencastor,v $ $Revision: 1.14 $ $Release$ $Date: 2006/08/07 14:44:59 $ $Author: itglp $
+# @(#)$RCSfile: gencastor,v $ $Revision: 1.15 $ $Release$ $Date: 2007/02/08 18:22:41 $ $Author: itglp $
 # 
 
 if ("$1" == "-h") then
@@ -41,20 +41,20 @@ mkdir -p ${TMPDIR}/${TOPNS}/db
 cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
 grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/oracleTrailer_drop.sql
 grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
+# removes CVS keywords
+sed 's/\$//g' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql > ${TMPDIR}/ora.sql
+mv ${TMPDIR}/ora.sql ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql
 
-# hack to prevent Umbrello from overwriting the original XMI file
-cp ${XMIFILE} ${TMPDIR}
-set XMITOUSE=`basename ${XMIFILE}`
-
-(/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${TMPDIR}/${XMITOUSE} > /dev/tty) >& /dev/null
+(/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE} > /dev/tty) >& /dev/null
 
 sed 's/^END;/END;\n\//' ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sqlplus
+sed 's/^END;/END;\n\//' ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_drop.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_drop.sqlplus
 
 set pushdsilent
 pushd ${TMPDIR}
 rm -f ${TOPNS}/db/*Generated*
 rm -f ${TOPNS}/db/*Trailer_drop*
-rm -f ${XMITOUSE}
+rm -f ${TOPNS}/db/oracleTrailer.sql
 
 foreach f (`find . -type f`)
   #echo $f
@@ -66,7 +66,7 @@ foreach f (`find . -type f`)
     cp ${TMPDIR}/${f} ${WORKDIR}/$f
   else
     if (-f ${WORKDIR}/${f}_clone) then
-      echo Merging clone before upgrading $f
+      #echo Merging clone before upgrading $f
       `dirname $0`/codemerge.py ${TMPDIR}/${f} ${WORKDIR}/${f}_clone ${TMPDIR}/${f}_merge
       mv ${TMPDIR}/${f}_merge ${TMPDIR}/${f}
     endif
