@@ -2208,7 +2208,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
             << endl << getIndent()
             << "m_insertStatement->registerOutParam("
             << n
-            << ", castor::db::DBTYPE_INT64);" << endl;
+            << ", castor::db::DBTYPE_UINT64);" << endl;
   m_indent--;
   *m_stream << getIndent() << "}" << endl;
   if (isNewRequest()) {
