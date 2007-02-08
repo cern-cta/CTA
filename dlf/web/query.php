@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.12 2006/11/30 09:35:49 waldron Exp $
+ * $Id: query.php,v 1.13 2007/02/08 07:08:48 waldron Exp $
  */
 
 require("utils.php");
@@ -76,7 +76,7 @@ setcookie("instance", $_GET['instance']);
 		$fac_no = $row[0];
 	
 		/* array entry */
-		$all_msgtexts .= "['".$row[0]."','".$row[1]."','".str_replace("\n", "", $row[2])."']";
+		$all_msgtexts .= "['".$row[0]."','".$row[1]."','".str_replace("'", "\'", str_replace("\n", "", $row[2]))."']";
 	}
 
 	echo "\t<script type=\"text/javascript\"> \n\t\tvar txtOptions = [";
