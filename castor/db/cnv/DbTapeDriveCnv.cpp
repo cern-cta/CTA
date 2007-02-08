@@ -1004,7 +1004,7 @@ void castor::db::cnv::DbTapeDriveCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(15, castor::db::DBTYPE_INT64);
+      m_insertStatement->registerOutParam(15, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
