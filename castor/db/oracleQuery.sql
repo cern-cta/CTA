@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.372 $ $Release$ $Date: 2007/02/08 13:22:44 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.373 $ $Release$ $Date: 2007/02/08 14:32:31 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.372 $ $Date: 2007/02/08 13:22:44 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.373 $ $Date: 2007/02/08 14:32:31 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -817,7 +817,7 @@ BEGIN
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
                          (SELECT id, svcClass from StageGetRequest UNION ALL
                           SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
-			  SELECT id, svcClass from StageRepackRequest UNION ALL
+                          SELECT id, svcClass from StageRepackRequest UNION ALL
                           SELECT id, svcClass from StageGetNextRequest UNION ALL
                           SELECT id, svcClass from StageUpdateRequest UNION ALL
                           SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
@@ -858,7 +858,7 @@ BEGIN
       END LOOP;
       CLOSE c1;
       IF NotOk != 0 THEN
-        raise_application_error(-20103, 'Recall could not find a FileSystem with no copy of this file !');
+        raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
       END IF;      
       UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
       updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
