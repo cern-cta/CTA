@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Release$ $Date: 2007/01/18 11:02:52 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2007/02/08 18:15:44 $ $Author: itglp $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -56,19 +56,16 @@ LD = g++
 
 #if BuildVDQMCpp
 #VDQM related objects
-ORAVDQMLIB_SRCS = ../ora/OraBaseObj.cpp \
-		../ora/OraBaseCnv.cpp \
-		../ora/OraCnvSvc.cpp \
-		../ora/OraClientIdentificationCnv.cpp \
-                ../ora/OraErrorHistoryCnv.cpp \
-                ../ora/OraDeviceGroupNameCnv.cpp \
-                ../ora/OraTapeAccessSpecificationCnv.cpp \
-                ../ora/OraTapeDriveCnv.cpp \
-                ../ora/OraTapeDriveCompatibilityCnv.cpp \
-                ../ora/OraTapeDriveDedicationCnv.cpp \
-                ../ora/OraTapeRequestCnv.cpp \
-                ../ora/OraTapeServerCnv.cpp \
-                ../ora/OraVdqmSvc.cpp
+ORAVDQMLIB_SRCS = ../ora/OraVdqmSvc.cpp \
+                ../cnv/DbClientIdentificationCnv.cpp \
+                ../cnv/DbErrorHistoryCnv.cpp \
+                ../cnv/DbDeviceGroupNameCnv.cpp \
+                ../cnv/DbTapeAccessSpecificationCnv.cpp \
+                ../cnv/DbTapeDriveCnv.cpp \
+                ../cnv/DbTapeDriveCompatibilityCnv.cpp \
+                ../cnv/DbTapeDriveDedicationCnv.cpp \
+                ../cnv/DbTapeRequestCnv.cpp \
+                ../cnv/DbTapeServerCnv.cpp
 
 ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.Osuf)
 VDQMLIB = LibraryTargetName(castorVdqmOra)
