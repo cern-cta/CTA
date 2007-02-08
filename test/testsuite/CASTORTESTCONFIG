@@ -29,8 +29,9 @@ TAPE            TEST            NO
 
 ADMIN           TEST            NO
 
-*** Generic Parameter ***
+*** Generic parameters ***
 
+TIMEOUT           120
 
 *** Rfio test specific parameters ***
 

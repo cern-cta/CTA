@@ -50,7 +50,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
 			index= configFileInfo.find("*** Rfio test specific parameters ***")
 			configFileInfo=configFileInfo[index:]
 			index=configFileInfo.find("***")
-			index=index-1
+			index=index -1
 			configFileInfo=configFileInfo[:index]
 
 			global localDir
@@ -75,7 +75,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
 
 			remoteDir=(configFileInfo[configFileInfo.find("REMOTE_DIR"):]).split()[1]
 			remoteDir=remoteHost+":"+remoteDir+"/tmpRfio"+ticket
-			print remoteDir
+			
 			
 			os.system("rfmkdir "+remoteDir)
 			

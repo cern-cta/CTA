@@ -83,7 +83,7 @@ index= configFileInfo.find("*** Test choice ***")
 configFileInfo=configFileInfo[index:]
 configFileInfo=configFileInfo.strip("*** Test choice ***\n\n")
 index=configFileInfo.find("***")
-index=index-1
+index=index
 configFileInfo=configFileInfo[:index]
 
 

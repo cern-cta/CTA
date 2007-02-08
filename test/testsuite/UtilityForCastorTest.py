@@ -3,6 +3,18 @@ import os
 import sys
 import time
 
+def getTimeOut():
+    f=open("/etc/castor/CASTORTESTCONFIG","r")
+    configFileInfo=f.read()
+    f.close
+    index= configFileInfo.find("*** Generic parameters ***")
+    configFileInfo=configFileInfo[index:]
+    index=configFileInfo.find("***")
+    index=index-1
+    configFileInfo=configFileInfo[:index]
+    timeOutVal=configFileInfo[configFileInfo.find("TIMEOUT"):].split()[1]
+    return int(timeOutVal)
+
 def getTicket():
     newTime=time.gmtime()
     return str(((newTime[7]*24+newTime[3])*60 + newTime[4])*60 +newTime[5]) 
@@ -26,8 +38,8 @@ def timeOut(myCmd):
 def saveOnFile(namefile,cmdS,scen=None):
     count=0
     for singleCmd in cmdS:
-
-        t=threading.Timer(120.0,timeOut,[singleCmd])
+        myTime=getTimeOut()
+        t=threading.Timer(myTime,timeOut,[singleCmd])
         t.start()
         if count == 0:
             fin=open(namefile,"wb")
@@ -44,7 +56,8 @@ def saveOnFile(namefile,cmdS,scen=None):
       
 def runOnShell(cmdS,scen=None):
     for singleCmd in cmdS:
-        t=threading.Timer(120.0,timeOut,[singleCmd])
+        myTime=getTimeOut()
+        t=threading.Timer(myTime,timeOut,[singleCmd])
         t.start()
         if scen != None:
             singleCmd=scen+singleCmd
@@ -78,7 +91,7 @@ def prepareCastorString():
 	    
 # check if the user of the program is a castor user
 
-def checkUser(filePath):
+def checkUser():
     myCmd=prepareCastorString()
     myCmd="nsls "+myCmd
     ret=os.popen(myCmd).read()

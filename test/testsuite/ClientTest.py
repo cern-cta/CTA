@@ -29,7 +29,7 @@ def MakeBigFile():
 
 class PreRequisitesCase(unittest.TestCase):
 	def mainScenarium(self):
-		assert (UtilityForCastorTest.checkUser(localDir) != -1), "you don't have a valid castor directory"
+		assert (UtilityForCastorTest.checkUser() != -1), "you don't have a valid castor directory"
 
 		try:
 
@@ -45,6 +45,7 @@ class PreRequisitesCase(unittest.TestCase):
 
 			global localDir
 			localDir=(configFileInfo[configFileInfo.find("LOCAL_DIR"):]).split()[1]
+		
 			localDir=localDir+ticket+"/"
 			os.system("mkdir "+localDir)
 		        
@@ -517,9 +518,8 @@ class StagerSpecialQueryCase(unittest.TestCase):
 	def queryE(self):
 		cmd=["stager_put -M "+dirCastor+"fileQueryE"+ticket+"TEXT1","stager_put -M "+dirCastor+"fileQueryE"+ticket+"TEXT2","stager_qry -E "+dirCastor+"fileQueryE"+ticket+"*"]
 
-		myScenE=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,-1,stagerVersion,[["STAGER_TRACE","3"]])
 		
-	        UtilityForCastorTest.saveOnFile(localDir+"queryE",cmd,myScenE)
+	        UtilityForCastorTest.saveOnFile(localDir+"queryE",cmd,myScen)
 		fi=open(localDir+"queryE2","r")
 	        buffOut=fi.read()
 		fi.close()		
