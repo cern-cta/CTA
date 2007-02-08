@@ -20,8 +20,8 @@
 #include "ccclasswriter.h"
 #include "cpphclasswriter.h"
 #include "cppcppclasswriter.h"
-#include "cpphoracnvwriter.h"
-#include "cppcpporacnvwriter.h"
+//#include "cpphoracnvwriter.h"
+//#include "cppcpporacnvwriter.h"
 #include "cpphdbcnvwriter.h"
 #include "cppcppdbcnvwriter.h"
 #include "cpphstreamcnvwriter.h"
@@ -40,8 +40,8 @@ CppWriter::CppWriter( ) :
   hw = new CHClassWriter(m_doc, ".h file generator for C interfaces");
   cw = new CCClassWriter(m_doc, ".cpp file generator for C interfaces");
   cppw = new CppCppClassWriter(m_doc, ".cpp file generator");
-  orahw = new CppHOraCnvWriter(m_doc, "Oracle converter generator");
-  oracppw = new CppCppOraCnvWriter(m_doc, "Oracle converter generator");
+  //orahw = new CppHOraCnvWriter(m_doc, "Oracle converter generator");
+  //oracppw = new CppCppOraCnvWriter(m_doc, "Oracle converter generator");
   dbhw = new CppHDbCnvWriter(m_doc, "Database converter generator");
   dbcppw = new CppCppDbCnvWriter(m_doc, "Database converter generator");
   streamhw = new CppHStreamCnvWriter(m_doc, "Stream converter generator");
@@ -56,8 +56,8 @@ CppWriter::~CppWriter() {
   delete hw;
   delete cw;
   delete cppw;
-  delete orahw;
-  delete oracppw;
+  //delete orahw;
+  //delete oracppw;
   delete dbhw;
   delete dbcppw;
   delete streamhw;
@@ -86,8 +86,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
     configGenerator(cppw);
     configGenerator(dbhw);
     configGenerator(dbcppw);
-    configGenerator(orahw);
-    configGenerator(oracppw);
+    //configGenerator(orahw);
+    //configGenerator(oracppw);
     configGenerator(streamhw);
     configGenerator(streamcppw);
     firstGeneration = false;
@@ -223,13 +223,13 @@ void CppWriter::writeClass(UMLClassifier *c) {
                         << "\nPlease check the access rights" << std::endl;
               return;
             }
-            QDir packageDirOra(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/ora");
-            if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
-              std::cerr << "Cannot create the package folder "
-                        << packageDirOra.absPath().ascii()
-                        << "\nPlease check the access rights" << std::endl;
-              return;
-            }
+            //QDir packageDirOra(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/ora");
+            //if (! (packageDirOra.exists() || packageDirOra.mkdir(packageDirOra.absPath()) ) ) {
+            //  std::cerr << "Cannot create the package folder "
+            //            << packageDirOra.absPath().ascii()
+            //            << "\nPlease check the access rights" << std::endl;
+            //  return;
+            //}
             QDir packageDirDb(UMLApp::app()->getCommonPolicy()->getOutputDirectory().absPath() + "/" + s_topNS + "/db/cnv");
             if (! (packageDirDb.exists() || packageDirDb.mkdir(packageDirDb.absPath()) ) ) {
               std::cerr << "Cannot create the package folder "
@@ -243,8 +243,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
             QString file = fileName.right(fileName.length()-i);
             runGenerator(dbhw, s_topNS + "/db/cnv/Db" + file + "Cnv.hpp", c);
             runGenerator(dbcppw, s_topNS + "/db/cnv/Db" + file + "Cnv.cpp", c);
-            runGenerator(orahw, s_topNS + "/db/ora/Ora" + file + "Cnv.hpp", c);
-            runGenerator(oracppw, s_topNS + "/db/ora/Ora" + file + "Cnv.cpp", c);
+            //runGenerator(orahw, s_topNS + "/db/ora/Ora" + file + "Cnv.hpp", c);
+            //runGenerator(oracppw, s_topNS + "/db/ora/Ora" + file + "Cnv.cpp", c);
           }
         }
         UMLObject* obj = m_doc->findUMLObject(QString("castor::IStreamable"),
