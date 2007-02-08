@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.371 $ $Release$ $Date: 2007/02/08 07:31:06 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.372 $ $Release$ $Date: 2007/02/08 13:22:44 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.371 $ $Date: 2007/02/08 07:31:06 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.372 $ $Date: 2007/02/08 13:22:44 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -69,9 +69,11 @@ CREATE INDEX I_CastorFile_svcClass on CastorFile (svcClass);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
+CREATE INDEX I_DiskCopy_Status_10 on DiskCopy (decode(status,10,status,NULL));
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE index I_TapeCopy_Status on Tapecopy (status);
+CREATE INDEX I_TapeCopy_Status_2 on TapeCopy (decode(status,2,status,NULL));
 
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
@@ -664,10 +666,12 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
                                                   tapeCopyId OUT INTEGER) AS
- fileSystemId INTEGER := 0;
- dsid NUMBER;
- deviation NUMBER;
- fsDiskServer NUMBER;
+                                                
+  fileSystemId INTEGER := 0;  
+  dsid NUMBER;  
+  deviation NUMBER;  
+  fsDiskServer NUMBER; 
+  
 BEGIN
   -- We lock here a given DiskServer. See the comment for the creation of the LockTable
   -- table for a full explanation of why we need such a stupid UPDATE statement
@@ -676,7 +680,7 @@ BEGIN
      SELECT DS.diskserver_id
        FROM (
          -- The double level of selects is due to the fact that ORACLE is unable
-         -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first computes
+         -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first compute
          -- the maxRate and then select on it.
          SELECT diskserver.id diskserver_id
            FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
@@ -708,24 +712,26 @@ BEGIN
          AND FS.diskserver = dsId
        ORDER BY FileSystemRate(FS.weight, FS.deltaWeight, FS.fsDeviation) DESC
        ) FN
-  WHERE ROWNUM < 2;   
-
-  SELECT /*+ ORDERED */ DC.path, DC.diskcopy_id, DC.castorfile_id,   -- here the ORDERED hint forces a faster join (credits to Nilo)
+   WHERE ROWNUM < 2;
+  SELECT /*+ FIRST_ROWS_1 */
+         DC.path, DC.diskcopy_id, DC.castorfile_id,
          DC.fileId, DC.nsHost, DC.fileSize, TapeCopy.id
-  INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-  FROM (SELECT DiskCopy.path path, DiskCopy.id diskcopy_id, CastorFile.id castorfile_id,
+    INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+    FROM (SELECT DiskCopy.path path, DiskCopy.id diskcopy_id, CastorFile.id castorfile_id,
                CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize
           FROM DiskCopy, CastorFile
          WHERE DiskCopy.castorfile = CastorFile.id
-           AND DiskCopy.status = 10 -- CANBEMIGR
-           AND DiskCopy.filesystem = fileSystemId 
-       ) DC,
-       TapeCopy, Stream2TapeCopy
-  WHERE TapeCopy.castorfile = DC.castorfile_id
-   AND Stream2TapeCopy.child = TapeCopy.id
-   AND Stream2TapeCopy.parent = streamId
-   AND TapeCopy.status = 2 -- WAITINSTREAMS
-   AND ROWNUM < 2;
+            -- Added decode functions to be able to use FBI on status columns
+            -- i_diskcopy_status_10 and i_tapecopy_status_2
+           AND decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
+           AND DiskCopy.filesystem = fileSystemId
+         ) DC,
+         TapeCopy, Stream2TapeCopy
+   WHERE TapeCopy.castorfile = DC.castorfile_id
+     AND Stream2TapeCopy.child = TapeCopy.id
+     AND Stream2TapeCopy.parent = streamId
+     AND decode(TapeCopy.status,2,TapeCopy.status,null) = 2 -- WAITINSTREAMS
+     AND ROWNUM < 2;
 
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
@@ -734,7 +740,7 @@ BEGIN
    WHERE id = streamId;
 
   -- detach the tapecopy from the stream now that it is SELECTED
-  -- the triggers will update NbTapeCopiesInFS accordingly 
+  -- the triggers will update NbTapeCopiesInFS accordingly
   DELETE FROM Stream2TapeCopy
    WHERE child = tapeCopyId;
 
@@ -764,6 +770,7 @@ BEGIN
                             tapeCopyId);
     END IF;
 END;
+
 
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
@@ -1604,7 +1611,6 @@ END;
 
 
 /* PL/SQL method implementing prepareForMigration */
-
 CREATE OR REPLACE PROCEDURE  prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
                                                  ts IN NUMBER,
@@ -1621,6 +1627,7 @@ CREATE OR REPLACE PROCEDURE  prepareForMigration (srId IN INTEGER,
 BEGIN
  -- get CastorFile
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
+ 
  -- Determine the context (Put inside PrepareToPut or not)
  BEGIN
    -- check that we are a Put or an Update
@@ -1649,17 +1656,19 @@ BEGIN
    -- here we are a PutDone
    contextPIPP := 2;
  END;
- -- update CastorFile. This also takes a lock on it, insuring
- -- with triggers that we are the only ones to deal with its copies
+ 
  IF contextPIPP != 2 THEN
+   -- update CastorFile. This also takes a lock on it, insuring
+   -- with triggers that we are the only ones to deal with its copies
    UPDATE CastorFile set fileSize = fs, lastUpdateTime = ts 
     WHERE id = cfId and (lastUpdateTime is NULL or ts > lastUpdateTime) 
    RETURNING fileId, nsHost INTO fId, nh;
  ELSE
-   -- if putDone, don't update fileSize and lastUpdateTime
-   SELECT fileId, nsHost INTO fId, nh
+   -- if putDone, don't update fileSize and lastUpdateTime but just take the lock
+   SELECT fileId, nsHost, fileSize INTO fId, nh, oldFs
      FROM CastorFile
-     WHERE id = cfId;
+     WHERE id = cfId
+     FOR UPDATE;
  END IF;
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
@@ -1667,20 +1676,21 @@ BEGIN
       SELECT euid, egid, id from StageUpdateRequest UNION ALL
       SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
- -- If not a put inside a PrepareToPut, update the FileSystem free space
- SELECT filesize into oldFs FROM CastorFile WHERE id = cfId;
+ -- In case reserved space is 0, it was changed to 2G by default
+ IF 0 = reservedSpace THEN reservedSpace := 2147483648; END IF;
  
- IF contextPIPP != 0 THEN
+ IF contextPIPP != 0 THEN   
+   -- standalone Put or PutDone
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
-<<<<<<< oracleTrailer.sql
-    updateFsFileClosed(fsId, reservedSpace, oldFs);
-=======
-   -- In case reserved space is 0, it was changed to 2G by default
-   IF 0 = reservedSpace THEN reservedSpace := 2147483648; END IF;
-   updateFsFileClosed(fsId, reservedSpace, fs);
->>>>>>> 1.369
+   IF contextPIPP == 2 THEN
+     -- for a putDone, the fs is always 0, so we take the last one found in CastorFile
+     updateFsFileClosed(fsId, reservedSpace, oldFs);
+   ELSE
+     updateFsFileClosed(fsId, reservedSpace, fs);
+   END IF;
  END IF;
+
  -- archive Subrequest
  archiveSubReq(srId);
  --  If not a put inside a PrepareToPut/Update, create TapeCopies and update DiskCopy status
@@ -1700,7 +1710,6 @@ BEGIN
  END IF;
  COMMIT;
 END;
-
 
 
 /* PL/SQL method implementing fileRecalled */
