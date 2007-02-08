@@ -5,6 +5,19 @@
 /* and DBA privileges must be present for scheduling the maintenance job    */
 
 /*
+ * dlf_settings
+ */
+CREATE TABLE dlf_settings
+(
+	name		VARCHAR2(50),
+	value		VARCHAR2(255),
+	description	VARCHAR2(255)
+)
+TABLESPACE dlf_data;
+
+CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_idx;
+
+/*
  * dlf_sequences
  */
 CREATE TABLE dlf_sequences
@@ -297,6 +310,9 @@ INSERT INTO dlf_mode (name, enabled) VALUES ('queue_purge',      0);
 INSERT INTO dlf_mode (name, enabled) VALUES ('queue_suspend',    0);
 INSERT INTO dlf_mode (name, enabled) VALUES ('database_suspend', 0);
 
+/* initialise settings */
+INSERT INTO dlf_settings VALUES ('ARCHIVE_MODE',   '1',  'Defines the archiving policy that should be performed on the database. Where a value of 1 = drop and 2 = archive and drop.');
+INSERT INTO dlf_settings VALUES ('ARCHIVE_EXPIRY', '30', 'Defines how many days worth of data should remain online.');
 
 /*
  * dlf_partition procedure
@@ -440,16 +456,24 @@ CREATE OR REPLACE PROCEDURE dlf_archive
 AS
 
   -- variables
-  v_expire      NUMBER := 30;
-  v_mode        NUMBER := 1; -- 1 = drop, 2 = archive and drop
+  v_expire      NUMBER := 0;
+  v_mode        NUMBER := 0;
   v_name        VARCHAR2(10);
-  
+  v_value       VARCHAR2(255);
+
   -- data pump
   dp_handle     NUMBER;
   dp_job_state  VARCHAR(30);
   dp_status     KU$_STATUS; 
   
 BEGIN
+
+  -- extract the settings 
+  SELECT value INTO v_value FROM dlf_settings WHERE name = 'ARCHIVE_MODE';
+  v_mode := TO_NUMBER(v_value);
+
+  SELECT value INTO v_value FROM dlf_settings WHERE name = 'ARCHIVE_EXPIRY';
+  v_expire := TO_NUMBER(v_value);
 
   -- drop partition (no archiving) 
   IF v_mode = 1 THEN
@@ -628,6 +652,7 @@ BEGIN
                     WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
                     AND   facility = 5
                     AND   msg_no   = 12)
+		AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
 		AND facility = 5
 		AND ((msg_no = 12) OR (msg_no = 15))
 

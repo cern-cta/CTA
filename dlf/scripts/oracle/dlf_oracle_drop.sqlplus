@@ -17,6 +17,7 @@ DROP TABLE dlf_monitoring;
 DROP TABLE dlf_jobstats;
 DROP TABLE dlf_reqstats;
 DROP TABLE dlf_mode;
+DROP TABLE dlf_settings;
 
 /* procedures */
 DROP PROCEDURE dlf_partition;

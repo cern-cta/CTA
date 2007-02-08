@@ -16,7 +16,7 @@ GRANT SELECT ON castor_dlf.dlf_sequences        TO castordlf_read;
 GRANT SELECT ON castor_dlf.dlf_monitoring       TO castordlf_read;
 GRANT SELECT ON castor_dlf.dlf_jobstats         TO castordlf_read;
 GRANT SELECT ON castor_dlf.dlf_reqstats         TO castordlf_read;
-
+GRANT SELECT ON castor_dlf.dlf_settings		TO castordlf_read;
 
 
 /** End-of-File **/
