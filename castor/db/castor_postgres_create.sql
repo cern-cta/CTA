@@ -35,7 +35,7 @@ CREATE TABLE GCFile (diskCopyId INT8, id INT8 PRIMARY KEY, request INTEGER);
 CREATE TABLE GCLocalFile (fileName VARCHAR(2048), diskCopyId INT8, id INT8 PRIMARY KEY);
 
 /* SQL statements for type MoverCloseRequest */
-CREATE TABLE MoverCloseRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileSize INT8, id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE MoverCloseRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileSize INT8, timeStamp INT8, id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type PutStartRequest */
 CREATE TABLE PutStartRequest (subreqId INT8, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -113,7 +113,7 @@ CREATE TABLE TapePool (name VARCHAR(2048), id INT8 PRIMARY KEY);
 CREATE TABLE TapeCopy (copyNb INT4, id INT8 PRIMARY KEY, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type CastorFile */
-CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creationTime INT8, lastAccessTime INT8, nbAccesses INT4, lastKnownFileName VARCHAR(2048), id INT8 PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
+CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creationTime INT8, lastAccessTime INT8, nbAccesses INT4, lastKnownFileName VARCHAR(2048), lastUpdateTime INT8, id INT8 PRIMARY KEY, svcClass INTEGER, fileClass INTEGER);
 
 /* SQL statements for type DiskCopy */
 CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, id INT8 PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
