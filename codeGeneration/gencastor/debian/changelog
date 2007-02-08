@@ -1,3 +1,14 @@
+gencastor (6.0-0) unstable; urgency=low
+
+  * Port to KDE 3.5.5.
+  * Support of signed 64bit int type.
+  * Fixed extra ';' to allow compiling with gcc 4.1.
+  * Fixed exception handling when committing/rollbacking in Db converters.
+  * Disabled generation of Oracle-specific converters.
+  * Fixed CVS versioning info in the generated SQL script.
+
+ -- Giuseppe Lo Presti <itglp@cern.ch>  Thu,  8 Feb 2007 17:30:21 +0100
+
 gencastor (5.1-1) unstable; urgency=low
 
   * Fixed generation of Stream converters for enumerationNoStream stereotype.
