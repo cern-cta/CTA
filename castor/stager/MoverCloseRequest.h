@@ -292,6 +292,16 @@ int Cstager_MoverCloseRequest_fileSize(struct Cstager_MoverCloseRequest_t* insta
 int Cstager_MoverCloseRequest_setFileSize(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of timeStamp
+ */
+int Cstager_MoverCloseRequest_timeStamp(struct Cstager_MoverCloseRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of timeStamp
+ */
+int Cstager_MoverCloseRequest_setTimeStamp(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

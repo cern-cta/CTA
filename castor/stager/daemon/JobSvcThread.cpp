@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.36 2006/09/29 07:18:42 gtaur Exp $
+ * $Id: JobSvcThread.cpp,v 1.37 2007/02/08 07:31:04 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.36 $ $Date: 2006/09/29 07:18:42 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.37 $ $Date: 2007/02/08 07:31:04 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -486,14 +486,14 @@ namespace castor {
         /* Invoking the method                */
         /* ---------------------------------- */
         STAGER_LOG_DEBUG(NULL, "Invoking prepareForMigration");
-        jobSvc->prepareForMigration(subreq, mcReq->fileSize());
+        jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp());
 
         // Cleaning
         delete obj;
 
       } catch (castor::exception::Exception e) {
         serrno = e.code();
-        error = e.getMessage().str();
+        error = e.getMessage().str().c_str();
         STAGER_LOG_DB_ERROR(NULL, func,
                             e.getMessage().str().c_str());
       }

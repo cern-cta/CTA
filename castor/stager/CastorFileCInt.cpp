@@ -216,6 +216,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_CastorFile_lastUpdateTime
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_lastUpdateTime(castor::stager::CastorFile* instance, u_signed64* var) {
+    *var = instance->lastUpdateTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_CastorFile_setLastUpdateTime
+  //----------------------------------------------------------------------------
+  int Cstager_CastorFile_setLastUpdateTime(castor::stager::CastorFile* instance, u_signed64 new_var) {
+    instance->setLastUpdateTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_CastorFile_id
   //----------------------------------------------------------------------------
   int Cstager_CastorFile_id(castor::stager::CastorFile* instance, u_signed64* var) {

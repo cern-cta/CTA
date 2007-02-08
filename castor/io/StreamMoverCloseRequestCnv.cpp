@@ -104,6 +104,7 @@ void castor::io::StreamMoverCloseRequestCnv::createRep(castor::IAddress* address
   ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->subReqId();
   ad->stream() << obj->fileSize();
+  ad->stream() << obj->timeStamp();
   ad->stream() << obj->id();
 }
 
@@ -159,6 +160,9 @@ castor::IObject* castor::io::StreamMoverCloseRequestCnv::createObj(castor::IAddr
   u_signed64 fileSize;
   ad->stream() >> fileSize;
   object->setFileSize(fileSize);
+  u_signed64 timeStamp;
+  ad->stream() >> timeStamp;
+  object->setTimeStamp(timeStamp);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

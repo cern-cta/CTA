@@ -54,7 +54,7 @@ static castor::CnvFactory<castor::db::cnv::DbMoverCloseRequestCnv>* s_factoryDbM
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_insertStatementString =
-"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,ids_seq.nextval,:15,:16) RETURNING id INTO :17";
+"INSERT INTO MoverCloseRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,ids_seq.nextval,:16,:17) RETURNING id INTO :18";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_deleteStatementString =
@@ -62,11 +62,11 @@ const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_deleteStatementStri
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, id, svcClass, client FROM MoverCloseRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileSize, timeStamp, id, svcClass, client FROM MoverCloseRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_updateStatementString =
-"UPDATE MoverCloseRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, subReqId = :12, fileSize = :13 WHERE id = :14";
+"UPDATE MoverCloseRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, subReqId = :12, fileSize = :13, timeStamp = :14 WHERE id = :15";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbMoverCloseRequestCnv::s_storeTypeStatementString =
@@ -288,7 +288,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::fillObjSvcClass(castor::stager::Mo
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(16);
+  u_signed64 svcClassId = rset->getInt64(17);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -326,7 +326,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::fillObjIClient(castor::stager::Mov
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = rset->getInt64(17);
+  u_signed64 clientId = rset->getInt64(18);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -364,7 +364,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(17, castor::db::DBTYPE_INT64);
+      m_insertStatement->registerOutParam(18, castor::db::DBTYPE_INT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -387,10 +387,11 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setInt(12, time(0));
     m_insertStatement->setUInt64(13, obj->subReqId());
     m_insertStatement->setUInt64(14, obj->fileSize());
-    m_insertStatement->setUInt64(15, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setUInt64(16, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setUInt64(15, obj->timeStamp());
+    m_insertStatement->setUInt64(16, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(17, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(17));
+    obj->setId(m_insertStatement->getUInt64(18));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -424,6 +425,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  subReqId : " << obj->subReqId() << std::endl
                     << "  fileSize : " << obj->fileSize() << std::endl
+                    << "  timeStamp : " << obj->timeStamp() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -461,7 +463,8 @@ void castor::db::cnv::DbMoverCloseRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setInt(11, time(0));
     m_updateStatement->setUInt64(12, obj->subReqId());
     m_updateStatement->setUInt64(13, obj->fileSize());
-    m_updateStatement->setUInt64(14, obj->id());
+    m_updateStatement->setUInt64(14, obj->timeStamp());
+    m_updateStatement->setUInt64(15, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -561,7 +564,8 @@ castor::IObject* castor::db::cnv::DbMoverCloseRequestCnv::createObj(castor::IAdd
     object->setLastModificationTime(rset->getUInt64(12));
     object->setSubReqId(rset->getUInt64(13));
     object->setFileSize(rset->getUInt64(14));
-    object->setId(rset->getUInt64(15));
+    object->setTimeStamp(rset->getUInt64(15));
+    object->setId(rset->getUInt64(16));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -613,7 +617,8 @@ void castor::db::cnv::DbMoverCloseRequestCnv::updateObj(castor::IObject* obj)
     object->setLastModificationTime(rset->getUInt64(12));
     object->setSubReqId(rset->getUInt64(13));
     object->setFileSize(rset->getUInt64(14));
-    object->setId(rset->getUInt64(15));
+    object->setTimeStamp(rset->getUInt64(15));
+    object->setId(rset->getUInt64(16));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

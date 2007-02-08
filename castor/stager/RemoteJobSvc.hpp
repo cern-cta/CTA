@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/30 16:04:58 $ $Author: riojac3 $
+ * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
  *
  *
  *
@@ -188,11 +188,12 @@ namespace castor {
        * castorFile.
        * @param subreq The SubRequest handling the file to prepare
        * @param fileSize The actual size of the castor file
+       * @param timeStamp The time when the size of the file is checked.
        * @exception Exception throws an Exception in case of error
        */
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
-       u_signed64 fileSize)
+       u_signed64 fileSize, u_signed64 timeStamp)
         throw (castor::exception::Exception);
 
       /**

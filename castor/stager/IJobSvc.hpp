@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/11/30 16:04:58 $ $Author: riojac3 $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
  *
  * This class provides stager methods related to job handling
  *
@@ -189,11 +189,12 @@ namespace castor {
        * castorFile.
        * @param subreq The SubRequest handling the file to prepare
        * @param fileSize The actual size of the castor file
+       * @param timeStamp To know if the fileSize is still valid 
        * @exception Exception throws an Exception in case of error
        */
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
-       u_signed64 fileSize)
+       u_signed64 fileSize, u_signed64 timeStamp)
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -237,6 +237,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_lastUpdateTime
+       * @return the value of m_lastUpdateTime
+       */
+      u_signed64 lastUpdateTime() const {
+        return m_lastUpdateTime;
+      }
+
+      /**
+       * Set the value of m_lastUpdateTime
+       * @param new_var the new value of m_lastUpdateTime
+       */
+      void setLastUpdateTime(u_signed64 new_var) {
+        m_lastUpdateTime = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -369,6 +385,8 @@ namespace castor {
        * This information is only here for efficient and approximate querying. It should never be used in processing. There, only the fileid/nshost couple is trustable
       */
       std::string m_lastKnownFileName;
+
+      u_signed64 m_lastUpdateTime;
 
       /// The id of this object
       u_signed64 m_id;

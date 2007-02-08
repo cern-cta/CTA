@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/11/30 15:31:57 $ $Author: felixehm $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -111,7 +111,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
-  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6); END;";
+  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6,:7); END;";
 
 /// SQL statement for getUpdateDone
 const std::string castor::db::ora::OraJobSvc::s_getUpdateDoneStatementString =
@@ -443,7 +443,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 // -----------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::prepareForMigration
 (castor::stager::SubRequest *subreq,
- u_signed64 fileSize)
+ u_signed64 fileSize, u_signed64 timeStamp)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -452,17 +452,18 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         createStatement(s_prepareForMigrationStatementString);
       m_prepareForMigrationStatement->setAutoCommit(true);
       m_prepareForMigrationStatement->registerOutParam
-        (3, oracle::occi::OCCIDOUBLE);
+        (4, oracle::occi::OCCIDOUBLE);
       m_prepareForMigrationStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 2048);
-      m_prepareForMigrationStatement->registerOutParam
-        (5, oracle::occi::OCCIINT);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_prepareForMigrationStatement->registerOutParam
         (6, oracle::occi::OCCIINT);
+      m_prepareForMigrationStatement->registerOutParam
+        (7, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subreq->id());
     m_prepareForMigrationStatement->setDouble(2, fileSize);
+    m_prepareForMigrationStatement->setDouble(3, timeStamp);
     unsigned int nb = m_prepareForMigrationStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -473,16 +474,16 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     // collect output
     struct Cns_fileid fileid;
     fileid.fileid =
-      (u_signed64)m_prepareForMigrationStatement->getDouble(3);
+      (u_signed64)m_prepareForMigrationStatement->getDouble(4);
     std::string nsHost =
-      m_prepareForMigrationStatement->getString(4);
+      m_prepareForMigrationStatement->getString(5);
     strncpy(fileid.server,
             nsHost.c_str(),
             CA_MAXHOSTNAMELEN);
     unsigned long euid =
-      m_prepareForMigrationStatement->getInt(5);
-    unsigned long egid =
       m_prepareForMigrationStatement->getInt(6);
+    unsigned long egid =
+      m_prepareForMigrationStatement->getInt(7);
     // Update name server
     char cns_error_buffer[512];  /* Cns error buffer */
     if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {

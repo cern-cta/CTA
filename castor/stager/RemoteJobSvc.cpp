@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/10 17:08:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
  *
  *
  *
@@ -356,12 +356,13 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 // -----------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::prepareForMigration
 (castor::stager::SubRequest *subreq,
- u_signed64 fileSize)
+ u_signed64 fileSize,u_signed64 timeStamp)
   throw (castor::exception::Exception) {
   // Build the MoverCloseRequest
   castor::stager::MoverCloseRequest req;
   req.setSubReqId(subreq->id());
   req.setFileSize(fileSize);
+  req.setTimeStamp(timeStamp);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

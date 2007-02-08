@@ -137,6 +137,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_timeStamp
+       * @return the value of m_timeStamp
+       */
+      u_signed64 timeStamp() const {
+        return m_timeStamp;
+      }
+
+      /**
+       * Set the value of m_timeStamp
+       * @param new_var the new value of m_timeStamp
+       */
+      void setTimeStamp(u_signed64 new_var) {
+        m_timeStamp = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -161,6 +177,8 @@ namespace castor {
 
       /// The actual file of the size, once it was closed
       u_signed64 m_fileSize;
+
+      u_signed64 m_timeStamp;
 
       /// The id of this object
       u_signed64 m_id;

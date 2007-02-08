@@ -51,6 +51,7 @@ castor::stager::CastorFile::CastorFile() throw() :
   m_lastAccessTime(0),
   m_nbAccesses(0),
   m_lastKnownFileName(""),
+  m_lastUpdateTime(0),
   m_id(0),
   m_svcClass(0),
   m_fileClass(0) {
@@ -91,6 +92,7 @@ void castor::stager::CastorFile::print(std::ostream& stream,
   stream << indent << "lastAccessTime : " << m_lastAccessTime << std::endl;
   stream << indent << "nbAccesses : " << m_nbAccesses << std::endl;
   stream << indent << "lastKnownFileName : " << m_lastKnownFileName << std::endl;
+  stream << indent << "lastUpdateTime : " << m_lastUpdateTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "SvcClass : " << std::endl;

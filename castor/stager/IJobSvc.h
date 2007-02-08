@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.3 $ $Release$ $Date: 2006/11/30 16:04:58 $ $Author: riojac3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
  *
  *
  *
@@ -261,7 +261,8 @@ int Cstager_IJobSvc_disk2DiskCopyDone
  * castorFile.
  * @param jobSvc the IJobSvc used
  * @param subreq The SubRequest handling the file to prepare
- * @param fileSize The actual size of the castor file
+ * @param fileSize The actual size of the castor file 
+ * @param timeStamp To know if the fileSize is still valid
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -270,7 +271,7 @@ int Cstager_IJobSvc_disk2DiskCopyDone
 int Cstager_IJobSvc_prepareForMigration
 (struct Cstager_IJobSvc_t* jobSvc,
  struct Cstager_SubRequest_t* subreq,
- u_signed64 fileSize);
+ u_signed64 fileSize, u_signed64 timeStamp);
 
 /**
  * Informs the stager the a Get or Update SubRequest

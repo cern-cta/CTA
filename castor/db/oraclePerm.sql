@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.370 $ $Release$ $Date: 2007/02/07 17:17:26 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.371 $ $Release$ $Date: 2007/02/08 07:31:06 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_2_4', '$Revision: 1.370 $ $Date: 2007/02/07 17:17:26 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.371 $ $Date: 2007/02/08 07:31:06 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -124,6 +124,7 @@ ALTER TABLE SvcClass ADD CONSTRAINT SvcClass_Name_UK UNIQUE (NAME);
 
 /* the primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT pk_DiskPool2SvcClass PRIMARY KEY (parent, child);
+
 
 /* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
@@ -1603,24 +1604,23 @@ END;
 
 
 /* PL/SQL method implementing prepareForMigration */
-CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
+
+CREATE OR REPLACE PROCEDURE  prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
+                                                 ts IN NUMBER,
                                                  fId OUT NUMBER,
                                                  nh OUT VARCHAR2,
                                                  userId OUT INTEGER,
                                                  groupId OUT INTEGER) AS
   cfId INTEGER;
   fsId INTEGER;
+  oldFs INTEGER;
   reservedSpace NUMBER;
   unused INTEGER;
   contextPIPP INTEGER;
 BEGIN
  -- get CastorFile
  SELECT castorFile INTO cfId FROM SubRequest where id = srId;
- -- update CastorFile. This also takes a lock on it, insuring
- -- with triggers that we are the only ones to deal with its copies
- UPDATE CastorFile set fileSize = fs WHERE id = cfId
-  RETURNING fileId, nsHost INTO fId, nh;
  -- Determine the context (Put inside PrepareToPut or not)
  BEGIN
    -- check that we are a Put or an Update
@@ -1649,6 +1649,18 @@ BEGIN
    -- here we are a PutDone
    contextPIPP := 2;
  END;
+ -- update CastorFile. This also takes a lock on it, insuring
+ -- with triggers that we are the only ones to deal with its copies
+ IF contextPIPP != 2 THEN
+   UPDATE CastorFile set fileSize = fs, lastUpdateTime = ts 
+    WHERE id = cfId and (lastUpdateTime is NULL or ts > lastUpdateTime) 
+   RETURNING fileId, nsHost INTO fId, nh;
+ ELSE
+   -- if putDone, don't update fileSize and lastUpdateTime
+   SELECT fileId, nsHost INTO fId, nh
+     FROM CastorFile
+     WHERE id = cfId;
+ END IF;
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
      (SELECT euid, egid, id from StagePutRequest UNION ALL
@@ -1656,18 +1668,24 @@ BEGIN
       SELECT euid, egid, id from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
  -- If not a put inside a PrepareToPut, update the FileSystem free space
+ SELECT filesize into oldFs FROM CastorFile WHERE id = cfId;
+ 
  IF contextPIPP != 0 THEN
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
+<<<<<<< oracleTrailer.sql
+    updateFsFileClosed(fsId, reservedSpace, oldFs);
+=======
    -- In case reserved space is 0, it was changed to 2G by default
    IF 0 = reservedSpace THEN reservedSpace := 2147483648; END IF;
    updateFsFileClosed(fsId, reservedSpace, fs);
+>>>>>>> 1.369
  END IF;
  -- archive Subrequest
  archiveSubReq(srId);
  --  If not a put inside a PrepareToPut/Update, create TapeCopies and update DiskCopy status
  IF contextPIPP != 0 THEN
-   putDoneFunc(cfId, fs, contextPIPP);
+   putDoneFunc(cfId, oldFs, contextPIPP);
  END IF;
  -- If put inside PrepareToPut/Update, restart any PutDone currently
  -- waiting on this put/update
@@ -1682,6 +1700,8 @@ BEGIN
  END IF;
  COMMIT;
 END;
+
+
 
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
@@ -1971,6 +1991,8 @@ BEGIN
   OPEN segments FOR SELECT * FROM Segment
                      WHERE Segment.status = 6; -- SEGMENT_FAILED
 END;
+
+
 
 /* PL/SQL method implementing stageRelease */
 CREATE OR REPLACE PROCEDURE stageRelease (fid IN INTEGER,

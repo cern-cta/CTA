@@ -98,7 +98,7 @@ int close_status) {
           if (Cstager_SubRequest_create(&subrequest) == 0) {
             if (Cstager_SubRequest_setId(subrequest,internal_context->subrequest_id) == 0) {
               log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-              if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size) != 0) {
+              if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size, (u_signed64) time(NULL)) != 0) {
                 log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
               } else {
                 forced_mover_exit_error = 0;

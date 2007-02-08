@@ -43,6 +43,7 @@ castor::stager::MoverCloseRequest::MoverCloseRequest() throw() :
   Request(),
   m_subReqId(0),
   m_fileSize(0),
+  m_timeStamp(0),
   m_id(0) {
 }
 
@@ -69,6 +70,7 @@ void castor::stager::MoverCloseRequest::print(std::ostream& stream,
   // Output of all members
   stream << indent << "subReqId : " << m_subReqId << std::endl;
   stream << indent << "fileSize : " << m_fileSize << std::endl;
+  stream << indent << "timeStamp : " << m_timeStamp << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

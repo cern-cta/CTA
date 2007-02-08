@@ -181,6 +181,16 @@ int Cstager_CastorFile_lastKnownFileName(struct Cstager_CastorFile_t* instance, 
 int Cstager_CastorFile_setLastKnownFileName(struct Cstager_CastorFile_t* instance, const char* new_var);
 
 /**
+ * Get the value of lastUpdateTime
+ */
+int Cstager_CastorFile_lastUpdateTime(struct Cstager_CastorFile_t* instance, u_signed64* var);
+
+/**
+ * Set the value of lastUpdateTime
+ */
+int Cstager_CastorFile_setLastUpdateTime(struct Cstager_CastorFile_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
