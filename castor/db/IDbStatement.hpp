@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/11 10:04:19 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/02/08 18:02:59 $ $Author: itglp $
  *
  * 
  *
@@ -86,9 +86,10 @@ class IDbStatement {
 
 const int DBTYPE_INT = 1;
 const int DBTYPE_INT64 = 2;
-const int DBTYPE_FLOAT = 3;
-const int DBTYPE_DOUBLE = 4;
-const int DBTYPE_STRING = 5;
+const int DBTYPE_UINT64 = 3;
+const int DBTYPE_FLOAT = 4;
+const int DBTYPE_DOUBLE = 5;
+const int DBTYPE_STRING = 6;
 
 }
 

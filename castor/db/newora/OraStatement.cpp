@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/02/08 18:02:59 $ $Author: itglp $
  *
  * 
  *
@@ -80,7 +80,8 @@ throw (castor::exception::SQLError) {
     oracle::occi::Type oraType;
     if(dbType == castor::db::DBTYPE_INT)
         oraType = oracle::occi::OCCIINT;
-    else if(dbType == castor::db::DBTYPE_INT64 || dbType == castor::db::DBTYPE_DOUBLE)
+    else if(dbType == castor::db::DBTYPE_INT64 || dbType == castor::db::DBTYPE_UINT64
+         || dbType == castor::db::DBTYPE_DOUBLE)
         oraType = oracle::occi::OCCIDOUBLE;
     else if(dbType == castor::db::DBTYPE_STRING)
         oraType = oracle::occi::OCCISTRING;
