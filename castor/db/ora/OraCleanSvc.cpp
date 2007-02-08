@@ -31,7 +31,6 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/IClient.hpp"
 #include "castor/db/ora/OraCleanSvc.hpp"
-#include "castor/db/ora/OraCnvSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
