@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/01/31 15:58:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/02/08 17:48:26 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -29,6 +29,7 @@
 
 #include <memory>
 #include "castor/sharedMemory/BlockKey.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/dlf/Dlf.hpp"
 
 namespace castor {
@@ -70,7 +71,8 @@ namespace castor {
       /**
        * new operator, so that this goes always to shared memory
        */
-      void *operator new(unsigned int num_bytes, void*);
+      void *operator new(unsigned int num_bytes, void*)
+	throw (castor::exception::Exception);
 
       /**
        * allocates objects in the shared memory
@@ -79,7 +81,8 @@ namespace castor {
        * @return pointer to the allocated memory
        */
       T* allocate(std::allocator<void>::size_type numObjects,
-                  std::allocator<void>::const_pointer hint = 0) throw();
+                  std::allocator<void>::const_pointer hint = 0)
+	throw(std::exception);
 
       /**
        * deallocates objects in the shared memory
@@ -103,7 +106,8 @@ namespace castor {
        * or create it and register it in the block
        * disctionnary if necessary
        */
-      castor::sharedMemory::BasicBlock* getBlock();
+      castor::sharedMemory::BasicBlock* getBlock()
+	throw (castor::exception::Exception);
 
     // should be private but the templated constructor would not compile
     public:
@@ -132,7 +136,8 @@ namespace castor {
 //------------------------------------------------------------------------------
 template<class T, class BK>
 void* castor::sharedMemory::Allocator<T, BK>::operator new
-(unsigned int num_bytes, void*) {
+(unsigned int num_bytes, void*)
+  throw (castor::exception::Exception) {
   castor::sharedMemory::BasicBlock* smBlock = getBlock();
   return smBlock->malloc(num_bytes);
 }
@@ -143,18 +148,21 @@ void* castor::sharedMemory::Allocator<T, BK>::operator new
 template<class T, class BK>
 T* castor::sharedMemory::Allocator<T, BK>::allocate
 (std::allocator<void>::size_type numObjects,
- std::allocator<void>::const_pointer hint) throw() {
+ std::allocator<void>::const_pointer hint)
+  throw(std::exception) {
   try {
     if (0 == m_smBlock) m_smBlock = getBlock();
     return static_cast<T*>
       (m_smBlock->malloc(numObjects*sizeof(T)));
   } catch (castor::exception::Exception e) {
     // Log exception "Exception caught in allocate"
+    std::cout << e.getMessage().str() << std::endl;
     castor::dlf::Param initParams[] =
       {castor::dlf::Param("Original error", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
 			    DLF_BASE_SHAREDMEMORY + 6, 1, initParams);
-    return 0;
+    // and throw standard exception
+    throw std::bad_alloc();
   }
 }
 
@@ -173,7 +181,7 @@ void castor::sharedMemory::Allocator<T, BK>::deallocate
     // Log exception "Exception caught in allocate"
     castor::dlf::Param initParams[] =
       {castor::dlf::Param("Original error", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
 			    DLF_BASE_SHAREDMEMORY + 6, 1, initParams);
   }
 }
@@ -183,7 +191,8 @@ void castor::sharedMemory::Allocator<T, BK>::deallocate
 //------------------------------------------------------------------------------
 template<class T, class BK>
 castor::sharedMemory::BasicBlock*
-castor::sharedMemory::Allocator<T, BK>::getBlock() {
+castor::sharedMemory::Allocator<T, BK>::getBlock()
+throw (castor::exception::Exception) {
   // try to get an existing block
   BlockKey key = BK::getBlockKey();
   castor::sharedMemory::BasicBlock* smBlock =
