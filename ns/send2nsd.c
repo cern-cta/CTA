@@ -26,7 +26,7 @@
 
 /* send2nsd - send a request to the name server and wait for the reply */
 
-send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, nbstruct)
+int send2nsdx(socketp, host, reqp, reql, user_repbuf, user_repbuf_len, repbuf2, nbstruct)
 int *socketp;
 char *host;
 char *reqp;
@@ -99,7 +99,7 @@ int *nbstruct;
 		if (! sin.sin_port) {
 			if ((p = getenv (CNS_PORT_ENV)) || (p = getconfent (CNS_SCE, "PORT", 0))) {
 				sin.sin_port = htons ((unsigned short)atoi (p));
-			} else if (sp = Cgetservbyname (CNS_SVC, "tcp")) {
+			} else if ((sp = Cgetservbyname (CNS_SVC, "tcp"))) {
 				sin.sin_port = sp->s_port;
 				serrno = 0;
 			} else {
@@ -322,7 +322,7 @@ int *nbstruct;
 	return (c);
 }
 
-send2nsd(socketp, host, reqp, reql, user_repbuf, user_repbuf_len)
+int send2nsd(socketp, host, reqp, reql, user_repbuf, user_repbuf_len)
 int *socketp;
 char *host;
 char *reqp;

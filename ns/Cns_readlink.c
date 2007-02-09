@@ -84,7 +84,7 @@ Cns_readlink(const char *path, char *buf, size_t bufsiz)
 	    serrno == ENSNACT)
 		sleep (RETRYI);
 	if (c == 0) {
-		if (p = memchr (buf, '\0', bufsiz))
+		if ((p = memchr (buf, '\0', bufsiz)))
 			c = p - buf + 1;
 		else
 			c = bufsiz;
