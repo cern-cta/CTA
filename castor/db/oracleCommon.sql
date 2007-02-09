@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.373 $ $Release$ $Date: 2007/02/08 14:32:31 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.374 $ $Date: 2007/02/09 14:20:41 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.373 $ $Date: 2007/02/08 14:32:31 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.374 $ $Date: 2007/02/09 14:20:41 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -62,9 +62,9 @@ partition by list (type)
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
 
-CREATE UNIQUE INDEX I_CastorFile_fileIdNsHost on CastorFile (fileId, nsHost);
-CREATE INDEX I_CastorFile_lastKnownFileName on CastorFile (lastKnownFileName);
-CREATE INDEX I_CastorFile_svcClass on CastorFile (svcClass);
+CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost on CastorFile (fileId, nsHost);
+CREATE INDEX I_CastorFile_LastKnownFileName on CastorFile (lastKnownFileName);
+CREATE INDEX I_CastorFile_SvcClass on CastorFile (svcClass);
 
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
@@ -1210,7 +1210,7 @@ BEGIN
        IF curNbRepl < maxNbRepl OR
           (maxNbRepl = 0 AND repPolicy IS NULL) THEN
          -- update filesystem status, take care of 0 filesizes
-         IF reserved = 0 THEN reserved := realFilXeSize; END IF;
+         IF reserved = 0 THEN reserved := realFileSize; END IF;
          updateFSFileClosed(fileSystemId, reserved, reserved);
        END IF;
      END IF;
@@ -1683,7 +1683,7 @@ BEGIN
    -- standalone Put or PutDone
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
-   IF contextPIPP == 2 THEN
+   IF contextPIPP = 2 THEN
      -- for a putDone, the fs is always 0, so we take the last one found in CastorFile
      updateFsFileClosed(fsId, reservedSpace, oldFs);
    ELSE
