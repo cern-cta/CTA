@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      BasicBlock.cpp
+ *                      LocalBlock.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,31 +17,53 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BasicBlock.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: LocalBlock.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
  *
- * A basic shared memory block, with a key and a static
- * table of attached addresses
+ * An object, usually created in process memory (not in
+ * a shared memory block) encapsulating a sharedMemory
+ * Block
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
+#include "castor/sharedMemory/LocalBlock.hpp"
 #include "castor/sharedMemory/BasicBlock.hpp"
 #include "castor/exception/Internal.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::sharedMemory::BasicBlock::BasicBlock
-(BlockKey& key, void* rawMem)
+castor::sharedMemory::LocalBlock::LocalBlock
+(castor::sharedMemory::BasicBlock* basicBlock,
+ void* (*mallocMethod)(castor::sharedMemory::BasicBlock* obj, size_t nbBytes),
+ void (*freeMethod)(castor::sharedMemory::BasicBlock* obj, void* pointer, size_t nbBytes))
   throw (castor::exception::Exception) :
-  m_key(key), m_sharedMemoryBlock(rawMem) {}
+  m_block(basicBlock), m_mallocMethod(mallocMethod),
+  m_freeMethod(freeMethod) {}
 
 //------------------------------------------------------------------------------
-// destructor
+// malloc
 //------------------------------------------------------------------------------
-castor::sharedMemory::BasicBlock::~BasicBlock () throw () {}
+void* castor::sharedMemory::LocalBlock::malloc(size_t nbBytes)
+  throw (castor::exception::Exception) {
+  if (0 == m_mallocMethod) {
+    castor::exception::Internal e;
+    e.getMessage() << "Tried to malloc bytes in an abstract block";
+    throw e;
+  }
+  return m_mallocMethod(m_block, nbBytes);
+}
 
 //------------------------------------------------------------------------------
-// attached blocks static member
+// free
 //------------------------------------------------------------------------------
-std::map<int, void*> castor::sharedMemory::BasicBlock::s_attachedBlocks;
+void castor::sharedMemory::LocalBlock::free
+(void* pointer, size_t nbBytes)
+  throw (castor::exception::Exception) {
+  if (0 == m_freeMethod) {
+    castor::exception::Internal e;
+    e.getMessage() << "Tried to free bytes in an abstract block";
+    throw e;
+  }
+  return m_freeMethod(m_block, pointer, nbBytes);
+}

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -80,14 +80,12 @@ namespace castor {
        */
       ~Block() throw ();
 
-    private:
-
       /**
        * allocates a new chunk of memory
        * @param obj the Block object to use (to be casted into Block*)
        * @param nbBytes the number of bytes needed
        */
-      static void* internalMalloc(BasicBlock* obj, size_t nbBytes)
+      static void* malloc(BasicBlock* obj, size_t nbBytes)
         throw (castor::exception::Exception);
 
       /**
@@ -96,7 +94,7 @@ namespace castor {
        * @param pointer a pointer to the space to deallocate
        * @param nbBytes the number of bytes freed
        */
-      static void internalFree(BasicBlock* obj, void* pointer, size_t nbBytes)
+      static void free(BasicBlock* obj, void* pointer, size_t nbBytes)
         throw (castor::exception::Exception);
 
     private:
@@ -141,12 +139,10 @@ castor::sharedMemory::Block<A>::Block
 (BlockKey& key, void* rawMem)
   throw (castor::exception::Exception) :
   BasicBlock(key, rawMem), m_initializing(0) {
-  // First define free and malloc
-  setFreeMethod(Block::internalFree);
-  setMallocMethod(Block::internalMalloc);
   // Register block in the dictionnary before it's fully
   // created since the SharedMap creation will use it
-  castor::sharedMemory::BlockDict::insertBlock(key, this);
+  castor::sharedMemory::BlockDict::insertBlock
+    (key, this, this->malloc, this->free);
   // start of memory initialization
   m_initializing = 1;
   // now create the map of allocated regions
@@ -172,10 +168,10 @@ template <typename A>
 castor::sharedMemory::Block<A>::~Block () throw () {}
 
 //------------------------------------------------------------------------------
-// internalMalloc
+// malloc
 //------------------------------------------------------------------------------
 template <class A>
-void* castor::sharedMemory::Block<A>::internalMalloc
+void* castor::sharedMemory::Block<A>::malloc
 (BasicBlock* rawObj, size_t nbBytes)
   throw (castor::exception::Exception) {
   // This can only be done because no virtual inheritance
@@ -221,10 +217,10 @@ void* castor::sharedMemory::Block<A>::internalMalloc
 }
 
 //------------------------------------------------------------------------------
-// internalFree
+// free
 //------------------------------------------------------------------------------
 template <class A>
-void castor::sharedMemory::Block<A>::internalFree
+void castor::sharedMemory::Block<A>::free
 (BasicBlock* rawObj, void* pointer, size_t nbBytes)
   throw (castor::exception::Exception) {
   // This can only be done because no virtual inheritance

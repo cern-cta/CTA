@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/02/08 17:48:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -37,7 +37,7 @@ namespace castor {
   namespace sharedMemory {
 
     // Forward declaration
-    class BasicBlock;
+    class LocalBlock;
 
     /**
      * A shared memory allocator to be used for allocating
@@ -106,14 +106,14 @@ namespace castor {
        * or create it and register it in the block
        * disctionnary if necessary
        */
-      castor::sharedMemory::BasicBlock* getBlock()
+      castor::sharedMemory::LocalBlock* getBlock()
 	throw (castor::exception::Exception);
 
     // should be private but the templated constructor would not compile
     public:
 
       /// the shared memory block to be used by this allocator
-      castor::sharedMemory::BasicBlock* m_smBlock;
+      castor::sharedMemory::LocalBlock* m_smBlock;
 
     }; // class Allocator
 
@@ -127,7 +127,7 @@ namespace castor {
 
 #include <memory>
 #include "castor/sharedMemory/Allocator.hpp"
-#include "castor/sharedMemory/BasicBlock.hpp"
+#include "castor/sharedMemory/LocalBlock.hpp"
 #include "castor/sharedMemory/BlockDict.hpp"
 #include "castor/exception/Internal.hpp"
 
@@ -138,7 +138,7 @@ template<class T, class BK>
 void* castor::sharedMemory::Allocator<T, BK>::operator new
 (unsigned int num_bytes, void*)
   throw (castor::exception::Exception) {
-  castor::sharedMemory::BasicBlock* smBlock = getBlock();
+  castor::sharedMemory::LocalBlock* smBlock = getBlock();
   return smBlock->malloc(num_bytes);
 }
 
@@ -190,13 +190,13 @@ void castor::sharedMemory::Allocator<T, BK>::deallocate
 // getBlock
 //------------------------------------------------------------------------------
 template<class T, class BK>
-castor::sharedMemory::BasicBlock*
+castor::sharedMemory::LocalBlock*
 castor::sharedMemory::Allocator<T, BK>::getBlock()
 throw (castor::exception::Exception) {
   // try to get an existing block
   BlockKey key = BK::getBlockKey();
-  castor::sharedMemory::BasicBlock* smBlock =
-    castor::sharedMemory::BlockDict::getBasicBlock(key);
+  castor::sharedMemory::LocalBlock* smBlock =
+    castor::sharedMemory::BlockDict::getLocalBlock(key);
   if (0 == smBlock) {
     castor::exception::Internal e;
     e.getMessage() << "No block found for key " << key.key();

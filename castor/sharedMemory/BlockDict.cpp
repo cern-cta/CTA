@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -27,7 +27,7 @@
 
 #include <map>
 #include "castor/dlf/Dlf.hpp"
-#include "castor/sharedMemory/BasicBlock.hpp"
+#include "castor/sharedMemory/LocalBlock.hpp"
 #include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/sharedMemory/BlockDict.hpp"
 #include "castor/exception/Internal.hpp"
@@ -39,17 +39,17 @@
 //------------------------------------------------------------------------------
 // s_blockDict
 //------------------------------------------------------------------------------
-std::map<castor::sharedMemory::BlockKey, castor::sharedMemory::BasicBlock*>
+std::map<castor::sharedMemory::BlockKey, castor::sharedMemory::LocalBlock*>
 castor::sharedMemory::BlockDict::s_blockDict;
 
 //------------------------------------------------------------------------------
-// getBasicBlock
+// getLocalBlock
 //------------------------------------------------------------------------------
-castor::sharedMemory::BasicBlock*
-castor::sharedMemory::BlockDict::getBasicBlock
+castor::sharedMemory::LocalBlock*
+castor::sharedMemory::BlockDict::getLocalBlock
 (castor::sharedMemory::BlockKey &key) {
   // try to find the block in existing ones
-  std::map<BlockKey, BasicBlock*>::const_iterator it =
+  std::map<BlockKey, LocalBlock*>::const_iterator it =
     s_blockDict.find(key);
   if (it != s_blockDict.end()) {
     return it->second;
@@ -111,7 +111,14 @@ bool castor::sharedMemory::BlockDict::createBlock
 bool
 castor::sharedMemory::BlockDict::insertBlock
 (castor::sharedMemory::BlockKey &key,
- castor::sharedMemory::BasicBlock *block) {
+ castor::sharedMemory::BasicBlock *block,
+ void* (*mallocMethod)
+ (castor::sharedMemory::BasicBlock* obj, size_t nbBytes),
+ void (*freeMethod)
+ (castor::sharedMemory::BasicBlock* obj,
+  void* pointer, size_t nbBytes)) {
   return s_blockDict.insert
-    (std::pair<BlockKey, BasicBlock*>(key, block)).second;
+    (std::pair<BlockKey, LocalBlock*>
+     (key, new castor::sharedMemory::LocalBlock
+      (block, mallocMethod, freeMethod))).second;
 }

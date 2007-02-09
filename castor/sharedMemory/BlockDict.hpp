@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -36,7 +36,7 @@ namespace castor {
   namespace sharedMemory {
 
     // Forward declaration
-    class BasicBlock;
+    class LocalBlock;
 
     /**
      * Just a container for the dictionnary,
@@ -46,10 +46,12 @@ namespace castor {
     public:
 
       /**
-       * retrieves any a block by key. Does not create any new block
-       * @return a pointer to the block or 0 if not found
+       * retrieves a block by key. Does not create any new block
+       * @return a pointer to a LocalBlock or 0 if not found.
+       * NOte that this pointer should not be deallocated by the
+       * caller.
        */
-      static BasicBlock* getBasicBlock(BlockKey &key);
+      static LocalBlock* getLocalBlock(BlockKey &key);
 
       /**
        * retrieves any kind of block by key
@@ -64,7 +66,11 @@ namespace castor {
       /**
        * add a block
        */
-      static bool insertBlock(BlockKey &key, BasicBlock* block);
+      static bool insertBlock
+      (BlockKey &key,
+       BasicBlock* block,
+       void* (*mallocMethod)(BasicBlock* obj, size_t nbBytes),
+       void (*freeMethod)(BasicBlock* obj, void* pointer, size_t nbBytes));
 
     private:
 
@@ -81,7 +87,7 @@ namespace castor {
       /**
        * the dictionnary of existing blocks
        */
-      static std::map<BlockKey, BasicBlock*> s_blockDict;
+      static std::map<BlockKey, LocalBlock*> s_blockDict;
 
     }; // class BlockDict
 
@@ -94,6 +100,7 @@ namespace castor {
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "castor/exception/Internal.hpp"
+#include "castor/sharedMemory/LocalBlock.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include <Cmutex.h>
 
@@ -103,9 +110,9 @@ namespace castor {
 template <typename T>
 T* castor::sharedMemory::BlockDict::getBlock
 (castor::sharedMemory::BlockKey &key) {
-  BasicBlock* block = getBasicBlock(key);
+  LocalBlock* block = getLocalBlock(key);
   if (0 != block) {
-    return (T*)block;
+    return (T*)block->block();
   }
   // here we will have to create a new block and register it
   // we need to assure that we create the shared memory only once
@@ -119,10 +126,17 @@ T* castor::sharedMemory::BlockDict::getBlock
   if (created) {
     // Object creation
     // Note that it will register itself in the dictionnary
+    // This is needed since the SharedMap within the Block
+    // will need the block to be registered, so we have to
+    // register it before it's fully created
     tblock = new(sharedMemoryBlock)
       T(key, (void*)((char*)sharedMemoryBlock + sizeof(T)));
   } else {
     tblock = (T*)sharedMemoryBlock;
+    // Register block in the dictionnary. Bere the block
+    // was not created in this process. So we need to register
+    // it in this process dictionnary.
+    insertBlock(key, tblock, T::malloc, T::free);
   }
   // Now we can release the lock
   Cmutex_unlock(&s_blockDict);

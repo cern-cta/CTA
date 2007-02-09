@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BasicBlock.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BasicBlock.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
  *
  * A basic shared memory block, with a key and a static
  * table of attached addresses
@@ -39,11 +39,14 @@ namespace castor {
     /**
      * a class dealing with a basic Block of Shared memory.
      * Any real Block implementation should extend this class
-     * and set the free and malloc function pointers.
-     * These are used in replacement of a virtual function
-     * that could be simply overwritten since having virtual
-     * functions would mean having a virtual table, which is
-     * kind of forbiden when using shared memory
+     * by defining a free and a malloc function. (see example
+     * and signature in Block.hpp)
+     * These are not defined here as abstract to avoid having
+     * a virtual table, which is kind of forbiden when using
+     * shared memory.
+     * In order to replace the virtual table, the BlockDict
+     * object registers, for each block the actual free and
+     * malloc functions, and acts as a local virtual table
      */
     class BasicBlock {
 
@@ -63,40 +66,6 @@ namespace castor {
        */
       ~BasicBlock() throw();
 
-      /**
-       * allocates a new chunk of memory
-       * @param nbBytes the number of bytes needed
-       */
-      void* malloc(size_t nbBytes)
-        throw (castor::exception::Exception);
-
-      /**
-       * deallocate some memory
-       * @param pointer a pointer to the space to deallocate
-       * @param nbBytes the number of bytes freed
-       */
-      void free(void* pointer, size_t nbBytes)
-        throw (castor::exception::Exception);
-
-    protected:
-
-      /**
-       * set the internal malloc method
-       */
-      void setMallocMethod(void* (*mallocMethod)
-			   (BasicBlock* obj, size_t nbBytes)) {
-	m_mallocMethod = mallocMethod;
-      }
-
-      /**
-       * set the internal free method
-       */
-      void setFreeMethod(void (*freeMethod) (BasicBlock* obj,
-					     void* pointer,
-					     size_t nbBytes)) {
-	m_freeMethod = freeMethod;
-      }
-
     protected:
 
       /**
@@ -115,20 +84,6 @@ namespace castor {
        * Pointer to the raw shared memory block
        */
       void* m_sharedMemoryBlock;
-
-    private:
-
-      /**
-       * Pointer to the actual malloc method to be used
-       */
-      void* (*m_mallocMethod)(BasicBlock* obj, size_t nbBytes)
-	throw (castor::exception::Exception);
-
-      /**
-       * Pointer to the actual free method to be used
-       */
-      void (*m_freeMethod)(BasicBlock* obj, void* pointer, size_t nbBytes)
-	throw (castor::exception::Exception);
 
     }; // end class BasicBlock
 
