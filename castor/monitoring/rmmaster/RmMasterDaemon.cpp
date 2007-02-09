@@ -187,6 +187,7 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
      {25, "Ignored admin filesystem report for filesystem with empty name"},
      {26, "Ignored metrics report for filesystem with empty name"},
      {27, "Ignored state report for filesystem with empty name"},
+     {28, "Unable to allocate SharedMemoryString"},
      {-1, ""}};
   castor::dlf::dlf_init("newrmmaster", messages);
 
