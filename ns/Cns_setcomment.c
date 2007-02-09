@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_setcomment.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_setcomment - add/replace a comment associated with a file/directory */
 
 #include <errno.h>

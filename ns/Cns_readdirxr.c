@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_readdirxr.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_readdirxr - read a directory entry including replica information */
 
 #include <errno.h>
@@ -36,7 +32,6 @@ Cns_readdirxr(Cns_DIR *dirp, char *se)
 	int i;
 	struct Cns_rep_info *ir;
 	int msglen;
-	int n;
 	int nbentries;
 	char *q;
 	char *rbp;

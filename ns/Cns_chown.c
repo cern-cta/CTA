@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_chown.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_chown - change owner and group of a file or a directory */
 
 #include <errno.h>
@@ -27,7 +23,7 @@ int DLL_DECL
 Cns_chown(const char *path, uid_t new_uid, gid_t new_gid)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;
@@ -96,7 +92,7 @@ int DLL_DECL
 Cns_lchown(const char *path, uid_t new_uid, gid_t new_gid)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;

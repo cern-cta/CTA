@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_setfsize.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_setfsize - set file size and last modification date */
 
 #include <errno.h>
@@ -27,7 +23,7 @@ int DLL_DECL
 Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 filesize)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;
@@ -104,7 +100,7 @@ Cns_setfsize(const char *path, struct Cns_fileid *file_uniqueid, u_signed64 file
 int DLL_DECL
 Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype, char *csumvalue)
 {
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;
@@ -113,7 +109,6 @@ Cns_setfsizeg(const char *guid, u_signed64 filesize, const char *csumtype, char 
 	char sendbuf[REQBUFSZ];
 	struct Cns_api_thread_info *thip;
 	uid_t uid;
-	u_signed64 zero = 0;
  
 	strcpy (func, "Cns_setfsizeg");
 	if (Cns_apiinit (&thip))

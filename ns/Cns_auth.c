@@ -3,11 +3,8 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_auth.c,v $ $Revision: 1.4 $ $Date: 2006/01/26 15:36:17 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <string.h>
 #include "Castor_limits.h"
@@ -19,9 +16,8 @@ static char sccsid[] = "@(#)$RCSfile: Cns_auth.c,v $ $Revision: 1.4 $ $Date: 200
 int DLL_DECL
 Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
 {
-	struct Cns_api_thread_info *thip;
-
 #ifdef CSEC
+	struct Cns_api_thread_info *thip;
 	if (Cns_apiinit (&thip))
 		return (-1);
 	if (thip->use_authorization_id == 0)
@@ -43,10 +39,10 @@ Cns_client_getAuthorizationId(uid_t *uid, gid_t *gid, char **mech, char **id)
 int DLL_DECL
 Cns_client_setAuthorizationId(uid_t uid, gid_t gid, const char *mech, char *id)
 {
-	char func[30];
-	struct Cns_api_thread_info *thip;
 
 #ifdef CSEC
+	char func[30];
+	struct Cns_api_thread_info *thip;
 	strcpy (func, "Cns_client_setAuthorizationId");
 	if (Cns_apiinit (&thip))
 		return (-1);

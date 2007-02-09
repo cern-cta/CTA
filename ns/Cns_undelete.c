@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_undelete.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_undelete - logically restore a file entry */
 
 #include <errno.h>
@@ -27,7 +23,7 @@ int DLL_DECL
 Cns_undelete(const char *path)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;

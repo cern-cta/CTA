@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_opendir.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_opendir - open a directory entry */
 
 #include <errno.h>
@@ -29,7 +25,7 @@ Cns_opendirxg(char *host, const char *path, const char *guid)
 {
 	char *actual_path;
 	char *actual_server;
-	int c, n;
+	int c;
 	Cns_DIR *dirp = NULL;
 	char func[16];
 	gid_t gid;

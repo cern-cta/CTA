@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_setatime.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_setatime - set last access (read) date */
 
 #include <errno.h>
@@ -27,7 +23,7 @@ int DLL_DECL
 Cns_setatime(const char *path, struct Cns_fileid *file_uniqueid)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;

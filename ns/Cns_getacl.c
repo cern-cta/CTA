@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_getacl.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-ADC/CA Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_getacl - get the Access Control List for a file/directory */
 
 #include <errno.h>

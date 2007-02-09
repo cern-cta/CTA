@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_creat.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_creatx - create a new file entry and return unique fileid */
 
 #include <errno.h>
@@ -27,7 +23,7 @@ int DLL_DECL
 Cns_creatc(const char *path, const char *guid, mode_t mode, struct Cns_fileid *file_uniqueid)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;

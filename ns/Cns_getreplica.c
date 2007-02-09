@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_getreplica.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_getreplica - get replica entries for a given file */
 
 #include <errno.h>
@@ -32,7 +28,6 @@ Cns_getreplica(const char *path, const char *guid, const char *se, int *nbentrie
 	char func[16];
 	gid_t gid;
 	int msglen;
-	char *p;
 	char *q;
 	char *rbp;
 	char repbuf[4];

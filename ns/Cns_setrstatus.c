@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_setrstatus.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:21 $ CERN IT-GD/CT Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_setrstatus - set replica status */
 
 #include <errno.h>
@@ -35,7 +31,6 @@ Cns_setrstatus(const char *sfn, const char status)
 	char sendbuf[REQBUFSZ];
 	struct Cns_api_thread_info *thip;
 	uid_t uid;
-	u_signed64 zero = 0;
  
 	strcpy (func, "Cns_setrstatus");
 	if (Cns_apiinit (&thip))

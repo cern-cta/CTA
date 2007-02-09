@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_replacetapecopy.c,v $ $Revision: 1.1 $ $Date: 2006/05/12 08:11:58 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      Cns_replaceseg - replace file segment (used by repack) */
 
 #include <errno.h>

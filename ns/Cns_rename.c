@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_rename.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_rename - rename a file or a directory */
 
 #include <errno.h>
@@ -27,7 +23,7 @@ int DLL_DECL
 Cns_rename(const char *oldpath, const char *newpath)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	char func[16];
 	gid_t gid;
 	int msglen;

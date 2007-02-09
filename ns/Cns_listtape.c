@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_listtape.c,v $ $Revision: 1.4 $ $Date: 2006/05/11 12:38:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_listtape - list the file segments residing on a volume */
 
 #include <errno.h>

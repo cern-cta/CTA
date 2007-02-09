@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_readdirx.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_readdirx - read a directory entry including file attributes */
 
 #include <errno.h>
@@ -34,7 +30,6 @@ Cns_readdirx(Cns_DIR *dirp)
 	int getattr = 1;
 	gid_t gid;
 	int msglen;
-	int n;
 	int nbentries;
 	char *q;
 	char *rbp;

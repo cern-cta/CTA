@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_access.c,v $ $Revision: 1.3 $ $Date: 2006/11/02 16:41:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_access - check accessibility of a file/directory */
 
 #include <errno.h>
@@ -27,7 +23,7 @@ static int
 Cns_access_internal(const char* func, const char *path, int amode, uid_t uid, gid_t gid)
 {
 	char *actual_path;
-	int c, n;
+	int c;
 	int msglen;
 	char *q;
 	char *sbp;
@@ -91,8 +87,8 @@ Cns_access(const char *path, int amode)
 {
   gid_t gid;
   uid_t uid;
-  Cns_getrealid(&uid, &gid);
   char* func = "Cns_access";
+  Cns_getrealid(&uid, &gid);
 
   return Cns_access_internal(func, path, amode, uid, gid);
 }

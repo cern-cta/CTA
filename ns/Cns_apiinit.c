@@ -3,15 +3,12 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_apiinit.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_apiinit - allocate thread specific or global structures */
 
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include "Cglobals.h"
 #include "Cns_api.h"
 #include "serrno.h"

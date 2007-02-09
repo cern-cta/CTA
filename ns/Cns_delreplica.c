@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_delreplica.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-GD/CT Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_delreplica - delete a replica for a given file */
 
 #include <errno.h>

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_listlinks.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/CT Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	Cns_listlinks - list all link entries for a given file */
 
 #include <errno.h>
@@ -36,7 +32,6 @@ Cns_listlinks(const char *path, const char *guid, int flags, Cns_list *listp)
 	struct Cns_linkinfo *lp;
 	int msglen;
 	int nbentries;
-	char *p;
 	char *q;
 	char *rbp;
 	char repbuf[LISTBUFSZ+4];

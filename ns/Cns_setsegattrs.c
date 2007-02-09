@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_setsegattrs.c,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      Cns_setsegattrs - set file segments attributes */
 
 #include <errno.h>
