@@ -1,11 +1,7 @@
 /*
- * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
+ * Copyright (C) 1999-2007 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_chkperm.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
  
 #include <errno.h>
 #include <sys/types.h>
@@ -176,6 +172,10 @@ next:
 			    &fmd_entry, 1, rec_addr))
 				return (-1);
 	} else if (*component && strcmp (component, ".")) {
+		if (strlen (component) > CA_MAXNAMELEN) {
+			serrno = SENAMETOOLONG;
+			return (-1);
+		}
 		if (Cns_get_fmd_by_fullid (dbfd, fmd_entry.fileid, component,
 		    &fmd_entry, 0, NULL)) {
 			if (serrno != ENOENT || flags & CNS_MUST_EXIST)
