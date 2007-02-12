@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/08/03 12:40:26 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/12 17:26:06 $ $Author: itglp $
  *
  *
  *
@@ -123,7 +123,6 @@ castor::db::DbCnvSvc::getTypeFromId(const u_signed64 id)
   throw (castor::exception::Exception) {
   // a null id has a null type
   if (0 == id) return 0;
-  castor::db::IDbResultSet *rset;
   try {
     // Check whether the statement is ok
     if (0 == m_getTypeStatement) {
@@ -131,7 +130,7 @@ castor::db::DbCnvSvc::getTypeFromId(const u_signed64 id)
     }
     // Execute it
     m_getTypeStatement->setInt64(1, id);
-    rset = m_getTypeStatement->executeQuery();
+    castor::db::IDbResultSet* rset = m_getTypeStatement->executeQuery();
     if (!rset->next()) {
       delete rset;
       castor::exception::NoEntry ex;
@@ -142,8 +141,9 @@ castor::db::DbCnvSvc::getTypeFromId(const u_signed64 id)
     delete rset;
     return res;
   } catch (castor::exception::SQLError e) {
-    delete rset;
-    rollback();
+    try {
+      rollback();
+    } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in getting type from id."
                     << std::endl << e.getMessage();
@@ -164,4 +164,3 @@ castor::IObject* castor::db::DbCnvSvc::getObjFromId(u_signed64 id)
   clientAd.setCnvSvcType(repType());
   return createObj(&clientAd);
 }
-
