@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.4 $ $Date: 2003/10/31 12:46:56 $ CERN IT-DS/HSM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cdomainname.c,v $ $Revision: 1.5 $ $Date: 2007/02/13 07:52:24 $ CERN IT-DS/HSM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 
 	gethostname (hostname, CA_MAXHOSTNAMELEN+1);
 
-	if (hp = Cgethostbyname (hostname)) {
+	if ((hp = Cgethostbyname (hostname)) != NULL) {
 		struct in_addr *haddrarray;
 		struct in_addr **haddrlist;
 		struct hostent *hp2;
@@ -92,10 +92,9 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 		}
 
 		for (i = 0; i < naddr; i++) {
-			if (hp2 = Cgethostbyaddr (haddrarray + i,
-			    sizeof(struct in_addr), AF_INET)) {
+			if ((hp2 = Cgethostbyaddr (haddrarray + i, sizeof(struct in_addr), AF_INET)) != NULL) {
 				char **hal;
-				if (p = strchr (hp2->h_name, '.')) {
+				if ((p = strchr (hp2->h_name, '.')) != NULL) {
 					free (haddrarray);
 					p++;
 					if (strlen (p) > namelen) {
@@ -110,7 +109,7 @@ int DLL_DECL Cdomainname(char *name, int namelen)
 
 				hal = hp2->h_aliases;
 				while (*hal) {
-					if (p = strchr (*hal, '.')) {
+					if ((p = strchr (*hal, '.')) != NULL) {
 						free (haddrarray);
 						p++;
 						if (strlen (p) > namelen) {
