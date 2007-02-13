@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.16 $ $Date: 2005/07/11 10:21:45 $ CERN/IT/PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.17 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -88,8 +88,6 @@ char *host_name ;
     struct  ifconf  ifc;     /* ifconf structure      */
     struct  ifreq   *ifr;    /* Pointer on ifreq structure */
     int n ;          
-    char    *endp;
-    struct  sockaddr_in     *sp;
 #endif  /* WIN32 */
     unsigned int netw ;
     union adr {
@@ -276,8 +274,8 @@ char *host_name ;
     }
 #else
     {
-        endp = (char *) ifr + ifc.ifc_len;
-        sp = (struct sockaddr_in *) &ifr->ifr_addr;
+        char *endp = (char *) ifr + ifc.ifc_len;
+        struct  sockaddr_in *sp = (struct sockaddr_in *) &ifr->ifr_addr;
         while ((char *) sp < endp) {
             log(LOG_DEBUG , " Comparing %d and %d \n",netw, inet_netof(sp->sin_addr)) ;
             if ((sp->sin_family == AF_INET) &&

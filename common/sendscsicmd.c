@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.17 $ $Date: 2007/02/01 15:29:49 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.18 $ $Date: 2007/02/13 07:52:24 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -78,7 +78,9 @@ static char tp_err_msgbuf[132];
 #define USRMSG(fmt,p,f,msg) {}
 #endif
 /*static char nosensekey[] = "no sense key available";*/
+#if !defined(linux)
 static char notsupp[] = "send_scsi_cmd not supported on this platform";
+#endif
 static char *sk_msg[] = {
         "No sense",
         "Recovered error",
@@ -190,10 +192,10 @@ struct scsi_info {
         char *text;
 };
 struct scsi_info scsi_codmsg[] = {
-	SCSI_STATUS_CHECK_CONDITION,	"Check condition",
-	SCSI_STATUS_BUSY,		"Target busy",
-	SCSI_STATUS_RESERVATION_CONFLICT, "Reservation conflict",
-	0xFF,				 NULL
+	{ SCSI_STATUS_CHECK_CONDITION,	    "Check condition"      },
+	{ SCSI_STATUS_BUSY,		    "Target busy"          },
+	{ SCSI_STATUS_RESERVATION_CONFLICT, "Reservation conflict" },
+	{ 0xFF,				    NULL }
 };
 static char err_msgbuf[132];
 #define PROCBUFSZ 80
@@ -611,7 +613,7 @@ char **msgaddr;
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = tp_err_msgbuf;
 #else
-		sprintf (err_msgbuf, "blocksize too large (max %ld)",
+		sprintf (err_msgbuf, "blocksize too large (max %d)",
 		    sg_big_buff_val - sizeof(struct sg_header) - cdblen);
 		*msgaddr = err_msgbuf;
 #endif

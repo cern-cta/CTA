@@ -7,7 +7,7 @@
 /* For the what command                 */
 /* ------------------------------------ */
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.38 $ $Date: 2004/03/18 10:42:27 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.39 $ $Date: 2007/02/13 07:52:24 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cpool_api.h>
@@ -1908,7 +1908,7 @@ int DLL_DECL Cpool_assign_ext(poolnb,pooladdr,startroutine,arg,timeout)
 			struct Cpool_t *current = &Cpool;
 			int    found;
 			int    i;
-			void *lock_parent_cthread_structure;
+			void *lock_parent_cthread_structure = NULL;
 		  
 			if (poolnb < 0) {
 				errno = EINVAL;
@@ -2631,7 +2631,7 @@ int DLL_DECL Cpool_next_index_timeout_ext(poolnb,pooladdr,timeout)
 			struct Cpool_t *current = &Cpool;
 			int    found;
 			int    i;
-			void *lock_parent_cthread_structure;
+			void *lock_parent_cthread_structure = NULL;
 		  
 			if (poolnb < 0) {
 				errno = EINVAL;

@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.10 2005/06/27 09:01:00 sponcec3 Exp $
+ * $Id: Cuuid.c,v 1.11 2007/02/13 07:52:24 waldron Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -9,7 +9,7 @@
 
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.10 $ $Date: 2005/06/27 09:01:00 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cuuid.c,v $ $Revision: 1.11 $ $Date: 2007/02/13 07:52:24 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -204,31 +204,20 @@ static Cuuid_state_t _Cuuid_st_static;
 /* Static MD5 prototypes */
 static int     _Cuuid_MD5Init                  _PROTO((MD5_CTX *));
 static int     _Cuuid_MD5Update                _PROTO((MD5_CTX *,
-													   unsigned char *,
-													   unsigned int));
+						       unsigned char *,
+						       unsigned int));
 static int     _Cuuid_MD5Final                 _PROTO((MD5_CTX *));
 static void    _Cuuid_Transform                _PROTO((UINT4 *,
-													   UINT4 *));
+						       UINT4 *));
 
 /* Static _Cuuid prototypes */
 static void    _Cuuid_read_state               _PROTO((U_SHORT *,
-													   Cuuid_time_t *,
-													   Cuuid_node_t *));
-#if (defined(hpux) || defined(sun))
-/* I don't know why the compiler complains about identifier redeclared */
+						       Cuuid_time_t *,
+						       Cuuid_node_t *));
 static void    _Cuuid_write_state              _PROTO(());
 static void    _Cuuid_format_uuid_v1           _PROTO(());
-#else
-static void    _Cuuid_write_state              _PROTO((U_SHORT,
-													   Cuuid_time_t,
-													   Cuuid_node_t));
-static void    _Cuuid_format_uuid_v1           _PROTO((Cuuid_t *,
-													   U_SHORT,
-													   Cuuid_time_t,
-													   Cuuid_node_t));
-#endif
 static void    _Cuuid_format_uuid_v3           _PROTO((Cuuid_t *,
-													   unsigned char[16]));
+						       unsigned char[16]));
 static void    _Cuuid_get_current_time         _PROTO((Cuuid_time_t *));
 static U_SHORT _Cuuid_true_random              _PROTO(());
 static void    _Cuuid_get_ieee_node_identifier _PROTO((Cuuid_node_t *));
@@ -761,16 +750,16 @@ static void _Cuuid_get_system_time(uuid_time)
 	
     GetSystemTimeAsFileTime((FILETIME *)&time);
 	
-	/* NT keeps time in FILETIME format which is 100ns ticks since
+    /* NT keeps time in FILETIME format which is 100ns ticks since
        Jan 1, 1601.  UUIDs use time in 100ns ticks since Oct 15, 1582.
        The difference is 17 Days in Oct + 30 (Nov) + 31 (Dec)
        + 18 years and 5 leap days.
     */
 	
 	time.QuadPart +=
-		(unsigned __int64) (1000*1000*10)       // seconds
-		* (unsigned __int64) (60 * 60 * 24)       // days
-		* (unsigned __int64) (17+30+31+365*18+5); // # of days
+		(unsigned __int64) (1000*1000*10)         /* seconds   */
+		* (unsigned __int64) (60 * 60 * 24)       /* days      */
+		* (unsigned __int64) (17+30+31+365*18+5); /* # of days */
 	
     *uuid_time = time.QuadPart;
 }

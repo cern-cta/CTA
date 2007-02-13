@@ -21,7 +21,7 @@
  * @file  lib.h
  * @brief definitions and structures for api internals
  *
- * $Id: dlf_lib.h,v 1.3 2007/01/18 07:09:24 waldron Exp $
+ * $Id: dlf_lib.h,v 1.4 2007/02/13 07:52:24 waldron Exp $
  */
 
 #ifndef _API_H
@@ -91,27 +91,6 @@ static struct {
 	{ "Debug",      DLF_LVL_DEBUG,      0x000400,  "LOGDEBUG"      },
 	{ "All",        -1,                 0x000800,  "LOGALL"        },
 	{ NULL,         0,                  0,         NULL            }
-};
-
-
-/* error list
- *   - we could use the serrno provided by castor commons or define the char *sys_dlferrlist[]. However,
- *     as errors aren't propagated back to the calling client there is no need to make the client aware
- *     of error codes, so we have the freedom to do as we want
- */
-static struct {
-	int     err_no;                     /**< error number returned by DLF_REP_ERR      */
-	char    *err_str;                   /**< error string associated with error number */
-} dlf_errorlist[] = {
-	{ 1,  DLF_ERR_01 },
-	{ 2,  DLF_ERR_02 },
-	{ 3,  DLF_ERR_03 },
-	{ 4,  DLF_ERR_04 },
-	{ 5,  DLF_ERR_05 },
-	{ 6,  DLF_ERR_06 },
-	{ 7,  DLF_ERR_07 },
-	{ 8,  DLF_ERR_08 },
-	{ 0,  NULL       },
 };
 
 

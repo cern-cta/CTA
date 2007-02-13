@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.17 $ $Date: 2004/09/02 08:15:25 $ CERN IT/ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.18 $ $Date: 2007/02/13 07:52:24 $ CERN IT/ADC/CA Jean-Damien Durand";
 #endif /* not lint */
 
 /* log.c        - generalized logging routines                          */
@@ -158,7 +158,7 @@ void DLL_DECL logit(int level, char *format, ...)
         if (strlen(logfilename)!=0) {
             if ( (fd= open(logfilename,O_CREAT|O_WRONLY|
                 O_APPEND,logbits)) == -1 ) {
-                syslog(LOG_ERR,"open: %s: %m", logfilename);
+                syslog(LOG_ERR,"open: %s", logfilename);
                 /* FH we probably should retry */
 				va_end(args);
 				errno = save_errno;

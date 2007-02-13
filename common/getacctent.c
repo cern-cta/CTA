@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.7 $ $Date: 2001/05/04 05:15:37 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.8 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
 
 
@@ -42,12 +42,12 @@ char DLL_DECL *getacctent(pwd, acct, buf, buflen)
 
         FILE      *fp = NULL; /* Pointer to /etc/account file  */
         char acct_file[256];
-        char *p;
 #if !defined(_WIN32) && (defined(_REENTRANT) || defined(_THREAD_SAFE))
         char *last = NULL;
 #endif /* !_WIN32 && (_REENTRANT || _THREAD_SAFE) */ 
 #if defined(_WIN32)
         OSVERSIONINFO osvi;
+	char *p;
 #endif
 
         if (pwd == (struct passwd *)NULL) return(NULL);

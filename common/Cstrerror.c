@@ -4,7 +4,7 @@
  */
 
 /*
- * $Id: Cstrerror.c,v 1.2 2005/09/16 12:54:41 jdurand Exp $
+ * $Id: Cstrerror.c,v 1.3 2007/02/13 07:52:24 waldron Exp $
  */
 
 #include <string.h>
@@ -15,7 +15,7 @@
 #include "Cglobals.h"
 
 #ifndef lint
-static char sccsid[] =  "@(#)$RCSfile: Cstrerror.c,v $ $Revision: 1.2 $ $Date: 2005/09/16 12:54:41 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] =  "@(#)$RCSfile: Cstrerror.c,v $ $Revision: 1.3 $ $Date: 2007/02/13 07:52:24 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif
 
 #define INTERNAL_BUFLEN 1023
@@ -66,7 +66,10 @@ char DLL_DECL *Cstrerror(code)
 {
   char *bufp;
   int buflen = INTERNAL_BUFLEN+1;
+
+#if !linux
   char *message;
+#endif
 
   /* Get thread-specific buffers */
   if (Cstrerror_getbuf(&bufp,&buflen) != 0) {

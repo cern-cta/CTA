@@ -1,5 +1,5 @@
 /*
- * $Id: Csched.c,v 1.1 2000/06/19 09:48:32 jdurand Exp $
+ * $Id: Csched.c,v 1.2 2007/02/13 07:52:24 waldron Exp $
  */
 
 /*
@@ -8,10 +8,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csched.c,v $ $Revision: 1.1 $ $Date: 2000/06/19 09:48:32 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Csched.c,v $ $Revision: 1.2 $ $Date: 2007/02/13 07:52:24 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Csched_api.h>
+#include <Cthread_api.h>
 #include <Cthread_typedef.h>
 #include <Cglobals.h>
 #include <serrno.h>
@@ -69,6 +70,8 @@ EXTERN_C int _Cthread_once_status;
 #define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
 EXTERN_C int _Cthread_obtain_mtx_debug _PROTO((char *, int, char *, int, Cth_mtx_t *, int));
 #endif
+EXTERN_C int _Cthread_init _PROTO((void));
+EXTERN_C int _Cthread_release_mtx _PROTO((char *, int, Cth_mtx_t *));
 
 /* =============================================== */
 /* Routine  : Csched_Getschedparam                 */

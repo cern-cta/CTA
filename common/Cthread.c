@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.49 2002/02/06 14:04:09 jdurand Exp $
+ * $Id: Cthread.c,v 1.50 2007/02/13 07:52:24 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.49 $ $Date: 2002/02/06 14:04:09 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cthread.c,v $ $Revision: 1.50 $ $Date: 2007/02/13 07:52:24 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
 #endif /* not lint */
 
 #include <Cthread_api.h>
@@ -1149,8 +1149,8 @@ int DLL_DECL Cthread_Detach(file, line, cid)
      int cid;
 {
   struct Cid_element_t *current = &Cid;   /* Curr Cid_element */
-  int                 n;                /* Status           */
-  int detached;                          /* Local store */
+  int                 n;                  /* Status           */
+  int detached = 0;                       /* Local store      */
 
 #ifdef CTHREAD_DEBUG
   if (file != NULL) {
@@ -3286,7 +3286,7 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
     int gotmutex   = 0;
     unsigned long timewaited = 0;
     unsigned long Timeout = 0;
-#if !(defined(IRIX5) || defined(IRIX6) || defined(IRIX64))
+#if !(defined(IRIX5) || defined(IRIX6) || defined(IRIX64) || defined(linux))
     struct timeval ts;
 #endif
 
@@ -3447,9 +3447,11 @@ int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startrout
   void               *tsd = NULL;          /* Thread-Specific Variable */
 #ifdef _CTHREAD
   int n;
+#if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
+  int                 ourthID;
+#endif
 #endif
   Cth_pid_t           ourpid;             /* We will need to identify ourself */
-  int                 ourthID;
 
 #ifdef CTHREAD_DEBUG
   if (Cthread_file != NULL) {

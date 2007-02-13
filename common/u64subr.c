@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: u64subr.c,v $ $Revision: 1.2 $ $Date: 2005/02/09 10:42:35 $ CERN IT-ADC/CA Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: u64subr.c,v $ $Revision: 1.3 $ $Date: 2007/02/13 07:52:24 $ CERN IT-ADC/CA Jean-Damien Durand";
 #endif /* not lint */
  
 #include <stdio.h>       /* For sprintf */
@@ -221,12 +221,13 @@ u_signed64 DLL_DECL strutou64(str)
 		if (! isdigit (*p)) break;
 			u64 = u64 * 10 + (*p++ - '0');
 	}
-	if (*p && ! *(p + 1))
+	if (*p && ! *(p + 1)) {
 		if (*p == 'k') u64 *= ONE_KB;
 		else if (*p == 'M') u64 *= ONE_MB;
 		else if (*p == 'G') u64 *= ONE_GB;
 		else if (*p == 'T') u64 *= ONE_TB;
 		else if (*p == 'P') u64 *= ONE_PB;
+	}
 	return (u64);
 }
 
@@ -253,12 +254,13 @@ u_signed64 DLL_DECL hexstrutou64(str)
 			u64 = u64 * 16 + (*p++ - 'A' + 10);
 		}
 	}
-	if (*p && ! *(p + 1))
+	if (*p && ! *(p + 1)) {
 		if (*p == 'k') u64 *= ONE_KB;
 		else if (*p == 'M') u64 *= ONE_MB;
 		else if (*p == 'G') u64 *= ONE_GB;
 		else if (*p == 'T') u64 *= ONE_TB;
 		else if (*p == 'P') u64 *= ONE_PB;
+	}
 	return (u64);
 }
 
@@ -277,7 +279,6 @@ char DLL_DECL *u64tostru(u64, buf, fldsize)
 	int inum;
 	int n;
 	signed64 t64;
-	char *p;
 	char tmpbuf[21];
 	char unit;
 

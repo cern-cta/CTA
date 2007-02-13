@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.4 $ $Date: 2000/12/07 08:19:27 $ CERN/IT/PDP/DM Felix Hassine";
+static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.5 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Felix Hassine";
 #endif /* not lint */
 
 
@@ -30,6 +30,65 @@ static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.4 $ $Date: 2000
 #endif /* SOLARIS */
 #include <osdep.h>
 #define MAXFILENAMSIZE 1024     /* Maximum length of a file path name   */
+
+/*
+ * path is assumed to be a file name or a directory path.
+ * It does not modify the content of buffer path.
+ * return -1 if path has not been modified, 
+ * a positive number otherwise.
+ */
+int DLL_DECL seelink ( path, buff, size) 
+char * path ;
+char * buff ;
+int size    ;
+{
+#if defined(_WIN32)
+	strcpy(buff, path);
+	return (strlen(path));
+#else
+	char *cp ;
+	char filename[MAXFILENAMSIZE] ;
+	char storpath[MAXFILENAMSIZE] ;
+	char stordir[MAXFILENAMSIZE] ;
+	int n ;
+	
+	strcpy(storpath, path );
+	if ( (cp = strrchr(storpath,'/')) != NULL ) {
+		strcpy(filename,cp+1) ;
+		cp[0] = '\0' ;
+	}
+	else
+		return -1 ;
+	
+	while ((cp = getcwd(stordir, MAXFILENAMSIZE-1)) == NULL && errno == ETIMEDOUT)
+		sleep (60);
+	if ( chdir(storpath)  < 0 ) {
+		errno = ENOENT ;
+		return -1 ;
+	}
+	else {
+		cp = getcwd( buff, size );
+		chdir(stordir);
+		if ( cp == NULL )
+			return -1 ;
+		else {
+			/* 
+			 * Putting back file name
+			 */
+			strcat (buff,"/") ;
+			strcat (buff ,filename) ;
+			strcpy(filename, buff ) ;
+			if ( (n=readlink( filename, buff, size)) < 0 ) 
+				return (strlen(filename) ) ;
+			else {
+				buff[n] = '\0' ;
+				return ( strlen(buff) ) ;
+			}
+		}
+	}
+#endif
+}
+
 
 /*
  * Solves links on path names given at command line.
@@ -155,63 +214,5 @@ int size ;
                         return 0 ;
                 }
         }
-}
-
-/*
- * path is assumed to be a file name or a directory path.
- * It does not modify the content of buffer path.
- * return -1 if path has not been modified, 
- * a positive number otherwise.
- */
-int DLL_DECL seelink ( path, buff, size) 
-char * path ;
-char * buff ;
-int size    ;
-{
-#if defined(_WIN32)
-	strcpy(buff, path);
-	return (strlen(path));
-#else
-	char *cp ;
-	char filename[MAXFILENAMSIZE] ;
-	char storpath[MAXFILENAMSIZE] ;
-	char stordir[MAXFILENAMSIZE] ;
-	int n ;
-	
-	strcpy(storpath, path );
-	if ( (cp = strrchr(storpath,'/')) != NULL ) {
-		strcpy(filename,cp+1) ;
-		cp[0] = '\0' ;
-	}
-	else
-		return -1 ;
-	
-	while ((cp = getcwd(stordir, MAXFILENAMSIZE-1)) == NULL && errno == ETIMEDOUT)
-		sleep (60);
-	if ( chdir(storpath)  < 0 ) {
-		errno = ENOENT ;
-		return -1 ;
-	}
-	else {
-		cp = getcwd( buff, size );
-		chdir(stordir);
-		if ( cp == NULL )
-			return -1 ;
-		else {
-			/* 
-			 * Putting back file name
-			 */
-			strcat (buff,"/") ;
-			strcat (buff ,filename) ;
-			strcpy(filename, buff ) ;
-			if ( (n=readlink( filename, buff, size)) < 0 ) 
-				return (strlen(filename) ) ;
-			else {
-				buff[n] = '\0' ;
-				return ( strlen(buff) ) ;
-			}
-		}
-	}
-#endif
 }
 

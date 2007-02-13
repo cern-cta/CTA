@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.12 2007/01/18 07:09:24 waldron Exp $
+ * $Id: dlf_lib.c,v 1.13 2007/02/13 07:52:25 waldron Exp $
  */
 
 /* headers */
@@ -78,7 +78,6 @@ int dlf_read(target_t *t, int *rtype, int *rcode) {
 	/* variables */
 	int       len;
 	int       rc;
-	int       err_no;
 	int       type;
 	int       magic;
 	char      header[3 * LONGSIZE];
@@ -1163,19 +1162,19 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	/* variables */
 	struct servent *servent;
 
-	target_t   *t;
-	int        i;
-	int        j;
-	int        rv;
-	int        port;
-	int        perm;
-	int        found;
-	int        queue_size;
-	char       *value;
-	char       *word;
-	char       buffer[1024];
-	char       uri[10];
- 	char       tmp[1024];
+	target_t     *t;
+	int          i;
+	int          j;
+	int          rv;
+	int          port;
+	unsigned int perm;
+	int          found;
+	int          queue_size;
+	char         *value;
+	char         *word;
+	char         buffer[1024];
+	char         uri[10];
+ 	char         tmp[1024];
 
 	/* we can't pass an error message back if the pointer to the error is NULL */
 	if (errptr == NULL) {

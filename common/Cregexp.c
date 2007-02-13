@@ -1,9 +1,9 @@
 /*
- * $Id: Cregexp.c,v 1.4 2003/12/10 10:00:22 jdurand Exp $
+ * $Id: Cregexp.c,v 1.5 2007/02/13 07:52:24 waldron Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cregexp.c,v $ $Revision: 1.4 $ $Date: 2003/12/10 10:00:22 $ CERN/IT/PDP/DM Jean-Damien Durand";
+static char sccsid[] = "@(#)$RCSfile: Cregexp.c,v $ $Revision: 1.5 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Jean-Damien Durand";
 #endif /* not lint */
 
 /*
@@ -286,22 +286,10 @@ char *_Cregexp_reg _PROTO((int, int *, char **, int *, char *, char **, long *))
 char *_Cregexp_branch _PROTO((int *, char **, int *, char *, char **, long *));
 char *_Cregexp_piece _PROTO((int *, char **, int *, char *, char **, long *));
 char *_Cregexp_atom _PROTO((int *, char **, int *, char *, char **, long *));
-#if (defined(hpux) || defined(SOLARIS))
 char *_Cregexp_node _PROTO(());
-#else
-char *_Cregexp_node _PROTO((char, char **, int *, char *, char **, long *));
-#endif
 char *_Cregexp_next _PROTO((char *, char **, int *, char *, char **, long *));
-#if (defined(hpux) || defined(SOLARIS))
 void _Cregexp_c _PROTO(());
-#else
-void _Cregexp_c _PROTO((char, char **, int *, char *, char **, long *));
-#endif
-#if (defined(hpux) || defined(SOLARIS))
 void _Cregexp_insert _PROTO(());
-#else
-void _Cregexp_insert _PROTO((char, char *, char **, int *, char *, char **, long *));
-#endif
 void _Cregexp_tail _PROTO((char *, char *, char **, int *, char *, char **, long *));
 void _Cregexp_optail _PROTO((char *, char *, char **, int *, char *, char **, long *));
 int _Cregexp_try _PROTO((Cregexp_t *, char *, char **, int *, char *, char **, long *, char **, char **, char ***, char ***));
