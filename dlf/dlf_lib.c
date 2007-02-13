@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.13 2007/02/13 07:52:25 waldron Exp $
+ * $Id: dlf_lib.c,v 1.14 2007/02/13 10:13:56 waldron Exp $
  */
 
 /* headers */
@@ -167,6 +167,7 @@ int dlf_send(target_t *t, char *data, int len) {
 		/* connect */
 		rv = netconnect_timeout(t->socket, (struct sockaddr *)&server_addr, sizeof(server_addr), API_CONNECT_TIMEOUT);
 		if (rv < 0) {
+			netclose(t->socket);
 			t->socket = -1;
 			ClrConnected(t->mode);
 			return rv;
