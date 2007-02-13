@@ -29,7 +29,7 @@ COMM
 SUBDIRS = $(RMMASTERDIR) $(RMNODEDIR) $(RMADMINDIR)
 
 OSLIBS = -L FileName(../..,shlib) -lshift $(ADNSLIB) -lnsl -ldl
-DEBUG  = -g -O0 -pedantic -ansi -Wall -Wno-long-long
+DEBUG  = -g -O0
 INCLUDES = -I FileName(../..,h) -I ../..
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DRH_HOST=\"$(RH_HOST)\"
 
