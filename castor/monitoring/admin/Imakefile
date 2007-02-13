@@ -26,7 +26,7 @@
 
 #include <Project.tmpl>
 
-DEBUG  = -g -O0 -pedantic -ansi -Wall -Wno-long-long
+DEBUG  = -g -O0
 MANPAGES = 
 EXPORTMANPAGES = 
 
