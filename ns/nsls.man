@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsls.man,v $ $Revision: 1.3 $ $Date: 2007/02/13 14:51:07 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLS 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.TH NSLS 1 "$Date: 2007/02/13 14:51:07 $" CASTOR "Cns User Commands"
 .SH NAME
 nsls \- list CASTOR name server directory/file entries
 .SH SYNOPSIS
@@ -60,6 +60,9 @@ list file segments migrated to tape.
 .TP
 .B -u
 use last access time instead of last modification.
+.TP
+.BR --checksum
+prints the checksum (and its type) for each file segment. This option is valid only if -T is specified.
 .TP
 .B --class
 print the file class in front of each entry.
