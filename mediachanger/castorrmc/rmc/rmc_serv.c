@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.7 $ $Date: 2006/03/20 17:56:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.8 $ $Date: 2007/02/13 13:11:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -134,7 +134,7 @@ struct main_args *main_args;
 	strcpy (plist, "DUMMY0");
 	c = send_scsi_cmd (extended_robot_info.smc_fd,
 	    extended_robot_info.smc_ldr, 0, cdb, 12, plist, 40,
-	    sense, 38, 60000, SCSI_OUT, &nb_sense_ret, &msgaddr);
+	    sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
 	if (c < 0) {
 		if (c == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5 &&
 		    sense[12] == 0x20) {
