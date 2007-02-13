@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.9 $ $Date: 2006/12/01 11:36:13 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.10 $ $Date: 2007/02/13 13:14:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -418,7 +418,7 @@ struct robot_info *robot_info;
         /* IBM library in pause mode  */ 
         while (pause_mode && nretries<=900) { 
 	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 6, buf, 24,
-		 sense, 38, 180000, SCSI_IN, &nb_sense_ret, &msgaddr);
+		 sense, 38, 900000, SCSI_IN, &nb_sense_ret, &msgaddr);
              if (rc < 0) {
                if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
                  sleep(60);
