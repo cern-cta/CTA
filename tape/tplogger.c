@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.4 2007/01/31 08:46:52 wiebalck Exp $
+** $Id: tplogger.c,v 1.5 2007/02/14 09:31:51 wiebalck Exp $
 */
 
 #include <string.h>
@@ -249,7 +249,7 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
                 rv = dlf_regtext( self->tl_msg[i].tm_no, self->tl_msg[i].tm_txt );
                 if (rv < 0) {
                         fprintf(stderr, "Failed to dlf_regtext() %d\n", self->tl_msg[i].tm_no );
-                        free(self->tl_name);
+                        free( self->tl_name );
                         err = -4;
                         goto err_out;
                 }
@@ -349,20 +349,28 @@ int DLL_DECL tl_exit_dlf( tplogger_t *self, int exit ) {
 
         int err = 0, rv;
 
+        if( NULL == self ) {
+
+                err = -1;
+                goto err_out;
+        } 
+
         switch( exit ) {
                 
         case 0:
                 rv = dlf_shutdown( 5 );
                 if (rv < 0) {
                         fprintf(stderr, "dlf_shutdown() - failed to shutdown\n");
-                        err = -1;
+                        free( self->tl_name );
+                        err = -2;
                         goto err_out;
                 }               
                 break;
 
         default:
-                fprintf( stderr, "dlf_exit() - shutdown code unknown\n" );
-                err = -1;
+                fprintf( stderr, "tl_exit_dlf() - shutdown code unknown\n" );
+                free( self->tl_name );
+                err = -3;
                 goto err_out;
         }
 
@@ -374,7 +382,7 @@ int DLL_DECL tl_exit_dlf( tplogger_t *self, int exit ) {
 
 
 /**
- * Check the validity of a messag number
+ * Check the validity of a message number
  *
  * @returns    : the index in message table on success
  *               a value < 0 otherwise

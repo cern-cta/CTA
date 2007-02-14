@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.3 2007/01/31 08:46:52 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.4 2007/02/14 09:31:51 wiebalck Exp $
 */
 
 #include <string.h>
@@ -120,7 +120,7 @@ tplogger_message_t tplogger_messages[] = {
                                                                                     /* par_req   */
                                                                                     /* par_TMS   */
 
-        {  56, TL_LVL_MONITORING,  "TP056 - request"                                 },  /* type      */
+        {  56, TL_LVL_MONITORING,  "TP056 - request"                            },  /* type      */
                                                                                     /* uid       */
                                                                                     /* gid       */
                                                                                     /* clienthost*/
@@ -158,16 +158,20 @@ tplogger_message_t tplogger_messages[] = {
 
 
 /*
-** The predefined messages for rtcpd/tpdaemon (emtpy for the time being since 
-** it is not clear if different tables for the different tape related facilities are 
-** needed or not  
+** The predefined messages for rtcpd/tpdaemon 
+** (emtpy for the time being since it
+** it is not clear if different tables 
+** for the different tape related facilities 
+** are needed or not)  
 */
 tplogger_message_t tplogger_messages_tpdaemon[] = {
 
+        {   0, TL_LVL_DEBUG     , "Dummy message"                               }  
 };
 
 tplogger_message_t tplogger_messages_rtcpd[] = {
 
+        {   0, TL_LVL_DEBUG     , "Dummy message"                               }  
 };
 
 
