@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.374 $ $Date: 2007/02/09 14:20:41 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.375 $ $Date: 2007/02/14 13:53:55 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.374 $ $Date: 2007/02/09 14:20:41 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.375 $ $Date: 2007/02/14 13:53:55 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2669,7 +2669,7 @@ BEGIN
       -- there is no more space on this filesystem and everything is stuck: this can
       -- happen if the migration is stuck for a while and the file system fills up;
       -- then we "manually" trigger the standard GC, it will unblock the situation somewhen
-      UPDATE FileSystem SET free = free - 1 WHERE id = fs.id;
+      UPDATE FileSystem SET free = free WHERE id = fs.id;
       COMMIT;
     END IF;
     
@@ -2732,23 +2732,6 @@ BEGIN
 END;
 
 
-
-/*
-CREATE MATERIALIZED VIEW MView_FS_DS_DP2SC
-ORGANIZATION HEAP PCTFREE 0 COMPRESS
-CACHE NOPARALLEL BUILD IMMEDIATE
-REFRESH ON COMMIT COMPLETE
-WITH PRIMARY KEY USING ENFORCED CONSTRAINTS
-DISABLE QUERY REWRITE
-AS
-  SELECT FS.id fsId, DP2SC.child scId,
-         FS.mountpoint fsMountPoint, DS.name dsName
-    FROM diskpool2svcclass DP2SC, diskserver DS, filesystem FS
-   WHERE FS.status IN (0,1)   -- PRODUCTION, DRAINING
-     AND DS.status IN (0,1)   -- PRODUCTION, DRAINING
-     AND DS.id(+) = FS.diskServer
-     AND DP2SC.parent(+) = FS.diskPool;
-*/
 
 /*
  * PL/SQL method implementing the core part of stage queries
