@@ -1,2 +1,3 @@
 %attr(0755,root,bin) usr/bin/reclaim
 %attr(0755,root,bin) usr/bin/tapetohsm
+%attr(0755,root,bin) usr/bin/c2probe
