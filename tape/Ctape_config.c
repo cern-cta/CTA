@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.12 $ $Date: 2000/08/04 05:45:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.13 $ $Date: 2007/02/15 17:00:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_config - configure a drive up/down */
@@ -21,13 +21,14 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_config.c,v $ $Revision: 1.12 $ $Date
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
+#include "Ctape_api.h"
 
-Ctape_config(unm, status, reason)
+int Ctape_config(unm, status, reason)
 char *unm;
 int status;
 int reason;
 {
-	int c, n;
+	int c;
 	char drive[CA_MAXUNMLEN+1];
 	char func[16];
 	gid_t gid;
@@ -52,7 +53,7 @@ int reason;
 
 	/* unm may be in the form drivename@hostname */
 
-	if (p = strchr (unm, '@')) {
+	if ((p = strchr (unm, '@'))) {
 		if ((p - unm) > CA_MAXUNMLEN) {
 			serrno = EINVAL;
 			return (-1);
