@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.375 $ $Date: 2007/02/14 13:53:55 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.376 $ $Date: 2007/02/15 14:07:04 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.375 $ $Date: 2007/02/14 13:53:55 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.376 $ $Date: 2007/02/15 14:07:04 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -866,6 +866,7 @@ BEGIN
   END IF;
 END;
 
+
 /* PL/SQL method implementing fileRecallFailed */
 CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
  SubRequestId NUMBER;
@@ -894,6 +895,7 @@ BEGIN
   END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
 END;
+
 
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
@@ -957,6 +959,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
+
 
 /* PL/SQL method implementing isSubRequestToSchedule */
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
@@ -2633,17 +2636,18 @@ BEGIN
   FOR fs IN (SELECT id FROM FileSystem) LOOP
     
     -- GC the INVALID unused diskCopies on this filesystem
-    BEGIN
-      SELECT DC.id, CF.fileSize
-        BULK COLLECT INTO dcIds, fileSizes
-        FROM DiskCopy DC, CastorFile CF
-       WHERE DC.castorFile = CF.id
-         AND DC.fileSystem = fs.id
-         AND DC.status = 7  -- INVALID
-         AND NOT EXISTS (
-           SELECT 'x' FROM SubRequest
-            WHERE DC.status = 0 AND diskcopy = DC.id
-              AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+    SELECT DC.id, CF.fileSize
+      BULK COLLECT INTO dcIds, fileSizes
+      FROM DiskCopy DC, CastorFile CF
+     WHERE DC.castorFile = CF.id
+       AND DC.fileSystem = fs.id
+       AND DC.status = 7  -- INVALID
+       AND NOT EXISTS (
+         SELECT 'x' FROM SubRequest
+          WHERE DC.status = 0 AND diskcopy = DC.id
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+
+    IF dcIds.COUNT > 0 THEN
       UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
        WHERE id MEMBER OF dcIds; 
       -- compute and update the filesystem's freed space
@@ -2656,9 +2660,7 @@ BEGIN
        WHERE id = fs.id;
       -- commit now the cleanup of this filesystem 
       COMMIT;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL;    -- no invalid diskcopies to be removed, move on
-    END;
+    END IF;
     
     -- sanity check in case the filesystem got full over the hard threshold
     SELECT free + deltaFree - reservedSpace + spaceToBeFreed, minAllowedFreeSpace * totalSize
@@ -2679,7 +2681,9 @@ BEGIN
 END;
 
 BEGIN
-  DELETE FROM user_schedule_jobs WHERE JOB_NAME = 'GCInvalidDiskCopiesJob'; 
+  -- creates a db job to be run every 15 mins for the cleanup of invalid diskCopies
+  -- given the 2 seconds sleep in gcInvalidDiskCopies, such interval allows for
+  -- ~450 filesystem to be processed for each round.
   DBMS_SCHEDULER.CREATE_JOB (
       JOB_NAME        => 'GCInvalidDiskCopiesJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
