@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_drvinfo.c,v $ $Revision: 1.1 $ $Date: 2003/09/12 14:04:41 $ CERN IT-GD/CT Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_drvinfo.c,v $ $Revision: 1.2 $ $Date: 2007/02/15 17:37:05 $ CERN IT-GD/CT Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_drvinfo - get tape drive information */
@@ -22,7 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_drvinfo.c,v $ $Revision: 1.1 $ $Date
 #include "marshall.h"
 #include "serrno.h"
 
-Ctape_drvinfo(drive, devinfo)
+int Ctape_drvinfo(drive, devinfo)
 char *drive;
 struct devinfo *devinfo;
 {

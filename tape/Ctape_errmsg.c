@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_errmsg.c,v $ $Revision: 1.5 $ $Date: 2003/10/13 07:39:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_errmsg.c,v $ $Revision: 1.6 $ $Date: 2007/02/15 17:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -30,7 +30,7 @@ int buflen;
 
 /* Ctape_errmsg - send error message to user defined client buffer or to stderr */
 
-Ctape_errmsg(char *func, char *msg, ...)
+int Ctape_errmsg(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[PRTBUFSZ];
