@@ -1,26 +1,26 @@
 /******************************************************************************
- *                      OraCleanSvc.cpp
- *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
- *
- * Copyright (C) 2004  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: itglp $
- *
- * @author Giulia Taurelli
- *****************************************************************************/
+*                      OraCleanSvc.cpp
+*
+* This file is part of the Castor project.
+* See http://castor.web.cern.ch/castor
+*
+* Copyright (C) 2004  CERN
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*
+* @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: itglp $
+*
+* @author Giulia Taurelli
+*****************************************************************************/
 
 
 // Include Files
@@ -51,7 +51,7 @@
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraCleanSvc>* s_factoryOraCleanSvc =
-  new castor::SvcFactory<castor::db::ora::OraCleanSvc>();
+new castor::SvcFactory<castor::db::ora::OraCleanSvc>();
 
 //------------------------------------------------------------------------------
 // Static constants initialization
@@ -60,11 +60,15 @@ static castor::SvcFactory<castor::db::ora::OraCleanSvc>* s_factoryOraCleanSvc =
 
 /// SQL statement for function removeOutOfDateRequests
 const std::string castor::db::ora::OraCleanSvc::s_removeOutOfDateRequestsString=
-    "BEGIN deleteOutOfDateRequests(:1);END;";
+"BEGIN deleteOutOfDateRequests(:1); END;";
 
 /// SQL statement for removeArchivedRequests function
 const std::string castor::db::ora::OraCleanSvc::s_removeArchivedRequestsString=
-    "BEGIN deleteArchivedRequests(:1); END;";
+"BEGIN deleteArchivedRequests(:1); END;";
+
+/// SQL statement for function removeOutOfDateDiskCopies
+const std::string castor::db::ora::OraCleanSvc::s_removeOutOfDateDiskCopiesString=
+"BEGIN deleteOutOfDateDiskCopies(:1); END;";
 
 
 
@@ -73,11 +77,11 @@ const std::string castor::db::ora::OraCleanSvc::s_removeArchivedRequestsString=
 // -----------------------------------------------------------------------
 
 castor::db::ora::OraCleanSvc::OraCleanSvc(const std::string name) :
-  OraCommonSvc(name),
-  m_removeOutOfDateRequestsStatement(0),
-  m_removeArchivedRequestsStatement(0){
-
-
+OraCommonSvc(name),
+m_removeOutOfDateRequestsStatement(0),
+m_removeArchivedRequestsStatement(0){
+  
+  
 }
 
 // -----------------------------------------------------------------------
@@ -113,60 +117,60 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
     deleteStatement(m_removeArchivedRequestsStatement);
   } catch (oracle::occi::SQLException e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message", e.getMessage())};
+    {castor::dlf::Param("message", e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
-     };
-
+  };
+  
   // Now reset all pointers to 0
-
+  
   m_removeOutOfDateRequestsStatement = 0;
   m_removeArchivedRequestsStatement = 0;
-
-
+  
+  
 }
 
 // -----------------------------------------------------------------------
 // removeOutOfDateRequests
 // -----------------------------------------------------------------------
- 
+
 int castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int numDays)
-        throw (castor::exception::Exception){
-    try{
-       if (0 == m_removeOutOfDateRequestsStatement) {
-           m_removeOutOfDateRequestsStatement 
-              =createStatement(s_removeOutOfDateRequestsString);
-           m_removeOutOfDateRequestsStatement->setAutoCommit(true);
-       }
-
-    // execute the statement
-   
-      m_removeOutOfDateRequestsStatement->setInt(1, numDays*24*60*60);
-    
-      unsigned int nb = m_removeOutOfDateRequestsStatement->executeUpdate();
-       
-       if (nb == 0) {
-         rollback();
-         castor::exception::NoEntry e;
-         e.getMessage() << "deleteOutOfDateRequests function not found";
-         throw e;
-       }
-       
-       castor::dlf::Param logParams[] =
-	 {castor::dlf::Param("message", "Removed out of date request.")};
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, logParams);
-       return 0;
-
-    }catch (oracle::occi::SQLException e) {
-
-            handleException(e);
-            castor::exception::Internal ex;
-
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("message",e.getMessage())};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);
-	    throw ex;
-	    return -1;
+throw (castor::exception::Exception){
+  try{
+    if (0 == m_removeOutOfDateRequestsStatement) {
+      m_removeOutOfDateRequestsStatement 
+      =createStatement(s_removeOutOfDateRequestsString);
+      m_removeOutOfDateRequestsStatement->setAutoCommit(true);
     }
+    
+    // execute the statement
+    
+    m_removeOutOfDateRequestsStatement->setInt(1, numDays*24*60*60);
+    
+    unsigned int nb = m_removeOutOfDateRequestsStatement->executeUpdate();
+    
+    if (nb == 0) {
+      rollback();
+      castor::exception::NoEntry e;
+      e.getMessage() << "deleteOutOfDateRequests function not found";
+      throw e;
+    }
+    
+    castor::dlf::Param logParams[] =
+    {castor::dlf::Param("message", "Removed out of date request.")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, logParams);
+    return 0;
+    
+  }catch (oracle::occi::SQLException e) {
+    
+    handleException(e);
+    castor::exception::Internal ex;
+    
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("message",e.getMessage())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);
+    throw ex;
+    return -1;
+  }
 }
 
 
@@ -174,46 +178,86 @@ int castor::db::ora::OraCleanSvc::removeOutOfDateRequests(int numDays)
 // removeArchivedRequests
 // -----------------------------------------------------------------------
 
-
-int  castor::db::ora::OraCleanSvc::removeArchivedRequests(int hours)
-        throw (castor::exception::Exception){
-    try{
-       if (0 == m_removeArchivedRequestsStatement) {
-           m_removeArchivedRequestsStatement 
-              =createStatement(s_removeArchivedRequestsString);
-           m_removeArchivedRequestsStatement->setAutoCommit(true);
-       }
-
-    // execute the statement
-   
-       m_removeArchivedRequestsStatement->setInt(1, hours*60*60); 
-       unsigned int nb = m_removeArchivedRequestsStatement->executeUpdate();
-
-       if (nb == 0) {
-         rollback();
-         castor::exception::NoEntry e;
-         e.getMessage() << "deleteArchivedRequests function not found";
-         throw e;
-       }
-       castor::dlf::Param logParams[] =
-         {castor::dlf::Param("message", "Removed archived request.")};
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, logParams);
-       return 0;
-    }catch (oracle::occi::SQLException e) {
-
-      handleException(e);
-      castor::exception::Internal ex;
-
-      castor::dlf::Param params[] =
-	{castor::dlf::Param(castor::dlf::Param("message",e.getMessage()))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 1, params);
-      throw ex;
-      return -1;
+int castor::db::ora::OraCleanSvc::removeArchivedRequests(int hours)
+throw (castor::exception::Exception){
+  try{
+    if (0 == m_removeArchivedRequestsStatement) {
+      m_removeArchivedRequestsStatement 
+      =createStatement(s_removeArchivedRequestsString);
+      m_removeArchivedRequestsStatement->setAutoCommit(true);
     }
-
+    
+    // execute the statement
+    
+    m_removeArchivedRequestsStatement->setInt(1, hours*60*60); 
+    unsigned int nb = m_removeArchivedRequestsStatement->executeUpdate();
+    
+    if (nb == 0) {
+      rollback();
+      castor::exception::NoEntry e;
+      e.getMessage() << "deleteArchivedRequests function not found";
+      throw e;
+    }
+    castor::dlf::Param logParams[] =
+    {castor::dlf::Param("message", "Removed archived request.")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, logParams);
+    return 0;
+  }
+  catch (oracle::occi::SQLException e) {
+    
+    handleException(e);
+    castor::exception::Internal ex;
+    
+    castor::dlf::Param params[] =
+    {castor::dlf::Param(castor::dlf::Param("message",e.getMessage()))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 1, params);
+    throw ex;
+    return -1;
+  }
+  
 }
 
 
+// -----------------------------------------------------------------------
+// removeOutOfDateDiskCopies
+// -----------------------------------------------------------------------
 
- 
-
+int castor::db::ora::OraCleanSvc::removeOutOfDateDiskCopies(int numDays)
+throw (castor::exception::Exception){
+  try{
+    if (0 == m_removeOutOfDateDiskCopiesStatement) {
+      m_removeOutOfDateDiskCopiesStatement 
+      =createStatement(s_removeOutOfDateDiskCopiesString);
+      m_removeOutOfDateDiskCopiesStatement->setAutoCommit(true);
+    }
+    
+    // execute the statement
+    
+    m_removeOutOfDateDiskCopiesStatement->setInt(1, numDays*24*60*60);
+    
+    unsigned int nb = m_removeOutOfDateDiskCopiesStatement->executeUpdate();
+    
+    if (nb == 0) {
+      rollback();
+      castor::exception::NoEntry e;
+      e.getMessage() << "deleteOutOfDateDiskCopies function not found";
+      throw e;
+    }
+    
+    castor::dlf::Param logParams[] =
+    {castor::dlf::Param("message", "Removed out of date request.")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, logParams);
+    return 0;
+    
+  }catch (oracle::occi::SQLException e) {
+    
+    handleException(e);
+    castor::exception::Internal ex;
+    
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("message",e.getMessage())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);
+    throw ex;
+    return -1;
+  }
+}
