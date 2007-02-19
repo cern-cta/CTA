@@ -1913,6 +1913,8 @@ int copyfile_stage_from_local(input,output,mode,input_size,input_is_hpss)
 						 (struct stgpath_entry *) &stpp_input /* stpp_input */
 			);
 		if (rc2 != 0) {
+			int save_serrno;
+			save_serrno = serrno;
 			if (stpp_input.upath[0] != '\0') {
 				if (serrno != EACCES) {
 					TRACE(2,"rfio","copyfile_stage_from_local: Clearing %s", stpp_input.upath);
@@ -1923,7 +1925,8 @@ int copyfile_stage_from_local(input,output,mode,input_size,input_is_hpss)
 			} else {
 				TRACE(2,"rfio","copyfile_stage_from_local: stpp_input.upath is empty, nothing to clear");
 			}
-			fprintf(stderr,"%s: %s\n", output, sstrerror(serrno));
+			fprintf(stderr,"%s: %s\n", output, sstrerror(save_serrno));
+			serrno = save_serrno;
 			return(rc_castor2shift(serrno));
 		}
 	}
