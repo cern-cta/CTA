@@ -127,7 +127,6 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(printFileClass) \
 	 ProgramTargetName(printSvcClass) \
 	 ProgramTargetName(c2probe) \
-	 ProgramTargetName(fsprobe) \
 	 ProgramTargetName(nsGetPath)
 
 #if BuildVDQMCpp
@@ -171,7 +170,6 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(listDedications)) \
 	 FileName($(BIN),ProgramTargetName(houseKeeping)) \
 	 FileName($(BIN),ProgramTargetName(c2probe)) \
-	 FileName($(BIN),ProgramTargetName(fsprobe)) \
 	 FileName($(BIN),ProgramTargetName(springCleaning))
 
 
@@ -201,7 +199,6 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/listDedications \
 	 $(EXPORTBIN)/houseKeeping \
 	 $(EXPORTBIN)/c2probe \
-	 $(EXPORTBIN)/fsprobe \
 	 $(EXPORTBIN)/springCleaning
 
 
@@ -213,9 +210,6 @@ IPERL = FileName($(PERLLIBDIR),castor_tools.pm)
 EPERL = $(EXPORTPERL)/castor_tools.pm
 
 all: $(PROGS_TO_KEEP) $(PROGS_TO_CLEAN)
-
-fsprobe.Osuf: fsprobe.c
-	$(CC) -Wall -O0 -c fsprobe.c
 
 
 NormalProgramTarget(reclaim,reclaim.Osuf,$(DEPLIB),$(LIBS))
@@ -231,7 +225,6 @@ NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(diskUsage,diskUsage.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(nsGetPath,nsGetPath.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB2),-pthread $(LIBS2))
-NormalProgramTarget(fsprobe,fsprobe.Osuf,,)
 
 #if BuildVDQMCpp
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
@@ -300,9 +293,6 @@ IEXPORT(springCleaning,$(EXPORTBIN),755);
 
 InstallProgram(c2probe,$(BIN),root,bin,755)
 IEXPORT(c2probe,$(EXPORTBIN),755);
-
-InstallProgram(fsprobe,$(BIN),root,bin,755)
-IEXPORT(fsprobe,$(EXPORTBIN),755)
 
 #if BuildVDQMCpp
 InstallProgram(vdqmDBInit,$(BIN),root,bin,755)
