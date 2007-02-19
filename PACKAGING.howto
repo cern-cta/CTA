@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.28 2007/01/11 15:13:14 itglp Exp $
+## $Id: PACKAGING.howto,v 1.29 2007/02/19 14:20:48 riojac3 Exp $
 #
 
 #
@@ -50,7 +50,7 @@ make tar
 ## linux versions :
 ## i386-SLC3, i386-SLC4, and x86_64-SLC4.
 ## The list of machines to use are respectively :
-## lxs5010, lx32slc4, lx64slc4.
+## lxs5010,(SLC$ 32) , lxbuild085 (SLC4 64).
 ## You will only have root access on lxs5010.
 #
 
