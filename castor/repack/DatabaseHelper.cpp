@@ -25,6 +25,7 @@
  *****************************************************************************/
 
 // Include Files
+
 #include "castor/repack/DatabaseHelper.hpp"
 
 #include "castor/db/cnv/DbRepackRequestCnv.hpp"
@@ -150,7 +151,7 @@ void castor::repack::DatabaseHelper::reset() throw() {
 // store_Request 
 //------------------------------------------------------------------------------
 void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest* rreq)
-						throw (castor::exception::Internal)
+						throw (castor::exception::Exception)
 {
   stage_trace(2,"Storing Request in DB" );
 
@@ -199,7 +200,7 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 // is_stored
 //------------------------------------------------------------------------------
 bool castor::repack::DatabaseHelper::is_stored(std::string vid) 
-						throw (castor::exception::Internal)
+						throw (castor::exception::Exception)
 {
   bool result = false;
 
@@ -250,7 +251,7 @@ castor::repack::RepackSubRequest*
              castor::repack::DatabaseHelper::getSubRequestByVid(
                                                                std::string vid,
                                                                bool fill)
-                                            throw (castor::exception::Internal)
+                                            throw (castor::exception::Exception)
 {
   RepackSubRequest* result = NULL;
   try {
@@ -322,7 +323,7 @@ void castor::repack::DatabaseHelper::updateSubRequest(
         castor::repack::RepackSubRequest* obj,
         bool fill,
         Cuuid_t& cuuid) 
-        throw (castor::exception::Internal)
+        throw (castor::exception::Exception)
 {
   try {
     /// stores it into the database
@@ -359,7 +360,7 @@ void castor::repack::DatabaseHelper::updateSubRequest(
 castor::repack::RepackSubRequest* 
 			castor::repack::DatabaseHelper::getSubRequest(
 						u_signed64 sub_id)
-						throw (castor::exception::Internal)   
+						throw (castor::exception::Exception)   
 {
   castor::IObject* obj = cnvSvc()->getObjFromId( sub_id );
 
@@ -389,7 +390,7 @@ castor::repack::RepackSubRequest*
 //------------------------------------------------------------------------------
 // unlock
 //------------------------------------------------------------------------------
-void castor::repack::DatabaseHelper::lock(RepackSubRequest* tape) throw (castor::exception::Internal)
+void castor::repack::DatabaseHelper::lock(RepackSubRequest* tape) throw (castor::exception::Exception)
 {
   if ( tape != NULL ){
   /// Since the RepacksubRequest is the only object, which is changed in the DB
@@ -446,7 +447,7 @@ void castor::repack::DatabaseHelper::unlock() throw ()
 //------------------------------------------------------------------------------
 castor::repack::RepackSubRequest* 
 		castor::repack::DatabaseHelper::checkSubRequestStatus(int status)
-					throw (castor::exception::Internal)
+					throw (castor::exception::Exception)
 {
   RepackSubRequest* result = NULL;
   castor::db::IDbResultSet *rset = NULL;
@@ -498,7 +499,7 @@ castor::repack::RepackSubRequest*
 //------------------------------------------------------------------------------
 // archive
 //------------------------------------------------------------------------------
-void castor::repack::DatabaseHelper::archive() throw (castor::exception::Internal){
+void castor::repack::DatabaseHelper::archive() throw (castor::exception::Exception){
   
   if ( m_archiveStatement == NULL ) {
     m_archiveStatement = createStatement(s_archiveStatementString);
@@ -523,7 +524,7 @@ void castor::repack::DatabaseHelper::archive() throw (castor::exception::Interna
 // private : remove
 //------------------------------------------------------------------------------
 void castor::repack::DatabaseHelper::remove(castor::IObject* obj) 
-					throw (castor::exception::Internal)
+					throw (castor::exception::Exception)
 {
   /* we don't really delete something from the database, since a history is 
    * to be kept, so only the RepackSubRequest is set to ARCHIVED
@@ -556,7 +557,7 @@ void castor::repack::DatabaseHelper::remove(castor::IObject* obj)
 //------------------------------------------------------------------------------
 std::vector<castor::repack::RepackSubRequest*>*
                              castor::repack::DatabaseHelper::getAllSubRequests()
-                                             throw (castor::exception::Internal)
+                                             throw (castor::exception::Exception)
 {
   if ( m_selectAllSubRequestsStatement == NULL ) {
     m_selectAllSubRequestsStatement = 
@@ -573,7 +574,7 @@ std::vector<castor::repack::RepackSubRequest*>*
                        castor::repack::DatabaseHelper::getAllSubRequestsStatus(
                                                                        int status
                                                                       )
-                                              throw (castor::exception::Internal)
+                                              throw (castor::exception::Exception)
 {
   if ( m_selectAllSubRequestsStatusStatement == NULL ) {
     m_selectAllSubRequestsStatusStatement = 
@@ -604,7 +605,7 @@ std::vector<castor::repack::RepackSubRequest*>*
 std::vector<castor::repack::RepackSubRequest*>* 
                           castor::repack::DatabaseHelper::internalgetSubRequests
                                            (castor::db::IDbStatement* statement) 
-                                             throw (castor::exception::Internal)
+                                             throw (castor::exception::Exception)
 {
 
   std::vector<castor::repack::RepackSubRequest*>* result 
@@ -650,7 +651,7 @@ castor::repack::RepackSegment*
                     castor::repack::DatabaseHelper::getTapeCopy(
                                           castor::repack::RepackSegment* lookup
 					   )
-                    throw (castor::exception::Internal)
+                    throw (castor::exception::Exception)
 {
   castor::repack::RepackSegment* result = NULL;
 
@@ -700,7 +701,7 @@ castor::repack::RepackSegment*
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest* 
  castor::repack::DatabaseHelper::getLastTapeInformation(std::string vidName)
-                    throw (castor::exception::Internal)
+                    throw (castor::exception::Exception)
 {
 
   castor::repack::RepackSubRequest* result=NULL;

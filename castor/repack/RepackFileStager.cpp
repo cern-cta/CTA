@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2006/12/13 12:42:56 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/02/19 11:06:53 $ $Author: gtaur $
  *
  *
  *
@@ -338,8 +338,8 @@ void RepackFileStager::startRepack(RepackSubRequest* sreq){
 
 }
 
-//------------------------------------------------------------------------------
-// stage_files
+//-----------------------------------------------------------------------------
+// sendStagerRepackRequest
 //------------------------------------------------------------------------------
 int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
                                                 castor::stager::StageRepackRequest* req,
@@ -377,7 +377,17 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
 
   /** 3. now try to poll for the answers. If there is an timeout it will throw
       an exception */
-  client.pollAnswersFromStager(req, &rh);
+  try{
+    client.pollAnswersFromStager(req, &rh);
+  }catch (castor::exception::Exception ex){
+    // time out that should be ignored
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+     castor::dlf::Param("Precise Message", ex.getMessage().str()),
+     castor::dlf::Param("VID", req->repackVid())
+    };
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 3, params);
+  }
 
   /** like the normale api call, we have to check for errors in the answer*/
   for (int i=0; i<respvec.size(); i++) {

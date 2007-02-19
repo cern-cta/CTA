@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/02/01 10:25:07 $ $Author: waldron $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/02/19 11:06:53 $ $Author: gtaur $
  *
  *
  *
@@ -338,10 +338,11 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
     
     if ( tmp != NULL ) {
       Cuuid_t cuuid = stringtoCuuid(tmp->cuuid());
-      if ( tmp->status() == SUBREQUEST_TOBESTAGED || SUBREQUEST_READYFORSTAGING )
+      if ( tmp->status() == SUBREQUEST_TOBESTAGED || tmp->status() == SUBREQUEST_READYFORSTAGING )
         tmp->setStatus(SUBREQUEST_DONE);
       else
         tmp->setStatus(SUBREQUEST_READYFORCLEANUP);
+
       m_databasehelper->updateSubRequest(tmp,false,cuuid);
       freeRepackObj(tmp);
       //m_databasehelper->unlock();
@@ -357,7 +358,7 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
 //------------------------------------------------------------------------------
 void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::Internal)
 {
-  int tapecnt =0;
+  unsigned int tapecnt =0;
   /* check if the tape(s)/pool exist  and if all tapes are valid for repacking*/
   if ( !getPoolInfo(rreq) ) {
     return;
