@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.190 $ $Release$ $Date: 2007/02/01 10:54:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.191 $ $Release$ $Date: 2007/02/19 11:03:34 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -495,28 +495,31 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
       cnvSvc()->updateRep(&ad, subreq, false); 
       
       // create needed TapeCopy(ies) and Segment(s)
-      try {
-        createTapeCopySegmentsForRecall(cf, euid, egid);
-        cnvSvc()->commit();
-      }catch (castor::exception::Exception forward){
+     
+      createTapeCopySegmentsForRecall(cf, euid, egid);
+      cnvSvc()->commit();   
+      subreq->setDiskcopy(NULL);
+      delete dc;
+  }catch (castor::exception::Exception forward){
         // no valid tape copy found, in such a case, we rollback the created DiskCopy
         // and set the subrequest to failed. The original Message is forwarded
+    try{
+
         cnvSvc()->rollback();
         delete dc;
         subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
         cnvSvc()->updateRep(&ad, subreq, true);
-        throw forward;
-      }
-    subreq->setDiskcopy(NULL);
-    delete dc;
+       
+    }catch(castor::exception::Exception forward2){
+        castor::exception::Internal ex2;
+        ex2.getMessage() << "Exception in try-catch of  createRecallCandidate"
+        << std::endl << forward2.getMessage().str();
+        throw ex2;
+    }
 
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    if ( dc != NULL )delete dc;
     castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in isSubRequestToSchedule."
-      << std::endl << e.what();
+    ex.getMessage() << "Exception in createRecallCandidate"
+    << std::endl << forward.getMessage().str();
     throw ex;
   }
 }
