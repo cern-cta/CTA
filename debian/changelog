@@ -1,3 +1,7 @@
+castor (2.1.2-5) Repack only; urgency=low
+  *  thrown castor::castor::Exception instead of  castor::exception::Internal from DatabaseHelper, fix for monitoring to be able to deal with time out, bug fix in repack worker.
+  *
+
 castor (2.1.2-4) unstable; urgency=low
 
   * Only changed PL/SQL code version
