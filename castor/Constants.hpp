@@ -40,7 +40,7 @@ namespace castor {
    */
   enum ObjectsIds {
     OBJ_INVALID = 0,
-    OBJ_Ptr = 1, // Only used for streaming for circular dependencies
+    OBJ_Ptr = 1, /* Only used for streaming for circular dependencies */
     OBJ_CastorFile = 2,
     OBJ_Client = 3,
     OBJ_Cuuid = 4,

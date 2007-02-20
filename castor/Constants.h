@@ -57,4 +57,4 @@ const char* C_RepresentationsIdsStrings(unsigned int type);
 
 #include "Constants.hpp"
 
-#endif // CASTOR_CONSTANTS_H
+#endif /* CASTOR_CONSTANTS_H */
