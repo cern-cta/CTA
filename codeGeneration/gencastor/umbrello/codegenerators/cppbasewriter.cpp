@@ -271,6 +271,20 @@ void CppBaseWriter::writeWideHeaderComment(QString comment,
 }
 
 //=============================================================================
+// writeCWideHeaderComment
+//=============================================================================
+void CppBaseWriter::writeCWideHeaderComment(QString comment,
+                                           QString myIndent,
+                                           QTextStream &stream) {
+  unsigned int lindent = getIndent().length();
+  QString topline = "";
+  for (unsigned int i = 0; i < 80 - lindent - 6; i++) topline.append('-');
+  stream << myIndent << "/* " << topline << endl;
+  stream << myIndent << "  " << comment << endl;
+  stream << myIndent << "  " << topline << " */" << endl;
+}
+
+//=============================================================================
 // writeDocumentation
 //=============================================================================
 void CppBaseWriter::writeDocumentation(QString header,

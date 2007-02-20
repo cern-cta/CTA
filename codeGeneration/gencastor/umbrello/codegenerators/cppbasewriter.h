@@ -154,6 +154,14 @@ class CppBaseWriter : public CppCastorWriter {
                               QTextStream &cpp);
 
   /**
+   * Writes a wide header comment, with an extra line
+   * of "==" and 80 caracters wide, in a C file
+   */
+  void writeCWideHeaderComment(QString text,
+                              QString indent,
+                              QTextStream &cpp);
+
+  /**
    * Writes a documentation comment
    */
   void writeDocumentation(QString header,

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2006/12/22 13:23:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/02/20 17:22:40 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -68,7 +68,7 @@ void CHClassWriter::writeClass(UMLClassifier *c) {
   comment = comment + " " + m_classInfo->className
     + "\n" + formatDoc(c->getDoc(),getIndent()+"// ");
   comment = comment.left(comment.length() - 1);
-  writeWideHeaderComment(comment, getIndent(), *m_stream);
+  writeCWideHeaderComment(comment, getIndent(), *m_stream);
   *m_stream << endl;
   // Deal with enumerations
   if (isEnum(c)) {
@@ -137,7 +137,8 @@ bool CHClassWriter::finalize(UMLClassifier* c) {
 //=============================================================================
 void CHClassWriter::writeCForwardFromSet(QTextStream &stream,
                                          std::set<QString> &set) {
-  stream << "// Include Files and Forward declarations for the C world" << endl;
+  stream << "/* Include Files and Forward declarations for the C world */"
+         << endl;
   for (std::set<QString>::const_iterator it = set.begin();
        it != set.end();
        it++) {
