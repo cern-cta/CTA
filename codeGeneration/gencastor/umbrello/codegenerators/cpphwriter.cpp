@@ -105,7 +105,11 @@ bool CppHWriter::finalize(UMLClassifier* c) {
   QString hashDefine = m_classInfo->packageName.upper().replace("::",  "_");
   if (!hashDefine.isEmpty() && !hashDefine.endsWith("_")) hashDefine.append('_');
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
-  *m_mainStream << "#endif // " << hashDefine << "_HPP" << endl;
+  if (!m_classInfo->packageName.isEmpty() && isEnum(c)) {
+    *m_mainStream << "#endif /* " << hashDefine << "_HPP */" << endl;
+  } else {
+    *m_mainStream << "#endif // " << hashDefine << "_HPP" << endl;
+  }
   // call upperclass method
   this->CppBaseWriter::finalize(c);
   return true;
