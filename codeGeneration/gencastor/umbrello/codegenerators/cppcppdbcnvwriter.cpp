@@ -976,27 +976,27 @@ void CppCppDbCnvWriter::writeReset() {
             << endl << getIndent() << "try {" << endl;
   m_indent++;
   *m_stream << getIndent()
-            << "delete m_insertStatement;"
+            << "if(m_insertStatement) delete m_insertStatement;"
             << endl << getIndent()
-            << "delete m_deleteStatement;"
+            << "if(m_deleteStatement) delete m_deleteStatement;"
             << endl << getIndent()
-            << "delete m_selectStatement;"
+            << "if(m_selectStatement) delete m_selectStatement;"
             << endl << getIndent()
-            << "delete m_updateStatement;"
+            << "if(m_updateStatement) delete m_updateStatement;"
             << endl;
   if (isNewRequest()) {
     *m_stream << getIndent()
-              << "delete m_insertNewReqStatement;"
+              << "if(m_insertNewReqStatement) delete m_insertNewReqStatement;"
               << endl;
   }
   if (isNewSubRequest()) {
     *m_stream << getIndent()
-              << "delete m_insertNewSubReqStatement;"
+              << "if(m_insertNewSubReqStatement) delete m_insertNewSubReqStatement;"
               << endl;
   }
-  *m_stream << getIndent() << "delete m_storeTypeStatement;"
+  *m_stream << getIndent() << "if(m_storeTypeStatement) delete m_storeTypeStatement;"
             << endl << getIndent()
-            << "delete m_deleteTypeStatement;"
+            << "if(m_deleteTypeStatement) delete m_deleteTypeStatement;"
             << endl;
   // Associations dedicated statements
   AssocList assocs = createAssocsList();
@@ -1011,13 +1011,19 @@ void CppCppDbCnvWriter::writeReset() {
       // Here we will use a dedicated table for the association
       // Find out the parent and child in this table
       *m_stream << getIndent()
-                << "delete m_insert"
+                << "if(m_insert"
+                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "Statement) delete m_insert"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;" << endl << getIndent()
-                << "delete m_delete"
+                << "if(m_delete"
+                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "Statement) delete m_delete"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;" << endl << getIndent()
-                << "delete m_select"
+                << "if(m_select"
+                << capitalizeFirstLetter(as->remotePart.typeName)
+                << "Statement) delete m_select"
                 << capitalizeFirstLetter(as->remotePart.typeName)
                 << "Statement;" << endl;
     } else {
@@ -1027,14 +1033,19 @@ void CppCppDbCnvWriter::writeReset() {
           as->localPart.name != "") {
         // 1 to * association
         *m_stream << getIndent()
-                  << "delete m_delete"
+                  << "if(m_delete"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement) delete m_delete"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;" << endl << getIndent()
-                  << "delete m_select"
+                  << "if(m_select"
                   << capitalizeFirstLetter(as->remotePart.typeName)
-                  << "Statement;" << endl
-                  << getIndent()
-                  << "delete m_remoteUpdate"
+                  << "Statement) delete m_select"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement;" << endl << getIndent()
+                  << "if(m_remoteUpdate"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement) delete m_remoteUpdate"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;" << endl;
       }
@@ -1042,12 +1053,16 @@ void CppCppDbCnvWriter::writeReset() {
         // * to 1
         if (!as->remotePart.abstract) {
           *m_stream << getIndent()
-                    << "delete m_check"
+                    << "if(m_check"
+                    << capitalizeFirstLetter(as->remotePart.typeName)
+                    << "Statement) delete m_check"
                     << capitalizeFirstLetter(as->remotePart.typeName)
                     << "ExistStatement;" << endl;
         }
         *m_stream << getIndent()
-                  << "delete m_update"
+                  << "if(m_update"
+                  << capitalizeFirstLetter(as->remotePart.typeName)
+                  << "Statement) delete m_update"
                   << capitalizeFirstLetter(as->remotePart.typeName)
                   << "Statement;" << endl;
       }
