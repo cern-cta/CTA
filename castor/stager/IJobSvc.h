@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.5 $ $Release$ $Date: 2007/02/20 17:55:56 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,7 +30,7 @@
 #include "castor/Constants.h"
 #include "castor/stager/DiskCopyStatusCodes.h"
 
-/// Forward declarations for the C world
+/* Forward declarations for the C world */
 struct C_IService_t;
 struct C_IClient_t;
 struct C_IObject_t;
