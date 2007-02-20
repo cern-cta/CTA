@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.9 $ $Date: 2005/01/20 16:29:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.10 $ $Date: 2007/02/20 16:28:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_info - get tape file information */
@@ -21,8 +21,9 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_info.c,v $ $Revision: 1.9 $ $Date: 2
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
+#include "Ctape_api.h"
 
-Ctape_info(path, blksize, blockid, density, devtype, drive, fid, fseq, lrecl, recfm)
+int Ctape_info(path, blksize, blockid, density, devtype, drive, fid, fseq, lrecl, recfm)
 char *path;
 int *blksize;
 unsigned char *blockid;

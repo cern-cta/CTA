@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.9 $ $Date: 2005/01/20 16:29:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.10 $ $Date: 2007/02/20 16:28:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_kill - cancel a tape mount or position request */
@@ -21,11 +21,12 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_kill.c,v $ $Revision: 1.9 $ $Date: 2
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
+#include "Ctape_api.h"
 
-Ctape_kill(path)
+int Ctape_kill(path)
 char *path;
 {
-	int c, n;
+	int c;
 	int errflg = 0;
 	char fullpath[CA_MAXPATHLEN+1];
 	char func[16];
