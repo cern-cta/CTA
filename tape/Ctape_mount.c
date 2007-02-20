@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.24 $ $Date: 2005/01/20 16:29:50 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.25 $ $Date: 2007/02/20 16:56:34 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_mount - send a request to the tape daemon to have a tape mounted
@@ -22,8 +22,10 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_mount.c,v $ $Revision: 1.24 $ $Date:
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
+#include "Ctape_api.h"
+#include "vmgr_api.h"
 
-Ctape_mount(path, vid, side, dgn, density, drive, mode, vsn, lbltype, vdqm_reqid)
+int Ctape_mount(path, vid, side, dgn, density, drive, mode, vsn, lbltype, vdqm_reqid)
 char *path;
 char *vid;
 int side;
@@ -41,7 +43,7 @@ int vdqm_reqid;
 	char actual_lbltype[CA_MAXLBLTYPLEN+1];
 	char actual_vid[CA_MAXVIDLEN+1];
 	char actual_vsn[CA_MAXVSNLEN+1];
-	int c, i, n;
+	int c;
 	int den;
 	char devtype[CA_MAXDVTLEN+1];
 	int errflg = 0;
@@ -53,7 +55,7 @@ int vdqm_reqid;
 	int jid;
 	int lblcode;
 	int msglen;
-	char *p, *q;
+	char *q;
 	int prelabel = -1;	/* not a prelabel */
 	char *rbp;
 	char repbuf[16];
@@ -155,8 +157,8 @@ int vdqm_reqid;
 		strcpy (actual_lbltype, lbltype);
 
 #if VMGR
-	if (c = vmgrcheck (actual_vid, actual_vsn, actual_dgn, actual_den,
-	    actual_lbltype, mode, uid, gid)) {
+	if ((c = vmgrcheck (actual_vid, actual_vsn, actual_dgn, actual_den,
+	    actual_lbltype, mode, uid, gid))) {
 #if TMS
 		if (c != ETVUNKN)
 #endif
