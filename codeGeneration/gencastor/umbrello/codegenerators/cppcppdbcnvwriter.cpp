@@ -1055,7 +1055,7 @@ void CppCppDbCnvWriter::writeReset() {
           *m_stream << getIndent()
                     << "if(m_check"
                     << capitalizeFirstLetter(as->remotePart.typeName)
-                    << "Statement) delete m_check"
+                    << "ExistStatement) delete m_check"
                     << capitalizeFirstLetter(as->remotePart.typeName)
                     << "ExistStatement;" << endl;
         }
