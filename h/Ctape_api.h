@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.21 2003/10/29 12:17:23 baud Exp $
+ * $Id: Ctape_api.h,v 1.22 2007/02/20 16:31:00 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.21 $ $Date: 2003/10/29 12:17:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.22 $ $Date: 2007/02/20 16:31:00 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -89,4 +89,5 @@ EXTERN_C int DLL_DECL Ctape_rstatus _PROTO((char *, struct rsv_status *, int, in
 EXTERN_C void DLL_DECL Ctape_seterrbuf _PROTO((char *, int));
 EXTERN_C int DLL_DECL Ctape_status _PROTO((char *, struct drv_status *, int));
 EXTERN_C int DLL_DECL send2tpd _PROTO((char *, char *, int, char *, int));
+EXTERN_C int DLL_DECL findpgrp();
 #endif
