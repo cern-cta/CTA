@@ -88,13 +88,13 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
 
   // end of class header
   m_indent--;
-  *m_stream << getIndent() << "}; // end of ";
+  *m_stream << getIndent() << "}; /* end of ";
   if (!m_classInfo->isInterface && isEnum(c)) {
     *m_stream << "enum";
   } else {
     *m_stream << "class";
   }
-  *m_stream << " " << m_classInfo->className
+  *m_stream << " " << m_classInfo->className << " */"
             << endl << endl;
 
   // Enum strings

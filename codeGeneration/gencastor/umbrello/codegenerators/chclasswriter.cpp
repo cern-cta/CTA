@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/02/20 17:22:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/02/20 17:31:25 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -126,7 +126,7 @@ bool CHClassWriter::finalize(UMLClassifier* c) {
   QString hashDefine = m_classInfo->packageName.upper().replace("::",  "_");
   if (!hashDefine.isEmpty() && !hashDefine.endsWith("_")) hashDefine.append('_');
   hashDefine.append(m_classInfo->className.upper().simplifyWhiteSpace().replace(QRegExp(" "),  "_"));
-  *m_mainStream << "#endif // " << hashDefine << "_H" << endl;
+  *m_mainStream << "#endif /* " << hashDefine << "_H */" << endl;
   // call upperclass method
   this->CppBaseWriter::finalize(c);
   return true;
