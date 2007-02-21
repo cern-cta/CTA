@@ -476,14 +476,7 @@ namespace castor {
 
       FileSystemStatusCodes m_status;
 
-<<<<<<< FileSystem.hpp
-      /// Admin status of the FileSystem
-      castor::monitoring::AdminStatusCodes m_adminStatus;
-
     }; /* end of class FileSystem */
-=======
-    }; // end of class FileSystem
->>>>>>> 1.19
 
   } /* end of namespace stager */
 

@@ -195,14 +195,7 @@ namespace castor {
 
       DiskServerStatusCode m_status;
 
-<<<<<<< DiskServer.hpp
-      /// Admin status of the DiskServer
-      castor::monitoring::AdminStatusCodes m_adminStatus;
-
     }; /* end of class DiskServer */
-=======
-    }; // end of class DiskServer
->>>>>>> 1.9
 
   } /* end of namespace stager */
 

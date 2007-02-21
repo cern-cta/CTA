@@ -29,12 +29,7 @@
 #ifndef CASTOR_STAGER_FILESYSTEM_H
 #define CASTOR_STAGER_FILESYSTEM_H
 
-<<<<<<< FileSystem.h
 /* Include Files and Forward declarations for the C world */
-#include "castor/monitoring/AdminStatusCodes.h"
-=======
-// Include Files and Forward declarations for the C world
->>>>>>> 1.27
 #include "castor/stager/FileSystemStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -311,20 +306,4 @@ int Cstager_FileSystem_status(struct Cstager_FileSystem_t* instance, enum Cstage
  */
 int Cstager_FileSystem_setStatus(struct Cstager_FileSystem_t* instance, enum Cstager_FileSystemStatusCodes_t new_var);
 
-<<<<<<< FileSystem.h
-/**
- * Get the value of adminStatus
- * Admin status of the FileSystem
- */
-int Cstager_FileSystem_adminStatus(struct Cstager_FileSystem_t* instance, enum Cmonitoring_AdminStatusCodes_t* var);
-
-/**
- * Set the value of adminStatus
- * Admin status of the FileSystem
- */
-int Cstager_FileSystem_setAdminStatus(struct Cstager_FileSystem_t* instance, enum Cmonitoring_AdminStatusCodes_t new_var);
-
 #endif /* CASTOR_STAGER_FILESYSTEM_H */
-=======
-#endif // CASTOR_STAGER_FILESYSTEM_H
->>>>>>> 1.27
