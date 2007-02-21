@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.3 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stage_api.c,v 1.4 2007/02/21 11:28:01 sponcec3 Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -216,20 +216,19 @@ int DLL_DECL rc_castor2shift(rc)
 	}
 }
 
-int DLL_DECL stage_iowc(req_type,t_or_d,flags,openflags,openmode,hostname,pooluser,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_input,stpp_input)
-	int req_type;
-	char t_or_d;
-	u_signed64 flags;
-	int openflags;
-	mode_t openmode;
-	char *hostname;
-	char *pooluser;
-	int nstcp_input;
-	struct stgcat_entry *stcp_input;
-	int *nstcp_output;
-	struct stgcat_entry **stcp_output;
-	int nstpp_input;
-	struct stgpath_entry *stpp_input;     
+int DLL_DECL stage_iowc (int req_type,
+                         char t_or_d,
+                         u_signed64 flags,
+                         int openflags,
+                         mode_t openmode,
+                         char *hostname,
+                         char *pooluser,
+                         int nstcp_input,
+                         struct stgcat_entry *stcp_input,
+                         int *nstcp_output,
+                         struct stgcat_entry **stcp_output,
+                         int nstpp_input,
+                         struct stgpath_entry *stpp_input)
 {
 	struct stgcat_entry *thiscat; /* Catalog current pointer */
 	struct stgpath_entry *thispath; /* Path current pointer */
@@ -1103,17 +1102,15 @@ int DLL_DECL stage_admin_kill(hostname,uniqueid)
 	return(0);
 }
 
-int DLL_DECL stage_qry(t_or_d,flags,hostname,nstcp_input,stcp_input,nstcp_output,stcp_output,nstpp_output,stpp_output)
-	char t_or_d;
-	u_signed64 flags;
-	char *hostname;
-	int nstcp_input;
-	struct stgcat_entry *stcp_input;
-	int *nstcp_output;
-	struct stgcat_entry **stcp_output;
-	int *nstpp_output;
-	struct stgpath_entry **stpp_output;
-{
+int DLL_DECL stage_qry (char t_or_d,
+                        u_signed64 flags,
+                        char *hostname,
+                        int nstcp_input,
+                        struct stgcat_entry *stcp_input,
+                        int *nstcp_output,
+                        struct stgcat_entry **stcp_output,
+                        int *nstpp_output,
+                        struct stgpath_entry **stpp_output) {
 	int req_type = STAGE_QRY;
 	struct stgcat_entry *thiscat; /* Catalog current pointer */
 	int istcp;                    /* Counter on catalog structures passed in the protocol */
@@ -1893,15 +1890,13 @@ int DLL_DECL stage_updc(flags,hostname,pooluser,rcstatus,nstcp_output,stcp_outpu
 	return (c == 0 ? 0 : -1);
 }
 
-int DLL_DECL stage_clr(t_or_d,flags,hostname,nstcp_input,stcp_input,nstpp_input,stpp_input)
-	char t_or_d;
-	u_signed64 flags;
-	char *hostname;
-	int nstcp_input;
-	struct stgcat_entry *stcp_input;
-	int nstpp_input;
-	struct stgpath_entry *stpp_input;     
-{
+int DLL_DECL stage_clr(char t_or_d,
+                       u_signed64 flags,
+                       char *hostname,
+                       int nstcp_input,
+                       struct stgcat_entry *stcp_input,
+                       int nstpp_input,
+                       struct stgpath_entry *stpp_input) {
 	int req_type = STAGE_CLR;
 	struct stgcat_entry *thiscat; /* Catalog current pointer */
 	struct stgpath_entry *thispath; /* Path current pointer */
