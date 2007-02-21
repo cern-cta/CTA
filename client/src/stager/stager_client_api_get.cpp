@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.28 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stager_client_api_get.cpp,v 1.29 2007/02/21 11:03:01 sponcec3 Exp $
  */
 
 /*
@@ -120,7 +120,6 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
       subreq->setPriority(requests[i].priority);      
       subreq->setRequest(&req);
       
-      const char *dprotocol = (requests[i].protocol != 0)?(requests[i].protocol):"NULL";
       stage_trace(3, "%s file=%s proto=%s", 
 		  func, requests[i].filename, requests[i].protocol);
 

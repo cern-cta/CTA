@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.28 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.29 2007/02/21 11:03:02 sponcec3 Exp $
  */
 
 /*
@@ -561,7 +561,7 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
     snprintf(freepBuf, 3, "%2lld", (100*response->freeSpace)/response->totalSpace);
     snprintf(reservedpBuf, 3, "%2lld", (100*response->reservedSpace)/response->totalSpace);
   }
-  fprintf(stream, "POOL %-16s CAPACITY %-10s FREE %7s(%s\%)  RESERVED %7s(%-2s\%)\n",
+  fprintf(stream, "POOL %-16s CAPACITY %-10s FREE %7s(%s%%)  RESERVED %7s(%-2s%%)\n",
   response->diskPoolName, totalBuf, freeBuf,
   freepBuf, reservedBuf, reservedpBuf);
   for (int i = 0; i < response->nbDiskServers; i++) {
@@ -576,7 +576,7 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
       snprintf(freepBuf, 3, "%2lld", (100*dsd.freeSpace)/dsd.totalSpace);
       snprintf(reservedpBuf, 3, "%2lld", (100*dsd.reservedSpace)/dsd.totalSpace);
     }
-    fprintf(stream, "  DiskServer %-16s %-23s CAPACITY %-10s FREE %7s(%-2s\%)  RESERVED %7s(%-2s\%)\n",
+    fprintf(stream, "  DiskServer %-16s %-23s CAPACITY %-10s FREE %7s(%-2s%%)  RESERVED %7s(%-2s%%)\n",
     dsd.name,
     stage_diskServerStatusName(dsd.status),
     totalBuf, freeBuf, freepBuf, reservedBuf, reservedpBuf);
@@ -593,7 +593,7 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
         snprintf(freepBuf, 3, "%2lld", (100*fsd.freeSpace)/fsd.totalSpace);
         snprintf(reservedpBuf, 3, "%2lld", (100*fsd.reservedSpace)/fsd.totalSpace);
       }
-      fprintf(stream, "     %-33s %-23s %-10s %7s(%-2s\%)  %7s(%-2s\%)   %4.2f, %4.2f\n",
+      fprintf(stream, "     %-33s %-23s %-10s %7s(%-2s%%)  %7s(%-2s%%)   %4.2f, %4.2f\n",
       fsd.mountPoint,
       stage_fileSystemStatusName(fsd.status),
       totalBuf, freeBuf, freepBuf,
