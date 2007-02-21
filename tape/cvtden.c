@@ -4,12 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cvtden.c,v 1.7 2002/11/06 10:11:26 CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)cvtden.c,v 1.7 2002/11/06 10:11:26 CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	cvtden - check and convert alphanumeric densities to integer */
 #include <errno.h>
 #include <sys/types.h>
+#include <string.h>
 #include "Ctape.h"
 #include "serrno.h"
 static char adens[CA_MAXDENNUM][6] = {"0", "800", "1600", "6250", "38000",
@@ -18,7 +19,7 @@ static char adens[CA_MAXDENNUM][6] = {"0", "800", "1600", "6250", "38000",
 static char adensc[CA_MAXDENNUM][6] = {"", "", "", "", "38KC",
 	"8200C", "8500C", "38KDC", "", "", "10GC", "", "", "DDSC",
 				       "20GC", "25GC", "35GC", "50GC", "40GC", "60GC", "100GC", "200GC", "110GC","160GC","300GC", "400GC", "500GC", "700GC"};
-cvtden(aden)
+int cvtden(aden)
 char	*aden;
 {
 	int i;

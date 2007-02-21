@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.20 $ $Date: 2006/05/24 14:26:23 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier";
+/* static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.21 $ $Date: 2007/02/21 16:31:31 $ CERN Fabien Collin/Jean-Philippe Baud/Benjamin Couturier"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -20,7 +20,9 @@ static char sccsid[] = "@(#)$RCSfile: getcompstat.c,v $ $Revision: 1.20 $ $Date:
 #include "Ctape_api.h" 
 #include "serrno.h" 
 
-get_compression_stats(tapefd, path, devtype, comp_stats)
+extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **); 
+
+int get_compression_stats(tapefd, path, devtype, comp_stats)
 int tapefd;
 char *path;
 char *devtype;
@@ -242,14 +244,12 @@ COMPRESSION_STATS *comp_stats;
 #endif
 }
 
-clear_compression_stats(tapefd, path, devtype)
+int clear_compression_stats(tapefd, path, devtype)
 int tapefd;
 char *path;
 char *devtype;
 {
 #if defined(ADSTAR) || defined(SOLARIS25) || defined(sgi) || defined(hpux) || (defined(__osf__) && defined(__alpha)) || defined(linux)
-	unsigned char *endpage;
-	unsigned char *p;
 #if defined(ADSTAR)
 	struct sc_iocmd sc_iocmd;
 

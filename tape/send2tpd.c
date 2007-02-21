@@ -1,16 +1,18 @@
 /*
- * $Id: send2tpd.c,v 1.3 2005/03/15 23:07:55 bcouturi Exp $
+ * $Id: send2tpd.c,v 1.4 2007/02/21 16:31:31 wiebalck Exp $
  *
  * Copyright (C) 1993-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.3 $ $Date: 2005/03/15 23:07:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.4 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
 #include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -27,10 +29,11 @@ static char sccsid[] = "@(#)$RCSfile: send2tpd.c,v $ $Revision: 1.3 $ $Date: 200
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
+#include "Ctape_api.h"
 
 /* send2tpd - send a request to the tape daemon and wait for the reply */
 
-send2tpd(host, reqp, reql, user_repbuf, user_repbuf_len)
+int send2tpd(host, reqp, reql, user_repbuf, user_repbuf_len)
 char *host;
 char *reqp;
 int reql;
@@ -78,7 +81,7 @@ int user_repbuf_len;
 #endif
 	  if ((p = getenv ("TAPE_PORT")) || (p = getconfent ("TAPE", "PORT", 0))) {
 	    sin.sin_port = htons ((unsigned short)atoi (p));
-	  } else if (sp = Cgetservbyname ("tape", "tcp")) {
+	  } else if ((sp = Cgetservbyname ("tape", "tcp"))) {
 	    sin.sin_port = sp->s_port;
 	    serrno = 0;
 	  } else {

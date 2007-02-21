@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.11 $ $Date: 2000/10/03 07:48:42 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.12 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_reserve - reserve tape resources */
@@ -20,8 +20,10 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_reserve.c,v $ $Revision: 1.11 $ $Dat
 #include "Ctape_api.h"
 #include "marshall.h"
 #include "serrno.h"
+#include <unistd.h>
+#include <sys/types.h>
 
-Ctape_reserve(count, dgn_rsv)
+int Ctape_reserve(count, dgn_rsv)
 int count;
 struct dgn_rsv dgn_rsv[];
 {

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.8 $ $Date: 2002/04/08 08:01:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.9 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -21,7 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: initlabel.c,v $ $Revision: 1.8 $ $Date: 20
 
 static int nb_rsvd_resources;
 static struct devlblinfo *devlblinfop;
-initlabelroutines (nrr)
+int initlabelroutines (nrr)
 int nrr;
 {
 	nb_rsvd_resources = nrr;
@@ -34,7 +34,7 @@ int nrr;
 	return (0);
 }
 
-getlabelinfo (path, dlipp)
+int getlabelinfo (path, dlipp)
 char *path;
 struct devlblinfo  **dlipp;
 {
@@ -53,7 +53,7 @@ struct devlblinfo  **dlipp;
 
 /*	rmlabelinfo - remove label information from the internal table */
 
-rmlabelinfo (path, flags)
+int rmlabelinfo (path, flags)
 char *path;
 int flags;
 {
@@ -82,7 +82,7 @@ int flags;
 /*	setdevinfo - set flags for optimization of label processing routines
  *	according to device type and density
  */
-setdevinfo (path, devtype, den, lblcode)
+int setdevinfo (path, devtype, den, lblcode)
 char *path;
 char *devtype;
 int den;
@@ -114,7 +114,7 @@ int lblcode;
 
 /*	setlabelinfo - set label information for label processing routines */
 
-setlabelinfo (path, flags, fseq, vol1, hdr1, hdr2, uhl1)
+int setlabelinfo (path, flags, fseq, vol1, hdr1, hdr2, uhl1)
 char *path;
 int flags;
 int fseq;
@@ -137,4 +137,5 @@ char *uhl1;
 		strcpy (dlip->hdr2, hdr2);
 		strcpy (dlip->uhl1, uhl1);
 	}
+        return (0);
 }

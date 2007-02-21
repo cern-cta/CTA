@@ -4,12 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: findpgrp.c,v $ $Revision: 1.5 $ $Date: 2000/10/03 07:37:27 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: findpgrp.c,v $ $Revision: 1.6 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	findpgrp - finds the process group */
 
-findpgrp()
+#include <unistd.h>
+
+int findpgrp()
 {
 #if defined(_WIN32)
 	return (getpid());

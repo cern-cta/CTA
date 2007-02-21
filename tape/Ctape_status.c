@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_status.c,v $ $Revision: 1.5 $ $Date: 2000/08/04 05:45:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_status.c,v $ $Revision: 1.6 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_status - get drive status */
@@ -20,8 +20,10 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_status.c,v $ $Revision: 1.5 $ $Date:
 #include "Ctape_api.h"
 #include "marshall.h"
 #include "serrno.h"
+#include <unistd.h>
+#include <sys/types.h>
 
-Ctape_status(host, drv_status, nbentries)
+int Ctape_status(host, drv_status, nbentries)
 char *host;
 struct drv_status drv_status[];
 int nbentries;

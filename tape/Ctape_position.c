@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.19 $ $Date: 2005/01/20 16:29:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.20 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_position - send a request to the tape daemon to get the tape
@@ -22,8 +22,9 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_position.c,v $ $Revision: 1.19 $ $Da
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
+#include "Ctape_api.h"
 
-Ctape_position(path, method, fseq, fsec, blockid, Qfirst, Qlast, filstat, fid, fsid, recfm, blksize, lrecl, retentd, flags)
+int Ctape_position(path, method, fseq, fsec, blockid, Qfirst, Qlast, filstat, fid, fsid, recfm, blksize, lrecl, retentd, flags)
 char *path;
 int method;
 int fseq;

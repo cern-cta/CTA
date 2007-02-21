@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.12 $ $Date: 2005/01/20 16:30:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.13 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_rls - unload tape and release reservations */
@@ -21,12 +21,13 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_rls.c,v $ $Revision: 1.12 $ $Date: 2
 #include "Ctape.h"
 #include "marshall.h"
 #include "serrno.h"
+#include "Ctape_api.h"
 
-Ctape_rls(path, flags)
+int Ctape_rls(path, flags)
 char *path;
 int flags;
 {
-	int c, n;
+	int c;
 	int errflg = 0;
 	char fullpath[CA_MAXPATHLEN+1];
 	char func[16];
@@ -35,7 +36,6 @@ int flags;
 	int jid;
 	int msglen;
 	char *q;
-	char *rbp;
 	char repbuf[1];
 	char *sbp;
 	char sendbuf[REQBUFSZ];

@@ -4,10 +4,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: ebc2asc.c,v $ $Revision: 1.2 $ $Date: 1999/09/20 06:58:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: ebc2asc.c,v $ $Revision: 1.3 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
-ebc2asc(p, len)
+void ebc2asc(p, len)
 char *p;
 int len;
 {

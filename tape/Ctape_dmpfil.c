@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.26 $ $Date: 2006/11/07 10:25:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.27 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -15,15 +15,16 @@ static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.26 $ $Date
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <unistd.h>
 #if defined(ADSTAR)
 #include <sys/Atape.h>
 #endif
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
+#include "u64subr.h"
 void DLL_DECL (*Ctape_dmpmsg) _PROTO((int, const char *, ...)) = NULL;
 static char *buffer;
-static int code;
 static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
 static int den;		/* density code */
 static int density;	/* nb bytes/inch for 3420/3480/3490 */
@@ -44,7 +45,7 @@ static float gap;	/* inter record gap for 3420/3480/3490 */
 static int infd = -1;
 static int irec;
 
-Ctape_dmpinit(path, vid, aden, drive, devtype, maxblksize, fromblock, toblock, maxbyte, fromfile, maxfile, code, flags)
+int Ctape_dmpinit(path, vid, aden, drive, devtype, maxblksize, fromblock, toblock, maxbyte, fromfile, maxfile, code, flags)
 char *path;
 char *vid;
 char *aden;
@@ -164,11 +165,13 @@ int flags;
 	if (maxblksize > 65535) maxblksize = 65535;
 #endif
 	if (maxbyte < 0) maxbyte = 320;
-	if (maxfile < 0)
-		if ((den & 0xFF) <= D38000 || (den & 0xFF) == D38KD)
+	if (maxfile < 0) {
+		if ((den & 0xFF) <= D38000 || (den & 0xFF) == D38KD) {
 			maxfile = 0;
-		else
+                } else { 
 			maxfile = 1;
+                }
+        }
 	if (fromblock < 0) fromblock = 1;
 	if (toblock < 0) toblock = 1;
 
@@ -221,7 +224,249 @@ int flags;
 	return (0);
 }
 
-Ctape_dmpfil(path, lbltype, blksize, fid, fsec, fseq, lrecl, recfm, Size)
+int ebc_asc(p, q, n)
+char *p;
+char *q;
+int n;
+{
+	int i;
+	static char e2atab[256] = {
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	' ','.','.','.','.','.','.','.','.','.','.','.','<','(','+','|',
+
+	'&','.','.','.','.','.','.','.','.','.','!','$','*',')',';','^',
+
+	'-','/','.','.','.','.','.','.','.','.','.',',','%','_','>','?',
+
+	'.','.','.','.','.','.','.','.','.','`',':','#','@','\'','=','"',
+
+	'.','a','b','c','d','e','f','g','h','i','.','.','.','.','.','.',
+
+	'.','j','k','l','m','n','o','p','q','r','.','.','.','.','.','.',
+
+	'.','~','s','t','u','v','w','x','y','z','.','.','.','[','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.',']','.','.',
+
+	'{','A','B','C','D','E','F','G','H','I','.','.','.','.','.','.',
+
+	'}','J','K','L','M','N','O','P','Q','R','.','.','.','.','.','.',
+
+	'\\','.','S','T','U','V','W','X','Y','Z','.','.','.','.','.','.',
+
+	'0','1','2','3','4','5','6','7','8','9','.','.','.','.','.','.',
+	};
+
+	for (i = 0; i < n; i++)
+		*q++ = e2atab[*p++ & 0xff];
+        return (0);
+}
+
+int asc_asc(p, q, n)
+char *p;
+char *q;
+int n;
+{
+	int i;
+	static char a2atab[256] = {
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	' ','!','"','#','$','%','&','\'','(',')','*','+',',','-','.','/',
+
+	'0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?',
+
+	'@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
+
+	'P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_',
+
+	'`','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
+
+	'p','q','r','s','t','u','v','w','x','y','z','{','|','}','~','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+
+	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
+	};
+
+	for (i = 0; i < n; i++)
+		*q++ = a2atab[*p++ & 0xff];
+        return (0);
+}
+
+
+int dumpblock (buffer, nbytes)
+char *buffer;
+int nbytes;
+{
+	char bufftr[33];
+	int i, k, l;
+	int iad;
+	char *p;
+
+	Ctape_dmpmsg (MSG_OUT, " BLOCK NUMBER %d\n", irec);
+	for (iad = 0, p = buffer; iad < nbytes; iad += 32) {
+		if (dmpparm.maxbyte != 0 && iad >= dmpparm.maxbyte) break;
+		l = iad + 31;
+		if (l >= nbytes) l = nbytes - 1;
+		k = l - iad + 1;
+		if (dmpparm.code == DMP_EBC)
+			ebc_asc (p, bufftr, k);
+		else
+			asc_asc (p, bufftr, k);
+		bufftr[k] = '\0';
+		Ctape_dmpmsg (MSG_OUT, " %.8x   ", iad);
+		for (i = 0; i < k; i++) {
+			if (i % 8 == 0) putchar (' ');
+			Ctape_dmpmsg (MSG_OUT, "%.2x", *(p++) & 0xff);
+		}
+		for (i = k; i < 32; i++)
+			putchar (' ');
+		Ctape_dmpmsg (MSG_OUT, "    *%s*\n", bufftr);
+	}
+        return (0);
+}
+
+int printlabel1 (label)
+char *label;
+{
+	Ctape_dmpmsg (MSG_OUT, " FILE ID:                    %.17s\n", label + 4);
+	Ctape_dmpmsg (MSG_OUT, " VOLUME SEQNO:               %.4s\n", label + 27);
+	Ctape_dmpmsg (MSG_OUT, " FILE SEQNO:                 %.4s\n", label + 31);
+	Ctape_dmpmsg (MSG_OUT, " CREATION DATE:              %.6s\n", label + 41);
+	Ctape_dmpmsg (MSG_OUT, " EXPIRATION DATE:            %.6s\n", label + 47);
+	Ctape_dmpmsg (MSG_OUT, " BLOCK COUNT:                %.6s\n", label + 54);
+
+        return (0);
+}
+
+int printlabel2 (label)
+char *label;
+{
+	Ctape_dmpmsg (MSG_OUT, " RECORD FORMAT:              %.1s\n", label + 4);
+	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.5s\n", label + 5);
+	Ctape_dmpmsg (MSG_OUT, " RECORD LENGTH:              %.5s\n", label + 10);
+	Ctape_dmpmsg (MSG_OUT, " DENSITY:                    %.1s\n", label + 15);
+	Ctape_dmpmsg (MSG_OUT, " DATA RECORDING:             %.1s\n", label + 34);
+	Ctape_dmpmsg (MSG_OUT, " BLOCKING ATTRIBUTE:         %.1s\n", label + 38);
+
+        return (0);
+}
+
+int printulabel1 (label)
+char *label;
+{
+	Ctape_dmpmsg (MSG_OUT, " FILE SEQNO:                 %.10s\n", label + 4);
+	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.10s\n", label + 14);
+	Ctape_dmpmsg (MSG_OUT, " RECORD LENGTH:              %.10s\n", label + 24);
+	Ctape_dmpmsg (MSG_OUT, " SITE:                       %.8s\n", label + 34);
+	Ctape_dmpmsg (MSG_OUT, " TAPE MOVER HOSTNAME:        %.10s\n", label + 42);
+	Ctape_dmpmsg (MSG_OUT, " DRIVE MANUFACTURER:         %.8s\n", label + 52);
+	Ctape_dmpmsg (MSG_OUT, " DRIVE MODEL:                %.8s\n", label + 60);
+	Ctape_dmpmsg (MSG_OUT, " DRIVE SERIAL NUMBER:        %.12s\n", label + 68);
+
+        return (0);
+}
+
+int islabel(label)
+char *label;
+{
+	if (strncmp (label, "HDR1", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 1:\n");
+		printlabel1 (label);
+		return (1);
+	} else if (strncmp (label, "HDR2", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 2:\n");
+		printlabel2 (label);
+		return (2);
+	} else if (strncmp (label, "HDR3", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 3:             %.76s\n", label+4);
+		return (3);
+	} else if (strncmp (label, "HDR4", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 4:             %.76s\n", label+4);
+		return (4);
+	} else if (strncmp (label, "UHL1", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n USER HEADER LABEL 1:\n");
+		printulabel1 (label);
+		return (5);
+	} else if (strncmp (label, "EOF1", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 1:\n");
+		printlabel1 (label);
+		return (-1);
+	} else if (strncmp (label, "EOF2", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 2:\n");
+		printlabel2 (label);
+		return (-2);
+	} else if (strncmp (label, "EOF3", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 3:            %.76s\n", label+4);
+		return (-3);
+	} else if (strncmp (label, "EOF4", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 4:            %.76s\n", label+4);
+		return (-4);
+	} else if (strncmp (label, "EOV1", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n END OF VOLUME LABEL 1:\n");
+		printlabel1 (label);
+		return (-1);
+	} else if (strncmp (label, "EOV2", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n END OF VOLUME LABEL 2:\n");
+		printlabel2 (label);
+		return (-2);
+	} else if (strncmp (label, "UTL1", 4) == 0) {
+		Ctape_dmpmsg (MSG_OUT, "\n USER TRAILER LABEL 1:\n");
+		printulabel1 (label);
+		return (-5);
+	}
+	return (0);
+}
+
+int report_comp_stats (infd, path, devtype)
+int infd;
+char *path;
+char *devtype;
+{
+	COMPRESSION_STATS compstats;
+
+	memset (&compstats, 0, sizeof(compstats));
+	if (get_compression_stats (infd, path, devtype, &compstats) == 0) {
+		if (compstats.from_tape)
+			Ctape_dmpmsg (MSG_OUT, " ***** COMPRESSION RATE ON TAPE: %8.2f\n",
+			    (float)compstats.to_host / (float)compstats.from_tape);
+	}
+	return (0);
+}
+
+int Ctape_dmpend()
+{
+	if (infd >= 0)
+		close (infd);
+	infd = -1;
+	return (0);
+}
+
+
+int Ctape_dmpfil(path, lbltype, blksize, fid, fsec, fseq, lrecl, recfm, Size)
 char *path;
 char *lbltype;
 int *blksize;
@@ -354,7 +599,7 @@ u_signed64 *Size;
 					if (fid) {
 						strncpy (fid, label + 4, 17);
 						*(fid+17) = '\0';
-						if (p = strchr (fid, ' ')) *p = '\0';
+						if ((p = strchr (fid, ' '))) *p = '\0';
 					}
 					if (fsec)
 						sscanf (label+27, "%4d", fsec);
@@ -668,235 +913,4 @@ u_signed64 *Size;
 	Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 	close (infd);
 	return (1);
-}
-
-dumpblock (buffer, nbytes)
-char *buffer;
-int nbytes;
-{
-	char bufftr[33];
-	int i, k, l;
-	int iad;
-	char *p;
-
-	Ctape_dmpmsg (MSG_OUT, " BLOCK NUMBER %d\n", irec);
-	for (iad = 0, p = buffer; iad < nbytes; iad += 32) {
-		if (dmpparm.maxbyte != 0 && iad >= dmpparm.maxbyte) break;
-		l = iad + 31;
-		if (l >= nbytes) l = nbytes - 1;
-		k = l - iad + 1;
-		if (dmpparm.code == DMP_EBC)
-			ebc_asc (p, bufftr, k);
-		else
-			asc_asc (p, bufftr, k);
-		bufftr[k] = '\0';
-		Ctape_dmpmsg (MSG_OUT, " %.8x   ", iad);
-		for (i = 0; i < k; i++) {
-			if (i % 8 == 0) putchar (' ');
-			Ctape_dmpmsg (MSG_OUT, "%.2x", *(p++) & 0xff);
-		}
-		for (i = k; i < 32; i++)
-			putchar (' ');
-		Ctape_dmpmsg (MSG_OUT, "    *%s*\n", bufftr);
-	}
-}
-
-ebc_asc(p, q, n)
-char *p;
-char *q;
-int n;
-{
-	int i;
-	static char e2atab[256] = {
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	' ','.','.','.','.','.','.','.','.','.','.','.','<','(','+','|',
-
-	'&','.','.','.','.','.','.','.','.','.','!','$','*',')',';','^',
-
-	'-','/','.','.','.','.','.','.','.','.','.',',','%','_','>','?',
-
-	'.','.','.','.','.','.','.','.','.','`',':','#','@','\'','=','"',
-
-	'.','a','b','c','d','e','f','g','h','i','.','.','.','.','.','.',
-
-	'.','j','k','l','m','n','o','p','q','r','.','.','.','.','.','.',
-
-	'.','~','s','t','u','v','w','x','y','z','.','.','.','[','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.',']','.','.',
-
-	'{','A','B','C','D','E','F','G','H','I','.','.','.','.','.','.',
-
-	'}','J','K','L','M','N','O','P','Q','R','.','.','.','.','.','.',
-
-	'\\','.','S','T','U','V','W','X','Y','Z','.','.','.','.','.','.',
-
-	'0','1','2','3','4','5','6','7','8','9','.','.','.','.','.','.',
-	};
-
-	for (i = 0; i < n; i++)
-		*q++ = e2atab[*p++ & 0xff];
-}
-
-asc_asc(p, q, n)
-char *p;
-char *q;
-int n;
-{
-	int i;
-	static char a2atab[256] = {
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	' ','!','"','#','$','%','&','\'','(',')','*','+',',','-','.','/',
-
-	'0','1','2','3','4','5','6','7','8','9',':',';','<','=','>','?',
-
-	'@','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O',
-
-	'P','Q','R','S','T','U','V','W','X','Y','Z','[','\\',']','^','_',
-
-	'`','a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
-
-	'p','q','r','s','t','u','v','w','x','y','z','{','|','}','~','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-	};
-
-	for (i = 0; i < n; i++)
-		*q++ = a2atab[*p++ & 0xff];
-}
-
-islabel(label)
-char *label;
-{
-	if (strncmp (label, "HDR1", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 1:\n");
-		printlabel1 (label);
-		return (1);
-	} else if (strncmp (label, "HDR2", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 2:\n");
-		printlabel2 (label);
-		return (2);
-	} else if (strncmp (label, "HDR3", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 3:             %.76s\n", label+4);
-		return (3);
-	} else if (strncmp (label, "HDR4", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n HEADER LABEL 4:             %.76s\n", label+4);
-		return (4);
-	} else if (strncmp (label, "UHL1", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n USER HEADER LABEL 1:\n");
-		printulabel1 (label);
-		return (5);
-	} else if (strncmp (label, "EOF1", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 1:\n");
-		printlabel1 (label);
-		return (-1);
-	} else if (strncmp (label, "EOF2", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 2:\n");
-		printlabel2 (label);
-		return (-2);
-	} else if (strncmp (label, "EOF3", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 3:            %.76s\n", label+4);
-		return (-3);
-	} else if (strncmp (label, "EOF4", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n TRAILER LABEL 4:            %.76s\n", label+4);
-		return (-4);
-	} else if (strncmp (label, "EOV1", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n END OF VOLUME LABEL 1:\n");
-		printlabel1 (label);
-		return (-1);
-	} else if (strncmp (label, "EOV2", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n END OF VOLUME LABEL 2:\n");
-		printlabel2 (label);
-		return (-2);
-	} else if (strncmp (label, "UTL1", 4) == 0) {
-		Ctape_dmpmsg (MSG_OUT, "\n USER TRAILER LABEL 1:\n");
-		printulabel1 (label);
-		return (-5);
-	}
-	return (0);
-}
-
-printlabel1 (label)
-char *label;
-{
-	Ctape_dmpmsg (MSG_OUT, " FILE ID:                    %.17s\n", label + 4);
-	Ctape_dmpmsg (MSG_OUT, " VOLUME SEQNO:               %.4s\n", label + 27);
-	Ctape_dmpmsg (MSG_OUT, " FILE SEQNO:                 %.4s\n", label + 31);
-	Ctape_dmpmsg (MSG_OUT, " CREATION DATE:              %.6s\n", label + 41);
-	Ctape_dmpmsg (MSG_OUT, " EXPIRATION DATE:            %.6s\n", label + 47);
-	Ctape_dmpmsg (MSG_OUT, " BLOCK COUNT:                %.6s\n", label + 54);
-}
-
-printlabel2 (label)
-char *label;
-{
-	Ctape_dmpmsg (MSG_OUT, " RECORD FORMAT:              %.1s\n", label + 4);
-	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.5s\n", label + 5);
-	Ctape_dmpmsg (MSG_OUT, " RECORD LENGTH:              %.5s\n", label + 10);
-	Ctape_dmpmsg (MSG_OUT, " DENSITY:                    %.1s\n", label + 15);
-	Ctape_dmpmsg (MSG_OUT, " DATA RECORDING:             %.1s\n", label + 34);
-	Ctape_dmpmsg (MSG_OUT, " BLOCKING ATTRIBUTE:         %.1s\n", label + 38);
-}
-
-printulabel1 (label)
-char *label;
-{
-	Ctape_dmpmsg (MSG_OUT, " FILE SEQNO:                 %.10s\n", label + 4);
-	Ctape_dmpmsg (MSG_OUT, " BLOCK LENGTH:               %.10s\n", label + 14);
-	Ctape_dmpmsg (MSG_OUT, " RECORD LENGTH:              %.10s\n", label + 24);
-	Ctape_dmpmsg (MSG_OUT, " SITE:                       %.8s\n", label + 34);
-	Ctape_dmpmsg (MSG_OUT, " TAPE MOVER HOSTNAME:        %.10s\n", label + 42);
-	Ctape_dmpmsg (MSG_OUT, " DRIVE MANUFACTURER:         %.8s\n", label + 52);
-	Ctape_dmpmsg (MSG_OUT, " DRIVE MODEL:                %.8s\n", label + 60);
-	Ctape_dmpmsg (MSG_OUT, " DRIVE SERIAL NUMBER:        %.12s\n", label + 68);
-}
-
-report_comp_stats (infd, path, devtype)
-int infd;
-char *path;
-char *devtype;
-{
-	COMPRESSION_STATS compstats;
-
-	memset (&compstats, 0, sizeof(compstats));
-	if (get_compression_stats (infd, path, devtype, &compstats) == 0) {
-		if (compstats.from_tape)
-			Ctape_dmpmsg (MSG_OUT, " ***** COMPRESSION RATE ON TAPE: %8.2f\n",
-			    (float)compstats.to_host / (float)compstats.from_tape);
-	}
-	return (0);
-}
-
-Ctape_dmpend()
-{
-	if (infd >= 0)
-		close (infd);
-	infd = -1;
-	return (0);
 }
