@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_CASTORFILE_H
 #define CASTOR_STAGER_CASTORFILE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_CastorFile_t;
@@ -38,11 +38,11 @@ struct Cstager_FileClass_t;
 struct Cstager_SvcClass_t;
 struct Cstager_TapeCopy_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class CastorFile
 // A castor file.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -254,4 +254,4 @@ int Cstager_CastorFile_removeTapeCopies(struct Cstager_CastorFile_t* instance, s
  */
 int Cstager_CastorFile_tapeCopies(struct Cstager_CastorFile_t* instance, struct Cstager_TapeCopy_t*** var, int* len);
 
-#endif // CASTOR_STAGER_CASTORFILE_H
+#endif /* CASTOR_STAGER_CASTORFILE_H */

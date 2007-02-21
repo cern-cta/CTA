@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STARTREQUEST_H
 #define CASTOR_STAGER_STARTREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -37,11 +37,11 @@ struct Cstager_Request_t;
 struct Cstager_StartRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StartRequest
 // Abstract class for all Job start requests
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -282,4 +282,4 @@ int Cstager_StartRequest_fileSystem(struct Cstager_StartRequest_t* instance, con
  */
 int Cstager_StartRequest_setFileSystem(struct Cstager_StartRequest_t* instance, const char* new_var);
 
-#endif // CASTOR_STAGER_STARTREQUEST_H
+#endif /* CASTOR_STAGER_STARTREQUEST_H */

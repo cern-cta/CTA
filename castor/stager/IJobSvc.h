@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.5 $ $Release$ $Date: 2007/02/20 17:55:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.6 $ $Release$ $Date: 2007/02/21 10:32:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -319,4 +319,4 @@ int Cstager_IJobSvc_putFailed
  u_signed64 subReqId);
 
 
-#endif // CASTOR_IJOBSVC_H
+#endif /* CASTOR_IJOBSVC_H */

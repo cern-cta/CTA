@@ -197,10 +197,10 @@ namespace castor {
 
       TapeServerStatusCodes m_actingMode;
 
-    }; // end of class TapeServer
+    }; /* end of class TapeServer */
 
-  } // end of namespace vdqm
+  } /* end of namespace vdqm */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_VDQM_TAPESERVER_HPP

@@ -279,10 +279,10 @@ namespace castor {
 
       std::vector<FileSystemStateReport*> m_FileSystemStatesReportsVector;
 
-    }; // end of class DiskServerStateReport
+    }; /* end of class DiskServerStateReport */
 
-  } // end of namespace monitoring
+  } /* end of namespace monitoring */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_MONITORING_DISKSERVERSTATEREPORT_HPP

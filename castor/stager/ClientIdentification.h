@@ -29,18 +29,18 @@
 #ifndef CASTOR_STAGER_CLIENTIDENTIFICATION_H
 #define CASTOR_STAGER_CLIENTIDENTIFICATION_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_ClientIdentification_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class ClientIdentification
 // An object to store all client related informations. In future this should be
 // replaced by an abstract class to support also other identification methods, like
 // Kerberos.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -166,4 +166,4 @@ int Cstager_ClientIdentification_id(struct Cstager_ClientIdentification_t* insta
  */
 int Cstager_ClientIdentification_setId(struct Cstager_ClientIdentification_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_CLIENTIDENTIFICATION_H
+#endif /* CASTOR_STAGER_CLIENTIDENTIFICATION_H */

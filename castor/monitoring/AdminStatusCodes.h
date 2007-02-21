@@ -29,14 +29,14 @@
 #ifndef CASTOR_MONITORING_ADMINSTATUSCODES_H
 #define CASTOR_MONITORING_ADMINSTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum AdminStatusCodes
 // The administrative status of the Diskserver
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cmonitoring_AdminStatusCodes_t AdminStatusCodes
 
 #include "AdminStatusCodes.hpp"
 
-#endif // CASTOR_MONITORING_ADMINSTATUSCODES_H
+#endif /* CASTOR_MONITORING_ADMINSTATUSCODES_H */

@@ -29,17 +29,17 @@
 #ifndef CASTOR_STAGER_FILECLASS_H
 #define CASTOR_STAGER_FILECLASS_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_FileClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class FileClass
 // The FileClass of a file defines several attributes like the number of copies of
 // the file or its tapepool
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -147,4 +147,4 @@ int Cstager_FileClass_id(struct Cstager_FileClass_t* instance, u_signed64* var);
  */
 int Cstager_FileClass_setId(struct Cstager_FileClass_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_FILECLASS_H
+#endif /* CASTOR_STAGER_FILECLASS_H */

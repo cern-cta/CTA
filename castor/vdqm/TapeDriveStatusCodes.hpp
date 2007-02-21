@@ -49,7 +49,7 @@ namespace castor {
       WAIT_FOR_UNMOUNT = 6, //The tape is still in the tape drive, but there are no more requests for it in the queue. So it just waits for the unmount command from the tpdaemon to come back to UNIT_UP status or to go immediatly to UNIT_STARTING status.
       STATUS_UNKNOWN = 7, //If an unexpected command comes from the client, which stays in conflict with the current status of the tape drive, the status will be set to STATUS_UNKNOWN.
       id //The id of this object
-    }; // end of enum TapeDriveStatusCodes
+    }; /* end of enum TapeDriveStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -58,9 +58,9 @@ namespace castor {
     extern const char* TapeDriveStatusCodesStrings[9];
 
 #ifdef __cplusplus
-  } // end of namespace vdqm
+  } /* end of namespace vdqm */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_VDQM_TAPEDRIVESTATUSCODES_HPP
+#endif /* CASTOR_VDQM_TAPEDRIVESTATUSCODES_HPP */

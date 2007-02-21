@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_DISKCOPYFORRECALL_H
 #define CASTOR_STAGER_DISKCOPYFORRECALL_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/DiskCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -39,10 +39,10 @@ struct Cstager_DiskCopy_t;
 struct Cstager_FileSystem_t;
 struct Cstager_SubRequest_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskCopyForRecall
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -246,4 +246,4 @@ int Cstager_DiskCopyForRecall_fsWeight(struct Cstager_DiskCopyForRecall_t* insta
  */
 int Cstager_DiskCopyForRecall_setFsWeight(struct Cstager_DiskCopyForRecall_t* instance, float new_var);
 
-#endif // CASTOR_STAGER_DISKCOPYFORRECALL_H
+#endif /* CASTOR_STAGER_DISKCOPYFORRECALL_H */

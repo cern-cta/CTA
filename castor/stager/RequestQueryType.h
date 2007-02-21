@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_REQUESTQUERYTYPE_H
 #define CASTOR_STAGER_REQUESTQUERYTYPE_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum RequestQueryType
 // An enumeration defining the different types of Request queries
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cstager_RequestQueryType_t RequestQueryType
 
 #include "RequestQueryType.hpp"
 
-#endif // CASTOR_STAGER_REQUESTQUERYTYPE_H
+#endif /* CASTOR_STAGER_REQUESTQUERYTYPE_H */

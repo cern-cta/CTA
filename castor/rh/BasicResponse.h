@@ -29,17 +29,17 @@
 #ifndef CASTOR_RH_BASICRESPONSE_H
 #define CASTOR_RH_BASICRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_BasicResponse_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class BasicResponse
 // The most basic response. Adapted to calls returning nothing.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -147,4 +147,4 @@ int Crh_BasicResponse_id(struct Crh_BasicResponse_t* instance, u_signed64* var);
  */
 int Crh_BasicResponse_setId(struct Crh_BasicResponse_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_BASICRESPONSE_H
+#endif /* CASTOR_RH_BASICRESPONSE_H */

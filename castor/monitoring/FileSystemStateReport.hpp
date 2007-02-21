@@ -221,10 +221,10 @@ namespace castor {
 
       DiskServerStateReport* m_diskServer;
 
-    }; // end of class FileSystemStateReport
+    }; /* end of class FileSystemStateReport */
 
-  } // end of namespace monitoring
+  } /* end of namespace monitoring */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_MONITORING_FILESYSTEMSTATEREPORT_HPP

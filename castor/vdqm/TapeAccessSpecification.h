@@ -29,18 +29,18 @@
 #ifndef CASTOR_VDQM_TAPEACCESSSPECIFICATION_H
 #define CASTOR_VDQM_TAPEACCESSSPECIFICATION_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_TapeAccessSpecification_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeAccessSpecification
 // This table contains all existing tape models, the densities and their access
 // modes.  A tape drive can be indirectly associated with several entries, if it is
 // capable to support them. Please note that this table has only static entries!
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -136,4 +136,4 @@ int Cvdqm_TapeAccessSpecification_id(struct Cvdqm_TapeAccessSpecification_t* ins
  */
 int Cvdqm_TapeAccessSpecification_setId(struct Cvdqm_TapeAccessSpecification_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_VDQM_TAPEACCESSSPECIFICATION_H
+#endif /* CASTOR_VDQM_TAPEACCESSSPECIFICATION_H */

@@ -29,17 +29,17 @@
 #ifndef CASTOR_BASEADDRESS_H
 #define CASTOR_BASEADDRESS_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_BaseAddress_t;
 struct C_IAddress_t;
 struct C_IObject_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class BaseAddress
 // The most basic address : only a type.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -161,4 +161,4 @@ int C_BaseAddress_id(struct C_BaseAddress_t* instance, u_signed64* var);
  */
 int C_BaseAddress_setId(struct C_BaseAddress_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_BASEADDRESS_H
+#endif /* CASTOR_BASEADDRESS_H */

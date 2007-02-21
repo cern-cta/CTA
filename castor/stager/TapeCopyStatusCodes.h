@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_TAPECOPYSTATUSCODES_H
 #define CASTOR_STAGER_TAPECOPYSTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum TapeCopyStatusCodes
 // Possible status codes for a TapeCopy
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cstager_TapeCopyStatusCodes_t TapeCopyStatusCodes
 
 #include "TapeCopyStatusCodes.hpp"
 
-#endif // CASTOR_STAGER_TAPECOPYSTATUSCODES_H
+#endif /* CASTOR_STAGER_TAPECOPYSTATUSCODES_H */

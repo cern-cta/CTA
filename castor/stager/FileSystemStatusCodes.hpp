@@ -43,7 +43,7 @@ namespace castor {
       FILESYSTEM_PRODUCTION = 0,
       FILESYSTEM_DRAINING = 1,
       FILESYSTEM_DISABLED = 2
-    }; // end of enum FileSystemStatusCodes
+    }; /* end of enum FileSystemStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -52,9 +52,9 @@ namespace castor {
     extern const char* FileSystemStatusCodesStrings[3];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_FILESYSTEMSTATUSCODES_HPP
+#endif /* CASTOR_STAGER_FILESYSTEMSTATUSCODES_HPP */

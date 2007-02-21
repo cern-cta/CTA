@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_DISKSERVERSTATUSCODE_H
 #define CASTOR_STAGER_DISKSERVERSTATUSCODE_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum DiskServerStatusCode
 // Possible status codes for a DiskServer
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cstager_DiskServerStatusCode_t DiskServerStatusCode
 
 #include "DiskServerStatusCode.hpp"
 
-#endif // CASTOR_STAGER_DISKSERVERSTATUSCODE_H
+#endif /* CASTOR_STAGER_DISKSERVERSTATUSCODE_H */

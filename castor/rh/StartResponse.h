@@ -29,19 +29,19 @@
 #ifndef CASTOR_RH_STARTRESPONSE_H
 #define CASTOR_RH_STARTRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_Response_t;
 struct Crh_StartResponse_t;
 struct Cstager_DiskCopy_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StartResponse
 // A response dedicated to cases where an IClient and a DiskCopy are returned. This
 // is typically the case in the first call when a job starts
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -159,4 +159,4 @@ int Crh_StartResponse_diskCopy(struct Crh_StartResponse_t* instance, struct Csta
  */
 int Crh_StartResponse_setDiskCopy(struct Crh_StartResponse_t* instance, struct Cstager_DiskCopy_t* new_var);
 
-#endif // CASTOR_RH_STARTRESPONSE_H
+#endif /* CASTOR_RH_STARTRESPONSE_H */

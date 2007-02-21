@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_GETUPDATESTARTREQUEST_H
 #define CASTOR_STAGER_GETUPDATESTARTREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -38,14 +38,14 @@ struct Cstager_Request_t;
 struct Cstager_StartRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class GetUpdateStartRequest
 // Internal request used when a get or update job has just started. It does the
 // scheduling of the given subrequest and returns the client information.
 // This request exists to avoid the jobs on the diskservers to handle a connection
 // to the database.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -333,4 +333,4 @@ int Cstager_GetUpdateStartRequest_id(struct Cstager_GetUpdateStartRequest_t* ins
  */
 int Cstager_GetUpdateStartRequest_setId(struct Cstager_GetUpdateStartRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_GETUPDATESTARTREQUEST_H
+#endif /* CASTOR_STAGER_GETUPDATESTARTREQUEST_H */

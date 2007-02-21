@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_SEGMENT_H
 #define CASTOR_STAGER_SEGMENT_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/SegmentStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -37,15 +37,15 @@ struct Cstager_Segment_t;
 struct Cstager_TapeCopy_t;
 struct Cstager_Tape_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Segment
 // Segment Information
 // The Segment object contains all tape file (segment) information required to be
 // stored in the stager request catalog. The remaining tape file parameters such as
 // record format and blocksize are either defined by defaults or taken from the
 // tape label.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -291,4 +291,4 @@ int Cstager_Segment_status(struct Cstager_Segment_t* instance, enum Cstager_Segm
  */
 int Cstager_Segment_setStatus(struct Cstager_Segment_t* instance, enum Cstager_SegmentStatusCodes_t new_var);
 
-#endif // CASTOR_STAGER_SEGMENT_H
+#endif /* CASTOR_STAGER_SEGMENT_H */

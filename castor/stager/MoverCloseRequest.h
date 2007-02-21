@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_MOVERCLOSEREQUEST_H
 #define CASTOR_STAGER_MOVERCLOSEREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -37,13 +37,13 @@ struct Cstager_MoverCloseRequest_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class MoverCloseRequest
 // Internal request used when a file was closed in a mover after writing.
 // This request exists to avoid the jobs on the diskservers to handle a connection
 // to the database.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -313,4 +313,4 @@ int Cstager_MoverCloseRequest_id(struct Cstager_MoverCloseRequest_t* instance, u
  */
 int Cstager_MoverCloseRequest_setId(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_MOVERCLOSEREQUEST_H
+#endif /* CASTOR_STAGER_MOVERCLOSEREQUEST_H */

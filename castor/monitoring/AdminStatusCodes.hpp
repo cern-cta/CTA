@@ -43,7 +43,7 @@ namespace castor {
       ADMIN_NONE = 0,
       ADMIN_FORCE = 1,
       ADMIN_RELEASE = 2
-    }; // end of enum AdminStatusCodes
+    }; /* end of enum AdminStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -52,9 +52,9 @@ namespace castor {
     extern const char* AdminStatusCodesStrings[3];
 
 #ifdef __cplusplus
-  } // end of namespace monitoring
+  } /* end of namespace monitoring */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_MONITORING_ADMINSTATUSCODES_HPP
+#endif /* CASTOR_MONITORING_ADMINSTATUSCODES_HPP */

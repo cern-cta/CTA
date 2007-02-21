@@ -43,7 +43,7 @@ namespace castor {
     enum TapeServerStatusCodes {
       TAPESERVER_ACTIVE = 0, //If the tape server is in ACTIVE status, then its tape drives are used for the actual CASTOR production and the tapeRequest can be dedicated to this tape server
       TAPESERVER_INACTIVE = 1 //If the tape server is in INCATIVE status, then its tape drives are not involved into the actual CASTOR production.
-    }; // end of enum TapeServerStatusCodes
+    }; /* end of enum TapeServerStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -52,9 +52,9 @@ namespace castor {
     extern const char* TapeServerStatusCodesStrings[2];
 
 #ifdef __cplusplus
-  } // end of namespace vdqm
+  } /* end of namespace vdqm */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_VDQM_TAPESERVERSTATUSCODES_HPP
+#endif /* CASTOR_VDQM_TAPESERVERSTATUSCODES_HPP */

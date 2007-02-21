@@ -29,19 +29,19 @@
 #ifndef CASTOR_RH_IORESPONSE_H
 #define CASTOR_RH_IORESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_FileResponse_t;
 struct Crh_IOResponse_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class IOResponse
 // Response dealing with an I/O. It gives everything to access the file
 // considered.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -285,4 +285,4 @@ int Crh_IOResponse_protocol(struct Crh_IOResponse_t* instance, const char** var)
  */
 int Crh_IOResponse_setProtocol(struct Crh_IOResponse_t* instance, const char* new_var);
 
-#endif // CASTOR_RH_IORESPONSE_H
+#endif /* CASTOR_RH_IORESPONSE_H */

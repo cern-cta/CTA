@@ -53,7 +53,7 @@ namespace castor {
       SUBREQUEST_FAILED_ANSWERING = 10,
       SUBREQUEST_ARCHIVED = 11,
       SUBREQUEST_REPACK = 12
-    }; // end of enum SubRequestStatusCodes
+    }; /* end of enum SubRequestStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -62,9 +62,9 @@ namespace castor {
     extern const char* SubRequestStatusCodesStrings[13];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_SUBREQUESTSTATUSCODES_HPP
+#endif /* CASTOR_STAGER_SUBREQUESTSTATUSCODES_HPP */

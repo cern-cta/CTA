@@ -29,18 +29,18 @@
 #ifndef CASTOR_STAGER_REQUEST_H
 #define CASTOR_STAGER_REQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Request
 // This is a common base class for all requests in the stager request queue.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -229,4 +229,4 @@ int Cstager_Request_client(struct Cstager_Request_t* instance, struct C_IClient_
  */
 int Cstager_Request_setClient(struct Cstager_Request_t* instance, struct C_IClient_t* new_var);
 
-#endif // CASTOR_STAGER_REQUEST_H
+#endif /* CASTOR_STAGER_REQUEST_H */

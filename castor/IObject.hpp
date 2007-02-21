@@ -90,9 +90,9 @@ namespace castor {
      */
     virtual void print() const = 0;
 
-  }; // end of class IObject
+  }; /* end of class IObject */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 /**
  * outputs this IObject to an output stream

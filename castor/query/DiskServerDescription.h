@@ -29,18 +29,18 @@
 #ifndef CASTOR_QUERY_DISKSERVERDESCRIPTION_H
 #define CASTOR_QUERY_DISKSERVERDESCRIPTION_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cquery_DiskPoolQueryResponse_t;
 struct Cquery_DiskServerDescription_t;
 struct Cquery_FileSystemDescription_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskServerDescription
 // Describe a Diskserver and its current state
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -187,4 +187,4 @@ int Cquery_DiskServerDescription_removeFileSystems(struct Cquery_DiskServerDescr
  */
 int Cquery_DiskServerDescription_fileSystems(struct Cquery_DiskServerDescription_t* instance, struct Cquery_FileSystemDescription_t*** var, int* len);
 
-#endif // CASTOR_QUERY_DISKSERVERDESCRIPTION_H
+#endif /* CASTOR_QUERY_DISKSERVERDESCRIPTION_H */

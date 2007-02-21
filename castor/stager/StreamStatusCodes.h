@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_STREAMSTATUSCODES_H
 #define CASTOR_STAGER_STREAMSTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum StreamStatusCodes
 // Possible status codes for a Stream
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cstager_StreamStatusCodes_t StreamStatusCodes
 
 #include "StreamStatusCodes.hpp"
 
-#endif // CASTOR_STAGER_STREAMSTATUSCODES_H
+#endif /* CASTOR_STAGER_STREAMSTATUSCODES_H */

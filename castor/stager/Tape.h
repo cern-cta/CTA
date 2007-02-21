@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_TAPE_H
 #define CASTOR_STAGER_TAPE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/TapeStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -38,14 +38,14 @@ struct Cstager_Stream_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ErrorHistory_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Tape
 // Tape Information
 // The Tape Object contains all tape information required to be stored in the
 // stager request catalog. The remaining tape parameters are taken from VMGR when
 // the request is processed by the rtcpclientd daemon.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -237,4 +237,4 @@ int Cstager_Tape_status(struct Cstager_Tape_t* instance, enum Cstager_TapeStatus
  */
 int Cstager_Tape_setStatus(struct Cstager_Tape_t* instance, enum Cstager_TapeStatusCodes_t new_var);
 
-#endif // CASTOR_STAGER_TAPE_H
+#endif /* CASTOR_STAGER_TAPE_H */

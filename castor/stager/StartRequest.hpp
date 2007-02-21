@@ -143,10 +143,10 @@ namespace castor {
       /// The mount point of the selected filesystem for the given SubRequest
       std::string m_fileSystem;
 
-    }; // end of class StartRequest
+    }; /* end of class StartRequest */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_STARTREQUEST_HPP

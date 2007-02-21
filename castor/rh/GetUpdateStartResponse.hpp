@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class DiskCopyForRecall;
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
   namespace rh {
 
@@ -162,10 +162,10 @@ namespace castor {
 
       std::vector<castor::stager::DiskCopyForRecall*> m_sourcesVector;
 
-    }; // end of class GetUpdateStartResponse
+    }; /* end of class GetUpdateStartResponse */
 
-  } // end of namespace rh
+  } /* end of namespace rh */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_RH_GETUPDATESTARTRESPONSE_HPP

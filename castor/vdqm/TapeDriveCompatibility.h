@@ -29,18 +29,18 @@
 #ifndef CASTOR_VDQM_TAPEDRIVECOMPATIBILITY_H
 #define CASTOR_VDQM_TAPEDRIVECOMPATIBILITY_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_TapeAccessSpecification_t;
 struct Cvdqm_TapeDriveCompatibility_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeDriveCompatibility
 // A static table which specifies for a tape drive model the priority list for tape
 // access
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -134,4 +134,4 @@ int Cvdqm_TapeDriveCompatibility_tapeAccessSpecification(struct Cvdqm_TapeDriveC
  */
 int Cvdqm_TapeDriveCompatibility_setTapeAccessSpecification(struct Cvdqm_TapeDriveCompatibility_t* instance, struct Cvdqm_TapeAccessSpecification_t* new_var);
 
-#endif // CASTOR_VDQM_TAPEDRIVECOMPATIBILITY_H
+#endif /* CASTOR_VDQM_TAPEDRIVECOMPATIBILITY_H */

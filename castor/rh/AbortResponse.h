@@ -29,17 +29,17 @@
 #ifndef CASTOR_RH_ABORTRESPONSE_H
 #define CASTOR_RH_ABORTRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_AbortResponse_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class AbortResponse
 // Response to the StageAbortRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -159,4 +159,4 @@ int Crh_AbortResponse_id(struct Crh_AbortResponse_t* instance, u_signed64* var);
  */
 int Crh_AbortResponse_setId(struct Crh_AbortResponse_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_ABORTRESPONSE_H
+#endif /* CASTOR_RH_ABORTRESPONSE_H */

@@ -138,8 +138,8 @@ namespace castor {
 
     }; // end of class StreamGCFileCnv
 
-  } // end of namespace io
+  } /* end of namespace io */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_IO_GCFILE_HPP

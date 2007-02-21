@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class DiskCopy;
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
   namespace rh {
 
@@ -148,10 +148,10 @@ namespace castor {
 
       castor::stager::DiskCopy* m_diskCopy;
 
-    }; // end of class StartResponse
+    }; /* end of class StartResponse */
 
-  } // end of namespace rh
+  } /* end of namespace rh */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_RH_STARTRESPONSE_HPP

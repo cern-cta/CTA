@@ -30,7 +30,7 @@
 #include "castor/Constants.h"
 #include "castor/stager/DiskCopyStatusCodes.h"
 
-/// Forward declarations for the C world
+/* Forward declarations for the C world */
 struct C_IService_t;
 struct C_IClient_t;
 struct C_IObject_t;
@@ -413,4 +413,4 @@ int Cstager_IStagerSvc_createRecallCandidate
  const unsigned long euid,
  const unsigned long egid);
 
-#endif // CASTOR_ISTAGERSVC_H
+#endif /* CASTOR_ISTAGERSVC_H */

@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_PUTSTARTREQUEST_H
 #define CASTOR_STAGER_PUTSTARTREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -38,8 +38,8 @@ struct Cstager_Request_t;
 struct Cstager_StartRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class PutStartRequest
 // Internal request used when a put job has just started. It creates the link
 // between the FileSystem and the DiskCopy associated to the SubRequest. It also
@@ -47,7 +47,7 @@ struct Cstager_SvcClass_t;
 // SubRequest.
 // This request exists to avoid the jobs on the diskservers to handle a connection
 // to the database.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -335,4 +335,4 @@ int Cstager_PutStartRequest_id(struct Cstager_PutStartRequest_t* instance, u_sig
  */
 int Cstager_PutStartRequest_setId(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_PUTSTARTREQUEST_H
+#endif /* CASTOR_STAGER_PUTSTARTREQUEST_H */

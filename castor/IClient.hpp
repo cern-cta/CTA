@@ -75,8 +75,8 @@ namespace castor {
 
   private:
 
-  }; // end of class IClient
+  }; /* end of class IClient */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_ICLIENT_HPP

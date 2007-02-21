@@ -29,18 +29,18 @@
 #ifndef CASTOR_QUERY_DISKPOOLQUERYRESPONSE_H
 #define CASTOR_QUERY_DISKPOOLQUERYRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cquery_DiskPoolQueryResponse_t;
 struct Cquery_DiskServerDescription_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskPoolQueryResponse
 // Response to a DiskPoolQuery
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -213,4 +213,4 @@ int Cquery_DiskPoolQueryResponse_removeDiskServers(struct Cquery_DiskPoolQueryRe
  */
 int Cquery_DiskPoolQueryResponse_diskServers(struct Cquery_DiskPoolQueryResponse_t* instance, struct Cquery_DiskServerDescription_t*** var, int* len);
 
-#endif // CASTOR_QUERY_DISKPOOLQUERYRESPONSE_H
+#endif /* CASTOR_QUERY_DISKPOOLQUERYRESPONSE_H */

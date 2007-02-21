@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_DISKCOPY_H
 #define CASTOR_STAGER_DISKCOPY_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/DiskCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -38,11 +38,11 @@ struct Cstager_DiskCopy_t;
 struct Cstager_FileSystem_t;
 struct Cstager_SubRequest_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskCopy
 // A copy of a file in the disk pool
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -184,4 +184,4 @@ int Cstager_DiskCopy_status(struct Cstager_DiskCopy_t* instance, enum Cstager_Di
  */
 int Cstager_DiskCopy_setStatus(struct Cstager_DiskCopy_t* instance, enum Cstager_DiskCopyStatusCodes_t new_var);
 
-#endif // CASTOR_STAGER_DISKCOPY_H
+#endif /* CASTOR_STAGER_DISKCOPY_H */

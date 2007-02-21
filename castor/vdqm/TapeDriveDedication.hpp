@@ -316,10 +316,10 @@ namespace castor {
 
       TapeDrive* m_tapeDrive;
 
-    }; // end of class TapeDriveDedication
+    }; /* end of class TapeDriveDedication */
 
-  } // end of namespace vdqm
+  } /* end of namespace vdqm */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_VDQM_TAPEDRIVEDEDICATION_HPP

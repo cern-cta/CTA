@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_SEGMENTSTATUSCODES_H
 #define CASTOR_STAGER_SEGMENTSTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum SegmentStatusCodes
 // Possible status codes for a Segment
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cstager_SegmentStatusCodes_t SegmentStatusCodes
 
 #include "SegmentStatusCodes.hpp"
 
-#endif // CASTOR_STAGER_SEGMENTSTATUSCODES_H
+#endif /* CASTOR_STAGER_SEGMENTSTATUSCODES_H */

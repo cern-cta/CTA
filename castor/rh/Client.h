@@ -29,18 +29,18 @@
 #ifndef CASTOR_RH_CLIENT_H
 #define CASTOR_RH_CLIENT_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
 struct Crh_Client_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Client
 // A simple castor client defined by its machine name and the port it is listening
 // to in this machine.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -136,4 +136,4 @@ int Crh_Client_id(struct Crh_Client_t* instance, u_signed64* var);
  */
 int Crh_Client_setId(struct Crh_Client_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_CLIENT_H
+#endif /* CASTOR_RH_CLIENT_H */

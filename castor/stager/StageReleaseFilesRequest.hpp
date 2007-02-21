@@ -120,10 +120,10 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class StageReleaseFilesRequest
+    }; /* end of class StageReleaseFilesRequest */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_STAGERELEASEFILESREQUEST_HPP

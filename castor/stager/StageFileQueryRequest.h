@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STAGEFILEQUERYREQUEST_H
 #define CASTOR_STAGER_STAGEFILEQUERYREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,10 +39,10 @@ struct Cstager_Request_t;
 struct Cstager_StageFileQueryRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StageFileQueryRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -320,4 +320,4 @@ int Cstager_StageFileQueryRequest_id(struct Cstager_StageFileQueryRequest_t* ins
  */
 int Cstager_StageFileQueryRequest_setId(struct Cstager_StageFileQueryRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_STAGEFILEQUERYREQUEST_H
+#endif /* CASTOR_STAGER_STAGEFILEQUERYREQUEST_H */

@@ -111,10 +111,10 @@ namespace castor {
 
       std::vector<GCFile*> m_filesVector;
 
-    }; // end of class GCFileList
+    }; /* end of class GCFileList */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_GCFILELIST_HPP

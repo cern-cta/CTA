@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STREAM_H
 #define CASTOR_STAGER_STREAM_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/StreamStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -38,11 +38,11 @@ struct Cstager_TapeCopy_t;
 struct Cstager_TapePool_t;
 struct Cstager_Tape_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Stream
 // A logical stream for the writing of DiskCopies on Tapes
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -160,4 +160,4 @@ int Cstager_Stream_status(struct Cstager_Stream_t* instance, enum Cstager_Stream
  */
 int Cstager_Stream_setStatus(struct Cstager_Stream_t* instance, enum Cstager_StreamStatusCodes_t new_var);
 
-#endif // CASTOR_STAGER_STREAM_H
+#endif /* CASTOR_STAGER_STREAM_H */

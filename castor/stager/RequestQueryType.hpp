@@ -46,7 +46,7 @@ namespace castor {
       REQUESTQUERYTYPE_FILEID = 3,
       REQUESTQUERYTYPE_REQID_GETNEXT = 4,
       REQUESTQUERYTYPE_USERTAG_GETNEXT = 5
-    }; // end of enum RequestQueryType
+    }; /* end of enum RequestQueryType */
 
     /**
      * Names of the differents representations, used to display
@@ -55,9 +55,9 @@ namespace castor {
     extern const char* RequestQueryTypeStrings[6];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_REQUESTQUERYTYPE_HPP
+#endif /* CASTOR_STAGER_REQUESTQUERYTYPE_HPP */

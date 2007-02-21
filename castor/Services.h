@@ -27,7 +27,7 @@
 #ifndef CASTOR_SERVICES_H
 #define CASTOR_SERVICES_H 1
 
-/// Forward declarations for the C world
+/* Forward declarations for the C world */
 struct C_Services_t;
 struct C_IObject_t;
 struct C_IAddress_t;
@@ -207,4 +207,4 @@ int C_Services_rollback(struct C_Services_t* svcs,
  */
 const char* C_Services_errorMsg(struct C_Services_t* svcs);
 
-#endif // CASTOR_SERVICES_H
+#endif /* CASTOR_SERVICES_H */

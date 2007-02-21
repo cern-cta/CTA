@@ -29,7 +29,7 @@
 #ifndef CASTOR_VDQM_TAPEREQUEST_H
 #define CASTOR_VDQM_TAPEREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_ClientIdentification_t;
@@ -40,12 +40,12 @@ struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeRequest
 // A TapeRequest object is instanciated, when a client wants to read or write a
 // file frome a tape.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -199,4 +199,4 @@ int Cvdqm_TapeRequest_client(struct Cvdqm_TapeRequest_t* instance, struct Cstage
  */
 int Cvdqm_TapeRequest_setClient(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t* new_var);
 
-#endif // CASTOR_VDQM_TAPEREQUEST_H
+#endif /* CASTOR_VDQM_TAPEREQUEST_H */

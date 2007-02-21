@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_TAPECOPYFORMIGRATION_H
 #define CASTOR_STAGER_TAPECOPYFORMIGRATION_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/TapeCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -39,12 +39,12 @@ struct Cstager_Stream_t;
 struct Cstager_TapeCopyForMigration_t;
 struct Cstager_TapeCopy_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeCopyForMigration
 // This class is a wrapper around a Tape Copy that represents a TapCopy ready for
 // Migration. It thus has information about the physical file to be copied.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -218,4 +218,4 @@ int Cstager_TapeCopyForMigration_mountPoint(struct Cstager_TapeCopyForMigration_
  */
 int Cstager_TapeCopyForMigration_setMountPoint(struct Cstager_TapeCopyForMigration_t* instance, const char* new_var);
 
-#endif // CASTOR_STAGER_TAPECOPYFORMIGRATION_H
+#endif /* CASTOR_STAGER_TAPECOPYFORMIGRATION_H */

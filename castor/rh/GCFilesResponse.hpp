@@ -48,7 +48,7 @@ namespace castor {
     // Forward declarations
     class GCLocalFile;
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
   namespace rh {
 
@@ -161,10 +161,10 @@ namespace castor {
 
       std::vector<castor::stager::GCLocalFile*> m_filesVector;
 
-    }; // end of class GCFilesResponse
+    }; /* end of class GCFilesResponse */
 
-  } // end of namespace rh
+  } /* end of namespace rh */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_RH_GCFILESRESPONSE_HPP

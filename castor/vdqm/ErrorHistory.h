@@ -29,19 +29,19 @@
 #ifndef CASTOR_VDQM_ERRORHISTORY_H
 #define CASTOR_VDQM_ERRORHISTORY_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ErrorHistory_t;
 struct Cvdqm_TapeDrive_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class ErrorHistory
 // This table holds all the errors, which occures for a specified tape drive with a
 // dedicated tape.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -147,4 +147,4 @@ int Cvdqm_ErrorHistory_tape(struct Cvdqm_ErrorHistory_t* instance, struct Cstage
  */
 int Cvdqm_ErrorHistory_setTape(struct Cvdqm_ErrorHistory_t* instance, struct Cstager_Tape_t* new_var);
 
-#endif // CASTOR_VDQM_ERRORHISTORY_H
+#endif /* CASTOR_VDQM_ERRORHISTORY_H */

@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STAGEUPDATEREQUEST_H
 #define CASTOR_STAGER_STAGEUPDATEREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,10 +39,10 @@ struct Cstager_StageUpdateRequest_t;
 struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StageUpdateRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -308,4 +308,4 @@ int Cstager_StageUpdateRequest_id(struct Cstager_StageUpdateRequest_t* instance,
  */
 int Cstager_StageUpdateRequest_setId(struct Cstager_StageUpdateRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_STAGEUPDATEREQUEST_H
+#endif /* CASTOR_STAGER_STAGEUPDATEREQUEST_H */

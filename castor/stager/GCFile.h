@@ -29,17 +29,17 @@
 #ifndef CASTOR_STAGER_GCFILE_H
 #define CASTOR_STAGER_GCFILE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_GCFileList_t;
 struct Cstager_GCFile_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class GCFile
 // Represents a file that was just deleted on a DiskServer
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -121,4 +121,4 @@ int Cstager_GCFile_request(struct Cstager_GCFile_t* instance, struct Cstager_GCF
  */
 int Cstager_GCFile_setRequest(struct Cstager_GCFile_t* instance, struct Cstager_GCFileList_t* new_var);
 
-#endif // CASTOR_STAGER_GCFILE_H
+#endif /* CASTOR_STAGER_GCFILE_H */

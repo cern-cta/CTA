@@ -29,16 +29,16 @@
 #ifndef CASTOR_IADDRESS_H
 #define CASTOR_IADDRESS_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 struct C_IAddress_t;
 struct C_IObject_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class IAddress
 // Base class for all addresses.
 // An address allows to find a foreign representation of an object.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Destructor
@@ -86,4 +86,4 @@ int C_IAddress_cnvSvcType(struct C_IAddress_t* instance,
  */
 int C_IAddress_print(struct C_IAddress_t* instance);
 
-#endif // CASTOR_IADDRESS_H
+#endif /* CASTOR_IADDRESS_H */

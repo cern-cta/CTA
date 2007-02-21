@@ -29,20 +29,20 @@
 #ifndef CASTOR_STAGER_DISKPOOL_H
 #define CASTOR_STAGER_DISKPOOL_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskPool_t;
 struct Cstager_FileSystem_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskPool
 // A Resource as seen by the Scheduler.
 // Resources can be allocated to one or many projects are are composed of a set of
 // filesystems.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -146,4 +146,4 @@ int Cstager_DiskPool_removeSvcClasses(struct Cstager_DiskPool_t* instance, struc
  */
 int Cstager_DiskPool_svcClasses(struct Cstager_DiskPool_t* instance, struct Cstager_SvcClass_t*** var, int* len);
 
-#endif // CASTOR_STAGER_DISKPOOL_H
+#endif /* CASTOR_STAGER_DISKPOOL_H */

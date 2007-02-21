@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_FILES2DELETE_H
 #define CASTOR_STAGER_FILES2DELETE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -37,11 +37,11 @@ struct Cstager_Files2Delete_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Files2Delete
 // Request for files to delete on a given DiskServer
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -289,4 +289,4 @@ int Cstager_Files2Delete_id(struct Cstager_Files2Delete_t* instance, u_signed64*
  */
 int Cstager_Files2Delete_setId(struct Cstager_Files2Delete_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_FILES2DELETE_H
+#endif /* CASTOR_STAGER_FILES2DELETE_H */

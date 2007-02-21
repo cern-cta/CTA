@@ -29,15 +29,15 @@
 #ifndef CASTOR_VDQM_TAPESERVERSTATUSCODES_H
 #define CASTOR_VDQM_TAPESERVERSTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum TapeServerStatusCodes
 // These flags are used to control, wether TapeRequests should be dedicated to tape
 // drives on this tape server or not.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cvdqm_TapeServerStatusCodes_t TapeServerStatusCodes
 
 #include "TapeServerStatusCodes.hpp"
 
-#endif // CASTOR_VDQM_TAPESERVERSTATUSCODES_H
+#endif /* CASTOR_VDQM_TAPESERVERSTATUSCODES_H */

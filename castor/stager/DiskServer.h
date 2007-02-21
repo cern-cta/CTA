@@ -29,18 +29,23 @@
 #ifndef CASTOR_STAGER_DISKSERVER_H
 #define CASTOR_STAGER_DISKSERVER_H
 
+<<<<<<< DiskServer.h
+/* Include Files and Forward declarations for the C world */
+#include "castor/monitoring/AdminStatusCodes.h"
+=======
 // Include Files and Forward declarations for the C world
+>>>>>>> 1.15
 #include "castor/stager/DiskServerStatusCode.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskServer_t;
 struct Cstager_FileSystem_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskServer
 // A disk server is a physical device handling some filesystems
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -138,4 +143,20 @@ int Cstager_DiskServer_status(struct Cstager_DiskServer_t* instance, enum Cstage
  */
 int Cstager_DiskServer_setStatus(struct Cstager_DiskServer_t* instance, enum Cstager_DiskServerStatusCode_t new_var);
 
+<<<<<<< DiskServer.h
+/**
+ * Get the value of adminStatus
+ * Admin status of the DiskServer
+ */
+int Cstager_DiskServer_adminStatus(struct Cstager_DiskServer_t* instance, enum Cmonitoring_AdminStatusCodes_t* var);
+
+/**
+ * Set the value of adminStatus
+ * Admin status of the DiskServer
+ */
+int Cstager_DiskServer_setAdminStatus(struct Cstager_DiskServer_t* instance, enum Cmonitoring_AdminStatusCodes_t new_var);
+
+#endif /* CASTOR_STAGER_DISKSERVER_H */
+=======
 #endif // CASTOR_STAGER_DISKSERVER_H
+>>>>>>> 1.15

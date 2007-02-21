@@ -29,15 +29,15 @@
 #ifndef CASTOR_ICLIENT_H
 #define CASTOR_ICLIENT_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 struct C_IClient_t;
 struct C_IObject_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class IClient
 // A generic abstract base class for castor clients
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -64,4 +64,4 @@ struct C_IClient_t* C_IClient_fromIObject(struct C_IObject_t* obj);
  */
 int C_IClient_print(struct C_IClient_t* instance);
 
-#endif // CASTOR_ICLIENT_H
+#endif /* CASTOR_ICLIENT_H */

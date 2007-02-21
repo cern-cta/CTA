@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STAGEPREPARETOGETREQUEST_H
 #define CASTOR_STAGER_STAGEPREPARETOGETREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,10 +39,10 @@ struct Cstager_StagePrepareToGetRequest_t;
 struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StagePrepareToGetRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -308,4 +308,4 @@ int Cstager_StagePrepareToGetRequest_id(struct Cstager_StagePrepareToGetRequest_
  */
 int Cstager_StagePrepareToGetRequest_setId(struct Cstager_StagePrepareToGetRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_STAGEPREPARETOGETREQUEST_H
+#endif /* CASTOR_STAGER_STAGEPREPARETOGETREQUEST_H */

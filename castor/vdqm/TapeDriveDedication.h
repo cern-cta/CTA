@@ -29,18 +29,18 @@
 #ifndef CASTOR_VDQM_TAPEDRIVEDEDICATION_H
 #define CASTOR_VDQM_TAPEDRIVEDEDICATION_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_TapeDriveDedication_t;
 struct Cvdqm_TapeDrive_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeDriveDedication
 // This class is used to specify time slots, where a tape drive should be dedicated
 // for a specific tape.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -212,4 +212,4 @@ int Cvdqm_TapeDriveDedication_tapeDrive(struct Cvdqm_TapeDriveDedication_t* inst
  */
 int Cvdqm_TapeDriveDedication_setTapeDrive(struct Cvdqm_TapeDriveDedication_t* instance, struct Cvdqm_TapeDrive_t* new_var);
 
-#endif // CASTOR_VDQM_TAPEDRIVEDEDICATION_H
+#endif /* CASTOR_VDQM_TAPEDRIVEDEDICATION_H */

@@ -29,17 +29,17 @@
 #ifndef CASTOR_RH_FINDREQRESPONSE_H
 #define CASTOR_RH_FINDREQRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_FindReqResponse_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class FindReqResponse
 // Response to the FindReqRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -159,4 +159,4 @@ int Crh_FindReqResponse_id(struct Crh_FindReqResponse_t* instance, u_signed64* v
  */
 int Crh_FindReqResponse_setId(struct Crh_FindReqResponse_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_FINDREQRESPONSE_H
+#endif /* CASTOR_RH_FINDREQRESPONSE_H */

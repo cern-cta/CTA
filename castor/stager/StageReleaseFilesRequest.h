@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STAGERELEASEFILESREQUEST_H
 #define CASTOR_STAGER_STAGERELEASEFILESREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,10 +39,10 @@ struct Cstager_StageReleaseFilesRequest_t;
 struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StageReleaseFilesRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -308,4 +308,4 @@ int Cstager_StageReleaseFilesRequest_id(struct Cstager_StageReleaseFilesRequest_
  */
 int Cstager_StageReleaseFilesRequest_setId(struct Cstager_StageReleaseFilesRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_STAGERELEASEFILESREQUEST_H
+#endif /* CASTOR_STAGER_STAGERELEASEFILESREQUEST_H */

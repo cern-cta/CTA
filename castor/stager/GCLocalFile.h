@@ -29,16 +29,16 @@
 #ifndef CASTOR_STAGER_GCLOCALFILE_H
 #define CASTOR_STAGER_GCLOCALFILE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_GCLocalFile_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class GCLocalFile
 // Represents a local file on a diskServer
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -122,4 +122,4 @@ int Cstager_GCLocalFile_id(struct Cstager_GCLocalFile_t* instance, u_signed64* v
  */
 int Cstager_GCLocalFile_setId(struct Cstager_GCLocalFile_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_GCLOCALFILE_H
+#endif /* CASTOR_STAGER_GCLOCALFILE_H */

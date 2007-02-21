@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_FILEREQUEST_H
 #define CASTOR_STAGER_FILEREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -38,11 +38,11 @@ struct Cstager_Request_t;
 struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class FileRequest
 // An abstract ancester for all file requests
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -261,4 +261,4 @@ int Cstager_FileRequest_removeSubRequests(struct Cstager_FileRequest_t* instance
  */
 int Cstager_FileRequest_subRequests(struct Cstager_FileRequest_t* instance, struct Cstager_SubRequest_t*** var, int* len);
 
-#endif // CASTOR_STAGER_FILEREQUEST_H
+#endif /* CASTOR_STAGER_FILEREQUEST_H */

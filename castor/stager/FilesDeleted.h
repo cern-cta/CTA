@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_FILESDELETED_H
 #define CASTOR_STAGER_FILESDELETED_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,12 +39,12 @@ struct Cstager_GCFile_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class FilesDeleted
 // Request for telling the stager which files were actually deleted on a given
 // DiskServer
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -310,4 +310,4 @@ int Cstager_FilesDeleted_id(struct Cstager_FilesDeleted_t* instance, u_signed64*
  */
 int Cstager_FilesDeleted_setId(struct Cstager_FilesDeleted_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_FILESDELETED_H
+#endif /* CASTOR_STAGER_FILESDELETED_H */

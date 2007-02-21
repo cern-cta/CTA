@@ -184,10 +184,10 @@ namespace castor {
 
       TapeAccessSpecification* m_tapeAccessSpecification;
 
-    }; // end of class TapeDriveCompatibility
+    }; /* end of class TapeDriveCompatibility */
 
-  } // end of namespace vdqm
+  } /* end of namespace vdqm */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_VDQM_TAPEDRIVECOMPATIBILITY_HPP

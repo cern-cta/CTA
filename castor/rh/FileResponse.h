@@ -29,17 +29,17 @@
 #ifndef CASTOR_RH_FILERESPONSE_H
 #define CASTOR_RH_FILERESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_FileResponse_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class FileResponse
 // A response dealing with a castor file
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -209,4 +209,4 @@ int Crh_FileResponse_id(struct Crh_FileResponse_t* instance, u_signed64* var);
  */
 int Crh_FileResponse_setId(struct Crh_FileResponse_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_FILERESPONSE_H
+#endif /* CASTOR_RH_FILERESPONSE_H */

@@ -29,20 +29,20 @@
 #ifndef CASTOR_VDQM_TAPESERVER_H
 #define CASTOR_VDQM_TAPESERVER_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/vdqm/TapeServerStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeServer_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeServer
 // Holds the information about the tape server. Every tape server has several tape
 // drives. If its actingMode says that it is in SERVER_INACTIVE, then its tape
 // drives are not involved in the CASTOR production.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -140,4 +140,4 @@ int Cvdqm_TapeServer_actingMode(struct Cvdqm_TapeServer_t* instance, enum Cvdqm_
  */
 int Cvdqm_TapeServer_setActingMode(struct Cvdqm_TapeServer_t* instance, enum Cvdqm_TapeServerStatusCodes_t new_var);
 
-#endif // CASTOR_VDQM_TAPESERVER_H
+#endif /* CASTOR_VDQM_TAPESERVER_H */

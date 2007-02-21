@@ -29,15 +29,15 @@
 #ifndef CASTOR_RH_RESPONSE_H
 #define CASTOR_RH_RESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 struct C_IObject_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Response
 // The base class for all responses send back to the client
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -98,4 +98,4 @@ int Crh_Response_reqAssociated(struct Crh_Response_t* instance, const char** var
  */
 int Crh_Response_setReqAssociated(struct Crh_Response_t* instance, const char* new_var);
 
-#endif // CASTOR_RH_RESPONSE_H
+#endif /* CASTOR_RH_RESPONSE_H */

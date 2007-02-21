@@ -29,17 +29,17 @@
 #ifndef CASTOR_RH_REQUESTQUERYRESPONSE_H
 #define CASTOR_RH_REQUESTQUERYRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_RequestQueryResponse_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class RequestQueryResponse
 // Response to the RequestQueryRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -195,4 +195,4 @@ int Crh_RequestQueryResponse_id(struct Crh_RequestQueryResponse_t* instance, u_s
  */
 int Crh_RequestQueryResponse_setId(struct Crh_RequestQueryResponse_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_REQUESTQUERYRESPONSE_H
+#endif /* CASTOR_RH_REQUESTQUERYRESPONSE_H */

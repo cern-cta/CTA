@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STAGEPUTNEXTREQUEST_H
 #define CASTOR_STAGER_STAGEPUTNEXTREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,10 +39,10 @@ struct Cstager_Request_t;
 struct Cstager_StagePutNextRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StagePutNextRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -316,4 +316,4 @@ int Cstager_StagePutNextRequest_id(struct Cstager_StagePutNextRequest_t* instanc
  */
 int Cstager_StagePutNextRequest_setId(struct Cstager_StagePutNextRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_STAGEPUTNEXTREQUEST_H
+#endif /* CASTOR_STAGER_STAGEPUTNEXTREQUEST_H */

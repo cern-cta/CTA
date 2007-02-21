@@ -121,10 +121,10 @@ namespace castor {
 
       FileRequest* m_parent;
 
-    }; // end of class ReqIdRequest
+    }; /* end of class ReqIdRequest */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_REQIDREQUEST_HPP

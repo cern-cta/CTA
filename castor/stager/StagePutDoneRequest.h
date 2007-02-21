@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_STAGEPUTDONEREQUEST_H
 #define CASTOR_STAGER_STAGEPUTDONEREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -39,10 +39,10 @@ struct Cstager_StagePutDoneRequest_t;
 struct Cstager_SubRequest_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StagePutDoneRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -332,4 +332,4 @@ int Cstager_StagePutDoneRequest_parent(struct Cstager_StagePutDoneRequest_t* ins
  */
 int Cstager_StagePutDoneRequest_setParent(struct Cstager_StagePutDoneRequest_t* instance, struct Cstager_FileRequest_t* new_var);
 
-#endif // CASTOR_STAGER_STAGEPUTDONEREQUEST_H
+#endif /* CASTOR_STAGER_STAGEPUTDONEREQUEST_H */

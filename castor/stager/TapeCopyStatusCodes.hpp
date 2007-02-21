@@ -47,7 +47,7 @@ namespace castor {
       TAPECOPY_TOBERECALLED = 4,
       TAPECOPY_STAGED = 5,
       TAPECOPY_FAILED = 6
-    }; // end of enum TapeCopyStatusCodes
+    }; /* end of enum TapeCopyStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -56,9 +56,9 @@ namespace castor {
     extern const char* TapeCopyStatusCodesStrings[7];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_TAPECOPYSTATUSCODES_HPP
+#endif /* CASTOR_STAGER_TAPECOPYSTATUSCODES_HPP */

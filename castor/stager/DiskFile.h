@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_DISKFILE_H
 #define CASTOR_STAGER_DISKFILE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 struct Cstager_DiskFile_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskFile
 // A file residing in the disk pool
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -48,4 +48,4 @@ int Cstager_DiskFile_create(struct Cstager_DiskFile_t** obj);
  */
 int Cstager_DiskFile_delete(struct Cstager_DiskFile_t* obj);
 
-#endif // CASTOR_STAGER_DISKFILE_H
+#endif /* CASTOR_STAGER_DISKFILE_H */

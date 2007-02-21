@@ -29,15 +29,15 @@
 #ifndef CASTOR_STAGER_DISKCOPYINFO_H
 #define CASTOR_STAGER_DISKCOPYINFO_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskCopyInfo_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskCopyInfo
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -243,4 +243,4 @@ int Cstager_DiskCopyInfo_id(struct Cstager_DiskCopyInfo_t* instance, u_signed64*
  */
 int Cstager_DiskCopyInfo_setId(struct Cstager_DiskCopyInfo_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_DISKCOPYINFO_H
+#endif /* CASTOR_STAGER_DISKCOPYINFO_H */

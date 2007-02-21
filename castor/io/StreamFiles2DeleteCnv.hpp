@@ -138,8 +138,8 @@ namespace castor {
 
     }; // end of class StreamFiles2DeleteCnv
 
-  } // end of namespace io
+  } /* end of namespace io */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_IO_FILES2DELETE_HPP

@@ -139,8 +139,8 @@ namespace castor {
 
     }; // end of class StreamDiskCopyForRecallCnv
 
-  } // end of namespace io
+  } /* end of namespace io */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_IO_DISKCOPYFORRECALL_HPP

@@ -29,14 +29,14 @@
 #ifndef CASTOR_VDQM_TAPEDRIVESTATUSCODES_H
 #define CASTOR_VDQM_TAPEDRIVESTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum TapeDriveStatusCodes
 // Contains all  possible status of the TapeDrive
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cvdqm_TapeDriveStatusCodes_t TapeDriveStatusCodes
 
 #include "TapeDriveStatusCodes.hpp"
 
-#endif // CASTOR_VDQM_TAPEDRIVESTATUSCODES_H
+#endif /* CASTOR_VDQM_TAPEDRIVESTATUSCODES_H */

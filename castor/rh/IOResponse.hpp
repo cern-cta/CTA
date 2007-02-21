@@ -184,10 +184,10 @@ namespace castor {
       /// The protocol to use to retrieve the file
       std::string m_protocol;
 
-    }; // end of class IOResponse
+    }; /* end of class IOResponse */
 
-  } // end of namespace rh
+  } /* end of namespace rh */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_RH_IORESPONSE_HPP

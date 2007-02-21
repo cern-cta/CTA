@@ -29,7 +29,7 @@
 #ifndef CASTOR_QUERY_DISKPOOLQUERY_H
 #define CASTOR_QUERY_DISKPOOLQUERY_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -37,11 +37,11 @@ struct Cquery_DiskPoolQuery_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DiskPoolQuery
 // Request for the description of a diskpool (or all if no name given)
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -291,4 +291,4 @@ int Cquery_DiskPoolQuery_id(struct Cquery_DiskPoolQuery_t* instance, u_signed64*
  */
 int Cquery_DiskPoolQuery_setId(struct Cquery_DiskPoolQuery_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_QUERY_DISKPOOLQUERY_H
+#endif /* CASTOR_QUERY_DISKPOOLQUERY_H */

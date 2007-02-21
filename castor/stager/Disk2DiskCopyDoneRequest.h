@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_DISK2DISKCOPYDONEREQUEST_H
 #define CASTOR_STAGER_DISK2DISKCOPYDONEREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -37,14 +37,14 @@ struct Cstager_Disk2DiskCopyDoneRequest_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class Disk2DiskCopyDoneRequest
 // Internal request for updating the database after a successful Disk to Disk
 // copy.
 // This request is there to avoid the jobs on the diskservers to handle a
 // connection to the database.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -304,4 +304,4 @@ int Cstager_Disk2DiskCopyDoneRequest_id(struct Cstager_Disk2DiskCopyDoneRequest_
  */
 int Cstager_Disk2DiskCopyDoneRequest_setId(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_DISK2DISKCOPYDONEREQUEST_H
+#endif /* CASTOR_STAGER_DISK2DISKCOPYDONEREQUEST_H */

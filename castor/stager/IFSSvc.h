@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IFSSvc.h,v $ $Revision: 1.2 $ $Release$ $Date: 2007/02/20 17:55:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IFSSvc.h,v $ $Revision: 1.3 $ $Release$ $Date: 2007/02/21 10:32:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -189,4 +189,4 @@ int Cstager_IFSSvc_selectDiskServer(struct Cstager_IFSSvc_t* fsSvc,
                                     struct Cstager_DiskServer_t** diskServer,
                                     const char* name);
 
-#endif // CASTOR_IFSSVC_H
+#endif /* CASTOR_IFSSVC_H */

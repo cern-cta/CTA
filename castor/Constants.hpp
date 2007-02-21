@@ -102,7 +102,7 @@ namespace castor {
     OBJ_GCFileList = 82,
     OBJ_FilesDeletionFailed = 83,
 
-    //The vdqm objects
+    /* The vdqm objects */
     OBJ_TapeRequest = 84,
     OBJ_ClientIdentification = 85,
     OBJ_TapeServer = 86,
@@ -124,8 +124,7 @@ namespace castor {
     OBJ_FileSystemDescription = 102,
     OBJ_DiskPoolQuery = 103,
 
-    // Object to replace the old response
-
+    /* Object to replace the old response */
     OBJ_EndResponse = 104,
     OBJ_FileResponse = 105,
     OBJ_StringResponse = 106,
@@ -144,7 +143,7 @@ namespace castor {
 
     OBJ_StageRepackRequest = 119,
 
-    // Monitoring Objects
+    /* Monitoring Objects */
     OBJ_DiskServerStateReport = 120,
     OBJ_DiskServerMetricsReport = 121,
     OBJ_FileSystemStateReport = 122,
@@ -263,7 +262,7 @@ namespace castor {
   extern const char* RepresentationsIdStrings[6];
 
 #ifdef __cplusplus
-} // end of namespace castor
+} /* end of namespace castor */
 #endif
 
-#endif // CASTOR_CONSTANTS_HPP
+#endif /* CASTOR_CONSTANTS_HPP */

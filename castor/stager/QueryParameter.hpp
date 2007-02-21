@@ -182,10 +182,10 @@ namespace castor {
 
       RequestQueryType m_queryType;
 
-    }; // end of class QueryParameter
+    }; /* end of class QueryParameter */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_QUERYPARAMETER_HPP

@@ -43,7 +43,7 @@ namespace castor {
       DISKSERVER_PRODUCTION = 0,
       DISKSERVER_DRAINING = 1,
       DISKSERVER_DISABLED = 2
-    }; // end of enum DiskServerStatusCode
+    }; /* end of enum DiskServerStatusCode */
 
     /**
      * Names of the differents representations, used to display
@@ -52,9 +52,9 @@ namespace castor {
     extern const char* DiskServerStatusCodeStrings[3];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_DISKSERVERSTATUSCODE_HPP
+#endif /* CASTOR_STAGER_DISKSERVERSTATUSCODE_HPP */

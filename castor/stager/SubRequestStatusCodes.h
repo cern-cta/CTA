@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_SUBREQUESTSTATUSCODES_H
 #define CASTOR_STAGER_SUBREQUESTSTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum SubRequestStatusCodes
 // Possible status codes for a SubRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cstager_SubRequestStatusCodes_t SubRequestStatusCodes
 
 #include "SubRequestStatusCodes.hpp"
 
-#endif // CASTOR_STAGER_SUBREQUESTSTATUSCODES_H
+#endif /* CASTOR_STAGER_SUBREQUESTSTATUSCODES_H */

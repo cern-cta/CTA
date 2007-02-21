@@ -161,10 +161,10 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class Client
+    }; /* end of class Client */
 
-  } // end of namespace rh
+  } /* end of namespace rh */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_RH_CLIENT_HPP

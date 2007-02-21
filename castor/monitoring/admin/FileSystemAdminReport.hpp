@@ -201,12 +201,12 @@ namespace castor {
 
         castor::stager::FileSystemStatusCodes m_status;
 
-      }; // end of class FileSystemAdminReport
+      }; /* end of class FileSystemAdminReport */
 
-    } // end of namespace admin
+    } /* end of namespace admin */
 
-  } // end of namespace monitoring
+  } /* end of namespace monitoring */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_MONITORING_ADMIN_FILESYSTEMADMINREPORT_HPP

@@ -203,10 +203,10 @@ namespace castor {
 
       StreamDirection m_direction;
 
-    }; // end of class StreamReport
+    }; /* end of class StreamReport */
 
-  } // end of namespace monitoring
+  } /* end of namespace monitoring */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_MONITORING_STREAMREPORT_HPP

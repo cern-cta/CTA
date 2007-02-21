@@ -29,17 +29,17 @@
 #ifndef CASTOR_VDQM_DEVICEGROUPNAME_H
 #define CASTOR_VDQM_DEVICEGROUPNAME_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_DeviceGroupName_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class DeviceGroupName
 // Please note that this is a table with static entries! It contains all existing
 // device group names.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -125,4 +125,4 @@ int Cvdqm_DeviceGroupName_id(struct Cvdqm_DeviceGroupName_t* instance, u_signed6
  */
 int Cvdqm_DeviceGroupName_setId(struct Cvdqm_DeviceGroupName_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_VDQM_DEVICEGROUPNAME_H
+#endif /* CASTOR_VDQM_DEVICEGROUPNAME_H */

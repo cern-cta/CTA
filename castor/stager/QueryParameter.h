@@ -29,19 +29,19 @@
 #ifndef CASTOR_STAGER_QUERYPARAMETER_H
 #define CASTOR_STAGER_QUERYPARAMETER_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/RequestQueryType.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_QryRequest_t;
 struct Cstager_QueryParameter_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class QueryParameter
 // A parameter of a query request. Depending on its type, its value can contain a
 // fileName, a requestId, a fileId, ...
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -133,4 +133,4 @@ int Cstager_QueryParameter_queryType(struct Cstager_QueryParameter_t* instance, 
  */
 int Cstager_QueryParameter_setQueryType(struct Cstager_QueryParameter_t* instance, enum Cstager_RequestQueryType_t new_var);
 
-#endif // CASTOR_STAGER_QUERYPARAMETER_H
+#endif /* CASTOR_STAGER_QUERYPARAMETER_H */

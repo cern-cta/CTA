@@ -43,7 +43,7 @@ namespace castor {
       GETNEXTSTATUS_NOTAPPLICABLE = 0,
       GETNEXTSTATUS_FILESTAGED = 1,
       GETNEXTSTATUS_NOTIFIED = 2
-    }; // end of enum SubRequestGetNextStatusCodes
+    }; /* end of enum SubRequestGetNextStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -52,9 +52,9 @@ namespace castor {
     extern const char* SubRequestGetNextStatusCodesStrings[3];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_SUBREQUESTGETNEXTSTATUSCODES_HPP
+#endif /* CASTOR_STAGER_SUBREQUESTGETNEXTSTATUSCODES_HPP */

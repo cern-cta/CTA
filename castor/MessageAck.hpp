@@ -202,8 +202,8 @@ namespace castor {
     /// The id of this object
     u_signed64 m_id;
 
-  }; // end of class MessageAck
+  }; /* end of class MessageAck */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_MESSAGEACK_HPP

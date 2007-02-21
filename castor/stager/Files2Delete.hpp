@@ -142,10 +142,10 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class Files2Delete
+    }; /* end of class Files2Delete */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_FILES2DELETE_HPP

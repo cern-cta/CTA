@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_REQIDREQUEST_H
 #define CASTOR_STAGER_REQIDREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -38,11 +38,11 @@ struct Cstager_ReqIdRequest_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class ReqIdRequest
 // An abstract ancester for all requests refering to another one
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -269,4 +269,4 @@ int Cstager_ReqIdRequest_parent(struct Cstager_ReqIdRequest_t* instance, struct 
  */
 int Cstager_ReqIdRequest_setParent(struct Cstager_ReqIdRequest_t* instance, struct Cstager_FileRequest_t* new_var);
 
-#endif // CASTOR_STAGER_REQIDREQUEST_H
+#endif /* CASTOR_STAGER_REQIDREQUEST_H */

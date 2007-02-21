@@ -144,10 +144,10 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class DiskPoolQuery
+    }; /* end of class DiskPoolQuery */
 
-  } // end of namespace query
+  } /* end of namespace query */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_QUERY_DISKPOOLQUERY_HPP

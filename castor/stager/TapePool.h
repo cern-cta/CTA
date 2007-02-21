@@ -29,18 +29,18 @@
 #ifndef CASTOR_STAGER_TAPEPOOL_H
 #define CASTOR_STAGER_TAPEPOOL_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_Stream_t;
 struct Cstager_SvcClass_t;
 struct Cstager_TapePool_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapePool
 // A Pool of tapes
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -144,4 +144,4 @@ int Cstager_TapePool_removeStreams(struct Cstager_TapePool_t* instance, struct C
  */
 int Cstager_TapePool_streams(struct Cstager_TapePool_t* instance, struct Cstager_Stream_t*** var, int* len);
 
-#endif // CASTOR_STAGER_TAPEPOOL_H
+#endif /* CASTOR_STAGER_TAPEPOOL_H */

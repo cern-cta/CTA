@@ -29,18 +29,18 @@
 #ifndef CASTOR_RH_GCFILESRESPONSE_H
 #define CASTOR_RH_GCFILESRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_GCFilesResponse_t;
 struct Crh_Response_t;
 struct Cstager_GCLocalFile_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class GCFilesResponse
 // A list of files to be deleted on a diskServer. Answer to a Files2Delete Request
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -164,4 +164,4 @@ int Crh_GCFilesResponse_removeFiles(struct Crh_GCFilesResponse_t* instance, stru
  */
 int Crh_GCFilesResponse_files(struct Crh_GCFilesResponse_t* instance, struct Cstager_GCLocalFile_t*** var, int* len);
 
-#endif // CASTOR_RH_GCFILESRESPONSE_H
+#endif /* CASTOR_RH_GCFILESRESPONSE_H */

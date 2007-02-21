@@ -52,7 +52,7 @@ namespace castor {
       DISKCOPY_BEINGDELETED = 9,
       DISKCOPY_CANBEMIGR = 10,
       DISKCOPY_WAITFS_SCHEDULING = 11
-    }; // end of enum DiskCopyStatusCodes
+    }; /* end of enum DiskCopyStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -61,9 +61,9 @@ namespace castor {
     extern const char* DiskCopyStatusCodesStrings[12];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP
+#endif /* CASTOR_STAGER_DISKCOPYSTATUSCODES_HPP */

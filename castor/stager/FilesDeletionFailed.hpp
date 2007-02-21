@@ -122,10 +122,10 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class FilesDeletionFailed
+    }; /* end of class FilesDeletionFailed */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_FILESDELETIONFAILED_HPP

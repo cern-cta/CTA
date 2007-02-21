@@ -29,14 +29,14 @@
 #ifndef CASTOR_STAGER_DISKCOPYSTATUSCODES_H
 #define CASTOR_STAGER_DISKCOPYSTATUSCODES_H
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following enum
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following enum
 // enum DiskCopyStatusCodes
 // Possible status codes for a DiskCopy
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 #define Cstager_DiskCopyStatusCodes_t DiskCopyStatusCodes
 
 #include "DiskCopyStatusCodes.hpp"
 
-#endif // CASTOR_STAGER_DISKCOPYSTATUSCODES_H
+#endif /* CASTOR_STAGER_DISKCOPYSTATUSCODES_H */

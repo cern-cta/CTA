@@ -240,10 +240,10 @@ namespace castor {
 
       std::vector<DiskServerDescription*> m_diskServersVector;
 
-    }; // end of class DiskPoolQueryResponse
+    }; /* end of class DiskPoolQueryResponse */
 
-  } // end of namespace query
+  } /* end of namespace query */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_QUERY_DISKPOOLQUERYRESPONSE_HPP

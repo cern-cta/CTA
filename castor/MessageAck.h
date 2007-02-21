@@ -29,16 +29,16 @@
 #ifndef CASTOR_MESSAGEACK_H
 #define CASTOR_MESSAGEACK_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct C_MessageAck_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class MessageAck
 // Acknowledgement message in the request handler protocol.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -146,4 +146,4 @@ int C_MessageAck_id(struct C_MessageAck_t* instance, u_signed64* var);
  */
 int C_MessageAck_setId(struct C_MessageAck_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_MESSAGEACK_H
+#endif /* CASTOR_MESSAGEACK_H */

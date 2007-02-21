@@ -29,7 +29,7 @@
 #ifndef CASTOR_VDQM_TAPEDRIVE_H
 #define CASTOR_VDQM_TAPEDRIVE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/vdqm/TapeDriveStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -42,12 +42,12 @@ struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeDrive
 // An instance of this class contains the informations of one specific tape drive
 // of a server.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -324,4 +324,4 @@ int Cvdqm_TapeDrive_tapeServer(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_
  */
 int Cvdqm_TapeDrive_setTapeServer(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_TapeServer_t* new_var);
 
-#endif // CASTOR_VDQM_TAPEDRIVE_H
+#endif /* CASTOR_VDQM_TAPEDRIVE_H */

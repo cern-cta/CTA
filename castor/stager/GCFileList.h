@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_GCFILELIST_H
 #define CASTOR_STAGER_GCFILELIST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -38,10 +38,10 @@ struct Cstager_GCFile_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class GCFileList
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -260,4 +260,4 @@ int Cstager_GCFileList_removeFiles(struct Cstager_GCFileList_t* instance, struct
  */
 int Cstager_GCFileList_files(struct Cstager_GCFileList_t* instance, struct Cstager_GCFile_t*** var, int* len);
 
-#endif // CASTOR_STAGER_GCFILELIST_H
+#endif /* CASTOR_STAGER_GCFILELIST_H */

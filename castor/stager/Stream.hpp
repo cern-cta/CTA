@@ -233,10 +233,10 @@ namespace castor {
 
       StreamStatusCodes m_status;
 
-    }; // end of class Stream
+    }; /* end of class Stream */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_STREAM_HPP

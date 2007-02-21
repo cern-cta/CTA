@@ -29,16 +29,16 @@
 #ifndef CASTOR_IOBJECT_H
 #define CASTOR_IOBJECT_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class IObject
 // Base class for all objects
 // Implements the id methods
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Destructor
@@ -74,4 +74,4 @@ int C_IObject_clone(struct C_IObject_t* instance,
  */
 int C_IObject_print(struct C_IObject_t* instance);
 
-#endif // CASTOR_IOBJECT_H
+#endif /* CASTOR_IOBJECT_H */

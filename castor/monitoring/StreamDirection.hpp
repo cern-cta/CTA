@@ -52,9 +52,9 @@ namespace castor {
     extern const char* StreamDirectionStrings[3];
 
 #ifdef __cplusplus
-  } // end of namespace monitoring
+  } /* end of namespace monitoring */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_MONITORING_STREAMDIRECTION_HPP
+#endif /* CASTOR_MONITORING_STREAMDIRECTION_HPP */

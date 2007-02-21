@@ -51,10 +51,10 @@ namespace castor {
        */
       virtual ~DiskFile() throw();
 
-    }; // end of class DiskFile
+    }; /* end of class DiskFile */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_DISKFILE_HPP

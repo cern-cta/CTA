@@ -27,7 +27,7 @@
 #ifndef REPLIER_REQUESTREPLIER_H 
 #define REPLIER_REQUESTREPLIER_H 1
 
-/// Forward declarations for the C world
+/* Forward declarations for the C world */
 struct Creplier_RequestReplier_t;
 struct C_IClient_t;
 struct C_IObject_t;
@@ -134,7 +134,4 @@ const char* Creplier_RequestReplier_errorMsg
  */
 int Creplier_RequestReplier_terminate(struct Creplier_RequestReplier_t *rr);
 
-
-
-
-#endif // REPLIER_REQUESTREPLIER_H
+#endif /* REPLIER_REQUESTREPLIER_H */

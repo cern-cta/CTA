@@ -29,18 +29,18 @@
 #ifndef CASTOR_RH_ENDRESPONSE_H
 #define CASTOR_RH_ENDRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_EndResponse_t;
 struct Crh_Response_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class EndResponse
 // This type of response is used to inform the client that the server has nothing
 // more to send back.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -148,4 +148,4 @@ int Crh_EndResponse_id(struct Crh_EndResponse_t* instance, u_signed64* var);
  */
 int Crh_EndResponse_setId(struct Crh_EndResponse_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_ENDRESPONSE_H
+#endif /* CASTOR_RH_ENDRESPONSE_H */

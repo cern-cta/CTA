@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_GETUPDATEDONE_H
 #define CASTOR_STAGER_GETUPDATEDONE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -37,12 +37,12 @@ struct Cstager_GetUpdateDone_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class GetUpdateDone
 // Request to inform the stager that a Get or an Update request (with no write) was
 // successful.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -290,4 +290,4 @@ int Cstager_GetUpdateDone_id(struct Cstager_GetUpdateDone_t* instance, u_signed6
  */
 int Cstager_GetUpdateDone_setId(struct Cstager_GetUpdateDone_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_GETUPDATEDONE_H
+#endif /* CASTOR_STAGER_GETUPDATEDONE_H */

@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_PUTFAILED_H
 #define CASTOR_STAGER_PUTFAILED_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -37,11 +37,11 @@ struct Cstager_PutFailed_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class PutFailed
 // Request to inform the stager that a Put Request failed
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -289,4 +289,4 @@ int Cstager_PutFailed_id(struct Cstager_PutFailed_t* instance, u_signed64* var);
  */
 int Cstager_PutFailed_setId(struct Cstager_PutFailed_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_STAGER_PUTFAILED_H
+#endif /* CASTOR_STAGER_PUTFAILED_H */

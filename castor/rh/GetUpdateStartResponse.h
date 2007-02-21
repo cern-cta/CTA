@@ -29,7 +29,7 @@
 #ifndef CASTOR_RH_GETUPDATESTARTRESPONSE_H
 #define CASTOR_RH_GETUPDATESTARTRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_GetUpdateStartResponse_t;
@@ -38,11 +38,11 @@ struct Crh_StartResponse_t;
 struct Cstager_DiskCopyForRecall_t;
 struct Cstager_DiskCopy_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class GetUpdateStartResponse
 // Adapted response to a GetUpdateStartRequest
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -214,4 +214,4 @@ int Crh_GetUpdateStartResponse_removeSources(struct Crh_GetUpdateStartResponse_t
  */
 int Crh_GetUpdateStartResponse_sources(struct Crh_GetUpdateStartResponse_t* instance, struct Cstager_DiskCopyForRecall_t*** var, int* len);
 
-#endif // CASTOR_RH_GETUPDATESTARTRESPONSE_H
+#endif /* CASTOR_RH_GETUPDATESTARTRESPONSE_H */

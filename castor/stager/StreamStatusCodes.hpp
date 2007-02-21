@@ -46,7 +46,7 @@ namespace castor {
       STREAM_RUNNING = 3,
       STREAM_WAITSPACE = 4,
       STREAM_CREATED = 5
-    }; // end of enum StreamStatusCodes
+    }; /* end of enum StreamStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -55,9 +55,9 @@ namespace castor {
     extern const char* StreamStatusCodesStrings[6];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_STREAMSTATUSCODES_HPP
+#endif /* CASTOR_STAGER_STREAMSTATUSCODES_HPP */

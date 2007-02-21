@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_TAPECOPY_H
 #define CASTOR_STAGER_TAPECOPY_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "castor/stager/TapeCopyStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -38,11 +38,11 @@ struct Cstager_Segment_t;
 struct Cstager_Stream_t;
 struct Cstager_TapeCopy_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class TapeCopy
 // One copy of a given file on a tape
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -168,4 +168,4 @@ int Cstager_TapeCopy_status(struct Cstager_TapeCopy_t* instance, enum Cstager_Ta
  */
 int Cstager_TapeCopy_setStatus(struct Cstager_TapeCopy_t* instance, enum Cstager_TapeCopyStatusCodes_t new_var);
 
-#endif // CASTOR_STAGER_TAPECOPY_H
+#endif /* CASTOR_STAGER_TAPECOPY_H */

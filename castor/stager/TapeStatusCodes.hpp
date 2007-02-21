@@ -48,7 +48,7 @@ namespace castor {
       TAPE_FINISHED = 5, //Processing of this tape is over
       TAPE_FAILED = 6, //Request failed
       TAPE_UNKNOWN = 7 //Unknown status code
-    }; // end of enum TapeStatusCodes
+    }; /* end of enum TapeStatusCodes */
 
     /**
      * Names of the differents representations, used to display
@@ -57,9 +57,9 @@ namespace castor {
     extern const char* TapeStatusCodesStrings[8];
 
 #ifdef __cplusplus
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif
-#endif // CASTOR_STAGER_TAPESTATUSCODES_HPP
+#endif /* CASTOR_STAGER_TAPESTATUSCODES_HPP */

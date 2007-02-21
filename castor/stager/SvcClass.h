@@ -29,20 +29,20 @@
 #ifndef CASTOR_STAGER_SVCCLASS_H
 #define CASTOR_STAGER_SVCCLASS_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskPool_t;
 struct Cstager_SvcClass_t;
 struct Cstager_TapePool_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class SvcClass
 // A service, as seen by the user.
 // A SvcClass is a container of resources and may be given as parameter of the
 // request.
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -240,4 +240,4 @@ int Cstager_SvcClass_removeDiskPools(struct Cstager_SvcClass_t* instance, struct
  */
 int Cstager_SvcClass_diskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t*** var, int* len);
 
-#endif // CASTOR_STAGER_SVCCLASS_H
+#endif /* CASTOR_STAGER_SVCCLASS_H */

@@ -29,7 +29,7 @@
 #ifndef CASTOR_STAGER_QRYREQUEST_H
 #define CASTOR_STAGER_QRYREQUEST_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
@@ -38,11 +38,11 @@ struct Cstager_QueryParameter_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class QryRequest
 // An abstract ancester for all query requests
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -261,4 +261,4 @@ int Cstager_QryRequest_removeParameters(struct Cstager_QryRequest_t* instance, s
  */
 int Cstager_QryRequest_parameters(struct Cstager_QryRequest_t* instance, struct Cstager_QueryParameter_t*** var, int* len);
 
-#endif // CASTOR_STAGER_QRYREQUEST_H
+#endif /* CASTOR_STAGER_QRYREQUEST_H */

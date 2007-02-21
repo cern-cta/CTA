@@ -122,10 +122,10 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-    }; // end of class EndResponse
+    }; /* end of class EndResponse */
 
-  } // end of namespace rh
+  } /* end of namespace rh */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_RH_ENDRESPONSE_HPP

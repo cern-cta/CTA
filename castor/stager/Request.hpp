@@ -366,10 +366,10 @@ namespace castor {
 
       castor::IClient* m_client;
 
-    }; // end of class Request
+    }; /* end of class Request */
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_STAGER_REQUEST_HPP

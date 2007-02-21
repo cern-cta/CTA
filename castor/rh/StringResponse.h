@@ -29,17 +29,17 @@
 #ifndef CASTOR_RH_STRINGRESPONSE_H
 #define CASTOR_RH_STRINGRESPONSE_H
 
-// Include Files and Forward declarations for the C world
+/* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
 struct Crh_Response_t;
 struct Crh_StringResponse_t;
 
-//------------------------------------------------------------------------------
-// This defines a C interface to the following class
+/* --------------------------------------------------------------------------
+  This defines a C interface to the following class
 // class StringResponse
 // The most simple response : just a string
-//------------------------------------------------------------------------------
+  -------------------------------------------------------------------------- */
 
 /**
  * Empty Constructor
@@ -159,4 +159,4 @@ int Crh_StringResponse_id(struct Crh_StringResponse_t* instance, u_signed64* var
  */
 int Crh_StringResponse_setId(struct Crh_StringResponse_t* instance, u_signed64 new_var);
 
-#endif // CASTOR_RH_STRINGRESPONSE_H
+#endif /* CASTOR_RH_STRINGRESPONSE_H */
