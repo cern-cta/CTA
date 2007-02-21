@@ -99,12 +99,12 @@ void castor::db::cnv::DbTapeAccessSpecificationCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-    delete m_insertStatement;
-    delete m_deleteStatement;
-    delete m_selectStatement;
-    delete m_updateStatement;
-    delete m_storeTypeStatement;
-    delete m_deleteTypeStatement;
+    if(m_insertStatement) delete m_insertStatement;
+    if(m_deleteStatement) delete m_deleteStatement;
+    if(m_selectStatement) delete m_selectStatement;
+    if(m_updateStatement) delete m_updateStatement;
+    if(m_storeTypeStatement) delete m_storeTypeStatement;
+    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;

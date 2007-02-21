@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class CastorFile;
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
   namespace db {
 
@@ -346,10 +346,10 @@ namespace castor {
 
       }; // end of class DbCastorFileCnv
 
-    } // end of namespace cnv
+    } /* end of namespace cnv */
 
-  } // end of namespace db
+  } /* end of namespace db */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_DB_CNV_CASTORFILE_HPP

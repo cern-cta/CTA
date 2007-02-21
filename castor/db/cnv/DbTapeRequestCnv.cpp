@@ -181,27 +181,27 @@ void castor::db::cnv::DbTapeRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-    delete m_insertStatement;
-    delete m_deleteStatement;
-    delete m_selectStatement;
-    delete m_updateStatement;
-    delete m_storeTypeStatement;
-    delete m_deleteTypeStatement;
-    delete m_checkTapeExistStatement;
-    delete m_updateTapeStatement;
-    delete m_checkTapeAccessSpecificationExistStatement;
-    delete m_updateTapeAccessSpecificationStatement;
-    delete m_checkTapeServerExistStatement;
-    delete m_updateTapeServerStatement;
-    delete m_deleteTapeDriveStatement;
-    delete m_selectTapeDriveStatement;
-    delete m_remoteUpdateTapeDriveStatement;
-    delete m_checkTapeDriveExistStatement;
-    delete m_updateTapeDriveStatement;
-    delete m_checkDeviceGroupNameExistStatement;
-    delete m_updateDeviceGroupNameStatement;
-    delete m_checkClientIdentificationExistStatement;
-    delete m_updateClientIdentificationStatement;
+    if(m_insertStatement) delete m_insertStatement;
+    if(m_deleteStatement) delete m_deleteStatement;
+    if(m_selectStatement) delete m_selectStatement;
+    if(m_updateStatement) delete m_updateStatement;
+    if(m_storeTypeStatement) delete m_storeTypeStatement;
+    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
+    if(m_checkTapeExistStatement) delete m_checkTapeExistStatement;
+    if(m_updateTapeStatement) delete m_updateTapeStatement;
+    if(m_checkTapeAccessSpecificationExistStatement) delete m_checkTapeAccessSpecificationExistStatement;
+    if(m_updateTapeAccessSpecificationStatement) delete m_updateTapeAccessSpecificationStatement;
+    if(m_checkTapeServerExistStatement) delete m_checkTapeServerExistStatement;
+    if(m_updateTapeServerStatement) delete m_updateTapeServerStatement;
+    if(m_deleteTapeDriveStatement) delete m_deleteTapeDriveStatement;
+    if(m_selectTapeDriveStatement) delete m_selectTapeDriveStatement;
+    if(m_remoteUpdateTapeDriveStatement) delete m_remoteUpdateTapeDriveStatement;
+    if(m_checkTapeDriveExistStatement) delete m_checkTapeDriveExistStatement;
+    if(m_updateTapeDriveStatement) delete m_updateTapeDriveStatement;
+    if(m_checkDeviceGroupNameExistStatement) delete m_checkDeviceGroupNameExistStatement;
+    if(m_updateDeviceGroupNameStatement) delete m_updateDeviceGroupNameStatement;
+    if(m_checkClientIdentificationExistStatement) delete m_checkClientIdentificationExistStatement;
+    if(m_updateClientIdentificationStatement) delete m_updateClientIdentificationStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;

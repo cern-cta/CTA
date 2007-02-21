@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class Files2Delete;
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
   namespace db {
 
@@ -278,10 +278,10 @@ namespace castor {
 
       }; // end of class DbFiles2DeleteCnv
 
-    } // end of namespace cnv
+    } /* end of namespace cnv */
 
-  } // end of namespace db
+  } /* end of namespace db */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_DB_CNV_FILES2DELETE_HPP

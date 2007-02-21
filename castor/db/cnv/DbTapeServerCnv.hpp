@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class TapeServer;
 
-  } // end of namespace vdqm
+  } /* end of namespace vdqm */
 
   namespace db {
 
@@ -274,10 +274,10 @@ namespace castor {
 
       }; // end of class DbTapeServerCnv
 
-    } // end of namespace cnv
+    } /* end of namespace cnv */
 
-  } // end of namespace db
+  } /* end of namespace db */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_DB_CNV_TAPESERVER_HPP

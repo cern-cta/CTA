@@ -148,20 +148,20 @@ void castor::db::cnv::DbTapeCopyCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-    delete m_insertStatement;
-    delete m_deleteStatement;
-    delete m_selectStatement;
-    delete m_updateStatement;
-    delete m_storeTypeStatement;
-    delete m_deleteTypeStatement;
-    delete m_insertStreamStatement;
-    delete m_deleteStreamStatement;
-    delete m_selectStreamStatement;
-    delete m_deleteSegmentStatement;
-    delete m_selectSegmentStatement;
-    delete m_remoteUpdateSegmentStatement;
-    delete m_checkCastorFileExistStatement;
-    delete m_updateCastorFileStatement;
+    if(m_insertStatement) delete m_insertStatement;
+    if(m_deleteStatement) delete m_deleteStatement;
+    if(m_selectStatement) delete m_selectStatement;
+    if(m_updateStatement) delete m_updateStatement;
+    if(m_storeTypeStatement) delete m_storeTypeStatement;
+    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
+    if(m_insertStreamStatement) delete m_insertStreamStatement;
+    if(m_deleteStreamStatement) delete m_deleteStreamStatement;
+    if(m_selectStreamStatement) delete m_selectStreamStatement;
+    if(m_deleteSegmentStatement) delete m_deleteSegmentStatement;
+    if(m_selectSegmentStatement) delete m_selectSegmentStatement;
+    if(m_remoteUpdateSegmentStatement) delete m_remoteUpdateSegmentStatement;
+    if(m_checkCastorFileExistStatement) delete m_checkCastorFileExistStatement;
+    if(m_updateCastorFileStatement) delete m_updateCastorFileStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;

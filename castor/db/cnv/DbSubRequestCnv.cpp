@@ -140,19 +140,19 @@ void castor::db::cnv::DbSubRequestCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-    delete m_insertStatement;
-    delete m_deleteStatement;
-    delete m_selectStatement;
-    delete m_updateStatement;
-    delete m_storeTypeStatement;
-    delete m_deleteTypeStatement;
-    delete m_checkDiskCopyExistStatement;
-    delete m_updateDiskCopyStatement;
-    delete m_checkCastorFileExistStatement;
-    delete m_updateCastorFileStatement;
-    delete m_checkSubRequestExistStatement;
-    delete m_updateSubRequestStatement;
-    delete m_updateFileRequestStatement;
+    if(m_insertStatement) delete m_insertStatement;
+    if(m_deleteStatement) delete m_deleteStatement;
+    if(m_selectStatement) delete m_selectStatement;
+    if(m_updateStatement) delete m_updateStatement;
+    if(m_storeTypeStatement) delete m_storeTypeStatement;
+    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
+    if(m_checkDiskCopyExistStatement) delete m_checkDiskCopyExistStatement;
+    if(m_updateDiskCopyStatement) delete m_updateDiskCopyStatement;
+    if(m_checkCastorFileExistStatement) delete m_checkCastorFileExistStatement;
+    if(m_updateCastorFileStatement) delete m_updateCastorFileStatement;
+    if(m_checkSubRequestExistStatement) delete m_checkSubRequestExistStatement;
+    if(m_updateSubRequestStatement) delete m_updateSubRequestStatement;
+    if(m_updateFileRequestStatement) delete m_updateFileRequestStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;

@@ -135,18 +135,18 @@ void castor::db::cnv::DbSetFileGCWeightCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-    delete m_insertStatement;
-    delete m_deleteStatement;
-    delete m_selectStatement;
-    delete m_updateStatement;
-    delete m_storeTypeStatement;
-    delete m_deleteTypeStatement;
-    delete m_deleteSubRequestStatement;
-    delete m_selectSubRequestStatement;
-    delete m_remoteUpdateSubRequestStatement;
-    delete m_checkSvcClassExistStatement;
-    delete m_updateSvcClassStatement;
-    delete m_updateIClientStatement;
+    if(m_insertStatement) delete m_insertStatement;
+    if(m_deleteStatement) delete m_deleteStatement;
+    if(m_selectStatement) delete m_selectStatement;
+    if(m_updateStatement) delete m_updateStatement;
+    if(m_storeTypeStatement) delete m_storeTypeStatement;
+    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
+    if(m_deleteSubRequestStatement) delete m_deleteSubRequestStatement;
+    if(m_selectSubRequestStatement) delete m_selectSubRequestStatement;
+    if(m_remoteUpdateSubRequestStatement) delete m_remoteUpdateSubRequestStatement;
+    if(m_checkSvcClassExistStatement) delete m_checkSvcClassExistStatement;
+    if(m_updateSvcClassStatement) delete m_updateSvcClassStatement;
+    if(m_updateIClientStatement) delete m_updateIClientStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;

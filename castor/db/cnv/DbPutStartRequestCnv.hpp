@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class PutStartRequest;
 
-  } // end of namespace stager
+  } /* end of namespace stager */
 
   namespace db {
 
@@ -278,10 +278,10 @@ namespace castor {
 
       }; // end of class DbPutStartRequestCnv
 
-    } // end of namespace cnv
+    } /* end of namespace cnv */
 
-  } // end of namespace db
+  } /* end of namespace db */
 
-} // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_DB_CNV_PUTSTARTREQUEST_HPP

@@ -138,18 +138,18 @@ void castor::db::cnv::DbSvcClassCnv::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-    delete m_insertStatement;
-    delete m_deleteStatement;
-    delete m_selectStatement;
-    delete m_updateStatement;
-    delete m_storeTypeStatement;
-    delete m_deleteTypeStatement;
-    delete m_insertTapePoolStatement;
-    delete m_deleteTapePoolStatement;
-    delete m_selectTapePoolStatement;
-    delete m_insertDiskPoolStatement;
-    delete m_deleteDiskPoolStatement;
-    delete m_selectDiskPoolStatement;
+    if(m_insertStatement) delete m_insertStatement;
+    if(m_deleteStatement) delete m_deleteStatement;
+    if(m_selectStatement) delete m_selectStatement;
+    if(m_updateStatement) delete m_updateStatement;
+    if(m_storeTypeStatement) delete m_storeTypeStatement;
+    if(m_deleteTypeStatement) delete m_deleteTypeStatement;
+    if(m_insertTapePoolStatement) delete m_insertTapePoolStatement;
+    if(m_deleteTapePoolStatement) delete m_deleteTapePoolStatement;
+    if(m_selectTapePoolStatement) delete m_selectTapePoolStatement;
+    if(m_insertDiskPoolStatement) delete m_insertDiskPoolStatement;
+    if(m_deleteDiskPoolStatement) delete m_deleteDiskPoolStatement;
+    if(m_selectDiskPoolStatement) delete m_selectDiskPoolStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
