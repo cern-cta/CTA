@@ -29,7 +29,7 @@ DROP PROCEDURE dlf_stats_requests;
 BEGIN
 	DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_partition_job', FORCE => TRUE);
 	DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_archive_job', FORCE => TRUE);
-	DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_stats_5mins', FORCE => TRUE);
+	DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'dlf_stats_15mins', FORCE => TRUE);
 END;
 
 

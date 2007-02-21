@@ -625,7 +625,7 @@ BEGIN
         (i = 36)  OR
         (i = 37)  OR
         (i = 40)) THEN
-          INSERT INTO dlf_jobstats VALUES(v_time, i, 0, 0, 0, 0, 0, 0, 300);
+          INSERT INTO dlf_jobstats VALUES(v_time, i, 0, 0, 0, 0, 0, 0, 900);
     END IF;
   END LOOP;
 
@@ -643,7 +643,7 @@ BEGIN
 		-- intersection of request ids
 		SELECT * FROM dlf_messages WHERE reqid IN(
 		  SELECT reqid FROM dlf_messages
-                    WHERE timestamp >  TO_DATE(SYSDATE - 15/1440, 'YYYYMMDDHH24MISS')
+                    WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
                     AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
                     AND   facility = 5
                     AND   msg_no   = 15
@@ -679,7 +679,7 @@ BEGIN
   -- update the starting statistics data
   FOR a IN (SELECT p.value, COUNT(m.reqid) count 
             FROM   dlf_messages m, dlf_num_param_values p
-            WHERE  m.timestamp >  TO_DATE(SYSDATE - 15/1440, 'YYYYMMDDHH24MISS')
+            WHERE  m.timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
             AND    m.timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
             AND    m.facility = 5
             AND    m.msg_no   = 12
@@ -715,7 +715,7 @@ BEGIN
         (i = 36)  OR
         (i = 37)  OR
         (i = 40)) THEN
-          INSERT INTO dlf_reqstats VALUES(v_time, i, 0, 0, 0, 0, 0, 300);    
+          INSERT INTO dlf_reqstats VALUES(v_time, i, 0, 0, 0, 0, 0, 900);    
     END IF;
   END LOOP;
   
@@ -732,7 +732,7 @@ BEGIN
                   -- intersection of request ids
                   SELECT * FROM dlf_messages WHERE reqid IN (
                     SELECT reqid FROM dlf_messages
-                      WHERE timestamp >  TO_DATE(SYSDATE - 15/1440, 'YYYYMMDDHH24MISS')
+                      WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
                       AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
                       AND   facility = 4
                       AND   msg_no   = 10
@@ -742,6 +742,7 @@ BEGIN
                       AND   facility = 4
                       AND   msg_no   = 12
                   )
+		  AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
                   AND facility = 4
                   AND ((msg_no = 10) OR (msg_no = 12))		    
 
@@ -772,16 +773,16 @@ END;
  */
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
-	JOB_NAME 	=> 'DLF_STATS_5MINS',
+	JOB_NAME 	=> 'DLF_STATS_15MINS',
 	JOB_TYPE 	=> 'PLSQL_BLOCK',
 	JOB_ACTION 	=> 'BEGIN
 				DLF_STATS_JOBS();
 				DLF_STATS_REQUESTS();
 			   END;',
 	START_DATE 	=> SYSDATE,
-	REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+	REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
 	ENABLED 	=> TRUE,
-	COMMENTS	=> 'CASTOR2 Monitoring Statistics (5 Minute Frequency)');
+	COMMENTS	=> 'CASTOR2 Monitoring Statistics (15 Minute Frequency)');
 END;
 /
 
