@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.28 2007/02/21 11:03:01 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.29 2007/02/21 11:04:18 sponcec3 Exp $
  */
 
 /*
@@ -183,7 +183,7 @@ EXTERN_C char *stage_statusName(int statusCode) {
 EXTERN_C char *stage_requestStatusName(int statusCode) {
   char *ret = STATUS_NA;
   if (statusCode >= 0 
-      && (unsigneint) statusCode < (sizeof(castor::stager::SubRequestStatusCodesStrings)/
+      && (unsigned int) statusCode < (sizeof(castor::stager::SubRequestStatusCodesStrings)/
                                     sizeof(castor::stager::SubRequestStatusCodesStrings[0]))) {
     char *tmp = strchr((char *)(castor::stager::SubRequestStatusCodesStrings[statusCode]), '_');
     ret = tmp+1;
