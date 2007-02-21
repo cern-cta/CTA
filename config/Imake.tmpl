@@ -55,7 +55,7 @@ MANDIR = ManDir
 MANSUFFIX = ManSuffix
 #if !defined(_WIN32)
 CP = cp
-LD = cc
+LD = cc -Wl,--defsym,CastorVersion_v$(__MAJOR_CASTOR_VERSION__).$(__MINOR_CASTOR_VERSION__)=0
 LN = ln
 #endif
 #if HasRanlib
