@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.23 2007/02/20 16:58:00 wiebalck Exp $
+ * $Id: Ctape_api.h,v 1.24 2007/02/21 16:36:20 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.23 $ $Date: 2007/02/20 16:58:00 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.24 $ $Date: 2007/02/21 16:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -89,7 +89,23 @@ EXTERN_C int DLL_DECL Ctape_rstatus _PROTO((char *, struct rsv_status *, int, in
 EXTERN_C void DLL_DECL Ctape_seterrbuf _PROTO((char *, int));
 EXTERN_C int DLL_DECL Ctape_status _PROTO((char *, struct drv_status *, int));
 EXTERN_C int DLL_DECL send2tpd _PROTO((char *, char *, int, char *, int));
+
 EXTERN_C int DLL_DECL findpgrp();
 EXTERN_C int DLL_DECL setdevinfo _PROTO((char *, char *, int, int));
 EXTERN_C int DLL_DECL chkdirw _PROTO((char *));
+EXTERN_C int DLL_DECL cvtden _PROTO((char *));
+EXTERN_C int DLL_DECL get_compression_stats _PROTO((int, char *, char*, COMPRESSION_STATS *comp_stats));
+EXTERN_C int DLL_DECL clear_compression_stats _PROTO((int, char *, char *));
+EXTERN_C int DLL_DECL read_pos _PROTO((int, char *, unsigned char *));
+#if defined(_WIN32)
+EXTERN_C int DLL_DECL skiptpff _PROTO((HANDLE, char *, int));
+#else
+EXTERN_C int DLL_DECL skiptpff _PROTO((int, char *, int));
+#endif
+EXTERN_C int DLL_DECL gettperror _PROTO((int, char *, char**));
+EXTERN_C int DLL_DECL setlabelinfo _PROTO((char *, int, int, char *, char *, char *, char *));
+EXTERN_C int DLL_DECL initlabelroutines _PROTO((int));
+EXTERN_C int DLL_DECL rmlabelinfo _PROTO((char *, int));
+
+
 #endif
