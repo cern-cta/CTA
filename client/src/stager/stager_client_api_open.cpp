@@ -1,15 +1,11 @@
 /*
- * $Id: stager_client_api_open.cpp,v 1.8 2006/07/20 15:36:27 sponcec3 Exp $
+ * $Id: stager_client_api_open.cpp,v 1.9 2007/02/21 09:46:22 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  */
-
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_open.cpp,v $ $Revision: 1.8 $ $Date: 2006/07/20 15:36:27 $ CERN IT-ADC/CA Benjamin Couturier";
-#endif
 
 /* ============== */
 /* System headers */
@@ -48,8 +44,6 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                                  char **requestId,
                                  struct stage_options* opts) {
   
-  char *func = "stage_open_ext";
-
   if ((flags == O_RDONLY) ||
       (flags == (O_TRUNC|O_RDONLY)) ||
       (flags == (O_CREAT|O_RDONLY)) ||

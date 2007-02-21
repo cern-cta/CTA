@@ -1,15 +1,11 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.12 2006/12/14 14:54:00 itglp Exp $
+ * $Id: stager_client_api_update.cpp,v 1.13 2007/02/21 09:46:22 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  */
-
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_update.cpp,v $ $Revision: 1.12 $ $Date: 2006/12/14 14:54:00 $ CERN IT-ADC/CA Benjamin Couturier";
-#endif
 
 /* ============== */
 /* System headers */
@@ -137,7 +133,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     *nbresps = nbResponses;
     
 
-    for (int i=0; i<respvec.size(); i++) {
+    for (unsigned int i=0; i<respvec.size(); i++) {
 
       // Casting the response into a FileResponse !
       castor::rh::FileResponse* fr = 

@@ -1,15 +1,11 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.7 2006/12/14 14:53:59 itglp Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.8 2007/02/21 09:46:22 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2005 by CERN/IT/ADC/CA
  * All rights reserved
  */
-
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: stager_client_api_rm.cpp,v $ $Revision: 1.7 $ $Date: 2006/12/14 14:53:59 $ CERN IT-ADC/CA Benjamin Couturier";
-#endif
 
 /* ============== */
 /* System headers */

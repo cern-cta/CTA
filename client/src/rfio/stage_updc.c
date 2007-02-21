@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)stage_updc.c,v 1.3 2003/10/31 07:03:57 CERN IT-PDP/DM Jean-Damien Durand Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,15 +1,11 @@
 /*
- * $Id: buildupath.c,v 1.1 2004/10/18 21:46:44 jdurand Exp $
+ * $Id: buildupath.c,v 1.2 2007/02/21 09:46:22 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1994-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildupath.c,v $ $Revision: 1.1 $ $Date: 2004/10/18 21:46:44 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>

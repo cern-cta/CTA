@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.c,v 1.2 2006/12/13 17:44:46 itglp Exp $
+ * $Id: stage_api.c,v 1.3 2007/02/21 09:46:22 sponcec3 Exp $
  */
 
 #include <stdlib.h>            /* For malloc(), etc... */
@@ -33,10 +33,6 @@
 #include "vmgr_api.h"          /* For vmgrcheck() */
 #endif
 #include "net.h"
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_api.c,v $ $Revision: 1.2 $ $Date: 2006/12/13 17:44:46 $ CERN IT/DS/HSM Jean-Damien Durand";
-#endif /* not lint */
 
 #ifdef hpux
 static int DLL_DECL stageinit _PROTO(());

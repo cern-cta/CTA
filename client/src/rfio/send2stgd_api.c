@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)send2stgd_api.c,v 1.19 2001/05/31 13:52:27 CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

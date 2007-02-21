@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_errmsg.c,v $ $Revision: 1.2 $ $Date: 2004/10/28 15:02:28 $ CERN IT-PDP/DM Jean-Damien Durand";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>

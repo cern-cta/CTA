@@ -1,10 +1,6 @@
 /*
- * $Id: stage_util.c,v 1.1 2004/10/18 21:46:45 jdurand Exp $
+ * $Id: stage_util.c,v 1.2 2007/02/21 09:46:22 sponcec3 Exp $
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stage_util.c,v $ $Revision: 1.1 $ $Date: 2004/10/18 21:46:45 $ CERN IT-DS/HSM Jean-Damien Durand";
-#endif /* not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
