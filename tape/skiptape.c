@@ -4,11 +4,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.11 $ $Date: 2006/10/10 14:16:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.12 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
 #if defined(_AIX) && defined(_IBMR2)
 #include <sys/tape.h>
@@ -31,10 +32,11 @@ static char sccsid[] = "@(#)$RCSfile: skiptape.c,v $ $Revision: 1.11 $ $Date: 20
 #endif
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 #if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux) || defined(hpux)
 extern int mt_rescnt;
-skiptpfff(tapefd, path, n)
+int skiptpfff(tapefd, path, n)
 int tapefd;
 char *path;
 int n;
@@ -92,7 +94,7 @@ int n;
 	RETURN (0);
 }
 #endif
-skiptpff(tapefd, path, n)
+int skiptpff(tapefd, path, n)
 #if defined(_WIN32)
 HANDLE tapefd;
 #else
@@ -129,7 +131,7 @@ int n;
 #endif
 	RETURN (0);
 }
-skiptpfb(tapefd, path, n)
+int skiptpfb(tapefd, path, n)
 #if defined(_WIN32)
 HANDLE tapefd;
 #else
@@ -166,7 +168,7 @@ int n;
 #endif
 	RETURN (0);
 }
-skiptprf(tapefd, path, n)
+int skiptprf(tapefd, path, n)
 #if defined(_WIN32)
 HANDLE tapefd;
 #else
@@ -203,7 +205,7 @@ int n;
 #endif
 	RETURN (0);
 }
-skiptprb(tapefd, path, n)
+int skiptprb(tapefd, path, n)
 #if defined(_WIN32)
 HANDLE tapefd;
 #else

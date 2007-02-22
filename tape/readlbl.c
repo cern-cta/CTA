@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.12 $ $Date: 2006/10/10 14:16:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.13 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -17,13 +17,16 @@ static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.12 $ $Date: 200
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
 #if defined(linux)
 #include <sys/mtio.h>
 #include <sys/utsname.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
-readlbl(tapefd, path, lblbuf)
+int readlbl(tapefd, path, lblbuf)
 int tapefd;
 char *path;
 char *lblbuf;
@@ -32,15 +35,13 @@ char *lblbuf;
 	char func[16];
 	char *msgaddr;
 	int n;
-	int rc;
-    int c;
 #if defined(linux) 
-    struct mtget mt_info;
-    static struct utsname un;
-    int major = 0;
-    int minor = 0;
-    int patch = 0;
-    int nr = 0;
+        struct mtget mt_info;
+        static struct utsname un;
+        int major = 0;
+        int minor = 0;
+        int patch = 0;
+        int nr = 0;
 #endif
 
 	ENTRY (readlbl);

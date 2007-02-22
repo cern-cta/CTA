@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.6 $ $Date: 2006/12/13 12:59:25 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.7 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -12,12 +12,20 @@ static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.6 $ $Date: 200
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 #include "smc.h"
 
-smc_dismount (fd, loader, robot_info, drvord, vid)
+/* from smcsubr.c */
+extern int smc_read_elem_status(int, char *, int, int, int, struct smc_element_info[]);
+extern int smc_lasterror(struct smc_status *, char **);
+extern int smc_move_medium(int, char *, int, int, int);
+extern int smc_find_cartridge(int, char *, int, char *, int, int, struct smc_element_info[] );
+
+int smc_dismount (fd, loader, robot_info, drvord, vid)
 int fd;
 char *loader;
 struct robot_info *robot_info;
@@ -72,7 +80,7 @@ char *vid;
 	RETURN (0);
 }
 
-smc_export (fd, loader, robot_info, vid)
+int smc_export (fd, loader, robot_info, vid)
 int fd;
 char *loader;
 struct robot_info *robot_info;
@@ -137,7 +145,7 @@ char *vid;
 	RETURN (0);
 }
 
-smc_import (fd, loader, robot_info, vid)
+int smc_import (fd, loader, robot_info, vid)
 int fd;
 char *loader;
 struct robot_info *robot_info;

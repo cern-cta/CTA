@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rwndtape.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: rwndtape.c,v $ $Revision: 1.5 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -26,8 +26,9 @@ static char sccsid[] = "@(#)$RCSfile: rwndtape.c,v $ $Revision: 1.4 $ $Date: 200
 #endif
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
-rwndtape(tapefd, path)
+int rwndtape(tapefd, path)
 #if defined(_WIN32)
 HANDLE tapefd;
 #else

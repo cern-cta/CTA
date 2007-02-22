@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: writelbl.c,v $ $Revision: 1.4 $ $Date: 2001/01/24 08:40:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: writelbl.c,v $ $Revision: 1.5 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	writelbl - write one label record */
@@ -13,10 +13,12 @@ static char sccsid[] = "@(#)$RCSfile: writelbl.c,v $ $Revision: 1.4 $ $Date: 200
  */
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
-writelbl(tapefd, path, lblbuf)
+int writelbl(tapefd, path, lblbuf)
 int tapefd;
 char *path;
 char *lblbuf;

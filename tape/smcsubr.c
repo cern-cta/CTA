@@ -4,13 +4,14 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.10 $ $Date: 2007/02/13 13:14:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.11 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include "Ctape.h"
 #include "scsictl.h"
@@ -19,6 +20,8 @@ static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.10 $ $Date: 200
 #define	RBT_XTRA_PROC 10
 static struct smc_status smc_status;
 static char *smc_msgaddr;
+
+extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
 
 static void
 save_error(rc, nb_sense, sense, msgaddr)
@@ -237,135 +240,7 @@ struct smc_element_info element_info[];
 	return (avail_elem);
 }
 
-smc_find_cartridge(fd, rbtdev, template, type, start, nbelem, element_info)
-int fd;
-char *rbtdev;
-int type;
-char *template;
-int start;
-int nbelem;
-struct smc_element_info element_info[];
-{
-	unsigned char cdb[12];
-	char func[16];
-	char *msgaddr;
-	int nb_sense_ret;
-	char plist[40];
-	int rc;
-	char sense[MAXSENSE];
-        int pause_mode = 1;
-        int nretries = 0;
-
-	ENTRY (find_cartridge);
-	memset (cdb, 0, sizeof(cdb));
-	cdb[0] = 0xB6;		/* send volume tag */
-	cdb[1] = type;
-	cdb[2] = start >> 8;
-	cdb[3] = start & 0xFF;
-	cdb[5] = 5;
-	cdb[9] = 40;
-	memset (plist, 0, sizeof(plist));
-	strcpy (plist, template);
-   
-       /* IBM library in pause mode  */ 
-        while (pause_mode && nretries <= 900) {
-	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, plist, 40,
-		  sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
-            if (rc < 0) {
-              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
-                 sleep(60);
-                 pause_mode = 1;
-              } else  {
-                 pause_mode = 0; 
-              }
-            } else {
-                pause_mode = 0;
-            }
-            nretries++;
-        }
-
-	if (rc < 0) {
-		if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
-			rc = smc_find_cartridge2 (fd, rbtdev, template, type,
-			    start, nbelem, element_info);
-			if (rc >= 0)
-				RETURN (rc);
-		}
-		save_error (rc, nb_sense_ret, sense, msgaddr);
-		RETURN (-1);
-	}
-	rc = get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
-	RETURN (rc);
-}
-
-smc_find_cartridge2 (fd, rbtdev, template, type, start, nbelem, element_info)
-int fd;
-char *rbtdev;
-int type;
-char *template;
-int start;
-int nbelem;
-struct smc_element_info element_info[];
-{
-	int c;
-	static char err_msgbuf[132];
-	int found;
-	char func[16];
-	int i;
-	struct smc_element_info *inventory_info; 
-	char *msgaddr;
-	int pm = 0;
-	struct robot_info robot_info;
-	int tot_nbelem;
-
-	ENTRY (find_cartridge2);
-	if (c = smc_get_geometry (fd, rbtdev, &robot_info))
-		return (c);
-
-	tot_nbelem = robot_info.transport_count + robot_info.slot_count +
-		robot_info.port_count + robot_info.device_count;
-
-	if ((inventory_info = malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
-		serrno = errno;
-#if defined(TAPE)
-		sprintf (err_msgbuf, TP005);
-#else
-		sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
-#endif
-		msgaddr = err_msgbuf;
-		save_error (-1, 0, NULL, msgaddr);
-		return (-1);
-	}
-
-	if ((c = smc_read_elem_status (fd, rbtdev, type, start, tot_nbelem, inventory_info)) < 0) {
-		free (inventory_info);
-		return (c);
-	}
-	found = 0;	
-	if (strchr (template, '*') || strchr (template, '?'))	/* pattern matching */
-		pm++;
-	for (i = 0 ; i < tot_nbelem ; i++)
-		if (inventory_info[i].state & 0x1) {
-			if (! pm) {
-				if (strcmp (template, inventory_info[i].name) == 0) {
-					memcpy (element_info, &inventory_info[i],
-						sizeof(struct smc_element_info));
-					found++;
-					break;
-				}
-			} else {
-				if (vmatch (template, inventory_info[i].name) == 0) {
-					memcpy (&element_info[found], &inventory_info[i],
-						sizeof(struct smc_element_info));
-					found++;
-				}
-			}
-		}
-	free (inventory_info);
-	RETURN (found);
-}
-
-smc_get_geometry(fd, rbtdev, robot_info)
+int smc_get_geometry(fd, rbtdev, robot_info)
 int fd;
 char *rbtdev;
 struct robot_info *robot_info;
@@ -447,6 +322,152 @@ struct robot_info *robot_info;
 	RETURN (0);
 }
 
+int smc_read_elem_status(fd, rbtdev, type, start, nbelem, element_info)
+int fd;
+char *rbtdev;
+int type;
+int start;
+int nbelem;
+struct smc_element_info element_info[];
+{
+	char func[16];
+	int rc;
+
+	ENTRY (read_elem_statu);
+	rc = get_element_info (0xB8, fd, rbtdev, type, start, nbelem, element_info);
+	RETURN (rc);
+}
+
+int smc_find_cartridge2 (fd, rbtdev, template, type, start, nbelem, element_info)
+int fd;
+char *rbtdev;
+int type;
+char *template;
+int start;
+int nbelem;
+struct smc_element_info element_info[];
+{
+	int c;
+	static char err_msgbuf[132];
+	int found;
+	char func[16];
+	int i;
+	struct smc_element_info *inventory_info; 
+	char *msgaddr;
+	int pm = 0;
+	struct robot_info robot_info;
+	int tot_nbelem;
+
+	ENTRY (find_cartridge2);
+	if ((c = smc_get_geometry (fd, rbtdev, &robot_info)))
+		return (c);
+
+	tot_nbelem = robot_info.transport_count + robot_info.slot_count +
+		robot_info.port_count + robot_info.device_count;
+
+	if ((inventory_info = malloc (tot_nbelem * sizeof(struct smc_element_info))) == NULL) {
+		serrno = errno;
+#if defined(TAPE)
+		sprintf (err_msgbuf, TP005);
+#else
+		sprintf (err_msgbuf, "malloc error: %s", strerror(errno));
+#endif
+		msgaddr = err_msgbuf;
+		save_error (-1, 0, NULL, msgaddr);
+		return (-1);
+	}
+
+	if ((c = smc_read_elem_status (fd, rbtdev, type, start, tot_nbelem, inventory_info)) < 0) {
+		free (inventory_info);
+		return (c);
+	}
+	found = 0;	
+	if (strchr (template, '*') || strchr (template, '?'))	/* pattern matching */
+		pm++;
+	for (i = 0 ; i < tot_nbelem ; i++)
+		if (inventory_info[i].state & 0x1) {
+			if (! pm) {
+				if (strcmp (template, inventory_info[i].name) == 0) {
+					memcpy (element_info, &inventory_info[i],
+						sizeof(struct smc_element_info));
+					found++;
+					break;
+				}
+			} else {
+				if (vmatch (template, inventory_info[i].name) == 0) {
+					memcpy (&element_info[found], &inventory_info[i],
+						sizeof(struct smc_element_info));
+					found++;
+				}
+			}
+		}
+	free (inventory_info);
+	RETURN (found);
+}
+
+
+int smc_find_cartridge(fd, rbtdev, template, type, start, nbelem, element_info)
+int fd;
+char *rbtdev;
+int type;
+char *template;
+int start;
+int nbelem;
+struct smc_element_info element_info[];
+{
+	unsigned char cdb[12];
+	char func[16];
+	char *msgaddr;
+	int nb_sense_ret;
+	char plist[40];
+	int rc;
+	char sense[MAXSENSE];
+        int pause_mode = 1;
+        int nretries = 0;
+
+	ENTRY (find_cartridge);
+	memset (cdb, 0, sizeof(cdb));
+	cdb[0] = 0xB6;		/* send volume tag */
+	cdb[1] = type;
+	cdb[2] = start >> 8;
+	cdb[3] = start & 0xFF;
+	cdb[5] = 5;
+	cdb[9] = 40;
+	memset (plist, 0, sizeof(plist));
+	strcpy (plist, template);
+   
+       /* IBM library in pause mode  */ 
+        while (pause_mode && nretries <= 900) {
+	     rc = send_scsi_cmd (fd, rbtdev, 0, cdb, 12, plist, 40,
+		  sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
+            if (rc < 0) {
+              if (rc == -4 && nb_sense_ret >= 14 && (sense[12] == 0x04)  && (sense[13] == 0xFFFFFF85 )) {
+                 sleep(60);
+                 pause_mode = 1;
+              } else  {
+                 pause_mode = 0; 
+              }
+            } else {
+                pause_mode = 0;
+            }
+            nretries++;
+        }
+
+	if (rc < 0) {
+		if (rc == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5) {
+			rc = smc_find_cartridge2 (fd, rbtdev, template, type,
+			    start, nbelem, element_info);
+			if (rc >= 0)
+				RETURN (rc);
+		}
+		save_error (rc, nb_sense_ret, sense, msgaddr);
+		RETURN (-1);
+	}
+	rc = get_element_info (0xB5, fd, rbtdev, type, start, nbelem, element_info);
+	RETURN (rc);
+}
+
+
 /* SCSI 3 additional sense code and additional sense qualifier */
 struct scsierr_codact {
 	unsigned char sensekey;
@@ -495,7 +516,7 @@ struct scsierr_codact scsierr_acttbl[] = {
     {0x02, 0x5A, 0x01, RBT_OMSGR, "Operator Medium Removal Request"}
 };
 
-smc_lasterror(smc_stat, msgaddr)
+int smc_lasterror(smc_stat, msgaddr)
 struct smc_status *smc_stat;
 char **msgaddr;
 {
@@ -523,7 +544,7 @@ char **msgaddr;
 	return (RBT_NORETRY);
 }
 
-smc_move_medium(fd, rbtdev, from, to, invert)
+int smc_move_medium(fd, rbtdev, from, to, invert)
 int fd;
 char *rbtdev;
 int from;
@@ -571,23 +592,8 @@ int invert;
 	RETURN (0);
 }
 
-smc_read_elem_status(fd, rbtdev, type, start, nbelem, element_info)
-int fd;
-char *rbtdev;
-int type;
-int start;
-int nbelem;
-struct smc_element_info element_info[];
-{
-	char func[16];
-	int rc;
 
-	ENTRY (read_elem_statu);
-	rc = get_element_info (0xB8, fd, rbtdev, type, start, nbelem, element_info);
-	RETURN (rc);
-}
-
-smc_ready_inport(fd, rbtdev, port)
+int smc_ready_inport(fd, rbtdev, port)
 int fd;
 char *rbtdev;
 int port;

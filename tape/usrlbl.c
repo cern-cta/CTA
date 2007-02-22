@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.11 $ $Date: 2002/04/08 13:40:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.12 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	usrlbl - user callable routines to read/write header and trailer labels */
@@ -30,7 +30,7 @@ static char sccsid[] = "@(#)$RCSfile: usrlbl.c,v $ $Revision: 1.11 $ $Date: 2002
  *		0	for EOF
  *		ETEOV	for EOV
  */
-checkeofeov (tapefd, path)
+int checkeofeov (tapefd, path)
 int	tapefd;
 char	*path;
 {
@@ -40,11 +40,13 @@ char	*path;
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
-	if ((c = readlbl (tapefd, path, hdr1)) < 0)
-		if (dlip->flags & NOTRLCHK)
+	if ((c = readlbl (tapefd, path, hdr1)) < 0) {
+		if (dlip->flags & NOTRLCHK) {
 			return (0);
-		else
+		} else {
 			return (c);
+                }
+        }
 	if (dlip->lblcode == NL || dlip->lblcode == BLP) {	/* tape is unlabelled */
 		if (c > 1) {	/* last file on this tape */
 			if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);
@@ -69,7 +71,7 @@ char	*path;
 }
 
 /*	wrthdrlbl - write header labels */
-wrthdrlbl (tapefd, path)
+int wrthdrlbl (tapefd, path)
 int	tapefd;
 char	*path;
 {
@@ -106,8 +108,33 @@ char	*path;
 	return (wrttpmrk (tapefd, path, 1));
 }
 
+int wrteotmrk(tapefd, path)
+int tapefd;
+char *path;
+{
+	int c;
+	struct devlblinfo  *dlip;
+
+	if (getlabelinfo (path, &dlip) < 0)
+		return (-1);
+	if (! dlip->dev1tm) {
+		/* write 2 tape marks */
+		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
+		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
+		/* for Exabytes in 8200 mode, position in front of the 2 tapemarks,
+		   otherwise position between the 2 tapemarks */
+		if ((c = skiptpfb (tapefd, path, dlip->rewritetm+1)) < 0) return (c);
+	} else {
+		/* write 1 tape mark */
+		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
+		/* flush the buffer */
+		if ((c = wrttpmrk (tapefd, path, 0)) < 0) return (c);
+	}
+	return (0);
+}
+
 /*	wrttrllbl - write trailer labels */
-wrttrllbl (tapefd, path, labelid, nblocks)
+int wrttrllbl (tapefd, path, labelid, nblocks)
 int	tapefd;
 char	*path;
 char	*labelid;
@@ -116,7 +143,6 @@ int	nblocks;
 	char buf[7];
 	int c;
 	struct devlblinfo  *dlip;
-	int fseq;
 	char hdr1[80], hdr2[80];
 #if defined(hpux) || defined(linux)
 	struct mtget mt_info;
@@ -207,7 +233,7 @@ int	nblocks;
 }
 
 /*	deltpfil - delete current tape file */
-deltpfil (tapefd, path)
+int deltpfil (tapefd, path)
 int	tapefd;
 char	*path;
 {
@@ -242,27 +268,3 @@ char	*path;
 	return (wrteotmrk (tapefd, path));
 }
 
-wrteotmrk(tapefd, path)
-int tapefd;
-char *path;
-{
-	int c;
-	struct devlblinfo  *dlip;
-
-	if (getlabelinfo (path, &dlip) < 0)
-		return (-1);
-	if (! dlip->dev1tm) {
-		/* write 2 tape marks */
-		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
-		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
-		/* for Exabytes in 8200 mode, position in front of the 2 tapemarks,
-		   otherwise position between the 2 tapemarks */
-		if ((c = skiptpfb (tapefd, path, dlip->rewritetm+1)) < 0) return (c);
-	} else {
-		/* write 1 tape mark */
-		if ((c = wrttpmrk (tapefd, path, 1)) < 0) return (c);
-		/* flush the buffer */
-		if ((c = wrttpmrk (tapefd, path, 0)) < 0) return (c);
-	}
-	return (0);
-}

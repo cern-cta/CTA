@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.9 $ $Date: 2005/07/11 10:55:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.10 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -39,6 +39,7 @@ static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.9 $ $Date: 2005
 #endif
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 #if defined(_WIN32)
 gettperror(tapefd, path, msgaddr)
@@ -82,29 +83,29 @@ struct sk_info {
 	int errcat;
 };
 struct sk_info sk_codmsg[] = {
-	"No sense", ETNOSNS,
-	"Recovered error", 0,
-	"Not ready", 0,
-	"Medium error", ETPARIT,
-	"Hardware error", ETHWERR,
-	"Illegal request", ETHWERR,
-	"Unit attention", ETHWERR,
-	"Data protect", 0,
-	"Blank check", ETBLANK,
-	"Vendor unique", 0,
-	"Copy aborted", 0,
-	"Aborted command", 0,
-	"Equal", 0,
-	"Volume overflow", 0,
-	"Miscompare", 0,
-	"Reserved", 0,
-	"SCSI handshake failure", ETHWERR,
-	"Timeout", ETHWERR,
-	"EOF hit", 0,
-	"EOT hit", ETBLANK,
-	"Length error", ETCOMPA,
-	"BOT hit", ETUNREC,
-	"Wrong tape media", ETCOMPA
+	{"No sense", ETNOSNS},
+	{"Recovered error", 0},
+	{"Not ready", 0},
+	{"Medium error", ETPARIT},
+	{"Hardware error", ETHWERR},
+	{"Illegal request", ETHWERR},
+	{"Unit attention", ETHWERR},
+	{"Data protect", 0},
+	{"Blank check", ETBLANK},
+	{"Vendor unique", 0},
+	{"Copy aborted", 0},
+	{"Aborted command", 0},
+	{"Equal", 0},
+	{"Volume overflow", 0},
+	{"Miscompare", 0},
+	{"Reserved", 0},
+	{"SCSI handshake failure", ETHWERR},
+	{"Timeout", ETHWERR},
+	{"EOF hit", 0},
+	{"EOT hit", ETBLANK},
+	{"Length error", ETCOMPA},
+	{"BOT hit", ETUNREC},
+	{"Wrong tape media", ETCOMPA}
 };
 #endif
 #if defined(_AIX) && (defined(RS6000PCTA) || defined(ADSTAR))
@@ -217,7 +218,11 @@ struct era_info era_codmsg[] = {
 int mt_rescnt;
 static char tp_err_msgbuf[32];
 
-gettperror(tapefd, path, msgaddr)
+#if ! defined(_AIX) || defined(ADSTAR)
+int get_sk_msg(char *, int, int, int, char **);
+#endif 
+
+int gettperror(tapefd, path, msgaddr)
 int tapefd;
 char *path;
 char **msgaddr;
@@ -228,7 +233,6 @@ char **msgaddr;
 	char *devtype;
 #endif
 	struct devlblinfo  *dlip;
-	extern char *dvrname;
 	int rc;
 	int save_errno;
 #ifndef _AIX
@@ -429,7 +433,7 @@ char **msgaddr;
 #endif
 
 #if ! defined(_AIX) || defined(ADSTAR)
-get_sk_msg(devtype, key, asc, ascq, msgaddr)
+int get_sk_msg(devtype, key, asc, ascq, msgaddr)
 char *devtype;
 int key;
 int asc;
@@ -466,7 +470,7 @@ char **msgaddr;
 #endif
 #endif
 
-rpttperror(func, tapefd, path, cmd)
+int rpttperror(func, tapefd, path, cmd)
 char *func;
 int tapefd;
 char *path;

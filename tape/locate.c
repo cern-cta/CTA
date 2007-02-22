@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: locate.c,v $ $Revision: 1.4 $ $Date: 2005/07/11 10:54:04 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: locate.c,v $ $Revision: 1.5 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -12,9 +12,13 @@ static char sccsid[] = "@(#)$RCSfile: locate.c,v $ $Revision: 1.4 $ $Date: 2005/
 #include <stdio.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "scsictl.h"
 #include "serrno.h"
-locate(tapefd, path, blockid)
+
+extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
+
+int locate(tapefd, path, blockid)
 int tapefd;
 char *path;
 unsigned char *blockid;
@@ -37,7 +41,7 @@ unsigned char *blockid;
 	RETURN (0);
 }
 
-read_pos(tapefd, path, blockid)
+int read_pos(tapefd, path, blockid)
 int tapefd;
 char *path;
 unsigned char *blockid;
@@ -47,7 +51,6 @@ unsigned char *blockid;
 	char func[16];
 	char *msgaddr;
 	int nb_sense_ret;
-	int rc;
 	char sense[MAXSENSE];
 
 	ENTRY (read_pos);
