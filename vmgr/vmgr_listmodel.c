@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listmodel.c,v $ $Revision: 1.3 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_listmodel - list cartridge model entries */
 
 #include <errno.h>

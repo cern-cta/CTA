@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_apiinit.c,v $ $Revision: 1.2 $ $Date: 2000/05/15 06:50:02 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	vmgr_apiinit - allocate thread specific or global structures */
 
 #include <errno.h>
@@ -17,7 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_apiinit.c,v $ $Revision: 1.2 $ $Date:
 #include "serrno.h"
 static int vmgr_api_key = -1;
 
-vmgr_apiinit(thip)
+int vmgr_apiinit(thip)
 struct vmgr_api_thread_info **thip;
 {
 	Cglobals_get (&vmgr_api_key,

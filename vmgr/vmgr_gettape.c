@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.11 $ $Date: 2002/02/07 06:06:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_gettape - get a tape volume to store a given amount of data */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_gettape.c,v $ $Revision: 1.11 $ $Date
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, int *side, int *fseq, u_signed64 *estimated_free_space)
+int vmgr_gettape(const char *poolname, u_signed64 Size, const char *Condition, char *vid, char *vsn, char *dgn, char *density, char *lbltype, char *model, int *side, int *fseq, u_signed64 *estimated_free_space)
 {
 	int c;
 	char func[16];

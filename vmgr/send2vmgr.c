@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2vmgr.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 22:56:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -22,6 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: send2vmgr.c,v $ $Revision: 1.4 $ $Date: 20
 #include "net.h"
 #include "serrno.h"
 #include "vmgr.h"
+#include "vmgr_api.h"
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
@@ -31,7 +28,7 @@ extern char *ws_strerr;
 
 /* send2vmgr - send a request to the volume manager and wait for the reply */
 
-send2vmgr(socketp, reqp, reql, user_repbuf, user_repbuf_len)
+int send2vmgr(socketp, reqp, reql, user_repbuf, user_repbuf_len)
 int *socketp;
 char *reqp;
 int reql;
@@ -80,7 +77,7 @@ int user_repbuf_len;
 #endif
 		  if ((p = getenv ("VMGR_PORT")) || (p = getconfent ("VMGR", "PORT", 0))) {
 		    sin.sin_port = htons ((unsigned short)atoi (p));
-		  } else if (sp = Cgetservbyname ("vmgr", "tcp")) {
+		  } else if ((sp = Cgetservbyname ("vmgr", "tcp"))) {
 		    sin.sin_port = sp->s_port;
 		    serrno = 0;
 		  } else {

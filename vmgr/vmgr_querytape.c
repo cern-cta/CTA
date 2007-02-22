@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.8 $ $Date: 2002/02/07 06:08:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_querytape - query about a tape volume */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querytape.c,v $ $Revision: 1.8 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, char *dgn)
+int vmgr_querytape(const char *vid, int side, struct vmgr_tape_info *tape_info, char *dgn)
 {
 	int c;
 	char func[15];

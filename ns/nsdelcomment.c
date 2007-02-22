@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsdelcomment.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsdelcomment - delete a comment associated with a file/directory */
 #include <errno.h>
 #include <pwd.h>
@@ -25,7 +21,6 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-	int c;
 	int errflg = 0;
 	char fullpath[CA_MAXPATHLEN+1];
 	char *p;

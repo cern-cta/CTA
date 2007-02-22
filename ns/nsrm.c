@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)nsrm.c,v 1.2 2006/01/26 15:36:23 CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsrm - remove name server directory/file entries */
 #include <errno.h>
 #include <stdio.h>

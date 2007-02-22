@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_settag.c,v $ $Revision: 1.1 $ $Date: 2003/10/28 11:13:25 $ CERN IT-GD/CT Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	vmgr_settag - add/replace a tag associated with a tape volume */
 
 #include <errno.h>

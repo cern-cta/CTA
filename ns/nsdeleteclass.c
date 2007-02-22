@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsdeleteclass.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsdeleteclass - delete a fileclass definition */
 #include <errno.h>
 #include <stdio.h>

@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nschmod.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nschmod - change directory/file permissions in name server */
 #include <errno.h>
 #include <pwd.h>
@@ -26,7 +22,6 @@ extern	char	*getenv();
 int main(int argc,char **argv)
 {
 	int absmode = 0;
-	int c;
 	char *dp;
 	int errflg = 0;
 	char fullpath[CA_MAXPATHLEN+1];

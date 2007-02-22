@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listtape.c,v $ $Revision: 1.4 $ $Date: 2002/02/07 06:10:36 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_listtape - list all existing tapes */
 
 #include <errno.h>

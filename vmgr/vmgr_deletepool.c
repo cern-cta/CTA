@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletepool.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:38:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_deletepool - delete a tape pool definition */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_deletepool.c,v $ $Revision: 1.3 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_deletepool(const char *pool_name)
+int vmgr_deletepool(const char *pool_name)
 {
 	int c;
 	char func[16];

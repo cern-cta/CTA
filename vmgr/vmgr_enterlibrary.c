@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_enterlibrary.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:21:17 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_enterlibrary - define a new tape library */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_enterlibrary.c,v $ $Revision: 1.1 $ $
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_enterlibrary(const char *library_name, int capacity, int status)
+int vmgr_enterlibrary(const char *library_name, int capacity, int status)
 {
 	int c;
 	char func[18];

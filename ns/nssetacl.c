@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nssetacl.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:07 $ CERN IT-ADC/CA Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nssetacl - set the Access Control List for a file/directory */
 #include <errno.h>
 #include <sys/types.h>
@@ -189,7 +185,7 @@ parse_entries(char *entries, struct Cns_acl *acl)
 	char *q;
 
 	while (entry) {
-		if (p = strchr (entry, ',')) {
+		if ((p = strchr (entry, ','))) {
 			*p = '\0';
 			p++;
 		}

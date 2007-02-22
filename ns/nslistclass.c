@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nslistclass.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nslistclass - query a given class or list all existing file classes */
 #include <errno.h>
 #include <sys/types.h>
@@ -144,7 +140,7 @@ int listentry(struct Cns_fileclass *Cns_fileclass)
 		sav_uid = Cns_fileclass->uid;
 		if (sav_uid == 0)
 			strcpy (sav_uidstr, "-");
-		else if (pw = getpwuid (sav_uid))
+		else if ((pw = getpwuid (sav_uid)))
 			strcpy (sav_uidstr, pw->pw_name);
 		else
 			sprintf (sav_uidstr, "%-8u", sav_uid);
@@ -153,7 +149,7 @@ int listentry(struct Cns_fileclass *Cns_fileclass)
 		sav_gid = Cns_fileclass->gid;
 		if (sav_gid == 0)
 			strcpy (sav_gidstr, "-");
-		else if (gr = getgrgid (sav_gid))
+		else if ((gr = getgrgid (sav_gid)))
 			strcpy (sav_gidstr, gr->gr_name);
 		else
 			sprintf (sav_gidstr, "%-6u", sav_gid);

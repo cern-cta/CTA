@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querypool.c,v $ $Revision: 1.4 $ $Date: 2001/01/30 06:29:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_querypool - query about a tape pool */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querypool.c,v $ $Revision: 1.4 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_signed64 *capacity, u_signed64 *tot_free_space)
+int vmgr_querypool(const char *pool_name, uid_t *pool_user, gid_t *pool_group, u_signed64 *capacity, u_signed64 *tot_free_space)
 {
 	int c;
 	char func[15];

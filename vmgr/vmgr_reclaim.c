@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_reclaim.c,v $ $Revision: 1.1 $ $Date: 2000/05/09 19:19:57 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_reclaim - reset tape volume content information */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_reclaim.c,v $ $Revision: 1.1 $ $Date:
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_reclaim(const char *vid)
+int vmgr_reclaim(const char *vid)
 {
 	int c;
 	char func[16];

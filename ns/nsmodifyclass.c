@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsmodifyclass.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsmodifyclass - modify an existing file class */
 #include <errno.h>
 #include <sys/types.h>
@@ -207,7 +203,7 @@ char **argv;
 					errflg++;
 				} else
 					nbtppools++;
-				if (p = strtok (NULL, ":")) *(p - 1) = ':';
+				if ((p = strtok (NULL, ":"))) *(p - 1) = ':';
 			}
 			if (errflg) break;
 			Cns_fileclass.nbtppools = nbtppools;

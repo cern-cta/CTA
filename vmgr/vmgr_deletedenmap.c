@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletedenmap.c,v $ $Revision: 1.3 $ $Date: 2000/07/07 06:08:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_deletedenmap - delete a triplet model/media_letter/density */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_deletedenmap.c,v $ $Revision: 1.3 $ $
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_deletedenmap(const char *model, char *media_letter, char *density)
+int vmgr_deletedenmap(const char *model, char *media_letter, char *density)
 {
 	int c;
 	char func[18];

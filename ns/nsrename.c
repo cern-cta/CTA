@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsrename.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsrename - rename entries in name server */
 #include <errno.h>
 #include <stdio.h>

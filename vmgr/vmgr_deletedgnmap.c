@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletedgnmap.c,v $ $Revision: 1.2 $ $Date: 2002/02/07 06:02:54 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_deletedgnmap - delete a triplet dgn/model/library */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_deletedgnmap.c,v $ $Revision: 1.2 $ $
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_deletedgnmap(const char *model, char *library)
+int vmgr_deletedgnmap(const char *model, char *library)
 {
 	int c;
 	char func[18];

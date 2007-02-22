@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsfind.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsfind - search for files in name server */
 #include <errno.h>
 #include <sys/types.h>
@@ -50,7 +46,6 @@ int main(argc, argv)
 int argc;
 char **argv;
 {
-	int c;
 	char fullpath[CA_MAXPATHLEN+1];
 	int i;
 	int lastpath = 0;
@@ -217,14 +212,14 @@ struct Cns_filestat *statbuf;
 		modestr[10] = '\0';
 		if (statbuf->uid != sav_uid) {
 			sav_uid = statbuf->uid;
-			if (pw = getpwuid (sav_uid))
+			if ((pw = getpwuid (sav_uid)))
 				strcpy (sav_uidstr, pw->pw_name);
 			else
 				sprintf (sav_uidstr, "%-8u", sav_uid);
 		}
 		if (statbuf->gid != sav_gid) {
 			sav_gid = statbuf->gid;
-			if (gr = getgrgid (sav_gid))
+			if ((gr = getgrgid (sav_gid)))
 				strcpy (sav_gidstr, gr->gr_name);
 			else
 				sprintf (sav_gidstr, "%-6u", sav_gid);

@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nstouch.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:07 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nstouch - set last access and modification times */
 #include <errno.h>
 #include <stdio.h>
@@ -146,9 +142,9 @@ char *arg;
 	struct tm tm;
 
 	memset (&tm, 0, sizeof(struct tm));
-        curtime = time (0);
-        tm.tm_year = localtime(&curtime)->tm_year;
-	if (p = strchr (arg, '.')) {
+  curtime = time (0);
+  tm.tm_year = localtime(&curtime)->tm_year;
+  if ((p = strchr (arg, '.'))) {
 		*p = '\0';
 		if ((n = strtol (p + 1, &dp, 10)) < 0 || *dp != '\0' || n > 59)
 			return (-1);

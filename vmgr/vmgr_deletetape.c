@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_deletetape.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:38:52 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_deletetape - delete a tape volume */
 
 #include <errno.h>
@@ -23,7 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_deletetape.c,v $ $Revision: 1.3 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_deletetape(const char *vid)
+int vmgr_deletetape(const char *vid)
 {
 	int c;
 	char func[15];

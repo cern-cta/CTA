@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)nsgetacl.c,v 1.2 2006/01/26 15:36:22 CERN IT-ADC/CA Jean-Philippe Baud";
-#endif /* not lint */
-
 #ifdef _WIN32
 #define S_IROTH 00004
 #define S_IWOTH 00002
@@ -21,6 +17,7 @@ static char sccsid[] = "@(#)nsgetacl.c,v 1.2 2006/01/26 15:36:22 CERN IT-ADC/CA 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -35,7 +32,7 @@ extern	char	*getenv();
 extern	int	optind;
 int aflag;
 int dflag;
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -221,7 +218,7 @@ decode_group(gid_t gid)
 		if (Cns_getgrpbygid (sav_gid, sav_gidstr) < 0)
 #else
 		sav_gid = gid;
-		if (gr = getgrgid (sav_gid)) {
+		if ((gr = getgrgid (sav_gid))) {
 			strncpy (sav_gidstr, gr->gr_name, sizeof(sav_gidstr) - 1);
 			sav_gidstr[sizeof(sav_gidstr) - 1] = '\0';
 		} else
@@ -257,7 +254,7 @@ decode_user(uid_t uid)
 		if (Cns_getusrbyuid (sav_uid, sav_uidstr) < 0)
 #else
 		sav_uid = uid;
-		if (pw = getpwuid (sav_uid))
+		if ((pw = getpwuid (sav_uid)))
 			strcpy (sav_uidstr, pw->pw_name);
 		else
 #endif

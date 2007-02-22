@@ -3,23 +3,20 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrcheck.c,v $ $Revision: 1.6 $ $Date: 2004/01/23 14:55:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include "Cupv_api.h"
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
-vmgrcheck(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t uid, gid_t gid)
+int vmgrcheck(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t uid, gid_t gid)
 {
 	return (vmgrchecki (vid, vsn, dgn, den, lbl, mode, uid, gid, NULL));
 }
 
-vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t uid, gid_t gid, char *clienthost)
+int vmgrchecki(char *vid, char *vsn, char *dgn, char *den, char *lbl, int mode, uid_t uid, gid_t gid, char *clienthost)
 {
 	int errflg = 0;
 	char func[16];

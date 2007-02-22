@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)nsls.c,v 1.2 2006/01/26 15:36:22 CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsls - list name server directory/file entries */
 #include <errno.h>
 #include <dirent.h>
@@ -31,9 +27,18 @@ static char sccsid[] = "@(#)nsls.c,v 1.2 2006/01/26 15:36:22 CERN IT-PDP/DM Jean
 #include "serrno.h"
 #include "u64subr.h"
 #define SIXMONTHS (6*30*24*60*60)
+
+/* Forward declarations */
 static char *decode_group(gid_t);
 static char *decode_user(uid_t);
 extern	char	*getenv();
+int procpath(char*);
+int listdir(char*);
+int listsegs(char*);
+int listentry(char*,struct Cns_filestat*,char*,char*);
+int listtpentry(char*,int,int,u_signed64,int,char*,int,int,
+                unsigned char[4],char,char*,unsigned long);
+
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
@@ -51,13 +56,11 @@ int Rflag;
 int Tflag;
 int uflag;
 int checksumflag;
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
 	int c;
-	char *dp;
-	char *endp;
 	int errflg = 0;
 	char fullpath[CA_MAXPATHLEN+1];
 	int i;
@@ -173,8 +176,8 @@ char **argv;
 	exit (0);
 }
 
-procpath(fullpath)
-char *fullpath;
+int procpath(fullpath)
+     char *fullpath;
 {
 	int c;
 	char comment[CA_MAXCOMMENTLEN+1];
@@ -206,7 +209,7 @@ char *fullpath;
 	}
 }
 
-listdir(dir)
+int listdir(dir)
 char *dir;
 {
 	int c;
@@ -335,20 +338,14 @@ char *dir;
 	return (0);
 }
 
-listentry(path, statbuf, slink, comment)
+int listentry(path, statbuf, slink, comment)
 char *path;
 struct Cns_filestat *statbuf;
 char *slink;
 char *comment;
 {
-	struct group *gr;
 	char modestr[11];
-	struct passwd *pw;
-	static gid_t sav_gid = -1;
-	static char sav_gidstr[9];
 	time_t ltime;
-	static uid_t sav_uid = -1;
-	static char sav_uidstr[CA_MAXUSRNAMELEN+1];
 	char timestr[13];
 	struct tm *tm;
 	char tmpbuf[21];
@@ -434,7 +431,7 @@ decode_group(gid_t gid)
 		sav_gid = gid;
 #else
 		sav_gid = gid;
-		if (gr = getgrgid (sav_gid)) {
+		if ((gr = getgrgid (sav_gid))) {
 			strncpy (sav_gidstr, gr->gr_name, sizeof(sav_gidstr) - 1);
 			sav_gidstr[sizeof(sav_gidstr) - 1] = '\0';
 		} else
@@ -458,7 +455,7 @@ decode_user(uid_t uid)
 		sav_uid = uid;
 #else
 		sav_uid = uid;
-		if (pw = getpwuid (sav_uid))
+		if ((pw = getpwuid (sav_uid)))
 			strcpy (sav_uidstr, pw->pw_name);
 		else
 #endif
@@ -467,7 +464,7 @@ decode_user(uid_t uid)
 	return (sav_uidstr);
 }
 
-listsegs(path)
+int listsegs(path)
 char *path;
 {
 	int c;
@@ -492,7 +489,7 @@ char *path;
 }
 
 
-listtpentry(path, copyno, fsec, segsize, compression, vid, side, fseq, blockid, status,
+int listtpentry(path, copyno, fsec, segsize, compression, vid, side, fseq, blockid, status,
             checksum_name, checksum)
 char *path;
 int copyno;

@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_listdgnmap.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_listdgnmap - list triplets dgn/model/library */
 
 #include <errno.h>

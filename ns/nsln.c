@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsln.c,v $ $Revision: 1.3 $ $Date: 2006/12/06 16:05:08 $ CERN IT-GD/CT Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nsln - make a symbolic link to a file or a directory */
 #include <errno.h>
 #include <stdio.h>
@@ -78,7 +74,7 @@ char **argv;
 	argc -= optind;
 	argv += optind;
 	if (argc == 1)
-		if (p = strrchr (argv[0], '/'))
+		if ((p = strrchr (argv[0], '/')))
 			lastarg = p + 1;
 		else
 			lastarg = argv[0];
@@ -86,7 +82,7 @@ char **argv;
 		lastarg = argv[--argc];
 	for (i = 0; i < argc; i++) {
 		if (argc > 1)
-			if (p = strrchr (argv[i], '/'))
+			if ((p = strrchr (argv[i], '/')))
 				sprintf (path, "%s/%s", lastarg, p + 1);
 			else
 				sprintf (path, "%s/%s", lastarg, argv[i]);

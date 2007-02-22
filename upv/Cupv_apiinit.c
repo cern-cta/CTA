@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_apiinit.c,v $ $Revision: 1.2 $ $Date: 2006/12/05 14:00:40 $ CERN IT-DS/HSM Ben Couturier";
-#endif /* not lint */
-
 /*	Cupv_apiinit - allocate thread specific or global structures */
 
 #include <errno.h>    

@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.4 $ $Date: 2002/02/07 06:06:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_updatetape - update tape volume content information */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_updatetape.c,v $ $Revision: 1.4 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_updatetape(const char *vid, int side, u_signed64 BytesWritten, int CompressionFactor, int FilesWritten, int Flags)
+int vmgr_updatetape(const char *vid, int side, u_signed64 BytesWritten, int CompressionFactor, int FilesWritten, int Flags)
 {
 	int c;
 	char func[16];

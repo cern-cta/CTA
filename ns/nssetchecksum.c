@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nssetchecksum.c,v $ $Revision: 1.2 $ CERN IT-ADC-CA Ben Couturier";
-#endif /* not lint */
-
 /*
  * Utility to set/reset the tape segment checksum in the name server
  */

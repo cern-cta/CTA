@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.7 $ $Date: 2002/02/07 06:05:39 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_entertape - enter a new tape volume */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_entertape.c,v $ $Revision: 1.7 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_entertape(const char *vid, char *vsn, char *library, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, int nbsides, char *poolname, int status)
+int vmgr_entertape(const char *vid, char *vsn, char *library, char *density, char *lbltype, char *model, char *media_letter, char *manufacturer, char *sn, int nbsides, char *poolname, int status)
 {
 	int c;
 	char func[15];

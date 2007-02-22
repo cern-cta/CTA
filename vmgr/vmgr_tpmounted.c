@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_tpmounted.c,v $ $Revision: 1.3 $ $Date: 2002/02/07 06:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_tpmounted - update tape volume access time/count */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_tpmounted.c,v $ $Revision: 1.3 $ $Dat
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_tpmounted(const char *vid, int mode, int jid)
+int vmgr_tpmounted(const char *vid, int mode, int jid)
 {
 	int c;
 	char func[16];

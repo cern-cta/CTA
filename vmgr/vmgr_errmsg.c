@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_errmsg.c,v $ $Revision: 1.4 $ $Date: 2003/10/13 07:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,7 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_errmsg.c,v $ $Revision: 1.4 $ $Date: 
 
 /*	vmgr_seterrbuf - set receiving buffer for error messages */
 
-vmgr_seterrbuf(char *buffer, int buflen)
+int vmgr_seterrbuf(char *buffer, int buflen)
 {
 	struct vmgr_api_thread_info *thip;
 
@@ -30,7 +26,7 @@ vmgr_seterrbuf(char *buffer, int buflen)
 
 /* vmgr_errmsg - send error message to user defined client buffer or to stderr */
 
-vmgr_errmsg(char *func, char *msg, ...)
+int vmgr_errmsg(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[PRTBUFSZ];

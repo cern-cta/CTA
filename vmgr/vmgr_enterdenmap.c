@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.5 $ $Date: 2003/10/29 07:48:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_enterdenmap.c,v $ $Revision: 1.5 $ $D
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_enterdenmap(const char *model, char *media_letter, char *density, int native_capacity)
+int vmgr_enterdenmap(const char *model, char *media_letter, char *density, int native_capacity)
 {
 	int c;
 	char func[17];

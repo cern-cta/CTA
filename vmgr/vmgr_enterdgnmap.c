@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_enterdgnmap.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:18 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_enterdgnmap - enter a new triplet dgn/model/library */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_enterdgnmap.c,v $ $Revision: 1.1 $ $D
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_enterdgnmap(const char *dgn, char *model, char *library)
+int vmgr_enterdgnmap(const char *dgn, char *model, char *library)
 {
 	int c;
 	char func[17];

@@ -1,13 +1,9 @@
 /*
- * $Id: send2Cupv.c,v 1.5 2006/12/05 14:00:43 riojac3 Exp $
+ * $Id: send2Cupv.c,v 1.6 2007/02/22 13:41:42 sponcec3 Exp $
  *
  * Copyright (C) 1999-2002 by CERN/IT-DS/HSM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2Cupv.c,v $ $Revision: 1.5 $ $Date: 2006/12/05 14:00:43 $ CERN IT-DS/HSM Ben Couturier";
-#endif /* not lint */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -80,7 +76,7 @@ int send2Cupv(int *socketp,char *reqp,int reql,char *user_repbuf,int user_repbuf
 #endif
 		  if ((p = getenv ("UPV_PORT")) || (p = getconfent ("UPV", "PORT", 0))) {
 		    sin.sin_port = htons ((unsigned short)atoi (p));
-		  } else if (sp = Cgetservbyname ("Cupv", "tcp")) {
+		  } else if ((sp = Cgetservbyname ("Cupv", "tcp"))) {
 		    sin.sin_port = sp->s_port;
 		  } else {
 		    sin.sin_port = htons ((unsigned short)CUPV_PORT);

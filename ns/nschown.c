@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nschown.c,v $ $Revision: 1.3 $ $Date: 2006/12/05 17:00:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nschown - change directory/file ownership in name server */
 #include <errno.h>
 #include <sys/types.h>
@@ -92,7 +88,7 @@ int main(int argc,char **argv)
 			errflg++;
 		}
 	}
-	if (p = strtok (NULL, ":.")) {
+    if ((p = strtok (NULL, ":."))) {
 		if (isdigit (*p)) {
 			newgid = strtol (p, &dp, 10);
 			if (*dp != '\0') {
@@ -172,7 +168,6 @@ int main(int argc,char **argv)
 
 int chowndir (char *dir,uid_t newuid,gid_t newgid)
 {
-	int c;
 	char curdir[CA_MAXPATHLEN+1];
 	struct dirlist {
 		char *d_name;

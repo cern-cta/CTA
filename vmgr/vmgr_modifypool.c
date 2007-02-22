@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_modifypool.c,v $ $Revision: 1.3 $ $Date: 2000/04/03 12:40:14 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_modifypool - modify an existing tape pool definition */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_modifypool.c,v $ $Revision: 1.3 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_modifypool(const char *pool_name, uid_t pool_user, gid_t pool_group)
+int vmgr_modifypool(const char *pool_name, uid_t pool_user, gid_t pool_group)
 {
 	int c;
 	char func[16];

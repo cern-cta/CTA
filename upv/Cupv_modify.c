@@ -3,11 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cupv_modify.c,v $ $Revision: 1.7 $ $Date: 2006/12/05 14:00:42 $ CERN IT-DS/HSM Ben Couturier";
-#endif /* not lint */
- 
-
 #include <errno.h>
 #include <sys/types.h>
 #if defined(_WIN32)

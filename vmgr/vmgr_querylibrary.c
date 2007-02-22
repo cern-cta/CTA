@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_querylibrary.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_querylibrary - query about a tape library */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_querylibrary.c,v $ $Revision: 1.1 $ $
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_querylibrary(const char *library_name, int *capacity, int *nb_free_slots, int *status)
+int vmgr_querylibrary(const char *library_name, int *capacity, int *nb_free_slots, int *status)
 {
 	int c;
 	char func[18];

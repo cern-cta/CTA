@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.6 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 /*      vmgr_entermodel - enter a new model of cartridge */
 
 #include <errno.h>
@@ -22,7 +18,7 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_entermodel.c,v $ $Revision: 1.6 $ $Da
 #include "vmgr.h"
 #include "serrno.h"
 
-vmgr_entermodel(const char *model, char *media_letter, int media_cost)
+int vmgr_entermodel(const char *model, char *media_letter, int media_cost)
 {
 	int c;
 	char func[16];

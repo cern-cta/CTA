@@ -3,15 +3,12 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nssetcomment.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	nssetcomment - add/replace a comment associated with a file/directory */
 #include <errno.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -20,11 +17,10 @@ static char sccsid[] = "@(#)$RCSfile: nssetcomment.c,v $ $Revision: 1.2 $ $Date:
 #include "Cns_api.h"
 #include "serrno.h"
 extern	char	*getenv();
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
-	int c;
 	int errflg = 0;
 	char fullpath[CA_MAXPATHLEN+1];
 	char *p;
