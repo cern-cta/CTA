@@ -20,7 +20,7 @@
 #  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
 #  USA.                                                                                                #
 #                                                                                                      #
-#  Usage: dlfserver {start|stop|status|restart|condrestart}                                            #
+#  Usage: dlfserver {start|stop|status|reload|restart|condrestart}                                     #
 #                                                                                                      #
 #------------------------------------------------------------------------------------------------------#
 
@@ -70,6 +70,13 @@ stop() {
 	return $RETVAL	
 }
 
+reload() {
+	echo -n $"Reloading $prog: "
+	killproc $prog -HUP
+	RETVAL=$?
+	echo
+}
+
 restart() {
 	stop
         start 
@@ -88,6 +95,9 @@ case "$1" in
 		status $prog
 		RETVAL=$?
 		;;
+	reload)
+		reload
+		;;
 	restart)
 		restart
 		;;
@@ -95,7 +105,7 @@ case "$1" in
 		[ -f /var/lock/subsys/$prog ] && restart || :
 		;;
 	*)
-		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+		echo $"Usage: $0 {start|stop|status|reload|restart|condrestart}"
 		exit 1
 esac
 
