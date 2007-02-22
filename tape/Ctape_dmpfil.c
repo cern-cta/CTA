@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.27 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_dmpfil.c,v $ $Revision: 1.28 $ $Date: 2007/02/22 11:54:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_dmpfil - analyse the content of a tape file */
@@ -886,7 +886,7 @@ u_signed64 *Size;
 		Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF AN 3592 CARTRIDGE (300GB) *****\n",
 			perc);
 	} else if (den == D500G || den == D500GC) {
-		perc = tape_used / 5000000000UL;
+		perc = tape_used / 5000000000.0;
 		if (strcmp (dmpparm.devtype, "T10000") == 0) {
 		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A T10000 CARTRIDGE (500GB) *****\n",
 				perc);
@@ -894,8 +894,8 @@ u_signed64 *Size;
 		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 3592B CARTRIDGE (500GB) *****\n",
 				perc);
 		}
-    } else if (den == D700G || den == D700GC) {
-		perc = tape_used / 5000000000UL;
+        } else if (den == D700G || den == D700GC) {
+		perc = tape_used / 7000000000.0;
 		if (strcmp (dmpparm.devtype, "3592") == 0) {
 		  Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED ABOUT %u %%  OF A 3592B CARTRIDGE (700GB) *****\n",
 				perc);
