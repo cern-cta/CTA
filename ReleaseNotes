@@ -1,4 +1,22 @@
 -----------
+- 2.1.2-6 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This release brings a number of bug fixes:
+   - Fixed potential double/invalid frees in the database access layer
+   - Fixed in the prepare to get not-scheduled (Doing some errors check and threading the expections)
+    - Bug Fixed in repack worker and monitoring now is able to deal with the stager timeout.
+   - Fixed for xrootd, the put/preparetoput is not invoking the prepareforMigrate	    
+
+  Upgrade from 2.1.2-5
+  --------------------
+  - Stop all the CASTOR daemons
+  - Upgrade the database; 
+  - Upgrade all nodes (the order is not important) and restart the service
+
+-----------
 - 2.1.2-4 -
 -----------
 
