@@ -15,7 +15,7 @@ CREATE TABLE dlf_settings
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_indx;
 
 /*
  * dlf_sequences
