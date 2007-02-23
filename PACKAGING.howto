@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.30 2007/02/19 15:32:07 riojac3 Exp $
+## $Id: PACKAGING.howto,v 1.31 2007/02/23 16:07:27 itglp Exp $
 #
 
 #
@@ -50,7 +50,7 @@ make tar
 ## linux versions :
 ## i386-SLC3, i386-SLC4, and x86_64-SLC4.
 ## The list of machines to use are respectively :
-## lxs5010,lxbuild020 (SLC4 32), lxbuild085 (SLC4 64).
+## lxs5010, lxbuild020 (SLC4 32), lxbuild085 (SLC4 64).
 ## You will only have root access on lxs5010.
 #
 
@@ -63,13 +63,13 @@ ssh machine
 #
 ## WARNING if you compile as regular user, you don't have access to
 ## /usr/src/redhat/... So you need to do the following to be able to
-## compile in /tmp :
+## compile in /build :
 #
-cd /tmp
+cd /build
 mkdir `whoami`
 cd `whoami`
 mkdir BUILD  RPMS  SOURCES  SPECS  SRPMS RPMS/i386 RPMS/x86_64
-export RPM_BUILD_ROOT=/tmp/`whoami`
+export RPM_BUILD_ROOT=/build/`whoami`
 
 #
 ## WARNING: If you are on a platform where you don't want to build the
@@ -101,15 +101,14 @@ cd SLC3/i386     #copy here the rmps for lxs5010
 cp /usr/src/redhat/RPMS/i386/*x.y.z-r*.rpm .
 cp /usr/src/redhat/RPMS/i386/castor-lib*x.y.z-r*.rpm ../../SLC4/x86_64
 cp /usr/src/redhat/SRPMS/castor-x.y.z-r.src.rpm ../../
-cp /tmp/`whoami`/castor-*.tar.gz ../../
-cp /tmp/`whoami`/CASTOR2/ReleaseNotes ../../
+cp /build/`whoami`/castor-*.tar.gz ../../
+cp /build/`whoami`/CASTOR2/ReleaseNotes ../../
 
 # to verify that the built RPMs are the 'right' number
 foreach i ( SLC*/* ) ; ls -1 $i | wc -l ; end
 
 # to put the RPMs in swrep
 ssh lxadm
-cd /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/SLC3/i386
 swrep-soap-client put i386_slc3 /cern/cc castor-*.i386.rpm
 swrep-soap-client put x86_64_slc4 /cern/cc castor-lib-2*.i386.rpm  # this package is needed by x86_64 as well because of GridFTPv1
 cd ../../SLC4/x86_64
