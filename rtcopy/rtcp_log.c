@@ -8,10 +8,6 @@
  * rtcp_log.c - Common entry points for RTCOPY logging
  */
 
-#ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcp_log.c,v $ $Revision: 1.19 $ $Date: 2005/01/20 16:32:27 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 #include <stdlib.h>
 #include <time.h>
 #if defined(_WIN32)
@@ -170,7 +166,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
  * The returned string must be free'd by the caller
  */
 char *rtcp_voidToString(void *in, int len) {
-    int i, j, printlen;
+    int i, printlen;
     u_char *c;
     char *str, *buf = NULL;
 
@@ -193,7 +189,7 @@ char *rtcp_voidToString(void *in, int len) {
  */
 int rtcp_stringToVoid(char *str, void *out, int len)
 {
-  u_char *c, *outCp;
+  u_char *outCp;
   u_long num;
   char current_char[3], *p;
   int i;

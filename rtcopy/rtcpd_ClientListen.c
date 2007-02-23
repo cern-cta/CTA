@@ -7,10 +7,6 @@
  * rtcp_ClientListen.c - Keep connection with client (to receive ABORT)
  */
 
-#ifndef lint
-static char cvsId[] = "@(#)$RCSfile: rtcpd_ClientListen.c,v $ $Revision: 1.1 $ $Date: 2004/08/05 15:38:39 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 #include <stdlib.h>
 #include <time.h>
 #if defined(_WIN32)
@@ -35,6 +31,7 @@ static char cvsId[] = "@(#)$RCSfile: rtcpd_ClientListen.c,v $ $Revision: 1.1 $ $
 #include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#include <rtcp_api.h>
 #include <rtcp_server.h>
 
 extern int success;

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.5 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Jean-Damien Durand";
-#endif /* not lint */
-
 /*
  * rtcp_CallVMGR.c - Call VMGR and fill in missing info.
  */
@@ -20,6 +16,9 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_CallVMGR.c,v $ $Revision: 1.5 $ $Date
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <ctype.h>
+#include <unistd.h>
 #include "net.h"
 #include "Castor_limits.h"
 #include "log.h"
@@ -47,7 +46,7 @@ int rtcp_CallVMGR(tape_list_t *tape, char *realVID) {
 #if defined(VMGR)
     tape_list_t *tl;
     rtcpTapeRequest_t *tapereq;
-    char *p, *firstVID;
+    char *firstVID;
     uid_t euid;
     gid_t egid;
 

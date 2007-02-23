@@ -17,17 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.157 $ $Release$ $Date: 2007/01/25 09:15:52 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.158 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.157 $ $Release$ $Date: 2007/01/25 09:15:52 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -1063,7 +1058,6 @@ static int procSegmentsForTape(
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
-  struct C_IObject_t *iObj;
   struct Cstager_Tape_t *tp = NULL;
   struct Cstager_ITapeSvc_t **stgsvc = NULL;
   struct Cstager_Segment_t **segmArray = NULL;
@@ -3365,7 +3359,6 @@ int rtcpcld_putFailed(
   struct C_Services_t **svcs = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr = NULL;
-  struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cstager_TapeCopy_t *tapeCopy;
   struct Cstager_Segment_t **segmentArray = NULL;
   struct Cstager_DiskCopy_t **diskCopyArray = NULL;
@@ -4159,7 +4152,6 @@ int rtcpcld_checkFileForRepack(
      char **repackvid;
 {
   int rc = 0;
-  ID_TYPE key;
   struct Cstager_ITapeSvc_t **tpSvc = NULL;
   
   serrno = errno = 0;

@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_SendRecv.c,v 1.5 2005/03/15 22:58:55 bcouturi Exp $
+ * $Id: rtcp_SendRecv.c,v 1.6 2007/02/23 09:30:11 sponcec3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -8,10 +8,6 @@
 /*
  * rtcp_SendRecv.c - Send and receive RTCOPY request and acknowledge messages.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_SendRecv.c,v $ $Revision: 1.5 $ $Date: 2005/03/15 22:58:55 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -27,6 +23,7 @@ extern char *geterr();
 #include <sys/time.h>
 #endif /* _WIN32 */
 #include <errno.h>
+#include <unistd.h>
 
 #include <Castor_limits.h>
 #include <net.h>

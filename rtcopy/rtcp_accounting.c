@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.18 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 #include <sys/types.h>
 #include <string.h>
 #include <Castor_limits.h>
@@ -18,6 +14,11 @@ static char sccsid[] = "@(#)$RCSfile: rtcp_accounting.c,v $ $Revision: 1.18 $ $D
 #include <Cuuid.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#include <rtcp_api.h>
+#include <rtcp_server.h>
+#include <rfio_api.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 extern int AbortFlag;
 
@@ -36,7 +37,7 @@ int rtcp_wacct(int   subtype,
                char  *dsksrvr,
                int   fseq,
                char  *errmsgtxt) {
-    int acctreclen,len;
+    int acctreclen;
     struct acctrtcp acctrtcp;
     char *getconfent();
     char *p;
@@ -127,7 +128,7 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
     int mode = WRITE_DISABLE;
     int exitcode = 0;
     int fseq = 0;
-    int rc, severity;
+    int rc;
     char charcom, *p, stageID[CA_MAXSTGRIDLEN+1];
     char *disksrv = NULL;
     char *errmsgtxt = NULL;

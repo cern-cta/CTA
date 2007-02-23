@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_TapeIO.c,v $ $Revision: 1.35 $ $Date: 2004/03/31 07:54:11 $ CERN/ADC Olof Barring";
-#endif /* not lint */
-
 /* 
  * rtcpd_TapeIO.c - Tape I/O routines 
  */

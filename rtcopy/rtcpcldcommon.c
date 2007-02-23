@@ -17,16 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/02 13:56:16 $ $Author: felixehm $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.35 $ $Release$ $Date: 2007/02/23 09:30:12 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/02 13:56:16 $ Olof Barring";
-#endif /* not lint */
 
 #include <ctype.h>
 #include <stdlib.h>

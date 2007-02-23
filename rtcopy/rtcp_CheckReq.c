@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_CheckReq.c,v $ $Revision: 1.52 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_CheckReq.c - Check RTCOPY request and set defaults
  */
@@ -179,7 +175,6 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     file_list_t *tmpfile;
     int rc = 0;
     int mode;
-    const u_signed64 defmaxsize = (u_signed64)2 * (u_signed64)(1024*1024*1024) - 1;
     char *p;
     char dir_delim;
     struct stat64 st;

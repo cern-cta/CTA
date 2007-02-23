@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/14 12:18:37 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/02/23 09:30:12 $ $Author: sponcec3 $
  *
  * 
  *
@@ -27,11 +27,6 @@
 /**
  * \file rtcpcldcommon_mt.c - common multithreaded methods
  */
-
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldcommon_mt.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/03/14 12:18:37 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: killjid.c,v $ $Revision: 1.1 $ $Date: 2004/08/05 15:38:39 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * killjid.c - command to kill local running job.
  */
@@ -30,6 +26,8 @@ static char sccsid[] = "@(#)$RCSfile: killjid.c,v $ $Revision: 1.1 $ $Date: 2004
 #include <Ctape_constants.h>
 #include <rtcp_constants.h>
 #include <rtcp.h>
+#include <stdlib.h>
+#include <unistd.h>
 extern int rtcp_InitLog(char *, FILE *, FILE *, SOCKET *);
 extern char * optarg;
 extern int optind;
@@ -45,7 +43,6 @@ int main(int argc, char *argv[]) {
     rtcpHdr_t hdr;
     static char errtxt[1024];
     char server[CA_MAXHOSTNAMELEN+1];
-    char dgn[CA_MAXDGNLEN+1];
     SOCKET client_socket = INVALID_SOCKET;
 
     rtcp_InitLog(errtxt,NULL,stderr,NULL);

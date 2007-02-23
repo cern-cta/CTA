@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_tpdump.c,v $ $Revision: 1.14 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_tpdump.c - RTCOPY server dumptape 
  */
@@ -46,6 +42,7 @@ extern char *geterr();
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
+#include <stdio.h>
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 extern processing_status_t proc_stat;
@@ -94,7 +91,7 @@ void dmp_usrmsg(int dmpmsg_level, char *format, ...) {
 
 int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     char *msgtxtbuf = NULL;
-    int rc,severity,save_errno,save_serrno;
+    int rc,save_errno,save_serrno;
     tape_list_t *tl = NULL;
     file_list_t *fl = NULL;
     rtcpFileRequest_t *filereq = NULL;

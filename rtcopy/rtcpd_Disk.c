@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Disk.c,v $ $Revision: 1.109 $ $Date: 2005/03/15 15:08:50 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_Disk.c - RTCOPY server disk IO thread 
  */
@@ -266,7 +262,6 @@ static int ReturnFortranUnit(int pool_index, file_list_t *file) {
 }
     
 static int LockForAppend(const int lock) {
-    int rc,severity,i;
     static int nb_waiters = 0;
     static int next_entry = 0;
     static int *wait_list = NULL;
@@ -289,7 +284,6 @@ static int DiskFileOpen(int pool_index,
     char node[2];
     SOCKET s;
     char Uformat_flags[8];
-    register int debug = Debug;
 #if defined(_WIN32)
     int binmode = O_BINARY;
 #else /* _WIN32 */
@@ -1412,7 +1406,6 @@ void *diskIOthread(void *arg) {
     u_signed64 nbbytes;
     SOCKET client_socket;
     char *p, u64buf[22];
-    register int debug = Debug;
     int pool_index = -1;
     int indxp = 0;
     int offset = 0;
@@ -1720,11 +1713,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     rtcpFileRequest_t *filereq;
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
-    int rc, save_serrno, indxp, offset, next_offset, last_file,end_of_tpfile, spill;
+    int rc, save_serrno, indxp, offset, next_offset, last_file,end_of_tpfile;
     int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex, mode;
     register int Uformat;
     register int convert;
-    register int debug = Debug;
 
     if ( client == NULL || tape == NULL || file == NULL ||
         poolsize <= 0 ) {

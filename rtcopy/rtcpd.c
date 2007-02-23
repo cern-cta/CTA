@@ -1,5 +1,5 @@
 /*
- * $Id: rtcpd.c,v 1.2 2004/08/06 15:03:07 motiakov Exp $
+ * $Id: rtcpd.c,v 1.3 2007/02/23 09:30:12 sponcec3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -8,10 +8,6 @@
 /*
  * rtcpd.c - Remote Tape Copy Daemon main program.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd.c,v $ $Revision: 1.2 $ $Date: 2004/08/06 15:03:07 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -34,6 +30,7 @@ WSADATA wsadata;
 #include <patchlevel.h>
 #include <Castor_limits.h>
 #include <log.h>
+#include <unistd.h>
 #include <net.h>
 #include <osdep.h>
 #include <trace.h>

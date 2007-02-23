@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_MainCntl.c,v $ $Revision: 1.96 $ $Date: 2005/10/28 20:30:37 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_MainCntl.c - RTCOPY server main control thread
  */

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_RetvalSHIFT.c,v $ $Revision: 1.13 $ $Date: 2004/02/12 15:59:08 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_RetvalSHIFT.c - RTCOPY routines to calculate tpread/tpwrite command RC
  */
@@ -47,7 +43,7 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
     tape_list_t *tl;
     file_list_t *fl;
     rtcpErrMsg_t *err;
-    int retval, rc, incomplete;
+    int retval, incomplete;
 
     if ( tape == NULL ) {
         serrno = EINVAL;

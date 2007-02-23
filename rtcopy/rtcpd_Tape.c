@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Tape.c,v $ $Revision: 1.87 $ $Date: 2004/09/24 13:09:36 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_Tape.c - RTCOPY server tape IO thread
  */
@@ -704,8 +700,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     int nb_bytes, rc, i, j, last_sz, blksiz, current_bufsz;
     int lrecl, end_of_tpfile, break_and_return, severity, proc_err;
     int nb_skipped_blks = 0;
-    char u64buf[22];
-    int u64bufsz = 22;
     register int Uformat;
     register int debug = Debug;
     rtcpTapeRequest_t *tapereq = NULL;

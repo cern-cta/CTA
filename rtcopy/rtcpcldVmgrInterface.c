@@ -17,15 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2006/10/04 16:58:47 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.25 $ $Release$ $Date: 2006/10/04 16:58:47 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -550,7 +547,6 @@ int rtcpcld_handleTapeError(
   rtcpFileRequest_t *filereq;
   rtcpTapeRequest_t *tapereq;
   char *p = NULL;
-  int mode;
 
   if ( tape == NULL || file == NULL ) return(0);
   /*
@@ -820,7 +816,6 @@ int rtcpcld_getTapePoolName(
   vmgr_list list;
   struct vmgr_tape_info *lp;
   char pool_name[CA_MAXPOOLNAMELEN+1];
-  struct vmgr_tape_info *tape_info;
   int flags;
   
   if ( (tape == NULL) || (*(tape->tapereq.vid) == '\0') ) {

@@ -1,5 +1,5 @@
 /*
- * $Id: rtcp_Listen.c,v 1.7 2005/07/11 11:12:11 jdurand Exp $
+ * $Id: rtcp_Listen.c,v 1.8 2007/02/23 09:30:11 sponcec3 Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -8,11 +8,6 @@
 /*
  * rtcp_Listen.c - accept new or select on existing connections.
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_Listen.c,v $ $Revision: 1.7 $ $Date: 2005/07/11 11:12:11 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 
 #include <stdlib.h>
 #include <string.h>
@@ -201,7 +196,7 @@ int rtcp_Listen(SOCKET s, SOCKET *ns, int timeout, int wherefrom) {
 
 int rtcp_CheckConnect(SOCKET *s, tape_list_t *tape) {
   char peerhost[CA_MAXHOSTNAMELEN+1], tmp[CA_MAXHOSTNAMELEN+1];
-  char *p, *tpserver;
+  char *tpserver;
   int l, rc;
 
   *peerhost = '\0';

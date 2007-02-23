@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_Ctape.c,v $ $Revision: 1.66 $ $Date: 2004/02/12 15:59:07 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_Ctape.c - RTCOPY interface to Ctape
  */
@@ -21,6 +17,7 @@ extern char *geterr();
 #else /* _WIN32 */
 #include <sys/param.h>
 #include <sys/types.h>                  /* Standard data types          */
+#include <unistd.h>                      /* Network "data base"          */
 #include <netdb.h>                      /* Network "data base"          */
 #include <sys/socket.h>
 #include <netinet/in.h>                 /* Internet data types          */
@@ -759,7 +756,7 @@ int rtcpd_Position(tape_list_t *tape,
 
 int rtcpd_drvinfo(tape_list_t *tape) {
     struct devinfo devInfo;
-    int rc, blksize;
+    int rc;
     file_list_t *fl;
 
     if ( tape == NULL || tape->file == NULL ) {
@@ -944,7 +941,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
 }
 
 int rtcpd_DmpInit(tape_list_t *tape) {
-    int rc, code, flags, save_serrno;
+    int rc, code, save_serrno;
 
     if ( tape == NULL || tape->file == NULL ) {
         serrno = EINVAL;
@@ -1053,10 +1050,7 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
 }
 
 int rtcpd_DmpEnd() {
-    int rc, save_serrno;
-
     rtcp_log(LOG_DEBUG,"rtcpd_DmpEnd() called\n");
-
     (void)Ctape_dmpend();
     rtcp_log(LOG_DEBUG,"rtcpd_DmpEnd() Ctape_dmpend() successful\n");
     return(0);

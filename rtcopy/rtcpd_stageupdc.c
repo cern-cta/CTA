@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_stageupdc.c,v $ $Revision: 1.56 $ $Date: 2004/08/02 10:41:44 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_stageupdc.c - RTCOPY interface to stageupdc
  */
@@ -83,7 +79,6 @@ int rtcpd_init_stgupdc(tape_list_t *tape) {
  * calls to come in sequence: tppos(file1) - filcp(file1) - tppos(file2) -...
  */
 int rtcpd_LockForTpPos(const int lock) {
-    int rc,severity,i, *my_wait_entry;
     static int nb_waiters = 0;
     static int next_entry = 0;
     static int *wait_list = NULL;

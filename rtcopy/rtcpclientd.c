@@ -3,16 +3,12 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/12/15 10:55:46 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.35 $ $Release$ $Date: 2007/02/23 09:30:12 $ $Author: sponcec3 $
  *
  *
  *
  * @author Olof Barring
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.34 $ $Release$ $Date: 2006/12/15 10:55:46 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>

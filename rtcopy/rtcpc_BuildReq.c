@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpc_BuildReq.c,v $ $Revision: 1.43 $ $Date: 2004/08/09 10:05:42 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpc_BuildReq.c - build the tape and file request list from command
  */

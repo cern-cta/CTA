@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Ctape_dummies.c,v $ $Revision: 1.18 $ $Date: 2005/08/30 10:33:34 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * Ctape_dummies.c - Ctape dummy interface
  */

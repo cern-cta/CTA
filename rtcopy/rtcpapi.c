@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)rtcpapi.c,v 1.7 2005/03/24 17:59:13 CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpapi.c - RTCOPY client API library
  */
@@ -30,6 +26,7 @@ static char sccsid[] = "@(#)rtcpapi.c,v 1.7 2005/03/24 17:59:13 CERN-IT/ADC Olof
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <pwd.h>
 #include <Castor_limits.h>
@@ -37,6 +34,7 @@ static char sccsid[] = "@(#)rtcpapi.c,v 1.7 2005/03/24 17:59:13 CERN-IT/ADC Olof
 #include <Cmutex.h>
 #include <Cnetdb.h>
 #include <Ctape_api.h>
+#define RFIO_KERNEL 1
 #include <rfio_api.h>
 #include <log.h>
 #include <osdep.h>
@@ -48,7 +46,10 @@ static char sccsid[] = "@(#)rtcpapi.c,v 1.7 2005/03/24 17:59:13 CERN-IT/ADC Olof
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_api.h>
+#include <rtcp_server.h>
 #include <vdqm_api.h>
+#include <common.h>
+#include <ctype.h>
 
 typedef struct rtcpcThrData 
 {
@@ -110,6 +111,10 @@ int (*rtcpc_ClientCallback) _PROTO((
                                     rtcpTapeRequest_t *, 
                                     rtcpFileRequest_t *
                                     )) = NULL;
+int rtcpc_finished _PROTO((
+                           rtcpc_sockets_t **,
+                           rtcpHdr_t *,
+                           tape_list_t *));
 
 /*
  * Kill mechanism is not thread-safe if several threads run rtcpc() in
@@ -144,7 +149,7 @@ static int rtcpc_FixPath(file_list_t *file, int fn_size, int mode) {
   rtcpFileRequest_t *filereq;
   char tmp_path[CA_MAXPATHLEN+1];
   char local_host[CA_MAXHOSTNAMELEN+1];
-  char *cp, *filename, *dskhost, *path;
+  char *filename, *dskhost, *path;
 #if defined(_WIN32)
   char dir_delim[] = "\\";
 #else /* _WIN32 */
@@ -518,9 +523,6 @@ int rtcpc_GiveInfo(tape_list_t *tl,
 
 int rtcpc_CmpFileRequests(rtcpFileRequest_t *filereq1,
                           rtcpFileRequest_t *filereq2) {
-  int rc;
-  char *p, *q;
-
   /*
    * Check for special proc_status for adding more filereq to
    * a running request
@@ -630,9 +632,8 @@ int rtcpc_UpdateProcStatus(tape_list_t *tape,
                            rtcpFileRequest_t *filereq,
                            int dumptape) {
   int rc, listLocked, match_found, save_proc_status, save_serrno;
-  tape_list_t *tl, *tltmp;
+  tape_list_t *tl;
   file_list_t *fl, *fltmp;
-  rtcpErrMsg_t err;
 
   if ( tape == NULL || (tapereq == NULL && filereq == NULL ) ||
        (tapereq != NULL && filereq != NULL ) ) {
@@ -900,12 +901,9 @@ int rtcpc_SelectServer(rtcpc_sockets_t **socks,
                        char *realVID,
                        int port,
                        int *ReqID) {
-  int rc, maxfd, i, local_severity, reqID, save_serrno;
+  int rc, i, local_severity, reqID, save_serrno;
   char tpserver[CA_MAXHOSTNAMELEN+1];
-  rtcpHdr_t hdr;
   rtcpTapeRequest_t *tapereq = NULL;
-  fd_set rd,wr,ex;
-  struct timeval tv;
 
   if ( socks == NULL || *socks == NULL || (*socks)->listen_socket == NULL ||
        *(*socks)->listen_socket == INVALID_SOCKET || tape == NULL ) {
@@ -1213,7 +1211,7 @@ int rtcpc_InitReq(rtcpc_sockets_t **socks, int *port, tape_list_t *tape) {
  *
  */
 int rtcpc(tape_list_t *tape) {
-  int rc, port = 0, reqID, i, mode, local_severity;
+  int rc, port = 0, reqID, local_severity;
   int nb_queued, nb_units, nb_used;
   rtcpc_sockets_t *socks = NULL;
   rtcpTapeRequest_t *tapereq;
@@ -1319,10 +1317,7 @@ int rtcpc_sendEndOfReq(
                        rtcpc_sockets_t **socks,
                        tape_list_t *tape
                        ) {
-  int reqID, rc, tStartRequest, mode, local_severity, save_serrno = 0;
-  int dumptape = FALSE;
-  tape_list_t *tl;
-  file_list_t *fl;
+  int rc, local_severity, save_serrno = 0;
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
 
@@ -1934,21 +1929,18 @@ int rtcpc_runReq_ext(
                      tape_list_t *tape,
                      int (*dispatchRoutine)(void *(*)(void *), void *)
                      ) {
-  int rc, i, found, socketIndex, reqID, mode, local_severity;
+  int rc, i, found, socketIndex, reqID;
   char wakeUpMsg[1];
   SOCKET internalPipe[2] = {INVALID_SOCKET, INVALID_SOCKET};
   rtcpcThrData_t *thr = NULL;
-  tape_list_t *tl;
-  file_list_t *fl;
-  rtcpHdr_t tmpHdr;
   rtcpTapeRequest_t *tapereq, tpreq;
-  rtcpFileRequest_t *filereq, flreq, fltmp;
+  rtcpFileRequest_t *filereq, flreq;
   char tpdumpbuf[CA_MAXLINELEN+1];
-  int retval = 0, check_more_work=0;
+  int retval = 0;
   int save_serrno = 0;
   int dumptape = FALSE;
   fd_set rd_set, wr_set, exc_set, rd_set_save, wr_set_save, exc_set_save;
-  int maxfd, TStartRequest;
+  int maxfd;
   struct timeval t_out;
   int (*internalDispatchRoutine)(void *(*)(void *), void *) = 
     rtcpc_internalDispatchRoutine;

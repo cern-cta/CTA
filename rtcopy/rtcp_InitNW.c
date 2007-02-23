@@ -7,10 +7,6 @@
  * rtcp_InitNW.c - Initialise the RTCP network interface (server only).
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcp_InitNW.c,v $ $Revision: 1.9 $ $Date: 2005/07/11 11:09:50 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -28,6 +24,7 @@ WSADATA wsadata;
 #include <Castor_limits.h>
 #include <Cnetdb.h>
 #include <log.h>
+#include <unistd.h>
 #include <net.h>
 #include <Cuuid.h>
 #include <osdep.h>

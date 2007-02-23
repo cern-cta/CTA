@@ -17,16 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.49 $ $Release$ $Date: 2006/10/04 16:58:44 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.50 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: migrator.c,v $ $Revision: 1.49 $ $Release$ $Date: 2006/10/04 16:58:44 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>

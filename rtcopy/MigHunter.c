@@ -18,16 +18,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.39 $ $Release$ $Date: 2006/12/15 10:55:45 $ $Author: waldron $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.40 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: MigHunter.c,v $ $Revision: 1.39 $ $Release$ $Date: 2006/12/15 10:55:45 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>

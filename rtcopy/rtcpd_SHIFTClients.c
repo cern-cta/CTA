@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_SHIFTClients.c,v $ $Revision: 1.34 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_SHIFTClients.c - RTCOPY routines to serve old SHIFT clients
  */
@@ -277,7 +273,6 @@ static int rtcp_GetOldCinfo(rtcpHdr_t *hdr, shift_client_t *req) {
     char server[CA_MAXHOSTNAMELEN+1];
     int namelen = CA_MAXHOSTNAMELEN;
     int nb_queued, nb_used, nb_units, rc;
-    char *p;
     extern char *getconfent _PROTO((const char *, const char *, int));
 
 
@@ -362,10 +357,6 @@ int rtcpd_CleanUpSHIFT(shift_client_t **req, char **buf, int status) {
 int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     int rc, retval, status, namelen, CLThId;
     shift_client_t *req = NULL;
-    tape_list_t *tl;
-    file_list_t *fl;
-    rtcpTapeRequest_t *tapereq;
-    rtcpFileRequest_t *filereq;
     char envacct[20];
     char *client_msg_buf = NULL;
 

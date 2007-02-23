@@ -17,16 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/12/19 13:58:38 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.21 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.20 $ $Release$ $Date: 2006/12/19 13:58:38 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -167,11 +163,8 @@ static int cleanupSegment(
                           )
      struct Cstager_Segment_t *segment;
 {
-  struct Cstager_Tape_t *tp;
-  struct Cstager_TapeCopy_t *tapeCopy;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   int rc;
@@ -265,7 +258,6 @@ static int doRecallRetry(
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cstager_Tape_t *tape = NULL;
@@ -469,16 +461,14 @@ static int checkRecallRetry(
   struct Cstager_Segment_t **segments = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cns_fileid fileid;
-  struct Cns_filestat statbuf;
   struct Cns_segattrs *nsSegmentAttrs = NULL;
   int nbSegments = 0, nbNsSegments = 0, i, rc, errorCode, severity, fseq = -1;
   char *expertBuffer = NULL, *errMsgTxt, *tmpBuf, *p, *nsHost = NULL;
-  char castorFileName[CA_MAXPATHLEN+1], *vid = NULL;
-  unsigned char blockid[4], nullblockid[4] = {'\0','\0','\0','\0'};
+  char *vid = NULL;
+  unsigned char blockid[4];
   int expertBufferLen = 0, nsSegmentOK = 0, nbDiskCopies = 0, anyStagedSegment;
   int save_serrno = 0;
   ID_TYPE key;
@@ -833,7 +823,6 @@ static int doMigrationRetry(
 {
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_Stream_t **streamArray = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
@@ -944,7 +933,6 @@ static int checkMigrationRetry(
      struct Cns_fileid *_fileid;
 {
   enum Cstager_TapeCopyStatusCodes_t tapeCopyStatus;
-  enum Cstager_SegmentStatusCodes_t segmentStatus;
   enum Cstager_DiskCopyStatusCodes_t diskCopyStatus;
   enum Cstager_FileSystemStatusCodes_t fileSystemStatus;
   enum Cstager_DiskServerStatusCode_t diskServerStatus;
@@ -955,7 +943,6 @@ static int checkMigrationRetry(
   struct Cstager_DiskServer_t *diskServer = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   struct Cns_fileid fileid;
@@ -1384,19 +1371,16 @@ int main(
      int argc;
      char **argv;
 {
-  enum Cstager_SegmentStatusCodes_t segmStatus;
-  enum Cstager_TapeStatusCodes_t tpStatus;
   struct Cstager_Segment_t **failedSegments = NULL, *segm, **segms;
   struct Cstager_CastorFile_t *castorFile = NULL;
   struct Cstager_Tape_t *tp;
   struct Cstager_TapeCopy_t *tapeCopy;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t *dbSvc;
-  struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr = NULL;
   struct Cstager_ITapeSvc_t *tpSvc = NULL;
   char *tapeErrorHunterFacilityName = TAPEERRORHANDLER_FACILITY;
-  int nbFailedSegments = 0, nbSegms, i, j, fseq, rc;
+  int nbFailedSegments = 0, nbSegms, i, fseq, rc;
   int tpErrorCode, tpSeverity, segErrorCode, segSeverity, mode;
   char *vid, *tpErrMsgTxt, *segErrMsgTxt, cns_error_buffer[512];
   int deleteDiskCopy = 0;
@@ -1517,7 +1501,7 @@ int main(
           }
         } else if (serrno == ENOENT ) {
           (void)cleanupSegment(segm);
-        } else if ( serrno = SERTYEXHAUST ) {
+        } else if (( serrno = SERTYEXHAUST )) {
           Cstager_TapeCopy_id(tapeCopy,&key);
           /*
            * PUT_FAILED

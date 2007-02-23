@@ -17,15 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.9 $ $Release$ $Date: 2005/07/21 09:13:08 $ $Author: itglp $
+ * @(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpcldCleanupDB.c,v $ $Revision: 1.9 $ $Date: 2005/07/21 09:13:08 $ CERN-IT/ADC Olof Barring";
-#endif /* not lint */
 
 #include <errno.h>
 #include <string.h>
@@ -87,7 +84,6 @@ int main(int argc, char *argv[])
   struct Cstager_Tape_t *tp = NULL;
   struct C_IObject_t *iObj = NULL;
   struct C_Services_t **dbSvc;
-  struct Cdb_DbAddress_t *dbAddr;
   struct C_BaseAddress_t *baseAddr;
   struct C_IAddress_t *iAddr;
   struct Cstager_ITapeSvc_t **tpSvc = NULL;

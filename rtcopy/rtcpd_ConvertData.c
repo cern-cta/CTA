@@ -3,16 +3,14 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rtcpd_ConvertData.c,v $ $Revision: 1.6 $ $Date: 2004/02/12 15:59:07 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * rtcpd_ConvertData.c - RTCOPY server data conversion routines
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#define _XOPEN_SOURCE
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <serrno.h>
