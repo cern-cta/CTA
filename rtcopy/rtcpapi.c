@@ -991,7 +991,7 @@ int rtcpc_SelectServer(rtcpc_sockets_t **socks,
 
   if ( rtcpc_killed != 0 ) {
     rtcp_log(LOG_ERR,"rtcpc_SelectServer() request aborting\n");
-    (void)rtcpc_finished(&socks,NULL,tape);
+    (void)rtcpc_finished(socks,NULL,tape);
     serrno = ERTUSINTR;
     local_severity = RTCP_FAILED|RTCP_USERR;
     return(rtcpc_SetLocalErrorStatus(tape,serrno,"request aborting",
