@@ -6,7 +6,7 @@
   ------------------------
   This release brings a number of bug fixes:
    - Fixed potential double/invalid frees in the database access layer
-   - Fixed in the prepare to get not-scheduled (Doing some errors check and threading the expections)
+   - Fixed error checking in the PrepareToGet in case of tape recalls
    - Bug Fixed in repack worker and monitoring now is able to deal with the stager timeout.
    - Fixed the socket leak in DLF client when the DLF server is not reachable
    - Fixed the stagerJob for xroot. We were calling prepareForMigration while xroot does it for us.
@@ -15,7 +15,7 @@
    - Fixed the reservedSpace accumulation problem
    - Fixed garbage collector job
   
-  Upgrade from 2.1.2-5
+  Upgrade from 2.1.2-4
   --------------------
   - Stop all the CASTOR daemons
   - Upgrade the database; 
