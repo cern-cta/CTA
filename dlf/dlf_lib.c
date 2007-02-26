@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.14 2007/02/13 10:13:56 waldron Exp $
+ * $Id: dlf_lib.c,v 1.15 2007/02/26 10:28:28 waldron Exp $
  */
 
 /* headers */
@@ -734,11 +734,6 @@ void dlf_worker(target_t *t) {
 			continue;
 		}
 
-		/* initialised ?
-		 *   - the thread cannot send any messages to the remote target/destination until
-		 *     initialisation has occurred. This is because the thread doesn't know its facility
-		 *     number yet
-		 */
 		/* initialised ?
 		 *   - the thread cannot send any messages to the remote target/destination until
 		 *     initialisation has occurred. This is because the thread doesn't know its facility
