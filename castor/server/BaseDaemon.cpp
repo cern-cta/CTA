@@ -89,7 +89,7 @@ void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
 {
   castor::server::BaseServer::start();
   
-  /* Wait forever on a catched signal */
+  /* Wait forever on a caught signal */
   signalHandler();
 }
 
@@ -99,8 +99,6 @@ void castor::server::BaseDaemon::start() throw(castor::exception::Exception)
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::signalHandler()
 {
-  int rc = 0;
-  
   try {
     m_signalMutex->lock();
 
@@ -126,29 +124,30 @@ void castor::server::BaseDaemon::signalHandler()
         clog() << SYSTEM << "GRACEFUL STOP [SIGTERM]" << std::endl;
         /* wait on all threads to terminate */
         waitAllThreads();
-        rc = EXIT_SUCCESS;
+        dlf_shutdown(10);
+        exit(EXIT_SUCCESS);
         break;
       
       case STOP_NOW:
         clog() << ERROR << "IMMEDIATE STOP [SIGINT]" << std::endl;
-        rc = EXIT_SUCCESS;
         /* just stop as fast as possible */
+        dlf_shutdown(1);
+        exit(EXIT_SUCCESS);
         break;
       
       default:
         /* Impossible !? */
         clog() << ERROR << "Caught a not handled signal - IMMEDIATE STOP" << std::endl;
-        rc = EXIT_FAILURE;
+        dlf_shutdown(1);
+        exit(EXIT_FAILURE);
     }
 
   }
   catch (castor::exception::Exception e) {
     clog() << ERROR << "Exception during wait for signal loop: " << e.getMessage().str() << std::endl;
-    rc = EXIT_FAILURE;
+    dlf_shutdown(1);
+    exit(EXIT_FAILURE);
   }
-
-  dlf_shutdown(10);
-  exit(rc);
 }
 
 
