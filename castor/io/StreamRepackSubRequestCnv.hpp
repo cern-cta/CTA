@@ -50,6 +50,8 @@ namespace castor {
 
     /**
      * class StreamRepackSubRequestCnv
+     * A converter for marshalling/unmarshalling RepackSubRequest into/from stl
+     * streams
      */
     class StreamRepackSubRequestCnv : public StreamBaseCnv {
 
@@ -137,8 +139,8 @@ namespace castor {
 
     }; // end of class StreamRepackSubRequestCnv
 
-  }; // end of namespace io
+  } /* end of namespace io */
 
-}; // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_IO_REPACKSUBREQUEST_HPP
