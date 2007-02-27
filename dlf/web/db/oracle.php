@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.php,v 1.6 2006/11/29 13:39:15 waldron Exp $
+ * $Id: oracle.php,v 1.7 2007/02/27 15:56:28 waldron Exp $
  */
 
 /* definitions */
@@ -82,6 +82,8 @@ function db_connect($instance, $persistency, $stager) {
 		trigger_error("ociparse() - ".ocierror(), E_USER_ERROR);
 		exit;
 	}
+	ocisetprefetch($stmt, 1000);
+
 	$rtn = ociexecute($stmt, OCI_DEFAULT);
 	if (!$rtn) {
 		trigger_error("ociexecute() - ".ocierror(), E_USER_ERROR);
@@ -106,6 +108,8 @@ function db_query($query, $conn) {
 		trigger_error("ociparse() - ".ocierror($conn), E_USER_ERROR);
 		exit;
 	}
+	ocisetprefetch($stmt, 1000);
+
 	$rtn = ociexecute($stmt, OCI_DEFAULT);
 	if (!$rtn) {
 		trigger_error("ociexecute() - ".ocierror($stmt), E_USER_ERROR);
