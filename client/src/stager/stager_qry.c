@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.23 2007/02/21 17:15:26 itglp Exp $
+ * $Id: stager_qry.c,v 1.24 2007/02/27 14:53:18 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.23 $ $Date: 2007/02/21 17:15:26 $ $Author: itglp $ CERN IT-FIO/DS Benjamin Couturier";
+static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.24 $ $Date: 2007/02/27 14:53:18 $ $Author: itglp $ CERN IT-FIO/DS Benjamin Couturier";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -477,7 +477,7 @@ void usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s%s",
            "[-M hsmfile [-M ...]] [-E regular_expression [-E ...]] ",
-           "[-F fileid@nshost] [-U usertag] [-r requestid] [-n] [-h]\n");
+           "[-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
   fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-h]\n");
 }
