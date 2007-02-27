@@ -47,7 +47,7 @@ namespace castor {
     // Forward declarations
     class RepackSegment;
 
-  }; // end of namespace repack
+  } /* end of namespace repack */
 
   namespace db {
 
@@ -156,6 +156,7 @@ namespace castor {
 
         /**
          * Fill the foreign representation with some of the objects.refered by a given C++
+         * object.
          * @param address the place where to find the foreign representation
          * @param object the original C++ object
          * @param type the type of the refered objects to store
@@ -171,6 +172,7 @@ namespace castor {
 
         /**
          * Fill the database with objects of type RepackSubRequest refered by a given
+         * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
@@ -191,6 +193,7 @@ namespace castor {
 
         /**
          * Retrieve from the database objects of type RepackSubRequest refered by a given
+         * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
@@ -249,10 +252,10 @@ namespace castor {
 
       }; // end of class DbRepackSegmentCnv
 
-    }; // end of namespace cnv
+    } /* end of namespace cnv */
 
-  }; // end of namespace db
+  } /* end of namespace db */
 
-}; // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_DB_CNV_REPACKSEGMENT_HPP
