@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.376 $ $Date: 2007/02/15 14:07:04 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.377 $ $Date: 2007/02/27 13:09:40 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.376 $ $Date: 2007/02/15 14:07:04 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.377 $ $Date: 2007/02/27 13:09:40 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2791,7 +2791,7 @@ BEGIN
     -- Here we get the status for each cf as follows: if a valid diskCopy is found,
     -- its status is returned, else if a (prepareTo)Get request is found and no diskCopy is there,
     -- WAITTAPERECALL is returned, else -1 (INVALID) is returned
-    SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbAccesses, lastKnownFileName
+    SELECT fileId, nsHost, dcId, path, fileSize, srStatus, machine, mountPoint, nbAccesses, lastKnownFileName
        FROM (SELECT
            -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
            UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
@@ -2837,7 +2837,7 @@ BEGIN
                AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
      WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
        AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
-     WHERE status != -1
+     WHERE srStatus != -1
   ORDER BY fileid, nshost;
  END IF;
 END;
