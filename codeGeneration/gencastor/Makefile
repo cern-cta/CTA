@@ -1,4 +1,4 @@
-DEV=/home/gtaur/CASTOR2/codeGeneration/gencastor
+DEV=$(CASTORDEV_HOME)/codeGeneration/gencastor
 UMBRELLOBASE=../kdesdk-3.5.5
 
 UMBRELLO=$(UMBRELLOBASE)/umbrello/umbrello
