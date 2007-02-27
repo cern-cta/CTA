@@ -49,7 +49,7 @@ castor::repack::RepackSegment::RepackSegment() throw() :
   m_fileseq(0),
   m_id(0),
   m_vid(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -58,7 +58,7 @@ castor::repack::RepackSegment::~RepackSegment() throw() {
   if (0 != m_vid) {
     m_vid->removeSegment(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print

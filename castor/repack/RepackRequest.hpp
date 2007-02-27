@@ -157,8 +157,9 @@ namespace castor {
       /**
        * Get the value of m_serviceclass
        * The service class to where the file have to be written. It is not possible to
-       * specify directly the target tapes or tapepools. By default, the files are written
-       * to the tapepool belonging to the repack service class specified in the castor
+       * specify directly the target tapes or tapepools. By default, the files are
+       * written to the tapepool belonging to the repack service class specified in the
+       * castor config file.
        * @return the value of m_serviceclass
        */
       std::string serviceclass() const {
@@ -168,8 +169,9 @@ namespace castor {
       /**
        * Set the value of m_serviceclass
        * The service class to where the file have to be written. It is not possible to
-       * specify directly the target tapes or tapepools. By default, the files are written
-       * to the tapepool belonging to the repack service class specified in the castor
+       * specify directly the target tapes or tapepools. By default, the files are
+       * written to the tapepool belonging to the repack service class specified in the
+       * castor config file.
        * @param new_var the new value of m_serviceclass
        */
       void setServiceclass(std::string new_var) {
@@ -241,22 +243,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_groupid
-       * @return the value of m_groupid
-       */
-      u_signed64 groupid() const {
-        return m_groupid;
-      }
-
-      /**
-       * Set the value of m_groupid
-       * @param new_var the new value of m_groupid
-       */
-      void setGroupid(u_signed64 new_var) {
-        m_groupid = new_var;
-      }
-
-      /**
        * Get the value of m_userid
        * @return the value of m_userid
        */
@@ -270,6 +256,22 @@ namespace castor {
        */
       void setUserid(u_signed64 new_var) {
         m_userid = new_var;
+      }
+
+      /**
+       * Get the value of m_groupid
+       * @return the value of m_groupid
+       */
+      u_signed64 groupid() const {
+        return m_groupid;
+      }
+
+      /**
+       * Set the value of m_groupid
+       * @param new_var the new value of m_groupid
+       */
+      void setGroupid(u_signed64 new_var) {
+        m_groupid = new_var;
       }
 
       /**
@@ -329,7 +331,7 @@ namespace castor {
 
       /// The creation time of the request
       u_signed64 m_creationTime;
-      
+
       /// The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.
       std::string m_serviceclass;
 
@@ -341,19 +343,19 @@ namespace castor {
 
       std::string m_stager;
 
-      u_signed64 m_groupid;
-
       u_signed64 m_userid;
+
+      u_signed64 m_groupid;
 
       /// The id of this object
       u_signed64 m_id;
 
       std::vector<RepackSubRequest*> m_subRequestVector;
 
-    }; // end of class RepackRequest
+    }; /* end of class RepackRequest */
 
-  }; // end of namespace repack
+  } /* end of namespace repack */
 
-}; // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_REPACK_REPACKREQUEST_HPP

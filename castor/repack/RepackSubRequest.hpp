@@ -239,7 +239,7 @@ namespace castor {
 
       /**
        * Get the value of m_submitTime
-       * The submit time to the stager of the request
+       * Time of submission of files to the stager
        * @return the value of m_submitTime
        */
       u_signed64 submitTime() const {
@@ -248,11 +248,27 @@ namespace castor {
 
       /**
        * Set the value of m_submitTime
-       * The submit time to the stager of the request
+       * Time of submission of files to the stager
        * @param new_var the new value of m_submitTime
        */
       void setSubmitTime(u_signed64 new_var) {
         m_submitTime = new_var;
+      }
+
+      /**
+       * Get the value of m_filesStaged
+       * @return the value of m_filesStaged
+       */
+      u_signed64 filesStaged() const {
+        return m_filesStaged;
+      }
+
+      /**
+       * Set the value of m_filesStaged
+       * @param new_var the new value of m_filesStaged
+       */
+      void setFilesStaged(u_signed64 new_var) {
+        m_filesStaged = new_var;
       }
 
       /**
@@ -340,8 +356,10 @@ namespace castor {
 
       unsigned int m_filesFailed;
 
-      /// The submit time to the stager of the request
+      /// Time of submission of files to the stager
       u_signed64 m_submitTime;
+
+      u_signed64 m_filesStaged;
 
       /// The id of this object
       u_signed64 m_id;
@@ -350,10 +368,10 @@ namespace castor {
 
       RepackRequest* m_requestID;
 
-    }; // end of class RepackSubRequest
+    }; /* end of class RepackSubRequest */
 
-  }; // end of namespace repack
+  } /* end of namespace repack */
 
-}; // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_REPACK_REPACKSUBREQUEST_HPP

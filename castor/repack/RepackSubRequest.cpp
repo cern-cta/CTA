@@ -51,9 +51,10 @@ castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_files(0),
   m_filesFailed(0),
   m_submitTime(0),
+  m_filesStaged(0),
   m_id(0),
   m_requestID(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -66,7 +67,7 @@ castor::repack::RepackSubRequest::~RepackSubRequest() throw() {
   if (0 != m_requestID) {
     m_requestID->removeSubRequest(this);
   }
-};
+}
 
 //------------------------------------------------------------------------------
 // print
@@ -90,6 +91,7 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   stream << indent << "files : " << m_files << std::endl;
   stream << indent << "filesFailed : " << m_filesFailed << std::endl;
   stream << indent << "submitTime : " << m_submitTime << std::endl;
+  stream << indent << "filesStaged : " << m_filesStaged << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

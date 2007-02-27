@@ -266,10 +266,10 @@ namespace castor {
 
       RepackSubRequest* m_vid;
 
-    }; // end of class RepackSegment
+    }; /* end of class RepackSegment */
 
-  }; // end of namespace repack
+  } /* end of namespace repack */
 
-}; // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_REPACK_REPACKSEGMENT_HPP

@@ -49,10 +49,10 @@ castor::repack::RepackRequest::RepackRequest() throw() :
   m_command(0),
   m_pool(""),
   m_stager(""),
-  m_groupid(0),
   m_userid(0),
+  m_groupid(0),
   m_id(0) {
-};
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -62,7 +62,7 @@ castor::repack::RepackRequest::~RepackRequest() throw() {
     m_subRequestVector[i]->setRequestID(0);
   }
   m_subRequestVector.clear();
-};
+}
 
 //------------------------------------------------------------------------------
 // print
@@ -85,8 +85,8 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
   stream << indent << "command : " << m_command << std::endl;
   stream << indent << "pool : " << m_pool << std::endl;
   stream << indent << "stager : " << m_stager << std::endl;
-  stream << indent << "groupid : " << m_groupid << std::endl;
   stream << indent << "userid : " << m_userid << std::endl;
+  stream << indent << "groupid : " << m_groupid << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

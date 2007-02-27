@@ -190,10 +190,10 @@ namespace castor {
 
       std::vector<RepackRequest*> m_requestVector;
 
-    }; // end of class RepackAck
+    }; /* end of class RepackAck */
 
-  }; // end of namespace repack
+  } /* end of namespace repack */
 
-}; // end of namespace castor
+} /* end of namespace castor */
 
 #endif // CASTOR_REPACK_REPACKACK_HPP
