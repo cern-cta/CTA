@@ -1,9 +1,10 @@
 castor (2.1.2-6) unstable; urgency=low
+
   * Two bug fixes in the prepare to get not-scheduled:
      - CreateRecallCandidate in stager_db_service now is doing errors check.
-     - OraStagerSvc.cpp  bug fix in how they are threaded the exceptions in for createRecallCandidate.
+     - OraStagerSvc.cpp  bug fix in how the exceptions are thrown for createRecallCandidate.
    * Bug Fix for Repack:
-     - castor::castor::Exception instead of castor::exception::Internal thown by functions in the DatabaseHelper,
+     - castor::castor::Exception instead of castor::exception::Internal thrown by functions in the DatabaseHelper,
      - fix for monitoring to be able to deal with stager time out,
      - bug fix in repack worker. 
    * Fixed the socket leak in DLF client when the DLF server is not reachable
@@ -13,12 +14,12 @@ castor (2.1.2-6) unstable; urgency=low
      - fixes for the processing of update requests
      - fixed the reservedSpace accumulation problem
      - fixed garbage collector job
- -- Rosa Garcia <rosa.garcia@cern.ch>  Thurs, 22 Feb 2007 18:25:49 +0100
 
+ -- Rosa Garcia <rosa.garcia@cern.ch>  Thu, 27 Feb 2007 18:00:00 +0100
 
-castor (2.1.2-5) Repack only; urgency=low
+castor (2.1.2-5 Repack only) unstable; urgency=low
   *  thrown castor::castor::Exception instead of  castor::exception::Internal from DatabaseHelper, fix for monitoring to be able to deal with time out, bug fix in repack worker.
-  *
+
 
 castor (2.1.2-4) unstable; urgency=low
 
