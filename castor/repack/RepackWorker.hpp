@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/01/16 16:01:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
  *
  *
  *
@@ -135,13 +135,18 @@ namespace castor {
       void restart(RepackRequest* rreq) throw (castor::exception::Internal);
 
       /**
-       *.Removes a RepackSubRequest in the given RepackRequest. Note that
-       * it is not checked if the repack process is finished or not.
-       * @param RepackRequest The request with the tapes to remove
+       *.Archive a RepackSubRequest in the given RepackRequest, if finished.
+       * @param RepackRequest The request with the tapes to be archived
        * @throws castor::exception::Exception if an error occurs
        */
       void archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Internal);
 
+     /**
+       * Archive  all finishedRepackSubRequest in the given RepackRequest.
+       * @param RepackRequest 
+       * @throws castor::exception::Exception if an error occurs
+       */
+      void archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Internal);
 
       /** Gets the status of one RepackSubRequest from the DB. The given tape vid
        * in the RepackSubRequest (only one is allowed, has to ensured by the

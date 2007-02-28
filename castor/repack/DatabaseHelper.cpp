@@ -49,7 +49,7 @@ const std::string castor::repack::DatabaseHelper::s_selectExistingSegmentsStatem
 
 /// SQL for archiving RepackSubRequests
 const std::string castor::repack::DatabaseHelper::s_archiveStatementString =
-  "UPDATE RepackSubRequest set status = 6 where status = 5"; // ARCHIVED, FINISHED
+  "UPDATE RepackSubRequest set status = 6 where vid=:1 and status = 5"; // ARCHIVED, FINISHED
 
 /// SQL for getting a specified RepacksubRequest in a certain status
 const std::string castor::repack::DatabaseHelper::s_isStoredStatementString =
@@ -58,6 +58,10 @@ const std::string castor::repack::DatabaseHelper::s_isStoredStatementString =
 /// SQL for getting RepackSubRequest in a certain status
 const std::string castor::repack::DatabaseHelper::s_selectAllSubRequestsStatusStatementString =
   "SELECT id FROM RepackSubRequest where status = :1 order by vid";
+
+/// SQL for getting RepackSubRequest with a certain vid
+const std::string castor::repack::DatabaseHelper::s_selectAllSubRequestsVidStatementString =
+  "SELECT id FROM RepackSubRequest where vid = :1";
 
 /// SQL for getting RepackSubRequest which are not SUBREQUEST_ARCHIVED
 const std::string castor::repack::DatabaseHelper::s_selectAllSubRequestsStatementString =
@@ -86,6 +90,7 @@ castor::repack::DatabaseHelper::DatabaseHelper() :
     m_isStoredStatement(NULL),
     m_archiveStatement(NULL),
     m_selectAllSubRequestsStatusStatement(NULL),
+    m_selectAllSubRequestsVidStatement(NULL),
     m_selectLockStatement(NULL),
     m_selectLastSegmentsSituationStatement(NULL){
     try {
@@ -129,6 +134,7 @@ void castor::repack::DatabaseHelper::reset() throw() {
    if ( m_isStoredStatement ) delete m_isStoredStatement;
    if ( m_archiveStatement ) delete m_archiveStatement;
    if ( m_selectAllSubRequestsStatusStatement ) delete m_selectAllSubRequestsStatusStatement;
+   if ( m_selectAllSubRequestsVidStatement ) delete m_selectAllSubRequestsVidStatement;
    if ( m_selectLockStatement ) delete m_selectLockStatement;
    if (m_selectLastSegmentsSituationStatement) delete m_selectLastSegmentsSituationStatement;
   } catch (castor::exception::SQLError ignored) {};
@@ -140,6 +146,7 @@ void castor::repack::DatabaseHelper::reset() throw() {
    m_isStoredStatement = NULL;
    m_archiveStatement = NULL;
    m_selectAllSubRequestsStatusStatement = NULL;
+   m_selectAllSubRequestsVidStatement = NULL;
    m_selectLockStatement = NULL;
    m_selectLastSegmentsSituationStatement=NULL;
 }
@@ -499,13 +506,14 @@ castor::repack::RepackSubRequest*
 //------------------------------------------------------------------------------
 // archive
 //------------------------------------------------------------------------------
-void castor::repack::DatabaseHelper::archive() throw (castor::exception::Exception){
+void castor::repack::DatabaseHelper::archive(std::string vid) throw (castor::exception::Exception){
   
   if ( m_archiveStatement == NULL ) {
     m_archiveStatement = createStatement(s_archiveStatementString);
   }
   
   try { 
+    m_archiveStatement->setString(1, vid);
     m_archiveStatement->execute();
     svcs()->commit(&ad);
   }catch (castor::exception::SQLError e) {
@@ -594,7 +602,31 @@ std::vector<castor::repack::RepackSubRequest*>*
 }
 
 
-
+//------------------------------------------------------------------------------
+// getAllSubRequestsVid 
+//------------------------------------------------------------------------------
+std::vector<castor::repack::RepackSubRequest*>* 
+                       castor::repack::DatabaseHelper::getAllSubRequestsVid(
+                                                                 std::string vid 
+                                                                      )
+                                              throw (castor::exception::Exception)
+{
+  if ( m_selectAllSubRequestsVidStatement == NULL ) {
+    m_selectAllSubRequestsVidStatement = 
+      createStatement(s_selectAllSubRequestsVidStatementString);
+  }
+  m_selectAllSubRequestsVidStatement->setString(1, vid);
+  
+  std::vector<castor::repack::RepackSubRequest*>* result = NULL;
+  result = internalgetSubRequests(m_selectAllSubRequestsVidStatement);
+  
+  /// we want to have to corresponding RepackRequest for each RepackSubRequest
+  for (int i=0; i<result->size(); i++ ){
+    svcs()->fillObj(&ad,result->at(i),OBJ_RepackRequest);
+  }
+  svcs()->commit(&ad);
+  return result;
+}
 
 
 

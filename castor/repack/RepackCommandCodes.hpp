@@ -41,6 +41,7 @@ namespace castor{
         GET_STATUS_ARCHIVED = 10,   // TODO
         RESTART_REPACK      = 12,   // TODO
         ARCHIVE             = 14,
+        ARCHIVE_ALL         = 15,
         GET_STATUS_RUNNING  = 16   // TODO?
         };
   }

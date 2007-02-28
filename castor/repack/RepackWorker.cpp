@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/02/19 11:06:53 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
  *
  *
  *
@@ -158,6 +158,9 @@ void RepackWorker::run(void* param)
   case ARCHIVE:           archiveSubRequests(rreq);
                           ack.addRequest(rreq);
                           break;
+  case ARCHIVE_ALL:       archiveAllSubRequests(rreq);
+                          ack.addRequest(rreq);
+                          break;
 
 	  default:break;	/** Do nothing by default */
 	}
@@ -183,7 +186,7 @@ void RepackWorker::run(void* param)
 
 
   /** Clean everything. */  
-  freeRepackObj(rreq);
+  if(rreq !=NULL) freeRepackObj(rreq);
   rreq = NULL;
   delete sock;  // originally created from RepackServer
 
@@ -251,7 +254,7 @@ void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::I
 		tape++;
 	}
 	
-	delete result;
+	if (result != NULL) delete result;
 }
 
 
@@ -259,30 +262,73 @@ void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::I
 // Archives the finished tapes
 //------------------------------------------------------------------------------
 void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Internal)
-{ ///get all finished repack tapes
+{ ///get all finished repack tape
+
+  std::vector<castor::repack::RepackSubRequest*>* result=NULL;
+  std::vector<RepackSubRequest*>::iterator tapeToBeArchived;
+
+  if ( rreq== NULL || rreq->subRequest().size()==0 ) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "RepackWorker::archiveSubRequests(..) : Invalid Request" << std::endl;
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 0, NULL);
+    throw ex;
+  }
+
+  std::vector<RepackSubRequest*>::iterator tape= rreq->subRequest().begin();
+
+  // Get the All SubRequest  
+  while(tape != rreq->subRequest().end()){ 
+     result=m_databasehelper->getAllSubRequestsVid((*tape)->vid());
+     tapeToBeArchived = result->begin();
+     while ( tapeToBeArchived != result->end() ){
+       if ((*tapeToBeArchived)->status() == SUBREQUEST_DONE){
+         m_databasehelper->archive((*tapeToBeArchived)->vid());
+     
+	 // For the result
+	(*tape)->setStatus(SUBREQUEST_ARCHIVED); 
+        (*tape)->setCuuid((*tapeToBeArchived)->cuuid());
+        (*tape)->setFiles((*tapeToBeArchived)->files());
+        (*tape)->setFilesStaging((*tapeToBeArchived)->filesStaging());
+        (*tape)->setFilesMigrating((*tapeToBeArchived)->filesMigrating());
+	(*tape)->setFilesMigrating((*tapeToBeArchived)->filesFailed());
+	(*tape)->setFilesMigrating((*tapeToBeArchived)->filesStaged());
+        (*tape)->setXsize((*tapeToBeArchived)->xsize());         
+        break; 
+       }    
+       tapeToBeArchived++;       
+     }
+     tape++;
+     if (result !=NULL) delete result;
+  }
+
+}
+
+
+//------------------------------------------------------------------------------
+// Archives all finished tapes
+//------------------------------------------------------------------------------
+void RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Internal)
+{
   std::vector<castor::repack::RepackSubRequest*>* result = 
             m_databasehelper->getAllSubRequestsStatus(SUBREQUEST_DONE);
   
   std::vector<RepackSubRequest*>::iterator tape = result->begin();
+
   /// for the answer we set the status to archived
   while ( tape != result->end() ){
+    m_databasehelper->archive((*tape)->vid());
     (*tape)->setStatus(SUBREQUEST_ARCHIVED);
     rreq->subRequest().push_back((*tape));
     tape++;
   }
   delete result;
-
-  /// now the real archive.
-  m_databasehelper->archive();
-  //m_databasehelper->unlock();
+ 
 }
 
 
 
-
-
 //------------------------------------------------------------------------------
-// Removes a request from repack
+// Restart a  repack subrequest
 //------------------------------------------------------------------------------
 void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Internal)
 {   

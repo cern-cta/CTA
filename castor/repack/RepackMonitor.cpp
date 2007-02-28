@@ -172,8 +172,8 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
                           throw (castor::exception::Internal)
 { 
   /** status counters */
-  int canbemig_status,stagein_status,waitingmig_status, stageout_status, invalid_status;
-  canbemig_status = stagein_status = waitingmig_status = stageout_status = invalid_status = 0;
+  int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status,invalid_status;
+  canbemig_status = stagein_status = waitingmig_status = stageout_status = staged_status = invalid_status = 0;
 
   Cuuid_t cuuid;  
   cuuid = stringtoCuuid(sreq->cuuid());
@@ -233,7 +233,10 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
       case FILE_STAGEIN       : stagein_status++;   break;
       case FILE_WAITINGMIGR   : waitingmig_status++;break;
       case FILE_STAGEOUT      : stageout_status++;  break;
-      case FILE_INVALID_STATUS: invalid_status++;   break;
+      case FILE_STAGED        : staged_status++;    break;
+      case FILE_INVALID_STATUS:
+      case FILE_PUTFAILED     : invalid_status++;break; 
+                           //putfailed should never appeare 
     }
     response++;
   }
@@ -247,16 +250,17 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 
   /// we only update the subrequest, if something has changed */
   if ( (waitingmig_status + canbemig_status) !=  sreq->filesMigrating() 
-        || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed()
+        || stagein_status != sreq->filesStaging() ||  invalid_status != sreq->filesFailed() || staged_status != sreq->filesStaged()
   )
   {
     
     sreq->setFilesMigrating( waitingmig_status + canbemig_status );
     sreq->setFilesStaging( stagein_status );
     sreq->setFilesFailed( invalid_status );
+    sreq->setFilesStaged( staged_status );
     
-    stage_trace(3,"Updating RepackSubRequest with %d responses: Mig: %d\tStaging: %d\t Invalid %d\n",
-    fr.size(), sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed() );  
+    stage_trace(3,"Updating RepackSubRequest with %d responses: Mig: %d\tStaging: %d\t Invalid: %d\t Staged: %d\n",
+    fr.size(), sreq->filesMigrating(), sreq->filesStaging(),sreq->filesFailed(),sreq->filesStaged());  
 
 
     /// if we find migration candidates, we just change the status from staging, 

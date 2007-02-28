@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2006/12/05 18:18:05 $ $Author: felixehm $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -121,8 +121,13 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "o:aS:sR:V:P:r:hx:";
+  const char* cmdParams = "o:a:AS:sR:V:P:r:hx:";
   if (argc == 1){
+    return false;
+  }
+
+  if (getuid() == 0){
+    std::cout <<"You cannot use repack commands if you are root."<< std::endl; 
     return false;
   }
   struct Coptions longopts[] = {
@@ -133,7 +138,8 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
     {"restart", REQUIRED_ARGUMENT, NULL, 'r'},
     {"pool", REQUIRED_ARGUMENT, NULL, 'P'},
-    {"archive", NO_ARGUMENT, 0, 'a'},
+    {"archive", REQUIRED_ARGUMENT, NULL, 'a'},
+    {"archiveAll", NO_ARGUMENT, NULL, 'A'},
     /*{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
     {"min_free", REQUIRED_ARGUMENT, 0, 'm'},
     {"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
@@ -185,6 +191,11 @@ bool RepackClient::parseInput(int argc, char** argv)
       break;
     case 'a':
       cp.command = ARCHIVE;
+      cp.vid = Coptarg;
+      return true;
+      break;
+   case 'A':
+      cp.command = ARCHIVE_ALL;
       return true;
       break;
     }
@@ -206,7 +217,9 @@ void RepackClient::usage()
 		  << "              -h " << std::endl
 		  << "              -s " << std::endl
 		  << "              -R [VID1:VID2:..] " << std::endl
-		  << "              -r [VID1:VID2:..] " << std::endl;
+		  << "              -r [VID1:VID2:..] " << std::endl
+		  << "              -a [VID1] " << std::endl
+		  << "              -A " << std::endl;
 }
 
 
@@ -381,7 +394,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
 
   if ( ack->request().size() > 0 ){
     RepackRequest* rreq = ack->request().at(0);
-    std::cout << "======================================================================================================" 
+    std::cout << "===============================================================================================================" 
               << std::endl;
 
     switch ( rreq->command() ){
@@ -410,10 +423,11 @@ void RepackClient::handleResponse(RepackAck* ack) {
       
       case GET_STATUS_ALL : 
       case ARCHIVE : 
+    case ARCHIVE_ALL:
       case REPACK : 
       {
-        std::cout << "vid\tcuuid\t\t\t\t\ttotal  size     staging  migration  failed   status" <<std::endl;
-        std::cout << "-----------------------------------------------------------------------------------------------------"
+        std::cout << "vid\tcuuid\t\t\t\t\ttotal  size     staging  migration  failed  staged   status" <<std::endl;
+        std::cout << "--------------------------------------------------------------------------------------------------------------"
                   << std::endl;
         std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
         while ( tape != rreq->subRequest().end() ){
@@ -423,7 +437,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
         break;
       }
     }
-    std::cout << "======================================================================================================" 
+    std::cout << "===============================================================================================================" 
               << std::endl;
   }
 
@@ -456,6 +470,7 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
       std::setw(9) << std::left << tape->filesStaging() <<
       std::setw(11) << std::left << tape->filesMigrating() <<
       std::setw(9) << std::left << tape->filesFailed() <<
+      std::setw(8) << std::left << tape->filesStaged() <<
       std::setw(9) << statuslist[tape->status()] <<
       std::endl;
 }

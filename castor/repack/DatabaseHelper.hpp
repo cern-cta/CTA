@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/02/19 11:06:52 $ $Author: gtaur $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
  *
  *
  *
@@ -161,6 +161,17 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
+       * Gets all RepackSubRequests with a certain vid from the DB
+       * Be aware : the affected table is locked! do an unlock() after use;
+       * @return an pointer to a vector of Repack SubRequests
+       * @throws castor::exception::exception in case of an error
+       */
+      std::vector<castor::repack::RepackSubRequest*>*
+      getAllSubRequestsVid(std::string vid)
+        throw (castor::exception::Exception);
+
+
+      /**
        * Returns the already existing RepackSegment in the DB.
        * Note that even a file is multi segmented the file is being
        * repacked only for one segment.
@@ -182,8 +193,8 @@ namespace castor {
        * to SUBREQUEST_ARCHIVED.
        * @throw castor::exception::exception in case of an error
        */
-      void archive() throw (castor::exception::Exception);
-
+      void archive(std::string) throw (castor::exception::Exception);
+      
 
 
     private:
@@ -227,6 +238,9 @@ namespace castor {
 
       static const std::string s_selectAllSubRequestsStatusStatementString;
       castor::db::IDbStatement *m_selectAllSubRequestsStatusStatement;
+
+      static const std::string s_selectAllSubRequestsVidStatementString;
+      castor::db::IDbStatement *m_selectAllSubRequestsVidStatement;
 
       static const std::string s_archiveStatementString;
       castor::db::IDbStatement  *m_archiveStatement;
