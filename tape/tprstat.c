@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tprstat.c,v $ $Revision: 1.1 $ $Date: 2000/10/10 07:28:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tprstat.c,v $ $Revision: 1.2 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tprstat - resource reservation status display */
@@ -13,6 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: tprstat.c,v $ $Revision: 1.1 $ $Date: 2000
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -20,7 +21,13 @@ static char sccsid[] = "@(#)$RCSfile: tprstat.c,v $ $Revision: 1.1 $ $Date: 2000
 #define MAXDGP 4
 #define MAXJOBS 64
 
-main(argc, argv)
+void usage(cmd)
+char *cmd;
+{
+	fprintf (stderr, "usage: %s [hostname]\n", cmd);
+}
+
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -31,7 +38,6 @@ char	**argv;
 	char name[CA_MAXUSRNAMELEN+1];
 	int nbdgp = MAXDGP;
 	int nbentries = MAXJOBS;
-	char *p;
 	struct passwd *pwd;
 
 	if (argc > 2) {
@@ -81,8 +87,3 @@ char	**argv;
 	exit (c > 0 ? 0 : SYERR);
 }
 
-usage(cmd)
-char *cmd;
-{
-	fprintf (stderr, "usage: %s [hostname]\n", cmd);
-}

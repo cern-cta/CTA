@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.7 $ $Date: 2005/07/11 11:42:00 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.8 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tpconfig - configure tape drive up/down */
@@ -12,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: tpconfig.c,v $ $Revision: 1.7 $ $Date: 200
 #include <errno.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <string.h>
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "sacct.h"
@@ -23,29 +24,36 @@ struct confrsn {
 };
  
 struct confrsn confdnrsn[] = {
-	"cleaning",	TPCD_CLN,
-	"test",		TPCD_TST,
-	"failure",	TPCD_HWF,
-	"system",	TPCD_SYS,
-	"suspect",	TPCD_SUS,
-	"upgrade",	TPCD_UPG,
-	"ops",		TPCD_OPS
+	{"cleaning",	TPCD_CLN},
+	{"test",	TPCD_TST},
+	{"failure",	TPCD_HWF},
+	{"system",	TPCD_SYS},
+	{"suspect",	TPCD_SUS},
+	{"upgrade",	TPCD_UPG},
+	{"ops",		TPCD_OPS}
 };
 struct confrsn confuprsn[] = {
-	"cleaned",	TPCU_CLN,
-	"replaced",	TPCU_RPL,
-	"repaired",	TPCU_RPR,
-	"preventive",	TPCU_PRV,
-	"upgraded",	TPCU_UPG,
-	"ops",		TPCU_OPS
+	{"cleaned",	TPCU_CLN},
+	{"replaced",	TPCU_RPL},
+	{"repaired",	TPCU_RPR},
+	{"preventive",	TPCU_PRV},
+	{"upgraded",	TPCU_UPG},
+        {"ops",	        TPCU_OPS}
 };
 #endif
 
-main(argc, argv)
+void usage(cmd)
+char *cmd;
+{
+	fprintf (stderr, "usage: %s ", cmd);
+	fprintf (stderr, "unit_name status [reason]\n");
+}
+
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
-	int c, n;
+	int n;
 	int reason;
 	int status;
 
@@ -94,10 +102,4 @@ char	**argv;
 		exit (0);
 }
 
-usage(cmd)
-char *cmd;
-{
-	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "unit_name status [reason]\n");
-}
 

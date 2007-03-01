@@ -4,21 +4,29 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.5 $ $Date: 2000/10/09 09:19:29 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tpstat.c,v $ $Revision: 1.6 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tpstat - tape status display */
 #include <stdio.h>
+#include <stdlib.h>
 #include <pwd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <time.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
 #include "Ctape_api.h"
 
-main(argc, argv)
+void usage(cmd)
+char *cmd;
+{
+	fprintf (stderr, "usage: %s [hostname]\n", cmd);
+}
+
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -48,7 +56,7 @@ char	**argv;
 		gethostname (hostname, sizeof(hostname));
 	c = Ctape_status (hostname, drv_status, nbentries);
 	if (c > 0) {
-		if (p = strchr (hostname, '.')) *p = '\0';
+		if ((p = strchr (hostname, '.'))) *p = '\0';
 		printf ("userid     jid  dgn        stat dvn                 rl  vsn    vid\n");
 		for (i = 0; i < c; i++) {
 			if (drv_status[i].asn == 0) {
@@ -97,8 +105,3 @@ char	**argv;
 	exit (c > 0 ? 0 : SYERR);
 }
 
-usage(cmd)
-char *cmd;
-{
-	fprintf (stderr, "usage: %s [hostname]\n", cmd);
-}

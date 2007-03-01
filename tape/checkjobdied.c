@@ -4,11 +4,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:30:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.7 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	checkjobdied - returns the list of jobs that have died */
 
+#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/time.h>
@@ -29,17 +30,18 @@ static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.6 $ $Date:
 #include "Ctape.h"
 #include "serrno.h"
 static char func[16];
-checkjobdied(jobs)
+
+int checkjobdied(jobs)
 int jobs[];
 {
 	int i, j, k;
 #ifndef hpux
-	int fdkmem;
 #if defined(SOLARIS) || defined(sgi) || (defined(__osf__) && defined(__alpha)) || defined(linux) || defined(AIX51)
 	char name[12];
 	struct stat st;
 #else
 #if _AIX && _IBMR2
+	int fdkmem;
 	long lastprocaddr;
 	struct nlist nl[3];
 	int nproc;
