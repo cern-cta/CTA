@@ -358,4 +358,5 @@ EXTERN_C int DLL_DECL setlabelinfo _PROTO((char *, int, int, char *, char *, cha
 EXTERN_C int DLL_DECL initlabelroutines _PROTO((int));
 EXTERN_C int DLL_DECL rmlabelinfo _PROTO((char *, int));
 EXTERN_C int DLL_DECL setdevinfo _PROTO((char *, char *, int, int));
+EXTERN_C int DLL_DECL tplogit _PROTO((char *, char *, ...));
 #endif
