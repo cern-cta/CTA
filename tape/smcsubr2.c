@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.7 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.8 $ $Date: 2007/03/01 14:57:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -23,7 +23,7 @@
 extern int smc_read_elem_status(int, char *, int, int, int, struct smc_element_info[]);
 extern int smc_lasterror(struct smc_status *, char **);
 extern int smc_move_medium(int, char *, int, int, int);
-extern int smc_find_cartridge(int, char *, int, char *, int, int, struct smc_element_info[] );
+extern int smc_find_cartridge(int, char *, char *, int, int, int, struct smc_element_info[] );
 
 int smc_dismount (fd, loader, robot_info, drvord, vid)
 int fd;
@@ -230,7 +230,7 @@ char *vid;
 	RETURN (c);
 }
 
-smc_mount (fd, loader, robot_info, drvord, vid, invert)
+int smc_mount (fd, loader, robot_info, drvord, vid, invert)
 int fd;
 char *loader;
 struct robot_info *robot_info;
