@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.380 $ $Date: 2007/03/01 10:09:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.381 $ $Date: 2007/03/01 10:19:54 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.380 $ $Date: 2007/03/01 10:09:40 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.381 $ $Date: 2007/03/01 10:19:54 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -586,15 +586,16 @@ CREATE OR REPLACE PROCEDURE updateFsFileOpened
 BEGIN
   /* We have to lock first the diskserver in order to lock all the
      filesystems of this DiskServer in an atomical way.
-     Otherwise, the fact that we update several filesystems in one go
-     will lead to a dead lock if 2 threads are running this in parallel.
-     They may start with different filesystems (actually ORACLE will
-     even ensure that), lock it and try to get lock the others afterwards. */
+     Otherwise, the fact that we update the "single" filesystem fs
+     first and then all the others leads to a dead lock if 2 threads
+     are running this in parallel : they will both lock one
+     filesystem to start with and try to get the others locks afterwards. */
   SELECT id INTO unused FROM DiskServer WHERE id = ds FOR UPDATE;
-  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation,
-                        fsDeviation = decode(id,fs,LEAST(2 * deviation, 1000),fsDeviation)
-                        reservedSpace = decode(id,fs,reservedSpace + fileSize,reservedSpace)
+  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
    WHERE diskServer = ds;
+  UPDATE FileSystem SET fsDeviation = LEAST(2 * deviation, 1000),
+                        reservedSpace = reservedSpace + fileSize
+   WHERE id = fs;
 END;
 
 /* PL/SQL method to update FileSystem free space when file are closed */
