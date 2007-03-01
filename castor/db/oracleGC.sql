@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.378 $ $Date: 2007/02/28 09:29:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.379 $ $Date: 2007/03/01 09:50:37 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.378 $ $Date: 2007/02/28 09:29:40 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.379 $ $Date: 2007/03/01 09:50:37 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -94,6 +94,9 @@ CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
 /* Some index on the GCFile table to speed up garbage collection */
 CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST) TABLESPACE STAGER_INDX;
+
+/* Indexing segments by Tape */
+CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE) TABLESPACE STAGER_INDX COMPUTE STATISTICS;
 
 /* some constraints */
 /* Can not be added since some code (stager_fs_service) creates FileSystems with no DiskServer
