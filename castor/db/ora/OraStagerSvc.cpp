@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.191 $ $Release$ $Date: 2007/02/19 11:03:34 $ $Author: gtaur $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.192 $ $Release$ $Date: 2007/03/02 10:51:41 $ $Author: riojac3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -495,28 +495,27 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
       cnvSvc()->updateRep(&ad, subreq, false); 
       
       // create needed TapeCopy(ies) and Segment(s)
-     
+    
       createTapeCopySegmentsForRecall(cf, euid, egid);
-      cnvSvc()->commit();   
+      cnvSvc()->commit();
       subreq->setDiskcopy(NULL);
-      delete dc;
-  }catch (castor::exception::Exception forward){
+      delete dc; 
+    }catch (castor::exception::Exception forward){
         // no valid tape copy found, in such a case, we rollback the created DiskCopy
         // and set the subrequest to failed. The original Message is forwarded
     try{
-
-        cnvSvc()->rollback();
+  
+	cnvSvc()->rollback();
         delete dc;
         subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
         cnvSvc()->updateRep(&ad, subreq, true);
-       
     }catch(castor::exception::Exception forward2){
         castor::exception::Internal ex2;
         ex2.getMessage() << "Exception in try-catch of  createRecallCandidate"
         << std::endl << forward2.getMessage().str();
         throw ex2;
     }
-
+  
     castor::exception::Internal ex;
     ex.getMessage() << "Exception in createRecallCandidate"
     << std::endl << forward.getMessage().str();
@@ -545,7 +544,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     m_selectCastorFileStatement->setAutoCommit(true);
   }
   // Execute statement and get result
-  unsigned long id;
+  //unsigned long id;
   try {
     m_selectCastorFileStatement->setDouble(1, fileId);
     m_selectCastorFileStatement->setString(2, nsHost);
@@ -693,6 +692,13 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
       << std::endl;
     throw ex;
   }
+  ub2 *lensFS, *lensM, *lensMF;
+  char **bufferFS, **bufferM;
+  unsigned char **bufferMF;
+  unsigned int fsNbFree=0;
+  unsigned int machinesLa=0, machinesL=0;
+  unsigned int fileSystemsLa=0, fileSystemsL=0;
+
   try {
     // Check whether the statements are ok
     if (0 == m_bestFileSystemForJobStatement) {
@@ -705,45 +711,55 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
         (5, oracle::occi::OCCISTRING, 2048);
     }
     // lengths of the different arrays
-    unsigned int fileSystemsL = fileSystems == 0 ? 0 : fileSystemsNb;
-    unsigned int machinesL = machines == 0 ? 0 : fileSystemsNb;
+    fileSystemsL = fileSystems == 0 ? 0 : fileSystemsNb;
+    machinesL = machines == 0 ? 0 : fileSystemsNb;
     // Compute actual length of the buffers : this
     // may be different from the needed one, since
     // Oracle does not like 0 length arrays....
-    unsigned int fileSystemsLa = fileSystemsL == 0 ? 1 : fileSystemsL;
-    unsigned int machinesLa = machinesL == 0 ? 1 : machinesL;
+    fileSystemsLa = fileSystemsL == 0 ? 1 : fileSystemsL;
+    machinesLa = machinesL == 0 ? 1 : machinesL;
     // Find max length of the input parameters
-    ub2 lensFS[fileSystemsLa], lensM[machinesLa];
+    lensFS= (ub2 *)malloc(sizeof(ub2)*fileSystemsLa);
+    lensM= (ub2 *)malloc(sizeof(ub2)*machinesLa); 
     unsigned int maxFS = 0;
     unsigned int maxM = 0;
     // in case fileSystemsLa != fileSystemsL
     lensFS[fileSystemsLa-1]= 0;
     // in case machinesLa != machinesL
     lensM[machinesLa-1]= 0;    
-    for (int i = 0; i < fileSystemsL; i++) {
+    for (unsigned int i = 0; i < fileSystemsL; i++) {
       lensFS[i] = strlen(fileSystems[i]);
       if (lensFS[i] > maxFS) maxFS = lensFS[i];
     }
-    for (int i = 0; i < machinesL; i++) { 
+    for (unsigned int i = 0; i < machinesL; i++) { 
       lensM[i] = strlen(machines[i]);
       if (lensM[i] > maxM) maxM = lensM[i];
     }
     // Allocate buffer for giving the parameters to ORACLE
-    char bufferFS[fileSystemsLa][maxFS];
-    char bufferM[machinesLa][maxM];
+    bufferFS= (char **)malloc(sizeof(char)*fileSystemsLa);
+    bufferM= (char **)malloc(sizeof(char)*machinesLa);
+
     // Copy inputs into the buffer
-    for (int i = 0; i < fileSystemsL; i++) {
-      strncpy(bufferFS[i], fileSystems[i], lensFS[i]);
+    for (unsigned int i = 0; i < fileSystemsL; i++) {
+      bufferFS[i]=(char *)malloc(sizeof(char)* maxFS);
+      if (bufferFS[i]!=NULL)
+        strncpy(bufferFS[i], fileSystems[i], lensFS[i]);
     }
-    for (int i = 0; i < machinesL; i++) { 
-      strncpy(bufferM[i], machines[i], lensM[i]);
+
+    for (unsigned int i = 0; i < machinesL; i++) { 
+      bufferM[i]=(char *)malloc(sizeof(char)* maxM);
+      if (bufferM[i]!=NULL)
+        strncpy(bufferM[i], machines[i], lensM[i]);
     }
     // Deal with the special case of u_signed64 parameters
-    unsigned int fsNbFree = fileSystems != 0 ? fileSystemsNb : 1;
-    ub2 lensMF[fsNbFree];
-    unsigned char bufferMF[fsNbFree][21];
+    fsNbFree = fileSystems != 0 ? fileSystemsNb : 1;
+    lensMF= (ub2 *) malloc(sizeof(ub2)*fsNbFree);
+    bufferMF=(unsigned char **) malloc(sizeof(unsigned char) *fsNbFree);
+    for (unsigned int i=0;i < fsNbFree ;i++){
+      bufferMF[i]=(unsigned char *)malloc(sizeof(char)* 21);
+    }
     memset(bufferMF, 0, fsNbFree * 21);
-    for (int i = 0; i < fsNbFree; i++) {
+    for (unsigned int i = 0; i < fsNbFree; i++) {
       oracle::occi::Number n = (double)minFree[i];
       oracle::occi::Bytes b = n.toBytes();
       b.getBytes(bufferMF[i],b.length());
@@ -767,17 +783,70 @@ void castor::db::ora::OraStagerSvc::bestFileSystemForJob
       castor::exception::Internal ex;
       ex.getMessage()
         << "bestFileSystemForJob did not return any result.";
+      //deleting the allocated memory
+      free(lensFS);
+      free(lensM);
+      free (lensMF);
+      for (unsigned int i = 0; i < fileSystemsL; i++) {
+          free (bufferFS[i]);
+      }
+      free(bufferFS);
+      for (unsigned int i=0;i < fsNbFree ;i++){
+        free(bufferMF[i]); 
+      }
+      free (bufferMF);
+      for (unsigned int i = 0; i < machinesL; i++) {
+        free(bufferM[i]);
+      }
+      free(bufferM);
+      
       throw ex;
     }
     // collect output
     *mountPoint = m_bestFileSystemForJobStatement->getString(4);
     *diskServer = m_bestFileSystemForJobStatement->getString(5);
+    
+    //deleting the allocated memory
+    free(lensFS);
+    free(lensM);
+    free (lensMF);
+    for (unsigned int i = 0; i < fileSystemsL; i++) {
+        free (bufferFS[i]);
+    }
+    free(bufferFS);
+    for (unsigned int i=0;i < fsNbFree ;i++){
+      free(bufferMF[i]);
+    }
+    free (bufferMF);
+    for (unsigned int i = 0; i < machinesL; i++) {
+      free(bufferM[i]);
+    }
+    free(bufferM);
+
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in bestFileSystemForJob."
       << std::endl << e.what();
+    
+    //deleting the allocated memory
+    free(lensFS);
+    free(lensM);
+    free (lensMF);
+    for (unsigned int i = 0; i < fileSystemsL; i++) {
+        free (bufferFS[i]);
+    }
+    free(bufferFS);
+    for (unsigned int i=0;i < fsNbFree ;i++){
+      free(bufferMF[i]);
+    }
+    free (bufferMF);
+    for (unsigned int i = 0; i < machinesL; i++) {
+      free(bufferM[i]);
+    }
+    free(bufferM);    
+
     throw ex;
   }
 }
@@ -831,7 +900,7 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
     m_archiveSubReqStatement->setAutoCommit(true);
   }
   // Execute statement and get result
-  unsigned long id;
+  //unsigned long id;
   try {
     m_archiveSubReqStatement->setDouble(1, subReqId);
     m_archiveSubReqStatement->executeUpdate();
@@ -1161,6 +1230,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     case castor::stager::TAPE_FAILED:
     case castor::stager::TAPE_UNKNOWN:
       tape->setStatus(castor::stager::TAPE_PENDING);
+    default: ;
     }
     cnvSvc()->updateRep(&ad, tape, false);
     // Link Tape with Segment
