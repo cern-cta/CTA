@@ -15,7 +15,7 @@
 %if ! %has_oracle_home
 %define has_oracle 0
 %else
-%{expand:%define has_oracle %(if [ ! -r $ORACLE_HOME/libocci.so* ]; then echo 0; else echo 1; fi)}
+%{expand:%define has_oracle %(if [ ! -r $ORACLE_HOME/lib/libclntsh.so ]; then echo 0; else echo 1; fi)}
 %endif
 %{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_lsf %(if [ -d /usr/local/lsf/lib -a -d /usr/local/lsf/include ]; then echo 1; else echo 0; fi)}
@@ -115,11 +115,11 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/castor/expert
 mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
-#%ifarch x86_64
-#mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib64
-#%else
+%ifarch x86_64
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib
-#%endif
+%else
+mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/lib
+%endif
 mkdir -p ${RPM_BUILD_ROOT}/usr/local/lsf/etc
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
 # Note: Only castor-job subpackage have a cron job
