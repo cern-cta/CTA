@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2006/09/21 16:26:06 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/03/02 16:05:18 $ $Author: riojac3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -189,6 +189,10 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
   // vector of results
   std::vector<castor::stager::GCLocalFile*>* result = 0;
   // Get files to delete
+  unsigned int nb=0;
+  ub2 *lens;
+  unsigned char **buffer;
+
   try {
     m_selectFiles2DeleteStatement->setString(1, diskServer);
     m_selectFiles2DeleteStatement->executeUpdate();
@@ -213,11 +217,15 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
     }
     if (foundSomething) {
       // Deal with the list of diskcopy ids
-      unsigned int nb = dcIds.size();
-      ub2 lens[nb];
-      unsigned char buffer[nb][21];
+      nb = dcIds.size();
+      lens=(ub2 *)malloc (sizeof(ub2)*nb);
+      buffer=(unsigned char **) malloc(sizeof(unsigned char) *21);
+      for (unsigned int i=0;i < nb ;i++){
+        buffer[i]=(unsigned char *)malloc(sizeof(char)* nb);
+      }
+
       memset(buffer, 0, nb * 21);
-      for (int i = 0; i < nb; i++) {
+      for (unsigned int i = 0; i < nb; i++) {
         oracle::occi::Number n = (double)(dcIds[i]);
         oracle::occi::Bytes b = n.toBytes();
         b.getBytes(buffer[i],b.length());
@@ -232,6 +240,12 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
     }
     m_selectFiles2DeleteStatement->closeResultSet(rset);
     commit();
+    //free allocated memory
+    free(lens);
+    for (unsigned int i=0;i < nb ;i++){
+       free(buffer[i]);
+    }
+    free(buffer);
     return result;
   } catch (oracle::occi::SQLException e) {
 
@@ -249,6 +263,13 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       }
       delete result;
     }
+    //free allocated memory
+    free(lens);
+    for (unsigned int i=0;i < nb ;i++){
+      free(buffer[i]);
+    }
+    free(buffer);
+    
     handleException(e);
     throw ex;
   }
@@ -268,18 +289,25 @@ void castor::db::ora::OraGCSvc::filesDeleted
       (2, oracle::occi::OCCICURSOR);
   }
   // Execute statement and get result
-  unsigned long id;
+  //unsigned long id;
+  ub2 *lens;
+  unsigned char **buffer;
+  unsigned int nba=0;
   try {
     // Deal with the list of diskcopy ids
     unsigned int nb = diskCopyIds.size();
     // Compute actual length of the buffers : this
     // may be different from the needed one, since
     // Oracle does not like 0 length arrays....
-    unsigned int nba = nb == 0 ? 1 : nb;
-    ub2 lens[nb];
-    unsigned char buffer[nba][21];
+    nba = nb == 0 ? 1 : nb;
+    lens=(ub2 *)malloc(sizeof(ub2)*nb);
+    buffer=(unsigned char **)malloc(sizeof(unsigned char)*nba);
+    //unsigned char buffer[nba][21];
+    for (unsigned int i=0;i<nba;i++){
+      buffer[i]=(unsigned char *)malloc (sizeof(unsigned char)*21);
+    }
     memset(buffer, 0, nba * 21);
-    for (int i = 0; i < nb; i++) {
+    for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(*(diskCopyIds[i]));
       oracle::occi::Bytes b = n.toBytes();
       b.getBytes(buffer[i],b.length());
@@ -289,14 +317,20 @@ void castor::db::ora::OraGCSvc::filesDeleted
     m_filesDeletedStatement->setDataBufferArray
       (1, buffer, oracle::occi::OCCI_SQLT_NUM,
        nba, &unused, 21, lens);
-    // execute the statement
+    ;// execute the statement
     m_filesDeletedStatement->executeUpdate();
     if (0 == nb) {
       // we want to commit anyway to release locks
       cnvSvc()->commit();
       castor::exception::Internal ex;
       ex.getMessage() << "filesDeleted : no rows returned.";
-      throw ex;
+      //free allocated memory
+      free(lens);
+      for (unsigned int i=0;i < nba ;i++){
+         free(buffer[i]);
+       }
+       free(buffer); 
+     throw ex;
     }
     // get the result, that is a cursor on the files to
     // remove from the name server
@@ -328,7 +362,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
         try {
           oracle::occi::ResultSet::Status status = rs->next();
           while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-            u_signed64 fileid = (u_signed64) rs->getDouble(1);
+            //u_signed64 fileid = (u_signed64) rs->getDouble(1);
             std::string nsHost = rs->getString(2);
             clog() << ERROR << (u_signed64)rs->getDouble(1)
                    << "@" << rs->getString(2)
@@ -342,6 +376,12 @@ void castor::db::ora::OraGCSvc::filesDeleted
         }
         // commit everything into the DB
         cnvSvc()->commit();
+        //free allocated memory
+        free(lens);
+        for (unsigned int i=0;i < nba ;i++){
+          free(buffer[i]);
+        }
+        free(buffer);
         return;
       }
 
@@ -355,7 +395,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
         try {
           oracle::occi::ResultSet::Status status = rs->next();
           while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-            u_signed64 fileid = (u_signed64) rs->getDouble(1);
+            //u_signed64 fileid = (u_signed64) rs->getDouble(1);
             std::string nsHost = rs->getString(2);
             clog() << ERROR << (u_signed64)rs->getDouble(1)
                    << "@" << rs->getString(2)
@@ -369,6 +409,12 @@ void castor::db::ora::OraGCSvc::filesDeleted
         }
         // commit everything into the DB
         cnvSvc()->commit();
+        //free allocated memory
+        free(lens);
+        for (unsigned int i=0;i < nba ;i++){
+          free(buffer[i]);
+         }
+        free(buffer);
         return;
       }
 
@@ -427,6 +473,12 @@ void castor::db::ora::OraGCSvc::filesDeleted
       << "Got an extra error while trying to commit connection :\n"
       << e2.getMessage();
     }
+     //free allocated memory
+    free(lens);
+    for (unsigned int i=0;i < nba ;i++){
+      free(buffer[i]);
+    }
+    free(buffer);
     throw ex;
   }
 }
@@ -444,18 +496,26 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     m_filesDeletionFailedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
-  unsigned long id;
+  //unsigned long id;
+  ub2 *lens;
+  unsigned char **buffer;
+  unsigned int nba;
   try {
     // Deal with the list of diskcopy ids
     unsigned int nb = diskCopyIds.size();
     // Compute actual length of the buffers : this
     // may be different from the needed one, since
     // Oracle does not like 0 length arrays....
-    unsigned int nba = nb == 0 ? 1 : nb;
-    ub2 lens[nb];
-    unsigned char buffer[nba][21];
+    nba = nb == 0 ? 1 : nb;
+    lens=(ub2 *)malloc(sizeof(ub2)*nb);
+    buffer=(unsigned char **)malloc(sizeof(unsigned char)*nba);
+    for (unsigned int i=0;i<nba;i++){
+       buffer[i]=(unsigned char *)malloc (sizeof(unsigned char)*21);
+    }
+    //ub2 lens[nb];
+    //unsigned char buffer[nba][21];
     memset(buffer, 0, nba * 21);
-    for (int i = 0; i < nb; i++) {
+    for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(*(diskCopyIds[i]));
       oracle::occi::Bytes b = n.toBytes();
       b.getBytes(buffer[i],b.length());
@@ -467,12 +527,22 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
        nba, &unused, 21, lens);
     // execute the statement
     m_filesDeletionFailedStatement->executeUpdate();
+    free(lens);
+    for (unsigned int i=0;i < nba ;i++){
+      free(buffer[i]);
+    }
+    free(buffer);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to remove files for which deletion failed :"
       << std::endl << e.getMessage();
+    free(lens);
+    for (unsigned int i=0;i < nba ;i++){
+      free(buffer[i]);
+    }
+    free(buffer);
     throw ex;
   }
 }
