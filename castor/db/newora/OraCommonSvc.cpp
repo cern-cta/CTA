@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/05 13:57:19 $ $Author: riojac3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -247,7 +247,6 @@ castor::db::ora::OraCommonSvc::selectSvcClass
       createStatement(s_selectSvcClassStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
   try {
     m_selectSvcClassStatement->setString(1, name);
     oracle::occi::ResultSet *rset = m_selectSvcClassStatement->executeQuery();
@@ -292,7 +291,6 @@ castor::db::ora::OraCommonSvc::selectFileClass
       createStatement(s_selectFileClassStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
   try {
     m_selectFileClassStatement->setString(1, name);
     oracle::occi::ResultSet *rset = m_selectFileClassStatement->executeQuery();
@@ -334,7 +332,6 @@ castor::db::ora::OraCommonSvc::selectFileSystem
       createStatement(s_selectFileSystemStatementString);
   }
   // Execute statement and get result
-  unsigned long id;
   try {
     m_selectFileSystemStatement->setString(1, diskServer);
     m_selectFileSystemStatement->setString(2, mountPoint);
