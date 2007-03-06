@@ -4,15 +4,16 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: builduhl.c,v $ $Revision: 1.1 $ $Date: 2002/04/08 08:40:15 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: builduhl.c,v $ $Revision: 1.2 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	builduhl - build UHL1 from tpmnt parameters */
 #include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <time.h>
 #include "Ctape.h"
-builduhl(uhl1, fseq, blksize, lrecl, domainname, hostname, inq_data, drive_serial_no)
+int builduhl(uhl1, fseq, blksize, lrecl, domainname, hostname, inq_data, drive_serial_no)
 char uhl1[];
 int fseq;
 int blksize;
@@ -43,7 +44,7 @@ char *drive_serial_no;
 	sprintf (buf, "%.10d", lrecl);
 	memcpy (uhl1 + 24, buf, 10);
 	strcpy (buf, domainname);
-	if (p = strchr (buf, '.')) *p = '\0';
+	if ((p = strchr (buf, '.'))) *p = '\0';
 	UPPER (buf);
 	memcpy (uhl1 + 34, buf, strlen (buf));
 	strcpy (buf, hostname);
@@ -57,4 +58,5 @@ char *drive_serial_no;
 		n = strlen (drive_serial_no);
 		memcpy (uhl1 + 68, drive_serial_no, (n < 12) ? n : 12);
 	}
+        return (0);
 }

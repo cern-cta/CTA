@@ -4,14 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.4 $ $Date: 2002/04/09 07:46:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.5 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	buildvollbl - build VOL1 */
 #include <string.h>
 #include <sys/types.h>
 #include "Ctape.h"
-buildvollbl(vol1, vsn, lblcode, name)
+int buildvollbl(vol1, vsn, lblcode, name)
 char vol1[];
 char *vsn;
 int lblcode;
@@ -35,4 +35,5 @@ char *name;
 			memcpy (vol1 + 37, "CASTOR", 6);
 	if (lblcode == AL || lblcode == AUL)
 		vol1[79] = '3';
+        return (0);
 }

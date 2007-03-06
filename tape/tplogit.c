@@ -4,19 +4,21 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.4 $ $Date: 2003/08/28 10:16:40 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tplogit.c,v $ $Revision: 1.5 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdio.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
 #include "Ctape.h"
 extern int jid;
 
-tplogit(char *func, char *msg, ...)
+int tplogit(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[PRTBUFSZ];

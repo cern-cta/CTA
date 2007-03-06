@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:30:46 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.7 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -21,12 +21,16 @@ static char sccsid[] = "@(#)$RCSfile: inquiry.c,v $ $Revision: 1.6 $ $Date: 2005
 #include "scsictl.h"
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 #if defined(_IBMR2)
 extern char *dvrname;
 #endif
 #endif
-inquiry(fd, path, inq_data)
+
+extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
+
+int inquiry(fd, path, inq_data)
 int fd;
 char *path;
 unsigned char *inq_data;
@@ -100,7 +104,7 @@ unsigned char *inq_data;
 }
 
 /*      inquiry80 - get drive serial number */
-inquiry80(fd, path, inq_data)
+int inquiry80(fd, path, inq_data)
 int fd;
 char *path;
 unsigned char *inq_data;
