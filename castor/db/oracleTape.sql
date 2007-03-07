@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.381 $ $Date: 2007/03/01 10:19:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.382 $ $Date: 2007/03/07 15:21:05 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.381 $ $Date: 2007/03/01 10:19:54 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.382 $ $Date: 2007/03/07 15:21:05 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -69,11 +69,11 @@ CREATE INDEX I_CastorFile_SvcClass on CastorFile (svcClass);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
-CREATE INDEX I_DiskCopy_Status_10 on DiskCopy (decode(status,10,status,NULL));
+CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,status,NULL));
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
-CREATE index I_TapeCopy_Status on Tapecopy (status);
-CREATE INDEX I_TapeCopy_Status_2 on TapeCopy (decode(status,2,status,NULL));
+CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
+CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,status,null));
 
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
@@ -719,26 +719,22 @@ BEGIN
        ORDER BY FileSystemRate(FS.weight, FS.deltaWeight, FS.fsDeviation) DESC
        ) FN
    WHERE ROWNUM < 2;
-  SELECT /*+ FIRST_ROWS_1 */
-         DC.path, DC.diskcopy_id, DC.castorfile_id,
-         DC.fileId, DC.nsHost, DC.fileSize, TapeCopy.id
-    INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-    FROM (SELECT DiskCopy.path path, DiskCopy.id diskcopy_id, CastorFile.id castorfile_id,
-               CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize
-          FROM DiskCopy, CastorFile
-         WHERE DiskCopy.castorfile = CastorFile.id
-            -- Added decode functions to be able to use FBI on status columns
-            -- i_diskcopy_status_10 and i_tapecopy_status_2
-           AND decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-           AND DiskCopy.filesystem = fileSystemId
-         ) DC,
-         TapeCopy, Stream2TapeCopy
-   WHERE TapeCopy.castorfile = DC.castorfile_id
-     AND Stream2TapeCopy.child = TapeCopy.id
-     AND Stream2TapeCopy.parent = streamId
-     AND decode(TapeCopy.status,2,TapeCopy.status,null) = 2 -- WAITINSTREAMS
-     AND ROWNUM < 2;
-
+   SELECT P.path, P.diskcopy_id, P.castorfile,
+          C.fileId, C.nsHost, C.fileSize, P.id
+     INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+     FROM (SELECT /*+ INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+           D.path, D.diskcopy_id, D.castorfile, T.id
+             FROM (SELECT DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
+                     FROM DiskCopy
+                    WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
+                      AND DiskCopy.filesystem = fileSystemId) D,
+                  TapeCopy T, Stream2TapeCopy ST
+            WHERE T.castorfile = D.castorfile
+              AND ST.child = T.id
+              AND ST.parent = streamId
+              AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
+              AND ROWNUM < 2) P, castorfile C
+    WHERE P.castorfile = C.id;
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
