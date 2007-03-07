@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/03/07 08:04:26 $ $Author: gtaur $
  *
  *
  *
@@ -157,7 +157,7 @@ namespace castor {
        * @return The RepackRequest corresponding to the given vid.
        * @throws castor::exception::Exception if the tape was not found
        */
-      RepackRequest* getStatus(RepackRequest* rreq) throw (castor::exception::Internal);
+      void  getStatus(RepackRequest* rreq) throw (castor::exception::Internal);
 
 
       /** Gets the status of all RepackSubRequests from the DB. The given tape vid

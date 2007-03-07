@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Release$ $Date: 2006/12/19 09:21:19 $ $Author: felixehm $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Release$ $Date: 2007/03/07 08:04:26 $ $Author: gtaur $
 #
 # Make Castor Repack System
 #
@@ -44,6 +44,7 @@ LIBS = -lshift -lcastorCnvs
 REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 		../io/StreamRepackSubRequestCnv.cpp \
 		../io/StreamRepackAckCnv.cpp \
+		../io/StreamRepackSegmentCnv.cpp \
 		RepackRequest.cpp \
 		RepackSubRequest.cpp \
 		RepackSegment.cpp \
@@ -52,7 +53,6 @@ REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 REPACKDBCNVSRC =../db/cnv/DbRepackRequestCnv.cpp \
 		../db/cnv/DbRepackSegmentCnv.cpp \
 		../db/cnv/DbRepackSubRequestCnv.cpp 
-		
 
 REPACKSERVERBIN_SRCS =  RepackServer.cpp \
 		DatabaseHelper.cpp \

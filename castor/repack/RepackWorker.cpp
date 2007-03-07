@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/03/07 08:04:26 $ $Author: gtaur $
  *
  *
  *
@@ -142,8 +142,8 @@ void RepackWorker::run(void* param)
                           break;
 
   case GET_STATUS: /** the old RepackRequest is removed */
-                          rreq = getStatus(rreq);
-                          rreq->setCommand(GET_STATUS);
+                          getStatus(rreq);
+                          //rreq->setCommand(GET_STATUS);
                           ack.addRequest(rreq);
                           break;
 
@@ -206,12 +206,11 @@ void RepackWorker::stop()
 //------------------------------------------------------------------------------
 // Retrieves the subrequest for client answer
 //------------------------------------------------------------------------------
-RepackRequest* RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Internal)
+void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Internal)
 {
   /** this method takes only 1! subrequest, this is normaly ensured by the 
     * repack client 
     */
-  RepackRequest* result = NULL;
 
   if ( rreq== NULL || rreq->subRequest().size()==0 ) {
     castor::exception::Internal ex;
@@ -219,23 +218,19 @@ RepackRequest* RepackWorker::getStatus(RepackRequest* rreq) throw (castor::excep
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 0, NULL);
     throw ex;
   }
-  /** Get the SubRequest. We query by VID and recieve a full subrequest */
-  std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
-  RepackSubRequest* tmp = m_databasehelper->getSubRequestByVid( (*tape)->vid(), false );
-  //m_databasehelper->unlock();
-  /// but we don't need the segment data for the client. -> remove them
 
+  /** Get the SubRequest. We query by VID and recieve a full subrequest */
+
+  // we give all the segments to gather information from the name server.
+
+  RepackSubRequest* tmp= m_databasehelper->getSubRequestByVid(rreq->subRequest().at(0)->vid(), true );
   if ( tmp != NULL ) {
-    result = tmp->requestID();
+      //  we don't need the request from the client, we replace it with the one from DB 
+
+      rreq->subRequest().clear();
+      rreq->addSubRequest(tmp);
+      //tmp->setRequest(rreq);
   }
-  delete (*tape);  // we have only one, must be  ensured by the repack client!
-  
-  /** we don't need the request from the client, we replace it with the 
-    *            one from DB
-    */
-  rreq->subRequest().clear();
-  delete rreq;
-  return result;
 }
 
 
@@ -290,8 +285,8 @@ void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::except
         (*tape)->setFiles((*tapeToBeArchived)->files());
         (*tape)->setFilesStaging((*tapeToBeArchived)->filesStaging());
         (*tape)->setFilesMigrating((*tapeToBeArchived)->filesMigrating());
-	(*tape)->setFilesMigrating((*tapeToBeArchived)->filesFailed());
-	(*tape)->setFilesMigrating((*tapeToBeArchived)->filesStaged());
+	(*tape)->setFilesFailed((*tapeToBeArchived)->filesFailed());
+	(*tape)->setFilesStaged((*tapeToBeArchived)->filesStaged());
         (*tape)->setXsize((*tapeToBeArchived)->xsize());         
         break; 
        }    

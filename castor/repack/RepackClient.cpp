@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/03/07 08:04:26 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -200,7 +200,7 @@ bool RepackClient::parseInput(int argc, char** argv)
       break;
     }
   }
-  if ( cp.command == GET_STATUS && cp.vid == NULL ) return false; 
+  if ( (cp.command == GET_STATUS || cp.command == ARCHIVE) && cp.vid == NULL ) return false; 
   return ( cp.pool != NULL || cp.vid != NULL );
 }
 
@@ -212,13 +212,13 @@ bool RepackClient::parseInput(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::usage() 
 {
-	std::cout << "Usage: repack [-V [VID1:VID2:..] | -P [PoolID] ] [-o serviceclass] [-S stager_hostname]" << std::endl 
-                  << "              -x [VID] " << std::endl
+	std::cout << "Usage: repack -V VID1[:VID2:..] | -P PoolID  [-o serviceclass] [-S stager_hostname]" << std::endl 
+                  << "              -x VID " << std::endl
 		  << "              -h " << std::endl
 		  << "              -s " << std::endl
-		  << "              -R [VID1:VID2:..] " << std::endl
-		  << "              -r [VID1:VID2:..] " << std::endl
-		  << "              -a [VID1] " << std::endl
+		  << "              -R VID1[:VID2:..] " << std::endl
+		  << "              -r VID1[:VID2:..] " << std::endl
+		  << "              -a VID1 " << std::endl
 		  << "              -A " << std::endl;
 }
 
@@ -262,7 +262,9 @@ int RepackClient::addTapes(RepackRequest *rreq)
 	  	sreq->setRequestID(rreq);
 	  	rreq->addSubRequest(sreq);
 	  }
-  }	
+	  return 0;
+	}	
+	return -1;
 }
 
 
@@ -272,8 +274,6 @@ int RepackClient::addTapes(RepackRequest *rreq)
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
 {
-  
-  char* vid;
   char cName[CA_MAXHOSTNAMELEN];
   struct passwd *pw = Cgetpwuid(getuid());
   
@@ -397,6 +397,15 @@ void RepackClient::handleResponse(RepackAck* ack) {
     std::cout << "===============================================================================================================" 
               << std::endl;
 
+    // Variables eventually used for the name server
+    
+    Cns_fileid file_uniqueid;
+    Cns_segattrs * segattrs=NULL;
+    int nbseg=0;
+    int ret=0;
+    int i=0;
+    std::vector<RepackSubRequest*>::iterator sreq;
+
     switch ( rreq->command() ){
       case GET_STATUS :
        creation_time = (long)rreq->creationTime();
@@ -405,6 +414,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
        pw = Cgetpwuid((uid_t)rreq->userid());
        std::cout << 
         "Details for Request created on " << ctime (&creation_time) <<  std::endl ;
+
         if ( submit_time )
 	  std::cout << "=> submitted : " << ctime (&submit_time);
         else
@@ -419,12 +429,53 @@ void RepackClient::handleResponse(RepackAck* ack) {
         std::setw(10) << std::left <<  pw->pw_name << 
         std::setw(20) << std::left << rreq->serviceclass()
         << std::left << rreq->stager()
-        << std::endl << std::endl; 
-      
-      case GET_STATUS_ALL : 
-      case ARCHIVE : 
-    case ARCHIVE_ALL:
-      case REPACK : 
+        << std::endl << std::endl;
+        sreq = rreq->subRequest().begin();
+        while ( sreq != rreq->subRequest().end() ){
+          std::cout << "===============================================================================================================" << std::endl;
+          printTapeDetail((*sreq));
+          std::cout << "===============================================================================================================" << std::endl;
+          std::cout << "\n   ***   Details file by file   ***\n" << std::endl;
+
+	  // Query the name server to retrieve more information related with the situation of segment 
+
+	  std::vector<RepackSegment*>::iterator segs = (*sreq)->segment().begin();
+
+	  memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
+	  sprintf(file_uniqueid.server,"%s","castorns"); // to be changed not to be hard coded
+	  while ( segs != (*sreq)->segment().end() ) {
+	    segattrs=NULL;nbseg=0;
+	    file_uniqueid.fileid=(*segs)->fileid();
+	    ret=Cns_getsegattrs(NULL, &file_uniqueid,&nbseg,&segattrs);
+	    if (ret<0){}
+	    if (nbseg == 0){}
+	    for(i=0; i<nbseg; i++) {
+	      if ((*segs)->copyno() != segattrs[i].copyno) continue;
+	      std::cout << "Fileid: " << file_uniqueid.fileid  << std::endl;
+	      std::cout << "Copyno: " << segattrs[i].copyno << std::endl;
+	      std::cout << "Fsec: " << segattrs[i].fsec << std::endl;
+	      std::cout << "Segsize: " << segattrs[i].segsize << std::endl;
+	      std::cout << "Compression: " << segattrs[i].compression << std::endl;
+	      std::cout << "Status: " << segattrs[i].s_status << std::endl ;
+	      std::cout << "Vid: " << segattrs[i].vid << std::endl;
+	      std::cout << "Side: " << segattrs[i].side << std::endl;
+	      std::cout << "Fseq: " << segattrs[i].fseq << std::endl;
+	      std::cout << "Blockid: " << segattrs[i].blockid << std::endl;
+	      std::cout << "ChecksumName: " << segattrs[i].checksum_name << std::endl;
+	      std::cout << "Checksum: " << segattrs[i].checksum << std::endl; 
+	    }	    
+	    std::cout << "===============================================================================================================" 
+              << std::endl;
+	    segs++;
+	  }
+	  sreq++;
+	}
+	break;
+ 
+      case GET_STATUS_ALL: 
+      case ARCHIVE: 
+      case ARCHIVE_ALL:
+      case REPACK: 
       {
         std::cout << "vid\tcuuid\t\t\t\t\ttotal  size     staging  migration  failed  staged   status" <<std::endl;
         std::cout << "--------------------------------------------------------------------------------------------------------------"
