@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.25 2007/02/22 17:27:43 wiebalck Exp $
+ * $Id: Ctape_api.h,v 1.26 2007/03/08 09:43:19 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.25 $ $Date: 2007/02/22 17:27:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.26 $ $Date: 2007/03/08 09:43:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -124,4 +124,5 @@ EXTERN_C int DLL_DECL rwndtape _PROTO((HANDLE, char *));
 EXTERN_C int DLL_DECL rwndtape _PROTO((int, char *));
 #endif
 EXTERN_C int DLL_DECL usrmsg _PROTO((char *, char *, ...));
+EXTERN_C int DLL_DECL sendrep _PROTO((int, int, ...));
 #endif
