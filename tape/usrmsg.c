@@ -4,13 +4,11 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.8 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.9 $ $Date: 2007/03/08 09:42:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
-#ifdef NOTRACE
 #include <stdio.h>
-#endif
 #include <string.h>
 #include <sys/types.h>
 #include <stdarg.h>

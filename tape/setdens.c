@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.6 $ $Date: 2001/01/24 08:40:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.7 $ $Date: 2007/03/08 09:42:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
  
 /*	setdens - set density and compression flag */
@@ -16,7 +16,10 @@ static char sccsid[] = "@(#)$RCSfile: setdens.c,v $ $Revision: 1.6 $ $Date: 2001
 #include "Ctape_api.h"
 #include "scsictl.h"
 #include "serrno.h"
-setdens(tapefd, path, devtype, den)
+
+extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
+
+int setdens(tapefd, path, devtype, den)
 int tapefd;
 char *path;
 char *devtype;
