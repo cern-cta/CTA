@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/16 15:57:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RepackServer.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
  *
  *
  *
@@ -98,6 +98,10 @@ namespace castor {
     
     /** Overloaded method from BaseServer for individual command line parser */
     virtual void parseCommandLine(int argc, char *argv[]);
+ 
+    /** Overloaded method from BaseServer for help */
+    virtual void help(std::string programName);
+
 
   private:
     /**

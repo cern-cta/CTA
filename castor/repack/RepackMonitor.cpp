@@ -76,7 +76,7 @@ namespace castor {
           //m_dbhelper->lock(tapelist->at(i));
           cuuid = stringtoCuuid(tapelist->at(i)->cuuid());
           updateTape(tapelist->at(i));
-          m_dbhelper->unlock();
+          //m_dbhelper->unlock();
           freeRepackObj(tapelist->at(i)->requestID());
 	      }
         tapelist->clear();
@@ -87,7 +87,7 @@ namespace castor {
           //m_dbhelper->lock(tapelist2->at(i));
           cuuid = stringtoCuuid(tapelist2->at(i)->cuuid());
           updateTape(tapelist2->at(i));
-          m_dbhelper->unlock();
+          //m_dbhelper->unlock();
           freeRepackObj(tapelist2->at(i)->requestID());
         }
         tapelist2->clear();

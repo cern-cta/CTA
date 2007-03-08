@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/02/19 11:06:53 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
  *
  *
  *
@@ -89,7 +89,7 @@ void RepackFileStager::run(void *param) throw() {
           else
             restartRepack(sreq);
 
-        m_dbhelper->unlock();
+	  //m_dbhelper->unlock();
 
         /// the Request has now status SUBREQUEST_STAGING
         /// try to stage the files, and forget the errors
@@ -100,7 +100,7 @@ void RepackFileStager::run(void *param) throw() {
       freeRepackObj(sreq->requestID()); /// always delete from the top
       sreq = NULL;
     }
-    m_dbhelper->unlock();
+    //m_dbhelper->unlock();
 }
 
 

@@ -395,7 +395,7 @@ castor::repack::RepackSubRequest*
 
 
 //------------------------------------------------------------------------------
-// unlock
+// lock
 //------------------------------------------------------------------------------
 void castor::repack::DatabaseHelper::lock(RepackSubRequest* tape) throw (castor::exception::Exception)
 {

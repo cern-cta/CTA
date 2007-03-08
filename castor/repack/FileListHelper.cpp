@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2006/12/13 11:00:36 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
  *
  *
  *
@@ -33,7 +33,7 @@ namespace castor {
 
 
 //------------------------------------------------------------------------------
-// Constructor 1
+// Constructor 
 //------------------------------------------------------------------------------
 FileListHelper::FileListHelper(std::string nameserver)
 {

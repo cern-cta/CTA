@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/03/07 08:04:26 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -212,36 +212,44 @@ bool RepackClient::parseInput(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::usage() 
 {
-	std::cout << "Usage: repack -V VID1[:VID2:..] | -P PoolID  [-o serviceclass] [-S stager_hostname]" << std::endl 
-                  << "              -x VID " << std::endl
-		  << "              -h " << std::endl
-		  << "              -s " << std::endl
-		  << "              -R VID1[:VID2:..] " << std::endl
-		  << "              -r VID1[:VID2:..] " << std::endl
-		  << "              -a VID1 " << std::endl
-		  << "              -A " << std::endl;
+	std::cout << " Usage:  \n ------  \n repack -V VID1[:VID2:..] | -P PoolID  [-o serviceclass] [-S stager_hostname]" << "   (to start a repack request)"<< std::endl
+                  << " repack -s " 
+                  << "   (to have the global status of the all repack sequests not archived)" << std::endl
+                  << " repack -x VID " 
+                  << "   (to have dettailed status of a specific repack sequest not archivied)" << std::endl   	
+		  << " repack -R VID1[:VID2:..] " 
+                  << "   (to kill a repack request)" << std::endl
+		  << " repack -r VID1[:VID2:..] " 
+		  << "   (to restart a failed or finished repack subrequest)" << std::endl
+		  << " repack -a VID1 " 
+                  << "   (to archive the finished  tapes with the vid  specified)" << std::endl
+		  << " repack -A " 
+                  << "   (to archive all  tapes finished)" << std::endl
+		  << " repack -h " 
+		  << "   (to have more information about the client)" << std::endl<< std::endl;
+
 }
 
 
 //------------------------------------------------------------------------------
-// destructor
+// help
 //------------------------------------------------------------------------------
 void RepackClient::help(){
-	std::cout << "The RepackClient" << std::endl
-	<< "This client sends a request to the repack server with tapes or one pool to be repacked. "<< std::endl 
-	<< "Several tapes can be added by sperating them by ':'.It is also possible to repack a tape pool."<< std::endl 
-	<< "Here, only the name of one tape pool is allowed and a output ." << std::endl;
+	std::cout << "\n *** The RepackClient *** \n" << std::endl
+	<< " This client sends a request to the repack server with tapes or one pool to be repacked. "<< std::endl 
+	<< " Several tapes can be added by sperating them by ':'.It is also possible to repack a tape pool."<< std::endl 
+	<< " Here, only the name of one tape pool is allowed and a output ." << std::endl;
 
-	std::cout << "The hostname and port can be changed in your castor " << std::endl 
-	<< "config file or by defining them in your enviroment." << std::endl << std::endl 
-	<< "The enviroment variables are: "<< std::endl 
-	<< "REPACK_PORT or REPACK_PORT_ALT "<< std::endl 
-	<< "REPACK_HOST or REPACK_HOST_ALT "<< std::endl << std::endl 
-	<< "The castor config file :" << std::endl
-	<< "REPACK PORT <port number> "<< std::endl
-	<< "REPACK HOST <hostname> "<< std::endl<< std::endl
-	<< "If the enviroment has no vaild entries, the castor configuration file" << std::endl
-	<< "is read." << std::endl << std::endl;
+	std::cout << " The hostname and port can be changed in your castor " << std::endl 
+	<< " config file or by defining them in your enviroment." << std::endl << std::endl 
+	<< " * The enviroment variables are: "<< std::endl 
+        << "   REPACK_HOST or REPACK_HOST_ALT "<< std::endl
+	<< "   REPACK_PORT or REPACK_PORT_ALT "<< std::endl  << std::endl
+	<< " * The castor config file :" << std::endl
+        << "   REPACK HOST <hostname> "<< std::endl
+	<< "   REPACK PORT <port number> "<< std::endl << std::endl
+	<< " If the enviroment has no vaild entries, the castor configuration file" << std::endl
+	<< " is read." << std::endl << std::endl;
 		
         usage();
 }

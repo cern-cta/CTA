@@ -67,7 +67,7 @@ void RepackCleaner::run(void* param) throw(){
         {castor::dlf::Param("VID", tape->vid())};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 35, 1, params);
       }
-      m_dbhelper->unlock();
+      //m_dbhelper->unlock();
       cuuid = nullCuuid;
       freeRepackObj(tape->requestID()); 
       tape = NULL;
@@ -92,7 +92,7 @@ void RepackCleaner::stop() throw(){
 }
 
 //------------------------------------------------------------------------------
-// getStageStatus
+// cleanupTape
 //------------------------------------------------------------------------------
 int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Internal)
 { 
@@ -109,7 +109,7 @@ int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::
 }
 
 //------------------------------------------------------------------------------
-// getStageStatus
+// removeFilesFromStager
 //------------------------------------------------------------------------------
 void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Internal)
 {

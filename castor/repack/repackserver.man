@@ -6,10 +6,24 @@ repackserver \- The server part for the CASTOR II Repack system.
 .SH "SYNOPSIS"
 .B repackserver
 [
-.BI \-f
+.B \-f
 ] [
-.BI \-h
+.B \-h
 ]
+[
+.B \-S num
+] [
+.B \-M num
+]
+[
+.B \-c num
+] [
+.B \-C num
+]
+[
+.B \-W num
+] 
+
 .SH "DESCRIPTION"
 The repackserver accepts connections from repack clients and processes their
 requests.  
@@ -77,6 +91,21 @@ Runs in foreground, if STAGER_TRACE is set to level 1-3, debug messages can be s
 
 \fB\-h\fR
 Help
+
+\fB\-S num\fR
+Number of RepackFileStager threads (default 1)
+
+\fB\-M num\fR
+Number of RepackMonitor threads (default 1)
+
+\fB\-c num\fR
+Number of RepackFileChecker threads (default 1)
+
+\fB\-C num\fR
+Number of RepackCleaner threads (default 1)
+
+\fB\-W num\fR
+Number of RepackWorker threads (default 1)
 
 .SH "EXIT STATUS"
 In case of an error <> 0.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/01/16 15:57:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
  *
  *
  *
@@ -339,36 +339,20 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
 
   Coptind = 1;
   Copterr = 0;
-
   char c;
+  castor::server::BaseThreadPool* p= NULL;
+
   while ((c = Cgetopt_long(argc, argv, (char*)cmdParams, longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
       break;
-    case 's':
-      { 
-        /** if we synchronise, foreground mode is forced, so we can talk to the user */
-        if ( !m_foreground )
-          m_foreground = true;
-        
-        /** only the RepackSychroniser is active */
-        m_synchronise = true;
-        m_threadPools['W']->setNbThreads(0);
-        m_threadPools['C']->setNbThreads(0);
-        m_threadPools['M']->setNbThreads(0);
-        m_threadPools['S']->setNbThreads(0);
-        m_threadPools['c']->setNbThreads(0);
-        m_threadPools['Z']->setNbThreads(1);
-        break;
-      }
-      break;
     case 'h':
       help(argv[0]);
       exit(0);
       break;
-    default:
-      castor::server::BaseThreadPool* p = m_threadPools[c];
+    case 'W': case 'c': case 'C': case 'M': case 'S':
+      p = m_threadPools[c];
       if(p != 0) {
         p->setNbThreads(atoi(Coptarg));
       }
@@ -377,12 +361,32 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
         exit(0);
       }
       break;
+    default:
+      help(argv[0]);
+      exit(0);
     }
+    
   }
   delete [] longopts;
 }
 
+//------------------------------------------------------------------------------
+// help
+//------------------------------------------------------------------------------
+void castor::repack::RepackServer::help(std::string programName)
+{
+  std::cout << "\nUsage: " << programName << " [options]\n"
+	    << "where options can be:\n\n"
+            << "\t--foreground      or -f                \tForeground\n"
+             << "\t--help            or -h                \tThis help\n"
+            << "\t-M  num  \tRepackMonitor threads(default 1)\n"
+            << "\t-C  num  \tRepackCleaner threads(default 1)\n"
+            << "\t-c num   \tRepackFileChecker threads(default 1)\n"
+            << "\t-S num   \tRepackFileStager threads(default 1)\n"
+            << "\t-W num   \tRepackWorker threads(default 1)\n\n"
+            << "Comments to: Castor.Support@cern.ch "<<std::endl;
 
+}
 
 
 

@@ -5,39 +5,35 @@
 .SH "NAME"
 repack \- Move files from tape(s) to other tape destination 
 .SH "SYNOPSIS"
-.B repack
+
+
+.B repack option] 
+
+options: 
+.B
 .br 
-[
-.BI \-V " VID1:VID2"
-[
-.BI \-o " OutputServiceClass"
-]
-[
-.BI \-S " StagerHostname"
-]
-]
+.BI \-V " VID1[:VID2[:VID3...]] ["\-o " OutputServiceClass ][" \-S " StagerHostname"]
 .br 
-[
-.BI  \-h
-]
-.br 
-[
-.B \-s 
-]
-.br 
-[
-.B \-a 
-]
-.br 
-[
-.BI \-x " VID"
-]
-.br 
-[
 .BI \-P " SourcePoolname"
 [
 .BI \-o " OutputServiceClass"
-] ]
+]
+.br 
+.BI  \-r " VID"
+.br 
+.br 
+.BI  \-R " VID"
+.br
+.B \-s 
+.br 
+.BI \-x " VID"
+.br
+.BI \-A " VID1[:VID2[:VID3...]]" 
+.br 
+.BI \-a " VID1[:VID2[:VID3...]]" 
+.br
+.BI  \-h
+ 
 .SH "DESCRIPTION"
 .B repack
 moves files of active segments from a set of tape(s) to a target tape pool and gives 
@@ -93,13 +89,22 @@ The hostname of the Stager this Repack process has to be send to.
 
 .SH "OPTIONS"
 \fB\-V\fR
-specifies the volumes to repack seperated by ':'.
+specifies the volumes to repack seperated by :.
+
+\fB\-P\fR
+specifies the source pool  to repack 
 
 \fB\-o\fR
 The service class used for migration (see obove). If none specified, the default is taken from the castor config file on the repackserver machine.
 
-\fB\-o\fR
+\fB\-S\fR
 The stager to be used to do the repack of the tape.
+
+\fB\-r\fR
+To restart the repack of the tape which finished but with failures.
+
+\fB\-R\fR
+To kill a repack process.
 
 \fB\-s\fR
 Prints information about all tapes in an active repack process.
@@ -107,12 +112,16 @@ Prints information about all tapes in an active repack process.
 \fB\-x\fR
 Prints detailed information of the given volume.
 
+\fB\-A\fR
+Archives all the repacked tapes. They are not listed anymore when the \fB\-s\fR option is 
+given
+
+\fB\-a\fR
+Archives the tapes specified, the volumes to repack seperated by :
+
 \fB\-h\fR
 Help
 
-\fB\-a\fR
-Archives repacked tapes. They are not listed anymore when the \fB\-s\fR option is 
-given
 .SH "EXAMPLE"
 .nf 
 .ft CW
