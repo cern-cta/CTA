@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_procreq.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 11:36:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -74,7 +70,7 @@ char *logbuf;
 	}
 }
 
-marshall_ELEMENT (sbpp, element_info)
+int marshall_ELEMENT (sbpp, element_info)
 char **sbpp;
 struct smc_element_info *element_info;
 {
@@ -94,7 +90,7 @@ struct smc_element_info *element_info;
 
 /*	rmc_srv_export - export/eject a cartridge from the robot */
 
-rmc_srv_export(req_data, clienthost)
+int rmc_srv_export(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -136,7 +132,7 @@ char *clienthost;
 
 /*	rmc_srv_findcart - find cartridge(s) */
 
-rmc_srv_findcart(req_data, clienthost)
+int rmc_srv_findcart(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -218,7 +214,7 @@ char *clienthost;
 
 /*	rmc_srv_getgeom - get the robot geometry */
 
-rmc_srv_getgeom(req_data, clienthost)
+int rmc_srv_getgeom(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -260,7 +256,7 @@ char *clienthost;
 
 /*	rmc_srv_import - import/inject a cartridge into the robot */
 
-rmc_srv_import(req_data, clienthost)
+int rmc_srv_import(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -302,7 +298,7 @@ char *clienthost;
 
 /*	rmc_srv_mount - mount a cartridge on a drive */
 
-rmc_srv_mount(req_data, clienthost)
+int rmc_srv_mount(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -348,7 +344,7 @@ char *clienthost;
 
 /*	rmc_srv_readelem - read element status */
 
-rmc_srv_readelem(req_data, clienthost)
+int rmc_srv_readelem(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -423,7 +419,7 @@ char *clienthost;
 
 /*	rmc_srv_unmount - dismount a cartridge from a drive */
 
-rmc_srv_unmount(req_data, clienthost)
+int rmc_srv_unmount(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {

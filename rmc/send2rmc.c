@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.4 $ $Date: 2003/11/19 12:22:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -14,6 +10,7 @@ static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.4 $ $Date: 200
 #include <winsock2.h>
 #else
 #include <netdb.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
@@ -21,11 +18,12 @@ static char sccsid[] = "@(#)$RCSfile: send2rmc.c,v $ $Revision: 1.4 $ $Date: 200
 #include "marshall.h"
 #include "net.h"
 #include "rmc.h"
+#include "rmc_api.h"
 #include "serrno.h"
 
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
-send2rmc(host, reqp, reql, user_repbuf, user_repbuf_len)
+int send2rmc(host, reqp, reql, user_repbuf, user_repbuf_len)
 char *host;
 char *reqp;
 int reql;
@@ -53,7 +51,7 @@ int user_repbuf_len;
 	sin.sin_family = AF_INET;
 	if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if (sp = Cgetservbyname ("rmc", "tcp")) {
+	} else if ((sp = Cgetservbyname ("rmc", "tcp"))) {
 		sin.sin_port = sp->s_port;
 		serrno = 0;
 	} else {

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_find_cartridge.c,v $ $Revision: 1.3 $ $Date: 2003/10/29 12:51:21 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      rmc_find_cartridge - find cartridge(s) in a remote SCSI robot */
 
 #include <stdlib.h>
@@ -21,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: rmc_find_cartridge.c,v $ $Revision: 1.3 $ 
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-rmc_find_cartridge(server, smc_ldr, template, type, startaddr, nbelem, element_info)
+int rmc_find_cartridge(server, smc_ldr, template, type, startaddr, nbelem, element_info)
 char *server;
 char *smc_ldr;
 char *template;

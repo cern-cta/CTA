@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmclogit.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 11:36:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -14,10 +10,11 @@ static char sccsid[] = "@(#)$RCSfile: rmclogit.c,v $ $Revision: 1.3 $ $Date: 200
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include "rmc.h"
 extern int jid;
 
-rmclogit(char *func, char *msg, ...)
+int rmclogit(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[PRTBUFSZ];

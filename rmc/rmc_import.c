@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_import.c,v $ $Revision: 1.2 $ $Date: 2002/12/03 06:45:28 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      rmc_import - import/inject a cartridge into the robot */
 
 #include <stdlib.h>
@@ -21,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: rmc_import.c,v $ $Revision: 1.2 $ $Date: 2
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-rmc_import(server, smc_ldr, vid)
+int rmc_import(server, smc_ldr, vid)
 char *server;
 char *smc_ldr;
 char *vid;

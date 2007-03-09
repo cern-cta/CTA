@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.8 $ $Date: 2007/02/13 13:11:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -18,6 +14,8 @@ static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.8 $ $Date: 200
 #include <winsock2.h>
 #else
 #include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -29,6 +27,12 @@ static char sccsid[] = "@(#)$RCSfile: rmc_serv.c,v $ $Revision: 1.8 $ $Date: 200
 #include "rmc.h"
 #include "scsictl.h"
 #include "serrno.h"
+#include "rmc_server_api.h"
+#include "Cdomainname.h"
+
+/* Forward declaration */
+int getreq(int, int*, char*, char**);
+void procreq(int, char*, char*);
 
 int being_shutdown;
 char func[16];
@@ -38,14 +42,13 @@ int maxfds;
 struct extended_robot_info extended_robot_info;
 int rpfd;
 
-rmc_main(main_args)
+int rmc_main(main_args)
 struct main_args *main_args;
 {
 	int c;
 	unsigned char cdb[12];
 	void doit(int);
 	char domainname[CA_MAXHOSTNAMELEN+1];
-	struct smc_element_info element_info;
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
 	char *getconfent();
@@ -108,8 +111,9 @@ struct main_args *main_args;
 	/* get robot geometry, try 2 times */
    
     while (n < 2) {
-	     if (c = smc_get_geometry (extended_robot_info.smc_fd,
-	        extended_robot_info.smc_ldr, &extended_robot_info.robot_info)) {
+      if ((c = smc_get_geometry (extended_robot_info.smc_fd,
+                                 extended_robot_info.smc_ldr,
+                                 &extended_robot_info.robot_info))) {
             c = smc_lasterror (&smc_status, &msgaddr);
             rmclogit (func, RMC02, "get_geometry", msgaddr);
             rmclogit (func,"trying again get_geometry\n");
@@ -161,7 +165,7 @@ struct main_args *main_args;
 	sin.sin_family = AF_INET ;
 	if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if (sp = getservbyname ("rmc", "tcp")) {
+	} else if ((sp = getservbyname ("rmc", "tcp"))) {
 		sin.sin_port = sp->s_port;
 	} else {
 		sin.sin_port = htons ((unsigned short)RMC_PORT);
@@ -196,7 +200,7 @@ struct main_args *main_args;
 }
 
 #if ! defined(_WIN32)
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -233,7 +237,7 @@ int rqfd;
 		netclose (rqfd);
 }
 
-getreq(s, req_type, req_data, clienthost)
+int getreq(s, req_type, req_data, clienthost)
 int s;
 int *req_type;
 char *req_data;
@@ -285,7 +289,7 @@ char **clienthost;
 	}
 }
 
-procreq(req_type, req_data, clienthost)
+void procreq(req_type, req_data, clienthost)
 int req_type;
 char *req_data;
 char *clienthost;

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_dismount.c,v $ $Revision: 1.2 $ $Date: 2002/12/03 06:45:28 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      rmc_dismount - dismount a cartridge from a drive */
 
 #include <stdlib.h>
@@ -21,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: rmc_dismount.c,v $ $Revision: 1.2 $ $Date:
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-rmc_dismount(server, smc_ldr, vid, drvord, force)
+int rmc_dismount(server, smc_ldr, vid, drvord, force)
 char *server;
 char *smc_ldr;
 char *vid;
