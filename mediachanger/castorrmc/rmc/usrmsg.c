@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 11:38:12 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -14,7 +10,7 @@ static char sccsid[] = "@(#)$RCSfile: usrmsg.c,v $ $Revision: 1.3 $ $Date: 2005/
 #include <stdarg.h>
 #include "rmc.h"
 
-usrmsg(char *func, char *msg, ...)
+int usrmsg(char *func, char *msg, ...)
 {
 	va_list args;
 	char *p;

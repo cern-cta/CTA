@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_errmsg.c,v $ $Revision: 1.3 $ $Date: 2003/09/08 17:22:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +26,7 @@ int buflen;
 
 /* rmc_errmsg - send error message to user defined client buffer or to stderr */
 
-rmc_errmsg(char *func, char *msg, ...)
+int rmc_errmsg(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[PRTBUFSZ];

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmc_get_geometry.c,v $ $Revision: 1.2 $ $Date: 2002/12/03 06:45:28 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      rmc_get_geometry - get the remote SCSI robot geometry */
 
 #include <stdlib.h>
@@ -21,7 +17,7 @@ static char sccsid[] = "@(#)$RCSfile: rmc_get_geometry.c,v $ $Revision: 1.2 $ $D
 #include "rmc.h"
 #include "rmc_api.h"
 #include "serrno.h"
-rmc_get_geometry(server, smc_ldr, robot_info)
+int rmc_get_geometry(server, smc_ldr, robot_info)
 char *server;
 char *smc_ldr;
 struct robot_info *robot_info;
