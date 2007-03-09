@@ -172,7 +172,7 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
   client.sendRequest(&req,&rh); 
 
   /** we ignore the results from the stager */
-  for (int i=0; i<respvec.size(); i++) {
+  for (unsigned int i=0; i<respvec.size(); i++) {
     delete respvec[i];
   }
 }

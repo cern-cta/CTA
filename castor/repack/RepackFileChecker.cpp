@@ -202,6 +202,7 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 23, 1, params);
      return -1;
   }
+  return 0;
 }		
 	
 //------------------------------------------------------------------------------

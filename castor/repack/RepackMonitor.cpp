@@ -72,7 +72,7 @@ namespace castor {
   
     try{
       if (tapelist != NULL ) { 
-        for (int i=0; i< tapelist->size(); i++){
+        for (unsigned int i=0; i< tapelist->size(); i++){
           //m_dbhelper->lock(tapelist->at(i));
           cuuid = stringtoCuuid(tapelist->at(i)->cuuid());
           updateTape(tapelist->at(i));
@@ -83,7 +83,7 @@ namespace castor {
         delete tapelist;
       }
       if ( tapelist2 != NULL ) {
-        for (int i=0; i< tapelist2->size(); i++){
+        for (unsigned int i=0; i< tapelist2->size(); i++){
           //m_dbhelper->lock(tapelist2->at(i));
           cuuid = stringtoCuuid(tapelist2->at(i)->cuuid());
           updateTape(tapelist2->at(i));
@@ -172,7 +172,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
                           throw (castor::exception::Internal)
 { 
   /** status counters */
-  int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status,invalid_status;
+  unsigned int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;
   canbemig_status = stagein_status = waitingmig_status = stageout_status = staged_status = invalid_status = 0;
 
   Cuuid_t cuuid;  

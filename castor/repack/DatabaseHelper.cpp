@@ -87,10 +87,10 @@ castor::repack::DatabaseHelper::DatabaseHelper() :
     m_selectCheckSubRequestStatement(NULL),
     m_selectAllSubRequestsStatement(NULL),
     m_selectExistingSegmentsStatement(NULL),
-    m_isStoredStatement(NULL),
-    m_archiveStatement(NULL),
+    m_isStoredStatement(NULL), 
     m_selectAllSubRequestsStatusStatement(NULL),
     m_selectAllSubRequestsVidStatement(NULL),
+    m_archiveStatement(NULL),
     m_selectLockStatement(NULL),
     m_selectLastSegmentsSituationStatement(NULL){
     try {
@@ -170,7 +170,7 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
     svcs()->fillRep(&ad, rreq, OBJ_RepackSubRequest, false);	//and fill it
 
     // we must not forget the segments
-    for (int i = 0; i < rreq->subRequest().size(); i++){
+    for (unsigned int  i = 0; i < rreq->subRequest().size(); i++){
       svcs()->fillRep(&ad, rreq->subRequest().at(i), OBJ_RepackSegment, false);
     }
     svcs()->commit(&ad);
@@ -341,7 +341,7 @@ void castor::repack::DatabaseHelper::updateSubRequest(
         svcs()->fillRep(&ad, obj, OBJ_RepackSegment, false);
     }
     else {
-        for (int i = 0; i < obj->segment().size(); i++)
+        for (unsigned int  i = 0; i < obj->segment().size(); i++)
           svcs()->updateRep(&ad, obj->segment().at(i), false);
     }
     svcs()->commit(&ad);
@@ -594,7 +594,7 @@ std::vector<castor::repack::RepackSubRequest*>*
   result = internalgetSubRequests(m_selectAllSubRequestsStatusStatement);
   
   /// we want to have to corresponding RepackRequest for each RepackSubRequest
-  for (int i=0; i<result->size(); i++ ){
+  for (unsigned int i=0; i<result->size(); i++ ){
     svcs()->fillObj(&ad,result->at(i),OBJ_RepackRequest);
   }
   svcs()->commit(&ad);
@@ -621,7 +621,7 @@ std::vector<castor::repack::RepackSubRequest*>*
   result = internalgetSubRequests(m_selectAllSubRequestsVidStatement);
   
   /// we want to have to corresponding RepackRequest for each RepackSubRequest
-  for (int i=0; i<result->size(); i++ ){
+  for (unsigned int i=0; i<result->size(); i++ ){
     svcs()->fillObj(&ad,result->at(i),OBJ_RepackRequest);
   }
   svcs()->commit(&ad);

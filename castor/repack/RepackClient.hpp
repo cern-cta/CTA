@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/12/14 15:04:19 $ $Author: itglp $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/09 10:49:59 $ $Author: gtaur $
  *
  * The Repack Client. This is the client part of the repack project, which just
  * sends and Request to the server. One Request can have serveral tapes 
@@ -70,9 +70,9 @@ namespace castor {
     /**
      * destructor
      */
-    ~RepackClient()                                             throw();
+    ~RepackClient()throw();
 
-    void RepackClient::run(int argc, char** argv);
+    void run(int argc, char** argv);
 
   protected:
     /** 
@@ -124,7 +124,7 @@ namespace castor {
     /**
      * little print helper for nice output and factorisation 
      */
-    void RepackClient::printTapeDetail(RepackSubRequest *tape);
+    void printTapeDetail(RepackSubRequest *tape);
 
   private:
     int m_defaultport;

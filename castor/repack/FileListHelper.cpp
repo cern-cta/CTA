@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/03/09 10:49:59 $ $Author: gtaur $
  *
  *
  *
@@ -56,7 +56,7 @@ std::vector<std::string>* FileListHelper::getFilePathnames(
                                        castor::repack::RepackSubRequest *subreq)
                                               throw (castor::exception::Internal)
 {
-  int i=0;
+  unsigned int i=0;
   char path[CA_MAXPATHLEN+1];
   
   std::vector<u_signed64>* tmp;
@@ -95,7 +95,6 @@ std::vector<std::string>* FileListHelper::getFilePathnames(
 std::vector<u_signed64>* FileListHelper::getFileList(
       							castor::repack::RepackSubRequest *subreq) 
 {
-  unsigned long i = 0;
   double vecsize = 0;
   std::vector<RepackSegment*>::iterator iterseg;
   /** pointer to vector of all Segments */
@@ -201,6 +200,7 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 3, params);
       return 0;
   }
+  return -1; // you should never reach this point 
 }
 
 	} // End namespace repack

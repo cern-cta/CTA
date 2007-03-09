@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/03/09 10:49:59 $ $Author: gtaur $
  *
  *
  *
@@ -119,7 +119,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
                                             throw (castor::exception::Exception)
 {
 
-  int failed = 0;
+  unsigned int failed = 0;
   std::string reqId = "";
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   castor::stager::StageRepackRequest req;
@@ -265,7 +265,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq){
       }
       response++;
     }
-    for (int i=0; i < fr.size(); i++ ) {
+    for (unsigned int i=0; i < fr.size(); i++ ) {
      delete fr[i];
     }
 
@@ -390,7 +390,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   }
 
   /** like the normale api call, we have to check for errors in the answer*/
-  for (int i=0; i<respvec.size(); i++) {
+  for (unsigned int i=0; i<respvec.size(); i++) {
 
     // Casting the response into a FileResponse !
     castor::rh::FileResponse* fr = dynamic_cast<castor::rh::FileResponse*>(respvec[i]);

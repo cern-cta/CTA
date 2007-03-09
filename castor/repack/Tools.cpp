@@ -47,7 +47,7 @@ namespace castor {
       if ( obj->type() == OBJ_RepackRequest)
       {
         RepackRequest* tmp = dynamic_cast<RepackRequest*>(obj);
-        for (int i=0;i<tmp->subRequest().size(); i++){
+        for (unsigned int i=0;i<tmp->subRequest().size(); i++){
           freeRepackSubRequest( tmp->subRequest().at(i) );
         }
         tmp->subRequest().clear();
@@ -68,7 +68,7 @@ namespace castor {
   void freeRepackSubRequest(castor::repack::RepackSubRequest* obj)
   {
     if ( obj != NULL ) {
-      for (int i=0;i<obj->segment().size(); i++){
+      for (unsigned int i=0;i<obj->segment().size(); i++){
         delete obj->segment().at(i);
       }
       obj->segment().clear();
