@@ -5,9 +5,9 @@
 # chkconfig: 345 73 32
 # description: MigHunter daemons
 #
-# $Id: MigHunter.init,v 1.6 2006/02/07 08:37:21 itglp Exp $
+# $Id: MigHunter.init,v 1.7 2007/03/09 13:44:17 waldron Exp $
 #
-# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.6 $ $Date: 2006/02/07 08:37:21 $ CERN/IT/ADC Jean-Damien Durand
+# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.7 $ $Date: 2007/03/09 13:44:17 $ CERN/IT/ADC Jean-Damien Durand
 #
 
 #
@@ -111,9 +111,9 @@ case "$1" in
 	if [ -n "$pid" ]; then
 		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping ${prog}(s): "
             if [ $SILENTSTOP -eq 0 ]; then
-                kill -9 $pid
+                kill -2 $pid
             else
-                kill -9 $pid >& /dev/null
+                kill -2 $pid >& /dev/null
             fi
 	    RETVAL=$?
 	else
