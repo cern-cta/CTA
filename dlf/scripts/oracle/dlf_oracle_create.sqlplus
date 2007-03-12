@@ -299,6 +299,8 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (13, 'SRMServer');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (14, 'SRMDaemon');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (15, 'Repack');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (16, 'cleaning');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'tpdaemon');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
 
 /* initialise sequences */
 INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);
