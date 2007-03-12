@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.32 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.33 $ $Date: 2007/03/12 08:10:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -166,11 +166,12 @@ char	**argv;
                                   "media error",    TL_MSG_PARAM_INT, mediaerror,
                                   "read failure",   TL_MSG_PARAM_INT, readfailure,
                                   "write failure",  TL_MSG_PARAM_INT, writefailure );
-
-       	      if (tapealerts > 0) {
-	            configdown (drive);
+              /*
+                if (tapealerts > 0) {
+                configdown (drive);
                 return -1;
-              }
+                }
+              */
     	  } else {
 	    	tplogit (func, "tape alerts: no information available\n");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
