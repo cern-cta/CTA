@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.5 $ $Date: 2003/04/10 09:40:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.6 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -27,6 +27,8 @@ static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.5 $ $Date: 20
 #include "net.h"
 #include "vdqm_api.h"
 #endif
+#include <unistd.h>
+#include "tplogger_api.h"
 int jid;
 main(argc, argv)
 int	argc;
@@ -48,6 +50,9 @@ char	**argv;
 	int vdqm_status;
 
 	ENTRY (confdrive);
+
+        tl_init_handle( &tl_tpdaemon, "dlf" );
+        tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
 	drive = argv[1];
 	dvn = argv[2];
@@ -110,15 +115,24 @@ char	**argv;
 	if (c == 0) {
 		vdqm_status = (status == CONF_UP) ? VDQM_UNIT_UP : VDQM_UNIT_DOWN;
 		tplogit (func, "calling vdqm_UnitStatus\n");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus" );
 		while ((vdqm_rc = vdqm_UnitStatus (NULL, NULL, dgn, NULL, drive,
 			&vdqm_status, NULL, 0)) &&
 			(serrno == SECOMERR || serrno == EVQHOLD))
 				sleep (60);
 		tplogit (func, "vdqm_UnitStatus returned %s\n",
 			vdqm_rc ? sstrerror(serrno) : "ok");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
+                                    "func",    TL_MSG_PARAM_STR, func, 
+                                    "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
+                                    "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok");
 	}
 #endif
 	if (rpfd >= 0)
 		sendrep (rpfd, TAPERC, c);
+
+        tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
 	exit (c);
 }

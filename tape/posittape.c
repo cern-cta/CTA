@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.14 $ $Date: 2003/10/28 12:05:26 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.15 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.14 $ $Date: 2
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
+#include "tplogger_api.h"
 posittape(tapefd, path, devtype, lblcode, mode, cfseq, fid, filstat, fsec, fseq,
 	den, flags, Qfirst, Qlast, vol1, hdr1, hdr2, uhl1)
 int tapefd;
@@ -96,6 +97,10 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				n = INT_MAX;	/* arbitrary large count */
 			}
 			tplogit (func, "trying to skip over %d files\n", n);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "trying to skip over files",
+                                            "Number",  TL_MSG_PARAM_INT, n );
 			if ((c = skiptpfff (tapefd, path, n)) < 0) goto reply;
 			if (c == 0) {
 				*cfseq = fseq;
@@ -312,6 +317,10 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 			else
 				n = INT_MAX;	/* arbitrary large count */
 			tplogit (func, "trying to skip over %d files\n", n);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "trying to skip over files",
+                                            "Number",  TL_MSG_PARAM_INT, n );
 			if ((c = skiptpfff (tapefd, path, n)) < 0) goto reply;
 			if (c > 0) {
 				if ((c = skiptpfb (tapefd, path, 2))) goto reply;
@@ -445,11 +454,22 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 prthdrs:
 		c = 0;
 		tplogit (func, "hdr1 = %s\n", hdr1);
-		if (*hdr2)
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func", TL_MSG_PARAM_STR, func,
+                                    "hdr1", TL_MSG_PARAM_STR, hdr1 );
+                if (*hdr2) {
 			tplogit (func, "hdr2 = %s\n", hdr2);
-		if (*uhl1)
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func", TL_MSG_PARAM_STR, func,
+                                            "hdr2", TL_MSG_PARAM_STR, hdr2 );
+		}
+                if (*uhl1) {
 			tplogit (func, "uhl1 = %s\n", uhl1);
-		if (filstat != NEW_FILE && *fid) {
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func", TL_MSG_PARAM_STR, func,
+                                            "uhl1", TL_MSG_PARAM_STR, uhl1 );
+		}
+                if (filstat != NEW_FILE && *fid) {
 			strncpy (tpfid, hdr1 + 4, 17);
 			tpfid[17] = '\0';
 			if ((p = strchr (tpfid, ' ')) != NULL) *p = '\0';

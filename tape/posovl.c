@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.26 $ $Date: 2003/09/15 08:55:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.27 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -29,6 +29,7 @@ static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.26 $ $Date: 2003
 #include "sacct.h"
 #endif
 #include "serrno.h"
+#include "tplogger_api.h"
 char *devtype;
 char *dvrname;
 char errbuf[512];
@@ -97,6 +98,9 @@ char	**argv;
 
 	ENTRY (posovl);
 
+        tl_init_handle( &tl_tpdaemon, "dlf" );
+        tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
+
 	drive = argv[1];
 	vid = argv[2];
 	rpfd = atoi(argv[3]);
@@ -163,13 +167,20 @@ char	**argv;
 			c = errno;
 			if (errno == ENXIO)	/* drive not operational */
 				configdown (drive);
-			else
+			else {
 				usrmsg (func, TP042, path, "open",
 					strerror(errno));
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "path",    TL_MSG_PARAM_STR, path,
+                                                    "Message", TL_MSG_PARAM_STR, "open" );
+                        }
 			goto reply;
 		}
 		if (chkdriveready_sony (tapefd) <= 0) {
 			usrmsg (func, TP054);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 1,
+                                            "func", TL_MSG_PARAM_STR, func );
 			c = ETNRDY;
 			goto reply;
 		}
@@ -194,6 +205,8 @@ char	**argv;
 			if (errno == EIO) {
 #endif
 				usrmsg (func, TP054);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 1,
+                                                    "func", TL_MSG_PARAM_STR, func );                        
 				c = ETNRDY;
 				goto reply;
 			}
@@ -201,19 +214,38 @@ char	**argv;
 			c = errno;
 			if (errno == ENXIO)	/* drive not operational */
 				configdown (drive);
-			else
+			else {
 				usrmsg (func, TP042, path, "open",
 					strerror(errno));
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "path",    TL_MSG_PARAM_STR, path,
+                                                    "Message", TL_MSG_PARAM_STR, "open" );
+                        }
 			goto reply;
 		}
 		if (chkdriveready (tapefd) <= 0) {
 			usrmsg (func, TP054);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 1,
+                                            "func", TL_MSG_PARAM_STR, func );                        
 			c = ETNRDY;
 			goto reply;
 		}
 		if (method == TPPOSIT_BLKID) {
 			tplogit (func, "locating to blockid %02x%02x%02x%02x\n",
 			    blockid[0], blockid[1], blockid[2], blockid[3]);
+                        {
+                                char msg[32];
+                                sprintf( msg, "locating to blockid %02x%02x%02x%02x\n",
+                                         blockid[0], blockid[1], blockid[2], blockid[3] );
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 6,
+                                                    "func",       TL_MSG_PARAM_STR, func,
+                                                    "Message",    TL_MSG_PARAM_STR, msg,
+                                                    "Block ID 0", TL_MSG_PARAM_INT, blockid[0],
+                                                    "Block ID 1", TL_MSG_PARAM_INT, blockid[1],
+                                                    "Block ID 2", TL_MSG_PARAM_INT, blockid[2],
+                                                    "Block ID 3", TL_MSG_PARAM_INT, blockid[3] );
+                        }
 			if (c = locate (tapefd, path, blockid)) goto reply;
 			flags |= LOCATE_DONE;
 		}
@@ -357,8 +389,12 @@ char	**argv;
                 marshall_STRING (sbp, hdr2);
 		marshall_STRING (sbp, uhl1);
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
-	} else
+	} else {
 		usrmsg (func, "%s", errbuf);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, errbuf );                        
+        }
 reply:
 	if (c < 0) c = serrno;
 	if (c) {
@@ -367,6 +403,7 @@ reply:
 		close (tapefd);
 	}
 	sendrep (rpfd, TAPERC, c);
+        tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 	exit (0);
 }
 
@@ -380,6 +417,9 @@ void cleanup()
 	char sendbuf[REQBUFSZ];
 
 	tplogit (func, "cleanup started\n");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "cleanup started" );
 	if (tapefd >= 0)
 		close (tapefd);
 
@@ -408,6 +448,9 @@ void cleanup()
 	marshall_LONG (q, msglen);	/* update length field */
 
 	(void) send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+        
+        /* called before each exit() */
+        tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 }
 
 configdown(drive)
@@ -417,6 +460,9 @@ char *drive;
 
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
 	usrmsg ("posovl", "%s\n", msg);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                            "func",    TL_MSG_PARAM_STR, "posovl",
+                            "Message", TL_MSG_PARAM_STR, msg );                        
 	omsgr ("configdown", msg, 0);
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }

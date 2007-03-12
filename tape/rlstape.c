@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.31 $ $Date: 2006/12/13 12:59:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.32 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -32,6 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.31 $ $Date: 200
 #include "net.h"
 #include "vdqm_api.h"
 #endif
+#include "tplogger_api.h"
 char *devtype;
 char *dvrname;
 char errbuf[512];
@@ -86,6 +87,9 @@ char	**argv;
 
 	ENTRY (rlstape);
 
+        tl_init_handle( &tl_tpdaemon, "dlf" );
+        tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
+
 	drive = argv[1];
 	vid = argv[2];
 	dvn = argv[3];
@@ -111,6 +115,12 @@ char	**argv;
         vsnretry = 0;
 
 	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 5,
+                            "func",     TL_MSG_PARAM_STR, func,
+                            "Message",  TL_MSG_PARAM_STR, "rls",
+                            "dvn",      TL_MSG_PARAM_STR, dvn,
+                            "vid",      TL_MSG_PARAM_STR, vid,
+                            "rlsflags", TL_MSG_PARAM_INT, rlsflags );
 
 #if SONYRAW
 	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
@@ -149,12 +159,23 @@ char	**argv;
                        mediaerror, 
                        readfailure,
                        writefailure);
+              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 103 : 111, 6,
+                                  "func",           TL_MSG_PARAM_STR, func,
+                                  "Message",        TL_MSG_PARAM_STR, "tape alerts",
+                                  "hardware error", TL_MSG_PARAM_INT, harderror,
+                                  "media error",    TL_MSG_PARAM_INT, mediaerror,
+                                  "read failure",   TL_MSG_PARAM_INT, readfailure,
+                                  "write failure",  TL_MSG_PARAM_INT, writefailure );
+
        	      if (tapealerts > 0) {
 	            configdown (drive);
                 return -1;
               }
     	  } else {
 	    	tplogit (func, "tape alerts: no information available\n");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "tape alerts: no information available" );
     	  }
 
 	  close (tapefd);
@@ -165,12 +186,21 @@ char	**argv;
 #if defined(_IBMR2)
 		if (strcmp (dvrname, "tape") || (errno != EIO && errno != ENOTREADY))
 #endif
-			tplogit (func, TP042, dvn, "open", strerror(errno));
+                        {
+                                tplogit (func, TP042, dvn, "open", strerror(errno));
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "dvn",     TL_MSG_PARAM_STR, dvn,
+                                                    "Message", TL_MSG_PARAM_STR, "open",
+                                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                        }
  	}
 #if SONYRAW
     } else {
        tplogit (func, "tape alerts: no information available\n");
-
+       tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                           "func",    TL_MSG_PARAM_STR, func,
+                           "Message", TL_MSG_PARAM_STR, "tape alerts: no information available" );
     }
 #endif
 
@@ -185,12 +215,19 @@ char	**argv;
 	if (rlsflags & TPRLS_UNLOAD)
 		vdqm_status |= VDQM_FORCE_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)\n");
-	while ((vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)" );
+        while ((vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive,
 		&vdqm_status, NULL, jid)) &&
 		(serrno == SECOMERR || serrno == EVQHOLD))
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 3,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
+                            "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok" );        
 	if (vdqm_rc == 0 && (vdqm_status & VDQM_VOL_UNMOUNT) == 0 &&
 	    (rlsflags & TPRLS_UNLOAD) == 0) {
 		rlsflags |= TPRLS_NOUNLOAD;
@@ -253,7 +290,14 @@ unload_loop:
 #if defined(_IBMR2)
 		if (strcmp (dvrname, "tape") || (errno != EIO && errno != ENOTREADY))
 #endif
-			tplogit (func, TP042, dvn, "open", strerror(errno));
+                        {
+                                tplogit (func, TP042, dvn, "open", strerror(errno));
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "dvn",     TL_MSG_PARAM_STR, dvn,
+                                                    "Message", TL_MSG_PARAM_STR, "open",
+                                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                        }
 	}
 #if SONYRAW
     } else {
@@ -268,8 +312,14 @@ unload_loop:
 #endif
 		}
 		close (tapefd);
-	} else
+	} else {
 		tplogit (func, TP042, dvn, "open", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "dvn",     TL_MSG_PARAM_STR, dvn,
+                                    "Message", TL_MSG_PARAM_STR, "open",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+        }
     }
 #endif
 	c = 0;
@@ -291,12 +341,19 @@ vol_unmount:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)" );
 	while ((vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive,
 		&vdqm_status, NULL, 0)) &&
 		(serrno == SECOMERR || serrno == EVQHOLD))
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 3,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
+                            "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok" );        
 #endif
 	goto freedrv;
 
@@ -328,9 +385,15 @@ freedrv:
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
  
-	if (c = send2tpd (NULL, sendbuf, msglen, NULL, 0))
+	if (c = send2tpd (NULL, sendbuf, msglen, NULL, 0)) {
 		usrmsg (func, "%s", errbuf);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, errbuf );
+        }
 	if (c < 0) c = serrno;
+
+        tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 	exit (c);
 }
 
@@ -339,6 +402,9 @@ char *drive;
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
 	usrmsg ("rlstape", "%s\n", msg);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                            "func",    TL_MSG_PARAM_STR, "rlstape",
+                            "Message", TL_MSG_PARAM_STR, msg );        
 	omsgr ("configdown", msg, 0);
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }

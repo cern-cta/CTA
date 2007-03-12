@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.5 2005/12/12 10:25:53 lopic3 Exp $
+ * $Id: tpdaemon.c,v 1.6 2007/03/12 08:06:06 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.5 $ $Date: 2005/12/12 10:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.6 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -48,6 +48,8 @@ static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.5 $ $Date: 200
 #ifdef CSEC
 #include "Csec_api.h"
 #endif 
+#include "tplogger_api.h"
+#include <unistd.h>
 
 struct confq *confqp;	/* pointer to config queue */
 extern char *den2aden();
@@ -114,14 +116,26 @@ struct main_args *main_args;
 #ifdef CSEC
 	Csec_context_t sec_ctx;
 #endif
+        /* initialize tplogging to DLF */ 
+        tl_init_handle( &tl_tpdaemon, "dlf" );
+        tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
+
 	strcpy (func, "tpdaemon");
 	jid = getpid();
 	tplogit (func, "started\n");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "tpdaemon has started." );
+
 #if SACCT
 	tapeacct (TPDSTART, 0, 0, jid, "", "", "", 0, 0);
 #endif
 	if (Cdomainname (domainname, sizeof(domainname)) < 0) {
+
 		tplogit (func, "Unable to get domainname\n");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2, 
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "Unable to get domainname." );
 		exit (SYERR);
 	}
 
@@ -148,6 +162,10 @@ struct main_args *main_args;
 
 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		tplogit (func, TP002, "socket", neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func, 
+                                    "Message", TL_MSG_PARAM_STR, "socket",
+                                    "Value",   TL_MSG_PARAM_STR, neterror() );
 		exit (CONFERR);
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
@@ -170,10 +188,20 @@ struct main_args *main_args;
 	}
 #endif
 	sin.sin_addr.s_addr = htonl(INADDR_ANY);
-	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0)
+	if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
 		tplogit (func, TP002, "setsockopt", neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "setsockopt",
+                                    "Value",   TL_MSG_PARAM_STR, neterror() );
+
+        }
 	if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
 		tplogit (func, TP002, "bind", neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "bind",
+                                    "Value",   TL_MSG_PARAM_STR, neterror() );                
 		exit (CONFERR);
 	}
 	listen (s, 5) ;
@@ -194,6 +222,10 @@ struct main_args *main_args;
 			Csec_server_reinitContext(&sec_ctx, CSEC_SERVICE_TYPE_TAPE, NULL);
 			if (Csec_server_establishContext(&sec_ctx, rqfd) < 0) {
 			  tplogit(func, "CSEC: Could not establish context: %s !\n", Csec_getErrorMessage());
+                          tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                              "func",    TL_MSG_PARAM_STR, func,
+                                              "Message", TL_MSG_PARAM_STR, "CSEC: Could not establish context!",
+                                              "Value",   TL_MSG_PARAM_STR, Csec_getErrorMessage() );
 			  netclose (rqfd);
 			  continue;
 			}
@@ -201,6 +233,10 @@ struct main_args *main_args;
 			Csec_getClientId(&sec_ctx, &mech, &clientid);
 			if ((c = Csec_server_is_castor_service(&sec_ctx)) >= 0) {
 			  tplogit(func, "CSEC: Client is castor service type: %d\n", c);
+                          tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                              "func",    TL_MSG_PARAM_STR, func,
+                                              "Message", TL_MSG_PARAM_STR, "CSEC: Client is castor service type",
+                                              "Value",   TL_MSG_PARAM_INT, c );
 			  Csec_service_type = c;
 			}
 			else {
@@ -209,10 +245,18 @@ struct main_args *main_args;
 				      Csec_server_get_client_username(&sec_ctx, NULL, NULL),
 				      Csec_uid,
 				      Csec_gid);
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 4, 
+                                                "func",    TL_MSG_PARAM_STR, func,
+                                                "Message", TL_MSG_PARAM_STR, "CSEC: Client is",
+                                                "UID",     TL_MSG_PARAM_INT, Csec_uid,
+                                                "GID",     TL_MSG_PARAM_INT, Csec_gid );
 			    Csec_service_type = -1;
 			  }
 			  else {
 			    tplogit(func, "CSEC: Can't get client username\n");
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                "func",    TL_MSG_PARAM_STR, func,
+                                                "Message", TL_MSG_PARAM_STR, "CSEC: Can't get client username!" );
 			    netclose (rqfd);
 			    continue;
 			  }
@@ -228,6 +272,9 @@ struct main_args *main_args;
 				unmarshall_LONG (rbp, msglen);
 				if (msglen > REQBUFSZ) {
 					tplogit (func, TP046, REQBUFSZ);
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 46, 2,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "REQBUFSZ", TL_MSG_PARAM_INT, REQBUFSZ );
 					netclose (rqfd);
 					continue;
 				}
@@ -238,6 +285,10 @@ struct main_args *main_args;
 				    &fromlen) < 0) {
 					tplogit (func, TP002, "getpeername",
 						neterror());
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "getpeername",
+                                                            "Value",   TL_MSG_PARAM_STR, neterror() );
 				}
 				hp = gethostbyaddr ((char *)(&from.sin_addr),
 					sizeof(struct in_addr),from.sin_family);
@@ -255,10 +306,20 @@ struct main_args *main_args;
 
 			} else {
 				netclose (rqfd);
-				if (l > 0)
+				if (l > 0) {
 					tplogit (func, TP004, l);
-				else if (l < 0)
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 4, 3,
+                                                            "func",   TL_MSG_PARAM_STR, func,
+                                                            "l",      TL_MSG_PARAM_INT, l,
+                                                            "Length", TL_MSG_PARAM_INT, l );
+                                }
+				else if (l < 0) {
 					tplogit (func, TP002, "netread", neterror());
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "netread",
+                                                            "Value",   TL_MSG_PARAM_STR, neterror() );
+                                }
 			}
 		}
 		if (((tm = time (0)) - lasttime) >= CLNREQI) {
@@ -348,6 +409,10 @@ clean4jobdied()
 
 	for (j = 0; j < n; j++) {
 		tplogit (func, "cleaning up: job %d has died\n", jids[j]);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "Cleaning up: job has died",
+                                    "JID",     TL_MSG_PARAM_INT, jids[j] );                
 		rrtp = tpdrrt.next;
 		while (rrtp) {
 			if (rrtp->jid == jids[j]) break;
@@ -362,6 +427,10 @@ clean4jobdied()
 					if (tunp->mntovly_pid) {
 						tplogit (func, "killing process %d\n",
 							tunp->mntovly_pid);
+                                                tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                                    "Message", TL_MSG_PARAM_STR, "Killing process",
+                                                                    "PID",     TL_MSG_PARAM_INT, tunp->mntovly_pid );
 						kill (tunp->mntovly_pid, SIGINT);
 						tunp->mntovly_pid = 0;
 					} else {
@@ -407,14 +476,27 @@ int reason;
 #endif
 	if (status) {	/* tpconfig up */
 		tplogit (func, TP035, tunp->drive, "up");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 35, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Drive",   TL_MSG_PARAM_STR, tunp->drive,
+                                    "Message", TL_MSG_PARAM_STR, "up" );
 		for (i = 0, tdp = tunp->devp; i < tunp->devnum; i++, tdp++)
-			if (stat (tdp->dvn, &sbuf) < 0)
+			if (stat (tdp->dvn, &sbuf) < 0) {
 				tplogit (func, "TP002 - %s : stat error : %s\n",
 					tdp->dvn, strerror(errno));
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                    "func",       TL_MSG_PARAM_STR, func,
+                                                    "Message",    TL_MSG_PARAM_STR, tdp->dvn,
+                                                    "Stat error", TL_MSG_PARAM_STR, strerror(errno) );
+                        }
 			else
 				tdp->majmin = sbuf.st_rdev;
 	} else {
 		tplogit (func, TP035, tunp->drive, "down");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 35, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Drive",   TL_MSG_PARAM_STR, tunp->drive,
+                                    "Message", TL_MSG_PARAM_STR, "down" );
 	}
 	prev = 0;
 	rqp = confqp;
@@ -435,10 +517,19 @@ int reason;
 
 	c = 0;
 	tplogit (func, "forking a confdrive process\n");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "Forking a confdrive process" );
+        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
+
 	rqp->ovly_pid = fork ();
 	pid = rqp->ovly_pid;
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "fork",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = ETSYS;
 	} else if (pid == 0) {	/* we are in the child */
 
@@ -447,6 +538,8 @@ int reason;
 		char arg_gid[11], arg_jid[11], arg_reason[2], arg_rpfd[3];
 		char arg_status[2], arg_uid[11];
 		char progfullpath[CA_MAXPATHLEN+1];
+
+                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/confdrive", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -457,14 +550,24 @@ int reason;
 		sprintf (arg_reason, "%d", reason);
 
 		tplogit (func, "execing confdrive, pid=%d\n", getpid());
+                /* tl_log msg wouldn't be seen in the DB due to the execlp() */
+
 		execlp (progfullpath, "confdrive", tunp->drive,
 			tunp->devp->dvn, arg_rpfd, arg_uid, arg_gid,
 			arg_jid, tunp->dgn, tunp->dvrname, arg_status,
 			arg_reason, NULL);
+
 		tplogit (func, "TP002 - confdrive : execlp error : %s\n",
 		    strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "confdrive : execlp error",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+
+                tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 		exit (errno);
 	}
+        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 	return (c);
 }
 
@@ -494,6 +597,9 @@ initdrvtab()
 
 	if ((s = fopen (TPCONFIG, "r")) == NULL) {
 		tplogit (func, TP008, TPCONFIG);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 8, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, TPCONFIG );
 		return (ETSYS);
 	}
 	/* 1st pass: count number of tape drives defined */
@@ -506,6 +612,9 @@ initdrvtab()
 		if (buf[0] == '#') continue;	/* comment line */
 		if (buf[strlen (buf)-1] != '\n') {
 			tplogit (func, TP043, buf);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 43, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, buf );                        
 			errflag++;
 		}
 		if (strspn (buf, " \t") == (strlen (buf) - 1)) continue; /* blank line */
@@ -517,6 +626,10 @@ initdrvtab()
 		    (p_ldr = strtok (NULL, " \t")) == NULL ||
 		    (p_dvt = strtok (NULL, " \t")) == NULL) {
 			tplogit (func, TP032, lineno, "missing fields");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "missing fields" );
 			errflag++;
 			continue;
 		}
@@ -527,30 +640,58 @@ initdrvtab()
 			}
 		} else {
 			tplogit (func, TP032, lineno, "invalid drive name");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "invalid drive name" );                        
 			errflag++;
 		}
 		if (strlen (p_dgn) > CA_MAXDGNLEN) {
 			tplogit (func, TP032, lineno, "invalid device group");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "invalid device group" );                        
 			errflag++;
 		}
 		if (strlen (p_dvn) > CA_MAXDVNLEN || strncmp (p_dvn, "/dev", 4)) {
 			tplogit (func, TP032, lineno, "invalid device name");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "invalid device name" );                        
 			errflag++;
 		}
 		if (strlen (p_den) > CA_MAXDENLEN || cvtden (p_den) < 0) {
 			tplogit (func, TP032, lineno, "invalid density");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "invalid density" );                        
 			errflag++;
 		}
 		if (strcmp (p_stat, "up") && strcmp (p_stat, "down")) {
 			tplogit (func, TP032, lineno, "invalid status");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "invalid status" );                        
 			errflag++;
 		}
 		if (strlen (p_ldr) > CA_MAXRBTNAMELEN) {
 			tplogit (func, TP032, lineno, "invalid loader");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "invalid loader" );                        
 			errflag++;
 		}
 		if (strlen (p_dvt) > CA_MAXDVTLEN) {
 			tplogit (func, TP032, lineno, "invalid device type");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Line",    TL_MSG_PARAM_INT, lineno,
+                                            "Message", TL_MSG_PARAM_STR, "invalid device type" );                        
 			errflag++;
 		}
 	}
@@ -643,6 +784,8 @@ initrrt()
 		} else {
 			if (j != prevgrp) {
 				tplogit (func, TP034);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 34, 1,
+                                                    "func", TL_MSG_PARAM_STR, func );                        
 				errflag++;
 			}
 		}
@@ -703,6 +846,9 @@ char *clienthost;
 		break;
 	default:
 		usrmsg (func, TP003, req_type);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 3, 2,
+                                    "func",     TL_MSG_PARAM_STR, func,
+                                    "req_type", TL_MSG_PARAM_INT, req_type );                
 		sendrep (rpfd, TAPERC, USERR);
 	}
 }
@@ -728,6 +874,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "conf", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "conf",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
         unmarshall_STRING (rbp, drive);
         unmarshall_WORD (rbp, status);
         unmarshall_WORD (rbp, reason);
@@ -740,7 +892,9 @@ char *clienthost;
 	}
 	if (j == nbtpdrives) {    /* unknown drive name */
 		usrmsg (func, TP015);
-		c = ETIDN;
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
+                                    "func", TL_MSG_PARAM_STR, func );                                
+                c = ETIDN;
 		goto reply;
 	}
 	if (tunp->up == status || (status == CONF_DOWN && tunp->up < 0)) {
@@ -752,6 +906,9 @@ char *clienthost;
 	}
 	if (tunp->asn != 0) {	/* drive currently assigned */
 		tplogit (func, TP048, tunp->drive);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 48, 2,
+                                    "func",  TL_MSG_PARAM_STR, func,
+                                    "Drive", TL_MSG_PARAM_STR, tunp->drive );
 		if (status == CONF_UP) { /* conf down, then up while assigned */
 			tunp->up = 1;
 			tpdrrt.dg[j].rsvd++;
@@ -797,6 +954,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "drvinfo", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "drvinfo",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_STRING (rbp, drive);
 
 	c = 0;
@@ -811,6 +974,8 @@ char *clienthost;
 	}
 	if (! found) {
 		usrmsg (func, TP015);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		c = ENOENT;
 		goto reply;
 	} else {
@@ -859,6 +1024,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "free drive", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "free drive",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_WORD (rbp, rlsflags);
 	unmarshall_WORD (rbp, rls_rpfd);
@@ -949,6 +1120,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "info", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "info",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_STRING (rbp, path);
 
 	c = 0;
@@ -964,6 +1141,9 @@ char *clienthost;
 	}
 	if (! found) {
 		usrmsg (func, TP037, path);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 37, 2,
+                                    "func", TL_MSG_PARAM_STR, func,
+                                    "path", TL_MSG_PARAM_STR, path );                
 		c = ENOENT;
 		goto reply;
 	} else {
@@ -1006,6 +1186,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "kill", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "kill",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_STRING (rbp, path);
 
@@ -1026,6 +1212,10 @@ char *clienthost;
 				if (tunp->mntovly_pid) {
 					tplogit (func, "killing process %d\n",
 						tunp->mntovly_pid);
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Killing process",
+                                                            "PID",     TL_MSG_PARAM_INT, tunp->mntovly_pid );                        
 					kill (tunp->mntovly_pid, SIGINT);
 					tunp->mntovly_pid = 0;
 				}
@@ -1075,6 +1265,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "mount", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "mount",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
         unmarshall_STRING (rbp, acctname);
         unmarshall_STRING (rbp, path);
@@ -1090,6 +1286,11 @@ char *clienthost;
 	unmarshall_LONG (rbp, vdqm_reqid);
 
 	tplogit (func, "mount request %s\n", vid);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
+                            "func",     TL_MSG_PARAM_STR,   func,
+                            "Message",  TL_MSG_PARAM_STR,   "Mount request",
+                            "VID",      TL_MSG_PARAM_STR,   vid,
+                            "Tape VID", TL_MSG_PARAM_TPVID, vid );                        
 	c = 0;
 
 	/* check if reserv done */
@@ -1101,6 +1302,8 @@ char *clienthost;
 	}
 	if (rrtp == 0) {
 		usrmsg (func, TP014);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 14, 1,
+                                    "func", TL_MSG_PARAM_STR, func );                
 		c = ETNRS;		/* reserve not done */
 		goto reply;
 	}
@@ -1111,6 +1314,8 @@ char *clienthost;
 		if (strcmp (rrtp->dg[j].name, dgn) == 0) break;
 	if (j == nbdgp) {
 		usrmsg (func, TP013);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 1,
+                                    "func", TL_MSG_PARAM_STR, func );                
 		c = ETIDG;		/* invalid device group name */
 		goto reply;
 	}
@@ -1119,6 +1324,9 @@ char *clienthost;
 
 	if ((den = cvtden (density)) < 0) {
 		usrmsg (func, TP006, "density");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "density" );                
 		errflg++;
 	}
 	if (! strcmp (lbltype, "al")) lblcode = AL;
@@ -1128,10 +1336,15 @@ char *clienthost;
 	else if (! strcmp (lbltype, "aul")) lblcode = AUL;
 	else {
 		usrmsg (func, TP006, "lbltype");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "lbltype" );                
 		errflg++;
 	}
 	if (lblcode == BLP && mode == WRITE_ENABLE) {
 		usrmsg (func, TP017);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 17, 1,
+                                    "func", TL_MSG_PARAM_STR, func );                
 		errflg++;
 	}
 	if (errflg) {
@@ -1147,27 +1360,38 @@ char *clienthost;
 		}
 		if (i == nbtpdrives) {
 			usrmsg (func, TP015);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
+                                            "func", TL_MSG_PARAM_STR, func );                
 			c = ETIDN;	/* non existing drive */
 			goto reply;
 		}
 		if (strcmp (tunp->dgn, dgn) != 0) {
 			usrmsg (func, TP013);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 1,
+                                            "func", TL_MSG_PARAM_STR, func );                
 			c = ETIDG;	/* device group name does not match */
 			goto reply;
 		}
 		if (rrtp->dg[j].used >= rrtp->dg[j].rsvd) {
 			usrmsg (func, TP012);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 1,
+                                            "func", TL_MSG_PARAM_STR, func );                
 			c = ETNDV;	/* request would exceed # of drives rsvd */
 			goto reply;
 		}
 		if (chk_den (tunp, den, &cdevp) != 0) {
 			usrmsg (func, TP015);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
+                                            "func", TL_MSG_PARAM_STR, func );                
 			c = ETIDN;	/* drive does not have requested density */
 			goto reply;
 		}
 		if (tunp->asn != 0 || tunp->up != 1 ||
 		    (*tunp->vid && (strcmp (tunp->vid, vid) || strcmp (tunp->vsn, vsn)))) {
 			usrmsg (func, TP057, drive);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 57, 2,
+                                            "func",  TL_MSG_PARAM_STR, func,
+                                            "Drive", TL_MSG_PARAM_STR, drive );                                        
 			c = EBUSY;
 			goto reply;
 		}
@@ -1175,6 +1399,8 @@ char *clienthost;
 	} else {	/* non specific drive request */
 		if (rrtp->dg[j].used >= rrtp->dg[j].rsvd) {
 			usrmsg (func, TP012);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 1,
+                                            "func", TL_MSG_PARAM_STR, func );
 			c = ETNDV;	/* request would exceed # of drives rsvd */
 			goto reply;
 		}
@@ -1206,10 +1432,14 @@ char *clienthost;
 			}
 			if (! found) {
 				usrmsg (func, TP015);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
+                                                    "func", TL_MSG_PARAM_STR, func );                
 				c = ETIDN;	/* no drive with requested density */
 				goto reply;
 			} else {
 				usrmsg (func, TP058);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 58, 1,
+                                                    "func", TL_MSG_PARAM_STR, func );
 				c = EBUSY;
 				goto reply;
 			}
@@ -1239,17 +1469,32 @@ bldtfd:
 	/* create special device */
 
 	if (mknod (path, 0020700, tunp->cdevp->majmin) < 0) {
-		if (errno == EEXIST)
+		if (errno == EEXIST) {
 			usrmsg (func, TP022);
-		else
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 22, 1,
+                                            "func", TL_MSG_PARAM_STR, func );
+                }
+		else {
 			usrmsg (func, "TP002 - %s : mknod error : %s\n",
 			    path, strerror(errno));
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "mknod error",
+                                            "path",    TL_MSG_PARAM_STR, path,
+                                            "Error",   TL_MSG_PARAM_STR, strerror(errno) );                                        
+                        
+                }
 		c = errno;
 		goto reply;
 	}
 	if (chown (path, uid, gid) < 0) {
 		usrmsg (func, "TP002 - %s : chown error : %s\n",
 		    path, strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "chown error",
+                                    "path",    TL_MSG_PARAM_STR, path,
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );                                        
 		c = errno;
 		goto reply;
 	}
@@ -1258,10 +1503,20 @@ bldtfd:
 
 	c = 0;
 	tplogit (func, "forking a mounttape process\n");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "Forking a mounttape process" );                        
+        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
+
 	tunp->mntovly_pid = fork ();
 	pid = tunp->mntovly_pid;
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "fork",
+                                    "path",    TL_MSG_PARAM_STR, path,
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = errno;
 	} else if (pid == 0) {	/* we are in the child */
 
@@ -1271,6 +1526,8 @@ bldtfd:
 		char arg_prelabel[3], arg_rpfd[3], arg_side[2];
 		char arg_tpmounted[2], arg_uid[11], arg_ux[3], arg_vdqmid[10];
 		char progfullpath[CA_MAXPATHLEN+1];
+
+                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/mounttape", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -1287,6 +1544,7 @@ bldtfd:
 		sprintf (arg_side, "%d", side);
 
 		tplogit (func, "execing mounttape, pid=%d\n", getpid());
+                /* tl_log msg wouldn't be seen in the DB due to the execlp() */
 
 		execlp (progfullpath, "mounttape", tunp->drive, vid, 
 			tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid,
@@ -1296,13 +1554,21 @@ bldtfd:
 			arg_vdqmid, arg_tpmounted, arg_side, clienthost, NULL);
 		tplogit (func, "TP002 - mounttape : execlp error : %s\n",
 		    strerror(errno));
-		exit (errno);
+
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "mounttape : execlp error",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+
+                tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
+                exit (errno);                
 	}
 reply:
 	if (c)
 		sendrep (rpfd, TAPERC, c);
 	else
 		netclose (rpfd);
+        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 }
 
 procposreq(req_data, clienthost)
@@ -1344,6 +1610,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "position", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "position",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_STRING (rbp, path);
 	unmarshall_WORD (rbp, method);
@@ -1383,6 +1655,8 @@ char *clienthost;
 	}
 	if (rrtp == 0) {
 		usrmsg (func, TP014);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 14, 1,
+                                    "func", TL_MSG_PARAM_STR, func ); 
 		c = ETNRS;		/* reserve not done */
 		goto reply;
 	}
@@ -1402,6 +1676,9 @@ char *clienthost;
 	}
 	if (! found) {
 		usrmsg (func, TP037, path);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 37, 2,
+                                    "func", TL_MSG_PARAM_STR, func,
+                                    "path", TL_MSG_PARAM_STR, path );
 		errflg++;
 	}
 
@@ -1410,47 +1687,72 @@ char *clienthost;
 	if (method != TPPOSIT_FSEQ && method != TPPOSIT_FID &&
 	    method != TPPOSIT_EOI && method != TPPOSIT_BLKID) {
 		usrmsg (func, TP006, "positioning method");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "positioning method" );
 		errflg++;
 	}
 	if (method == TPPOSIT_FSEQ && fseq <= 0) {
 		usrmsg (func, TP006, "file sequence number");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "file sequence number" );
 		errflg++;
 	}
 	if (method == TPPOSIT_FSEQ && fsec <= 0) {
 		usrmsg (func, TP006, "file section number");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "file section number" );
 		errflg++;
 	}
 	if (method == TPPOSIT_FID && *fid == '\0') {
 		usrmsg (func, TP007);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 7, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		errflg++;
 	}
 	if (method == TPPOSIT_FID && (tunp->lblcode == NL || tunp->lblcode == BLP)) {
 		usrmsg (func, TP064);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 64, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		errflg++;
 	}
 	if (filstat != APPEND && filstat != NEW_FILE && filstat != CHECK_FILE &&
 	    filstat != NOFILECHECK) {
 		usrmsg (func, TP006, "file status");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "file status" );
 		errflg++;
 	}
 	if (method == TPPOSIT_BLKID && filstat == APPEND) {
 		usrmsg (func, TP060);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 60, 1, 
+                                    "func", TL_MSG_PARAM_STR, func );
 		errflg++;
 	}
 	if ((filstat == NEW_FILE || filstat == APPEND) &&
 	    tunp->mode == WRITE_DISABLE) {
 		usrmsg (func, TP061);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 61, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		errflg++;
 	}
 	if (*recfm && strcmp (recfm, "F") && strcmp (recfm, "FB") &&
 	    strcmp (recfm, "FBS")  && strcmp (recfm, "FS") &&
 	    strcmp (recfm, "U")) {
 		usrmsg (func, TP006, "record format");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "record format" );
 		errflg++;
 	}
 	if (flags & IGNOREEOI &&
 	    (tunp->lblcode == AL || tunp->lblcode == SL)) {
 		usrmsg (func, TP049);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 49, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		errflg++;
 	}
 	if (errflg) {
@@ -1480,10 +1782,19 @@ char *clienthost;
 
 	c = 0;
 	tplogit (func, "forking a posovl process\n");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "Forking a posovl process" );                        
+        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
+
 	tunp->mntovly_pid = fork ();
 	pid = tunp->mntovly_pid;
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "fork", 
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = ETSYS;
 	} else if (pid == 0) {	/* we are in the child */
 
@@ -1495,6 +1806,8 @@ char *clienthost;
 		char arg_method[2], arg_mode[2], arg_Qfirst[11], arg_Qlast[11];
 		char arg_retentd[5], arg_rpfd[3], arg_uid[11], arg_ux[3];
 		char progfullpath[CA_MAXPATHLEN+1];
+
+                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/posovl", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -1520,6 +1833,8 @@ char *clienthost;
 		sprintf (arg_flags, "%d", flags);
 
 		tplogit (func, "execing posovl, pid=%d\n", getpid());
+                /* tl_log msg wouldn't be seen in the DB due to the execlp() */
+
 		execlp (progfullpath, "posovl", tunp->drive, tunp->vid, 
 			arg_rpfd, arg_uid, arg_gid, rrtp->user, arg_jid, arg_ux,
 			tunp->dgn, tunp->devtype, tunp->dvrname, arg_mode, arg_lbl,
@@ -1529,6 +1844,12 @@ char *clienthost;
 			arg_den, arg_flags, fsid, domainname, NULL);
 		tplogit (func, "TP002 - posovl : execlp error : %s\n",
 		    strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "posovl : execlp error",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );                        
+
+                tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 		exit (errno);
 	}
 reply:
@@ -1536,6 +1857,7 @@ reply:
 		sendrep (rpfd, TAPERC, c);
 	else
 		netclose (rpfd);
+        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 }
 
 procrlsreq(req_data, clienthost)
@@ -1560,11 +1882,22 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "rls", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "rls",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
         unmarshall_WORD (rbp, flags);
 	unmarshall_STRING (rbp, path);
 
 	tplogit (func, "rls request path=<%s>, flags=%d\n", path, flags);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4, 
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "rls request",
+                            "Path",    TL_MSG_PARAM_STR, path,
+                            "Flags",   TL_MSG_PARAM_INT, flags );                        
 	c = 0;
 
 	/* check validity of the arguments */
@@ -1573,10 +1906,16 @@ char *clienthost;
 	    (flags & TPRLS_ALL && flags & TPRLS_KEEP_RSV) ||
 	    (flags & TPRLS_ALL && flags & TPRLS_PATH)) {
 		usrmsg (func, TP006, "rls flags");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "rls flags" );
 		errflg++;
 	}
 	if ((flags & TPRLS_PATH) && ! *path) {
 		usrmsg (func, TP036, flags);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 36, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "flags", TL_MSG_PARAM_INT, flags );
 		errflg++;
 	}
 	if (errflg) {
@@ -1671,6 +2010,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "reselect", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "reselect",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_STRING (rbp, olddrive);
 	unmarshall_STRING (rbp, newdrive);
@@ -1686,6 +2031,8 @@ char *clienthost;
 	}
 	if (rrtp == 0) {
 		usrmsg (func, TP014);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 14, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		c = ETNRS;	/* reserve not done */
 		goto reply;
 	}
@@ -1708,21 +2055,30 @@ char *clienthost;
 	}
 	if (i == nbtpdrives) {
 		usrmsg (func, TP015);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		c = ETIDN;	/* non existing drive */
 		goto reply;
 	}
 	if (strcmp (tunp->dgn, oldtunp->dgn) != 0) {
 		usrmsg (func, TP013);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		c = ETIDG;	/* device group name does not match */
 		goto reply;
 	}
 	if (chk_den (tunp, oldtunp->cdevp->den, &cdevp) != 0) {
 		usrmsg (func, TP015);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 15, 1,
+                                    "func", TL_MSG_PARAM_STR, func );
 		c = ETIDN;	/* drive does not have requested density */
 		goto reply;
 	}
 	if (tunp->asn != 0 || tunp->up != 1) {
 		usrmsg (func, TP057, newdrive);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 57, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "newdrive", TL_MSG_PARAM_STR, newdrive );
 		c = EBUSY;
 		goto reply;
 	}
@@ -1762,12 +2118,22 @@ char *clienthost;
 	if (mknod (tunp->filp->path, 0020700, tunp->cdevp->majmin) < 0) {
 		usrmsg (func, "TP002 - %s : mknod error : %s\n",
 		    tunp->filp->path, strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "mknod error",
+                                    "path",    TL_MSG_PARAM_STR, tunp->filp->path,
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = errno;
 		goto reply;
 	}
 	if (chown (tunp->filp->path, tunp->uid, tunp->gid) < 0) {
 		usrmsg (func, "TP002 - %s : chown error : %s\n",
 		    tunp->filp->path, strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "chown error",
+                                    "path",    TL_MSG_PARAM_STR, tunp->filp->path,
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = ETSYS;
 		goto reply;
 	}
@@ -1806,11 +2172,20 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "reserv", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "reserv",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_WORD (rbp, count);
 
 	if ((pwd = getpwuid (uid)) == NULL) {
 		usrmsg (func, TP063, uid);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 63, 2,
+                                    "func", TL_MSG_PARAM_STR, func,
+                                    "UID",  TL_MSG_PARAM_UID, uid );
 		c = SEUSERUNKN;
 		goto reply;
 	}
@@ -1820,6 +2195,8 @@ char *clienthost;
 	while (orrtp) {
 		if (jid == orrtp->jid) {
 			usrmsg (func, TP010);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 10, 1,
+                                            "func", TL_MSG_PARAM_STR, func );
 			c = ETRSV;	/* resources already reserved for this job */
 			goto reply;
 		}
@@ -1828,6 +2205,9 @@ char *clienthost;
 	}
 	if (count <= 0) {
 		usrmsg (func, TP006, "count");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "count" );
 		c = EINVAL;
 		goto reply;
 	}
@@ -1848,6 +2228,8 @@ char *clienthost;
 					break;
 				else {
 					usrmsg (func, TP012);
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 12, 1,
+                                                            "func", TL_MSG_PARAM_STR, func );                
 					c = ETNDV;	/* too many drives requested */
 					goto reply;
 				}
@@ -1855,11 +2237,16 @@ char *clienthost;
 		}
 		if (j == nbdgp) {
 			usrmsg (func, TP013);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 13, 1,
+                                            "func", TL_MSG_PARAM_STR, func );                
 			c = ETIDG;	/* invalid device group name */
 			goto reply;
 		}
 		if (num <= 0) {
 			usrmsg (func, TP006, "num");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "num" );
 			c = EINVAL;
 			goto reply;
 		}
@@ -1899,6 +2286,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "reservation status", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "reservation status",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 
 	sbp = repbuf;
 	rrtp = &tpdrrt;
@@ -1939,6 +2332,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "status", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "status",
+                            "UID",        TL_MSG_PARAM_INT, uid,
+                            "GID",        TL_MSG_PARAM_INT, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 
 	sbp = repbuf;
 	tunp = tptabp;
@@ -1991,6 +2390,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "update file info", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func, 
+                            "Message",    TL_MSG_PARAM_STR, "update file info",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_WORD (rbp, ux);
 	unmarshall_LONG (rbp, blksize);
@@ -2032,6 +2437,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "update vsn", uid, gid, clienthost);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "update vsn",
+                            "UID",        TL_MSG_PARAM_UID, uid,
+                            "GID",        TL_MSG_PARAM_GID, gid,
+                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_WORD (rbp, ux);
 	unmarshall_STRING (rbp, vid);
@@ -2067,9 +2478,18 @@ int rlsflags;
 	/* fork and exec the process to process tape unload */
 
 	tplogit (func, "forking an rlstape process\n");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 2,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "Forking an rlstape process" );                        
+        tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
+
 	pid = fork ();
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "fork",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		c = ETSYS;
 	} else if (pid == 0) {	/* we are in the child */
 
@@ -2078,6 +2498,8 @@ int rlsflags;
 		char arg_den[4], arg_gid[11], arg_jid[11], arg_rlsflags[3];
 		char arg_mode[2], arg_rpfd[3], arg_uid[11], arg_ux[3];
 		char progfullpath[CA_MAXPATHLEN+1];
+
+                tl_tpdaemon.tl_fork_child( &tl_tpdaemon ); 
 
 		sprintf (progfullpath, "%s/rlstape", BIN);
 		sprintf (arg_rpfd, "%d", rpfd);
@@ -2090,6 +2512,8 @@ int rlsflags;
 		sprintf (arg_den, "%d", tunp->cdevp->den);
 
 		tplogit (func, "execing rlstape, pid=%d\n", getpid());
+                /* tl_log msg wouldn't be seen in the DB due to the execlp() */
+
 		execlp (progfullpath, "rlstape", tunp->drive, tunp->vid,
 			tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid, user,
 			tunp->acctname, arg_jid, arg_ux, arg_rlsflags, tunp->dgn,
@@ -2097,6 +2521,13 @@ int rlsflags;
 			arg_den, NULL);
 		tplogit (func, "TP002 - rlstape : execlp error : %s\n",
 		    strerror(errno));
+                
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "rlstape : execlp error",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );                        
+
+                tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 		exit (errno);
 	}
 	if (c == 0 && rpfd >= 0) {	/* increment count of unload request */
@@ -2123,6 +2554,7 @@ int rlsflags;
 		}
 		rqp->unldcnt++;
 	}
+        tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 	return (c);
 }
 
@@ -2142,6 +2574,11 @@ check_child_exit()
 	while ((pid = waitpid (-1, &status, WNOHANG)) > 0) {
 		tplogit (func, "process %d exiting with status %x\n",
 		    pid, status & 0xFFFF);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "Process exiting",
+                                    "PID",     TL_MSG_PARAM_INT, pid,
+                                    "Status",  TL_MSG_PARAM_INT, status & 0xFFFF );                        
 
 		/* is it a mountape or a posittape process? */
 

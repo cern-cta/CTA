@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.6 $ $Date: 2005/01/20 16:30:58 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.7 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -28,6 +28,7 @@ static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.6 $ $Date: 20
 extern char *dvrname;
 #endif
 #endif
+#include "tplogger_api.h"
 lddisplay(fd, path, fcb, msg1, msg2, devtype)
 int fd;
 char *path;
@@ -85,6 +86,10 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		if ((tapefd = open (path, O_RDONLY|O_NDELAY)) < 0) {
 			serrno = errno;
 			usrmsg (func, TP042, path, "open", strerror(errno));
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "open",
+                                            "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 			RETURN (-1);
 		}
 	}
@@ -136,6 +141,9 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		if (send_scsi_cmd (tapefd, path, 0, cdb, 6, &ldcmd, 17,
 		    sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {
 			usrmsg (func, "%s", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",       TL_MSG_PARAM_STR, func,
+                                            "msgaddr",    TL_MSG_PARAM_STR, msgaddr );
 			c = -1;
 		}
 		break;
@@ -154,6 +162,9 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		if (send_scsi_cmd (tapefd, path, 0, cdb, 6, &ntp_ldcmd, 24,
 		    sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {
 			usrmsg (func, "%s", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",       TL_MSG_PARAM_STR, func,
+                                            "msgaddr",    TL_MSG_PARAM_STR, msgaddr );
 			c = -1;
 		}
 		break;
@@ -168,6 +179,9 @@ int devtype;	/* 0 -> 3480, 1 -> 3590, 2 -> Vision Box */
 		if (send_scsi_cmd (tapefd, path, 0, cdb, 6, &vb_ldcmd, 33,
 		    sense, 38, DISP_TIMEOUT, SCSI_OUT, &nb_sense_ret, &msgaddr) < 0) {
 			usrmsg (func, "%s", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",       TL_MSG_PARAM_STR, func,
+                                            "msgaddr",    TL_MSG_PARAM_STR, msgaddr );
 			c = -1;
 		}
 	}

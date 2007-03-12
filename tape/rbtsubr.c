@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.19 $ $Date: 2006/12/13 12:59:24 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.20 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.19 $ $Date: 200
 #include "rmc_api.h"
 #include "smc.h"
 #include "Ctape.h"
+#include "tplogger_api.h"
 extern char msg[];
 
 static char action[8];
@@ -118,13 +119,27 @@ char *loader;
 		else
 			sprintf (buf, "/dms/fbs/bin/dmscmv C%s %s 2>&1", vid, loader);
 		tplogit (func, "%s\n", buf);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, buf );
 		if ((f = popen (buf, "r")) == NULL) {
 			usrmsg (func, TP042, "", "popen", strerror(errno));
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "popen",
+                                            "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 			RETURN (-errno);
 		}
-		while (fgets (buf, sizeof(buf), f) != NULL)
+		while (fgets (buf, sizeof(buf), f) != NULL) {
 			usrmsg (func, "TP041 - %s of %s on %s failed : %s\n",
 			    action, cur_vid, cur_unm, buf);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, action,
+                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, buf );
+                }
 		if (pclose (f)) {
 			RETURN (-EIO);
 		} else {
@@ -140,6 +155,12 @@ char *loader;
 	ENTRY (rbtmount);
 	usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action, cur_vid,
 	    cur_unm, "invalid loader type");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "action",  TL_MSG_PARAM_STR, action,
+                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                            "Message", TL_MSG_PARAM_STR, "invalid loader type" );
 	RETURN (RBT_CONF_DRV_DN);
 }
 
@@ -205,13 +226,27 @@ int vsnretry;
 		else
 			sprintf (buf, "/dms/fbs/bin/dmscmv C%s 2>&1", vid);
 		tplogit (func, "%s\n", buf);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, buf );
 		if ((f = popen (buf, "r")) == NULL) {
 			usrmsg (func, TP042, "", "popen", strerror(errno));
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "popen",
+                                            "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 			RETURN (-errno);
 		}
-		while (fgets (buf, sizeof(buf), f) != NULL)
+		while (fgets (buf, sizeof(buf), f) != NULL) {
 			usrmsg (func, "TP041 - %s of %s on %s failed : %s\n",
 			    action, cur_vid, cur_unm, buf);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, action,
+                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, buf );
+                }
 		if (pclose (f)) {
 			RETURN (-EIO);
 		} else {
@@ -227,6 +262,12 @@ int vsnretry;
 	ENTRY (rbtdemount);
 	usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action, cur_vid,
 	    cur_unm, "invalid loader type");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "action",  TL_MSG_PARAM_STR, action,
+                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                            "Message", TL_MSG_PARAM_STR, "invalid loader type" );
 	RETURN (RBT_CONF_DRV_DN);
 }
 
@@ -250,6 +291,11 @@ char *loader;
 	ENTRY (openlmcp);
 	if ((tapefd = open (drive, O_RDONLY|O_NDELAY)) < 0) {
 		usrmsg (func, TP042, drive, "open", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "drive",   TL_MSG_PARAM_STR, drive, 
+                                    "Message", TL_MSG_PARAM_STR, "open",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		RETURN (-errno);
 	}
 	ioctl (tapefd, MTDEVICE, &device);
@@ -257,6 +303,11 @@ char *loader;
 	sprintf (ldr, "/dev/%s", loader);
 	if ((lmcpfd = open (ldr, O_RDWR)) < 0) {
 		usrmsg (func, TP042, ldr, "open", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "ldr",     TL_MSG_PARAM_STR, ldr, 
+                                    "Message", TL_MSG_PARAM_STR, "open",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
 		RETURN (-errno);
 	}
 	RETURN (lmcpfd);
@@ -355,14 +406,27 @@ int *status;
 		libcc = mtlqmidarg.mtlqmidret.info.status_response.drm_status.cc;
 		libcc2txt (libcc, &msgaddr);
 		if (libcc < 4) {
-			if (libcc)
+			if (libcc) {
 				tplogit (func, "TP041 - %s of %s on %s %s\n",
 					action, cur_vid, cur_unm, msgaddr);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "action",  TL_MSG_PARAM_STR, action,
+                                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "msgaddr", TL_MSG_PARAM_STR, msgaddr );
+                        }
 			return (0);
 		} else {
 			sprintf (msg, "TP041 - %s of %s on %s %s",
 				action, cur_vid, cur_unm, msgaddr);
 			usrmsg (func, "%s\n", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, action,
+                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr );
 			c =  liberr2act (0, libcc);
 			RETURN (c);
 		}
@@ -523,13 +587,24 @@ char sense_bytes[];
 
 	if (errno != EIO) {
 		usrmsg (func, TP042, ldr, "ioctl", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "ldr",     TL_MSG_PARAM_STR, ldr,
+                                    "Message", TL_MSG_PARAM_STR, "ioctl",
+                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );                
 		return (-errno);
 	} else {
 		if (cc == MTCC_IO_FAILED) {
 			get_era_msg (number_sense, sense_bytes, &msgaddr);
 			sprintf (msg, TP041, action, cur_vid, cur_unm, msgaddr);
 			usrmsg (func, "%s\n", msg);
-			if (number_sense)
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, action,
+                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr );                       
+ 			if (number_sense)
 				return (eracod2act (*action == 'm' ? 0 : 1, sense_bytes[3]));
 			else
 				return (RBT_NORETRY);
@@ -538,6 +613,12 @@ char sense_bytes[];
 			sprintf (msg, "TP041 - %s of %s on %s %s",
 				action, cur_vid, cur_unm, msgaddr);
 			usrmsg (func, "%s\n", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, action,
+                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr );
 			return (liberr2act (*action == 'm' ? 0 : 1, cc));
 		}
 	}
@@ -630,14 +711,32 @@ int ring;
 	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d ROflag:%d\n", vol_id.external_label,
 	    drive_id.panel_id.lsm_id.acs, drive_id.panel_id.lsm_id.lsm,
 	    drive_id.panel_id.panel, drive_id.drive, use_read_only_flag);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 7,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "vol_id",     TL_MSG_PARAM_STR, vol_id.external_label,
+                            "drive_id_0", TL_MSG_PARAM_INT, drive_id.panel_id.lsm_id.acs,
+                            "drive_id_1", TL_MSG_PARAM_INT, drive_id.panel_id.lsm_id.lsm,
+                            "drive_id_2", TL_MSG_PARAM_INT, drive_id.panel_id.panel,
+                            "drive_id_3", TL_MSG_PARAM_INT, drive_id.drive,
+                            "R0flag",     TL_MSG_PARAM_INT, use_read_only_flag );
 	if (status = acs_mount (++myseqnum, NO_LOCK_ID, vol_id, drive_id,
 	    (ring || !use_read_only_flag) ? FALSE : TRUE, 0)) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",      TL_MSG_PARAM_STR, func,
+                                    "action",    TL_MSG_PARAM_STR, action,
+                                    "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (0, status);
 		RETURN (c);
 	}
 	tplogit (func,"acs_mount Ok - returned %s\n", acs_status(status));
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                            "func",     TL_MSG_PARAM_STR, func,
+                            "Message",  TL_MSG_PARAM_STR, "acs_mount Ok",
+                            "returned", TL_MSG_PARAM_STR, acs_status(status) );
 	mount_req_id = -1;	/* no request id assigned by ACSLS yet */
 	RETURN (0);
 }
@@ -667,27 +766,62 @@ unsigned int force;
 	tplogit (func, "vol_id = %s drive_id = %d,%d,%d,%d %s\n", vol_id.external_label,
 	    drive_id.panel_id.lsm_id.acs, drive_id.panel_id.lsm_id.lsm,
 	    drive_id.panel_id.panel, drive_id.drive, force ? "force" : "");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 7,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "vol_id",     TL_MSG_PARAM_STR, vol_id.external_label,
+                            "drive_id_0", TL_MSG_PARAM_INT, drive_id.panel_id.lsm_id.acs,
+                            "drive_id_1", TL_MSG_PARAM_INT, drive_id.panel_id.lsm_id.lsm,
+                            "drive_id_2", TL_MSG_PARAM_INT, drive_id.panel_id.panel,
+                            "drive_id_3", TL_MSG_PARAM_INT, drive_id.drive,
+                            "Message",    TL_MSG_PARAM_STR, force ? "force" : "" );
 	if (status = acs_dismount (++myseqnum, NO_LOCK_ID, vol_id, drive_id, force)) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",      TL_MSG_PARAM_STR, func,
+                                    "action",    TL_MSG_PARAM_STR, action,
+                                    "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (1, status);
 		RETURN (c);
 	}
 	tplogit (func,"acs_dismount Ok returned %s\n", acs_status(status));
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                            "func",     TL_MSG_PARAM_STR, func,
+                            "Message",  TL_MSG_PARAM_STR, "acs_dismount Ok",
+                            "returned", TL_MSG_PARAM_STR, acs_status(status) );
 	dismount_req_id = -1;	/* no request id assigned by ACSLS yet */
 	do {
 		status = acs_response (UCHECKI, &s, &req_id, &rtype, rbuf);
 		tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 
 			 status, acs_status(status), req_id, rtype);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
+                                    "func",       TL_MSG_PARAM_STR, func,
+                                    "Message",    TL_MSG_PARAM_STR, "acs_response returned",
+                                    "returned_1", TL_MSG_PARAM_INT, status,
+                                    "returned_2", TL_MSG_PARAM_STR, acs_status(status),
+                                    "reqid",      TL_MSG_PARAM_INT, req_id, 
+                                    "rtype",      TL_MSG_PARAM_INT, rtype );                                    
 		if (rtype == RT_ACKNOWLEDGE) {
 			dismount_req_id = req_id;
 			tplogit (func, "ACSLS req_id = %d\n", dismount_req_id);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                                            "func",            TL_MSG_PARAM_STR, func,
+                                            "Message",         TL_MSG_PARAM_STR, "ACSLS",
+                                            "dismount req_id", TL_MSG_PARAM_INT, dismount_req_id );
 		}
 	} while (rtype != RT_FINAL);
 	dismount_req_id = 0;
 	if (status) {
 	        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",      TL_MSG_PARAM_STR, func,
+                                    "action",    TL_MSG_PARAM_STR, action,
+                                    "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (1, status);
 		RETURN (c);
 	}
@@ -702,6 +836,12 @@ unsigned int force;
 	  if (dr->dismount_status) {
 	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
 	    usrmsg (func, "%s\n", msg);
+            tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                "func",      TL_MSG_PARAM_STR, func,
+                                "action",    TL_MSG_PARAM_STR, action,
+                                "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                "acsstatus", TL_MSG_PARAM_STR, acsstatus (dr->dismount_status) );           
 	    c = acserr2act (1, dr->dismount_status);
 	    RETURN (c);
 	  }
@@ -722,11 +862,22 @@ acsmountresp()
 	status = acs_response (0, &s, &req_id, &rtype, rbuf);
 	tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 
 		 status, acs_status(status), req_id, rtype);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
+                            "func",       TL_MSG_PARAM_STR, func,
+                            "Message",    TL_MSG_PARAM_STR, "acs_response returned",
+                            "returned_1", TL_MSG_PARAM_INT, status,
+                            "returned_2", TL_MSG_PARAM_STR, acs_status(status),
+                            "reqid",      TL_MSG_PARAM_INT, req_id, 
+                            "rtype",      TL_MSG_PARAM_INT, rtype );                                    
 	if (status == STATUS_PENDING)
 		return (0);
 	if (rtype == RT_ACKNOWLEDGE) {
 		mount_req_id = req_id;
 		tplogit (func, "ACSLS req_id = %d\n", mount_req_id);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                                    "func",         TL_MSG_PARAM_STR, func,
+                                    "Message",      TL_MSG_PARAM_STR, "ACSLS",
+                                    "mount req_id", TL_MSG_PARAM_INT, mount_req_id );
 		return (0);
 	}
 	/* final status */
@@ -734,6 +885,12 @@ acsmountresp()
 	if (status) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",      TL_MSG_PARAM_STR, func,
+                                    "action",    TL_MSG_PARAM_STR, action,
+                                    "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (0, status);
 		RETURN (c);
 	}
@@ -748,6 +905,12 @@ acsmountresp()
 	  if (dr->mount_status) {
 	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
 	    usrmsg (func, "%s\n", msg);
+            tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                "func",      TL_MSG_PARAM_STR, func,
+                                "action",    TL_MSG_PARAM_STR, action,
+                                "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                "acsstatus", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
 	    c = acserr2act (1, dr->mount_status);
 	    RETURN (c);
 	  }
@@ -772,8 +935,19 @@ wait4acsfinalresp()
 		status = acs_response (UCHECKI, &s, &req_id, &rtype, rbuf);
 		tplogit (func, "acs_response returned %d/%s reqid:%d rtype:%d\n", 
 			 status, acs_status(status), req_id, rtype);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
+                                    "func",       TL_MSG_PARAM_STR, func,
+                                    "Message",    TL_MSG_PARAM_STR, "acs_response returned",
+                                    "returned_1", TL_MSG_PARAM_INT, status,
+                                    "returned_2", TL_MSG_PARAM_STR, acs_status(status),
+                                    "reqid",      TL_MSG_PARAM_INT, req_id, 
+                                    "rtype",      TL_MSG_PARAM_INT, rtype );                                    
 		if (rtype == RT_ACKNOWLEDGE) {
 			tplogit (func, "ACSLS req_id = %d\n", req_id);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "ACSLS",
+                                            "req_id",  TL_MSG_PARAM_INT, req_id );
 		}
 	} while (rtype != RT_FINAL);
 	mount_req_id = 0;
@@ -781,6 +955,12 @@ wait4acsfinalresp()
 	if (status) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",      TL_MSG_PARAM_STR, func,
+                                    "action",    TL_MSG_PARAM_STR, action,
+                                    "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                    "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
 		c = acserr2act (*action == 'm' ? 0 : 1, status);
 		RETURN (c);
 	}
@@ -795,6 +975,12 @@ wait4acsfinalresp()
 	  if (dr->mount_status) {
 	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
 	    usrmsg (func, "%s\n", msg);
+            tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                "func",      TL_MSG_PARAM_STR, func,
+                                "action",    TL_MSG_PARAM_STR, action,
+                                "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                "acsstatus", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
 	    c = acserr2act (1, dr->mount_status);
 	    RETURN (c);
 	  }
@@ -849,6 +1035,11 @@ char *loader;
 		if ((hostid = fbsinit (NULL)) < 0) {
 			usrmsg (func, TP042, loader, "fbsinit",
 				fbsstrerror (fbs_errno, msgbuf));
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "loader",  TL_MSG_PARAM_STR, loader,
+                                            "Message", TL_MSG_PARAM_STR, "fbsinit", 
+                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
 			RETURN (-errno);
 		}
 	}
@@ -858,6 +1049,12 @@ char *loader;
 		sprintf (msg, TP041, action, cur_vid, cur_unm,
 			fbsstrerror (fbs_errno, msgbuf));
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, action,
+                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
 		c = fbserr2act (0, fbs_errno);
 		RETURN (c);
 	}
@@ -879,6 +1076,11 @@ unsigned int force;
 		if ((hostid = fbsinit (NULL)) < 0) {
 			usrmsg (func, TP042, loader, "fbsinit",
 				fbsstrerror (fbs_errno, msgbuf));
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "loader",  TL_MSG_PARAM_STR, loader,
+                                            "Message", TL_MSG_PARAM_STR, "fbsinit", 
+                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
 			RETURN (-errno);
 		}
 	}
@@ -890,6 +1092,12 @@ unsigned int force;
 		sprintf (msg, TP041, action, cur_vid, cur_unm,
 			fbsstrerror (fbs_errno, msgbuf));
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, action,
+                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
 		c = fbserr2act (1, fbs_errno);
 		RETURN (c);
 	}
@@ -907,6 +1115,11 @@ char *loader;
 		if (fbsterm (hostid) < 0) {
 			usrmsg (func, TP042, loader, "fbsterm",
 				fbsstrerror (fbs_errno, msgbuf));
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "loader",  TL_MSG_PARAM_STR, loader,
+                                            "Message", TL_MSG_PARAM_STR, "fbsterm", 
+                                            "Error",   TL_MSG_PARAM_STR, fbsstrerror( fbs_errno, msgbuf ) );
 			RETURN (-EIO);
 		}
 	}
@@ -948,6 +1161,12 @@ char *loader;
 		if ( last != NULL && *last != '\0' ) {
 			sprintf(msg,TP041,action, cur_vid, cur_unm, last);
 			usrmsg(func,"%s\n",msg); 
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, action,
+                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "last",    TL_MSG_PARAM_STR, last );
 		}
 	}
 	if ( rep.log_info != NULL && rep.log_info_l ) free(rep.log_info);
@@ -975,6 +1194,11 @@ unsigned int force;
 	strcat(req.loader,",");
 	strcat(req.loader,unm);
 	tplogit(func,"vol_id = %s drive_id = %s %s\n",req.vid,req.loader,force ? "force" : "");
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 4,
+                            "func",     TL_MSG_PARAM_STR, func,
+                            "vol_id",   TL_MSG_PARAM_STR, req.vid,req,
+                            "drive_id", TL_MSG_PARAM_STR, req.loader,
+                            "Message",  TL_MSG_PARAM_STR, force ? "force" : "" );
 	rc = send2dmc(&s,&req);
 	if ( rc ) RETURN(rc);
 	rc = fromdmc(&s,&rep);
@@ -987,6 +1211,12 @@ unsigned int force;
 		if ( last != NULL && *last != '\0' ) {
 			sprintf(msg, TP041, action, cur_vid, cur_unm, last);
 			usrmsg(func,"%s\n",msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, action,
+                                            "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "last",    TL_MSG_PARAM_STR, last );
 		}
 	}
 	if ( rep.log_info != NULL && rep.log_info_l ) free(rep.log_info);
@@ -1026,6 +1256,10 @@ DMCrequest_t *req;
 	else {
 		if ( (sp = getservbyname(DMC_NAME,DMC_PROTO)) == NULL ) {
 			tplogit(func,"getservbyname: %s\n",neterror());
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "getservbyname",
+                                            "Error",   TL_MSG_PARAM_STR, neterror() );
 			RETURN(RBT_FAST_RETRY);
 		}
 		dmc_port = ntohs(sp->s_port);
@@ -1034,6 +1268,10 @@ DMCrequest_t *req;
 	sin.sin_family = AF_INET;
 	if ( (hp = gethostbyname(dmc_host)) == NULL ) {
 		tplogit(func,"gethostbyname: %s\n",neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "gethostbyname",
+                                    "Error",   TL_MSG_PARAM_STR, neterror() );
 		free(dmc_host);
 		RETURN(RBT_FAST_RETRY);
 	}
@@ -1041,11 +1279,19 @@ DMCrequest_t *req;
 	sin.sin_port = htons(dmc_port);
 	if ((s = socket(AF_INET,SOCK_STREAM,0)) == -1) {
 		tplogit(func,"socket: %s\n",neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "socket",
+                                    "Error",   TL_MSG_PARAM_STR, neterror() );
 		free(dmc_host);
 		RETURN(RBT_FAST_RETRY);
 	}
 	if ( connect(s,(struct sockaddr *)&sin,sizeof(struct sockaddr_in)) == -1 ){
 		tplogit(func,"connect: %s\n",neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "connect",
+                                    "Error",   TL_MSG_PARAM_STR, neterror() );
 		shutdown(s,2);
 		close(s);
 		free(dmc_host);
@@ -1058,6 +1304,10 @@ DMCrequest_t *req;
 	j = sizeof(DMCrequest_t);
 	if ( send(s,(char *)req,j,0) != j ) {
 		tplogit(func,"send: %s\n",neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "send",
+                                    "Error",   TL_MSG_PARAM_STR, neterror() );
 		shutdown(s,2);
 		close(s);
 		free(dmc_host);
@@ -1079,6 +1329,10 @@ DMCreply_t *rep;
 	ENTRY(fromdmc);
 	if ( (j = recv(s,(char *)rep,sizeof(DMCreply_t),0)) != sizeof(DMCreply_t) ) {
 		tplogit(func,"recv: %s\n",neterror());
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "recv",
+                                    "Error",   TL_MSG_PARAM_STR, neterror() );
 		shutdown(s,2);
 		close(s);
 		RETURN(RBT_FAST_RETRY);
@@ -1093,6 +1347,10 @@ DMCreply_t *rep;
 		do {
 			if ( (j = recv(s,(char *)&rep->log_info[ntot],rep->log_info_l-ntot,0)) < 0 ) {
 	tplogit(func,"recv: %s\n",neterror());
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "recv",
+                            "Error",   TL_MSG_PARAM_STR, neterror() );
 	free(rep->log_info);
 	shutdown(s,2);
 	close(s);
@@ -1105,6 +1363,16 @@ DMCreply_t *rep;
 	close(s);
 	if ( rep->magic != S_MAGIC ) {
 		tplogit(func,"Wrong magic number (0x%x) from DMC server. Should be 0x%x\n",rep->magic,S_MAGIC);
+                {
+                        char cur[16], exp[16];
+                        sprintf( cur, "0x%x", rep->magic );
+                        sprintf( exp, "0x%x", S_MAGIC );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                            "func",     TL_MSG_PARAM_STR, func,
+                                            "Message",  TL_MSG_PARAM_STR, "Wrong magic number from DMC server",
+                                            "Current",  TL_MSG_PARAM_STR, cur,
+                                            "Expected", TL_MSG_PARAM_STR, exp );
+                }
 		if ( rep->log_info_l ) free(rep->log_info);
 		RETURN(RBT_NORETRY);
 	}
@@ -1134,6 +1402,12 @@ char *loader;
 	if ((p = strchr (smc_ldr, ',')) == 0) {
 		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
 		    cur_vid, cur_unm, "invalid loader");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, action,
+                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Message", TL_MSG_PARAM_STR, "invalid loader" );
 		RETURN (RBT_NORETRY);
 	}
 	*p = '\0';
@@ -1141,6 +1415,12 @@ char *loader;
 	if (*dp != '\0' || drvord < 0) {
 		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
 		    cur_vid, cur_unm, "invalid loader");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, action,
+                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Message", TL_MSG_PARAM_STR, "invalid loader" );
 		RETURN (RBT_NORETRY);
 	}
 	if (p = strchr (smc_ldr, '@')) {
@@ -1161,6 +1441,11 @@ char *loader;
 		else
 			c = RBT_NORETRY;
                 usrmsg (func, TP042, smc_ldr, "open", strerror(errno));
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
+                                    "Message", TL_MSG_PARAM_STR, "open", 
+                                    "Error",   TL_MSG_PARAM_STR, strerror( errno ) );
 		RETURN (c);
         }
 #endif
@@ -1170,11 +1455,20 @@ char *loader;
 	if (! got_robot_info) {
 		if (c = smc_get_geometry (smc_fd, smc_ldr, &robot_info)) {
 			c = smc_lasterror (&smc_status, &msgaddr);
-			if (smc_status.rc == -1 || smc_status.rc == -2)
+			if (smc_status.rc == -1 || smc_status.rc == -2) {
 				usrmsg (func, "%s\n", msg);
-			else
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "Message", TL_MSG_PARAM_STR, msg ); 
+                        } else {
 				usrmsg (func, TP042, smc_ldr, "get_geometry",
 					strrchr (msgaddr, ':') + 2);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
+                                                    "Message", TL_MSG_PARAM_STR, "get_geometry", 
+                                                    "Error",   TL_MSG_PARAM_STR, strrchr (msgaddr, ':') + 2 );
+                        }
 			RETURN (c);
 		}
 		got_robot_info = 1;
@@ -1183,6 +1477,12 @@ char *loader;
 	if (drvord >= robot_info.device_count) {
 		usrmsg (func, "TP041 - %s of %s on %s failed : %s\n", action,
 		    cur_vid, cur_unm, "invalid loader");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, action,
+                                    "cur_vid", TL_MSG_PARAM_STR, cur_vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Message", TL_MSG_PARAM_STR, "invalid loader" );
 		RETURN (RBT_NORETRY);
 	}
 	RETURN (0);
@@ -1202,51 +1502,92 @@ int vsnretry;
 	struct smc_status smc_status;
 
 	ENTRY (smcmount);
-
+        
 	if ((c = opensmc (loader)) != 0)
 		RETURN (c);
 	if (rmc_host) {
 		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
-        if (c == EBUSY) {
-           RETURN(RBT_FAST_RETRY);
-        } else if (c) {
+                if (c == EBUSY) {
+                        RETURN(RBT_FAST_RETRY);
+                } else if (c) {
 			p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
-				p ? p + 2 : rmc_errbuf);
-            /* Just send message to operator after two retries*/ 
-            if (vsnretry > 3 && (serrno == SECOMERR)) {  
-			   usrmsg (func, "%s\n", msg);
-            } else if (vsnretry <= 3 && (serrno == SECOMERR)) {
-			   tplogit (func, "%s", msg);
-            } else {
-			   usrmsg (func, "%s\n", msg);
-            }
-			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
+                                 p ? p + 2 : rmc_errbuf);
+                        /* Just send message to operator after two retries*/ 
+                        if (vsnretry > 3 && (serrno == SECOMERR)) {  
+                                usrmsg (func, "%s\n", msg);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "action",  TL_MSG_PARAM_STR, "mount",
+                                                    "cur_vid", TL_MSG_PARAM_STR, vid,
+                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+                        } else if (vsnretry <= 3 && (serrno == SECOMERR)) {
+                                tplogit (func, "%s", msg);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "action",  TL_MSG_PARAM_STR, "mount",
+                                                    "cur_vid", TL_MSG_PARAM_STR, vid,
+                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+                        } else {
+                                usrmsg (func, "%s\n", msg);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "action",  TL_MSG_PARAM_STR, "mount",
+                                                    "cur_vid", TL_MSG_PARAM_STR, vid,
+                                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                                    "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+                        }
+                        c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
-		RETURN (c);
+                RETURN (c);
 	}
 	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
         if (c == EBUSY) {
 		    usrmsg (func, "%s\n", msgaddr);
-            RETURN(RBT_FAST_RETRY);
+                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                        "func",    TL_MSG_PARAM_STR, func,
+                                        "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
+                    RETURN(RBT_FAST_RETRY);
 		} else if (smc_status.rc == -1 || smc_status.rc == -2) {
 			usrmsg (func, "%s\n", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
 		} else {
 			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "find_cartridge",
 				p ? p + 2 : msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
+                                            "Message", TL_MSG_PARAM_STR, "find_cartridge", 
+                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
 		}
 		RETURN (c);
 	}
 	if (c == 0) {
 		sprintf (msg, TP041, "mount", vid, cur_unm, "volume not in library");
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, "mount",
+                                    "cur_vid", TL_MSG_PARAM_STR, vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Message", TL_MSG_PARAM_STR, "volume not in library" );
 		RETURN (RBT_OMSG_NORTRY);
 	}
 	if (element_info.element_type != 2) {
 		sprintf (msg, TP041, "mount", vid, cur_unm, "volume in use");
 		usrmsg (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, "mount",
+                                    "cur_vid", TL_MSG_PARAM_STR, vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Message", TL_MSG_PARAM_STR, "volume in use" );
 		RETURN (RBT_OMSG_SLOW_R);
 	}
 	if ((c = smc_move_medium (smc_fd, smc_ldr, element_info.element_address,
@@ -1254,15 +1595,27 @@ int vsnretry;
 		c = smc_lasterror (&smc_status, &msgaddr);
         if (c == EBUSY) {
 			usrmsg (func, "%s\n", msgaddr);
-            RETURN (RBT_FAST_RETRY);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                        "func",    TL_MSG_PARAM_STR, func,
+                                        "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
+                        RETURN (RBT_FAST_RETRY);
 		} else if (smc_status.rc == -1 || smc_status.rc == -2){
 			usrmsg (func, "%s\n", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
 		} else {
 			p = strrchr (msgaddr, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
 				p ? p + 2 : msgaddr);
 			usrmsg (func, "%s\n", msg);
-		}
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, "mount",
+                                            "cur_vid", TL_MSG_PARAM_STR, vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
+                }
 		RETURN (c);
 	}
 	RETURN (0);
@@ -1295,10 +1648,28 @@ int vsnretry;
             /* Just send message to operator after two retries on connection reset*/ 
             if (vsnretry > 3 && (serrno == SECOMERR)) {
 			  usrmsg (func, "%s\n", msg);
+                          tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                              "func",    TL_MSG_PARAM_STR, func,
+                                              "action",  TL_MSG_PARAM_STR, "demount",
+                                              "cur_vid", TL_MSG_PARAM_STR, vid,
+                                              "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                              "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
             } else if (vsnretry <= 3 && (serrno == SECOMERR)){
 			   tplogit (func, "%s", msg);
+                           tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                               "func",    TL_MSG_PARAM_STR, func,
+                                               "action",  TL_MSG_PARAM_STR, "demount",
+                                               "cur_vid", TL_MSG_PARAM_STR, vid,
+                                               "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                               "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
             } else {
 			   usrmsg (func, "%s\n", msg);
+                           tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                               "func",    TL_MSG_PARAM_STR, func,
+                                               "action",  TL_MSG_PARAM_STR, "demount",
+                                               "cur_vid", TL_MSG_PARAM_STR, vid,
+                                               "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                               "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
             }
 			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
 		}
@@ -1309,44 +1680,85 @@ int vsnretry;
 		c = smc_lasterror (&smc_status, &msgaddr);
         if (c == EBUSY) {
             usrmsg (func, "%s\n", msgaddr);
+            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                "func",    TL_MSG_PARAM_STR, func,
+                                "msgaddr", TL_MSG_PARAM_STR, msgaddr );             
             RETURN (RBT_FAST_RETRY);
 		} else if (smc_status.rc == -1 || smc_status.rc == -2) {
 			usrmsg (func, "%s\n", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
 		} else {
 			p = strrchr (msgaddr, ':');
 			usrmsg (func, TP042, smc_ldr, "read_elem_status",
 				p ? p + 2 : msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "smc_ldr", TL_MSG_PARAM_STR, smc_ldr,
+                                            "Message", TL_MSG_PARAM_STR, "read_elem_status", 
+                                            "Error",   TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
 		}
 		RETURN (c);
 	}
 	if ((element_info.state & 0x1) == 0) {
 		usrmsg (func, TP041, "demount", vid, cur_unm, "Medium Not Present");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, "demount",
+                                    "cur_vid", TL_MSG_PARAM_STR, vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Message", TL_MSG_PARAM_STR, "Medium Not Present" );
 		RETURN (RBT_OK);
 	}
 	if ((element_info.state & 0x8) == 0) {
 		usrmsg (func, TP041, "demount", vid, cur_unm, "Drive Not Unloaded");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "action",  TL_MSG_PARAM_STR, "demount",
+                                    "cur_vid", TL_MSG_PARAM_STR, vid,
+                                    "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                    "Message", TL_MSG_PARAM_STR, "Drive Not Unloaded" );
 		RETURN (RBT_UNLD_DMNT);
 	}
 	if (*vid && !force && strcmp (element_info.name, vid)) {
 		usrmsg (func, TP050, vid, element_info.name);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 50, 4,
+                                    "func",  TL_MSG_PARAM_STR, func,
+                                    "vid_1", TL_MSG_PARAM_STR, vid,
+                                    "vid_2", TL_MSG_PARAM_STR, element_info.name );
 		RETURN (RBT_DMNT_FORCE);
 	}
 	if ((c = smc_move_medium (smc_fd, smc_ldr,
-	    robot_info.device_start+drvord, element_info.source_address,
-	    (element_info.flags & 0x40) ? 1 : 0)) < 0) {
+                                  robot_info.device_start+drvord, element_info.source_address,
+                                  (element_info.flags & 0x40) ? 1 : 0)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
-        if (c == EBUSY) {
+                if (c == EBUSY) {
 			usrmsg (func, "%s\n", msgaddr);
-            RETURN(RBT_FAST_RETRY);
-		} else if (smc_status.rc == -1 || smc_status.rc == -2)
-			usrmsg (func, "%s\n", msgaddr);
-		else {
-			p = strrchr (msgaddr, ':');
-			sprintf (msg, TP041, "demount", vid, cur_unm,
-				p ? p + 2 : msgaddr);
-			usrmsg (func, "%s\n", msg);
-		}
-		RETURN (c);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
+                        RETURN(RBT_FAST_RETRY);
+                } else if (smc_status.rc == -1 || smc_status.rc == -2) {
+                        usrmsg (func, "%s\n", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
+                
+                }
+                else {
+                        p = strrchr (msgaddr, ':');
+                        sprintf (msg, TP041, "demount", vid, cur_unm,
+                                 p ? p + 2 : msgaddr);
+                        usrmsg (func, "%s\n", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, "demount",
+                                            "cur_vid", TL_MSG_PARAM_STR, vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : msgaddr );
+                }
+                RETURN (c);
 	}
 	RETURN (0);
 }
