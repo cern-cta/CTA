@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.383 $ $Date: 2007/03/12 13:37:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.384 $ $Date: 2007/03/12 18:08:26 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.383 $ $Date: 2007/03/12 13:37:32 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.384 $ $Date: 2007/03/12 18:08:26 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2546,7 +2546,6 @@ BEGIN
     END IF;
   END LOOP;
   
-  -- if no candidate has been found (this can happen with the null GC policy) just terminate
   IF bestCandidate <> -1 THEN
     -- Now extract the diskcopies that will be garbaged and
     -- mark them GCCandidate
@@ -2647,7 +2646,7 @@ BEGIN
        AND DC.status = 7  -- INVALID
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest
-          WHERE DC.status = 0 AND diskcopy = DC.id
+          WHERE SubRequest.diskcopy = DC.id
             AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
 
     IF dcIds.COUNT > 0 THEN
