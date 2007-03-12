@@ -1,9 +1,9 @@
 /*
- * $Id: msg.h,v 1.3 2005/02/28 14:09:58 obarring Exp $
+ * $Id: msg.h,v 1.4 2007/03/12 16:36:56 wiebalck Exp $
  */
 
 /*
- * @(#)$RCSfile: msg.h,v $ $Revision: 1.3 $ $Date: 2005/02/28 14:09:58 $ CERN IT-PDP/DC Antoine Trannoy
+ * @(#)$RCSfile: msg.h,v $ $Revision: 1.4 $ $Date: 2007/03/12 16:36:56 $ CERN IT-PDP/DC Antoine Trannoy
  */
 
 /*
@@ -54,5 +54,13 @@
 #define ACKN_CANC	0x2006
 
 #define GIVE_REPL	0x1007	/* Sending the reply to the user.	*/
+
+/*
+ * Function Protypes
+ */
+EXTERN_C int DLL_DECL rcvmsgr _PROTO(( int, int*, int*, int*, char*, int));
+EXTERN_C int DLL_DECL canmsgr _PROTO(( int, int ));
+EXTERN_C int DLL_DECL opnmsgr _PROTO(( int* ));
+EXTERN_C int DLL_DECL sndmsgr _PROTO(( char*, int, int ));
 
 #endif 	/*	__MSG_H__	*/
