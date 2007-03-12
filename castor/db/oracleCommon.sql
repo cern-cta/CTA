@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.382 $ $Date: 2007/03/07 15:21:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.383 $ $Date: 2007/03/12 13:37:32 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.382 $ $Date: 2007/03/07 15:21:05 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.383 $ $Date: 2007/03/12 13:37:32 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -719,22 +719,23 @@ BEGIN
        ORDER BY FileSystemRate(FS.weight, FS.deltaWeight, FS.fsDeviation) DESC
        ) FN
    WHERE ROWNUM < 2;
-   SELECT P.path, P.diskcopy_id, P.castorfile,
-          C.fileId, C.nsHost, C.fileSize, P.id
-     INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-     FROM (SELECT /*+ INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
-           D.path, D.diskcopy_id, D.castorfile, T.id
-             FROM (SELECT DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                     FROM DiskCopy
-                    WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                      AND DiskCopy.filesystem = fileSystemId) D,
+  SELECT P.path, P.diskcopy_id, P.castorfile,
+         C.fileId, C.nsHost, C.fileSize, P.id
+    INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+    FROM (SELECT /*+ USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+          D.path, D.diskcopy_id, D.castorfile, T.id
+            FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
+                         DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
+                    FROM DiskCopy
+                   WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
+                     AND DiskCopy.filesystem = fileSystemId) D,
                   TapeCopy T, Stream2TapeCopy ST
-            WHERE T.castorfile = D.castorfile
-              AND ST.child = T.id
-              AND ST.parent = streamId
-              AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-              AND ROWNUM < 2) P, castorfile C
-    WHERE P.castorfile = C.id;
+           WHERE T.castorfile = D.castorfile
+             AND ST.child = T.id
+             AND ST.parent = streamId
+             AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
+             AND ROWNUM < 2) P, castorfile C
+   WHERE P.castorfile = C.id;
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
