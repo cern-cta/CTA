@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.7 $ $Date: 2001/01/29 07:35:34 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: sendtmsmount.c,v $ $Revision: 1.8 $ $Date: 2007/03/12 16:36:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
  
 /*	sendtmsmount -  send a MOUNT request to TMS */

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.10 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tperror.c,v $ $Revision: 1.11 $ $Date: 2007/03/12 16:36:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*      gettperror - get drive status after I/O error and
@@ -231,8 +231,8 @@ char **msgaddr;
 	extern char *devtype;
 #else
 	char *devtype;
-#endif
 	struct devlblinfo  *dlip;
+#endif
 	int rc;
 	int save_errno;
 #ifndef _AIX
