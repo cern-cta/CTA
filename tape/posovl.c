@@ -4,11 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.27 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.28 $ $Date: 2007/03/13 16:22:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <pwd.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -42,7 +44,7 @@ fd_set readmask;
 int rpfd;
 int tapefd;
 uid_t uid;
-main(argc, argv)
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -75,7 +77,6 @@ char	**argv;
 	int msglen;
 	char *name;
 	char *p;
-	struct passwd *pwd;
 	char *q;
 	int Qfirst;
 	int Qlast;
@@ -85,7 +86,9 @@ char	**argv;
 	char *sbp;
 	int scsi;
 	char sendbuf[REQBUFSZ];
+#if SONYRAW
 	int sonyraw;
+#endif
 	char tpfid[CA_MAXFIDLEN+1];
 	char uhl1[LBLBUFSZ];
 	int ux;
@@ -95,6 +98,7 @@ char	**argv;
 
 	void cleanup();
 	void positkilled();
+        void configdown( char* );
 
 	ENTRY (posovl);
 
@@ -246,7 +250,7 @@ char	**argv;
                                                     "Block ID 2", TL_MSG_PARAM_INT, blockid[2],
                                                     "Block ID 3", TL_MSG_PARAM_INT, blockid[3] );
                         }
-			if (c = locate (tapefd, path, blockid)) goto reply;
+			if ((c = locate (tapefd, path, blockid))) goto reply;
 			flags |= LOCATE_DONE;
 		}
 		if ((c = posittape (tapefd, path, devtype, lblcode, mode,
@@ -254,7 +258,7 @@ char	**argv;
 		    vol1, hdr1, hdr2, uhl1)))
 			goto reply;
 		if (mode == WRITE_ENABLE)
-			if (c = read_pos (tapefd, path, blockid))
+			if ((c = read_pos (tapefd, path, blockid)))
 				goto reply;
 #if SONYRAW
 	}
@@ -284,16 +288,20 @@ char	**argv;
 							recfm[1] = hdr2[38];
 					}
 				}
-				if (blksize == 0)
-					if (*uhl1)
+				if (blksize == 0) {
+					if (*uhl1) {
 						sscanf (uhl1 + 14, "%10d", &blksize);
-					else
+					} else {
 						sscanf (hdr2 + 5, "%5d", &blksize);
-				if (lrecl == 0)
-					if (*uhl1)
+                                        }
+                                }
+				if (lrecl == 0) {
+					if (*uhl1) {
 						sscanf (uhl1 + 24, "%10d", &lrecl);
-					else
+					} else {
 						sscanf (hdr2 + 10, "%5d", &lrecl);
+                                        }
+                                }
 			}
 		} else {
 			if (fid[0] == '\0') {
@@ -309,22 +317,25 @@ char	**argv;
 
 	if (recfm[0] == '\0')
 		strcpy (recfm, "U");
-	if (blksize == 0)
+	if (blksize == 0) {
 		if (strcmp (devtype, "SD3")) {
 			if (lrecl == 0) {
 				devinfo = Ctape_devinfo (devtype);
 				blksize = devinfo->defblksize;
-			} else
+			} else {
 				blksize = lrecl;
+                        }
 		} else {
-			if (lrecl == 0)
+			if (lrecl == 0) {
 				blksize = 262144;
-			else if (strcmp (recfm, "F") == 0) {
+			} else if (strcmp (recfm, "F") == 0) {
 				blksize = (262144 / lrecl) * lrecl;
 				strcpy (recfm, "FB");
-			} else
+			} else {
 				blksize = lrecl;
+                        }
 		}
+        }
 	if (lrecl == 0 && strcmp (recfm, "U")) lrecl = blksize;
 
 	/* Build UPDFIL request header */
@@ -453,7 +464,7 @@ void cleanup()
         tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 }
 
-configdown(drive)
+void configdown(drive)
 char *drive;
 {
 	char msg[OPRMSGSZ];

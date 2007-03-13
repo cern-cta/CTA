@@ -4,9 +4,10 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.6 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.7 $ $Date: 2007/03/13 16:22:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
+#include <stdlib.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
@@ -19,6 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.6 $ $Date: 20
 #include <sys/Atape.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #if SACCT
 #include "sacct.h"
 #include "serrno.h"
@@ -30,7 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.6 $ $Date: 20
 #include <unistd.h>
 #include "tplogger_api.h"
 int jid;
-main(argc, argv)
+int main(argc, argv)
 int	argc;
 char	**argv;
 {

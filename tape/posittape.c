@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.15 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.16 $ $Date: 2007/03/13 16:22:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,7 +17,56 @@ static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.15 $ $Date: 2
 #include "Ctape_api.h"
 #include "serrno.h"
 #include "tplogger_api.h"
-posittape(tapefd, path, devtype, lblcode, mode, cfseq, fid, filstat, fsec, fseq,
+
+int gethdr2uhl1(tapefd, path, lblcode, hdr1, hdr2, uhl1, tmr)
+int tapefd;
+char *path;
+int lblcode;
+char *hdr1;
+char *hdr2;
+char *uhl1;
+int *tmr;
+{
+	int c;
+	int cfseq;
+
+	if ((c = readlbl (tapefd, path, hdr2)) < 0) return (c);
+	if (c == 1) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	if (c > 1) {	/* tape mark or blank tape found */
+		*hdr2 = '\0';
+		*uhl1 = '\0';
+		*tmr = 1;
+		return (0);
+	}
+	if (lblcode == SL) ebc2asc (hdr2, 80);
+	if (strncmp (hdr2, (*hdr1 == 'H') ? "HDR2" : "EOF2", 4)) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	if ((c = readlbl (tapefd, path, uhl1)) < 0) return (c);
+	if (c == 1) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	if (c > 1) {	/* tape mark or blank tape found */
+		*uhl1 = '\0';
+		*tmr = 1;
+		return (0);
+	}
+	if (lblcode == SL) ebc2asc (uhl1, 80);
+	if (strncmp (uhl1, (*hdr1 == 'H') ? "UHL1" : "UTL1", 4)) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	sscanf (uhl1+4, "%10d", &cfseq);
+	*tmr = 0;
+	return (cfseq);
+}
+
+int posittape(tapefd, path, devtype, lblcode, mode, cfseq, fid, filstat, fsec, fseq,
 	den, flags, Qfirst, Qlast, vol1, hdr1, hdr2, uhl1)
 int tapefd;
 char *path;
@@ -39,7 +88,9 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 	int c;
 	time_t current_time;
 	struct devinfo *devinfo;
+#if defined(ADSTAR)
 	extern char *dvrname;
+#endif
 	char func[16];
 	struct tm *localtime(), *tm;
 	int n;
@@ -530,50 +581,3 @@ reply:
 	RETURN (c);
 }
 
-gethdr2uhl1(tapefd, path, lblcode, hdr1, hdr2, uhl1, tmr)
-int tapefd;
-char *path;
-int lblcode;
-char *hdr1;
-char *hdr2;
-char *uhl1;
-int *tmr;
-{
-	int c;
-	int cfseq;
-
-	if ((c = readlbl (tapefd, path, hdr2)) < 0) return (c);
-	if (c == 1) {
-		serrno = ETLBL;
-		return (-1);
-	}
-	if (c > 1) {	/* tape mark or blank tape found */
-		*hdr2 = '\0';
-		*uhl1 = '\0';
-		*tmr = 1;
-		return (0);
-	}
-	if (lblcode == SL) ebc2asc (hdr2, 80);
-	if (strncmp (hdr2, (*hdr1 == 'H') ? "HDR2" : "EOF2", 4)) {
-		serrno = ETLBL;
-		return (-1);
-	}
-	if ((c = readlbl (tapefd, path, uhl1)) < 0) return (c);
-	if (c == 1) {
-		serrno = ETLBL;
-		return (-1);
-	}
-	if (c > 1) {	/* tape mark or blank tape found */
-		*uhl1 = '\0';
-		*tmr = 1;
-		return (0);
-	}
-	if (lblcode == SL) ebc2asc (uhl1, 80);
-	if (strncmp (uhl1, (*hdr1 == 'H') ? "UHL1" : "UTL1", 4)) {
-		serrno = ETLBL;
-		return (-1);
-	}
-	sscanf (uhl1+4, "%10d", &cfseq);
-	*tmr = 0;
-	return (cfseq);
-}
