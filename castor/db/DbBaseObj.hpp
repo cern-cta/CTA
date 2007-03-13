@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/02/01 10:22:33 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/03/13 16:52:34 $ $Author: itglp $
  *
  *
  *
@@ -51,14 +51,21 @@ namespace castor {
       public:
 
         /**
-         * Constructor
+         * Constructor. Binds this object to the provided conversion service.
+         * If nothing is passed, tries to create a "DbCnvSvc" service. 
          */
         DbBaseObj(castor::ICnvSvc* cnvSvc);
 
         /**
+         * Constructor. Tries to create a conversion service with the
+         * provided service name, and binds this object to it. 
+         */
+        DbBaseObj(std::string serviceName);
+        
+        /**
          * Destructor
          */
-        virtual ~DbBaseObj() throw();
+        virtual ~DbBaseObj() throw() {};
 
         /**
          * Resets the converter. In particular any prepared
@@ -67,6 +74,11 @@ namespace castor {
         virtual void reset() throw() = 0;
 
       protected:
+
+        /**
+         * inits the conversion service to be used
+         */
+        void initCnvSvc(std::string serviceName) throw (castor::exception::Exception);
 
         /**
          * creates a statement from a string. Note that the
@@ -96,7 +108,7 @@ namespace castor {
         
         /// The corresponding conversion service
         castor::db::DbCnvSvc* m_cnvSvc;
-
+        
       };
 
   } // end of namespace db

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/02/01 10:22:33 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/03/13 16:52:34 $ $Author: itglp $
  *
  *
  *
@@ -41,20 +41,32 @@ castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* cnvSvc) :
   BaseObject(), m_cnvSvc(0) {
   m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(cnvSvc);
   if (0 == m_cnvSvc) {
-    m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>
-      (svcs()->cnvService("DbCnvSvc", SVC_DBCNV));
-    if (!m_cnvSvc) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "No DbCnvSvc available";
-      throw ex;
-    }
+    initCnvSvc("DbCnvSvc");
   }
 }
 
 // -----------------------------------------------------------------------
-// Destructor
+// Constructor
 // -----------------------------------------------------------------------
-castor::db::DbBaseObj::~DbBaseObj() throw() {}
+castor::db::DbBaseObj::DbBaseObj(std::string serviceName) :
+  BaseObject(), m_cnvSvc(0) {
+  initCnvSvc(serviceName);
+}
+
+// -----------------------------------------------------------------------
+// initCnvSvc
+// -----------------------------------------------------------------------
+void castor::db::DbBaseObj::initCnvSvc(std::string serviceName)
+  throw (castor::exception::Exception) {
+  m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>
+    (svcs()->cnvService(serviceName, SVC_DBCNV));
+  if (!m_cnvSvc) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "No DbCnvSvc available";
+    throw ex;
+  }
+}
+
 
 // -----------------------------------------------------------------------
 // createStatement
