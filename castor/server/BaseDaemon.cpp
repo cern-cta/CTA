@@ -109,9 +109,9 @@ void castor::server::BaseDaemon::signalHandler()
     }
 
     m_signalMutex->release();
-    int stagerSignaled = m_signalMutex->getValue();
+    int sigValue = m_signalMutex->getValue();
 	
-    switch (stagerSignaled) {
+    switch (sigValue) {
       case RESTART_GRACEFULLY:
         clog() << SYSTEM << "GRACEFUL RESTART [SIGHUP]" << std::endl;
         /* wait on all threads to terminate */
@@ -136,8 +136,7 @@ void castor::server::BaseDaemon::signalHandler()
         break;
       
       default:
-        /* Impossible !? */
-        clog() << ERROR << "Caught a not handled signal - IMMEDIATE STOP" << std::endl;
+        clog() << ERROR << "Caught a not handled signal (" << (-1*sigValue) << ") - IMMEDIATE STOP" << std::endl;
         dlf_shutdown(1);
         exit(EXIT_FAILURE);
     }
@@ -210,24 +209,22 @@ void* castor::server::_signalThread_run(void* arg)
       
       switch (sig_number) {
         case SIGHUP:
-          /* Administrator want us to restart */
           // this wakes up the main thread (see line 104)
           daemon->m_signalMutex->setValueNoMutex(castor::server::RESTART_GRACEFULLY);
           break;
         
         case SIGABRT:
         case SIGTERM:
-          /* Administrator want us to stop gracefully */
           daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
           break;
         
         case SIGINT:
-          /* Administrator want us to stop now */
           daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
           break;
         
         default:
-          daemon->clog() << SYSTEM << "Caught signal: " << sig_number << std::endl;
+	  // all other signals
+	  daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
           break;
       }
 	  }
