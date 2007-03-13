@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.26 2007/03/08 09:43:19 wiebalck Exp $
+ * $Id: Ctape_api.h,v 1.27 2007/03/13 16:27:31 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.26 $ $Date: 2007/03/08 09:43:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.27 $ $Date: 2007/03/13 16:27:31 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -107,6 +107,9 @@ EXTERN_C int DLL_DECL skiptpfb _PROTO((HANDLE, char *, int));
 #else
 EXTERN_C int DLL_DECL skiptpfb _PROTO((int, char *, int));
 #endif
+#if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux) || defined(hpux)
+EXTERN_C int DLL_DECL skiptpfff _PROTO((int, char*, int));
+#endif
 EXTERN_C int DLL_DECL gettperror _PROTO((int, char *, char **));
 EXTERN_C int DLL_DECL rpttperror _PROTO((char *, int, char *, char *));
 EXTERN_C int DLL_DECL readlbl _PROTO((int, char*, char *));
@@ -125,4 +128,14 @@ EXTERN_C int DLL_DECL rwndtape _PROTO((int, char *));
 #endif
 EXTERN_C int DLL_DECL usrmsg _PROTO((char *, char *, ...));
 EXTERN_C int DLL_DECL sendrep _PROTO((int, int, ...));
+EXTERN_C int DLL_DECL chkdriveready _PROTO((int));
+EXTERN_C int DLL_DECL buildhdrlbl _PROTO((char[], char[], char*, char*, int, int, int, char*, int, int, int, int));
+EXTERN_C int DLL_DECL builduhl _PROTO((char[], int, int, int, char*, char*, char*, char*));
+EXTERN_C int DLL_DECL buildvollbl _PROTO((char[], char*, int, char*));
+EXTERN_C int DLL_DECL inquiry _PROTO((int, char*, unsigned char*));
+EXTERN_C int DLL_DECL inquiry80 _PROTO((int, char*, unsigned char*));
+EXTERN_C int DLL_DECL locate _PROTO((int, char*, unsigned char*));
+EXTERN_C int DLL_DECL posittape _PROTO((int, char*, char*, int, int, int*, char*, int, int, int, int, int, int, int, char*, char*, char*, char*));
+EXTERN_C int DLL_DECL omsgr _PROTO((char*, char*, int));
+
 #endif

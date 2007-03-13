@@ -1,5 +1,5 @@
 /*
- * $Id: sacct.h,v 1.15 2002/11/22 08:53:26 jdurand Exp $
+ * $Id: sacct.h,v 1.16 2007/03/13 16:27:31 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: sacct.h,v $ $Revision: 1.15 $ $Date: 2002/11/22 08:53:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: sacct.h,v $ $Revision: 1.16 $ $Date: 2007/03/13 16:27:31 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Include file for CASTOR software accounting */
 
@@ -394,3 +394,7 @@ struct acctstage64 {	/* accounting record for stage 64BITS software */
 #define	STGFILC		5	/* file cleared */
 
 
+/*
+ * Function prototypes
+ */
+EXTERN_C int DLL_DECL tapeacct _PROTO((int, uid_t, gid_t, int, char*, char*, char*, int, int));
