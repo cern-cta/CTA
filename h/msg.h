@@ -1,9 +1,9 @@
 /*
- * $Id: msg.h,v 1.4 2007/03/12 16:36:56 wiebalck Exp $
+ * $Id: msg.h,v 1.5 2007/03/13 12:22:55 wiebalck Exp $
  */
 
 /*
- * @(#)$RCSfile: msg.h,v $ $Revision: 1.4 $ $Date: 2007/03/12 16:36:56 $ CERN IT-PDP/DC Antoine Trannoy
+ * @(#)$RCSfile: msg.h,v $ $Revision: 1.5 $ $Date: 2007/03/13 12:22:55 $ CERN IT-PDP/DC Antoine Trannoy
  */
 
 /*
@@ -15,6 +15,8 @@
 
 #ifndef __MSG_H__
 #define __MSG_H__
+
+#include "osdep.h"
 
 /*
  * Key number for communications with message daemon.
@@ -58,7 +60,7 @@
 /*
  * Function Protypes
  */
-EXTERN_C int DLL_DECL rcvmsgr _PROTO(( int, int*, int*, int*, char*, int));
+EXTERN_C int DLL_DECL rcvmsgr _PROTO(( int, int*, int*, int*, char*, int ));
 EXTERN_C int DLL_DECL canmsgr _PROTO(( int, int ));
 EXTERN_C int DLL_DECL opnmsgr _PROTO(( int* ));
 EXTERN_C int DLL_DECL sndmsgr _PROTO(( char*, int, int ));
