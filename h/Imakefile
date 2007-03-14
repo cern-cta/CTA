@@ -105,6 +105,7 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),rm_struct.h) \
 	 FileName($(DESTDIRCASTOR),rmc.h) \
 	 FileName($(DESTDIRCASTOR),rmc_api.h) \
+	 FileName($(DESTDIRCASTOR),rmc_server_api.h) \
 	 FileName($(DESTDIRCASTOR),rmc_constants.h) \
 	 FileName($(DESTDIRCASTOR),rmnode_util.h) \
 	 FileName($(DESTDIRCASTOR),rtcpcld.h) \
@@ -203,6 +204,7 @@ ECOMMON_H = \
 	 $(EXPORTH)/rm_struct.h \
 	 $(EXPORTH)/rmc.h \
 	 $(EXPORTH)/rmc_api.h \
+	 $(EXPORTH)/rmc_server_api.h \
 	 $(EXPORTH)/rmc_constants.h \
 	 $(EXPORTH)/rmnode_util.h \
 	 $(EXPORTH)/rtcpcld.h \
@@ -631,6 +633,9 @@ IEXPORT(rmc.h,$(EXPORTH),644)
 
 InstallNonExecFile(rmc_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rmc_api.h,$(EXPORTH),644)
+
+InstallNonExecFile(rmc_server_api.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(rmc_server_api.h,$(EXPORTH),644)
 
 InstallNonExecFile(rmc_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rmc_constants.h,$(EXPORTH),644)
