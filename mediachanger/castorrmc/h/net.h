@@ -1,5 +1,5 @@
 /*
- * $Id: net.h,v 1.5 2005/07/14 14:02:52 jdurand Exp $ 
+ * $Id: net.h,v 1.6 2007/03/14 09:30:08 sponcec3 Exp $ 
  */
 
 #ifndef _NET_H
@@ -15,7 +15,9 @@
  * use these definitions to maximize portability.
  */
 #if !defined(_WIN32)
-typedef int SOCKET;
+#ifndef SOCKET
+#define SOCKET int
+#endif
 /*
  * The following definitions should be used with shutdown()
  */
