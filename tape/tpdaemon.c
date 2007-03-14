@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.6 2007/03/12 08:06:06 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.7 2007/03/14 14:55:00 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.6 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.7 $ $Date: 2007/03/14 14:55:00 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -34,6 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.6 $ $Date: 200
 #include "Cinit.h"
 #include "Ctape.h"
 #include "Ctape_api.h"
+#include "Cdomainname.h"
 #include "marshall.h"
 #undef  unmarshall_STRING
 #define unmarshall_STRING(ptr,str)  { str = ptr ; INC_PTR(ptr,strlen(str)+1) ; }
@@ -88,8 +89,30 @@ void resetid(uid_t *u, gid_t *g) {
 
 time_t time();
 void wait4child();
+void check_child_exit();
+void clean4jobdied();
 
-tpd_main(main_args)
+int reldrive( struct tptab*, char*, int, int );
+int initdrvtab( void );
+int initrrt( void );
+
+void procreq( int, char*, char* );
+void procconfreq( char*, char* );
+void procdinforeq( char*, char* );
+void procfrdrvreq( char*, char* );
+void procinforeq( char*, char* );
+void procuvsnreq( char*, char* );
+void procufilreq( char*, char* );
+void procstatreq( char*, char* );
+void procmountreq( char*, char* );
+void prockilltreq( char*, char* );
+void procposreq( char*, char* );
+void procrlsreq( char*, char* );
+void procrsltreq( char*, char* );
+void procrsvreq( char*, char* );
+void procrstatreq( char*, char* );
+
+int tpd_main(main_args)
 struct main_args *main_args;
 {
 	int c, l;
@@ -141,12 +164,12 @@ struct main_args *main_args;
 
         /* initialize drive table */
 
-        if (c = initdrvtab())
+        if ((c = initdrvtab()))
 		exit (c);
 
 	/* initialize global resource reservation table */
 
-	if (c = initrrt())
+	if ((c = initrrt()))
 		exit (c);
 
 	lasttime = time(0);
@@ -181,7 +204,7 @@ struct main_args *main_args;
 #else
 	if ((p = getenv ("TAPE_PORT")) || (p = getconfent ("TAPE", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if (sp = getservbyname ("tape", "tcp")) {
+	} else if ((sp = getservbyname ("tape", "tcp"))) {
 		sin.sin_port = sp->s_port;
 	} else {
 		sin.sin_port = htons ((unsigned short)TAPE_PORT);
@@ -213,7 +236,9 @@ struct main_args *main_args;
 	while (1) {
 		check_child_exit();
 		if (FD_ISSET (s, &readfd)) {
+#ifdef CSEC
 		        char *mech, *clientid;
+#endif
 			FD_CLR (s, &readfd);
 			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 			serrno = 0;
@@ -345,7 +370,7 @@ struct main_args *main_args;
 }
 
 #if ! defined(_WIN32)
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -365,7 +390,7 @@ main()
 }
 #endif
 
-chk_den(tunp, den, cdevp)
+int chk_den(tunp, den, cdevp)
 struct tptab *tunp;
 int den;
 struct tpdev **cdevp;
@@ -386,14 +411,13 @@ struct tpdev **cdevp;
 	return (1);
 }
 
-clean4jobdied()
+void clean4jobdied()
 {
 	int c, i, j, n;
 	int *jids;
 	int nb_drives_asn;
 	struct tptab *tunp;
 	struct tprrt *rrtp;
-	struct waitq *wqp;
 
 	j = 0;
 	rrtp = tpdrrt.next;
@@ -453,20 +477,18 @@ clean4jobdied()
 	free (jids);
 }
 
-confdrive(tunp, rpfd, status, reason)
+int confdrive(tunp, rpfd, status, reason)
 struct tptab *tunp;
 int rpfd;
 int status;
 int reason;
 {
 	int c;
-	int found;
 	int i;
 	int pid;
 	struct confq *prev;
 	struct confq *rqp;
 	struct stat sbuf;
-	int tapefd;
 	struct tpdev *tdp;
 
 	c = 0;
@@ -571,11 +593,10 @@ int reason;
 	return (c);
 }
 
-initdrvtab()
+int initdrvtab()
 {
 	char aden[CA_MAXDENLEN+1];
 	char buf[100];
-	int c;
 	char drive[CA_MAXUNMLEN+1];
 	int errflag;
 	char *fgets();
@@ -583,7 +604,6 @@ initdrvtab()
 	int i, j;
 	char instat[5];
 	int lineno;
-	char *p;
 	char *p_den;
 	char *p_dgn;
 	char *p_dvn;
@@ -742,7 +762,7 @@ initdrvtab()
 	return (0);
 }
 
-initrrt()
+int initrrt()
 {
 	int errflag;
 	int i, j;
@@ -796,7 +816,7 @@ initrrt()
 	return (0);
 }
 
-procreq(req_type, req_data, clienthost)
+void procreq(req_type, req_data, clienthost)
 int req_type;
 char *req_data;
 char *clienthost;
@@ -853,7 +873,7 @@ char *clienthost;
 	}
 }
 
-procconfreq(req_data, clienthost)
+void procconfreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -931,7 +951,7 @@ reply:
 		netclose (rpfd);
 }
 
-procdinforeq(req_data, clienthost)
+void procdinforeq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -1000,7 +1020,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-procfrdrvreq(req_data, clienthost)
+void procfrdrvreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -1097,7 +1117,7 @@ char *clienthost;
 	netclose (rpfd);
 }
 
-procinforeq(req_data, clienthost)
+void procinforeq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -1166,7 +1186,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-prockilltreq(req_data, clienthost)
+void prockilltreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -1227,7 +1247,7 @@ char *clienthost;
 	netclose (rpfd);
 }
 
-procmountreq(req_data, clienthost)
+void procmountreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -1463,7 +1483,7 @@ char *clienthost;
 #endif
 
 	tunp->filp = (struct tpfil *) calloc (1, sizeof(struct tpfil));
-bldtfd:
+
 	strcpy (tunp->filp->path, path);
  
 	/* create special device */
@@ -1571,7 +1591,7 @@ reply:
         tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 }
 
-procposreq(req_data, clienthost)
+void procposreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -1860,7 +1880,7 @@ reply:
         tl_tpdaemon.tl_fork_parent( &tl_tpdaemon ); 
 }
 
-procrlsreq(req_data, clienthost)
+void procrlsreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -1985,7 +2005,7 @@ reply:
 		sendrep (rpfd, TAPERC, c);
 }
 
-procrsltreq(req_data, clienthost)
+void procrsltreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -2147,7 +2167,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-procrsvreq(req_data, clienthost)
+void procrsvreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -2267,7 +2287,7 @@ reply:
 	sendrep (rpfd, TAPERC, c);
 }
 
-procrstatreq(req_data, clienthost)
+void procrstatreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -2311,7 +2331,7 @@ char *clienthost;
 	sendrep (rpfd, TAPERC, 0);
 }
 
-procstatreq(req_data, clienthost)
+void procstatreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -2366,7 +2386,7 @@ char *clienthost;
 	sendrep (rpfd, TAPERC, 0);
 }
 
-procufilreq(req_data, clienthost)
+void procufilreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -2415,7 +2435,7 @@ char *clienthost;
 	netclose (rpfd);
 }
 
-procuvsnreq(req_data, clienthost)
+void procuvsnreq(req_data, clienthost)
 char *req_data;
 char *clienthost;
 {
@@ -2460,7 +2480,7 @@ char *clienthost;
 	netclose (rpfd);
 }
 
-reldrive(tunp, user, rpfd, rlsflags)
+int reldrive(tunp, user, rpfd, rlsflags)
 struct tptab *tunp;
 char *user;
 int rpfd;
@@ -2563,7 +2583,7 @@ void wait4child()
 {
 }
 
-check_child_exit()
+void check_child_exit()
 {
 	int i;
 	int pid;
