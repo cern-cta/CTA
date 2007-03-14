@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.35 $ $Release$ $Date: 2007/02/23 09:30:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.36 $ $Release$ $Date: 2007/03/14 10:57:23 $ $Author: waldron $
  *
  *
  *
@@ -73,6 +73,7 @@ rtcpcld_RequestList_t *requestList = NULL;
 static int port = -1;
 static pid_t tapeErrorHandlerPid = 0;
 static char *cmdName = NULL;
+static sigset_t signalset;
 
 static void startTapeErrorHandler _PROTO((void));
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
@@ -688,12 +689,10 @@ static void shutdownService _PROTO((
                                     ));
 
 static void signal_handler(void *arg) {
-	sigset_t set;
-	int      signal;
-	sigfillset(&set);
+	int signal;
 
 	while (1) {
-		if (sigwait(&set, &signal) == 0) {
+		if (sigwait(&signalset, &signal) == 0) {
 			shutdownService(signal);
 		}
 	}
@@ -1044,9 +1043,6 @@ int rtcpcld_main(
   SOCKET acceptSocket = INVALID_SOCKET;
   tape_list_t **tapeArray, *tape;
   rtcpTapeRequest_t tapereq;
-#if !defined(_WIN32)
-  sigset_t set;
-#endif /* _WIN32 */
   char *p = NULL;
 
   /* Initializing the C++ log */
@@ -1054,17 +1050,23 @@ int rtcpcld_main(
   C_BaseObject_initLog("NewStagerLog", SVC_NOMSG);
 
 #if !defined(_WIN32)
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGXFSZ, SIG_IGN);
 
   /* ignore all signals apart from INT, TERM and ABRT */
-  sigemptyset(&set);
-  sigaddset(&set, SIGINT);
-  sigaddset(&set, SIGTERM);
-  sigaddset(&set, SIGABRT);
-  sigprocmask(SIG_SETMASK, &set, NULL);
+  sigemptyset(&signalset);
+  sigaddset(&signalset, SIGINT);
+  sigaddset(&signalset, SIGTERM);
+  sigaddset(&signalset, SIGABRT);
+
+  rc = pthread_sigmask(SIG_BLOCK,&signalset,NULL);
+  if (rc != 0) {
+	  return(1);
+  }
 
   rc = Cthread_create_detached((void *)signal_handler, NULL);
   if (rc < 0) {
-	  exit(1);
+	  return(1);
   }
 #endif /* _WIN32 */
 

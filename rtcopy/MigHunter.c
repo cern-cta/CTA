@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.40 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.41 $ $Release$ $Date: 2007/03/14 10:57:23 $ $Author: waldron $
  *
  * 
  *
@@ -104,6 +104,8 @@ static int doCloneStream = 0;
 static char *cmdName = NULL;
 static struct Cstager_TapeCopy_t ***_migrCandidates = NULL;
 static int *_nbMigrCandidates = NULL;
+static sigset_t signalset;
+
 /** Global needed for determine which uuid to log
  */
 int inChild;
@@ -1530,12 +1532,10 @@ static int addMigrationCandidatesToStreams(
 }
 
 static void signal_handler(void *arg) {
-	sigset_t set;
-	int      signal;
-	sigfillset(&set);
+	int signal;
 
 	while (1) {
-		if (sigwait(&set, &signal) == 0) {
+		if (sigwait(&signalset, &signal) == 0) {
 			shutdownService(signal);
 		}
 	}
@@ -1597,27 +1597,9 @@ int main(int argc, char *argv[])
   char buf[32];
   int c, rc, i, nbMigrCandidates = 0, nbOldStreams = 0, nbNewStreams = 0;
   time_t sleepTime = 0;
-#if !defined(_WIN32)
-  sigset_t set;
-#endif /* _WIN32 */
 
   _migrCandidates = &migrCandidates;
   _nbMigrCandidates = &nbMigrCandidates;
-#if !defined(_WIN32)
-
-  /* ignore all signals apart from INT, TERM and ABRT */
-  sigemptyset(&set);
-  sigaddset(&set,SIGINT);
-  sigaddset(&set,SIGTERM);
-  sigaddset(&set,SIGABRT);
-  sigprocmask(SIG_SETMASK,&set,NULL);
-
-  rc = Cthread_create_detached((void *)signal_handler,NULL);
-  if (rc < 0) {
-	  exit(1);
-  }
-
-#endif /* _WIN32 */
   
   cmdName = argv[0];
   if ( argc <= 1 ) {
@@ -1670,6 +1652,9 @@ int main(int argc, char *argv[])
                   );
 #endif /* __DATE__ && __TIME__ */
   
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGXFSZ, SIG_IGN);
+
   if ( runAsDaemon == 1 ) {
     dlf_prepare();
     if ( (Cinitdaemon("MigHunter",SIG_IGN) == -1) ) {
@@ -1681,6 +1666,28 @@ int main(int argc, char *argv[])
     if ( sleepTime == 0 ) sleepTime = 300;
   }
   
+#if !defined(_WIN32)
+
+  /* ignore all signals apart from INT, TERM and ABRT */
+  sigemptyset(&signalset);
+  sigaddset(&signalset,SIGINT);
+  sigaddset(&signalset,SIGTERM);
+  sigaddset(&signalset,SIGABRT);
+
+  rc = pthread_sigmask(SIG_BLOCK,&signalset,NULL);
+  if (rc != 0) {
+    dlf_shutdown(5);
+    return(1);
+  }
+
+  rc = Cthread_create_detached((void *)signal_handler,NULL);
+  if (rc < 0) {
+    dlf_shutdown(5);
+    return(1);
+  }
+
+#endif /* _WIN32 */
+
   rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
