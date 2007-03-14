@@ -39,6 +39,7 @@ int listentry(char*,struct Cns_filestat*,char*,char*);
 int listtpentry(char*,int,int,u_signed64,int,char*,int,int,
                 unsigned char[4],char,char*,unsigned long);
 
+
 #if sgi
 extern char *strdup _PROTO((CONST char *));
 #endif
@@ -322,7 +323,7 @@ char *dir;
 				}
 			}
 	}
-	(void) Cns_closedir (dirp);
+	Cns_closedir (dirp);
 	while (dlf) {
 		if (strcmp (dir, "/"))
 			sprintf (curdir, "%s/%s", dir, dlf->d_name);
@@ -488,9 +489,9 @@ char *path;
 	return (0);
 }
 
-
-int listtpentry(path, copyno, fsec, segsize, compression, vid, side, fseq, blockid, status,
-            checksum_name, checksum)
+int listtpentry(char *path, int copyno, int fsec, u_signed64 segsize, int compression,char *vid,int side, int fseq, unsigned char blockid[4],char status,
+           char *checksum_name,unsigned long checksum)
+/*int listtpentry(path, copyno, fsec, segsize, compression,vid,side, fseq, blockid, status, checksum_name, checksum)
 char *path;
 int copyno;
 int fsec;
@@ -502,7 +503,7 @@ int fseq;
 unsigned char blockid[4];
 char status;
 char *checksum_name;
-unsigned long checksum;
+unsigned long checksum;*/
 {
 	char tmpbuf[21];
 
@@ -523,7 +524,7 @@ unsigned long checksum;
         if (checksum_name != NULL && checksum_name[0] != '\0') {
             printf ("%*s %08lx ", CA_MAXCKSUMNAMELEN, checksum_name, checksum);
         } else {
-            printf ("%*s %08lx ", CA_MAXCKSUMNAMELEN, "-", 0);
+            printf ("%*s %08x ", CA_MAXCKSUMNAMELEN, "-", 0);
         }
 	}
 	printf ("%s\n", path);
