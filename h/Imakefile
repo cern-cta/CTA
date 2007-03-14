@@ -20,6 +20,7 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),Castor_limits.h) FileName($(DESTDIRCASTOR),Cgetopt.h) \
 	 FileName($(DESTDIRCASTOR),sacct.h) \
 	 FileName($(DESTDIRCASTOR),Cglobals.h) FileName($(DESTDIRCASTOR),Cnetdb.h) \
+	 FileName($(DESTDIRCASTOR),Cdomainname.h) \
 	 FileName($(DESTDIRCASTOR),Cpool_api.h) FileName($(DESTDIRCASTOR),Cpwd.h) \
 	 FileName($(DESTDIRCASTOR),Cstrerror.h) \
 	 FileName($(DESTDIRCASTOR),Cregexp.h) FileName($(DESTDIRCASTOR),Cregexp_magic.h) \
@@ -105,7 +106,6 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),rm_struct.h) \
 	 FileName($(DESTDIRCASTOR),rmc.h) \
 	 FileName($(DESTDIRCASTOR),rmc_api.h) \
-	 FileName($(DESTDIRCASTOR),rmc_server_api.h) \
 	 FileName($(DESTDIRCASTOR),rmc_constants.h) \
 	 FileName($(DESTDIRCASTOR),rmnode_util.h) \
 	 FileName($(DESTDIRCASTOR),rtcpcld.h) \
@@ -119,6 +119,7 @@ ECOMMON_H = \
 	 $(EXPORTH)/Castor_limits.h $(EXPORTH)/Cgetopt.h \
 	 $(EXPORTH)/sacct.h \
 	 $(EXPORTH)/Cglobals.h $(EXPORTH)/Cnetdb.h \
+	 $(EXPORTH)/Cdomainname.h \
 	 $(EXPORTH)/Cpool_api.h $(EXPORTH)/Cpwd.h \
 	 $(EXPORTH)/Cstrerror.h \
 	 $(EXPORTH)/Cregexp.h $(EXPORTH)/Cregexp_magic.h \
@@ -204,7 +205,6 @@ ECOMMON_H = \
 	 $(EXPORTH)/rm_struct.h \
 	 $(EXPORTH)/rmc.h \
 	 $(EXPORTH)/rmc_api.h \
-	 $(EXPORTH)/rmc_server_api.h \
 	 $(EXPORTH)/rmc_constants.h \
 	 $(EXPORTH)/rmnode_util.h \
 	 $(EXPORTH)/rtcpcld.h \
@@ -327,6 +327,9 @@ IEXPORT(Cgetopt.h,$(EXPORTH),644)
 
 InstallNonExecFile(Cglobals.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cglobals.h,$(EXPORTH),644)
+
+InstallNonExecFile(Cdomainname.h,$(DESTDIRCASTOR),root,bin,644)
+IEXPORT(Cdomainname.h,$(EXPORTH),644)
 
 InstallNonExecFile(stager.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(stager.h,$(EXPORTH),644)
@@ -633,9 +636,6 @@ IEXPORT(rmc.h,$(EXPORTH),644)
 
 InstallNonExecFile(rmc_api.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rmc_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(rmc_server_api.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(rmc_server_api.h,$(EXPORTH),644)
 
 InstallNonExecFile(rmc_constants.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rmc_constants.h,$(EXPORTH),644)
