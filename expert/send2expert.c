@@ -5,9 +5,6 @@
  *
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: send2expert.c,v $ $Revision: 1.4 $ $Date: 2004/07/08 13:31:36 $ CERN IT-ADC/CA Vitaly Motyakov";
-#endif /* not lint */
 
 #include <errno.h>
 #include <stdlib.h>
@@ -30,20 +27,20 @@ extern char *ws_strerr;
 
 /* send2expert - send a request to the expert daemon */
 
-send2expert(socketp, reqp, reql)
+int send2expert(socketp, reqp, reql)
 int *socketp;
 char *reqp;
 int reql;
 
 {
-	int c;
+	/*int c;*/
 	int port;
 	char exphost[CA_MAXHOSTNAMELEN + 1];
 	char func[16];
 	char *getconfent();
 	char *getenv();
 	struct hostent *hp;
-	int magic;
+	/*int magic;*/
 	int n;
 	char *p;
 	int s;
@@ -118,7 +115,7 @@ int reql;
 
 /* get reply from the expert daemon */
 
-getexpertrep (socket, rep_status, errcode, reply_type)
+int getexpertrep (socket, rep_status, errcode, reply_type)
 int socket;
 int* rep_status;
 int* errcode;

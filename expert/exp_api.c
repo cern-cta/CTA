@@ -5,10 +5,6 @@
 *
 */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.5 $ $Date: 2005/01/07 09:18:00 $ CERN IT-ADC/CA Vitaly Motyakov";
-#endif /* not lint */
-
 
 /*********************************************************************
 
@@ -55,6 +51,7 @@ static char sccsid[] = "@(#)$RCSfile: exp_api.c,v $ $Revision: 1.5 $ $Date: 2005
                the completion status of the last recv(), or <= 0 on error.
 			  
 ***********************************************************************/
+#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -73,9 +70,6 @@ int *exp_socket;
 int request;
 {
 
-	int c;
-	int errflg = 0;
-	int force = 0;
 	gid_t gid;
 	int msglen;
 	char *q;
@@ -84,12 +78,7 @@ int request;
 	uid_t uid;
 
 	int status;
-	char *reply;
-	int rep_size;
 	int rep_type;
-	char *rep_buf_end;
-	char *rbp;
-	int i;
 	int errcode;
 
 	uid = geteuid();
@@ -152,6 +141,35 @@ int buf_length;
 	return (n);
 }
 
+
+int DLL_DECL expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
+int exp_socket;
+char *buffer;
+int buf_length;
+int timeout;
+{
+    fd_set  fds;
+    struct  timeval tout;
+
+    FD_ZERO (&fds);
+    FD_SET  (exp_socket, &fds);
+    tout.tv_sec = timeout;
+    tout.tv_usec = 0;
+
+    switch(select(FD_SETSIZE, &fds, (fd_set *)0, (fd_set *)0, &tout)) {
+    case -1:
+        return (-1);
+    case 0:
+        serrno = SETIMEDOUT;
+        return(-1);
+    default:
+        break;
+    }
+    return (recv(exp_socket, buffer, buf_length, 0));
+}
+
+
+
 int DLL_DECL expert_receive_data(exp_socket, buffer, buf_length, timeout)
 int exp_socket;
 char *buffer;
@@ -192,29 +210,3 @@ int timeout;
 	  return (n);
 }
 
-int DLL_DECL expert_netread_timeout(exp_socket, buffer, buf_length, timeout)
-int exp_socket;
-char *buffer;
-int buf_length;
-int timeout;
-{
-    fd_set  fds;
-    int n;
-    struct  timeval tout;
-
-    FD_ZERO (&fds);
-    FD_SET  (exp_socket, &fds);
-    tout.tv_sec = timeout;
-    tout.tv_usec = 0;
-
-    switch(select(FD_SETSIZE, &fds, (fd_set *)0, (fd_set *)0, &tout)) {
-    case -1:
-        return (-1);
-    case 0:
-        serrno = SETIMEDOUT;
-	return(-1);
-    default:
-        break;
-    }
-    return (recv(exp_socket, buffer, buf_length, 0));
-}
