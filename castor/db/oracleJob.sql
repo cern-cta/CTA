@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.384 $ $Date: 2007/03/12 18:08:26 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.385 $ $Date: 2007/03/15 09:35:00 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.384 $ $Date: 2007/03/12 18:08:26 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.385 $ $Date: 2007/03/15 09:35:00 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1165,7 +1165,7 @@ BEGIN
     AND SubRequest.id = srId FOR UPDATE;
  -- Try to find local DiskCopy
  dci := 0;
- SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
+ SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ DiskCopy.id, DiskCopy.path, DiskCopy.status
   INTO dci, rpath, rstatus
   FROM DiskCopy
   WHERE DiskCopy.castorfile = cfId
