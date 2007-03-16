@@ -1,12 +1,12 @@
 # Global paths setup for CASTOR
 
-# $Id: castor_paths.example,v 1.1 2005/05/24 12:10:02 jdurand Exp $
+# $Id: castor_paths.example,v 1.2 2007/03/16 11:20:38 sponcec3 Exp $
 # Copyright CERN/IT/ADC/CA 2004
 
 if [ -n "$LD_LIBRARY_PATH" ]; then
-  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lsf/lib
+  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lsf/lib
 else
-  LD_LIBRARY_PATH=/usr/local/lsf/lib
+  LD_LIBRARY_PATH=/usr/lsf/lib
 fi
 
 export LD_LIBRARY_PATH
