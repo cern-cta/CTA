@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.53 2007/03/02 10:59:51 itglp Exp $
+# $Id: maketar.sh,v 1.54 2007/03/16 18:00:08 sponcec3 Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -296,7 +296,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	    fi
 	fi
 	lib_or_lib64=0
-	if [ "$package" != "castor-dbtools" -a "$package" != "castor-lsf-plugin" ]; then
+	if [ "$package" != "castor-dbtools" ]; then
 	    #
 	    ## Check if we have to play with %ifarch
 	    #
