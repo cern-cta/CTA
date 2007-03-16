@@ -8,6 +8,11 @@
 #
 ## Conditional packaging a-la-RPM
 #  ------------------------------
+%ifarch x86_64
+%define LIB lib64
+%else
+%define LIB lib
+%endif
 %{expand:%define has_oracle_home %(if [ -z $ORACLE_HOME ]; then echo 0; else echo 1; fi)}
 %if ! %has_oracle_home
 %{expand:%define has_oracle_home %([ -r /etc/sysconfig/castor ] && . /etc/sysconfig/castor; if [ -z $ORACLE_HOME ]; then echo 0; else echo 1; fi)}
@@ -18,8 +23,9 @@
 %{expand:%define has_oracle %(if [ ! -r $ORACLE_HOME/lib/libclntsh.so ]; then echo 0; else echo 1; fi)}
 %endif
 %{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
-%{expand:%define has_lsf %(if [ -d /usr/lsf/lib -a -d /usr/lsf/include ]; then echo 1; else echo 0; fi)}
+%{expand:%define has_lsf %(if [ -d /usr/lsf/%{LIB} -a -d /usr/lsf/include ]; then echo 1; else echo 0; fi)}
 
+%endif
 #
 ## General settings
 #  ----------------
@@ -100,11 +106,7 @@ export MINOR_CASTOR_VERSION
 rm -rf ${RPM_BUILD_ROOT}
 mkdir -p ${RPM_BUILD_ROOT}/usr/bin
 mkdir -p ${RPM_BUILD_ROOT}/usr/sbin
-%ifarch x86_64
-mkdir -p ${RPM_BUILD_ROOT}/usr/lib64/rtcopy
-%else
-mkdir -p ${RPM_BUILD_ROOT}/usr/lib/rtcopy
-%endif
+mkdir -p ${RPM_BUILD_ROOT}/usr/%{LIB}/rtcopy
 mkdir -p ${RPM_BUILD_ROOT}/usr/lib/perl/CASTOR
 mkdir -p ${RPM_BUILD_ROOT}/usr/include/shift
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man1
@@ -115,11 +117,7 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/castor/expert
 mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
-%ifarch x86_64
-mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/lib
-%else
-mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/lib
-%endif
+mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/%{LIB}
 mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/etc
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
 # Note: Only castor-job subpackage have a cron job
