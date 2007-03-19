@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/03/19 17:48:00 $ $Author: itglp $
  *
  * Allocator for the Shared Memory space
  *
@@ -71,7 +71,7 @@ namespace castor {
       /**
        * new operator, so that this goes always to shared memory
        */
-      void *operator new(unsigned int num_bytes, void*)
+      void *operator new(size_t num_bytes, void*)
 	throw (castor::exception::Exception);
 
       /**
@@ -136,7 +136,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 template<class T, class BK>
 void* castor::sharedMemory::Allocator<T, BK>::operator new
-(unsigned int num_bytes, void*)
+(size_t num_bytes, void*)
   throw (castor::exception::Exception) {
   castor::sharedMemory::LocalBlock* smBlock = getBlock();
   return smBlock->malloc(num_bytes);
