@@ -27,7 +27,7 @@ SHLIBREQLIBS1 += -lcastorCnvs
 #endif
 
 LIBRARIES2 = $(MONITORCPPLIB)
-SHLIBREQLIBS2 = $(SHLIBREQLIBS)
+SHLIBREQLIBS2 = $(SHLIBREQLIBS) -L.. -lshift
 
 LIBRARIES3 = $(CNVSLIB)
 SHLIBREQLIBS3 = $(SHLIBREQLIBS)
@@ -193,7 +193,7 @@ libcastorVdqmOra.so: $(LIBRARIES6)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorVdqmOra.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS6)
 
-libcastorMonitor.so: $(LIBRARIES2) libshift.so
+libcastorMonitor.so: $(LIBRARIES2)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
