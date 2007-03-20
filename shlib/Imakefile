@@ -199,7 +199,7 @@ libcastorMonitor.so: $(LIBRARIES2)
 	@mkdir tmp
 	@for i in $(LIBRARIES2) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libcastorMonitor.so -lshift $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
+	./makeshlib.sh '$(CXX)' libcastorMonitor.so $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
 
 
 shift.dll:	$(LIBRARIES0)
