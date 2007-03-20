@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/02/28 14:33:38 $ $Author: gtaur $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
  *
  *
  *
@@ -86,7 +86,7 @@ namespace castor {
        * Executes an explicit commit on the db connection. Since the statements are all FOR UPDATE
        * (pessimistic CC), we have to do a commit, even if we didn't do anything with a table row.
        */
-      void unlock() throw ();
+      void unlock() throw(castor::exception::Exception);
 
 
       /**

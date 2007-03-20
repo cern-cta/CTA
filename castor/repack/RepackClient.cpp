@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -35,6 +35,7 @@
 
 /* Client  includes */
 #include "castor/repack/RepackClient.hpp"
+#include "castor/repack/FileListHelper.hpp"
 #include <time.h>
 #include <ios>
 
@@ -44,6 +45,7 @@
 #include "castor/io/StreamRepackRequestCnv.hpp"
 #include "castor/io/StreamRepackSubRequestCnv.hpp"
 #include "castor/io/StreamRepackAckCnv.hpp"
+
 
 
 
@@ -140,10 +142,6 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"pool", REQUIRED_ARGUMENT, NULL, 'P'},
     {"archive", REQUIRED_ARGUMENT, NULL, 'a'},
     {"archiveAll", NO_ARGUMENT, NULL, 'A'},
-    /*{"library", REQUIRED_ARGUMENT, 0, OPT_LIBRARY_NAME},
-    {"min_free", REQUIRED_ARGUMENT, 0, 'm'},
-    {"model", REQUIRED_ARGUMENT, 0, OPT_MODEL},
-    {"nodelete", NO_ARGUMENT, &nodelete_flag, 1} ,*/
     {"details", REQUIRED_ARGUMENT, 0, 'x'},
     {"help", NO_ARGUMENT,NULL, 'h' },
     {NULL, 0, NULL, 0}
@@ -405,14 +403,18 @@ void RepackClient::handleResponse(RepackAck* ack) {
     std::cout << "===============================================================================================================" 
               << std::endl;
 
-    // Variables eventually used for the name server
-    
-    Cns_fileid file_uniqueid;
-    Cns_segattrs * segattrs=NULL;
-    int nbseg=0;
-    int ret=0;
-    int i=0;
     std::vector<RepackSubRequest*>::iterator sreq;
+
+    char* nsStr;
+  
+    if ( !(nsStr = getconfent("CNS", "HOST",0)) && !(nsStr = getenv("CNS_HOST")) ){
+	   nsStr=strdup("castorns");
+    }  
+
+    std::string nameServer(nsStr);
+    // if (nsStr != NULL) free(nsStr);
+
+    FileListHelper m_filehelper(nameServer);
 
     switch ( rreq->command() ){
       case GET_STATUS :
@@ -439,6 +441,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
         << std::left << rreq->stager()
         << std::endl << std::endl;
         sreq = rreq->subRequest().begin();
+
         while ( sreq != rreq->subRequest().end() ){
           std::cout << "===============================================================================================================" << std::endl;
           printTapeDetail((*sreq));
@@ -448,32 +451,11 @@ void RepackClient::handleResponse(RepackAck* ack) {
 	  // Query the name server to retrieve more information related with the situation of segment 
 
 	  std::vector<RepackSegment*>::iterator segs = (*sreq)->segment().begin();
-
-	  memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
-	  sprintf(file_uniqueid.server,"%s","castorns"); // to be changed not to be hard coded
+          if (segs == (*sreq)->segment().end())
+	     std::cout << "          No File found. \n" << std::endl;
 	  while ( segs != (*sreq)->segment().end() ) {
-	    segattrs=NULL;nbseg=0;
-	    file_uniqueid.fileid=(*segs)->fileid();
-	    ret=Cns_getsegattrs(NULL, &file_uniqueid,&nbseg,&segattrs);
-	    if (ret<0){}
-	    if (nbseg == 0){}
-	    for(i=0; i<nbseg; i++) {
-	      if ((*segs)->copyno() != segattrs[i].copyno) continue;
-	      std::cout << "Fileid: " << file_uniqueid.fileid  << std::endl;
-	      std::cout << "Copyno: " << segattrs[i].copyno << std::endl;
-	      std::cout << "Fsec: " << segattrs[i].fsec << std::endl;
-	      std::cout << "Segsize: " << segattrs[i].segsize << std::endl;
-	      std::cout << "Compression: " << segattrs[i].compression << std::endl;
-	      std::cout << "Status: " << segattrs[i].s_status << std::endl ;
-	      std::cout << "Vid: " << segattrs[i].vid << std::endl;
-	      std::cout << "Side: " << segattrs[i].side << std::endl;
-	      std::cout << "Fseq: " << segattrs[i].fseq << std::endl;
-	      std::cout << "Blockid: " << segattrs[i].blockid << std::endl;
-	      std::cout << "ChecksumName: " << segattrs[i].checksum_name << std::endl;
-	      std::cout << "Checksum: " << segattrs[i].checksum << std::endl; 
-	    }	    
-	    std::cout << "===============================================================================================================" 
-              << std::endl;
+	    m_filehelper.printFileInfo((*segs)->fileid(),(*segs)->copyno());
+	      std::cout << "===============================================================================================================" << std::endl;
 	    segs++;
 	  }
 	  sreq++;
@@ -493,13 +475,12 @@ void RepackClient::handleResponse(RepackAck* ack) {
           printTapeDetail((*tape));
           tape++;
         }
+	std::cout << "===============================================================================================================" << std::endl;
         break;
       }
     }
-    std::cout << "===============================================================================================================" 
-              << std::endl;
-  }
 
+  }
 
 }
 

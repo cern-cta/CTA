@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/03/07 08:04:26 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2007/03/20 08:11:24 $ $Author: gtaur $
  *
  *
  *
@@ -169,6 +169,14 @@ void RepackWorker::run(void* param)
     ack.setErrorCode(e.code());
     ack.setErrorMessage(e.getMessage().str());
     stage_trace(2,"%s\n%s",sstrerror(e.code()), e.getMessage().str().c_str() );
+   
+    // Added some log in DLF
+
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
+       castor::dlf::Param("Precise Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 9, 2, params);
+
   }
 /****************************************************************************/  
   
@@ -206,7 +214,7 @@ void RepackWorker::stop()
 //------------------------------------------------------------------------------
 // Retrieves the subrequest for client answer
 //------------------------------------------------------------------------------
-void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Internal)
+void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Exception)
 {
   /** this method takes only 1! subrequest, this is normaly ensured by the 
     * repack client 
@@ -237,7 +245,7 @@ void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Int
 //------------------------------------------------------------------------------
 // Retrieves all subrequests in the repack system
 //------------------------------------------------------------------------------
-void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::Internal)
+void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception)
 {
   std::vector<castor::repack::RepackSubRequest*>* result = 
 						m_databasehelper->getAllSubRequests();
@@ -256,7 +264,7 @@ void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::I
 //------------------------------------------------------------------------------
 // Archives the finished tapes
 //------------------------------------------------------------------------------
-void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Internal)
+void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::exception::Exception)
 { ///get all finished repack tape
 
   std::vector<castor::repack::RepackSubRequest*>* result=NULL;
@@ -302,7 +310,7 @@ void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::except
 //------------------------------------------------------------------------------
 // Archives all finished tapes
 //------------------------------------------------------------------------------
-void RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Internal)
+void RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exception::Exception)
 {
   std::vector<castor::repack::RepackSubRequest*>* result = 
             m_databasehelper->getAllSubRequestsStatus(SUBREQUEST_DONE);
@@ -325,7 +333,7 @@ void RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exc
 //------------------------------------------------------------------------------
 // Restart a  repack subrequest
 //------------------------------------------------------------------------------
-void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Internal)
+void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Exception)
 {   
     /** more than one tape can be restarted at once */
     std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
@@ -367,7 +375,7 @@ void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Intern
 //------------------------------------------------------------------------------
 // Removes a request from repack
 //------------------------------------------------------------------------------
-void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::Internal)
+void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::Exception)
 {
 	
   std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
@@ -397,7 +405,7 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
 //------------------------------------------------------------------------------
 // handleRepack
 //------------------------------------------------------------------------------
-void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::Internal)
+void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::Exception)
 {
   unsigned int tapecnt =0;
   /* check if the tape(s)/pool exist  and if all tapes are valid for repacking*/
@@ -441,7 +449,7 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::I
 //------------------------------------------------------------------------------
 // Retrieves Information about the Pool of the Request
 //------------------------------------------------------------------------------
-int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor::exception::Internal)
+int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor::exception::Exception)
 {
 	char *pool_name;
 	int flags;
@@ -523,7 +531,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 //------------------------------------------------------------------------------
 // checkTapeForRepack
 //------------------------------------------------------------------------------
-bool RepackWorker::checkTapeForRepack(std::string tapename) throw (castor::exception::Internal)
+bool RepackWorker::checkTapeForRepack(std::string tapename) throw (castor::exception::Exception)
 {
   /** checks if already in queue */
   if  ( m_databasehelper->is_stored(tapename)  ){
@@ -540,7 +548,7 @@ bool RepackWorker::checkTapeForRepack(std::string tapename) throw (castor::excep
 //------------------------------------------------------------------------------
 // Validates the status of the tape
 //------------------------------------------------------------------------------
-int RepackWorker::getTapeStatus(std::string tapename) throw (castor::exception::Internal)
+int RepackWorker::getTapeStatus(std::string tapename) throw (castor::exception::Exception)
 {
 	
 	struct vmgr_tape_info tape_info;

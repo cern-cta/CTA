@@ -68,10 +68,10 @@ namespace castor {
       * that time. Everyone reaching it after the physical recall, would be 
       * ignored. This is here checked and in case the user informed.
       * @param sreq The RepackSubRequest to check
-      * @throws castor::exception::Internal in case of an error
+      * @throws castor::exception::Exception in case of an error
       */
     int checkMultiRepack(RepackSubRequest* sreq)
-                                      throw (castor::exception::Internal);
+                                      throw (castor::exception::Exception);
 			/**
 			 * The DatabaseHelper for updatting finished jobs in the Repack Tables
 			 */

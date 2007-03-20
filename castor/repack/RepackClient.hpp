@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/09 10:49:59 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
  *
  * The Repack Client. This is the client part of the repack project, which just
  * sends and Request to the server. One Request can have serveral tapes 
@@ -38,6 +38,7 @@
 #include "castor/io/ClientSocket.hpp"
 #include "RepackAck.hpp"
 #include "Cgetopt.h"
+#include "FileListHelper.hpp"
 
 namespace castor {
 

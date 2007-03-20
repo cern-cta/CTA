@@ -169,7 +169,7 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
 // updateTape
 //------------------------------------------------------------------------------
 void RepackMonitor::updateTape(RepackSubRequest *sreq)
-                          throw (castor::exception::Internal)
+                          throw (castor::exception::Exception)
 { 
   /** status counters */
   unsigned int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;

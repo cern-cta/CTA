@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/17 17:05:02 $ $Author: felixehm $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
  *
  * The Filelisthelper offers some little functions for getting the file 
  * information for a tape.
@@ -85,11 +85,17 @@ namespace castor {
         * @param subreq The RepackSubRequest with the fileids
         * @return pointer to vector of strings 
         */
-      std::vector<std::string>* getFilePathnames(
-                                    castor::repack::RepackSubRequest *subreq) 
-                                          throw (castor::exception::Internal);
-                          
-	private:
+      std::vector<std::string>* getFilePathnames(castor::repack::RepackSubRequest *subreq)
+	                                               throw (castor::exception::Exception);
+ 
+       /**
+        * Print the information of a file using the fileid and copyno.
+        * @param fileid and copyno.
+        * @return void
+        */
+
+      void printFileInfo(u_signed64 fileid, int copyno);
+      private:
 		/**
 		 * The nameserver this Class contacts
 		 */

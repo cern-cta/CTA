@@ -94,13 +94,14 @@ void RepackCleaner::stop() throw(){
 //------------------------------------------------------------------------------
 // cleanupTape
 //------------------------------------------------------------------------------
-int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Internal)
+int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Exception)
 { 
     Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
 
     /// we remove the files from stager
     /// and set the status to SUBREQUEST_DONE. This indicates
     /// that the RepackSubRequest can now be archived
+
     removeFilesFromStager(sreq);
     m_dbhelper->remove(sreq);
     sreq->setStatus(SUBREQUEST_DONE);
@@ -111,7 +112,7 @@ int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::
 //------------------------------------------------------------------------------
 // removeFilesFromStager
 //------------------------------------------------------------------------------
-void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Internal)
+void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Exception)
 {
   
   struct stage_options opts;

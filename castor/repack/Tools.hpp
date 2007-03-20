@@ -14,7 +14,7 @@ namespace castor {
     void free_stager_response(struct  stage_filequery_resp* resp);
     void freeRepackObj(castor::IObject* obj);
     void getStageOpts(struct stage_options* opts, RepackSubRequest* sreq)
-                                       throw (castor::exception::Internal);
+                                       throw (castor::exception::Exception);
   }
 }
 #endif

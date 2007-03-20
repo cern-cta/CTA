@@ -65,14 +65,14 @@ namespace castor {
        * @param sreq The RepackSubRequest to cleanup
        * @throws exception in case on an error.
 			 */
-			int cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Internal);
+			int cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Exception);
 		  
 
       /**
         * Removes the files for this RepackSubRequest from the stager. In fact
         * it sends a stage_rm command with the filelist.
         */
-      void removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Internal);
+      void removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Exception);
 		
 			/**
 			 * The DatabaseHelper for updatting finished jobs in the Repack Tables

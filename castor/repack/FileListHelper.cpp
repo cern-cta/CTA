@@ -1,3 +1,4 @@
+
 /******************************************************************************
  *                      RepackServerReqSvcThread.cpp
  *
@@ -17,7 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/03/09 10:49:59 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.26 $ $Release$ 
+ * $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
  *
  *
  *
@@ -52,9 +54,8 @@ FileListHelper::~FileListHelper()
 //------------------------------------------------------------------------------
 // getFilePathnames
 //------------------------------------------------------------------------------
-std::vector<std::string>* FileListHelper::getFilePathnames(
-                                       castor::repack::RepackSubRequest *subreq)
-                                              throw (castor::exception::Internal)
+std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::RepackSubRequest *subreq)
+                                              throw (castor::exception::Exception)
 {
   unsigned int i=0;
   char path[CA_MAXPATHLEN+1];
@@ -92,8 +93,7 @@ std::vector<std::string>* FileListHelper::getFilePathnames(
 //------------------------------------------------------------------------------
 // getFileList, check if double entries are in list (should never happen !!!)
 //------------------------------------------------------------------------------
-std::vector<u_signed64>* FileListHelper::getFileList(
-      							castor::repack::RepackSubRequest *subreq) 
+std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRequest *subreq) 
 {
   double vecsize = 0;
   std::vector<RepackSegment*>::iterator iterseg;
@@ -145,6 +145,7 @@ std::vector<u_signed64>* FileListHelper::getFileList(
 // getFileListSegs
 //------------------------------------------------------------------------------
 int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
+                                                
 {
   int flags;
   u_signed64 segs_size = 0;
@@ -191,8 +192,7 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
     
       Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), CNS_LIST_END, &list);
       subreq->setXsize(segs_size);
-      
-      
+         
       castor::dlf::Param params[] =
       {castor::dlf::Param("Vid", subreq->vid()),
        castor::dlf::Param("Segments", subreq->segment().size()),
@@ -200,8 +200,64 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 3, params);
       return 0;
   }
-  return -1; // you should never reach this point 
+ 
+  // you should never reach this point 
+   return -1;
+
 }
+
+
+
+//------------------------------------------------------------------------------
+// printFileInfo
+//------------------------------------------------------------------------------
+
+void FileListHelper::printFileInfo(u_signed64 fileid, int copyno) 
+   {
+    Cns_fileid file_uniqueid;
+    Cns_segattrs * segattrs=NULL;
+    int nbseg=0;
+    int ret=0;
+    int i=0;
+
+    memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
+    sprintf(file_uniqueid.server,"%s",(char*)m_ns.c_str());  
+    file_uniqueid.fileid= fileid;
+
+    ret=Cns_getsegattrs(NULL, &file_uniqueid,&nbseg,&segattrs);
+    //if(file_uniqueid.server) free(file_uniqueid.server);
+  
+    if (ret<0){
+      std::cout << "Error in retrieving file " << file_uniqueid.fileid << "from the nameserver." << std::endl;
+    }
+    if (nbseg == 0){
+      std::cout << "File " << file_uniqueid.fileid << "not found int the nameserver." << std::endl;
+    }
+    ret=-1;
+    for(i=0; i<nbseg; i++) {
+      if (copyno == segattrs[i].copyno){ 
+	ret=0;
+        std::cout << "Fileid: " << file_uniqueid.fileid  << std::endl;
+        std::cout << "Copyno: " << segattrs[i].copyno << std::endl;
+        std::cout << "Fsec: " << segattrs[i].fsec << std::endl;
+        std::cout << "Segsize: " << segattrs[i].segsize << std::endl;
+        std::cout << "Compression: " << segattrs[i].compression << std::endl;
+        std::cout << "Status: " << segattrs[i].s_status << std::endl ;
+        std::cout << "Vid: " << segattrs[i].vid << std::endl;
+        std::cout << "Side: " << segattrs[i].side << std::endl;
+        std::cout << "Fseq: " << segattrs[i].fseq << std::endl;
+        std::cout << "Blockid: " << segattrs[i].blockid << std::endl;
+        std::cout << "ChecksumName: " << segattrs[i].checksum_name << std::endl;
+        std::cout << "Checksum: " << segattrs[i].checksum << std::endl; 
+      }
+    }
+    if (ret<0){
+      std::cout << "File " << file_uniqueid.fileid << "not found int the nameserver with copyno "<< copyno << std::endl;
+    }
+}	  
+
+
+
 
 	} // End namespace repack
 }	//End namespace castor

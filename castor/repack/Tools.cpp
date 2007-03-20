@@ -81,7 +81,7 @@ namespace castor {
 // Helper for setting the Stager Options 
 //------------------------------------------------------------------------------ 
   void getStageOpts(struct stage_options* opts, RepackSubRequest* sreq) 
-                                              throw (castor::exception::Internal)
+                                              throw (castor::exception::Exception)
   {
     /// first check the output stage_options
     if ( opts == NULL ){

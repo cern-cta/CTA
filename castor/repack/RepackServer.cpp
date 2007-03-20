@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/03/08 16:03:43 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/03/20 08:11:24 $ $Author: gtaur $
  *
  *
  *
@@ -87,21 +87,18 @@ int main(int argc, char *argv[]) {
     server.start();
 
 
-    } catch (castor::exception::Internal i){
-    	std::cerr << "Caught castor internal exception : "
-			<< sstrerror(i.code()) << std::endl
-			<< i.getMessage().str() << std::endl;
     }
-	catch (castor::exception::Exception e) {
-			std::cerr << "Caught castor exception : "
-			<< sstrerror(e.code()) << std::endl
-			<< e.getMessage().str() << std::endl;
-	}
-	catch (...) {
-		std::cerr << "Caught general exception!" << std::endl;
-		return 1;
-	}
-	return 0;
+     catch (castor::exception::Exception e) {
+      		std::cerr << "Caught castor exception : "
+       		<< sstrerror(e.code()) << std::endl
+       		<< e.getMessage().str() << std::endl;
+     }
+     catch (...) {
+       	std::cerr << "Caught general exception!" << std::endl;
+       	return 1;
+     }
+
+     return 0;
 }
 
 //------------------------------------------------------------------------------
@@ -197,6 +194,7 @@ castor::repack::RepackServer::RepackServer() :
   }
   else
     m_listenPort = castor::repack::CSP_REPACKSERVER_PORT;
+
   free(tmp);
 
   /* --------------------------------------------------------------------- */
@@ -204,6 +202,7 @@ castor::repack::RepackServer::RepackServer() :
   /** the RepackServer reads the configuration for Nameserver, stager etc.
       at the beginning and keeps the information for the threads
     */
+
   char* tmp2;
   if ( !(tmp2 = getconfent("CNS", "HOST",0)) &&
        !(tmp2 = getenv("CNS_HOST")) ){
@@ -317,14 +316,10 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
   longopts[0].has_arg = NO_ARGUMENT;
   longopts[0].flag = NULL;
   longopts[0].val = 'f';
-  longopts[1].name = "synchronise";
+  longopts[1].name = "help";
   longopts[1].has_arg = NO_ARGUMENT;
   longopts[1].flag = NULL;
-  longopts[1].val = 's';
-  longopts[2].name = "help";
-  longopts[2].has_arg = NO_ARGUMENT;
-  longopts[2].flag = NULL;
-  longopts[2].val = 'h';
+  longopts[1].val = 'h';
   
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   int i = 3;

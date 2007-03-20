@@ -110,7 +110,7 @@ void RepackFileChecker::run(void* param) throw(){
 // checkMultiRepack
 //------------------------------------------------------------------------------
 int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
-                                             throw (castor::exception::Internal)
+                                             throw (castor::exception::Exception)
 {
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   std::vector<RepackSegment*>::iterator segment = sreq->segment().begin();
