@@ -25,7 +25,6 @@
 %{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_lsf %(if [ -d /usr/lsf/%{LIB} -a -d /usr/lsf/include ]; then echo 1; else echo 0; fi)}
 
-%endif
 #
 ## General settings
 #  ----------------
