@@ -4,11 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.49 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.50 $ $Date: 2007/03/21 09:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <pwd.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -66,7 +68,14 @@ int tapefd;
 uid_t uid;
 int updvsn_done = -1;
 char *vid;
-main(argc, argv)
+
+void configdown( char* );
+int  Ctape_updvsn( uid_t, gid_t, int, int, char*, char*, int, int, int );
+int  Ctape_rslt( uid_t, gid_t, int, char*, char*, int*, char*, char* );
+int  rbtmountchk( int*, char*, char*, char*, char* );
+int  rbtdmntchk( int*, char*, unsigned int* );
+
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -81,7 +90,6 @@ char	**argv;
 	int get_reply;
 	char hdr1[81];
 	char hdr2[81];
-	int i;
 	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
 	int lblcode;
 #if DUXV4
@@ -95,15 +103,18 @@ char	**argv;
 	int needrbtmnt;
 	char *p;
 	int prelabel;
-	struct passwd *pwd;
 	fd_set readfds;
 	char repbuf[REPBUFSZ];
 	char rings[9];
 	char *sbp;
 	int scsi;
 	int side;
+#if SONYRAW
 	int sonyraw;
+#endif
+#if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
 	int status;
+#endif
 	int Tflag = 0;
 	struct timeval timeval;
 	int tplbl;
@@ -111,7 +122,9 @@ char	**argv;
 	int tpmounted;
 	char tpvsn[CA_MAXVSNLEN+1];
 	int ux;
+#ifdef TMS
 	int vbsyretry;
+#endif        
 	int vdqm_rc;
 	int vdqm_reqid;
 	int vdqm_status;
@@ -218,7 +231,7 @@ char	**argv;
 #endif
 #if VMGR
 	density[0] = '\0';
-	if (c = vmgrchecki (vid, vsn, dgn, density, labels[lblcode], mode, uid, gid, clienthost))
+	if ((c = vmgrchecki (vid, vsn, dgn, density, labels[lblcode], mode, uid, gid, clienthost)))
 		goto reply;
 #endif
 
@@ -261,7 +274,7 @@ char	**argv;
 reselect_loop:
 	/* send vid, vsn and flag "to be mounted" to the tape daemon */
 
-	if (c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 1, lblcode, mode))
+	if ((c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 1, lblcode, mode)))
 		goto reply;
 	updvsn_done = 1;
 
@@ -296,7 +309,9 @@ reselect_loop:
 		} else
 			msg_num = n;
 		get_reply = 0;
+#if defined(RS6000PCTA) || defined(ADSTAR) || defined(CDK)
 remount_loop:
+#endif
 		if (*loader != 'm' && needrbtmnt) {
 			do {
 				c = rbtmount (vid, side, drive, dvn, mode, loader);
@@ -465,7 +480,7 @@ unload_loop1:
 #endif
 					if (chkdriveready (tapefd) > 0) {
 						if (*loader != 'n')
-							if (n = unldtape (tapefd, path)) {
+							if ((n = unldtape (tapefd, path))) {
 								c = n;
 								goto reply;
 							}
@@ -539,7 +554,7 @@ unload_loop1:
 			goto reply;
 		}
 		if (tpmode != mode && *loader == 'm') {
-			if (c = unldtape (tapefd, path))
+			if ((c = unldtape (tapefd, path)))
 				goto reply;
 			if (devinfo->lddtype == 0)
 				lddisplay (tapefd, path, 0x50, msg1, "wrng rng", 0);
@@ -670,7 +685,7 @@ unload_loop1:
 			goto reply;
 		}
 		if (*loader != 'n')
-			if (n = unldtape (tapefd, path)) {
+			if ((n = unldtape (tapefd, path))) {
 				c = n;
 				goto reply;
 			}
@@ -702,8 +717,7 @@ unload_loop1:
 	}
 
 	/* tape is mounted */
-
-
+                
     post_mount_check(tapefd, path, devtype);
     if (strcmp (devtype, "9840") == 0 ||
         strcmp (devtype, "9940") == 0 ||
@@ -742,7 +756,7 @@ unload_loop1:
 #if SACCT
 	tapeacct (TPMOUNTED, uid, gid, jid, dgn, drive, vid, 0, 0);
 #endif
-	if (c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 0, lblcode, mode))
+	if ((c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 0, lblcode, mode)))
 		goto reply;
 #if VMGR
 	(void) vmgr_seterrbuf (errbuf, sizeof(errbuf));
@@ -874,7 +888,7 @@ reply:
 	exit (0);
 }
 
-Ctape_rslt(uid, gid, jid, olddrive, newdrive, ux, loader, dvn)
+int Ctape_rslt(uid, gid, jid, olddrive, newdrive, ux, loader, dvn)
 uid_t uid;
 gid_t gid;
 int jid;
@@ -927,7 +941,7 @@ char *dvn;
 	return (c);
 }
 
-Ctape_updvsn(uid, gid, jid, ux, vid, vsn, tobemounted, lblcode, mode)
+int Ctape_updvsn(uid, gid, jid, ux, vid, vsn, tobemounted, lblcode, mode)
 uid_t uid;
 gid_t gid;
 int jid;
@@ -1045,7 +1059,7 @@ void cleanup()
         tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
 }
 
-configdown(drive)
+void configdown(drive)
 char *drive;
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
@@ -1065,7 +1079,7 @@ void mountkilled()
 	exit (2);
 }
 
-rbtdmntchk(c, drive, demountforce)
+int rbtdmntchk(c, drive, demountforce)
 int *c;
 char *drive;
 unsigned int *demountforce;
@@ -1127,7 +1141,7 @@ unsigned int *demountforce;
 	}
 }
 
-rbtmountchk(c, drive, vid, dvn, loader)
+int rbtmountchk(c, drive, vid, dvn, loader)
 int *c;
 char *drive;
 char *vid;

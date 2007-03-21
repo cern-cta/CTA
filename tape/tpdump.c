@@ -4,20 +4,25 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.32 $ $Date: 2003/10/13 07:39:56 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tpdump.c,v $ $Revision: 1.33 $ $Date: 2007/03/21 09:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tpdump - analyse the content of a tape */
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <signal.h>
 #include <stdarg.h>
 #include "Cgetopt.h"
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
+#if VMGR
+#include "vmgr_api.h"
+#endif
 int Ctape_kill_needed;
 char *dvrname;
 char infil[CA_MAXPATHLEN+1];
@@ -37,7 +42,26 @@ void tpdump_usrmsg(int msg_type, char *msg, ...)
 	va_end (args);
 }
 
-main(argc, argv)
+int exit_prog(exit_code)
+int exit_code;
+{
+	Ctape_dmpend();
+	if (reserve_done)
+		(void) Ctape_rls (NULL, TPRLS_ALL|TPRLS_UNLOAD);
+	exit (exit_code);
+}
+
+void usage(cmd)
+char *cmd;
+{
+	fprintf (stderr, "usage: %s ", cmd);
+	fprintf (stderr, "%s%s%s",
+	    "[-B maxbyte] [-b max_block_size] [-C {ebcdic|ascii}]\n",
+	    "[-d density] [-E ignoreeoi] [-F maxfile] [-g device_group_name]\n",
+	    "[-N [fromblock,]toblock] [-q fromfile] [-v vsn] -V vid\n");
+}
+
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -51,7 +75,9 @@ char	**argv;
 	struct dgn_rsv dgn_rsv;
 	char *dp;
 	char drive[CA_MAXUNMLEN+1];
+#if defined(_AIX) && defined(_IBMR2)
 	char driver_name[7];
+#endif
 	int errflg = 0;
 	int flags = 0;
 	int fromblock = -1;
@@ -66,7 +92,7 @@ char	**argv;
 	int maxfile = -1;
 	char *p;
 	int side = 0;
-	char *tempnam();
+        char *tempnam();
 	int toblock = -1;
 	static char vid[CA_MAXVIDLEN+1] = "";
 	static char vsn[CA_MAXVSNLEN+1] = "";
@@ -162,7 +188,7 @@ char	**argv;
 			break;
 		case 'N':
 			if (fromblock < 0) {
-				if (p = strchr (Coptarg, ',')) {
+				if ((p = strchr (Coptarg, ','))) {
 					*p++ = '\0';
 					fromblock = strtol (Coptarg, &dp, 10);
 					if (*dp != '\0') {
@@ -262,7 +288,7 @@ char	**argv;
 		/* If dgn not specified, get it from VMGR or TMS (if installed) */
 
 #if VMGR
-		if (c = vmgrcheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, 0, 0)) {
+		if ((c = vmgrcheck (vid, vsn, dgn, aden, lbltype, WRITE_DISABLE, 0, 0))) {
 #if TMS
 			if (c != ETVUNKN)
 #endif
@@ -323,6 +349,16 @@ char	**argv;
 	while ((c = Ctape_dmpfil (infil, NULL, NULL, NULL, NULL, NULL, NULL,
 	    NULL, NULL)) == 0) continue;
 	exit_prog ((c < 0) ? USERR : 0);
+
+        /* 
+           The return will actually never be called (due to exit_prog). 
+           It's just inserted to make the compiler happy: Though
+           the C standard allows void main( void ) and the value
+           of exit() would be passed despite a void return value, the 
+           compiler (gcc 3.2.3 in this case) complains about the return 
+           type of void main() for not being int ...
+        */
+        return (0);
 }
 
 void
@@ -337,21 +373,3 @@ int sig;
 	exit (USERR);
 }
 
-exit_prog(exit_code)
-int exit_code;
-{
-	Ctape_dmpend();
-	if (reserve_done)
-		(void) Ctape_rls (NULL, TPRLS_ALL|TPRLS_UNLOAD);
-	exit (exit_code);
-}
-
-usage(cmd)
-char *cmd;
-{
-	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s",
-	    "[-B maxbyte] [-b max_block_size] [-C {ebcdic|ascii}]\n",
-	    "[-d density] [-E ignoreeoi] [-F maxfile] [-g device_group_name]\n",
-	    "[-N [fromblock,]toblock] [-q fromfile] [-v vsn] -V vid\n");
-}

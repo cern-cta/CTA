@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.7 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.8 $ $Date: 2007/03/21 09:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -21,6 +21,7 @@ static char sccsid[] = "@(#)$RCSfile: lddisplay.c,v $ $Revision: 1.7 $ $Date: 20
 #include <sys/Atape.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "scsictl.h"
 #include "serrno.h"
 #define DISP_TIMEOUT 10000	/* timeout for load display in milliseconds */
@@ -29,7 +30,8 @@ extern char *dvrname;
 #endif
 #endif
 #include "tplogger_api.h"
-lddisplay(fd, path, fcb, msg1, msg2, devtype)
+
+int lddisplay(fd, path, fcb, msg1, msg2, devtype)
 int fd;
 char *path;
 int fcb;	/* format control byte */

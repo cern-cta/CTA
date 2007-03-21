@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.3 $ $Date: 2000/05/04 10:12:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.4 $ $Date: 2007/03/21 09:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <stdio.h>
@@ -13,7 +13,7 @@ static char sccsid[] = "@(#)$RCSfile: tapeacct.c,v $ $Revision: 1.3 $ $Date: 200
 #include "osdep.h"
 #include "sacct.h"
 
-tapeacct(subtype, uid, gid, jid, dgn, drive, vid, fseq, reason)
+int tapeacct(subtype, uid, gid, jid, dgn, drive, vid, fseq, reason)
 int subtype;
 uid_t uid;
 gid_t gid;
