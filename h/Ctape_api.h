@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.28 2007/03/14 14:56:11 wiebalck Exp $
+ * $Id: Ctape_api.h,v 1.29 2007/03/21 09:29:52 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.28 $ $Date: 2007/03/14 14:56:11 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.29 $ $Date: 2007/03/21 09:29:52 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -90,53 +90,123 @@ EXTERN_C void DLL_DECL Ctape_seterrbuf _PROTO((char *, int));
 EXTERN_C int DLL_DECL Ctape_status _PROTO((char *, struct drv_status *, int));
 EXTERN_C int DLL_DECL send2tpd _PROTO((char *, char *, int, char *, int));
 
-EXTERN_C int DLL_DECL get_compression_stats _PROTO((int, char *, char*, COMPRESSION_STATS *comp_stats));
-EXTERN_C int DLL_DECL clear_compression_stats _PROTO((int, char *, char *));
+/* tape/asc2ebc.c      */
+EXTERN_C void DLL_DECL asc2ebc      _PROTO((char *, int));
 
+/* tape/buildhdrlbl.c  */
+EXTERN_C int DLL_DECL buildhdrlbl   _PROTO((char[], char[], char*, char*, int, int, int, char*, int, int, int, int));
+
+/* tape/builduhl.c     */
+EXTERN_C int DLL_DECL builduhl      _PROTO((char[], int, int, int, char*, char*, char*, char*));
+
+/* tape/buildvollbl.c  */
+EXTERN_C int DLL_DECL buildvollbl   _PROTO((char[], char*, int, char*));
+
+/* tape/chkdirw.c      */
+EXTERN_C int DLL_DECL chkdirw       _PROTO((char *));
+
+/* tape/checkjobdied.c */
+EXTERN_C int DLL_DECL checkjobdied  _PROTO((int[]));
+
+/* tape/cvtden.c       */
+EXTERN_C int DLL_DECL cvtden        _PROTO((char *));
+
+/* tape/ebc2asc.c      */
+EXTERN_C void DLL_DECL ebc2asc      _PROTO((char *, int));
+
+/* tape/getcompstat.c  */
+EXTERN_C int DLL_DECL clear_compression_stats _PROTO((int, char *, char *));
+EXTERN_C int DLL_DECL get_compression_stats   _PROTO((int, char *, char*, COMPRESSION_STATS *comp_stats));
+
+/* tape/getdrvstatus.c */
+EXTERN_C int DLL_DECL chkdriveready _PROTO((int));
+EXTERN_C int DLL_DECL chkwriteprot  _PROTO((int));
+
+/* tape/findpgrp.c     */
 EXTERN_C int DLL_DECL findpgrp();
-EXTERN_C int DLL_DECL chkdirw _PROTO((char *));
-EXTERN_C int DLL_DECL cvtden _PROTO((char *));
-EXTERN_C int DLL_DECL read_pos _PROTO((int, char *, unsigned char *));
+
+/* tape/inquiry.c      */
+EXTERN_C int DLL_DECL inquiry       _PROTO((int, char*, unsigned char*));
+EXTERN_C int DLL_DECL inquiry80     _PROTO((int, char*, unsigned char*));
+
+/* tape/lddisplay.c    */
+EXTERN_C int DLL_DECL lddisplay     _PROTO((int, char*, int, char*, char*, int));
+
+/* tape/mircheck.c     */
+EXTERN_C int DLL_DECL is_mir_invalid_load _PROTO((int, char *, char *));
+EXTERN_C int DLL_DECL post_mount_check _PROTO((int, char*, char*));
+
+/* tape/locate.c       */
+EXTERN_C int DLL_DECL locate        _PROTO((int, char*, unsigned char*));
+EXTERN_C int DLL_DECL read_pos      _PROTO((int, char *, unsigned char *));
+
+/* tape/osmg.c         */
+EXTERN_C void DLL_DECL checkorep    _PROTO((char*, char*));
+EXTERN_C void DLL_DECL omsgdel      _PROTO((char*, int));
+EXTERN_C int DLL_DECL omsgr         _PROTO((char*, char*, int));
+EXTERN_C int DLL_DECL testorep      _PROTO((fd_set *));
+
+/* tape/posittape.c    */
+EXTERN_C int DLL_DECL posittape     _PROTO((int, char*, char*, int, int, int*, char*, int, int, int, int, int, int, int, char*, char*, char*, char*));
+
+/* tape/rbtsubr.c      */
+/* EXTERN_C int DLL_DECL rbtdemount    _PROTO((char*, char*, char*, char*, unsigned int, int )); */
+EXTERN_C int DLL_DECL rbtmount      _PROTO((char*, int, char*, char*, int, char*));
+
+/* tape/readlbl.c      */
+EXTERN_C int DLL_DECL readlbl       _PROTO((int, char*, char *));
+EXTERN_C void DLL_DECL closesmc();
+
+/* tape/rwndtape.c     */
 #if defined(_WIN32)
-EXTERN_C int DLL_DECL skiptpff _PROTO((HANDLE, char *, int));
+EXTERN_C int DLL_DECL rwndtape      _PROTO((HANDLE, char *));
 #else
-EXTERN_C int DLL_DECL skiptpff _PROTO((int, char *, int));
+EXTERN_C int DLL_DECL rwndtape      _PROTO((int, char *));
+#endif
+
+/* tape/sendrep.c      */
+EXTERN_C int DLL_DECL sendrep       _PROTO((int, int, ...));
+
+/* tape/setdens.c      */
+EXTERN_C int DLL_DECL setdens       _PROTO((int, char*, char*, int));
+
+/* tape/skiptape.c     */
+#if defined(_WIN32)
+EXTERN_C int DLL_DECL skiptpfb      _PROTO((HANDLE, char *, int));
+#else
+EXTERN_C int DLL_DECL skiptpfb      _PROTO((int, char *, int));
 #endif
 #if defined(_WIN32)
-EXTERN_C int DLL_DECL skiptpfb _PROTO((HANDLE, char *, int));
+EXTERN_C int DLL_DECL skiptpff      _PROTO((HANDLE, char *, int));
 #else
-EXTERN_C int DLL_DECL skiptpfb _PROTO((int, char *, int));
+EXTERN_C int DLL_DECL skiptpff      _PROTO((int, char *, int));
 #endif
 #if (defined(__alpha) && defined(__osf__)) || defined(ADSTAR) || defined(IRIX64) || defined(linux) || defined(hpux)
-EXTERN_C int DLL_DECL skiptpfff _PROTO((int, char*, int));
+EXTERN_C int DLL_DECL skiptpfff     _PROTO((int, char*, int));
 #endif
-EXTERN_C int DLL_DECL gettperror _PROTO((int, char *, char **));
-EXTERN_C int DLL_DECL rpttperror _PROTO((char *, int, char *, char *));
-EXTERN_C int DLL_DECL readlbl _PROTO((int, char*, char *));
-EXTERN_C int DLL_DECL writelbl _PROTO((int, char *, char*));
-EXTERN_C void DLL_DECL ebc2asc _PROTO((char *, int));
-EXTERN_C void DLL_DECL asc2ebc _PROTO((char *, int));
+
+/* tape/tperror.c      */
+EXTERN_C int DLL_DECL gettperror    _PROTO((int, char *, char **));
+EXTERN_C int DLL_DECL rpttperror    _PROTO((char *, int, char *, char *));
+
+/* tape/unldtape.c     */
 #if defined(_WIN32)
-EXTERN_C int DLL_DECL wrttpmrk _PROTO((HANDLE, char *, int));
+EXTERN_C int DLL_DECL unldtape      _PROTO((HANDLE, char*));
 #else
-EXTERN_C int DLL_DECL wrttpmrk _PROTO((int, char *, int));
+EXTERN_C int DLL_DECL unldtape      _PROTO((int, char*));
 #endif
+
+/* tape/usrmsg.c       */
+EXTERN_C int DLL_DECL usrmsg        _PROTO((char *, char *, ...));
+
+/* tape/writelbl.c     */
+EXTERN_C int DLL_DECL writelbl      _PROTO((int, char *, char*));
+
+/* tape/wrttpmrk.c     */
 #if defined(_WIN32)
-EXTERN_C int DLL_DECL rwndtape _PROTO((HANDLE, char *));
+EXTERN_C int DLL_DECL wrttpmrk      _PROTO((HANDLE, char *, int));
 #else
-EXTERN_C int DLL_DECL rwndtape _PROTO((int, char *));
+EXTERN_C int DLL_DECL wrttpmrk      _PROTO((int, char *, int));
 #endif
-EXTERN_C int DLL_DECL usrmsg _PROTO((char *, char *, ...));
-EXTERN_C int DLL_DECL sendrep _PROTO((int, int, ...));
-EXTERN_C int DLL_DECL chkdriveready _PROTO((int));
-EXTERN_C int DLL_DECL buildhdrlbl _PROTO((char[], char[], char*, char*, int, int, int, char*, int, int, int, int));
-EXTERN_C int DLL_DECL builduhl _PROTO((char[], int, int, int, char*, char*, char*, char*));
-EXTERN_C int DLL_DECL buildvollbl _PROTO((char[], char*, int, char*));
-EXTERN_C int DLL_DECL inquiry _PROTO((int, char*, unsigned char*));
-EXTERN_C int DLL_DECL inquiry80 _PROTO((int, char*, unsigned char*));
-EXTERN_C int DLL_DECL locate _PROTO((int, char*, unsigned char*));
-EXTERN_C int DLL_DECL posittape _PROTO((int, char*, char*, int, int, int*, char*, int, int, int, int, int, int, int, char*, char*, char*, char*));
-EXTERN_C int DLL_DECL omsgr _PROTO((char*, char*, int));
-EXTERN_C int DLL_DECL checkjobdied _PROTO((int[]));
 
 #endif
