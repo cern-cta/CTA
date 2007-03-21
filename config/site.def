@@ -237,10 +237,10 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
 
-#if defined(_WIN32)
-#define LsfInstallDir %%SystemRoot%%\\system32
+#if defined(__x86_64)||defined(__ppc64__)
+#define InstallLsfLibDir /usr/lsf/lib64
 #else
-#define LsfInstallDir /usr/lsf
+#define InstallLsfLibDir /usr/lsf/lib
 #endif
 
 #define BuildCommands		NO
