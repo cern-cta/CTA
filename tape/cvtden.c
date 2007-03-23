@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 static char adens[CA_MAXDENNUM][6] = {"0", "800", "1600", "6250", "38000",
 	"8200", "8500", "38KD", "2G", "6G", "10G", "FMT", "RAW", "DDS",

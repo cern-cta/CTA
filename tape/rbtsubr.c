@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.20 $ $Date: 2007/03/12 08:06:06 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.21 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.20 $ $Date: 200
 #include "rmc_api.h"
 #include "smc.h"
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "tplogger_api.h"
 extern char msg[];
 
@@ -1763,7 +1764,7 @@ int vsnretry;
 	RETURN (0);
 }
 
-closesmc ()
+void closesmc ()
 {
 	if (smc_fd >= 0)
 		close (smc_fd);

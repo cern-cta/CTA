@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.7 $ $Date: 2007/03/01 16:41:37 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: checkjobdied.c,v $ $Revision: 1.8 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	checkjobdied - returns the list of jobs that have died */
@@ -28,6 +28,7 @@
 #endif
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 static char func[16];
 

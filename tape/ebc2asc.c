@@ -4,8 +4,11 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: ebc2asc.c,v $ $Revision: 1.3 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: ebc2asc.c,v $ $Revision: 1.4 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
+
+#include <sys/types.h>
+#include "Ctape_api.h"
 
 void ebc2asc(p, len)
 char *p;

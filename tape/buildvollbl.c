@@ -4,13 +4,15 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.5 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: buildvollbl.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	buildvollbl - build VOL1 */
 #include <string.h>
 #include <sys/types.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
+
 int buildvollbl(vol1, vsn, lblcode, name)
 char vol1[];
 char *vsn;

@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.5 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: buildhdrlbl.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	buildhdrlbl - build HDR1 and HDR2 from tpmnt parameters */
@@ -15,6 +15,7 @@
 #include "patchlevel.h"
 #define __BASEVERSION__ "?"
 #include "Ctape.h"
+#include "Ctape_api.h"
 int buildhdrlbl(hdr1, hdr2, fid, fsid, fsec, fseq, retentd, recfm, blksize, lrecl, den, lblcode)
 char hdr1[];
 char hdr2[];

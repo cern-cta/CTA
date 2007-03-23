@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: builduhl.c,v $ $Revision: 1.2 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: builduhl.c,v $ $Revision: 1.3 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	builduhl - build UHL1 from tpmnt parameters */
@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 int builduhl(uhl1, fseq, blksize, lrecl, domainname, hostname, inq_data, drive_serial_no)
 char uhl1[];
 int fseq;

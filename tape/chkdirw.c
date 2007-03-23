@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.5 $ $Date: 2007/02/21 16:31:31 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: chkdirw.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	chkdirw - extract directory name from full pathname
@@ -21,6 +21,8 @@
 #include <unistd.h>
 #endif
 #include "serrno.h"
+#include "Ctape_api.h"
+
 int chkdirw(path)
 char *path;
 {

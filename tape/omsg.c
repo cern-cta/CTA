@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: omsg.c,v $ $Revision: 1.5 $ $Date: 2007/03/12 16:36:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: omsg.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -19,6 +19,7 @@
 #include <unistd.h>
 #endif
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 #include "msg.h"
 static int msg_num = 0;

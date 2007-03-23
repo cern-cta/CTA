@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: getdrvstatus.c,v $ $Revision: 1.5 $ $Date: 2007/03/06 16:46:35 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: getdrvstatus.c,v $ $Revision: 1.6 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -135,6 +135,7 @@ int tapefd;
 #include <sys/types.h>
 #include <sys/mtio.h>
 #include "Ctape.h"
+#include "Ctape_api.h"
 #include "serrno.h"
 int chkdriveready(tapefd)
 int tapefd;
