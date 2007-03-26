@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.22 $ $Date: 2007/03/26 07:35:18 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.23 $ $Date: 2007/03/26 15:33:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -75,6 +75,13 @@ struct rbterr_codact {
 		RBT_UNLD_DMNT	Should unload the tape and retry demount
  */
 
+
+/*
+** Protoypes
+*/
+int acsmount( char*, char*, int );
+int acsdismount( char*, char*, unsigned int );
+
 int dmcmount( char*, char*, char* );
 int dmcdismount( char*, char*, char*, unsigned int );
 
@@ -83,7 +90,6 @@ int smcdismount( char*, char*, int, int );
 
 int send2dmc( int*, DMCrequest_t * );
 int fromdmc( int*, DMCreply_t * );
-
 
 
 /*	rbtmount - mounts a volume on a specified drive  */
@@ -646,32 +652,32 @@ char sense_bytes[];
 char acsloader[14];
 ALIGNED_BYTES rbuf[MAX_MESSAGE_SIZE/sizeof(ALIGNED_BYTES)];
 
-acserr2act(req_type, cc)
+int acserr2act(req_type, cc)
 int req_type;	/* 0 --> mount, 1 --> dismount */
 int cc;		/* error returned by the mount/dismount routine */
 {
 	struct rbterr_codact acserr_acttbl[] = {
-	  STATUS_DRIVE_AVAILABLE, RBT_NORETRY, RBT_OK,		/* unload on empty drive */
-	  STATUS_DRIVE_IN_USE, RBT_DMNT_FORCE, RBT_DMNT_FORCE,
-	  STATUS_DRIVE_OFFLINE, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN,
-	  STATUS_INVALID_VOLUME, RBT_NORETRY, RBT_NORETRY,	/* syntax error in vid */
-	  STATUS_IPC_FAILURE, RBT_OMSGR, RBT_OMSGR,
-	  STATUS_LIBRARY_FAILURE, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN,
-	  STATUS_LIBRARY_NOT_AVAILABLE, RBT_FAST_RETRY, RBT_FAST_RETRY,
-	  STATUS_LSM_OFFLINE, RBT_OMSGR, RBT_OMSGR,
-	  STATUS_MISPLACED_TAPE, RBT_OMSG_NORTRY, RBT_OMSG_NORTRY,
-	  STATUS_PENDING, RBT_DMNT_FORCE, RBT_DMNT_FORCE,	/* corrupted database */
+	  {STATUS_DRIVE_AVAILABLE, RBT_NORETRY, RBT_OK},		/* unload on empty drive */
+	  {STATUS_DRIVE_IN_USE, RBT_DMNT_FORCE, RBT_DMNT_FORCE},
+	  {STATUS_DRIVE_OFFLINE, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN},
+	  {STATUS_INVALID_VOLUME, RBT_NORETRY, RBT_NORETRY},	/* syntax error in vid */
+	  {STATUS_IPC_FAILURE, RBT_OMSGR, RBT_OMSGR},
+	  {STATUS_LIBRARY_FAILURE, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN},
+	  {STATUS_LIBRARY_NOT_AVAILABLE, RBT_FAST_RETRY, RBT_FAST_RETRY},
+	  {STATUS_LSM_OFFLINE, RBT_OMSGR, RBT_OMSGR},
+	  {STATUS_MISPLACED_TAPE, RBT_OMSG_NORTRY, RBT_OMSG_NORTRY},
+	  {STATUS_PENDING, RBT_DMNT_FORCE, RBT_DMNT_FORCE},	/* corrupted database */
 #if TMS
-	  STATUS_VOLUME_IN_DRIVE, RBT_OMSG_SLOW_R, RBT_NORETRY,	/* volume in use */
+	  {STATUS_VOLUME_IN_DRIVE, RBT_OMSG_SLOW_R, RBT_NORETRY},	/* volume in use */
 #else
-	  STATUS_VOLUME_IN_DRIVE, RBT_SLOW_RETRY, RBT_NORETRY, 
+	  {STATUS_VOLUME_IN_DRIVE, RBT_SLOW_RETRY, RBT_NORETRY}, 
 #endif
-	  STATUS_VOLUME_NOT_IN_DRIVE, RBT_NORETRY, RBT_DMNT_FORCE, /* vid mismatch on unload */
-	  STATUS_VOLUME_NOT_IN_LIBRARY, RBT_OMSG_NORTRY, RBT_OK,
-	  STATUS_VOLUME_IN_USE, RBT_FAST_RETRY, RBT_FAST_RETRY,	/* volume in transit */
-	  STATUS_NI_FAILURE, RBT_OMSGR, RBT_OMSGR,		/* contact with ACSLS lost */
-	  STATUS_INVALID_MEDIA_TYPE, RBT_OMSG_NORTRY, RBT_OMSG_NORTRY,
-	  STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_OMSGR, RBT_NORETRY,
+	  {STATUS_VOLUME_NOT_IN_DRIVE, RBT_NORETRY, RBT_DMNT_FORCE}, /* vid mismatch on unload */
+	  {STATUS_VOLUME_NOT_IN_LIBRARY, RBT_OMSG_NORTRY, RBT_OK},
+	  {STATUS_VOLUME_IN_USE, RBT_FAST_RETRY, RBT_FAST_RETRY},	/* volume in transit */
+	  {STATUS_NI_FAILURE, RBT_OMSGR, RBT_OMSGR},		/* contact with ACSLS lost */
+	  {STATUS_INVALID_MEDIA_TYPE, RBT_OMSG_NORTRY, RBT_OMSG_NORTRY},
+	  {STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_OMSGR, RBT_NORETRY},
 	};
 	int i;
 
@@ -697,7 +703,7 @@ STATUS status;
 	return (p);
 }
 
-acsmount(vid, loader, ring)
+int acsmount(vid, loader, ring)
 char *vid;
 char *loader;
 int ring;
@@ -706,8 +712,6 @@ int ring;
 	DRIVEID drive_id;
 	char func[16];
 	SEQ_NO myseqnum = 0;
-	ACS_RESPONSE_TYPE rtype;
-	SEQ_NO s;
 	STATUS status;
 	VOLID vol_id;
     int use_read_only_flag = 1;
@@ -733,8 +737,8 @@ int ring;
                             "drive_id_2", TL_MSG_PARAM_INT, drive_id.panel_id.panel,
                             "drive_id_3", TL_MSG_PARAM_INT, drive_id.drive,
                             "R0flag",     TL_MSG_PARAM_INT, use_read_only_flag );
-	if (status = acs_mount (++myseqnum, NO_LOCK_ID, vol_id, drive_id,
-	    (ring || !use_read_only_flag) ? FALSE : TRUE, 0)) {
+	if ((status = acs_mount (++myseqnum, NO_LOCK_ID, vol_id, drive_id,
+                                (ring || !use_read_only_flag) ? FALSE : TRUE, 0))) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
@@ -755,7 +759,7 @@ int ring;
 	RETURN (0);
 }
 
-acsdismount(vid, loader, force)
+int acsdismount(vid, loader, force)
 char *vid;
 char *loader;
 unsigned int force;
@@ -788,7 +792,7 @@ unsigned int force;
                             "drive_id_2", TL_MSG_PARAM_INT, drive_id.panel_id.panel,
                             "drive_id_3", TL_MSG_PARAM_INT, drive_id.drive,
                             "Message",    TL_MSG_PARAM_STR, force ? "force" : "" );
-	if (status = acs_dismount (++myseqnum, NO_LOCK_ID, vol_id, drive_id, force)) {
+	if ((status = acs_dismount (++myseqnum, NO_LOCK_ID, vol_id, drive_id, force))) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
@@ -843,7 +847,6 @@ unsigned int force;
 	/* Added by BC 20050317 to process status code inside the rbuf */
 	{
 	  ACS_DISMOUNT_RESPONSE *dr;
-	  STATUS dismount_status;
 
 	  dr = (ACS_DISMOUNT_RESPONSE *)rbuf;
 
@@ -863,7 +866,7 @@ unsigned int force;
 	RETURN (0);
 }
 
-acsmountresp()
+int acsmountresp()
 {
 	int c;
 	char func[16];
@@ -912,7 +915,6 @@ acsmountresp()
 	/* Added by BC 20050317 to process status code inside the rbuf */
 	{
 	  ACS_MOUNT_RESPONSE *dr;
-	  STATUS mount_status;
 
 	  dr = (ACS_MOUNT_RESPONSE *)rbuf;
 
@@ -933,7 +935,7 @@ acsmountresp()
 	return (0);
 }
 
-wait4acsfinalresp()
+int wait4acsfinalresp()
 {
 	int c;
 	char func[16];
@@ -982,7 +984,6 @@ wait4acsfinalresp()
 	/* Added by BC 20050317 to process status code inside the rbuf */
 	{
 	  ACS_MOUNT_RESPONSE *dr;
-	  STATUS mount_status;
 
 	  dr = (ACS_MOUNT_RESPONSE *)rbuf;
 
