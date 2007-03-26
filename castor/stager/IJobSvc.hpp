@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/03/26 16:59:46 $ $Author: itglp $
  *
  * This class provides stager methods related to job handling
  *
@@ -143,22 +143,6 @@ namespace castor {
       virtual castor::stager::DiskCopy* putStart
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Handles the start of a PutDone job.
-       * Actually only returns the DiskCopy associated to the SubRequest
-       * Note that deallocation of the DiskCopy is the
-       * responsability of the caller.
-       * If a null  DiskCopy is returned then the PutDone
-       * was put in waiting mode and the caller should stop
-       * processing it
-       * @param subreqId the if of the SubRequest to consider
-       * @return the DiskCopy to use for the data access or
-       * 0 if the PutDone should wait
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::DiskCopy* putDoneStart(u_signed64 subreqId)
         throw (castor::exception::Exception) = 0;
 
       /**

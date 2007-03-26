@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/03/26 16:59:46 $ $Author: itglp $
  *
  *
  *
@@ -138,25 +138,6 @@ extern "C" {
     try {
       *diskCopy =
         jobSvc->jobSvc->putStart(subreq, fileSystem);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_putDoneStart
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_putDoneStart
-  (struct Cstager_IJobSvc_t* jobSvc,
-   u_signed64 subreqId,
-   castor::stager::DiskCopy** diskCopy) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      *diskCopy =
-        jobSvc->jobSvc->putDoneStart(subreqId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();

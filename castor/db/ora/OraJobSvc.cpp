@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/03/26 16:59:21 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -101,10 +101,6 @@ const std::string castor::db::ora::OraJobSvc::s_getUpdateStartStatementString =
 const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
   "BEGIN putStart(:1, :2, :3, :4, :5); END;";
 
-/// SQL statement for putDoneStart
-const std::string castor::db::ora::OraJobSvc::s_putDoneStartStatementString =
-  "BEGIN putDoneStartProc(:1, :2, :3, :4); END;";
-
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
   "BEGIN disk2DiskCopyDone(:1, :2); END;";
@@ -136,7 +132,6 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   OraCommonSvc(name),
   m_getUpdateStartStatement(0),
   m_putStartStatement(0),
-  m_putDoneStartStatement(0),
   m_disk2DiskCopyDoneStatement(0),
   m_prepareForMigrationStatement(0),
   m_getUpdateDoneStatement(0),
@@ -176,7 +171,6 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   try {
     deleteStatement(m_getUpdateStartStatement);
     deleteStatement(m_putStartStatement);
-    deleteStatement(m_putDoneStartStatement);
     deleteStatement(m_disk2DiskCopyDoneStatement);
     deleteStatement(m_prepareForMigrationStatement);
     deleteStatement(m_getUpdateDoneStatement);
@@ -187,7 +181,6 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   // Now reset all pointers to 0
   m_getUpdateStartStatement = 0;
   m_putStartStatement = 0;
-  m_putDoneStartStatement = 0;
   m_disk2DiskCopyDoneStatement = 0;
   m_prepareForMigrationStatement = 0;
   m_getUpdateDoneStatement = 0;
@@ -352,59 +345,6 @@ castor::db::ora::OraJobSvc::putStart
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in putStart."
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-// -----------------------------------------------------------------------
-// putDoneStart
-// -----------------------------------------------------------------------
-castor::stager::DiskCopy*
-castor::db::ora::OraJobSvc::putDoneStart(u_signed64 subreqId)
-  throw (castor::exception::Exception) {
-  castor::IObject *iobj = 0;
-  castor::stager::DiskCopy* result = 0;
-  try {
-    // Check whether the statements are ok
-    if (0 == m_putDoneStartStatement) {
-      m_putDoneStartStatement =
-        createStatement(s_putDoneStartStatementString);
-      m_putDoneStartStatement->registerOutParam
-        (2, oracle::occi::OCCIDOUBLE);
-      m_putDoneStartStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
-      m_putDoneStartStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 2048);
-    }
-    // execute the statement and see whether we found something
-    m_putDoneStartStatement->setDouble(1, subreqId);
-    unsigned int nb = m_putDoneStartStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "putDoneStart : unable to execute putDoneStart in DB.\n"
-        << "Subrequest Id was " << subreqId;
-      throw ex;
-    }
-    // Get the result
-    result = new castor::stager::DiskCopy();
-    result->setId((u_signed64)m_putDoneStartStatement->getDouble(2));
-    result->setStatus
-      ((enum castor::stager::DiskCopyStatusCodes)
-       m_putDoneStartStatement->getInt(3));
-    result->setPath(m_putDoneStartStatement->getString(4));
-    // return
-    cnvSvc()->commit();
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    if (0 != result) {
-      delete result;
-    }
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in putDoneStart."
       << std::endl << e.what();
     throw ex;
   }
