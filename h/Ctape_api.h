@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.30 2007/03/26 12:15:51 wiebalck Exp $
+ * $Id: Ctape_api.h,v 1.31 2007/03/26 14:43:38 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.30 $ $Date: 2007/03/26 12:15:51 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.31 $ $Date: 2007/03/26 14:43:38 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -121,6 +121,9 @@ EXTERN_C int DLL_DECL get_compression_stats   _PROTO((int, char *, char*, COMPRE
 /* tape/getdrvstatus.c */
 EXTERN_C int DLL_DECL chkdriveready _PROTO((int));
 EXTERN_C int DLL_DECL chkwriteprot  _PROTO((int));
+
+/* tape/tapealertcheck.c */
+EXTERN_C int DLL_DECL get_tape_alerts _PROTO((int, char*, char*));
 
 /* tape/findpgrp.c     */
 EXTERN_C int DLL_DECL findpgrp();
