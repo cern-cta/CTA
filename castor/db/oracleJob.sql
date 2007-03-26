@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.387 $ $Date: 2007/03/26 17:01:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.388 $ $Date: 2007/03/26 17:37:38 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.387 $ $Date: 2007/03/26 17:01:16 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.388 $ $Date: 2007/03/26 17:37:38 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1628,25 +1628,19 @@ BEGIN
  END;
  
  IF contextPIPP != 2 THEN
-   -- update CastorFile. This also takes a lock on it, insuring
-   -- with triggers that we are the only ones to deal with its copies
+   -- update CastorFile's file size
    UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts 
     WHERE id = cfId AND (lastUpdateTime is NULL or ts > lastUpdateTime); 
    -- if ts < lastUpdateTime, we were late and another job already updated the
    -- CastorFile. But we still need to call updateFsFileClosed() so we go on
-   -- and take again the lock.
-   SELECT fileId, nsHost INTO fId, nh
-     FROM CastorFile
-     WHERE id = cfId
-     FOR UPDATE;
- ELSE
-   -- if putDone, don't update fileSize and lastUpdateTime but just take the lock
-   -- we get the real file size too because fs = 0
-   SELECT fileId, nsHost, fileSize INTO fId, nh, realFileSize
-     FROM CastorFile
-     WHERE id = cfId
-     FOR UPDATE;
  END IF;
+ -- Take a lock on the CastorFile. Together with triggers, this insures that
+ -- we are the only ones to deal with its copies.
+ -- We also get here the real file size too because fs = 0 for a PutDone
+ SELECT fileId, nsHost, fileSize INTO fId, nh, realFileSize
+   FROM CastorFile
+   WHERE id = cfId
+   FOR UPDATE;
  -- get uid, gid and reserved space from Request
  SELECT euid, egid, xsize, svcClass INTO userId, groupId, reservedSpace, scId
    FROM SubRequest,
@@ -1666,7 +1660,8 @@ BEGIN
 
  -- archive Subrequest
  archiveSubReq(srId);
- --  If not a put inside a PrepareToPut/Update, create TapeCopies and update DiskCopy status
+ -- If not a put inside a PrepareToPut/Update, create TapeCopies
+ -- and update DiskCopy status
  IF contextPIPP != 0 THEN
    putDoneFunc(cfId, realFileSize, contextPIPP);
  END IF;
