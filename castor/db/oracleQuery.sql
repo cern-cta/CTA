@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.386 $ $Date: 2007/03/26 10:39:52 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.387 $ $Date: 2007/03/26 17:01:16 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.386 $ $Date: 2007/03/26 10:39:52 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.387 $ $Date: 2007/03/26 17:01:16 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1317,59 +1317,6 @@ BEGIN
   WHERE id = rdcId
   RETURNING status, path
   INTO rdcStatus, rdcPath;
-END;
-
-CREATE OR REPLACE PROCEDURE putDoneStartProc
-        (srId IN INTEGER, dcId OUT INTEGER,
-         dcStatus OUT INTEGER, dcPath OUT VARCHAR2) AS
-  reqId NUMBER;
-  cfId NUMBER;
-  ty NUMBER;
-BEGIN
-  -- Check there is no put going on
-  -- If any, we'll wait on one of them
-  SELECT request, castorFile INTO reqId, cfId
-    FROM SubRequest WHERE id = srId;
-  SELECT type INTO ty FROM Id2Type WHERE id = reqId;
-  IF ty = 39 THEN -- PutDone
-    DECLARE
-      putSubReq NUMBER;
-    BEGIN
-      -- Try to find a running put
-      SELECT subrequest.id INTO putSubReq
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.castorfile = cfId
-         AND SubRequest.request = Id2Type.id
-         AND Id2Type.type = 40 -- Put
-         AND SubRequest.status IN (0, 1, 2, 3) -- START, RESTART, RETRY, WAITSCHED
-         AND ROWNUM < 2;
-      -- we've found one, putDone will have to wait
-      UPDATE SubRequest
-         SET parent = putSubReq,
-             status = 5, -- WAITSUBREQ
-             lastModificationTime = getTime()
-       WHERE id = srId;
-      -- return an invalid diskcopy
-      dcId := 0;
-      dcStatus := 7; -- INVALID
-      dcPath := '';
-      RETURN;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- no put waiting, let continue
-      NULL;
-    END;
-  END IF;
-  -- No put, we can safely go
-  SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
-    INTO dcId, dcStatus, dcPath
-    FROM SubRequest, DiskCopy
-   WHERE SubRequest.id = srId
-     AND DiskCopy.castorfile = SubRequest.castorfile
-     AND DiskCopy.status = 6; -- STAGEOUT
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- We need to clean set the original putDone request to FAILED_FINISHED
-    UPDATE SubRequest SET status = 9 WHERE id = srId;
-    RAISE;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
