@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.31 2007/03/26 14:43:38 wiebalck Exp $
+ * $Id: Ctape_api.h,v 1.32 2007/03/26 15:33:36 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.31 $ $Date: 2007/03/26 14:43:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.32 $ $Date: 2007/03/26 15:33:36 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -154,7 +154,9 @@ EXTERN_C int DLL_DECL posittape     _PROTO((int, char*, char*, int, int, int*, c
 
 /* tape/rbtsubr.c      */
 /* EXTERN_C int DLL_DECL rbtdemount    _PROTO((char*, char*, char*, char*, unsigned int, int )); */
+EXTERN_C int DLL_DECL acsmountresp();
 EXTERN_C int DLL_DECL rbtmount      _PROTO((char*, int, char*, char*, int, char*));
+EXTERN_C int DLL_DECL wait4acsfinalresp();
 
 /* tape/readlbl.c      */
 EXTERN_C int DLL_DECL readlbl       _PROTO((int, char*, char *));
