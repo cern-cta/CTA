@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.385 $ $Date: 2007/03/15 09:35:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.386 $ $Date: 2007/03/26 10:39:52 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.385 $ $Date: 2007/03/15 09:35:00 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.386 $ $Date: 2007/03/26 10:39:52 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -722,7 +722,7 @@ BEGIN
   SELECT P.path, P.diskcopy_id, P.castorfile,
          C.fileId, C.nsHost, C.fileSize, P.id
     INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-    FROM (SELECT /*+ USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+    FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
           D.path, D.diskcopy_id, D.castorfile, T.id
             FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
                          DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
@@ -1616,8 +1616,24 @@ BEGIN
 END;
 
 
+/* PL/SQL method implementing getDefaultFileSize */
+CREATE OR REPLACE PROCEDURE getDefaultFileSize(scId IN INTEGER, fileSize IN OUT NUMBER) AS
+  scDefault NUMBER;
+BEGIN
+  IF fileSize > 0 THEN
+    RETURN;
+  END IF;
+  SELECT defaultFileSize INTO scDefault FROM SvcClass WHERE id = scId;
+  IF scDefault > 0 THEN
+    fileSize := scDefault;
+  ELSE
+    -- hard coded default to 2Gb if no default is provided from the SvcClass
+    fileSize := 2147483648;
+  END IF;
+END;
+
 /* PL/SQL method implementing prepareForMigration */
-CREATE OR REPLACE PROCEDURE  prepareForMigration (srId IN INTEGER,
+CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
                                                  ts IN NUMBER,
                                                  fId OUT NUMBER,
@@ -1626,7 +1642,8 @@ CREATE OR REPLACE PROCEDURE  prepareForMigration (srId IN INTEGER,
                                                  groupId OUT INTEGER) AS
   cfId INTEGER;
   fsId INTEGER;
-  oldFs INTEGER;
+  scId INTEGER;
+  realFileSize INTEGER;
   reservedSpace NUMBER;
   unused INTEGER;
   contextPIPP INTEGER;
@@ -1648,7 +1665,7 @@ BEGIN
      SELECT SubRequest.diskCopy INTO unused
        FROM SubRequest,
         (SELECT id FROM StagePrepareToPutRequest UNION ALL
-        SELECT id FROM StagePrepareToUpdateRequest) Request
+         SELECT id FROM StagePrepareToUpdateRequest) Request
       WHERE SubRequest.CastorFile = cfId
         AND Request.id = SubRequest.request
         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
@@ -1666,42 +1683,45 @@ BEGIN
  IF contextPIPP != 2 THEN
    -- update CastorFile. This also takes a lock on it, insuring
    -- with triggers that we are the only ones to deal with its copies
-   UPDATE CastorFile set fileSize = fs, lastUpdateTime = ts 
-    WHERE id = cfId and (lastUpdateTime is NULL or ts > lastUpdateTime) 
-   RETURNING fileId, nsHost INTO fId, nh;
+   UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts 
+    WHERE id = cfId AND (lastUpdateTime is NULL or ts > lastUpdateTime); 
+   -- if ts < lastUpdateTime, we were late and another job already updated the
+   -- CastorFile. But we still need to call updateFsFileClosed() so we go on
+   -- and take again the lock.
+   SELECT fileId, nsHost INTO fId, nh
+     FROM CastorFile
+     WHERE id = cfId
+     FOR UPDATE;
  ELSE
    -- if putDone, don't update fileSize and lastUpdateTime but just take the lock
-   SELECT fileId, nsHost, fileSize INTO fId, nh, oldFs
+   -- we get the real file size too because fs = 0
+   SELECT fileId, nsHost, fileSize INTO fId, nh, realFileSize
      FROM CastorFile
      WHERE id = cfId
      FOR UPDATE;
  END IF;
  -- get uid, gid and reserved space from Request
- SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
-     (SELECT euid, egid, id from StagePutRequest UNION ALL
-      SELECT euid, egid, id from StageUpdateRequest UNION ALL
-      SELECT euid, egid, id from StagePutDoneRequest) Request
+ SELECT euid, egid, xsize, svcClass INTO userId, groupId, reservedSpace, scId
+   FROM SubRequest,
+     (SELECT euid, egid, id, svcClass from StagePutRequest UNION ALL
+      SELECT euid, egid, id, svcClass from StageUpdateRequest UNION ALL
+      SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
- -- In case reserved space is 0, it was changed to 2G by default
- IF 0 = reservedSpace THEN reservedSpace := 2147483648; END IF;
+ -- get correct reservedSpace according to defaults
+ getDefaultFileSize(scId, reservedSpace);
  
- IF contextPIPP != 0 THEN   
-   -- standalone Put or PutDone
+ IF contextPIPP != 2 THEN   
+   -- any Put, either standalone or inside PrepareToPut
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
-   IF contextPIPP = 2 THEN
-     -- for a putDone, the fs is always 0, so we take the last one found in CastorFile
-     updateFsFileClosed(fsId, reservedSpace, oldFs);
-   ELSE
-     updateFsFileClosed(fsId, reservedSpace, fs);
-   END IF;
+   updateFsFileClosed(fsId, reservedSpace, fs);
  END IF;
 
  -- archive Subrequest
  archiveSubReq(srId);
  --  If not a put inside a PrepareToPut/Update, create TapeCopies and update DiskCopy status
  IF contextPIPP != 0 THEN
-   putDoneFunc(cfId, oldFs, contextPIPP);
+   putDoneFunc(cfId, realFileSize, contextPIPP);
  END IF;
  -- If put inside PrepareToPut/Update, restart any PutDone currently
  -- waiting on this put/update
@@ -2367,6 +2387,8 @@ CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
   dcId INTEGER;
   fsId INTEGER;
   cfId INTEGER;
+  scId INTEGER;
+  reqId INTEGER;
   unused INTEGER;
   reservedSpace INTEGER;
 BEGIN
@@ -2374,39 +2396,40 @@ BEGIN
   UPDATE SubRequest
      SET status = 7 -- FAILED
    WHERE id = srId
-  RETURNING diskCopy, xsize, castorFile
-    INTO dcId, reservedSpace, cfId;
-    -- Check if the operation is a PutDone
-   SELECT StagePutDoneRequest.id INTO unused 
-   FROM  StagePutDoneRequest, Subrequest
-   WHERE StagePutDoneRequest.id=srid AND 
-         StagePutDoneRequest.id=Subrequest.request;
-   EXCEPTION WHEN NO_DATA_FOUND  THEN
+  RETURNING diskCopy, xsize, castorFile, request
+    INTO dcId, reservedSpace, cfId, reqId;
+  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
+  -- get current SvcClass. We are a Put/Update
+  SELECT svcClass INTO scId 
+    FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
+          SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
+          SELECT id, svcClass FROM StagePutRequest UNION ALL
+          SELECT id, svcClass FROM StageUpdateRequest) Req
+   WHERE id = reqId;
+  -- get correct reservedSpace according to defaults
+  getDefaultFileSize(scId, reservedSpace);
+  -- free it
+  updateFsFileClosed(fsId, reservedSpace, 0);
+  -- Determine the context (Put inside PrepareToPut ?)
+  BEGIN
+    -- check that there is a PrepareToPut going on
+    SELECT SubRequest.id INTO unused
+      FROM StagePrepareToPutRequest, SubRequest
+     WHERE SubRequest.CastorFile = cfId
+       AND StagePrepareToPutRequest.id = SubRequest.request;
+    -- the select worked out, so we have a prepareToPut
+    -- In such a case, we do not cleanup DiskCopy and CastorFile
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- this means we are a standalone put
+    -- thus cleanup DiskCopy and maybe the CastorFile
+    DECLARE
+      dcIds castor."cnumList";
+      fileIds castor.FileList_Cur;
     BEGIN
-      SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
-     -- free reserved space
-     updateFsFileClosed(fsId, reservedSpace, 0);
-     -- Determine the context (Put inside PrepareToPut ?)
-      BEGIN
-       -- check that there is a PrepareToPut going on
-       SELECT SubRequest.diskCopy INTO unused
-         FROM StagePrepareToPutRequest, SubRequest
-        WHERE SubRequest.CastorFile = cfId
-          AND StagePrepareToPutRequest.id = SubRequest.request;
-       -- the select worked out, so we have a prepareToPut
-       -- In such a case, we do not cleanup DiskCopy and CastorFile
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- this means we are a standalone put
-      -- thus cleanup DiskCopy and maybe the CastorFile
-      DECLARE
-        dcIds castor."cnumList";
-        fileIds castor.FileList_Cur;
-      BEGIN
-       dcIds(1) := dcId;
-       filesDeletedProc(dcIds, fileIds);
-      END;
+      dcIds(1) := dcId;
+      filesDeletedProc(dcIds, fileIds);
     END;
-  END;  
+  END;
 END;
 
 
