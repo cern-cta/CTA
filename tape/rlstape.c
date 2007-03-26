@@ -4,11 +4,13 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.33 $ $Date: 2007/03/12 08:10:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.34 $ $Date: 2007/03/26 14:43:01 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <fcntl.h>
 #if defined(_WIN32)
 #include <winsock2.h>
@@ -46,7 +48,13 @@ fd_set readmask;
 char repbuf[133];
 int rpfd;
 
-main(argc, argv)
+/*
+** Prototypes
+*/
+void configdown( char* );
+int rbtdmntchk( int*, char*, unsigned int* );
+
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -66,12 +74,13 @@ char	**argv;
 	int n;
 	char *name;
 	char *p;
-	struct passwd *pwd;
 	char *q;
 	int rlsflags;
 	char *sbp;
 	char sendbuf[REQBUFSZ];
+#if SONYRAW
 	int sonyraw;
+#endif
 	int tapefd;
 	uid_t uid;
 	int ux;
@@ -208,7 +217,7 @@ char	**argv;
 	/* delay VDQM_UNIT_RELEASE so that a new request for the same volume
 	   has a chance to keep the volume mounted */
 
-	if (p = getconfent ("TAPE", "RLSDELAY", 0))
+	if ((p = getconfent ("TAPE", "RLSDELAY", 0)))
 		sleep (atoi (p));
 
 #if VDQM
@@ -386,7 +395,7 @@ freedrv:
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
  
-	if (c = send2tpd (NULL, sendbuf, msglen, NULL, 0)) {
+	if ((c = send2tpd (NULL, sendbuf, msglen, NULL, 0))) {
 		usrmsg (func, "%s", errbuf);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
@@ -398,7 +407,7 @@ freedrv:
 	exit (c);
 }
 
-configdown(drive)
+void configdown(drive)
 char *drive;
 {
 	sprintf (msg, TP033, drive, hostname); /* ops msg */
@@ -410,7 +419,7 @@ char *drive;
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
 
-rbtdmntchk(c, drive, demountforce)
+int rbtdmntchk(c, drive, demountforce)
 int *c;
 char *drive;
 unsigned int *demountforce;
