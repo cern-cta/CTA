@@ -4,12 +4,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.21 $ $Date: 2007/03/23 13:08:33 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.22 $ $Date: 2007/03/26 07:35:18 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
 #include <errno.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
@@ -73,9 +75,20 @@ struct rbterr_codact {
 		RBT_UNLD_DMNT	Should unload the tape and retry demount
  */
 
+int dmcmount( char*, char*, char* );
+int dmcdismount( char*, char*, char*, unsigned int );
+
+/* int smcmount( char*, int, char*, int ); */
+int smcdismount( char*, char*, int, int );
+
+int send2dmc( int*, DMCrequest_t * );
+int fromdmc( int*, DMCreply_t * );
+
+
+
 /*	rbtmount - mounts a volume on a specified drive  */
 
-rbtmount (vid, side, unm, dvn, ring, loader)
+int rbtmount (vid, side, unm, dvn, ring, loader)
 char *vid;
 int side;
 char *unm;
@@ -167,7 +180,7 @@ char *loader;
 
 /*	rbtdemount - demounts a volume from a specified drive  */
 
-rbtdemount (vid, unm, dvn, loader, force, vsnretry)
+int rbtdemount (vid, unm, dvn, loader, force, vsnretry)
 char *vid;
 char *unm;
 char *dvn;
@@ -1227,8 +1240,9 @@ int send2dmc(sock,req)
 int *sock;
 DMCrequest_t *req;
 {
-	struct passwd *pw;
+#if SERVICESDB
 	struct servent *sp;
+#endif
 	struct hostent *hp;
 	struct sockaddr_in sin;
 	int s,j;
@@ -1388,7 +1402,7 @@ static char rmc_errbuf[256];
 static char smc_ldr[CA_MAXRBTNAMELEN+6];
 static struct robot_info robot_info;
 
-opensmc(loader)
+int opensmc(loader)
 char *loader;
 {
 	int c;
@@ -1424,7 +1438,7 @@ char *loader;
                                     "Message", TL_MSG_PARAM_STR, "invalid loader" );
 		RETURN (RBT_NORETRY);
 	}
-	if (p = strchr (smc_ldr, '@')) {
+	if ((p = strchr (smc_ldr, '@'))) {
 		*p = '\0';
 		rmc_host = p + 1;
 	}
@@ -1454,7 +1468,7 @@ char *loader;
 	/* get robot geometry */
 
 	if (! got_robot_info) {
-		if (c = smc_get_geometry (smc_fd, smc_ldr, &robot_info)) {
+		if ((c = smc_get_geometry (smc_fd, smc_ldr, &robot_info))) {
 			c = smc_lasterror (&smc_status, &msgaddr);
 			if (smc_status.rc == -1 || smc_status.rc == -2) {
 				usrmsg (func, "%s\n", msg);
@@ -1489,7 +1503,7 @@ char *loader;
 	RETURN (0);
 }
 
-smcmount(vid, side, loader, vsnretry)
+int smcmount(vid, side, loader, vsnretry)
 char *vid;
 int side;
 char *loader;
@@ -1622,7 +1636,7 @@ int vsnretry;
 	RETURN (0);
 }
 
-smcdismount(vid, loader, force, vsnretry)
+int smcdismount(vid, loader, force, vsnretry)
 char *vid;
 char *loader;
 int force;
