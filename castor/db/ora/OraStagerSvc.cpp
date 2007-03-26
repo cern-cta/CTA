@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.192 $ $Release$ $Date: 2007/03/02 10:51:41 $ $Author: riojac3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.193 $ $Release$ $Date: 2007/03/26 16:58:45 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1193,8 +1193,8 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   }
   // DB address
   castor::BaseAddress ad;
-  ad.setCnvSvcName("OracnvSvc");
-  ad.setCnvSvcType(castor::SVC_ORACNV);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
   // create TapeCopy
   castor::stager::TapeCopy tapeCopy;
   tapeCopy.setCopyNb(useCopyNb);
