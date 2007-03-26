@@ -1,5 +1,5 @@
 /*
- * $Id: smc.h,v 1.8 2005/06/16 09:43:26 bcouturi Exp $
+ * $Id: smc.h,v 1.9 2007/03/26 07:35:57 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: smc.h,v $ $Revision: 1.8 $ $Date: 2005/06/16 09:43:26 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: smc.h,v $ $Revision: 1.9 $ $Date: 2007/03/26 07:35:57 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _SMC_H
@@ -71,4 +71,11 @@ struct smc_status {
 	unsigned char sensekey;
 	int skvalid;	/* sense key is valid */
 };
+
+EXTERN_C int DLL_DECL smc_get_geometry     _PROTO((int, char*, struct robot_info*));
+EXTERN_C int DLL_DECL smc_move_medium      _PROTO((int, char*, int, int, int));
+EXTERN_C int DLL_DECL smc_lasterror        _PROTO((struct smc_status *, char**));
+EXTERN_C int DLL_DECL smc_read_elem_status _PROTO((int, char*, int, int, int, struct smc_element_info[]));
+EXTERN_C int DLL_DECL smc_find_cartridge   _PROTO((int, char*, char*, int, int, int, struct smc_element_info[]));
+
 #endif
