@@ -1,5 +1,5 @@
 /*
- * $Id: smc.h,v 1.9 2007/03/26 07:35:57 wiebalck Exp $
+ * $Id: smc.h,v 1.10 2007/03/26 12:15:51 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: smc.h,v $ $Revision: 1.9 $ $Date: 2007/03/26 07:35:57 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: smc.h,v $ $Revision: 1.10 $ $Date: 2007/03/26 12:15:51 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 
 #ifndef _SMC_H
@@ -77,5 +77,10 @@ EXTERN_C int DLL_DECL smc_move_medium      _PROTO((int, char*, int, int, int));
 EXTERN_C int DLL_DECL smc_lasterror        _PROTO((struct smc_status *, char**));
 EXTERN_C int DLL_DECL smc_read_elem_status _PROTO((int, char*, int, int, int, struct smc_element_info[]));
 EXTERN_C int DLL_DECL smc_find_cartridge   _PROTO((int, char*, char*, int, int, int, struct smc_element_info[]));
+
+EXTERN_C int DLL_DECL smc_dismount         _PROTO((int, char*, struct robot_info*, int, char*));
+EXTERN_C int DLL_DECL smc_export           _PROTO((int, char*, struct robot_info*, char*));
+EXTERN_C int DLL_DECL smc_import           _PROTO((int, char*, struct robot_info*, char*));
+EXTERN_C int DLL_DECL smc_mount            _PROTO((int, char*, struct robot_info*, int, char*, int));
 
 #endif

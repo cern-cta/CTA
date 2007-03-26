@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_api.h,v 1.29 2007/03/21 09:29:52 wiebalck Exp $
+ * $Id: Ctape_api.h,v 1.30 2007/03/26 12:15:51 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.29 $ $Date: 2007/03/21 09:29:52 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Ctape_api.h,v $ $Revision: 1.30 $ $Date: 2007/03/26 12:15:51 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CTAPE_API_H
@@ -140,7 +140,7 @@ EXTERN_C int DLL_DECL post_mount_check _PROTO((int, char*, char*));
 EXTERN_C int DLL_DECL locate        _PROTO((int, char*, unsigned char*));
 EXTERN_C int DLL_DECL read_pos      _PROTO((int, char *, unsigned char *));
 
-/* tape/osmg.c         */
+/* tape/omsg.c         */
 EXTERN_C void DLL_DECL checkorep    _PROTO((char*, char*));
 EXTERN_C void DLL_DECL omsgdel      _PROTO((char*, int));
 EXTERN_C int DLL_DECL omsgr         _PROTO((char*, char*, int));
