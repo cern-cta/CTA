@@ -4,28 +4,54 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.11 $ $Date: 2002/08/08 14:44:30 $ CERN IT-PDP/DM Jean-Philippe Baud";
+/* static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.12 $ $Date: 2007/03/26 12:14:53 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include "Cgetopt.h"
 #include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h"
+#if VMGR
+#include "vmgr_api.h"
+#endif
 int Ctape_kill_needed;
 int reserve_done;
 char path[CA_MAXPATHLEN+1];
 
-main(argc, argv)
+int exit_prog(exit_code)
+int exit_code;
+{
+	if (reserve_done)
+		(void) Ctape_rls (NULL, TPRLS_ALL);
+	exit (exit_code);
+}
+
+void usage(cmd)
+char *cmd;
+{
+	fprintf (stderr, "usage: %s ", cmd);
+	fprintf (stderr, "%s%s%s",
+	    "[-D device_name] [-d density] [-g device_group_name]\n",
+	    "[-H number_headers] [-l label_type] [-T] [-V visual_identifier]\n",
+	    "[-v volume_serial_number] [--nbsides n]\n");
+}
+
+int main(argc, argv)
 int	argc;
 char	**argv;
 {
+#ifdef TMS
 	char acctname[7];
+	char *p;
+#endif
 	int c;
 	void cleanup();
 	int count;
@@ -45,7 +71,6 @@ char	**argv;
 	};
 	int nbhdr = -1;
 	int nbsides = 1;
-	char *p;
 	int side = 0;
 	char *tempnam();
 	uid_t uid;
@@ -201,7 +226,7 @@ char	**argv;
 			exit_prog (USERR);
 		}
 #endif
-		if (c = vmgrcheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, uid, gid)) {
+		if ((c = vmgrcheck (vid, vsn, dgn, density, lbltype, WRITE_ENABLE, uid, gid))) {
 #if TMS
 			if (c != ETVUNKN)
 #endif
@@ -248,6 +273,9 @@ char	**argv;
 			    USERR : SYERR);
 	}
 	exit_prog (0);
+
+        /* will never be reached, but makes the compiler happy */
+        exit (0);        
 }
 
 void cleanup(sig)
@@ -260,19 +288,3 @@ int sig;
 	exit (USERR);
 }
 
-exit_prog(exit_code)
-int exit_code;
-{
-	if (reserve_done)
-		(void) Ctape_rls (NULL, TPRLS_ALL);
-	exit (exit_code);
-}
-usage(cmd)
-char *cmd;
-{
-	fprintf (stderr, "usage: %s ", cmd);
-	fprintf (stderr, "%s%s%s",
-	    "[-D device_name] [-d density] [-g device_group_name]\n",
-	    "[-H number_headers] [-l label_type] [-T] [-V visual_identifier]\n",
-	    "[-v volume_serial_number] [--nbsides n]\n");
-}

@@ -9,11 +9,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include "scsictl.h"
+#include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h" 
 
 
 static char *func = "tapealertcheck";
+
+extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
 
 /* Functions that checks 9840/9940/T10000/LTO/3592 tape flags */
 int

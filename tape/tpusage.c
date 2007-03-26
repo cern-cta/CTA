@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.8 $ $Date: 2003/09/14 06:57:18 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.9 $ $Date: 2007/03/26 12:14:53 $ CERN CN-PDP/DM Claire Redmond/Andrew Askew/Olof Barring"; 
 #endif /* not lint */
 
 #include <errno.h>
@@ -23,6 +23,7 @@ static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.8 $ $Date: 2003
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
 #include "Cregexp.h"
@@ -32,6 +33,7 @@ static char sccsid[] = "@(#)$RCSfile: tpusage.c,v $ $Revision: 1.8 $ $Date: 2003
 #include <sacct.h>
 #include <rfio.h>
 #include <net.h>
+#include "serrno.h"
 #if defined(VDQM)
 #include <rtcp_api.h>           /* To get CLIST macro's */
 #include <vdqm_api.h>
@@ -168,6 +170,48 @@ struct summary {		/* Structure of summary information on mounts */
   int wrong_vsn[MAXDGP];	/* Total mounts for wrong vsn */
 };
 
+
+/*
+** Prototypes
+*/
+int usage( char* );
+#if defined(VDQM)
+int get_drvlist();
+#endif
+int create_devicelist( char[][] );
+int create_serverlist( char[][], int );
+
+int chk_devgrp( char*, int );
+int chk_serv( char*, char[][], int );
+int chk_vol( char*, Cregexp_t ** );
+
+int create_reqserverlist( int, char[], char[][], int );
+int getacctrec( int, struct accthdr*, char*, int* );
+int swap_fields( struct accttape* );
+int graph_divs( time_t, time_t, int*, time_t[] );
+int enter_data( struct numq*, struct accttape*, time_t[], time_t, time_t, char* );
+int ti_vals( struct numq * );
+
+int adddevinfo( struct accttape*, time_t, char* );
+int add_gph_info( struct accttape *, time_t, time_t[], char[], time_t );
+int add_queue_info( struct accttape*, int, char[], time_t[], time_t, time_t, char* );
+int add_suminfo( struct accttape*, int, struct summary* );
+int addtpmnt( struct accttape*, int ); 
+
+int print_devusage( time_t, time_t, time_t[], int );
+int print_mountdetails( time_t, time_t, int, char, char[] );
+int print_tpentry( struct accttape*, time_t, char[], int, Cregexp_t*, char* );
+int print_queue( time_t, time_t, struct numq*, time_t[], char[], char[], int );
+int printsorted_list( struct userstats*, int );
+int print_time_interval( time_t, time_t );
+
+int print_summary( time_t, time_t, int, struct summary*, char[] );
+int print_time_details( time_t, time_t );
+
+int set_util_timeslots( struct dev_usage* );
+int set_q_timeslots( struct numq* );
+
+
 /* ************************************************************************** */
 void set_max_acctreclen() {
   if ( sizeof(struct acctrfio) > max_acctreclen ) 
@@ -182,7 +226,7 @@ void set_max_acctreclen() {
       max_acctreclen = sizeof(struct acctstage);
 }
  
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -223,7 +267,6 @@ char **argv;
   int num_devs = 0;		/* Total number of valid device groups */
   int numservs = 0;		/* Counter for number of servers to be read */
   int num_serv_errors = 0;	/* Number of server failures */
-  char *optargmain = NULL;
   int Qflag = 0;		/* If set queue length info requested */
   struct accttape *rp = NULL;	/* Pointer to accttape record */
   char servers[MAXSERVS][9];	/* Full server list */
@@ -887,7 +930,7 @@ char *servname;
 /* Function to add graph information for device usage */
 
 int add_gph_info(rp, timestamp, divisions, server_name, endtime)
-time_t endtime, divisions[];
+time_t timestamp, endtime, divisions[];
 struct accttape *rp;
 char server_name[CA_MAXHOSTNAMELEN+1];
 {
@@ -1093,7 +1136,7 @@ char *servername;
 
 /* Function to enter summary information */
 
-add_suminfo(rp, num_devs, sumstats)
+int add_suminfo(rp, num_devs, sumstats)
 struct accttape *rp;
 int num_devs;
 struct summary *sumstats;
@@ -1277,11 +1320,9 @@ int num_devs;
 
 
 
-sort_usrstats(num_devs,device_group_counter)
+int sort_usrstats(num_devs,device_group_counter)
 {
   struct userstats *usr = NULL;		    /* Pointer to userstats record */
-  struct group *gr = NULL;				/* Pointer to group record */
-  struct passwd *pw = NULL;
   struct userstats *current_max = NULL;
   int finished_sorting = 0;
   struct userstats *sortedlist_start = NULL;
@@ -1367,8 +1408,9 @@ sort_usrstats(num_devs,device_group_counter)
  /* ********************************************************************* */  
 /* Function to print the result of the sorted list*/
   
-printsorted_list(sortedlist_start,device_group_counter)
+int printsorted_list(sortedlist_start,device_group_counter)
      struct userstats *sortedlist_start;
+     int device_group_counter;
 {
   
   struct group *gr = NULL;				
@@ -1381,12 +1423,12 @@ printsorted_list(sortedlist_start,device_group_counter)
       printf("\n\nDevice group name: %-8s\n\n",devgrps[device_group_counter]);
     while (i < 20 && sortedlist && sortedlist->nb[device_group_counter]) {
       
-      if (pw = getpwuid(sortedlist->uid)) {
+      if ((pw = getpwuid(sortedlist->uid))) {
         printf("%-10s ", pw->pw_name);
       } else {
         printf("%-10d ", sortedlist->uid);
       }
-      if (gr = getgrgid(sortedlist->gid)) {
+      if ((gr = getgrgid(sortedlist->gid))) {
         printf("%-8s ", gr->gr_name);
       } else  {
         printf("%-8d ", sortedlist->gid);
@@ -1509,14 +1551,11 @@ int get_drvlist() {
 
 /* Function to create device group list */
 
-create_devicelist(devgrps)
+int create_devicelist(devgrps)
 char devgrps[MAXDGP][CA_MAXDGNLEN+1];
 {
   int i = 0;			/* Counter */
-  char *d = NULL;		/* Token pointer */
-  FILE *fp = NULL;		/* File pointer */
   int num_devs = 0;		/* Count of number of devices found */
-  char *server_list = NULL;	/* Pointer to matching entry */
   char *current_server = NULL;	/* Pointer to token */
   struct servlist *currentserv = NULL; /* Pointer to next server name entry */
 #if defined(VDQM)
@@ -1564,7 +1603,7 @@ char devgrps[MAXDGP][CA_MAXDGNLEN+1];
 /* Function to create a list of all servers making sure that there are no */
 /* duplicates */
 
-create_serverlist(list, num_devs)
+int create_serverlist(list, num_devs)
 char list[MAXSERVS][9];
 int num_devs;
 {
@@ -1604,14 +1643,12 @@ int num_devs;
 
 /* Function to create a list of servers for one particular device */
 
-create_reqserverlist(dev_found, devgroup, list, num_devs)
+int create_reqserverlist(dev_found, devgroup, list, num_devs)
 int dev_found;
 char devgroup[CA_MAXDGNLEN+1];
 char list[MAXSERVS][9];
 int num_devs;
 {
-  char *server_list = NULL;	/* Pointer to matching entry */
-  char *current_server = NULL;	/* Pointer to token */
   int numservs = 0;		/* Number of servers to be read */
 
 #if defined(VDQM)
@@ -1695,7 +1732,7 @@ int enter_data(record, rp, divisions, timestamp, endtime, servername)
 struct accttape *rp;
 struct numq *record;
 time_t divisions[];
-time_t endtime;
+time_t timestamp, endtime;
 char *servername;
 {
   int i = 0;			/* Counter */
@@ -1813,7 +1850,7 @@ char *servername;
 
 /* Function to read in records from the accounting file */
 
-getacctrec(fd_acct, accthdr, buf, swapped)
+int getacctrec(fd_acct, accthdr, buf, swapped)
 int fd_acct;
 struct accthdr *accthdr;
 char *buf;
@@ -2450,7 +2487,7 @@ time_t endtime;
     timeidle = period - (dp->timeused + timedown);
 
     if (dp->nbmounted > 0) {
-      printf("%8s@%-8s\t%5d\t%5d\t%5d\t%5d\t%5d\t%5.1f %%\n", dp->drive, dp->snm
+      printf("%8s@%-8s\t%5d\t%5d\t%5ld\t%5ld\t%5ld\t%5.1f %%\n", dp->drive, dp->snm
 	     , dp->nbreqs, 
 	     dp->nbmounted, dp->time2mount/dp->nbmounted, dp->min2mount,
              dp->max2mount, (dp->nbreqs - dp->nbmounted) * 100. / dp->nbreqs);

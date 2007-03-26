@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "scsictl.h"
+#include "Ctape.h"
 #include "Ctape_api.h"
 #include "serrno.h" 
 
@@ -17,15 +18,7 @@
 
 static char *func = "mircheck";
 
-int is_mir_invalid_load(int tapefd, char *path, char *devtype) {
-    return is_mir_invalid(tapefd, path, devtype, MIR_INVALID_LOAD);
-}
-
-
-int is_mir_invalid_unload(int tapefd, char *path, char *devtype) {
-    return is_mir_invalid(tapefd, path, devtype, MIR_INVALID_UNLOAD);
-}
-
+extern int send_scsi_cmd( int, char *, int, char *, int, char *, int, char *, int, int, int, int *, char **);
 
 /* Functions that checks whether the 9840/9940/T10000/LTO/3592 tape MIR is valid */
 int
@@ -115,6 +108,14 @@ int checktype;
 #endif
 }
 
+int is_mir_invalid_load(int tapefd, char *path, char *devtype) {
+    return is_mir_invalid(tapefd, path, devtype, MIR_INVALID_LOAD);
+}
+
+
+int is_mir_invalid_unload(int tapefd, char *path, char *devtype) {
+    return is_mir_invalid(tapefd, path, devtype, MIR_INVALID_UNLOAD);
+}
 
 /*
  * Function called after tape is mounted so as to perform some checks
@@ -128,6 +129,6 @@ char *devtype;
 {
 
 
-
+        return 0;
 }
 
