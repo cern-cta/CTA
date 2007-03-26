@@ -618,6 +618,10 @@ int tclose(int fd, tape_list_t *tape, file_list_t *file) {
                  compstats.from_host,compstats.to_tape);
         filereq->host_bytes = ((u_signed64)compstats.from_host) * 1024;
         filereq->bytes_out = ((u_signed64)compstats.to_tape) * 1024;
+        if ( ((filereq->bytes_out == 0) && (filereq->host_bytes != 0)) || (filereq->bytes_out > filereq->host_bytes)) {
+           filereq->bytes_out = filereq->host_bytes;
+        }
+  
       } else {
         rtcp_log(LOG_DEBUG,"compression: to_host %d, from_tape %d\n",
                  compstats.to_host,compstats.from_tape);
