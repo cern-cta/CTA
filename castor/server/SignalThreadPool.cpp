@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/01/10 16:53:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/27 17:46:46 $ $Author: itglp $
  *
  *
  *
@@ -201,42 +201,3 @@ void castor::server::SignalThreadPool::commitRelease()
     throw e;
   }
 }
-
-
-//------------------------------------------------------------------------------
-// getNotifPort - deprecated
-//------------------------------------------------------------------------------
-//int castor::server::SignalThreadPool::getNotifPort()
-//{
-//  if(m_notifPort > 0)
-//    return m_notifPort;
-
-//  /* Try to get port if not provided */
-//  /* - From environment variable */
-//  std::string varName = getPoolId() + NOTIFY_PORT;
-//  std::string envName = "DAEMON_" + varName;
-//  char *port = NULL;
-//  if ((port = getenv(envName.c_str())) != NULL) {
-//    m_notifPort = atoi(port);
-//  } else {
-//    /* - From configuration file */
-//    if ((port = getconfent("DAEMON", varName.c_str(), 0)) != NULL) {
-//      m_notifPort = atoi(port);
-//    } else {
-//      /* - (obsolete) from /etc/services or NIS */
-//      struct servent *sp = NULL;
-//      if ((sp = Cgetservbyname(m_poolName.c_str(), NOTIFY_PROTO)) != NULL) {
-//        m_notifPort = ntohs(sp->s_port);
-//     } else {
-//    	  /* - Default value: use the ASCII value of the pool id */
-//        m_notifPort = NOTIFY_PORT_BASE + (int)getPoolId();
-//      }
-//    }
-//  }
-//  if (m_notifPort <= 0) {
-//    /* A port must be > 0 */
-//    serrno = EINVAL;
-//  }
-//  return m_notifPort;
-//}
-
