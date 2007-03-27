@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/02/08 07:31:05 $ $Author: gtaur $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/03/27 17:38:38 $ $Author: itglp $
  *
  *
  *
@@ -260,27 +260,6 @@ castor::stager::RemoteJobSvc::putStart
   req.setSubreqId(subreq->id());
   req.setDiskServer(fileSystem->diskserver()->name());
   req.setFileSystem(fileSystem->mountPoint());
-  // Uses a BaseClient to handle the request
-  castor::client::BaseClient client(getRemoteJobClientTimeout());
-  client.setOption(NULL);
-  client.sendRequest(&req, &rh);
-  // return
-  return result;
-}
-
-// -----------------------------------------------------------------------
-// putDoneStart
-// -----------------------------------------------------------------------
-castor::stager::DiskCopy*
-castor::stager::RemoteJobSvc::putDoneStart(u_signed64 subreqId)
-  throw (castor::exception::Exception) {
-  // placeholders for the result
-  castor::stager::DiskCopy* result;
-  // Build a response Handler
-  PutStartResponseHandler rh(&result);
-  // Build the PutStartDoneRequest
-  castor::stager::PutDoneStart req;
-  req.setSubreqId(subreqId);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
   client.setOption(NULL);
