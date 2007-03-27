@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.193 $ $Release$ $Date: 2007/03/26 16:58:45 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.194 $ $Release$ $Date: 2007/03/27 16:53:41 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1106,6 +1106,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
  unsigned long egid)
   throw (castor::exception::Exception) {
   // check argument
+  int i=0;
   if (0 == castorFile) {
     castor::exception::Internal e;
     e.getMessage() << "createTapeCopySegmentsForRecall "
@@ -1141,7 +1142,8 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
           castorFile->nsHost().c_str(),
           CA_MAXHOSTNAMELEN);
   struct Cns_segattrs *nsSegmentAttrs = 0;
-  int nbNsSegments;
+  int nbNsSegments=0;
+
   int rc = Cns_getsegattrs
     (0, &fileid, &nbNsSegments, &nsSegmentAttrs);
   if (-1 == rc) {
@@ -1157,7 +1159,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
         compareSegments);
   // Find a valid copy
   int useCopyNb = -1;
-  for (int i = 0; i < nbNsSegments; i++) {
+  for (i = 0; i < nbNsSegments; i++) {
     if (validNsSegment(&nsSegmentAttrs[i]) == 0) {
       invalidateAllSegmentsForCopy(nsSegmentAttrs[i].copyno,
                                    nsSegmentAttrs,
@@ -1182,20 +1184,24 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
       }
     }
   }
-  if (useCopyNb == -1) {
-    free (nsSegmentAttrs);
+  if (useCopyNb == -1) {  //something went bad.
+    
+    if (nsSegmentAttrs != NULL ) free(nsSegmentAttrs); 
+
     // No valid copy found
-	return -1;
-    //castor::exception::Internal e;
-    //e.getMessage() << "createTapeCopySegmentsForRecall : "
-    //               << "No valid copy found";
-    //throw e;
+    //	return -1;
+    castor::exception::Internal e;
+    e.getMessage() << "createTapeCopySegmentsForRecall : "
+                   << "No valid copy found";
+    throw e;
   }
+
   // DB address
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
   // create TapeCopy
+
   castor::stager::TapeCopy tapeCopy;
   tapeCopy.setCopyNb(useCopyNb);
   tapeCopy.setStatus(castor::stager::TAPECOPY_TOBERECALLED);
@@ -1205,7 +1211,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
                     castor::OBJ_TapeCopy, false);
   // Go through Segments
   u_signed64 totalSize = 0;
-  for (int i = 0; i < nbNsSegments; i++) {
+  for (i = 0; i < nbNsSegments; i++) {
     // Only deal with segments of the copy we choose
     if (nsSegmentAttrs[i].copyno != useCopyNb) continue;
     // create Segment
@@ -1243,15 +1249,16 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   // create Segments in DataBase
   cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
   // Fill Segment to Tape link
-  for (unsigned int i = 0; i < tapeCopy.segments().size(); i++) {
+  for (i = 0; i < tapeCopy.segments().size(); i++) {
     castor::stager::Segment* seg = tapeCopy.segments()[i];
     cnvSvc()->fillRep(&ad, seg, castor::OBJ_Tape, false);
   }
   // cleanup
-  while (tapeCopy.segments().size() > 0) {
-    delete tapeCopy.segments()[0]->tape();
-  }
-  for (int i=0; i<nbNsSegments;i++) free (nsSegmentAttrs);
+
+  for(i=0;i<tapeCopy.segments().size();i++)
+    delete tapeCopy.segments()[i]->tape(); 
+ 
+  if (nsSegmentAttrs != NULL) free(nsSegmentAttrs);
 
   return 0;
 }
