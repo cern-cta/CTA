@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.34 $ $Date: 2007/03/26 14:43:01 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.35 $ $Date: 2007/03/28 13:39:57 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -175,13 +175,38 @@ char	**argv;
                                   "media error",    TL_MSG_PARAM_INT, mediaerror,
                                   "read failure",   TL_MSG_PARAM_INT, readfailure,
                                   "write failure",  TL_MSG_PARAM_INT, writefailure );
-              /*
-                if (tapealerts > 0) {
-                configdown (drive);
-                return -1;
-                }
-              */
+              
+              if (tapealerts > 0) {
+                      
+                      char *p = NULL;
+                                            
+                      p = getconfent( "TAPE", "DOWN_ON_TPALERT", 0 );
+                      if (NULL != p) {
+                              /* found a config entry */
+                              if ( (0 == strcmp( p, "yes")) || (0 == strcmp( p, "YES"))) {                               
+                                      tplogit( func, "Configure the drive down (config)\n" );
+                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                          "func",    TL_MSG_PARAM_STR, func,
+                                                          "Message", TL_MSG_PARAM_STR, "Configure the drive down (config)" );
+                                      configdown (drive);
+                              } else {
+                                      tplogit( func, "Leave the drive up (config)\n" );
+                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                                          "func",    TL_MSG_PARAM_STR, func,
+                                                          "Message", TL_MSG_PARAM_STR, "Leave the drive up (config)" );
+                              }
+                      } else {
+                              /* default: configure the drive down */
+                              tplogit( func, "Configure the drive down (default)\n" );
+                              tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                  "func",    TL_MSG_PARAM_STR, func,
+                                                  "Message", TL_MSG_PARAM_STR, "Configure the drive down (default)" );
+                              configdown (drive);
+                      }
+              }
+
     	  } else {
+
 	    	tplogit (func, "tape alerts: no information available\n");
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
                                     "func",    TL_MSG_PARAM_STR, func,
