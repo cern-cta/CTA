@@ -708,19 +708,8 @@ int rtcp_CheckReq(SOCKET *client_socket,
 #if VMGR
     /* Call VMGR */
     if ((rc = rtcp_CallVMGR(tape,NULL)) != 0) {
-#endif
-#if TMS
-#if VMGR
-        /* VMGR fails with acceptable serrno and TMS is available */
-        if (serrno == ETVUNKN) {
-#endif
-            /* Call TMS */
-            rc = rtcp_CallTMS(tape,NULL);
-#if VMGR
-        }
-#endif
-#endif
-#if VMGR
+            rtcp_log(LOG_ERR,"rtcp_CheckReq(): rtcp_CallVMGR reported an error!\n");
+            return (-1);
     }
 #endif
 
