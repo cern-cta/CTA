@@ -61,11 +61,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define RmMasterConfigFile	/etc/castor/RMMASTERCONFIG
 #endif
 #define RmNodeSpool	/var/spool/rmnode
-#if defined(_WIN32)
-#define RmNodeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\RMNODECONFIG
-#else
-#define RmNodeConfigFile	/etc/castor/RMNODECONFIG
-#endif
 #define	DMSCDir	/dms/fbs/src
 #if defined(_WIN32)
 #define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\DBCONFIG
