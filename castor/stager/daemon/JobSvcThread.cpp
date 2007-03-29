@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.37 2007/02/08 07:31:04 gtaur Exp $
+ * $Id: JobSvcThread.cpp,v 1.38 2007/03/29 08:11:48 gtaur Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.37 $ $Date: 2007/02/08 07:31:04 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.38 $ $Date: 2007/03/29 08:11:48 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -302,79 +302,6 @@ namespace castor {
       }
     }
 
-    /**
-     * Handles a putDoneStartRequest and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param jobSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_putDoneStartRequest(castor::stager::Request* req,
-				    castor::IClient *client,
-				    castor::Services* svcs,
-				    castor::stager::IJobSvc* jobSvc,
-				    castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::startRequest";
-      castor::stager::DiskCopy *dc = 0;
-      std::string error;
-      castor::stager::PutDoneStart *sReq;
-
-      try {
-
-        /* get the StartRequest */
-        /* -------------------- */
-        // cannot return 0 since we check the type before calling this method
-        sReq = dynamic_cast<castor::stager::PutDoneStart*> (req);
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking putDoneStart");
-        dc = jobSvc->putDoneStart(sReq->subreqId());
-
-        /* Fill DiskCopy with SubRequest           */
-        /* --------------------------------------- */
-        STAGER_LOG_VERBOSE(NULL,"Filling DiskCopy with SubRequest");
-        if (0 != dc) {
-          svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
-        }
-
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::StartResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      } else {
-        res.setDiskCopy(dc);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
-      /* Cleanup                        */
-      /* ------------------------------ */
-      if (dc) {
-        std::vector<castor::stager::SubRequest*> srs = dc->subRequests();
-        for (std::vector<castor::stager::SubRequest*>::iterator it =
-               srs.begin();
-             it != srs.end();
-             it++) {
-          delete *it;
-        }
-        delete dc;
-      }
-    }
 
     /**
      * Handles a Disk2DiskCopyDoneRequest and replies to client.
@@ -791,11 +718,6 @@ EXTERN_C int DLL_DECL stager_job_process(void *output) {
 
   case castor::OBJ_PutFailed:
     castor::stager::handle_putFailedRequest
-      (req, client, svcs, jobSvc, ad);
-    break;
-
-  case castor::OBJ_PutDoneStart:
-    castor::stager::handle_putDoneStartRequest
       (req, client, svcs, jobSvc, ad);
     break;
 
