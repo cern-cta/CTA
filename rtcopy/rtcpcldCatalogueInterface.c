@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.158 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.159 $ $Release$ $Date: 2007/03/29 10:24:47 $ $Author: sponcec3 $
  *
  * 
  *
@@ -3054,6 +3054,10 @@ int rtcpcld_updcFileRecalled(
       serrno = save_serrno;
       return(-1);
     }
+    // let rmMasterDaemon known that the stream is over
+    rtcpcld_sendStreamReport(*tpSvc, file->filereq.file_path,
+			     O_WRONLY, 0, tape->tapereq.vid,
+			     (inChild == 0 ? mainUuid : childUuid));
     for ( i=0; i<nbSegments; i++ ) {
       rc = deleteSegmentFromDB(
                                segmentArray[i],
@@ -3100,6 +3104,7 @@ int rtcpcld_updcFileMigrated(
   struct Cstager_Segment_t *segment = NULL;
   struct Cstager_Tape_t *tp = NULL;
   struct C_BaseAddress_t *baseAddr = NULL;
+  struct Cstager_ITapeSvc_t **tpSvc = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj;
   struct C_Services_t **svcs = NULL;
@@ -3313,6 +3318,19 @@ int rtcpcld_updcFileMigrated(
   }
   if ( iAddr != NULL ) C_IAddress_delete(iAddr);
 
+  // let rmMasterDaemon known that the stream is over
+  rc = getStgSvc(&tpSvc);
+  if ( rc == -1 || tpSvc == NULL || *tpSvc == NULL ) {
+    save_serrno = serrno;
+    LOG_SYSCALL_ERR("getStgSvc");
+    C_IAddress_delete(iAddr);
+    if ( fileid != NULL ) free(fileid);
+    serrno = save_serrno;
+    return(-1);
+  }
+  rtcpcld_sendStreamReport(*tpSvc, file->filereq.file_path,
+			   O_RDONLY, 0, tape->tapereq.vid,
+			   (inChild == 0 ? mainUuid : childUuid));
 
   /*
    * Now we don't need the tape copies anymore. Remove them from
@@ -4179,3 +4197,90 @@ int rtcpcld_checkFileForRepack(
 }
 
 
+/** This function is a wrapper around the call to sendStreamReport
+    of the tape service. It only parses the filename in order
+    to find out the machine and mountpoint
+*/
+void rtcpcld_sendStreamReport(struct Cstager_ITapeSvc_t* tpSvc,
+			      char *file_path,
+			      int direction,
+			      int created,
+			      char* tape_vid,
+			      Cuuid_t uuid) {
+  char* machine = strdup(file_path);
+  if (machine == NULL) {
+    dlf_write(uuid,
+	      RTCPCLD_LOG_MSG(RTCPCLD_MSG_UDPERR),
+	      (struct Cns_fileid *)NULL,
+	      2,
+	      "",
+	      DLF_MSG_PARAM_TPVID,
+              tape_vid,
+	      "Details",
+	      DLF_MSG_PARAM_STR,
+	      "strdup failed");
+    return;
+  }
+  // separate machine name and mountPoint 
+  char* mountPoint = strchr(machine, ':');
+  if (mountPoint == NULL) {
+    dlf_write(uuid,
+	      RTCPCLD_LOG_MSG(RTCPCLD_MSG_UDPERR),
+	      (struct Cns_fileid *)NULL,
+	      3,
+	      "",
+	      DLF_MSG_PARAM_TPVID,
+              tape_vid,
+	      "Details",
+	      DLF_MSG_PARAM_STR,
+	      "Unable to find machine name separator ':' in path",
+	      "Path",
+	      DLF_MSG_PARAM_STR,
+	      machine);
+    free(machine);
+    return;
+  }
+  *mountPoint = 0;
+  mountPoint++;
+  // find end of mountPoint (last but one slash)
+  char* end = rindex(mountPoint, '/');
+  if (end == NULL) {
+    dlf_write(uuid,
+	      RTCPCLD_LOG_MSG(RTCPCLD_MSG_UDPERR),
+	      (struct Cns_fileid *)NULL,
+	      3,
+	      "",
+	      DLF_MSG_PARAM_TPVID,
+              tape_vid,
+	      "Details",
+	      DLF_MSG_PARAM_STR,
+	      "No '/' in file path !",
+              "Path",
+              DLF_MSG_PARAM_STR,
+              mountPoint);
+    free(machine);
+    return;
+  }
+  end = rindex(mountPoint, '/');
+  if (end == NULL) {
+    dlf_write(uuid,
+	      RTCPCLD_LOG_MSG(RTCPCLD_MSG_UDPERR),
+	      (struct Cns_fileid *)NULL,
+	      3,
+	      "",
+	      DLF_MSG_PARAM_TPVID,
+              tape_vid,
+              "Details",
+              DLF_MSG_PARAM_STR,
+              "No second '/' in file path !",
+              "Path",
+              DLF_MSG_PARAM_STR,
+              mountPoint);
+    free(machine);
+    return;
+  }
+  end++;
+  *end = 0;
+  Cstager_ITapeSvc_sendStreamReport(tpSvc, machine, mountPoint, direction, created);
+  free(machine);
+}
