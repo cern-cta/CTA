@@ -101,7 +101,7 @@ namespace castor {
        * files on tape and for those a new StageRepackReques is send.
        * In both cases the Cuuid is updated and the stats set to '0';
        */
-      void restartRepack(RepackSubRequest* sreq);
+      void restartRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
 
 
       /**

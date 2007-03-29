@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/03/29 08:34:37 $ $Author: gtaur $
  *
  * The Filelisthelper offers some little functions for getting the file 
  * information for a tape.
@@ -61,7 +61,7 @@ namespace castor {
       /**
        * Empty Destructor
        */
-      virtual ~FileListHelper();
+      virtual ~FileListHelper()throw();
 
       /**
        * Returns a vector with a filelist with full pathname.
@@ -69,7 +69,8 @@ namespace castor {
        * @return pointer to vector of u_signed64
        */
       std::vector<u_signed64>* getFileList(
-                                    castor::repack::RepackSubRequest *sreq) ;
+                                    castor::repack::RepackSubRequest *sreq)
+                                                    throw ();
 
       /**
        * Fills the Request with the segments on the tape
@@ -77,7 +78,8 @@ namespace castor {
        * @param sreq The RepackSubRequest to fill
        * @return -1 in case of an error, the error Message is written to DLF!
        */
-      int getFileListSegs(castor::repack::RepackSubRequest *sreq);
+      void getFileListSegs(castor::repack::RepackSubRequest *sreq)
+                                                      throw (castor::exception::Exception);
       
       /**
         * Retrieves the filenames for the fileids given in the passed
@@ -94,7 +96,7 @@ namespace castor {
         * @return void
         */
 
-      void printFileInfo(u_signed64 fileid, int copyno);
+      void printFileInfo(u_signed64 fileid, int copyno)throw();
       private:
 		/**
 		 * The nameserver this Class contacts

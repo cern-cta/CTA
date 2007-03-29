@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/03/09 10:49:59 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/03/29 08:34:38 $ $Author: gtaur $
  *
  *
  *
@@ -95,7 +95,11 @@ void RepackFileStager::run(void *param) throw() {
         /// try to stage the files, and forget the errors
       }
       catch (castor::exception::Exception ex){
-        freeRepackObj(sreq->requestID());
+       castor::dlf::Param params[] =
+       {castor::dlf::Param("Message","Exception caught in RepackFileStager::run"),
+        castor::dlf::Param("Precise message",ex.getMessage().str())};
+       castor::dlf::dlf_writep( cuuid, DLF_LVL_WARNING, 5, 2, params);
+       freeRepackObj(sreq->requestID());
       }
       freeRepackObj(sreq->requestID()); /// always delete from the top
       sreq = NULL;
@@ -210,7 +214,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
 //------------------------------------------------------------------------------
 // restartRepack
 //------------------------------------------------------------------------------		
-void RepackFileStager::restartRepack(RepackSubRequest* sreq){
+void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exception::Exception){
 
     _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
     RepackMonitor monitor(ptr_server);

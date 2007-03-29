@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.26 $ $Release$ 
- * $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.27 $ $Release$ 
+ * $Date: 2007/03/29 08:34:37 $ $Author: gtaur $
  *
  *
  *
@@ -46,7 +46,7 @@ FileListHelper::FileListHelper(std::string nameserver)
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-FileListHelper::~FileListHelper()
+	  FileListHelper::~FileListHelper()throw()
 {
 
 }
@@ -74,7 +74,7 @@ std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::Repac
       Cuuid_t cuuid;
       cuuid = stringtoCuuid(subreq->cuuid());
       castor::exception::Internal ex;
-      ex.getMessage() << "FileListHelper::getFilePathnames(..):" 
+      ex.getMessage() << "FileListHelper::getFilePathnames(...):" 
                       << sstrerror(serrno) << std::endl;
       castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(ex.code()))};
@@ -94,6 +94,7 @@ std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::Repac
 // getFileList, check if double entries are in list (should never happen !!!)
 //------------------------------------------------------------------------------
 std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRequest *subreq) 
+  throw()
 {
   double vecsize = 0;
   std::vector<RepackSegment*>::iterator iterseg;
@@ -124,6 +125,7 @@ std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRe
       /// give a message if a double entry was found
       /// this means that the given sreq has already the segments, or
       /// the fileid is twice on a tape (not possible)
+ 
       castor::dlf::Param params[] =
       {castor::dlf::Param("FileID", (*j)),
         castor::dlf::Param("VID",subreq->vid() )
@@ -144,8 +146,8 @@ std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRe
 //------------------------------------------------------------------------------
 // getFileListSegs
 //------------------------------------------------------------------------------
-int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
-                                                
+void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
+                                                 throw (castor::exception::Exception)
 {
   int flags;
   u_signed64 segs_size = 0;
@@ -198,11 +200,14 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
        castor::dlf::Param("Segments", subreq->segment().size()),
        castor::dlf::Param("DiskSpace", subreq->xsize())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 3, params);
-      return 0;
+      
   }
- 
-  // you should never reach this point 
-   return -1;
+  else{
+      castor::exception::Internal ex;
+      ex.getMessage() << "FileListHelper::getFileListSegs(...):" 
+                      <<" the subrequest is null "  << std::endl;
+      throw ex;
+  }
 
 }
 
@@ -212,7 +217,8 @@ int FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
 // printFileInfo
 //------------------------------------------------------------------------------
 
-void FileListHelper::printFileInfo(u_signed64 fileid, int copyno) 
+void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
+  throw() 
    {
     Cns_fileid file_uniqueid;
     Cns_segattrs * segattrs=NULL;

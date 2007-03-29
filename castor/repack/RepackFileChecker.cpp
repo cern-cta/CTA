@@ -74,11 +74,11 @@ void RepackFileChecker::run(void* param) throw(){
     castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 29, 3, params);
     
     /** get the Segs for this tape  */
-    if ( m_filehelper.getFileListSegs(sreq) )
-      return;
 
     try {
-    
+
+      /** get the Segs for this tape  */
+      m_filehelper.getFileListSegs(sreq);
       /** check, if we got something back */
       if ( sreq->segment().size() == 0 ){
         castor::dlf::Param params[] =
@@ -86,7 +86,8 @@ void RepackFileChecker::run(void* param) throw(){
         castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 39, 1, params);
         sreq->setStatus(SUBREQUEST_DONE);
         m_dbhelper->updateSubRequest(sreq,false, cuuid);
-        stage_trace(3,"Nothing found to do for Tape %s",(char*)sreq->vid().c_str());
+        
+        //stage_trace(3,"Nothing found to do for Tape %s",(char*)sreq->vid().c_str());
         return;
       }
   
@@ -99,7 +100,10 @@ void RepackFileChecker::run(void* param) throw(){
       m_dbhelper->updateSubRequest(sreq,true, cuuid);
       stage_trace(3,"Found %d files, RepackSubRequest for Tape %s ready for Staging ",sreq->files(),(char*)sreq->vid().c_str());
     }catch (castor::exception::Exception e){
-      /** do nothing, messages were written by the dbhelper in case of an exception*/
+       castor::dlf::Param params[] =
+        {castor::dlf::Param("Message","Exception caugt inRepack FileChecker"), 
+        castor::dlf::Param("Error Message",e.getMessage().str())};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 5, 2, params);
     }
   }
 }
