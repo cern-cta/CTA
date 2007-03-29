@@ -147,6 +147,9 @@ mkdir -p ${RPM_BUILD_ROOT}/var/spool/upv
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/vdqm
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/scheduler
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/vmgr
+mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/db
+mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
+mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/images
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 # Install policies
