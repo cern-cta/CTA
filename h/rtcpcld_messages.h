@@ -102,6 +102,7 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_NOTPPOOLS,
     RTCPCLD_MSG_REPACK,
     RTCPCLD_MSG_STATS,
+    RTCPCLD_MSG_UDPERR,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -193,6 +194,7 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_NOTPPOOLS, DLF_LVL_ERROR,"No tape pool for service class with migr candidates"},
     { RTCPCLD_MSG_REPACK, DLF_LVL_SYSTEM,"Repack Information found"},
     { RTCPCLD_MSG_STATS, DLF_LVL_SYSTEM,"Service class statistics"},
+    { RTCPCLD_MSG_UDPERR, DLF_LVL_ERROR,"Could not send UDP Stream report"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
