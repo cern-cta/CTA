@@ -418,4 +418,13 @@ int rtcpcld_segmentOK _PROTO((
                               struct Cns_segattrs *
                               ));
 
+void rtcpcld_sendStreamReport _PROTO((
+				      struct Cstager_ITapeSvc_t* tpSvc,
+				      char *file_path,
+				      int direction,
+				      int created,
+				      char* tape_vid,
+				      Cuuid_t uuid
+                              ));
+
 #endif /* RTCPCLD_H */
