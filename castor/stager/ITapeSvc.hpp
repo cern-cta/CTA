@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/09/13 10:11:58 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/02 15:26:09 $ $Author: sponcec3 $
  *
  * This class provides methods related to tape handling
  *
@@ -32,6 +32,7 @@
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
+#include "castor/monitoring/StreamDirection.hpp"
 #include <vector>
 #include <string>
 #include <list>
@@ -277,6 +278,22 @@ namespace castor {
       */
       virtual std::string checkFileForRepack
       (const u_signed64 fileId) throw (castor::exception::Exception) = 0;
+
+      /**
+       * Sends a UDP message to the rmMasterDaemon to inform it
+       * of the creation or deletion of a stream on a given
+       * machine/filesystem This method is always successful
+       * although there is no guaranty that the UDP package is
+       * sent and arrives.
+       * @param diskserver the diskserver where the stream resides
+       * @param filesystem the filesystem where the stream resides
+       * @param direction the stream direction (read, write or readWrite)
+       * @param created whether the stream was created or deleted
+       */
+      virtual void sendStreamReport(const std::string diskServer,
+				    const std::string fileSystem,
+				    const castor::monitoring::StreamDirection direction,
+				    const bool created) throw() = 0;
 
     }; // end of class ITapeSvc
 

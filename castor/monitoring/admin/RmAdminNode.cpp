@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/31 17:18:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/02 15:26:02 $ $Author: sponcec3 $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -201,23 +201,6 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // Get default values for some arguments when needed
-    // RmMaster Host Name
-    if (0 == rmHostName) {
-      // check environment
-      rmHostName = getenv ("RM_HOST");
-      if (0 == rmHostName) {
-	// check configuration file
-	rmHostName = getconfent ("RM", "HOST", 0);
-	if (0 == rmHostName) {
-	  // error
-	  std::cerr << "Error : Could not figure out the RmMaster host\n"
-		    << "Please use --host option, set RM_HOST environment variable "
-		    <<	"or add and entry for RM/HOST in configuration file" << std::endl;
-	  exit(1);
-	}
-      }
-    }
     // RmMaster Port
     if (-1 ==  rmPort) {
       char* p;
@@ -234,6 +217,24 @@ int main(int argc, char *argv[]) {
 	}
       } else {
 	rmPort = atoi(p);
+      }
+    }
+
+    // Get default values for some arguments when needed
+    // RmMaster Host Name
+    if (0 == rmHostName) {
+      // check environment
+      rmHostName = getenv ("RM_HOST");
+      if (0 == rmHostName) {
+	// check configuration file
+	rmHostName = getconfent ("RM", "HOST", 0);
+	if (0 == rmHostName) {
+	  // error
+	  std::cerr << "Error : Could not figure out the RmMaster host\n"
+		    << "Please use --host option, set RM_HOST environment variable "
+		    <<	"or add and entry for RM/HOST in configuration file" << std::endl;
+	  exit(1);
+	}
       }
     }
 
@@ -271,10 +272,12 @@ int main(int argc, char *argv[]) {
 	       << std::endl;
       exit(1);
     }
-
+    if (!ack->status()) {
+      std::cerr << strerror(ack->errorCode()) << "\n"
+		<< ack->errorMessage() << std::endl;
+    }
   } catch (castor::exception::Exception e) {
-    std::cerr << "Caught exception : "
-              << e.getMessage().str() << std::endl;    
+    std::cerr << e.getMessage().str() << std::endl;    
   } catch (std::exception e) {
     std::cerr << "Caught standard exception : "
               << e.what() << std::endl;    

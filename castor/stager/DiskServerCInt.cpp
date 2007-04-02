@@ -28,6 +28,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -117,6 +118,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_DiskServer_load
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_load(castor::stager::DiskServer* instance, unsigned int* var) {
+    *var = instance->load();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setLoad
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setLoad(castor::stager::DiskServer* instance, unsigned int new_var) {
+    instance->setLoad(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_DiskServer_id
   //----------------------------------------------------------------------------
   int Cstager_DiskServer_id(castor::stager::DiskServer* instance, u_signed64* var) {
@@ -174,6 +191,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_DiskServer_setStatus(castor::stager::DiskServer* instance, castor::stager::DiskServerStatusCode new_var) {
     instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_adminStatus
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_adminStatus(castor::stager::DiskServer* instance, castor::monitoring::AdminStatusCodes* var) {
+    *var = instance->adminStatus();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setAdminStatus
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setAdminStatus(castor::stager::DiskServer* instance, castor::monitoring::AdminStatusCodes new_var) {
+    instance->setAdminStatus(new_var);
     return 0;
   }
 

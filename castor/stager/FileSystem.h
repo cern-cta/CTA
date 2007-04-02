@@ -30,6 +30,7 @@
 #define CASTOR_STAGER_FILESYSTEM_H
 
 /* Include Files and Forward declarations for the C world */
+#include "castor/monitoring/AdminStatusCodes.h"
 #include "castor/stager/FileSystemStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -103,28 +104,6 @@ int Cstager_FileSystem_free(struct Cstager_FileSystem_t* instance, u_signed64* v
 int Cstager_FileSystem_setFree(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of weight
- * Weight of the filesystem, as computed by the expert system
- */
-int Cstager_FileSystem_weight(struct Cstager_FileSystem_t* instance, float* var);
-
-/**
- * Set the value of weight
- * Weight of the filesystem, as computed by the expert system
- */
-int Cstager_FileSystem_setWeight(struct Cstager_FileSystem_t* instance, float new_var);
-
-/**
- * Get the value of fsDeviation
- */
-int Cstager_FileSystem_fsDeviation(struct Cstager_FileSystem_t* instance, float* var);
-
-/**
- * Set the value of fsDeviation
- */
-int Cstager_FileSystem_setFsDeviation(struct Cstager_FileSystem_t* instance, float new_var);
-
-/**
  * Get the value of mountPoint
  */
 int Cstager_FileSystem_mountPoint(struct Cstager_FileSystem_t* instance, const char** var);
@@ -133,18 +112,6 @@ int Cstager_FileSystem_mountPoint(struct Cstager_FileSystem_t* instance, const c
  * Set the value of mountPoint
  */
 int Cstager_FileSystem_setMountPoint(struct Cstager_FileSystem_t* instance, const char* new_var);
-
-/**
- * Get the value of deltaWeight
- * Estimation of the modifications of the weight since the last update.
- */
-int Cstager_FileSystem_deltaWeight(struct Cstager_FileSystem_t* instance, float* var);
-
-/**
- * Set the value of deltaWeight
- * Estimation of the modifications of the weight since the last update.
- */
-int Cstager_FileSystem_setDeltaWeight(struct Cstager_FileSystem_t* instance, float new_var);
 
 /**
  * Get the value of deltaFree
@@ -249,6 +216,66 @@ int Cstager_FileSystem_totalSize(struct Cstager_FileSystem_t* instance, u_signed
 int Cstager_FileSystem_setTotalSize(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of readRate
+ * The read rate for the fileSystem
+ */
+int Cstager_FileSystem_readRate(struct Cstager_FileSystem_t* instance, u_signed64* var);
+
+/**
+ * Set the value of readRate
+ * The read rate for the fileSystem
+ */
+int Cstager_FileSystem_setReadRate(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of writeRate
+ * The write rate for the fileSystem
+ */
+int Cstager_FileSystem_writeRate(struct Cstager_FileSystem_t* instance, u_signed64* var);
+
+/**
+ * Set the value of writeRate
+ * The write rate for the fileSystem
+ */
+int Cstager_FileSystem_setWriteRate(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nbReadStreams
+ * Nb of read streams running on this fileSystem
+ */
+int Cstager_FileSystem_nbReadStreams(struct Cstager_FileSystem_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbReadStreams
+ * Nb of read streams running on this fileSystem
+ */
+int Cstager_FileSystem_setNbReadStreams(struct Cstager_FileSystem_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of nbWriteStreams
+ * Nb of write streams running on this fileSystem
+ */
+int Cstager_FileSystem_nbWriteStreams(struct Cstager_FileSystem_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbWriteStreams
+ * Nb of write streams running on this fileSystem
+ */
+int Cstager_FileSystem_setNbWriteStreams(struct Cstager_FileSystem_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of nbReadWriteStreams
+ * Nb of read/write streams running on this fileSystem
+ */
+int Cstager_FileSystem_nbReadWriteStreams(struct Cstager_FileSystem_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbReadWriteStreams
+ * Nb of read/write streams running on this fileSystem
+ */
+int Cstager_FileSystem_setNbReadWriteStreams(struct Cstager_FileSystem_t* instance, unsigned int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
@@ -305,5 +332,17 @@ int Cstager_FileSystem_status(struct Cstager_FileSystem_t* instance, enum Cstage
  * Set the value of status
  */
 int Cstager_FileSystem_setStatus(struct Cstager_FileSystem_t* instance, enum Cstager_FileSystemStatusCodes_t new_var);
+
+/**
+ * Get the value of adminStatus
+ * Admin status of the FileSystem
+ */
+int Cstager_FileSystem_adminStatus(struct Cstager_FileSystem_t* instance, enum Cmonitoring_AdminStatusCodes_t* var);
+
+/**
+ * Set the value of adminStatus
+ * Admin status of the FileSystem
+ */
+int Cstager_FileSystem_setAdminStatus(struct Cstager_FileSystem_t* instance, enum Cmonitoring_AdminStatusCodes_t new_var);
 
 #endif /* CASTOR_STAGER_FILESYSTEM_H */

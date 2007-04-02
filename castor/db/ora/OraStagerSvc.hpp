@@ -217,40 +217,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Selects a machine and FileSystem for a given job.
-         * @param fileSystems the list of allowed filesystems
-         * according to job requirements (given by id). This
-         * is the fileSystems' mountPoint, the corresponding
-         * machines are given by parameter machines.
-         * A null array means that any filesystem is eligible
-         * @param machines the machines on which the filesystems
-         * in parameter fileSystems reside.
-         * A null array means that any machine is eligible. in such
-         * a case, fileSystems has to be null.
-         * @param minFree the minimum free space needed on each
-         * filesystem to be selected. This is filesystem dependent
-         * if filesystems are given (due to possible reservations
-         * of the scheduler).
-         * If no filesystem are given, this array must have
-         * exactely one item, used for all filesystems.
-         * @param fileSystemsNb the length of the arrays
-         * fileSystems, machines and minFree when they are not
-         * null (and if filesystems are given for minFree)
-         * @mountPoint the selected fileSystem's mountPoint
-         * @diskServer the diskServer on which the selected
-         * fileSystem resides.
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void bestFileSystemForJob
-        (char** fileSystems,
-         char** machines,
-         u_signed64* minFree,
-         unsigned int fileSystemsNb,
-         std::string* mountPoint,
-         std::string* diskServer)
-          throw (castor::exception::Exception);
-
-        /**
          * Updates a filesystem state (e.g : weight,
          * fsdeviation) to take into account the opening of
          * a new job.
@@ -379,12 +345,6 @@ namespace castor {
 
         /// SQL statement object for function recreateCastorFile
         oracle::occi::Statement *m_recreateCastorFileStatement;
-
-        /// SQL statement for function bestFileSystemForJob
-        static const std::string s_bestFileSystemForJobStatementString;
-
-        /// SQL statement object for function bestFileSystemForJob
-        oracle::occi::Statement *m_bestFileSystemForJobStatement;
 
         /// SQL statement for function updateFileSystemForJob
         static const std::string s_updateFileSystemForJobStatementString;

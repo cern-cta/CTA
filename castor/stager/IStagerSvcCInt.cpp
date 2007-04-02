@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2007/01/10 17:10:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2007/04/02 15:26:08 $ $Author: sponcec3 $
  *
  *
  *
@@ -223,29 +223,6 @@ extern "C" {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
       *diskCopy = stgSvc->stgSvc->recreateCastorFile(castorFile, subreq);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_bestFileSystemForJob
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_bestFileSystemForJob
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   char** fileSystems, char** machines,
-   u_signed64* minFree, unsigned int fileSystemsNb,
-   char** mountPoint, char** diskServer) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      std::string mp, ds;
-      stgSvc->stgSvc->bestFileSystemForJob
-        (fileSystems, machines, minFree, fileSystemsNb, &mp, &ds);
-      *mountPoint = strdup(mp.c_str());
-      *diskServer = strdup(ds.c_str());
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

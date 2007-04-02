@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.18 $Release$ 2007/02/08 18:01:45 itglp
+ * @(#)OraTapeSvc.cpp,v 1.19 $Release$ 2007/04/02 15:26:01 sponcec3
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -79,6 +79,7 @@
 #include <vmgr_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include <fcntl.h>
 
 #define NS_SEGMENT_NOTOK (' ')
 
@@ -152,19 +153,19 @@ const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementStri
 // OraTapeSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
-  OraCommonSvc(name),
+  OraCommonSvc(name), BaseTapeSvc(),
   m_tapesToDoStatement(0),
   m_streamsToDoStatement(0),
   m_anyTapeCopyForStreamStatement(0),
   m_bestTapeCopyForStreamStatement(0),
   m_streamsForTapePoolStatement(0),
   m_bestFileSystemForSegmentStatement(0),
+  m_segmentsForTapeStatement(0),
+  m_anySegmentsForTapeStatement(0),
   m_fileRecalledStatement(0),
   m_fileRecallFailedStatement(0),
   m_selectTapeCopiesForMigrationStatement(0),
   m_resetStreamStatement(0),
-  m_segmentsForTapeStatement(0),
-  m_anySegmentsForTapeStatement(0),
   m_failedSegmentsStatement(0),
   m_checkFileForRepackStatement(0) {
 }
@@ -366,6 +367,11 @@ castor::db::ora::OraTapeSvc::bestFileSystemForSegment
     cnvSvc()->fillObj(&ad, result, OBJ_CastorFile);
     // commit
     cnvSvc()->commit();
+    // Make rmMaster aware of the new stream that will be created
+    sendStreamReport(result->diskServer(),
+		     result->mountPoint(),
+		     castor::monitoring::STREAMDIRECTION_WRITE,
+		     true);
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -495,6 +501,11 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
          it++) {
       cnvSvc()->fillObj(&ad, *it, OBJ_Tape);
     }
+    // Make rmMaster aware of the stream that will be createdis now gone
+    sendStreamReport(result->diskServer(),
+		     result->mountPoint(),
+		     castor::monitoring::STREAMDIRECTION_READ,
+		     true);
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -749,7 +760,6 @@ castor::db::ora::OraTapeSvc::selectTapeCopiesForMigration
   }
   // Execute statement and get result
   // The procedure takes internally a lock and performs the commit
-  unsigned long id;
   try {
     m_selectTapeCopiesForMigrationStatement->setDouble(1, svcClass->id());
     m_selectTapeCopiesForMigrationStatement->executeUpdate();
@@ -872,7 +882,6 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
   
   std::string repackvid = "";
  
-  u_signed64 id = 0;
   try {
     
     if (0 == m_checkFileForRepackStatement) {

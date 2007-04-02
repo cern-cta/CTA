@@ -42,8 +42,6 @@ STGLIB_SRCS = ClusterStatus.cpp \
               admin/DiskServerAdminReport.cpp \
               FileSystemMetricsReport.cpp \
               FileSystemStateReport.cpp \
-              StreamDirection.cpp \
-              StreamReport.cpp \
               admin/FileSystemAdminReport.cpp \
               ../io/StreamDiskServerAdminReportCnv.cpp \
               ../io/StreamDiskServerMetricsReportCnv.cpp \

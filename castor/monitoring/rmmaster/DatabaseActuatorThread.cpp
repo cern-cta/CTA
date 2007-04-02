@@ -40,19 +40,21 @@ castor::monitoring::rmmaster::DatabaseActuatorThread::DatabaseActuatorThread
 (castor::monitoring::ClusterStatus* clusterStatus)
   throw (castor::exception::Exception) :
   m_rmMasterService(0), m_clusterStatus(clusterStatus) {
-    castor::IService* orasvc = castor::BaseObject::services()-> service("OraRmMasterSvc", castor::SVC_ORARMMASTERSVC);
-    if (0 == orasvc) {
-      castor::exception::Internal e;
-      e.getMessage() << "Unable to get OraRmMasterSvc";
-      throw e;
-    }
-    m_rmMasterService = dynamic_cast<castor::monitoring::rmmaster::IRmMasterSvc*>(orasvc);
-    if (0 == m_rmMasterService) {
-      castor::exception::Internal e;
-      e.getMessage() << "Could Not cast newly retrieved service into IRmMasterSvc" << std::endl;
-      throw e;
-    }
+  // "Collector thread created"
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 33);
+  castor::IService* orasvc = castor::BaseObject::services()-> service("OraRmMasterSvc", castor::SVC_ORARMMASTERSVC);
+  if (0 == orasvc) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to get OraRmMasterSvc";
+    throw e;
   }
+  m_rmMasterService = dynamic_cast<castor::monitoring::rmmaster::IRmMasterSvc*>(orasvc);
+  if (0 == m_rmMasterService) {
+    castor::exception::Internal e;
+    e.getMessage() << "Could Not cast newly retrieved service into IRmMasterSvc" << std::endl;
+    throw e;
+  }
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -67,7 +69,7 @@ castor::monitoring::rmmaster::DatabaseActuatorThread::~DatabaseActuatorThread() 
 void castor::monitoring::rmmaster::DatabaseActuatorThread::run
 (void* par) throw() {
   // "Thread DatabaseActuator started. Updating shared memory data."
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 9, 0, 0);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 32, 0, 0);
   try{
     if (m_rmMasterService != 0) {
       m_rmMasterService->syncClusterStatus(m_clusterStatus);

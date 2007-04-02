@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 16:28:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/02 15:26:01 $ $Author: sponcec3 $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -38,6 +38,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
+#include "castor/exception/OutOfMemory.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/DiskServer.hpp"
@@ -126,78 +127,122 @@ inline void fillOracleBuffer(unsigned char buf[][21],
 void castor::db::ora::OraRmMasterSvc::syncClusterStatus
 (castor::monitoring::ClusterStatus* clusterStatus)
   throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_syncClusterStatusStatement) {
+  if (0 == m_syncClusterStatusStatement) {
+    try {
+      // Check whether the statements are ok
       m_syncClusterStatusStatement =
 	createStatement(s_syncClusterStatusStatementString);
       m_syncClusterStatusStatement->setAutoCommit(true);
+    } catch (oracle::occi::SQLException e) {
+      handleException(e);
+      castor::exception::Internal ex;
+      ex.getMessage()
+	<< "Unable to create statement for synchronizing DB with monitoring data :"
+	<< std::endl << e.getMessage();
+      throw ex;
     }
-    // Compute array lengths
-    unsigned int diskServersL = clusterStatus->size();
-    unsigned int fileSystemsL = 0;
-    for (castor::monitoring::ClusterStatus::const_iterator it =
-	   clusterStatus->begin();
-	 it != clusterStatus->end();
-	 it++) {
-      fileSystemsL += it->second.size();
+  }
+  // Compute array lengths
+  unsigned int diskServersL = clusterStatus->size();
+  unsigned int fileSystemsL = 0;
+  for (castor::monitoring::ClusterStatus::const_iterator it =
+	 clusterStatus->begin();
+       it != clusterStatus->end();
+       it++) {
+    fileSystemsL += it->second.size();
+  }
+  // Since ORACLE does not like 0 length arrays, it's better
+  // to protect ourselves and give up in such a case
+  if (0 == fileSystemsL) return;
+  // Find max length of the string parameters
+  ub2 *lensDS = (ub2*) malloc(diskServersL * sizeof(ub2));
+  if (0 == lensDS) { castor::exception::OutOfMemory e; throw e; };
+  ub2 *lensFS = (ub2*) malloc((diskServersL + fileSystemsL) * sizeof(ub2));
+  if (0 == lensFS) { free (lensDS); castor::exception::OutOfMemory e; throw e; };
+  unsigned int maxFSL = 0;
+  unsigned int maxDSL = 0;
+  unsigned int ds = 0;
+  unsigned int fs = 0;
+  for (castor::monitoring::ClusterStatus::const_iterator it =
+	 clusterStatus->begin();
+       it != clusterStatus->end();
+       it++) {
+    lensDS[ds] = it->first.length();
+    if (lensDS[ds] > maxDSL) maxDSL = lensDS[ds];
+    lensFS[ds+fs] = it->first.length();
+    if (lensFS[ds+fs] > maxFSL) maxFSL = lensFS[ds+fs];
+    ds++;
+    for (castor::monitoring::DiskServerStatus::const_iterator it2
+	   = it->second.begin();
+	 it2 != it->second.end();
+	 it2++) {
+      lensFS[ds+fs] = it2->first.length();
+      if (lensFS[ds+fs] > maxFSL) maxFSL = lensFS[ds+fs];
+      fs++;
     }
-    // Since ORACLE does not like 0 length arrays, it's better
-    // to protect ourselves and give up in such a case
-    if (0 == fileSystemsL) return;
-    // Find max length of the string parameters
-    ub2 lensDS[diskServersL], lensFS[diskServersL+fileSystemsL];
-    unsigned int maxFSL = 0;
-    unsigned int maxDSL = 0;
-    unsigned int ds = 0;
-    unsigned int fs = 0;
-    for (castor::monitoring::ClusterStatus::const_iterator it =
-	   clusterStatus->begin();
-	 it != clusterStatus->end();
-	 it++) {
-      lensDS[ds] = it->first.length();
-      if (lensDS[ds] > maxDSL) maxDSL = lensDS[ds];
-      ds++;
-      for (castor::monitoring::DiskServerStatus::const_iterator it2
-	     = it->second.begin();
-	   it2 != it->second.end();
-	   it2++) {
-	lensFS[ds+fs] = it2->first.length();
-	if (lensFS[ds+fs] > maxFSL) maxFSL = lensFS[ds+fs];
-	fs++;
-      }
+  }
+  // Allocate buffer for giving the parameters to ORACLE
+  unsigned int bufferDSCellSize = maxDSL * sizeof(char);
+  char *bufferDS =
+    (char*) malloc(diskServersL * bufferDSCellSize);
+  if (0 == bufferDS) {
+    free (lensDS); free (lensFS);
+    castor::exception::OutOfMemory e; throw e;
+  };
+  unsigned int bufferFSCellSize = maxFSL * sizeof(char);
+  char *bufferFS =
+    (char*) malloc((diskServersL + fileSystemsL) * bufferFSCellSize);
+  if (0 == bufferFS) {
+    free (lensDS); free (lensFS); free (bufferDS);
+    castor::exception::OutOfMemory e; throw e;
+  };
+  // Put DiskServer and FileSystem names into the buffers
+  unsigned int d = 0;
+  unsigned int f = 0;
+  for (castor::monitoring::ClusterStatus::const_iterator it =
+	 clusterStatus->begin();
+       it != clusterStatus->end();
+       it++) {
+    strncpy(bufferDS+(d*bufferDSCellSize), it->first.c_str(), lensDS[d]);
+    strncpy(bufferFS+((d+f)*bufferFSCellSize), it->first.c_str(), lensDS[d]);
+    d++;
+    for (castor::monitoring::DiskServerStatus::const_iterator it2
+	   = it->second.begin();
+	 it2 != it->second.end();
+	 it2++) {
+      strncpy(bufferFS+((d+f)*bufferFSCellSize), it2->first.c_str(), lensFS[d+f]);
+      f++;
     }
-    if (maxFSL < maxDSL) maxFSL = maxDSL;
-    // Allocate buffer for giving the parameters to ORACLE
-    char bufferDS[diskServersL][maxDSL];
-    char bufferFS[diskServersL+fileSystemsL][maxFSL];
-    // Put DiskServer and FileSystem names into the buffers
-    unsigned int d = 0;
-    unsigned int f = 0;
-    for (castor::monitoring::ClusterStatus::const_iterator it =
-	   clusterStatus->begin();
-	 it != clusterStatus->end();
-	 it++) {
-      strncpy(bufferDS[d], it->first.c_str(), lensDS[d]);
-      strncpy(bufferFS[d+f], it->first.c_str(), lensDS[d]);
-      d++;
-      for (castor::monitoring::DiskServerStatus::const_iterator it2
-	     = it->second.begin();
-	   it2 != it->second.end();
-	   it2++) {
-	strncpy(bufferFS[d+f], it2->first.c_str(), lensFS[f]);
-	f++;
-      }
-    }
-    // Deal with parameters for both DiskServers and FileSystems
-    ub2 lensDSP[diskServersL*3];
-    ub2 lensFSP[fileSystemsL*8];
-    unsigned char bufferDSP[diskServersL*3][21];
-    unsigned char bufferFSP[fileSystemsL*8][21];
-    memset(bufferDSP, 0, diskServersL * 3 * 21);
-    memset(bufferFSP, 0, fileSystemsL * 8 * 21);
-    d = 0;
-    f = 0;
+  }
+  // Deal with parameters for both DiskServers and FileSystems
+  ub2 *lensDSP = (ub2*) malloc(diskServersL * 3 * sizeof(ub2));
+  if (0 == lensDSP) {
+    free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
+    castor::exception::OutOfMemory e; throw e;
+  };
+  ub2 *lensFSP = (ub2*) malloc(fileSystemsL * 9 * sizeof(ub2));
+  if (0 == lensFSP) {
+    free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
+    free(lensDSP);
+    castor::exception::OutOfMemory e; throw e;
+  };
+  unsigned char (*bufferDSP)[21] =
+    (unsigned char(*)[21]) calloc(diskServersL * 3 * 21, sizeof(unsigned char));
+  if (0 == bufferDSP) {
+    free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
+    free(lensDSP); free(lensFSP);
+    castor::exception::OutOfMemory e; throw e;
+  };
+  unsigned char (*bufferFSP)[21] =
+    (unsigned char(*)[21]) calloc(fileSystemsL * 9 * 21, sizeof(unsigned char));
+  if (0 == lensFSP) {
+    free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
+    free(lensDSP); free(lensFSP); free(bufferDSP);
+    castor::exception::OutOfMemory e; throw e;
+  };
+  d = 0;
+  f = 0;
+  try {
     for (castor::monitoring::ClusterStatus::const_iterator it =
 	   clusterStatus->begin();
 	 it != clusterStatus->end();
@@ -214,14 +259,15 @@ void castor::db::ora::OraRmMasterSvc::syncClusterStatus
 	   it2++) {
 	const castor::monitoring::FileSystemStatus& fss = it2->second;
 	// fill buffers
-	fillOracleBuffer(bufferFSP, lensFSP, 8*d, fss.status());
-	fillOracleBuffer(bufferFSP, lensFSP, (8*d)+1, fss.adminStatus());
-	fillOracleBuffer(bufferFSP, lensFSP, (8*d)+2, (double)fss.readRate());
-	fillOracleBuffer(bufferFSP, lensFSP, (8*d)+3, (double)fss.writeRate());
-	fillOracleBuffer(bufferFSP, lensFSP, (8*d)+4, fss.nbReadStreams());
-	fillOracleBuffer(bufferFSP, lensFSP, (8*d)+5, fss.nbWriteStreams());
-	fillOracleBuffer(bufferFSP, lensFSP, (8*d)+6, fss.nbReadWriteStreams());
-	fillOracleBuffer(bufferFSP, lensFSP, (8*d)+7, (double)fss.freeSpace());
+	fillOracleBuffer(bufferFSP, lensFSP, 9*f, fss.status());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+1, fss.adminStatus());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+2, (double)fss.readRate());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+3, (double)fss.writeRate());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+4, fss.nbReadStreams());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+5, fss.nbWriteStreams());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+6, fss.nbReadWriteStreams());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+7, (double)fss.freeSpace());
+	fillOracleBuffer(bufferFSP, lensFSP, (9*f)+8, (double)fss.space());
 	f++;
       }
     }
@@ -229,7 +275,7 @@ void castor::db::ora::OraRmMasterSvc::syncClusterStatus
     ub4 DSL = diskServersL;
     ub4 FSL = diskServersL+fileSystemsL;
     ub4 DSPL = 3*diskServersL;
-    ub4 FSPL = 8*fileSystemsL;
+    ub4 FSPL = 9*fileSystemsL;
     m_syncClusterStatusStatement->setDataBufferArray
       (1, bufferDS, oracle::occi::OCCI_SQLT_CHR,
        diskServersL, &DSL, maxDSL, lensDS);
@@ -241,10 +287,29 @@ void castor::db::ora::OraRmMasterSvc::syncClusterStatus
        3*diskServersL, &DSPL, 21, lensDSP);
     m_syncClusterStatusStatement->setDataBufferArray
       (4, bufferFSP, oracle::occi::OCCI_SQLT_NUM,
-       8*fileSystemsL, &FSPL, 21, lensFSP);
+       9 * fileSystemsL, &FSPL, 21, lensFSP);
     // Finally execute the statement
     m_syncClusterStatusStatement->executeUpdate();
+    // And release the memory
+    free(lensDS);
+    free(lensFS);
+    free(bufferDS);
+    free(bufferFS);
+    free(lensDSP);
+    free(lensFSP);
+    free(bufferDSP);
+    free(bufferFSP);
   } catch (oracle::occi::SQLException e) {
+    // release the memory
+    free(lensDS);
+    free(lensFS);
+    free(bufferDS);
+    free(bufferFS);
+    free(lensDSP);
+    free(lensFSP);
+    free(bufferDSP);
+    free(bufferFSP);
+    // and handle exception
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()

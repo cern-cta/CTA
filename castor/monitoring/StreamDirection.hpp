@@ -40,10 +40,10 @@ namespace castor {
      * Describes direction of streams
      */
     enum StreamDirection {
-      STREAMDIRECTION_READ,
-      STREAMDIRECTION_WRITE,
-      STREAMDIRECTION_READWRITE
-    }; // end of enum StreamDirection
+      STREAMDIRECTION_READ = 0,
+      STREAMDIRECTION_WRITE = 1,
+      STREAMDIRECTION_READWRITE = 2
+    }; /* end of enum StreamDirection */
 
     /**
      * Names of the differents representations, used to display

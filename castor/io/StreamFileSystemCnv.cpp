@@ -39,6 +39,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
@@ -94,10 +95,7 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->free();
-  ad->stream() << obj->weight();
-  ad->stream() << obj->fsDeviation();
   ad->stream() << obj->mountPoint();
-  ad->stream() << obj->deltaWeight();
   ad->stream() << obj->deltaFree();
   ad->stream() << obj->reservedSpace();
   ad->stream() << obj->minFreeSpace();
@@ -105,8 +103,14 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->maxFreeSpace();
   ad->stream() << obj->spaceToBeFreed();
   ad->stream() << obj->totalSize();
+  ad->stream() << obj->readRate();
+  ad->stream() << obj->writeRate();
+  ad->stream() << obj->nbReadStreams();
+  ad->stream() << obj->nbWriteStreams();
+  ad->stream() << obj->nbReadWriteStreams();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
+  ad->stream() << obj->adminStatus();
 }
 
 //------------------------------------------------------------------------------
@@ -122,18 +126,9 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   u_signed64 free;
   ad->stream() >> free;
   object->setFree(free);
-  float weight;
-  ad->stream() >> weight;
-  object->setWeight(weight);
-  float fsDeviation;
-  ad->stream() >> fsDeviation;
-  object->setFsDeviation(fsDeviation);
   std::string mountPoint;
   ad->stream() >> mountPoint;
   object->setMountPoint(mountPoint);
-  float deltaWeight;
-  ad->stream() >> deltaWeight;
-  object->setDeltaWeight(deltaWeight);
   signed64 deltaFree;
   ad->stream() >> deltaFree;
   object->setDeltaFree(deltaFree);
@@ -155,12 +150,30 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   u_signed64 totalSize;
   ad->stream() >> totalSize;
   object->setTotalSize(totalSize);
+  u_signed64 readRate;
+  ad->stream() >> readRate;
+  object->setReadRate(readRate);
+  u_signed64 writeRate;
+  ad->stream() >> writeRate;
+  object->setWriteRate(writeRate);
+  unsigned int nbReadStreams;
+  ad->stream() >> nbReadStreams;
+  object->setNbReadStreams(nbReadStreams);
+  unsigned int nbWriteStreams;
+  ad->stream() >> nbWriteStreams;
+  object->setNbWriteStreams(nbWriteStreams);
+  unsigned int nbReadWriteStreams;
+  ad->stream() >> nbReadWriteStreams;
+  object->setNbReadWriteStreams(nbReadWriteStreams);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
   int status;
   ad->stream() >> status;
   object->setStatus((castor::stager::FileSystemStatusCodes)status);
+  int adminStatus;
+  ad->stream() >> adminStatus;
+  object->setAdminStatus((castor::monitoring::AdminStatusCodes)adminStatus);
   return object;
 }
 

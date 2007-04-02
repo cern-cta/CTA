@@ -62,13 +62,13 @@ int main(int argc, char* argv[]) {
     // new BaseDaemon as Server
     castor::monitoring::rmmaster::RmMasterDaemon daemon;
     int interval;
-    int port;
+    int port = RMMASTER_DEFAULT_PORT;
 
     //default values
     interval = UPDATE_INTERVAL;
 
     // Try to retrieve values from the config file otherwise use the default one
-    char* intervalStr = getconfent("RmMaster","UPDATE_INTERVAL", 0);
+    char* intervalStr = getconfent("RmMaster","UpdateInterval", 0);
     if (intervalStr){
       interval = std::strtol(intervalStr,0,10);
       if (0 == interval) {
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, initParams);
       }
     }
-    char* portStr = getconfent("RmMaster","PORT", 0);
+    char* portStr = getconfent("RM","PORT", 0);
     if (portStr){
       port = std::strtol(portStr,0,10);
       if (0 == port) {
@@ -154,12 +154,12 @@ int main(int argc, char* argv[]) {
 castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
   castor::server::BaseDaemon("RmMasterDaemon") {
 
-  castor::BaseObject::initLog("newrmmaster", castor::SVC_DLFMSG);
+  castor::BaseObject::initLog("RmMaster", castor::SVC_DLFMSG);
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
 
   castor::dlf::Message messages[] =
-    {{ 0, "Could Not get OraStagerSvc"},
+    {{ 0, ""},
      { 1, "Bad interval value in configuration file"},
      { 2, "Starting RmMaster Daemon"},
      { 3, "Starting of RmMaster Daemon failed"},
@@ -188,8 +188,14 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
      {26, "Ignored metrics report for filesystem with empty name"},
      {27, "Ignored state report for filesystem with empty name"},
      {28, "Unable to allocate SharedMemoryString"},
+     {29, "Ignored admin diskServer report for unknown machine"},
+     {30, "Ignored admin fileSystem report for unknown machine"},
+     {31, "Ignored admin fileSystem report for unknown mountPoint"},
+     {32, "Thread DatabaseActuator started. Updating shared memory data"},
+     {33, "Thread DatabaseActuator created"},
+     {34, "Thread Update created"},
      {-1, ""}};
-  castor::dlf::dlf_init("newrmmaster", messages);
+  castor::dlf::dlf_init("RmMaster", messages);
 
   // get the cluster status singleton
   m_clusterStatus = castor::monitoring::ClusterStatus::getClusterStatus();

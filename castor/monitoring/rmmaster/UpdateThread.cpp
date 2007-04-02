@@ -41,7 +41,7 @@ castor::monitoring::rmmaster::UpdateThread::UpdateThread
 (castor::monitoring::ClusterStatus* clusterStatus) :
   m_clusterStatus(clusterStatus) {
   // "Update thread created"
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 10);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 34);
 }
 
 //------------------------------------------------------------------------------

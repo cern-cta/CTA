@@ -37,6 +37,7 @@ namespace castor {
     // Forward declaration
     class DiskServerState;
     class DiskServerMetricsReport;
+    class FileSystemStateReport;
     class FileSystemMetricsReport;
 
     namespace rmnode {
@@ -71,35 +72,16 @@ namespace castor {
 
         /**
          * Collects the diskServer metrics
-         * The user is responsible for deleting the returned object
          */
-        castor::monitoring::DiskServerMetricsReport* collectDiskServerMetrics()
+        void collectDiskServerMetrics()
           throw(castor::exception::Exception);
 
         /**
          * Collects a given fileSystem metrics.
-         * The user is responsible for deleting the returned object
-         * @param mountPoint the mountPoint of the fileSystem to deal with
+         * @param filesystem the file system object to be updated
          */
-        castor::monitoring::FileSystemMetricsReport* collectFileSystemMetrics
-        (std::string mountPoint)
-          throw(castor::exception::Exception);
-
-      private:
-
-        /**
-         * Old methods gathering statistics.
-         * To be replaced
-         */
-        int Crm_util_countstream(const char* fs, int*nr, int*nrw, int*nw);
-        int Crm_util_io(const char* part,
-                        u_signed64 *rd, u_signed64 *wr);
-        int Crm_util_io_wrapper(const char* mountPoint,
-                                u_signed64 *rd, u_signed64 *wr,
-                                u_signed64 nr, u_signed64 brw, u_signed64 nw);
-	int Crm_util_find_partition(char* mountPoint,
-				    char* partition,
-				    int maxlen);
+	void collectFileSystemMetrics(castor::monitoring::FileSystemMetricsReport* filesystem)
+	  throw(castor::exception::Exception);
 
       private:
       
@@ -108,6 +90,9 @@ namespace castor {
 
         /// RmMaster port
         int m_rmMasterPort;
+
+	/// DiskServerMetricsReport pointer
+	castor::monitoring::DiskServerMetricsReport* dsMetrics;
 
       };
 

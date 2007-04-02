@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -43,8 +44,10 @@
 //------------------------------------------------------------------------------
 castor::stager::DiskServer::DiskServer() throw() :
   m_name(""),
+  m_load(0),
   m_id(0),
-  m_status(DiskServerStatusCode(0)) {
+  m_status(DiskServerStatusCode(0)),
+  m_adminStatus(castor::monitoring::AdminStatusCodes(0)) {
 }
 
 //------------------------------------------------------------------------------
@@ -71,6 +74,7 @@ void castor::stager::DiskServer::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "name : " << m_name << std::endl;
+  stream << indent << "load : " << m_load << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
@@ -85,6 +89,7 @@ void castor::stager::DiskServer::print(std::ostream& stream,
     }
   }
   stream << indent << "status : " << DiskServerStatusCodeStrings[m_status] << std::endl;
+  stream << indent << "adminStatus : " << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << std::endl;
 }
 
 //------------------------------------------------------------------------------

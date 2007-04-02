@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPSocket.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 15:42:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: UDPSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/02 15:26:01 $ $Author: sponcec3 $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -50,6 +50,26 @@ namespace castor {
        */
       UDPSocket(const unsigned short port,
                 const bool reusable)
+        throw (castor::exception::Exception);
+
+      /**
+       * Constructor building a socket on a given port
+       * in order to connect to a given host
+       * @param port the port for this socket.
+       * @param port the host for this socket, given as machine name.
+       */
+      UDPSocket(const unsigned short port,
+		const std::string host)
+        throw (castor::exception::Exception);
+
+      /**
+       * Constructor building a socket on a given port
+       * in order to connect to a given host
+       * @param port the port for this socket.
+       * @param port the host for this socket, given as ip address.
+       */
+      UDPSocket(const unsigned short port,
+		const unsigned long ip)
         throw (castor::exception::Exception);
 
     protected:

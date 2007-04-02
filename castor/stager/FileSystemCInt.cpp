@@ -28,6 +28,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
@@ -118,38 +119,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_FileSystem_weight
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_weight(castor::stager::FileSystem* instance, float* var) {
-    *var = instance->weight();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_setWeight
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setWeight(castor::stager::FileSystem* instance, float new_var) {
-    instance->setWeight(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_fsDeviation
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_fsDeviation(castor::stager::FileSystem* instance, float* var) {
-    *var = instance->fsDeviation();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_setFsDeviation
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setFsDeviation(castor::stager::FileSystem* instance, float new_var) {
-    instance->setFsDeviation(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_FileSystem_mountPoint
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_mountPoint(castor::stager::FileSystem* instance, const char** var) {
@@ -163,22 +132,6 @@ extern "C" {
   int Cstager_FileSystem_setMountPoint(castor::stager::FileSystem* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setMountPoint(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_deltaWeight
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_deltaWeight(castor::stager::FileSystem* instance, float* var) {
-    *var = instance->deltaWeight();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_setDeltaWeight
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setDeltaWeight(castor::stager::FileSystem* instance, float new_var) {
-    instance->setDeltaWeight(new_var);
     return 0;
   }
 
@@ -295,6 +248,86 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_FileSystem_readRate
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_readRate(castor::stager::FileSystem* instance, u_signed64* var) {
+    *var = instance->readRate();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setReadRate
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setReadRate(castor::stager::FileSystem* instance, u_signed64 new_var) {
+    instance->setReadRate(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_writeRate
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_writeRate(castor::stager::FileSystem* instance, u_signed64* var) {
+    *var = instance->writeRate();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setWriteRate
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setWriteRate(castor::stager::FileSystem* instance, u_signed64 new_var) {
+    instance->setWriteRate(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_nbReadStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_nbReadStreams(castor::stager::FileSystem* instance, unsigned int* var) {
+    *var = instance->nbReadStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setNbReadStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setNbReadStreams(castor::stager::FileSystem* instance, unsigned int new_var) {
+    instance->setNbReadStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_nbWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_nbWriteStreams(castor::stager::FileSystem* instance, unsigned int* var) {
+    *var = instance->nbWriteStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setNbWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setNbWriteStreams(castor::stager::FileSystem* instance, unsigned int new_var) {
+    instance->setNbWriteStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_nbReadWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_nbReadWriteStreams(castor::stager::FileSystem* instance, unsigned int* var) {
+    *var = instance->nbReadWriteStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setNbReadWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setNbReadWriteStreams(castor::stager::FileSystem* instance, unsigned int new_var) {
+    instance->setNbReadWriteStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_FileSystem_id
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_id(castor::stager::FileSystem* instance, u_signed64* var) {
@@ -384,6 +417,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_setStatus(castor::stager::FileSystem* instance, castor::stager::FileSystemStatusCodes new_var) {
     instance->setStatus(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_adminStatus
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_adminStatus(castor::stager::FileSystem* instance, castor::monitoring::AdminStatusCodes* var) {
+    *var = instance->adminStatus();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setAdminStatus
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setAdminStatus(castor::stager::FileSystem* instance, castor::monitoring::AdminStatusCodes new_var) {
+    instance->setAdminStatus(new_var);
     return 0;
   }
 

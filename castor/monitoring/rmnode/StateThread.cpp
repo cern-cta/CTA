@@ -27,7 +27,6 @@
 
 // Include files
 #include "castor/monitoring/rmnode/StateThread.hpp"
-#include "castor/monitoring/rmnode/RmNodeConfig.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/monitoring/DiskServerStateReport.hpp"
@@ -153,12 +152,12 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
   // get current list of filesystems
   char** fs;
   int nbFs;
-  if (getconfent_multi_fromfile
-      (RMNODECONFIGFILE, "RMNODE", "MOUNTPOINT", 0, &fs, &nbFs) < 0) {
+  if (getconfent_multi
+      ("RmNode", "MountPoints", 1, &fs, &nbFs) < 0) {
     castor::exception::Exception e(errno);
     delete state;
     e.getMessage()
-      << "StateThread::collectDiskServerState : getconfent_multi_fromfile failed";
+      << "StateThread::collectDiskServerState : getconfent_multi failed";
     throw e;
   }
   // fill state for each FileSystems

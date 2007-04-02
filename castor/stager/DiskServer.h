@@ -30,6 +30,7 @@
 #define CASTOR_STAGER_DISKSERVER_H
 
 /* Include Files and Forward declarations for the C world */
+#include "castor/monitoring/AdminStatusCodes.h"
 #include "castor/stager/DiskServerStatusCode.h"
 #include "osdep.h"
 struct C_IObject_t;
@@ -101,6 +102,18 @@ int Cstager_DiskServer_name(struct Cstager_DiskServer_t* instance, const char** 
 int Cstager_DiskServer_setName(struct Cstager_DiskServer_t* instance, const char* new_var);
 
 /**
+ * Get the value of load
+ * The load of the diskserver
+ */
+int Cstager_DiskServer_load(struct Cstager_DiskServer_t* instance, unsigned int* var);
+
+/**
+ * Set the value of load
+ * The load of the diskserver
+ */
+int Cstager_DiskServer_setLoad(struct Cstager_DiskServer_t* instance, unsigned int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
@@ -137,5 +150,17 @@ int Cstager_DiskServer_status(struct Cstager_DiskServer_t* instance, enum Cstage
  * Set the value of status
  */
 int Cstager_DiskServer_setStatus(struct Cstager_DiskServer_t* instance, enum Cstager_DiskServerStatusCode_t new_var);
+
+/**
+ * Get the value of adminStatus
+ * Admin status of the DiskServer
+ */
+int Cstager_DiskServer_adminStatus(struct Cstager_DiskServer_t* instance, enum Cmonitoring_AdminStatusCodes_t* var);
+
+/**
+ * Set the value of adminStatus
+ * Admin status of the DiskServer
+ */
+int Cstager_DiskServer_setAdminStatus(struct Cstager_DiskServer_t* instance, enum Cmonitoring_AdminStatusCodes_t new_var);
 
 #endif /* CASTOR_STAGER_DISKSERVER_H */

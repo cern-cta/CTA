@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -121,6 +122,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_load
+       * The load of the diskserver
+       * @return the value of m_load
+       */
+      unsigned int load() const {
+        return m_load;
+      }
+
+      /**
+       * Set the value of m_load
+       * The load of the diskserver
+       * @param new_var the new value of m_load
+       */
+      void setLoad(unsigned int new_var) {
+        m_load = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -183,10 +202,31 @@ namespace castor {
         m_status = new_var;
       }
 
+      /**
+       * Get the value of m_adminStatus
+       * Admin status of the DiskServer
+       * @return the value of m_adminStatus
+       */
+      castor::monitoring::AdminStatusCodes adminStatus() const {
+        return m_adminStatus;
+      }
+
+      /**
+       * Set the value of m_adminStatus
+       * Admin status of the DiskServer
+       * @param new_var the new value of m_adminStatus
+       */
+      void setAdminStatus(castor::monitoring::AdminStatusCodes new_var) {
+        m_adminStatus = new_var;
+      }
+
     private:
 
       /// Name of the DiskServer
       std::string m_name;
+
+      /// The load of the diskserver
+      unsigned int m_load;
 
       /// The id of this object
       u_signed64 m_id;
@@ -194,6 +234,9 @@ namespace castor {
       std::vector<FileSystem*> m_fileSystemsVector;
 
       DiskServerStatusCode m_status;
+
+      /// Admin status of the DiskServer
+      castor::monitoring::AdminStatusCodes m_adminStatus;
 
     }; /* end of class DiskServer */
 

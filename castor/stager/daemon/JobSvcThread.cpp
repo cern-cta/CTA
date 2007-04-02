@@ -1,15 +1,11 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.38 2007/03/29 08:11:48 gtaur Exp $
+ * $Id: JobSvcThread.cpp,v 1.39 2007/04/02 15:28:19 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2004 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.38 $ $Date: 2007/03/29 08:11:48 $ CERN IT-ADC/CA Ben Couturier";
-#endif
 
 /* ================================================================= */
 /* Local headers for threads : to be included before ANYTHING else   */
@@ -218,9 +214,9 @@ namespace castor {
                                       sReq->diskServer());
         if (0==fs) {
           castor::exception::Internal e;
-          e.getMessage() << "Could not find suitable filesystem for"
-                         << sReq->fileSystem() << "/"
-                         << sReq->diskServer();
+          e.getMessage() << "Could not find suitable filesystem for "
+                         << sReq->diskServer() << ":"
+                         << sReq->fileSystem();
           throw e;
         }
 

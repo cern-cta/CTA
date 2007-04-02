@@ -217,6 +217,9 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               rh/BasicResponse.cpp \
               rh/BasicResponseCInt.cpp \
               monitoring/AdminStatusCodes.cpp \
+              monitoring/StreamDirection.cpp \
+              monitoring/StreamReport.cpp \
+              stager/BaseTapeSvc.cpp \
               server/BaseThreadPool.cpp \
               server/ListenerThreadPool.cpp \
               server/TCPListenerThreadPool.cpp \

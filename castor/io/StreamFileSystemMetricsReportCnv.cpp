@@ -96,6 +96,9 @@ void castor::io::StreamFileSystemMetricsReportCnv::createRep(castor::IAddress* a
   ad->stream() << obj->nbWriteStreams();
   ad->stream() << obj->nbReadWriteStreams();
   ad->stream() << obj->freeSpace();
+  ad->stream() << obj->previousReadCounter();
+  ad->stream() << obj->previousWriteCounter();
+  ad->stream() << obj->lastUpdateTime();
   ad->stream() << obj->id();
 }
 
@@ -130,6 +133,15 @@ castor::IObject* castor::io::StreamFileSystemMetricsReportCnv::createObj(castor:
   u_signed64 freeSpace;
   ad->stream() >> freeSpace;
   object->setFreeSpace(freeSpace);
+  u_signed64 previousReadCounter;
+  ad->stream() >> previousReadCounter;
+  object->setPreviousReadCounter(previousReadCounter);
+  u_signed64 previousWriteCounter;
+  ad->stream() >> previousWriteCounter;
+  object->setPreviousWriteCounter(previousWriteCounter);
+  u_signed64 lastUpdateTime;
+  ad->stream() >> lastUpdateTime;
+  object->setLastUpdateTime(lastUpdateTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

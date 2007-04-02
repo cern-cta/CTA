@@ -173,6 +173,7 @@ namespace castor {
 
       /**
        * Get the value of m_direction
+       * Direction of the reported stream
        * @return the value of m_direction
        */
       StreamDirection direction() const {
@@ -181,6 +182,7 @@ namespace castor {
 
       /**
        * Set the value of m_direction
+       * Direction of the reported stream
        * @param new_var the new value of m_direction
        */
       void setDirection(StreamDirection new_var) {
@@ -201,6 +203,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
+      /// Direction of the reported stream
       StreamDirection m_direction;
 
     }; /* end of class StreamReport */

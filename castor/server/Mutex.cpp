@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/22 11:22:29 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/02 15:26:03 $ $Author: sponcec3 $
  *
  *
  *
@@ -35,7 +35,7 @@
 //------------------------------------------------------------------------------
 castor::server::Mutex::Mutex(int value, int timeout)
   throw (castor::exception::Exception) :
-  m_var(value), m_timeout(timeout)
+  m_var(value), m_timeout(timeout), m_mutexCthread(0)
 {
   if(createLock() != 0) {
     castor::exception::Internal ex;

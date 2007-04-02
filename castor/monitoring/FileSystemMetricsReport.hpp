@@ -102,7 +102,7 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_writeRate
-       * The mount point of the FileSystem
+       * The number of bytes written to the filesystem per second
        * @return the value of m_writeRate
        */
       u_signed64 writeRate() const {
@@ -111,7 +111,7 @@ namespace castor {
 
       /**
        * Set the value of m_writeRate
-       * The mount point of the FileSystem
+       * The number of bytes written to the filesystem per second
        * @param new_var the new value of m_writeRate
        */
       void setWriteRate(u_signed64 new_var) {
@@ -120,7 +120,7 @@ namespace castor {
 
       /**
        * Get the value of m_mountPoint
-       * The number of bytes read from the filesystem per second
+       * The mount point of the FileSystem
        * @return the value of m_mountPoint
        */
       std::string mountPoint() const {
@@ -129,7 +129,7 @@ namespace castor {
 
       /**
        * Set the value of m_mountPoint
-       * The number of bytes read from the filesystem per second
+       * The mount point of the FileSystem
        * @param new_var the new value of m_mountPoint
        */
       void setMountPoint(std::string new_var) {
@@ -138,7 +138,7 @@ namespace castor {
 
       /**
        * Get the value of m_readRate
-       * The number of bytes written to the filesystem per second
+       * The number of bytes read from the filesystem per second
        * @return the value of m_readRate
        */
       u_signed64 readRate() const {
@@ -147,7 +147,7 @@ namespace castor {
 
       /**
        * Set the value of m_readRate
-       * The number of bytes written to the filesystem per second
+       * The number of bytes read from the filesystem per second
        * @param new_var the new value of m_readRate
        */
       void setReadRate(u_signed64 new_var) {
@@ -227,6 +227,66 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_previousReadCounter
+       * Value of the system read I/O counter for this filesystem last time it was
+       * checked. This is needed to be able to compute the next value of the readRate.
+       * @return the value of m_previousReadCounter
+       */
+      u_signed64 previousReadCounter() const {
+        return m_previousReadCounter;
+      }
+
+      /**
+       * Set the value of m_previousReadCounter
+       * Value of the system read I/O counter for this filesystem last time it was
+       * checked. This is needed to be able to compute the next value of the readRate.
+       * @param new_var the new value of m_previousReadCounter
+       */
+      void setPreviousReadCounter(u_signed64 new_var) {
+        m_previousReadCounter = new_var;
+      }
+
+      /**
+       * Get the value of m_previousWriteCounter
+       * Value of the system write I/O counter for this filesystem last time it was
+       * checked. This is needed to be able to compute the next value of the writeRate.
+       * @return the value of m_previousWriteCounter
+       */
+      u_signed64 previousWriteCounter() const {
+        return m_previousWriteCounter;
+      }
+
+      /**
+       * Set the value of m_previousWriteCounter
+       * Value of the system write I/O counter for this filesystem last time it was
+       * checked. This is needed to be able to compute the next value of the writeRate.
+       * @param new_var the new value of m_previousWriteCounter
+       */
+      void setPreviousWriteCounter(u_signed64 new_var) {
+        m_previousWriteCounter = new_var;
+      }
+
+      /**
+       * Get the value of m_lastUpdateTime
+       * System time when we last checked the I/o counters. This is needed to be able to
+       * compute the next values of the readRate and writeRate.
+       * @return the value of m_lastUpdateTime
+       */
+      u_signed64 lastUpdateTime() const {
+        return m_lastUpdateTime;
+      }
+
+      /**
+       * Set the value of m_lastUpdateTime
+       * System time when we last checked the I/o counters. This is needed to be able to
+       * compute the next values of the readRate and writeRate.
+       * @param new_var the new value of m_lastUpdateTime
+       */
+      void setLastUpdateTime(u_signed64 new_var) {
+        m_lastUpdateTime = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -262,13 +322,13 @@ namespace castor {
 
     private:
 
-      /// The mount point of the FileSystem
+      /// The number of bytes written to the filesystem per second
       u_signed64 m_writeRate;
 
-      /// The number of bytes read from the filesystem per second
+      /// The mount point of the FileSystem
       std::string m_mountPoint;
 
-      /// The number of bytes written to the filesystem per second
+      /// The number of bytes read from the filesystem per second
       u_signed64 m_readRate;
 
       /// The number of read streams accessing the filesystem
@@ -283,6 +343,15 @@ namespace castor {
       /// Amount of free space in bytes
       u_signed64 m_freeSpace;
 
+      /// Value of the system read I/O counter for this filesystem last time it was checked. This is needed to be able to compute the next value of the readRate.
+      u_signed64 m_previousReadCounter;
+
+      /// Value of the system write I/O counter for this filesystem last time it was checked. This is needed to be able to compute the next value of the writeRate.
+      u_signed64 m_previousWriteCounter;
+
+      /// System time when we last checked the I/o counters. This is needed to be able to compute the next values of the readRate and writeRate.
+      u_signed64 m_lastUpdateTime;
+
       /// The id of this object
       u_signed64 m_id;
 
@@ -294,4 +363,4 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_MONITORING_FILESYSTEMMETRICSREPORT_HPP
+#endif /* CASTOR_MONITORING_FILESYSTEMMETRICSREPORT_HPP */

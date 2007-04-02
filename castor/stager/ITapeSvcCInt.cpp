@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/11/02 14:33:02 $ $Author: felixehm $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/04/02 15:26:09 $ $Author: sponcec3 $
  *
  *
  *
@@ -26,9 +26,11 @@
 
 // Include Files
 #include "castor/stager/ITapeSvc.hpp"
+#include "castor/monitoring/StreamDirection.hpp"
 #include "castor/Services.hpp"
 #include <errno.h>
 #include <string>
+#include <fcntl.h>
 
 extern "C" {
 
@@ -410,5 +412,28 @@ extern "C" {
     return 0;
   }
 
+
+  //-------------------------------------------------------------------------
+  // C_stager_ITapeSvc_sendStreamReport
+  //-------------------------------------------------------------------------
+  void Cstager_ITapeSvc_sendStreamReport
+  (struct Cstager_ITapeSvc_t* tpSvc,
+   char* diskServer,
+   char* fileSystem,
+   int direction,
+   int created) {
+    if (!checkITapeSvc(tpSvc)) return;
+    castor::monitoring::StreamDirection dir;
+    if (direction == O_RDONLY) {
+      dir = castor::monitoring::STREAMDIRECTION_READ;
+    } else if (direction == O_WRONLY) {
+      dir = castor::monitoring::STREAMDIRECTION_WRITE;
+    } else if (direction == O_RDWR) {
+      dir = castor::monitoring::STREAMDIRECTION_READWRITE;
+    } else {
+      return;
+    }
+    tpSvc->tpSvc->sendStreamReport(diskServer, fileSystem, dir, (created != 0));
+  }
 
 }

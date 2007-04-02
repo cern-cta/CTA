@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/DiskServer.hpp"
@@ -45,10 +46,7 @@
 //------------------------------------------------------------------------------
 castor::stager::FileSystem::FileSystem() throw() :
   m_free(0),
-  m_weight(0.0),
-  m_fsDeviation(0.0),
   m_mountPoint(""),
-  m_deltaWeight(0.0),
   m_deltaFree(0),
   m_reservedSpace(0),
   m_minFreeSpace(0.0),
@@ -56,10 +54,16 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_maxFreeSpace(0.0),
   m_spaceToBeFreed(0),
   m_totalSize(0),
+  m_readRate(0),
+  m_writeRate(0),
+  m_nbReadStreams(0),
+  m_nbWriteStreams(0),
+  m_nbReadWriteStreams(0),
   m_id(0),
   m_diskPool(0),
   m_diskserver(0),
-  m_status(FileSystemStatusCodes(0)) {
+  m_status(FileSystemStatusCodes(0)),
+  m_adminStatus(castor::monitoring::AdminStatusCodes(0)) {
 }
 
 //------------------------------------------------------------------------------
@@ -92,10 +96,7 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "free : " << m_free << std::endl;
-  stream << indent << "weight : " << m_weight << std::endl;
-  stream << indent << "fsDeviation : " << m_fsDeviation << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
-  stream << indent << "deltaWeight : " << m_deltaWeight << std::endl;
   stream << indent << "deltaFree : " << m_deltaFree << std::endl;
   stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
   stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
@@ -103,6 +104,11 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;
   stream << indent << "spaceToBeFreed : " << m_spaceToBeFreed << std::endl;
   stream << indent << "totalSize : " << m_totalSize << std::endl;
+  stream << indent << "readRate : " << m_readRate << std::endl;
+  stream << indent << "writeRate : " << m_writeRate << std::endl;
+  stream << indent << "nbReadStreams : " << m_nbReadStreams << std::endl;
+  stream << indent << "nbWriteStreams : " << m_nbWriteStreams << std::endl;
+  stream << indent << "nbReadWriteStreams : " << m_nbReadWriteStreams << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "DiskPool : " << std::endl;
@@ -129,6 +135,7 @@ void castor::stager::FileSystem::print(std::ostream& stream,
     stream << indent << "  null" << std::endl;
   }
   stream << indent << "status : " << FileSystemStatusCodesStrings[m_status] << std::endl;
+  stream << indent << "adminStatus : " << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << std::endl;
 }
 
 //------------------------------------------------------------------------------

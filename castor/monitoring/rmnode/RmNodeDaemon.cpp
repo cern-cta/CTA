@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 
     // Try to retrieve interval values from the config file
     // otherwise use the default one
-    char* intervalStr = getconfent("RMNODE","STATE_UPDATE_INTERVAL", 0);
+    char* intervalStr = getconfent("RmNode","StateUpdateInterval", 0);
     if (intervalStr){
       stateInterval = std::strtol(intervalStr,0,10);
       if (0 == stateInterval) {
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, initParams);
       }
     }
-    intervalStr = getconfent("RMNODE","METRICS_UPDATE_INTERVAL", 0);
+    intervalStr = getconfent("RmNode","MetricsUpdateInterval", 0);
     if (intervalStr) {
       metricsInterval = std::strtol(intervalStr,0,10);
       if (0 == metricsInterval) {
@@ -88,17 +88,17 @@ int main(int argc, char* argv[]) {
 
     // Try to retrieve the rmmaster machine and port from the
     // config file. No default provided for the machine.
-    char* rmMasterHost = getconfent("RMMASTER","HOST", 0);
+    char* rmMasterHost = getconfent("RM","HOST", 0);
     if (0 == rmMasterHost) {
       // Raise an exception
       castor::exception::NoEntry e;
-      e.getMessage() << "Found not entry RMMASTER/HOST in config file";
+      e.getMessage() << "Found not entry RM/HOST in config file";
       throw e;
     } else {
       rmMasterHost = strdup(rmMasterHost);
     }
     int rmMasterPort = RMMASTER_PORT;
-    char* rmMasterPortStr = getconfent("RMMASTER","PORT", 0);
+    char* rmMasterPortStr = getconfent("RM","PORT", 0);
     if (rmMasterPortStr){
       rmMasterPort = std::strtol(rmMasterPortStr,0,10);
       if (0 == rmMasterPort) {
@@ -171,7 +171,7 @@ int main(int argc, char* argv[]) {
 castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
   castor::server::BaseDaemon("RmNodeDaemon") {
 
-  castor::BaseObject::initLog("newrmnode", castor::SVC_DLFMSG);
+  castor::BaseObject::initLog("RmNode", castor::SVC_DLFMSG);
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
 
@@ -193,7 +193,7 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
      {16, "State sent to rmMaster"},
      {17, "Metrics sent to rmMaster"},
      {-1, ""}};
-  castor::dlf::dlf_init("newrmnode", messages);
+  castor::dlf::dlf_init("RmNode", messages);
 
 }
 

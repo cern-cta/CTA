@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
@@ -123,40 +124,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_weight
-       * Weight of the filesystem, as computed by the expert system
-       * @return the value of m_weight
-       */
-      float weight() const {
-        return m_weight;
-      }
-
-      /**
-       * Set the value of m_weight
-       * Weight of the filesystem, as computed by the expert system
-       * @param new_var the new value of m_weight
-       */
-      void setWeight(float new_var) {
-        m_weight = new_var;
-      }
-
-      /**
-       * Get the value of m_fsDeviation
-       * @return the value of m_fsDeviation
-       */
-      float fsDeviation() const {
-        return m_fsDeviation;
-      }
-
-      /**
-       * Set the value of m_fsDeviation
-       * @param new_var the new value of m_fsDeviation
-       */
-      void setFsDeviation(float new_var) {
-        m_fsDeviation = new_var;
-      }
-
-      /**
        * Get the value of m_mountPoint
        * @return the value of m_mountPoint
        */
@@ -170,24 +137,6 @@ namespace castor {
        */
       void setMountPoint(std::string new_var) {
         m_mountPoint = new_var;
-      }
-
-      /**
-       * Get the value of m_deltaWeight
-       * Estimation of the modifications of the weight since the last update.
-       * @return the value of m_deltaWeight
-       */
-      float deltaWeight() const {
-        return m_deltaWeight;
-      }
-
-      /**
-       * Set the value of m_deltaWeight
-       * Estimation of the modifications of the weight since the last update.
-       * @param new_var the new value of m_deltaWeight
-       */
-      void setDeltaWeight(float new_var) {
-        m_deltaWeight = new_var;
       }
 
       /**
@@ -335,6 +284,96 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_readRate
+       * The read rate for the fileSystem
+       * @return the value of m_readRate
+       */
+      u_signed64 readRate() const {
+        return m_readRate;
+      }
+
+      /**
+       * Set the value of m_readRate
+       * The read rate for the fileSystem
+       * @param new_var the new value of m_readRate
+       */
+      void setReadRate(u_signed64 new_var) {
+        m_readRate = new_var;
+      }
+
+      /**
+       * Get the value of m_writeRate
+       * The write rate for the fileSystem
+       * @return the value of m_writeRate
+       */
+      u_signed64 writeRate() const {
+        return m_writeRate;
+      }
+
+      /**
+       * Set the value of m_writeRate
+       * The write rate for the fileSystem
+       * @param new_var the new value of m_writeRate
+       */
+      void setWriteRate(u_signed64 new_var) {
+        m_writeRate = new_var;
+      }
+
+      /**
+       * Get the value of m_nbReadStreams
+       * Nb of read streams running on this fileSystem
+       * @return the value of m_nbReadStreams
+       */
+      unsigned int nbReadStreams() const {
+        return m_nbReadStreams;
+      }
+
+      /**
+       * Set the value of m_nbReadStreams
+       * Nb of read streams running on this fileSystem
+       * @param new_var the new value of m_nbReadStreams
+       */
+      void setNbReadStreams(unsigned int new_var) {
+        m_nbReadStreams = new_var;
+      }
+
+      /**
+       * Get the value of m_nbWriteStreams
+       * Nb of write streams running on this fileSystem
+       * @return the value of m_nbWriteStreams
+       */
+      unsigned int nbWriteStreams() const {
+        return m_nbWriteStreams;
+      }
+
+      /**
+       * Set the value of m_nbWriteStreams
+       * Nb of write streams running on this fileSystem
+       * @param new_var the new value of m_nbWriteStreams
+       */
+      void setNbWriteStreams(unsigned int new_var) {
+        m_nbWriteStreams = new_var;
+      }
+
+      /**
+       * Get the value of m_nbReadWriteStreams
+       * Nb of read/write streams running on this fileSystem
+       * @return the value of m_nbReadWriteStreams
+       */
+      unsigned int nbReadWriteStreams() const {
+        return m_nbReadWriteStreams;
+      }
+
+      /**
+       * Set the value of m_nbReadWriteStreams
+       * Nb of read/write streams running on this fileSystem
+       * @param new_var the new value of m_nbReadWriteStreams
+       */
+      void setNbReadWriteStreams(unsigned int new_var) {
+        m_nbReadWriteStreams = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -429,20 +468,30 @@ namespace castor {
         m_status = new_var;
       }
 
+      /**
+       * Get the value of m_adminStatus
+       * Admin status of the FileSystem
+       * @return the value of m_adminStatus
+       */
+      castor::monitoring::AdminStatusCodes adminStatus() const {
+        return m_adminStatus;
+      }
+
+      /**
+       * Set the value of m_adminStatus
+       * Admin status of the FileSystem
+       * @param new_var the new value of m_adminStatus
+       */
+      void setAdminStatus(castor::monitoring::AdminStatusCodes new_var) {
+        m_adminStatus = new_var;
+      }
+
     private:
 
       /// Free space on the filesystem
       u_signed64 m_free;
 
-      /// Weight of the filesystem, as computed by the expert system
-      float m_weight;
-
-      float m_fsDeviation;
-
       std::string m_mountPoint;
-
-      /// Estimation of the modifications of the weight since the last update.
-      float m_deltaWeight;
 
       /// Estimation of the modifications of the free space since the last update.
       signed64 m_deltaFree;
@@ -465,6 +514,21 @@ namespace castor {
       /// Total size of the fileSystem (given in bytes)
       u_signed64 m_totalSize;
 
+      /// The read rate for the fileSystem
+      u_signed64 m_readRate;
+
+      /// The write rate for the fileSystem
+      u_signed64 m_writeRate;
+
+      /// Nb of read streams running on this fileSystem
+      unsigned int m_nbReadStreams;
+
+      /// Nb of write streams running on this fileSystem
+      unsigned int m_nbWriteStreams;
+
+      /// Nb of read/write streams running on this fileSystem
+      unsigned int m_nbReadWriteStreams;
+
       /// The id of this object
       u_signed64 m_id;
 
@@ -475,6 +539,9 @@ namespace castor {
       DiskServer* m_diskserver;
 
       FileSystemStatusCodes m_status;
+
+      /// Admin status of the FileSystem
+      castor::monitoring::AdminStatusCodes m_adminStatus;
 
     }; /* end of class FileSystem */
 

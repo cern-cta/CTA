@@ -60,6 +60,26 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
   }
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::UDPSocket::UDPSocket(const unsigned short port,
+				 const std::string host)
+  throw (castor::exception::Exception) :
+  AbstractSocket(port, host, false) {
+  createSocket();
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::UDPSocket::UDPSocket(const unsigned short port,
+				 const unsigned long ip)
+  throw (castor::exception::Exception) :
+  AbstractSocket(port, ip, false) {
+  createSocket();
+}
+
+//------------------------------------------------------------------------------
 // createSocket
 //------------------------------------------------------------------------------
 void castor::io::UDPSocket::createSocket()

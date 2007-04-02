@@ -34,7 +34,7 @@
 #else
 #include "castor/db/ora/OraCommonSvc.hpp"
 #endif
-#include "castor/stager/ITapeSvc.hpp"
+#include "castor/stager/BaseTapeSvc.hpp"
 #include "occi.h"
 #include <vector>
 
@@ -48,7 +48,7 @@ namespace castor {
        * Implementation of the ITapeSvc for Oracle
        */
       class OraTapeSvc : public OraCommonSvc,
-                         public virtual castor::stager::ITapeSvc {
+                         public virtual castor::stager::BaseTapeSvc {
 
       public:
 

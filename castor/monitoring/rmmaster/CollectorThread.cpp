@@ -37,6 +37,7 @@
 #include "castor/monitoring/admin/DiskServerAdminReport.hpp"
 #include "castor/monitoring/admin/FileSystemAdminReport.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/MessageAck.hpp"
 #include "castor/Constants.hpp"
@@ -120,13 +121,12 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
         ack.setStatus(false);
         ack.setErrorCode(e.code());
         std::ostringstream stst;
-        stst << "Caught exception in CollectorThread"
-             << std::endl << e.getMessage().str();
+        stst << e.getMessage().str();
         ack.setErrorMessage(stst.str());
       }
     }
     // free memory
-    delete obj;
+    if (0 != obj) delete obj;
     // "Sending acknowledgement to client" message
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 15);
     try {
@@ -138,6 +138,8 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
          castor::dlf::Param("Precise Message", e.getMessage().str())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 16, 2, params);
     }
+    // closing and deleting socket
+    delete sock;
   } catch (...) {
     // "General exception caught"
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 17);
@@ -342,17 +344,17 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
       return;
     }
     // Update FileSystem metrics
-    it2->second.setReadRate((*itFs)->readRate() + it2->second.readRate());
+    it2->second.setReadRate((*itFs)->readRate() + it2->second.deltaReadRate());
     it2->second.setDeltaReadRate(0);
-    it2->second.setWriteRate((*itFs)->writeRate() + it2->second.writeRate());
+    it2->second.setWriteRate((*itFs)->writeRate() + it2->second.deltaWriteRate());
     it2->second.setDeltaWriteRate(0);
-    it2->second.setNbReadStreams((*itFs)->nbReadStreams() + it2->second.nbReadStreams());
+    it2->second.setNbReadStreams((*itFs)->nbReadStreams() + it2->second.deltaNbReadStreams());
     it2->second.setDeltaNbReadStreams(0);
-    it2->second.setNbWriteStreams((*itFs)->nbWriteStreams() + it2->second.nbWriteStreams());
+    it2->second.setNbWriteStreams((*itFs)->nbWriteStreams() + it2->second.deltaNbWriteStreams());
     it2->second.setDeltaNbWriteStreams(0);
-    it2->second.setNbReadWriteStreams((*itFs)->nbReadWriteStreams() + it2->second.nbReadWriteStreams());
+    it2->second.setNbReadWriteStreams((*itFs)->nbReadWriteStreams() + it2->second.deltaNbReadWriteStreams());
     it2->second.setDeltaNbReadWriteStreams(0);
-    it2->second.setFreeSpace((*itFs)->freeSpace() + it2->second.freeSpace());
+    it2->second.setFreeSpace((*itFs)->freeSpace() + it2->second.deltaFreeSpace());
     it2->second.setDeltaFreeSpace(0);
     // Update lastUpdate
     it2->second.setLastMetricsUpdate(time(0));
@@ -377,7 +379,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
   // created the empty string).
   if (admin->diskServerName().size() == 0) {
     // "Ignored admin diskserver report for machine with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 23);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23);
     return;
   }
   // Take care of DiskServer creation
@@ -387,9 +389,16 @@ void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
       smMachineName(admin->diskServerName().c_str());
     it = m_clusterStatus->find(smMachineName);
     if (it == m_clusterStatus->end()) {
-      it = m_clusterStatus->insert
-	(std::make_pair(smMachineName,
-			castor::monitoring::DiskServerStatus())).first;
+      // "Ignored admin diskServer report for unknown machine"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Machine name", admin->diskServerName())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 29, 1, params);
+      // inform user via the exception mechanism
+      castor::exception::NoEntry e;
+      e.getMessage() << "Unknown machine '"
+		     << admin->diskServerName()
+		     << "'. Please check the name and provide the domain.";
+      throw e;
     }
   } catch (std::exception e) {
     // "Unable to allocate SharedMemoryString"
@@ -427,12 +436,12 @@ void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
   // created the empty string).
   if (admin->diskServerName().size() == 0) {
     // "Ignored admin filesystem report for machine with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 24);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 24);
     return;
   }
   if (admin->mountPoint().size() == 0) {
     // "Ignored admin filesystem report for filesystem with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 25);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 25);
     return;
   }
   // Take care of FileSystem creation
@@ -442,9 +451,16 @@ void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
       smMachineName(admin->diskServerName().c_str());
     it = m_clusterStatus->find(smMachineName);
     if (it == m_clusterStatus->end()) {
-      it = m_clusterStatus->insert
-	(std::make_pair(smMachineName,
-			castor::monitoring::DiskServerStatus())).first;
+      // "Ignored admin fileSystem report for unknown machine"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Machine name", admin->diskServerName())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 30, 1, params);
+      // inform user via the exception mechanism
+      castor::exception::NoEntry e;
+      e.getMessage() << "Unknown machine '"
+		     << admin->diskServerName()
+		     << "'. Please check the name and provide the domain.";
+      throw e;
     }
   } catch (std::exception e) {
     // "Unable to allocate SharedMemoryString"
@@ -458,10 +474,19 @@ void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
       (admin->mountPoint().c_str());
     it2 = it->second.find(smMountPoint);
     if (it2 == it->second.end()) {
-      it2 = it->second.insert
-	(std::make_pair
-	 (smMountPoint,
-	  castor::monitoring::FileSystemStatus())).first;
+      // "Ignored admin fileSystem report for unknown mountPoint"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Machine name", admin->diskServerName()),
+	 castor::dlf::Param("MountPoint", admin->mountPoint())};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 31, 2, params);
+      // inform user via the exception mechanism
+      castor::exception::NoEntry e;
+      e.getMessage() << "Unknown mountPoint '"
+		     << admin->mountPoint()
+		     << "' on machine '"
+		     << admin->diskServerName()
+		     << "'.";
+      throw e;
     }
   } catch (std::exception e) {
     // "Unable to allocate SharedMemoryString"

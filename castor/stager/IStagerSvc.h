@@ -272,43 +272,6 @@ int Cstager_IStagerSvc_recreateCastorFile
  struct Cstager_DiskCopyForRecall_t** diskCopy);
 
 /**
- * Selects a machine and FileSystem for a given job.
- * Note that the caller is responsible for freeing
- * the returned strings : mountPoint and diskServer
- * @param stgSvc the IStagerSvc used
- * @param fileSystems the list of allowed filesystems
- * according to job requirements (given by id). This
- * is the fileSystems' mountPoint, the corresponding
- * machines are given by parameter machines.
- * A null array means that any filesystem is eligible
- * @param machines the machines on which the filesystems
- * in parameter fileSystems reside.
- * A null array means that any machine is eligible. in such
- * a case, fileSystems has to be null.
- * @param minFree the minimum free space needed on each
- * filesystem to be selected. This is filesystem dependent
- * if filesystems are given (due to possible reservations
- * of the scheduler).
- * If no filesystem are given, this array must have
- * exactely one item, used for all filesystems.
- * @param fileSystemsNb the length of the arrays
- * fileSystems, machines and minFree when they are not
- * null (and if filesystems are given for minFree)
- * @mountPoint the selected fileSystem's mountPoint
- * @diskServer the diskServer on which the selected
- * fileSystem resides.
- * @return 0 : OK.
- * -1 : an error occurred and serrno is set to the corresponding error code
- * A detailed error message can be retrieved by calling
- * Cstager_IStagerSvc_errorMsg
- */
-int Cstager_IStagerSvc_bestFileSystemForJob
-(struct Cstager_IStagerSvc_t* stgSvc,
- char** fileSystems, char** machines,
- u_signed64* minFree, unsigned int fileSystemsNb,
- char** mountPoint, char** diskServer);
-
-/**
  * Updates a filesystem state (e.g : weight,
  * fsdeviation) to take into account the opening of
  * a new job.
