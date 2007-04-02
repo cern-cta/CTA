@@ -5,3 +5,7 @@
 %attr(0755,root,bin) usr/bin/rmenterjob
 %attr(0755,root,bin) usr/bin/rmkilljob
 %attr(0750,root,bin) usr/bin/rmmaster
+%attr(0755,root,bin) etc/init.d/rmMasterDaemon
+%attr(0644,root,bin) etc/sysconfig/rmMasterDaemon.example
+%attr(0750,root,bin) usr/bin/rmMasterDaemon
+%attr(0750,root,bin) usr/bin/rmGetNodes

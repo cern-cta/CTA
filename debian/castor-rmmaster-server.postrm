@@ -1,10 +1,13 @@
 #! /bin/sh
 #
-# $Id: castor-rmmaster-server.postrm,v 1.8 2005/08/08 16:51:22 jdurand Exp $
+# $Id: castor-rmmaster-server.postrm,v 1.9 2007/04/02 14:26:30 sponcec3 Exp $
 #
 CASTOR_SERVICE=rmmaster
 export CASTOR_SERVICE
 CASTOR_SERVICE_SPOOL=/var/spool/rmmaster
 export CASTOR_SERVICE_SPOOL
+[ -x /usr/sbin/castor-service.postrm ] && /usr/sbin/castor-service.postrm ${1+"$@"}
+CASTOR_SERVICE=rmMasterDaemon
+export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.postrm ] && /usr/sbin/castor-service.postrm ${1+"$@"}
 exit $?

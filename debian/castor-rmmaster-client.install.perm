@@ -2,3 +2,4 @@
 %attr(0755,root,bin) usr/bin/rmgetnodes
 %attr(0755,root,bin) usr/bin/rmgettime
 %attr(0755,root,bin) usr/bin/rmmodifyjob
+%attr(0755,root,bin) usr/bin/rmAdminNode

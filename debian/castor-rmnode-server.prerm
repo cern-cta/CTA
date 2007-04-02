@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-rmnode-server.prerm,v 1.4 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-rmnode-server.prerm,v 1.5 2007/04/02 14:26:31 sponcec3 Exp $
 #
-CASTOR_SERVICE=rmnode
+CASTOR_SERVICE=rmNodeDaemon
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
 exit $?

@@ -1,3 +1,20 @@
+castor (2.1.3-3) unstable; urgency=low
+
+  * Third test release with new LSF plugin and new monitoring
+  * done from the branch newLSFPlugin
+  * 2 small changes done : fixed rmMasterDaemon default port and fixed trailing slashes handling in monitoring
+
+castor (2.1.3-2) unstable; urgency=low
+
+  * Second test release with new LSF plugin and new monitoring
+  * done from the branch newLSFPlugin
+  * also includes recent changes for the tape part
+
+castor (2.1.3-1) unstable; urgency=low
+
+  * First test release with new LSF plugin and new monitoring
+  * done from the branch newLSFPlugin
+
 castor (2.1.2-6) unstable; urgency=low
 
   * Two bug fixes in the prepare to get not-scheduled:

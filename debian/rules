@@ -88,10 +88,10 @@ install: build
 	mkdir -p $(CURDIR)/debian/castor/usr/sbin
 ifeq ($(DEB_HOST_ARCH_CPU),amd64)
 	mkdir -p $(CURDIR)/debian/castor/usr/lib64/rtcopy
-	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib64
+	mkdir -p $(CURDIR)/debian/castor/usr/lsf/lib64
 else
 	mkdir -p $(CURDIR)/debian/castor/usr/lib/rtcopy
-	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/lib
+	mkdir -p $(CURDIR)/debian/castor/usr/lsf/lib
 endif
 	mkdir -p $(CURDIR)/debian/castor/usr/lib/perl/CASTOR
 	mkdir -p $(CURDIR)/debian/castor/usr/include/shift
@@ -102,7 +102,7 @@ endif
 	mkdir -p $(CURDIR)/debian/castor/etc/castor/expert
 	mkdir -p $(CURDIR)/debian/castor/etc/init.d
 	mkdir -p $(CURDIR)/debian/castor/etc/sysconfig
-	mkdir -p $(CURDIR)/debian/castor/usr/local/lsf/etc
+	mkdir -p $(CURDIR)/debian/castor/usr/lsf/etc
 	mkdir -p $(CURDIR)/debian/castor/var/www/html/dlf
 	# Install CASTOR
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/castor

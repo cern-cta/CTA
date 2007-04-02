@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-rmnode-server.postrm,v 1.8 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-rmnode-server.postrm,v 1.9 2007/04/02 14:26:30 sponcec3 Exp $
 #
-CASTOR_SERVICE=rmnode
+CASTOR_SERVICE=rmNodeDaemon
 export CASTOR_SERVICE
 CASTOR_SERVICE_SPOOL=/var/spool/rmnode
 export CASTOR_SERVICE_SPOOL

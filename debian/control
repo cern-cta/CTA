@@ -192,19 +192,19 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rmmaster-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring Master clients
 
 Package: castor-rmmaster-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring Master server
 
 Package: castor-rmnode-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets, castor-lib-monitor
 Description: castor (Cern Advanced STORage system)
  Resource Monitoring running on each worker node
 
@@ -332,4 +332,9 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Distributed Logging Facility Web Interface
-  
+
+Package: castor-lib-monitor
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Description: castor (Cern Advanced STORage system)
+ Shared libraries for monitoring framework

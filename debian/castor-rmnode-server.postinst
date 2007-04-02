@@ -1,8 +1,8 @@
 #! /bin/sh
 #
-# $Id: castor-rmnode-server.postinst,v 1.7 2005/08/08 16:51:23 jdurand Exp $
+# $Id: castor-rmnode-server.postinst,v 1.8 2007/04/02 14:26:30 sponcec3 Exp $
 #
-CASTOR_SERVICE=rmnode
+CASTOR_SERVICE=rmNodeDaemon
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
 exit $?
