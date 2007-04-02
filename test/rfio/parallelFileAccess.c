@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.11 $ $Release$ $Date: 2005/06/10 14:52:13 $ $Author: obarring $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.12 $ $Release$ $Date: 2007/04/02 16:57:23 $ $Author: itglp $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.11 $ $Date: 2005/06/10 14:52:13 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.12 $ $Date: 2007/04/02 16:57:23 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -143,7 +143,8 @@ void dumpTiming(
   int i;
   
   for (i=0; i<nbThreads; i++) {
-    fprintf(dumpfp,"%s %d.%6.6d %d.%6.6d %d.%6.6d %d.%6.6d %d.%6.6d ",
+    /*
+    fprintf(dumpfp,"%s %ld.%6.6ld %ld.%6.6ld %ld.%6.6ld %ld.%6.6ld %ld.%6.6ld ",
             mode,
             timingInfo[i].threadLaunchedTime.tv_sec,
             timingInfo[i].threadLaunchedTime.tv_usec,
@@ -155,6 +156,7 @@ void dumpTiming(
             timingInfo[i].closeEnterTime.tv_usec,
             timingInfo[i].closeExitTime.tv_sec,
             timingInfo[i].closeExitTime.tv_usec);
+    */
     fprintf(dumpfp,"%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
             timingInfo[i].threadId,
             timingInfo[i].fd,
@@ -588,5 +590,5 @@ int main(
   } /* for ( i=0; i<nbLoops; i++ ) */
 
   fclose(dumpfp);
-    
+  return(0);
 }
