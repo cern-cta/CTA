@@ -301,6 +301,8 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (15, 'Repack');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (16, 'cleaning');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'tpdaemon');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'RmMaster');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (20, 'RmNode');
 
 /* initialise sequences */
 INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);
