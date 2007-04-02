@@ -272,7 +272,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/GCFileList.cpp \
               stager/GCFileListCInt.cpp \
               stager/IStagerSvcCInt.cpp \
-              stager/IFSSvcCInt.cpp \
               stager/IJobSvcCInt.cpp \
               stager/ITapeSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/01/16 16:07:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/04/02 15:34:24 $ $Author: sponcec3 $
  *
  *
  *
@@ -182,7 +182,7 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "DBCOMMONSVC",
   "DBSTAGERSVC",
   "DBTAPESVC",
-  "DBFSSVC",
+  "DELETED SERVICE",
   "DBJOBSVC",
   "DBGCSVC",
   "DBQUERYSVC",
@@ -192,7 +192,7 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "ORACOMMONSVC",
   "ORASTAGERSVC",
   "ORATAPESVC",
-  "ORAFSSVC",
+  "DELETED SERVICE",
   "ORAJOBSVC",
   "ORAGCSVC",
   "ORAQUERYSVC",
@@ -202,7 +202,7 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "PGCOMMONSVC",
   "PGSTAGERSVC",
   "PGTAPESVC",
-  "PGFSSVC",
+  "DELETED SERVICE",
   "PGJOBSVC",
   "PGGCSVC",
   "PGQUERYSVC",
