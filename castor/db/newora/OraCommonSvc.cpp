@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/05 13:57:19 $ $Author: riojac3 $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/04/02 15:56:38 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -81,7 +81,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 
   /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
-  "SELECT DiskServer.id, DiskServer.status, FileSystem.id, FileSystem.free, FileSystem.weight, FileSystem.fsDeviation, FileSystem.status, FileSystem.minFreeSpace, FileSystem.maxFreeSpace, FileSystem.reservedSpace, FileSystem.spaceToBeFreed, FileSystem.totalSize, FileSystem.minAllowedFreeSpace FROM FileSystem, DiskServer WHERE DiskServer.name = :1 AND FileSystem.mountPoint = :2 AND FileSystem.diskserver = DiskServer.id FOR UPDATE";
+  "SELECT d.id, d.load, d.status, d.adminStatus, f.id, f.free, f.deltaFree, f.reservedSpace, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id FOR UPDATE";
 
   
 // -----------------------------------------------------------------------
@@ -170,7 +170,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
         return tape;
       } catch (castor::exception::Exception e) {
         delete tape;
-        // XXX  Change createREp in CodeGenerator to forward the oracle errorcode 
+        // XXX  Change createRep in CodeGenerator to forward the oracle errorcode 
         if ( e.getMessage().str().find("ORA-00001", 0) != std::string::npos ) {
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
@@ -343,28 +343,35 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     }
     // Found the FileSystem and the DiskServer,
     // create them in memory
-    // XXX NOTE: the FileSystem object is not complete, we are not
-    // XXX retrieving from the db the deltaFree value.
     castor::stager::DiskServer* ds =
       new castor::stager::DiskServer();
     ds->setId((u_signed64)rset->getDouble(1));
+    ds->setLoad(rset->getInt(2));
     ds->setStatus
-      ((enum castor::stager::DiskServerStatusCode)rset->getInt(2));
+      ((enum castor::stager::DiskServerStatusCode)rset->getInt(3));
+    ds->setAdminStatus
+      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(4));
     ds->setName(diskServer);
     castor::stager::FileSystem* result =
       new castor::stager::FileSystem();
-    result->setId((u_signed64)rset->getDouble(3));
-    result->setFree((u_signed64)rset->getDouble(4));
-    result->setWeight(rset->getDouble(5));
-    result->setFsDeviation(rset->getDouble(6));
+    result->setId((u_signed64)rset->getDouble(5));
+    result->setFree((u_signed64)rset->getDouble(6));
+    result->setDeltaFree((signed64)rset->getDouble(7));
+    result->setReservedSpace((u_signed64)rset->getDouble(8));
+    result->setMinFreeSpace(rset->getFloat(9));
+    result->setMinAllowedFreeSpace(rset->getFloat(10));
+    result->setMaxFreeSpace(rset->getFloat(11));
+    result->setSpaceToBeFreed((u_signed64)rset->getDouble(12));
+    result->setTotalSize((u_signed64)rset->getDouble(13));
+    result->setReadRate((u_signed64)rset->getDouble(14));
+    result->setWriteRate((u_signed64)rset->getDouble(15));
+    result->setNbReadStreams(rset->getInt(16));
+    result->setNbWriteStreams(rset->getInt(17));
+    result->setNbReadWriteStreams(rset->getInt(18));
     result->setStatus
-      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(7));
-    result->setMinFreeSpace(rset->getFloat(8));
-    result->setMaxFreeSpace(rset->getFloat(9));
-    result->setReservedSpace((u_signed64)rset->getDouble(10));
-    result->setSpaceToBeFreed((u_signed64)rset->getDouble(11));
-    result->setTotalSize((u_signed64)rset->getDouble(12));
-    result->setMinAllowedFreeSpace(rset->getFloat(13));
+      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(19));
+    result->setAdminStatus
+      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(20));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
