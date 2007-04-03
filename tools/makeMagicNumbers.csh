@@ -39,5 +39,11 @@ if $?SRMDEV_HOME then
   end
 endif
 
+echo Creating SQL script for Type2Obj metatable...
+rm -f fillType2Obj.sql
+echo 'DROP TABLE Type2Obj;' > fillType2Obj.sql
+echo 'CREATE TABLE Type2Obj (type INTEGER, object VARCHAR2(100));' >> fillType2Obj.sql
+grep OBJ_ MagicNumbers | awk '{print "INSERT INTO Type2Obj VALUES(" $1 ", '\''" $2 "'\'');" }' >> fillType2Obj.sql
+
 a2ps --columns=4 -f 7.5 -c -o MagicNumbers.ps MagicNumbers
 
