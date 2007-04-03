@@ -17,16 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/08/11 14:30:51 $ $Author: itglp $
+ * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/03 09:45:26 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.5 $ $Release$ $Date: 2005/08/11 14:30:51 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -41,7 +37,7 @@ static char sccsid[] = "@(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.5 $ $Rel
 #include <castor/BaseObject.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
-#include <castor/stager/IFSSvc.h>
+#include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
@@ -95,7 +91,7 @@ int main(int argc, char *argv[])
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj = NULL;
-  struct Cstager_IFSSvc_t *fsSvc = NULL;
+  struct Cstager_IStagerSvc_t *fsSvc = NULL;
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_FileClass_t *fileClass = NULL, *fileClassOld = NULL;
@@ -114,14 +110,14 @@ int main(int argc, char *argv[])
             sstrerror(serrno));
     return(1);
   }
-  rc = C_Services_service(svcs,"DbFSSvc",SVC_DBFSSVC,&iSvc);
+  rc = C_Services_service(svcs,"DbStagerSvc",SVC_DBSTAGERSVC,&iSvc);
   if ( rc == -1 ) {
     fprintf(stderr,"Cannot create fs svc: %s, %s\n",
             sstrerror(serrno),
             C_Services_errorMsg(svcs));
     return(1);
   }
-  fsSvc = Cstager_IFSSvc_fromIService(iSvc);
+  fsSvc = Cstager_IStagerSvc_fromIService(iSvc);
     
   Cstager_FileClass_create(&fileClass);
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
@@ -180,7 +176,7 @@ int main(int argc, char *argv[])
     }
   }
 
-  rc = Cstager_IFSSvc_selectFileClass(fsSvc,&fileClassOld,name);
+  rc = Cstager_IStagerSvc_selectFileClass(fsSvc,&fileClassOld,name);
   if ( fileClassOld != NULL ) {
     fprintf(stdout,
             "FileClass %s already exists, please use 'modifyFileClass' command\n"

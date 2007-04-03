@@ -17,16 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/03/30 12:52:51 $ $Author: itglp $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.11 $ $Release$ $Date: 2007/04/03 09:45:26 $ $Author: sponcec3 $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/03/30 12:52:51 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
@@ -42,7 +38,7 @@ static char sccsid[] = "@(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.10 $ $Re
 #include <castor/stager/SvcClass.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
-#include <castor/stager/IFSSvc.h>
+#include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
@@ -210,14 +206,14 @@ int findDiskPool(
 }
 
 int addTapePools(
-                 fsSvc,
+                 stgSvc,
                  svcClass,
                  tapePoolsArray,
                  nbTapePools,
                  addTapePoolsArray,
                  nbAddTapePools
                  )
-  struct Cstager_IFSSvc_t *fsSvc;
+  struct Cstager_IStagerSvc_t *stgSvc;
   struct Cstager_SvcClass_t *svcClass;
   char **tapePoolsArray, **addTapePoolsArray;
   int nbTapePools, nbAddTapePools;
@@ -234,16 +230,16 @@ int addTapePools(
     fprintf(stdout,"Add tape pool %s\n",addTapePoolsArray[i]);
     tapePool = NULL;
     if ( findTapePool(tapePoolsArray,nbTapePools,&tapePool,addTapePoolsArray[i]) == 0 ) {
-      rc = Cstager_IFSSvc_selectTapePool(
-                                             fsSvc,
+      rc = Cstager_IStagerSvc_selectTapePool(
+                                             stgSvc,
                                              &tapePool,
                                              addTapePoolsArray[i]
                                              );
       if ( rc == -1 ) {
-        fprintf(stderr,"Cstager_IFSSvc_selectTapePool(%s): %s, %s\n",
+        fprintf(stderr,"Cstager_IStagerSvc_selectTapePool(%s): %s, %s\n",
           addTapePoolsArray[i],
           sstrerror(serrno),
-          Cstager_IFSSvc_errorMsg(fsSvc));
+          Cstager_IStagerSvc_errorMsg(stgSvc));
         return(1);
       }
       if ( tapePool == NULL ) {
@@ -296,14 +292,14 @@ int removeTapePools(
 }
 
 int addDiskPools(
-                 fsSvc,
+                 stgSvc,
                  svcClass,
                  diskPoolsArray,
                  nbDiskPools,
                  addDiskPoolsArray,
                  nbAddDiskPools
                  )
-  struct Cstager_IFSSvc_t *fsSvc;
+  struct Cstager_IStagerSvc_t *stgSvc;
   struct Cstager_SvcClass_t *svcClass;
   char **diskPoolsArray, **addDiskPoolsArray;
   int nbDiskPools, nbAddDiskPools;
@@ -319,16 +315,16 @@ int addDiskPools(
     fprintf(stdout,"Add disk pool %s\n",addDiskPoolsArray[i]);
     diskPool = NULL;
     if ( findDiskPool(diskPoolsArray,nbDiskPools,&diskPool,addDiskPoolsArray[i]) == 0 ) {
-      rc = Cstager_IFSSvc_selectDiskPool(
-                                             fsSvc,
+      rc = Cstager_IStagerSvc_selectDiskPool(
+                                             stgSvc,
                                              &diskPool,
                                              addDiskPoolsArray[i]
                                              );
       if ( rc == -1 ) {
-        fprintf(stderr,"Cstager_IFSSvc_selectDiskPool(%s): %s, %s\n",
+        fprintf(stderr,"Cstager_IStagerSvc_selectDiskPool(%s): %s, %s\n",
           addDiskPoolsArray[i],
           sstrerror(serrno),
-          Cstager_IFSSvc_errorMsg(fsSvc));
+          Cstager_IStagerSvc_errorMsg(stgSvc));
         return(1);
       }
       if ( diskPool == NULL ) {
@@ -393,7 +389,7 @@ int main(int argc, char *argv[])
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj = NULL;
-  struct Cstager_IFSSvc_t *fsSvc = NULL;
+  struct Cstager_IStagerSvc_t *stgSvc = NULL;
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_SvcClass_t *svcClass = NULL;
@@ -418,14 +414,14 @@ int main(int argc, char *argv[])
             sstrerror(serrno));
     return(1);
   }
-  rc = C_Services_service(svcs,"DbFSSvc",SVC_DBFSSVC,&iSvc);
+  rc = C_Services_service(svcs,"DbStagerSvc",SVC_DBSTAGERSVC,&iSvc);
   if ( rc == -1 ) {
-    fprintf(stderr,"Cannot create fs svc: %s, %s\n",
+    fprintf(stderr,"Cannot create stager svc: %s, %s\n",
             sstrerror(serrno),
             C_Services_errorMsg(svcs));
     return(1);
   }
-  fsSvc = Cstager_IFSSvc_fromIService(iSvc);
+  stgSvc = Cstager_IStagerSvc_fromIService(iSvc);
     
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
     switch (ch) {
@@ -475,12 +471,12 @@ int main(int argc, char *argv[])
     return(0);
   }
 
-  rc = Cstager_IFSSvc_selectSvcClass(fsSvc,&svcClass,name);
+  rc = Cstager_IStagerSvc_selectSvcClass(stgSvc,&svcClass,name);
   if ( (rc == -1) || (svcClass == NULL) ) {
     fprintf(stdout,
             "SvcClass %s does not exists, %s, %s\n",name,
             sstrerror(serrno),
-            Cstager_IFSSvc_errorMsg(fsSvc));
+            Cstager_IStagerSvc_errorMsg(stgSvc));
     return(1);
   }
   if ( nbDrives >= 0 ) Cstager_SvcClass_setNbDrives(svcClass,nbDrives);
@@ -561,7 +557,7 @@ int main(int argc, char *argv[])
       return(1);
     }
     rc = addTapePools(
-                      fsSvc,
+                      stgSvc,
                       svcClass,
                       tapePoolsArray,
                       nbTapePools,
@@ -615,7 +611,7 @@ int main(int argc, char *argv[])
       return(1);
     }
     rc = addDiskPools(
-                      fsSvc,
+                      stgSvc,
                       svcClass,
                       diskPoolsArray,
                       nbDiskPools,

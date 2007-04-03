@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile $ $Revision: 1.4 $ $Release$ $Date: 2005/08/11 14:30:51 $ $Author: itglp $
+ * @(#)$RCSfile $ $Revision: 1.5 $ $Release$ $Date: 2007/04/03 09:45:26 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: deleteSvcClass.c,v $ $Revision: 1.4 $ $Release$ $Date: 2005/08/11 14:30:51 $ Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: deleteSvcClass.c,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/03 09:45:26 $ Olof Barring";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)$RCSfile: deleteSvcClass.c,v $ $Revision: 1.4 $ $Rel
 #include <castor/stager/SvcClass.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
-#include <castor/stager/IFSSvc.h>
+#include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
   struct C_BaseAddress_t *baseAddr = NULL;
   struct C_IAddress_t *iAddr;
   struct C_IObject_t *iObj = NULL;
-  struct Cstager_IFSSvc_t *fsSvc = NULL;
+  struct Cstager_IStagerSvc_t *stgSvc = NULL;
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_SvcClass_t *svcClassOld = NULL;
@@ -104,14 +104,14 @@ int main(int argc, char *argv[])
             sstrerror(serrno));
     return(1);
   }
-  rc = C_Services_service(svcs,"DbFSSvc",SVC_DBFSSVC,&iSvc);
+  rc = C_Services_service(svcs,"DbStagerSvc",SVC_DBSTAGERSVC,&iSvc);
   if ( rc == -1 ) {
-    fprintf(stderr,"Cannot create fs svc: %s, %s\n",
+    fprintf(stderr,"Cannot create stager svc: %s, %s\n",
             sstrerror(serrno),
             C_Services_errorMsg(svcs));
     return(1);
   }
-  fsSvc = Cstager_IFSSvc_fromIService(iSvc);
+  stgSvc = Cstager_IStagerSvc_fromIService(iSvc);
     
   while ((ch = Cgetopt_long(argc,argv,"h",longopts,NULL)) != EOF) {
     switch (ch) {
@@ -128,12 +128,12 @@ int main(int argc, char *argv[])
     return(0);
   }
 
-  rc = Cstager_IFSSvc_selectSvcClass(fsSvc,&svcClassOld,name);
+  rc = Cstager_IStagerSvc_selectSvcClass(stgSvc,&svcClassOld,name);
   if ( (rc == -1) || (svcClassOld == NULL) ) {
     if ( rc == -1 ) {
-      fprintf(stderr,"Cstager_IFSSvc_selectSvcClass(%s): %s, %s\n",
+      fprintf(stderr,"Cstager_IStagerSvc_selectSvcClass(%s): %s, %s\n",
               name,sstrerror(serrno),
-              Cstager_IFSSvc_errorMsg(fsSvc));
+              Cstager_IStagerSvc_errorMsg(stgSvc));
       return(1);
     }
     fprintf(stderr,
