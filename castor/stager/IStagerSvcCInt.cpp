@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2007/04/02 15:26:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2007/04/03 09:37:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -337,6 +337,40 @@ extern "C" {
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectDiskPool
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectDiskPool(struct Cstager_IStagerSvc_t* stagerSvc,
+					castor::stager::DiskPool** diskPool,
+					const char* name) {
+    if (!checkIStagerSvc(stagerSvc)) return -1;
+    try {
+      *diskPool = stagerSvc->stgSvc->selectDiskPool(name);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stagerSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IStagerSvc_selectTapePool
+  //-------------------------------------------------------------------------
+  int Cstager_IStagerSvc_selectTapePool(struct Cstager_IStagerSvc_t* stagerSvc,
+					castor::stager::TapePool** tapePool,
+					const char* name) {
+    if (!checkIStagerSvc(stagerSvc)) return -1;
+    try {
+      *tapePool = stagerSvc->stgSvc->selectTapePool(name);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      stagerSvc->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
