@@ -1,3 +1,10 @@
+gencastor (6.0-1) unstable; urgency=low
+
+  * Removed Oracle-specific converters
+  * Several minor fixes
+
+ -- Giuseppe Lo Presti <itglp@cern.ch>  Tue, 03 Apr 2007 10:14:57 +0200
+
 gencastor (6.0-0) unstable; urgency=low
 
   * Port to KDE 3.5.5.
