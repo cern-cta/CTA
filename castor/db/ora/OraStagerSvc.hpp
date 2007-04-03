@@ -295,6 +295,30 @@ namespace castor {
          unsigned long euid,
          unsigned long egid)
            throw (castor::exception::Exception);
+          
+        /**
+         * Retrieves a DiskPool from the database based on name.
+         * Caller is in charge of the deletion of the allocated
+         * memory.
+         * @param name the name of the disk pool
+         * @return the DiskPool object or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::DiskPool* selectDiskPool
+        (const std::string name)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieves a TapePool from the database based on name.
+         * Caller is in charge of the deletion of the allocated
+         * memory.
+         * @param name the name of the tape pool
+         * @return the TapePool object or 0 if none found
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::TapePool* selectTapePool
+        (const std::string name)
+          throw (castor::exception::Exception);
 
       private:
 
@@ -375,6 +399,18 @@ namespace castor {
 
         /// SQL statement object for function setFileGCWeight
         oracle::occi::Statement *m_setFileGCWeightStatement;
+
+        /// SQL statement for function selectDiskPool
+        static const std::string s_selectDiskPoolStatementString;
+
+        /// SQL statement object for function selectDiskPool
+        oracle::occi::Statement *m_selectDiskPoolStatement;
+
+        /// SQL statement for function selectTapePool
+        static const std::string s_selectTapePoolStatementString;
+
+        /// SQL statement object for function selectTapePool
+        oracle::occi::Statement *m_selectTapePoolStatement;
 
       }; // end of class OraStagerSvc
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.195 $ $Release$ $Date: 2007/04/02 15:26:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.196 $ $Release$ $Date: 2007/04/03 09:29:38 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -132,6 +132,14 @@ const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
   "UPDATE DiskCopy SET gcWeight = :1 WHERE castorfile = (SELECT id FROM castorfile WHERE fileId = :2 and nsHost = :3)";
 
+/// SQL statement for selectDiskPool
+const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
+  "SELECT id FROM DiskPool WHERE name = :1";
+
+/// SQL statement for selectTapePool
+const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString =
+  "SELECT id FROM TapePool WHERE name = :1";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -147,7 +155,9 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_archiveSubReqStatement(0),
   m_stageReleaseStatement(0),
   m_stageRmStatement(0),
-  m_setFileGCWeightStatement(0) {
+  m_setFileGCWeightStatement(0),
+  m_selectDiskPoolStatement(0),
+  m_selectTapePoolStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -190,6 +200,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     deleteStatement(m_stageReleaseStatement);
     deleteStatement(m_stageRmStatement);
     deleteStatement(m_setFileGCWeightStatement);
+    deleteStatement(m_selectDiskPoolStatement);
+    deleteStatement(m_selectTapePoolStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
@@ -203,6 +215,8 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_stageReleaseStatement = 0;
   m_stageRmStatement = 0;
   m_setFileGCWeightStatement = 0;
+  m_selectDiskPoolStatement = 0;
+  m_selectTapePoolStatement = 0;
 }
 
 
@@ -908,8 +922,6 @@ extern "C" {
   }
 }
 
-
-
 // -----------------------------------------------------------------------
 // createTapeCopySegmentsForRecall (private)
 // -----------------------------------------------------------------------
@@ -919,7 +931,6 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
  unsigned long egid)
   throw (castor::exception::Exception) {
   // check argument
-  int i=0;
   if (0 == castorFile) {
     castor::exception::Internal e;
     e.getMessage() << "createTapeCopySegmentsForRecall "
@@ -972,7 +983,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
         compareSegments);
   // Find a valid copy
   int useCopyNb = -1;
-  for (i = 0; i < nbNsSegments; i++) {
+  for (int i = 0; i < nbNsSegments; i++) {
     if (validNsSegment(&nsSegmentAttrs[i]) == 0) {
       invalidateAllSegmentsForCopy(nsSegmentAttrs[i].copyno,
                                    nsSegmentAttrs,
@@ -1024,7 +1035,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
                     castor::OBJ_TapeCopy, false);
   // Go through Segments
   u_signed64 totalSize = 0;
-  for (i = 0; i < nbNsSegments; i++) {
+  for (int i = 0; i < nbNsSegments; i++) {
     // Only deal with segments of the copy we choose
     if (nsSegmentAttrs[i].copyno != useCopyNb) continue;
     // create Segment
@@ -1064,13 +1075,13 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   // create Segments in DataBase
   cnvSvc()->fillRep(&ad, &tapeCopy, castor::OBJ_Segment, false);
   // Fill Segment to Tape link
-  for (i = 0; i < tapeCopy.segments().size(); i++) {
+  for (unsigned i = 0; i < tapeCopy.segments().size(); i++) {
     castor::stager::Segment* seg = tapeCopy.segments()[i];
     cnvSvc()->fillRep(&ad, seg, castor::OBJ_Tape, false);
   }
   // cleanup
 
-  for(i=0;i<tapeCopy.segments().size();i++)
+  for(unsigned i = 0;i<tapeCopy.segments().size();i++)
     delete tapeCopy.segments()[i]->tape(); 
  
   if (nsSegmentAttrs != NULL) free(nsSegmentAttrs);
@@ -1078,3 +1089,76 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   return 0;
 }
 
+// -----------------------------------------------------------------------
+// selectDiskPool
+// -----------------------------------------------------------------------
+castor::stager::DiskPool*
+castor::db::ora::OraStagerSvc::selectDiskPool
+(const std::string name)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectDiskPoolStatement) {
+    m_selectDiskPoolStatement =
+      createStatement(s_selectDiskPoolStatementString);
+  }
+  // Execute statement and get result
+  try {
+    m_selectDiskPoolStatement->setString(1, name);
+    oracle::occi::ResultSet *rset = m_selectDiskPoolStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_selectDiskPoolStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the DiskPool, so create it in memory
+    castor::stager::DiskPool* result =
+      new castor::stager::DiskPool();
+    result->setId((u_signed64)rset->getDouble(1));
+    m_selectDiskPoolStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select DiskPool by name :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// selectTapePool
+// -----------------------------------------------------------------------
+castor::stager::TapePool*
+castor::db::ora::OraStagerSvc::selectTapePool
+(const std::string name)
+  throw (castor::exception::Exception) {
+  // Check whether the statements are ok
+  if (0 == m_selectTapePoolStatement) {
+    m_selectTapePoolStatement =
+      createStatement(s_selectTapePoolStatementString);
+  }
+  // Execute statement and get result
+  try {
+    m_selectTapePoolStatement->setString(1, name);
+    oracle::occi::ResultSet *rset = m_selectTapePoolStatement->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+      // Nothing found, return 0
+      m_selectTapePoolStatement->closeResultSet(rset);
+      return 0;
+    }
+    // Found the TapePool, so create it in memory
+    castor::stager::TapePool* result =
+      new castor::stager::TapePool();
+    result->setId((u_signed64)rset->getDouble(1));
+    m_selectTapePoolStatement->closeResultSet(rset);
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to select TapePool by name :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}

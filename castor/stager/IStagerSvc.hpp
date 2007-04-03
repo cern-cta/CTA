@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.70 $ $Release$ $Date: 2007/04/02 15:26:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.71 $ $Release$ $Date: 2007/04/03 09:29:38 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -291,6 +291,29 @@ namespace castor {
       const unsigned long euid, const unsigned long egid) 
         throw (castor::exception::Exception) = 0;
 
+      /**
+       * Retrieves a DiskPool from the database based on name.
+       * Caller is in charge of the deletion of the allocated
+       * memory.
+       * @param name the name of the disk pool
+       * @return the DiskPool object or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::DiskPool* selectDiskPool
+      (const std::string name)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a TapePool from the database based on name.
+       * Caller is in charge of the deletion of the allocated
+       * memory.
+       * @param name the name of the tape pool
+       * @return the TapePool object or 0 if none found
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::TapePool* selectTapePool
+      (const std::string name)
+        throw (castor::exception::Exception) = 0;
 
     }; // end of class IStagerSvc
 
