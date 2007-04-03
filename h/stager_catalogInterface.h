@@ -1,5 +1,5 @@
 /*
- * $Id: stager_catalogInterface.h,v 1.23 2007/02/08 07:31:05 gtaur Exp $
+ * $Id: stager_catalogInterface.h,v 1.24 2007/04/03 09:46:13 sponcec3 Exp $
  */
 
 #ifndef __stager_catalogInterface_h
@@ -9,7 +9,6 @@
 #include "castor/stager/CastorFile.h"
 #include "castor/stager/IStagerSvc.h"
 #include "castor/stager/IJobSvc.h"
-#include "castor/stager/IFSSvc.h"
 #include "castor/stager/Request.h"
 #include "castor/stager/SubRequest.h"
 #include "castor/stager/SubRequestStatusCodes.h"
