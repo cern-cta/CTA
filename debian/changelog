@@ -1,3 +1,8 @@
+castor (2.1.3-5) unstable; urgency=low
+
+  * Fifth test release with new LSF plugin and new monitoring
+  * Fixed a couple of bugs and included last tape fixes
+
 castor (2.1.3-4) unstable; urgency=low
 
   * Fourth test release with new LSF plugin and new monitoring
