@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.196 $ $Release$ $Date: 2007/04/03 09:29:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.197 $ $Release$ $Date: 2007/04/04 13:47:49 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -513,7 +513,8 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
     try{
   
 	cnvSvc()->rollback();
-        delete dc;
+	subreq->setDiskcopy(0);
+	delete dc;
         subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
         cnvSvc()->updateRep(&ad, subreq, true);
     }catch(castor::exception::Exception forward2){
