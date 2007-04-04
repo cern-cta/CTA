@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/03/02 16:05:18 $ $Author: riojac3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/04/04 10:20:03 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -190,8 +190,8 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
   std::vector<castor::stager::GCLocalFile*>* result = 0;
   // Get files to delete
   unsigned int nb=0;
-  ub2 *lens;
-  unsigned char **buffer;
+  ub2 *lens = 0;
+  unsigned char **buffer = 0;
 
   try {
     m_selectFiles2DeleteStatement->setString(1, diskServer);
@@ -237,15 +237,15 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
          nb, &unused, 21, lens);
       // execute the statement
       m_selectFiles2DeleteStatement2->executeUpdate();
+      //free allocated memory
+      free(lens);
+      for (unsigned int i=0;i < nb ;i++){
+	free(buffer[i]);
+      }
+      free(buffer);
     }
     m_selectFiles2DeleteStatement->closeResultSet(rset);
     commit();
-    //free allocated memory
-    free(lens);
-    for (unsigned int i=0;i < nb ;i++){
-       free(buffer[i]);
-    }
-    free(buffer);
     return result;
   } catch (oracle::occi::SQLException e) {
 
@@ -264,12 +264,13 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       delete result;
     }
     //free allocated memory
-    free(lens);
-    for (unsigned int i=0;i < nb ;i++){
-      free(buffer[i]);
+    if (0 != lens) free(lens);
+    if (0 != buffer) {
+      for (unsigned int i=0;i < nb ;i++){
+	free(buffer[i]);
+      }
+      free(buffer);
     }
-    free(buffer);
-    
     handleException(e);
     throw ex;
   }
@@ -290,8 +291,8 @@ void castor::db::ora::OraGCSvc::filesDeleted
   }
   // Execute statement and get result
   //unsigned long id;
-  ub2 *lens;
-  unsigned char **buffer;
+  ub2 *lens = 0;
+  unsigned char **buffer = 0;
   unsigned int nba=0;
   try {
     // Deal with the list of diskcopy ids
@@ -329,8 +330,8 @@ void castor::db::ora::OraGCSvc::filesDeleted
       for (unsigned int i=0;i < nba ;i++){
          free(buffer[i]);
        }
-       free(buffer); 
-     throw ex;
+      free(buffer); 
+      throw ex;
     }
     // get the result, that is a cursor on the files to
     // remove from the name server
@@ -474,11 +475,13 @@ void castor::db::ora::OraGCSvc::filesDeleted
       << e2.getMessage();
     }
      //free allocated memory
-    free(lens);
-    for (unsigned int i=0;i < nba ;i++){
-      free(buffer[i]);
+    if (0 != lens) free(lens);
+    if (buffer != 0) {
+      for (unsigned int i=0;i < nba ;i++){
+	free(buffer[i]);
+      }
+      free(buffer);
     }
-    free(buffer);
     throw ex;
   }
 }
