@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Release$ $Date: 2006/04/27 10:28:06 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Release$ $Date: 2007/04/04 10:22:56 $ $Author: sponcec3 $
 #
 # Make Castor RH library
 #
@@ -45,7 +45,7 @@ RHBIN_OBJS = $(RHBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 
-LDFLAGS = -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
+LDFLAGS += -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
 LD = g++
 
 all: ProgramTargetName(rhserver)

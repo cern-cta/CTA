@@ -42,7 +42,7 @@ RMNODEDAEMONBIN_OBJS = $(RMNODEDAEMONBIN_SRCS:.cpp=.Osuf)
 DEPLIB = DepSharedLibraryTargetName(FileName(../..,shlib),castorMonitor) \
          DepSharedLibraryTargetName(FileName(../..,shlib),shift)
 
-LDFLAGS = -L FileName(..,FileName(../..,shlib)) $(MTLDFLAGS)
+LDFLAGS += -L FileName(..,FileName(../..,shlib)) $(MTLDFLAGS)
 LD = g++
 
 all:ProgramTargetName(rmNodeDaemon)

@@ -415,7 +415,7 @@ COMMONLIB = LibraryTargetName(castorClient)
 
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
 
-LDFLAGS = $(DEBUG) $(MTLDFLAGS)
+LDFLAGS += $(DEBUG) $(MTLDFLAGS)
 LD = g++
 
 all: $(COMMONLIB)
