@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.24 $ $Date: 2007/04/03 13:35:11 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.25 $ $Date: 2007/04/04 12:30:47 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1667,13 +1667,16 @@ int smcdismount(vid, loader, force, vsnretry)
                         RETURN (RBT_FAST_RETRY);
                 } else if (c) {
                         /* log information about the error condition         */
-                        tplogit (func, "Unknown error in smcdismount: c=%d, err=%d\n", c, (serrno - ERMCRBTERR) );
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 4,
-                                            "func"   , TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "Unknown error in smcdismount",
-                                            "c"      , TL_MSG_PARAM_INT, c, 
-                                            "err"    , TL_MSG_PARAM_INT, (serrno - ERMCRBTERR) );
-
+                        if (serrno != SECOMERR) {
+                                tplogit (func, "Error in smcdismount: c=%d, serrno=%d, (serrno-ERMCRBTERR)=%d\n", 
+                                         c, serrno, (serrno - ERMCRBTERR) );                        
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                                    "func"               , TL_MSG_PARAM_STR, func,
+                                                    "Message"            , TL_MSG_PARAM_STR, "Error in smcdismount",
+                                                    "c"                  , TL_MSG_PARAM_INT, c, 
+                                                    "serrno"             , TL_MSG_PARAM_INT, serrno, 
+                                                    "(serrno-ERMCRBTERR)", TL_MSG_PARAM_INT, (serrno - ERMCRBTERR) );
+                        }
                         p = strrchr (rmc_errbuf, ':');
                         sprintf (msg, TP041, "demount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
