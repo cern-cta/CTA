@@ -119,7 +119,7 @@ CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, weight float, fsDeviation float, mountPoint VARCHAR2(2048), deltaWeight float, deltaFree INTEGER, reservedSpace INTEGER, minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), deltaFree INTEGER, reservedSpace INTEGER, minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, id INTEGER PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
@@ -143,7 +143,7 @@ CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 CREATE TABLE FileClass (name VARCHAR2(2048), minFileSize INTEGER, maxFileSize INTEGER, nbCopies NUMBER, id INTEGER PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), id INTEGER PRIMARY KEY, status INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE DiskServer (name VARCHAR2(2048), load NUMBER, id INTEGER PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SetFileGCWeight */
 CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight float, id INTEGER PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.373  Date: 2007/02/08 14:32:31  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.389  Date: 2007/04/02 15:26:00  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', 'Revision: 1.373  Date: 2007/02/08 14:32:31 ');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', 'Revision: 1.389  Date: 2007/04/02 15:26:00 ');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -264,11 +264,11 @@ CREATE INDEX I_CastorFile_SvcClass on CastorFile (svcClass);
 CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
-CREATE INDEX I_DiskCopy_Status_10 on DiskCopy (decode(status,10,status,NULL));
+CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,status,NULL));
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
-CREATE index I_TapeCopy_Status on Tapecopy (status);
-CREATE INDEX I_TapeCopy_Status_2 on TapeCopy (decode(status,2,status,NULL));
+CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
+CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,status,null));
 
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
@@ -286,6 +286,12 @@ CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,ge
 
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
+
+/* Some index on the GCFile table to speed up garbage collection */
+CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST) TABLESPACE STAGER_INDX;
+
+/* Indexing segments by Tape */
+CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE) TABLESPACE STAGER_INDX COMPUTE STATISTICS;
 
 /* some constraints */
 /* Can not be added since some code (stager_fs_service) creates FileSystems with no DiskServer
@@ -401,19 +407,21 @@ CREATE TABLE FileSystemGC (fsid NUMBER PRIMARY KEY, submissionTime NUMBER);
    of weight and fsDeviation. The goal is to be able to classify
    the fileSystems using a single value and to put an index on it */
 CREATE OR REPLACE FUNCTION FileSystemRate
-(weight IN NUMBER,
- deltaWeight IN NUMBER,
- fsDeviation IN NUMBER)
+(readRate IN NUMBER,
+ writeRate IN NUMBER,
+ nbReadStreams IN NUMBER,
+ nbWriteStreams IN NUMBER,
+ nbReadWriteStreams IN NUMBER)
 RETURN NUMBER DETERMINISTIC IS
 BEGIN
-  RETURN 1000*(weight + deltaWeight) - fsDeviation;
+  RETURN nbReadStreams + nbWriteStreams + nbReadWriteStreams;
 END;
 /
 
 /* FileSystem index based on the rate. */
-CREATE INDEX I_FileSystem_Rate ON FileSystem(FileSystemRate(weight, deltaWeight, fsDeviation));
-
-
+CREATE INDEX I_FileSystem_Rate
+    ON FileSystem(FileSystemRate(readRate, writeRate,
+	          nbReadStreams,nbWriteStreams, nbReadWriteStreams));
 
 
 /*******************************************/
@@ -787,20 +795,12 @@ END;
 
 /* PL/SQL method to update FileSystem weight for new streams */
 CREATE OR REPLACE PROCEDURE updateFsFileOpened
-(ds IN INTEGER, fs IN INTEGER,
- deviation IN INTEGER, fileSize IN INTEGER) AS
-  unused INTEGER;
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
 BEGIN
-  /* We have to lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way.
-     Otherwise, the fact that we update the "single" filesystem fs
-     first and then all the others leads to a dead lock if 2 threads
-     are running this in parallel : they will both lock one
-     filesystem to start with and try to get the others locks afterwards. */
-  SELECT id INTO unused FROM DiskServer WHERE id = ds FOR UPDATE;
-  UPDATE FileSystem SET deltaWeight = deltaWeight - deviation
-   WHERE diskServer = ds;
-  UPDATE FileSystem SET fsDeviation = LEAST(2 * deviation, 1000),
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET load = load + 1 WHERE id = ds; -- XXX 1 ?
+  UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
                         reservedSpace = reservedSpace + fileSize
    WHERE id = fs;
 END;
@@ -809,25 +809,17 @@ END;
 /* PL/SQL method to update FileSystem free space when file are closed */
 CREATE OR REPLACE PROCEDURE updateFsFileClosed
 (fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
-  deviation NUMBER;
   ds INTEGER;
-  unused INTEGER;
 BEGIN
-  /* We have to lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way.
-     Otherwise, the fact that we update the "single" filesystem fs
-     first and then all the others leads to a dead lock if 2 threads
-     are running this in parallel : they will both lock one
-     filesystem to start with and try to get the others locks afterwards. */
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
   SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
-  SELECT id INTO unused FROM DiskServer WHERE id = ds FOR UPDATE;
+  UPDATE DiskServer SET load = decode(sign(load-1),-1,0,load-1) WHERE id = ds; -- XXX 1 ?
   /* now we can safely go */
-  UPDATE FileSystem SET fsDeviation = fsdeviation / 2,
-                       deltaFree = deltaFree - fileSize,
-                       reservedSpace = reservedSpace - reservation
-  WHERE id = fs RETURNING fsDeviation, diskServer INTO deviation, ds;
-  UPDATE FileSystem SET deltaWeight = deltaWeight + deviation
-   WHERE diskServer = ds;
+  UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1),
+                        deltaFree = deltaFree - fileSize,
+                        reservedSpace = reservedSpace - reservation
+  WHERE id = fs;
 END;
 /
 
@@ -859,11 +851,9 @@ CREATE OR REPLACE PROCEDURE updateFileSystemForJob
  fileSize IN NUMBER) AS
   fsID NUMBER;
   dsId NUMBER;
-  dev NUMBER;
   unused NUMBER;
 BEGIN
-  SELECT FileSystem.id, FileSystem.fsDeviation,
-         DiskServer.id INTO fsId, dev, dsId
+  SELECT FileSystem.id, DiskServer.id INTO fsId, dsId
     FROM FileSystem, DiskServer
    WHERE FileSystem.diskServer = DiskServer.id
      AND FileSystem.mountPoint = fs
@@ -872,7 +862,7 @@ BEGIN
   -- to avoid dead locks with bestTapeCopyForStream. See the definition
   -- of the table for a complete explanation on why it exists
   SELECT TheLock INTO unused FROM LockTable WHERE DiskServerId = dsId FOR UPDATE;
-  updateFsFileOpened(dsId, fsId, dev, fileSize);
+  updateFsFileOpened(dsId, fsId, fileSize);
 END;
 /
 
@@ -887,7 +877,6 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                 
   fileSystemId INTEGER := 0;  
   dsid NUMBER;  
-  deviation NUMBER;  
   fsDiskServer NUMBER; 
   
 BEGIN
@@ -908,7 +897,7 @@ BEGIN
             AND FS.status IN (0, 1)
             AND DiskServer.id = FS.diskserver
             AND DiskServer.status IN (0, 1)
-          ORDER BY FileSystemRate(FS.weight, FS.deltaWeight, FS.fsDeviation) DESC
+          ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams) DESC
           ) DS
       WHERE ROWNUM < 2)
   RETURNING diskServerId INTO dsid;
@@ -916,11 +905,10 @@ BEGIN
   -- Now we got our Diskserver but we lost all other data (due to the fact we had
   -- to do an update for the lock and we could not do a join in the update).
   -- So here we select all we need
-  SELECT FN.name, FN.mountPoint, FN.fsDeviation, FN.diskserver, FN.id
-    INTO diskServerName, mountPoint, deviation, fsDiskServer, fileSystemId
+  SELECT FN.name, FN.mountPoint, FN.diskserver, FN.id
+    INTO diskServerName, mountPoint, fsDiskServer, fileSystemId
     FROM (
-      SELECT DiskServer.name, FS.mountPoint, FS.fsDeviation,
-             FS.diskserver, FS.id
+      SELECT DiskServer.name, FS.mountPoint, FS.diskserver, FS.id
         FROM FileSystem FS, NbTapeCopiesInFS, Diskserver
        WHERE FS.id = NbTapeCopiesInFS.FS
          AND DiskServer.id = FS.diskserver
@@ -928,29 +916,26 @@ BEGIN
          AND NbTapeCopiesInFS.Stream = StreamId
          AND FS.status IN (0, 1)    -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
          AND FS.diskserver = dsId
-       ORDER BY FileSystemRate(FS.weight, FS.deltaWeight, FS.fsDeviation) DESC
+       ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams) DESC
        ) FN
    WHERE ROWNUM < 2;
-  SELECT /*+ FIRST_ROWS_1 */
-         DC.path, DC.diskcopy_id, DC.castorfile_id,
-         DC.fileId, DC.nsHost, DC.fileSize, TapeCopy.id
+  SELECT P.path, P.diskcopy_id, P.castorfile,
+         C.fileId, C.nsHost, C.fileSize, P.id
     INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-    FROM (SELECT DiskCopy.path path, DiskCopy.id diskcopy_id, CastorFile.id castorfile_id,
-               CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize
-          FROM DiskCopy, CastorFile
-         WHERE DiskCopy.castorfile = CastorFile.id
-            -- Added decode functions to be able to use FBI on status columns
-            -- i_diskcopy_status_10 and i_tapecopy_status_2
-           AND decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-           AND DiskCopy.filesystem = fileSystemId
-         ) DC,
-         TapeCopy, Stream2TapeCopy
-   WHERE TapeCopy.castorfile = DC.castorfile_id
-     AND Stream2TapeCopy.child = TapeCopy.id
-     AND Stream2TapeCopy.parent = streamId
-     AND decode(TapeCopy.status,2,TapeCopy.status,null) = 2 -- WAITINSTREAMS
-     AND ROWNUM < 2;
-
+    FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+          D.path, D.diskcopy_id, D.castorfile, T.id
+            FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
+                         DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
+                    FROM DiskCopy
+                   WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
+                     AND DiskCopy.filesystem = fileSystemId) D,
+                  TapeCopy T, Stream2TapeCopy ST
+           WHERE T.castorfile = D.castorfile
+             AND ST.child = T.id
+             AND ST.parent = streamId
+             AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
+             AND ROWNUM < 2) P, castorfile C
+   WHERE P.castorfile = C.id;
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
@@ -963,7 +948,7 @@ BEGIN
    WHERE child = tapeCopyId;
 
   -- Update Filesystem state
-  updateFSFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+  updateFSFileOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- No data found means the selected filesystem has no
@@ -997,7 +982,6 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
                                                      dci OUT INTEGER) AS
  fileSystemId NUMBER;
  castorFileId NUMBER;
- deviation NUMBER;
  fsDiskServer NUMBER;
  fileSize NUMBER;
 BEGIN
@@ -1017,14 +1001,14 @@ BEGIN
  IF fileSystemId > 0 THEN
    BEGIN
      -- it had one, force filesystem selection, unless it was disabled.
-     SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint, FileSystem.fsDeviation
-     INTO diskServerName, fsDiskServer, rmountPoint, deviation
+     SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint
+     INTO diskServerName, fsDiskServer, rmountPoint
      FROM DiskServer, FileSystem
       WHERE FileSystem.id = fileSystemId
        AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
-     updateFsFileOpened(fsDiskServer, fileSystemId, deviation, 0);
+     updateFsFileOpened(fsDiskServer, fileSystemId, 0);
    EXCEPTION WHEN NO_DATA_FOUND THEN
      -- Error, the filesystem or the machine was probably disabled in between
      raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
@@ -1032,7 +1016,7 @@ BEGIN
  ELSE
    DECLARE
      CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
-                       FileSystem.fsDeviation, FileSystem.diskserver, CastorFile.fileSize
+                       FileSystem.diskserver, CastorFile.fileSize
                     FROM DiskServer, FileSystem, DiskPool2SvcClass,
                          (SELECT id, svcClass from StageGetRequest UNION ALL
                           SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
@@ -1051,13 +1035,13 @@ BEGIN
                      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                      AND DiskServer.id = FileSystem.diskServer
                      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-                   ORDER BY FileSystem.weight + FileSystem.deltaWeight DESC, FileSystem.fsDeviation ASC;
+                   ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC;
       NotOk NUMBER := 1;
       nb NUMBER;
     BEGIN
       OPEN c1;
       LOOP
-        FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, deviation, fsDiskServer, fileSize;
+        FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, fsDiskServer, fileSize;
         -- Check that we don't alredy have a copy of this file on this filesystem.
         -- This will never happend in normal operations but may be the case if a filesystem
         -- was disabled and did come back while the tape recall was waiting.
@@ -1080,11 +1064,12 @@ BEGIN
         raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
       END IF;      
       UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
-      updateFsFileOpened(fsDiskServer, fileSystemId, deviation, fileSize);
+      updateFsFileOpened(fsDiskServer, fileSystemId, fileSize);
     END;
   END IF;
 END;
 /
+
 
 /* PL/SQL method implementing fileRecallFailed */
 CREATE OR REPLACE PROCEDURE fileRecallFailed(tapecopyId IN INTEGER) AS
@@ -1115,6 +1100,7 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
 END;
 /
+
 
 /* PL/SQL method implementing castor package */
 CREATE OR REPLACE PACKAGE castor AS
@@ -1180,6 +1166,7 @@ END castor;
 /
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 /
+
 
 /* PL/SQL method implementing isSubRequestToSchedule */
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
@@ -1270,8 +1257,10 @@ BEGIN
     result := 1;  -- schedule and try to use available diskcopies
     OPEN sources
       FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                  FileSystem.weight, FileSystem.mountPoint,
-                  DiskServer.name
+                 FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
+                                FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+                 FileSystem.mountPoint,
+                 DiskServer.name
             FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE SubRequest.id = rsubreqId
              AND SubRequest.castorfile = DiskCopy.castorfile
@@ -1385,7 +1374,7 @@ BEGIN
     AND SubRequest.id = srId FOR UPDATE;
  -- Try to find local DiskCopy
  dci := 0;
- SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
+ SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ DiskCopy.id, DiskCopy.path, DiskCopy.status
   INTO dci, rpath, rstatus
   FROM DiskCopy
   WHERE DiskCopy.castorfile = cfId
@@ -1436,7 +1425,7 @@ BEGIN
        IF curNbRepl < maxNbRepl OR
           (maxNbRepl = 0 AND repPolicy IS NULL) THEN
          -- update filesystem status, take care of 0 filesizes
-         IF reserved = 0 THEN reserved := realFilXeSize; END IF;
+         IF reserved = 0 THEN reserved := realFileSize; END IF;
          updateFSFileClosed(fileSystemId, reserved, reserved);
        END IF;
      END IF;
@@ -1477,7 +1466,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
    -- We found at least a DiskCopy. Let's list all of them
    OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-               FileSystem.weight, FileSystem.mountPoint,
+               FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
+                              FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+               FileSystem.mountPoint,
                DiskServer.name
     FROM DiskCopy, FileSystem, DiskServer
     WHERE DiskCopy.castorfile = cfId
@@ -1538,60 +1529,6 @@ BEGIN
   WHERE id = rdcId
   RETURNING status, path
   INTO rdcStatus, rdcPath;
-END;
-/
-
-CREATE OR REPLACE PROCEDURE putDoneStartProc
-        (srId IN INTEGER, dcId OUT INTEGER,
-         dcStatus OUT INTEGER, dcPath OUT VARCHAR2) AS
-  reqId NUMBER;
-  cfId NUMBER;
-  ty NUMBER;
-BEGIN
-  -- Check there is no put going on
-  -- If any, we'll wait on one of them
-  SELECT request, castorFile INTO reqId, cfId
-    FROM SubRequest WHERE id = srId;
-  SELECT type INTO ty FROM Id2Type WHERE id = reqId;
-  IF ty = 39 THEN -- PutDone
-    DECLARE
-      putSubReq NUMBER;
-    BEGIN
-      -- Try to find a running put
-      SELECT subrequest.id INTO putSubReq
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.castorfile = cfId
-         AND SubRequest.request = Id2Type.id
-         AND Id2Type.type = 40 -- Put
-         AND SubRequest.status IN (0, 1, 2, 3) -- START, RESTART, RETRY, WAITSCHED
-         AND ROWNUM < 2;
-      -- we've found one, putDone will have to wait
-      UPDATE SubRequest
-         SET parent = putSubReq,
-             status = 5, -- WAITSUBREQ
-             lastModificationTime = getTime()
-       WHERE id = srId;
-      -- return an invalid diskcopy
-      dcId := 0;
-      dcStatus := 7; -- INVALID
-      dcPath := '';
-      RETURN;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- no put waiting, let continue
-      NULL;
-    END;
-  END IF;
-  -- No put, we can safely go
-  SELECT DiskCopy.id, DiskCopy.status, DiskCopy.path
-    INTO dcId, dcStatus, dcPath
-    FROM SubRequest, DiskCopy
-   WHERE SubRequest.id = srId
-     AND DiskCopy.castorfile = SubRequest.castorfile
-     AND DiskCopy.status = 6; -- STAGEOUT
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- We need to clean set the original putDone request to FAILED_FINISHED
-    UPDATE SubRequest SET status = 9 WHERE id = srId;
-    RAISE;
 END;
 /
 
@@ -1844,8 +1781,25 @@ END;
 /
 
 
+/* PL/SQL method implementing getDefaultFileSize */
+CREATE OR REPLACE PROCEDURE getDefaultFileSize(scId IN INTEGER, fileSize IN OUT NUMBER) AS
+  scDefault NUMBER;
+BEGIN
+  IF fileSize > 0 THEN
+    RETURN;
+  END IF;
+  SELECT defaultFileSize INTO scDefault FROM SvcClass WHERE id = scId;
+  IF scDefault > 0 THEN
+    fileSize := scDefault;
+  ELSE
+    -- hard coded default to 2Gb if no default is provided from the SvcClass
+    fileSize := 2147483648;
+  END IF;
+END;
+/
+
 /* PL/SQL method implementing prepareForMigration */
-CREATE OR REPLACE PROCEDURE  prepareForMigration (srId IN INTEGER,
+CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
                                                  ts IN NUMBER,
                                                  fId OUT NUMBER,
@@ -1854,7 +1808,8 @@ CREATE OR REPLACE PROCEDURE  prepareForMigration (srId IN INTEGER,
                                                  groupId OUT INTEGER) AS
   cfId INTEGER;
   fsId INTEGER;
-  oldFs INTEGER;
+  scId INTEGER;
+  realFileSize INTEGER;
   reservedSpace NUMBER;
   unused INTEGER;
   contextPIPP INTEGER;
@@ -1876,7 +1831,7 @@ BEGIN
      SELECT SubRequest.diskCopy INTO unused
        FROM SubRequest,
         (SELECT id FROM StagePrepareToPutRequest UNION ALL
-        SELECT id FROM StagePrepareToUpdateRequest) Request
+         SELECT id FROM StagePrepareToUpdateRequest) Request
       WHERE SubRequest.CastorFile = cfId
         AND Request.id = SubRequest.request
         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
@@ -1892,44 +1847,42 @@ BEGIN
  END;
  
  IF contextPIPP != 2 THEN
-   -- update CastorFile. This also takes a lock on it, insuring
-   -- with triggers that we are the only ones to deal with its copies
-   UPDATE CastorFile set fileSize = fs, lastUpdateTime = ts 
-    WHERE id = cfId and (lastUpdateTime is NULL or ts > lastUpdateTime) 
-   RETURNING fileId, nsHost INTO fId, nh;
- ELSE
-   -- if putDone, don't update fileSize and lastUpdateTime but just take the lock
-   SELECT fileId, nsHost, fileSize INTO fId, nh, oldFs
-     FROM CastorFile
-     WHERE id = cfId
-     FOR UPDATE;
+   -- update CastorFile's file size
+   UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts 
+    WHERE id = cfId AND (lastUpdateTime is NULL or ts > lastUpdateTime); 
+   -- if ts < lastUpdateTime, we were late and another job already updated the
+   -- CastorFile. But we still need to call updateFsFileClosed() so we go on
  END IF;
+ -- Take a lock on the CastorFile. Together with triggers, this insures that
+ -- we are the only ones to deal with its copies.
+ -- We also get here the real file size too because fs = 0 for a PutDone
+ SELECT fileId, nsHost, fileSize INTO fId, nh, realFileSize
+   FROM CastorFile
+   WHERE id = cfId
+   FOR UPDATE;
  -- get uid, gid and reserved space from Request
- SELECT euid, egid, xsize INTO userId, groupId, reservedSpace FROM SubRequest,
-     (SELECT euid, egid, id from StagePutRequest UNION ALL
-      SELECT euid, egid, id from StageUpdateRequest UNION ALL
-      SELECT euid, egid, id from StagePutDoneRequest) Request
+ SELECT euid, egid, xsize, svcClass INTO userId, groupId, reservedSpace, scId
+   FROM SubRequest,
+     (SELECT euid, egid, id, svcClass from StagePutRequest UNION ALL
+      SELECT euid, egid, id, svcClass from StageUpdateRequest UNION ALL
+      SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
- -- In case reserved space is 0, it was changed to 2G by default
- IF 0 = reservedSpace THEN reservedSpace := 2147483648; END IF;
+ -- get correct reservedSpace according to defaults
+ getDefaultFileSize(scId, reservedSpace);
  
- IF contextPIPP != 0 THEN   
-   -- standalone Put or PutDone
+ IF contextPIPP != 2 THEN   
+   -- any Put, either standalone or inside PrepareToPut
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
-   IF contextPIPP == 2 THEN
-     -- for a putDone, the fs is always 0, so we take the last one found in CastorFile
-     updateFsFileClosed(fsId, reservedSpace, oldFs);
-   ELSE
-     updateFsFileClosed(fsId, reservedSpace, fs);
-   END IF;
+   updateFsFileClosed(fsId, reservedSpace, fs);
  END IF;
 
  -- archive Subrequest
  archiveSubReq(srId);
- --  If not a put inside a PrepareToPut/Update, create TapeCopies and update DiskCopy status
+ -- If not a put inside a PrepareToPut/Update, create TapeCopies
+ -- and update DiskCopy status
  IF contextPIPP != 0 THEN
-   putDoneFunc(cfId, oldFs, contextPIPP);
+   putDoneFunc(cfId, realFileSize, contextPIPP);
  END IF;
  -- If put inside PrepareToPut/Update, restart any PutDone currently
  -- waiting on this put/update
@@ -2083,105 +2036,6 @@ BEGIN
   END;
   -- in any case, unlink tape and stream
   UPDATE Tape SET Stream = 0 WHERE Stream = sid;
-END;
-/
-
-/* PL/SQL method implementing bestFileSystemForJob */
-CREATE OR REPLACE PROCEDURE bestFileSystemForJob (fileSystems IN castor."strList",
-             machines IN castor."strList", minFree IN castor."cnumList",
-             rMountPoint OUT VARCHAR2, rDiskServer OUT VARCHAR2) AS
- ds NUMBER;
- fs NUMBER;
- dev NUMBER;
- TYPE cursorContent IS RECORD
-   (mountPoint VARCHAR2(2048), dsName VARCHAR2(2048),
-    dsId NUMBER, fsId NUMBER, deviation NUMBER);
- TYPE AnyCursor IS REF CURSOR RETURN cursorContent;
- c1 AnyCursor;
- 
- BEGIN
- IF fileSystems.COUNT > 0 THEN
-  -- here machines AND filesystems should be given
-  DECLARE
-   fsIds "numList" := "numList"();
-   nextIndex NUMBER := 1;
-  BEGIN
-   fsIds.EXTEND(fileSystems.COUNT);
-   FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
-    BEGIN
-      SELECT FileSystem.id INTO fsIds(nextIndex)
-        FROM FileSystem, DiskServer
-       WHERE FileSystem.mountPoint = fileSystems(i)
-         AND DiskServer.name = machines(i)
-         AND FileSystem.diskServer = DiskServer.id
-         AND (minFree(i) = 0     -- get requests should always go through
-           OR FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(i) 
-              > FileSystem.minAllowedFreeSpace * FileSystem.totalSize)
-         AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-         AND FileSystem.status = 0; -- FILESYSTEM_PRODUCTION
-      nextIndex := nextIndex + 1;
-    EXCEPTION  WHEN NO_DATA_FOUND THEN
-      NULL;
-    END;  
-   END LOOP;
-   OPEN c1 FOR
-    SELECT FileSystem.mountPoint, Diskserver.name,
-           DiskServer.id, FileSystem.id, FileSystem.fsDeviation
-    FROM FileSystem, DiskServer
-    WHERE FileSystem.diskserver = DiskServer.id
-      AND FileSystem.id MEMBER OF fsIds
-    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
-             FileSystem.fsDeviation ASC;
-  END;
- ELSE
-  -- No fileSystems given, there may still be machines given
-  IF machines.COUNT > 0 THEN
-   DECLARE
-    mIds "numList" := "numList"();
-    nextIndex NUMBER := 1;
-   BEGIN
-    mIds.EXTEND(machines.COUNT);
-    FOR i in machines.FIRST .. machines.LAST LOOP
-     BEGIN
-      SELECT DiskServer.id INTO mIds(nextIndex)
-        FROM DiskServer
-       WHERE DiskServer.name = machines(i)
-         AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
-      nextIndex := nextIndex + 1;
-     EXCEPTION  WHEN NO_DATA_FOUND THEN
-      NULL;
-     END;  
-    END LOOP;
-    OPEN c1 FOR
-     SELECT FileSystem.mountPoint, Diskserver.name,
-            DiskServer.id, FileSystem.id, FileSystem.fsDeviation
-     FROM FileSystem, DiskServer
-     WHERE FileSystem.diskserver = DiskServer.id
-       AND DiskServer.id MEMBER OF mIds
-       AND (minFree(1) = 0     -- get requests should always go through
-         OR FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-            > FileSystem.minAllowedFreeSpace * FileSystem.totalSize)
-       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION       
-     ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
-              FileSystem.fsDeviation ASC;
-   END;
-  ELSE
-   OPEN c1 FOR
-    SELECT FileSystem.mountPoint, Diskserver.name,
-           DiskServer.id, FileSystem.id, FileSystem.fsDeviation
-    FROM FileSystem, DiskServer
-    WHERE FileSystem.diskserver = DiskServer.id
-      AND (minFree(1) = 0     -- get requests should always go through
-        OR FileSystem.free - FileSystem.reservedSpace + FileSystem.deltaFree - minFree(1) 
-           > FileSystem.minAllowedFreeSpace * FileSystem.totalSize)
-      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-    ORDER by FileSystem.weight + FileSystem.deltaWeight DESC,
-             FileSystem.fsDeviation ASC;
-  END IF;
- END IF;
- FETCH c1 INTO rMountPoint, rDiskServer, ds, fs, dev;
- CLOSE c1;
 END;
 /
 
@@ -2613,6 +2467,8 @@ CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
   dcId INTEGER;
   fsId INTEGER;
   cfId INTEGER;
+  scId INTEGER;
+  reqId INTEGER;
   unused INTEGER;
   reservedSpace INTEGER;
 BEGIN
@@ -2620,39 +2476,40 @@ BEGIN
   UPDATE SubRequest
      SET status = 7 -- FAILED
    WHERE id = srId
-  RETURNING diskCopy, xsize, castorFile
-    INTO dcId, reservedSpace, cfId;
-    -- Check if the operation is a PutDone
-   SELECT StagePutDoneRequest.id INTO unused 
-   FROM  StagePutDoneRequest, Subrequest
-   WHERE StagePutDoneRequest.id=srid AND 
-         StagePutDoneRequest.id=Subrequest.request;
-   EXCEPTION WHEN NO_DATA_FOUND  THEN
+  RETURNING diskCopy, xsize, castorFile, request
+    INTO dcId, reservedSpace, cfId, reqId;
+  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
+  -- get current SvcClass. We are a Put/Update
+  SELECT svcClass INTO scId 
+    FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
+          SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
+          SELECT id, svcClass FROM StagePutRequest UNION ALL
+          SELECT id, svcClass FROM StageUpdateRequest) Req
+   WHERE id = reqId;
+  -- get correct reservedSpace according to defaults
+  getDefaultFileSize(scId, reservedSpace);
+  -- free it
+  updateFsFileClosed(fsId, reservedSpace, 0);
+  -- Determine the context (Put inside PrepareToPut ?)
+  BEGIN
+    -- check that there is a PrepareToPut going on
+    SELECT SubRequest.id INTO unused
+      FROM StagePrepareToPutRequest, SubRequest
+     WHERE SubRequest.CastorFile = cfId
+       AND StagePrepareToPutRequest.id = SubRequest.request;
+    -- the select worked out, so we have a prepareToPut
+    -- In such a case, we do not cleanup DiskCopy and CastorFile
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- this means we are a standalone put
+    -- thus cleanup DiskCopy and maybe the CastorFile
+    DECLARE
+      dcIds castor."cnumList";
+      fileIds castor.FileList_Cur;
     BEGIN
-      SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
-     -- free reserved space
-     updateFsFileClosed(fsId, reservedSpace, 0);
-     -- Determine the context (Put inside PrepareToPut ?)
-      BEGIN
-       -- check that there is a PrepareToPut going on
-       SELECT SubRequest.diskCopy INTO unused
-         FROM StagePrepareToPutRequest, SubRequest
-        WHERE SubRequest.CastorFile = cfId
-          AND StagePrepareToPutRequest.id = SubRequest.request;
-       -- the select worked out, so we have a prepareToPut
-       -- In such a case, we do not cleanup DiskCopy and CastorFile
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- this means we are a standalone put
-      -- thus cleanup DiskCopy and maybe the CastorFile
-      DECLARE
-        dcIds castor."cnumList";
-        fileIds castor.FileList_Cur;
-      BEGIN
-       dcIds(1) := dcId;
-       filesDeletedProc(dcIds, fileIds);
-      END;
+      dcIds(1) := dcId;
+      filesDeletedProc(dcIds, fileIds);
     END;
-  END;  
+  END;
 END;
 /
 
@@ -2795,7 +2652,6 @@ BEGIN
     END IF;
   END LOOP;
   
-  -- if no candidate has been found (this can happen with the null GC policy) just terminate
   IF bestCandidate <> -1 THEN
     -- Now extract the diskcopies that will be garbaged and
     -- mark them GCCandidate
@@ -2890,17 +2746,18 @@ BEGIN
   FOR fs IN (SELECT id FROM FileSystem) LOOP
     
     -- GC the INVALID unused diskCopies on this filesystem
-    BEGIN
-      SELECT DC.id, CF.fileSize
-        BULK COLLECT INTO dcIds, fileSizes
-        FROM DiskCopy DC, CastorFile CF
-       WHERE DC.castorFile = CF.id
-         AND DC.fileSystem = fs.id
-         AND DC.status = 7  -- INVALID
-         AND NOT EXISTS (
-           SELECT 'x' FROM SubRequest
-            WHERE DC.status = 0 AND diskcopy = DC.id
-              AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+    SELECT DC.id, CF.fileSize
+      BULK COLLECT INTO dcIds, fileSizes
+      FROM DiskCopy DC, CastorFile CF
+     WHERE DC.castorFile = CF.id
+       AND DC.fileSystem = fs.id
+       AND DC.status = 7  -- INVALID
+       AND NOT EXISTS (
+         SELECT 'x' FROM SubRequest
+          WHERE SubRequest.diskcopy = DC.id
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+
+    IF dcIds.COUNT > 0 THEN
       UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
        WHERE id MEMBER OF dcIds; 
       -- compute and update the filesystem's freed space
@@ -2913,9 +2770,7 @@ BEGIN
        WHERE id = fs.id;
       -- commit now the cleanup of this filesystem 
       COMMIT;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL;    -- no invalid diskcopies to be removed, move on
-    END;
+    END IF;
     
     -- sanity check in case the filesystem got full over the hard threshold
     SELECT free + deltaFree - reservedSpace + spaceToBeFreed, minAllowedFreeSpace * totalSize
@@ -2926,7 +2781,7 @@ BEGIN
       -- there is no more space on this filesystem and everything is stuck: this can
       -- happen if the migration is stuck for a while and the file system fills up;
       -- then we "manually" trigger the standard GC, it will unblock the situation somewhen
-      UPDATE FileSystem SET free = free - 1 WHERE id = fs.id;
+      UPDATE FileSystem SET free = free WHERE id = fs.id;
       COMMIT;
     END IF;
     
@@ -2937,7 +2792,9 @@ END;
 /
 
 BEGIN
-  DELETE FROM user_schedule_jobs WHERE JOB_NAME = 'GCInvalidDiskCopiesJob'; 
+  -- creates a db job to be run every 15 mins for the cleanup of invalid diskCopies
+  -- given the 2 seconds sleep in gcInvalidDiskCopies, such interval allows for
+  -- ~450 filesystem to be processed for each round.
   DBMS_SCHEDULER.CREATE_JOB (
       JOB_NAME        => 'GCInvalidDiskCopiesJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
@@ -2994,23 +2851,6 @@ END;
 
 
 /*
-CREATE MATERIALIZED VIEW MView_FS_DS_DP2SC
-ORGANIZATION HEAP PCTFREE 0 COMPRESS
-CACHE NOPARALLEL BUILD IMMEDIATE
-REFRESH ON COMMIT COMPLETE
-WITH PRIMARY KEY USING ENFORCED CONSTRAINTS
-DISABLE QUERY REWRITE
-AS
-  SELECT FS.id fsId, DP2SC.child scId,
-         FS.mountpoint fsMountPoint, DS.name dsName
-    FROM diskpool2svcclass DP2SC, diskserver DS, filesystem FS
-   WHERE FS.status IN (0,1)   -- PRODUCTION, DRAINING
-     AND DS.status IN (0,1)   -- PRODUCTION, DRAINING
-     AND DS.id(+) = FS.diskServer
-     AND DP2SC.parent(+) = FS.diskPool;
-*/
-
-/*
  * PL/SQL method implementing the core part of stage queries
  * It takes a list of castorfile ids as input
  */
@@ -3064,7 +2904,7 @@ BEGIN
     -- Here we get the status for each cf as follows: if a valid diskCopy is found,
     -- its status is returned, else if a (prepareTo)Get request is found and no diskCopy is there,
     -- WAITTAPERECALL is returned, else -1 (INVALID) is returned
-    SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbAccesses, lastKnownFileName
+    SELECT fileId, nsHost, dcId, path, fileSize, srStatus, machine, mountPoint, nbAccesses, lastKnownFileName
        FROM (SELECT
            -- we need to give these hints to the optimizer otherwise it goes for a full table scan (!)
            UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
@@ -3110,7 +2950,7 @@ BEGIN
                AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
      WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
        AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
-     WHERE status != -1
+     WHERE srStatus != -1
   ORDER BY fileid, nshost;
  END IF;
 END;
@@ -3464,5 +3304,81 @@ BEGIN
   OPEN result FOR
     SELECT * FROM TapeCopy
     WHERE id MEMBER OF tcIds;
+END;
+/
+
+/* PL/SQL method implementing syncClusterStatus */
+CREATE OR REPLACE PROCEDURE syncClusterStatus
+(machines IN castor."strList",
+ fileSystems IN castor."strList",
+ machineValues IN castor."cnumList",
+ fileSystemValues IN castor."cnumList") AS
+ ind NUMBER;
+ machine NUMBER := 0;
+BEGIN
+  -- First Update Machines
+  FOR i in machines.FIRST .. machines.LAST LOOP
+    ind := machineValues.FIRST + 3 * (i - machines.FIRST);
+    BEGIN
+      SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
+      UPDATE DiskServer
+         SET status = machineValues(ind),
+             adminStatus = machineValues(ind + 1),
+             load = machineValues(ind + 2)
+       WHERE name = machines(i);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      DECLARE
+        mid INTEGER;
+      BEGIN
+        -- we should insert a new machine here
+        SELECT ids_seq.nextval INTO mId FROM DUAL;
+        INSERT INTO DiskServer (name, load, id, status, adminStatus)
+         VALUES (machines(i), machineValues(ind + 2), mid, machineValues(ind), machineValues(ind + 1));
+        INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
+      END;
+    END;
+  END LOOP;
+  -- And then FileSystems
+  ind := machineValues.FIRST;
+  FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
+    IF fileSystems(i) NOT LIKE ('/%') THEN
+      SELECT id INTO machine FROM DiskServer WHERE name = fileSystems(i);
+    ELSE
+      BEGIN
+        SELECT diskServer INTO machine FROM FileSystem
+         WHERE mountPoint = fileSystems(i) AND diskServer = machine;
+        UPDATE FileSystem
+           SET status = fileSystemValues(ind),
+               adminStatus = fileSystemValues(ind + 1),
+               readRate = fileSystemValues(ind + 2),
+               writeRate = fileSystemValues(ind + 3),
+               nbReadStreams = fileSystemValues(ind + 4),
+               nbWriteStreams = fileSystemValues(ind + 5),
+               nbReadWriteStreams = fileSystemValues(ind + 6),
+               free = fileSystemValues(ind + 7)
+         WHERE mountPoint = fileSystems(i)
+           AND diskServer = machine;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        DECLARE
+          fsid INTEGER;
+        BEGIN
+          -- we should insert a new filesystem here
+          SELECT ids_seq.nextval INTO fsId FROM DUAL;
+          INSERT INTO FileSystem (free, mountPoint, deltaFree, reservedSpace,
+                 minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
+                 spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
+                 nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
+                 status, adminStatus)
+            VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, 0, .2, .1,
+                    .3, 0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
+                    fileSystemValues(ind + 3), fileSystemValues(ind + 4),
+                    fileSystemValues(ind + 5), fileSystemValues(ind + 6),
+                    fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
+          INSERT INTO Id2Type (id, type) VALUES (fsid, 12); -- OBJ_FileSystem
+        END;
+      END;
+      ind := ind + 9;
+    END IF;
+  END LOOP;
 END;
 /
