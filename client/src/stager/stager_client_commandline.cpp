@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.3 2006/12/14 15:18:23 gtaur Exp $
+ * $Id: stager_client_commandline.cpp,v 1.4 2007/04/04 16:39:53 gtaur Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -70,12 +70,15 @@ int DLL_DECL getDefaultForGlobal(
 	portDefault=*port;
 	versionDefault=*version;
 
-	ret=just_stage_mapper(getenv("USER"),NULL,&hostMap,&svcMap,&versionMap);
 	gid=getgid();
+	grp = getgrgid(gid);
 
-	if (ret<0 && (grp = getgrgid(gid)) == NULL )
-	  ret=just_stage_mapper(NULL,grp->gr_name,&hostMap,&svcMap,&versionMap);
-	
+	if (grp != NULL){
+	  ret=just_stage_mapper(getenv("USER"),grp->gr_name,&hostMap,&svcMap,&versionMap);
+	}
+	else { 
+	  ret=just_stage_mapper(getenv("USER"),NULL,&hostMap,&svcMap,&versionMap);
+	}	
 
 	if(hostDefault==NULL || strcmp(hostDefault,"")==0){
 		if(hostDefault != NULL){free(hostDefault);hostDefault=NULL;}
