@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.55 2007/03/20 18:00:13 itglp Exp $
+# $Id: maketar.sh,v 1.56 2007/04/05 09:45:32 jveldik Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -248,10 +248,10 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     echo "%files -n $package" >> CASTOR.spec
     echo "%defattr(-,root,root)" >> CASTOR.spec
     if [ -s "debian/$package.init" ]; then
-	echo "%attr(0755,root,bin) %config /etc/init.d/$package" >> CASTOR.spec
+	echo "%attr(0755,root,bin) /etc/init.d/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.logrotate" ]; then
-	echo "%attr(0644,root,root) %config(noreplace) /etc/logrotate.d/$package" >> CASTOR.spec
+	echo "%attr(0644,root,root) /etc/logrotate.d/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.manpages" ]; then
 	for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
@@ -264,19 +264,19 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	done
     fi
     if [ -s "debian/$package.cron.d" ]; then
-	echo "%attr(0755,root,root) %config(noreplace) /etc/cron.d/$package" >> CASTOR.spec
+	echo "%attr(0755,root,root) /etc/cron.d/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.cron.daily" ]; then
-	echo "%attr(0755,root,root) %config(noreplace) /etc/cron.daily/$package" >> CASTOR.spec
+	echo "%attr(0755,root,root) /etc/cron.daily/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.cron.hourly" ]; then
-	echo "%attr(0755,root,root) %config(noreplace) /etc/cron.hourly/$package" >> CASTOR.spec
+	echo "%attr(0755,root,root) /etc/cron.hourly/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.cron.monthly" ]; then
-	echo "%attr(0755,root,root) %config(noreplace) /etc/cron.monthly/$package" >> CASTOR.spec
+	echo "%attr(0755,root,root) /etc/cron.monthly/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.cron.weekly" ]; then
-	echo "%attr(0755,root,root) %config(noreplace) /etc/cron.weekly/$package" >> CASTOR.spec
+	echo "%attr(0755,root,root) /etc/cron.weekly/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.install.perm" ]; then
 	cp -f debian/$package.install.perm debian/$package.install.perm.tmp
