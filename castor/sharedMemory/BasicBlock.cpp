@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BasicBlock.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BasicBlock.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/10 16:23:47 $ $Author: sponcec3 $
  *
  * A basic shared memory block, with a key and a static
  * table of attached addresses
@@ -42,6 +42,21 @@ castor::sharedMemory::BasicBlock::BasicBlock
 castor::sharedMemory::BasicBlock::~BasicBlock () throw () {}
 
 //------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::sharedMemory::BasicBlock::print(std::ostream& stream,
+					     std::string indent) const
+  throw() {
+  stream << indent << "[# BasicBlock #]" << "\n";
+  m_key.print(stream, indent + "  ");
+  stream << indent << "  m_sharedMemoryBlock = "
+	 << std::hex << m_sharedMemoryBlock
+	 << std::endl;
+}
+
+//------------------------------------------------------------------------------
 // attached blocks static member
 //------------------------------------------------------------------------------
 std::map<int, void*> castor::sharedMemory::BasicBlock::s_attachedBlocks;
+
+

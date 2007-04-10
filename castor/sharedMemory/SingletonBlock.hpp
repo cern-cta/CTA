@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/10 16:23:01 $ $Author: sponcec3 $
  *
  * 
  *
@@ -67,6 +67,14 @@ namespace castor {
        */
       T* getSingleton() { return m_singleton; }
 
+      /**
+       * Outputs this object in a human readable format
+       * @param stream The stream where to print this object
+       * @param indent The indentation to use
+       */
+      void print(std::ostream& stream,
+		 std::string indent) const throw();
+
     private:
 
       /**
@@ -101,5 +109,17 @@ castor::sharedMemory::SingletonBlock<T,A>::SingletonBlock
 //------------------------------------------------------------------------------
 template<class T, class A>
 castor::sharedMemory::SingletonBlock<T,A>::~SingletonBlock () throw () {}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+template<class T, class A>
+void castor::sharedMemory::SingletonBlock<T,A>::print
+(std::ostream& stream, std::string indent) const throw() {
+  castor::sharedMemory::Block<A>::print(stream, indent);
+  stream << indent << "[# SingletonBlock #]" << "\n"
+	 << indent << "  m_singleton = ";
+  m_singleton->print(stream, indent + "  ");
+}
 
 #endif // SHAREDMEMORY_SINGLETONBLOCK_HPP

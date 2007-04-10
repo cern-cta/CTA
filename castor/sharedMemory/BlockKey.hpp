@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockKey.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2006/11/03 15:34:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockKey.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/10 16:23:01 $ $Author: sponcec3 $
  *
  * The identification of a shared memory block
  *
@@ -77,6 +77,14 @@ namespace castor {
       bool operator<(const BlockKey k) const {
         return key() < k.key();
       }
+
+      /**
+       * Outputs this object in a human readable format
+       * @param stream The stream where to print this object
+       * @param indent The indentation to use
+       */
+      void print(std::ostream& stream,
+		 std::string indent) const throw();
 
     private:
 

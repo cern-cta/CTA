@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BasicBlock.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BasicBlock.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/10 16:23:47 $ $Author: sponcec3 $
  *
  * A basic shared memory block, with a key and a static
  * table of attached addresses
@@ -65,6 +65,14 @@ namespace castor {
        * Destructor
        */
       ~BasicBlock() throw();
+
+      /**
+       * Outputs this object in a human readable format
+       * @param stream The stream where to print this object
+       * @param indent The indentation to use
+       */
+      void print(std::ostream& stream,
+		 std::string indent) const throw();
 
     protected:
 
