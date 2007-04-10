@@ -449,7 +449,7 @@ END;
 
 /* trigger a partition run immediately */
 BEGIN
-	dlf_partition(0);
+	dlf_partition(BOUNDARY => '0');
 END;
 
 
