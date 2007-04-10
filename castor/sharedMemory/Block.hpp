@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/04/10 16:25:20 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -50,6 +50,7 @@ namespace castor {
      *     Block object (this class)
      *     Extra reserved memory (for use by child classes)
      *     First and Second node of the Allocation Table
+     *     Allocator of the allocation table
      *     Allocation Table
      *     Available memory
      *   End of Block
@@ -96,6 +97,14 @@ namespace castor {
        */
       static void free(BasicBlock* obj, void* pointer, size_t nbBytes)
         throw (castor::exception::Exception);
+
+      /**
+       * Outputs this object in a human readable format
+       * @param stream The stream where to print this object
+       * @param indent The indentation to use
+       */
+      void print(std::ostream& stream,
+		 std::string indent) const throw();
 
     private:
 
@@ -147,9 +156,12 @@ castor::sharedMemory::Block<A>::Block
   m_initializing = 1;
   // now create the map of allocated regions
   size_t offset = 2*sizeof(std::_Rb_tree_node<SharedNode>);
+  void* allocatorRaw = (void*)((char*)m_sharedMemoryBlock + offset);
+  offset += sizeof(A);
   void* m_freeRegionsRaw = (void*)((char*)m_sharedMemoryBlock + offset);
-  // create the free region map
-  m_freeRegions = new(m_freeRegionsRaw) SharedMap();
+  // create the free region map and its allocator
+  A* alloc = new(allocatorRaw) A();
+  m_freeRegions = new(m_freeRegionsRaw) SharedMap(std::less<void*>(), *alloc);
   offset += sizeof(SharedMap);
   // note that malloc will be called here since a new cell
   // has to be created in the m_freeRegions container
@@ -263,5 +275,19 @@ void castor::sharedMemory::Block<A>::free
     (*obj->m_freeRegions)[pointer] = size;
   }
 }
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+template <class A>
+void castor::sharedMemory::Block<A>::print
+(std::ostream& stream, std::string indent) const throw() {
+  castor::sharedMemory::BasicBlock::print(stream, indent);
+  stream << indent << "[# Block #]" << "\n"
+	 << indent << "  m_initializing = " << m_initializing << "\n"
+	 << indent << "  m_freeRegions = " << "<map>"
+	 << std::endl;
+}
+
 
 #endif // SHAREDMEMORY_BLOCK_HPP
