@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/03/19 17:48:00 $ $Author: itglp $
+ * @(#)$RCSfile: Allocator.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/04/10 16:26:08 $ $Author: sponcec3 $
  *
  * Allocator for the Shared Memory space
  *
@@ -55,24 +55,18 @@ namespace castor {
       /**
        * default constructor
        */
-      Allocator() throw() : std::allocator<T>(), m_smBlock(0) {};
+      Allocator() throw() : std::allocator<T>() {};
 
       /**
        * templated constructor
        */
       template <class U> Allocator(const Allocator<U, BK>& a) throw() :
-        std::allocator<T>(a), m_smBlock(a.m_smBlock) {}
+        std::allocator<T>(a) {}
 
       /**
        * destructor
        */
       ~Allocator() throw() {};
-
-      /**
-       * new operator, so that this goes always to shared memory
-       */
-      void *operator new(size_t num_bytes, void*)
-	throw (castor::exception::Exception);
 
       /**
        * allocates objects in the shared memory
@@ -109,12 +103,6 @@ namespace castor {
       castor::sharedMemory::LocalBlock* getBlock()
 	throw (castor::exception::Exception);
 
-    // should be private but the templated constructor would not compile
-    public:
-
-      /// the shared memory block to be used by this allocator
-      castor::sharedMemory::LocalBlock* m_smBlock;
-
     }; // class Allocator
 
   } // namespace sharedMemory
@@ -132,17 +120,6 @@ namespace castor {
 #include "castor/exception/Internal.hpp"
 
 //------------------------------------------------------------------------------
-// operator new
-//------------------------------------------------------------------------------
-template<class T, class BK>
-void* castor::sharedMemory::Allocator<T, BK>::operator new
-(size_t num_bytes, void*)
-  throw (castor::exception::Exception) {
-  castor::sharedMemory::LocalBlock* smBlock = getBlock();
-  return smBlock->malloc(num_bytes);
-}
-
-//------------------------------------------------------------------------------
 // allocate
 //------------------------------------------------------------------------------
 template<class T, class BK>
@@ -151,9 +128,8 @@ T* castor::sharedMemory::Allocator<T, BK>::allocate
  std::allocator<void>::const_pointer hint)
   throw(std::exception) {
   try {
-    if (0 == m_smBlock) m_smBlock = getBlock();
     return static_cast<T*>
-      (m_smBlock->malloc(numObjects*sizeof(T)));
+      (getBlock()->malloc(numObjects*sizeof(T)));
   } catch (castor::exception::Exception e) {
     // Log exception "Exception caught in allocate"
     std::cout << e.getMessage().str() << std::endl;
@@ -175,8 +151,7 @@ void castor::sharedMemory::Allocator<T, BK>::deallocate
 (std::allocator<void>::pointer ptrToMemory,
  std::allocator<void>::size_type numObjects) throw() {
   try {
-    if (0 == m_smBlock) m_smBlock = getBlock();
-    m_smBlock->free(ptrToMemory, numObjects*sizeof(T));
+    getBlock()->free(ptrToMemory, numObjects*sizeof(T));
   } catch (castor::exception::Exception e) {
     // Log exception "Exception caught in allocate"
     castor::dlf::Param initParams[] =
