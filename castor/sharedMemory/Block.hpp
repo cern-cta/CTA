@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/04/10 16:25:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/04/11 13:12:32 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -285,8 +285,16 @@ void castor::sharedMemory::Block<A>::print
   castor::sharedMemory::BasicBlock::print(stream, indent);
   stream << indent << "[# Block #]" << "\n"
 	 << indent << "  m_initializing = " << m_initializing << "\n"
-	 << indent << "  m_freeRegions = " << "<map>"
-	 << std::endl;
+	 << indent << "  m_freeRegions = (" << m_freeRegions->size() << " items) :\n";
+  for (typename SharedMap::iterator it =
+         m_freeRegions->begin();
+       it != m_freeRegions->end();
+       it++) {
+    stream << indent << "    "
+	   << std::hex << "0x" << it->second << " bytes @ "
+	   << std::hex << "0x" << it->first << "\n";
+  }
+  stream << std::flush;
 }
 
 
