@@ -44,6 +44,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <pwd.h>
 
 /// File locations
 #define PARTITIONS_FILE "/proc/partitions"
@@ -150,7 +151,10 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
   }
   // get current list of filesystems
   char** fs;
-  int nbFs;
+  char   path[CA_MAXPATHLEN + 1];
+  int    nbFs;
+  int    rc;
+
   if (getconfent_multi
       ("RmNode", "MountPoints", 1, &fs, &nbFs) < 0) {
     castor::exception::Exception e(errno);
@@ -174,11 +178,44 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 	}
       }
 
-      // entry found ?
+      // entry not found ?
       if (metrics == NULL) {
 	metrics = new castor::monitoring::FileSystemMetricsReport();
 	metrics->setMountPoint(fs[i]);
 	dsMetrics->addFileSystemMetricsReports(metrics);
+
+	// search the password file for the stage user.
+	struct passwd *pw = getpwnam("stage");
+	if (pw == NULL) {
+	  castor::exception::Exception e(errno);
+	  e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
+			 << "failed to get username information for user "
+			 << "'stage', check account exists";
+	  throw e;
+	}
+
+	// create the sub-directories in the filesystem
+	for (int j = 0; j < 100; j++) {
+	  sprintf(path, "%s/%.2d", fs[i], j);
+
+	  rc = mkdir(path, 0700);
+	  if ((rc != 0) && (errno != EEXIST)) {
+	    castor::exception::Exception e(errno);
+	    e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
+			   << "failed to create directory " << path;
+	    throw e;
+	  }
+
+	  rc = chown(path, pw->pw_uid, pw->pw_gid);
+	  if (rc != 0) {
+	    castor::exception::Exception e(errno);
+	    e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
+			   << "unable to change directory ownership on " 
+			   << path << " to uid:" << pw->pw_uid << " gid:"
+			   << pw->pw_gid;
+	    throw e;
+	  }
+	}
       }
       collectFileSystemMetrics(metrics);
     }
