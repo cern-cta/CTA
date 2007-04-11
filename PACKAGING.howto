@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.32 2007/03/02 10:59:06 itglp Exp $
+## $Id: PACKAGING.howto,v 1.33 2007/04/11 08:48:52 sponcec3 Exp $
 #
 
 #
@@ -110,7 +110,9 @@ cd ../../SLC4/x86_64
 swrep-soap-client put x86_64_slc4 /cern/cc castor-*.x86_64.rpm
 
 # to trigger castortest nodes' upgrade
-wassh root@c2test spma_wrapper.sh
+wassh -l root -c c2test spma_wrapper.sh
+
+# Send a mail to castor-dev mailing list when the release is ready
 
 #
 ## To publish the release for production
