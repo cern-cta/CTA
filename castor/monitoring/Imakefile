@@ -54,6 +54,8 @@ RMGETNODESBIN_SRCS = RmGetNodes.cpp
 RMGETNODESBIN_OBJS = $(RMGETNODESBIN_SRCS:.cpp=.Osuf)
 RMADMINNODESBIN_SRCS = admin/RmAdminNode.cpp
 RMADMINNODESBIN_OBJS = $(RMADMINNODESBIN_SRCS:.cpp=.Osuf)
+DUMPSHAREDMEMORYBIN_SRCS = DumpSharedMemory.cpp
+DUMPSHAREDMEMORYBIN_OBJS = $(DUMPSHAREDMEMORYBIN_SRCS:.cpp=.Osuf)
 
 LIBS = $(OSLIBS) $(MTLDLIBS) -lcastorMonitor -lshift
 DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor) \
@@ -73,6 +75,7 @@ NormalLibraryTarget(castorMonitor,$(STGLIB_OBJS))
 
 NormalProgramTarget(rmGetNodes,$(RMGETNODESBIN_OBJS),$(DEPLIB),$(LIBS))
 NormalProgramTarget(rmAdminNode,$(RMADMINNODESBIN_OBJS),$(DEPLIB),$(LIBS))
+NormalProgramTarget(dumpSharedMemory,$(DUMPSHAREDMEMORYBIN_OBJS),$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(FileName(..,shlib),castorMonitor)
 MakeDepSharedLibrary(FileName(..,shlib),shift)
@@ -99,7 +102,7 @@ Makefiles:
 	done ;
 
 depend:
-	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) $(RMGETNODESBIN_SRCS) $(RMADMINNODEBIN_SRCS) 2> /dev/null; \
+	makedepend -- $(INCLUDES) -- $(STGLIB_SRCS) $(RMGETNODESBIN_SRCS) $(RMADMINNODEBIN_SRCS) $(DUMPSHAREDMEMORYBIN_SRCS) 2> /dev/null; \
 	for i in $(SUBDIRS) ;\
 	do (if [ -d $$i ] ;\
 	    then \
@@ -122,7 +125,7 @@ clean0:
 
 clobber0:	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles($(COMMONLIB))
+	-@RemoveFiles($(COMMONLIB) rmGetNodes rmAdminNode dumpSharedMemory)
 
 FORCE:
 
