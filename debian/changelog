@@ -1,3 +1,80 @@
+castor (2.1.3-6) unstable; urgency=low
+
+  * Sixth test release with new LSF plugin and new monitoring
+  * Since this is closer to production, here is a list of everything that changed since version v2.1.2-4
+  * general
+    - Dropped FSSvc, rmnode, rmgetnodes, rmnodeadmin, RMNODECONFIG, etc...
+    - created rmNodeDaemon, rmMasterDaemon, RmMasterSvc and rmNodeAdmin as new monitoring tools, using only castor.conf as configuration file
+    - dropped schmod_castor.c and rewrote it into schmod_castor.cpp, using shared memory with rmMasterDaemon.
+    - Added a CastorVersion symbol in all executables and libraries
+  * xroot support
+    - Added xrootd configuration to castor.conf
+    - Fixed end of stagerJob for xroot : especially don't call prepareForMigration for puts, xroot will do it
+  * CASTOR2/CASTOR.spec:
+    - Fixed LSF paths for LSF 7
+    - added package castor-lib-monitor
+    - Fixed rule to decide if we have oracle 
+    - Added UDP sockets and ListenerThreadPool, also renamed ListenerThreadPool into TCPListenerThreadPool 
+    - Putdone now is not scheduled anymore
+    - Added infrasstructure for shared memory in the framework
+    - Now compiling with -Wall -pedantic by default. A lot of compilation warnings have already been fixed, but a lot remain
+  * cleaning Daemon
+    - Fixed default values for time intervals
+  * DB releated
+    - Removed the Oracle specific database converters 
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+    - Fixed handling of exception in createRecallCandidate that was leading to a segfault in stager_db_service. The point is that the link subrequest->diskCopy was not suppressed while the diskCopy was deleted.
+    - reintroduced selectDiskPool and selectTapePool in IStagerSvc. They were wrongly placed in the FSSvc that went and are now wrongly placed in IStagerSvc
+    - fix in the exception handling for createRecallCandidate
+    - fixed retrieval of the subrequest ReqId in SubRequestToDo. The consequence was that subrequests were changing uuid at each restart
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    - Fixed another leak of reservedSpace for failed Puts (thanks to Olof).
+    - Fixed PrepareForMigration to call updateFSFileClosed after each Put.
+    - Added hint to getUpdateStart to insure the right execution plan is choosen. Credits to Nilo.
+    - Added more ORACLE hints to bestTapeCopyForStream so that ORACLE does things properly. Once more, many thanks to Nilo
+    - Optimized bestTapeCopyForStream. This included changing 2 function based index and working on the main query inside the function. Big thanks to Nilo, aka superDBA
+    - Added new index on segment and GCFile. Credits to Nilo
+    - Fixed typo in internalStageQuery leading to strange behavior of the stager_qry command. See CT406333 in remedy
+    - Optimized version of bestTapeCopyForStream with function-based indexes (credits to Nilo).
+    - Putdone now is not scheduled anymore, the db schema is  changed
+    - Fixed the problem of reservedSpace accumulation. Three cases were not covered properly, in the sense that the reserved space was not removed :
+      + puts with no file size given. Fixed in prepareForMigration
+      + disk2diskcopies. Fixed in disk2diskCopyDone
+      + aborted disk2diskCopies in the case LSF scheudules the copy on a filesystem already having the file. Fixed in getUpdateStart.
+    - Better version of the fix for the update requests, now canceling migrations before thay take place
+    - Temporary hack to fix the behavior of update requests. They were basically not working and we could easily lose the modifications. The missing part was the conversion of the diskcopy to STAGEOUT status and the invalidation of the other DiskCopies on the first write. The temporary hack was to do this at the start in getUpdateStart and Disk2DiskCopyDone, leading to non optimal dropping of replicas
+    - New, reoptimized version of internalStageQuery. Big thanks to Nilo.
+  * castor/sharedMemory
+    - Added some debug tool for analyzing the shared memory content. Not compiled by default
+  * repack
+    - Fixed man for repack and repackserver as well as -h output
+    - Removed the Z option which was not implemented 
+    - Changed the logic of the parsing of arguments given to repackserver because it was creating coredump in case of not existing options.
+    - extension of archiving command, check uid != root at the begining, added staged counter
+    - thrown castor::castor::Exception instead of  castor::exception::Internal from DatabaseHelper, fix for monitoring to be able to deal with time out, bug fix in repack worker.
+    - new features added in the repack -x
+  * tape
+    - Added the DOWN_ON_TPALERT option. Default value YES (same as if the config entry is missing).
+    - increasing the scsi timeout for the volume tag command
+    - Fix for the "stuck in START" case. The patch changes the code to not ignore consistency problems with the status of a tape in VMGR (thanks to Olof for the help tracking this down).
+    - changing the compression handling for the NVC IBM mode in tapedrives 
+    - Initial commit of the tplogger implementation.
+    - Extension of tpdaemon and related programs to use the dlf-based tape logging interface (tplogger).
+    - Extended error handling in case of a device or resource busy in smcmount(). This should now trigger a retry, instead of the attempt to unmount the non-mounted tape (which led to subsequent errors and ended in the drive being configured down).
+    - Improved logging for errors from smcdismount().
+    - Possible fix for the "device or resource busy" problem (which puts drives down in case of a busy RMC). The patch basically checks 'serrno' instead of smcdismount's return code.
+    - First fix for the "stuck in UNKNOWN" case. The drive will be configured down in case of a tapealert by default. This is configurable by an option in castor.conf (TAPE DOWN_ON_TPALERT yes/no). This patch will not fix all cases of drives in UNKNOWN state, since there are different root causes.
+    - Omit the configdown() in case of a tape alert (as this is suspected to leave the drive in an unknown state). Simply log a message and try to go on.
+  * dlf
+    - closed socket on netconnect_timeout() to avoid socket losses
+    - statistics are now generated every 15 minutes not 5
+    - added rtcpd, RmMaster and RmNode facility
+    - added dlf_settings table to control key parameters within the plsql procedures
+    - optimised dlf_stats_jobs procedure to reduce DB load/IO
+    - increase the prefetch size on oci queries to improve performance
+  * nameserver
+    - changed the limit on name lengths in the nameserver to support POSIX 88, i.e. 255 characters
+
 castor (2.1.3-5) unstable; urgency=low
 
   * Fifth test release with new LSF plugin and new monitoring
