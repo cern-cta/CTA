@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.25 $ $Date: 2007/04/04 12:30:47 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.26 $ $Date: 2007/04/11 07:05:12 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1524,9 +1524,28 @@ int vsnretry;
 	if (rmc_host) {
 		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
                 if (c == EBUSY) {
+                        /* this will never happen, since c == -1 on error    */
                         RETURN(RBT_FAST_RETRY);
+                } else if ((-1 == c) && ((serrno - ERMCRBTERR) == EBUSY)) {
+                        /* this should trigger a retry on a busy error       */ 
+                        tplogit (func, "Encountered EBUSY. Will retry." );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 2,
+                                            "func"   , TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Will retry." );
+                        RETURN (RBT_FAST_RETRY);
                 } else if (c) {
-			p = strrchr (rmc_errbuf, ':');
+                        /* log information about the error condition         */
+                        if (serrno != SECOMERR) {
+                                tplogit (func, "Error in smcmount: c=%d, serrno=%d, (serrno-ERMCRBTERR)=%d\n", 
+                                         c, serrno, (serrno - ERMCRBTERR) );                        
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                                    "func"               , TL_MSG_PARAM_STR, func,
+                                                    "Message"            , TL_MSG_PARAM_STR, "Error in smcmount",
+                                                    "c"                  , TL_MSG_PARAM_INT, c, 
+                                                    "serrno"             , TL_MSG_PARAM_INT, serrno, 
+                                                    "(serrno-ERMCRBTERR)", TL_MSG_PARAM_INT, (serrno - ERMCRBTERR) );
+                        }                        
+                        p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
                         /* Just send message to operator after two retries*/ 
