@@ -333,6 +333,9 @@ AS
   
 BEGIN
 
+  -- set the nls_date_format
+  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
+
   -- loop over all partitioned tables
   FOR a IN (SELECT DISTINCT(TABLE_NAME)
             FROM   USER_TAB_PARTITIONS
@@ -449,7 +452,7 @@ END;
 
 /* trigger a partition run immediately */
 BEGIN
-	dlf_partition(BOUNDARY => '0');
+	dlf_partition(0);
 END;
 
 
@@ -471,6 +474,9 @@ AS
   dp_status     KU$_STATUS; 
   
 BEGIN
+
+  -- set the nls_date_format
+  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
 
   -- extract the settings 
   SELECT value INTO v_value FROM dlf_settings WHERE name = 'ARCHIVE_MODE';
