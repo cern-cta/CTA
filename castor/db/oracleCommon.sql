@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.389 $ $Date: 2007/04/02 15:26:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.390 $ $Date: 2007/04/12 16:58:33 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.389 $ $Date: 2007/04/02 15:26:00 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.390 $ $Date: 2007/04/12 16:58:33 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -87,7 +87,6 @@ CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
 /* function base indexes to speed up subrequestToDo, subrequestFailedToDo, and getLastRecalls */
 CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
 CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,NULL));
-CREATE INDEX I_SubRequest_GetNextStatus on SubRequest (decode(getNextStatus,1,getNextStatus,NULL));
 
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
@@ -99,9 +98,7 @@ CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST) TABLESPACE STAGER_INDX;
 CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE) TABLESPACE STAGER_INDX COMPUTE STATISTICS;
 
 /* some constraints */
-/* Can not be added since some code (stager_fs_service) creates FileSystems with no DiskServer
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
-*/
 ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
@@ -2011,7 +2008,12 @@ BEGIN
   OPEN files FOR
     SELECT SelectFiles2DeleteProcHelper.path||DiskCopy.path, DiskCopy.id
       FROM DiskCopy, SelectFiles2DeleteProcHelper
-     WHERE DiskCopy.status = 8
+     WHERE (DiskCopy.status = 8
+           OR DiskCopy.status = 9 AND DiskCopy.creationTime < getTime() - 1800)
+           -- for failures recovery we also take all DiskCopies which were
+           -- already selected but got stuck somehow and didn't get removed
+           -- after 30 mins. The creationTime field is actually updated
+           -- for this purpose when status changes to 9 in updateFiles2Delete.
        AND DiskCopy.fileSystem = SelectFiles2DeleteProcHelper.id
        FOR UPDATE;
 END;
@@ -2021,7 +2023,10 @@ CREATE OR REPLACE PROCEDURE updateFiles2Delete
 (dcIds IN castor."cnumList") AS
 BEGIN
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
-    UPDATE DiskCopy set status = 9 -- BEING_DELETED
+    UPDATE DiskCopy
+       set status = 9, -- BEING_DELETED
+           creationTime = getTime()
+           -- note that this is an over-use of the field, but it's needed in selectFiles2Delete
      WHERE id = dcIds(i);
   END LOOP;
 END;
