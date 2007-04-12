@@ -85,36 +85,34 @@ void castor::monitoring::rmmaster::UpdateThread::run(void* par) throw() {
 void castor::monitoring::rmmaster::UpdateThread::handleStreamReport
 (castor::monitoring::StreamReport* report)
   throw (castor::exception::Exception) {
+  // cast normal string into sharedMemory one in order to be able
+  // to search for it in the ClusterStatus map.
+  // This is safe because the difference in the types is only
+  // the allocator and because the 2 allocators have identical
+  // members
+  std::string machineName = report->diskServerName();
+  castor::monitoring::SharedMemoryString *smMachineName =
+    (castor::monitoring::SharedMemoryString*)(&machineName);
   // Find the diskServer
-  castor::monitoring::ClusterStatus::iterator it;
-  try {
-    const castor::monitoring::SharedMemoryString
-      smMachineName(report->diskServerName().c_str());
-    it = m_clusterStatus->find(smMachineName);
-    if (it == m_clusterStatus->end()) {
-      // DiskServer does not yet exist, ignore report
-      return;
-    }
-  } catch (std::exception e) {
-    // "Unable to allocate SharedMemoryString"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-    // not enough shared memory... let's give up
+  castor::monitoring::ClusterStatus::iterator it =
+    m_clusterStatus->find(*smMachineName);
+  if (it == m_clusterStatus->end()) {
+    // DiskServer does not yet exist, ignore report
     return;
   }
+  // cast normal string into sharedMemory one in order to be able
+  // to search for it in the DiskServerStatus map.
+  // This is safe because the difference in the types is only
+  // the allocator and because the 2 allocators have identical
+  // members
+  std::string mountPoint = report->mountPoint();
+  castor::monitoring::SharedMemoryString *smMountPoint =
+    (castor::monitoring::SharedMemoryString*)(&mountPoint);
   // Find the FileSystem
-  castor::monitoring::DiskServerStatus::iterator it2;
-  try {
-    const castor::monitoring::SharedMemoryString smMountPoint
-      (report->mountPoint().c_str());
-    it2 = it->second.find(smMountPoint);
-    if (it2 == it->second.end()) {
-      // FileSystem does not yet exist, ignore report
-      return;
-    }
-  } catch (std::exception e) {
-    // "Unable to allocate SharedMemoryString"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-    // not enough shared memory... let's give up
+  castor::monitoring::DiskServerStatus::iterator it2 =
+    it->second.find(*smMountPoint);
+  if (it2 == it->second.end()) {
+    // FileSystem does not yet exist, ignore report
     return;
   }
   // Update FileSystem nb of streams

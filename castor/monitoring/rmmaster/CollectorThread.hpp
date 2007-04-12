@@ -103,6 +103,34 @@ namespace castor {
         (castor::monitoring::admin::FileSystemAdminReport* admin)
           throw (castor::exception::Exception);
 
+	/*
+	 * gets an iterator on a specific machine from the
+	 * ClusterStatus map or create one if the machine is
+	 * not existing in the map yet
+	 * @param name name of the machine
+	 * @param it the returned iterator
+	 * @return true if the machine was found or created successfully,
+	 * false if the creation failed
+	 */
+	bool getOrCreateDiskServer
+	(std::string name,
+	 castor::monitoring::ClusterStatus::iterator& it) throw();
+
+	/*
+	 * gets an iterator on a specific fileSystem from a
+	 * DiskServerStatus map or create one if the fileSystem is
+	 * not existing in the map yet
+	 * @param it dss the DiskServerStatus map
+	 * @param mountPoint the mountPoint of the fileSystem
+	 * @param it2 the returned iterator
+	 * @return true if the fileSystem was found or created successfully,
+	 * false if the creation failed
+	 */
+	bool getOrCreateFileSystem
+	(castor::monitoring::DiskServerStatus& dss,
+	 std::string mountPoint,
+	 castor::monitoring::DiskServerStatus::iterator& it2) throw();
+
       private:
 
         // Machine Status List

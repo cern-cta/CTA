@@ -23,7 +23,7 @@
  * It collects the data from the different nodes and updates a shared
  * memory representation of it
  *
- * @author Giulia Taurelli
+ * @author castor-dev team
  *****************************************************************************/
 
 #include "castor/monitoring/rmmaster/CollectorThread.hpp"
@@ -169,19 +169,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
   }
   // Take care of DiskServer creation
   castor::monitoring::ClusterStatus::iterator it;
-  try {
-    const castor::monitoring::SharedMemoryString
-      smMachineName(state->name().c_str());
-    it = m_clusterStatus->find(smMachineName);
-    if (it == m_clusterStatus->end()) {
-      it = m_clusterStatus->insert
-	(std::make_pair(smMachineName,
-			castor::monitoring::DiskServerStatus())).first;
-    }
-  } catch (std::exception e) {
-    // "Unable to allocate SharedMemoryString"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-    // not enough shared memory... let's give up
+  if (!getOrCreateDiskServer(state->name(), it)) {
     return;
   }
   // update DiskServer status
@@ -205,7 +193,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
          itFs = state->FileSystemStatesReports().begin();
        itFs != state->FileSystemStatesReports().end();
        itFs++) {
-    // Throw away reports fro filesystems with no name cause the build of
+    // Throw away reports from filesystems with no name cause the build of
     // a shared memory string fails for empty strings. This
     // is due to an optimization inside the string implementation
     // that tries to delay memory allocation when not needed
@@ -224,20 +212,9 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
     }
     // Take care of the FileSystem creation
     castor::monitoring::DiskServerStatus::iterator it2;
-    try {
-      const castor::monitoring::SharedMemoryString smMountPoint
-	((*itFs)->mountPoint().c_str());
-      it2 = it->second.find(smMountPoint);
-      if (it2 == it->second.end()) {
-	it2 = it->second.insert
-	  (std::make_pair
-	   (smMountPoint,
-	    castor::monitoring::FileSystemStatus())).first;
-      }
-    } catch (std::exception e) {
-      // "Unable to allocate SharedMemoryString"
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-      // not enough shared memory... let's give up
+    if (!getOrCreateFileSystem(it->second,
+			       (*itFs)->mountPoint(),
+			       it2)) {
       return;
     }
     // Update FileSystem status
@@ -255,6 +232,74 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
     // Update lastUpdate
     it2->second.setLastStateUpdate(time(0));
   }
+}
+
+//------------------------------------------------------------------------------
+// getOrCreateDiskServer
+//------------------------------------------------------------------------------
+bool
+castor::monitoring::rmmaster::CollectorThread::getOrCreateDiskServer
+(std::string name,
+ castor::monitoring::ClusterStatus::iterator& it) throw() {
+  // cast normal string into sharedMemory one in order to be able
+  // to search for it in the ClusterStatus map.
+  // This is safe because the difference in the types is only
+  // the allocator and because the 2 allocators have identical
+  // members
+  castor::monitoring::SharedMemoryString *smName =
+    (castor::monitoring::SharedMemoryString*)(&name);
+  it = m_clusterStatus->find(*smName);
+  if (it == m_clusterStatus->end()) {
+    try {
+      // here we really have to create a shared memory string,
+      // the previous cast won't work since we need to allocate memory
+      const castor::monitoring::SharedMemoryString smName2(name.c_str());
+      it = m_clusterStatus->insert
+	(std::make_pair(smName2,
+			castor::monitoring::DiskServerStatus())).first;
+    } catch (std::exception e) {
+      // "Unable to allocate SharedMemoryString"
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
+      // not enough shared memory... let's give up
+      return false;
+    }
+  }
+  return true;
+}
+
+//------------------------------------------------------------------------------
+// getOrCreateFileSystem
+//------------------------------------------------------------------------------
+bool
+castor::monitoring::rmmaster::CollectorThread::getOrCreateFileSystem
+(castor::monitoring::DiskServerStatus& dss,
+ std::string mountPoint,
+ castor::monitoring::DiskServerStatus::iterator& it2) throw() {
+  // cast normal string into sharedMemory one in order to be able
+  // to search for it in the DiskServerStatus map.
+  // This is safe because the difference in the types is only
+  // the allocator and because the 2 allocators have identical
+  // members
+  castor::monitoring::SharedMemoryString *smMountPoint =
+    (castor::monitoring::SharedMemoryString*)(&mountPoint);
+  it2 = dss.find(*smMountPoint);
+  if (it2 == dss.end()) {
+    try {
+      // here we really have to create a shared memory string,
+      // the previous cast won't work
+      const castor::monitoring::SharedMemoryString smMountPoint2
+	(mountPoint.c_str());
+      it2 = dss.insert(std::make_pair
+		       (smMountPoint2,
+			castor::monitoring::FileSystemStatus())).first;
+    } catch (std::exception e) {
+      // "Unable to allocate SharedMemoryString"
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
+      // not enough shared memory... let's give up
+      return false;
+    }
+  }
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -280,19 +325,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
   }
   // Take care of DiskServer creation
   castor::monitoring::ClusterStatus::iterator it;
-  try {
-    const castor::monitoring::SharedMemoryString
-      smMachineName(metrics->name().c_str());
-    it = m_clusterStatus->find(smMachineName);
-    if (it == m_clusterStatus->end()) {
-      it = m_clusterStatus->insert
-	(std::make_pair(smMachineName,
-			castor::monitoring::DiskServerStatus())).first;
-    }
-  } catch (std::exception e) {
-    // "Unable to allocate SharedMemoryString"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-    // not enough shared memory... let's give up
+  if (!getOrCreateDiskServer(metrics->name(), it)) {
     return;
   }
   // update DiskServer metrics
@@ -327,20 +360,9 @@ void castor::monitoring::rmmaster::CollectorThread::handleMetricsUpdate
     }
     // Take care of the FileSystem creation
     castor::monitoring::DiskServerStatus::iterator it2;
-    try{
-      const castor::monitoring::SharedMemoryString smMountPoint
-	((*itFs)->mountPoint().c_str());
-      it2 = it->second.find(smMountPoint);
-      if (it2 == it->second.end()) {
-	it2 = it->second.insert
-	  (std::make_pair
-	   (smMountPoint,
-	    castor::monitoring::FileSystemStatus())).first;
-      }
-    } catch (std::exception e) {
-      // "Unable to allocate SharedMemoryString"
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-      // not enough shared memory... let's give up
+    if (!getOrCreateFileSystem(it->second,
+			       (*itFs)->mountPoint(),
+			       it2)) {
       return;
     }
     // Update FileSystem metrics
@@ -382,29 +404,28 @@ void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23);
     return;
   }
+  // cast normal string into sharedMemory one in order to be able
+  // to search for it in the ClusterStatus map.
+  // This is safe because the difference in the types is only
+  // the allocator and because the 2 allocators have identical
+  // members
+  std::string machineName = admin->diskServerName();
+  castor::monitoring::SharedMemoryString *smMachineName =
+    (castor::monitoring::SharedMemoryString*)(&machineName);
   // Take care of DiskServer creation
-  castor::monitoring::ClusterStatus::iterator it;
-  try {
-    const castor::monitoring::SharedMemoryString
-      smMachineName(admin->diskServerName().c_str());
-    it = m_clusterStatus->find(smMachineName);
-    if (it == m_clusterStatus->end()) {
-      // "Ignored admin diskServer report for unknown machine"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Machine name", admin->diskServerName())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 29, 1, params);
-      // inform user via the exception mechanism
-      castor::exception::NoEntry e;
-      e.getMessage() << "Unknown machine '"
-		     << admin->diskServerName()
-		     << "'. Please check the name and provide the domain.";
-      throw e;
-    }
-  } catch (std::exception e) {
-    // "Unable to allocate SharedMemoryString"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-    // not enough shared memory... let's give up
-    return;
+  castor::monitoring::ClusterStatus::iterator it =
+    m_clusterStatus->find(*smMachineName);
+  if (it == m_clusterStatus->end()) {
+    // "Ignored admin diskServer report for unknown machine"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Machine name", admin->diskServerName())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 29, 1, params);
+    // inform user via the exception mechanism
+    castor::exception::NoEntry e;
+    e.getMessage() << "Unknown machine '"
+		   << admin->diskServerName()
+		   << "'. Please check the name and provide the domain.";
+    throw e;
   }
   // Update status if needed
   if (it->second.adminStatus() != ADMIN_FORCE ||
@@ -444,55 +465,54 @@ void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 25);
     return;
   }
-  // Take care of FileSystem creation
-  castor::monitoring::ClusterStatus::iterator it;
-  try {
-    const castor::monitoring::SharedMemoryString
-      smMachineName(admin->diskServerName().c_str());
-    it = m_clusterStatus->find(smMachineName);
-    if (it == m_clusterStatus->end()) {
-      // "Ignored admin fileSystem report for unknown machine"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Machine name", admin->diskServerName())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 30, 1, params);
-      // inform user via the exception mechanism
-      castor::exception::NoEntry e;
-      e.getMessage() << "Unknown machine '"
-		     << admin->diskServerName()
-		     << "'. Please check the name and provide the domain.";
-      throw e;
-    }
-  } catch (std::exception e) {
-    // "Unable to allocate SharedMemoryString"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-    // not enough shared memory... let's give up
-    return;
+  // cast normal string into sharedMemory one in order to be able
+  // to search for it in the ClusterStatus map.
+  // This is safe because the difference in the types is only
+  // the allocator and because the 2 allocators have identical
+  // members
+  std::string machineName = admin->diskServerName();
+  castor::monitoring::SharedMemoryString *smMachineName =
+    (castor::monitoring::SharedMemoryString*)(&machineName);
+  // Find out DiskServer
+  castor::monitoring::ClusterStatus::iterator it =
+    m_clusterStatus->find(*smMachineName);
+  if (it == m_clusterStatus->end()) {
+    // "Ignored admin fileSystem report for unknown machine"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Machine name", admin->diskServerName())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 30, 1, params);
+    // inform user via the exception mechanism
+    castor::exception::NoEntry e;
+    e.getMessage() << "Unknown machine '"
+		   << admin->diskServerName()
+		   << "'. Please check the name and provide the domain.";
+    throw e;
   }
-  castor::monitoring::DiskServerStatus::iterator it2;
-  try {
-    const castor::monitoring::SharedMemoryString smMountPoint
-      (admin->mountPoint().c_str());
-    it2 = it->second.find(smMountPoint);
-    if (it2 == it->second.end()) {
-      // "Ignored admin fileSystem report for unknown mountPoint"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Machine name", admin->diskServerName()),
-	 castor::dlf::Param("MountPoint", admin->mountPoint())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 31, 2, params);
-      // inform user via the exception mechanism
-      castor::exception::NoEntry e;
-      e.getMessage() << "Unknown mountPoint '"
-		     << admin->mountPoint()
-		     << "' on machine '"
-		     << admin->diskServerName()
-		     << "'.";
-      throw e;
-    }
-  } catch (std::exception e) {
-    // "Unable to allocate SharedMemoryString"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
-    // not enough shared memory... let's give up
-    return;
+  // cast normal string into sharedMemory one in order to be able
+  // to search for it in the DiskServerStatus map.
+  // This is safe because the difference in the types is only
+  // the allocator and because the 2 allocators have identical
+  // members
+  std::string mountPoint = admin->mountPoint();
+  castor::monitoring::SharedMemoryString *smMountPoint =
+    (castor::monitoring::SharedMemoryString*)(&mountPoint);
+  // Find out FileSystem
+  castor::monitoring::DiskServerStatus::iterator it2 =
+    it->second.find(*smMountPoint);
+  if (it2 == it->second.end()) {
+    // "Ignored admin fileSystem report for unknown mountPoint"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Machine name", admin->diskServerName()),
+       castor::dlf::Param("MountPoint", admin->mountPoint())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 31, 2, params);
+    // inform user via the exception mechanism
+    castor::exception::NoEntry e;
+    e.getMessage() << "Unknown mountPoint '"
+		   << admin->mountPoint()
+		   << "' on machine '"
+		   << admin->diskServerName()
+		   << "'.";
+    throw e;
   }
   // Update status if needed
   if (it2->second.adminStatus() != ADMIN_FORCE ||
