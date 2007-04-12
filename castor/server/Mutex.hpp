@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/02/22 11:22:29 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/12 16:53:13 $ $Author: itglp $
  *
  *
  *
@@ -61,59 +61,59 @@ namespace castor {
       return m_var;
     }
 
-	/**
-	 * Sets the internal variable value.
-	 * This method is thread-safe, meaning that
-	 * it will wait for mutex on the var.
-	 * @throws exception if the mutex can't be
-	 * acquired or the mutex initialization failed.
-	 */
-	void setValue(int newValue)
+  /**
+   * Sets the internal variable value.
+   * This method is thread-safe, meaning that
+   * it will wait for mutex on the var.
+   * @throws exception if the mutex can't be
+   * acquired or the mutex initialization failed.
+   */
+  void setValue(int newValue)
     throw (castor::exception::Exception);
 
-	/**
-	 * Sets the internal variable value.
-	 * This method tries to be thread-safe, but won't
-	 * throw an exception when the mutex can't be
-	 * acquired: in that case it does thread-
+  /**
+   * Sets the internal variable value.
+   * This method tries to be thread-safe, but won't
+   * throw an exception when the mutex can't be
+   * acquired: in that case it does thread-
    * unsafely change the value.
-	 */
-	void setValueNoEx(int newValue);
+   */
+  void setValueNoEx(int newValue);
 
-	/**
-	 * Sets the internal variable value.
-	 * This method is NOT thread-safe, and
-	 * it is provided for convenience only.
-	 */
+  /**
+   * Sets the internal variable value.
+   * This method is NOT thread-safe, and
+   * it is provided for convenience only.
+   */
     void setValueNoMutex(int newValue) {
       m_var = newValue;
     }
 
     /**
-	   * waits for a signal on this mutex.
-	   */
+     * waits for a signal on this mutex.
+     */
     void wait();
 
     /**
-	   * Tries to get a lock on this mutex.
-	   */
+     * Tries to get a lock on this mutex.
+     */
     void lock() throw (castor::exception::Exception);
 
     /**
-	   * Tries to release the lock on this mutex.
-	   */
+     * Tries to release the lock on this mutex.
+     */
     void release() throw (castor::exception::Exception);
 
     /**
-	   * Tries to signal the mutex by calling Cthread_cond_signal().
-	   */
+     * Tries to signal the mutex by calling Cthread_cond_signal().
+     */
     void signal() throw (castor::exception::Exception);
 
   private:
 
-  	int m_var;
+    int m_var;
     int m_timeout;
-  	void* m_mutexCthread;
+    void* m_mutexCthread;
 
     int createLock();
 
