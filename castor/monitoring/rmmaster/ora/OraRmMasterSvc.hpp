@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 16:28:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/12 16:52:26 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -79,16 +79,26 @@ namespace castor {
 
       public:
 
-	/**
-	 * Synchronizes the stager database and the ClusterStatus, as known
-	 * by RmMaster
-	 * @param clusterStatus the ClusterStatus as known by RmMaster
-	 * @exception Exception in case of error
-	 */
+        /**
+         * Synchronizes the stager database and the ClusterStatus, as known
+         * by RmMaster
+         * @param clusterStatus the ClusterStatus as known by RmMaster
+         * @exception Exception in case of error
+         */
         virtual void syncClusterStatus
-	(castor::monitoring::ClusterStatus* clusterStatus)
+        (castor::monitoring::ClusterStatus* clusterStatus)
           throw (castor::exception::Exception);
 
+        /**
+         * Retrieves the last cluster status from the stager database
+         * and updates the shared ClusterStatus
+         * @param clusterStatus the ClusterStatus in shared memory
+         * @exception Exception in case of error
+         */
+        virtual void retrieveClusterStatus
+        (castor::monitoring::ClusterStatus* clusterStatus)
+          throw (castor::exception::Exception);
+          
       private:
 
         /// SQL statement for function syncClusterStatus
@@ -96,6 +106,14 @@ namespace castor {
 
         /// SQL statement object for function syncClusterStatus
         oracle::occi::Statement *m_syncClusterStatusStatement;
+
+        /// SQL statements for function retrieveClusterStatus
+        static const std::string s_getDiskServersStatementString;
+        static const std::string s_getFileSystemsStatementString;
+
+        /// SQL statement object for function retrieveClusterStatus
+        oracle::occi::Statement *m_getDiskServersStatement;
+        oracle::occi::Statement *m_getFileSystemsStatement;
 
       }; // end of class OraRmMasterSvc
 

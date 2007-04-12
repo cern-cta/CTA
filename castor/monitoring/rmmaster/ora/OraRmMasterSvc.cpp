@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/02 15:26:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/12 16:52:26 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -66,6 +66,12 @@ static castor::SvcFactory<castor::db::ora::OraRmMasterSvc>* s_factoryOraRmMaster
 const std::string castor::db::ora::OraRmMasterSvc::s_syncClusterStatusStatementString =
   "BEGIN syncClusterStatus(:1, :2, :3, :4); END;";
 
+const std::string castor::db::ora::OraRmMasterSvc::s_getDiskServersStatementString =
+  "SELECT id, name, adminStatus FROM DiskServer";
+
+const std::string castor::db::ora::OraRmMasterSvc::s_getFileSystemsStatementString =
+  "SELECT id, mountPoint, adminStatus FROM FileSystem WHERE diskServer = :1";
+
 // -----------------------------------------------------------------------
 // OraRmMasterSvc
 // -----------------------------------------------------------------------
@@ -103,10 +109,14 @@ void castor::db::ora::OraRmMasterSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_syncClusterStatusStatement);
+    if(m_syncClusterStatusStatement) deleteStatement(m_syncClusterStatusStatement);
+    if(m_getDiskServersStatement) deleteStatement(m_getDiskServersStatement);
+    if(m_getFileSystemsStatement) deleteStatement(m_getFileSystemsStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_syncClusterStatusStatement = 0;
+  m_getDiskServersStatement = 0;
+  m_getFileSystemsStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -319,3 +329,10 @@ void castor::db::ora::OraRmMasterSvc::syncClusterStatus
   }
 }
 
+// -----------------------------------------------------------------------
+// retrieveClusterStatus
+// -----------------------------------------------------------------------
+void castor::db::ora::OraRmMasterSvc::retrieveClusterStatus
+(castor::monitoring::ClusterStatus* clusterStatus)
+  throw (castor::exception::Exception) {
+}
