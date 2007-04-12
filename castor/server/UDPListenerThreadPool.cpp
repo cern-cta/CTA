@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 15:46:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/12 16:54:03 $ $Author: itglp $
  *
  * A listener thread pool listening on an UDP port
  *
@@ -50,7 +50,7 @@ void castor::server::UDPListenerThreadPool::init() throw (castor::exception::Exc
   try {
     m_sock = new castor::io::UDPSocket(m_port, true);
   } catch (castor::exception::Exception e) {
-    clog() << "Fatal error: cannot bind UDP socket on port " << m_port << ": "
+    clog() << ERROR << "Fatal error: cannot bind UDP socket on port " << m_port << ": "
            << e.getMessage().str() << std::endl;
     throw e;         // calling server should exit() here
   }
@@ -60,23 +60,15 @@ void castor::server::UDPListenerThreadPool::init() throw (castor::exception::Exc
 // listenLoop
 //------------------------------------------------------------------------------
 void castor::server::UDPListenerThreadPool::listenLoop() {
-  try {
-    for (;;) {
+  for (;;) {
+    try {
       // Read next datagram
-      try {
-        // Read next datagram
-        castor::IObject* obj = m_sock->readObject();
-        // handle the command
-        threadAssign(obj);
-      } catch (castor::exception::Exception e) {
-        // "Unable to read Object from socket" message
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("Message", e.getMessage().str())};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 12, 1, params);
-      }
+      castor::IObject* obj = m_sock->readObject();
+      // handle the command
+      threadAssign(obj);
+    } catch (castor::exception::Exception e) {
+      clog() << ERROR << "Error while reading datagrams from port " << m_port << ": "
+             << e.getMessage().str() << std::endl;
     }
-  } catch(castor::exception::Exception any) {
-    clog() << "Error while accepting connections to port " << m_port << ": "
-           << any.getMessage().str() << std::endl;
   }
 }

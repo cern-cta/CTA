@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 15:46:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/12 16:54:03 $ $Author: itglp $
  *
  * Listener thread pool based on TCP
  *
@@ -50,7 +50,7 @@ void castor::server::TCPListenerThreadPool::init() throw (castor::exception::Exc
   try {
     m_sock = new castor::io::ServerSocket(m_port, true);
   } catch (castor::exception::Exception e) {
-    clog() << "Fatal error: cannot bind socket on port " << m_port << ": "
+    clog() << ERROR << "Fatal error: cannot bind socket on port " << m_port << ": "
            << e.getMessage().str() << std::endl;
     throw e;
   }
@@ -60,15 +60,16 @@ void castor::server::TCPListenerThreadPool::init() throw (castor::exception::Exc
 // listenLoop
 //------------------------------------------------------------------------------
 void castor::server::TCPListenerThreadPool::listenLoop() {
-  try {
-    for (;;) {
+  for (;;) {
+    try {
       // accept connections
       castor::io::ServerSocket* s = m_sock->accept();
       // handle the command
       threadAssign(s);
     }
-  } catch(castor::exception::Exception any) {
-    clog() << "Error while accepting connections to port " << m_port << ": "
-           << any.getMessage().str() << std::endl;
+    catch(castor::exception::Exception any) {
+      clog() << ERROR << "Error while accepting connections to port " << m_port << ": "
+             << any.getMessage().str() << std::endl;
+    }
   }
 }
