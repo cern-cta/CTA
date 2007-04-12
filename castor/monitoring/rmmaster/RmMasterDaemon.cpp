@@ -33,11 +33,12 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/UDPListenerThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
-#include "castor/monitoring/rmmaster/RmMasterDaemon.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
+#include "castor/monitoring/rmmaster/RmMasterDaemon.hpp"
 #include "castor/monitoring/rmmaster/CollectorThread.hpp"
 #include "castor/monitoring/rmmaster/UpdateThread.hpp"
 #include "castor/monitoring/rmmaster/DatabaseActuatorThread.hpp"
+#include "castor/monitoring/rmmaster/IRmMasterSvc.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
 
@@ -104,6 +105,8 @@ int main(int argc, char* argv[]) {
        ("DatabaseActuator",
         new castor::monitoring::rmmaster::DatabaseActuatorThread
         (daemon.clusterStatus()), 0, interval));
+    // this threadpool is supposed to have a single thread because
+    // it uses shared member fields, see its implementation  
     daemon.getThreadPool('D')->setNbThreads(1);
     
     // Update threadpool
@@ -151,13 +154,13 @@ int main(int argc, char* argv[]) {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
+castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon()
+throw (castor::exception::Exception) :
   castor::server::BaseDaemon("RmMasterDaemon") {
 
   castor::BaseObject::initLog("RmMaster", castor::SVC_DLFMSG);
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
-
   castor::dlf::Message messages[] =
     {{ 0, ""},
      { 1, "Bad interval value in configuration file"},
@@ -191,16 +194,35 @@ castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
      {29, "Ignored admin diskServer report for unknown machine"},
      {30, "Ignored admin fileSystem report for unknown machine"},
      {31, "Ignored admin fileSystem report for unknown mountPoint"},
-     {32, "Thread DatabaseActuator started. Updating shared memory data"},
+     {32, "Thread DatabaseActuator started. Synchronizing shared memory data"},
      {33, "Thread DatabaseActuator created"},
      {34, "Thread Update created"},
+     {35, "Retrieving cluster status from database to shared memory"},
      {-1, ""}};
   castor::dlf::dlf_init("RmMaster", messages);
 
   // get the cluster status singleton
-  m_clusterStatus = castor::monitoring::ClusterStatus::getClusterStatus();
+  bool created = true;
+  m_clusterStatus = castor::monitoring::ClusterStatus::getClusterStatus(created);
 
+  if(created) {
+    // the cluster status has just been created and it's empty, probably RmMaster got restarted
+    // get db service
+    castor::IService* orasvc = castor::BaseObject::services()->service("OraRmMasterSvc", castor::SVC_ORARMMASTERSVC);
+    if (0 == orasvc) {
+      castor::exception::Internal e;
+      e.getMessage() << "Unable to get OraRmMasterSvc";
+      throw e;
+    }
+    castor::monitoring::rmmaster::IRmMasterSvc* rmMasterService = dynamic_cast<castor::monitoring::rmmaster::IRmMasterSvc*>(orasvc);
+    if (0 == rmMasterService) {
+      castor::exception::Internal e;
+      e.getMessage() << "Could not cast newly retrieved service into IRmMasterSvc" << std::endl;
+      throw e;
+    }
+
+    // now populate cluster status with last saved status in the database if any
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 35);
+    rmMasterService->retrieveClusterStatus(m_clusterStatus);    
+  }
 }
-
-
-

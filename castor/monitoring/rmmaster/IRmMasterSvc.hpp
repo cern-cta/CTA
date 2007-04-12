@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IRmMasterSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 16:25:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IRmMasterSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/12 16:51:07 $ $Author: itglp $
  *
  * This class provides stager methods related to File System handling
  *
@@ -53,6 +53,16 @@ namespace castor {
          * @exception Exception in case of error
          */
         virtual void syncClusterStatus
+        (castor::monitoring::ClusterStatus* clusterStatus)
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Retrieves the last known cluster status from the stager database
+         * and updates the passed ClusterStatus
+         * @param clusterStatus the ClusterStatus in shared memory
+         * @exception Exception in case of error
+         */
+        virtual void retrieveClusterStatus
         (castor::monitoring::ClusterStatus* clusterStatus)
           throw (castor::exception::Exception) = 0;
 

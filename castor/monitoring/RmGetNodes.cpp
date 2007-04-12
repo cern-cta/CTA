@@ -31,7 +31,14 @@
 
 int main() {
   try {
-    castor::monitoring::ClusterStatus::getClusterStatus()->print(std::cout, "");
+    bool create = false;
+    castor::monitoring::ClusterStatus* cs =
+      castor::monitoring::ClusterStatus::getClusterStatus(create);
+    if(cs == 0)
+      std::cout << "No shared memory area found. Please start RmMasterDaemon first." 
+                << std::endl << std::endl; 
+    else
+      cs->print(std::cout, "");
   } catch (castor::exception::Exception e) {
     std::cout << e.getMessage().str() << std::endl;
   }

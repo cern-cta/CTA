@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseActuatorThread.cpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: DatabaseActuatorThread.cpp,v $ $Author: itglp $
  *
  * The DatabaseActuator thread of the RmMaster daemon.
  * It updates the stager database with monitoring data
@@ -42,7 +42,10 @@ castor::monitoring::rmmaster::DatabaseActuatorThread::DatabaseActuatorThread
   m_rmMasterService(0), m_clusterStatus(clusterStatus) {
   // "Collector thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 33);
-  castor::IService* orasvc = castor::BaseObject::services()-> service("OraRmMasterSvc", castor::SVC_ORARMMASTERSVC);
+  
+  // initialize oracle service. Note that we do it here because we run
+  // a single thread for this threadpool, so we don't need to have an instance per thread
+  castor::IService* orasvc = castor::BaseObject::services()->service("OraRmMasterSvc", castor::SVC_ORARMMASTERSVC);
   if (0 == orasvc) {
     castor::exception::Internal e;
     e.getMessage() << "Unable to get OraRmMasterSvc";

@@ -36,7 +36,7 @@
 // getClusterStatus
 //------------------------------------------------------------------------------
 castor::monitoring::ClusterStatus*
-castor::monitoring::ClusterStatus::getClusterStatus() {
+castor::monitoring::ClusterStatus::getClusterStatus(bool& create) {
   // declare a singleton containing the cluster Status
   static ClusterStatus* smStatus = 0;
   // If first call, we have to initialize the singleton
@@ -50,12 +50,13 @@ castor::monitoring::ClusterStatus::getClusterStatus() {
       <castor::sharedMemory::SharedNode,
       castor::monitoring::ClusterStatusBlockKey> > *b =
       castor::sharedMemory::BlockDict::getBlock
-      <castor::sharedMemory::SingletonBlock
-      <castor::monitoring::ClusterStatus,
-      castor::sharedMemory::Allocator
-      <castor::sharedMemory::SharedNode,
-      castor::monitoring::ClusterStatusBlockKey> > >(key);
-    smStatus = b->getSingleton();
+        <castor::sharedMemory::SingletonBlock
+        <castor::monitoring::ClusterStatus,
+        castor::sharedMemory::Allocator
+        <castor::sharedMemory::SharedNode,
+        castor::monitoring::ClusterStatusBlockKey> > >(key, create);
+    if(b != 0)
+      smStatus = b->getSingleton();
     // Note that we don't delete the SingletonBlock.
     // This is because it will register itself in the
     // BlockDictionnary. I know, not a very nice interface...

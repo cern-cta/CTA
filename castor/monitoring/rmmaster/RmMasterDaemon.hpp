@@ -33,6 +33,7 @@
 // Include Files
 
 #include "castor/server/BaseDaemon.hpp"
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
 
@@ -58,7 +59,7 @@ namespace castor {
         /**
          * constructor
          */
-        RmMasterDaemon();
+        RmMasterDaemon() throw (castor::exception::Exception);
 
         /**
          * destructor

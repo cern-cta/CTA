@@ -56,9 +56,12 @@ namespace castor {
        * gets a pointer to the cluster status. This status
        * is a "shared memory singleton" meaning that this
        * method will return a pointer to the same instance
-       * of ClusterStatus for all calls in all processes
+       * of ClusterStatus for all calls in all processes.
+       * @param create when true, the shared memory singleton
+       * is created if not found. The returned value tells
+       * whether the singleton has been created or not.
        */
-      static ClusterStatus* getClusterStatus();
+      static ClusterStatus* getClusterStatus(bool& create);
 
     public:
 
