@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/05/02 10:10:33 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/04/12 13:37:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -79,11 +79,6 @@ namespace castor {
      virtual void run() {};
 
     /**
-     * Sets the foreground flag
-     */
-    void setForeground(bool value);
-
-    /**
      * Sets the number of threads
      */
     void setNbThreads(int value);
@@ -114,12 +109,6 @@ namespace castor {
 
 
   protected:
-
-    /**
-     * Flag indicating whether the server should
-     * run in foreground or background mode.
-     */
-    bool m_foreground;
 
     /**
      * The id of the pool created

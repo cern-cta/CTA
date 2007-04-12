@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/11/23 17:53:49 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/04/12 13:37:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -42,7 +42,7 @@
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
                                                castor::server::IThread* thread) :
-  BaseObject(), m_foreground(false), m_threadPoolId(-1),
+  BaseObject(), m_threadPoolId(-1),
   m_nbThreads(castor::server::DEFAULT_THREAD_NUMBER),
   m_poolName(poolName), m_thread(thread) {}
 
@@ -77,14 +77,6 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
            << m_nbThreads << " threads" << std::endl;
     m_nbThreads = actualNbThreads;
   }
-}
-
-//------------------------------------------------------------------------------
-// setForeground
-//------------------------------------------------------------------------------
-void castor::server::BaseThreadPool::setForeground(bool value)
-{
-  m_foreground = value;
 }
 
 //------------------------------------------------------------------------------

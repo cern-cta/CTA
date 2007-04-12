@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2006/08/14 19:04:11 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/12 13:37:05 $ $Author: sponcec3 $
  *
  *
  *
@@ -70,7 +70,7 @@ namespace castor {
     /**
      * Sets the foreground flag
      */
-    void setForeground(bool value);
+    void setForeground(bool value) { m_foreground = value; }
 
     /**
      * Adds a thread pool to this server
