@@ -103,6 +103,22 @@ castor (2.1.3-1) unstable; urgency=low
   * First test release with new LSF plugin and new monitoring
   * done from the branch newLSFPlugin
 
+castor (2.1.2-7) unstable; urgency=low
+
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+    [r1.189.6.2,2007-03-28,gtaur] Fixed handling of exception in createRecallCandidate that was leading to a segfault in stager_db_service
+  * CASTOR2/hsmtools/modifySvcClass.c:
+    [r1.9.4.1,2007-04-02,itglp] Backport fix to commit after the fillObj
+  * CASTOR2/hsmtools/printSvcClass.cpp:
+    [r1.1.14.1,2007-04-02,itglp] Backport fix to commit after the fillObj
+  * CASTOR2/stager/stager_client_commandline.cpp:
+    [r1.3.4.1,2007-04-04,gtaur] fix in the mapping
+  * CASTOR2/stager/stager_gc_service.cpp:
+    [r1.12.4.1,2007-03-28,gtaur] Proper cleanup of the request
+  * Fixed another leak of reservedSpace for failed Puts + Puts coming from SRM
+
+  -- Giuseppe Lo Presti <itglp@cern.ch>  Wed, 11 Apr 2007 18:00:00 +0100
+
 castor (2.1.2-6) unstable; urgency=low
 
   * Two bug fixes in the prepare to get not-scheduled:
