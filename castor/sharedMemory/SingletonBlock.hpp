@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/10 16:23:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/12 16:50:00 $ $Author: itglp $
  *
  * 
  *
@@ -63,7 +63,7 @@ namespace castor {
       ~SingletonBlock() throw ();
 
       /**
-       * accessor to tyhe singleton object
+       * accessor to the singleton object
        */
       T* getSingleton() { return m_singleton; }
 

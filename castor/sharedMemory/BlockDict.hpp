@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/09 16:59:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/12 16:49:59 $ $Author: itglp $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -55,13 +55,19 @@ namespace castor {
 
       /**
        * retrieves any kind of block by key
-       * In case the block does not yet exist, creates it
+       * In case the block does not yet exist and create is true,
+       * creates it.
        * This method is to be used with care since it does
        * a static cast of the block found for key into the
        * desired type, without any further check
+       * @param key the BlockKey object to identify this block
+       * @param create when true, the block is created if doesn't exist.
+       * The returned value tells whether the block was created or not.
+       * @return the instantiated block, or NULL if create was false
+       * and no shared memory area was found.
        */
       template<typename T>
-      static T* getBlock(BlockKey &key);
+      static T* getBlock(BlockKey &key, bool& create);
 
       /**
        * add a block
@@ -109,21 +115,24 @@ namespace castor {
 //------------------------------------------------------------------------------
 template <typename T>
 T* castor::sharedMemory::BlockDict::getBlock
-(castor::sharedMemory::BlockKey &key) {
+(castor::sharedMemory::BlockKey &key, bool& create) {
   LocalBlock* block = getLocalBlock(key);
   if (0 != block) {
     return (T*)block->block();
   }
-  // here we will have to create a new block and register it
-  // we need to assure that we create the shared memory only once
+  // shall we create a new block and register it ?
+  if (!create) {
+    return 0;
+  }
+  // yes, and we need to assure that we create the shared memory only once
   // so we serialize all the Block creation
   Cmutex_lock(&s_blockDict, -1);
   // create the block
   void* sharedMemoryBlock;
-  bool created = createBlock(key, &sharedMemoryBlock);
+  create = createBlock(key, &sharedMemoryBlock);
   // Now let's really create/retrieve the Block object inside the shared memory
   T* tblock = 0;
-  if (created) {
+  if (create) {
     // Object creation
     // Note that it will register itself in the dictionnary
     // This is needed since the SharedMap within the Block
@@ -133,7 +142,7 @@ T* castor::sharedMemory::BlockDict::getBlock
       T(key, (void*)((char*)sharedMemoryBlock + sizeof(T)));
   } else {
     tblock = (T*)sharedMemoryBlock;
-    // Register block in the dictionnary. Bere the block
+    // Register block in the dictionnary. Here the block
     // was not created in this process. So we need to register
     // it in this process dictionnary.
     insertBlock(key, tblock, T::malloc, T::free);
