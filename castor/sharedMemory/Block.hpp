@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/04/11 16:23:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/04/12 12:00:15 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -28,6 +28,7 @@
 #define SHAREDMEMORY_BLOCK_HPP 1
 
 #include <map>
+#include <sys/types.h>
 #include "castor/sharedMemory/BasicBlock.hpp"
 #include "castor/sharedMemory/BlockKey.hpp"
 #include "castor/exception/Exception.hpp"
@@ -122,17 +123,6 @@ namespace castor {
       int m_initializing;
 
       /**
-       * Are we calling malloc or free recursively ?
-       * That is is one of the 2 calling the other ?
-       */
-      int m_recursiveCall;
-
-      /**
-       * mutex for synchronizing access to the map of free regions
-       */
-      pthread_mutex_t m_freeRegionsLock;
-
-      /**
        * map of free regions.
        */
       SharedMap* m_freeRegions;
@@ -158,33 +148,13 @@ template <typename A>
 castor::sharedMemory::Block<A>::Block
 (BlockKey& key, void* rawMem)
   throw (castor::exception::Exception) :
-  BasicBlock(key, rawMem), m_initializing(0), m_recursiveCall(false) {
+  BasicBlock(key, rawMem), m_initializing(0) {
   // Register block in the dictionnary before it's fully
   // created since the SharedMap creation will use it
   castor::sharedMemory::BlockDict::insertBlock
     (key, this, this->malloc, this->free);
   // start of memory initialization
   m_initializing = 1;
-  // create a mutex to synchronize the access to the map of free regions
-  pthread_mutexattr_t mutexAttr;
-  int rc = pthread_mutexattr_init(&mutexAttr);
-  if (0 != rc) {
-    castor::exception::Exception e(rc);
-    e.getMessage() << "pthread_mutexattr_init failed while initializing shared memory block";
-    throw e;
-  }
-  rc = pthread_mutexattr_setpshared(&mutexAttr, PTHREAD_PROCESS_SHARED);
-  if (0 != rc) {
-    castor::exception::Exception e(rc);
-    e.getMessage() << "pthread_mutexattr_setpshared failed while initializing shared memory block";
-    throw e;
-  }
-  rc = pthread_mutex_init(&m_freeRegionsLock, &mutexAttr);
-  if (0 != rc) {
-    castor::exception::Exception e(rc);
-    e.getMessage() << "pthread_mutex_init failed while initializing shared memory block";
-    throw e;
-  }
   // now create the map of free regions (and its allocator)
   size_t offset = 2*sizeof(std::_Rb_tree_node<SharedNode>);
   void* allocatorRaw = (void*)((char*)m_sharedMemoryBlock + offset);
@@ -231,19 +201,6 @@ void* castor::sharedMemory::Block<A>::malloc
     obj->m_initializing++;
     return res;
   }
-  // serialize allocation and deallocations in the block,
-  // except in the case where we are called recursively.
-  // In such a case, we already have the lock.
-  // The only case where it happens is that free calls malloc
-  // to allocate a new node in the map of free regions
-  if (!obj->m_recursiveCall) {
-    int rc = pthread_mutex_lock(&(obj->m_freeRegionsLock));
-    if (0 != rc) {
-      castor::exception::Exception e(rc);
-      e.getMessage() << "Unable to take lock when mallocing in shared memory block. Giving up";
-      throw e;
-    }
-  }
   // loop over free regions to find a suitable one
   for (typename SharedMap::iterator it =
          obj->m_freeRegions->begin();
@@ -266,16 +223,8 @@ void* castor::sharedMemory::Block<A>::malloc
 	//std::cout << "allocated " << std::hex << nbBytes << " bytes at "
 	//	  << std::hex << pointer << "\n";
       }
-      // release lock
-      if (!obj->m_recursiveCall) {
-	pthread_mutex_unlock(&(obj->m_freeRegionsLock));
-      }
       return pointer;
     }
-  }
-  // release lock
-  if (!obj->m_recursiveCall) {
-    pthread_mutex_unlock(&(obj->m_freeRegionsLock));
   }
   // none found, i.e. out of memory
   castor::exception::OutOfMemory e;
@@ -294,13 +243,6 @@ void castor::sharedMemory::Block<A>::free
   // This can only be done because no virtual inheritance
   // is implied and because there is no virtual table
   Block* obj = (Block*) rawObj;
-  // serialize allocation and deallocations in the block
-  int rc = pthread_mutex_lock(&(obj->m_freeRegionsLock));
-  if (0 != rc) {
-    castor::exception::Exception e(rc);
-    e.getMessage() << "Unable to take lock when freeing in shared memory block. Giving up";
-    throw e;
-  }
   // Update free space
   typename SharedMap::iterator it = obj->m_freeRegions->begin();
   // First find the surrounding free regions (if any)
@@ -343,16 +285,9 @@ void castor::sharedMemory::Block<A>::free
     // for the cell of the new free region within the
     // obj->m_freeRegions container. Thus malloc will be called
     // at some point inside free !
-    // We need to remember that through a member variable
-    // so that malloc does not try to acquire the mutex
-    // that we already hold
-    obj->m_recursiveCall = true;
     (*obj->m_freeRegions)[pointer] = size;
-    obj->m_recursiveCall = false;
     //std::cout << "  New free region created\n";
   }
-  // release lock
-  pthread_mutex_unlock(&(obj->m_freeRegionsLock));
 }
 
 //------------------------------------------------------------------------------
@@ -364,7 +299,6 @@ void castor::sharedMemory::Block<A>::print
   castor::sharedMemory::BasicBlock::print(stream, indent);
   stream << indent << "[# Block #]" << "\n"
 	 << indent << "  m_initializing = " << m_initializing << "\n"
-	 << indent << "  m_recursiveCall = " << m_recursiveCall << "\n"
 	 << indent << "  m_freeRegions = " << std::hex
 	 << m_freeRegions << " (" << m_freeRegions->size() << " items) :\n";
   for (typename SharedMap::iterator it =
