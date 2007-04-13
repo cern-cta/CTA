@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -120,6 +121,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_fileSystemStatus
+       * @return the value of m_fileSystemStatus
+       */
+      castor::stager::FileSystemStatusCodes fileSystemStatus() const {
+        return m_fileSystemStatus;
+      }
+
+      /**
+       * Set the value of m_fileSystemStatus
+       * @param new_var the new value of m_fileSystemStatus
+       */
+      void setFileSystemStatus(castor::stager::FileSystemStatusCodes new_var) {
+        m_fileSystemStatus = new_var;
+      }
+
+      /**
        * Get the value of m_fileSystemStates
        * @return the value of m_fileSystemStates
        */
@@ -139,6 +156,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      castor::stager::FileSystemStatusCodes m_fileSystemStatus;
 
       MonitorMessageAck* m_fileSystemStates;
 

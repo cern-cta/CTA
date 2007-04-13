@@ -103,7 +103,22 @@ namespace castor {
       /*********************************/
       /* End of IObject abstract class */
       /*********************************/
-      Unknown Multiplicity : DiskServerStatusCode status
+      /**
+       * Get the value of m_diskServerStatus
+       * @return the value of m_diskServerStatus
+       */
+      castor::stager::DiskServerStatusCode diskServerStatus() const {
+        return m_diskServerStatus;
+      }
+
+      /**
+       * Set the value of m_diskServerStatus
+       * @param new_var the new value of m_diskServerStatus
+       */
+      void setDiskServerStatus(castor::stager::DiskServerStatusCode new_var) {
+        m_diskServerStatus = new_var;
+      }
+
       /**
        * Add a FileSystemStateAck* object to the m_ackVector list
        */
@@ -135,7 +150,8 @@ namespace castor {
 
     private:
 
-      Unknown Multiplicity : castor::stager::DiskServerStatusCode status
+      castor::stager::DiskServerStatusCode m_diskServerStatus;
+
       std::vector<FileSystemStateAck*> m_ackVector;
 
     }; /* end of class MonitorMessageAck */

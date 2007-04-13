@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/monitoring/FileSystemStateAck.hpp"
 #include "castor/monitoring/MonitorMessageAck.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -41,6 +42,7 @@
 //------------------------------------------------------------------------------
 castor::monitoring::FileSystemStateAck::FileSystemStateAck() throw() :
   m_id(0),
+  m_fileSystemStatus(castor::stager::FileSystemStatusCodes(0)),
   m_fileSystemStates(0) {
 }
 
@@ -68,6 +70,7 @@ void castor::monitoring::FileSystemStateAck::print(std::ostream& stream,
   // Output of all members
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "fileSystemStatus : " << castor::stager::FileSystemStatusCodesStrings[m_fileSystemStatus] << std::endl;
   stream << indent << "FileSystemStates : " << std::endl;
   if (0 != m_fileSystemStates) {
     m_fileSystemStates->print(stream, indent + "  ", alreadyPrinted);

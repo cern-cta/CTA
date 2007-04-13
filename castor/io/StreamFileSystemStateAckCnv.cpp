@@ -41,6 +41,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/monitoring/FileSystemStateAck.hpp"
 #include "castor/monitoring/MonitorMessageAck.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "osdep.h"
 
 //------------------------------------------------------------------------------
@@ -89,6 +90,7 @@ void castor::io::StreamFileSystemStateAckCnv::createRep(castor::IAddress* addres
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->id();
+  ad->stream() << obj->fileSystemStatus();
 }
 
 //------------------------------------------------------------------------------
@@ -104,6 +106,9 @@ castor::IObject* castor::io::StreamFileSystemStateAckCnv::createObj(castor::IAdd
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int fileSystemStatus;
+  ad->stream() >> fileSystemStatus;
+  object->setFileSystemStatus((castor::stager::FileSystemStatusCodes)fileSystemStatus);
   return object;
 }
 

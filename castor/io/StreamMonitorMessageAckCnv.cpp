@@ -41,6 +41,7 @@
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/monitoring/FileSystemStateAck.hpp"
 #include "castor/monitoring/MonitorMessageAck.hpp"
+#include "castor/stager/DiskServerStatusCode.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -95,6 +96,7 @@ void castor::io::StreamMonitorMessageAckCnv::createRep(castor::IAddress* address
   ad->stream() << obj->errorMessage();
   ad->stream() << obj->requestId();
   ad->stream() << obj->id();
+  ad->stream() << obj->diskServerStatus();
 }
 
 //------------------------------------------------------------------------------
@@ -122,6 +124,9 @@ castor::IObject* castor::io::StreamMonitorMessageAckCnv::createObj(castor::IAddr
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int diskServerStatus;
+  ad->stream() >> diskServerStatus;
+  object->setDiskServerStatus((castor::stager::DiskServerStatusCode)diskServerStatus);
   return object;
 }
 

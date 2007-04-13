@@ -33,6 +33,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/monitoring/FileSystemStateAck.hpp"
 #include "castor/monitoring/MonitorMessageAck.hpp"
+#include "castor/stager/DiskServerStatusCode.hpp"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -41,7 +42,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::monitoring::MonitorMessageAck::MonitorMessageAck() throw() :
-  MessageAck() {
+  MessageAck(),
+  m_diskServerStatus(castor::stager::DiskServerStatusCode(0)) {
 }
 
 //------------------------------------------------------------------------------
@@ -70,6 +72,7 @@ void castor::monitoring::MonitorMessageAck::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->castor::MessageAck::print(stream, indent, alreadyPrinted);
   alreadyPrinted.insert(this);
+  stream << indent << "diskServerStatus : " << castor::stager::DiskServerStatusCodeStrings[m_diskServerStatus] << std::endl;
   {
     stream << indent << "Ack : " << std::endl;
     int i;
