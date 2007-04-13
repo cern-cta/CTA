@@ -1,4 +1,65 @@
 -----------
+- 2.1.3-* -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This release brings the new LSF plugin and a brand new monitoring architecture.
+  Details concerning the monitoring :
+   - rmmaster daemon is now only doing job scheduling and is not used anymore for monitoring
+     although it is still active. As a consequence, rmgetnodes won't give anything
+   - as a corrolate, rmnode is no more distributed and does not run anymore on the diskservers.
+     rmadminnode should not be used anymore and the fileSystem service of the stager was dropped.
+   - the new daemon is called rmMasterDaemon and should run on the scheduler node. It is distributed
+     in the same package castor-rmmaster as rmmaster so this package should be installed on both
+     the scheduler node and the rmmaster node even if both daemons are not needed in both places.
+   - rmMasterDaemon uses shared memory to store the data. This set of memory will survive it
+     in case of crash and be reused when restarting. In case of reboot, it can be reinitialized from
+     the data contained in the stager DB, which are constantly updated.
+   - the new command lines are rmAdminNode and rmGetNodes (the last one being only available on
+     the scheduler node).
+   - the new monitoring daemon is called rmNodeDaemon and is distributed in castor-rmnode. On top
+     of monitoring the node and sending data to the rmMasterDaemon, it also keeps the current status
+     of the node in the daemon in /etc/castor/status
+   - the new monitoring monitors :
+     - for each diskserver : ram(total+free), memory(total+free), swap(total+free), load, status and adminStatus
+     - for each filesystem : space(total+free), nbRead/ReadWrite/WriteStreams, read/writeRate, status and adminstatus
+   - the status can be Production, Down or Draining
+   - the admin status can be None or Force. If None, the status in the master is updated according
+     to monitoring. It Force, it is not updated. rmAdminNode also uses the Release admin status to
+     switch from Force to None.
+  Details concerning the LSF/shared memory part :
+   - there is a new LSF plugin with same name and same interface.
+   - it uses shared memory to get data from the rmMasterDaemon and thus has to run on the same machine
+   - this shared memory is also accessed by rmGetNodes that basically dumps it
+   - In case of corruption, the way to reset the shared memory is to stop rmMasterDaemon and LSF and
+     use ipcs/ipcrm. the key used is 0x946
+  Other new parts :
+   - the DB schema was changed to integrate the new monitoring parts
+   - the external clips policy for the scheduling was dropped so clips is no more needed
+   - all executables and libraries now have a new symbol storing the CASTOR version number.
+     just do an "nm <exe or lib file> | grep CastorVersion" to get it
+  Improvements and bug fixes :
+   - the default values for the cleaning daemon time intervals were fixed
+   - Fixed handling of exception in createRecallCandidate that was leading to a segfault in stager_db_service. The point is that the link subrequest->diskCopy was not suppressed while the diskCopy was deleted.
+   - Fixed the problem of reservedSpace accumulation. Three cases were not covered properly, in the sense that the reserved space was not removed :
+      + puts with no file size given. Fixed in prepareForMigration
+      + disk2diskcopies. Fixed in disk2diskCopyDone
+      + aborted disk2diskCopies in the case LSF scheudules the copy on a filesystem already having the file. Fixed in getUpdateStart.
+   - Optimized several ORACLE procedures (getUpdateStart, bestTapeCopyForStream, internalStageQuery)
+   - putDones are not scheduled anymore
+   - many fixes on repack and in the tape part
+   - the maximum file name length in the nameserver was changed from 231 to 255 characters
+  
+  Upgrade from 2.1.2-*
+  --------------------
+  - Stop all the CASTOR daemons
+  - Upgrade the database;
+  - Upgrade all nodes (the order is not important)
+  - Restart the services
+
+
+-----------
 - 2.1.2-7 -
 -----------
 
