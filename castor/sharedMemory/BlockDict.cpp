@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/10 16:23:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/13 15:25:07 $ $Author: itglp $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -60,16 +60,20 @@ castor::sharedMemory::BlockDict::getLocalBlock
 //------------------------------------------------------------------------------
 // createBlock
 //------------------------------------------------------------------------------
-bool castor::sharedMemory::BlockDict::createBlock
-(castor::sharedMemory::BlockKey &key, void** pointer) {
-  bool created = false;
+void castor::sharedMemory::BlockDict::createBlock
+(castor::sharedMemory::BlockKey &key, void** pointer, bool& create) {
   // Try to get the identifier of the shared memory
   int shmid = shmget(key.key(), key.size(), 0666);
   if (-1 == shmid) {
+    if (!create) {
+      // We are asked not to create anything
+      *pointer = 0;
+      return;
+    }
     if (ENOENT != errno) {
       // "Unable to get shared memory id. Giving up"
       castor::dlf::Param initParams[] =
-	{castor::dlf::Param("Error Message", strerror(errno))};
+        {castor::dlf::Param("Error Message", strerror(errno))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 1, initParams);
       castor::exception::Internal e;
       e.getMessage() << "Unable to get shared memory id. Giving up.";
@@ -80,7 +84,7 @@ bool castor::sharedMemory::BlockDict::createBlock
     if (-1 == shmid) {
       // "Unable to create shared memory. Giving up"
       castor::dlf::Param initParams[] =
-	{castor::dlf::Param("Error Message", strerror(errno))};
+        {castor::dlf::Param("Error Message", strerror(errno))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 1, initParams);
       castor::exception::Internal e;
       e.getMessage() << "Unable to create shared memory. Giving up.";
@@ -88,7 +92,11 @@ bool castor::sharedMemory::BlockDict::createBlock
     }
     // "Created the shared memory."
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 0, 0);
-    created = true;
+  }
+  else {
+    // Regardless whether we were asked to create it, we found it.
+    // So we attach and we notify that to the caller
+    create = false;
   }
   // Attach the shared memory
   void *sharedMemoryBlock = shmat(shmid, key.address(), SHM_REMAP);
@@ -102,7 +110,6 @@ bool castor::sharedMemory::BlockDict::createBlock
     throw e;
   }
   *pointer = sharedMemoryBlock;
-  return created;
 }
 
 //------------------------------------------------------------------------------

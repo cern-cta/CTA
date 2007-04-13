@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/12 16:49:59 $ $Author: itglp $
+ * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/13 15:25:07 $ $Author: itglp $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -83,10 +83,10 @@ namespace castor {
       /**
        * create a block
        * @param pointer is filled with a pointer to the raw memory of the block
-       * @return whether the block was really created or only attached
-       * (true means really created)
+       * @param create whether the block has to be really created or only attached
+       * (it is returned true when it has been really created)
        */
-      static bool createBlock(BlockKey &key, void** pointer);
+      static void createBlock(BlockKey &key, void** pointer, bool& create);
 
     private:
 
@@ -120,16 +120,12 @@ T* castor::sharedMemory::BlockDict::getBlock
   if (0 != block) {
     return (T*)block->block();
   }
-  // shall we create a new block and register it ?
-  if (!create) {
-    return 0;
-  }
-  // yes, and we need to assure that we create the shared memory only once
+  // we need to assure that we create the shared memory only once
   // so we serialize all the Block creation
   Cmutex_lock(&s_blockDict, -1);
   // create the block
   void* sharedMemoryBlock;
-  create = createBlock(key, &sharedMemoryBlock);
+  createBlock(key, &sharedMemoryBlock, create);
   // Now let's really create/retrieve the Block object inside the shared memory
   T* tblock = 0;
   if (create) {
@@ -142,14 +138,18 @@ T* castor::sharedMemory::BlockDict::getBlock
       T(key, (void*)((char*)sharedMemoryBlock + sizeof(T)));
   } else {
     tblock = (T*)sharedMemoryBlock;
-    // Register block in the dictionnary. Here the block
-    // was not created in this process. So we need to register
-    // it in this process dictionnary.
-    insertBlock(key, tblock, T::malloc, T::free);
+    if(tblock != 0) {
+      // Register block in the dictionnary. Here the block
+      // was not created in this process. So we need to register
+      // it in this process dictionnary.
+      insertBlock(key, tblock, T::malloc, T::free);
+    }
+    // else the block was not created because create was false,
+    // nothing to do
   }
   // Now we can release the lock
   Cmutex_unlock(&s_blockDict);
-  // return the brean new Block
+  // return the new Block, or 0 if nothing existed and create was false
   return tblock;
 }
 
