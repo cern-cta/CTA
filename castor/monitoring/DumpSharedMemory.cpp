@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DumpSharedMemory.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/04/11 08:50:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DumpSharedMemory.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/13 15:26:17 $ $Author: itglp $
  *
  * this is a little executable able to dump the content of
  * the monitoring shared memory block for debugging purposes
@@ -34,6 +34,7 @@
 int main(int argc, char** argv) {
 
   // get SharedMemoryBlock
+  bool create = false;
   castor::sharedMemory::BlockKey key =
     castor::monitoring::ClusterStatusBlockKey::getBlockKey();
   castor::sharedMemory::SingletonBlock
@@ -46,8 +47,12 @@ int main(int argc, char** argv) {
     <castor::monitoring::ClusterStatus,
     castor::sharedMemory::Allocator
     <castor::sharedMemory::SharedNode,
-    castor::monitoring::ClusterStatusBlockKey> > >(key);
+    castor::monitoring::ClusterStatusBlockKey> > >(key, create);
 
+  if (0 == b) {
+    std::cout << "No shared memory found." << std::endl;
+    return 0;
+  }
   // print content roughly
   b->print(std::cout, "");
 
