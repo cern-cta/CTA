@@ -21,7 +21,8 @@
  *
  * The Collector thread of the RmMaster daemon.
  * It collects the data from the different nodes and updates a shared
- * memory representation of it
+ * memory representation of the cluster. The real implementation of the
+ * cluster update is implemented in a separated helper class.
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -30,25 +31,16 @@
 #define RMMASTER_COLLECTORTHREAD_HPP 1
 
 #include "castor/server/IThread.hpp"
-#include "castor/monitoring/ClusterStatus.hpp"
+#include "castor/monitoring/rmmaster/ora/StatusUpdateHelper.hpp"
 
 namespace castor {
 
   namespace monitoring {
 
-    // Forward declarations
-    class DiskServerStateReport;
-    class DiskServerMetricsReport;
-    class ClusterStatus;
-    namespace admin {
-      class DiskServerAdminReport;
-      class FileSystemAdminReport;
-    }
-
     namespace rmmaster {
 
       /**
-       * Collector  tread.
+       * Collector tread.
        */
       class CollectorThread : public castor::server::IThread {
 
@@ -71,70 +63,8 @@ namespace castor {
 
       private:
 
-        /**
-         * handles state updates
-         * @param state the new state
-         */
-        void handleStateUpdate
-        (castor::monitoring::DiskServerStateReport* state)
-          throw (castor::exception::Exception);
-
-        /**
-         * handles metrics updates
-         * @param metrics the new metrics
-         */
-        void handleMetricsUpdate
-        (castor::monitoring::DiskServerMetricsReport* metrics)
-          throw (castor::exception::Exception);
-
-        /**
-         * handles DiskServer admin updates
-         * @param admin the new admin report
-         */
-        void handleDiskServerAdminUpdate
-        (castor::monitoring::admin::DiskServerAdminReport* admin)
-          throw (castor::exception::Exception);
-
-        /**
-         * handles FileSystem admin updates
-         * @param admin the new admin report
-         */
-        void handleFileSystemAdminUpdate
-        (castor::monitoring::admin::FileSystemAdminReport* admin)
-          throw (castor::exception::Exception);
-
-	/*
-	 * gets an iterator on a specific machine from the
-	 * ClusterStatus map or create one if the machine is
-	 * not existing in the map yet
-	 * @param name name of the machine
-	 * @param it the returned iterator
-	 * @return true if the machine was found or created successfully,
-	 * false if the creation failed
-	 */
-	bool getOrCreateDiskServer
-	(std::string name,
-	 castor::monitoring::ClusterStatus::iterator& it) throw();
-
-	/*
-	 * gets an iterator on a specific fileSystem from a
-	 * DiskServerStatus map or create one if the fileSystem is
-	 * not existing in the map yet
-	 * @param it dss the DiskServerStatus map
-	 * @param mountPoint the mountPoint of the fileSystem
-	 * @param it2 the returned iterator
-	 * @return true if the fileSystem was found or created successfully,
-	 * false if the creation failed
-	 */
-	bool getOrCreateFileSystem
-	(castor::monitoring::DiskServerStatus& dss,
-	 std::string mountPoint,
-	 castor::monitoring::DiskServerStatus::iterator& it2) throw();
-
-      private:
-
-        // Machine Status List
-        castor::monitoring::ClusterStatus* m_clusterStatus;
+        // Cluster update status helper, shared with OraRmMasterSvc
+        castor::monitoring::rmmaster::ora::StatusUpdateHelper* m_updater;
 
       };
 
