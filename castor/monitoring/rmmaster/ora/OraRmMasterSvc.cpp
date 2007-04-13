@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/13 14:05:09 $ $Author: itglp $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/13 16:08:56 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -365,6 +365,8 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       castor::monitoring::DiskServerStateReport* dsReport =
         new castor::monitoring::DiskServerStateReport();
       dsReport->setName(dsRset->getString(2));
+      // by default we start with everything disabled, when the node comes up rmNode
+      // will send a full report reenabling the node
       dsReport->setStatus(castor::stager::DISKSERVER_DISABLED);
       dsReport->setAdminStatus((castor::monitoring::AdminStatusCodes)dsRset->getInt(3));
       
