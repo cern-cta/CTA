@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/13 13:44:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/13 14:05:09 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -78,7 +78,7 @@ const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getFileSy
 // -----------------------------------------------------------------------
 castor::monitoring::rmmaster::ora::OraRmMasterSvc::OraRmMasterSvc(const std::string name) :
   OraCommonSvc(name),
-  m_syncClusterStatusStatement(0), m_getDiskServersStatement(0),
+  m_storeClusterStatusStatement(0), m_getDiskServersStatement(0),
   m_getFileSystemsStatement (0) {}
 
 // -----------------------------------------------------------------------
