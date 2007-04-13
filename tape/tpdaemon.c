@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.7 2007/03/14 14:55:00 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.8 2007/04/13 13:02:29 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.7 $ $Date: 2007/03/14 14:55:00 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.8 $ $Date: 2007/04/13 13:02:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -2532,6 +2532,10 @@ int rlsflags;
 		sprintf (arg_den, "%d", tunp->cdevp->den);
 
 		tplogit (func, "execing rlstape, pid=%d\n", getpid());
+                tplogit (func, "rlstape %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+                         tunp->drive, tunp->vid, tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid, 
+                         user, tunp->acctname, arg_jid, arg_ux, arg_rlsflags, tunp->dgn,
+                         tunp->devtype, tunp->dvrname, tunp->loader, arg_mode, arg_den);
                 /* tl_log msg wouldn't be seen in the DB due to the execlp() */
 
 		execlp (progfullpath, "rlstape", tunp->drive, tunp->vid,
