@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.390 $ $Date: 2007/04/12 16:58:33 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.391 $ $Date: 2007/04/13 13:27:21 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.390 $ $Date: 2007/04/12 16:58:33 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.391 $ $Date: 2007/04/13 13:27:21 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -3043,35 +3043,49 @@ BEGIN
 END;
 
 /* PL/SQL method implementing syncClusterStatus */
-CREATE OR REPLACE PROCEDURE syncClusterStatus
+CREATE OR REPLACE PROCEDURE storeClusterStatus
 (machines IN castor."strList",
  fileSystems IN castor."strList",
  machineValues IN castor."cnumList",
  fileSystemValues IN castor."cnumList") AS
  ind NUMBER;
  machine NUMBER := 0;
+ fs NUMBER := 0;
 BEGIN
   -- First Update Machines
   FOR i in machines.FIRST .. machines.LAST LOOP
     ind := machineValues.FIRST + 3 * (i - machines.FIRST);
-    BEGIN
-      SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
-      UPDATE DiskServer
-         SET status = machineValues(ind),
-             adminStatus = machineValues(ind + 1),
-             load = machineValues(ind + 2)
-       WHERE name = machines(i);
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      DECLARE
-        mid INTEGER;
+    IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
-        -- we should insert a new machine here
-        SELECT ids_seq.nextval INTO mId FROM DUAL;
-        INSERT INTO DiskServer (name, load, id, status, adminStatus)
-         VALUES (machines(i), machineValues(ind + 2), mid, machineValues(ind), machineValues(ind + 1));
-        INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
+        SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
+        DELETE FROM DiskServer WHERE name = machines(i);
+        DELETE FROM id2Type WHERE id = machine;
+        DELETE FROM id2Type WHERE id IN (SELECT id FROM FileSystem WHERE diskServer = machine);
+        DELETE FROM FileSystem WHERE diskServer = machine;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- Fine, was already deleted
+        NULL;
       END;
-    END;
+    ELSE
+      BEGIN
+        SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
+        UPDATE DiskServer
+           SET status = machineValues(ind),
+               adminStatus = machineValues(ind + 1),
+               load = machineValues(ind + 2)
+         WHERE name = machines(i);
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        DECLARE
+          mid INTEGER;
+        BEGIN
+          -- we should insert a new machine here
+          SELECT ids_seq.nextval INTO mId FROM DUAL;
+          INSERT INTO DiskServer (name, load, id, status, adminStatus)
+           VALUES (machines(i), machineValues(ind + 2), mid, machineValues(ind), machineValues(ind + 1));
+          INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
+        END;
+      END;
+    ENDIF;
   END LOOP;
   -- And then FileSystems
   ind := machineValues.FIRST;
@@ -3079,39 +3093,50 @@ BEGIN
     IF fileSystems(i) NOT LIKE ('/%') THEN
       SELECT id INTO machine FROM DiskServer WHERE name = fileSystems(i);
     ELSE
-      BEGIN
-        SELECT diskServer INTO machine FROM FileSystem
-         WHERE mountPoint = fileSystems(i) AND diskServer = machine;
-        UPDATE FileSystem
-           SET status = fileSystemValues(ind),
-               adminStatus = fileSystemValues(ind + 1),
-               readRate = fileSystemValues(ind + 2),
-               writeRate = fileSystemValues(ind + 3),
-               nbReadStreams = fileSystemValues(ind + 4),
-               nbWriteStreams = fileSystemValues(ind + 5),
-               nbReadWriteStreams = fileSystemValues(ind + 6),
-               free = fileSystemValues(ind + 7)
-         WHERE mountPoint = fileSystems(i)
-           AND diskServer = machine;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        DECLARE
-          fsid INTEGER;
+      IF fileSystemValues(ind + 1) = 3 THEN -- ADMIN DELETED
         BEGIN
-          -- we should insert a new filesystem here
-          SELECT ids_seq.nextval INTO fsId FROM DUAL;
-          INSERT INTO FileSystem (free, mountPoint, deltaFree, reservedSpace,
-                 minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
-                 spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
-                 nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
-                 status, adminStatus)
-            VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, 0, .2, .1,
-                    .3, 0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
-                    fileSystemValues(ind + 3), fileSystemValues(ind + 4),
-                    fileSystemValues(ind + 5), fileSystemValues(ind + 6),
-                    fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
-          INSERT INTO Id2Type (id, type) VALUES (fsid, 12); -- OBJ_FileSystem
+          SELECT id INTO fs FROM FileSystem WHERE mountPoint = fileSystems(i) AND diskServer = machine;
+          DELETE FROM id2Type WHERE id = fs;
+          DELETE FROM FileSystem WHERE id = fs;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- Fine, was already deleted
+          NULL;
         END;
-      END;
+      ELSE
+        BEGIN
+          SELECT diskServer INTO machine FROM FileSystem
+           WHERE mountPoint = fileSystems(i) AND diskServer = machine;
+          UPDATE FileSystem
+             SET status = fileSystemValues(ind),
+                 adminStatus = fileSystemValues(ind + 1),
+                 readRate = fileSystemValues(ind + 2),
+                 writeRate = fileSystemValues(ind + 3),
+                 nbReadStreams = fileSystemValues(ind + 4),
+                 nbWriteStreams = fileSystemValues(ind + 5),
+                 nbReadWriteStreams = fileSystemValues(ind + 6),
+                 free = fileSystemValues(ind + 7)
+           WHERE mountPoint = fileSystems(i)
+             AND diskServer = machine;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          DECLARE
+            fsid INTEGER;
+          BEGIN
+            -- we should insert a new filesystem here
+            SELECT ids_seq.nextval INTO fsId FROM DUAL;
+            INSERT INTO FileSystem (free, mountPoint, deltaFree, reservedSpace,
+                   minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
+                   spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
+                   nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
+                   status, adminStatus)
+              VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, 0, .2, .1,
+                      .3, 0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
+                      fileSystemValues(ind + 3), fileSystemValues(ind + 4),
+                      fileSystemValues(ind + 5), fileSystemValues(ind + 6),
+                      fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
+            INSERT INTO Id2Type (id, type) VALUES (fsid, 12); -- OBJ_FileSystem
+          END;
+        END;
+      END IF;
       ind := ind + 9;
     END IF;
   END LOOP;
