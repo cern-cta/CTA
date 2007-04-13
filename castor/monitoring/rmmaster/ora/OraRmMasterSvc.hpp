@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/db/ora/OraRmMasterSvc.hpp
+ *            castor/monitoring/rmmaster/ora/OraRmMasterSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/12 16:52:26 $ $Author: itglp $
+ * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/13 13:44:20 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -40,86 +40,89 @@
 
 namespace castor {
 
-  namespace db {
+  namespace monitoring {
 
-    namespace ora {
+    namespace rmmaster {
 
-      /**
-       * Implementation of the IRmMasterSvc for Oracle
-       */
-      class OraRmMasterSvc : public OraCommonSvc,
-			     public virtual castor::monitoring::rmmaster::IRmMasterSvc {
-
-      public:
-
+      namespace ora {
+  
         /**
-         * default constructor
+         * Implementation of the IRmMasterSvc for Oracle
          */
-        OraRmMasterSvc(const std::string name);
+        class OraRmMasterSvc : public castor::db::ora::OraCommonSvc,
+             public virtual castor::monitoring::rmmaster::IRmMasterSvc {
+  
+        public:
+  
+          /**
+           * default constructor
+           */
+          OraRmMasterSvc(const std::string name);
+  
+          /**
+           * default destructor
+           */
+          virtual ~OraRmMasterSvc() throw();
+  
+          /**
+           * Get the service id
+           */
+          virtual inline const unsigned int id() const;
+  
+          /**
+           * Get the service id
+           */
+          static const unsigned int ID();
+  
+          /**
+           * Reset the converter statements.
+           */
+          void reset() throw ();
+  
+        public:
+  
+          /**
+           * Stores the current ClusterStatus into the stager database
+           * @param clusterStatus the ClusterStatus as known by RmMaster
+           * @exception Exception in case of error
+           */
+          virtual void storeClusterStatus
+          (castor::monitoring::ClusterStatus* clusterStatus)
+            throw (castor::exception::Exception);
+  
+          /**
+           * Retrieves the last known cluster status from the stager database
+           * and updates the passed ClusterStatus
+           * @param clusterStatus the ClusterStatus as known by RmMaster
+           * @exception Exception in case of error
+           */
+          virtual void retrieveClusterStatus
+          (castor::monitoring::ClusterStatus* clusterStatus)
+            throw (castor::exception::Exception);
+            
+        private:
+  
+          /// SQL statement for function storeClusterStatus
+          static const std::string s_storeClusterStatusStatementString;
+  
+          /// SQL statement object for function storeClusterStatus
+          oracle::occi::Statement *m_storeClusterStatusStatement;
+  
+          /// SQL statements for function retrieveClusterStatus
+          static const std::string s_getDiskServersStatementString;
+          static const std::string s_getFileSystemsStatementString;
+  
+          /// SQL statement object for function retrieveClusterStatus
+          oracle::occi::Statement *m_getDiskServersStatement;
+          oracle::occi::Statement *m_getFileSystemsStatement;
+  
+        }; // end of class OraRmMasterSvc
 
-        /**
-         * default destructor
-         */
-        virtual ~OraRmMasterSvc() throw();
+      } // end of namespace ora
 
-        /**
-         * Get the service id
-         */
-        virtual inline const unsigned int id() const;
+    } // end of namespace rmmaster
 
-        /**
-         * Get the service id
-         */
-        static const unsigned int ID();
-
-        /**
-         * Reset the converter statements.
-         */
-        void reset() throw ();
-
-      public:
-
-        /**
-         * Synchronizes the stager database and the ClusterStatus, as known
-         * by RmMaster
-         * @param clusterStatus the ClusterStatus as known by RmMaster
-         * @exception Exception in case of error
-         */
-        virtual void syncClusterStatus
-        (castor::monitoring::ClusterStatus* clusterStatus)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieves the last cluster status from the stager database
-         * and updates the shared ClusterStatus
-         * @param clusterStatus the ClusterStatus in shared memory
-         * @exception Exception in case of error
-         */
-        virtual void retrieveClusterStatus
-        (castor::monitoring::ClusterStatus* clusterStatus)
-          throw (castor::exception::Exception);
-          
-      private:
-
-        /// SQL statement for function syncClusterStatus
-        static const std::string s_syncClusterStatusStatementString;
-
-        /// SQL statement object for function syncClusterStatus
-        oracle::occi::Statement *m_syncClusterStatusStatement;
-
-        /// SQL statements for function retrieveClusterStatus
-        static const std::string s_getDiskServersStatementString;
-        static const std::string s_getFileSystemsStatementString;
-
-        /// SQL statement object for function retrieveClusterStatus
-        oracle::occi::Statement *m_getDiskServersStatement;
-        oracle::occi::Statement *m_getFileSystemsStatement;
-
-      }; // end of class OraRmMasterSvc
-
-    } // end of namespace ora
-
-  } // end of namespace db
+  } // end of namespace monitoring
 
 } // end of namespace castor
 
