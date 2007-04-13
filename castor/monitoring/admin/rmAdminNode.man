@@ -1,4 +1,4 @@
-.TH RMADMINNODE 1 "$Date: 2007/04/13 15:27:19 $" CASTOR "stager catalogue administrative commands"
+.TH RMADMINNODE 1 "$Date: 2007/04/13 16:44:49 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 rmAdminNode \- handle statuses in rmMaster
 .SH SYNOPSIS
@@ -14,6 +14,10 @@ OPTIONS
 ]
 .BI -n,
 .BI --node " nodeName"
+[
+.BI -r,
+.BI --recursive
+]
 [
 .BI -s,
 .BI --state " nodeState"
@@ -60,6 +64,10 @@ Get usage information
 .BI \-n,
 .BI \-\-node " nodeName"
 is the name of the node concerned. This is the only mandatory option
+.TP
+.BI \-r,
+.BI \-\-recursive
+allows to set the state of a diskserver and all its fileSystems in one go
 .TP
 .BI \-s,
 .BI \-\-state " nodeState"

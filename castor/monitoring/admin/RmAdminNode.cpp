@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/04/13 13:26:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/13 16:44:48 $ $Author: sponcec3 $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -49,6 +49,7 @@ static struct Coptions longopts[] = {
   {"mountPoint",  REQUIRED_ARGUMENT, NULL, 'm'},
   {"fsState",     REQUIRED_ARGUMENT, NULL, 't'},
   {"fsAdminState",REQUIRED_ARGUMENT, NULL, 'd'},
+  {"recursive",   NO_ARGUMENT,       NULL, 'r'},
   {NULL, 0, NULL, 0}
 };
 
@@ -57,6 +58,7 @@ void usage(char *cmd) {
             << "-h,--help displays this help\n"
             << "--host <Rmmaster host>\n"
             << "--port <Rmmaster port>\n"
+            << "-r, --recursive allows to modify a node and all its fileSystems in one go.\n"
             << "-n, --node <Name> of the node to administrate. Required.\n"
             << "-s, --state {state} New node's state\n"
             << "-a, --adminState {adminState} New node's state\n"
@@ -86,12 +88,13 @@ int main(int argc, char *argv[]) {
     char* mountPoint = 0;
     char* fsStateName = 0;
     char* fsAdminStateName = 0;
-    
+    bool recursive;
+
     // Deal with options
     Coptind = 1;
     Copterr = 1;
     int ch;
-    while ((ch = Cgetopt_long(argc,argv,"hn:s:a:m:t:d:",longopts,NULL)) != EOF) {
+    while ((ch = Cgetopt_long(argc,argv,"hn:rs:a:m:t:d:",longopts,NULL)) != EOF) {
       switch (ch) {
       case 'h':
 	usage(progName);
@@ -101,6 +104,9 @@ int main(int argc, char *argv[]) {
 	break;
       case 'p':
 	rmPort = atoi(Coptarg);
+	break;
+      case 'r':
+	recursive = true;
 	break;
       case 'n':
 	nodeName = Coptarg;
@@ -251,6 +257,7 @@ int main(int argc, char *argv[]) {
       report->setDiskServerName(nodeName);
       report->setAdminStatus(adminState);
       report->setStatus(state);
+      report->setRecursive(recursive);
     } else {
       castor::monitoring::admin::FileSystemAdminReport* report =
 	new castor::monitoring::admin::FileSystemAdminReport();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StatusUpdateHelper.cpp,v $ $Author: itglp $
+ * @(#)$RCSfile: StatusUpdateHelper.cpp,v $ $Author: sponcec3 $
  *
  * Status update helper class. Shared between the OraRmMasterSvc and the
  * Collector thread of the RmMasterDaemon.
@@ -344,6 +344,38 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
 	it->second.setAdminStatus(ADMIN_FORCE);
       } else {
 	it->second.setAdminStatus(ADMIN_NONE);
+      }
+    }
+  }
+  // Go over the fileSystems if required
+  if (admin->recursive()) {
+    for (castor::monitoring::DiskServerStatus::iterator it2 =
+	   it->second.begin();
+	 it2 != it->second.end();
+	 it2++) {
+      // Update status if needed
+      if (it2->second.adminStatus() == ADMIN_NONE ||
+	  admin->adminStatus() != ADMIN_NONE) {
+	if (admin->adminStatus() == ADMIN_DELETED) {
+	  it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
+	  it2->second.setAdminStatus(ADMIN_DELETED);
+	} else {
+	  switch (admin->status()) {
+	  case castor::stager::DISKSERVER_PRODUCTION :
+	    it2->second.setStatus(castor::stager::FILESYSTEM_PRODUCTION);
+	    break;
+	  case castor::stager::DISKSERVER_DRAINING :
+	    it2->second.setStatus(castor::stager::FILESYSTEM_DRAINING);
+	    break;
+	  case castor::stager::DISKSERVER_DISABLED :
+	    it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
+	  }
+	  if (admin->adminStatus() == ADMIN_FORCE) {
+	    it2->second.setAdminStatus(ADMIN_FORCE);
+	  } else {
+	    it2->second.setAdminStatus(ADMIN_NONE);
+	  }
+	}
       }
     }
   }
