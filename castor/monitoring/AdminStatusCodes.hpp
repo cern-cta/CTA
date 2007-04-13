@@ -42,14 +42,15 @@ namespace castor {
     enum AdminStatusCodes {
       ADMIN_NONE = 0,
       ADMIN_FORCE = 1,
-      ADMIN_RELEASE = 2
+      ADMIN_RELEASE = 2,
+      ADMIN_DELETED = 3
     }; /* end of enum AdminStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the AdminStatusCodes enum
      */
-    extern const char* AdminStatusCodesStrings[3];
+    extern const char* AdminStatusCodesStrings[4];
 
 #ifdef __cplusplus
   } /* end of namespace monitoring */
