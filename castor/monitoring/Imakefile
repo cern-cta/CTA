@@ -43,12 +43,16 @@ STGLIB_SRCS = ClusterStatus.cpp \
               FileSystemMetricsReport.cpp \
               FileSystemStateReport.cpp \
               admin/FileSystemAdminReport.cpp \
+              FileSystemStateAck.cpp \
+              MonitorMessageAck.cpp \
               ../io/StreamDiskServerAdminReportCnv.cpp \
               ../io/StreamDiskServerMetricsReportCnv.cpp \
               ../io/StreamDiskServerStateReportCnv.cpp \
               ../io/StreamFileSystemAdminReportCnv.cpp \
               ../io/StreamFileSystemMetricsReportCnv.cpp \
-              ../io/StreamFileSystemStateReportCnv.cpp
+              ../io/StreamFileSystemStateReportCnv.cpp \
+              ../io/StreamFileSystemStateAckCnv.cpp \
+              ../io/StreamMonitorMessageAckCnv.cpp
 
 RMGETNODESBIN_SRCS = RmGetNodes.cpp
 RMGETNODESBIN_OBJS = $(RMGETNODESBIN_SRCS:.cpp=.Osuf)
