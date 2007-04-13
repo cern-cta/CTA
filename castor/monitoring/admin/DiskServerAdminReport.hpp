@@ -120,6 +120,24 @@ namespace castor {
         }
 
         /**
+         * Get the value of m_recursive
+         * Whether to update recursively the status of the filesystems.
+         * @return the value of m_recursive
+         */
+        bool recursive() const {
+          return m_recursive;
+        }
+
+        /**
+         * Set the value of m_recursive
+         * Whether to update recursively the status of the filesystems.
+         * @param new_var the new value of m_recursive
+         */
+        void setRecursive(bool new_var) {
+          m_recursive = new_var;
+        }
+
+        /**
          * Get the value of m_id
          * The id of this object
          * @return the value of m_id
@@ -173,6 +191,9 @@ namespace castor {
 
         /// Name of the diskServer
         std::string m_diskServerName;
+
+        /// Whether to update recursively the status of the filesystems.
+        bool m_recursive;
 
         /// The id of this object
         u_signed64 m_id;

@@ -42,6 +42,7 @@
 //------------------------------------------------------------------------------
 castor::monitoring::admin::DiskServerAdminReport::DiskServerAdminReport() throw() :
   m_diskServerName(""),
+  m_recursive(false),
   m_id(0),
   m_adminStatus(castor::monitoring::AdminStatusCodes(0)),
   m_status(castor::stager::DiskServerStatusCode(0)) {
@@ -67,6 +68,7 @@ void castor::monitoring::admin::DiskServerAdminReport::print(std::ostream& strea
   }
   // Output of all members
   stream << indent << "diskServerName : " << m_diskServerName << std::endl;
+  stream << indent << "recursive : " << m_recursive << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "adminStatus : " << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << std::endl;

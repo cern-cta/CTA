@@ -91,6 +91,7 @@ void castor::io::StreamDiskServerAdminReportCnv::createRep(castor::IAddress* add
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->diskServerName();
+  ad->stream() << obj->recursive();
   ad->stream() << obj->id();
   ad->stream() << obj->adminStatus();
   ad->stream() << obj->status();
@@ -109,6 +110,9 @@ castor::IObject* castor::io::StreamDiskServerAdminReportCnv::createObj(castor::I
   std::string diskServerName;
   ad->stream() >> diskServerName;
   object->setDiskServerName(diskServerName);
+  bool recursive;
+  ad->stream() >> recursive;
+  object->setRecursive(recursive);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
