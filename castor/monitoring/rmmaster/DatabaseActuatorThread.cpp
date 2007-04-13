@@ -75,7 +75,7 @@ void castor::monitoring::rmmaster::DatabaseActuatorThread::run
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 32, 0, 0);
   try{
     if (m_rmMasterService != 0) {
-      m_rmMasterService->syncClusterStatus(m_clusterStatus);
+      m_rmMasterService->storeClusterStatus(m_clusterStatus);
     }
   }
   catch(castor::exception::Exception e) {
