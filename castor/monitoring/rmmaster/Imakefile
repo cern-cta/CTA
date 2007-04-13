@@ -30,12 +30,13 @@ DEBUG  = -g -O0
 MANPAGES = 
 EXPORTMANPAGES = 
 
-INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
+INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I FileName(../..,..)
 
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
-LIBS = -lcastorMonitor -lshift
-RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp
+LIBS = -lcastorMonitor -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci
+RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp \
+         ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
 
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
 
