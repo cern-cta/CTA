@@ -56,7 +56,7 @@ MANSUFFIX = ManSuffix
 #if !defined(_WIN32)
 CP = cp
 LD = cc
-LDFLAGS = -Wl,--defsym,CastorVersion_v$(__MAJOR_CASTOR_VERSION__).$(__MINOR_CASTOR_VERSION__)=0
+LDFLAGS = -Wl,--defsym,CastorVersion_v$(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION)=0
 LN = ln
 #endif
 #if HasRanlib
