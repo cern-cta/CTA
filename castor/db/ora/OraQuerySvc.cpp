@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2006/08/03 10:03:16 $ $Author: gtaur $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/04/13 11:58:53 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -127,15 +127,15 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_diskCopies4FileNameStatement);
-    deleteStatement(m_diskCopies4FileStatement);
-    deleteStatement(m_diskCopies4ReqIdStatement);
-    deleteStatement(m_diskCopies4UserTagStatement);
-    deleteStatement(m_diskCopies4ReqIdLastRecallsStatement);
-    deleteStatement(m_diskCopies4UserTagLastRecallsStatement);
-    deleteStatement(m_requestToDoStatement);
-    deleteStatement(m_describeDiskPoolsStatement);
-    deleteStatement(m_describeDiskPoolStatement);
+    if (m_diskCopies4FileNameStatement) deleteStatement(m_diskCopies4FileNameStatement);
+    if (m_diskCopies4FileStatement) deleteStatement(m_diskCopies4FileStatement);
+    if (m_diskCopies4ReqIdStatement) deleteStatement(m_diskCopies4ReqIdStatement);
+    if (m_diskCopies4UserTagStatement) deleteStatement(m_diskCopies4UserTagStatement);
+    if (m_diskCopies4ReqIdLastRecallsStatement) deleteStatement(m_diskCopies4ReqIdLastRecallsStatement);
+    if (m_diskCopies4UserTagLastRecallsStatement) deleteStatement(m_diskCopies4UserTagLastRecallsStatement);
+    if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
+    if (m_describeDiskPoolsStatement) deleteStatement(m_describeDiskPoolsStatement);
+    if (m_describeDiskPoolStatement) deleteStatement(m_describeDiskPoolStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_diskCopies4FileNameStatement = 0;

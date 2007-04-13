@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/03/26 16:59:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/04/13 11:58:53 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -169,14 +169,14 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_getUpdateStartStatement);
-    deleteStatement(m_putStartStatement);
-    deleteStatement(m_disk2DiskCopyDoneStatement);
-    deleteStatement(m_prepareForMigrationStatement);
-    deleteStatement(m_getUpdateDoneStatement);
-    deleteStatement(m_getUpdateFailedStatement);
-    deleteStatement(m_putFailedStatement);
-    deleteStatement(m_requestToDoStatement);
+    if (m_getUpdateStartStatement) deleteStatement(m_getUpdateStartStatement);
+    if (m_putStartStatement) deleteStatement(m_putStartStatement);
+    if (m_disk2DiskCopyDoneStatement) deleteStatement(m_disk2DiskCopyDoneStatement);
+    if (m_prepareForMigrationStatement) deleteStatement(m_prepareForMigrationStatement);
+    if (m_getUpdateDoneStatement) deleteStatement(m_getUpdateDoneStatement);
+    if (m_getUpdateFailedStatement) deleteStatement(m_getUpdateFailedStatement);
+    if (m_putFailedStatement) deleteStatement(m_putFailedStatement);
+    if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_getUpdateStartStatement = 0;

@@ -193,23 +193,23 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_selectTapeServerStatement);
-    deleteStatement(m_checkTapeRequestStatement1);
-     deleteStatement(m_checkTapeRequestStatement2);
-    deleteStatement(m_getQueuePositionStatement);
-    deleteStatement(m_selectTapeDriveStatement);
-    deleteStatement(m_existTapeDriveWithTapeInUseStatement);
-    deleteStatement(m_existTapeDriveWithTapeMountedStatement);
-    deleteStatement(m_selectTapeByVidStatement);
-    deleteStatement(m_selectTapeReqForMountedTapeStatement);
-    deleteStatement(m_selectTapeAccessSpecificationStatement);
-    deleteStatement(m_selectDeviceGroupNameStatement);
-    deleteStatement(m_selectTapeRequestQueueStatement);
-    deleteStatement(m_selectTapeRequestStatement);
-    deleteStatement(m_selectTapeDriveQueueStatement);
-    deleteStatement(m_matchTape2TapeDriveStatement);
-    deleteStatement(m_selectCompatibilitiesForDriveModelStatement);
-    deleteStatement(m_selectTapeAccessSpecificationsStatement);
+    if (m_selectTapeServerStatement) deleteStatement(m_selectTapeServerStatement);
+    if (m_checkTapeRequestStatement1) deleteStatement(m_checkTapeRequestStatement1);
+     if (m_checkTapeRequestStatement2) deleteStatement(m_checkTapeRequestStatement2);
+    if (m_getQueuePositionStatement) deleteStatement(m_getQueuePositionStatement);
+    if (m_selectTapeDriveStatement) deleteStatement(m_selectTapeDriveStatement);
+    if (m_existTapeDriveWithTapeInUseStatement) deleteStatement(m_existTapeDriveWithTapeInUseStatement);
+    if (m_existTapeDriveWithTapeMountedStatement) deleteStatement(m_existTapeDriveWithTapeMountedStatement);
+    if (m_selectTapeByVidStatement) deleteStatement(m_selectTapeByVidStatement);
+    if (m_selectTapeReqForMountedTapeStatement) deleteStatement(m_selectTapeReqForMountedTapeStatement);
+    if (m_selectTapeAccessSpecificationStatement) deleteStatement(m_selectTapeAccessSpecificationStatement);
+    if (m_selectDeviceGroupNameStatement) deleteStatement(m_selectDeviceGroupNameStatement);
+    if (m_selectTapeRequestQueueStatement) deleteStatement(m_selectTapeRequestQueueStatement);
+    if (m_selectTapeRequestStatement) deleteStatement(m_selectTapeRequestStatement);
+    if (m_selectTapeDriveQueueStatement) deleteStatement(m_selectTapeDriveQueueStatement);
+    if (m_matchTape2TapeDriveStatement) deleteStatement(m_matchTape2TapeDriveStatement);
+    if (m_selectCompatibilitiesForDriveModelStatement) deleteStatement(m_selectCompatibilitiesForDriveModelStatement);
+    if (m_selectTapeAccessSpecificationsStatement) deleteStatement(m_selectTapeAccessSpecificationsStatement);
   } catch (oracle::occi::SQLException e) {};
   
   // Now reset all pointers to 0

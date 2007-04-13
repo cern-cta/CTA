@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/04/04 10:20:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/04/13 11:58:53 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -153,11 +153,11 @@ void castor::db::ora::OraGCSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_selectFiles2DeleteStatement);
-    deleteStatement(m_selectFiles2DeleteStatement2);
-    deleteStatement(m_filesDeletedStatement);
-    deleteStatement(m_filesDeletionFailedStatement);
-    deleteStatement(m_requestToDoStatement);
+    if (m_selectFiles2DeleteStatement) deleteStatement(m_selectFiles2DeleteStatement);
+    if (m_selectFiles2DeleteStatement2) deleteStatement(m_selectFiles2DeleteStatement2);
+    if (m_filesDeletedStatement) deleteStatement(m_filesDeletedStatement);
+    if (m_filesDeletionFailedStatement) deleteStatement(m_filesDeletionFailedStatement);
+    if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectFiles2DeleteStatement = 0;

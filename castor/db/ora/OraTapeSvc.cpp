@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)OraTapeSvc.cpp,v 1.19 $Release$ 2007/04/02 15:26:01 sponcec3
+ * @(#)OraTapeSvc.cpp,v 1.20 $Release$ 2007/04/13 11:58:53 sponcec3
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -199,20 +199,20 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_tapesToDoStatement);
-    deleteStatement(m_streamsToDoStatement);
-    deleteStatement(m_anyTapeCopyForStreamStatement);
-    deleteStatement(m_bestTapeCopyForStreamStatement);
-    deleteStatement(m_streamsForTapePoolStatement);
-    deleteStatement(m_bestFileSystemForSegmentStatement);
-    deleteStatement(m_fileRecalledStatement);
-    deleteStatement(m_fileRecallFailedStatement);
-    deleteStatement(m_selectTapeCopiesForMigrationStatement);
-    deleteStatement(m_resetStreamStatement);
-    deleteStatement(m_segmentsForTapeStatement);
-    deleteStatement(m_anySegmentsForTapeStatement);
-    deleteStatement(m_failedSegmentsStatement);
-    deleteStatement(m_checkFileForRepackStatement);
+    if (m_tapesToDoStatement) deleteStatement(m_tapesToDoStatement);
+    if (m_streamsToDoStatement) deleteStatement(m_streamsToDoStatement);
+    if (m_anyTapeCopyForStreamStatement) deleteStatement(m_anyTapeCopyForStreamStatement);
+    if (m_bestTapeCopyForStreamStatement) deleteStatement(m_bestTapeCopyForStreamStatement);
+    if (m_streamsForTapePoolStatement) deleteStatement(m_streamsForTapePoolStatement);
+    if (m_bestFileSystemForSegmentStatement) deleteStatement(m_bestFileSystemForSegmentStatement);
+    if (m_fileRecalledStatement) deleteStatement(m_fileRecalledStatement);
+    if (m_fileRecallFailedStatement) deleteStatement(m_fileRecallFailedStatement);
+    if (m_selectTapeCopiesForMigrationStatement) deleteStatement(m_selectTapeCopiesForMigrationStatement);
+    if (m_resetStreamStatement) deleteStatement(m_resetStreamStatement);
+    if (m_segmentsForTapeStatement) deleteStatement(m_segmentsForTapeStatement);
+    if (m_anySegmentsForTapeStatement) deleteStatement(m_anySegmentsForTapeStatement);
+    if (m_failedSegmentsStatement) deleteStatement(m_failedSegmentsStatement);
+    if (m_checkFileForRepackStatement) deleteStatement(m_checkFileForRepackStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_tapesToDoStatement = 0;

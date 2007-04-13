@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/04/02 15:56:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/04/13 11:58:53 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -123,10 +123,11 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
-    deleteStatement(m_selectTapeStatement);
-    deleteStatement(m_selectSvcClassStatement);
-    deleteStatement(m_selectFileClassStatement);
-    deleteStatement(m_selectFileSystemStatement);
+    if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
+    if (m_selectSvcClassStatement) deleteStatement(m_selectSvcClassStatement);
+    if (m_selectFileClassStatement) deleteStatement(m_selectFileClassStatement);
+    if (m_selectFileSystemStatement)
+      deleteStatement(m_selectFileSystemStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectTapeStatement = 0;

@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: itglp $
+* @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: sponcec3 $
 *
 * @author Giulia Taurelli
 *****************************************************************************/
@@ -113,8 +113,8 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_removeOutOfDateRequestsStatement);
-    deleteStatement(m_removeArchivedRequestsStatement);
+    if (m_removeOutOfDateRequestsStatement) deleteStatement(m_removeOutOfDateRequestsStatement);
+    if (m_removeArchivedRequestsStatement) deleteStatement(m_removeArchivedRequestsStatement);
   } catch (oracle::occi::SQLException e) {
     castor::dlf::Param params[] =
     {castor::dlf::Param("message", e.getMessage())};

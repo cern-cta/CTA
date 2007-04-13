@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.197 $ $Release$ $Date: 2007/04/04 13:47:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.198 $ $Release$ $Date: 2007/04/13 11:58:53 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -189,19 +189,19 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    deleteStatement(m_subRequestToDoStatement);
-    deleteStatement(m_subRequestFailedToDoStatement);
-    deleteStatement(m_isSubRequestToScheduleStatement);
-    deleteStatement(m_selectCastorFileStatement);
-    deleteStatement(m_updateAndCheckSubRequestStatement);
-    deleteStatement(m_recreateCastorFileStatement);
-    deleteStatement(m_updateFileSystemForJobStatement);
-    deleteStatement(m_archiveSubReqStatement);
-    deleteStatement(m_stageReleaseStatement);
-    deleteStatement(m_stageRmStatement);
-    deleteStatement(m_setFileGCWeightStatement);
-    deleteStatement(m_selectDiskPoolStatement);
-    deleteStatement(m_selectTapePoolStatement);
+    if (m_subRequestToDoStatement) deleteStatement(m_subRequestToDoStatement);
+    if (m_subRequestFailedToDoStatement) deleteStatement(m_subRequestFailedToDoStatement);
+    if (m_isSubRequestToScheduleStatement) deleteStatement(m_isSubRequestToScheduleStatement);
+    if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
+    if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
+    if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
+    if (m_updateFileSystemForJobStatement) deleteStatement(m_updateFileSystemForJobStatement);
+    if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
+    if (m_stageReleaseStatement) deleteStatement(m_stageReleaseStatement);
+    if (m_stageRmStatement) deleteStatement(m_stageRmStatement);
+    if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
+    if (m_selectDiskPoolStatement) deleteStatement(m_selectDiskPoolStatement);
+    if (m_selectTapePoolStatement) deleteStatement(m_selectTapePoolStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
