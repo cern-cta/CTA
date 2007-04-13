@@ -36,6 +36,8 @@
 #include "castor/monitoring/FileSystemStateReport.hpp"
 #include "castor/monitoring/admin/DiskServerAdminReport.hpp"
 #include "castor/monitoring/admin/FileSystemAdminReport.hpp"
+#include "castor/stager/DiskServer.hpp"
+#include "castor/stager/FileSystem.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -177,7 +179,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
   it->second.setMemory(state->memory());
   it->second.setSwap(state->swap());
   // Update status if needed
-  if (it->second.adminStatus() != ADMIN_FORCE ||
+  if (it->second.adminStatus() == ADMIN_NONE ||
       state->adminStatus() != ADMIN_NONE) {
     it->second.setStatus(state->status());
     if (state->adminStatus() == ADMIN_FORCE) {
@@ -220,7 +222,7 @@ void castor::monitoring::rmmaster::CollectorThread::handleStateUpdate
     // Update FileSystem status
     it2->second.setSpace((*itFs)->space());
     // Update status if needed
-    if (it2->second.adminStatus() != ADMIN_FORCE ||
+    if (it2->second.adminStatus() == ADMIN_NONE ||
         (*itFs)->adminStatus() != ADMIN_NONE) {
       it2->second.setStatus((*itFs)->status());
       if ((*itFs)->adminStatus() == ADMIN_FORCE) {
@@ -428,13 +430,18 @@ void castor::monitoring::rmmaster::CollectorThread::handleDiskServerAdminUpdate
     throw e;
   }
   // Update status if needed
-  if (it->second.adminStatus() != ADMIN_FORCE ||
+  if (it->second.adminStatus() == ADMIN_NONE ||
       admin->adminStatus() != ADMIN_NONE) {
-    it->second.setStatus(admin->status());
-    if (admin->adminStatus() == ADMIN_FORCE) {
-      it->second.setAdminStatus(ADMIN_FORCE);
+    if (admin->adminStatus() == ADMIN_DELETED) {
+      it->second.setStatus(castor::stager::DISKSERVER_DISABLED);
+      it->second.setAdminStatus(ADMIN_DELETED);
     } else {
-      it->second.setAdminStatus(ADMIN_NONE);
+      it->second.setStatus(admin->status());
+      if (admin->adminStatus() == ADMIN_FORCE) {
+	it->second.setAdminStatus(ADMIN_FORCE);
+      } else {
+	it->second.setAdminStatus(ADMIN_NONE);
+      }
     }
   }
 }
@@ -515,13 +522,18 @@ void castor::monitoring::rmmaster::CollectorThread::handleFileSystemAdminUpdate
     throw e;
   }
   // Update status if needed
-  if (it2->second.adminStatus() != ADMIN_FORCE ||
+  if (it2->second.adminStatus() == ADMIN_NONE ||
       admin->adminStatus() != ADMIN_NONE) {
-    it2->second.setStatus(admin->status());
-    if (admin->adminStatus() == ADMIN_FORCE) {
-      it2->second.setAdminStatus(ADMIN_FORCE);
+    if (admin->adminStatus() == ADMIN_DELETED) {
+      it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
+      it2->second.setAdminStatus(ADMIN_DELETED);
     } else {
-      it2->second.setAdminStatus(ADMIN_NONE);
+      it2->second.setStatus(admin->status());
+      if (admin->adminStatus() == ADMIN_FORCE) {
+	it2->second.setAdminStatus(ADMIN_FORCE);
+      } else {
+	it2->second.setAdminStatus(ADMIN_NONE);
+      }
     }
   }
 }

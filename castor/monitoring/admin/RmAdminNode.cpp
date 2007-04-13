@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/02 15:26:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/04/13 13:26:38 $ $Author: sponcec3 $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -65,7 +65,7 @@ void usage(char *cmd) {
             << "-d, --fsAdminState {fsstate} New filesystem's state\n"
             << "Notes:\n"
             << "\t{state} and {fsState} can be: \"Production\", \"Draining\" or \"Disabled\"\n"
-            << "\t{adminState} and {fsAdminState} can be: \"None\", \"Force\" or \"Release\"\n"
+            << "\t{adminState} and {fsAdminState} can be: \"None\", \"Force\", \"Release\" or \"Deleted\"\n"
 	    << "\tdefault states (when not provided) are \"Production\" and \"None\"\n"
             << "\tmountPoints usually end with a '/', for example /data01/\n"
             << "\tonly the node name is required, not giving any mountPoint will not change any fileSystem state\n"
@@ -164,10 +164,12 @@ int main(int argc, char *argv[]) {
 	adminState = castor::monitoring::ADMIN_FORCE;
       } else if (0 == strcmp(adminStateName, "Release")) {
 	adminState = castor::monitoring::ADMIN_RELEASE;
-      } else {
+      } else if (0 == strcmp(adminStateName, "Deleted")) {
+	adminState = castor::monitoring::ADMIN_DELETED;
+      } else if (0 != strcmp(adminStateName, "None")) {
 	// Error
 	std::cerr << "Invalid node admin status '" << adminStateName << "'\n"
-		  << "Valid status are \"Force\" and \"Release\""
+		  << "Valid status are \"None\", \"Force\", \"Release\" and \"Deleted\""
 		  << std::endl;
 	exit(1);
       }
@@ -192,6 +194,8 @@ int main(int argc, char *argv[]) {
 	fsAdminState = castor::monitoring::ADMIN_FORCE;
       } else if (0 == strcmp(fsAdminStateName, "Release")) {
 	fsAdminState = castor::monitoring::ADMIN_RELEASE;
+      } else if (0 == strcmp(fsAdminStateName, "Deleted")) {
+	fsAdminState = castor::monitoring::ADMIN_DELETED;
       } else if (0 != strcmp(fsAdminStateName, "None")) {
 	// Error
 	std::cerr << "Invalid fileSystem Admin status '" << fsAdminStateName << "'\n"
