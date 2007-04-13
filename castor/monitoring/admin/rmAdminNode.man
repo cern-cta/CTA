@@ -1,4 +1,4 @@
-.TH RMADMINNODE 1 "$Date: 2007/01/16 16:14:52 $" CASTOR "stager catalogue administrative commands"
+.TH RMADMINNODE 1 "$Date: 2007/04/13 15:27:19 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 rmAdminNode \- handle statuses in rmMaster
 .SH SYNOPSIS
@@ -101,6 +101,12 @@ In this state, the node is not used at all by the system.
 .SH POSSIBLE ADMIN STATES
 .TP
 
+.BI "None"
+This is the default admin state and will allow to update the status of
+a node/fileSystem as if you were the rmNodeDaemon. It means that a previous
+adminState set on the node/FileSystem will be respected (e.g. your update will be
+ignored on a node in status Force) and that the admin status won't be changed.
+.TP
 .BI "Force"
 A node/fileSystem with "Force" admin state will not change anymore its state
 according to monitoring data. Instead it will keep the current state until
@@ -110,6 +116,11 @@ the "Force" is released.
 This allows to release a node/fileSystem in "Force" admin state, so that the
 update to states by the monitoring resumes.
 In this state, the node is not used at all by the system
+.TP
+.BI "Deleted"
+This allows to "delete" node/fileSystem from the monitoring.
+It will actually stay in this state until the next reset of the shared memory
+but will disappear from the stager database.
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
