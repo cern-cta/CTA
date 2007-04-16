@@ -66,12 +66,13 @@ castor (2.1.3-6) unstable; urgency=low
     - First fix for the "stuck in UNKNOWN" case. The drive will be configured down in case of a tapealert by default. This is configurable by an option in castor.conf (TAPE DOWN_ON_TPALERT yes/no). This patch will not fix all cases of drives in UNKNOWN state, since there are different root causes.
     - Omit the configdown() in case of a tape alert (as this is suspected to leave the drive in an unknown state). Simply log a message and try to go on.
   * dlf
-    - closed socket on netconnect_timeout() to avoid socket losses
-    - statistics are now generated every 15 minutes not 5
-    - added rtcpd, RmMaster and RmNode facility
-    - added dlf_settings table to control key parameters within the plsql procedures
-    - optimised dlf_stats_jobs procedure to reduce DB load/IO
-    - increase the prefetch size on oci queries to improve performance
+    - Closed socket on netconnect_timeout() to avoid socket losses
+    - Statistics are now generated every 15 minutes not 5
+    - Added rtcpd, RmMaster and RmNode facilities
+    - Added dlf_settings table to control key parameters within the plsql procedures
+    - Optimised dlf_stats_jobs procedure to reduce DB load/IO
+    - Increase the prefetch size on oci queries to improve performance
+    - Turned off automatic generation of request and job statistics by default. The jobs must be turned on use the dlf_settings table.
   * nameserver
     - changed the limit on name lengths in the nameserver to support POSIX 88, i.e. 255 characters
 
