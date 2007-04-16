@@ -315,8 +315,10 @@ INSERT INTO dlf_mode (name, enabled) VALUES ('queue_suspend',    0);
 INSERT INTO dlf_mode (name, enabled) VALUES ('database_suspend', 0);
 
 /* initialise settings */
-INSERT INTO dlf_settings VALUES ('ARCHIVE_MODE',   '1',  'Defines the archiving policy that should be performed on the database. Where a value of 1 = drop and 2 = archive and drop.');
-INSERT INTO dlf_settings VALUES ('ARCHIVE_EXPIRY', '30', 'Defines how many days worth of data should remain online.');
+INSERT INTO dlf_settings VALUES ('ARCHIVE_MODE',    '1',  'Defines the archiving policy that should be performed on the database. Where a value of 1 = drop and 2 = archive and drop.');
+INSERT INTO dlf_settings VALUES ('ARCHIVE_EXPIRY',  '30', 'Defines how many days worth of data should remain online.');
+INSERT INTO dlf_settings VALUES ('ENABLE_JOBSTATS', '0',  'Enable the automatic generation of job statistics.');
+INSERT INTO dlf_settings VALUES ('ENABLE_REQSTATS', '0',  'Enable the automatic generation of request statistics.');
 
 /*
  * dlf_partition procedure
@@ -621,86 +623,95 @@ CREATE OR REPLACE PROCEDURE dlf_stats_jobs
 AS
 
   -- variables
-  v_time	  DATE;
+  v_time	DATE;
+  v_mode        NUMBER := 0;
+  v_value       VARCHAR2(255);
 
 BEGIN
-  -- set the nls_date_format
-  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
 
-  -- we define the time as a variable so that all data recorded will be synchronised
-  v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
+  -- job stats enabled ?
+  SELECT value INTO v_value FROM dlf_settings WHERE name = 'ENABLE_JOBSTATS';
+  v_mode := TO_NUMBER(v_value);
 
-  FOR i IN 35..40 LOOP
-    IF ((i = 35)  OR
-        (i = 36)  OR
-        (i = 37)  OR
-        (i = 40)) THEN
-          INSERT INTO dlf_jobstats VALUES(v_time, i, 0, 0, 0, 0, 0, 0, 900);
-    END IF;
-  END LOOP;
+  IF v_mode = 1 THEN
+    -- set the nls_date_format
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
 
-  -- update the exiting statistics data
-  FOR a IN (SELECT p.value, AVG(diff) avg, STDDEV_POP(diff) stddev, MIN(diff) min,
-		   MAX(diff) max, COUNT(*) count
+    -- we define the time as a variable so that all data recorded will be synchronised
+    v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
+
+    FOR i IN 35..40 LOOP
+      IF ((i = 35)  OR
+          (i = 36)  OR
+          (i = 37)  OR
+          (i = 40)) THEN
+            INSERT INTO dlf_jobstats VALUES(v_time, i, 0, 0, 0, 0, 0, 0, 900);
+      END IF;
+    END LOOP;
+
+    -- update the exiting statistics data
+    FOR a IN (SELECT p.value, AVG(diff) avg, STDDEV_POP(diff) stddev, MIN(diff) min,
+	  	     MAX(diff) max, COUNT(*) count
                    
-            FROM (SELECT id, reqid, timestamp, msg_no,
-                  LEAD(TO_NUMBER(timestamp), 1)
-                    OVER (PARTITION BY reqid ORDER by timestamp, msg_no) next_timestamp,
-                  LEAD(TO_NUMBER(timestamp), 1)
-                    OVER (ORDER BY reqid) - TO_NUMBER(timestamp) diff
-            FROM (
+              FROM (SELECT id, reqid, timestamp, msg_no,
+                    LEAD(TO_NUMBER(timestamp), 1)
+                      OVER (PARTITION BY reqid ORDER by timestamp, msg_no) next_timestamp,
+                    LEAD(TO_NUMBER(timestamp), 1)
+                      OVER (ORDER BY reqid) - TO_NUMBER(timestamp) diff
+              FROM (
 
-		-- intersection of request ids
-		SELECT * FROM dlf_messages WHERE reqid IN(
-		  SELECT reqid FROM dlf_messages
-                    WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
-                    AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-                    AND   facility = 5
-                    AND   msg_no   = 15
-                INTERSECT
-                  SELECT reqid FROM dlf_messages
-                    WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-                    AND   facility = 5
-                    AND   msg_no   = 12)
-		AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-		AND facility = 5
-		AND ((msg_no = 12) OR (msg_no = 15))
+		  -- intersection of request ids
+		  SELECT * FROM dlf_messages WHERE reqid IN(
+		    SELECT reqid FROM dlf_messages
+                      WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
+                      AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                      AND   facility = 5
+                      AND   msg_no   = 15
+                  INTERSECT
+                    SELECT reqid FROM dlf_messages
+                      WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+                      AND   facility = 5
+                      AND   msg_no   = 12)
+	 	  AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+		  AND facility = 5
+		  AND ((msg_no = 12) OR (msg_no = 15))
 
-		) ORDER BY reqid
-	    ) m, dlf_num_param_values p
+		  ) ORDER BY reqid
+	      ) m, dlf_num_param_values p
 
-	    WHERE m.msg_no = 12
-	    AND   m.id = p.id
-            AND   p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-	    AND   p.name = 'type'
-	    AND   p.value IN (35, 36, 37, 40)
-	    GROUP BY p.value ORDER BY p.value)
-  LOOP
-    EXECUTE IMMEDIATE 'UPDATE dlf_jobstats SET
-                              min_time  = '||a.min||',
-                              max_time  = '||a.max||',
-                              avg_time  = '||a.avg||',
-                              std_dev   = '||a.stddev||',
-                              exiting   = '||a.count||'
-			WHERE timestamp = '''||v_time||'''
-			AND   type      = '||a.value;    
-  END LOOP;
+	      WHERE m.msg_no = 12
+	      AND   m.id = p.id
+              AND   p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+	      AND   p.name = 'type'
+	      AND   p.value IN (35, 36, 37, 40)
+	      GROUP BY p.value ORDER BY p.value)
+    LOOP
+      EXECUTE IMMEDIATE 'UPDATE dlf_jobstats SET
+                                min_time  = '||a.min||',
+                                max_time  = '||a.max||',
+                                avg_time  = '||a.avg||',
+                                std_dev   = '||a.stddev||',
+                                exiting   = '||a.count||'
+			  WHERE timestamp = '''||v_time||'''
+			  AND   type      = '||a.value;    
+    END LOOP;
        
-  -- update the starting statistics data
-  FOR a IN (SELECT p.value, COUNT(m.reqid) count 
-            FROM   dlf_messages m, dlf_num_param_values p
-            WHERE  m.timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
-            AND    m.timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-            AND    m.facility = 5
-            AND    m.msg_no   = 12
-            AND    m.id       = p.id
-            AND    p.name     = 'type'
-            GROUP BY p.value)
-  LOOP
-    EXECUTE IMMEDIATE 'UPDATE dlf_jobstats SET starting = '||a.count||'
-                       WHERE  timestamp = '''||v_time||'''
-                       AND    type = '||a.value;
-  END LOOP;
+    -- update the starting statistics data
+    FOR a IN (SELECT p.value, COUNT(m.reqid) count 
+              FROM   dlf_messages m, dlf_num_param_values p
+              WHERE  m.timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
+              AND    m.timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+              AND    m.facility = 5
+              AND    m.msg_no   = 12
+              AND    m.id       = p.id
+              AND    p.name     = 'type'
+              GROUP BY p.value)
+    LOOP
+      EXECUTE IMMEDIATE 'UPDATE dlf_jobstats SET starting = '||a.count||'
+                         WHERE  timestamp = '''||v_time||'''
+                         AND    type = '||a.value;
+    END LOOP;
+  END IF;
 END;
 /
 
@@ -711,70 +722,79 @@ CREATE OR REPLACE PROCEDURE dlf_stats_requests
 AS
 
   -- variables
-  v_time	  DATE;
+  v_time	DATE;
+  v_mode        NUMBER := 0;
+  v_value       VARCHAR2(255);
 
 BEGIN
-  -- set the nls_date_format
-  EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
 
-  -- we define the time as a variable so that all data recorded will be synchronised
-  v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
+  -- request stats enabled ?
+  SELECT value INTO v_value FROM dlf_settings WHERE name = 'ENABLE_REQSTATS';
+  v_mode := TO_NUMBER(v_value);
 
-  FOR i IN 35..40 LOOP
-    IF ((i = 35)  OR
-        (i = 36)  OR
-        (i = 37)  OR
-        (i = 40)) THEN
-          INSERT INTO dlf_reqstats VALUES(v_time, i, 0, 0, 0, 0, 0, 900);    
-    END IF;
-  END LOOP;
+  IF v_mode = 1 THEN
+    -- set the nls_date_format
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
+
+    -- we define the time as a variable so that all data recorded will be synchronised
+    v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
+
+    FOR i IN 35..40 LOOP
+      IF ((i = 35)  OR
+          (i = 36)  OR
+          (i = 37)  OR
+          (i = 40)) THEN
+            INSERT INTO dlf_reqstats VALUES(v_time, i, 0, 0, 0, 0, 0, 900);    
+      END IF;
+    END LOOP;
   
-  -- update the statistics data
-  FOR a IN (SELECT type, avg(proctime) avg, stddev_pop(proctime) stddev, min(proctime) min,
-		   max(proctime) max, count(*) count
-	    FROM (
+    -- update the statistics data
+    FOR a IN (SELECT type, avg(proctime) avg, stddev_pop(proctime) stddev, min(proctime) min,
+		     max(proctime) max, count(*) count
+	      FROM (
 
-		SELECT m.msg_no, (p.value * 0.001) proctime,
-			LEAD (p.value, 1) 
-			OVER (PARTITION BY m.reqid ORDER BY m.timestamp, m.msg_no) type
-		FROM (
+		  SELECT m.msg_no, (p.value * 0.001) proctime,
+			  LEAD (p.value, 1) 
+			  OVER (PARTITION BY m.reqid ORDER BY m.timestamp, m.msg_no) type
+		  FROM (
 
-                  -- intersection of request ids
-                  SELECT * FROM dlf_messages WHERE reqid IN (
-                    SELECT reqid FROM dlf_messages
-                      WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
-                      AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-                      AND   facility = 4
-                      AND   msg_no   = 10
-                  INTERSECT
-                    SELECT reqid FROM dlf_messages
-                      WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-                      AND   facility = 4
-                      AND   msg_no   = 12
-                  )
-		  AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-                  AND facility = 4
-                  AND ((msg_no = 10) OR (msg_no = 12))		    
+                    -- intersection of request ids
+                    SELECT * FROM dlf_messages WHERE reqid IN (
+                      SELECT reqid FROM dlf_messages
+                        WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
+                        AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                        AND   facility = 4
+                        AND   msg_no   = 10
+                    INTERSECT
+                      SELECT reqid FROM dlf_messages
+                        WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+                        AND   facility = 4
+                        AND   msg_no   = 12
+                    )
+		    AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+                    AND facility = 4
+                    AND ((msg_no = 10) OR (msg_no = 12))		    
 
-		) m, dlf_num_param_values p
-		WHERE p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-		AND   m.id = p.id
-		AND   p.name IN ('Type', 'ProcTime')
+		  ) m, dlf_num_param_values p
+		  WHERE p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+		  AND   m.id = p.id
+		  AND   p.name IN ('Type', 'ProcTime')
 
-	    )
-	    WHERE msg_no = 10
-	    AND   type IN (35, 36, 37, 40)
-	    GROUP BY type ORDER BY type)
-  LOOP
-    EXECUTE IMMEDIATE 'UPDATE dlf_reqstats SET
-                              min_time  = '||a.min||',
-                              max_time  = '||a.max||',
-                              avg_time  = '||a.avg||',
-                              std_dev   = '||a.stddev||',
-                              req_count = '||a.count||'
-			WHERE timestamp = '''||v_time||'''
-			AND   type      = '||a.type;    
-  END LOOP;  
+	      )
+	      WHERE msg_no = 10
+	      AND   type IN (35, 36, 37, 40)
+	      GROUP BY type ORDER BY type)
+    LOOP
+      EXECUTE IMMEDIATE 'UPDATE dlf_reqstats SET
+                                min_time  = '||a.min||',
+                                max_time  = '||a.max||',
+                                avg_time  = '||a.avg||',
+                                std_dev   = '||a.stddev||',
+                                req_count = '||a.count||'
+			  WHERE timestamp = '''||v_time||'''
+			  AND   type      = '||a.type;    
+    END LOOP;
+  END IF;
 END;
 /
 
