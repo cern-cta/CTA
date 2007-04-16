@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/02/08 14:33:15 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/04/16 14:54:18 $ $Author: itglp $
  *
  *
  *
@@ -72,11 +72,6 @@ castor::db::ora::OraCnvSvc::OraCnvSvc(const std::string name) :
 // -----------------------------------------------------------------------
 castor::db::ora::OraCnvSvc::~OraCnvSvc() throw() {
   dropConnection();
-  if (0 != m_environment) {
-    try {
-      oracle::occi::Environment::terminateEnvironment(m_environment);
-    } catch (...) { }
-  }
 }
 
 // -----------------------------------------------------------------------
@@ -182,16 +177,23 @@ void castor::db::ora::OraCnvSvc::dropConnection() throw() {
   // drop the connection
   try {
     if (0 != m_connection && 0 != m_environment) {
-        //oracle::occi::Statement* stmt = m_connection->createStatement
-        //  ("alter session set events '10046 trace name context off'");
-        //stmt->executeUpdate();
-        //m_connection->terminateStatement(stmt);
-        //m_connection->commit();
-        m_environment->terminateConnection(m_connection);
+      //oracle::occi::Statement* stmt = m_connection->createStatement
+      //  ("alter session set events '10046 trace name context off'");
+      //stmt->executeUpdate();
+      //m_connection->terminateStatement(stmt);
+      //m_connection->commit();
+      m_environment->terminateConnection(m_connection);
     }
-  } catch (oracle::occi::SQLException e) {};
+    if (0 != m_environment) {
+      oracle::occi::Environment::terminateEnvironment(m_environment);
+    }
+  } catch (oracle::occi::SQLException e) {
+    clog() << ERROR << "Failed to drop the Oracle connection: "
+           << e.what() << std::endl;
+  } catch (...) {};
   // reset all whatever the state is
   m_connection = 0;
+  m_environment = 0;
   // also reset the connection string so that we reload parameters next time
   m_user = "";
   m_passwd = "";
