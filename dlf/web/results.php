@@ -495,7 +495,7 @@ setcookie("style", $_GET['style']);
 						/* table data */
 						for ($i = 0, $keys = array_keys($data); $i < count($keys); $i++) {
 							echo "<tr>";
-							echo "<td class=\"timestamp\">".$data[$keys[$i]]['col_timestamp']."</td>";
+							echo "<td title=\"$keys[$i]\" class=\"timestamp\">".$data[$keys[$i]]['col_timestamp']."</td>";
 
 							/* user defined fields */
 							foreach ($columns as $config) {
