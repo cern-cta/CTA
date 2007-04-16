@@ -191,9 +191,15 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
       state->addFileSystemStatesReports(collectFileSystemState(fs[i]));
     }
   } catch (castor::exception::Exception e) {
+    // free Memory
     delete state;
+    for (int i = 0; i < nbFs; i++) free(fs[i]);
+    free(fs);
     throw e;
   }
+  // free Memory
+  for (int i = 0; i < nbFs; i++) free(fs[i]);
+  free(fs);
   return state;
 }
 

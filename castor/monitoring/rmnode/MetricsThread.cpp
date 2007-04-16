@@ -194,6 +194,9 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 	  e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
 			 << "failed to get username information for user "
 			 << "'stage', check account exists";
+	  // free memory
+	  for (int j = 0; j < nbFs; j++) free(fs[j]);
+	  free(fs);
 	  throw e;
 	}
 
@@ -206,6 +209,9 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 	    castor::exception::Exception e(errno);
 	    e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
 			   << "failed to create directory " << path;
+	    // free memory
+	    for (int k = 0; k < nbFs; k++) free(fs[k]);
+	    free(fs);
 	    throw e;
 	  }
 
@@ -216,6 +222,9 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 			   << "unable to change directory ownership on " 
 			   << path << " to uid:" << pw->pw_uid << " gid:"
 			   << pw->pw_gid;
+	    // free memory
+	    for (int k = 0; k < nbFs; k++) free(fs[k]);
+	    free(fs);
 	    throw e;
 	  }
 	}
@@ -223,8 +232,14 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
       collectFileSystemMetrics(metrics);
     }
   } catch (castor::exception::Exception e) {
+    // free memory
+    for (int i = 0; i < nbFs; i++) free(fs[i]);
+    free(fs);
     throw e;
   }
+  // free memory
+  for (int i = 0; i < nbFs; i++) free(fs[i]);
+  free(fs);
 }
 
 //------------------------------------------------------------------------------
