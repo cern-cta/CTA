@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.16 $ $Date: 2005/05/25 12:03:41 $ CERN IT-PDP/DM Olof Barring";
+static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.17 $ $Date: 2007/04/16 13:19:57 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -156,7 +156,8 @@ int DLL_DECL getconfent_parser(conf_val, result, count)
   /* Counting the number of strings for the array */
   if ((p = strdup(*conf_val)) == NULL) { return -1; }
   for (q = strtok(p," \t"); q != NULL; q = strtok(NULL," \t")) i++;
-  
+  free(p);
+
   /* Saving the index information to pass on later */
   *count = i;
   
@@ -167,7 +168,8 @@ int DLL_DECL getconfent_parser(conf_val, result, count)
  
   i = 0 ;
   for (q = strtok(p," \t");q != NULL; q = strtok(NULL," \t")) { (*result)[i++] = strdup(q); }
-  
+  free(p);
+
   return 0;
 }
 
