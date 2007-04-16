@@ -28,15 +28,19 @@
 // Include files
 #include "castor/monitoring/rmnode/StateThread.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/monitoring/DiskServerStateReport.hpp"
 #include "castor/monitoring/FileSystemStateReport.hpp"
+#include "castor/monitoring/MonitorMessageAck.hpp"
+#include "castor/monitoring/FileSystemStateAck.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/MessageAck.hpp"
 #include "castor/IObject.hpp"
 #include "castor/System.hpp"
+#include <iostream>
+#include <fstream>
 #include "getconfent.h"
 #include <unistd.h>
 #include <sys/sysinfo.h>
@@ -85,14 +89,35 @@ void castor::monitoring::rmnode::StateThread::run(void* par)
     state = 0;
     // check the acknowledgment
     castor::IObject* obj = s.readObject();
-    castor::MessageAck* ack =
-      dynamic_cast<castor::MessageAck*>(obj);
+    castor::monitoring::MonitorMessageAck* ack =
+      dynamic_cast<castor::monitoring::MonitorMessageAck*>(obj);
     if (0 == ack) {
       castor::exception::InvalidArgument e; // XXX To be changed
       e.getMessage() << "No Acknowledgement from the Server";
       delete ack;
       throw e;
     }
+    // write status file
+    char *filename = getconfent("RmNode", "StatusFile", 0);
+    if (filename) {
+      std::fstream out(filename, std::ios::out);
+      if (!out.is_open()) {
+        castor::exception::InvalidArgument e;
+        e.getMessage() << "Failed to open file " << filename << " for status update";
+        delete ack;
+        throw e;
+      }
+      // disk server status
+      out << "DiskServerStatus=" << castor::stager::DiskServerStatusCodeStrings[ack->diskServerStatus()] << std::endl;
+      // file system status
+      std::vector<FileSystemStateAck*>::const_iterator it;
+      int i = 1;
+      for (it = ack->ack().begin(); it != ack->ack().end(); it++, i++) {
+	      out << "FS" << i << "=" << castor::stager::FileSystemStatusCodesStrings[(*it)->fileSystemStatus()] << std::endl;
+      }
+      out.close();
+    }
+    delete ack;
   }
   catch(castor::exception::Exception e) {
     // cleanup
