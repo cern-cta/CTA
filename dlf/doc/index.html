@@ -8,7 +8,7 @@
 <meta http-equiv="Cache-Control" content="no-cache" />
 <meta http-equiv="Default-Style" content="compact" />
 <meta http-equiv="Content-Style-Type" content="text/css" />
-<!-- $Id: index.html,v 1.14 2007/02/22 11:07:37 waldron Exp $ -->
+<!-- $Id: index.html,v 1.15 2007/04/16 11:57:27 waldron Exp $ -->
 <title>Distributed Logging Facility - Documentation</title>
 <style type="text/css">
 
@@ -264,8 +264,8 @@ TR.subheader {
       <p><strong>Question: How do I change a message text for a given facility ? </strong></p>
       <p><span class="style2">Caution:</span> You should never change a message text number to mean something else. This will invalidate data within the database!!!!!!!!!! However, if you are simply changing the text to elaborate more on the subject matter or need to correct a spelling mistake then simply alter your text at the client level and the API will automatically update the text in the database. </p>
       <p><strong>Question: I need to perform maintenance on the database server. But I don't want to lose any messages which would normally be recorded centrally. can this be done?</strong></p>
-      <p><span class="style2">Answer:</span> Yes, The DLF server is basically a memory cache in front of a database server. By default this cache has the capacity to store 250,000 messages pending insertion into the database. If your intervention is not for a long time you can change the internal status of the DLF Server by modifying the dlf_config table. The following query will terminated database insertion</p>
-      <p>UPDATE dlf_config SET enabled = 1 WHERE name = 'suspend_db';</p>
+      <p><span class="style2">Answer:</span> Yes, The DLF server is basically a memory cache in front of a database server. By default this cache has the capacity to store 250,000 messages pending insertion into the database. If your intervention is not for a long time you can change the internal status of the DLF Server by modifying the dlf_mode table. The following query will terminated database insertion</p>
+      <p>UPDATE dlf_mode SET enabled = 1 WHERE name = 'suspend_db';</p>
       <p>Please note however, that  the memory consumption of the DLF server process can increase very rapidly under this state as all messages will be cached in memory until the cache is full. It can also take anything up to 1 minute for the status to be propageted to the DLF server. A message will appear in the log file indicating the state change. </p>
       <p>It is also possible to take down the DLF server for very short periods of time as clients also have an internal queue which can store 5,000 messages awaiting transmission to the server.</p>
       <p><strong>Question: How do I know if my server is performing well?</strong></p>
