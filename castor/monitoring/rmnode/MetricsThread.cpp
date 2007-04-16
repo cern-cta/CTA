@@ -29,10 +29,10 @@
 #include "castor/monitoring/DiskServerMetricsReport.hpp"
 #include "castor/monitoring/FileSystemMetricsReport.hpp"
 #include "castor/monitoring/rmnode/MetricsThread.hpp"
+#include "castor/monitoring/MonitorMessageAck.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ClientSocket.hpp"
-#include "castor/MessageAck.hpp"
 #include "castor/IObject.hpp"
 #include "castor/System.hpp"
 #include <sys/sysinfo.h>
@@ -94,15 +94,18 @@ void castor::monitoring::rmnode::MetricsThread::run(void* par)
     castor::dlf::Param params[] =
       {castor::dlf::Param("content", dsMetrics)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 17, 1, params);
-    // check the acknowledgment
+    // check the acknowledgment. Status file updates are only performed in the
+    // state update thread
     castor::IObject* obj = s.readObject();
-    castor::MessageAck* ack =
-      dynamic_cast<castor::MessageAck*>(obj);
+    castor::monitoring::MonitorMessageAck* ack =
+      dynamic_cast<castor::monitoring::MonitorMessageAck*>(obj);
     if (0 == ack) {
       castor::exception::InvalidArgument e; // XXX To be changed
       e.getMessage() << "No Acknowledgement from the Server";
+      delete ack;
       throw e;
     }
+    delete ack;
   }
   catch(castor::exception::Exception e) {
     // "Error caught in MetricsThread::run"
@@ -250,6 +253,7 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   unsigned int  nrw   = 0;
   unsigned int  nw    = 0;
   unsigned int  x     = 0;
+  unsigned int  len   = 0;
   char          linkpath[CA_MAXPATHLEN + 1];   // for readlink
 
   // loop over directory entries
@@ -292,12 +296,13 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
 	continue;         // not a symlink
       }
       linkpath[0] = '\0';
-      if (readlink(fdpath.c_str(), linkpath, CA_MAXPATHLEN) < 0) {
-	continue;        
+      if ((len = readlink(fdpath.c_str(), linkpath, CA_MAXPATHLEN)) < 0) {
+	continue;
       }
-      
+      linkpath[len] = '\0';
+
       // resource not of interest  ?
-      unsigned int len  = strlen(linkpath);
+      len = strlen(linkpath);
       if (strncmp(linkpath, filesystem->mountPoint().c_str(), len) != 0) {
 	continue;
       }
