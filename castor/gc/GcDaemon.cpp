@@ -160,10 +160,6 @@ int castor::gc::GcDaemon::start()
     }
   }
 
-  // Be sure we have only the machine name, without domain
-  diskServerName =
-    diskServerName.substr(0, diskServerName.find_first_of('.'));
-
   // set GC sleep interval, sec.
   // /etc/castor/castor.conf example: "GC  INTERVAL  600"
   int  gcinterval;
