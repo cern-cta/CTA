@@ -36,12 +36,13 @@
 #include "castor/monitoring/FileSystemStateReport.hpp"
 #include "castor/monitoring/admin/DiskServerAdminReport.hpp"
 #include "castor/monitoring/admin/FileSystemAdminReport.hpp"
+#include "castor/monitoring/MonitorMessageAck.hpp"
+#include "castor/monitoring/FileSystemStateAck.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "castor/MessageAck.hpp"
 #include "castor/Constants.hpp"
 #include <time.h>
 #include <errno.h>
@@ -66,7 +67,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     // Get the server socket
     castor::io::ServerSocket* sock = (castor::io::ServerSocket*) par;
     // prepare the ackowledgement
-    castor::MessageAck ack;
+    castor::monitoring::MonitorMessageAck ack;
     ack.setStatus(true);
     // get the incoming object
     castor::IObject* obj = 0;
@@ -125,6 +126,38 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
         std::ostringstream stst;
         stst << e.getMessage().str();
         ack.setErrorMessage(stst.str());
+      }
+    }
+    // for objects of type DiskServerStateReport send back the disk server and
+    // file system status values in the acknowledgement
+    if (OBJ_DiskServerStateReport == obj->type()) {
+      castor::monitoring::DiskServerStateReport* dss =
+        dynamic_cast<castor::monitoring::DiskServerStateReport*>(obj);
+      // get ClusterStatus map
+      bool create = false;
+      castor::monitoring::ClusterStatus* cs =
+        castor::monitoring::ClusterStatus::getClusterStatus(create);
+      if (0 != cs) {
+        // cast normal string into sharedMemory one in order to be able to search
+	// for it in the ClusterStatus map.
+        std::string machineName = dss->name();
+        castor::monitoring::SharedMemoryString *smMachineName =
+          (castor::monitoring::SharedMemoryString*)(&machineName);
+        // Find the diskServer
+        castor::monitoring::ClusterStatus::iterator it = cs->find(*smMachineName);
+        if (it != cs->end()) {
+           ack.setDiskServerStatus(it->second.status());
+           for (castor::monitoring::DiskServerStatus::const_iterator it2
+                  = it->second.begin();
+                it2 != it->second.end();
+		it2++) {
+            const castor::monitoring::FileSystemStatus& fss = it2->second;
+	    castor::monitoring::FileSystemStateAck *fssAck =
+              new castor::monitoring::FileSystemStateAck();
+	    fssAck->setFileSystemStatus(fss.status());
+	    ack.addAck(fssAck);
+	   }
+        }
       }
     }
     // free memory
