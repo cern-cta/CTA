@@ -1,5 +1,5 @@
 -----------
-- 2.1.3-* -
+- 2.1.3-6 -
 -----------
 
   New Features and Changes
@@ -16,24 +16,32 @@
    - rmMasterDaemon uses shared memory to store the data. This set of memory will survive it
      in case of crash and be reused when restarting. In case of reboot, it can be reinitialized from
      the data contained in the stager DB, which are constantly updated.
-   - the new command lines are rmAdminNode and rmGetNodes (the last one being only available on
+   - the new command lines are rmAdminNode and rmGetNodes (the second one being only available on
      the scheduler node).
    - the new monitoring daemon is called rmNodeDaemon and is distributed in castor-rmnode. On top
      of monitoring the node and sending data to the rmMasterDaemon, it also keeps the current status
-     of the node in the daemon in /etc/castor/status
+     of the node in the daemon in /etc/castor/status (default). It initializes the shared memory when
+     starting by reseting the metrics, setting statuses to Down and admin statuses to what they are
+     in the stager DB.
    - the new monitoring monitors :
      - for each diskserver : ram(total+free), memory(total+free), swap(total+free), load, status and adminStatus
      - for each filesystem : space(total+free), nbRead/ReadWrite/WriteStreams, read/writeRate, status and adminstatus
    - the status can be Production, Down or Draining
-   - the admin status can be None or Force. If None, the status in the master is updated according
-     to monitoring. It Force, it is not updated. rmAdminNode also uses the Release admin status to
-     switch from Force to None.
+   - the admin status can be None, Force or Deleted. If None, the status in the master is updated according
+     to monitoring. It Force, it is not updated. If Deleted, the diskServer/FileSystem is dropped from the
+     stager database and will disappear at the next reset of the shared memory (e.g. reboot).
+     rmAdminNode also uses the Release admin status to switch from Force to None.
   Details concerning the LSF/shared memory part :
    - there is a new LSF plugin with same name and same interface.
    - it uses shared memory to get data from the rmMasterDaemon and thus has to run on the same machine
    - this shared memory is also accessed by rmGetNodes that basically dumps it
    - In case of corruption, the way to reset the shared memory is to stop rmMasterDaemon and LSF and
      use ipcs/ipcrm. the key used is 0x946
+   - the new plugin uses 2 "equations" internally, one to rate filesystems when looking for the best
+     one, and one to modify the metrics of the selected filesystem in order to predict the future load.
+     Both "equations" are fully parametrized and parameters can be changed in castor.conf. In order to
+     take changes into account, one just has to ask LSF to reload the plugin (badmin reconfig will do it
+     without interrupting the service)
   Other new parts :
    - the DB schema was changed to integrate the new monitoring parts
    - the external clips policy for the scheduling was dropped so clips is no more needed
