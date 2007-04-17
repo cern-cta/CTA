@@ -536,6 +536,9 @@ The following error values are returned only by the stager package:
 .TP
 .B ESTCONF
 (1715) stage configuration error
+.TP
+.B ESTSEGNOACC
+(1716) Required tape segments are not all accessible
 
 .SH SYSREQ ERRORS
 The following error value is returned only by the sysreq package:
