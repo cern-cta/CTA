@@ -304,4 +304,4 @@ DROP PROCEDURE describeDiskPools;
 DROP PROCEDURE describeDiskPool;
 DROP PROCEDURE checkFileForRepack;
 DROP PROCEDURE selectTapeCopiesForMigration;
-DROP PROCEDURE syncClusterStatus;
+DROP PROCEDURE storeClusterStatus;
