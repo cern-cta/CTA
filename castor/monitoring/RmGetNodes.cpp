@@ -27,18 +27,61 @@
 
 #include <iostream>
 #include "castor/monitoring/ClusterStatus.hpp"
+#include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/exception/Exception.hpp"
+#include "Cgetopt.h"
 
-int main() {
+void help(std::string programName) {
+  std::cout << "Usage: " << programName
+            << " [-h,--help] [-n,--node diskServerName]"
+            << std::endl;
+}
+
+int main(int argc, char** argv) {
   try {
     bool create = false;
+    // Parse command line
+    Coptions_t longopts[] = {
+      {"help", NO_ARGUMENT, NULL, 'h'},
+      {"node", REQUIRED_ARGUMENT, NULL, 'n'},
+      {0, 0, 0, 0}
+    };
+    char c;
+    char* node = 0;
+    while ((c = Cgetopt_long(argc, argv, "hn:", longopts, NULL)) != -1) {
+      switch (c) {
+      case 'n':
+        node = strdup(Coptarg);
+        break;
+      default:
+        help(argv[0]);
+        exit(0);
+        break;
+      }
+    }
+    // Get shared memory object
     castor::monitoring::ClusterStatus* cs =
       castor::monitoring::ClusterStatus::getClusterStatus(create);
-    if(cs == 0)
-      std::cout << "No shared memory area found. Please start RmMasterDaemon first." 
-                << std::endl << std::endl; 
-    else
+    if(cs == 0) {
+      std::cout << "No shared memory area found. Please start RmMasterDaemon first."
+                << std::endl << std::endl;
+      return -1;
+    }
+    // Check whether we want to print everything or only a given machine
+    if (0 == node) {
       cs->print(std::cout, "");
+    } else {
+      castor::monitoring::ClusterStatus::const_iterator it =
+        cs->find(node);
+      if (cs->end() != it) {
+        std::cout << "name" << ": " << it->first << "\n";
+        it->second.print(std::cout, "");
+      } else {
+        std::cerr << "No diskServer found with name '"
+                  << node << "'. Maybe check the domain."
+                  << std::endl;
+      }
+    }
   } catch (castor::exception::Exception e) {
     std::cout << e.getMessage().str() << std::endl;
   }
