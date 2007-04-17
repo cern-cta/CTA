@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.391 $ $Date: 2007/04/13 13:27:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.392 $ $Date: 2007/04/17 10:05:01 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.391 $ $Date: 2007/04/13 13:27:21 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.392 $ $Date: 2007/04/17 10:05:01 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -3085,7 +3085,7 @@ BEGIN
           INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
         END;
       END;
-    ENDIF;
+    END IF;
   END LOOP;
   -- And then FileSystems
   ind := machineValues.FIRST;
