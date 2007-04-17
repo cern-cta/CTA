@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/04/17 15:45:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/04/17 20:28:34 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -191,7 +191,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
   // Get files to delete
   unsigned int nb=0;
   ub2 *lens = 0;
-  unsigned char **buffer = 0;
+  unsigned char (*buffer)[21] = 0;
 
   try {
     m_selectFiles2DeleteStatement->setString(1, diskServer);
@@ -219,12 +219,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       // Deal with the list of diskcopy ids
       nb = dcIds.size();
       lens=(ub2 *)malloc (sizeof(ub2)*nb);
-      buffer=(unsigned char **) malloc(sizeof(unsigned char) * nb * 21);
-      for (unsigned int i=0;i < nb ;i++){
-        buffer[i]=(unsigned char *)malloc(sizeof(char)* nb);
-      }
-
-      memset(buffer, 0, nb * 21);
+      buffer=(unsigned char(*)[21]) calloc(nb * 21, sizeof(unsigned char));
       for (unsigned int i = 0; i < nb; i++) {
         oracle::occi::Number n = (double)(dcIds[i]);
         oracle::occi::Bytes b = n.toBytes();
@@ -239,9 +234,6 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       m_selectFiles2DeleteStatement2->executeUpdate();
       //free allocated memory
       free(lens);
-      for (unsigned int i=0;i < nb ;i++){
-	free(buffer[i]);
-      }
       free(buffer);
     }
     m_selectFiles2DeleteStatement->closeResultSet(rset);
@@ -265,12 +257,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
     }
     //free allocated memory
     if (0 != lens) free(lens);
-    if (0 != buffer) {
-      for (unsigned int i=0;i < nb ;i++){
-	free(buffer[i]);
-      }
-      free(buffer);
-    }
+    if (0 != buffer) free(buffer);
     handleException(e);
     throw ex;
   }
@@ -292,7 +279,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
   // Execute statement and get result
   //unsigned long id;
   ub2 *lens = 0;
-  unsigned char **buffer = 0;
+  unsigned char (*buffer)[21] = 0;
   unsigned int nba=0;
   try {
     // Deal with the list of diskcopy ids
@@ -302,12 +289,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     // Oracle does not like 0 length arrays....
     nba = nb == 0 ? 1 : nb;
     lens=(ub2 *)malloc(sizeof(ub2)*nb);
-    buffer=(unsigned char **)malloc(sizeof(unsigned char)*nba);
-    //unsigned char buffer[nba][21];
-    for (unsigned int i=0;i<nba;i++){
-      buffer[i]=(unsigned char *)malloc (sizeof(unsigned char)*21*nba);
-    }
-    memset(buffer, 0, nba * 21);
+    buffer=(unsigned char(*)[21]) calloc(nba * 21, sizeof(unsigned char));
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(*(diskCopyIds[i]));
       oracle::occi::Bytes b = n.toBytes();
@@ -318,7 +300,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     m_filesDeletedStatement->setDataBufferArray
       (1, buffer, oracle::occi::OCCI_SQLT_NUM,
        nba, &unused, 21, lens);
-    ;// execute the statement
+    // execute the statement
     m_filesDeletedStatement->executeUpdate();
     if (0 == nb) {
       // we want to commit anyway to release locks
@@ -327,9 +309,6 @@ void castor::db::ora::OraGCSvc::filesDeleted
       ex.getMessage() << "filesDeleted : no rows returned.";
       //free allocated memory
       free(lens);
-      for (unsigned int i=0;i < nba ;i++){
-         free(buffer[i]);
-       }
       free(buffer); 
       throw ex;
     }
@@ -379,9 +358,6 @@ void castor::db::ora::OraGCSvc::filesDeleted
         cnvSvc()->commit();
         //free allocated memory
         free(lens);
-        for (unsigned int i=0;i < nba ;i++){
-          free(buffer[i]);
-        }
         free(buffer);
         return;
       }
@@ -412,9 +388,6 @@ void castor::db::ora::OraGCSvc::filesDeleted
         cnvSvc()->commit();
         //free allocated memory
         free(lens);
-        for (unsigned int i=0;i < nba ;i++){
-          free(buffer[i]);
-         }
         free(buffer);
         return;
       }
@@ -475,12 +448,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     handleException(e);
     //free allocated memory
     if (0 != lens) free(lens);
-    if (buffer != 0) {
-      for (unsigned int i=0;i < nba ;i++){
-	free(buffer[i]);
-      }
-      free(buffer);
-    }
+    if (buffer != 0) free(buffer);
     throw ex;
   }
 }
@@ -500,7 +468,7 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
   // Execute statement and get result
   //unsigned long id;
   ub2 *lens;
-  unsigned char **buffer;
+  unsigned char (*buffer)[21] = 0;
   unsigned int nba;
   try {
     // Deal with the list of diskcopy ids
@@ -510,13 +478,7 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     // Oracle does not like 0 length arrays....
     nba = nb == 0 ? 1 : nb;
     lens=(ub2 *)malloc(sizeof(ub2)*nb);
-    buffer=(unsigned char **)malloc(sizeof(unsigned char)*nba*21);
-    for (unsigned int i=0;i<nba;i++){
-       buffer[i]=(unsigned char *)malloc (sizeof(unsigned char)*21);
-    }
-    //ub2 lens[nb];
-    //unsigned char buffer[nba][21];
-    memset(buffer, 0, nba * 21);
+    buffer=(unsigned char(*)[21]) calloc(nba * 21, sizeof(unsigned char));
     for (unsigned int i = 0; i < nb; i++) {
       oracle::occi::Number n = (double)(*(diskCopyIds[i]));
       oracle::occi::Bytes b = n.toBytes();
@@ -530,9 +492,6 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     // execute the statement
     m_filesDeletionFailedStatement->executeUpdate();
     free(lens);
-    for (unsigned int i=0;i < nba ;i++){
-      free(buffer[i]);
-    }
     free(buffer);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -541,9 +500,6 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
       << "Unable to remove files for which deletion failed :"
       << std::endl << e.getMessage();
     free(lens);
-    for (unsigned int i=0;i < nba ;i++){
-      free(buffer[i]);
-    }
     free(buffer);
     throw ex;
   }
