@@ -81,7 +81,6 @@ void worker(void *arg) {
 	time_t   now        = time(NULL);
 	int      throughput = 0;
 	int      generated  = 0;
-	int      wait       = 100000 / rate;
 	
 	/* message variables */
 	struct Cns_fileid nsfileid = { "cns.cern.ch", 0 };
@@ -277,7 +276,7 @@ int main (int argc, char **argv) {
 		snprintf(msgtext, DLF_LEN_MSGTEXT, "This is message text %d", i);
 		rv = dlf_regtext(i, msgtext);
 		if (rv < 0) {
-			fprintf(stderr, "Failed to dlf_regtext() %d:%d\n", i, msgtext); 
+			fprintf(stderr, "Failed to dlf_regtext() %d:%s\n", i, msgtext); 
 			free(facility);
 			return -1;
 		}
