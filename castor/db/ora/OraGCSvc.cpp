@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/04/13 13:15:58 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/04/17 15:45:37 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -219,7 +219,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
       // Deal with the list of diskcopy ids
       nb = dcIds.size();
       lens=(ub2 *)malloc (sizeof(ub2)*nb);
-      buffer=(unsigned char **) malloc(sizeof(unsigned char) *21);
+      buffer=(unsigned char **) malloc(sizeof(unsigned char) * nb * 21);
       for (unsigned int i=0;i < nb ;i++){
         buffer[i]=(unsigned char *)malloc(sizeof(char)* nb);
       }
@@ -305,7 +305,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     buffer=(unsigned char **)malloc(sizeof(unsigned char)*nba);
     //unsigned char buffer[nba][21];
     for (unsigned int i=0;i<nba;i++){
-      buffer[i]=(unsigned char *)malloc (sizeof(unsigned char)*21);
+      buffer[i]=(unsigned char *)malloc (sizeof(unsigned char)*21*nba);
     }
     memset(buffer, 0, nba * 21);
     for (unsigned int i = 0; i < nb; i++) {
@@ -510,7 +510,7 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     // Oracle does not like 0 length arrays....
     nba = nb == 0 ? 1 : nb;
     lens=(ub2 *)malloc(sizeof(ub2)*nb);
-    buffer=(unsigned char **)malloc(sizeof(unsigned char)*nba);
+    buffer=(unsigned char **)malloc(sizeof(unsigned char)*nba*21);
     for (unsigned int i=0;i<nba;i++){
        buffer[i]=(unsigned char *)malloc (sizeof(unsigned char)*21);
     }
