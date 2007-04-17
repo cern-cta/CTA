@@ -149,8 +149,8 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-policies
 Architecture: any
-Suggests: perl, clips
-Depends: ${shlibs:Depends}, ${misc:Depends}, perl, clips
+Suggests: perl
+Depends: ${shlibs:Depends}, ${misc:Depends}, perl
 Description: castor (Cern Advanced STORage system)
  Policies used by the expert system
 

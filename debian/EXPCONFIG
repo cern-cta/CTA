@@ -8,7 +8,6 @@
 # Then you give the working directory, and the full command.
 # Other arguments are sent into the command's stdin
 #
-EXP_RQ_FILESYSTEM     /etc/castor/expert/   /usr/bin/clips -f bestfs.clp
 EXP_RQ_MIGRATOR       /etc/castor/expert/   /usr/bin/perl migrator.pl
 EXP_RQ_RECALLER       /etc/castor/expert/   /usr/bin/perl recaller.pl
 EXP_RQ_REPLICATION    /etc/castor/expert/   /usr/bin/perl replica.pl
