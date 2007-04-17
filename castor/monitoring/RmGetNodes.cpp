@@ -39,8 +39,8 @@ void help(std::string programName) {
 
 int main(int argc, char** argv) {
   try {
-    bool create = false;
     // Parse command line
+    Coptind = 1; /* Required */
     Coptions_t longopts[] = {
       {"help", NO_ARGUMENT, NULL, 'h'},
       {"node", REQUIRED_ARGUMENT, NULL, 'n'},
@@ -53,13 +53,23 @@ int main(int argc, char** argv) {
       case 'n':
         node = strdup(Coptarg);
         break;
-      default:
+      case 'h':
         help(argv[0]);
         exit(0);
-        break;
+      default:
+	std::cerr << "Unknown option \n";
+        help(argv[0]);
+        exit(-1);
       }
     }
+    argc -= Coptind;
+    if (argc > 0) {
+      std::cerr << "This command takes no argument\n";
+      help(argv[0]);
+      exit(-1);
+    }
     // Get shared memory object
+    bool create = false;
     castor::monitoring::ClusterStatus* cs =
       castor::monitoring::ClusterStatus::getClusterStatus(create);
     if(cs == 0) {
