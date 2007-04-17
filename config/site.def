@@ -232,12 +232,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
 
-#if defined(__x86_64)||defined(__ppc64__)
-#define InstallLsfLibDir /usr/lsf/lib64
-#else
-#define InstallLsfLibDir /usr/lsf/lib
-#endif
-
 #define BuildCommands		NO
 #define BuildCommon		NO
 #define BuildCupvClient		NO
@@ -326,8 +320,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseVmgr			YES
 #define UseLsf			YES
 #define UseScheduler    	YES
-/* Scheduler options: Supported LSF versions are: 6.1 */
-/* Default is defined in config files */
 #define UseExpert		YES
 #define UseMaui			NO
 #define UseStorageTank		NO

@@ -1,6 +1,6 @@
 
 /*
- * $Id: site.Win32.def,v 1.2 2006/06/13 14:07:02 waldron Exp $
+ * $Id: site.Win32.def,v 1.3 2007/04/17 15:07:32 sponcec3 Exp $
 */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.2 $ $Date: 2006/06/13 14:07:02 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.3 $ $Date: 2007/04/17 15:07:32 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Platform is normally guessed from the CPP predefined symbols
    But you may define special flags, for example
@@ -232,12 +232,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
 
-#if defined(_WIN32)
-#define LsfInstallDir %%SystemRoot%%\\system32
-#else
-#define LsfInstallDir /usr/local/lsf
-#endif
-
 #define BuildCommands	YES
 #define BuildCommon	YES
 #define BuildCupvClient	YES
@@ -319,8 +313,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseVmgr	YES
 #define UseLsf	NO
 #define UseScheduler	NO
-/* Scheduler options: Supported LSF versions are: 6.1 */
-/* Default is defined in config files */
 #define UseExpert	NO
 #define UseMaui	NO
 #define UseStorageTank		NO
