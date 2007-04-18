@@ -36,7 +36,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
 LIBS = -lcastorMonitor -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci
 RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp \
-         ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
+         HeartbeatThread.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
 
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
 
