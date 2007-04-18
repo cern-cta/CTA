@@ -12,8 +12,8 @@
 #include "Crmd_recv_from_maui.h"
 #ifdef LSF
 /* LSF support */
-#include "lsf.h"
-#include "lsbatch.h"
+#include "lsf/lsf.h"
+#include "lsf/lsbatch.h"
 #endif
 
 /* Variables to define in your main application and to initialize - see rmmaster.c */
