@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/13 15:25:07 $ $Author: itglp $
+ * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/18 14:12:14 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -100,7 +100,7 @@ void castor::sharedMemory::BlockDict::createBlock
   }
   // Attach the shared memory
   void *sharedMemoryBlock = shmat(shmid, key.address(), SHM_REMAP);
-  if (-1 == (int)sharedMemoryBlock) {
+  if ((void*)-1 == sharedMemoryBlock) {
     // "Unable to get pointer to shared memory. Giving up"
     castor::dlf::Param initParams[] =
       {castor::dlf::Param("Error Message", strerror(errno))};
