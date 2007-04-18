@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
       castor::monitoring::ClusterStatus::const_iterator it =
         cs->find(node);
       if (cs->end() != it) {
-        std::cout << "name" << ": " << it->first << "\n";
+        std::cout << "\t\tname" << ": " << it->first << "\n";
         it->second.print(std::cout, "");
       } else {
         std::cerr << "No diskServer found with name '"
