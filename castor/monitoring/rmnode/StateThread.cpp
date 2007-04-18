@@ -54,7 +54,7 @@ castor::monitoring::rmnode::StateThread::StateThread
 (std::string rmMasterHost, int rmMasterPort) :
   m_rmMasterHost(rmMasterHost), m_rmMasterPort(rmMasterPort) {
   // "State thread created"
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 6, 0, 0);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 6, 0, 0);
 }
 
 //------------------------------------------------------------------------------

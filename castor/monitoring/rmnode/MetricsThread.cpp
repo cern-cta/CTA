@@ -58,7 +58,7 @@ castor::monitoring::rmnode::MetricsThread::MetricsThread
 (std::string rmMasterHost, int rmMasterPort) :
   m_rmMasterHost(rmMasterHost), m_rmMasterPort(rmMasterPort) {
   // "Metrics thread created"
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 7, 0, 0);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 7, 0, 0);
   
   dsMetrics = new castor::monitoring::DiskServerMetricsReport();
 }
