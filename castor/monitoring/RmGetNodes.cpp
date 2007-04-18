@@ -26,6 +26,7 @@
  *****************************************************************************/
 
 #include <iostream>
+#include <iomanip>
 #include "castor/monitoring/ClusterStatus.hpp"
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/exception/Exception.hpp"
@@ -64,7 +65,6 @@ int main(int argc, char** argv) {
     }
     argc -= Coptind;
     if (argc > 0) {
-      std::cerr << "This command takes no argument\n";
       help(argv[0]);
       exit(-1);
     }
@@ -77,20 +77,32 @@ int main(int argc, char** argv) {
                 << std::endl << std::endl;
       return -1;
     }
-    // Check whether we want to print everything or only a given machine
-    if (0 == node) {
-      cs->print(std::cout, "");
-    } else {
-      castor::monitoring::ClusterStatus::const_iterator it =
-        cs->find(node);
-      if (cs->end() != it) {
-        std::cout << "\t\tname" << ": " << it->first << "\n";
-        it->second.print(std::cout, "");
-      } else {
-        std::cerr << "No diskServer found with name '"
-                  << node << "'. Maybe check the domain."
-                  << std::endl;
+    
+    // Loop over cluster status
+    int found = 0;
+    std::string dsIndent = "   ";
+    for (castor::monitoring::ClusterStatus::const_iterator it =
+	   cs->begin();
+	 it != cs->end();
+	 it++) {
+      // Ignore deleted disk servers
+      if (it->second.adminStatus() == castor::monitoring::ADMIN_DELETED) {
+	continue;
       }
+      if (node != 0) {
+	if (strcmp(it->first.c_str(), node)) {
+	  continue;
+	}
+      }
+      std::cout << dsIndent << std::setw(20) << "name" << ": " << it->first << "\n";
+      it->second.print(std::cout, dsIndent);
+      found++;
+    }
+
+    if ((0 == found) && (node != 0)) {
+      std::cerr << "No diskServer found with name '"
+		<< node << "'. Maybe check the domain."
+		<< std::endl;     
     }
   } catch (castor::exception::Exception e) {
     std::cout << e.getMessage().str() << std::endl;
