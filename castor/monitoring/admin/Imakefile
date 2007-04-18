@@ -35,9 +35,9 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lcastorMonitor -lshift
-RMMASTERDAEMONBIN_SRCS = RmAdminNode.cpp
+RMMASTERADMINBIN_SRCS = RmAdminNode.cpp
 
-RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
+RMMASTERADMINBIN_OBJS = $(RMMASTERADMINBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(../../shlib,castorMonitor) \
          DepSharedLibraryTargetName(../../shlib,shift)
@@ -47,7 +47,7 @@ LD = g++
 
 all:ProgramTargetName(rmAdminNode)
 
-NormalProgramTarget(rmAdminNode,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
+NormalProgramTarget(rmAdminNode,$(RMMASTERADMINBIN_OBJS),$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(../../shlib,castorMonitor)
 MakeDepSharedLibrary(../../shlib,shift)
@@ -59,7 +59,7 @@ depend:
 	@echo Not supported on this platform
 #else
 depend:
-	makedepend $(INCLUDES) $(RMMASTERDAEMONBIN_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(RMMASTERADMINBIN_SRCS) 2> /dev/null
 #endif
 
 install: FileName($(BIN),rmAdminNode)
@@ -79,7 +79,7 @@ clean:
 
 clobber:	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles(ProgramTargetName(rmMasterDaemon))
+	-@RemoveFiles(ProgramTargetName(rmAdminNode))
 
 FORCE:
 
