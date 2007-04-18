@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseActuatorThread.hpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: DatabaseActuatorThread.hpp,v $ $Author: waldron $
  *
  * The DatabaseActuator thread of the RmMaster daemon.
  * It updates the stager database with monitoring data
@@ -52,7 +52,7 @@ namespace castor {
 
         /**
          * constructor
-         * @param 
+         * @param clusterStatus pointer to the status of the cluster
          */
         DatabaseActuatorThread(ClusterStatus* clusterStatus)
           throw (castor::exception::Exception);
