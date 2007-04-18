@@ -38,6 +38,7 @@
 #include "castor/monitoring/rmmaster/CollectorThread.hpp"
 #include "castor/monitoring/rmmaster/UpdateThread.hpp"
 #include "castor/monitoring/rmmaster/DatabaseActuatorThread.hpp"
+#include "castor/monitoring/rmmaster/HeartbeatThread.hpp"
 #include "castor/monitoring/rmmaster/IRmMasterSvc.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
@@ -127,6 +128,14 @@ int main(int argc, char* argv[]) {
         port));
     daemon.getThreadPool('C')->setNbThreads(1);
 
+    // Heartbeat threadpool
+    daemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("Heartbeat",
+        new castor::monitoring::rmmaster::HeartbeatThread
+	(daemon.clusterStatus()), 0, interval));
+    daemon.getThreadPool('H')->setNbThreads(1);
+
     daemon.parseCommandLine(argc, argv);
     daemon.start();
 
@@ -198,6 +207,9 @@ throw (castor::exception::Exception) :
      {33, "Thread DatabaseActuator created"},
      {34, "Thread Update created"},
      {35, "Retrieving cluster status from database to shared memory"},
+     {36, "Heartbeat Thread created."},
+     {37, "Heartbeat Thread started."},
+     {38, "Heartbeat check failed for disk server, status changed to DISABLED."},
      {-1, ""}};
   castor::dlf::dlf_init("RmMaster", messages);
 
