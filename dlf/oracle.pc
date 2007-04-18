@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.19 2006/11/29 13:46:47 waldron Exp $
+ * $Id: oracle.pc,v 1.20 2007/04/18 06:34:16 waldron Exp $
  */
 
 /* headers */
@@ -32,9 +32,9 @@
 #include <unistd.h>
 
 #include "Cthread_api.h"
+#include "common.h"
 #include "dbi.h"
 #include "dlf_api.h"
-#include "getconfent.h"
 #include "hash.h"
 #include "log.h"
 #include "queue.h"
@@ -47,6 +47,7 @@ static database_t   *dpool[MAX_THREADS];     /**< thread pool for database conne
 /* hashes */
 static hash_t       *hosthash    = NULL;     /**< hostname hash                         */
 static hash_t       *nshosthash  = NULL;     /**< name server hostname hash             */
+static hash_t       *msgtexthash = NULL;     /**< message text hash                     */
 
 /* mutexes
  *   - used to generate msg sequence numbers and lock access to arrays
@@ -189,6 +190,12 @@ int DLL_DECL db_init(int threads) {
 	rv = hash_create(&nshosthash, 100);
 	if (rv != APP_SUCCESS) {
 		log(LOG_ERR, "db_init() - failed to initialise name server host hash\n");
+		return APP_FAILURE;
+	}
+
+	rv = hash_create(&msgtexthash, 512);
+	if (rv != APP_SUCCESS) {
+		log(LOG_ERR, "db_init() - failed to initialise message text hash\n");
 		return APP_FAILURE;
 	}
 
@@ -446,8 +453,9 @@ int DLL_DECL db_shutdown(void) {
 	}
 
 	/* destroy hashes */
-	hash_destroy(hosthash,   (void *(*)(void *))free);
-	hash_destroy(nshosthash, (void *(*)(void *))free);
+	hash_destroy(hosthash,    (void *(*)(void *))free);
+	hash_destroy(nshosthash,  (void *(*)(void *))free);
+	hash_destroy(msgtexthash, (void *(*)(void *))free);
 
 	return APP_SUCCESS;
 }
@@ -484,10 +492,14 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	database_t *db;
 	struct     sqlca sqlca;
 	char       err_msg[512];
+	char       *key   = NULL;
 	size_t     err_size;
 	size_t     err_len;
 	int        i;
+	int        rv;
 	int        found;
+	int        *value = NULL;
+	void       *v     = NULL;
 
 	/* attempt to find a database connection which is currently connected and not in a busy state
 	 *   - if no connection can be found pick any connected connection
@@ -538,32 +550,59 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	db->selects++;
 	EXEC SQL SELECT fac_no INTO :fac_no FROM dlf_facilities WHERE fac_name = :facility;
 
-	/* the arrays msg_text array passed to this function cannot simply be insert'ed into the database
+	/* the arrays msg_text array passed to this function cannot simply be inserted into the database
 	 * checks must be performed first to determine whether the message is new to the system or
 	 * already exists and requires an update.
 	 */
-
 	for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
 		if (texts[i] == NULL)
 			continue;
 
-		/* entry already exists ? */
-		db->selects++;
-		EXEC SQL SELECT COUNT(*) INTO :found FROM dlf_msg_texts
-		WHERE (fac_no = :fac_no) AND (msg_no = :texts[i]->msg_no);
-
-		/* found results, update as opposed to select */
-		if (found) {
-			db->updates++;
-
-			EXEC SQL UPDATE dlf_msg_texts SET msg_text = :texts[i]->msg_text
-			WHERE (fac_no = :fac_no) AND (msg_no = :texts[i]->msg_no);
-		} else {
-			db->inserts++;
-
-			EXEC SQL INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text)
-			VALUES (:fac_no, :texts[i]->msg_no, :texts[i]->msg_text);
+		/* construct hash lookup key */
+		key = malloc(100 + strlen(texts[i]->msg_text));
+		if (key == NULL) {
+			log(LOG_CRIT, "db_initfac() - failed to malloc hash key for msgtexthash : %s", 
+			    strerror(errno));
+			db->errors++;
+			Cthread_mutex_unlock(&db->mutex);
+			return APP_FAILURE;
 		}
+		sprintf(key, "%d:%d:%s", *fac_no, texts[i]->msg_no, texts[i]->msg_text);
+
+		/* entry already exists ? */
+		rv = hash_search(msgtexthash, key, &v);
+		if (rv != APP_SUCCESS) {
+			db->selects++;
+			EXEC SQL SELECT COUNT(*) INTO :found FROM dlf_msg_texts
+			WHERE (fac_no = :fac_no) AND (msg_no = :texts[i]->msg_no);
+
+			/* found entry ? */
+			if (found) {
+				db->updates++;
+
+				EXEC SQL UPDATE dlf_msg_texts SET msg_text = :texts[i]->msg_text
+				WHERE (fac_no = :fac_no) AND (msg_no = :texts[i]->msg_no);
+			} else {
+				db->inserts++;
+			
+				EXEC SQL INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text)
+				VALUES (:fac_no, :texts[i]->msg_no, :texts[i]->msg_text);
+			}
+
+			/* update message text hash */
+			value = malloc(sizeof(int));
+			if (value == NULL) {
+				log(LOG_CRIT, "db_initfac() - failed to malloc of hash entry : %s", 
+				    strerror(errno));
+				db->errors++;
+				free(key);
+				Cthread_mutex_unlock(&db->mutex);
+				return APP_FAILURE;
+			}
+			*value = 1;
+			hash_insert(msgtexthash, key, value);
+		}
+		free(key);
 	}
 
 	db->commits++;
@@ -582,7 +621,9 @@ not_found:
 	ClrActive(db->mode);
 
 	*fac_no = -1;
-
+	if (key != NULL) {
+		free(key);
+	}
 	Cthread_mutex_unlock(&db->mutex);
 	return APP_FAILURE;
 
@@ -607,7 +648,9 @@ error:
 
 	db->errors++;
 	ClrActive(db->mode);
-
+	if (key != NULL) {
+		free(key);
+	}
 	Cthread_mutex_unlock(&db->mutex);
 	return APP_FAILURE;
 }

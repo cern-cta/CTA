@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.12 2006/11/29 13:46:47 waldron Exp $
+ * $Id: mysql.c,v 1.13 2007/04/18 06:34:16 waldron Exp $
  */
 
 /* headers */
@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 #include "Cthread_api.h"
+#include "common.h"
 #include "dbi.h"
 #include "dlf_api.h"
 #include "hash.h"
@@ -47,6 +48,7 @@ static database_t   *dpool[MAX_THREADS];     /**< thread pool for database conne
 /* hashes */
 static hash_t       *hosthash    = NULL;     /**< hostname hash                         */
 static hash_t       *nshosthash  = NULL;     /**< name server hostname hash             */
+static hash_t       *msgtexthash = NULL;     /**< message text hash                     */
 
 /* mutexes
  *   - used to generate msg sequence numbers
@@ -136,6 +138,12 @@ int DLL_DECL db_init(int threads) {
 	rv = hash_create(&nshosthash, 100);
 	if (rv != APP_SUCCESS) {
 		log(LOG_ERR, "db_init() - failed to initialise name server host hash\n");
+		return APP_FAILURE;
+	}
+
+	rv = hash_create(&msgtexthash, 512);
+	if (rv != APP_SUCCESS) {
+		log(LOG_ERR, "db_init() - failed to initialise message text hash\n");
 		return APP_FAILURE;
 	}
 
@@ -389,8 +397,9 @@ int DLL_DECL db_shutdown(void) {
 	}
 
 	/* destroy hashes */
-	hash_destroy(hosthash,   (void *(*)(void *))free);
-	hash_destroy(nshosthash, (void *(*)(void *))free);
+	hash_destroy(hosthash,    (void *(*)(void *))free);
+	hash_destroy(nshosthash,  (void *(*)(void *))free);
+	hash_destroy(msgtexthash, (void *(*)(void *))free);
 
 	return APP_SUCCESS;
 }
@@ -427,10 +436,14 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	MYSQL_ROW    row;
 	database_t   *db;
 	char         func[30];
-       	char         query[1024];
+       	char         query[2048];
+	char         *key   = NULL;
 	int          i;
+	int          rv;
 	int          id;
 	int          found;
+	int          *value = NULL;
+	void         *v     = NULL;
 	unsigned int mysql_errnum;
 
 	/* attempt to find a database connection which is currently connected and not in a busy state
@@ -510,62 +523,92 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
 		if (texts[i] == NULL)
 			continue;
-
-		/* clear any previous results gathered */
-		mysql_free_result(res);
+		
+		/* construct hash lookup key */
+		key = malloc(100 + strlen(texts[i]->msg_text));
+		if (key == NULL) {
+			log(LOG_CRIT, "db_initfac() - failed to malloc hash key for msgtexthash : %s", 
+			    strerror(errno));
+			db->errors++;
+			Cthread_mutex_unlock(&db->mutex);
+			return APP_FAILURE;
+		}
+		sprintf(key, "%d:%d:%s", *fac_no, texts[i]->msg_no, texts[i]->msg_text);
 
 		/* entry already exists ? */
-		db->selects++;
-		snprintf(query, sizeof(query), "SELECT COUNT(*) FROM dlf_msg_texts WHERE (fac_no = '%d') AND (msg_no = '%d')",
-				       id, texts[i]->msg_no);
-		if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
-			strcpy(func, "mysql_query()");
-			goto error;
-		}
+		rv = hash_search(msgtexthash, key, &v);
+		if (rv != APP_SUCCESS) {
 
-		/* store the result */
-		if ((res = mysql_store_result(&db->mysql)) == NULL) {
-			strcpy(func, "mysql_store_result()");
-			goto error;
-		}
-
-		/* fetch the first row which tells us if the message already exists for the given
-		 * facility
-		 */
-		if ((row = mysql_fetch_row(res)) == NULL) {
-			strcpy(func, "mysql_fetch_row()");
-			goto error;
-		}
-
-		/* found results, update as opposed to select */
-		if (atoi(row[0]) == 1) {
-
-			/* construct query */
-			db->updates++;
-			snprintf(query, sizeof(query), "UPDATE dlf_msg_texts \
+			/* clear any previous results gathered */
+			if (res != NULL) {
+				mysql_free_result(res);			
+			}
+			db->selects++;
+			snprintf(query, sizeof(query), "SELECT COUNT(*) FROM dlf_msg_texts WHERE (fac_no = '%d') AND (msg_no = '%d')",
+				 id, texts[i]->msg_no);
+			if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
+				strcpy(func, "mysql_query()");
+				goto error;
+			}
+			
+			/* store the result */
+			if ((res = mysql_store_result(&db->mysql)) == NULL) {
+				strcpy(func, "mysql_store_result()");
+				goto error;
+			}
+			
+			/* fetch the first row which tells us if the message already exists for the given
+			 * facility
+			 */
+			if ((row = mysql_fetch_row(res)) == NULL) {
+				strcpy(func, "mysql_fetch_row()");
+				goto error;
+			}
+			
+			/* found results, update as opposed to select */
+			if (atoi(row[0]) == 1) {
+				
+				/* construct query */
+				db->updates++;
+				snprintf(query, sizeof(query), "UPDATE dlf_msg_texts \
                                                         SET msg_text = '%s'  \
                                                         WHERE (fac_no = '%d') AND (msg_no = '%d')",
-				 texts[i]->msg_text, id, texts[i]->msg_no);
-
-			/* execute query */
-			if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
-				strcpy(func, "mysql_query()");
-				goto error;
-			}
-		} else {
-
-			/* construct query */
-			db->inserts++;
-			snprintf(query, sizeof(query), "INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text) \
+					 texts[i]->msg_text, id, texts[i]->msg_no);
+				
+				/* execute query */
+				if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
+					strcpy(func, "mysql_query()");
+					goto error;
+				}
+			} else {
+				
+				/* construct query */
+				db->inserts++;
+				snprintf(query, sizeof(query), "INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text) \
                                                         VALUES ('%d', '%d', '%s')",
-				 id, texts[i]->msg_no, texts[i]->msg_text);
-
-			/* execute query */
-			if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
-				strcpy(func, "mysql_query()");
-				goto error;
+					 id, texts[i]->msg_no, texts[i]->msg_text);
+				
+				/* execute query */
+				if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
+					strcpy(func, "mysql_query()");
+					goto error;
+				}
 			}
+
+			/* update message text hash */
+			value = malloc(sizeof(int));
+			if (value == NULL) {
+				log(LOG_CRIT, "db_initfac() - failed to malloc of hash entry : %s", 
+				    strerror(errno));
+				db->errors++;
+				free(key);
+				Cthread_mutex_unlock(&db->mutex);
+				return APP_FAILURE;
+			}
+			*value = 1;
+			hash_insert(msgtexthash, key, value);	
 		}
+		free(key);
 	}
 
 	/* commit all changes */
@@ -584,6 +627,9 @@ not_found:
 
 	*fac_no = -1;
 
+	if (key != NULL) {
+		free(key);
+	}
 	mysql_free_result(res);
 	Cthread_mutex_unlock(&db->mutex);
 	return APP_FAILURE;
@@ -602,6 +648,9 @@ error:
 	mysql_free_result(res);
 	ClrActive(db->mode);
 
+	if (key != NULL) {
+		free(key);		
+	}
 	Cthread_mutex_unlock(&db->mutex);
 	return APP_FAILURE;
 }
