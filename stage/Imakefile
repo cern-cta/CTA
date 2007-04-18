@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1993-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/06/28 13:53:06 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2007/04/18 12:41:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 
 COMM 	Make stage daemon programs. 
 
@@ -824,7 +824,7 @@ clean:
 
 clobber:	clean
 	@echo clobbering in CurDir
-	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(DBOBJS_ALL) $(STGLIB_OBJS) Cstage_db.c Cstage_db.h)
+	-@RemoveFiles($(PROGS_C) $(PROGS_D) $(PROGS_S) $(PROGS_Z) $(DBOBJS_ALL) $(STGLIB_OBJS) $(PROGS_CPDSKDSK) Cstage_db.c Cstage_db.h)
 
 #if _WIN32
 depend:

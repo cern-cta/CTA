@@ -298,7 +298,7 @@ clean:
 	-@RemoveFiles(FilesToClean)
  
 clobber:        clean
-	-@RemoveFiles($(CLIENT) $(PROGS_D) Cupv_oracle_ifce.c Cupv_oracle_ifce.lis)
+	-@RemoveFiles($(CLIENT) $(PROGS_D) Cupv_oracle_ifce.c Cupv_oracle_ifce.lis tp*)
  
 #if _WIN32
 depend:
