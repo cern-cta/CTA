@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.198 $ $Release$ $Date: 2007/04/13 11:58:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.199 $ $Release$ $Date: 2007/04/18 16:06:24 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -465,17 +465,21 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
   ad.setTarget(subreq->id());
-  castor::stager::DiskCopy* dc = NULL;
+  castor::stager::DiskCopy* dc = 0;
  
   try {
       castor::stager::CastorFile* cf = subreq->castorFile();
+
+      // create needed TapeCopy(ies) and Segment(s)
+      createTapeCopySegmentsForRecall(cf, euid, egid);
+
+      // if we are here, we do have segments to recall
       // create DiskCopy
       dc = new castor::stager::DiskCopy();
       dc->setCastorFile(cf);
       
-      /* we need to create this object now, so we have the DB id for
-       * the following operation
-       */
+      // we need to create this object now, so we have the DB id for
+      // the following operation
       cnvSvc()->createRep(&ad, dc, false);
       cnvSvc()->fillRep(&ad, dc, OBJ_CastorFile, false);
       // build the path, since we now have the DB id from the DiskCopy;
@@ -501,36 +505,36 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
       subreq->setStatus(castor::stager::SUBREQUEST_WAITTAPERECALL);
       cnvSvc()->updateRep(&ad, subreq, false); 
       
-      // create needed TapeCopy(ies) and Segment(s)
-    
-      createTapeCopySegmentsForRecall(cf, euid, egid);
-      cnvSvc()->commit();
+      cnvSvc()->commit();   
       subreq->setDiskcopy(NULL);
-      delete dc; 
-    }catch (castor::exception::Exception forward){
-        // no valid tape copy found, in such a case, we rollback the created DiskCopy
-        // and set the subrequest to failed. The original Message is forwarded
+      delete dc;
+  }
+  catch (castor::exception::Exception forward){
+    // no valid tape copy found. In such a case, we rollback and
+    // set the subrequest to failed. The original message is forwarded
     try{
-  
-	cnvSvc()->rollback();
-	subreq->setDiskcopy(0);
-	delete dc;
+
+        cnvSvc()->rollback();
+        if(dc) {
+          delete dc;
+          subreq->setDiskcopy(0);
+        }
         subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
         cnvSvc()->updateRep(&ad, subreq, true);
+       
     }catch(castor::exception::Exception forward2){
         castor::exception::Internal ex2;
-        ex2.getMessage() << "Exception in try-catch of  createRecallCandidate"
+        ex2.getMessage() << "Exception in try-catch of createRecallCandidate"
         << std::endl << forward2.getMessage().str();
         throw ex2;
     }
-  
+
     castor::exception::Internal ex;
     ex.getMessage() << "Exception in createRecallCandidate"
     << std::endl << forward.getMessage().str();
     throw ex;
   }
 }
-
 
 // -----------------------------------------------------------------------
 // selectCastorFile
