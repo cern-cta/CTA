@@ -1,2 +1,2 @@
 %attr(0644,root,bin) etc/sysconfig/lsf.example
-%attr(0755,root,bin) usr/lsf/lib/schmod_castor.so
+%attr(0755,root,bin) usr/lib/schmod_castor.so

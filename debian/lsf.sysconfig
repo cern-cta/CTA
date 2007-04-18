@@ -1,12 +1,6 @@
 #
-# $Id: lsf.sysconfig,v 1.4 2007/04/02 14:26:31 sponcec3 Exp $
+# $Id: lsf.sysconfig,v 1.5 2007/04/18 10:11:00 sponcec3 Exp $
 #
 # Global setup for LSF
-
-if [ -n "$LD_LIBRARY_PATH" ]; then
-  LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lsf/lib
-else
-  LD_LIBRARY_PATH=/usr/lsf/lib
-fi
 
 # no need for db configuration if cern-oracle-instantclient is used
