@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.26 $ $Date: 2007/04/11 07:05:12 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.27 $ $Date: 2007/04/18 13:17:38 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1526,13 +1526,29 @@ int vsnretry;
                 if (c == EBUSY) {
                         /* this will never happen, since c == -1 on error    */
                         RETURN(RBT_FAST_RETRY);
+
                 } else if ((-1 == c) && ((serrno - ERMCRBTERR) == EBUSY)) {
-                        /* this should trigger a retry on a busy error       */ 
-                        tplogit (func, "Encountered EBUSY. Will retry." );
+
+                        /* this should trigger a retry on a busy error       */
+                        
+                        p = strrchr (rmc_errbuf, ':');
+			sprintf (msg, TP041, "mount", vid, cur_unm,
+                                 p ? p + 2 : rmc_errbuf);
+                        tplogit (func, "%s", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, "mount",
+                                            "cur_vid", TL_MSG_PARAM_STR, vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+                        
+                        tplogit (func, "Encountered EBUSY. Will retry.\n" );
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 2,
                                             "func"   , TL_MSG_PARAM_STR, func,
                                             "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Will retry." );
+
                         RETURN (RBT_FAST_RETRY);
+
                 } else if (c) {
                         /* log information about the error condition         */
                         if (serrno != SECOMERR) {
@@ -1677,13 +1693,29 @@ int smcdismount(vid, loader, force, vsnretry)
                 if (c == EBUSY) {
                         /* this will never happen, since c == -1 on error    */
                         RETURN (RBT_FAST_RETRY);
+
                 } else if ((-1 == c) && ((serrno - ERMCRBTERR) == EBUSY)) {
+
                         /* this should trigger a retry on a busy error       */ 
-                        tplogit (func, "Encountered EBUSY. Will retry." );
+
+                        p = strrchr (rmc_errbuf, ':');
+                        sprintf (msg, TP041, "demount", vid, cur_unm,
+                                 p ? p + 2 : rmc_errbuf);
+                        tplogit (func, "%s", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, "demount",
+                                            "cur_vid", TL_MSG_PARAM_STR, vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+
+                        tplogit (func, "Encountered EBUSY. Will retry.\n" );
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 2,
                                             "func"   , TL_MSG_PARAM_STR, func,
                                             "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Will retry." );
+
                         RETURN (RBT_FAST_RETRY);
+
                 } else if (c) {
                         /* log information about the error condition         */
                         if (serrno != SECOMERR) {
