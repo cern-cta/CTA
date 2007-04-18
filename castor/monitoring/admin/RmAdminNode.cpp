@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/17 13:16:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/18 15:45:31 $ $Author: sponcec3 $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -89,6 +89,12 @@ int main(int argc, char *argv[]) {
     char* fsStateName = 0;
     char* fsAdminStateName = 0;
     bool recursive = false;
+
+    // issue help if no options given
+    if (1 == argc) {
+      usage(progName);
+      return 0;
+    }
 
     // Deal with options
     Coptind = 1;
