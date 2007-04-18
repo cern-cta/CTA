@@ -1,3 +1,45 @@
+castor (2.1.3-7) unstable; urgency=low
+
+  * Bug fix release on top of 3.6.
+  * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
+    [r1.20,2007-04-16,itglp] Fully drop Oracle environment when dropping connection
+  * CASTOR2/castor/db/newora/OraCommonSvc.cpp:
+    [r1.17,2007-04-18,sponcec3] Removed unneeded FOR UPDATE in the selectFileSystem query in order to avoid dead locks. Now this was added in version 1.108 of OraStagerService on purpose so it used to have some utility but right now, I don't see any
+  * CASTOR2/castor/db/ora/OraGCSvc.cpp:
+    [r1.21,2007-04-17,sponcec3] Better fix : the malloc itself was wrong
+    [r1.20,2007-04-17,sponcec3] Fixed wrong size in a malloc leading to segfaults
+  * CASTOR2/castor/monitoring/RmGetNodes.cpp:
+    [r 1.4,2007-04-17,sponcec3] Fixed -n flag and added some checks
+    [r 1.3,2007-04-17,sponcec3] Added -h and -n flags. -n allows to ask for info for a single node
+  * CASTOR2/castor/monitoring/admin/RmAdminNode.cpp:
+    [r 1.6,2007-04-17,sponcec3] Fixed initialization of recursive flag. Due to this bug, rmAdminNode was always considering that -r was present
+  * CASTOR2/clips/Cconstants.pm:
+  * CASTOR2/clips/Cdiskserver.pm:
+  * CASTOR2/clips/Cfilesystem.pm:
+  * CASTOR2/clips/Cinterface.pm:
+  * CASTOR2/clips/Cutils.pm:
+  * CASTOR2/clips/bestfs.pl:
+    [2007-04-17,sponcec3] Dropped perl version of bestfs policy
+  * CASTOR2/clips/Imakefile:
+  * CASTOR2/clips/bestfs.clp:
+  * CASTOR2/clips/bestfs_test.clp:
+  * CASTOR2/clips/castor.clp:
+  * CASTOR2/clips/castorweight.clp:
+  * CASTOR2/clips/fs_capabilities.clp:
+  * CASTOR2/clips/fs_garbage.clp:
+  * CASTOR2/debian/EXPCONFIG:
+  * CASTOR2/debian/castor-policies.install.perm:
+  * CASTOR2/debian/control:
+    [2007-04-17,sponcec3] Dropped clips related stuff
+  * CASTOR2/config/castor_paths.example:
+  * CASTOR2/config/site.Win32.def:
+  * CASTOR2/config/site.def:
+  * CASTOR2/scheduler/LSF/Imakefile:
+    [2007-04-17,sponcec3] Simplified compilation and linking of LSF stuff now that it is installed in the default places, i.e. /usr/lib and /usr/include
+  * CASTOR2/dlf/mysql.c:
+  * CASTOR2/dlf/oracle.pc:
+    [2007-04-18,waldron] reduce the database overhead of dlf initialisation calls by caching messages texts in memory
+	
 castor (2.1.3-6) unstable; urgency=low
 
   * Sixth test release with new LSF plugin and new monitoring
