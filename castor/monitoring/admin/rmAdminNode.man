@@ -1,4 +1,4 @@
-.TH RMADMINNODE 1 "$Date: 2007/04/13 16:44:49 $" CASTOR "stager catalogue administrative commands"
+.TH RMADMINNODE 1 "$Date: 2007/04/19 13:22:47 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 rmAdminNode \- handle statuses in rmMaster
 .SH SYNOPSIS
@@ -7,130 +7,89 @@ rmAdminNode \- handle statuses in rmMaster
 .BI -h, 
 .BI --help
 ]
-.LP
-.B rmAdminNode
 [
-OPTIONS
-]
-.BI -n,
-.BI --node " nodeName"
-[
-.BI -r,
-.BI --recursive
-]
-[
-.BI -s,
-.BI --state " nodeState"
-]
-[
-.BI -a,
-.BI --adminState " nodeAdminState"
-]
-.LP
-.B rmAdminNode
-[
-OPTIONS
-]
-.BI -n,
-.BI --node " nodeName"
-.BI -m,
-.BI --mountPoint " fileSystemMountPoint"
-[
-.BI -t,
-.BI --fsState " fileSystemState"
-]
-[
-.BI -d,
-.BI --adminFsState " fileSystemAdminState"
-]
-.LP
-Where OPTIONS are :
-[
+.BI -o,
 .BI --host " rmMasterHost"
 ]
 [
+.BI -p
 .BI --port " rmMasterPort"
 ]
+.BI -n,
+.BI --node " nodeName"
+[
+.BI -f,
+.BI --force " state"
+|
+.BI -r,
+.BI --release
+|
+.BI -d,
+.BI --delete
+]
+[
+.BI -m,
+.BI --mountPoint " fileSystemMountPoint"
+]
+[
+.BI -R,
+.BI --recursive
+]
+.LP
 .SH DESCRIPTION
 .B rmAdminNode
-is able to change status of nodes and filesystems in rmMaster.
-Both the status and admin status can be changed. Depending whether a mountPoint is given or not, one can either change the
-node status or the fileSystem status, but not both at the same time.
-.TP
-.BI \-h,
-.BI \-\-help
+can be used to force and release the status of diskServers and filesystems
+in the monitoring system. It can also delete nodes and filesystems.
+Depending on the options, one can either force,
+release or delete a diskServer, a fileSystem status or a diskServer and
+all its fileSystems (recursive mode).
+.TP 16
+.BI \-h,\-\-help
 Get usage information
 .TP
-.BI \-n,
-.BI \-\-node " nodeName"
-is the name of the node concerned. This is the only mandatory option
+.BI -o,--host " rmMasterHost"
+Forces the RmMasterDaemon's host to contact. Default is taken from castor.conf.
 .TP
-.BI \-r,
-.BI \-\-recursive
-allows to set the state of a diskserver and all its fileSystems in one go
+.BI -p,--port " rmMasterPort"
+Forces the RmMasterDaemon's port. Default is taken from castor.conf.
 .TP
-.BI \-s,
-.BI \-\-state " nodeState"
-is the new state of the node. Default value is "Production".
-This option can only be used if no mountPoint is given.
+.BI \-n,\-\-node " nodeName"
+Name of the diskServer concerned. Mandatory.
 .TP
-.BI \-a,
-.BI \-\-adminState " nodeAdminState"
-is the new admin state of the node. No action is taken if it is not given.
-This option can only be used if no mountPoint is given.
+.BI \-f,\-\-force " state"
+Forces the diskServer/filesystem into a given state. This state will stay until
+the next call to rmAdminNode for this item.
 .TP
-.BI \-m,
-.BI \-\-mountPoint " fileSystemMountPoint"
+.BI \-r,\-\-release
+Releases the state of the diskServer/filesystem. The state will now be taken
+from the regular monitoring.
+.TP
+.BI \-d,\-\-delete
+Deletes the diskServer/filesystem from the stager DB and marks it as deleted in
+the monitoring system. The diskServer/filesystem will only diseappear from the
+monitoring at the next reset of the monitoring system.
+.TP
+.BI \-m,\-\-mountPoint " fileSystemMountPoint"
 is the mountPoint of the fileSystem concerned in case you want to modify the states of a filesystem
-and not the one of the node itself
+and not the one of the diskServer itself
 .TP
-.BI \-t,
-.BI \-\-fsState " fileSystemState"
-is the new state of the fileSystem. Default value is "Production".
-This option can only be used if a mountPoint is given.
-.TP
-.BI \-d,
-.BI \-\-adminFsState " fileSystemAdminState"
-is the new admin state of the fileSystem. No action is taken if it is not given.
-This option can only be used if a mountPoint is given.
+.BI \-R,\-\-recursive
+allows to deal with a diskserver and all its fileSystems in one go
 .LP
 .SH POSSIBLE STATES
 .TP 12
 .BI "Production"
-This is the default when no state is given and means that the node/FileSystem is ready for operation
+This is the default when no state is given and means that the diskServer/FileSystem is ready for operation
 .TP
 .BI "Draining"
-This means that the node/FileSystem is not accepting user requests anymore but is still available for
+This means that the diskServer/FileSystem is not accepting user requests anymore but is still available for
 migrations
 .TP
 .BI "Disabled"
-In this state, the node is not used at all by the system.
+In this state, the diskServer is not used at all by the system.
 .LP
-.SH POSSIBLE ADMIN STATES
-.TP
-
-.BI "None"
-This is the default admin state and will allow to update the status of
-a node/fileSystem as if you were the rmNodeDaemon. It means that a previous
-adminState set on the node/FileSystem will be respected (e.g. your update will be
-ignored on a node in status Force) and that the admin status won't be changed.
-.TP
-.BI "Force"
-A node/fileSystem with "Force" admin state will not change anymore its state
-according to monitoring data. Instead it will keep the current state until
-the "Force" is released.
-.TP
-.BI "Release"
-This allows to release a node/fileSystem in "Force" admin state, so that the
-update to states by the monitoring resumes.
-In this state, the node is not used at all by the system
-.TP
-.BI "Deleted"
-This allows to "delete" node/fileSystem from the monitoring.
-It will actually stay in this state until the next reset of the shared memory
-but will disappear from the stager database.
 .SH EXIT STATUS
-This program returns 0 if the operation was successful or >0 if the operation
+This program returns 0 if the operation was successful or > 0 if the operation
 failed.
 .SH SEE ALSO
 .BR rmMasterDaemon(1castor),

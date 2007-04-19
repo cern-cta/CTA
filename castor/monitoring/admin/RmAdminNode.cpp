@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/18 15:45:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/19 13:22:47 $ $Author: sponcec3 $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -44,33 +44,26 @@ static struct Coptions longopts[] = {
   {"host",        REQUIRED_ARGUMENT, NULL, 'o'},
   {"port",        REQUIRED_ARGUMENT, NULL, 'p'},
   {"node",        REQUIRED_ARGUMENT, NULL, 'n'},
-  {"state",       REQUIRED_ARGUMENT, NULL, 's'},
-  {"adminState",  REQUIRED_ARGUMENT, NULL, 'a'},
+  {"force",       REQUIRED_ARGUMENT, NULL, 'f'},
+  {"release",     NO_ARGUMENT,       NULL, 'r'},
+  {"delete",      NO_ARGUMENT,       NULL, 'd'},
   {"mountPoint",  REQUIRED_ARGUMENT, NULL, 'm'},
-  {"fsState",     REQUIRED_ARGUMENT, NULL, 't'},
-  {"fsAdminState",REQUIRED_ARGUMENT, NULL, 'd'},
-  {"recursive",   NO_ARGUMENT,       NULL, 'r'},
+  {"recursive",   NO_ARGUMENT,       NULL, 'R'},
   {NULL, 0, NULL, 0}
 };
 
 void usage(char *cmd) {
-  std::cerr << "usage : " << cmd << " [options] where options are :\n"
-            << "-h,--help displays this help\n"
-            << "--host <Rmmaster host>\n"
-            << "--port <Rmmaster port>\n"
-            << "-r, --recursive allows to modify a node and all its fileSystems in one go.\n"
-            << "-n, --node <Name> of the node to administrate. Required.\n"
-            << "-s, --state {state} New node's state\n"
-            << "-a, --adminState {adminState} New node's state\n"
-            << "-m, --mountPoint <Filesystem mountPoint> Filesystem on node\n"
-            << "-t, --fsState {fsstate} New filesystem's state\n"
-            << "-d, --fsAdminState {fsstate} New filesystem's state\n"
-            << "Notes:\n"
-            << "\t{state} and {fsState} can be: \"Production\", \"Draining\" or \"Disabled\"\n"
-            << "\t{adminState} and {fsAdminState} can be: \"None\", \"Force\", \"Release\" or \"Deleted\"\n"
-	    << "\tdefault states (when not provided) are \"Production\" and \"None\"\n"
-            << "\tmountPoints usually end with a '/', for example /data01/\n"
-            << "\tonly the node name is required, not giving any mountPoint will not change any fileSystem state\n"
+  std::cerr << "usage : " << cmd
+            << "[-h] "
+            << "[--host <Rmmaster host>] "
+            << "[--port <Rmmaster port>] "
+            << "-n <name> "
+            << "[-f <state> "
+            << "| -r "
+            << "| -d] "
+            << "[-m <mountPoint>] "
+            << "[-R]\n"
+            << "  where state can be \"Production\", \"Draining\" or \"Disabled\""
             << std::endl;
 }
 
@@ -83,12 +76,12 @@ int main(int argc, char *argv[]) {
     char* rmHostName = 0;
     int rmPort = -1;
     char* nodeName = 0;
+    bool force = false;
     char* stateName = 0;
-    char* adminStateName = 0;
-    char* mountPoint = 0;
-    char* fsStateName = 0;
-    char* fsAdminStateName = 0;
+    bool release = false;
+    bool deleteFlag = false;
     bool recursive = false;
+    char* mountPoint = 0;
 
     // issue help if no options given
     if (1 == argc) {
@@ -100,7 +93,7 @@ int main(int argc, char *argv[]) {
     Coptind = 1;
     Copterr = 1;
     int ch;
-    while ((ch = Cgetopt_long(argc,argv,"hn:rs:a:m:t:d:",longopts,NULL)) != EOF) {
+    while ((ch = Cgetopt_long(argc,argv,"ho:p:n:f:rdm:R",longopts,NULL)) != EOF) {
       switch (ch) {
       case 'h':
 	usage(progName);
@@ -111,33 +104,67 @@ int main(int argc, char *argv[]) {
       case 'p':
 	rmPort = atoi(Coptarg);
 	break;
-      case 'r':
-	recursive = true;
-	break;
       case 'n':
 	nodeName = Coptarg;
 	break;
-      case 's':
+      case 'f':
 	stateName = Coptarg;
+	force = true;
+	if (release || deleteFlag) {
+	  std::cerr << "Error : incompatible options used (force and "
+		    << (release ? "release" : "delete")
+		    << ")" << std::endl;
+	  usage(progName);
+	  return -1;
+	}
 	break;
-      case 'a':
-	adminStateName = Coptarg;
+      case 'r':
+	release = true;
+	if (force || deleteFlag) {
+	  std::cerr << "Error : incompatible options used (release and "
+		    << (force ? "force" : "delete")
+		    << ")" << std::endl;
+	  usage(progName);
+	  return -1;
+	}
+	break;
+      case 'd':
+	deleteFlag = true;
+	if (release || force) {
+	  std::cerr << "Error : incompatible options used (delete and "
+		    << (release ? "release" : "force")
+		    << ")" << std::endl;
+	  usage(progName);
+	  return -1;
+	}
 	break;
       case 'm':
 	mountPoint = Coptarg;
 	break;
-      case 't':
-	fsStateName = Coptarg;
-	break;
-      case 'd':
-	fsAdminStateName = Coptarg;
+      case 'R':
+	recursive = true;
 	break;
       case '?':
+	std::cerr << "Unable to parse options" << std::endl;
         usage(progName);
         return 1;
       default:
         break;
       }
+    }
+    // Compute the admin state
+    castor::monitoring::AdminStatusCodes adminState = castor::monitoring::ADMIN_NONE;
+    if (force) {
+      adminState = castor::monitoring::ADMIN_FORCE;
+    } else if (release) {
+      adminState = castor::monitoring::ADMIN_RELEASE;
+    } else if (deleteFlag) {
+      adminState = castor::monitoring::ADMIN_DELETED;
+    } else {
+      // Error
+      std::cerr << "Missing option : one of force, release or delete must be given"
+		<< std::endl;
+      return -1;
     }
 
     // Parse the arguments
@@ -149,72 +176,6 @@ int main(int argc, char *argv[]) {
     if (0 == nodeName) {
       std::cerr << "Missing node name. Please use -n,--node option !" << std::endl;
       exit(1);
-    }
-    if ((0 != mountPoint) &&
-	((0 != stateName) || (0 != adminStateName))) {
-      std::cerr << "One cannot set the status of a node and a deal with a "
-		<< "fileSystem at the same time !" << std::endl;
-      exit(1);      
-    }
-    castor::stager::DiskServerStatusCode state = castor::stager::DISKSERVER_PRODUCTION;
-    if (0 != stateName) {
-      if (0 == strcmp(stateName, "Draining")) {
-	state = castor::stager::DISKSERVER_DRAINING;
-      } else if (0 == strcmp(stateName, "Disabled")) {
-	state = castor::stager::DISKSERVER_DISABLED;
-      } else if (0 != strcmp(stateName, "Production")) {
-	// Error
-	std::cerr << "Invalid node status '" << stateName << "'\n"
-		  << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
-		  << std::endl;
-	exit(1);
-      }
-    }
-    castor::monitoring::AdminStatusCodes adminState = castor::monitoring::ADMIN_NONE;
-    if (0 != adminStateName) {
-      if (0 == strcmp(adminStateName, "Force")) {
-	adminState = castor::monitoring::ADMIN_FORCE;
-      } else if (0 == strcmp(adminStateName, "Release")) {
-	adminState = castor::monitoring::ADMIN_RELEASE;
-      } else if (0 == strcmp(adminStateName, "Deleted")) {
-	adminState = castor::monitoring::ADMIN_DELETED;
-      } else if (0 != strcmp(adminStateName, "None")) {
-	// Error
-	std::cerr << "Invalid node admin status '" << adminStateName << "'\n"
-		  << "Valid status are \"None\", \"Force\", \"Release\" and \"Deleted\""
-		  << std::endl;
-	exit(1);
-      }
-    }
-    castor::stager::FileSystemStatusCodes fsState = castor::stager::FILESYSTEM_PRODUCTION;
-    if (0 != fsStateName) {
-      if (0 == strcmp(fsStateName, "Draining")) {
-	fsState = castor::stager::FILESYSTEM_DRAINING;
-      } else if (0 == strcmp(fsStateName, "Disabled")) {
-	fsState = castor::stager::FILESYSTEM_DISABLED;
-      } else if (0 != strcmp(fsStateName, "Production")) {
-	// Error
-	std::cerr << "Wrong mountPoint status '" << fsStateName << "'\n"
-		  << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
-		  << std::endl;
-	exit(1);
-      }
-    }
-    castor::monitoring::AdminStatusCodes fsAdminState = castor::monitoring::ADMIN_NONE;
-    if (0 != fsAdminStateName) {
-      if (0 == strcmp(fsAdminStateName, "Force")) {
-	fsAdminState = castor::monitoring::ADMIN_FORCE;
-      } else if (0 == strcmp(fsAdminStateName, "Release")) {
-	fsAdminState = castor::monitoring::ADMIN_RELEASE;
-      } else if (0 == strcmp(fsAdminStateName, "Deleted")) {
-	fsAdminState = castor::monitoring::ADMIN_DELETED;
-      } else if (0 != strcmp(fsAdminStateName, "None")) {
-	// Error
-	std::cerr << "Invalid fileSystem Admin status '" << fsAdminStateName << "'\n"
-		  << "Valid status are \"None\"(default), \"Force\" and \"Release\""
-		  << std::endl;
-	exit(1);
-      }
     }
 
     // RmMaster Port
@@ -262,6 +223,20 @@ int main(int argc, char *argv[]) {
       obj = report;
       report->setDiskServerName(nodeName);
       report->setAdminStatus(adminState);
+      castor::stager::DiskServerStatusCode state = castor::stager::DISKSERVER_PRODUCTION;
+      if (0 != stateName) {
+	if (0 == strcmp(stateName, "Draining")) {
+	  state = castor::stager::DISKSERVER_DRAINING;
+	} else if (0 == strcmp(stateName, "Disabled")) {
+	  state = castor::stager::DISKSERVER_DISABLED;
+	} else if (0 != strcmp(stateName, "Production")) {
+	  // Error
+	  std::cerr << "Invalid node status '" << stateName << "'\n"
+		    << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
+		    << std::endl;
+	  exit(1);
+	}
+      }
       report->setStatus(state);
       report->setRecursive(recursive);
     } else {
@@ -270,8 +245,22 @@ int main(int argc, char *argv[]) {
       obj = report;
       report->setDiskServerName(nodeName);
       report->setMountPoint(mountPoint);
-      report->setAdminStatus(fsAdminState);
-      report->setStatus(fsState);
+      report->setAdminStatus(adminState);
+      castor::stager::FileSystemStatusCodes state = castor::stager::FILESYSTEM_PRODUCTION;
+      if (0 != stateName) {
+	if (0 == strcmp(stateName, "Draining")) {
+	  state = castor::stager::FILESYSTEM_DRAINING;
+	} else if (0 == strcmp(stateName, "Disabled")) {
+	  state = castor::stager::FILESYSTEM_DISABLED;
+	} else if (0 != strcmp(stateName, "Production")) {
+	  // Error
+	  std::cerr << "Invalid node status '" << stateName << "'\n"
+		    << "Valid status are \"Production\"(default), \"Draining\" and \"Disabled\""
+		    << std::endl;
+	  exit(1);
+	}
+      }
+      report->setStatus(state);
     }
 
     // send request to rmMaster
