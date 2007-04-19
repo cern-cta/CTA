@@ -619,7 +619,11 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
     if (n > 0) stream << ", ";
     stream << mem->name << " "
            << getOraSQLType(mem->typeName);
-    if (mem->name == "id") stream << " PRIMARY KEY";
+    if (mem->name == "id") {
+      stream << " CONSTRAINT I_"
+	     << m_classInfo->className
+	     << "_Id PRIMARY KEY";
+    }
     n++;
   }
   // create a list of associations
@@ -769,7 +773,11 @@ void CppCppDbCnvWriter::writePgSqlStatements() {
     if (n > 0) stream << ", ";
     stream << mem->name << " "
            << getPgSQLType(mem->typeName);
-    if (mem->name == "id") stream << " PRIMARY KEY";
+    if (mem->name == "id") {
+      stream << " CONSTRAINT I_"
+	     << m_classInfo->className
+	     << "_Id PRIMARY KEY";
+    }
     n++;
   }
   // create a list of associations
