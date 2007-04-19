@@ -68,7 +68,7 @@
 
 
 -----------
-- 2.1.2-7 -
+- 2.1.2-8 -
 -----------
 
   New Features and Changes
@@ -76,12 +76,20 @@
   This release brings selected fixes and no new functionality with respect to the previous 2.1.2:
   - Fixes for reservedSpace accumulation in case of failed Puts and Puts from SRM
   - Fixes in the stager to prevent segmentation faults in case of exception handling for tape recalls
-  - Fix for the stagemap handling
+  - Fix in the scheduling of disk-to-disk copies
+  - Fix for the stagemap handling when only the user gid is mapped in stagemap.conf
 
   Upgrade from 2.1.2-6
   --------------------
   - Upgrade the database 
   - Upgrade all head nodes (the order is not important)
+
+
+-----------
+- 2.1.2-7 -
+-----------
+
+  This release is broken in disk-to-disk copy handling.
 
 
 -----------
