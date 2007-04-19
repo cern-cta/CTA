@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.13 2007/04/18 06:34:16 waldron Exp $
+ * $Id: mysql.c,v 1.14 2007/04/19 13:45:04 waldron Exp $
  */
 
 /* headers */
@@ -49,6 +49,7 @@ static database_t   *dpool[MAX_THREADS];     /**< thread pool for database conne
 static hash_t       *hosthash    = NULL;     /**< hostname hash                         */
 static hash_t       *nshosthash  = NULL;     /**< name server hostname hash             */
 static hash_t       *msgtexthash = NULL;     /**< message text hash                     */
+static hash_t       *facilityhash = NULL;    /**< facility hash                         */  
 
 /* mutexes
  *   - used to generate msg sequence numbers
@@ -144,6 +145,12 @@ int DLL_DECL db_init(int threads) {
 	rv = hash_create(&msgtexthash, 512);
 	if (rv != APP_SUCCESS) {
 		log(LOG_ERR, "db_init() - failed to initialise message text hash\n");
+		return APP_FAILURE;
+	}
+
+	rv = hash_create(&facilityhash, 100);
+	if (rv != APP_SUCCESS) {
+		log(LOG_ERR, "db_init() - failed to initialise facility hash\n");
 		return APP_FAILURE;
 	}
 
@@ -397,9 +404,10 @@ int DLL_DECL db_shutdown(void) {
 	}
 
 	/* destroy hashes */
-	hash_destroy(hosthash,    (void *(*)(void *))free);
-	hash_destroy(nshosthash,  (void *(*)(void *))free);
-	hash_destroy(msgtexthash, (void *(*)(void *))free);
+	hash_destroy(hosthash,     (void *(*)(void *))free);
+	hash_destroy(nshosthash,   (void *(*)(void *))free);
+	hash_destroy(msgtexthash,  (void *(*)(void *))free);
+	hash_destroy(facilityhash, (void *(*)(void *))free);
 
 	return APP_SUCCESS;
 }
@@ -440,8 +448,9 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	char         *key   = NULL;
 	int          i;
 	int          rv;
-	int          id;
 	int          found;
+	int          id;
+	int          commit = 0;
 	int          *value = NULL;
 	void         *v     = NULL;
 	unsigned int mysql_errnum;
@@ -486,34 +495,45 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
        	Cthread_mutex_lock(&db->mutex);
 	db->inits++;
 
-	/* execute query */
-	SetActive(db->mode);
-
-	db->selects++;
-	snprintf(query, sizeof(query), "SELECT fac_no FROM dlf_facilities WHERE fac_name = '%s'", facility);
-	if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
-		strcpy(func, "mysql_query()");
-		goto error;
+	/* resolve the facility name to a number */
+	rv = hash_search(facilityhash, facility, &v);
+	if (rv == APP_SUCCESS) {
+		*fac_no = *(int *)v;
+	} else {
+		/* execute query */
+		SetActive(db->mode);
+		
+		db->selects++;
+		snprintf(query, sizeof(query), "SELECT fac_no FROM dlf_facilities WHERE fac_name = '%s'", facility);
+		if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
+			strcpy(func, "mysql_query()");
+			goto error;
+		}
+		
+		/* store the result */
+		if ((res = mysql_store_result(&db->mysql)) == NULL) {
+			strcpy(func, "mysql_store_result()");
+			goto error;
+		}
+		
+		/* nothing found ? - facility not registered */
+		if (mysql_num_rows(res) == 0) {
+			goto not_found;
+		}
+		
+		/* fetch the first row which contains the facility number */
+		if ((row = mysql_fetch_row(res)) == NULL) {
+			strcpy(func, "mysql_fetch_row()");
+			goto error;
+		}
+		id = atoi(row[0]);
+		
+		/* add new facility to hash */
+		value = malloc(sizeof(int));
+		*value = id;
+		hash_insert(facilityhash, facility, value);
+		*fac_no = id;
 	}
-
-	/* store the result */
-	if ((res = mysql_store_result(&db->mysql)) == NULL) {
-		strcpy(func, "mysql_store_result()");
-		goto error;
-	}
-
-	/* nothing found ? - facility not registered */
-	if (mysql_num_rows(res) == 0) {
-		goto not_found;
-	}
-
-	/* fetch the first row which contains the facility number */
-	if ((row = mysql_fetch_row(res)) == NULL) {
-		strcpy(func, "mysql_fetch_row()");
-		goto error;
-	}
-	id = atoi(row[0]);
-	*fac_no = id;
 
 	/* the arrays msg_text array passed to this function cannot simply be insert'ed into the database
 	 * checks must be performed first to determine whether the message is new to the system or
@@ -594,6 +614,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 					goto error;
 				}
 			}
+			commit = 1;
 
 			/* update message text hash */
 			value = malloc(sizeof(int));
@@ -612,8 +633,10 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	}
 
 	/* commit all changes */
-	db->commits++;
-	(void)mysql_query(&db->mysql, "COMMIT");
+	if (commit) {
+		db->commits++;
+		(void)mysql_query(&db->mysql, "COMMIT");
+	}
 
 	mysql_free_result(res);
  	ClrActive(db->mode);
