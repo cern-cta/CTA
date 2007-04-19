@@ -126,20 +126,6 @@ int Cstager_FileSystem_deltaFree(struct Cstager_FileSystem_t* instance, signed64
 int Cstager_FileSystem_setDeltaFree(struct Cstager_FileSystem_t* instance, signed64 new_var);
 
 /**
- * Get the value of reservedSpace
- * Space reserved on the filesystem but not yet used and thus not taken into
- * account in free and deltaFree
- */
-int Cstager_FileSystem_reservedSpace(struct Cstager_FileSystem_t* instance, u_signed64* var);
-
-/**
- * Set the value of reservedSpace
- * Space reserved on the filesystem but not yet used and thus not taken into
- * account in free and deltaFree
- */
-int Cstager_FileSystem_setReservedSpace(struct Cstager_FileSystem_t* instance, u_signed64 new_var);
-
-/**
  * Get the value of minFreeSpace
  * Minimum free space that should be kept on this FileSystem. This limit can be
  * transgressed but the garbage collector will then be launched. This is given as a

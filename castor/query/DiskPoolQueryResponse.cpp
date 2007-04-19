@@ -46,7 +46,6 @@ castor::query::DiskPoolQueryResponse::DiskPoolQueryResponse() throw() :
   m_diskPoolName(""),
   m_freeSpace(0),
   m_totalSpace(0),
-  m_reservedSpace(0),
   m_id(0) {
 }
 
@@ -79,7 +78,6 @@ void castor::query::DiskPoolQueryResponse::print(std::ostream& stream,
   stream << indent << "diskPoolName : " << m_diskPoolName << std::endl;
   stream << indent << "freeSpace : " << m_freeSpace << std::endl;
   stream << indent << "totalSpace : " << m_totalSpace << std::endl;
-  stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

@@ -157,24 +157,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_reservedSpace
-       * The total space reserved in the diskPool
-       * @return the value of m_reservedSpace
-       */
-      u_signed64 reservedSpace() const {
-        return m_reservedSpace;
-      }
-
-      /**
-       * Set the value of m_reservedSpace
-       * The total space reserved in the diskPool
-       * @param new_var the new value of m_reservedSpace
-       */
-      void setReservedSpace(u_signed64 new_var) {
-        m_reservedSpace = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -231,9 +213,6 @@ namespace castor {
 
       /// The total space provided by the diskPool
       u_signed64 m_totalSpace;
-
-      /// The total space reserved in the diskPool
-      u_signed64 m_reservedSpace;
 
       /// The id of this object
       u_signed64 m_id;

@@ -165,22 +165,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cquery_DiskServerDescription_reservedSpace
-  //----------------------------------------------------------------------------
-  int Cquery_DiskServerDescription_reservedSpace(castor::query::DiskServerDescription* instance, u_signed64* var) {
-    *var = instance->reservedSpace();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cquery_DiskServerDescription_setReservedSpace
-  //----------------------------------------------------------------------------
-  int Cquery_DiskServerDescription_setReservedSpace(castor::query::DiskServerDescription* instance, u_signed64 new_var) {
-    instance->setReservedSpace(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cquery_DiskServerDescription_id
   //----------------------------------------------------------------------------
   int Cquery_DiskServerDescription_id(castor::query::DiskServerDescription* instance, u_signed64* var) {

@@ -123,18 +123,6 @@ int Cquery_FileSystemDescription_totalSpace(struct Cquery_FileSystemDescription_
 int Cquery_FileSystemDescription_setTotalSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of reservedSpace
- * Space reserved for future file writing (in bytes)
- */
-int Cquery_FileSystemDescription_reservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64* var);
-
-/**
- * Set the value of reservedSpace
- * Space reserved for future file writing (in bytes)
- */
-int Cquery_FileSystemDescription_setReservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64 new_var);
-
-/**
  * Get the value of minFreeSpace
  * Minimum freespace the garbage collector should keep if possible (values from 0
  * to 1, as a portion of the totalSpace)

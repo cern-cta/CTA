@@ -154,24 +154,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_reservedSpace
-       * Space reserved for future file writing (in bytes)
-       * @return the value of m_reservedSpace
-       */
-      u_signed64 reservedSpace() const {
-        return m_reservedSpace;
-      }
-
-      /**
-       * Set the value of m_reservedSpace
-       * Space reserved for future file writing (in bytes)
-       * @param new_var the new value of m_reservedSpace
-       */
-      void setReservedSpace(u_signed64 new_var) {
-        m_reservedSpace = new_var;
-      }
-
-      /**
        * Get the value of m_minFreeSpace
        * Minimum freespace the garbage collector should keep if possible (values from 0
        * to 1, as a portion of the totalSpace)
@@ -273,9 +255,6 @@ namespace castor {
 
       /// Total size of this fileSystem (in bytes)
       u_signed64 m_totalSpace;
-
-      /// Space reserved for future file writing (in bytes)
-      u_signed64 m_reservedSpace;
 
       /// Minimum freespace the garbage collector should keep if possible (values from 0 to 1, as a portion of the totalSpace)
       float m_minFreeSpace;

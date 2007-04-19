@@ -48,7 +48,6 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_free(0),
   m_mountPoint(""),
   m_deltaFree(0),
-  m_reservedSpace(0),
   m_minFreeSpace(0.0),
   m_minAllowedFreeSpace(0.0),
   m_maxFreeSpace(0.0),
@@ -98,7 +97,6 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   stream << indent << "free : " << m_free << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "deltaFree : " << m_deltaFree << std::endl;
-  stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
   stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
   stream << indent << "minAllowedFreeSpace : " << m_minAllowedFreeSpace << std::endl;
   stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;

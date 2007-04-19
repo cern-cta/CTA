@@ -96,7 +96,6 @@ void castor::io::StreamDiskPoolQueryResponseCnv::createRep(castor::IAddress* add
   ad->stream() << obj->diskPoolName();
   ad->stream() << obj->freeSpace();
   ad->stream() << obj->totalSpace();
-  ad->stream() << obj->reservedSpace();
   ad->stream() << obj->id();
 }
 
@@ -128,9 +127,6 @@ castor::IObject* castor::io::StreamDiskPoolQueryResponseCnv::createObj(castor::I
   u_signed64 totalSpace;
   ad->stream() >> totalSpace;
   object->setTotalSpace(totalSpace);
-  u_signed64 reservedSpace;
-  ad->stream() >> reservedSpace;
-  object->setReservedSpace(reservedSpace);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

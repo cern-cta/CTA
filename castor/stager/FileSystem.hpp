@@ -158,26 +158,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_reservedSpace
-       * Space reserved on the filesystem but not yet used and thus not taken into
-       * account in free and deltaFree
-       * @return the value of m_reservedSpace
-       */
-      u_signed64 reservedSpace() const {
-        return m_reservedSpace;
-      }
-
-      /**
-       * Set the value of m_reservedSpace
-       * Space reserved on the filesystem but not yet used and thus not taken into
-       * account in free and deltaFree
-       * @param new_var the new value of m_reservedSpace
-       */
-      void setReservedSpace(u_signed64 new_var) {
-        m_reservedSpace = new_var;
-      }
-
-      /**
        * Get the value of m_minFreeSpace
        * Minimum free space that should be kept on this FileSystem. This limit can be
        * transgressed but the garbage collector will then be launched. This is given as a
@@ -495,9 +475,6 @@ namespace castor {
 
       /// Estimation of the modifications of the free space since the last update.
       signed64 m_deltaFree;
-
-      /// Space reserved on the filesystem but not yet used and thus not taken into account in free and deltaFree
-      u_signed64 m_reservedSpace;
 
       /// Minimum free space that should be kept on this FileSystem. This limit can be transgressed but the garbage collector will then be launched. This is given as a fraction of the totalSize.
       float m_minFreeSpace;

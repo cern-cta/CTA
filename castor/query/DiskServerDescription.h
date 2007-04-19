@@ -137,18 +137,6 @@ int Cquery_DiskServerDescription_totalSpace(struct Cquery_DiskServerDescription_
 int Cquery_DiskServerDescription_setTotalSpace(struct Cquery_DiskServerDescription_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of reservedSpace
- * The space reserved on this diskServer
- */
-int Cquery_DiskServerDescription_reservedSpace(struct Cquery_DiskServerDescription_t* instance, u_signed64* var);
-
-/**
- * Set the value of reservedSpace
- * The space reserved on this diskServer
- */
-int Cquery_DiskServerDescription_setReservedSpace(struct Cquery_DiskServerDescription_t* instance, u_signed64 new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */

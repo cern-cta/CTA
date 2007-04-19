@@ -152,22 +152,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_FileSystem_reservedSpace
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_reservedSpace(castor::stager::FileSystem* instance, u_signed64* var) {
-    *var = instance->reservedSpace();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_setReservedSpace
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setReservedSpace(castor::stager::FileSystem* instance, u_signed64 new_var) {
-    instance->setReservedSpace(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_FileSystem_minFreeSpace
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_minFreeSpace(castor::stager::FileSystem* instance, float* var) {
