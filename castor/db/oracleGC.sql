@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.392 $ $Date: 2007/04/17 10:05:01 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.393 $ $Date: 2007/04/19 09:39:05 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.392 $ $Date: 2007/04/17 10:05:01 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.393 $ $Date: 2007/04/19 09:39:05 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -973,7 +973,7 @@ BEGIN
     COMMIT;
     RETURN;
   END IF;
-  -- Get the svcclass for this subrequest
+  -- Get the svcclass and the reqId for this subrequest
   SELECT Request.id, Request.svcclass, SubRequest.castorfile
     INTO reqId, svcClassId, cfId
     FROM (SELECT id, svcClass from StageGetRequest UNION ALL
@@ -985,23 +985,26 @@ BEGIN
          SubRequest
    WHERE Subrequest.request = Request.id
      AND Subrequest.id = rsubreqId;
-  -- Try to see whether we have available DiskCopies
-  SELECT DiskCopy.status, DiskCopy.id
-    BULK COLLECT INTO stat, dci
-    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-   WHERE DiskCopy.castorfile = cfId
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = svcClassId
-     AND FileSystem.status = 0 -- PRODUCTION
-     AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.status = 0 -- PRODUCTION
-     AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
-  IF stat.COUNT > 0 THEN
-    -- In case of PutDone, Check there is no put going on
-    -- If any, we'll wait on one of them
-    SELECT type INTO reqType FROM Id2Type WHERE id = reqId;
-    IF reqType = 39 THEN -- PutDone
+     
+  -- PutDone processing is different from now on, handle it separately
+  SELECT type INTO reqType FROM Id2Type WHERE id = reqId;
+  IF reqType = 39 THEN -- PutDone
+    -- Try to see whether we have available DiskCopies.
+    -- Here we look on all FileSystems regardless the status
+    -- so that a putDone on a disabled one goes through as there's
+    -- no real IO activity involved.
+    SELECT DiskCopy.status, DiskCopy.id
+      BULK COLLECT INTO stat, dci
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.castorfile = cfId
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = svcClassId
+       AND FileSystem.diskserver = DiskServer.id
+       AND DiskCopy.status = 6; -- STAGEOUT
+    IF stat.COUNT > 0 THEN
+      -- Check that there is no put going on
+      -- If any, we'll wait on one of them
       DECLARE
         putSubReq NUMBER;
       BEGIN
@@ -1020,46 +1023,90 @@ BEGIN
                lastModificationTime = getTime()
          WHERE id = rsubreqId;
         result := 0;  -- no schedule
-        RETURN;
+        COMMIT;
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- no put waiting, let continue
-        NULL;
+        -- no put waiting, we can continue
+        result := 1;
+        OPEN sources
+          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                     FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
+                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+                     FileSystem.mountPoint,
+                     DiskServer.name
+                FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
+               WHERE SubRequest.id = rsubreqId
+                 AND SubRequest.castorfile = DiskCopy.castorfile
+                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                 AND DiskPool2SvcClass.child = svcClassId
+                 AND DiskCopy.status = 6 -- STAGEOUT
+                 AND FileSystem.id = DiskCopy.fileSystem
+                 AND DiskServer.id = FileSystem.diskServer;
+      END;
+    ELSE
+      -- This is a PutDone without a put (otherwise we would have found
+      -- a DiskCopy on a FileSystem). We answer 1 without sources,
+      -- the stager correctly handles this case.
+      result := 1;
+    END IF;
+  
+  ELSE
+    -- All other requests: try to see whether we have available DiskCopies
+    SELECT DiskCopy.status, DiskCopy.id
+      BULK COLLECT INTO stat, dci
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.castorfile = cfId
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = svcClassId
+       AND FileSystem.status = 0 -- PRODUCTION
+       AND FileSystem.diskserver = DiskServer.id
+       AND DiskServer.status = 0 -- PRODUCTION
+       AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+    IF stat.COUNT > 0 THEN
+      -- Yes, we schedule and we give a list of sources
+      result := 1;
+      OPEN sources
+        FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                   FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
+                                  FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+                   FileSystem.mountPoint,
+                   DiskServer.name
+              FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
+             WHERE SubRequest.id = rsubreqId
+               AND SubRequest.castorfile = DiskCopy.castorfile
+               AND FileSystem.diskpool = DiskPool2SvcClass.parent
+               AND DiskPool2SvcClass.child = svcClassId
+               AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+               AND FileSystem.id = DiskCopy.fileSystem
+               AND FileSystem.status = 0 -- PRODUCTION
+               AND DiskServer.id = FileSystem.diskServer
+               AND DiskServer.status = 0; -- PRODUCTION
+    ELSE
+      -- No diskcopies available for this service class;
+      -- check whether there are any diskcopies available for a disk2disk copy
+      DECLARE
+        unused NUMBER;
+      BEGIN
+        SELECT DiskCopy.id INTO unused 
+          FROM DiskCopy, FileSystem, DiskServer
+         WHERE DiskCopy.castorfile = cfId
+           AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+           AND FileSystem.id = DiskCopy.fileSystem
+           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+           AND DiskServer.id = FileSystem.diskserver
+           AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+           AND ROWNUM < 2;
+        -- We found at least one, therefore we schedule anywhere  
+        -- forcing a disk2disk copy from the existing diskcopy
+        -- not available to this svcclass
+        result := 3;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- We found no diskcopies at all. Don't schedule
+        -- and make a tape recall instead.
+        result := 2;
       END;
     END IF;
-    -- We are not in the case of a putDone with a running put
-    -- so we should schedule and give a list of sources
-    result := 1;  -- schedule and try to use available diskcopies
-    OPEN sources
-      FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                 FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                                FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
-                 FileSystem.mountPoint,
-                 DiskServer.name
-            FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-           WHERE SubRequest.id = rsubreqId
-             AND SubRequest.castorfile = DiskCopy.castorfile
-             AND FileSystem.diskpool = DiskPool2SvcClass.parent
-             AND DiskPool2SvcClass.child = svcClassId
-             AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-             AND FileSystem.id = DiskCopy.fileSystem
-             AND FileSystem.status = 0 -- PRODUCTION
-             AND DiskServer.id = FileSystem.diskServer
-             AND DiskServer.status = 0; -- PRODUCTION
-  ELSE
-    SELECT type INTO reqType FROM Id2Type WHERE id = reqId;
-    IF reqType = 39 THEN   -- PutDone
-      -- This is a PutDone without a put (otherwise we would have found
-      -- a DiskCopy on an available FileSystem). We answer 1 without sources,
-      -- so the stager correctly handles this case.
-      -- XXX this code has to be removed when PutDone is not scheduled anymore!
-      result := 1;
-    ELSE
-      -- We found no diskcopies for our svcclass, schedule anywhere
-      -- Note that this could mean a tape recall or a disk2disk copy
-      -- from an existing diskcopy not available to this svcclass
-      result := 2;
-    END IF;
-  END IF;
+  END IF;   -- IF type = PutDone
 END;
 
 /* Build diskCopy path from fileId */
