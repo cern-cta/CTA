@@ -1,5 +1,5 @@
 /*
- * $Id: rmc.h,v 1.1 2002/12/01 07:31:56 baud Exp $
+ * $Id: rmc.h,v 1.2 2007/04/19 15:18:19 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: rmc.h,v $ $Revision: 1.1 $ $Date: 2002/12/01 07:31:56 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: rmc.h,v $ $Revision: 1.2 $ $Date: 2007/04/19 15:18:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _RMC_H
@@ -28,6 +28,8 @@
 #define	REQBUFSZ 256	/* must be >= max media changer server request size */
 #define RMC_MAGIC	0x120D0301
 #define RMC_TIMEOUT	5	/* netread timeout while receiving a request */
+
+int rmclogit(char*, char*, ...);
 
 #define RETURN(x) \
 	{ \
