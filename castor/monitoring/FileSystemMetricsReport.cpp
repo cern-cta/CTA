@@ -47,10 +47,10 @@ castor::monitoring::FileSystemMetricsReport::FileSystemMetricsReport() throw() :
   m_nbWriteStreams(0),
   m_nbReadWriteStreams(0),
   m_freeSpace(0),
-  m_id(0),
   m_previousReadCounter(0),
   m_previousWriteCounter(0),
   m_lastUpdateTime(0),
+  m_id(0),
   m_diskServer(0) {
 }
 

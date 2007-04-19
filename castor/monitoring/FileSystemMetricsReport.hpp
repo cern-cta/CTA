@@ -363,4 +363,4 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif /* CASTOR_MONITORING_FILESYSTEMMETRICSREPORT_HPP */
+#endif // CASTOR_MONITORING_FILESYSTEMMETRICSREPORT_HPP
