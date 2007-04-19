@@ -47,3 +47,7 @@ DROP TABLE SelectFiles2DeleteProcHelper;
 DROP TABLE FilesDeletedProcOutput;
 DROP TABLE FileSystemGC;
 
+/* Drop scheduler jobs */
+BEGIN
+  DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'GCInvalidDiskCopiesJob', FORCE => TRUE);
+END;
