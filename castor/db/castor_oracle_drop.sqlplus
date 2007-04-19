@@ -274,7 +274,6 @@ DROP PROCEDURE disk2DiskCopyDone;
 DROP PROCEDURE recreateCastorFile;
 DROP PROCEDURE internalPutDoneFunc;
 DROP PROCEDURE putDoneFunc;
-DROP PROCEDURE getDefaultFileSize;
 DROP PROCEDURE prepareForMigration;
 DROP PROCEDURE fileRecalled;
 DROP PROCEDURE selectCastorFile;
