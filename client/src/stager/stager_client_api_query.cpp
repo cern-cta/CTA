@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.29 2007/02/21 11:03:02 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.30 2007/04/19 10:24:28 sponcec3 Exp $
  */
 
 /*
@@ -308,7 +308,6 @@ void stage_translateDiskPoolResponse
   response->diskPoolName = strdup(fr->diskPoolName().c_str());
   response->freeSpace = fr->freeSpace();
   response->totalSpace = fr->totalSpace();
-  response->reservedSpace = fr->reservedSpace();
   int nbDiskServers = fr->diskServers().size();
   response->nbDiskServers = nbDiskServers;
   response->diskServers = (struct stage_diskServerDescription*)
@@ -320,7 +319,6 @@ void stage_translateDiskPoolResponse
     ds.status = dsd->status();
     ds.freeSpace = dsd->freeSpace();
     ds.totalSpace = dsd->totalSpace();
-    ds.reservedSpace = dsd->reservedSpace();
     int nbFileSystems = dsd->fileSystems().size();
     ds.nbFileSystems = nbFileSystems;
     ds.fileSystems = (struct stage_fileSystemDescription*)
@@ -331,7 +329,6 @@ void stage_translateDiskPoolResponse
       fs.mountPoint = strdup(fsd->mountPoint().c_str());
       fs.freeSpace = fsd->freeSpace();
       fs.totalSpace = fsd->totalSpace();
-      fs.reservedSpace = fsd->reservedSpace();
       fs.minFreeSpace = fsd->minFreeSpace();
       fs.maxFreeSpace = fsd->maxFreeSpace();
       fs.status = fsd->status();
@@ -547,57 +544,45 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
 (FILE* stream, struct stage_diskpoolquery_resp *response) {
   char freeBuf[21];
   char totalBuf[21];
-  char reservedBuf[21];
   char freepBuf[21];
-  char reservedpBuf[21];
   if (0 == response) return;
   u64tostru(response->freeSpace, freeBuf, 0);
   u64tostru(response->totalSpace, totalBuf, 0);
-  u64tostru(response->reservedSpace, reservedBuf, 0);
   if (0 == response->totalSpace) {
     strncpy(freepBuf, " -", 3);
-    strncpy(reservedpBuf, " -", 3);
   } else {
     snprintf(freepBuf, 3, "%2lld", (100*response->freeSpace)/response->totalSpace);
-    snprintf(reservedpBuf, 3, "%2lld", (100*response->reservedSpace)/response->totalSpace);
   }
-  fprintf(stream, "POOL %-16s CAPACITY %-10s FREE %7s(%s%%)  RESERVED %7s(%-2s%%)\n",
+  fprintf(stream, "POOL %-16s CAPACITY %-10s FREE %7s(%s%%)\n",
   response->diskPoolName, totalBuf, freeBuf,
-  freepBuf, reservedBuf, reservedpBuf);
+  freepBuf);
   for (int i = 0; i < response->nbDiskServers; i++) {
     struct stage_diskServerDescription& dsd = response->diskServers[i];
     u64tostru(dsd.freeSpace, freeBuf, 0);
     u64tostru(dsd.totalSpace, totalBuf, 0);
-    u64tostru(dsd.reservedSpace, reservedBuf, 0);
     if (0 == dsd.totalSpace) {
       strncpy(freepBuf, " -", 3);
-      strncpy(reservedpBuf, " -", 3);
     } else {
       snprintf(freepBuf, 3, "%2lld", (100*dsd.freeSpace)/dsd.totalSpace);
-      snprintf(reservedpBuf, 3, "%2lld", (100*dsd.reservedSpace)/dsd.totalSpace);
     }
-    fprintf(stream, "  DiskServer %-16s %-23s CAPACITY %-10s FREE %7s(%-2s%%)  RESERVED %7s(%-2s%%)\n",
+    fprintf(stream, "  DiskServer %-16s %-23s CAPACITY %-10s FREE %7s(%-2s%%)\n",
     dsd.name,
     stage_diskServerStatusName(dsd.status),
-    totalBuf, freeBuf, freepBuf, reservedBuf, reservedpBuf);
-    fprintf(stream, "     %-33s %-23s %-10s FREE          RESERVED       GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
+    totalBuf, freeBuf, freepBuf);
+    fprintf(stream, "     %-33s %-23s %-10s FREE          GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
     for (int j = 0; j < dsd.nbFileSystems; j++) {
       struct stage_fileSystemDescription& fsd = dsd.fileSystems[j];
       u64tostru(fsd.freeSpace, freeBuf, 0);
       u64tostru(fsd.totalSpace, totalBuf, 0);
-      u64tostru(fsd.reservedSpace, reservedBuf, 0);
       if (0 == fsd.totalSpace) {
         strncpy(freepBuf, " -", 3);
-        strncpy(reservedpBuf, " -", 3);
       } else {
         snprintf(freepBuf, 3, "%2lld", (100*fsd.freeSpace)/fsd.totalSpace);
-        snprintf(reservedpBuf, 3, "%2lld", (100*fsd.reservedSpace)/fsd.totalSpace);
       }
-      fprintf(stream, "     %-33s %-23s %-10s %7s(%-2s%%)  %7s(%-2s%%)   %4.2f, %4.2f\n",
+      fprintf(stream, "     %-33s %-23s %-10s %7s(%-2s%%) %4.2f, %4.2f\n",
       fsd.mountPoint,
       stage_fileSystemStatusName(fsd.status),
       totalBuf, freeBuf, freepBuf,
-      reservedBuf, reservedpBuf,
       fsd.minFreeSpace, fsd.maxFreeSpace);
     }
   }

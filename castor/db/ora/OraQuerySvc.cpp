@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/04/13 11:58:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2007/04/19 10:24:09 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -466,7 +466,6 @@ castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
 	resp->setDiskPoolName(rset->getString(3));
         resp->setFreeSpace((u_signed64)rset->getDouble(7));
         resp->setTotalSpace((u_signed64)rset->getDouble(8));
-        resp->setReservedSpace((u_signed64)rset->getDouble(9));
 	result->push_back(resp);
       } else {
 	// this is not a diskPool summary
@@ -478,7 +477,6 @@ castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
 	  dsd->setStatus(rset->getInt(5));
 	  dsd->setFreeSpace((u_signed64)rset->getDouble(7));
 	  dsd->setTotalSpace((u_signed64)rset->getDouble(8));
-	  dsd->setReservedSpace((u_signed64)rset->getDouble(9));
 	  dsd->setQuery(resp);
 	  resp->addDiskServers(dsd);
 	} else {
@@ -488,10 +486,9 @@ castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
 	  fsd->setMountPoint(rset->getString(6));
 	  fsd->setFreeSpace((u_signed64)rset->getDouble(7));
 	  fsd->setTotalSpace((u_signed64)rset->getDouble(8));
-	  fsd->setReservedSpace((u_signed64)rset->getDouble(9));
-	  fsd->setMinFreeSpace(rset->getFloat(10));
-	  fsd->setMaxFreeSpace(rset->getFloat(11));
-	  fsd->setStatus(rset->getInt(12));
+	  fsd->setMinFreeSpace(rset->getFloat(9));
+	  fsd->setMaxFreeSpace(rset->getFloat(10));
+	  fsd->setStatus(rset->getInt(11));
 	  fsd->setDiskServer(dsd);
 	  dsd->addFileSystems(fsd);
 	}
@@ -546,14 +543,12 @@ castor::db::ora::OraQuerySvc::describeDiskPool (std::string diskPool)
 	result->setDiskPoolName(diskPool);
 	result->setFreeSpace((u_signed64)rset->getDouble(6));
 	result->setTotalSpace((u_signed64)rset->getDouble(7));
-	result->setReservedSpace((u_signed64)rset->getDouble(8));
       } else if (rset->getInt(2) == 1) {
 	dsd = new castor::query::DiskServerDescription();
 	dsd->setName(rset->getString(3));
 	dsd->setStatus(rset->getInt(4));
         dsd->setFreeSpace((u_signed64)rset->getDouble(6));
         dsd->setTotalSpace((u_signed64)rset->getDouble(7));
-        dsd->setReservedSpace((u_signed64)rset->getDouble(8));
 	dsd->setQuery(result);
 	result->addDiskServers(dsd);
       } else {
@@ -562,10 +557,9 @@ castor::db::ora::OraQuerySvc::describeDiskPool (std::string diskPool)
         fsd->setMountPoint(rset->getString(5));
         fsd->setFreeSpace((u_signed64)rset->getDouble(6));
         fsd->setTotalSpace((u_signed64)rset->getDouble(7));
-        fsd->setReservedSpace((u_signed64)rset->getDouble(8));
-        fsd->setMinFreeSpace(rset->getFloat(9));
-        fsd->setMaxFreeSpace(rset->getFloat(10));
-        fsd->setStatus(rset->getInt(11));
+        fsd->setMinFreeSpace(rset->getFloat(8));
+        fsd->setMaxFreeSpace(rset->getFloat(9));
+        fsd->setStatus(rset->getInt(10));
         fsd->setDiskServer(dsd);
         dsd->addFileSystems(fsd);
       }

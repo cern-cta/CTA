@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.393 $ $Date: 2007/04/19 09:39:05 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.394 $ $Date: 2007/04/19 10:24:09 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.393 $ $Date: 2007/04/19 09:39:05 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.394 $ $Date: 2007/04/19 10:24:09 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -585,13 +585,12 @@ BEGIN
      filesystems of this DiskServer in an atomical way */
   UPDATE DiskServer SET load = load + 1 WHERE id = ds; -- XXX 1 ?
   UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
-                        reservedSpace = reservedSpace + fileSize
+                        deltaFree = deltaFree - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
 
 /* PL/SQL method to update FileSystem free space when file are closed */
-CREATE OR REPLACE PROCEDURE updateFsFileClosed
-(fs IN INTEGER, reservation IN INTEGER, fileSize IN INTEGER) AS
+CREATE OR REPLACE PROCEDURE updateFsFileClosed(fs IN INTEGER) AS
   ds INTEGER;
 BEGIN
   /* We lock first the diskserver in order to lock all the
@@ -599,9 +598,7 @@ BEGIN
   SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
   UPDATE DiskServer SET load = decode(sign(load-1),-1,0,load-1) WHERE id = ds; -- XXX 1 ?
   /* now we can safely go */
-  UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1),
-                        deltaFree = deltaFree - fileSize,
-                        reservedSpace = reservedSpace - reservation
+  UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
   WHERE id = fs;
 END;
 
@@ -809,7 +806,7 @@ BEGIN
                      AND Request.id = SubRequest.request
                      AND Request.svcclass = DiskPool2SvcClass.child
                      AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                     AND FileSystem.free + FileSystem.deltaFree - FileSystem.reservedSpace > CastorFile.fileSize
+                     AND FileSystem.free + FileSystem.deltaFree > CastorFile.fileSize
                      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                      AND DiskServer.id = FileSystem.diskServer
                      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
@@ -917,7 +914,6 @@ CREATE OR REPLACE PACKAGE castor AS
         fileSystemmountPoint VARCHAR(2048),
         fileSystemfreeSpace INTEGER,
         fileSystemtotalSpace INTEGER,
-        fileSystemreservedSpace INTEGER,
         fileSystemminfreeSpace INTEGER,
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
@@ -931,7 +927,6 @@ CREATE OR REPLACE PACKAGE castor AS
         fileSystemmountPoint VARCHAR(2048),
         fileSystemfreeSpace INTEGER,
         fileSystemtotalSpace INTEGER,
-        fileSystemreservedSpace INTEGER,
         fileSystemminfreeSpace INTEGER,
         fileSystemmaxFreeSpace INTEGER,
         fileSystemStatus INTEGER);
@@ -1171,11 +1166,10 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   nh VARCHAR2(2048);
   realFileSize INTEGER;
   srSvcClass INTEGER;
-  reserved INTEGER;
 BEGIN
  -- Get and uid, gid
- SELECT euid, egid, svcClass, xsize
-   INTO reuid, regid, srSvcClass, reserved
+ SELECT euid, egid, svcClass
+   INTO reuid, regid, srSvcClass
    FROM SubRequest,
       (SELECT id, euid, egid, svcClass from StageGetRequest UNION ALL
        SELECT id, euid, egid, svcClass from StagePrepareToGetRequest UNION ALL
@@ -1242,9 +1236,8 @@ BEGIN
        -- compare the 2
        IF curNbRepl < maxNbRepl OR
           (maxNbRepl = 0 AND repPolicy IS NULL) THEN
-         -- update filesystem status, take care of 0 filesizes
-         IF reserved = 0 THEN reserved := realFileSize; END IF;
-         updateFSFileClosed(fileSystemId, reserved, reserved);
+         -- update filesystem status
+         updateFSFileClosed(fileSystemId);
        END IF;
      END IF;
    END IF;
@@ -1382,7 +1375,6 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srId INTEGER;
   cfId INTEGER;
   fsId INTEGER;
-  reserved INTEGER;
 BEGIN
   -- update DiskCopy
   UPDATE DiskCopy set status = dcStatus WHERE id = dcId
@@ -1391,8 +1383,7 @@ BEGIN
   UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
-   WHERE diskCopy = dcId
-  RETURNING id, xsize INTO srId, reserved;
+   WHERE diskCopy = dcId RETURNING id INTO srId;
   -- In case of an update, we should update the new copy to STAGEOUT,
   -- independently of the original status make the other copies INVALID.
   -- We should NOT do so, and we should wait for the first byte to be
@@ -1403,11 +1394,8 @@ BEGIN
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
    WHERE parent = srId; -- SUBREQUEST_RESTART
-  -- update filesystem status, take care of 0 filesizes
-  IF reserved = 0 THEN
-    SELECT fileSize INTO reserved FROM CastorFile WHERE id = cfId;
-  END IF;
-  updateFsFileClosed(fsId, reserved, reserved);
+  -- update filesystem status
+  updateFsFileClosed(fsId);
 END;
 
 /* PL/SQL method implementing recreateCastorFile */
@@ -1591,23 +1579,6 @@ BEGIN
  internalPutDoneFunc(cfId, fs, context, nc);
 END;
 
-
-/* PL/SQL method implementing getDefaultFileSize */
-CREATE OR REPLACE PROCEDURE getDefaultFileSize(scId IN INTEGER, fileSize IN OUT NUMBER) AS
-  scDefault NUMBER;
-BEGIN
-  IF fileSize > 0 THEN
-    RETURN;
-  END IF;
-  SELECT defaultFileSize INTO scDefault FROM SvcClass WHERE id = scId;
-  IF scDefault > 0 THEN
-    fileSize := scDefault;
-  ELSE
-    -- hard coded default to 2Gb if no default is provided from the SvcClass
-    fileSize := 2147483648;
-  END IF;
-END;
-
 /* PL/SQL method implementing prepareForMigration */
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fs IN INTEGER,
@@ -1620,7 +1591,6 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
   fsId INTEGER;
   scId INTEGER;
   realFileSize INTEGER;
-  reservedSpace NUMBER;
   unused INTEGER;
   contextPIPP INTEGER;
 BEGIN
@@ -1670,21 +1640,19 @@ BEGIN
    FROM CastorFile
    WHERE id = cfId
    FOR UPDATE;
- -- get uid, gid and reserved space from Request
- SELECT euid, egid, xsize, svcClass INTO userId, groupId, reservedSpace, scId
+ -- get uid, gid and svcclass from Request
+ SELECT euid, egid, svcClass INTO userId, groupId, scId
    FROM SubRequest,
      (SELECT euid, egid, id, svcClass from StagePutRequest UNION ALL
       SELECT euid, egid, id, svcClass from StageUpdateRequest UNION ALL
       SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
- -- get correct reservedSpace according to defaults
- getDefaultFileSize(scId, reservedSpace);
  
  IF contextPIPP != 2 THEN   
    -- any Put, either standalone or inside PrepareToPut
    SELECT fileSystem into fsId from DiskCopy
     WHERE castorFile = cfId AND status = 6;
-   updateFsFileClosed(fsId, reservedSpace, fs);
+   updateFsFileClosed(fsId);
  END IF;
 
  -- archive Subrequest
@@ -1714,14 +1682,13 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   SubRequestId NUMBER;
   dci NUMBER;
   fsId NUMBER;
-  fileSize NUMBER;
   reqType NUMBER;
   nbTC NUMBER(2);
   cfid NUMBER;
   fcnbcopies NUMBER; --number of tapecopies in fileclass
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.filesize, CastorFile.id, FileClass.nbcopies
-    INTO SubRequestId, dci, fileSize, cfid, fcnbcopies
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.id, FileClass.nbcopies
+    INTO SubRequestId, dci, cfid, fcnbcopies
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -1776,7 +1743,7 @@ BEGIN
        WHERE parent = SubRequestId;
     END IF;
   END IF;
-  updateFsFileClosed(fsId, fileSize, fileSize);
+  updateFsFileClosed(fsId);
 END;
 
 
@@ -2271,14 +2238,13 @@ CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
   scId INTEGER;
   reqId INTEGER;
   unused INTEGER;
-  reservedSpace INTEGER;
 BEGIN
   -- Set SubRequest in FAILED status
   UPDATE SubRequest
      SET status = 7 -- FAILED
    WHERE id = srId
-  RETURNING diskCopy, xsize, castorFile, request
-    INTO dcId, reservedSpace, cfId, reqId;
+  RETURNING diskCopy, castorFile, request
+    INTO dcId, cfId, reqId;
   SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
   -- get current SvcClass. We are a Put/Update
   SELECT svcClass INTO scId 
@@ -2287,10 +2253,8 @@ BEGIN
           SELECT id, svcClass FROM StagePutRequest UNION ALL
           SELECT id, svcClass FROM StageUpdateRequest) Req
    WHERE id = reqId;
-  -- get correct reservedSpace according to defaults
-  getDefaultFileSize(scId, reservedSpace);
-  -- free it
-  updateFsFileClosed(fsId, reservedSpace, 0);
+  -- take file closing into account
+  updateFsFileClosed(fsId);
   -- Determine the context (Put inside PrepareToPut ?)
   BEGIN
     -- check that there is a PrepareToPut going on
@@ -2406,7 +2370,7 @@ BEGIN
   END;  
 
   -- Now get the DiskPool and the maxFree space we want to achieve
-  SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree + reservedSpace - spaceToBeFreed
+  SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree - spaceToBeFreed
     INTO dpId, toBeFreed
     FROM FileSystem
    WHERE FileSystem.id = fsId
@@ -2569,7 +2533,7 @@ BEGIN
     END IF;
     
     -- sanity check in case the filesystem got full over the hard threshold
-    SELECT free + deltaFree - reservedSpace + spaceToBeFreed, minAllowedFreeSpace * totalSize
+    SELECT free + deltaFree + spaceToBeFreed, minAllowedFreeSpace * totalSize
       INTO free, minFree
       FROM FileSystem
      WHERE id = fs.id;
@@ -2606,7 +2570,7 @@ END;
  * Note that we only launch it when at least 4% is to be deleted
  */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Update
-AFTER UPDATE OF free, deltaFree, reservedSpace ON FileSystem
+AFTER UPDATE OF free, deltaFree ON FileSystem
 FOR EACH ROW
 DECLARE
   freeSpace NUMBER;
@@ -2614,9 +2578,8 @@ DECLARE
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
-  -- compute the actual free space taking into account reservations (reservedSpace)
-  -- and already running GC processes (spaceToBeFreed)
-  freeSpace := :new.free + :new.deltaFree - :new.reservedSpace + :new.spaceToBeFreed;
+  -- compute the actual free space taking into account already running GC processes (spaceToBeFreed)
+  freeSpace := :new.free + :new.deltaFree + :new.spaceToBeFreed;
   -- shall we launch a new GC?
   IF :new.minFreeSpace * :new.totalSize  > freeSpace AND
      -- is it really worth launching it? (some other GCs maybe are already running
@@ -2962,8 +2925,8 @@ BEGIN
            grouping(fs.mountPoint) as IsFSGrouped,
            dp.name,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed) as freeSpace,
-           sum(fs.totalSize), sum(fs.reservedSpace),
+           sum(fs.free + fs.deltaFree + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
            DiskPool2SvcClass d2s, SvcClass sc
@@ -2974,8 +2937,8 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (dp.name, ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
-             fs.totalSize, fs.reservedSpace,
+             fs.free + fs.deltaFree + fs.spaceToBeFreed,
+             fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (dp.name, ds.name, ds.status),
            (dp.name)
@@ -2999,8 +2962,8 @@ BEGIN
     SELECT grouping(ds.name) as IsDSGrouped,
            grouping(fs.mountPoint) as IsGrouped,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed) as freeSpace,
-           sum(fs.totalSize), sum(fs.reservedSpace),
+           sum(fs.free + fs.deltaFree + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp
      WHERE dp.id = fs.diskPool
@@ -3008,8 +2971,8 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.deltaFree - fs.reservedSpace + fs.spaceToBeFreed,
-             fs.totalSize, fs.reservedSpace,
+             fs.free + fs.deltaFree + fs.spaceToBeFreed,
+             fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (ds.name, ds.status),
            (dp.name)
@@ -3170,12 +3133,12 @@ BEGIN
           BEGIN
             -- we should insert a new filesystem here
             SELECT ids_seq.nextval INTO fsId FROM DUAL;
-            INSERT INTO FileSystem (free, mountPoint, deltaFree, reservedSpace,
+            INSERT INTO FileSystem (free, mountPoint, deltaFree,
                    minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
                    status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, 0, .2, .1,
+              VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, .2, .1,
                       .3, 0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                       fileSystemValues(ind + 5), fileSystemValues(ind + 6),
