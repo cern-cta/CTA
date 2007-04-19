@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.395 $ $Date: 2007/04/19 13:53:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.396 $ $Date: 2007/04/19 15:11:30 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.395 $ $Date: 2007/04/19 13:53:31 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.396 $ $Date: 2007/04/19 15:11:30 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -116,19 +116,16 @@ CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
 CREATE INDEX I_Segment_Copy on Segment (copy);
 
 /* Constraint on FileClass name */
-ALTER TABLE FileClass ADD UNIQUE (name); 
-
-/* Add unique constraint on castorFiles */
-ALTER TABLE CastorFile ADD UNIQUE (fileId, nsHost); 
+ALTER TABLE FileClass ADD CONSTRAINT I_FileClass_Name UNIQUE (name); 
 
 /* Add unique constraint on tapes */
-ALTER TABLE Tape ADD UNIQUE (VID, side, tpMode);
+ALTER TABLE Tape ADD CONSTRAINT I_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 
 /* Add unique constraint on svcClass name */
-ALTER TABLE SvcClass ADD CONSTRAINT SvcClass_Name_UK UNIQUE (NAME); 
+ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME); 
 
 /* the primary key in this table allows for materialized views */
-ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT pk_DiskPool2SvcClass PRIMARY KEY (parent, child);
+ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcClass_ParentChild PRIMARY KEY (parent, child);
 
 
 /* get current time as a time_t. Not that easy in ORACLE */
