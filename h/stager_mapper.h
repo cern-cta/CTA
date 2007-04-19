@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.3 $ $Release$ $Date: 2006/04/04 12:26:38 $ $Author: gtaur $
+ * @(#)$RCSfile: stager_mapper.h,v $ $Revision: 1.4 $ $Release$ $Date: 2007/04/19 15:18:19 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_mapper.h,v $
- * @version $Revision: 1.3 $
- * @date $Date: 2006/04/04 12:26:38 $
+ * @version $Revision: 1.4 $
+ * @date $Date: 2007/04/19 15:18:19 $
  */
 /** @mainpage CASTOR Mapper
- * $RCSfile: stager_mapper.h,v $ $Revision: 1.3 $
+ * $RCSfile: stager_mapper.h,v $ $Revision: 1.4 $
  *
  * @section intro Introduction
  * The stage mapper consists of utility functions to help applications
@@ -67,9 +67,9 @@
 /*\@{*/
 
 
-////////////////////////////////////////////////////////////
-//    Constants                                           //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    Constants                                           *
+ **********************************************************/
 
 
 #define USER_MAPPING_CATEGORY  "USTGMAP"
@@ -78,9 +78,9 @@
 #define STAGER_TYPE_V2         "V2"
 #define STAGER_TYPE_V2_ALT     "v2"
 
-////////////////////////////////////////////////////////////
-//    stage_mapper_setenv                                 //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_mapper_setenv                                 *
+ **********************************************************/
 
 /**
  * stage_mapper_setenv

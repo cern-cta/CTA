@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.3 $ $Date: 2004/09/30 07:40:41 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.4 $ $Date: 2007/04/19 15:18:19 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -199,7 +199,6 @@ int rtcp_RecvAckn  _PROTO((SOCKET *, int));
 int rtcp_SendAckn  _PROTO((SOCKET *, int));
 int rtcp_Listen  _PROTO((SOCKET, SOCKET *, int, int));
 int rtcpd_ClientListen  _PROTO((SOCKET));
-int rtcp_ClientMsg _PROTO((SOCKET *, char *));
 int rtcp_RunOld  _PROTO((SOCKET *, rtcpHdr_t *));
 int rtcp_SendOldCAckn _PROTO((SOCKET *, rtcpHdr_t *));
 int rtcp_SendOldCinfo _PROTO((SOCKET *, rtcpHdr_t *, shift_client_t *));

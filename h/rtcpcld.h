@@ -142,11 +142,11 @@ int rtcpcld_getDbSvc _PROTO((
                              ));
 #endif /* CASTOR_SERVICES_H */
 
-#if defined(CASTOR_ISTAGERSVC_H)
+#if defined(CASTOR_ITAPESVC_H)
 int rtcpcld_getStgSvc _PROTO((
-                              struct Cstager_IStagerSvc_t ***
+                              struct Cstager_ITapeSvc_t ***
                               ));
-#endif /* CASTOR_ISTAGERSVC_H */
+#endif /* CASTOR_ITAPESVC_H */
 
 int rtcpcld_doCommit _PROTO((
                              void
@@ -300,6 +300,10 @@ int rtcpcld_setVidWorkerAddress _PROTO((
                                         tape_list_t *,
                                         int
                                         ));
+int rtcpcld_checkFileForRepack _PROTO((
+                                       struct Cns_fileid *,
+                                       char **
+                                       ));
 
 #if defined(CASTOR_STAGER_TAPESTATUSCODES_H) && defined(CASTOR_STAGER_SEGMENTSTATUSCODES_H)
 int rtcpcld_updateTapeStatus _PROTO((

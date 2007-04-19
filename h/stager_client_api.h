@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.34 $ $Release$ $Date: 2006/10/09 14:34:50 $ $Author: kotlyar $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.35 $ $Release$ $Date: 2007/04/19 15:18:19 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.34 $
- * @date $Date: 2006/10/09 14:34:50 $
+ * @version $Revision: 1.35 $
+ * @date $Date: 2007/04/19 15:18:19 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.34 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.35 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -153,9 +153,9 @@
 /*\@{*/
 
 
-////////////////////////////////////////////////////////////
-//    stager options                                      //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stager options                                      *
+ **********************************************************/
 
 /**
  * Structure common to calls, containing API options,
@@ -171,9 +171,9 @@ struct stage_options {
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_PrepareToGet                                  //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_PrepareToGet                                  *
+ **********************************************************/
 
 
 /**
@@ -258,9 +258,9 @@ EXTERN_C int DLL_DECL stage_prepareToGet _PROTO((const char *userTag,
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_get                                           //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_get                                           *
+ **********************************************************/
 		       
 
 
@@ -338,9 +338,9 @@ EXTERN_C int DLL_DECL stage_get _PROTO ((const char *userTag,
                                          struct stage_options* opts));
 
 
-////////////////////////////////////////////////////////////
-//    stage_getNext                                       //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_getNext                                       *
+ **********************************************************/
 		       
 
 
@@ -362,9 +362,9 @@ EXTERN_C int stage_getNext _PROTO((const char *reqId,
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_prepareToUpdate                               //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_prepareToUpdate                               *
+ **********************************************************/
 
 /**
  * Request structure to update a file from CASTOR.
@@ -450,9 +450,9 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate _PROTO((const char *userTag,
                                                     struct stage_options* opts));
 
 
-////////////////////////////////////////////////////////////
-//    stage_update                                        //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_update                                        *
+ **********************************************************/
 
 
 /**
@@ -487,9 +487,9 @@ EXTERN_C int DLL_DECL stage_update _PROTO ((const char *userTag,
                                             struct stage_options* opts));
 
 
-////////////////////////////////////////////////////////////
-//    stage_updateNext                                    //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_updateNext                                    *
+ **********************************************************/
 		       
 
 
@@ -513,9 +513,9 @@ EXTERN_C int stage_updateNext _PROTO((const char *reqId,
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_PrepareToPut                                  //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_PrepareToPut                                  *
+ **********************************************************/
 
 
 /**
@@ -604,9 +604,9 @@ EXTERN_C int DLL_DECL stage_prepareToPut _PROTO ((const char *userTag,
                                                   char **requestId,
                                                   struct stage_options* opts));
 
-////////////////////////////////////////////////////////////
-//    stage_put                                           //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_put                                           *
+ **********************************************************/
 		       
 /**
  * stage_put
@@ -640,9 +640,9 @@ EXTERN_C int DLL_DECL stage_put _PROTO((const char *userTag,
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_putNext                                       //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_putNext                                       *
+ **********************************************************/
 		       
 
 
@@ -664,9 +664,9 @@ EXTERN_C int stage_putNext _PROTO((const char *reqId,
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_putDone                                       //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_putDone                                       *
+ **********************************************************/
 
 
 /**
@@ -691,7 +691,7 @@ struct stage_fileresp {
   /**
   * The CASTOR file id
   */
-  //u_signed64    fileId;
+  /* u_signed64    fileId; */
   
   /**
    * Status of the request
@@ -742,9 +742,9 @@ EXTERN_C int DLL_DECL stage_putDone _PROTO((char *putRequestId,
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_rm                                   //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_rm                                            *
+ **********************************************************/
 
 /**
  * stage_rm
@@ -770,9 +770,9 @@ EXTERN_C int DLL_DECL stage_rm _PROTO ((struct stage_filereq *requests,
                                         char **requestId,
                                         struct stage_options* opts));
 
-////////////////////////////////////////////////////////////
-//    stage_releaseFiles                                  //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_releaseFiles                                  *
+ **********************************************************/
 
 
 
@@ -802,9 +802,9 @@ EXTERN_C int DLL_DECL stage_releaseFiles _PROTO((struct stage_filereq *requests,
                                                  struct stage_options* opts));
 
 
-////////////////////////////////////////////////////////////
-//    stage_abortRequest                                  //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_abortRequest                                  *
+ **********************************************************/
 
 
 /**
@@ -823,9 +823,9 @@ EXTERN_C int DLL_DECL stage_abortRequest _PROTO((char *requestId,
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_setFileGCWeight                               //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_setFileGCWeight                               *
+ **********************************************************/
 
 /**
  * stage_setFileGCWeight
@@ -855,9 +855,9 @@ EXTERN_C int DLL_DECL stage_setFileGCWeight _PROTO ((struct stage_filereq *reque
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_filequery                                     //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_filequery                                     *
+ **********************************************************/
 
 enum query_type { BY_FILENAME, BY_REQID, BY_USERTAG, BY_FILEID, BY_REQID_GETNEXT, BY_USERTAG_GETNEXT };
 
@@ -969,9 +969,9 @@ EXTERN_C int DLL_DECL stage_filequery _PROTO((struct stage_query_req *requests,
                                               int *nbresps,
                                               struct stage_options* opts));
 
-////////////////////////////////////////////////////////////
-//    stage_diskpoolquery                                 //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_diskpoolquery                                 *
+ **********************************************************/
 
 /**
  * FileSystem description
@@ -1162,9 +1162,9 @@ EXTERN_C void DLL_DECL stage_delete_diskpoolquery_resp _PROTO
 EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp _PROTO
 ((FILE *stream, struct stage_diskpoolquery_resp *response));
 
-////////////////////////////////////////////////////////////
-//    stage_requestquery                                  //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_requestquery                                  *
+ **********************************************************/
 
 
 /**
@@ -1257,9 +1257,9 @@ EXTERN_C int DLL_DECL stage_requestquery _PROTO((struct stage_query_req *request
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_findrequest                                   //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_findrequest                                   *
+ **********************************************************/
 
 
 /**
@@ -1299,9 +1299,9 @@ EXTERN_C int DLL_DECL stage_findrequest _PROTO((struct stage_query_req *requests
                                                 struct stage_options* opts));
 
 
-////////////////////////////////////////////////////////////
-//    stage_seterrbuf                                     //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_seterrbuf                                     *
+ **********************************************************/
 
 /**
  * stage_seterrbuf
@@ -1319,9 +1319,9 @@ EXTERN_C int DLL_DECL stage_seterrbuf _PROTO((char *buffer, int buflen));
 
 
 
-////////////////////////////////////////////////////////////
-//    stage_open                                          //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_open                                          *
+ **********************************************************/
 
 /**
  * stage_open
@@ -1351,9 +1351,9 @@ EXTERN_C int DLL_DECL stage_open _PROTO ((const char *userTag,
                                           char **requestId,
                                           struct stage_options* opts));
 
-////////////////////////////////////////////////////////////
-//    stage_geturl                                        //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    stage_geturl                                        *
+ **********************************************************/
 
 /**
  * stage_geturl
@@ -1372,9 +1372,9 @@ EXTERN_C char* DLL_DECL stage_geturl _PROTO ((struct stage_io_fileresp *io));
 
 
 
-////////////////////////////////////////////////////////////
-//    Utility to display status string                    //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    Utility to display status string                    *
+ **********************************************************/
 
 /**
  * stage_statusName
@@ -1448,9 +1448,9 @@ EXTERN_C char* DLL_DECL stage_diskServerStatusName _PROTO((int statusCode));
  */
 EXTERN_C char* DLL_DECL stage_fileSystemStatusName _PROTO((int statusCode));
 
-////////////////////////////////////////////////////////////
-//    Utility to get the current client timeout           //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    Utility to get the current client timeout           *
+ **********************************************************/
 #define STAGER_TIMEOUT_DEFAULT 2592000
 
 EXTERN_C int DLL_DECL stage_getClientTimeout _PROTO(());
@@ -1458,9 +1458,9 @@ EXTERN_C int DLL_DECL stage_getClientTimeout _PROTO(());
 
 
 
-////////////////////////////////////////////////////////////
-//    MACROS                                              //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    MACROS                                              *
+ **********************************************************/
 
 /**
  * Macro to create a function that allocates a list of STRCNAME structures
@@ -1535,9 +1535,9 @@ FREE_STRUCT_LIST_DECL(findrequest_resp)
 
 
 
-////////////////////////////////////////////////////////////
-//    Known MOVER protocols                               //
-////////////////////////////////////////////////////////////
+/**********************************************************
+ *    Known MOVER protocols                               *
+ **********************************************************/
 
 #define MOVER_PROTOCOL_RFIO "rfio"
 #define MOVER_PROTOCOL_ROOT "root"
@@ -1546,7 +1546,7 @@ FREE_STRUCT_LIST_DECL(findrequest_resp)
 
 
 
-// XXX Add FindRequest
+/* XXX Add FindRequest */
 /*\@}*/
 
 #endif /* stager_client_api_h */

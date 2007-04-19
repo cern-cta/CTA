@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.22 $ $Date: 2004/10/07 14:48:29 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp.h,v $ $Revision: 1.23 $ $Date: 2007/04/19 15:18:19 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -348,5 +348,6 @@ else {(Y)->next=(X); (Y)->prev=(X)->prev; (Y)->next->prev=(Y); (Y)->prev->next=(
 EXTERN_C void DLL_DECL (*rtcp_log) _PROTO((int, const char *, ...));
 EXTERN_C char DLL_DECL *rtcp_voidToString _PROTO((void *, int));
 EXTERN_C int DLL_DECL rtcp_stringToVoid _PROTO((char *, void *, int));
+EXTERN_C int DLL_DECL rtcp_ClientMsg _PROTO((SOCKET *, char *));
 
 #endif /* RTCP_H */
