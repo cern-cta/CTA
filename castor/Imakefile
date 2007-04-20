@@ -153,6 +153,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamPutDoneStartCnv.cpp \
               io/StreamSegmentCnv.cpp \
               io/StreamSetFileGCWeightCnv.cpp \
+              io/StreamStreamReportCnv.cpp \
               io/StreamStringResponseCnv.cpp \
               io/StreamTapeCnv.cpp \
               io/StreamSubRequestCnv.cpp \
