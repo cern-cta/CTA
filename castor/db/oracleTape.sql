@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.399 $ $Date: 2007/04/20 10:09:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.400 $ $Date: 2007/04/20 13:09:35 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.399 $ $Date: 2007/04/20 10:09:04 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.400 $ $Date: 2007/04/20 13:09:35 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -3042,7 +3042,11 @@ BEGIN
                  nbReadStreams = fileSystemValues(ind + 4),
                  nbWriteStreams = fileSystemValues(ind + 5),
                  nbReadWriteStreams = fileSystemValues(ind + 6),
-                 free = fileSystemValues(ind + 7)
+                 free = fileSystemValues(ind + 7),
+                 totalSize = fileSystemValues(ind + 8),
+                 minFreeSpace = fileSystemValues(ind + 9),
+                 maxFreeSpace = fileSystemValues(ind + 10),
+                 minAllowedFreeSpace = fileSystemValues(ind + 11)
            WHERE mountPoint = fileSystems(i)
              AND diskServer = machine;
         EXCEPTION WHEN NO_DATA_FOUND THEN
