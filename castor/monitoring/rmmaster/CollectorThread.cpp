@@ -84,6 +84,7 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
       stst << "Unable to read Request object from socket."
            << std::endl << e.getMessage().str();
       ack.setErrorMessage(stst.str());
+      return;
     }
     // handle it
     if (ack.status()) {
