@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/20 10:07:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/04/20 15:36:06 $ $Author: sponcec3 $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -160,7 +160,10 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 	 clusterStatus->begin();
        it != clusterStatus->end();
        it++) {
-    fileSystemsL += it->second.size();
+    // don't send FileSystems for deleted nodes
+    if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
+      fileSystemsL += it->second.size();
+    }
   }
   // Since ORACLE does not like 0 length arrays, it's better
   // to protect ourselves and give up in such a case
@@ -172,24 +175,29 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   if (0 == lensFS) { free (lensDS); castor::exception::OutOfMemory e; throw e; };
   unsigned int maxFSL = 0;
   unsigned int maxDSL = 0;
-  unsigned int ds = 0;
-  unsigned int fs = 0;
+  unsigned int ds = 0;  // diskserver index
+  unsigned int dfs = 0; // diskserver index within filesystems list
+  unsigned int fs = 0;  // filesystem index (diskserver ignored)
   for (castor::monitoring::ClusterStatus::const_iterator it =
 	 clusterStatus->begin();
        it != clusterStatus->end();
        it++) {
     lensDS[ds] = it->first.length();
     if (lensDS[ds] > maxDSL) maxDSL = lensDS[ds];
-    lensFS[ds+fs] = it->first.length();
-    if (lensFS[ds+fs] > maxFSL) maxFSL = lensFS[ds+fs];
     ds++;
-    for (castor::monitoring::DiskServerStatus::const_iterator it2
-	   = it->second.begin();
-	 it2 != it->second.end();
-	 it2++) {
-      lensFS[ds+fs] = it2->first.length();
-      if (lensFS[ds+fs] > maxFSL) maxFSL = lensFS[ds+fs];
-      fs++;
+    // don't send FileSystems for deleted nodes
+    if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
+      lensFS[dfs+fs] = it->first.length();
+      if (lensFS[dfs+fs] > maxFSL) maxFSL = lensFS[dfs+fs];
+      dfs++;
+      for (castor::monitoring::DiskServerStatus::const_iterator it2
+	     = it->second.begin();
+	   it2 != it->second.end();
+	   it2++) {
+	lensFS[dfs+fs] = it2->first.length();
+	if (lensFS[dfs+fs] > maxFSL) maxFSL = lensFS[dfs+fs];
+	fs++;
+      }
     }
   }
   // Allocate buffer for giving the parameters to ORACLE
@@ -208,21 +216,26 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     castor::exception::OutOfMemory e; throw e;
   };
   // Put DiskServer and FileSystem names into the buffers
-  unsigned int d = 0;
-  unsigned int f = 0;
+  unsigned int d = 0;  // diskserver index
+  unsigned int df = 0; // diskserver index within filesystems list
+  unsigned int f = 0;  // filesystem index (diskserver ignored)
   for (castor::monitoring::ClusterStatus::const_iterator it =
 	 clusterStatus->begin();
        it != clusterStatus->end();
        it++) {
     strncpy(bufferDS+(d*bufferDSCellSize), it->first.c_str(), lensDS[d]);
-    strncpy(bufferFS+((d+f)*bufferFSCellSize), it->first.c_str(), lensDS[d]);
     d++;
-    for (castor::monitoring::DiskServerStatus::const_iterator it2
-	   = it->second.begin();
-	 it2 != it->second.end();
-	 it2++) {
-      strncpy(bufferFS+((d+f)*bufferFSCellSize), it2->first.c_str(), lensFS[d+f]);
-      f++;
+    // don't send FileSystems for deleted nodes
+    if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
+      strncpy(bufferFS+((df+f)*bufferFSCellSize), it->first.c_str(), lensDS[d-1]);
+      df++;
+      for (castor::monitoring::DiskServerStatus::const_iterator it2
+	     = it->second.begin();
+	   it2 != it->second.end();
+	   it2++) {
+	strncpy(bufferFS+((df+f)*bufferFSCellSize), it2->first.c_str(), lensFS[df+f]);
+	f++;
+      }
     }
   }
   // Deal with parameters for both DiskServers and FileSystems
@@ -252,6 +265,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     castor::exception::OutOfMemory e; throw e;
   };
   d = 0;
+  df = 0;
   f = 0;
   try {
     for (castor::monitoring::ClusterStatus::const_iterator it =
@@ -264,25 +278,28 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       fillOracleBuffer(bufferDSP, lensDSP, (3*d)+1, dss.adminStatus());
       fillOracleBuffer(bufferDSP, lensDSP, (3*d)+2, dss.load());
       d++;
-      for (castor::monitoring::DiskServerStatus::const_iterator it2
-	     = it->second.begin();
-	   it2 != dss.end();
-	   it2++) {
-	const castor::monitoring::FileSystemStatus& fss = it2->second;
-	// fill buffers
-	fillOracleBuffer(bufferFSP, lensFSP, 12*f, fss.status());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+1, fss.adminStatus());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+2, (double)fss.readRate());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+3, (double)fss.writeRate());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+4, fss.nbReadStreams());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+5, fss.nbWriteStreams());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+6, fss.nbReadWriteStreams());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+7, (double)fss.freeSpace());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+8, (double)fss.space());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+9, (double)fss.minFreeSpace());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+10,(double)fss.maxFreeSpace());
-	fillOracleBuffer(bufferFSP, lensFSP, (12*f)+11,(double)fss.minAllowedFreeSpace());
-	f++;
+      // don't send FileSystems for deleted nodes
+      if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
+	for (castor::monitoring::DiskServerStatus::const_iterator it2
+	       = it->second.begin();
+	     it2 != dss.end();
+	     it2++) {
+	  const castor::monitoring::FileSystemStatus& fss = it2->second;
+	  // fill buffers
+	  fillOracleBuffer(bufferFSP, lensFSP, 12*f, fss.status());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+1, fss.adminStatus());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+2, (double)fss.readRate());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+3, (double)fss.writeRate());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+4, fss.nbReadStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+5, fss.nbWriteStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+6, fss.nbReadWriteStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+7, (double)fss.freeSpace());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+8, (double)fss.space());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+9, (double)fss.minFreeSpace());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+10,(double)fss.maxFreeSpace());
+	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+11,(double)fss.minAllowedFreeSpace());
+	  f++;
+	}
       }
     }
     // prepare the statement
