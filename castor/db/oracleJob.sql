@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.401 $ $Date: 2007/04/20 13:20:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.402 $ $Date: 2007/04/20 13:34:55 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.401 $ $Date: 2007/04/20 13:20:44 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.402 $ $Date: 2007/04/20 13:34:55 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2497,14 +2497,15 @@ END;
 CREATE OR REPLACE PROCEDURE garbageCollect AS
 BEGIN
   FOR fs IN (SELECT id FROM FileSystem) LOOP
-  BEGIN
-    -- run the GC
-    garbageCollectInvalidDC(fs.id);
-    garbageCollectFS(fs.id);
-    -- yield to other jobs/transactions
-    DBMS_LOCK.sleep(seconds => 2.0);
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL;            -- ignore and go on
+    BEGIN
+      -- run the GC
+      garbageCollectInvalidDC(fs.id);
+      garbageCollectFS(fs.id);
+      -- yield to other jobs/transactions
+      DBMS_LOCK.sleep(seconds => 2.0);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;            -- ignore and go on
+    END;
   END LOOP;
 END;
 
@@ -3060,7 +3061,7 @@ BEGIN
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
                    status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, fileSystems(i+9),
+              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystems(i+9),
                       fileSystems(i+11), fileSystems(i+10),
                       0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
