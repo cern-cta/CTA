@@ -114,18 +114,6 @@ int Cstager_FileSystem_mountPoint(struct Cstager_FileSystem_t* instance, const c
 int Cstager_FileSystem_setMountPoint(struct Cstager_FileSystem_t* instance, const char* new_var);
 
 /**
- * Get the value of deltaFree
- * Estimation of the modifications of the free space since the last update.
- */
-int Cstager_FileSystem_deltaFree(struct Cstager_FileSystem_t* instance, signed64* var);
-
-/**
- * Set the value of deltaFree
- * Estimation of the modifications of the free space since the last update.
- */
-int Cstager_FileSystem_setDeltaFree(struct Cstager_FileSystem_t* instance, signed64 new_var);
-
-/**
  * Get the value of minFreeSpace
  * Minimum free space that should be kept on this FileSystem. This limit can be
  * transgressed but the garbage collector will then be launched. This is given as a

@@ -136,22 +136,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_FileSystem_deltaFree
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_deltaFree(castor::stager::FileSystem* instance, signed64* var) {
-    *var = instance->deltaFree();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_FileSystem_setDeltaFree
-  //----------------------------------------------------------------------------
-  int Cstager_FileSystem_setDeltaFree(castor::stager::FileSystem* instance, signed64 new_var) {
-    instance->setDeltaFree(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_FileSystem_minFreeSpace
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_minFreeSpace(castor::stager::FileSystem* instance, float* var) {

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.400 $ $Date: 2007/04/20 13:09:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.401 $ $Date: 2007/04/20 13:20:44 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.400 $ $Date: 2007/04/20 13:09:35 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.401 $ $Date: 2007/04/20 13:20:44 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -573,7 +573,7 @@ BEGIN
      filesystems of this DiskServer in an atomical way */
   UPDATE DiskServer SET load = load + 1 WHERE id = ds; -- XXX 1 ?
   UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
-                        deltaFree = deltaFree - fileSize   -- just an evaluation, monitoring will update it
+                        free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
 
@@ -794,7 +794,7 @@ BEGIN
                      AND Request.id = SubRequest.request
                      AND Request.svcclass = DiskPool2SvcClass.child
                      AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                     AND FileSystem.free + FileSystem.deltaFree > CastorFile.fileSize
+                     AND FileSystem.free > CastorFile.fileSize
                      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                      AND DiskServer.id = FileSystem.diskServer
                      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
@@ -2355,7 +2355,7 @@ BEGIN
   END;  
 
   -- Now get the DiskPool and the maxFree space we want to achieve
-  SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree - spaceToBeFreed
+  SELECT diskPool, maxFreeSpace * totalSize - free - spaceToBeFreed
     INTO dpId, toBeFreed
     FROM FileSystem
    WHERE FileSystem.id = fsId
@@ -2843,7 +2843,7 @@ BEGIN
            grouping(fs.mountPoint) as IsFSGrouped,
            dp.name,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.deltaFree + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
@@ -2855,7 +2855,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (dp.name, ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.deltaFree + fs.spaceToBeFreed,
+             fs.free + fs.spaceToBeFreed,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (dp.name, ds.name, ds.status),
@@ -2880,7 +2880,7 @@ BEGIN
     SELECT grouping(ds.name) as IsDSGrouped,
            grouping(fs.mountPoint) as IsGrouped,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.deltaFree + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp
@@ -2889,7 +2889,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.deltaFree + fs.spaceToBeFreed,
+             fs.free + fs.spaceToBeFreed,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (ds.name, ds.status),
@@ -3055,7 +3055,7 @@ BEGIN
           BEGIN
             -- we should insert a new filesystem here
             SELECT ids_seq.nextval INTO fsId FROM DUAL;
-            INSERT INTO FileSystem (free, mountPoint, deltaFree,
+            INSERT INTO FileSystem (free, mountPoint,
                    minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,

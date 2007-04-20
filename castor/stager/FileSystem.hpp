@@ -140,24 +140,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_deltaFree
-       * Estimation of the modifications of the free space since the last update.
-       * @return the value of m_deltaFree
-       */
-      signed64 deltaFree() const {
-        return m_deltaFree;
-      }
-
-      /**
-       * Set the value of m_deltaFree
-       * Estimation of the modifications of the free space since the last update.
-       * @param new_var the new value of m_deltaFree
-       */
-      void setDeltaFree(signed64 new_var) {
-        m_deltaFree = new_var;
-      }
-
-      /**
        * Get the value of m_minFreeSpace
        * Minimum free space that should be kept on this FileSystem. This limit can be
        * transgressed but the garbage collector will then be launched. This is given as a
@@ -472,9 +454,6 @@ namespace castor {
       u_signed64 m_free;
 
       std::string m_mountPoint;
-
-      /// Estimation of the modifications of the free space since the last update.
-      signed64 m_deltaFree;
 
       /// Minimum free space that should be kept on this FileSystem. This limit can be transgressed but the garbage collector will then be launched. This is given as a fraction of the totalSize.
       float m_minFreeSpace;
