@@ -119,7 +119,7 @@ CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), deltaFree INTEGER, minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), id INTEGER CONSTRAINT I_SvcClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50;
@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.398  Date: 2007/04/20 09:28:44  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.402  Date: 2007/04/20 13:34:55  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.398  Date: 2007/04/20 09:28:44 ');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.402  Date: 2007/04/20 13:34:55 ');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -768,7 +768,7 @@ BEGIN
      filesystems of this DiskServer in an atomical way */
   UPDATE DiskServer SET load = load + 1 WHERE id = ds; -- XXX 1 ?
   UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
-                        deltaFree = deltaFree - fileSize   -- just an evaluation, monitoring will update it
+                        free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
 END;
 
@@ -989,7 +989,7 @@ BEGIN
                      AND Request.id = SubRequest.request
                      AND Request.svcclass = DiskPool2SvcClass.child
                      AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                     AND FileSystem.free + FileSystem.deltaFree > CastorFile.fileSize
+                     AND FileSystem.free > CastorFile.fileSize
                      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                      AND DiskServer.id = FileSystem.diskServer
                      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
@@ -2550,7 +2550,7 @@ BEGIN
   END;  
 
   -- Now get the DiskPool and the maxFree space we want to achieve
-  SELECT diskPool, maxFreeSpace * totalSize - free - deltaFree - spaceToBeFreed
+  SELECT diskPool, maxFreeSpace * totalSize - free - spaceToBeFreed
     INTO dpId, toBeFreed
     FROM FileSystem
    WHERE FileSystem.id = fsId
@@ -2692,14 +2692,15 @@ END;
 CREATE OR REPLACE PROCEDURE garbageCollect AS
 BEGIN
   FOR fs IN (SELECT id FROM FileSystem) LOOP
-  BEGIN
-    -- run the GC
-    garbageCollectInvalidDC(fs.id);
-    garbageCollectFS(fs.id);
-    -- yield to other jobs/transactions
-    DBMS_LOCK.sleep(seconds => 2.0);
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL;            -- ignore and go on
+    BEGIN
+      -- run the GC
+      garbageCollectInvalidDC(fs.id);
+      garbageCollectFS(fs.id);
+      -- yield to other jobs/transactions
+      DBMS_LOCK.sleep(seconds => 2.0);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL;            -- ignore and go on
+    END;
   END LOOP;
 END;
 
@@ -3038,7 +3039,7 @@ BEGIN
            grouping(fs.mountPoint) as IsFSGrouped,
            dp.name,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.deltaFree + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
@@ -3050,7 +3051,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (dp.name, ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.deltaFree + fs.spaceToBeFreed,
+             fs.free + fs.spaceToBeFreed,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (dp.name, ds.name, ds.status),
@@ -3075,7 +3076,7 @@ BEGIN
     SELECT grouping(ds.name) as IsDSGrouped,
            grouping(fs.mountPoint) as IsGrouped,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.deltaFree + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp
@@ -3084,7 +3085,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.deltaFree + fs.spaceToBeFreed,
+             fs.free + fs.spaceToBeFreed,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (ds.name, ds.status),
@@ -3237,7 +3238,11 @@ BEGIN
                  nbReadStreams = fileSystemValues(ind + 4),
                  nbWriteStreams = fileSystemValues(ind + 5),
                  nbReadWriteStreams = fileSystemValues(ind + 6),
-                 free = fileSystemValues(ind + 7)
+                 free = fileSystemValues(ind + 7),
+                 totalSize = fileSystemValues(ind + 8),
+                 minFreeSpace = fileSystemValues(ind + 9),
+                 maxFreeSpace = fileSystemValues(ind + 10),
+                 minAllowedFreeSpace = fileSystemValues(ind + 11)
            WHERE mountPoint = fileSystems(i)
              AND diskServer = machine;
         EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3246,13 +3251,14 @@ BEGIN
           BEGIN
             -- we should insert a new filesystem here
             SELECT ids_seq.nextval INTO fsId FROM DUAL;
-            INSERT INTO FileSystem (free, mountPoint, deltaFree,
+            INSERT INTO FileSystem (free, mountPoint,
                    minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
                    status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, .1, .05,
-                      .15, 0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
+              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystems(i+9),
+                      fileSystems(i+11), fileSystems(i+10),
+                      0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                       fileSystemValues(ind + 5), fileSystemValues(ind + 6),
                       fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
@@ -3260,7 +3266,7 @@ BEGIN
           END;
         END;
       END IF;
-      ind := ind + 9;
+      ind := ind + 12;
     END IF;
   END LOOP;
 END;
