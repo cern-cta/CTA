@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.397 $ $Date: 2007/04/20 09:24:21 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.398 $ $Date: 2007/04/20 09:28:44 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.397 $ $Date: 2007/04/20 09:24:21 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.398 $ $Date: 2007/04/20 09:28:44 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2420,7 +2420,7 @@ BEGIN
       -- Shall we continue ?
       IF toBeFreed > freed THEN
         -- find next candidate
-        bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
+        bestValue := 100000000000;
         FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
           IF nextItems(i).utility < bestValue THEN
             bestCandidate := i;
