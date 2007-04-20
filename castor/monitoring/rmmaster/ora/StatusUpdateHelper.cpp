@@ -124,6 +124,9 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     }
     // Update FileSystem status
     it2->second.setSpace((*itFs)->space());
+    it2->second.setMinFreeSpace((*itFs)->minFreeSpace());
+    it2->second.setMinFreeSpace((*itFs)->maxFreeSpace());
+    it2->second.setMinAllowedFreeSpace((*itFs)->minAllowedFreeSpace());
     // Update status if needed
     if (it2->second.adminStatus() == ADMIN_NONE ||
         (*itFs)->adminStatus() != ADMIN_NONE) {

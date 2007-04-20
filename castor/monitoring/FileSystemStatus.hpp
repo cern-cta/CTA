@@ -63,6 +63,36 @@ namespace castor {
       /// Accessor to space
       void setSpace(u_signed64 space) { m_space = space; }
 
+      /// Accessor to minFreeSpace
+      float minFreeSpace() const {
+        return m_minFreeSpace;
+      }
+
+      /// Accessor to minFreeSpace
+      void setMinFreeSpace(float new_var) {
+        m_minFreeSpace = new_var;
+      }
+
+      /// Accessor to maxFreeSpace
+      float maxFreeSpace() const {
+        return m_maxFreeSpace;
+      }
+
+      /// Accessor to maxFreeSpace
+      void setMaxFreeSpace(float new_var) {
+        m_maxFreeSpace = new_var;
+      }
+
+      /// Accessor to minAllowedFreeSpace
+      float minAllowedFreeSpace() const {
+        return m_minAllowedFreeSpace;
+      }
+
+      /// Accessor to minAllowedFreeSpace
+      void setMinAllowedFreeSpace(float new_var) {
+        m_minAllowedFreeSpace = new_var;
+      }
+
       /// Accessor to status
       castor::stager::FileSystemStatusCodes status() const {
         return m_status;
@@ -188,6 +218,15 @@ namespace castor {
 
       /// total space
       u_signed64 m_space;
+
+      /// The fraction of free space under which the garbage collector will run. This number must be < 1
+      float m_minFreeSpace;
+
+      /// The fraction of free space that the garbage collector is targeting when liberating space. This number must be < 1
+      float m_maxFreeSpace;
+
+      /// The fraction of free space under which we stop scheduling write jobs on the filesystem. This number must be < 1
+      float m_minAllowedFreeSpace;
 
       /// status
       castor::stager::FileSystemStatusCodes m_status;

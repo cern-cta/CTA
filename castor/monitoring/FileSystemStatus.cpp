@@ -34,9 +34,10 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::monitoring::FileSystemStatus::FileSystemStatus() :
-  m_space(0),
+  m_space(0), m_minFreeSpace(0.0),
+  m_maxFreeSpace(0.0), m_minAllowedFreeSpace(0.0),
   m_status(castor::stager::FILESYSTEM_DISABLED),
-  m_adminStatus(ADMIN_FORCE),
+  m_adminStatus(ADMIN_NONE),
   m_readRate(0), m_deltaReadRate(0),
   m_writeRate(0), m_deltaWriteRate(0),
   m_nbReadStreams(0), m_deltaNbReadStreams(0),
@@ -53,6 +54,12 @@ void castor::monitoring::FileSystemStatus::print
   throw() {
   out << indentation << std::setw(20)
       << "space" << ": " << m_space << "\n"
+      << indentation << std::setw(20)
+      << "minFreeSpace" << ": " << m_minFreeSpace << "\n"
+      << indentation << std::setw(20)
+      << "maxFreeSpace" << ": " << m_maxFreeSpace << "\n"
+      << indentation << std::setw(20)
+      << "minAllowedFreeSpace" << ": " << m_minAllowedFreeSpace << "\n"
       << indentation << std::setw(20)
       << "status" << ": "
       << castor::stager::FileSystemStatusCodesStrings[m_status] << "\n"

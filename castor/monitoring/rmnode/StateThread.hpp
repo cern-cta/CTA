@@ -83,9 +83,14 @@ namespace castor {
          * Collects a given fileSystem state.
          * The user is responsible for deleting the returned object
          * @param mountPoint the mountPoint of the fileSystem to deal with
+         * @param minFreeSpace the minFreeSpace to use for the fileSystem
+         * @param maxFreeSpace the maxFreeSpace to use for the fileSystem
+         * @param minAllowedFreeSpace the minAllowedFreeSpace to use for the
+	 * fileSystem
          */
         castor::monitoring::FileSystemStateReport* collectFileSystemState
-        (std::string mountPoint)
+        (std::string mountPoint, float minFreeSpace,
+	 float maxFreeSpace, float minAllowedFreeSpace)
           throw(castor::exception::Exception);
 
       private:

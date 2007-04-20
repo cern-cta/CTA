@@ -47,6 +47,11 @@
 #include <sys/vfs.h>
 #include "errno.h"
 
+// Default value for minFreeSpace, maxFreeSpace, minAllowedFreeSpace
+#define MINFREESPACE .10
+#define MAXFREESPACE .15
+#define MINALLOWEDFREESPACE .05
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -174,6 +179,46 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
   // fill the status, always the same
   state->setStatus(castor::stager::DISKSERVER_PRODUCTION);
   state->setAdminStatus(castor::monitoring::ADMIN_NONE);
+  // Get the current values for min/max/minAllowedFreeSpace
+  float minFreeSpace = MINFREESPACE;
+  char* minFreeSpaceStr = getconfent("RmNode","MinFreeSpace", 0);
+  if (minFreeSpaceStr){
+    minFreeSpace = std::strtof(minFreeSpaceStr,0);
+    if (minFreeSpace > 1 || minFreeSpace < 0) {
+      // Go back to default
+      minFreeSpace = MINFREESPACE;
+      // "Bad minFreeSpace value in configuration file"
+      castor::dlf::Param initParams[] =
+	{castor::dlf::Param("Given value", minFreeSpaceStr)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 18, 1, initParams);
+    }
+  }
+  float maxFreeSpace = MAXFREESPACE;
+  char* maxFreeSpaceStr = getconfent("RmNode","MaxFreeSpace", 0);
+  if (maxFreeSpaceStr){
+    maxFreeSpace = std::strtof(maxFreeSpaceStr,0);
+    if (maxFreeSpace > 1 || maxFreeSpace < 0) {
+      // Go back to default
+      maxFreeSpace = MAXFREESPACE;
+      // "Bad maxFreeSpace value in configuration file"
+      castor::dlf::Param initParams[] =
+	{castor::dlf::Param("Given value", maxFreeSpaceStr)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 19, 1, initParams);
+    }
+  }
+  float minAllowedFreeSpace = MINALLOWEDFREESPACE;
+  char* minAllowedFreeSpaceStr = getconfent("RmNode","MinAllowedFreeSpace", 0);
+  if (minAllowedFreeSpaceStr){
+    minAllowedFreeSpace = std::strtof(minAllowedFreeSpaceStr,0);
+    if (minAllowedFreeSpace > 1 || minAllowedFreeSpace < 0) {
+      // Go back to default
+      minAllowedFreeSpace = MINALLOWEDFREESPACE;
+      // "Bad minAllowedFreeSpace value in configuration file"
+      castor::dlf::Param initParams[] =
+	{castor::dlf::Param("Given value", minAllowedFreeSpaceStr)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 20, 1, initParams);
+    }
+  }
   // get current list of filesystems
   char** fs;
   int nbFs;
@@ -188,7 +233,9 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
   // fill state for each FileSystems
   try {
     for (int i = 0; i < nbFs; i++) {
-      state->addFileSystemStatesReports(collectFileSystemState(fs[i]));
+      state->addFileSystemStatesReports
+	(collectFileSystemState(fs[i], minFreeSpace,
+				maxFreeSpace, minAllowedFreeSpace));
     }
   } catch (castor::exception::Exception e) {
     // free Memory
@@ -208,12 +255,16 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
 //------------------------------------------------------------------------------
 castor::monitoring::FileSystemStateReport*
 castor::monitoring::rmnode::StateThread::collectFileSystemState
-(std::string mountPoint)
+(std::string mountPoint, float minFreeSpace,
+ float maxFreeSpace, float minAllowedFreeSpace)
   throw(castor::exception::Exception) {
   castor::monitoring::FileSystemStateReport* state =
     new castor::monitoring::FileSystemStateReport();
   // set mountpoint
   state->setMountPoint(mountPoint);
+  state->setMinFreeSpace(minFreeSpace);
+  state->setMaxFreeSpace(maxFreeSpace);
+  state->setMinAllowedFreeSpace(minAllowedFreeSpace);
   // set space
   struct statfs sf;
   if (statfs(mountPoint.c_str(),&sf) == 0) {
@@ -230,3 +281,7 @@ castor::monitoring::rmnode::StateThread::collectFileSystemState
   state->setAdminStatus(castor::monitoring::ADMIN_NONE);
   return state;
 }
+
+#undef MINFREESPACE
+#undef MAXFREESPACE
+#undef MINALLOWEDFREESPACE

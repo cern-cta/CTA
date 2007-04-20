@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.398 $ $Date: 2007/04/20 09:28:44 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.399 $ $Date: 2007/04/20 10:09:04 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.398 $ $Date: 2007/04/20 09:28:44 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.399 $ $Date: 2007/04/20 10:09:04 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -3056,8 +3056,9 @@ BEGIN
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
                    status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, .1, .05,
-                      .15, 0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
+              VALUES (fileSystemValues(ind + 7), fileSystems(i), 0, fileSystems(i+9),
+                      fileSystems(i+11), fileSystems(i+10),
+                      0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                       fileSystemValues(ind + 5), fileSystemValues(ind + 6),
                       fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
@@ -3065,7 +3066,7 @@ BEGIN
           END;
         END;
       END IF;
-      ind := ind + 9;
+      ind := ind + 12;
     END IF;
   END LOOP;
 END;
