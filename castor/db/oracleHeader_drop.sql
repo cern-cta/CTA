@@ -45,9 +45,8 @@ DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
 DROP TABLE SelectFiles2DeleteProcHelper;
 DROP TABLE FilesDeletedProcOutput;
-DROP TABLE FileSystemGC;
 
 /* Drop scheduler jobs */
 BEGIN
-  DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'GCInvalidDiskCopiesJob', FORCE => TRUE);
+  DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'garbageCollectJob', FORCE => TRUE);
 END;
