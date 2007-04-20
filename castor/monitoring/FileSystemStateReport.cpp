@@ -44,6 +44,9 @@
 castor::monitoring::FileSystemStateReport::FileSystemStateReport() throw() :
   m_mountPoint(""),
   m_space(0),
+  m_minFreeSpace(0.0),
+  m_maxFreeSpace(0.0),
+  m_minAllowedFreeSpace(0.0),
   m_id(0),
   m_status(castor::stager::FileSystemStatusCodes(0)),
   m_adminStatus(AdminStatusCodes(0)),
@@ -74,6 +77,9 @@ void castor::monitoring::FileSystemStateReport::print(std::ostream& stream,
   // Output of all members
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "space : " << m_space << std::endl;
+  stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
+  stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;
+  stream << indent << "minAllowedFreeSpace : " << m_minAllowedFreeSpace << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "status : " << castor::stager::FileSystemStatusCodesStrings[m_status] << std::endl;

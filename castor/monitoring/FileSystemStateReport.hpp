@@ -139,6 +139,66 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_minFreeSpace
+       * The fraction of free space under which the garbage collector will run. This
+       * number must be < 1
+       * @return the value of m_minFreeSpace
+       */
+      float minFreeSpace() const {
+        return m_minFreeSpace;
+      }
+
+      /**
+       * Set the value of m_minFreeSpace
+       * The fraction of free space under which the garbage collector will run. This
+       * number must be < 1
+       * @param new_var the new value of m_minFreeSpace
+       */
+      void setMinFreeSpace(float new_var) {
+        m_minFreeSpace = new_var;
+      }
+
+      /**
+       * Get the value of m_maxFreeSpace
+       * The fraction of free space that the garbage collector is targeting when
+       * liberating space. This number must be < 1
+       * @return the value of m_maxFreeSpace
+       */
+      float maxFreeSpace() const {
+        return m_maxFreeSpace;
+      }
+
+      /**
+       * Set the value of m_maxFreeSpace
+       * The fraction of free space that the garbage collector is targeting when
+       * liberating space. This number must be < 1
+       * @param new_var the new value of m_maxFreeSpace
+       */
+      void setMaxFreeSpace(float new_var) {
+        m_maxFreeSpace = new_var;
+      }
+
+      /**
+       * Get the value of m_minAllowedFreeSpace
+       * The fraction of free space under which we stop scheduling write jobs on the
+       * filesystem. This number must be < 1
+       * @return the value of m_minAllowedFreeSpace
+       */
+      float minAllowedFreeSpace() const {
+        return m_minAllowedFreeSpace;
+      }
+
+      /**
+       * Set the value of m_minAllowedFreeSpace
+       * The fraction of free space under which we stop scheduling write jobs on the
+       * filesystem. This number must be < 1
+       * @param new_var the new value of m_minAllowedFreeSpace
+       */
+      void setMinAllowedFreeSpace(float new_var) {
+        m_minAllowedFreeSpace = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -211,6 +271,15 @@ namespace castor {
 
       /// The total amount of space on this fileSystem in bytes
       u_signed64 m_space;
+
+      /// The fraction of free space under which the garbage collector will run. This number must be < 1
+      float m_minFreeSpace;
+
+      /// The fraction of free space that the garbage collector is targeting when liberating space. This number must be < 1
+      float m_maxFreeSpace;
+
+      /// The fraction of free space under which we stop scheduling write jobs on the filesystem. This number must be < 1
+      float m_minAllowedFreeSpace;
 
       /// The id of this object
       u_signed64 m_id;

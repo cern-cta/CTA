@@ -93,6 +93,9 @@ void castor::io::StreamFileSystemStateReportCnv::createRep(castor::IAddress* add
   ad->stream() << obj->type();
   ad->stream() << obj->mountPoint();
   ad->stream() << obj->space();
+  ad->stream() << obj->minFreeSpace();
+  ad->stream() << obj->maxFreeSpace();
+  ad->stream() << obj->minAllowedFreeSpace();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
   ad->stream() << obj->adminStatus();
@@ -114,6 +117,15 @@ castor::IObject* castor::io::StreamFileSystemStateReportCnv::createObj(castor::I
   u_signed64 space;
   ad->stream() >> space;
   object->setSpace(space);
+  float minFreeSpace;
+  ad->stream() >> minFreeSpace;
+  object->setMinFreeSpace(minFreeSpace);
+  float maxFreeSpace;
+  ad->stream() >> maxFreeSpace;
+  object->setMaxFreeSpace(maxFreeSpace);
+  float minAllowedFreeSpace;
+  ad->stream() >> minAllowedFreeSpace;
+  object->setMinAllowedFreeSpace(minAllowedFreeSpace);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
