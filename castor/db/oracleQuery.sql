@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.396 $ $Date: 2007/04/19 15:11:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.397 $ $Date: 2007/04/20 09:24:21 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_0', '$Revision: 1.396 $ $Date: 2007/04/19 15:11:30 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.397 $ $Date: 2007/04/20 09:24:21 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -186,15 +186,6 @@ CREATE INDEX I_NbTapeCopiesInFS_Stream on NbTapeCopiesInFS(Stream);
  * is locked before the DiskServer. Thus this table..... */
 CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
 INSERT INTO LockTable SELECT id, id FROM DiskServer;
-
-
-/* This table keeps the current queue of the garbage collector:
- * whenever a new filesystem has to be garbage collected, a row is inserted
- * in this table and a db job runs on it to actually execute the gc.
- * In low load conditions this table will be empty and the db job is fired
- * for each new entered filesystem. In high load conditions a single db job
- * keeps running and no other jobs will be fired */
-CREATE TABLE FileSystemGC (fsid NUMBER PRIMARY KEY, submissionTime NUMBER);
 
 
 /*********************/
@@ -2286,14 +2277,11 @@ CREATE OR REPLACE FUNCTION defaultGCPolicy
 BEGIN
   OPEN result FOR
     SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
-         CASE DC.status
-           WHEN 7 THEN 100000000000    -- INVALID, they go the very first
-           WHEN 0 THEN getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
-         END
+           getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
       FROM DiskCopy DC, CastorFile CF
      WHERE CF.id = DC.castorFile
        AND DC.fileSystem = fsId
-       AND DC.status IN (0, 7) -- STAGED
+       AND DC.status = 0  -- STAGED
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
           WHERE DC.status = 0 AND diskcopy = DC.id 
@@ -2386,7 +2374,7 @@ BEGIN
   -- Get candidates for each policy
   nextItems.EXTEND(policies.COUNT);
   bestCandidate := -1;
-  bestValue := 100000000001; -- Take care that this is greater than the value given in defaultGCPolicy
+  bestValue := 100000000000;
   IF policies.COUNT > 0 THEN
     EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
       USING OUT cur1, IN fsId, IN toBeFreed;
@@ -2464,141 +2452,74 @@ BEGIN
   COMMIT;
 END;
 
-
 /*
- * Runs Garbage collection anywhere needed.
- * This is fired as a DBMS JOB from the FS trigger.
+ * Runs Garbage collection of invalid DiskCopies on the given FileSystem
  */
-CREATE OR REPLACE PROCEDURE garbageCollect AS
-  fs NUMBER;
-BEGIN
-  LOOP
-    -- get the oldest FileSystem to be garbage collected
-    SELECT fsid INTO fs FROM
-     (SELECT fsid FROM FileSystemGC ORDER BY submissionTime ASC)
-    WHERE ROWNUM < 2;
-    DELETE FROM FileSystemGC WHERE fsid = fs;
-    COMMIT;
-    -- run the GC
-    garbageCollectFS(fs);
-    -- yield to other jobs/transactions
-    DBMS_LOCK.sleep(seconds => 2.0);
-  END LOOP;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL;            -- terminate the job
-END;
-
-
-/*
- * Runs Garbage collection of invalid DiskCopies anywhere needed.
- * This is continuously run as a DBMS JOB.
- */
-CREATE OR REPLACE PROCEDURE gcInvalidDiskCopies AS
+CREATE OR REPLACE PROCEDURE garbageCollectInvalidDC(fsId INTEGER) AS
   sumSize NUMBER;
   free NUMBER;
   minFree NUMBER;
   dcIds "numList";
   fileSizes "numList";
 BEGIN
-  FOR fs IN (SELECT id FROM FileSystem) LOOP
-    
-    -- GC the INVALID unused diskCopies on this filesystem
-    SELECT DC.id, CF.fileSize
-      BULK COLLECT INTO dcIds, fileSizes
-      FROM DiskCopy DC, CastorFile CF
-     WHERE DC.castorFile = CF.id
-       AND DC.fileSystem = fs.id
-       AND DC.status = 7  -- INVALID
-       AND NOT EXISTS (
-         SELECT 'x' FROM SubRequest
-          WHERE SubRequest.diskcopy = DC.id
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+  -- GC the INVALID unused diskCopies on this filesystem
+  SELECT DC.id, CF.fileSize
+    BULK COLLECT INTO dcIds, fileSizes
+    FROM DiskCopy DC, CastorFile CF
+   WHERE DC.castorFile = CF.id
+     AND DC.fileSystem = fsId
+     AND DC.status = 7  -- INVALID
+     AND NOT EXISTS (
+       SELECT 'x' FROM SubRequest
+        WHERE SubRequest.diskcopy = DC.id
+          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
 
-    IF dcIds.COUNT > 0 THEN
-      UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
-       WHERE id MEMBER OF dcIds; 
-      -- compute and update the filesystem's freed space
-      sumSize := 0;
-      FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
-        sumSize := sumSize + fileSizes(i);
-      END LOOP;
-      UPDATE FileSystem
-         SET spaceToBeFreed = spaceToBeFreed + sumSize
-       WHERE id = fs.id;
-      -- commit now the cleanup of this filesystem 
-      COMMIT;
-    END IF;
-    
-    -- sanity check in case the filesystem got full over the hard threshold
-    SELECT free + deltaFree + spaceToBeFreed, minAllowedFreeSpace * totalSize
-      INTO free, minFree
-      FROM FileSystem
-     WHERE id = fs.id;
-    IF free < minFree THEN
-      -- there is no more space on this filesystem and everything is stuck: this can
-      -- happen if the migration is stuck for a while and the file system fills up;
-      -- then we "manually" trigger the standard GC, it will unblock the situation somewhen
-      UPDATE FileSystem SET free = free WHERE id = fs.id;
-      COMMIT;
-    END IF;
-    
+  IF dcIds.COUNT > 0 THEN
+    UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
+     WHERE id MEMBER OF dcIds; 
+    -- compute and update the filesystem's freed space
+    sumSize := 0;
+    FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
+      sumSize := sumSize + fileSizes(i);
+    END LOOP;
+    UPDATE FileSystem
+       SET spaceToBeFreed = spaceToBeFreed + sumSize
+     WHERE id = fsId;
+    -- commit the cleanup of this filesystem 
+    COMMIT;
+  END IF;
+END;
+
+/*
+ * Runs Garbage collection anywhere needed.
+ * This is continuously run as a DBMS JOB.
+ */
+CREATE OR REPLACE PROCEDURE garbageCollect AS
+BEGIN
+  FOR fs IN (SELECT id FROM FileSystem) LOOP
+  BEGIN
+    -- run the GC
+    garbageCollectInvalidDC(fs.id);
+    garbageCollectFS(fs.id);
     -- yield to other jobs/transactions
     DBMS_LOCK.sleep(seconds => 2.0);
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    NULL;            -- ignore and go on
   END LOOP;
 END;
 
 BEGIN
-  -- creates a db job to be run every 15 mins for the cleanup of invalid diskCopies
-  -- given the 2 seconds sleep in gcInvalidDiskCopies, such interval allows for
+  -- creates a db job to be run every 15 mins for the garbage collector
+  -- given the 2 seconds sleep in garbageCollect, such interval allows for
   -- ~450 filesystem to be processed for each round.
   DBMS_SCHEDULER.CREATE_JOB (
-      JOB_NAME        => 'GCInvalidDiskCopiesJob',
+      JOB_NAME        => 'garbageCollectJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN gcInvalidDiskCopies(); END;',
+      JOB_ACTION      => 'BEGIN garbageCollect(); END;',
       START_DATE      => SYSDATE,
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
       ENABLED         => TRUE,
-      COMMENTS        => 'Regular cleanup of INVALID disk copies');
-END;
-
-
-/*
- * Trigger launching garbage collection whenever needed
- * Note that we only launch it when at least 4% is to be deleted
- */
-CREATE OR REPLACE TRIGGER tr_FileSystem_Update
-AFTER UPDATE OF free, deltaFree ON FileSystem
-FOR EACH ROW
-DECLARE
-  freeSpace NUMBER;
-  jobid NUMBER;
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
-BEGIN
-  -- compute the actual free space taking into account already running GC processes (spaceToBeFreed)
-  freeSpace := :new.free + :new.deltaFree + :new.spaceToBeFreed;
-  -- shall we launch a new GC?
-  IF :new.minFreeSpace * :new.totalSize  > freeSpace AND
-     -- is it really worth launching it? (some other GCs maybe are already running
-     -- so we accept it only if it will free more than 4%)
-     :new.maxFreeSpace * :new.totalSize > freeSpace + 0.04 * :new.totalSize
-  THEN   -- ok, we queue this filesystem for being garbage collected
-    BEGIN
-      INSERT INTO FileSystemGC VALUES (:new.id, getTime());
-    EXCEPTION
-      -- the filesystem was already selected for GC, do nothing
-      WHEN CONSTRAINT_VIOLATED THEN NULL;
-    END;
-    -- is the garbage collector job already running?
-    SELECT count(*) INTO jobid FROM user_jobs
-     WHERE what = 'garbageCollect();' AND failures IS NULL;
-    IF jobid = 0 THEN
-      -- we spawn a job to do the real work. This avoids mutating table error
-      -- and ensures that the current update does not fail if GC fails
-      DBMS_JOB.SUBMIT(jobid,'garbageCollect();');
-    END IF;
-    -- otherwise, a recent job is already running and will take over this FS too
-  END IF;
+      COMMENTS        => 'Castor Garbage Collector');
 END;
 
 
