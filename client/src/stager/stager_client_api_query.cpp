@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.30 2007/04/19 10:24:28 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.31 2007/04/20 10:02:14 sponcec3 Exp $
  */
 
 /*
@@ -569,7 +569,7 @@ EXTERN_C void DLL_DECL stage_print_diskpoolquery_resp
     dsd.name,
     stage_diskServerStatusName(dsd.status),
     totalBuf, freeBuf, freepBuf);
-    fprintf(stream, "     %-33s %-23s %-10s FREE          GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
+    fprintf(stream, "     %-33s %-23s %-10s    FREE       GCBOUNDS\n", "FileSystems", "STATUS", "CAPACITY");
     for (int j = 0; j < dsd.nbFileSystems; j++) {
       struct stage_fileSystemDescription& fsd = dsd.fileSystems[j];
       u64tostru(fsd.freeSpace, freeBuf, 0);
