@@ -77,6 +77,12 @@ int main(int argc, char** argv) {
                 << std::endl << std::endl;
       return -1;
     }
+
+    // Handle case of empty list
+    if (cs->begin() == cs->end()) {
+      std::cout << "No diskServer registered" << std::endl;
+      return 0;
+    }
     
     // Loop over cluster status
     int found = 0;
