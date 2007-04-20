@@ -45,11 +45,10 @@ DROP TABLE NbTapeCopiesInFS;
 DROP TABLE LockTable;
 DROP TABLE SelectFiles2DeleteProcHelper;
 DROP TABLE FilesDeletedProcOutput;
-DROP TABLE FileSystemGC;
 
 /* Drop scheduler jobs */
 BEGIN
-  DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'GCInvalidDiskCopiesJob', FORCE => TRUE);
+  DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'garbageCollectJob', FORCE => TRUE);
 END;
 ALTER TABLE SvcClass2TapePool
   DROP CONSTRAINT fk_SvcClass2TapePool_P
@@ -294,8 +293,8 @@ DROP PROCEDURE putFailedProc;
 DROP FUNCTION defaultGCPolicy;
 DROP FUNCTION nopinGCPolicy;
 DROP PROCEDURE garbageCollectFS;
+DROP PROCEDURE garbageCollectInvalidDC;
 DROP PROCEDURE garbageCollect;
-DROP PROCEDURE gcInvalidDiskCopies;
 DROP PROCEDURE internalStageQuery;
 DROP PROCEDURE fileNameStageQuery;
 DROP PROCEDURE fileIdStageQuery;
