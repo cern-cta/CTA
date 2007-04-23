@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.402 $ $Date: 2007/04/20 13:34:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.403 $ $Date: 2007/04/23 08:45:04 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.402 $ $Date: 2007/04/20 13:34:55 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.403 $ $Date: 2007/04/23 08:45:04 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1046,24 +1046,30 @@ BEGIN
        AND DiskServer.status = 0 -- PRODUCTION
        AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
     IF stat.COUNT > 0 THEN
-      -- Yes, we schedule and we give a list of sources
-      result := 1;
-      OPEN sources
-        FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                   FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                                  FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
-                   FileSystem.mountPoint,
-                   DiskServer.name
-              FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-             WHERE SubRequest.id = rsubreqId
-               AND SubRequest.castorfile = DiskCopy.castorfile
-               AND FileSystem.diskpool = DiskPool2SvcClass.parent
-               AND DiskPool2SvcClass.child = svcClassId
-               AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-               AND FileSystem.id = DiskCopy.fileSystem
-               AND FileSystem.status = 0 -- PRODUCTION
-               AND DiskServer.id = FileSystem.diskServer
-               AND DiskServer.status = 0; -- PRODUCTION
+      -- Yes, we should schedule and give a list of sources.
+      -- However, in case of PrepareToGet/Update this is a no-op,
+      -- so we answer no
+      IF reqType in (36, 38) THEN
+        result := 0;
+      ELSE
+        result := 1;
+        OPEN sources
+          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                     FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
+                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+                     FileSystem.mountPoint,
+                     DiskServer.name
+                FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
+               WHERE SubRequest.id = rsubreqId
+                 AND SubRequest.castorfile = DiskCopy.castorfile
+                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                 AND DiskPool2SvcClass.child = svcClassId
+                 AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
+                 AND FileSystem.id = DiskCopy.fileSystem
+                 AND FileSystem.status = 0 -- PRODUCTION
+                 AND DiskServer.id = FileSystem.diskServer
+                 AND DiskServer.status = 0; -- PRODUCTION
+      END IF;
     ELSE
       -- No diskcopies available for this service class;
       -- check whether there are any diskcopies available for a disk2disk copy
@@ -1301,32 +1307,41 @@ CREATE OR REPLACE PROCEDURE putStart
          rdcId OUT INTEGER, rdcStatus OUT INTEGER,
          rdcPath OUT VARCHAR2) AS
   srStatus INTEGER;
+  fsId INTEGER;
 BEGIN
- -- Get older castorFiles with the same name and drop their lastKnownFileName
- UPDATE /*+ INDEX (castorfile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
-  WHERE id IN (
+  -- Get diskCopy id
+  SELECT diskCopy, status, fileSystem INTO rdcId, srStatus, fsId
+    FROM SubRequest, DiskCopy
+   WHERE SubRequest.diskcopy = Diskcopy.id
+     AND SubRequest.id = srId;
+  -- Check that we did not cancel the SubRequest in the mean time
+  IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
+    raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
+  END IF;
+  IF fsId > 0 THEN
+    -- this could happen when LSF reschedules the job twice!
+    -- (see bug report #14358 for the whole story)
+    raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
+  END IF;
+  
+  -- Get older castorFiles with the same name and drop their lastKnownFileName
+  UPDATE /*+ INDEX (castorfile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
+   WHERE id IN (
     SELECT cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
      WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
        AND cfOld.fileid <> cfNew.fileid
        AND cfNew.id = SubRequest.castorFile
        AND SubRequest.id = srId);
- -- Get diskCopy Id
- SELECT diskCopy, status INTO rdcId, srStatus
-   FROM SubRequest WHERE SubRequest.id = srId;
- -- Check that we did not cancel the SubRequest in the mean time
- IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
-   raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
- END IF;
- -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
- -- waiting SubRequests in RESTART
- UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
-  WHERE parent = srId;
- -- link DiskCopy and FileSystem and update DiskCopyStatus
- UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                     fileSystem = fileSystemId
-  WHERE id = rdcId
-  RETURNING status, path
-  INTO rdcStatus, rdcPath;
+  -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
+  -- waiting SubRequests in RESTART
+  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
+   WHERE parent = srId;
+  -- link DiskCopy and FileSystem and update DiskCopyStatus
+  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
+                      fileSystem = fileSystemId
+   WHERE id = rdcId
+   RETURNING status, path
+   INTO rdcStatus, rdcPath;
 END;
 
 /* PL/SQL method implementing updateAndCheckSubRequest */
