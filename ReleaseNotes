@@ -68,7 +68,7 @@
 
 
 -----------
-- 2.1.2-8 -
+- 2.1.2-9 -
 -----------
 
   New Features and Changes
@@ -79,8 +79,8 @@
   - Fix in the scheduling of disk-to-disk copies
   - Fix for the stagemap handling when only the user gid is mapped in stagemap.conf
 
-  Upgrade from 2.1.2-6
-  --------------------
+  Upgrade from 2.1.2-6/7
+  ----------------------
   - Upgrade the database 
   - Upgrade all head nodes (the order is not important)
 
