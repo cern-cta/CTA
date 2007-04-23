@@ -316,30 +316,20 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
       }
       linkpath[len] = '\0';
 
-      // resource not of interest  ?
-      len = strlen(linkpath);
-      if (strncmp(linkpath, filesystem->mountPoint().c_str(), len) != 0) {
-	continue;
-      }
-      // case of an additionnal / in the mountPoint
-      if (len < filesystem->mountPoint().length()) {
-	if (len < filesystem->mountPoint().length() - 1) {
-	  continue;
-	}
-	if (filesystem->mountPoint()[len] != '/') {
-	  continue;
-	}
-      }
+      // resource not of interest ?
+      if (!strncmp(filesystem->mountPoint().c_str(), linkpath, 
+		   filesystem->mountPoint().length())) {
 
-      // the permission bits on the file indicate what mode the stream is in
-      if ((statbuf.st_mode & S_IRUSR) == S_IRUSR) {
-	if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
-	  nrw++;  // read/write
-	} else {
-	  nr++;   // read only
+	// the permission bits on the file indicate what mode the stream is in
+	if ((statbuf.st_mode & S_IRUSR) == S_IRUSR) {
+	  if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
+	    nrw++;  // read/write
+	  } else {
+	    nr++;   // read only
 	}
-      } else if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
-	nw++;     // write only
+	} else if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
+	  nw++;     // write only
+	}
       }
     }
     closedir(dir_fd);
