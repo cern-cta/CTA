@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.13 $ $Release$ $Date: 2007/04/23 15:07:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.14 $ $Release$ $Date: 2007/04/23 15:33:17 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.13 $ $Date: 2007/04/23 15:07:32 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.14 $ $Date: 2007/04/23 15:33:17 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -55,6 +55,7 @@ FILE *dumpfp;
 
 enum RunOptions
 {
+  UNUSED,
   DirectoryName,
   DumpFile,
   LogFile,
@@ -447,12 +448,6 @@ int main(
       break;
     case SizeOfBuffer:
       sizeOfBuffer = atoi(Coptarg);
-      break;
-    case DropConnection:
-      dropConnection = 1;
-      break;
-    case WriteOnly:
-      writeOnly = 1;
       break;
     default:
       break;
