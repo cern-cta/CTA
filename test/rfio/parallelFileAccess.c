@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.12 $ $Release$ $Date: 2007/04/02 16:57:23 $ $Author: itglp $
+ * @(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.13 $ $Release$ $Date: 2007/04/23 15:07:32 $ $Author: sponcec3 $
  *
  * 
  *
@@ -25,7 +25,7 @@
  *****************************************************************************/
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.12 $ $Date: 2007/04/02 16:57:23 $ CERN IT/FIO Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: parallelFileAccess.c,v $ $Revision: 1.13 $ $Date: 2007/04/23 15:07:32 $ CERN IT/FIO Olof Barring";
 #endif /* lint */
 
 
@@ -49,6 +49,7 @@ static int success = 0;
 
 int help_flag = 0;
 int dropConnection = 0;
+int writeOnly = 0;
 char *baseFileName = NULL;
 FILE *dumpfp;
 
@@ -61,7 +62,8 @@ enum RunOptions
   NbBuffersToWrite,
   NbLoops,
   SizeOfBuffer,
-  DropConnection
+  DropConnection,
+  WriteOnly
 } runOptions;
 
 static struct Coptions longopts[] = 
@@ -75,6 +77,7 @@ static struct Coptions longopts[] =
   {"NbLoops",REQUIRED_ARGUMENT,0,NbLoops},
   {"SizeOfBuffer",REQUIRED_ARGUMENT,0,SizeOfBuffer},
   {"DropConnection",NO_ARGUMENT,&dropConnection,DropConnection},
+  {"WriteOnly",NO_ARGUMENT,&writeOnly,WriteOnly},
   {NULL, 0, NULL, 0}
 };
 
@@ -448,6 +451,9 @@ int main(
     case DropConnection:
       dropConnection = 1;
       break;
+    case WriteOnly:
+      writeOnly = 1;
+      break;
     default:
       break;
     }
@@ -542,51 +548,53 @@ int main(
     dumpTiming("WRITE",nbParallelOpens);
     startFlag = 0;
     
-    /*
-     * Start the reader threads
-     */
-    log(LOG_INFO,"Start %d read threads\n",nbParallelOpens);
-    rc = startThreads(
-                      nbParallelOpens,
-                      fileReadThread
-                      );
-    if ( rc == -1 ) {
-      LOG_ERROR("startThreads()");
-      return(1);
-    }
-    log(LOG_INFO,"All %d read threads started\n",nbParallelOpens);
-    
-    /*
-     * Launch the 'open'
-     */
-    rc = Cthread_mutex_lock_ext(startFlagLock);
-    if ( rc == -1 ) {
-      LOG_ERROR("Cthread_mutex_lock_ext()");
-      return(1);
-    }
-    
-    startFlag = 1;
-    log(LOG_INFO,"Send 'open' signal\n");
-    rc = Cthread_cond_broadcast_ext(startFlagLock);
-    if ( rc == -1 ) {
-      LOG_ERROR("Cthread_cond_broadcast_ext()");
-      return(1);
-    }
-    
-    rc = Cthread_mutex_unlock_ext(startFlagLock);
-    if ( rc == -1 ) {
-      LOG_ERROR("Cthread_mutex_unlock_ext()");
-      return(1);
-    }
-    
-    log(LOG_INFO,"Wait for all reader threads to return\n");
-    rc = waitAllThreads(nbParallelOpens);
-    if ( rc == -1 ) {
-      LOG_ERROR("waitAllThreads()");
-      return(1);
-    }
-    log(LOG_INFO,"All reader threads to returned\n");
-    dumpTiming("READ",nbParallelOpens);
+    if (writeOnly == 1) {
+      /*
+       * Start the reader threads
+       */
+      log(LOG_INFO,"Start %d read threads\n",nbParallelOpens);
+      rc = startThreads(
+                        nbParallelOpens,
+                        fileReadThread
+                        );
+      if ( rc == -1 ) {
+        LOG_ERROR("startThreads()");
+        return(1);
+      }
+      log(LOG_INFO,"All %d read threads started\n",nbParallelOpens);
+      
+      /*
+       * Launch the 'open'
+       */
+      rc = Cthread_mutex_lock_ext(startFlagLock);
+      if ( rc == -1 ) {
+        LOG_ERROR("Cthread_mutex_lock_ext()");
+        return(1);
+      }
+      
+      startFlag = 1;
+      log(LOG_INFO,"Send 'open' signal\n");
+      rc = Cthread_cond_broadcast_ext(startFlagLock);
+      if ( rc == -1 ) {
+        LOG_ERROR("Cthread_cond_broadcast_ext()");
+        return(1);
+      }
+      
+      rc = Cthread_mutex_unlock_ext(startFlagLock);
+      if ( rc == -1 ) {
+        LOG_ERROR("Cthread_mutex_unlock_ext()");
+        return(1);
+      }
+      
+      log(LOG_INFO,"Wait for all reader threads to return\n");
+      rc = waitAllThreads(nbParallelOpens);
+      if ( rc == -1 ) {
+        LOG_ERROR("waitAllThreads()");
+        return(1);
+      }
+      log(LOG_INFO,"All reader threads to returned\n");
+      dumpTiming("READ",nbParallelOpens);
+    } /* if (writeOnly == 1) */
   } /* for ( i=0; i<nbLoops; i++ ) */
 
   fclose(dumpfp);
