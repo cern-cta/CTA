@@ -621,7 +621,7 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
            << getOraSQLType(mem->typeName);
     if (mem->name == "id") {
       stream << " CONSTRAINT I_"
-	     << m_classInfo->className
+	     << m_classInfo->className.left(25)
 	     << "_Id PRIMARY KEY";
     }
     n++;
@@ -775,7 +775,7 @@ void CppCppDbCnvWriter::writePgSqlStatements() {
            << getPgSQLType(mem->typeName);
     if (mem->name == "id") {
       stream << " CONSTRAINT I_"
-	     << m_classInfo->className
+	     << m_classInfo->className.left(25)
 	     << "_Id PRIMARY KEY";
     }
     n++;
