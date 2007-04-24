@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/04/18 14:18:14 $ $Author: waldron $
+ * @(#)$RCSfile: HeartbeatThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/24 14:08:08 $ $Author: itglp $
  *
  * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -69,6 +69,9 @@ namespace castor {
 
 	/// The startup time of the thread
 	u_signed64 m_startup;
+
+	/// The timeout after which a diskserver is declared down
+	int timeout;
       };
 
     } // end of namespace rmmaster

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/04/18 14:18:14 $ $Author: waldron $
+ * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/24 14:08:08 $ $Author: itglp $
  *
  * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -53,6 +53,18 @@ castor::monitoring::rmmaster::HeartbeatThread::HeartbeatThread
   m_startup(time(NULL)) {
   //"Heartbeat thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 36, 0, 0);
+  // extract heartbeat timeout value
+  timeout = DEFAULT_TIMEOUT;    
+  char *value = getconfent("RmMaster", "HeartbeatTimeout", 0);
+  if (value) {
+    timeout = std::strtol(value, 0, 10);
+    if (0 == timeout) {
+      timeout = DEFAULT_TIMEOUT;
+      castor::dlf::Param initParams[] =
+        {castor::dlf::Param("Given value", value)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 18, 1, initParams);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -61,18 +73,6 @@ castor::monitoring::rmmaster::HeartbeatThread::HeartbeatThread
 void castor::monitoring::rmmaster::HeartbeatThread::run(void* par) throw() {
   try { // no exeption should go out
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 37, 0, 0);
-    // extract heartbeat timeout value
-    int timeout = DEFAULT_TIMEOUT;    
-    char *value = getconfent("RmMaster", "HeartbeatTimeout", 0);
-    if (value) {
-      timeout = std::strtol(value, 0, 10);
-      if (0 == timeout) {
-	timeout = DEFAULT_TIMEOUT;
-	castor::dlf::Param initParams[] =
-	  {castor::dlf::Param("Given value", value)};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 18, 1, initParams);
-      }
-    }
     // heartbeat check disabled ?
     if (timeout == -1) {
       return;
