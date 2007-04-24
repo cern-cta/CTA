@@ -50,6 +50,16 @@ start() {
 		fi
 	fi
 
+        # check if daemon is already running
+        if [ -e /var/lock/subsys/$prog ]; then
+                if [ -n "`/sbin/pidof $prog`" ]; then
+                        echo -n $"already running"
+                        failure
+                        echo
+                        return 1
+                fi
+        fi
+
 	daemon /usr/bin/$prog $RMNODEDAEMON_OPTIONS
 	
 	RETVAL=$?
