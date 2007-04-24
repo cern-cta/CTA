@@ -56,7 +56,7 @@ CREATE TABLE StagePrepareToGetRequest (flags INT8, userName VARCHAR(2048), euid 
 CREATE TABLE StagePrepareToPutRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StagePrepareToPutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StagePrepareToUpdateRequest */
-CREATE TABLE StagePrepareToUpdateRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StagePrepareToUpdateRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE StagePrepareToUpdateRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StagePrepareToUpdateReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageGetRequest */
 CREATE TABLE StageGetRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -119,7 +119,7 @@ CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creat
 CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, id INT8 CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), deltaFree INT8, minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
+CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), gcPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), id INT8 CONSTRAINT I_SvcClass_Id PRIMARY KEY);

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.403 $ $Date: 2007/04/23 08:45:04 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.404 $ $Date: 2007/04/24 12:43:23 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.403 $ $Date: 2007/04/23 08:45:04 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.404 $ $Date: 2007/04/24 12:43:23 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -125,7 +125,7 @@ ALTER TABLE Tape ADD CONSTRAINT I_Tape_VIDSideTpMode UNIQUE (VID, side, tpMode);
 ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME); 
 
 /* the primary key in this table allows for materialized views */
-ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcClass_ParentChild PRIMARY KEY (parent, child);
+ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
 
 
 /* get current time as a time_t. Not that easy in ORACLE */
