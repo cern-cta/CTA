@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/04/20 15:36:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/04/24 14:06:43 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -388,8 +388,13 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       // by default we start with everything disabled, when the node comes up rmNode
       // will send a full report reenabling the node
       dsReport->setStatus(castor::stager::DISKSERVER_DISABLED);
-      dsReport->setAdminStatus((castor::monitoring::AdminStatusCodes)dsRset->getInt(3));
-      
+      // make sure an ADMIN_NONE status in db resets anything found before
+      castor::monitoring::AdminStatusCodes adStatus =
+        (castor::monitoring::AdminStatusCodes)dsRset->getInt(3);
+      if(adStatus == castor::monitoring::ADMIN_NONE)
+        adStatus = castor::monitoring::ADMIN_RELEASE;
+      dsReport->setAdminStatus(adStatus);
+
       // loop on its FileSystems
       m_getFileSystemsStatement->setDouble(1, dsRset->getDouble(1));
       oracle::occi::ResultSet *fsRset = m_getFileSystemsStatement->executeQuery();
@@ -398,7 +403,10 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
           new castor::monitoring::FileSystemStateReport();
         fs->setMountPoint(fsRset->getString(1));
         fs->setStatus(castor::stager::FILESYSTEM_DISABLED);
-        fs->setAdminStatus((castor::monitoring::AdminStatusCodes)fsRset->getInt(2));
+        adStatus = (castor::monitoring::AdminStatusCodes)fsRset->getInt(2);
+        if(adStatus == castor::monitoring::ADMIN_NONE)
+          adStatus = castor::monitoring::ADMIN_RELEASE;
+        fs->setAdminStatus(adStatus);
         dsReport->addFileSystemStatesReports(fs);
       }
       
