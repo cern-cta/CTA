@@ -284,7 +284,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
     it2->second.setDeltaNbWriteStreams(0);
     it2->second.setNbReadWriteStreams((*itFs)->nbReadWriteStreams() + it2->second.deltaNbReadWriteStreams());
     it2->second.setDeltaNbReadWriteStreams(0);
-    it2->second.setFreeSpace((*itFs)->freeSpace() + it2->second.deltaFreeSpace());
+    it2->second.setFreeSpace((u_signed64)((signed64)(*itFs)->freeSpace()) + it2->second.deltaFreeSpace());
     it2->second.setDeltaFreeSpace(0);
     // Update lastUpdate
     it2->second.setLastMetricsUpdate(time(0));
