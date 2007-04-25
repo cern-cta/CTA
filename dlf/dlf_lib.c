@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.15 2007/02/26 10:28:28 waldron Exp $
+ * $Id: dlf_lib.c,v 1.16 2007/04/25 09:27:33 waldron Exp $
  */
 
 /* headers */
@@ -207,12 +207,13 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	param_t   *p2;
 	int       rv;
 	int       fd;
-	int       i, j, k, n;
+	int       i, j, n;
 	int       error;
 	int       left;
 	int       found;
 	int       sevmask;
-	char      *pos = NULL;
+	char      *ptr;
+	char      *pos  = NULL;
 	char      *text = NULL;
 	char      buffer[8192];
 	char      value[DLF_LEN_STRINGVALUE + 1];
@@ -265,7 +266,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	strftime(message->timestamp, DLF_LEN_TIMESTAMP + 1, "%Y%m%d%H%M%S", &tm_str);
 	message->timestamp[DLF_LEN_TIMESTAMP] = '\0';
 	message->timeusec = tv.tv_usec;
-	message->size = strlen(message->timestamp) + sizeof(int) + 1;
+	message->size = DLF_LEN_TIMESTAMP + sizeof(int) + 1;
 
 	/* hostname */
 	rv = gethostname(message->hostname, sizeof(message->hostname) - 1);
@@ -299,8 +300,8 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	message->msg_no   = msg_no;
 
 	/* update message size */
-	message->size += strlen(message->hostname) + strlen(message->reqid) + strlen(message->nshostname)
-		      +  strlen(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
+	message->size += sizeof(message->hostname) + sizeof(message->reqid) + sizeof(message->nshostname)
+		      +  sizeof(message->nsfileid) + sizeof(unsigned char)  + sizeof(unsigned char)
 		      +  sizeof(unsigned short)    + sizeof(pid_t)          + sizeof(uid_t) 
 		      +  sizeof(gid_t)             + sizeof(int)            + 4;
 
@@ -398,28 +399,22 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 	}
 
 	/* replace all occurrences of the new line '\n' character in all parameter strings
-	 *   - in parameter names we simply collapse all '\n' and spaces ' '
+	 *   - in parameter names we simply replace all '\n' and spaces ' ' with '_'
 	 */
 	for (param = message->plist; param != NULL; param = param->next) {
 
 		/* value */
-		for (i = 0; (param->value[i] != '\0') && (i < strlen(param->value)); i++) {
-			if (param->value[i] == '\n') {
-				param->value[i] = ' ';
-			}
+		while ((ptr = strchr(param->value, '\n')) != NULL) {
+			*ptr = ' ';
 		}
-		param->value[i] = '\0';
 
 		/* name */
-		for (i = 0, k = 0; (param->name[i] != '\0') && (i < strlen(param->name)); i++, k++) {
-			if ((param->name[i] == '\n') || (param->name[i] == ' ')) {
-				k--;
-				continue;
-			}
-			param->name[k] = param->name[i];
+		while ((ptr = strchr(param->name, '\n')) != NULL) {
+			*ptr = '_';
 		}
-		param->name[k] = '\0';
-
+		while ((ptr = strchr(param->name, ' ')) != NULL) {
+			*ptr = '_';
+		}
 		message->size += sizeof(int) + strlen(param->name) + strlen(param->value) + 2;
 	}
 
