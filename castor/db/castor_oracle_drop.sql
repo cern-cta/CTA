@@ -46,10 +46,17 @@ DROP TABLE LockTable;
 DROP TABLE SelectFiles2DeleteProcHelper;
 DROP TABLE FilesDeletedProcOutput;
 
+<<<<<<< oracleHeader_drop.sql
+/* Drop scheduler jobs */
+BEGIN
+  DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'GCInvalidDiskCopiesJob', FORCE => TRUE);
+END;
+=======
 /* Drop scheduler jobs */
 BEGIN
   DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'garbageCollectJob', FORCE => TRUE);
 END;
+>>>>>>> 1.11
 ALTER TABLE SvcClass2TapePool
   DROP CONSTRAINT fk_SvcClass2TapePool_P
   DROP CONSTRAINT fk_SvcClass2TapePool_C;
