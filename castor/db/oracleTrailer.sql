@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.404 $ $Date: 2007/04/24 12:43:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.405 $ $Date: 2007/04/25 14:10:22 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.404 $ $Date: 2007/04/24 12:43:23 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.405 $ $Date: 2007/04/25 14:10:22 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1310,7 +1310,7 @@ CREATE OR REPLACE PROCEDURE putStart
   fsId INTEGER;
 BEGIN
   -- Get diskCopy id
-  SELECT diskCopy, status, fileSystem INTO rdcId, srStatus, fsId
+  SELECT diskCopy, SubRequest.status, fileSystem INTO rdcId, srStatus, fsId
     FROM SubRequest, DiskCopy
    WHERE SubRequest.diskcopy = Diskcopy.id
      AND SubRequest.id = srId;
@@ -1338,7 +1338,7 @@ BEGIN
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
   UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                      fileSystem = fileSystemId
+                      fileSystem = fsId
    WHERE id = rdcId
    RETURNING status, path
    INTO rdcStatus, rdcPath;
