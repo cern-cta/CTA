@@ -173,6 +173,20 @@ int Cquery_DiskPoolQueryResponse_totalSpace(struct Cquery_DiskPoolQueryResponse_
 int Cquery_DiskPoolQueryResponse_setTotalSpace(struct Cquery_DiskPoolQueryResponse_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of reservedSpace
+ * Amount of reserved space. Reintroduced for backward compatibility with old
+ * clients. Should be dropped in the future.
+ */
+int Cquery_DiskPoolQueryResponse_reservedSpace(struct Cquery_DiskPoolQueryResponse_t* instance, u_signed64* var);
+
+/**
+ * Set the value of reservedSpace
+ * Amount of reserved space. Reintroduced for backward compatibility with old
+ * clients. Should be dropped in the future.
+ */
+int Cquery_DiskPoolQueryResponse_setReservedSpace(struct Cquery_DiskPoolQueryResponse_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

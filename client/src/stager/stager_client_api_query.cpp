@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.31 2007/04/20 10:02:14 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.32 2007/04/25 10:21:46 sponcec3 Exp $
  */
 
 /*
@@ -308,6 +308,7 @@ void stage_translateDiskPoolResponse
   response->diskPoolName = strdup(fr->diskPoolName().c_str());
   response->freeSpace = fr->freeSpace();
   response->totalSpace = fr->totalSpace();
+  response->reservedSpace = 0;
   int nbDiskServers = fr->diskServers().size();
   response->nbDiskServers = nbDiskServers;
   response->diskServers = (struct stage_diskServerDescription*)
@@ -319,6 +320,7 @@ void stage_translateDiskPoolResponse
     ds.status = dsd->status();
     ds.freeSpace = dsd->freeSpace();
     ds.totalSpace = dsd->totalSpace();
+    ds.reservedSpace = 0;
     int nbFileSystems = dsd->fileSystems().size();
     ds.nbFileSystems = nbFileSystems;
     ds.fileSystems = (struct stage_fileSystemDescription*)
@@ -329,6 +331,7 @@ void stage_translateDiskPoolResponse
       fs.mountPoint = strdup(fsd->mountPoint().c_str());
       fs.freeSpace = fsd->freeSpace();
       fs.totalSpace = fsd->totalSpace();
+      fs.reservedSpace = 0;
       fs.minFreeSpace = fsd->minFreeSpace();
       fs.maxFreeSpace = fsd->maxFreeSpace();
       fs.status = fsd->status();

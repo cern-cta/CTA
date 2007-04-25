@@ -213,6 +213,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cquery_DiskPoolQueryResponse_reservedSpace
+  //----------------------------------------------------------------------------
+  int Cquery_DiskPoolQueryResponse_reservedSpace(castor::query::DiskPoolQueryResponse* instance, u_signed64* var) {
+    *var = instance->reservedSpace();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cquery_DiskPoolQueryResponse_setReservedSpace
+  //----------------------------------------------------------------------------
+  int Cquery_DiskPoolQueryResponse_setReservedSpace(castor::query::DiskPoolQueryResponse* instance, u_signed64 new_var) {
+    instance->setReservedSpace(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cquery_DiskPoolQueryResponse_id
   //----------------------------------------------------------------------------
   int Cquery_DiskPoolQueryResponse_id(castor::query::DiskPoolQueryResponse* instance, u_signed64* var) {
