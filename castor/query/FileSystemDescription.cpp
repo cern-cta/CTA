@@ -46,6 +46,7 @@ castor::query::FileSystemDescription::FileSystemDescription() throw() :
   m_minFreeSpace(0.0),
   m_maxFreeSpace(0.0),
   m_status(0),
+  m_reservedSpace(0),
   m_id(0),
   m_diskServer(0) {
 }
@@ -78,6 +79,7 @@ void castor::query::FileSystemDescription::print(std::ostream& stream,
   stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
   stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;
   stream << indent << "status : " << m_status << std::endl;
+  stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "DiskServer : " << std::endl;

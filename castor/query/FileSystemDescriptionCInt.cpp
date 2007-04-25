@@ -195,6 +195,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cquery_FileSystemDescription_reservedSpace
+  //----------------------------------------------------------------------------
+  int Cquery_FileSystemDescription_reservedSpace(castor::query::FileSystemDescription* instance, u_signed64* var) {
+    *var = instance->reservedSpace();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cquery_FileSystemDescription_setReservedSpace
+  //----------------------------------------------------------------------------
+  int Cquery_FileSystemDescription_setReservedSpace(castor::query::FileSystemDescription* instance, u_signed64 new_var) {
+    instance->setReservedSpace(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cquery_FileSystemDescription_id
   //----------------------------------------------------------------------------
   int Cquery_FileSystemDescription_id(castor::query::FileSystemDescription* instance, u_signed64* var) {

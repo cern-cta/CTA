@@ -163,6 +163,20 @@ int Cquery_FileSystemDescription_status(struct Cquery_FileSystemDescription_t* i
 int Cquery_FileSystemDescription_setStatus(struct Cquery_FileSystemDescription_t* instance, int new_var);
 
 /**
+ * Get the value of reservedSpace
+ * Amount of reserved space. Reintroduced for backward compatibility with old
+ * clients. Should be dropped in the future.
+ */
+int Cquery_FileSystemDescription_reservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64* var);
+
+/**
+ * Set the value of reservedSpace
+ * Amount of reserved space. Reintroduced for backward compatibility with old
+ * clients. Should be dropped in the future.
+ */
+int Cquery_FileSystemDescription_setReservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
