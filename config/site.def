@@ -61,6 +61,11 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define RmMasterConfigFile	/etc/castor/RMMASTERCONFIG
 #endif
 #define RmNodeSpool	/var/spool/rmnode
+#if defined(_WIN32)
+#define RmNodeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\RMNODECONFIG
+#else
+#define RmNodeConfigFile	/etc/castor/RMNODECONFIG
+#endif
 #define	DMSCDir	/dms/fbs/src
 #if defined(_WIN32)
 #define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\DBCONFIG
@@ -232,88 +237,88 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define W2000MapDir	\\\\cern.ch\\dfs\\Applications\\CERN\\CASTOR\\Config
 #define WntMapDir	\\\\cerndfs01\\dfs\\Applications\\CERN\\CASTOR\\Config
 
-#define BuildCommands		NO
-#define BuildCommon		NO
-#define BuildCupvClient		NO
-#define BuildCupvDaemon		NO
-#define	BuildCupvLibrary	NO
-#define BuildExamples		NO
-#define BuildHsmTools		NO
-#define BuildMonitorClient	NO
-#define BuildMonitorServer	NO
-#define BuildMonitorLibrary	NO
-#define BuildMsgClient		NO
-#define BuildMsgServer		NO
-#define BuildMsgLibrary		NO
-#define BuildNameServerClient	NO
-#define BuildNameServerDaemon	NO
-#define BuildNameServerLibrary	NO
-#define BuildRfioClient		NO
-#define BuildRfioServer		NO
-#define BuildRfioLibrary	NO
+#define BuildCommands	YES
+#define BuildCommon	YES
+#define BuildCupvClient	YES
+#define BuildCupvDaemon	YES
+#define	BuildCupvLibrary	YES
+#define BuildExamples	NO
+#define BuildHsmTools	YES
+#define BuildMonitorClient	YES
+#define BuildMonitorServer	YES
+#define BuildMonitorLibrary	YES
+#define BuildMsgClient	YES
+#define BuildMsgServer	YES
+#define BuildMsgLibrary	YES
+#define BuildNameServerClient	YES
+#define BuildNameServerDaemon	YES
+#define BuildNameServerLibrary	YES
+#define BuildRfioClient	YES
+#define BuildRfioServer	YES
+#define BuildRfioLibrary	YES
 /* To be added when there will be end-user RMC client(s) */
 /* #define BuildRmcClient		NO */
-#define BuildRmcServer		NO
-#define BuildRmcLibrary		NO
-#define BuildJob		NO
-#define BuildRtcopyClient	NO
-#define BuildRtcopyServer	NO
-#define BuildRtcopyLibrary	NO
-#define BuildRtstat		NO
-#define BuildRtcpclientd	NO
-#define BuildStageClient	NO
-#define BuildStageClientOld	NO
-#define BuildStageDaemon	NO
-#define BuildStageLibrary	NO
-#define BuildRmMaster		NO
-#define BuildRmMasterCpp	NO
-#define BuildRmNode		NO
-#define BuildRmNodeCpp  	NO
-#define BuildRmClient		NO
-#define	BuildRmLibrary		NO
-#define BuildTapeClient		NO
-#define BuildTapeDaemon		NO
-#define BuildTapeLibrary	NO
-#define BuildTest	        NO
-#define BuildTpusage		NO
-#define BuildVdqmClient		NO
-#define BuildVdqmServer		NO
-#define BuildVdqmLibrary	NO
-#define BuildVolumeMgrClient	NO
-#define BuildVolumeMgrDaemon	NO
-#define BuildVolumeMgrLibrary	NO
-#define BuildDlfDaemon    	NO
-#define BuildDlfLibrary    	NO
-#define BuildDlfWeb      	NO
-#define BuildExpertClient	NO
-#define BuildExpertDaemon	NO
-#define BuildExpertLibrary	NO
-#define BuildSchedPlugin	NO
-#define BuildRHCpp              NO
-#define BuildVDQMCpp            NO
-#define BuildGCCpp              NO
-#define BuildOraCpp             NO
+#define BuildRmcServer	YES
+#define BuildRmcLibrary	YES
+#define BuildJob	YES
+#define BuildRtcopyClient	YES
+#define BuildRtcopyServer	YES
+#define BuildRtcopyLibrary	YES
+#define BuildRtstat	YES
+#define BuildRtcpclientd	YES
+#define BuildStageClient	YES
+#define BuildStageClientOld	YES
+#define BuildStageDaemon	YES
+#define BuildStageLibrary	YES
+#define BuildRmMaster	YES
+#define BuildRmMasterCpp	YES
+#define BuildRmNode	YES
+#define BuildRmNodeCpp	YES
+#define BuildRmClient	YES
+#define	BuildRmLibrary	YES
+#define BuildTapeClient	YES
+#define BuildTapeDaemon	YES
+#define BuildTapeLibrary	YES
+#define BuildTest	NO
+#define BuildTpusage	YES
+#define BuildVdqmClient	YES
+#define BuildVdqmServer	YES
+#define BuildVdqmLibrary	YES
+#define BuildVolumeMgrClient	YES
+#define BuildVolumeMgrDaemon	YES
+#define BuildVolumeMgrLibrary	YES
+#define BuildDlfDaemon	YES
+#define BuildDlfLibrary	YES
+#define BuildDlfWeb	YES
+#define BuildExpertClient	YES
+#define BuildExpertDaemon	YES
+#define BuildExpertLibrary	YES
+#define BuildSchedPlugin	YES
+#define BuildRHCpp	YES
+#define BuildVDQMCpp	YES
+#define BuildGCCpp	YES
+#define BuildOraCpp	YES
 #define BuildMyCpp              NO
 #define BuildPgCpp		NO
-#define BuildCastorClientCPPLibrary	NO
-#define BuildCppTest	        NO
+#define BuildCastorClientCPPLibrary	YES
+#define BuildCppTest	NO
 #define BuildTankPerfMonLibrary	NO
-#define BuildRepack		NO
-#define BuildCleaning		NO
+#define BuildRepack	YES
+#define BuildCleaning	YES
 
-#define Accounting		YES
-#define ClientLogging           NO
-#define HasNis			NO
-#define HasNroff		YES
-#define HasCDK			NO
-#define RFIODaemonRealTime 	NO	
-#define UseXFSPrealloc		YES
-#define UseAdns			NO
-#define UseCupv			YES
-#define UseDMSCapi		NO
-#define	UseHpss			NO
-#define UseMtx			NO
-#define UseOracle		YES
+#define Accounting	YES
+#define ClientLogging	NO
+#define HasNis	NO
+#define HasNroff	YES
+#define HasCDK	YES
+#define RFIODaemonRealTime	NO	
+#define UseXFSPrealloc	YES
+#define UseAdns	NO
+#define UseCupv	YES
+#define UseDMSCapi	NO
+#define	UseHpss	NO
+#define UseMtx	NO
+#define UseOracle	YES
 #define UseOraCDBC		YES
 #define UsePgSQL		NO
 #define UseMySQL		NO
@@ -329,29 +334,29 @@ correctly identified by CPP flags (tested on SuSE SLES9)
  * The following flag enables rfio client interface
  * To follow links. It brings an overhead at rfio_open()
  */
-#define FollowRtLinks		NO
+#define FollowRtLinks	NO
 
 /*
  * Section specifying the build of the Security packages
  */
 
-#define BuildSecurity		NO
-#define UseGSI                  YES
-#define UseKRB5                 YES
-#define UseHeimdalKrb5		NO
-#define UseKRB4                 NO
+#define BuildSecurity	NO
+#define UseGSI	YES
+#define UseKRB5	YES
+#define UseHeimdalKrb5	NO
+#define UseKRB4	YES
 
 #if BuildSecurity
 
 #define SecMakeStaticLibrary	NO
 
-#define BuildSecureTape		YES
-#define BuildSecureVmgr		YES
-#define BuildSecureCupv		YES
-#define	BuildSecureVdqm		YES
-#define	BuildSecureRfio		YES
+#define BuildSecureTape	YES
+#define BuildSecureVmgr	YES
+#define BuildSecureCupv	YES
+#define	BuildSecureVdqm	YES
+#define	BuildSecureRfio	YES
 #define BuildSecureRtcopy	YES
-#define BuildSecureCns		YES
+#define BuildSecureCns	YES
 #define BuildSecureStage	YES
 
 #if UseHeimdalKrb5
