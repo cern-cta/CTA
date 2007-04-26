@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseTapeSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/02 15:26:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseTapeSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/26 07:05:38 $ $Author: waldron $
  *
  * Basic implementation of ITapeSvc.
  * This class only implements the functions that are not DB related.
@@ -49,7 +49,7 @@ castor::stager::BaseTapeSvc::BaseTapeSvc()
   if (0 == rmMasterHost) {
     // Raise an exception
     castor::exception::NoEntry e;
-    e.getMessage() << "Found not entry RM/HOST in config file";
+    e.getMessage() << "Found null entry RM/HOST in config file";
     throw e;
   }
   m_rmMasterHost = rmMasterHost;
@@ -65,7 +65,7 @@ castor::stager::BaseTapeSvc::BaseTapeSvc()
 	 castor::dlf::Param("Given value", rmMasterPortStr)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 0, 2, initParams);
     }
-  }    
+  }
 }
 
 // -----------------------------------------------------------------------
