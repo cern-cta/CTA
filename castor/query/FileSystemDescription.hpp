@@ -154,6 +154,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_reservedSpace
+       * Amount of reserved space. Reintroduced for backward compatibility with old
+       * clients. Should be dropped in the future.
+       * @return the value of m_reservedSpace
+       */
+      u_signed64 reservedSpace() const {
+        return m_reservedSpace;
+      }
+
+      /**
+       * Set the value of m_reservedSpace
+       * Amount of reserved space. Reintroduced for backward compatibility with old
+       * clients. Should be dropped in the future.
+       * @param new_var the new value of m_reservedSpace
+       */
+      void setReservedSpace(u_signed64 new_var) {
+        m_reservedSpace = new_var;
+      }
+
+      /**
        * Get the value of m_minFreeSpace
        * Minimum freespace the garbage collector should keep if possible (values from 0
        * to 1, as a portion of the totalSpace)
@@ -212,26 +232,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_reservedSpace
-       * Amount of reserved space. Reintroduced for backward compatibility with old
-       * clients. Should be dropped in the future.
-       * @return the value of m_reservedSpace
-       */
-      u_signed64 reservedSpace() const {
-        return m_reservedSpace;
-      }
-
-      /**
-       * Set the value of m_reservedSpace
-       * Amount of reserved space. Reintroduced for backward compatibility with old
-       * clients. Should be dropped in the future.
-       * @param new_var the new value of m_reservedSpace
-       */
-      void setReservedSpace(u_signed64 new_var) {
-        m_reservedSpace = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -276,6 +276,9 @@ namespace castor {
       /// Total size of this fileSystem (in bytes)
       u_signed64 m_totalSpace;
 
+      /// Amount of reserved space. Reintroduced for backward compatibility with old clients. Should be dropped in the future.
+      u_signed64 m_reservedSpace;
+
       /// Minimum freespace the garbage collector should keep if possible (values from 0 to 1, as a portion of the totalSpace)
       float m_minFreeSpace;
 
@@ -284,9 +287,6 @@ namespace castor {
 
       /// status of the FileSystem
       int m_status;
-
-      /// Amount of reserved space. Reintroduced for backward compatibility with old clients. Should be dropped in the future.
-      u_signed64 m_reservedSpace;
 
       /// The id of this object
       u_signed64 m_id;

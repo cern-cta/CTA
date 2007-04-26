@@ -43,10 +43,10 @@ castor::query::FileSystemDescription::FileSystemDescription() throw() :
   m_mountPoint(""),
   m_freeSpace(0),
   m_totalSpace(0),
+  m_reservedSpace(0),
   m_minFreeSpace(0.0),
   m_maxFreeSpace(0.0),
   m_status(0),
-  m_reservedSpace(0),
   m_id(0),
   m_diskServer(0) {
 }
@@ -76,10 +76,10 @@ void castor::query::FileSystemDescription::print(std::ostream& stream,
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "freeSpace : " << m_freeSpace << std::endl;
   stream << indent << "totalSpace : " << m_totalSpace << std::endl;
+  stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
   stream << indent << "minFreeSpace : " << m_minFreeSpace << std::endl;
   stream << indent << "maxFreeSpace : " << m_maxFreeSpace << std::endl;
   stream << indent << "status : " << m_status << std::endl;
-  stream << indent << "reservedSpace : " << m_reservedSpace << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "DiskServer : " << std::endl;

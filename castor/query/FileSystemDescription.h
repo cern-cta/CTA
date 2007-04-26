@@ -123,6 +123,20 @@ int Cquery_FileSystemDescription_totalSpace(struct Cquery_FileSystemDescription_
 int Cquery_FileSystemDescription_setTotalSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of reservedSpace
+ * Amount of reserved space. Reintroduced for backward compatibility with old
+ * clients. Should be dropped in the future.
+ */
+int Cquery_FileSystemDescription_reservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64* var);
+
+/**
+ * Set the value of reservedSpace
+ * Amount of reserved space. Reintroduced for backward compatibility with old
+ * clients. Should be dropped in the future.
+ */
+int Cquery_FileSystemDescription_setReservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of minFreeSpace
  * Minimum freespace the garbage collector should keep if possible (values from 0
  * to 1, as a portion of the totalSpace)
@@ -161,20 +175,6 @@ int Cquery_FileSystemDescription_status(struct Cquery_FileSystemDescription_t* i
  * status of the FileSystem
  */
 int Cquery_FileSystemDescription_setStatus(struct Cquery_FileSystemDescription_t* instance, int new_var);
-
-/**
- * Get the value of reservedSpace
- * Amount of reserved space. Reintroduced for backward compatibility with old
- * clients. Should be dropped in the future.
- */
-int Cquery_FileSystemDescription_reservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64* var);
-
-/**
- * Set the value of reservedSpace
- * Amount of reserved space. Reintroduced for backward compatibility with old
- * clients. Should be dropped in the future.
- */
-int Cquery_FileSystemDescription_setReservedSpace(struct Cquery_FileSystemDescription_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id
