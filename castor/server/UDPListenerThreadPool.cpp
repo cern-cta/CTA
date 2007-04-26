@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/12 16:54:03 $ $Author: itglp $
+ * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/26 12:32:47 $ $Author: waldron $
  *
  * A listener thread pool listening on an UDP port
  *
@@ -48,7 +48,7 @@ void castor::server::UDPListenerThreadPool::init() throw (castor::exception::Exc
   castor::server::ListenerThreadPool::init();  
   /* Create a socket for the server, bind, and listen */
   try {
-    m_sock = new castor::io::UDPSocket(m_port, true);
+    m_sock = new castor::io::UDPSocket(m_port, true, true);
   } catch (castor::exception::Exception e) {
     clog() << ERROR << "Fatal error: cannot bind UDP socket on port " << m_port << ": "
            << e.getMessage().str() << std::endl;

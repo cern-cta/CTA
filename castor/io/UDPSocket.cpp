@@ -55,9 +55,29 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
                                  const bool reusable)
   throw (castor::exception::Exception) :
   AbstractSocket(port, reusable) {
-    createSocket();
-    setReusable();
+  createSocket();
+  setReusable();
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::io::UDPSocket::UDPSocket(const unsigned short port,
+                                 const bool reusable,
+				 const bool bind)
+  throw (castor::exception::Exception) :
+  AbstractSocket(port, reusable) {
+  createSocket();
+  setReusable();
+  if (bind == true) {
+    int rc = ::bind(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr));
+    if (0 < rc) {
+      castor::exception::Exception ex(errno);
+      ex.getMessage() << "Can't bind socket";
+      throw ex;
+    }
   }
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -102,10 +122,10 @@ void castor::io::UDPSocket::sendBuffer(const unsigned int magic,
   // create new buffer to send everything in one go
   int size = n + 2 * sizeof(unsigned int);
   char* newBuf = new char[size];
-  strncpy(newBuf, (char*)(&magic), sizeof(unsigned int));
-  strncpy(newBuf + sizeof(unsigned int), (char*)(&n), sizeof(unsigned int));
-  strncpy(newBuf + 2 * sizeof(unsigned int), buf, n);
-  // Sends the buffer with a header (magic number + size)
+  memcpy(newBuf, (char*)(&magic), sizeof(unsigned int));
+  memcpy(newBuf + sizeof(unsigned int), (char*)(&n), sizeof(unsigned int));
+  memcpy(newBuf + 2 * sizeof(unsigned int), buf, n);
+  // Sends the buffer witch a header (magic number + size)
   if (sendto(m_socket, newBuf, size, MSG_DONTWAIT,
              (struct sockaddr *)(&m_saddr), sizeof(m_saddr)) != size) {
     delete [] newBuf;
@@ -163,7 +183,7 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
   }
   // Now return the data
   *buf = (char*) malloc(n);
-  strncpy(*buf, internalBuf, n);
+  memcpy(*buf, internalBuf, n);
   delete [] internalBuf;
 }
 
