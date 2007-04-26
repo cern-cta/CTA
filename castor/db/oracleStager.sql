@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.405 $ $Date: 2007/04/25 14:10:22 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.406 $ $Date: 2007/04/26 12:41:40 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.405 $ $Date: 2007/04/25 14:10:22 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.406 $ $Date: 2007/04/26 12:41:40 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2363,7 +2363,7 @@ BEGIN
      WHERE FileSystem.id = fsId
        AND DiskPool2SvcClass.Parent = FileSystem.diskPool
        AND SvcClass.Id = DiskPool2SvcClass.Child
-       AND SvcClass.gcPolicy IS NOT NULL;
+       AND SvcClass.gcPolicy <> '';
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- no policy defined, nothing to do
     RETURN;
