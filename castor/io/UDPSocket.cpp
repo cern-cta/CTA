@@ -107,7 +107,7 @@ void castor::io::UDPSocket::sendBuffer(const unsigned int magic,
   strncpy(newBuf + 2 * sizeof(unsigned int), buf, n);
   // Sends the buffer with a header (magic number + size)
   if (sendto(m_socket, newBuf, size, MSG_DONTWAIT,
-             (struct sockaddr *)(&m_saddr), sizeof(m_saddr)) != n) {
+             (struct sockaddr *)(&m_saddr), sizeof(m_saddr)) != size) {
     delete [] newBuf;
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to send data";
