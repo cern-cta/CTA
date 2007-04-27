@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.406 $ $Date: 2007/04/26 12:41:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.407 $ $Date: 2007/04/27 08:34:45 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.406 $ $Date: 2007/04/26 12:41:40 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.407 $ $Date: 2007/04/27 08:34:45 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -3032,7 +3032,7 @@ BEGIN
     END IF;
   END LOOP;
   -- And then FileSystems
-  ind := machineValues.FIRST;
+  ind := fileSystemValues.FIRST;
   FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
     IF fileSystems(i) NOT LIKE ('/%') THEN
       SELECT id INTO machine FROM DiskServer WHERE name = fileSystems(i);
