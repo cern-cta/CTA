@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/03/13 16:54:43 $ $Author: itglp $
+ * @(#)$RCSfile: DbBaseObj.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/27 10:22:24 $ $Author: itglp $
  *
  * Base class for all database oriented objects
  *
@@ -43,6 +43,7 @@ castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* cnvSvc) :
   if (0 == m_cnvSvc) {
     initCnvSvc("DbCnvSvc");
   }
+  m_cnvSvc->registerDbObj(this);
 }
 
 // -----------------------------------------------------------------------
@@ -51,6 +52,14 @@ castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* cnvSvc) :
 castor::db::DbBaseObj::DbBaseObj(std::string serviceName) :
   BaseObject(), m_cnvSvc(0) {
   initCnvSvc(serviceName);
+  m_cnvSvc->registerDbObj(this);
+}
+
+// -----------------------------------------------------------------------
+// Destructor
+// -----------------------------------------------------------------------
+castor::db::DbBaseObj::~DbBaseObj() throw() {
+  m_cnvSvc->unregisterDbObj(this);
 }
 
 // -----------------------------------------------------------------------

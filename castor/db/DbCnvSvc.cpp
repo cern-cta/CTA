@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/02/12 17:26:06 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/27 10:22:25 $ $Author: itglp $
  *
  *
  *
@@ -85,14 +85,14 @@ const unsigned int castor::db::DbCnvSvc::RepType() {
 // dropConnection
 // -----------------------------------------------------------------------
 void castor::db::DbCnvSvc::dropConnection () throw() {
-  // make all registered converters aware
+  // make all registered db-oriented objects aware
   for (std::set<castor::db::DbBaseObj*>::const_iterator it =
-         m_registeredCnvs.begin();
-       it != m_registeredCnvs.end();
+         m_registeredDbObjs.begin();
+       it != m_registeredDbObjs.end();
        it++) {
     (*it)->reset();
   }
-  delete m_getTypeStatement;
+  if(m_getTypeStatement) delete m_getTypeStatement;
   m_getTypeStatement = 0;
   // child classes have to really drop the connection to the db
 }

@@ -35,16 +35,8 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::db::cnv::DbBaseCnv::DbBaseCnv(castor::ICnvSvc* cs) :
-  DbBaseObj(cs) {
-  cnvSvc()->registerCnv(this);
-}
+  DbBaseObj(cs) {}
 
-// -----------------------------------------------------------------------
-// Destructor
-// -----------------------------------------------------------------------
-castor::db::cnv::DbBaseCnv::~DbBaseCnv() throw() {
-  cnvSvc()->unregisterCnv(this);
-}
 
 // -----------------------------------------------------------------------
 // repType
