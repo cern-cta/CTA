@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.408 $ $Date: 2007/04/27 08:43:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.409 $ $Date: 2007/04/27 10:14:40 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.408 $ $Date: 2007/04/27 08:43:12 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.409 $ $Date: 2007/04/27 10:14:40 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1902,7 +1902,7 @@ BEGIN
    RETURN;
  END IF;
  -- set DiskCopies to GCCANDIDATE
- UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
+ UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId AND status = 0; -- STAGED
  ret := 0;
 END;
@@ -1947,16 +1947,13 @@ BEGIN
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
- -- set real DiskCopies to GCCANDIDATE. Note that we keep
+ -- set DiskCopies to INVALID. Note that we keep
  -- WAITTAPERECALL diskcopies so that recalls can continue
- UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
-  WHERE castorFile = cfId
-    AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
- -- set pending DiskCopies to INVALID. Note that they don't exist on disk
+ -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
  -- so they will only be taken by the cleaning daemon for the failed DCs.
  UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId
-    AND status IN (5, 11); -- WAITFS, WAITFS_SCHEDULING
+    AND status IN (0, 5, 6, 10, 11); -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
  DECLARE
   segId INTEGER;
   unusedIds "numList";
@@ -1989,7 +1986,7 @@ BEGIN
    END LOOP;
    -- Delete the DiskCopies
    UPDATE DiskCopy
-      SET status = 8  -- GCCANDIDATE
+      SET status = 7  -- GCCANDIDATE
     WHERE status = 2  -- WAITTAPERECALL
       AND castorFile = cfId;
    -- Mark the 'recall' SubRequests as failed
@@ -2421,19 +2418,19 @@ BEGIN
       -- Mark the DiskCopy
       UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
        WHERE id = nextItems(bestCandidate).dcId;
-      IF 1 = bestCandidate THEN
-        cur := cur1;
-      ELSIF 2 = bestCandidate THEN
-        cur := cur2;
-      ELSE
-        cur := cur3;
-      END IF;
-      FETCH cur INTO nextItems(bestCandidate);
-      EXIT WHEN cur%NOTFOUND;
       -- Update toBeFreed
       freed := freed + nextItems(bestCandidate).fileSize;
       -- Shall we continue ?
       IF toBeFreed > freed THEN
+        IF 1 = bestCandidate THEN
+          cur := cur1;
+        ELSIF 2 = bestCandidate THEN
+          cur := cur2;
+        ELSE
+          cur := cur3;
+        END IF;
+        FETCH cur INTO nextItems(bestCandidate);
+        EXIT WHEN cur%NOTFOUND;
         -- find next candidate
         bestValue := 100000000000;
         FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
