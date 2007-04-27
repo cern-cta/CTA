@@ -183,7 +183,7 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
   }
   // Now return the data
   *buf = (char*) malloc(n);
-  memcpy(*buf, internalBuf, n);
+  memcpy(*buf, internalBuf + 2*sizeof(unsigned int), n);
   delete [] internalBuf;
 }
 
