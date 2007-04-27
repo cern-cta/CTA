@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
         new castor::monitoring::rmmaster::UpdateThread
         (daemon.clusterStatus()),
         port));
-    daemon.getThreadPool('U')->setNbThreads(3);
+    daemon.getThreadPool('U')->setNbThreads(1);
 
     // Monitor threadpool
     daemon.addThreadPool
