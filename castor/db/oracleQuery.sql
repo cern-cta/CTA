@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.407 $ $Date: 2007/04/27 08:34:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.408 $ $Date: 2007/04/27 08:43:12 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.407 $ $Date: 2007/04/27 08:34:45 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.408 $ $Date: 2007/04/27 08:43:12 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -3076,8 +3076,8 @@ BEGIN
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
                    status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystems(i+9),
-                      fileSystems(i+11), fileSystems(i+10),
+              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystemValues(ind+9),
+                      fileSystemValues(ind+11), fileSystemValues(ind+10),
                       0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                       fileSystemValues(ind + 5), fileSystemValues(ind + 6),
