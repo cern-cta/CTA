@@ -47,16 +47,6 @@ void CppCppDbCnvWriter::startSQLFile() {
            IO_WriteOnly | IO_Truncate);
   file.close();  
 
-  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_drop.sql",
-           IO_WriteOnly | IO_Truncate);
-  file.close();
-  openFile(file, s_topNS + "/db/oracleGeneratedHeader_drop.sql",
-           IO_WriteOnly | IO_Truncate);
-  file.close();
-  openFile(file, s_topNS + "/db/oracleGeneratedCore_drop.sql",
-           IO_WriteOnly | IO_Truncate);
-  file.close();
-
   openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_create.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
@@ -106,15 +96,6 @@ void CppCppDbCnvWriter::endSQLFile() {
   insertFileintoStream(streamO, s_topNS + "/db/oracleGeneratedCore_create.sql");
   insertFileintoStream(streamO, s_topNS + "/db/oracleGeneratedTrailer_create.sql");
   insertFileintoStream(streamO, s_topNS + "/db/oracleTrailer.sql");
-  file.close();
-
-  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_drop.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream streamOD(&file);
-  insertFileintoStream(streamOD, s_topNS + "/db/oracleHeader_drop.sql");
-  insertFileintoStream(streamOD, s_topNS + "/db/oracleGeneratedHeader_drop.sql");
-  insertFileintoStream(streamOD, s_topNS + "/db/oracleGeneratedCore_drop.sql");
-  insertFileintoStream(streamOD, s_topNS + "/db/oracleTrailer_drop.sql");
   file.close();
 
   openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_create.sql",
@@ -576,7 +557,7 @@ void CppCppDbCnvWriter::writeConstants() {
 // writeOraSqlStatements
 //=============================================================================
 void CppCppDbCnvWriter::writeOraSqlStatements() {
-  QFile file, tFile, fileD, hFileD;
+  QFile file, tFile;
   openFile(file,
            s_topNS + "/db/oracleGeneratedCore_create.sql",
            IO_WriteOnly | IO_Append);
@@ -585,22 +566,6 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
            s_topNS + "/db/oracleGeneratedTrailer_create.sql",
            IO_WriteOnly | IO_Append);
   QTextStream tStream(&tFile);
-  openFile(hFileD,
-           s_topNS + "/db/oracleGeneratedHeader_drop.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream hStreamD(&hFileD);
-  openFile(fileD,
-           s_topNS + "/db/oracleGeneratedCore_drop.sql",
-           IO_WriteOnly | IO_Append);
-  QTextStream streamD(&fileD);
-
-  streamD << "/* SQL statements for type "
-         << m_classInfo->className
-         << " */"
-         << endl
-         << "DROP TABLE "
-         << m_classInfo->className
-         << ";" << endl;
 
   stream << "/* SQL statements for type "
          << m_classInfo->className
@@ -664,18 +629,7 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
         QString compoundName =
 			capitalizeFirstLetter(firstMember->typeName).mid(0, 12) + QString("2")
 			+ capitalizeFirstLetter(secondMember->typeName).mid(0, 13);
-        streamD << getIndent()
-               << "DROP INDEX I_"
-               << compoundName
-               << "_C;"
-               << endl << getIndent()
-               << "DROP INDEX I_"
-               << compoundName
-               << "_P;"
-               << endl << "DROP TABLE "
-               << compoundName
-               << ";" << endl;
-	    stream << "CREATE TABLE "
+        stream << "CREATE TABLE "
                << compoundName
                << " (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;"
                << endl << getIndent()
@@ -691,16 +645,6 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
                << compoundName
                << " (parent);"
                << endl;
-        hStreamD << getIndent()
-                << "ALTER TABLE "
-                << compoundName
-                << endl << getIndent()
-                << "  DROP CONSTRAINT fk_"
-                << compoundName
-                << "_P" << endl << getIndent()
-                << "  DROP CONSTRAINT fk_"
-                << compoundName
-                << "_C;" << endl;
         tStream << getIndent()
                 << "ALTER TABLE "
                 << compoundName
@@ -719,11 +663,8 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
     }
   }
   stream << endl;
-  streamD << endl;
   file.close();
   tFile.close();
-  hFileD.close();
-  fileD.close();
 }
 
 //=============================================================================
