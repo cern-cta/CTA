@@ -123,7 +123,7 @@ setcookie("style", $_GET['style']);
 		if ($schema_version < $version) {
 			continue;
 		}
-		if (($_GET[$name]) && ($_GET[$name] != 'All')) {
+		if (isset($_GET[$name]) && ($_GET[$name] != 'All') && ($_GET[$name] != "")) {
 			$filter .= ($filter) ? " AND " : "WHERE ";
 			$filter .= "t1.".$name." = '".$_GET[$name]."'";
 		}
@@ -364,10 +364,13 @@ setcookie("style", $_GET['style']);
 									 'paramvalue:Parameter Value');
 					foreach ($filters as $config) {
 						list ($form_name, $display_name) = split(":", $config);
-						if ((!$_GET[$form_name]) || ($_GET[$form_name] == 'All')) {
+						if (!isset($_GET[$form_name]) || ($_GET[$form_name] == 'All')) {
 							continue;
 						}
 						$value = $_GET[$form_name];
+						if ($value == "") {
+							continue;
+						}
 						if ($form_name == 'severity') {
 							if ($_GET[$form_name][0] == 'All') {
 								continue;
@@ -495,7 +498,7 @@ setcookie("style", $_GET['style']);
 						/* table data */
 						for ($i = 0, $keys = array_keys($data); $i < count($keys); $i++) {
 							echo "<tr>";
-							echo "<td title=\"$keys[$i]\" class=\"timestamp\">".$data[$keys[$i]]['col_timestamp']."</td>";
+							echo "<td class=\"timestamp\">".$data[$keys[$i]]['col_timestamp']."</td>";
 
 							/* user defined fields */
 							foreach ($columns as $config) {
