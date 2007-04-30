@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.36 $ $Release$ $Date: 2007/03/14 10:57:23 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.37 $ $Release$ $Date: 2007/04/30 11:30:56 $ $Author: waldron $
  *
  *
  *
@@ -731,8 +731,9 @@ static void startTapeErrorHandler()
 {
   char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
   char **argv = NULL;
-  int argc, c, maxfds, i;
+  int argc, c, maxfds, i, rc;
   pid_t pid;
+  sigset_t signal_set;
   
   /*
    * Never run more than one at a time
@@ -799,7 +800,29 @@ static void startTapeErrorHandler()
                     DLF_MSG_PARAM_STR,
                     cmdline
                     );
+
+    /* reset signal handler */
+    sigfillset(&signal_set);
+    rc = pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
+    if (rc != 0) {
+      (void)dlf_write(
+		      mainUuid,
+		      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+		      (struct Cns_fileid *)NULL,
+		      RTCPCLD_NB_PARAMS+2,
+		      "SYSCALL",
+		      DLF_MSG_PARAM_STR,
+		      "pthread_sigmask()",
+		      "ERROR_STR",
+		      DLF_MSG_PARAM_STR,
+		      strerror(errno),
+		      RTCPCLD_LOG_WHERE
+		      );
+      return;
+    }
+   
     execv(cmd,argv);
+
     /*
      * If we got here something went very wrong
      */
@@ -853,6 +876,7 @@ static int startWorker(
   char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[32];
   char usePipeStr[16], startFseqStr[16];
   char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
+  sigset_t signal_set;
 
   if ( (s == NULL) || (*s == INVALID_SOCKET) || 
        (tape == NULL) || (tape->dbRef == NULL) || (tape->dbRef->key == 0) ||
@@ -1004,6 +1028,27 @@ static int startWorker(
                   DLF_MSG_PARAM_STR,
                   cmdline
                   );
+
+  /* reset signal handler */
+  sigfillset(&signal_set);
+  rc = pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
+  if (rc != 0) {
+    (void)dlf_write(
+		    mainUuid,
+		    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+		    (struct Cns_fileid *)NULL,
+		    RTCPCLD_NB_PARAMS+2,
+		    "SYSCALL",
+		    DLF_MSG_PARAM_STR,
+		    "pthread_sigmask()",
+		    "ERROR_STR",
+		    DLF_MSG_PARAM_STR,
+		    strerror(errno),
+		    RTCPCLD_LOG_WHERE
+		    );
+    return(-1);
+  }
+ 
   execv(cmd,argv);
   /*
    * If we got here something went very wrong
