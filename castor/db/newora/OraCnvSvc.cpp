@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/04/27 10:20:10 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/04/30 08:55:59 $ $Author: waldron $
  *
  *
  *
@@ -154,7 +154,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
       if (0 != stmt) m_connection->terminateStatement(stmt);
       castor::exception::BadVersion ex;
       ex.getMessage() << "Not able to find the version of castor in the database"
-                      << "\n Original error was " << e.what();
+                      << " Original error was " << e.what();
       throw ex;
     }
     
