@@ -119,8 +119,8 @@ setcookie("style", $_GET['style']);
 
 	foreach (array('facility:1', 'hostid:1', 'pid:1', 'msg_no:1', 'reqid:1', 'nshostid:1', 'nsfileid:1', 'subreqid:2', 
 		           'tapevid:2', 'uid:2', 'gid:2', 'sec_type:2', 'sec_name:2') as $config) {
-		list ($name, $version) = split(":", $config, 2);
-		if ($schema_version < $version) {
+		list ($name, $version_prereq) = split(":", $config, 2);
+		if ($schema_version < $version_prereq) {
 			continue;
 		}
 		if (isset($_GET[$name]) && ($_GET[$name] != 'All') && ($_GET[$name] != "")) {
