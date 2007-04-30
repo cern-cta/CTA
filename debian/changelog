@@ -1,6 +1,110 @@
 castor (2.1.3-9) unstable; urgency=low
 
-  * Bug fix release on top of 3.7
+  * Bug fix release on top of 3.9
+  * CASTOR2/castor/db/DbBaseObj.cpp:
+  * CASTOR2/castor/db/DbBaseObj.hpp:
+  * CASTOR2/castor/db/DbCnvSvc.cpp:
+  * CASTOR2/castor/db/DbCnvSvc.hpp:
+  * CASTOR2/castor/db/cnv/DbBaseCnv.cpp:
+    [2007-04-27,itglp] Fixed automatic renewal of the database connection for all hand-written services. Now the registration of db objects happens at the highest level (DbBaseObj).
+  * CASTOR2/castor/db/mysql/MyCnvSvc.cpp:
+    [r1.11,2007-04-30,waldron] newline characters are not permitted inside dlf messages
+  * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
+    [r1.23,2007-04-30,waldron] newline characters are not permitted inside dlf messages
+    [r1.22,2007-04-27,itglp] Yet another errorcode for dropConnection + better comments
+  * CASTOR2/castor/db/ora/OraQuerySvc.cpp:
+    [r1.41,2007-04-26,sponcec3] Fixed missing initialization of reservedSpace
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.409,2007-04-27,sponcec3] Fixed problem with spaceToBeFreed going negative
+    [r1.408,2007-04-27,sponcec3] Fix insert statement in storeClusterStatus
+    [r1.407,2007-04-27,sponcec3] Fixed typo
+    [r1.406,2007-04-26,itglp] Fixed garbageCollectFS in the case no policy has to be applied (Disk1 pools)
+    [r1.405,2007-04-25,itglp] Really fix putStart for double job scheduling
+  * CASTOR2/castor/db/pgsql/PgCnvSvc.cpp:
+    [r 1.2,2007-04-30,waldron] newline characters are not permitted inside dlf messages
+  * CASTOR2/castor/io/StreamDiskPoolQueryResponseCnv.cpp:
+  * CASTOR2/castor/io/StreamDiskServerDescriptionCnv.cpp:
+  * CASTOR2/castor/io/StreamFileSystemDescriptionCnv.cpp:
+  * CASTOR2/castor/query/DiskPoolQueryResponse.cpp:
+  * CASTOR2/castor/query/DiskPoolQueryResponse.h:
+  * CASTOR2/castor/query/DiskPoolQueryResponse.hpp:
+  * CASTOR2/castor/query/DiskPoolQueryResponseCInt.cpp:
+  * CASTOR2/castor/query/DiskServerDescription.cpp:
+  * CASTOR2/castor/query/DiskServerDescription.h:
+  * CASTOR2/castor/query/DiskServerDescription.hpp:
+  * CASTOR2/castor/query/DiskServerDescriptionCInt.cpp:
+  * CASTOR2/castor/query/FileSystemDescription.cpp:
+  * CASTOR2/castor/query/FileSystemDescription.h:
+  * CASTOR2/castor/query/FileSystemDescription.hpp:
+  * CASTOR2/castor/query/FileSystemDescriptionCInt.cpp:
+  * CASTOR2/stager/stager_client_api_query.cpp:
+    [2007-04-25,sponcec3] Reintroduced reservedSpace for backward compatibility
+  * CASTOR2/castor/io/UDPSocket.cpp:
+    [r 1.5,2007-04-27,sponcec3] Fix buffer shifting
+    [r 1.4,2007-04-26,waldron] bind the udp socket in the UDPListenerThreadPool
+    [r 1.3,2007-04-26,waldron] fixed expected number of bytes returned from sendto
+  * CASTOR2/castor/io/UDPSocket.hpp:
+    [r 1.3,2007-04-26,waldron] bind the udp socket in the UDPListenerThreadPool
+  * CASTOR2/castor/monitoring/DiskServerStatus.cpp:
+  * CASTOR2/castor/monitoring/FileSystemStatus.cpp:
+    [2007-04-30,itglp] Print space metrics like df -h
+  * CASTOR2/castor/monitoring/rmmaster/RmMasterDaemon.cpp:
+    [r1.11,2007-04-30,waldron] switch to 3 listener threads
+    [r1.10,2007-04-27,sponcec3] Only start 1 update thread, it's far enough
+  * CASTOR2/castor/monitoring/rmnode/MetricsThread.cpp:
+    [r1.14,2007-04-30,waldron] fixed segmentation fault when readlink fails
+  * CASTOR2/castor/server/UDPListenerThreadPool.cpp:
+    [r 1.3,2007-04-26,waldron] bind the udp socket in the UDPListenerThreadPool
+  * CASTOR2/castor/stager/BaseTapeSvc.cpp:
+    [r 1.3,2007-04-26,waldron] changed error message
+  * CASTOR2/debian/castor.conf:
+    [r1.45,2007-04-30,waldron] switch to 2 minutes heartbeat timeout
+    [r1.44,2007-04-27,sponcec3] Added GC INTERVAL entry
+    [r1.43,2007-04-26,sponcec3] Added coeff that gives an estimation of the expected average file size. This is used for estimate amount of data to be written by ongoing streams
+  * CASTOR2/dlf/dlf_lib.c:
+    [r1.16,2007-04-25,waldron] optimisation in the dlf_writep call
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sqlplus:
+    [2007-04-30,waldron] added automatic generation of tape statistics
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_drop.sql:
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_drop.sqlplus:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_drop.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_drop.sqlplus:
+    [2007-04-30,waldron] ignore monitoring tables
+    [2007-04-30,waldron] generic drop script for all database objects
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_grant.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_grant.sql:
+  * CASTOR2/upgrades/dlf_2.1.2-x_to_2.1.3-x.sql:
+  * CASTOR2/upgrades/dlf_2.1.2-x_to_2.1.3-x.sqlplus:
+    [2007-04-30,waldron] added grant to dlf_tapestats
+  * CASTOR2/dlf/web/config.php:
+    [r 1.8,2007-04-30,waldron] version change
+  * CASTOR2/dlf/web/results.php:
+    [r1.17,2007-04-30,waldron] fixed versioning in footer
+    [r1.16,2007-04-30,waldron] fixed facility lookup when fac_no = 0
+  * CASTOR2/h/rtcpcld_messages.h:
+    [r1.49,2007-04-30,waldron] changed stats message severity to MONITORING
+  * CASTOR2/rtcopy/rtcpclientd.c:
+    [r1.37,2007-04-30,waldron] fixed block signal handling in execv processes caused by inherited sigmask
+  * CASTOR2/scheduler/LSF/schmod_castor.cpp:
+    [r1.19,2007-04-30,sponcec3] Changed computation of freeSpace from unsigned to signed so that we don't schedule on filesystems with 0% free space thinking there is 2^64-epsilon bytes free...
+    [r1.18,2007-04-27,sponcec3] Let read only jobs go through whatever the space situation is
+    [r1.17,2007-04-26,sponcec3] better estimation of the actual free space on a filesystem by taking into account running streams
+  * CASTOR2/scheduler/LSF/schmod_castor.hpp:
+    [r 1.5,2007-04-26,sponcec3] better estimation of the actual free space on a filesystem by taking into account running streams
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.157,2007-04-30,sponcec3] Fixed memory leak in the stager. Credits to Marisa
+  * CASTOR2/stager/stager_gc_service.cpp:
+    [r1.13,2007-04-30,itglp] Reset pointer to 0 after free (Found by Giulia with insure some time ago)
+  * CASTOR2/upgrades/2.1.3-*_to_2.1.3-8.sql:
+  * CASTOR2/upgrades/2.1.3-*_to_2.1.3-8.sqlplus:
+    [2007-04-26,itglp] Drop nullGCPolicy and update SvcClass.gcPolicy to '' where they were using it
+
+castor (2.1.3-9) unstable; urgency=low
+
+  * Bug fix release on top of 3.8
   * CASTOR2/castor/db/castor_oracle_create.sql:
   * CASTOR2/castor/db/castor_oracle_create.sqlplus:
   * CASTOR2/castor/db/castor_postgres_create.sql:
