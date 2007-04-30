@@ -26,6 +26,7 @@
 
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
+#include "u64subr.h"
 #include <iostream>
 #include <iomanip>
 
@@ -45,12 +46,25 @@ castor::monitoring::DiskServerStatus::DiskServerStatus() :
 void castor::monitoring::DiskServerStatus::print
 (std::ostream& out, const std::string& indentation) const
   throw() {
+  char ramBuf[21];
+  char memoryBuf[21];
+  char swapBuf[21];
+  char freeRamBuf[21];
+  char freeMemoryBuf[21];
+  char freeSwapBuf[21];
+  u64tostru(m_ram, ramBuf, 0);
+  u64tostru(m_memory, memoryBuf, 0);
+  u64tostru(m_swap, swapBuf, 0);
+  u64tostru(m_freeRam, freeRamBuf, 0);
+  u64tostru(m_freeMemory, freeMemoryBuf, 0);
+  u64tostru(m_freeSwap, freeSwapBuf, 0);
+
   out << indentation << std::setw(20)
-      << "ram" << ": " << m_ram << "\n"
+      << "ram" << ": " << ramBuf << "\n"
       << indentation << std::setw(20)
-      << "memory" << ": " << m_memory << "\n"
+      << "memory" << ": " << memoryBuf << "\n"
       << indentation << std::setw(20)
-      << "swap" << ": " << m_swap << "\n"
+      << "swap" << ": " << swapBuf << "\n"
       << indentation << std::setw(20)
       << "status" << ": "
       << castor::stager::DiskServerStatusCodeStrings[m_status] << "\n"
@@ -58,11 +72,11 @@ void castor::monitoring::DiskServerStatus::print
       << "adminStatus" << ": "
       << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << "\n"
       << indentation << std::setw(20)
-      << "freeRam" << ": " << m_freeRam << "\n"
+      << "freeRam" << ": " << freeRamBuf << "\n"
       << indentation << std::setw(20)
-      << "freeMemory" << ": " << m_freeMemory << "\n"
+      << "freeMemory" << ": " << freeMemoryBuf << "\n"
       << indentation << std::setw(20)
-      << "freeSwap" << ": " << m_freeSwap << "\n"
+      << "freeSwap" << ": " << freeSwapBuf << "\n"
       << indentation << std::setw(20)
       << "load" << ": " << m_load << "\n"
       << indentation << std::setw(20)

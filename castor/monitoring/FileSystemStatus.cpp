@@ -27,6 +27,7 @@
 #include "castor/monitoring/FileSystemStatus.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
+#include "u64subr.h"
 #include <iostream>
 #include <iomanip>
 
@@ -52,8 +53,15 @@ castor::monitoring::FileSystemStatus::FileSystemStatus() :
 void castor::monitoring::FileSystemStatus::print
 (std::ostream& out, const std::string& indentation) const
   throw() {
+  char spaceBuf[21];
+  char freeBuf[21];
+  char deltaFreeBuf[21];
+  u64tostru(m_space, spaceBuf, 0);
+  u64tostru(m_freeSpace, freeBuf, 0);
+  i64tostr(m_deltaFreeSpace, deltaFreeBuf, 0);
+
   out << indentation << std::setw(20)
-      << "space" << ": " << m_space << "\n"
+      << "space" << ": " << spaceBuf << "\n"
       << indentation << std::setw(20)
       << "minFreeSpace" << ": " << m_minFreeSpace << "\n"
       << indentation << std::setw(20)
@@ -87,9 +95,9 @@ void castor::monitoring::FileSystemStatus::print
       << indentation << std::setw(20)
       << "deltaNbReadWriteStreams" << ": " << m_deltaNbReadWriteStreams << "\n"
       << indentation << std::setw(20)
-      << "freeSpace" << ": " << m_freeSpace << "\n"
+      << "freeSpace" << ": " << freeBuf << "\n"
       << indentation << std::setw(20)
-      << "deltaFreeSpace" << ": " << m_deltaFreeSpace << "\n"
+      << "deltaFreeSpace" << ": " << deltaFreeBuf << "\n"
       << indentation << std::setw(20)
       << "lastStateUpdate" << ": " << m_lastStateUpdate << "\n"
       << indentation << std::setw(20)
