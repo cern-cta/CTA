@@ -1,5 +1,5 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.12 2006/09/29 07:18:41 gtaur Exp $
+ * $Id: GcSvcThread.cpp,v 1.13 2007/04/30 13:13:39 itglp Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.12 $ $Date: 2006/09/29 07:18:41 $ CERN IT-ADC/CA Ben Couturier";
+static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.13 $ $Date: 2007/04/30 13:13:39 $ CERN IT-ADC/CA Ben Couturier";
 #endif
 
 /* ================================================================= */
@@ -391,7 +391,7 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
     castor::exception::Internal e;
     e.getMessage() << "Unknown Request type : "
                    << castor::ObjectsIdStrings[req->type()];
-    if (req) delete req;
+    if (req) {delete req; req=0;}
     if (gcSvc) gcSvc->release();
     throw e;
   }
@@ -400,7 +400,7 @@ EXTERN_C int DLL_DECL stager_gc_process(void *output) {
   svcs->deleteRep(&ad, req, true);
 
   // Cleanup
-  if (req) delete req;
+  if (req) { delete req; req=0;}
   if (gcSvc) gcSvc->release();
   STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
 }
