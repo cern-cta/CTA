@@ -77,6 +77,23 @@ PARTITION BY RANGE (timestamp)
 TABLESPACE dlf_data;
 
 /*
+ * dlf_tapestats
+ */
+CREATE TABLE dlf_tapestats
+(
+	timestamp	DATE NOT NULL,
+	svcclass	VARCHAR2(50),
+	tapepool	VARCHAR2(50),
+	file_count	NUMBER,
+	file_size	NUMBER,
+	transfer_rate	NUMBER)
+PARTITION BY RANGE (timestamp)
+(
+	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
+)
+TABLESPACE dlf_data;
+
+/*
  * dlf_monitoring
  */
 CREATE TABLE dlf_monitoring
@@ -315,11 +332,12 @@ INSERT INTO dlf_mode (name, enabled) VALUES ('queue_suspend',    0);
 INSERT INTO dlf_mode (name, enabled) VALUES ('database_suspend', 0);
 
 /* initialise settings */
-INSERT INTO dlf_settings VALUES ('ARCHIVE_MODE',    '1',  'Defines the archiving policy that should be performed on the database. Where a value of 1 = drop and 2 = archive and drop.');
-INSERT INTO dlf_settings VALUES ('ARCHIVE_EXPIRY',  '30', 'Defines how many days worth of data should remain online.');
-INSERT INTO dlf_settings VALUES ('ENABLE_JOBSTATS', '0',  'Enable the automatic generation of job statistics.');
-INSERT INTO dlf_settings VALUES ('ENABLE_REQSTATS', '0',  'Enable the automatic generation of request statistics.');
-
+INSERT INTO dlf_settings VALUES ('ARCHIVE_MODE',     '1',  'Defines the archiving policy that should be performed on the database. Where a value of 1 = drop and 2 = archive and drop.');
+INSERT INTO dlf_settings VALUES ('ARCHIVE_EXPIRY',   '30', 'Defines how many days worth of data should remain online.');
+INSERT INTO dlf_settings VALUES ('ENABLE_JOBSTATS',  '0',  'Enable the automatic generation of job statistics.');
+INSERT INTO dlf_settings VALUES ('ENABLE_REQSTATS',  '0',  'Enable the automatic generation of request statistics.');
+INSERT INTO dlf_settings VALUES ('ENABLE_TAPESTATS', '0',  'Enable the automatic generation of tape statistics.');
+ 
 /*
  * dlf_partition procedure
  */
@@ -347,7 +365,7 @@ BEGIN
   
    -- determine the name of the partition for table 'X' with the highest value
     IF boundary = 0 THEN
-    
+
       -- automatic
       SELECT MAX(SUBSTR(PARTITION_NAME, 3, 10))
       INTO   v_partition_max
@@ -799,7 +817,7 @@ END;
 /
 
 /*
- * statistics scheduler
+ * statistics scheduler (15 minutes)
  */
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
@@ -813,6 +831,82 @@ DBMS_SCHEDULER.CREATE_JOB (
 	REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
 	ENABLED 	=> TRUE,
 	COMMENTS	=> 'CASTOR2 Monitoring Statistics (15 Minute Frequency)');
+END;
+/
+
+/*
+ * dlf_stats_tape (Populates table: dlf_tapestats)
+ */
+CREATE OR REPLACE PROCEDURE dlf_stats_tape
+AS
+  -- variables
+  v_time        DATE;
+  v_mode        NUMBER := 0;
+  v_value       VARCHAR2(255);
+
+BEGIN
+
+  -- tape stats enabled ?
+  SELECT value INTO v_value FROM dlf_settings WHERE name = 'ENABLE_TAPESTATS';
+  v_mode := TO_NUMBER(v_value);
+
+  IF v_mode = 1 THEN
+    -- set the nls_date_format
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
+
+    -- we define the time as a variable so that all data recorded will be synchronised
+    v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
+
+    -- update statistics
+    FOR a IN (SELECT svcclass, tapepool, COUNT(*) count, SUM(filesize) filesize, 
+		     (SUM(filesize)/300) rate
+              FROM (
+                SELECT a.id,
+                       MAX(DECODE(a.name, 'SVCCLASS',    a.value, NULL)) svcclass,
+                       MAX(DECODE(a.name, 'TAPEPOOL',    a.value, NULL)) tapepool,
+                       MAX(DECODE(b.name, 'FILESIZE',    b.value, NULL)) filesize
+                FROM  dlf_str_param_values a, dlf_num_param_values b
+                WHERE a.id = b.id
+                AND   a.id IN (
+                  -- message ids of interest
+                  SELECT id FROM dlf_messages
+                  WHERE facility = 1
+                  AND   msg_no = 55
+                  AND   timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                  AND   timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
+                )
+                AND   a.timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                AND   a.timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
+                AND   b.timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                AND   b.timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
+                AND   a.name IN ('SVCCLASS', 'TAPEPOOL')
+                AND   b.name IN ('FILESIZE', 'ELAPSEDTIME')
+                GROUP BY a.id
+              )
+              GROUP BY svcclass, tapepool)
+    LOOP
+      EXECUTE IMMEDIATE 'INSERT INTO dlf_tapestats
+                         VALUES ('''|| v_time ||''','''|| a.svcclass ||''','''|| a.tapepool ||''', 
+                                '|| a.count ||','|| a.filesize ||','|| a.rate ||')';
+    END LOOP;
+  END IF;
+END;
+/
+
+/*
+ * statistics scheduler (5 minutes)
+ */
+BEGIN
+DBMS_SCHEDULER.CREATE_JOB (
+	JOB_NAME 	=> 'DLF_STATS_5MINS',
+	JOB_TYPE 	=> 'PLSQL_BLOCK',
+	JOB_ACTION 	=> 'BEGIN
+				DLF_STATS_TAPE();
+			   END;',
+	START_DATE 	=> SYSDATE,
+	REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+	ENABLED 	=> TRUE,
+	COMMENTS	=> 'CASTOR2 Monitoring Statistics (5 Minute Frequency)');
 END;
 /
 
