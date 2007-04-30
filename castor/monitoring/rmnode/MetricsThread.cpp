@@ -268,7 +268,7 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   unsigned int  nrw   = 0;
   unsigned int  nw    = 0;
   unsigned int  x     = 0;
-  unsigned int  len   = 0;
+  int           len   = 0;
   char          linkpath[CA_MAXPATHLEN + 1];   // for readlink
 
   // loop over directory entries
