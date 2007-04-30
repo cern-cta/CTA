@@ -61,7 +61,7 @@ namespace castor {
         /**
          * Destructor
          */
-        virtual ~DbBaseCnv() throw();
+        virtual ~DbBaseCnv() throw() {};
 
         /**
          * gets the representation type, that is the type of
