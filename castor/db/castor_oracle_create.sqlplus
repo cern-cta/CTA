@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.405  Date: 2007/04/25 14:10:22  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.409  Date: 2007/04/27 10:14:40  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.405  Date: 2007/04/25 14:10:22 ');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.409  Date: 2007/04/27 10:14:40 ');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2144,7 +2144,7 @@ BEGIN
    RETURN;
  END IF;
  -- set DiskCopies to GCCANDIDATE
- UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
+ UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId AND status = 0; -- STAGED
  ret := 0;
 END;
@@ -2190,16 +2190,13 @@ BEGIN
      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
    END IF;
  END LOOP;
- -- set real DiskCopies to GCCANDIDATE. Note that we keep
+ -- set DiskCopies to INVALID. Note that we keep
  -- WAITTAPERECALL diskcopies so that recalls can continue
- UPDATE DiskCopy SET status = 8 -- GCCANDIDATE
-  WHERE castorFile = cfId
-    AND status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
- -- set pending DiskCopies to INVALID. Note that they don't exist on disk
+ -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
  -- so they will only be taken by the cleaning daemon for the failed DCs.
  UPDATE DiskCopy SET status = 7 -- INVALID
   WHERE castorFile = cfId
-    AND status IN (5, 11); -- WAITFS, WAITFS_SCHEDULING
+    AND status IN (0, 5, 6, 10, 11); -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
  DECLARE
   segId INTEGER;
   unusedIds "numList";
@@ -2232,7 +2229,7 @@ BEGIN
    END LOOP;
    -- Delete the DiskCopies
    UPDATE DiskCopy
-      SET status = 8  -- GCCANDIDATE
+      SET status = 7  -- GCCANDIDATE
     WHERE status = 2  -- WAITTAPERECALL
       AND castorFile = cfId;
    -- Mark the 'recall' SubRequests as failed
@@ -2616,7 +2613,7 @@ BEGIN
      WHERE FileSystem.id = fsId
        AND DiskPool2SvcClass.Parent = FileSystem.diskPool
        AND SvcClass.Id = DiskPool2SvcClass.Child
-       AND SvcClass.gcPolicy IS NOT NULL;
+       AND SvcClass.gcPolicy <> '';
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- no policy defined, nothing to do
     RETURN;
@@ -2674,19 +2671,19 @@ BEGIN
       -- Mark the DiskCopy
       UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
        WHERE id = nextItems(bestCandidate).dcId;
-      IF 1 = bestCandidate THEN
-        cur := cur1;
-      ELSIF 2 = bestCandidate THEN
-        cur := cur2;
-      ELSE
-        cur := cur3;
-      END IF;
-      FETCH cur INTO nextItems(bestCandidate);
-      EXIT WHEN cur%NOTFOUND;
       -- Update toBeFreed
       freed := freed + nextItems(bestCandidate).fileSize;
       -- Shall we continue ?
       IF toBeFreed > freed THEN
+        IF 1 = bestCandidate THEN
+          cur := cur1;
+        ELSIF 2 = bestCandidate THEN
+          cur := cur2;
+        ELSE
+          cur := cur3;
+        END IF;
+        FETCH cur INTO nextItems(bestCandidate);
+        EXIT WHEN cur%NOTFOUND;
         -- find next candidate
         bestValue := 100000000000;
         FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
@@ -2745,7 +2742,7 @@ BEGIN
 
   IF dcIds.COUNT > 0 THEN
     UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
-     WHERE id MEMBER OF dcIds; 
+     WHERE id MEMBER OF dcIds;
     -- compute and update the filesystem's freed space
     sumSize := 0;
     FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
@@ -3300,7 +3297,7 @@ BEGIN
     END IF;
   END LOOP;
   -- And then FileSystems
-  ind := machineValues.FIRST;
+  ind := fileSystemValues.FIRST;
   FOR i in fileSystems.FIRST .. fileSystems.LAST LOOP
     IF fileSystems(i) NOT LIKE ('/%') THEN
       SELECT id INTO machine FROM DiskServer WHERE name = fileSystems(i);
@@ -3344,8 +3341,8 @@ BEGIN
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
                    nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
                    status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystems(i+9),
-                      fileSystems(i+11), fileSystems(i+10),
+              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystemValues(ind+9),
+                      fileSystemValues(ind+11), fileSystemValues(ind+10),
                       0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                       fileSystemValues(ind + 5), fileSystemValues(ind + 6),
