@@ -22,7 +22,7 @@
 /*
  * Version of the DLF web interface
  */
-$version = "1.0.2-1";
+$version = "1.0.3-1";
 
 /*
  * Use the javascript/css calendar popup for date selection?
