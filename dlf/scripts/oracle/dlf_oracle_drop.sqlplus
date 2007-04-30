@@ -8,6 +8,7 @@ BEGIN
   -- drop all objects (ignore monitoring ones!)
   FOR rec IN (SELECT object_name, object_type FROM user_objects
               WHERE  object_name NOT LIKE 'PROC_%'
+              AND    object_name NOT LIKE 'MONITORING_%'
               ORDER BY object_name, object_type)
   LOOP
     IF rec.object_type = 'TABLE' THEN
