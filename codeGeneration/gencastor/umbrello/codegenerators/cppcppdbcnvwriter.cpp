@@ -383,19 +383,6 @@ void CppCppDbCnvWriter::writeConstants() {
               << " VALUES (:1, :2, SYSDATE)\";"
               << endl << endl;
   }
-  if (isNewSubRequest()) {
-    *m_stream << getIndent()
-              << "/// SQL statement for subrequest insertion into newSubRequests table"
-              << endl << getIndent()
-              << "const std::string "
-              << m_classInfo->fullPackageName
-              << "Db" << m_classInfo->className
-              << "Cnv::s_insertNewSubReqStatementString =" << endl
-              << getIndent()
-              << "\"INSERT INTO newSubRequests (id, creation)"
-              << " VALUES (:1, SYSDATE)\";"
-              << endl << endl;
-  }
   // Associations dedicated statements
   for (Assoc* as = assocs.first();
        0 != as;
@@ -837,9 +824,6 @@ void CppCppDbCnvWriter::writeConstructors() {
   if (isNewRequest()) {
     *m_stream << getIndent() << "  m_insertNewReqStatement(0)," << endl;
   }
-  if (isNewSubRequest()) {
-    *m_stream << getIndent() << "  m_insertNewSubReqStatement(0)," << endl;
-  }
   *m_stream << getIndent() << "  m_storeTypeStatement(0)," << endl
             << getIndent() << "  m_deleteTypeStatement(0)";
   // Associations dedicated statements
@@ -938,11 +922,6 @@ void CppCppDbCnvWriter::writeReset() {
               << "if(m_insertNewReqStatement) delete m_insertNewReqStatement;"
               << endl;
   }
-  if (isNewSubRequest()) {
-    *m_stream << getIndent()
-              << "if(m_insertNewSubReqStatement) delete m_insertNewSubReqStatement;"
-              << endl;
-  }
   *m_stream << getIndent() << "if(m_storeTypeStatement) delete m_storeTypeStatement;"
             << endl << getIndent()
             << "if(m_deleteTypeStatement) delete m_deleteTypeStatement;"
@@ -1033,11 +1012,6 @@ void CppCppDbCnvWriter::writeReset() {
   if (isNewRequest()) {
     *m_stream << getIndent()
               << "m_insertNewReqStatement = 0;"
-              << endl;
-  }
-  if (isNewSubRequest()) {
-    *m_stream << getIndent()
-              << "m_insertNewSubReqStatement = 0;"
               << endl;
   }
   *m_stream << getIndent()
@@ -2185,16 +2159,6 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
     m_indent--;
     *m_stream << getIndent() << "}" << endl;
   }
-  if (isNewSubRequest()) {
-    *m_stream << getIndent()
-              << "if (0 == m_insertNewSubReqStatement) {" << endl;
-    m_indent++;
-    *m_stream << getIndent()
-              << "m_insertNewSubReqStatement = createStatement(s_insertNewSubReqStatementString);"
-              << endl;
-    m_indent--;
-    *m_stream << getIndent() << "}" << endl;
-  }
   *m_stream << getIndent()
             << "if (0 == m_storeTypeStatement) {" << endl;
   m_indent++;
@@ -2270,13 +2234,6 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
               << "m_insertNewReqStatement->setUInt64(2, obj->type());"
               << endl << getIndent()
               << "m_insertNewReqStatement->execute();"
-              << endl;
-  }
-  if (isNewSubRequest()) {
-    *m_stream << getIndent()
-              << "m_insertNewSubReqStatement->setUInt64(1, obj->id());"
-              << endl << getIndent()
-              << "m_insertNewSubReqStatement->execute();"
               << endl;
   }
   // Commit if needed
@@ -3005,10 +2962,3 @@ bool CppCppDbCnvWriter::isNewRequest() {
     !m_classInfo->allSuperclasses.contains(concept2);
 }
 
-//=============================================================================
-// isNewSubRequest
-//=============================================================================
-bool CppCppDbCnvWriter::isNewSubRequest() {
-  //return m_classInfo->className == "SubRequest";
-  return false;
-}
