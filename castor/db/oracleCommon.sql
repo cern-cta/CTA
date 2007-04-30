@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.409 $ $Date: 2007/04/27 10:14:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.410 $ $Date: 2007/04/30 14:31:35 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.409 $ $Date: 2007/04/27 10:14:40 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.410 $ $Date: 2007/04/30 14:31:35 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2360,7 +2360,7 @@ BEGIN
      WHERE FileSystem.id = fsId
        AND DiskPool2SvcClass.Parent = FileSystem.diskPool
        AND SvcClass.Id = DiskPool2SvcClass.Child
-       AND SvcClass.gcPolicy <> '';
+       AND length(SvcClass.gcPolicy) IS NOT NULL; -- strange way ORACLE has to deal with empty strings...
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- no policy defined, nothing to do
     RETURN;
