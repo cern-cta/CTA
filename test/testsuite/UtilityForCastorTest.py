@@ -3,15 +3,28 @@ import os
 import sys
 import time
 
+
+
+def getListOfFiles(myDir):
+        tmpList=os.popen4("nsls "+myDir)[1].read().split("\n")
+        defList=[]
+	if tmpList[0].find("No such file or directory"):
+		return []
+        for file in tmpList:
+            defList.append(myDir+file)
+            return defList
+
+
 def getTimeOut():
-    f=open("/etc/castor/CASTORTESTCONFIG","r")
+    f=open("./CASTORTESTCONFIG","r")
     configFileInfo=f.read()
     f.close
     index= configFileInfo.find("*** Generic parameters ***")
     configFileInfo=configFileInfo[index:]
     index=configFileInfo.find("***")
-    index=index-1
-    configFileInfo=configFileInfo[:index]
+    if index != -1:
+        index=index-1
+        configFileInfo=configFileInfo[:index]
     timeOutVal=configFileInfo[configFileInfo.find("TIMEOUT"):].split()[1]
     return int(timeOutVal)
 
@@ -61,7 +74,7 @@ def runOnShell(cmdS,scen=None):
         t.start()
         if scen != None:
             singleCmd=scen+singleCmd
-        os.popen4(cmdS)
+        os.system(singleCmd)
         t.cancel()
     
     
@@ -70,15 +83,30 @@ def logUser():
 #function to find the right directory on castor 
     myUid= os.geteuid()
    
-    strUid=0
-   
+    strUid=0   
     fin=open("/etc/passwd",'r')
     for line in fin:
         elem=line.split(":")
         if elem[2] == str(myUid):
             strUid=elem[0]
-    fin.close()
-    return strUid
+            fin.close()
+            return strUid
+    return 0
+
+def logGroup():
+    #function to find the right directory on castor 
+    myGid= os.getegid()
+   
+    strGid=0
+   
+    fin=open("/etc/group",'r')
+    for line in fin:
+        elem=line.split(":")
+        if elem[2] == str(myGid):
+            strGid=elem[0]
+            fin.close()
+            return strGid
+    return 0
 
 
 # prepare string for castor file
@@ -104,57 +132,114 @@ def checkUser():
  
 #different scenarium for env
 
-def createScenarium(host,port,serviceClass,version,opt=None):
+def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
 	myShell=os.popen('ls -l /bin/sh').read()
 	myScen=""
 	if myShell.find("bash") != -1:
 		if host !=-1:
 			myScen+="export STAGE_HOST="+host+";"
-		else:
-			myScen+="unset STAGE_HOST;"
 		if port !=-1:
-			myScen+="export STAGE_PORT="+port+";"
-		else:
-			myScen+="unset STAGE_PORT;"	
+			myScen+="export STAGE_PORT="+port+";"	
 		if serviceClass !=-1:
 			myScen+="export STAGE_SVCCLASS="+serviceClass+";"
-		else:
-			myScen+="unset STAGE_SVCCLASS;"
 		if version !=-1:
 			myScen+="export RFIO_USE_CASTOR_V2="+version+";"
-		else:
-			myScen+="unset RFIO_USE_CASTOR_V2;"
                 if opt != None:
                     for envVar in opt:
                         if envVar[1] != -1:
                             myScen+="export "+envVar[0]+"="+envVar[1]+";"
-                        else:
-                            myScen+="unset "+envVar[0]+";"
-		return myScen
+
+                if useEnv == None or useEnv == "no":
+                    if host == -1:
+			myScen+="unset STAGE_HOST;"
+                    if port ==-1:
+			myScen+="unset STAGE_PORT;"	
+                    if serviceClass ==-1:
+			myScen+="unset STAGE_SVCCLASS;"
+                    if version ==-1:
+			myScen+="unset RFIO_USE_CASTOR_V2;"
+                    if opt != None:
+                        for envVar in opt:
+                            if envVar[1] == -1:
+                                myScen+="unset "+envVar[0]+";"
+
+                return myScen
 
 	if myShell.find("tcsh"):
 	        if host !=-1:
 			myScen+="setenv STAGE_HOST "+host+";"
-		else:
-			myScen+="unsetenv STAGE_HOST;"
 		if port !=-1:
 			myScen+="setenv  STAGE_PORT  "+port+";"
-		else:
-			myScen+="unsetenv STAGE_PORT;"	
 		if serviceClass !=-1:
 			myScen+="setenv  STAGE_SVCCLASS "+serviceClass+";"
-		else:
-			myScen+="unsetenv STAGE_SVCCLASS;"
 	        if version !=-1:
 			myScen+="setenv RFIO_USE_CASTOR_V2 "+version+";"
-		else:
-			myScen+="unsetenv RFIO_USE_CASTOR_V2;"
                 if opt != None:
                     for envVar in opt:
                         if envVar[1] != -1:
                             myScen+="setenv "+envVar[0]+" "+envVar[1]+";"
-                        else:
-                            myScen+="unsetenv "+envVar[0]+";"
-                
-	        return myScen
+                            
+                if useEnv == None or useEnv == "no":
+                    if host == -1:
+                        myScen+="unsetenv STAGE_HOST;"
+                    if port == -1:
+                        myScen+="unsetenv STAGE_PORT;"	
+                    if serviceClass == -1:
+                        myScen+="unsetenv STAGE_SVCCLASS;"
+                    if version == -1:
+                        myScen+="unsetenv RFIO_USE_CASTOR_V2;"
+                    if opt != None:
+                        for envVar in opt:
+                            if envVar[1] == -1:
+                                myScen+="unsetenv "+envVar[0]+";"
+        print myScen        
 	return myScen
+
+
+def getCastorParameters():
+	try:
+            f=open("./CASTORTESTCONFIG")
+            configFileInfo=f.read()
+            f.close
+            index= configFileInfo.find("*** Generic parameters ***")
+            configFileInfo=configFileInfo[index:]
+            index=configFileInfo.find("***")
+            if index != -1:
+                index=index-1
+                configFileInfo=configFileInfo[:index]
+            
+            stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
+            stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
+            stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
+            stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
+            return (stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+        except IOError:
+            return (0,0,0,0)
+
+# to test if the request handler and the stager are responding and the rfcp working
+ 
+def testCastorBasicFunctionality(inputFile,castorFile,localOut,scenario):
+        cmd=["stager_qry -M "+castorFile]
+        saveOnFile(localOut+"Qry",cmd,scenario)
+        fi=open(localOut+"Qry","r")
+        outBuff=fi.read()
+        fi.close()
+        if outBuff.rfind("Unknown host") != -1:
+            return [-1,"the stager host is unknown"]
+        if outBuff.rfind("Internal error")!= -1:
+            return [-1, "the stager gives Internal errors"]
+        
+	cmd=["rfcp "+inputFile+" "+castorFile+"RfioFine1","rfcp "+castorFile+"RfioFine1  "+castorFile+"RfioFine2","rfcp "+castorFile+"RfioFine1  "+localOut+"fileRfioFineCopy","rfcp "+castorFile+"RfioFine2  "+localOut+"fileRfioFine2Copy","diff "+inputFile+" "+localOut+"fileRfioFineCopy","diff "+inputFile+" "+localOut+"fileRfioFine2Copy"]
+		
+        saveOnFile(localOut+"RfioFine",cmd,scenario)
+        if os.stat(localOut+"fileRfioFineCopy")[6] == 0:
+            return [-1,"Rfcp doesn't work"]
+        if os.stat(localOut+"fileRfioFine2Copy")[6] == 0:
+            return [-1,"Rfcp doesn't work"]
+        if os.stat(localOut+"RfioFine4")[6] != 0:
+            return [-1,"Rfcp doesn't work"]
+        if os.stat(localOut+"RfioFine5")[6] != 0:
+            return [-1,"Rfcp doesn't work"]
+        
+        runOnShell(["rm "+localOut+"fileRfioFineCopy","rm "+localOut+"fileRfioFine2Copy"],scenario)
+        return [0,"Everything fine"]

@@ -2,19 +2,17 @@ import os
 import sys
 import unittest
 import string
+
 import ClientTest
 import RfioTest
+import TapeTest
+#import DlfTest
+#import CommonTest
+#import CoreTest
 
+import signal
 
 ########################### for each module its own test suite ##########################
-
-class CommonSuite(unittest.TestSuite):
-    def __init__(self):    
-	unittest.TestSuite.__init__(self)
-
-class ServerSuite(unittest.TestSuite):
-    def __init__(self):    
-	unittest.TestSuite.__init__(self)
 
 class ClientSuite(unittest.TestSuite):
     def __init__(self):    
@@ -24,58 +22,47 @@ class RfioSuite(unittest.TestSuite):
     def __init__(self):    
 	unittest.TestSuite.__init__(self)
 
+class TapeSuite(unittest.TestSuite):
+    def __init__(self):    
+	unittest.TestSuite.__init__(self)
+
 class DlfSuite(unittest.TestSuite):
     def __init__(self):    
 	unittest.TestSuite.__init__(self)
-	
-class CsvcsSuite(unittest.TestSuite):
-    def __init__(self):    
-	unittest.TestSuite.__init__(self)	
-	
-class DisksvrSuite(unittest.TestSuite):
-    def __init__(self):    
-	unittest.TestSuite.__init__(self)	
-	
-class TapeSuite(unittest.TestSuite):
-    def __init__(self):    
-	unittest.TestSuite.__init__(self)	
-	
-class AdminSuite(unittest.TestSuite):
+
+class CommonSuite(unittest.TestSuite):
     def __init__(self):    
 	unittest.TestSuite.__init__(self)
 	
+class CoreSuite(unittest.TestSuite):
+    def __init__(self):    
+	unittest.TestSuite.__init__(self)		
 
 #####  allCastorSuites is a dictonary with a test suite for each module ###########
 	
-allCastorSuites={'COMMON':CommonSuite(),'SERVER':ServerSuite(),'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'DLF':DlfSuite(),'CSVC':CsvcsSuite(),'DISKSVR':DisksvrSuite(),'TAPE':TapeSuite(),'ADMIN':AdminSuite()}
-
+allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'TAPE':TapeSuite(),'DLF':DlfSuite(),'COMMON':CommonSuite(),'CORE':CoreSuite()}
 
 ################ for each module all the possible test suites included #######################
 
-commonTest={'TEST':0}
+clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite(),'EXTRATEST':ClientTest.StagerExtraTestSuite()}
 
-serverTest={'TEST':0}
+rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_NEW_TURL': RfioTest.RfioRfcpNewTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_NEW_TURL': RfioTest.RfioOtherCmdNewTurlSuite(),'API': RfioTest.RfioApiSuite(), 'STRESS':RfioTest.RfioApiSuite()}
 
-clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite()}
+tapeTest={'PREREQ':TapeTest.TapePreSuite(),'MIGRATION':TapeTest.TapeMigrationSuite(),'RECALL':TapeTest.TapeRecallSuite(),'MIGRATION_AND_RECALL':TapeTest.TapeMigrationAndRecallSuite(), 'STRESS_CASTOR':TapeTest.TapeStressCastorSuite(),'TAPE_ONLY':TapeTest.TapeTapeOnlySuite()}
 
-rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_FANCY_TURL': RfioTest.RfioRfcpFancyTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_FANCY_TURL': RfioTest.RfioOtherCmdFancyTurlSuite()}
+dlfTest={'PREREQ':0,'TEST':0}
 
-dlfTest={'TEST':0}
 
-csvcsTest={'TEST':0}
+commonTest={'PREREQ':0,'TEST':0}
 
-disksvrTest={'TEST':0}
+coreTest={'PREREQ':0,'TEST':0}
 
-tapeTest={'TEST':0}
-
-adminTest={'TEST':0}
-
-listOfTest={'COMMON':commonTest,'SERVER':serverTest,'CLIENT':clientTest,'RFIO':rfioTest,'DLF':dlfTest,'CSVCS':csvcsTest,'DISKSVR':disksvrTest,'TAPE':tapeTest,'ADMIN':adminTest}
+listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'TAPE':tapeTest,'DLF':dlfTest,'COMMON':commonTest,'CORE':coreTest}
 
 
 #################### opening the file with the list of tests wanted  ################################
 
-f=open("/etc/castor/CASTORTESTCONFIG","r")
+f=open("./CASTORTESTCONFIG","r")
 configFileInfo=f.read()
 f.close
 
@@ -83,21 +70,28 @@ index= configFileInfo.find("*** Test choice ***")
 configFileInfo=configFileInfo[index:]
 configFileInfo=configFileInfo.strip("*** Test choice ***\n\n")
 index=configFileInfo.find("***")
-index=index
-configFileInfo=configFileInfo[:index]
-
+if index != -1:
+    index=index-1
+    configFileInfo=configFileInfo[:index]
 
 newSuites=configFileInfo.split("\n\n")
 
 for mySuite in newSuites:
-    newCases=mySuite.splitlines()
+    # at least a test of that group => I run the PreReqTests
+    if mySuite.find("YES") !=-1:
+         testSuiteName=(mySuite.split())[0]
+         testToAdd=(listOfTest[testSuiteName])["PREREQ"]
+         if testToAdd != 0:
+             (allCastorSuites[testSuiteName]).addTest(testToAdd)
+             
+    newCases=mySuite.splitlines()         
     for myCase in newCases:
        	if myCase.find("YES") != -1:
             elem=myCase.split()
             testToAdd=(listOfTest[elem[0]])[elem[1]]
             if testToAdd != 0:
                 (allCastorSuites[elem[0]]).addTest(testToAdd)
-
+            
 
 ############### this is the global test suite with all the tests required in the CASTORTESTCONFIG ####################
 
@@ -106,10 +100,14 @@ class CastorGlobalSuite(unittest.TestSuite):
 	unittest.TestSuite.__init__(self)
 
 
-myGlobalSuite=CastorGlobalSuite()
-for differentSuite in allCastorSuites:
+try:
+    myGlobalSuite=CastorGlobalSuite()
+    for differentSuite in allCastorSuites:
 	myGlobalSuite.addTest(allCastorSuites[differentSuite])
 		
-runner=unittest.TextTestRunner(verbosity=2)
-runner.run(myGlobalSuite)
-os._exit(0)
+    runner=unittest.TextTestRunner(verbosity=2)
+    runner.run(myGlobalSuite)
+    os._exit(0)
+except KeyboardInterrupt:
+    print "\nTests have been interrupted by a keyboard interrupt."
+    os._exit(-1)

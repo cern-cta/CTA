@@ -5,30 +5,36 @@ import sys
 import time
 import threading
 
-ticket= UtilityForCastorTest.getTicket()
-
-# Information from RFIOTESTCONFIG
+# Information to access Castor
 
 stagerHost=""
 stagerPort=""
 stagerSvcClass=""
 stagerVersion=""
+(stagerHost,stagerPort,stagerSvcClass,stagerVersion)=UtilityForCastorTest.getCastorParameters()
+
+#other parameters
+
 remoteHost=""
 stageMap="no"
 castorConf="no"
-
-# Directories used
-
-localDir="" 
-remoteDir=""
-castorDir=(UtilityForCastorTest.prepareCastorString())+"tmpRfioTest"+ticket+"/"
-
+castorEnv="no"
+ticket= UtilityForCastorTest.getTicket()
 
 # Variables used for different enviroment
 
 myTurl=""
 myTag=""
 caseScen=""
+
+# files and directories
+
+inputFile=""
+localDir="" 
+remoteDir=""
+castorDir=(UtilityForCastorTest.prepareCastorString())+"tmpRfioTest"+ticket+"/"
+inputStressFiles=""
+
 
 
 ###################
@@ -42,49 +48,45 @@ class RfioPreRequisitesCase(unittest.TestCase):
 	def mainScenariumSetUp(self):
 		assert (UtilityForCastorTest.checkUser != -1), "you don't have a valid castor directory"
 		try:
+			global castorDir
 		        os.system("rfmkdir "+castorDir)
-			f=open("/etc/castor/CASTORTESTCONFIG","r")
+			
+			f=open("./CASTORTESTCONFIG","r")
 			configFileInfo=f.read()
 			f.close
 
 			index= configFileInfo.find("*** Rfio test specific parameters ***")
 			configFileInfo=configFileInfo[index:]
 			index=configFileInfo.find("***")
-			index=index -1
-			configFileInfo=configFileInfo[:index]
+			if index != -1:
+				index=index-1
+				configFileInfo=configFileInfo[:index]
 
+		        global inputFile
+		 	inputFile=(configFileInfo[configFileInfo.find("INPUT_FILE"):]).split()[1]
+			
+                        global inputStressFiles
+		 	inputStressFiles=UtilityForCastorTest.getListOfFiles((configFileInfo[configFileInfo.find("STRESS_INPUT_DIR"):]).split()[1])
+			
 			global localDir
-		        localDir=(configFileInfo[configFileInfo.find("LOCAL_DIR"):]).split()[1]+ticket+"/"
+		        localDir=(configFileInfo[configFileInfo.find("LOG_DIR"):]).split()[1]+ticket+"/"
 			os.system("mkdir "+localDir)
-
-			global stagerHost
-		 	stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
-
-			global stagerPort
-		 	stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
-
-			global stagerSvcClass
-		 	stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
-
-		        global stagerVersion
-		 	stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
 
 		 	remoteHost=(configFileInfo[configFileInfo.find("REMOTE_HOST"):]).split()[1]
 
 			global remoteDir
-
-			remoteDir=(configFileInfo[configFileInfo.find("REMOTE_DIR"):]).split()[1]
+			remoteDir=(configFileInfo[configFileInfo.find("REMOTE_OUTPUT_DIR"):]).split()[1]
 			remoteDir=remoteHost+":"+remoteDir+"/tmpRfio"+ticket
-			
-			
 			os.system("rfmkdir "+remoteDir)
 			
+			
 			global stageMap
-		 	stageMap=((configFileInfo[configFileInfo.find("USE_STAGEMAP.CONF"):]).split()[1]).lower()
+		 	stageMap=((configFileInfo[configFileInfo.find("USE_STAGEMAP"):]).split()[1]).lower()
 
 			global castorConf
-		 	castorConf=((configFileInfo[configFileInfo.find("USE_CASTOR.CONF"):]).split()[1]).lower()
-			
+		 	castorConf=((configFileInfo[configFileInfo.find("USE_CASTOR_CONF"):]).split()[1]).lower()
+			global castorEnv
+		 	castorEnv=((configFileInfo[configFileInfo.find("USE_CASTOR_ENV"):]).split()[1]).lower()
 	        except IOError:
 			assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
 		
@@ -92,23 +94,31 @@ class RfioPreRequisitesCase(unittest.TestCase):
 	def stageMapSituation(self):
 		try:
 		   f=open("/etc/castor/stagemap.conf","r")
+		   buff=f.read()
 		   f.close()
-		   assert stageMap == "yes", "You might use value in /etc/castor/stagemap.conf even if you don't want."
+		   gid=UtilityForCastorTest.logGroup()
+		   uid=UtilityForCastorTest.logUser()
+		   if (buff.find("USTGMAP "+uid)!= -1 or buff.find("GSTGMAP "+gid) != -1):
+			   if castorEnv == "no":
+				   assert stageMap == "yes", "You might use values in /etc/castor/stagemap.conf even if you don't want." 
+		   else:
+			   assert stageMap == "no", "It might be not possible to use the stagemap.conf parameters."                	   		   
                 except IOError:                     
                    assert stageMap == "no", "It is not possible to read /etc/castor/stagemap.conf."
-
 		
 	def castorConfSituation(self):
 		try:
 		   f=open("/etc/castor/castor.conf","r")
+		   buff=f.read()
 		   f.close()
-		   assert castorConf == "yes", "You might use value in /etc/castor/castor.conf even if you don't want."
+
+		   if buff.find("#RH HOST") == -1  and  buff.find("RH HOST") != -1:
+			   if  castorEnv == "no":
+				   assert castorConf == "yes", "You might use value in /etc/castor/castor.conf even if you don't want."
+		   else:
+			   assert castorConf == "no", "It might be not possible to use the castor.conf parameters." 
                 except IOError:                     
                    assert castorConf == "no", "It is not possible to read /etc/castor/castor.conf."
-
-
-
-
 
 
 
@@ -124,8 +134,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
 
 class RfioRfcpSimpleCase(unittest.TestCase):
 	def localToLocal(self):
-		cmd=caseScen
-		cmd=["rfcp /etc/group "+localDir+"fileRfio1"+ticket,"rfcp "+localDir+"fileRfio1"+ticket+" "+localDir+"fileRfio1Copy"+ticket,"diff /etc/group "+localDir+"fileRfio1Copy"+ticket]
+		cmd=["rfcp "+inputFile+" "+localDir+"fileRfioLocalToLocal"+ticket,"rfcp "+localDir+"fileRfioLocalToLocal"+ticket+" "+localDir+"fileRfioLocalToLocalCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioLocalToLocalCopy"+ticket]
 		UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleLocalToLocal",cmd)
                 fi=open(localDir+"RfioSimpleLocalToLocal","r")
                 buffOut=fi.read()
@@ -137,17 +146,17 @@ class RfioRfcpSimpleCase(unittest.TestCase):
         	assert buffOut.rfind("through local (in) and local (out)") != -1, "rfio doesn't work local to local"
 
         	assert os.stat(localDir+"RfioSimpleLocalToLocal2")[6] == 0, "rfio doesn't work local to local"
-                assert os.stat(localDir+"fileRfio1Copy"+ticket)[6] != 0, "rfio doesn't work local to local"
+                assert os.stat(localDir+"fileRfioLocalToLocalCopy"+ticket)[6] != 0, "rfio doesn't work local to local"
 
         def localToRemote(self):
-                cmd=[caseScen+"rfcp /etc/group "+remoteDir+"localToRemote1"+ticket]
+                cmd=[caseScen+"rfcp "+inputFile+" "+remoteDir+"fileRfioLocalToRemote"+ticket]
 		UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleLocalToRemote",cmd)
                 fi=open(localDir+"RfioSimpleLocalToRemote","r")
                 buffOut=fi.read()
                 fi.close()
         	assert buffOut.rfind("through local (in) and eth0 (out)") != -1, "rfio doesn't work from local to remote"
         def remoteToLocal(self):
-                cmd=["rfcp /etc/group "+remoteDir+"localToRemote2"+ticket,"rfcp "+remoteDir+"localToRemote2"+ticket+" "+localDir+"fileRfio3"+ticket,"diff /etc/group "+localDir+"fileRfio3"+ticket]
+                cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToLocal"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToLocal"+ticket+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket]
 		UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleRemoteToLocal",cmd)
                 
                 fi=open(localDir+"RfioSimpleRemoteToLocal","r")
@@ -160,11 +169,11 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 fi.close()
         	assert buffOut.rfind("through eth0 (in) and local (out)") != -1, "rfio doesn't work from  remote  to local"
 
-                assert os.stat(localDir+"fileRfio3"+ticket)[6] != 0, "rfio doesn't work from remote to local"
+                assert os.stat(localDir+"fileRfioRemoteToLocalCopy"+ticket)[6] != 0, "rfio doesn't work from remote to local"
                 assert os.stat(localDir+"RfioSimpleRemoteToLocal2")[6] == 0, "rfio doesn't work from remote to local"
                 
         def remoteToRemote(self):
-                cmd=["rfcp /etc/group "+remoteDir+"remoteToRemote1"+ticket,"rfcp "+remoteDir+"remoteToRemote1"+ticket+" "+remoteDir+"remoteToRemote2"+ticket,"rfcp "+remoteDir+"remoteToRemote2"+ticket+" "+localDir+"fileRfio4"+ticket,"diff /etc/group "+localDir+"fileRfio4"+ticket]
+                cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToRemote"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToRemote"+ticket+" "+remoteDir+"fileRfioRemoteToRemoteCopy"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToRemoteCopy"+ticket+" "+localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket]
 
 		UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleRemoteToRemote",cmd)
                 
@@ -183,7 +192,7 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 fi.close()
         	assert buffOut.rfind("through eth0 (in) and local (out)") != -1, "rfio doesn't work from  remote  to local"
 
-                assert os.stat(localDir+"fileRfio4"+ticket)[6] != 0, "rfio doesn't work from remote to remote"
+                assert os.stat(localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket)[6] != 0, "rfio doesn't work from remote to remote"
                 assert os.stat(localDir+"RfioSimpleRemoteToRemote3")[6] == 0, "rfio doesn't work from remote to remote"
                 
 
@@ -192,67 +201,67 @@ class RfioRfcpSimpleCase(unittest.TestCase):
 
 class RfioOtherCmdSimpleCase(unittest.TestCase):
 	def localRfcat(self):
-	        cmd=["rfcat /etc/group"]
-		UtilityForCastorTest.saveOnFile(localDir+"LocalRfcat"+myTag,cmd,caseScen)
-                fi=open("/etc/group","r")
+	        cmd=["rfcat "+inputFile]
+		UtilityForCastorTest.saveOnFile(localDir+"RfioLocalRfcat",cmd,caseScen)
+                fi=open(inputFile,"r")
                 buffOut=fi.read()
                 fi.close()
-		fi=open(localDir+"LocalRfcat"+myTag,"r")
+		fi=open(localDir+"RfioLocalRfcat","r")
                 buffOut2=fi.read()
                 fi.close()
         	assert buffOut2.find(buffOut) != -1, "rfcat is not working for local files"
                 
 	def remoteRfcat(self):
-		cmd=["rfcp /etc/group "+remoteDir+"fileRfcatRemote"+ticket,"rfcat "+remoteDir+"fileRfcatRemote"+ticket]
-		UtilityForCastorTest.saveOnFile(localDir+"RemoteRfcat"+myTag,cmd,caseScen)
+		cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRfcatRemote"+ticket,"rfcat "+remoteDir+"fileRfioRfcatRemote"+ticket]
+		UtilityForCastorTest.saveOnFile(localDir+"RfioRemoteRfcat",cmd,caseScen)
 		
-                fi=open(localDir+"RemoteRfcat"+myTag+"1","r")
+                fi=open(localDir+"RfioRemoteRfcat1","r")
                 buffOut=fi.read()
                 fi.close()
 
-		fi=open("/etc/group","r")
+		fi=open(inputFile,"r")
                 buffOut2=fi.read()
                 fi.close()
 
                 assert buffOut2.find(buffOut) != -1, "rfcat is not working for local files"
 	
 	def localRfchmod(self):
-		cmd=["rfcp /etc/group "+localDir+"fileRfchmodLocal"+ticket,"ls -l "+localDir+"fileRfchmodLocal"+ticket,"rfchmod 777 "+localDir+"fileRfchmodLocal"+ticket,"ls -l "+localDir+"fileRfchmodLocal"+ticket,"rfchmod 600 "+localDir+"fileRfchmodLocal"+ticket,"ls -l "+localDir+"fileRfchmodLocal"+ticket]
-		UtilityForCastorTest.saveOnFile(localDir+"LocalRfchmod"+myTag,cmd,caseScen)
+		cmd=["rfcp "+inputFile+" "+localDir+"fileRfioRfchmodLocal"+ticket,"ls -l "+localDir+"fileRfioRfchmodLocal"+ticket,"rfchmod 777 "+localDir+"fileRfioRfchmodLocal"+ticket,"ls -l "+localDir+"fileRfioRfchmodLocal"+ticket,"rfchmod 600 "+localDir+"fileRfioRfchmodLocal"+ticket,"ls -l "+localDir+"fileRfioRfchmodLocal"+ticket]
+		UtilityForCastorTest.saveOnFile(localDir+"RfioLocalRfchmod",cmd,caseScen)
 		
-                fi=open(localDir+"LocalRfchmod"+myTag+"1","r")
+                fi=open(localDir+"RfioLocalRfchmod1","r")
 		buffOut=fi.read()
 		fi.close()
                 assert buffOut.find("-rw-r--r--")!= -1, "Rfchmod doesn't work with local files"
 
-                fi=open(localDir+"LocalRfchmod"+myTag+"3","r")
+                fi=open(localDir+"RfioLocalRfchmod3","r")
 		buffOut=fi.read()
 		fi.close()
                 assert buffOut.find("-rwxrwxrwx") != -1, "Rfchmod doesn't work with local files"
                 
 
-                fi=open(localDir+"LocalRfchmod"+myTag+"5","r")
+                fi=open(localDir+"RfioLocalRfchmod5","r")
 		buffOut=fi.read()
 		fi.close()
                 assert buffOut.find("-rw-------") != -1 , "Rfchmod doesn't work with local files"
 		
 	def remoteRfchmod(self):
-		cmd=["rfcp /etc/group "+remoteDir+"fileRfchmodRemote"+ticket,"rfdir "+remoteDir+"fileRfchmodRemote"+ticket,"rfchmod 777 "+remoteDir+"fileRfchmodRemote"+ticket,"rfdir "+remoteDir+"fileRfchmodRemote"+ticket,"rfchmod 600 "+remoteDir+"fileRfchmodRemote"+ticket,"rfdir "+remoteDir+"fileRfchmodRemote"+ticket]
+		cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRfchmodRemote"+ticket,"rfdir "+remoteDir+"fileRfioRfchmodRemote"+ticket,"rfchmod 777 "+remoteDir+"fileRfioRfchmodRemote"+ticket,"rfdir "+remoteDir+"fileRfioRfchmodRemote"+ticket,"rfchmod 600 "+remoteDir+"fileRfioRfchmodRemote"+ticket,"rfdir "+remoteDir+"fileRfioRfchmodRemote"+ticket]
 		
-		UtilityForCastorTest.saveOnFile(localDir+"RemoteRfchmod"+myTag,cmd,caseScen)
+		UtilityForCastorTest.saveOnFile(localDir+"RfioRemoteRfchmod",cmd,caseScen)
 		
-                fi=open(localDir+"RemoteRfchmod"+myTag+"1","r")
+                fi=open(localDir+"RfioRemoteRfchmod1","r")
 		buffOut= fi.read()
 		fi.close()
                 assert buffOut.find("-rw-r--r--")!= -1, "Rfchmod doesn't work with remote files"
                 
 
-                fi=open(localDir+"RemoteRfchmod"+myTag+"3","r")
+                fi=open(localDir+"RfioRemoteRfchmod3","r")
 		buffOut=fi.read()
 		fi.close()
                 assert buffOut.find("-rwxrwxrwx") != -1, "Rfchmod doesn't work with remote files"
                
-                fi=open(localDir+"RemoteRfchmod"+myTag+"5","r")
+                fi=open(localDir+"RfioRemoteRfchmod5","r")
 		buffOut=fi.read()
 		fi.close()
                 assert buffOut.find("-rw-------") != -1 , "Rfchmod doesn't work with remote files"
@@ -260,12 +269,12 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 
 	def localRfdir(self):
 		cmd=["rfdir "+localDir,"ls "+localDir]
-	        UtilityForCastorTest.saveOnFile(localDir+"localRfdir"+myTag,cmd,caseScen)
+	        UtilityForCastorTest.saveOnFile(localDir+"RfioLocalRfdir",cmd,caseScen)
 		
-                fi=open(localDir+"localRfdir"+myTag,"r")
+                fi=open(localDir+"RfioLocalRfdir","r")
 	        buffOut=fi.read()
                 fi.close()
-                fi=open(localDir+"localRfdir"+myTag+"1","r")
+                fi=open(localDir+"RfioLocalRfdir1","r")
 	        buffOut2=fi.read()
                 fi.close()
 		assert buffOut.find(buffOut2), "rfdir is not working with local dir"
@@ -274,46 +283,46 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 	def remoteRfdir(self):
 		cmd=["rfdir "+remoteDir]
 	
-	        UtilityForCastorTest.saveOnFile(localDir+"RemoteRfdir"+myTag,cmd,caseScen)
+	        UtilityForCastorTest.saveOnFile(localDir+"RfioRemoteRfdir",cmd,caseScen)
 		
-                fi=open(localDir+"RemoteRfdir"+myTag,"r")
+                fi=open(localDir+"RfioRemoteRfdir","r")
 		buffOut=fi.read()
 		fi.close()
 	        assert buffOut.find("error") == -1, "rfdir is not working with remote dir"
 		assert buffOut.find("No such file or directory") == -1, "rfdir is not working with remote dir"
 			
 	def localRfmkdir(self):
-		cmd=["rfmkdir "+localDir+"fileLocalRfmkdir"+ticket,"ls "+localDir+"fileLocalRfmkdir"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"LocalRfmkdir"+myTag,cmd,caseScen)
+		cmd=["rfmkdir "+localDir+"fileRfioLocalRfmkdir"+ticket,"ls "+localDir+"fileRfioLocalRfmkdir"+ticket] 
+		UtilityForCastorTest.saveOnFile(localDir+"RfioLocalRfmkdir",cmd,caseScen)
 		
-                fi=open(localDir+"LocalRfmkdir"+myTag+"1","r")
+                fi=open(localDir+"RfioLocalRfmkdir1","r")
 		buffOut=fi.read()
 		fi.close()
                 assert buffOut.find("No such file or directory") == -1, "rfmkdir is not working for local files"
 		
 	def remoteRfmkdir(self):
-	        cmd=["rfmkdir "+remoteDir+"fileRemoteRfmkdir"+ticket,"rfdir "+remoteDir+"fileRemoteRfmkdir"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"RemoteRfmkdir"+myTag,cmd,caseScen)
+	        cmd=["rfmkdir "+remoteDir+"fileRfioRemoteRfmkdir"+ticket,"rfdir "+remoteDir+"fileRfioRemoteRfmkdir"+ticket] 
+		UtilityForCastorTest.saveOnFile(localDir+"RfioRemoteRfmkdir",cmd,caseScen)
 		
-                fi=open(localDir+"RemoteRfmkdir"+myTag+"1","r")
+                fi=open(localDir+"RfioRemoteRfmkdir1","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("No such file or directory") == -1, "rfmkdir is not working for remote files"
 		
-		
 	def localRfrename(self):
-		cmd=["rfcp /etc/group "+localDir+"fileLocalRfrename"+ticket,"rfrename "+localDir+"fileLocalRfrename"+ticket+"  "+localDir+"fileLocalRfrename2"+ticket,"ls  "+localDir+"fileLocalRfrename"+ticket,"ls "+localDir+"fileLocalRfrename2"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"LocalRfrename"+myTag,cmd,caseScen)
+		cmd=["rfcp "+inputFile+" "+localDir+"fileRfioLocalRfrename"+ticket,"rfrename "+localDir+"fileRfioLocalRfrename"+ticket+"  "+localDir+"fileRfioLocalRfrename2"+ticket,"ls  "+localDir+"fileRfioLocalRfrename"+ticket,"ls "+localDir+"fileRfioLocalRfrename2"+ticket]
 		
-                fi=open(localDir+"LocalRfrename"+myTag+"2","r")
+		UtilityForCastorTest.saveOnFile(localDir+"RfioLocalRfrename",cmd,caseScen)
+		
+                fi=open(localDir+"RfioLocalRfrename2","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("No such file or directory")!= -1, "rfrename doesn't work with local files"
 		fi.close()
 		
-                fi=open(localDir+"LocalRfrename"+myTag+"3","r")
+                fi=open(localDir+"RfioLocalRfrename3","r")
 		buffOut=fi.read()
 		fi.close()
 		
@@ -321,16 +330,16 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 	
 
 	def remoteRfrename(self):
-		cmd=["rfcp /etc/group "+remoteDir+"fileRemoteRfrename"+ticket,"rfrename "+remoteDir+"fileRemoteRfrename"+ticket+"  "+remoteDir+"fileRemoteRfrename2"+ticket,"rfdir  "+remoteDir+"fileRemoteRfrename"+ticket,"rfdir "+remoteDir+"fileRemoteRfrename2"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"RemoteRfrename"+myTag,cmd,caseScen)
+		cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteRfrename"+ticket,"rfrename "+remoteDir+"fileRfioRemoteRfrename"+ticket+"  "+remoteDir+"fileRfioRemoteRfrename2"+ticket,"rfdir  "+remoteDir+"fileRfioRemoteRfrename"+ticket,"rfdir "+remoteDir+"fileRfioRemoteRfrename2"+ticket] 
+		UtilityForCastorTest.saveOnFile(localDir+"RfioRemoteRfrename",cmd,caseScen)
 		
-                fi=open(localDir+"RemoteRfrename"+myTag+"2","r")
+                fi=open(localDir+"RfioRemoteRfrename2","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("No such file or directory")!= -1, "rfrename doesn't work with local files"
 		
-                fi=open(localDir+"RemoteRfrename"+myTag+"3","r")
+                fi=open(localDir+"RfioRemoteRfrename3","r")
 		buffOut=fi.read()
 		fi.close()
 		
@@ -339,16 +348,16 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 
 
 	def localRfrm(self):
-	        cmd=["rfcp /etc/group "+localDir+"fileLocalRfrm"+ticket,"ls "+localDir+"fileLocalRfrm"+ticket,"rfrm "+localDir+"fileLocalRfrm"+ticket,"ls "+localDir+"fileLocalRfrm"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"LocalRfrm"+myTag,cmd,caseScen)
+	        cmd=["rfcp "+inputFile+" "+localDir+"fileRfioLocalRfrm"+ticket,"ls "+localDir+"fileRfioLocalRfrm"+ticket,"rfrm "+localDir+"fileRfioLocalRfrm"+ticket,"ls "+localDir+"fileRfioLocalRfrm"+ticket] 
+		UtilityForCastorTest.saveOnFile(localDir+"RfioLocalRfrm"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"LocalRfrm"+myTag+"1","r")
+                fi=open(localDir+"RfioLocalRfrm1","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("No such file or directory") == -1, "rfrm doesn't work with local files" 
 
-		fi=open(localDir+"LocalRfrm"+myTag+"3","r")
+		fi=open(localDir+"RfioLocalRfrm3","r")
 		buffOut=fi.read()
 		fi.close()
 		
@@ -356,16 +365,16 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 
 	def remoteRfrm(self):
 		
-                cmd=["rfcp /etc/group "+remoteDir+"fileRemoteRfrm"+ticket,"rfdir "+remoteDir+"fileRemoteRfrm"+ticket,"rfrm "+remoteDir+"fileRemoteRfrm"+ticket,"rfdir "+remoteDir+"fileRemoteRfrm"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"RemoteRfrm"+myTag,cmd,caseScen)
+                cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteRfrm"+ticket,"rfdir "+remoteDir+"fileRfioRemoteRfrm"+ticket,"rfrm "+remoteDir+"fileRfioRemoteRfrm"+ticket,"rfdir "+remoteDir+"fileRfioRemoteRfrm"+ticket] 
+		UtilityForCastorTest.saveOnFile(localDir+"RfioRemoteRfrm"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"RemoteRfrm"+myTag+"1","r")
+                fi=open(localDir+"RfioRemoteRfrm1","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("No such file or directory") == -1, "rfrm doesn't work with remote files" 
 
-		fi=open(localDir+"RemoteRfrm"+myTag+"3","r")
+		fi=open(localDir+"RfioRemoteRfrm3","r")
 		buffOut=fi.read()
 		fi.close()
 		
@@ -374,10 +383,10 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 		
 	def localRfstat(self):
 
-		cmd=["rfcp /etc/group "+localDir+"fileLocalRfstat"+ticket,"rfstat "+localDir+"fileLocalRfstat"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"LocalRfstat"+myTag,cmd,caseScen)
+		cmd=["rfcp "+inputFile+" "+localDir+"fileRfioLocalRfstat"+ticket,"rfstat "+localDir+"fileRfioLocalRfstat"+ticket] 
+		UtilityForCastorTest.saveOnFile(localDir+"RfioLocalRfstat",cmd,caseScen)
 		
-                fi=open(localDir+"LocalRfstat"+myTag+"1","r")
+                fi=open(localDir+"RfioLocalRfstat1","r")
                 buffOut=fi.read()
                 fi.close()
                 assert buffOut.find("Device") != -1, "rfstat is not working for local files"
@@ -394,10 +403,10 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 
 
 	def remoteRfstat(self):
-		cmd=["rfcp /etc/group "+remoteDir+"fileRemoteRfstat"+ticket,"rfstat "+remoteDir+"fileRemoteRfstat"+ticket] 
-		UtilityForCastorTest.saveOnFile(localDir+"RemoteRfstat"+myTag,cmd,caseScen)
+		cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteRfstat"+ticket,"rfstat "+remoteDir+"fileRfioRemoteRfstat"+ticket] 
+		UtilityForCastorTest.saveOnFile(localDir+"RfioRemoteRfstat",cmd,caseScen)
 		
-                fi=open(localDir+"RemoteRfstat"+myTag+"1","r")
+                fi=open(localDir+"RfioRemoteRfstat1","r")
                 buffOut=fi.read()
                 fi.close()
                 assert buffOut.find("Device") != -1, "rfstat is not working for remote files"
@@ -411,10 +420,6 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
 		assert buffOut.find("Last access") != -1, "rfstat is not working for remote files"
 		assert buffOut.find("Last modify") != -1, "rfstat is not working for remote files"
                 assert buffOut.find("Last stat. mod.") != -1, "rfstat is not working for remote files"
-#	def localRftp(self):
-
-#	def remoteRftp(self):
-
 
 
 
@@ -423,6 +428,7 @@ class RfioOtherCmdSimpleCase(unittest.TestCase):
     # RFIO WITH CASTOR #
     #	               #
     ####################
+
 
 
 # Scenaria Castor  # 
@@ -434,7 +440,7 @@ class RfioCastorScenarium1(unittest.TestCase):
 	    global myTurl
 	    myTurl=castorDir
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,-1,-1,-1)
+            caseScen=UtilityForCastorTest.createScenarium(-1,-1,-1,-1,castorEnv)
     
 class RfioCastorScenarium2(unittest.TestCase):
         def setUp(self):
@@ -443,7 +449,7 @@ class RfioCastorScenarium2(unittest.TestCase):
 	    global myTurl
 	    myTurl=castorDir
 	    global caseScen
-	    caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,-1,stagerVersion)
+	    caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,-1,stagerVersion,castorEnv)
             
 class RfioCastorScenarium3(unittest.TestCase):
         def setUp(self):
@@ -452,7 +458,7 @@ class RfioCastorScenarium3(unittest.TestCase):
 	    global myTurl
 	    myTurl=castorDir
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,-1,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,-1,stagerVersion,castorEnv)
 
 
 class RfioCastorScenarium4(unittest.TestCase):
@@ -462,7 +468,7 @@ class RfioCastorScenarium4(unittest.TestCase):
 	    global myTurl
 	    myTurl=castorDir
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(stagerHost,-1,stagerSvcClass,stagerVersion,castorEnv)
 
 class RfioCastorScenarium5(unittest.TestCase):
         def setUp(self):
@@ -471,117 +477,114 @@ class RfioCastorScenarium5(unittest.TestCase):
 	    global myTurl
 	    myTurl=castorDir
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
 	    
-class RfioCastorFancyTurl1(unittest.TestCase):
+class RfioCastorNewTurl1(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl1"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl 
 	    myTurl="rfio:///"+castorDir
 
 
-class RfioCastorFancyTurl2(unittest.TestCase):
+class RfioCastorNewTurl2(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl2"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+castorDir
 
             
-class RfioCastorFancyTurl3(unittest.TestCase):
+class RfioCastorNewTurl3(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl3"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
-	    myTurl="rfio:///castor\\?path="+castorDir
-  
+	    myTurl="rfio:///castor\\?path="+castorDir  
 
 
-class RfioCastorFancyTurl4(unittest.TestCase):
+class RfioCastorNewTurl4(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl4"
             global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+"/castor\\?path="+castorDir
 
             
-class RfioCastorFancyTurl5(unittest.TestCase):
+class RfioCastorNewTurl5(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl5"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+"//castor\\?path="+castorDir
 
             
-class RfioCastorFancyTurl6(unittest.TestCase):
+class RfioCastorNewTurl6(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl6"
-            UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion)
+            UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+":"+stagerPort+"/castor\\?path="+castorDir
           
             
-class RfioCastorFancyTurl7(unittest.TestCase):
+class RfioCastorNewTurl7(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl7"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(-1,stagerPort,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+"/castor\\?path="+castorDir
  
 
-class RfioCastorFancyTurl8(unittest.TestCase):
+class RfioCastorNewTurl8(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl8"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+":"+stagerPort+"/castor\\?path="+castorDir
     
  
-class RfioCastorFancyTurl9(unittest.TestCase):
+class RfioCastorNewTurl9(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl9"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+":"+stagerPort+"/"+castorDir
 
  
-class RfioCastorFancyTurl10(unittest.TestCase):
+class RfioCastorNewTurl10(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl10"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion)
+            caseScen=UtilityForCastorTest.createScenarium(-1,-1,stagerSvcClass,stagerVersion,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+":"+stagerPort+castorDir
 
-class RfioCastorFancyTurl11(unittest.TestCase):
+class RfioCastorNewTurl11(unittest.TestCase):
         def setUp(self):
 	    global myTag
 	    myTag="Turl11"
 	    global caseScen
-            caseScen=UtilityForCastorTest.createScenarium(-1,-1,-1,-1)
+            caseScen=UtilityForCastorTest.createScenarium(-1,-1,-1,-1,castorEnv)
             global myTurl
 	    myTurl="rfio://"+stagerHost+":"+stagerPort+"/castor\\?svcClass="+stagerSvcClass+"\\&castorVersion="+stagerVersion+"\\&path="+castorDir
-
-
 
 
 
@@ -593,7 +596,7 @@ class RfioCastorFancyTurl11(unittest.TestCase):
 class RfioRfcpCastor(unittest.TestCase):
 
         def localToCastor(self):
-	        cmd=["rfcp /etc/group "+myTurl+"fileLocalToCastor"+myTag+ticket]
+	        cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioLocalToCastor"+myTag+ticket]
 	
 		UtilityForCastorTest.saveOnFile(localDir+"RfioRfcpLocalToCastor"+myTag,cmd,caseScen)	
 		
@@ -603,7 +606,7 @@ class RfioRfcpCastor(unittest.TestCase):
         	assert buffOut.rfind("through local (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
                 
 	def castorToLocal(self):
-                cmd=["rfcp /etc/group "+myTurl+"fileCastorToLocal1"+myTag+ticket,"rfcp "+myTurl+"fileCastorToLocal1"+myTag+ticket+" "+localDir+"fileCastorToLocal2"+myTag+ticket,"diff /etc/group "+localDir+"fileCastorToLocal2"+myTag+ticket]
+                cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioCastorToLocal"+myTag+ticket,"rfcp "+myTurl+"fileRfioCastorToLocal"+myTag+ticket+" "+localDir+"fileRfioCastorToLocalCopy"+myTag+ticket,"diff "+inputFile+" "+localDir+"fileRfioCastorToLocalCopy"+myTag+ticket]
 	
 		UtilityForCastorTest.saveOnFile(localDir+"RfioRfcpCastorToLocal"+myTag,cmd,caseScen)
 		
@@ -618,11 +621,11 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi.close()
         	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor to local"
 
-                assert os.stat(localDir+"fileCastorToLocal2"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to local"
+                assert os.stat(localDir+"fileRfioCastorToLocalCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to local"
                 assert os.stat(localDir+"RfioRfcpCastorToLocal"+myTag+"2")[6] == 0, "rfio doesn't work from castor to local"
 
         def remoteToCastor(self):
-                cmd=["rfcp /etc/group "+remoteDir+"fileRemoteToCastor1"+myTag+ticket,"rfcp "+remoteDir+"fileRemoteToCastor1"+myTag+ticket+" "+myTurl+"fileRemoteToCastor1"+myTag+ticket,"rfcp "+myTurl+"fileRemoteToCastor1"+myTag+ticket+" "+localDir+"fileRemoteToCastor"+myTag+ticket,"diff /etc/group "+localDir+"fileRemoteToCastor"+myTag+ticket]
+                cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToCastor"+myTag+ticket,"rfcp "+remoteDir+"fileRfioRemoteToCastor"+myTag+ticket+" "+myTurl+"fileRfioRemoteToCastorCopy"+myTag+ticket,"rfcp "+myTurl+"fileRfioRemoteToCastorCopy"+myTag+ticket+" "+localDir+"fileRfioRemoteToCastorCopyCopy"+myTag+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToCastorCopyCopy"+myTag+ticket]
 
 		UtilityForCastorTest.saveOnFile(localDir+"RfioRfcpRemoteToCastor"+myTag,cmd,caseScen)
                 
@@ -641,12 +644,12 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi.close()
         	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
 
-                assert os.stat(localDir+"fileRemoteToCastor"+myTag+ticket)[6] != 0, "rfio doesn't work from remote to castor"
+                assert os.stat(localDir+"fileRfioRemoteToCastorCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from remote to castor"
                 assert os.stat(localDir+"RfioRfcpRemoteToCastor"+myTag+"3")[6] == 0, "rfio doesn't work from remote to castor"
                 
         def castorToRemote(self):
                 
-		cmd=["rfcp /etc/group "+myTurl+"fileCastorToRemote1"+myTag+ticket,"rfcp "+myTurl+"fileCastorToRemote1"+myTag+ticket+" "+remoteDir+"fileCastorToRemote2"+myTag+ticket,"rfcp "+remoteDir+"fileCastorToRemote2"+myTag+ticket+" "+localDir+"fileCastorToRemote"+myTag+ticket,"diff /etc/group "+localDir+"fileCastorToRemote"+myTag+ticket]
+		cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioCastorToRemote"+myTag+ticket,"rfcp "+myTurl+"fileRfioCastorToRemote"+myTag+ticket+" "+remoteDir+"fileRfioCastorToRemoteCopy"+myTag+ticket,"rfcp "+remoteDir+"fileRfioCastorToRemoteCopy"+myTag+ticket+" "+localDir+"fileRfioCastorToRemoteCopyCopy"+myTag+ticket,"diff "+inputFile+" "+localDir+"fileRfioCastorToRemoteCopyCopy"+myTag+ticket]
 
 		UtilityForCastorTest.saveOnFile(localDir+"RfioRfcpCastorToRemote"+myTag,cmd,caseScen)
                 
@@ -665,12 +668,12 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi.close()
         	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from  remote  to local"
 
-                assert os.stat(localDir+"fileCastorToRemote"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to remote"
+                assert os.stat(localDir+"fileRfioCastorToRemoteCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to remote"
                 assert os.stat(localDir+"RfioRfcpCastorToRemote"+myTag+"3")[6] == 0, "rfio doesn't work from castor to remote"
 
         def castorToCastor(self):
                 
-                cmd=["rfcp /etc/group "+myTurl+"fileCastorToCastor1"+myTag+ticket,"rfcp "+myTurl+"fileCastorToCastor1"+myTag+ticket+" "+myTurl+"fileCastorToCastor2"+myTag+ticket,"rfcp "+myTurl+"fileCastorToCastor2"+myTag+ticket+" "+localDir+"fileCastorToCastor"+myTag+ticket,"diff /etc/group "+localDir+"fileCastorToCastor"+myTag+ticket]
+                cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioCastorToCastor"+myTag+ticket,"rfcp "+myTurl+"fileRfioCastorToCastor"+myTag+ticket+" "+myTurl+"fileRfioCastorToCastorCopy"+myTag+ticket,"rfcp "+myTurl+"fileRfioCastorToCastorCopy"+myTag+ticket+" "+localDir+"fileRfioCastorToCastorCopyCopy"+myTag+ticket,"diff "+inputFile+" "+localDir+"fileRfioCastorToCastorCopyCopy"+myTag+ticket]
 	
 		UtilityForCastorTest.saveOnFile(localDir+"RfioRfcpCastorToCastor"+myTag,cmd,caseScen)
 
@@ -678,6 +681,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 buffOut=fi.read()
                 fi.close()
         	assert buffOut.rfind("through local (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
+		
                 fi=open(localDir+"RfioRfcpCastorToCastor"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
@@ -688,7 +692,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi.close()
         	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
 
-                assert os.stat(localDir+"fileCastorToCastor"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to castor"
+                assert os.stat(localDir+"fileRfioCastorToCastorCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to castor"
                 assert os.stat(localDir+"RfioRfcpCastorToCastor"+myTag+"3")[6] == 0, "rfio doesn't work from castor to castor"
 
 ### Rfcp with different enviroment ###
@@ -708,36 +712,36 @@ class RfioRfcpScenarium4(RfioCastorScenarium4,RfioRfcpCastor):
 class RfioRfcpScenarium5(RfioCastorScenarium5,RfioRfcpCastor):
         pass
 	    
-class RfioRfcpFancyTurl1(RfioCastorFancyTurl1,RfioRfcpCastor):
+class RfioRfcpNewTurl1(RfioCastorNewTurl1,RfioRfcpCastor):
         pass
 
-class RfioRfcpFancyTurl2(RfioCastorFancyTurl2,RfioRfcpCastor):
+class RfioRfcpNewTurl2(RfioCastorNewTurl2,RfioRfcpCastor):
 	pass
 
-class RfioRfcpFancyTurl3(RfioCastorFancyTurl3,RfioRfcpCastor):
+class RfioRfcpNewTurl3(RfioCastorNewTurl3,RfioRfcpCastor):
 	pass
 
-class RfioRfcpFancyTurl4(RfioCastorFancyTurl4,RfioRfcpCastor):
+class RfioRfcpNewTurl4(RfioCastorNewTurl4,RfioRfcpCastor):
         pass
             
-class RfioRfcpFancyTurl5(RfioCastorFancyTurl5,RfioRfcpCastor):
+class RfioRfcpNewTurl5(RfioCastorNewTurl5,RfioRfcpCastor):
         pass
             
-class RfioRfcpFancyTurl6(RfioCastorFancyTurl6,RfioRfcpCastor):
+class RfioRfcpNewTurl6(RfioCastorNewTurl6,RfioRfcpCastor):
         pass
             
-class RfioRfcpFancyTurl7(RfioCastorFancyTurl7,RfioRfcpCastor):
+class RfioRfcpNewTurl7(RfioCastorNewTurl7,RfioRfcpCastor):
         pass
 
-class RfioRfcpFancyTurl8(RfioCastorFancyTurl8,RfioRfcpCastor):
+class RfioRfcpNewTurl8(RfioCastorNewTurl8,RfioRfcpCastor):
         pass
  
-class RfioRfcpFancyTurl9(RfioCastorFancyTurl9,RfioRfcpCastor):
+class RfioRfcpNewTurl9(RfioCastorNewTurl9,RfioRfcpCastor):
         pass
  
-class RfioRfcpFancyTurl10(RfioCastorFancyTurl10,RfioRfcpCastor):
+class RfioRfcpNewTurl10(RfioCastorNewTurl10,RfioRfcpCastor):
         pass
-class RfioRfcpFancyTurl11(RfioCastorFancyTurl11,RfioRfcpCastor):
+class RfioRfcpNewTurl11(RfioCastorNewTurl11,RfioRfcpCastor):
         pass
 
 
@@ -745,37 +749,37 @@ class RfioRfcpFancyTurl11(RfioCastorFancyTurl11,RfioRfcpCastor):
 
 class RfioOtherCmdCastor(unittest.TestCase):
 	def castorRfcat(self):
-		cmd=["rfcp /etc/group "+myTurl+"fileRfcatCastor"+myTag+ticket,"rfcat "+myTurl+"fileRfcatCastor"+myTag+ticket]
-		UtilityForCastorTest.saveOnFile(localDir+"CastorRfcat"+myTag,cmd,caseScen)
+		cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioRfcatCastor"+myTag+ticket,"rfcat "+myTurl+"fileRfioRfcatCastor"+myTag+ticket]
+		UtilityForCastorTest.saveOnFile(localDir+"RfioCastorRfcat"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"CastorRfcat"+myTag+"1","r")
+                fi=open(localDir+"RfioCastorRfcat"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
 
-		fi=open("/etc/group","r")
+		fi=open(inputFile,"r")
                 buffOut2=fi.read()
                 fi.close()
 
                 assert buffOut.find(buffOut2) != -1, "rfcat is not working for castor files"
 		
 	def castorRfchmod(self):
-		cmd=["rfcp /etc/group "+myTurl+"fileRfchmodCastor"+myTag+ticket,"nsls -l "+castorDir+"fileRfchmodCastor"+myTag+ticket,"rfchmod 777 "+myTurl+"fileRfchmodCastor"+myTag+ticket,"nsls -l "+castorDir+"fileRfchmodCastor"+myTag+ticket,"rfchmod 600 "+myTurl+"fileRfchmodCastor"+myTag+ticket,"nsls -l "+castorDir+"fileRfchmodCastor"+myTag+ticket]
+		cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioRfchmodCastor"+myTag+ticket,"nsls -l "+castorDir+"fileRfioRfchmodCastor"+myTag+ticket,"rfchmod 777 "+myTurl+"fileRfioRfchmodCastor"+myTag+ticket,"nsls -l "+castorDir+"fileRfioRfchmodCastor"+myTag+ticket,"rfchmod 600 "+myTurl+"fileRfioRfchmodCastor"+myTag+ticket,"nsls -l "+castorDir+"fileRfioRfchmodCastor"+myTag+ticket]
 		
-		UtilityForCastorTest.saveOnFile(localDir+"CastorRfchmod"+myTag,cmd,caseScen)
+		UtilityForCastorTest.saveOnFile(localDir+"RfioCastorRfchmod"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"CastorRfchmod"+myTag+"1","r")
+                fi=open(localDir+"RfioCastorRfchmod"+myTag+"1","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("-rw-r--r--")!= -1, "Rfchmod doesn't work with castor files"
 
-                fi=open(localDir+"CastorRfchmod"+myTag+"3","r")
+                fi=open(localDir+"RfioCastorRfchmod"+myTag+"3","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("-rwxrwxrwx") != -1, "Rfchmod doesn't work with castor files"
 
-                fi=open(localDir+"CastorRfchmod"+myTag+"5","r")
+                fi=open(localDir+"RfioCastorRfchmod"+myTag+"5","r")
 		buffOut=fi.read()
 		fi.close()
 		
@@ -785,12 +789,12 @@ class RfioOtherCmdCastor(unittest.TestCase):
 	def castorRfdir(self):
 	        cmd=["rfdir "+myTurl,"nsls -l"+castorDir]
 		
-	        UtilityForCastorTest.saveOnFile(localDir+"CastorRfdir"+myTag,cmd,caseScen)
+	        UtilityForCastorTest.saveOnFile(localDir+"RfioCastorRfdir"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"CastorRfdir"+myTag,"r")
+                fi=open(localDir+"RfioCastorRfdir"+myTag,"r")
 	        buffOut=fi.read()
                 fi.close()
-                fi=open(localDir+"CastorRfdir"+myTag+"1","r")
+                fi=open(localDir+"RfioCastorRfdir"+myTag+"1","r")
 	        buffOut2=fi.read()
                 fi.close()
 		assert buffOut.find(buffOut2), "rfdir is not working with remote dir"
@@ -798,11 +802,11 @@ class RfioOtherCmdCastor(unittest.TestCase):
 		
 
 	def castorRfmkdir(self):
-	        cmd=["rfmkdir "+myTurl+"fileCastorRfmkdir"+myTag+ticket,"nsls "+castorDir+"fileCastorRfmkdir"+myTag+ticket]
+	        cmd=["rfmkdir "+myTurl+"fileRfioCastorRfmkdir"+myTag+ticket,"nsls "+castorDir+"fileRfioCastorRfmkdir"+myTag+ticket]
 		
-		UtilityForCastorTest.saveOnFile(localDir+"CastorRfmkdir"+myTag,cmd,caseScen)
+		UtilityForCastorTest.saveOnFile(localDir+"RfioCastorRfmkdir"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"CastorRfmkdir"+myTag+"1","r")
+                fi=open(localDir+"RfioCastorRfmkdir"+myTag+"1","r")
 		buffOut=fi.read()
 		fi.close()
 		
@@ -810,18 +814,18 @@ class RfioOtherCmdCastor(unittest.TestCase):
 		
 		
 	def castorRfrename(self):
-		cmd=["rfcp /etc/group "+myTurl+"fileCastorRfrename"+myTag+ticket,"rfrename "+myTurl+"fileCastorRfrename"+myTag+ticket+"  "+myTurl+"fileCastorRfrename2"+myTag+ticket,"nsls  "+castorDir+"fileCastorRfrename"+myTag+ticket,"nsls "+castorDir+"fileCastorRfrename2"+myTag+ticket] 
+		cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioCastorRfrename"+myTag+ticket,"rfrename "+myTurl+"fileRfioCastorRfrename"+myTag+ticket+"  "+myTurl+"fileRfioCastorRfrename2"+myTag+ticket,"nsls  "+castorDir+"fileRfioCastorRfrename"+myTag+ticket,"nsls "+castorDir+"fileRfioCastorRfrename2"+myTag+ticket] 
 		
-		UtilityForCastorTest.saveOnFile(localDir+"CastorRfrename"+myTag,cmd,caseScen)
+		UtilityForCastorTest.saveOnFile(localDir+"RfioCastorRfrename"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"CastorRfrename"+myTag+"2","r")
+                fi=open(localDir+"RfioCastorRfrename"+myTag+"2","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("No such file or directory")!= -1, "rfrename doesn't work with local files"
 		
 		
-                fi=open(localDir+"CastorRfrename"+myTag+"3","r")
+                fi=open(localDir+"RfioCastorRfrename"+myTag+"3","r")
 		buffOut=fi.read()
 		fi.close()
 		
@@ -829,28 +833,28 @@ class RfioOtherCmdCastor(unittest.TestCase):
 		
 
 	def castorRfrm(self):
-                cmd=["rfcp /etc/group "+myTurl+"fileCastorRfrm"+myTag+ticket,"nsls "+castorDir+"fileCastorRfrm"+myTag+ticket,"rfrm "+myTurl+"fileCastorRfrm"+myTag+ticket,"nsls "+castorDir+"fileCastorRfrm"+myTag+ticket] 
+                cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioCastorRfrm"+myTag+ticket,"nsls "+castorDir+"fileRfioCastorRfrm"+myTag+ticket,"rfrm "+myTurl+"fileRfioCastorRfrm"+myTag+ticket,"nsls "+castorDir+"fileRfioCastorRfrm"+myTag+ticket] 
 		
-		UtilityForCastorTest.saveOnFile(localDir+"CastorRfrm"+myTag,cmd,caseScen)
+		UtilityForCastorTest.saveOnFile(localDir+"RfioCastorRfrm"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"CastorRfrm"+myTag+"1","r")
+                fi=open(localDir+"RfioCastorRfrm"+myTag+"1","r")
 		buffOut=fi.read()
 		fi.close()
 		
                 assert buffOut.find("No such file or directory") == -1, "rfrm doesn't work with castor files" 
 
-		fi=open(localDir+"CastorRfrm"+myTag+"3","r")
+		fi=open(localDir+"RfioCastorRfrm"+myTag+"3","r")
 	        buffOut=fi.read()
 		fi.close()
                 assert buffOut.find("No such file or directory") != -1, "rfrm doesn't work with castor files"
 		
                 
         def castorRfstat(self):
-	        cmd=["rfcp /etc/group "+myTurl+"fileCastorRfstat"+myTag+ticket,"rfstat "+myTurl+"fileCastorRfstat"+myTag+ticket]
+	        cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioCastorRfstat"+myTag+ticket,"rfstat "+myTurl+"fileRfioCastorRfstat"+myTag+ticket]
 		
-		UtilityForCastorTest.saveOnFile(localDir+"CastorRfstat"+myTag,cmd,caseScen)
+		UtilityForCastorTest.saveOnFile(localDir+"RfioCastorRfstat"+myTag,cmd,caseScen)
 		
-                fi=open(localDir+"CastorRfstat"+myTag+"1","r")
+                fi=open(localDir+"RfioCastorRfstat"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
                 assert buffOut.find("Device") != -1, "rfstat is not working for castor files"
@@ -865,7 +869,7 @@ class RfioOtherCmdCastor(unittest.TestCase):
 		assert buffOut.find("Last modify") != -1, "rfstat is not working for castor files"
                 assert buffOut.find("Last stat. mod.") != -1, "rfstat is not working for castor files"
 		
-#	def castorRftp(self):
+
 
 ### other cmd with different enviroment ###
  
@@ -884,40 +888,78 @@ class RfioOtherCmdScenarium4(RfioCastorScenarium4,RfioOtherCmdCastor):
 class RfioOtherCmdScenarium5(RfioCastorScenarium5,RfioOtherCmdCastor):
         pass
 	    
-class RfioOtherCmdFancyTurl1(RfioCastorFancyTurl1,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl1(RfioCastorNewTurl1,RfioOtherCmdCastor):
         pass
 
-class RfioOtherCmdFancyTurl2(RfioCastorFancyTurl2,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl2(RfioCastorNewTurl2,RfioOtherCmdCastor):
 	pass
 
-class RfioOtherCmdFancyTurl3(RfioCastorFancyTurl3,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl3(RfioCastorNewTurl3,RfioOtherCmdCastor):
 	pass
 
-class RfioOtherCmdFancyTurl4(RfioCastorFancyTurl4,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl4(RfioCastorNewTurl4,RfioOtherCmdCastor):
         pass
             
-class RfioOtherCmdFancyTurl5(RfioCastorFancyTurl5,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl5(RfioCastorNewTurl5,RfioOtherCmdCastor):
         pass
             
-class RfioOtherCmdFancyTurl6(RfioCastorFancyTurl6,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl6(RfioCastorNewTurl6,RfioOtherCmdCastor):
         pass
             
-class RfioOtherCmdFancyTurl7(RfioCastorFancyTurl7,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl7(RfioCastorNewTurl7,RfioOtherCmdCastor):
         pass
 
-class RfioOtherCmdFancyTurl8(RfioCastorFancyTurl8,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl8(RfioCastorNewTurl8,RfioOtherCmdCastor):
         pass
  
-class RfioOtherCmdFancyTurl9(RfioCastorFancyTurl9,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl9(RfioCastorNewTurl9,RfioOtherCmdCastor):
         pass
  
-class RfioOtherCmdFancyTurl10(RfioCastorFancyTurl10,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl10(RfioCastorNewTurl10,RfioOtherCmdCastor):
         pass
 
-class RfioOtherCmdFancyTurl11(RfioCastorFancyTurl11,RfioOtherCmdCastor):
+class RfioOtherCmdNewTurl11(RfioCastorNewTurl11,RfioOtherCmdCastor):
         pass
 
 
+
+
+
+
+###################
+#                 # 
+# RFIO API        # 
+#                 #
+###################
+
+
+class RfioApiCase(unittest.TestCase):
+	def statTest(self):
+		pass
+	def readWriteTest(self):
+		pass	
+	def preSeekTest(self):
+		pass
+	def longPathTest(self):
+		pass
+	def unlinkTest(self):
+		pass
+	def regretionTest(self):
+		pass
+
+		
+###################
+#                 # 
+#  RFIO STRESS    # 
+#                 #
+###################
+
+
+class RfioStressCase(unittest.TestCase):
+	def parallelFileAccess(self):
+		pass
+	def dataSource(self):
+		pass
 
 
 ##########################################################################################################
@@ -928,7 +970,8 @@ casesRfcpSimple=("localToLocal","localToRemote","remoteToLocal","remoteToRemote"
 casesOtherCmdSimple=("localRfcat","remoteRfcat","localRfchmod","remoteRfchmod","localRfdir","remoteRfdir","localRfmkdir","remoteRfmkdir","localRfrename","remoteRfrename","localRfrm","remoteRfrm","localRfstat","remoteRfstat")
 casesRfcpCastor=("localToCastor","castorToLocal","remoteToCastor","castorToRemote","castorToCastor")
 casesOtherCmdCastor=("castorRfcat","castorRfchmod","castorRfdir","castorRfmkdir","castorRfrename","castorRfrm","castorRfstat")
-
+casesApi=("statTest","readWriteTest","preSeekTest","longPathTest","unlinkTest")
+casesStress=("parallelFileAccess","datasource")
 
 ## PREREQ AND SETTING
 
@@ -1005,108 +1048,134 @@ class RfioOtherCmdEnvSuite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,(RfioOtherCmdEnv1Suite(),RfioOtherCmdEnv2Suite(),RfioOtherCmdEnv3Suite(),RfioOtherCmdEnv4Suite(),RfioOtherCmdEnv5Suite()))
 
-## FANCY TURL POSSIBILITY
+## NEW TURL POSSIBILITY
 
 # rfcp
 
-class RfioRfcpFancyTurl1Suite(unittest.TestSuite):
+class RfioRfcpNewTurl1Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl1,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl1,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl2Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl2Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl2,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl2,casesRfcpCastor))
 
-class RfioRfcpFancyTurl3Suite(unittest.TestSuite):
+class RfioRfcpNewTurl3Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl3,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl3,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl4Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl4Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl4,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl4,casesRfcpCastor))
         
-class  RfioRfcpFancyTurl5Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl5Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl5,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl5,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl6Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl6Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl6,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl6,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl7Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl7Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl7,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl7,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl8Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl8Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl8,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl8,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl9Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl9Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl9,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl9,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl10Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl10Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl10,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl10,casesRfcpCastor))
 
-class  RfioRfcpFancyTurl11Suite(unittest.TestSuite):
+class  RfioRfcpNewTurl11Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioRfcpFancyTurl11,casesRfcpCastor))
+        unittest.TestSuite.__init__(self,map(RfioRfcpNewTurl11,casesRfcpCastor))
 
 # other cmd
 
-class RfioOtherCmdFancyTurl1Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl1Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl1,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl1,casesOtherCmdCastor))
 	
-class RfioOtherCmdFancyTurl2Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl2Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl2,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl2,casesOtherCmdCastor))
 	
-class RfioOtherCmdFancyTurl3Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl3Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl3,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl3,casesOtherCmdCastor))
 	
-class RfioOtherCmdFancyTurl4Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl4Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl4,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl4,casesOtherCmdCastor))
 
-class RfioOtherCmdFancyTurl5Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl5Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl5,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl5,casesOtherCmdCastor))
 
-class RfioOtherCmdFancyTurl6Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl6Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl6,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl6,casesOtherCmdCastor))
 
-class RfioOtherCmdFancyTurl7Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl7Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl7,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl7,casesOtherCmdCastor))
 
-class RfioOtherCmdFancyTurl8Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl8Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl8,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl8,casesOtherCmdCastor))
 
-class RfioOtherCmdFancyTurl9Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl9Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl9,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl9,casesOtherCmdCastor))
 
-class RfioOtherCmdFancyTurl10Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl10Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl10,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl10,casesOtherCmdCastor))
 	
-class RfioOtherCmdFancyTurl11Suite(unittest.TestSuite):
+class RfioOtherCmdNewTurl11Suite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,map(RfioOtherCmdFancyTurl11,casesOtherCmdCastor))
+        unittest.TestSuite.__init__(self,map(RfioOtherCmdNewTurl11,casesOtherCmdCastor))
 
+## RFIO API
 
-
-###  BIG TEST SUITE WITH ALL FANCY TURL CASES
-
-class RfioRfcpFancyTurlSuite(unittest.TestSuite):
+class RfioApiSuite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,(RfioRfcpFancyTurl1Suite(),RfioRfcpFancyTurl2Suite(),RfioRfcpFancyTurl3Suite(),RfioRfcpFancyTurl4Suite(),RfioRfcpFancyTurl5Suite(),RfioRfcpFancyTurl6Suite(),RfioRfcpFancyTurl7Suite(),RfioRfcpFancyTurl8Suite(),RfioRfcpFancyTurl9Suite(),RfioRfcpFancyTurl10Suite(),RfioRfcpFancyTurl11Suite()))
+        unittest.TestSuite.__init__(self,map(RfioApiCase,casesApi))
+	
+## RFIO STRESS
 
-class RfioOtherCmdFancyTurlSuite(unittest.TestSuite):
+class RfioStressSuite(unittest.TestSuite):
     def __init__(self):
-        unittest.TestSuite.__init__(self,(RfioOtherCmdFancyTurl1Suite(),RfioOtherCmdFancyTurl2Suite(),RfioOtherCmdFancyTurl3Suite(),RfioOtherCmdFancyTurl4Suite(),RfioOtherCmdFancyTurl5Suite(),RfioOtherCmdFancyTurl6Suite(),RfioOtherCmdFancyTurl7Suite(),RfioOtherCmdFancyTurl8Suite(),RfioOtherCmdFancyTurl9Suite(),RfioOtherCmdFancyTurl10Suite(),RfioOtherCmdFancyTurl11Suite()))
+        unittest.TestSuite.__init__(self,map(RfioStressCase,casesStress))
+	
+
+###  BIG TEST SUITE WITH ALL NEW TURL CASES
+
+class RfioRfcpNewTurlSuite(unittest.TestSuite):
+    def __init__(self):
+        unittest.TestSuite.__init__(self,(RfioRfcpNewTurl1Suite(),RfioRfcpNewTurl2Suite(),RfioRfcpNewTurl3Suite(),RfioRfcpNewTurl4Suite(),RfioRfcpNewTurl5Suite(),RfioRfcpNewTurl6Suite(),RfioRfcpNewTurl7Suite(),RfioRfcpNewTurl8Suite(),RfioRfcpNewTurl9Suite(),RfioRfcpNewTurl10Suite(),RfioRfcpNewTurl11Suite()))
+
+class RfioOtherCmdNewTurlSuite(unittest.TestSuite):
+    def __init__(self):
+        unittest.TestSuite.__init__(self,(RfioOtherCmdNewTurl1Suite(),RfioOtherCmdNewTurl2Suite(),RfioOtherCmdNewTurl3Suite(),RfioOtherCmdNewTurl4Suite(),RfioOtherCmdNewTurl5Suite(),RfioOtherCmdNewTurl6Suite(),RfioOtherCmdNewTurl7Suite(),RfioOtherCmdNewTurl8Suite(),RfioOtherCmdNewTurl9Suite(),RfioOtherCmdNewTurl10Suite(),RfioOtherCmdNewTurl11Suite()))
+
+
+
+## API
+
+class RfioApiSuite(unittest.TestSuite):
+    def __init__(self):
+        unittest.TestSuite.__init__(self,map(RfioApiCase,casesApi))
+
+
+## STRESS
+
+class RfioStressSuite(unittest.TestSuite):
+    def __init__(self):
+        unittest.TestSuite.__init__(self,map(RfioStressCase,casesStress))

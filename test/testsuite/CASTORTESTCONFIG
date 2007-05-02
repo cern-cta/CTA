@@ -1,59 +1,71 @@
 *** Test choice ***
 
-CLIENT  	PREREQ  	NO
 CLIENT		PUT		NO
 CLIENT		GET		NO
 CLIENT		PUTDONE		NO
 CLIENT		RM		NO
 CLIENT		EXTRAQRY	NO
+CLIENT          EXTRATEST       NO
+ 
 
-DLF		TEST            NO
-
-COMMON          TEST            NO 
-
-SERVER          TEST            NO 
-
-RFIO            PREREQ                       NO  
 RFIO            BASIC_RFCP                   NO
 RFIO            BASIC_OTHERCMD               NO
 RFIO            CASTOR_RFCP                  NO
-RFIO            CASTOR_RFCP_FANCY_TURL       NO
+RFIO            CASTOR_RFCP_NEW_TURL         NO
 RFIO            CASTOR_OTHERCMD              NO
-RFIO            CASTOR_OTHERCMD_FANCY_TURL   NO
+RFIO            CASTOR_OTHERCMD_NEW_TURL     NO
+RFIO            API                          NO
+RFIO            STRESS                       NO
 
-CSVCS           TEST            NO 
+ 
+TAPE            MIGRATION                    NO
+TAPE            RECALL                       NO
+TAPE            MIGRATION_AND_RECALL         NO
+TAPE            STRESS_CASTOR                NO
+TAPE            TAPE_ONLY                    NO
 
-DISKSVR         TEST            NO 
 
-TAPE            TEST            NO
+DLF		TEST            NO
 
-ADMIN           TEST            NO
+
+COMMON          TEST            NO 
+
+
+CORE            TEST            NO 
 
 *** Generic parameters ***
 
+STAGE_HOST        c2testrh
+STAGE_PORT        9002
+STAGE_SVCCLASS    defTape
+CASTOR_V2         yes 
 TIMEOUT           120
 
 *** Rfio test specific parameters ***
 
-USE_STAGEMAP.CONF NO
-USE_CASTOR.CONF   NO    
+USE_CASTOR_ENV    NO
+USE_STAGEMAP      NO
+USE_CASTOR_CONF   NO   
 
-STAGE_HOST        lxb1366
-STAGE_PORT        9002
-STAGE_SVCCLASS    default
-CASTOR_V2         yes 
+LOG_DIR      /tmp/tmpRfio
 
-LOCAL_DIR         /usr/local/src/CASTOR2/test/tmpRfio
+INPUT_FILE        /etc/group
+STRESS_INPUT_DIR  /tmp/dir 
 
-REMOTE_HOST       lxfsrk384
-REMOTE_DIR        /tmp 
+REMOTE_HOST        lxfsrk384
+REMOTE_OUTPUT_DIR  /tmp 
 
 
 *** Client test specific parameters ***
 
-STAGE_HOST        lxb1366
-STAGE_PORT        9002
-STAGE_SVCCLASS    default
-CASTOR_V2         yes 
+LOG_DIR         /tmp/tmpClient
+INPUT_FILE      /etc/group
+STRESS_INPUT_DIR /castor/cern.ch/user/g/gtaur/testDir
 
-LOCAL_DIR         /usr/local/src/CASTOR2/test/tmpClient
+
+*** Tape test specific parameters ***
+
+LOG_DIR  /tmp/tmpTape
+INPUT_FILE  /tmp/bigFile
+INPUT_CASTOR_DIR /castor/cern.ch/user/g/gtaur/tmpRfioTest27096218/
+
