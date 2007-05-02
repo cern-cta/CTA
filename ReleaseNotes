@@ -66,6 +66,18 @@
   - Upgrade all nodes (the order is not important)
   - Restart the services
 
+-----------
+- 2.1.2-10-
+-----------
+
+  New Features and Changes
+  ------------------------
+  This release brings selected fixes and no new functionality with respect to the previous 2.1.2:
+  - Fix the back signal handler modifications from 2.1.3
+
+  Upgrade from 2.1.2-9
+  --------------------
+  - Upgrade all head nodes (the order is not important)
 
 -----------
 - 2.1.2-9 -

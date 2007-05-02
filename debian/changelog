@@ -352,6 +352,15 @@ castor (2.1.3-1) unstable; urgency=low
   * First test release with new LSF plugin and new monitoring
   * done from the branch newLSFPlugin
 
+castor (2.1.2-10) unstable; urgency=low
+
+  * CASTOR2/rtcopy/MigHunter.c
+    CASTOR2/rtcopy/rtcpclientd.c:
+    back signal handler modifications from 2.1.3
+
+  -- Rosa Maria Garcia Rioja <rosa.garcia@cern.ch>  Wen, 2 May 2007 14:51:00 +0200
+
+
 castor (2.1.2-9) unstable; urgency=low
 
   * CASTOR2/job/stagerJob.c:
