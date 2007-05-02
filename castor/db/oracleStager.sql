@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.410 $ $Date: 2007/04/30 14:31:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.411 $ $Date: 2007/05/02 07:41:07 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.410 $ $Date: 2007/04/30 14:31:35 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.411 $ $Date: 2007/05/02 07:41:07 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1307,10 +1307,10 @@ CREATE OR REPLACE PROCEDURE putStart
          rdcId OUT INTEGER, rdcStatus OUT INTEGER,
          rdcPath OUT VARCHAR2) AS
   srStatus INTEGER;
-  fsId INTEGER;
+  prevFsId INTEGER;
 BEGIN
   -- Get diskCopy id
-  SELECT diskCopy, SubRequest.status, fileSystem INTO rdcId, srStatus, fsId
+  SELECT diskCopy, SubRequest.status, fileSystem INTO rdcId, srStatus, prevFsId
     FROM SubRequest, DiskCopy
    WHERE SubRequest.diskcopy = Diskcopy.id
      AND SubRequest.id = srId;
@@ -1318,8 +1318,8 @@ BEGIN
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
-  IF fsId > 0 THEN
-    -- this could happen when LSF reschedules the job twice!
+  IF prevFsId > 0 THEN
+    -- this could happen when LSF schedules the job twice!
     -- (see bug report #14358 for the whole story)
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
@@ -1338,7 +1338,7 @@ BEGIN
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
   UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                      fileSystem = fsId
+                      fileSystem = fileSystemId
    WHERE id = rdcId
    RETURNING status, path
    INTO rdcStatus, rdcPath;
@@ -2488,7 +2488,7 @@ BEGIN
 
   IF dcIds.COUNT > 0 THEN
     UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
-     WHERE id MEMBER OF dcIds; 
+     WHERE id MEMBER OF dcIds;
     -- compute and update the filesystem's freed space
     sumSize := 0;
     FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
@@ -2510,11 +2510,11 @@ CREATE OR REPLACE PROCEDURE garbageCollect AS
 BEGIN
   FOR fs IN (SELECT id FROM FileSystem) LOOP
     BEGIN
-      -- run the GC
+      -- run the GCs
       garbageCollectInvalidDC(fs.id);
       garbageCollectFS(fs.id);
       -- yield to other jobs/transactions
-      DBMS_LOCK.sleep(seconds => 2.0);
+      DBMS_LOCK.sleep(seconds => 1.0);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;            -- ignore and go on
     END;
@@ -2522,15 +2522,17 @@ BEGIN
 END;
 
 BEGIN
-  -- creates a db job to be run every 15 mins for the garbage collector
-  -- given the 2 seconds sleep in garbageCollect, such interval allows for
-  -- ~450 filesystem to be processed for each round.
+  -- creates a db job to be run every 5 mins for the garbage collector
+  -- given the 1 second sleep in garbageCollect, such interval allows for
+  -- ~300 filesystem to be processed for each round.
+  -- XXX In case more are present, jobs will overlap during their run
+  -- XXX The GC procedure has to be improved! 
   DBMS_SCHEDULER.CREATE_JOB (
       JOB_NAME        => 'garbageCollectJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN garbageCollect(); END;',
       START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
       ENABLED         => TRUE,
       COMMENTS        => 'Castor Garbage Collector');
 END;
