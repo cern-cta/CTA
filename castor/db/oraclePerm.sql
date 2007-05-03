@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.412 $ $Date: 2007/05/02 12:15:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.413 $ $Date: 2007/05/03 10:40:43 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.412 $ $Date: 2007/05/02 12:15:41 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.413 $ $Date: 2007/05/03 10:40:43 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -1318,8 +1318,8 @@ BEGIN
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
-  IF prevFsId > 0 THEN
-    -- this could happen when LSF schedules the job twice!
+  IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
+    -- this could happen if LSF schedules the same job twice!
     -- (see bug report #14358 for the whole story)
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
