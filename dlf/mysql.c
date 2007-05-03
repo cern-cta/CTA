@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.14 2007/04/19 13:45:04 waldron Exp $
+ * $Id: mysql.c,v 1.15 2007/05/03 12:21:04 waldron Exp $
  */
 
 /* headers */
@@ -1130,7 +1130,7 @@ void DLL_DECL db_worker(database_t *db) {
 		Cthread_mutex_lock(&db->mutex);
 		SetActive(db->mode);
 		strcpy(tapevid, "N/A");
-		strcpy(subreqid, "N/A");
+		strcpy(subreqid, "00000000-0000-0000-0000-000000000000");
 		strcpy(stype, "N/A");
 		strcpy(sname, "N/A");
 		userid = groupid = -1;

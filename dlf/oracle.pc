@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.21 2007/04/19 13:45:04 waldron Exp $
+ * $Id: oracle.pc,v 1.22 2007/05/03 12:21:04 waldron Exp $
  */
 
 /* headers */
@@ -1208,6 +1208,7 @@ void DLL_DECL db_worker(database_t *db) {
 		strcpy(db->mtable->reqid[db->mtable->count], message->reqid);
 		strcpy(db->mtable->nsfileid[db->mtable->count], message->nsfileid);
 		strcpy(db->mtable->tapevid[db->mtable->count], "N/A");
+		strcpy(db->mtable->subreqid[db->mtable->count], "00000000-0000-0000-0000-000000000000");
 		strcpy(db->mtable->stype[db->mtable->count], "N/A");
 		strcpy(db->mtable->sname[db->mtable->count], "N/A");
 		db->mtable->userid[db->mtable->count]  = -1;
