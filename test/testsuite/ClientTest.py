@@ -384,7 +384,7 @@ class StagerGetCase(unittest.TestCase):
 		
 		
 	def getSvcClass(self):
-		cmd=["stager_put -M "+dirCastor+"fileClientGetSvc"+ticket,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S mySVC","stager_put -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket]
+		cmd=["stager_put -M "+dirCastor+"fileClientGetSvc"+ticket,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S mySVC","stager_put -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass]
 		svcClassScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,-1,stagerVersion,None,[["STAGER_TRACE","3"]])
 	        UtilityForCastorTest.saveOnFile(localDir+"ClientGetSvc",cmd,svcClassScen)
                 

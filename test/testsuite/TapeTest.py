@@ -136,7 +136,7 @@ class PreRequisitesCase(unittest.TestCase):
         inputFile=(configFileInfo[configFileInfo.find("INPUT_FILE"):]).split()[1]
         global recallDir
         recallDir=(configFileInfo[configFileInfo.find("INPUT_CASTOR_DIR"):]).split()[1]
-        UtilityForCastor.runOnShell(["nsmkdir "+dirCastor],myScen)
+        UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
         
     def stagerRfioFine(self):
 		[ret,out]=UtilityForCastorTest.testCastorBasicFunctionality(inputFile,dirCastor+"TapePreReq"+ticket,localDir,myScen)
