@@ -50,6 +50,8 @@ castor::monitoring::FileSystemMetricsReport::FileSystemMetricsReport() throw() :
   m_previousReadCounter(0),
   m_previousWriteCounter(0),
   m_lastUpdateTime(0),
+  m_nbMigratorStreams(0),
+  m_nbRecallerStreams(0),
   m_id(0),
   m_diskServer(0) {
 }
@@ -86,6 +88,8 @@ void castor::monitoring::FileSystemMetricsReport::print(std::ostream& stream,
   stream << indent << "previousReadCounter : " << m_previousReadCounter << std::endl;
   stream << indent << "previousWriteCounter : " << m_previousWriteCounter << std::endl;
   stream << indent << "lastUpdateTime : " << m_lastUpdateTime << std::endl;
+  stream << indent << "nbMigratorStreams : " << m_nbMigratorStreams << std::endl;
+  stream << indent << "nbRecallerStreams : " << m_nbRecallerStreams << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "DiskServer : " << std::endl;
