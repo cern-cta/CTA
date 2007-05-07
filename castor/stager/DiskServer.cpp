@@ -44,7 +44,13 @@
 //------------------------------------------------------------------------------
 castor::stager::DiskServer::DiskServer() throw() :
   m_name(""),
-  m_load(0),
+  m_readRate(0),
+  m_writeRate(0),
+  m_nbReadStreams(0),
+  m_nbWriteStreams(0),
+  m_nbReadWriteStreams(0),
+  m_nbMigratorStreams(0),
+  m_nbRecallerStreams(0),
   m_id(0),
   m_status(DiskServerStatusCode(0)),
   m_adminStatus(castor::monitoring::AdminStatusCodes(0)) {
@@ -74,7 +80,13 @@ void castor::stager::DiskServer::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "name : " << m_name << std::endl;
-  stream << indent << "load : " << m_load << std::endl;
+  stream << indent << "readRate : " << m_readRate << std::endl;
+  stream << indent << "writeRate : " << m_writeRate << std::endl;
+  stream << indent << "nbReadStreams : " << m_nbReadStreams << std::endl;
+  stream << indent << "nbWriteStreams : " << m_nbWriteStreams << std::endl;
+  stream << indent << "nbReadWriteStreams : " << m_nbReadWriteStreams << std::endl;
+  stream << indent << "nbMigratorStreams : " << m_nbMigratorStreams << std::endl;
+  stream << indent << "nbRecallerStreams : " << m_nbRecallerStreams << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

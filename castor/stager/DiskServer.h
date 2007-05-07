@@ -102,16 +102,90 @@ int Cstager_DiskServer_name(struct Cstager_DiskServer_t* instance, const char** 
 int Cstager_DiskServer_setName(struct Cstager_DiskServer_t* instance, const char* new_var);
 
 /**
- * Get the value of load
- * The load of the diskserver
+ * Get the value of readRate
+ * Aggregated read rate over all filesystems of this diskServer
  */
-int Cstager_DiskServer_load(struct Cstager_DiskServer_t* instance, unsigned int* var);
+int Cstager_DiskServer_readRate(struct Cstager_DiskServer_t* instance, u_signed64* var);
 
 /**
- * Set the value of load
- * The load of the diskserver
+ * Set the value of readRate
+ * Aggregated read rate over all filesystems of this diskServer
  */
-int Cstager_DiskServer_setLoad(struct Cstager_DiskServer_t* instance, unsigned int new_var);
+int Cstager_DiskServer_setReadRate(struct Cstager_DiskServer_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of writeRate
+ * Aggregated write rate over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_writeRate(struct Cstager_DiskServer_t* instance, u_signed64* var);
+
+/**
+ * Set the value of writeRate
+ * Aggregated write rate over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_setWriteRate(struct Cstager_DiskServer_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nbReadStreams
+ * Aggregated nb of user read streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_nbReadStreams(struct Cstager_DiskServer_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbReadStreams
+ * Aggregated nb of user read streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_setNbReadStreams(struct Cstager_DiskServer_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of nbWriteStreams
+ * Aggregated nb of user write streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_nbWriteStreams(struct Cstager_DiskServer_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbWriteStreams
+ * Aggregated nb of user write streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_setNbWriteStreams(struct Cstager_DiskServer_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of nbReadWriteStreams
+ * Aggregated nb of user read/write streams over all filesystems of this
+ * diskServer
+ */
+int Cstager_DiskServer_nbReadWriteStreams(struct Cstager_DiskServer_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbReadWriteStreams
+ * Aggregated nb of user read/write streams over all filesystems of this
+ * diskServer
+ */
+int Cstager_DiskServer_setNbReadWriteStreams(struct Cstager_DiskServer_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of nbMigratorStreams
+ * Aggregated nb of migrator streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_nbMigratorStreams(struct Cstager_DiskServer_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbMigratorStreams
+ * Aggregated nb of migrator streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_setNbMigratorStreams(struct Cstager_DiskServer_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of nbRecallerStreams
+ * Aggregated nb of recaller streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_nbRecallerStreams(struct Cstager_DiskServer_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbRecallerStreams
+ * Aggregated nb of recaller streams over all filesystems of this diskServer
+ */
+int Cstager_DiskServer_setNbRecallerStreams(struct Cstager_DiskServer_t* instance, unsigned int new_var);
 
 /**
  * Get the value of id

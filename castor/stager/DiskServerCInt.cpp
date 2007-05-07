@@ -118,18 +118,114 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskServer_load
+  // Cstager_DiskServer_readRate
   //----------------------------------------------------------------------------
-  int Cstager_DiskServer_load(castor::stager::DiskServer* instance, unsigned int* var) {
-    *var = instance->load();
+  int Cstager_DiskServer_readRate(castor::stager::DiskServer* instance, u_signed64* var) {
+    *var = instance->readRate();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskServer_setLoad
+  // Cstager_DiskServer_setReadRate
   //----------------------------------------------------------------------------
-  int Cstager_DiskServer_setLoad(castor::stager::DiskServer* instance, unsigned int new_var) {
-    instance->setLoad(new_var);
+  int Cstager_DiskServer_setReadRate(castor::stager::DiskServer* instance, u_signed64 new_var) {
+    instance->setReadRate(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_writeRate
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_writeRate(castor::stager::DiskServer* instance, u_signed64* var) {
+    *var = instance->writeRate();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setWriteRate
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setWriteRate(castor::stager::DiskServer* instance, u_signed64 new_var) {
+    instance->setWriteRate(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_nbReadStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_nbReadStreams(castor::stager::DiskServer* instance, unsigned int* var) {
+    *var = instance->nbReadStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setNbReadStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setNbReadStreams(castor::stager::DiskServer* instance, unsigned int new_var) {
+    instance->setNbReadStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_nbWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_nbWriteStreams(castor::stager::DiskServer* instance, unsigned int* var) {
+    *var = instance->nbWriteStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setNbWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setNbWriteStreams(castor::stager::DiskServer* instance, unsigned int new_var) {
+    instance->setNbWriteStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_nbReadWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_nbReadWriteStreams(castor::stager::DiskServer* instance, unsigned int* var) {
+    *var = instance->nbReadWriteStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setNbReadWriteStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setNbReadWriteStreams(castor::stager::DiskServer* instance, unsigned int new_var) {
+    instance->setNbReadWriteStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_nbMigratorStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_nbMigratorStreams(castor::stager::DiskServer* instance, unsigned int* var) {
+    *var = instance->nbMigratorStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setNbMigratorStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setNbMigratorStreams(castor::stager::DiskServer* instance, unsigned int new_var) {
+    instance->setNbMigratorStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_nbRecallerStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_nbRecallerStreams(castor::stager::DiskServer* instance, unsigned int* var) {
+    *var = instance->nbRecallerStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_DiskServer_setNbRecallerStreams
+  //----------------------------------------------------------------------------
+  int Cstager_DiskServer_setNbRecallerStreams(castor::stager::DiskServer* instance, unsigned int new_var) {
+    instance->setNbRecallerStreams(new_var);
     return 0;
   }
 

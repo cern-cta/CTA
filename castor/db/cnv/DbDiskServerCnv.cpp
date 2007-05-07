@@ -57,7 +57,7 @@ static castor::CnvFactory<castor::db::cnv::DbDiskServerCnv>* s_factoryDbDiskServ
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbDiskServerCnv::s_insertStatementString =
-"INSERT INTO DiskServer (name, load, id, status, adminStatus) VALUES (:1,:2,ids_seq.nextval,:3,:4) RETURNING id INTO :5";
+"INSERT INTO DiskServer (name, readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams, id, status, adminStatus) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,ids_seq.nextval,:9,:10) RETURNING id INTO :11";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbDiskServerCnv::s_deleteStatementString =
@@ -65,11 +65,11 @@ const std::string castor::db::cnv::DbDiskServerCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbDiskServerCnv::s_selectStatementString =
-"SELECT name, load, id, status, adminStatus FROM DiskServer WHERE id = :1";
+"SELECT name, readRate, writeRate, nbReadStreams, nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams, id, status, adminStatus FROM DiskServer WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbDiskServerCnv::s_updateStatementString =
-"UPDATE DiskServer SET name = :1, load = :2, status = :3, adminStatus = :4 WHERE id = :5";
+"UPDATE DiskServer SET name = :1, readRate = :2, writeRate = :3, nbReadStreams = :4, nbWriteStreams = :5, nbReadWriteStreams = :6, nbMigratorStreams = :7, nbRecallerStreams = :8, status = :9, adminStatus = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbDiskServerCnv::s_storeTypeStatementString =
@@ -331,18 +331,24 @@ void castor::db::cnv::DbDiskServerCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(11, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setString(1, obj->name());
-    m_insertStatement->setInt(2, obj->load());
-    m_insertStatement->setInt(3, (int)obj->status());
-    m_insertStatement->setInt(4, (int)obj->adminStatus());
+    m_insertStatement->setUInt64(2, obj->readRate());
+    m_insertStatement->setUInt64(3, obj->writeRate());
+    m_insertStatement->setInt(4, obj->nbReadStreams());
+    m_insertStatement->setInt(5, obj->nbWriteStreams());
+    m_insertStatement->setInt(6, obj->nbReadWriteStreams());
+    m_insertStatement->setInt(7, obj->nbMigratorStreams());
+    m_insertStatement->setInt(8, obj->nbRecallerStreams());
+    m_insertStatement->setInt(9, (int)obj->status());
+    m_insertStatement->setInt(10, (int)obj->adminStatus());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(5));
+    obj->setId(m_insertStatement->getUInt64(11));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -360,7 +366,13 @@ void castor::db::cnv::DbDiskServerCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  name : " << obj->name() << std::endl
-                    << "  load : " << obj->load() << std::endl
+                    << "  readRate : " << obj->readRate() << std::endl
+                    << "  writeRate : " << obj->writeRate() << std::endl
+                    << "  nbReadStreams : " << obj->nbReadStreams() << std::endl
+                    << "  nbWriteStreams : " << obj->nbWriteStreams() << std::endl
+                    << "  nbReadWriteStreams : " << obj->nbReadWriteStreams() << std::endl
+                    << "  nbMigratorStreams : " << obj->nbMigratorStreams() << std::endl
+                    << "  nbRecallerStreams : " << obj->nbRecallerStreams() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  status : " << obj->status() << std::endl
                     << "  adminStatus : " << obj->adminStatus() << std::endl;
@@ -386,10 +398,16 @@ void castor::db::cnv::DbDiskServerCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setString(1, obj->name());
-    m_updateStatement->setInt(2, obj->load());
-    m_updateStatement->setInt(3, (int)obj->status());
-    m_updateStatement->setInt(4, (int)obj->adminStatus());
-    m_updateStatement->setUInt64(5, obj->id());
+    m_updateStatement->setUInt64(2, obj->readRate());
+    m_updateStatement->setUInt64(3, obj->writeRate());
+    m_updateStatement->setInt(4, obj->nbReadStreams());
+    m_updateStatement->setInt(5, obj->nbWriteStreams());
+    m_updateStatement->setInt(6, obj->nbReadWriteStreams());
+    m_updateStatement->setInt(7, obj->nbMigratorStreams());
+    m_updateStatement->setInt(8, obj->nbRecallerStreams());
+    m_updateStatement->setInt(9, (int)obj->status());
+    m_updateStatement->setInt(10, (int)obj->adminStatus());
+    m_updateStatement->setUInt64(11, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -473,10 +491,16 @@ castor::IObject* castor::db::cnv::DbDiskServerCnv::createObj(castor::IAddress* a
     castor::stager::DiskServer* object = new castor::stager::DiskServer();
     // Now retrieve and set members
     object->setName(rset->getString(1));
-    object->setLoad(rset->getInt(2));
-    object->setId(rset->getUInt64(3));
-    object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(4));
-    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(5));
+    object->setReadRate(rset->getUInt64(2));
+    object->setWriteRate(rset->getUInt64(3));
+    object->setNbReadStreams(rset->getInt(4));
+    object->setNbWriteStreams(rset->getInt(5));
+    object->setNbReadWriteStreams(rset->getInt(6));
+    object->setNbMigratorStreams(rset->getInt(7));
+    object->setNbRecallerStreams(rset->getInt(8));
+    object->setId(rset->getUInt64(9));
+    object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(10));
+    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(11));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -515,10 +539,16 @@ void castor::db::cnv::DbDiskServerCnv::updateObj(castor::IObject* obj)
     castor::stager::DiskServer* object = 
       dynamic_cast<castor::stager::DiskServer*>(obj);
     object->setName(rset->getString(1));
-    object->setLoad(rset->getInt(2));
-    object->setId(rset->getUInt64(3));
-    object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(4));
-    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(5));
+    object->setReadRate(rset->getUInt64(2));
+    object->setWriteRate(rset->getUInt64(3));
+    object->setNbReadStreams(rset->getInt(4));
+    object->setNbWriteStreams(rset->getInt(5));
+    object->setNbReadWriteStreams(rset->getInt(6));
+    object->setNbMigratorStreams(rset->getInt(7));
+    object->setNbRecallerStreams(rset->getInt(8));
+    object->setId(rset->getUInt64(9));
+    object->setStatus((enum castor::stager::DiskServerStatusCode)rset->getInt(10));
+    object->setAdminStatus((enum castor::monitoring::AdminStatusCodes)rset->getInt(11));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
