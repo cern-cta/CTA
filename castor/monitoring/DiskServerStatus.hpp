@@ -122,18 +122,6 @@ namespace castor {
       /// Accessor to freeSwap
       u_signed64 freeSwap()const { return m_freeSwap; }
 
-      /// Accessor to load
-      void setLoad(unsigned int load) { m_load = load; }
-
-      /// Accessor to load
-      unsigned int load()const { return m_load; }
-
-      /// Accessor to deltaLoad
-      void setDeltaLoad(int deltaLoad) { m_deltaLoad = deltaLoad; }
-
-      /// Accessor to deltaLoad
-      int deltaLoad() const { return m_deltaLoad; }
-
       /// Accessor to lastStateUpdate
       void setLastStateUpdate(u_signed64 lastStateUpdate) {
         m_lastStateUpdate = lastStateUpdate;
@@ -149,6 +137,105 @@ namespace castor {
 
       /// Accessor to lastMetricsUpdate
       u_signed64 lastMetricsUpdate() const { return m_lastMetricsUpdate; }
+
+      /// Accessor to readRate
+      u_signed64 readRate() const { return m_readRate; }
+
+      /// Accessor to readRate
+      void setReadRate(u_signed64 readRate) { m_readRate = readRate; }
+
+      /// Accessor to deltaReadRate
+      signed64 deltaReadRate() const { return m_deltaReadRate; }
+
+      /// Accessor to deltaReadRate
+      void setDeltaReadRate(signed64 deltaReadRate) {
+	m_deltaReadRate = deltaReadRate;
+      }
+
+      /// Accessor to writeRate
+      u_signed64 writeRate() const { return m_writeRate; }
+
+      /// Accessor to writeRate
+      void setWriteRate(u_signed64 writeRate) { m_writeRate = writeRate; }
+
+      /// Accessor to deltaWriteRate
+      signed64 deltaWriteRate() const { return m_deltaWriteRate; }
+
+      /// Accessor to deltaWriteRate
+      void setDeltaWriteRate(signed64 deltaWriteRate) {
+	m_deltaWriteRate = deltaWriteRate;
+      }
+
+      /// Accessor to nbReadStreams
+      unsigned int nbReadStreams() const { return m_nbReadStreams; }
+
+      /// Accessor to nbReadStreams
+      void setNbReadStreams(unsigned int nbReadStreams) { m_nbReadStreams = nbReadStreams; }
+
+      /// Accessor to deltaNbReadStreams
+      int deltaNbReadStreams() const { return m_deltaNbReadStreams; }
+
+      /// Accessor to deltaNbReadStreams
+      void setDeltaNbReadStreams(int deltaNbReadStreams) {
+	m_deltaNbReadStreams = deltaNbReadStreams;
+      }
+
+      /// Accessor to nbWriteStreams
+      unsigned int nbWriteStreams() const { return m_nbWriteStreams; }
+
+      /// Accessor to nbWriteStreams
+      void setNbWriteStreams(unsigned int nbWriteStreams) { m_nbWriteStreams = nbWriteStreams; }
+
+      /// Accessor to deltaNbWriteStreams
+      int deltaNbWriteStreams() const { return m_deltaNbWriteStreams; }
+
+      /// Accessor to deltaNbWriteStreams
+      void setDeltaNbWriteStreams(int deltaNbWriteStreams) {
+	m_deltaNbWriteStreams = deltaNbWriteStreams;
+      }
+
+      /// Accessor to nbReadWriteStreams
+      unsigned int nbReadWriteStreams() const { return m_nbReadWriteStreams; }
+
+      /// Accessor to nbReadWriteStreams
+      void setNbReadWriteStreams(unsigned int nbReadWriteStreams) {
+	m_nbReadWriteStreams = nbReadWriteStreams;
+      }
+
+      /// Accessor to deltaNbReadWriteStreams
+      int deltaNbReadWriteStreams() const { return m_deltaNbReadWriteStreams; }
+
+      /// Accessor to deltaNbReadWriteStreams
+      void setDeltaNbReadWriteStreams(int deltaNbReadWriteStreams)
+      { m_deltaNbReadWriteStreams = deltaNbReadWriteStreams; }
+
+      /// Accessor to nbMigratorStreams
+      unsigned int nbMigratorStreams() const { return m_nbMigratorStreams; }
+
+      /// Accessor to nbMigratorStreams
+      void setNbMigratorStreams(unsigned int nbMigratorStreams) { m_nbMigratorStreams = nbMigratorStreams; }
+
+      /// Accessor to deltaNbMigratorStreams
+      int deltaNbMigratorStreams() const { return m_deltaNbMigratorStreams; }
+
+      /// Accessor to deltaNbMigratorStreams
+      void setDeltaNbMigratorStreams(int deltaNbMigratorStreams) {
+	m_deltaNbMigratorStreams = deltaNbMigratorStreams;
+      }
+
+      /// Accessor to nbRecallerStreams
+      unsigned int nbRecallerStreams() const { return m_nbRecallerStreams; }
+
+      /// Accessor to nbRecallerStreams
+      void setNbRecallerStreams(unsigned int nbRecallerStreams) { m_nbRecallerStreams = nbRecallerStreams; }
+
+      /// Accessor to deltaNbRecallerStreams
+      int deltaNbRecallerStreams() const { return m_deltaNbRecallerStreams; }
+
+      /// Accessor to deltaNbRecallerStreams
+      void setDeltaNbRecallerStreams(int deltaNbRecallerStreams) {
+	m_deltaNbRecallerStreams = deltaNbRecallerStreams;
+      }
 
     private:
 
@@ -176,17 +263,53 @@ namespace castor {
       /// Free swap (in bytes)
       u_signed64 m_freeSwap;
 
-      /// Load
-      unsigned int m_load;
-
-      /// DeltaLoad
-      int m_deltaLoad;
-
       /// Last state update (seconds since EPOCH)
       u_signed64 m_lastStateUpdate;
 
       /// Last metrics update (seconds since EPOCH)
       u_signed64 m_lastMetricsUpdate;
+
+      /// The number of bytes read per second, aggregated over all filesystems
+      u_signed64 m_readRate;
+
+      /// Delta on the number of bytes read per second, aggregated over all filesystems
+      signed64 m_deltaReadRate;
+
+      /// The number of bytes written per second, aggregated over all filesystems
+      u_signed64 m_writeRate;
+
+      /// Delta on the number of bytes written per second, aggregated over all filesystems
+      signed64 m_deltaWriteRate;
+
+      /// The number of read streams, aggregated over all filesystems
+      unsigned int m_nbReadStreams;
+
+      /// Delta on the number of read streams, aggregated over all filesystems
+      int m_deltaNbReadStreams;
+
+      /// The number of write streams, aggregated over all filesystems
+      unsigned int m_nbWriteStreams;
+
+      /// Delta on the number of write streams, aggregated over all filesystems
+      int m_deltaNbWriteStreams;
+
+      /// The number of read-write streams, aggregated over all filesystems
+      unsigned int m_nbReadWriteStreams;
+
+      /// Delta on the number of read-write streams, aggregated over all filesystems
+      int m_deltaNbReadWriteStreams;
+
+      /// The number of migrator streams, aggregated over all filesystems
+      unsigned int m_nbMigratorStreams;
+
+      /// Delta on the number of migrator streams, aggregated over all filesystems
+      int m_deltaNbMigratorStreams;
+
+      /// The number of recaller streams, aggregated over all filesystems
+      unsigned int m_nbRecallerStreams;
+
+      /// Delta on the number of recaller streams, aggregated over all filesystems
+      int m_deltaNbRecallerStreams;
 
     }; // end DiskServerStatus
 

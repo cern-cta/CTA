@@ -37,8 +37,15 @@ castor::monitoring::DiskServerStatus::DiskServerStatus() :
   m_ram(0), m_memory(0),
   m_swap(0), m_status(castor::stager::DISKSERVER_DISABLED),
   m_adminStatus(ADMIN_FORCE), m_freeRam(0),
-  m_freeMemory(0), m_freeSwap(0), m_load(0),
-  m_lastStateUpdate(0), m_lastMetricsUpdate(0) { }
+  m_freeMemory(0), m_freeSwap(0),
+  m_lastStateUpdate(0), m_lastMetricsUpdate(0),
+  m_readRate(0), m_deltaReadRate(0),
+  m_writeRate(0), m_deltaWriteRate(0),
+  m_nbReadStreams(0), m_deltaNbReadStreams(0),
+  m_nbWriteStreams(0), m_deltaNbWriteStreams(0),
+  m_nbReadWriteStreams(0), m_deltaNbReadWriteStreams(0),
+  m_nbMigratorStreams(0), m_deltaNbMigratorStreams(0),
+  m_nbRecallerStreams(0), m_deltaNbRecallerStreams(0) { }
 
 //------------------------------------------------------------------------------
 // print
@@ -78,11 +85,37 @@ void castor::monitoring::DiskServerStatus::print
       << indentation << std::setw(20)
       << "freeSwap" << ": " << freeSwapBuf << "\n"
       << indentation << std::setw(20)
-      << "load" << ": " << m_load << "\n"
-      << indentation << std::setw(20)
       << "lastStateUpdate" << ": " << m_lastStateUpdate << "\n"
       << indentation << std::setw(20)
       << "lastMetricsUpdate" << ": " << m_lastMetricsUpdate
+      << indentation << std::setw(20)
+      << "readRate" << ": " << m_readRate << "\n"
+      << indentation << std::setw(20)
+      << "deltaReadRate" << ": " << m_deltaReadRate << "\n"
+      << indentation << std::setw(20)
+      << "writeRate" << ": " << m_writeRate << "\n"
+      << indentation << std::setw(20)
+      << "deltaWriteRate" << ": " << m_deltaWriteRate << "\n"
+      << indentation << std::setw(20)
+      << "nbReadStreams" << ": " << m_nbReadStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbReadStreams" << ": " << m_deltaNbReadStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbWriteStreams" << ": " << m_nbWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbWriteStreams" << ": " << m_deltaNbWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbReadWriteStreams" << ": " << m_nbReadWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbReadWriteStreams" << ": " << m_deltaNbReadWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbMigratorStreams" << ": " << m_nbMigratorStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbMigratorStreams" << ": " << m_deltaNbMigratorStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbRecallerStreams" << ": " << m_nbRecallerStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbRecallerStreams" << ": " << m_deltaNbRecallerStreams << "\n"
       << std::endl;
   if (0 == size()) {
     out << indentation << "No filesystems registered"
