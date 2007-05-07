@@ -174,24 +174,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_load
-       * The load at the time of the monitoring
-       * @return the value of m_load
-       */
-      unsigned int load() const {
-        return m_load;
-      }
-
-      /**
-       * Set the value of m_load
-       * The load at the time of the monitoring
-       * @param new_var the new value of m_load
-       */
-      void setLoad(unsigned int new_var) {
-        m_load = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -254,9 +236,6 @@ namespace castor {
 
       /// The amount of free swap in bytes
       u_signed64 m_freeSwap;
-
-      /// The load at the time of the monitoring
-      unsigned int m_load;
 
       /// The id of this object
       u_signed64 m_id;

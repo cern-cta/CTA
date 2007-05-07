@@ -94,7 +94,6 @@ void castor::io::StreamDiskServerMetricsReportCnv::createRep(castor::IAddress* a
   ad->stream() << obj->freeRam();
   ad->stream() << obj->freeMemory();
   ad->stream() << obj->freeSwap();
-  ad->stream() << obj->load();
   ad->stream() << obj->id();
 }
 
@@ -120,9 +119,6 @@ castor::IObject* castor::io::StreamDiskServerMetricsReportCnv::createObj(castor:
   u_signed64 freeSwap;
   ad->stream() >> freeSwap;
   object->setFreeSwap(freeSwap);
-  unsigned int load;
-  ad->stream() >> load;
-  object->setLoad(load);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

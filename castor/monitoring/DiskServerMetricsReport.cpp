@@ -45,7 +45,6 @@ castor::monitoring::DiskServerMetricsReport::DiskServerMetricsReport() throw() :
   m_freeRam(0),
   m_freeMemory(0),
   m_freeSwap(0),
-  m_load(0),
   m_id(0) {
 }
 
@@ -77,7 +76,6 @@ void castor::monitoring::DiskServerMetricsReport::print(std::ostream& stream,
   stream << indent << "freeRam : " << m_freeRam << std::endl;
   stream << indent << "freeMemory : " << m_freeMemory << std::endl;
   stream << indent << "freeSwap : " << m_freeSwap << std::endl;
-  stream << indent << "load : " << m_load << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
