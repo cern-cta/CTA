@@ -4,11 +4,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 11:46:03 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.7 $ $Date: 2007/05/07 06:58:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      reclaim - reset information concerning a volume */
 #include <errno.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +20,7 @@ static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.6 $ $Date: 2005
 extern	char	*getconfent();
 extern	char	*optarg;
 extern	int	optind;
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -89,7 +90,7 @@ char **argv;
 	if (! host && (Cns_hosts = getconfent ("CNS", "HOST", 1))) {
 		Cns_hosts = strdup (Cns_hosts);
 		host = Cns_hosts;
-		if (p = strpbrk (Cns_hosts, " \t\n")) {
+		if ((p = strpbrk (Cns_hosts, " \t\n"))) {
 			*p = '\0';
 			Cns_hosts = p + 1;
 		} else
@@ -119,7 +120,7 @@ char **argv;
 		(void) Cns_listtape (host, vid, CNS_LIST_END, &list);
 		if (! Cns_hosts) break;
 		host = Cns_hosts;
-		if (p = strpbrk (Cns_hosts, " \t\n")) {
+		if ((p = strpbrk (Cns_hosts, " \t\n"))) {
 			*p = '\0';
 			Cns_hosts = p + 1;
 		} else

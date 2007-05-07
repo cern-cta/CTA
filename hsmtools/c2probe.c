@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/15 14:17:43 $ $Author: obarring $
+ * @(#)$RCSfile: c2probe.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/05/07 06:58:05 $ $Author: waldron $
  *
  * 
  *
@@ -43,6 +43,9 @@
 #include <Cgetopt.h>
 #include <stager_api.h>
 #include <Cthread_api.h>
+#include <stager_client_commandline.h>
+#include <Cpool_api.h>
+#include <u64subr.h>
 #define ERRBUFSIZE 255
 /*
  * Various circular list operations.
@@ -250,7 +253,7 @@ int countItems(
                )
      char *itemStr;
 {
-  char *p, *q;
+  char *p;
   int nbItems = 0;
   if ( itemStr == NULL ) return(0);
   
@@ -310,7 +313,7 @@ int qryFile(char *svcClass, char *path)
 {
 	struct stage_query_req *qrequests;
 	struct  stage_filequery_resp *qresponses;
-	int nbqresps = 0, rc, i;
+	int nbqresps = 0, rc;
   char errbuf[ERRBUFSIZE+1];
   struct stage_options opts;
 
@@ -353,7 +356,7 @@ int rmFile(char *svcClass, char *path)
   int nbresps, nbreqs;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
-  int errflg, rc, i;
+  int rc;
   struct stage_options opts;
 
   opts.stage_host = stageHost;
@@ -434,15 +437,15 @@ void dumpStat()
             "stager_rm %d\n",
             myItem->svcClass,
             (unsigned long)now,
-            now - myItem->lastUpdate,
-            DELTA_TIME(myItem->rfio_open_write),
-            DELTA_TIME(myItem->rfio_write),
-            DELTA_TIME(myItem->rfio_close_write),
-            DELTA_TIME(myItem->rfio_open_read),
-            DELTA_TIME(myItem->rfio_read),
-            DELTA_TIME(myItem->rfio_close_read),
-            DELTA_TIME(myItem->stager_qry),
-            DELTA_TIME(myItem->stager_rm));
+            (int)(now - myItem->lastUpdate),
+            (int)DELTA_TIME(myItem->rfio_open_write),
+            (int)DELTA_TIME(myItem->rfio_write),
+            (int)DELTA_TIME(myItem->rfio_close_write),
+            (int)DELTA_TIME(myItem->rfio_open_read),
+            (int)DELTA_TIME(myItem->rfio_read),
+            (int)DELTA_TIME(myItem->rfio_close_read),
+            (int)DELTA_TIME(myItem->stager_qry),
+            (int)DELTA_TIME(myItem->stager_rm));
 
     rc = write(fd,printBuffer,strlen(printBuffer));
     sprintf(printBuffer,
