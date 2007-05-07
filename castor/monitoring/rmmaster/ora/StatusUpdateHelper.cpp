@@ -236,14 +236,14 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
   if (!getOrCreateDiskServer(metrics->name(), it)) {
     return;
   }
-  // update DiskServer metrics
-  it->second.setFreeRam(metrics->freeRam());
-  it->second.setFreeMemory(metrics->freeMemory());
-  it->second.setFreeSwap(metrics->freeSwap());
-  it->second.setLoad(metrics->load() + it->second.deltaLoad());
-  it->second.setDeltaLoad(0);
-  // Update lastUpdate
-  it->second.setLastMetricsUpdate(time(0));
+  // gather totals
+  u_signed64 totalReadRate = 0;
+  u_signed64 totalWriteRate = 0;
+  unsigned int totalNbReadStreams = 0;
+  unsigned int totalNbWriteStreams = 0;
+  unsigned int totalNbReadWriteStreams = 0;
+  unsigned int totalNbMigratorStreams = 0;
+  unsigned int totalNbRecallerStreams = 0;
   // Update FileSystems
   for (std::vector<castor::monitoring::FileSystemMetricsReport*>::const_iterator
          itFs = metrics->fileSystemMetricsReports().begin();
@@ -276,19 +276,50 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
     // Update FileSystem metrics
     it2->second.setReadRate((*itFs)->readRate() + it2->second.deltaReadRate());
     it2->second.setDeltaReadRate(0);
+    totalReadRate += it2->second.readRate();
     it2->second.setWriteRate((*itFs)->writeRate() + it2->second.deltaWriteRate());
     it2->second.setDeltaWriteRate(0);
+    totalWriteRate += it2->second.writeRate();
     it2->second.setNbReadStreams((*itFs)->nbReadStreams() + it2->second.deltaNbReadStreams());
     it2->second.setDeltaNbReadStreams(0);
+    totalNbReadStreams += it2->second.nbReadStreams();
     it2->second.setNbWriteStreams((*itFs)->nbWriteStreams() + it2->second.deltaNbWriteStreams());
     it2->second.setDeltaNbWriteStreams(0);
+    totalNbWriteStreams += it2->second.nbWriteStreams();
     it2->second.setNbReadWriteStreams((*itFs)->nbReadWriteStreams() + it2->second.deltaNbReadWriteStreams());
     it2->second.setDeltaNbReadWriteStreams(0);
+    totalNbReadWriteStreams += it2->second.nbReadWriteStreams();
+    it2->second.setNbMigratorStreams((*itFs)->nbMigratorStreams() + it2->second.deltaNbMigratorStreams());
+    it2->second.setDeltaNbMigratorStreams(0);
+    totalNbMigratorStreams += it2->second.nbMigratorStreams();
+    it2->second.setNbRecallerStreams((*itFs)->nbRecallerStreams() + it2->second.deltaNbRecallerStreams());
+    it2->second.setDeltaNbRecallerStreams(0);
+    totalNbRecallerStreams += it2->second.nbRecallerStreams();
     it2->second.setFreeSpace((u_signed64)((signed64)(*itFs)->freeSpace()) + it2->second.deltaFreeSpace());
     it2->second.setDeltaFreeSpace(0);
     // Update lastUpdate
     it2->second.setLastMetricsUpdate(time(0));
   }
+  // update DiskServer metrics
+  it->second.setFreeRam(metrics->freeRam());
+  it->second.setFreeMemory(metrics->freeMemory());
+  it->second.setFreeSwap(metrics->freeSwap());
+  it->second.setReadRate(totalReadRate);
+  it->second.setDeltaReadRate(0);
+  it->second.setWriteRate(totalWriteRate);
+  it->second.setDeltaWriteRate(0);
+  it->second.setNbReadStreams(totalNbReadStreams);
+  it->second.setDeltaNbReadStreams(0);
+  it->second.setNbWriteStreams(totalNbWriteStreams);
+  it->second.setDeltaNbWriteStreams(0);
+  it->second.setNbReadWriteStreams(totalNbReadWriteStreams);
+  it->second.setDeltaNbReadWriteStreams(0);
+  it->second.setNbMigratorStreams(totalNbMigratorStreams);
+  it->second.setDeltaNbMigratorStreams(0);
+  it->second.setNbRecallerStreams(totalNbRecallerStreams);
+  it->second.setDeltaNbRecallerStreams(0);
+  // Update lastUpdate
+  it->second.setLastMetricsUpdate(time(0));
 }
 
 //------------------------------------------------------------------------------
