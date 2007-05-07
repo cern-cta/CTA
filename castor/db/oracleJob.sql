@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.413 $ $Date: 2007/05/03 10:40:43 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.414 $ $Date: 2007/05/07 16:30:28 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.413 $ $Date: 2007/05/03 10:40:43 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.414 $ $Date: 2007/05/07 16:30:28 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2997,7 +2997,7 @@ CREATE OR REPLACE PROCEDURE storeClusterStatus
 BEGIN
   -- First Update Machines
   FOR i in machines.FIRST .. machines.LAST LOOP
-    ind := machineValues.FIRST + 3 * (i - machines.FIRST);
+    ind := machineValues.FIRST + 9 * (i - machines.FIRST);
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
@@ -3015,7 +3015,13 @@ BEGIN
         UPDATE DiskServer
            SET status = machineValues(ind),
                adminStatus = machineValues(ind + 1),
-               load = machineValues(ind + 2)
+               readRate = fileSystemValues(ind + 2),
+               writeRate = fileSystemValues(ind + 3),
+               nbReadStreams = fileSystemValues(ind + 4),
+               nbWriteStreams = fileSystemValues(ind + 5),
+               nbReadWriteStreams = fileSystemValues(ind + 6),
+               nbMigratorStreams = fileSystemValues(ind + 7),
+               nbRecallerStreams = fileSystemValues(ind + 8)
          WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         DECLARE
@@ -3023,8 +3029,13 @@ BEGIN
         BEGIN
           -- we should insert a new machine here
           SELECT ids_seq.nextval INTO mId FROM DUAL;
-          INSERT INTO DiskServer (name, load, id, status, adminStatus)
-           VALUES (machines(i), machineValues(ind + 2), mid, machineValues(ind), machineValues(ind + 1));
+          INSERT INTO DiskServer (name, id, status, adminStatus, writeRate, nbReadStreams,
+                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams)
+           VALUES (machines(i), mid, machineValues(ind),
+                   machineValues(ind + 1), machineValues(ind + 2),
+                   machineValues(ind + 3), machineValues(ind + 4),
+                   machineValues(ind + 5), machineValues(ind + 6),
+                   machineValues(ind + 7), machineValues(ind + 8));
           INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
         END;
       END;
@@ -3057,11 +3068,13 @@ BEGIN
                  nbReadStreams = fileSystemValues(ind + 4),
                  nbWriteStreams = fileSystemValues(ind + 5),
                  nbReadWriteStreams = fileSystemValues(ind + 6),
-                 free = fileSystemValues(ind + 7),
-                 totalSize = fileSystemValues(ind + 8),
-                 minFreeSpace = fileSystemValues(ind + 9),
-                 maxFreeSpace = fileSystemValues(ind + 10),
-                 minAllowedFreeSpace = fileSystemValues(ind + 11)
+                 nbMigratorStreams = fileSystemValues(ind + 7),
+                 nbRecallerStreams = fileSystemValues(ind + 8),
+                 free = fileSystemValues(ind + 9),
+                 totalSize = fileSystemValues(ind + 10),
+                 minFreeSpace = fileSystemValues(ind + 11),
+                 maxFreeSpace = fileSystemValues(ind + 12),
+                 minAllowedFreeSpace = fileSystemValues(ind + 13)
            WHERE mountPoint = fileSystems(i)
              AND diskServer = machine;
         EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3073,19 +3086,20 @@ BEGIN
             INSERT INTO FileSystem (free, mountPoint,
                    minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
-                   nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
-                   status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystemValues(ind+9),
-                      fileSystemValues(ind+11), fileSystemValues(ind+10),
-                      0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
+                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
+                   id, diskPool, diskserver, status, adminStatus)
+              VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
+                      fileSystemValues(ind+13), fileSystemValues(ind+12),
+                      0, fileSystemValues(ind + 10), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                       fileSystemValues(ind + 5), fileSystemValues(ind + 6),
+                      fileSystemValues(ind + 7), fileSystemValues(ind + 8),
                       fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
             INSERT INTO Id2Type (id, type) VALUES (fsid, 12); -- OBJ_FileSystem
           END;
         END;
       END IF;
-      ind := ind + 12;
+      ind := ind + 14;
     END IF;
   END LOOP;
 END;

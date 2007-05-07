@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/04/24 14:06:43 $ $Author: itglp $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/05/07 16:30:28 $ $Author: sponcec3 $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -239,26 +239,26 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     }
   }
   // Deal with parameters for both DiskServers and FileSystems
-  ub2 *lensDSP = (ub2*) malloc(diskServersL * 3 * sizeof(ub2));
+  ub2 *lensDSP = (ub2*) malloc(diskServersL * 9 * sizeof(ub2));
   if (0 == lensDSP) {
     free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
     castor::exception::OutOfMemory e; throw e;
   };
-  ub2 *lensFSP = (ub2*) malloc(fileSystemsL * 12 * sizeof(ub2));
+  ub2 *lensFSP = (ub2*) malloc(fileSystemsL * 14 * sizeof(ub2));
   if (0 == lensFSP) {
     free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
     free(lensDSP);
     castor::exception::OutOfMemory e; throw e;
   };
   unsigned char (*bufferDSP)[21] =
-    (unsigned char(*)[21]) calloc(diskServersL * 3 * 21, sizeof(unsigned char));
+    (unsigned char(*)[21]) calloc(diskServersL * 9 * 21, sizeof(unsigned char));
   if (0 == bufferDSP) {
     free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
     free(lensDSP); free(lensFSP);
     castor::exception::OutOfMemory e; throw e;
   };
   unsigned char (*bufferFSP)[21] =
-    (unsigned char(*)[21]) calloc(fileSystemsL * 12 * 21, sizeof(unsigned char));
+    (unsigned char(*)[21]) calloc(fileSystemsL * 14 * 21, sizeof(unsigned char));
   if (0 == lensFSP) {
     free(lensDS); free(lensFS); free(bufferDS); free(bufferFS);
     free(lensDSP); free(lensFSP); free(bufferDSP);
@@ -274,9 +274,15 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 	 it++) {
       const castor::monitoring::DiskServerStatus& dss = it->second;
       // fill buffers
-      fillOracleBuffer(bufferDSP, lensDSP, 3*d, dss.status());
-      fillOracleBuffer(bufferDSP, lensDSP, (3*d)+1, dss.adminStatus());
-      fillOracleBuffer(bufferDSP, lensDSP, (3*d)+2, dss.load());
+      fillOracleBuffer(bufferDSP, lensDSP, 9*d, dss.status());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+1, dss.adminStatus());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+2, (double)dss.readRate());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+3, (double)dss.writeRate());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+4, dss.nbReadStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+5, dss.nbWriteStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+6, dss.nbReadWriteStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+7, dss.nbMigratorStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+8, dss.nbRecallerStreams());
       d++;
       // don't send FileSystems for deleted nodes
       if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
@@ -286,18 +292,20 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 	     it2++) {
 	  const castor::monitoring::FileSystemStatus& fss = it2->second;
 	  // fill buffers
-	  fillOracleBuffer(bufferFSP, lensFSP, 12*f, fss.status());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+1, fss.adminStatus());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+2, (double)fss.readRate());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+3, (double)fss.writeRate());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+4, fss.nbReadStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+5, fss.nbWriteStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+6, fss.nbReadWriteStreams());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+7, (double)fss.freeSpace());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+8, (double)fss.space());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+9, (double)fss.minFreeSpace());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+10,(double)fss.maxFreeSpace());
-	  fillOracleBuffer(bufferFSP, lensFSP, (12*f)+11,(double)fss.minAllowedFreeSpace());
+	  fillOracleBuffer(bufferFSP, lensFSP, 14*f, fss.status());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+1, fss.adminStatus());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+2, (double)fss.readRate());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+3, (double)fss.writeRate());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+4, fss.nbReadStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+5, fss.nbWriteStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+6, fss.nbReadWriteStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+7, fss.nbMigratorStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+8, fss.nbRecallerStreams());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+9, (double)fss.freeSpace());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+10,(double)fss.space());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+11,(double)fss.minFreeSpace());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+12,(double)fss.maxFreeSpace());
+	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+13,(double)fss.minAllowedFreeSpace());
 	  f++;
 	}
       }
@@ -305,8 +313,8 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     // prepare the statement
     ub4 DSL = diskServersL;
     ub4 FSL = diskServersL+fileSystemsL;
-    ub4 DSPL = 3*diskServersL;
-    ub4 FSPL = 12*fileSystemsL;
+    ub4 DSPL = 9*diskServersL;
+    ub4 FSPL = 14*fileSystemsL;
     m_storeClusterStatusStatement->setDataBufferArray
       (1, bufferDS, oracle::occi::OCCI_SQLT_CHR,
        diskServersL, &DSL, maxDSL, lensDS);
@@ -315,10 +323,10 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
        diskServersL+fileSystemsL, &FSL, maxFSL, lensFS);
     m_storeClusterStatusStatement->setDataBufferArray
       (3, bufferDSP, oracle::occi::OCCI_SQLT_NUM,
-       3*diskServersL, &DSPL, 21, lensDSP);
+       9*diskServersL, &DSPL, 21, lensDSP);
     m_storeClusterStatusStatement->setDataBufferArray
       (4, bufferFSP, oracle::occi::OCCI_SQLT_NUM,
-       12 * fileSystemsL, &FSPL, 21, lensFSP);
+       14 * fileSystemsL, &FSPL, 21, lensFSP);
     // Finally execute the statement
     m_storeClusterStatusStatement->executeUpdate();
     // And release the memory

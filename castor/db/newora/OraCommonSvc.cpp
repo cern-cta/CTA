@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/04/20 14:12:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/05/07 16:30:28 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -81,7 +81,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 
   /// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
-  "SELECT d.id, d.load, d.status, d.adminStatus, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
+  "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
 
   
 // -----------------------------------------------------------------------
@@ -347,30 +347,38 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     castor::stager::DiskServer* ds =
       new castor::stager::DiskServer();
     ds->setId((u_signed64)rset->getDouble(1));
-    ds->setLoad(rset->getInt(2));
     ds->setStatus
-      ((enum castor::stager::DiskServerStatusCode)rset->getInt(3));
+      ((enum castor::stager::DiskServerStatusCode)rset->getInt(2));
     ds->setAdminStatus
-      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(4));
+      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(3));
     ds->setName(diskServer);
+    ds->setReadRate((u_signed64)rset->getDouble(4));
+    ds->setWriteRate((u_signed64)rset->getDouble(5));
+    ds->setNbReadStreams(rset->getInt(6));
+    ds->setNbWriteStreams(rset->getInt(7));
+    ds->setNbReadWriteStreams(rset->getInt(8));
+    ds->setNbMigratorStreams(rset->getInt(9));
+    ds->setNbRecallerStreams(rset->getInt(10));
     castor::stager::FileSystem* result =
       new castor::stager::FileSystem();
-    result->setId((u_signed64)rset->getDouble(5));
-    result->setFree((u_signed64)rset->getDouble(6));
-    result->setMinFreeSpace(rset->getFloat(7));
-    result->setMinAllowedFreeSpace(rset->getFloat(8));
-    result->setMaxFreeSpace(rset->getFloat(9));
-    result->setSpaceToBeFreed((u_signed64)rset->getDouble(10));
-    result->setTotalSize((u_signed64)rset->getDouble(11));
-    result->setReadRate((u_signed64)rset->getDouble(12));
-    result->setWriteRate((u_signed64)rset->getDouble(13));
-    result->setNbReadStreams(rset->getInt(14));
-    result->setNbWriteStreams(rset->getInt(15));
-    result->setNbReadWriteStreams(rset->getInt(16));
+    result->setId((u_signed64)rset->getDouble(11));
+    result->setFree((u_signed64)rset->getDouble(12));
+    result->setMinFreeSpace(rset->getFloat(13));
+    result->setMinAllowedFreeSpace(rset->getFloat(14));
+    result->setMaxFreeSpace(rset->getFloat(15));
+    result->setSpaceToBeFreed((u_signed64)rset->getDouble(16));
+    result->setTotalSize((u_signed64)rset->getDouble(17));
+    result->setReadRate((u_signed64)rset->getDouble(18));
+    result->setWriteRate((u_signed64)rset->getDouble(19));
+    result->setNbReadStreams(rset->getInt(20));
+    result->setNbWriteStreams(rset->getInt(21));
+    result->setNbReadWriteStreams(rset->getInt(22));
+    result->setNbMigratorStreams(rset->getInt(23));
+    result->setNbRecallerStreams(rset->getInt(24));
     result->setStatus
-      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(17));
+      ((enum castor::stager::FileSystemStatusCodes)rset->getInt(25));
     result->setAdminStatus
-      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(18));
+      ((enum castor::monitoring::AdminStatusCodes)rset->getInt(26));
     result->setMountPoint(mountPoint);
     result->setDiskserver(ds);
     ds->addFileSystems(result);
