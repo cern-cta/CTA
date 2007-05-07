@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.11 $ $Release$ $Date: 2007/04/03 09:45:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.12 $ $Release$ $Date: 2007/05/07 06:49:17 $ $Author: waldron $
  *
  * 
  *
@@ -38,8 +38,11 @@
 #include <castor/stager/SvcClass.h>
 #include <castor/stager/FileClass.h>
 #include <castor/stager/TapeCopy.h>
+#include <castor/stager/TapePool.h>
+#include <castor/stager/DiskPool.h>
 #include <castor/stager/IStagerSvc.h>
 #include <castor/Services.h>
+#include <castor/BaseObject.h>
 #include <castor/BaseAddress.h>
 #include <castor/IAddress.h>
 #include <castor/IObject.h>
@@ -100,7 +103,7 @@ int countItems(
                )
      char *itemStr;
 {
-  char *p, *q;
+  char *p;
   int nbItems = 0;
   if ( itemStr == NULL ) return(0);
   
@@ -271,7 +274,7 @@ int removeTapePools(
   int nbTapePools, nbRemoveTapePools;
 {
   struct Cstager_TapePool_t *tapePool;
-  int i, rc;
+  int i;
 
   if ( removeTapePoolsArray == NULL ) {
     fprintf(stderr,"removeTapePools(): empty tape pool array\n");
@@ -356,7 +359,7 @@ int removeDiskPools(
   int nbDiskPools, nbRemoveDiskPools;
 {
   struct Cstager_DiskPool_t *diskPool;
-  int i, rc;
+  int i;
 
   if ( removeDiskPoolsArray == NULL ) {
     fprintf(stderr,"removeDiskPools(): empty disk pool array\n");
@@ -378,8 +381,8 @@ int removeDiskPools(
 
 int main(int argc, char *argv[]) 
 {
-  int ch, rc, i;
-  char *cmd, buf[32], *name = NULL;
+  int ch, rc;
+  char *cmd, *name = NULL;
   char *addTapePoolsStr = NULL, *addDiskPoolsStr = NULL;
   char **addTapePoolsArray = NULL, **addDiskPoolsArray = NULL;
   char *removeTapePoolsStr = NULL, *removeDiskPoolsStr = NULL;
@@ -393,9 +396,9 @@ int main(int argc, char *argv[])
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_SvcClass_t *svcClass = NULL;
-  struct Cstager_TapePool_t *tapePool = NULL, **tapePoolsArray = NULL;
-  struct Cstager_DiskPool_t *diskPool = NULL, **diskPoolsArray = NULL;
-  u_signed64 u64, defaultFileSize = 0;
+  struct Cstager_TapePool_t **tapePoolsArray = NULL;
+  struct Cstager_DiskPool_t **diskPoolsArray = NULL;
+  u_signed64 defaultFileSize = 0;
   int maxReplicaNb = -1, nbDrives = -1;
   char *replicationPolicy = NULL, *migratorPolicy = NULL, *gcPolicy = NULL;
   char *recallerPolicy = NULL;
@@ -464,6 +467,12 @@ int main(int argc, char *argv[])
     default:
       break;
     }
+  }
+  /* Check the arguments */
+  argc -= Coptind;
+  argv += Coptind;
+  if (argc != 1) {
+    return(1);
   }
   if ( help_flag != 0 || name == NULL ) {
     if ( name == NULL ) fprintf(stderr,"SvcClass 'name' is required\n");

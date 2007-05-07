@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/03 09:45:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.7 $ $Release$ $Date: 2007/05/07 06:49:17 $ $Author: waldron $
  *
  * 
  *
@@ -236,6 +236,12 @@ int main(int argc, char *argv[])
     default:
       break;
     }
+  }
+  /* Check the arguments */
+  argc -= Coptind;
+  argv += Coptind;
+  if (argc != 1) {
+    return(1);
   }
   if ( help_flag != 0 || name == NULL ) {
     if ( name == NULL ) fprintf(stderr,"SvcClass 'name' is required\n");
