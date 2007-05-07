@@ -336,6 +336,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_nbMigratorStreams
+       * Nb of migrator streams running on this fileSystem
+       * @return the value of m_nbMigratorStreams
+       */
+      unsigned int nbMigratorStreams() const {
+        return m_nbMigratorStreams;
+      }
+
+      /**
+       * Set the value of m_nbMigratorStreams
+       * Nb of migrator streams running on this fileSystem
+       * @param new_var the new value of m_nbMigratorStreams
+       */
+      void setNbMigratorStreams(unsigned int new_var) {
+        m_nbMigratorStreams = new_var;
+      }
+
+      /**
+       * Get the value of m_nbRecallerStreams
+       * Nb of recaller streams running on this fileSystem
+       * @return the value of m_nbRecallerStreams
+       */
+      unsigned int nbRecallerStreams() const {
+        return m_nbRecallerStreams;
+      }
+
+      /**
+       * Set the value of m_nbRecallerStreams
+       * Nb of recaller streams running on this fileSystem
+       * @param new_var the new value of m_nbRecallerStreams
+       */
+      void setNbRecallerStreams(unsigned int new_var) {
+        m_nbRecallerStreams = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -484,6 +520,12 @@ namespace castor {
 
       /// Nb of read/write streams running on this fileSystem
       unsigned int m_nbReadWriteStreams;
+
+      /// Nb of migrator streams running on this fileSystem
+      unsigned int m_nbMigratorStreams;
+
+      /// Nb of recaller streams running on this fileSystem
+      unsigned int m_nbRecallerStreams;
 
       /// The id of this object
       u_signed64 m_id;

@@ -106,6 +106,8 @@ void castor::io::StreamFileSystemCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->nbReadStreams();
   ad->stream() << obj->nbWriteStreams();
   ad->stream() << obj->nbReadWriteStreams();
+  ad->stream() << obj->nbMigratorStreams();
+  ad->stream() << obj->nbRecallerStreams();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
   ad->stream() << obj->adminStatus();
@@ -157,6 +159,12 @@ castor::IObject* castor::io::StreamFileSystemCnv::createObj(castor::IAddress* ad
   unsigned int nbReadWriteStreams;
   ad->stream() >> nbReadWriteStreams;
   object->setNbReadWriteStreams(nbReadWriteStreams);
+  unsigned int nbMigratorStreams;
+  ad->stream() >> nbMigratorStreams;
+  object->setNbMigratorStreams(nbMigratorStreams);
+  unsigned int nbRecallerStreams;
+  ad->stream() >> nbRecallerStreams;
+  object->setNbRecallerStreams(nbRecallerStreams);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

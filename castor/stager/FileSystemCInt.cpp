@@ -296,6 +296,38 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_FileSystem_nbMigratorStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_nbMigratorStreams(castor::stager::FileSystem* instance, unsigned int* var) {
+    *var = instance->nbMigratorStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setNbMigratorStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setNbMigratorStreams(castor::stager::FileSystem* instance, unsigned int new_var) {
+    instance->setNbMigratorStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_nbRecallerStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_nbRecallerStreams(castor::stager::FileSystem* instance, unsigned int* var) {
+    *var = instance->nbRecallerStreams();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_FileSystem_setNbRecallerStreams
+  //----------------------------------------------------------------------------
+  int Cstager_FileSystem_setNbRecallerStreams(castor::stager::FileSystem* instance, unsigned int new_var) {
+    instance->setNbRecallerStreams(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_FileSystem_id
   //----------------------------------------------------------------------------
   int Cstager_FileSystem_id(castor::stager::FileSystem* instance, u_signed64* var) {

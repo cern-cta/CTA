@@ -57,6 +57,8 @@ castor::stager::FileSystem::FileSystem() throw() :
   m_nbReadStreams(0),
   m_nbWriteStreams(0),
   m_nbReadWriteStreams(0),
+  m_nbMigratorStreams(0),
+  m_nbRecallerStreams(0),
   m_id(0),
   m_diskPool(0),
   m_diskserver(0),
@@ -105,6 +107,8 @@ void castor::stager::FileSystem::print(std::ostream& stream,
   stream << indent << "nbReadStreams : " << m_nbReadStreams << std::endl;
   stream << indent << "nbWriteStreams : " << m_nbWriteStreams << std::endl;
   stream << indent << "nbReadWriteStreams : " << m_nbReadWriteStreams << std::endl;
+  stream << indent << "nbMigratorStreams : " << m_nbMigratorStreams << std::endl;
+  stream << indent << "nbRecallerStreams : " << m_nbRecallerStreams << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "DiskPool : " << std::endl;

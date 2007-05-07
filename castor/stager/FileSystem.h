@@ -250,6 +250,30 @@ int Cstager_FileSystem_nbReadWriteStreams(struct Cstager_FileSystem_t* instance,
 int Cstager_FileSystem_setNbReadWriteStreams(struct Cstager_FileSystem_t* instance, unsigned int new_var);
 
 /**
+ * Get the value of nbMigratorStreams
+ * Nb of migrator streams running on this fileSystem
+ */
+int Cstager_FileSystem_nbMigratorStreams(struct Cstager_FileSystem_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbMigratorStreams
+ * Nb of migrator streams running on this fileSystem
+ */
+int Cstager_FileSystem_setNbMigratorStreams(struct Cstager_FileSystem_t* instance, unsigned int new_var);
+
+/**
+ * Get the value of nbRecallerStreams
+ * Nb of recaller streams running on this fileSystem
+ */
+int Cstager_FileSystem_nbRecallerStreams(struct Cstager_FileSystem_t* instance, unsigned int* var);
+
+/**
+ * Set the value of nbRecallerStreams
+ * Nb of recaller streams running on this fileSystem
+ */
+int Cstager_FileSystem_setNbRecallerStreams(struct Cstager_FileSystem_t* instance, unsigned int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
