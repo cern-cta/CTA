@@ -184,6 +184,34 @@ namespace castor {
       void setDeltaNbReadWriteStreams(int deltaNbReadWriteStreams)
       { m_deltaNbReadWriteStreams = deltaNbReadWriteStreams; }
 
+      /// Accessor to nbMigratorStreams
+      unsigned int nbMigratorStreams() const { return m_nbMigratorStreams; }
+
+      /// Accessor to nbMigratorStreams
+      void setNbMigratorStreams(unsigned int nbMigratorStreams) { m_nbMigratorStreams = nbMigratorStreams; }
+
+      /// Accessor to deltaNbMigratorStreams
+      int deltaNbMigratorStreams() const { return m_deltaNbMigratorStreams; }
+
+      /// Accessor to deltaNbMigratorStreams
+      void setDeltaNbMigratorStreams(int deltaNbMigratorStreams) {
+	m_deltaNbMigratorStreams = deltaNbMigratorStreams;
+      }
+
+      /// Accessor to nbRecallerStreams
+      unsigned int nbRecallerStreams() const { return m_nbRecallerStreams; }
+
+      /// Accessor to nbRecallerStreams
+      void setNbRecallerStreams(unsigned int nbRecallerStreams) { m_nbRecallerStreams = nbRecallerStreams; }
+
+      /// Accessor to deltaNbRecallerStreams
+      int deltaNbRecallerStreams() const { return m_deltaNbRecallerStreams; }
+
+      /// Accessor to deltaNbRecallerStreams
+      void setDeltaNbRecallerStreams(int deltaNbRecallerStreams) {
+	m_deltaNbRecallerStreams = deltaNbRecallerStreams;
+      }
+
       /// Accessor to free space
       u_signed64 freeSpace() const { return m_freeSpace; }
 
@@ -252,10 +280,10 @@ namespace castor {
       /// Delta on the number of read streams
       int m_deltaNbReadStreams;
 
-      /// The number of read streams
+      /// The number of write streams
       unsigned int m_nbWriteStreams;
 
-      /// Delat on the number of read streams
+      /// Delta on the number of write streams
       int m_deltaNbWriteStreams;
 
       /// The number of read-write streams
@@ -263,6 +291,18 @@ namespace castor {
 
       /// Delta on the number of read-write streams
       int m_deltaNbReadWriteStreams;
+
+      /// The number of migrator streams
+      unsigned int m_nbMigratorStreams;
+
+      /// Delta on the number of migrator streams
+      int m_deltaNbMigratorStreams;
+
+      /// The number of recaller streams
+      unsigned int m_nbRecallerStreams;
+
+      /// Delta on the number of recaller streams
+      int m_deltaNbRecallerStreams;
 
       /// available space
       u_signed64 m_freeSpace;

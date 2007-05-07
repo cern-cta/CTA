@@ -44,6 +44,8 @@ castor::monitoring::FileSystemStatus::FileSystemStatus() :
   m_nbReadStreams(0), m_deltaNbReadStreams(0),
   m_nbWriteStreams(0), m_deltaNbWriteStreams(0),
   m_nbReadWriteStreams(0), m_deltaNbReadWriteStreams(0),
+  m_nbMigratorStreams(0), m_deltaNbMigratorStreams(0),
+  m_nbRecallerStreams(0), m_deltaNbRecallerStreams(0),
   m_freeSpace(0), m_deltaFreeSpace(0),
   m_lastStateUpdate(0), m_lastMetricsUpdate(0) { }
 
@@ -94,6 +96,14 @@ void castor::monitoring::FileSystemStatus::print
       << "nbReadWriteStreams" << ": " << m_nbReadWriteStreams << "\n"
       << indentation << std::setw(20)
       << "deltaNbReadWriteStreams" << ": " << m_deltaNbReadWriteStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbMigratorStreams" << ": " << m_nbMigratorStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbMigratorStreams" << ": " << m_deltaNbMigratorStreams << "\n"
+      << indentation << std::setw(20)
+      << "nbRecallerStreams" << ": " << m_nbRecallerStreams << "\n"
+      << indentation << std::setw(20)
+      << "deltaNbRecallerStreams" << ": " << m_deltaNbRecallerStreams << "\n"
       << indentation << std::setw(20)
       << "freeSpace" << ": " << freeBuf << "\n"
       << indentation << std::setw(20)
