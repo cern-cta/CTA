@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.50 $ $Date: 2007/03/21 09:29:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.51 $ $Date: 2007/05/08 10:21:11 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -725,32 +725,68 @@ unload_loop1:
         strcmp (devtype, "T10000") == 0 ||
         strcmp (devtype, "LTO") == 0 ||
         strcmp (devtype, "3592") == 0) {
-        
-        /* BC Now checking the MIR */
-        if (is_mir_invalid_load(tapefd, path, devtype) == 1) {
-            char mirmsg[OPRMSGSZ];
-            char mirrepbuf[OPRMSGSZ];
             
-            sprintf (mirmsg, TP065, vid, labels[lblcode], drive, hostname,
-                     name, jid);
-            omsgr(func, mirmsg, 1);
-            checkorep (func, mirrepbuf);
-            if (strncmp (mirrepbuf, "cancel", 6) == 0) {
-                tplogit(func, "Request cancelled by operator due to bad MIR\n");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "Request cancelled by operator due to bad MIR" );
-                cleanup();
-                sendrep (rpfd, TAPERC, ETBADMIR);
-                exit(0);
+            /* BC Now checking the MIR */
+            if (is_mir_invalid_load(tapefd, path, devtype) == 1) {
+
+                    /* MIR is bad */
+                    char *p = NULL;
+                    p = getconfent( "TAPE", "CANCEL_ON_BADMIR", 0 );
+                    if (NULL != p) {
+                            
+                            if ( (0 == strcmp( p, "no" )) || (0 == strcmp( p, "NO" ))) { 
+                            
+                                    /* ignore the bad MIR and rely on the drive to repair it */
+                                    tplogit(func, "Ignoring bad MIR (config)\n");
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                                        "func",    TL_MSG_PARAM_STR, func,
+                                                        "Message", TL_MSG_PARAM_STR, "Ignoring bad MIR (config)" );
+                                    
+                            } else {
+                                    
+                                    /* cancel the request without operator intervention */
+                                    tplogit(func, "Request cancelled due to bad MIR (config)\n");
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                        "func",    TL_MSG_PARAM_STR, func,
+                                                        "Message", TL_MSG_PARAM_STR, "Request cancelled due to bad MIR (config)" );
+                                    cleanup();
+                                    sendrep (rpfd, TAPERC, ETBADMIR);
+                                    exit(0);                                    
+                            }                                    
+                            
+                    } else {
+
+                            /* default: ask the operator what to do */
+                            char mirmsg[OPRMSGSZ];
+                            char mirrepbuf[OPRMSGSZ];            
+                            sprintf (mirmsg, TP065, vid, labels[lblcode], drive, hostname,
+                                     name, jid);
+                            omsgr(func, mirmsg, 1);
+                            checkorep (func, mirrepbuf);
+                            if (strncmp (mirrepbuf, "cancel", 6) == 0) {
+                                    tplogit(func, "Request cancelled by operator due to bad MIR\n");
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                        "func",    TL_MSG_PARAM_STR, func,
+                                                        "Message", TL_MSG_PARAM_STR, "Request cancelled by operator due to bad MIR" );
+                                    cleanup();
+                                    sendrep (rpfd, TAPERC, ETBADMIR);
+                                    exit(0);
+                            } else {
+                                    tplogit(func, "Ignoring bad MIR (operator)\n");
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                                        "func",    TL_MSG_PARAM_STR, func,
+                                                        "Message", TL_MSG_PARAM_STR, "Ignoring bad MIR (operator)" );
+                            }
+                    }
+                    
+            } else {
+                    
+                    /* MIR is ok */
+                    tplogit(func, "MIR is valid\n");
+                    tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                        "func",    TL_MSG_PARAM_STR, func,
+                                        "Message", TL_MSG_PARAM_STR, "MIR is valid" );
             }
-                
-        } else {
-            tplogit(func, "MIR is valid\n");
-            tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                "func",    TL_MSG_PARAM_STR, func,
-                                "Message", TL_MSG_PARAM_STR, "MIR is valid" );
-        }
     }
 
 #if SACCT
@@ -1153,7 +1189,7 @@ char *loader;
 	fd_set readfds;
 	struct timeval rbttimeval;
 	int tapefd;
-    int vsnretry=0;
+        int vsnretry=0;
     
 	switch (*c) {
 	case 0:
@@ -1187,7 +1223,7 @@ char *loader;
 		close (tapefd);
 		demountforce = 1;
 		do {
-             vsnretry++;
+                        vsnretry++;
 			*c = rbtdemount (vid, drive, dvn, loader, demountforce, vsnretry);
 			if ((n = rbtdmntchk (c, drive, &demountforce)) < 0)
 				return (-1);
