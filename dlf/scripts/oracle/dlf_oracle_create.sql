@@ -86,7 +86,7 @@ CREATE TABLE dlf_tapestats
 	tapepool	VARCHAR2(50),
 	file_count	NUMBER,
 	file_size	NUMBER,
-	transfer_rate	NUMBER)
+	interval	NUMBER)
 PARTITION BY RANGE (timestamp)
 (
 	PARTITION MAX_VALUE VALUES LESS THAN (MAXVALUE) TABLESPACE dlf_data
@@ -858,8 +858,7 @@ BEGIN
     v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
 
     -- update statistics
-    FOR a IN (SELECT svcclass, tapepool, COUNT(*) count, SUM(filesize) filesize, 
-		     (SUM(filesize)/300) rate
+    FOR a IN (SELECT svcclass, tapepool, COUNT(*) count, SUM(filesize) filesize
               FROM (
                 SELECT a.id,
                        MAX(DECODE(a.name, 'SVCCLASS',    a.value, NULL)) svcclass,
@@ -887,7 +886,7 @@ BEGIN
     LOOP
       EXECUTE IMMEDIATE 'INSERT INTO dlf_tapestats
                          VALUES ('''|| v_time ||''','''|| a.svcclass ||''','''|| a.tapepool ||''', 
-                                '|| a.count ||','|| a.filesize ||','|| a.rate ||')';
+                                '|| a.count ||','|| a.filesize ||', 300)';
     END LOOP;
   END IF;
 END;
