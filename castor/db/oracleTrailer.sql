@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.415 $ $Date: 2007/05/09 12:09:32 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.416 $ $Date: 2007/05/09 12:29:49 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.415 $ $Date: 2007/05/09 12:09:32 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.416 $ $Date: 2007/05/09 12:29:49 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -573,7 +573,7 @@ CREATE OR REPLACE PROCEDURE updateFsFileOpened
 BEGIN
   /* We lock first the diskserver in order to lock all the
      filesystems of this DiskServer in an atomical way */
-  UPDATE DiskServer SET load = load + 1 WHERE id = ds; -- XXX 1 ?
+  UPDATE DiskServer SET nbReadWriteStreams = nbReadWriteStreams + 1 WHERE id = ds;
   UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
                         free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
@@ -586,7 +586,7 @@ BEGIN
   /* We lock first the diskserver in order to lock all the
      filesystems of this DiskServer in an atomical way */
   SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
-  UPDATE DiskServer SET load = decode(sign(load-1),-1,0,load-1) WHERE id = ds; -- XXX 1 ?
+  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) WHERE id = ds;
   /* now we can safely go */
   UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
   WHERE id = fs;
