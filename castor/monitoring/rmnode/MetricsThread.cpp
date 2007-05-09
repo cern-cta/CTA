@@ -36,6 +36,8 @@
 #include "castor/IObject.hpp"
 #include "castor/System.hpp"
 #include <sys/sysinfo.h>
+#include <iostream>
+#include <fstream>
 #include "getconfent.h"
 #include <sys/vfs.h>
 #include "errno.h"
@@ -144,8 +146,6 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
     u_signed64 swap = si.freeswap;
     swap *= si.mem_unit;
     dsMetrics->setFreeSwap(swap);
-    // Load
-    dsMetrics->setLoad(si.loads[0]);
   } else {
     castor::exception::Exception e(errno);
     e.getMessage()
@@ -194,9 +194,6 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 	  e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
 			 << "failed to get username information for user "
 			 << "'stage', check account exists";
-	  // free memory
-	  for (int j = 0; j < nbFs; j++) free(fs[j]);
-	  free(fs);
 	  throw e;
 	}
 
@@ -209,9 +206,6 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 	    castor::exception::Exception e(errno);
 	    e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
 			   << "failed to create directory " << path;
-	    // free memory
-	    for (int k = 0; k < nbFs; k++) free(fs[k]);
-	    free(fs);
 	    throw e;
 	  }
 
@@ -222,9 +216,6 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 			   << "unable to change directory ownership on " 
 			   << path << " to uid:" << pw->pw_uid << " gid:"
 			   << pw->pw_gid;
-	    // free memory
-	    for (int k = 0; k < nbFs; k++) free(fs[k]);
-	    free(fs);
 	    throw e;
 	  }
 	}
@@ -233,12 +224,16 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
     }
   } catch (castor::exception::Exception e) {
     // free memory
-    for (int i = 0; i < nbFs; i++) free(fs[i]);
+    for (int i = 0; i < nbFs; i++) {
+      free(fs[i]);
+    }
     free(fs);
     throw e;
   }
   // free memory
-  for (int i = 0; i < nbFs; i++) free(fs[i]);
+  for (int i = 0; i < nbFs; i++) {
+    free(fs[i]);
+  }
   free(fs);
 }
 
@@ -264,71 +259,97 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   // variables
   struct dirent *entry_proc;
   struct dirent *entry_fd;
-  unsigned int  nr    = 0;
-  unsigned int  nrw   = 0;
-  unsigned int  nw    = 0;
-  unsigned int  x     = 0;
-  int           len   = 0;
-  char          linkpath[CA_MAXPATHLEN + 1];   // for readlink
+  struct stat   statbuf;
+
+  unsigned int  nBReadUsers      = 0;
+  unsigned int  nBWriteUsers     = 0;
+  unsigned int  nBReadWriteUsers = 0;
+  unsigned int  nBReadMigrators  = 0;
+  unsigned int  nBWriteRecallers = 0;
+  unsigned int  x        = 0;
+  int           len      = 0;
+  int           migrecal = 0;
+  char          buf[CA_MAXPATHLEN + 1];
+  FILE          *fd;
 
   // loop over directory entries
   while ((entry_proc = readdir(dir_proc))) {
-    std::string  file = entry_proc->d_name;
-    std::string  path = "/proc/";
-    std::string  fdpath;
-
-    std::istringstream i(file);
+    std::ostringstream path;
+    std::istringstream i(entry_proc->d_name);
     if (!(i >> x)) {
       continue;            // not a process, i.e not a digit
     }
-
     // open the processes file descriptor listing. The 'fd' directory can only be
     // viewed by the user of the process or root!! We don't trap any more errors
     // from this point forward as the error is mostly likely related to process
     // death.
-    path += file + "/fd";
-    DIR *dir_fd = opendir(path.c_str());
+    path << "/proc/" << entry_proc->d_name << "/fd";
+    DIR *dir_fd = opendir(path.str().c_str());
     if (dir_fd == NULL) {
       continue;
     }
-
     while ((entry_fd = readdir(dir_fd))) {
-      file = entry_fd->d_name;
-      
-      std::istringstream i(file);
-      if (!(i >> x)) {
-	continue;         // not a file descriptor, i.e not a digit
+      std::ostringstream file(entry_fd->d_name);
+      std::istringstream fd(file.str());
+      if (!(fd >> x)) {
+	continue;          // not a file descriptor
       }
-      fdpath = path + "/" + file;
-
-      // the 'fd' directory contains a list of symlinks to a given resource. We
-      // need to resolve these first before further processing.
-      struct stat statbuf;
-      if (lstat(fdpath.c_str(), &statbuf) != 0) {
+      std::ostringstream fdpath;
+      fdpath << path.str() << "/" << fd.str();
+      // the fd directory contains a list of symlinks to a given resource. We
+      // need to resolve these first before processing further.
+      if (lstat(fdpath.str().c_str(), &statbuf) != 0) {
 	continue;
       }
       if (!S_ISLNK(statbuf.st_mode)) {
-	continue;         // not a symlink
-      }
-      linkpath[0] = '\0';
-      if ((len = readlink(fdpath.c_str(), linkpath, CA_MAXPATHLEN)) < 0) {
 	continue;
       }
-      linkpath[len] = '\0';
-
+      buf[0] = '\0';
+      if ((len = readlink(fdpath.str().c_str(), buf, CA_MAXPATHLEN)) < 0) {
+	continue;
+      }
+      buf[len] = '\0';
       // resource not of interest ?
-      if (!strncmp(filesystem->mountPoint().c_str(), linkpath, 
-		   filesystem->mountPoint().length())) {
-
-	// the permission bits on the file indicate what mode the stream is in
-	if ((statbuf.st_mode & S_IRUSR) == S_IRUSR) {
-	  if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
-	    nrw++;  // read/write
-	  } else {
-	    nr++;   // read only
+      if (strncmp(filesystem->mountPoint().c_str(), buf,
+		  filesystem->mountPoint().length())) {
+	continue;
+      }  
+      std::ostringstream cmdpath;
+      migrecal = 0;
+      cmdpath << "/proc/" << entry_proc->d_name << "/cmdline";
+      // migrator or recaller ? we distinguish between the two in order to improve
+      // scheduling on the box. If the command line of the process is /usr/bin/rfiod 
+      // -sl it is either a migrator or a recaller. The exact one depends on the 
+      // direction of the stream.
+      std::ifstream in(cmdpath.str().c_str());
+      if (in) {
+	std::stringstream ss;
+	ss << in.rdbuf();
+	// /proc/<pid>/cmdline stores its values using NULL byte termination for each
+	// field. As a result it is necessary to replace all NULL bytes with spaces.
+	std::string cmdline(ss.str());	
+	std::replace(cmdline.begin(), cmdline.end(), '\0', ' ');
+	if (!strncmp("/usr/bin/rfiod -sl", cmdline.c_str(), 18)) {
+	  migrecal = 1;
 	}
-	} else if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
-	  nw++;     // write only
+	in.close();
+      }
+      // the permission bits on the file indicate what mode the stream is in
+      if ((statbuf.st_mode & S_IRUSR) == S_IRUSR) {
+	if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
+	  nBReadWriteUsers++;  // read/write (can only be user streams)
+	} else {
+	  if (migrecal) {
+	    nBReadMigrators++;
+	  } else {
+	    nBReadUsers++;     // read only;
+	  }
+	}
+      } else if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
+	if (migrecal) {
+	  nBWriteRecallers++;
+	} else {
+	  nBWriteUsers++;      // write only
 	}
       }
     }
@@ -337,13 +358,15 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   closedir(dir_proc);
 
   // Set stream values
-  filesystem->setNbReadStreams(nr);
-  filesystem->setNbWriteStreams(nw);
-  filesystem->setNbReadWriteStreams(nrw);
+  filesystem->setNbReadStreams(nBReadUsers);
+  filesystem->setNbWriteStreams(nBReadWriteUsers);
+  filesystem->setNbReadWriteStreams(nBReadWriteUsers);
+  filesystem->setNbMigratorStreams(nBReadMigrators);
+  filesystem->setNbRecallerStreams(nBWriteRecallers);
 
   // access the mounted file system description file and determine if the mountpoint
   // is actually present and what file system (mnt_fsname) it is associated with.
-  FILE *fd = setmntent(MTAB_FILE, "r");
+  fd = setmntent(MTAB_FILE, "r");
   if (fd == NULL) {
     castor::exception::Exception e(errno);
     e.getMessage()
