@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/05/07 16:30:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/05/09 12:05:49 $ $Author: waldron $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -276,13 +276,13 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       // fill buffers
       fillOracleBuffer(bufferDSP, lensDSP, 9*d, dss.status());
       fillOracleBuffer(bufferDSP, lensDSP, (9*d)+1, dss.adminStatus());
-      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+2, (double)dss.readRate());
-      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+3, (double)dss.writeRate());
-      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+4, dss.nbReadStreams());
-      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+5, dss.nbWriteStreams());
-      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+6, dss.nbReadWriteStreams());
-      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+7, dss.nbMigratorStreams());
-      fillOracleBuffer(bufferDSP, lensDSP, (9*f)+8, dss.nbRecallerStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+2, (double)dss.readRate());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+3, (double)dss.writeRate());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+4, dss.nbReadStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+5, dss.nbWriteStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+6, dss.nbReadWriteStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+7, dss.nbMigratorStreams());
+      fillOracleBuffer(bufferDSP, lensDSP, (9*d)+8, dss.nbRecallerStreams());
       d++;
       // don't send FileSystems for deleted nodes
       if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
