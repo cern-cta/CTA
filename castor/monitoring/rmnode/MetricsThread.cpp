@@ -313,7 +313,7 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
       if (strncmp(filesystem->mountPoint().c_str(), buf,
 		  filesystem->mountPoint().length())) {
 	continue;
-      }  
+      }
       std::ostringstream cmdpath;
       migrecal = 0;
       cmdpath << "/proc/" << entry_proc->d_name << "/cmdline";
@@ -359,7 +359,7 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
 
   // Set stream values
   filesystem->setNbReadStreams(nBReadUsers);
-  filesystem->setNbWriteStreams(nBReadWriteUsers);
+  filesystem->setNbWriteStreams(nBWriteUsers);
   filesystem->setNbReadWriteStreams(nBReadWriteUsers);
   filesystem->setNbMigratorStreams(nBReadMigrators);
   filesystem->setNbRecallerStreams(nBWriteRecallers);
