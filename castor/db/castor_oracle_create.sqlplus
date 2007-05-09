@@ -119,7 +119,7 @@ CREATE TABLE CastorFile (fileId INTEGER, nsHost VARCHAR2(2048), fileSize INTEGER
 CREATE TABLE DiskCopy (path VARCHAR2(2048), gcWeight float, creationTime INTEGER, id INTEGER CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INTEGER, totalSize INTEGER, readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives NUMBER, name VARCHAR2(2048), defaultFileSize INTEGER, maxReplicaNb NUMBER, replicationPolicy VARCHAR2(2048), gcPolicy VARCHAR2(2048), migratorPolicy VARCHAR2(2048), recallerPolicy VARCHAR2(2048), id INTEGER CONSTRAINT I_SvcClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50;
@@ -143,7 +143,7 @@ CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 CREATE TABLE FileClass (name VARCHAR2(2048), minFileSize INTEGER, maxFileSize INTEGER, nbCopies NUMBER, id INTEGER CONSTRAINT I_FileClass_Id PRIMARY KEY) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), load NUMBER, id INTEGER CONSTRAINT I_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE DiskServer (name VARCHAR2(2048), readRate INTEGER, writeRate INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbReadWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT I_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SetFileGCWeight */
 CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, weight float, id INTEGER CONSTRAINT I_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.412  Date: 2007/05/02 12:15:41  Author: sponcec3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.416  Date: 2007/05/09 12:29:49  Author: waldron 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.412  Date: 2007/05/02 12:15:41 ');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.416  Date: 2007/05/09 12:29:49 ');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -396,17 +396,19 @@ CREATE OR REPLACE FUNCTION FileSystemRate
  writeRate IN NUMBER,
  nbReadStreams IN NUMBER,
  nbWriteStreams IN NUMBER,
- nbReadWriteStreams IN NUMBER)
+ nbReadWriteStreams IN NUMBER,
+ nbMigratorStreams IN NUMBER,
+ nbRecallerStreams IN NUMBER)
 RETURN NUMBER DETERMINISTIC IS
 BEGIN
-  RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams;
+  RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams - nbMigratorStreams - nbRecallerStreams;
 END;
 /
 
 /* FileSystem index based on the rate. */
 CREATE INDEX I_FileSystem_Rate
     ON FileSystem(FileSystemRate(readRate, writeRate,
-	          nbReadStreams,nbWriteStreams, nbReadWriteStreams));
+	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
 
 
 /*******************************************/
@@ -784,7 +786,7 @@ CREATE OR REPLACE PROCEDURE updateFsFileOpened
 BEGIN
   /* We lock first the diskserver in order to lock all the
      filesystems of this DiskServer in an atomical way */
-  UPDATE DiskServer SET load = load + 1 WHERE id = ds; -- XXX 1 ?
+  UPDATE DiskServer SET nbReadWriteStreams = nbReadWriteStreams + 1 WHERE id = ds;
   UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
                         free = free - fileSize   -- just an evaluation, monitoring will update it
    WHERE id = fs;
@@ -798,7 +800,7 @@ BEGIN
   /* We lock first the diskserver in order to lock all the
      filesystems of this DiskServer in an atomical way */
   SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
-  UPDATE DiskServer SET load = decode(sign(load-1),-1,0,load-1) WHERE id = ds; -- XXX 1 ?
+  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) WHERE id = ds;
   /* now we can safely go */
   UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
   WHERE id = fs;
@@ -1545,8 +1547,8 @@ BEGIN
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
-  IF prevFsId > 0 THEN
-    -- this could happen when LSF schedules the job twice!
+  IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
+    -- this could happen if LSF schedules the same job twice!
     -- (see bug report #14358 for the whole story)
     raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
@@ -3265,7 +3267,7 @@ CREATE OR REPLACE PROCEDURE storeClusterStatus
 BEGIN
   -- First Update Machines
   FOR i in machines.FIRST .. machines.LAST LOOP
-    ind := machineValues.FIRST + 3 * (i - machines.FIRST);
+    ind := machineValues.FIRST + 9 * (i - machines.FIRST);
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
@@ -3283,7 +3285,13 @@ BEGIN
         UPDATE DiskServer
            SET status = machineValues(ind),
                adminStatus = machineValues(ind + 1),
-               load = machineValues(ind + 2)
+               readRate = fileSystemValues(ind + 2),
+               writeRate = fileSystemValues(ind + 3),
+               nbReadStreams = fileSystemValues(ind + 4),
+               nbWriteStreams = fileSystemValues(ind + 5),
+               nbReadWriteStreams = fileSystemValues(ind + 6),
+               nbMigratorStreams = fileSystemValues(ind + 7),
+               nbRecallerStreams = fileSystemValues(ind + 8)
          WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         DECLARE
@@ -3291,8 +3299,13 @@ BEGIN
         BEGIN
           -- we should insert a new machine here
           SELECT ids_seq.nextval INTO mId FROM DUAL;
-          INSERT INTO DiskServer (name, load, id, status, adminStatus)
-           VALUES (machines(i), machineValues(ind + 2), mid, machineValues(ind), machineValues(ind + 1));
+          INSERT INTO DiskServer (name, id, status, adminStatus, readRate, writeRate, nbReadStreams,
+                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams)
+           VALUES (machines(i), mid, machineValues(ind),
+                   machineValues(ind + 1), machineValues(ind + 2),
+                   machineValues(ind + 3), machineValues(ind + 4),
+                   machineValues(ind + 5), machineValues(ind + 6),
+                   machineValues(ind + 7), machineValues(ind + 8));
           INSERT INTO Id2Type (id, type) VALUES (mid, 8); -- OBJ_DiskServer
         END;
       END;
@@ -3325,11 +3338,13 @@ BEGIN
                  nbReadStreams = fileSystemValues(ind + 4),
                  nbWriteStreams = fileSystemValues(ind + 5),
                  nbReadWriteStreams = fileSystemValues(ind + 6),
-                 free = fileSystemValues(ind + 7),
-                 totalSize = fileSystemValues(ind + 8),
-                 minFreeSpace = fileSystemValues(ind + 9),
-                 maxFreeSpace = fileSystemValues(ind + 10),
-                 minAllowedFreeSpace = fileSystemValues(ind + 11)
+                 nbMigratorStreams = fileSystemValues(ind + 7),
+                 nbRecallerStreams = fileSystemValues(ind + 8),
+                 free = fileSystemValues(ind + 9),
+                 totalSize = fileSystemValues(ind + 10),
+                 minFreeSpace = fileSystemValues(ind + 11),
+                 maxFreeSpace = fileSystemValues(ind + 12),
+                 minAllowedFreeSpace = fileSystemValues(ind + 13)
            WHERE mountPoint = fileSystems(i)
              AND diskServer = machine;
         EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3341,19 +3356,20 @@ BEGIN
             INSERT INTO FileSystem (free, mountPoint,
                    minFreeSpace, minAllowedFreeSpace, maxFreeSpace,
                    spaceToBeFreed, totalSize, readRate, writeRate, nbReadStreams,
-                   nbWriteStreams, nbReadWriteStreams, id, diskPool, diskserver,
-                   status, adminStatus)
-              VALUES (fileSystemValues(ind + 7), fileSystems(i), fileSystemValues(ind+9),
-                      fileSystemValues(ind+11), fileSystemValues(ind+10),
-                      0, fileSystemValues(ind + 8), fileSystemValues(ind + 2),
+                   nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams,
+                   id, diskPool, diskserver, status, adminStatus)
+              VALUES (fileSystemValues(ind + 9), fileSystems(i), fileSystemValues(ind+11),
+                      fileSystemValues(ind+13), fileSystemValues(ind+12),
+                      0, fileSystemValues(ind + 10), fileSystemValues(ind + 2),
                       fileSystemValues(ind + 3), fileSystemValues(ind + 4),
                       fileSystemValues(ind + 5), fileSystemValues(ind + 6),
+                      fileSystemValues(ind + 7), fileSystemValues(ind + 8),
                       fsid, 0, machine, 2, 1); -- FILESYSTEM_DISABLED, ADMIN_FORCE
             INSERT INTO Id2Type (id, type) VALUES (fsid, 12); -- OBJ_FileSystem
           END;
         END;
       END IF;
-      ind := ind + 12;
+      ind := ind + 14;
     END IF;
   END LOOP;
 END;
