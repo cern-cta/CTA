@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.27 $ $Date: 2007/04/18 13:17:38 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.28 $ $Date: 2007/05/09 13:22:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1809,7 +1809,7 @@ int smcdismount(vid, loader, force, vsnretry)
 	}
 	if (*vid && !force && strcmp (element_info.name, vid)) {
 		usrmsg (func, TP050, vid, element_info.name);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 50, 4,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 50, 3,
                                     "func",  TL_MSG_PARAM_STR, func,
                                     "vid_1", TL_MSG_PARAM_STR, vid,
                                     "vid_2", TL_MSG_PARAM_STR, element_info.name );
