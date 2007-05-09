@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 	  continue;
 	}
       }
-      std::cout << dsIndent << std::setw(20) << "name" << ": " << it->first << "\n";
+      std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";
       it->second.print(std::cout, dsIndent);
       found++;
     }

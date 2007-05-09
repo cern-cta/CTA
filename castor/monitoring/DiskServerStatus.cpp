@@ -66,56 +66,56 @@ void castor::monitoring::DiskServerStatus::print
   u64tostru(m_freeMemory, freeMemoryBuf, 0);
   u64tostru(m_freeSwap, freeSwapBuf, 0);
 
-  out << indentation << std::setw(20)
+  out << indentation << std::setw(24)
       << "ram" << ": " << ramBuf << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "memory" << ": " << memoryBuf << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "swap" << ": " << swapBuf << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "status" << ": "
       << castor::stager::DiskServerStatusCodeStrings[m_status] << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "adminStatus" << ": "
       << castor::monitoring::AdminStatusCodesStrings[m_adminStatus] << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "freeRam" << ": " << freeRamBuf << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "freeMemory" << ": " << freeMemoryBuf << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "freeSwap" << ": " << freeSwapBuf << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "lastStateUpdate" << ": " << m_lastStateUpdate << "\n"
-      << indentation << std::setw(20)
-      << "lastMetricsUpdate" << ": " << m_lastMetricsUpdate
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
+      << "lastMetricsUpdate" << ": " << m_lastMetricsUpdate << "\n"
+      << indentation << std::setw(24)
       << "readRate" << ": " << m_readRate << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "deltaReadRate" << ": " << m_deltaReadRate << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "writeRate" << ": " << m_writeRate << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "deltaWriteRate" << ": " << m_deltaWriteRate << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "nbReadStreams" << ": " << m_nbReadStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "deltaNbReadStreams" << ": " << m_deltaNbReadStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "nbWriteStreams" << ": " << m_nbWriteStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "deltaNbWriteStreams" << ": " << m_deltaNbWriteStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "nbReadWriteStreams" << ": " << m_nbReadWriteStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "deltaNbReadWriteStreams" << ": " << m_deltaNbReadWriteStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "nbMigratorStreams" << ": " << m_nbMigratorStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "deltaNbMigratorStreams" << ": " << m_deltaNbMigratorStreams << "\n"
-      << indentation << std::setw(20)
+      << indentation << std::setw(24)
       << "nbRecallerStreams" << ": " << m_nbRecallerStreams << "\n"
-      << indentation << std::setw(20)
-      << "deltaNbRecallerStreams" << ": " << m_deltaNbRecallerStreams << "\n"
+      << indentation << std::setw(24)
+      << "deltaNbRecallerStreams" << ": " << m_deltaNbRecallerStreams
       << std::endl;
   if (0 == size()) {
     out << indentation << "No filesystems registered"
@@ -123,7 +123,7 @@ void castor::monitoring::DiskServerStatus::print
   } else {
     std::string fsIndent = indentation + "   ";
     for (const_iterator it = begin(); it != end(); it++) {
-      out << fsIndent << std::setw(20)
+      out << fsIndent << std::setw(24)
           << "mountPoint" << ": " << it->first << "\n";
       it->second.print(out, fsIndent);
     }
