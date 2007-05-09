@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.28 $ $Date: 2007/05/09 13:22:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.29 $ $Date: 2007/05/09 15:02:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1211,7 +1211,7 @@ unsigned int force;
 	tplogit(func,"vol_id = %s drive_id = %s %s\n",req.vid,req.loader,force ? "force" : "");
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 4,
                             "func",     TL_MSG_PARAM_STR, func,
-                            "vol_id",   TL_MSG_PARAM_STR, req.vid,req,
+                            "vol_id",   TL_MSG_PARAM_STR, req.vid,
                             "drive_id", TL_MSG_PARAM_STR, req.loader,
                             "Message",  TL_MSG_PARAM_STR, force ? "force" : "" );
 	rc = send2dmc(&s,&req);
