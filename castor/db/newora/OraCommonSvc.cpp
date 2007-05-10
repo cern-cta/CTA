@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/05/07 16:30:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/05/10 06:29:04 $ $Author: waldron $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -79,7 +79,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
   "SELECT id, minFileSize, maxFileSize, nbCopies FROM FileClass WHERE name = :1";
 
-  /// SQL statement for selectFileSystem
+/// SQL statement for selectFileSystem
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
   "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
 
