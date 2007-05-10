@@ -30,6 +30,7 @@ namespace castor{
       StagerDBService::StagerDBService()
       {
 	//maybe print a nice message or login in rm
+	types = {OBJ_StageGetRequest,OBJ_StagePrepareToGetRequest,OBJ_StageRepackRequest,OBJ_StagePutRequest,OBJ_StagePrepareToPutRequest,OBJ_StageUpdateRequest,OBJ_StagePrepareToUpdateRequest,OBJ_StageRmRequest,OBJ_SetFileGCWeight,OBJ_StagePutDoneRequest};
       }
 
 
