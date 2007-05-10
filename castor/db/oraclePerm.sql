@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.417 $ $Date: 2007/05/10 06:31:07 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.418 $ $Date: 2007/05/10 06:55:56 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.417 $ $Date: 2007/05/10 06:31:07 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.418 $ $Date: 2007/05/10 06:55:56 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -3020,13 +3020,13 @@ BEGIN
         UPDATE DiskServer
            SET status = machineValues(ind),
                adminStatus = machineValues(ind + 1),
-               readRate = machinesValues(ind + 2),
-               writeRate = machinesValues(ind + 3),
-               nbReadStreams = machinesValues(ind + 4),
-               nbWriteStreams = machinesValues(ind + 5),
-               nbReadWriteStreams = machinesValues(ind + 6),
-               nbMigratorStreams = machinesValues(ind + 7),
-               nbRecallerStreams = machinesValues(ind + 8)
+               readRate = machineValues(ind + 2),
+               writeRate = machineValues(ind + 3),
+               nbReadStreams = machineValues(ind + 4),
+               nbWriteStreams = machineValues(ind + 5),
+               nbReadWriteStreams = machineValues(ind + 6),
+               nbMigratorStreams = machineValues(ind + 7),
+               nbRecallerStreams = machineValues(ind + 8)
          WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         DECLARE
