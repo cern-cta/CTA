@@ -264,6 +264,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildStageClient	NO
 #define BuildStageClientOld	NO
 #define BuildStageDaemon	NO
+#define BuildStageDaemonCpp	NO
 #define BuildStageLibrary	NO
 #define BuildRmMaster		NO
 #define BuildRmMasterCpp	NO
