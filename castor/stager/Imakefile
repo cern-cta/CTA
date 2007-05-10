@@ -1,0 +1,65 @@
+COMM
+COMM                      castor/stager/Imakefile
+COMM
+COMM This file is part of the Castor project.
+COMM See http://castor.web.cern.ch/castor
+COMM
+COMM Copyright (C) 2003  CERN
+COMM This program is free software; you can redistribute it and/or
+COMM modify it under the terms of the GNU General Public License
+COMM as published by the Free Software Foundation; either version 2
+COMM of the License, or (at your option) any later version.
+COMM This program is distributed in the hope that it will be useful,
+COMM but WITHOUT ANY WARRANTY; without even the implied warranty of
+COMM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+COMM GNU General Public License for more details.
+COMM You should have received a copy of the GNU General Public License
+COMM along with this program; if not, write to the Free Software
+COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+COMM
+COMM @(#)Imakefile,v 1.123 $Release$ 2006/02/27 15:19:27 itglp
+COMM
+COMM Make Castor libraries and executables
+COMM
+COMM @author castor-dev team
+COMM
+
+#include <Project.tmpl>
+
+SUBDIRS = $(DBSERVICEDIR)
+
+MakeSubdirs(all,$(SUBDIRS))
+MakeSubdirs(install,$(SUBDIRS))
+MakeSubdirs(install.man,$(SUBDIRS))
+MakeSubdirs(exportman,$(SUBDIRS))
+MakeCondSubdirs(clean,$(SUBDIRS),clean0)
+MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
+
+Makefiles:
+	@. ../../setosflags ;\
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      ../../../imake/imake -I../../../config -DOSMajorVersion="$$OSMAJNO" -DOSMinorVersion="$$OSMINNO" ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+depend:
+	for i in $(SUBDIRS) ;\
+	do (if [ -d $$i ] ;\
+	    then \
+	      (echo " $$i:" ; cd $$i ;\
+	      $(MAKE) $(MFLAGS) $@) ;\
+	    else \
+	      (echo "ERROR : No directory $$i" ;\
+	      exit 1) ;\
+	    fi )\
+	done ;
+
+FORCE:
+
