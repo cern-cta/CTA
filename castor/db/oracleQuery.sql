@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.416 $ $Date: 2007/05/09 12:29:49 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.417 $ $Date: 2007/05/10 06:31:07 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.416 $ $Date: 2007/05/09 12:29:49 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.417 $ $Date: 2007/05/10 06:31:07 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -663,7 +663,7 @@ BEGIN
             AND FS.status IN (0, 1)
             AND DiskServer.id = FS.diskserver
             AND DiskServer.status IN (0, 1)
-          ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams) DESC
+          ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
           ) DS
       WHERE ROWNUM < 2)
   RETURNING diskServerId INTO dsid;
@@ -682,7 +682,7 @@ BEGIN
          AND NbTapeCopiesInFS.Stream = StreamId
          AND FS.status IN (0, 1)    -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
          AND FS.diskserver = dsId
-       ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams) DESC
+       ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
        ) FN
    WHERE ROWNUM < 2;
   SELECT P.path, P.diskcopy_id, P.castorfile,
@@ -800,7 +800,7 @@ BEGIN
                      AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                      AND DiskServer.id = FileSystem.diskServer
                      AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-                   ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams) DESC;
+                   ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC;
       NotOk NUMBER := 1;
       nb NUMBER;
     BEGIN
@@ -1015,7 +1015,8 @@ BEGIN
         OPEN sources
           FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                      FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
+				    FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams),
                      FileSystem.mountPoint,
                      DiskServer.name
                 FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
@@ -1058,7 +1059,8 @@ BEGIN
         OPEN sources
           FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                      FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
+				    FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams),
                      FileSystem.mountPoint,
                      DiskServer.name
                 FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
@@ -1274,7 +1276,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
    OPEN sources
     FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                              FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams),
+                              FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
+			      FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams),
                FileSystem.mountPoint,
                DiskServer.name
     FROM DiskCopy, FileSystem, DiskServer
@@ -3017,13 +3020,13 @@ BEGIN
         UPDATE DiskServer
            SET status = machineValues(ind),
                adminStatus = machineValues(ind + 1),
-               readRate = fileSystemValues(ind + 2),
-               writeRate = fileSystemValues(ind + 3),
-               nbReadStreams = fileSystemValues(ind + 4),
-               nbWriteStreams = fileSystemValues(ind + 5),
-               nbReadWriteStreams = fileSystemValues(ind + 6),
-               nbMigratorStreams = fileSystemValues(ind + 7),
-               nbRecallerStreams = fileSystemValues(ind + 8)
+               readRate = machinesValues(ind + 2),
+               writeRate = machinesValues(ind + 3),
+               nbReadStreams = machinesValues(ind + 4),
+               nbWriteStreams = machinesValues(ind + 5),
+               nbReadWriteStreams = machinesValues(ind + 6),
+               nbMigratorStreams = machinesValues(ind + 7),
+               nbRecallerStreams = machinesValues(ind + 8)
          WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         DECLARE
