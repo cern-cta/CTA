@@ -33,7 +33,7 @@ namespace castor {
 	StagerDBService::~StagerDBService();
 	
 	
-	enum C_ObjectsIds {OBJ_StageGetRequest,OBJ_StagePrepareToGet, OBJ_StageRepackRequest, OBJ_StagePutRequest, OBJ_PrepareToPutRequest, OBJ_StageUpdateRequest, OBJ_StagePrepareToUpdateRequest, OBJ_StageRmRequest,OBJ_SetFileGCWeight, OBJ_StagePutDoneRequest};
+	std::vector<ObjectsIds> types;
 	
 	
       }	// end class StagerDBService
