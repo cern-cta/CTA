@@ -43,7 +43,7 @@ namespace castor{
 	  /* execute the main function for the setFileGCWeight request   */
 	  /* basically a call to the corresponding stagerService method */
 	  /* passing the SetFileGCWeight object                        */
-	  stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->fileid, setFileGCWeight->weight());
+	  stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,setFileGCWeight->weight());
 	  
 	  
 	  /**********************************************************************************************/
@@ -62,7 +62,7 @@ namespace castor{
 	
 	  
 	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
-	  this->stgReplyHelper = new castor::stager::StagerReplyHelper*;
+	  this->stgReplyHelper = new StagerReplyHelper*;
 	  
 	  stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
 	  stgReplyHelper->endReplyToClient(stgRequestHelper);
