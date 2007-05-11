@@ -1,11 +1,13 @@
-/*************************************************************************************/
-/* main container for the classes and methods needed for the stager_db_service.cpp  */
-/* *********************************************************************************/
+/******************************************************************************************************************/
+/* Helper class containing the objects and methods which interact to performe the processing of the request      */
+/* it is needed to provide:                                                                                     */
+/*     - a common place where its objects can communicate                                                      */
+/*     - a way to pass the set of objects from the main flow (StagerDBService thread) to the specific handler */
+/* It is an attribute for all the request handlers                                                           */
+/* **********************************************************************************************************/
 
 
-#include "castor/stager/StagerRequestHelper.hpp"
-#include "castor/stager/StagerCnsHelper.hpp"
-#include "castor/stager/StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
 
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
@@ -18,6 +20,15 @@
 #include "castor/stager/FileClass.hpp"
 
 #include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "u64subr.h"
+#include "castor/IClientFactory.h"
+
 #include <iostream>
 #include <string>
 
@@ -25,9 +36,9 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
+      
       /* contructor */
-      castor::stager::StagerRequestHelper::StagerRequestHelper(){
+      StagerRequestHelper::StagerRequestHelper(){
 	
 	this->stagerService =  new castor::stager::IStagerSvc*; 
 	this->dbService = new castor::Services*;
@@ -43,7 +54,7 @@ namespace castor{
 
 
       /* destructor */
-      castor::stager::StagerRequestHelper::~StagerRequestHelper()
+      StagerRequestHelper::~StagerRequestHelper()
       {
 	delete stagerService;
 	delete dbService;
@@ -52,109 +63,50 @@ namespace castor{
 
 
 
-      /********************************************************/
-      /*******************************************************/
-      /* methods to get/create the fields of the collection */
-      /*****************************************************/
-      /****************************************************/
-   
-
-      /******************************************************************************************/
-      /* stagerService, dbService, baseAddr creation: PURE CONSTRUCTOR CALLS*/
-      /****************************************************************************************/
-      
-     
-
-    
-
-      /* used in StagerRmRequest.run()*/
-      // to do!!
-      void friendStagerServiceStageRm(castor::stager::StagerCnsHelper stgCnsHelper)
-      {
-	std::string cnsServer(stgCnsHelper.cnsFileidServer());
-	this->stagerService->stageRm(stgCnsHelper.cnsFileidFileid(),cnsServer);
-      }
-
-      /* used in StagerSetFileGCWeightRequest.run() */
-      // to do!!
-      void friendStagerServiceSetFileGCWeight(castor::stager::StagerCnsHelper stgCnsHelper,float weight)
-      {
-	std::string cnsServer(stgCnsHelper.cnsFileidServer());
-	this->stagerService->setFileGCWeight(stgCnsHelper.cnsFileidFileid(), cnsServer, weight);
-      }
 
 
-
-     
-      void dbServiceUpdateRep()
-      {
-
-	dbService->updateRep(baseAddr, subrequest, STAGER_AUTOCOMMIT_TRUE);
-      }
-      
+      /**********************/
       /* baseAddr settings */ 
-      void castor::stager::StagerRequestHelper::settingBaseAddress()
+      /********************/
+      void StagerRequestHelper::settingBaseAddress()
       {
-	  /* settings */
 	  baseAddr->setCnvSvcName("DbCnvSvc");
 	  baseAddr->setCnvSvcType("SVC_DB_CNV");
-
       }
      
-      
 
 
       /**************************************************************************************/
       /* get/create subrequest->  fileRequest, and many subrequest's attributes            */
-      /* and set the subrequest's status and nextStatus                                   */
-      /***********************************************************************************/
+      /************************************************************************************/
       
-      /* get subrequest using stagerService (and also type) */
-      // to keep it!!
-      void castor::stager::StagerRequestHelper::getSubrequest()
+      /* get subrequest using stagerService (and also types) */
+      void StagerRequestHelper::getSubrequest()
       {
 	this->subrequest=stagerService->subRequestToDo(&types);
       }
       
 
-
-      
-
-
-      /* at the end of each subrequest's handler, call this function to update the subrequest.status */
-      /* and subrequest.nextStatus, if it is needed  */
-      void checkAndUpdateSubrequestStatusAndNext(SubRequestStatusCodes status, SubRequestGetNextStatusCodes nextStatus)
-      {
-	
-      }
-     
-
-
-    
-
-
-
-
       /* get the link (fillObject~SELECT) between the subrequest and its associated fileRequest  */ 
       /* using dbService, and get the fileRequest */ 
-      void castor::stager::StagerRequestHelper::getFileRequest() 
+      void StagerRequestHelper::getFileRequest() 
       {
 	dbService->fillObj(baseAddr, subrequest, OBJ_FileRequest, 0);
-	fileRequest=subrequest->request();
+	this->fileRequest=subrequest->request();
       }
     
     
 
 
-      /*****************************************************************************/
-      /* get the link (fillObject~SELECT) between request and its associated client*/
-      /* using dbService, and get the client                                     */
-      /**************************************************************************/
-      void castor::stager::StagerRequestHelper::getIClient()
+      /***********************************************************************************/
+      /* get the link (fillObject~SELECT) between fileRequest and its associated client */
+      /* using dbService, and get the client                                           */
+      /********************************************************************************/
+      void StagerRequestHelper::getIClient()
       {
 	  dbService->fillObj(baseAddr, fileRequest,OBJ_IClient, 0);
-	  iClient=fileRequest->client();
-	  iClientAsString=IClientFactory.client2string(iClient);/* IClientFactory singleton */
+	  this->iClient=fileRequest->client();
+	  this->iClientAsString=IClientFactory.client2string(iClient);/* IClientFactory singleton */
       }
 	
 
@@ -164,9 +116,8 @@ namespace castor{
       /****************************************************************************************/
       /* get svClass by selecting with stagerService                                         */
       /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
-      /* and get its attributes: maxReplicationNb and replicationPollicy                   */
-      /************************************************************************************/
-      void castor::stager::StagerRequestHelper::getSvcClass()
+      /*************************************************************************************/
+      void StagerRequestHelper::getSvcClass()
       {
 
 	  std::string className=fileRequest->svcClassName(); 
@@ -175,7 +126,7 @@ namespace castor{
 	    className="default";
 	    fileRequest->setSvcClassName(className);
 	    
-	    className=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly update */
+	    className=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly updated */
 	    if((className==NULL)||(className.empty())){
 	      //print message error and throw exception!
 	    }
@@ -186,21 +137,13 @@ namespace castor{
 	  }
       }
       
-      /* get the maxReplicaNb and the replicationPolicy svcClass's attributes */
-      int svcClassMaxReplicNb()
-      {
-	return(this->svcClass->maxReplicaNb());
-      }
-      std::string svcClassReplicationPolicy()
-      {
-	return(this->svcClass->replicationPolicy());
-      }
+      
       
       
       /*******************************************************************************/
       /* update request in DB, create and fill request->svcClass link on DB         */ 
       /*****************************************************************************/
-      void castor::stager::StagerRequestHelper::linkRequestToSvcClassOnDB()
+      void StagerRequestHelper::linkRequestToSvcClassOnDB()
       {
 	/* update request on DB */
 	dbService->updateRep(baseAddr, fileRequest, STAGER_AUTOCOMMIT_TRUE);//EXCEPTION!
@@ -219,7 +162,7 @@ namespace castor{
       /*******************************************************************************/
       /* get the castoFile associated to the subrequest                             */ 
       /*****************************************************************************/
-      void castor::stager::StagerRequestHelper::getCastorFile()
+      void StagerRequestHelper::getCastorFile()
       {
 	this->castorFile=subrequest->castorFile();
       }
@@ -231,7 +174,7 @@ namespace castor{
       /* get fileClass by selecting with stagerService                                       */
       /* using the CnsfileClass.name as key      (in StagerRequest.JobOriented)             */
       /*************************************************************************************/
-      void castor::stager::StagerRequestHelper::getFileClass(char* nameClass)
+      void StagerRequestHelper::getFileClass(char* nameClass)
       {
 	
 	  std::string fileClassName(nameClass);
@@ -247,7 +190,7 @@ namespace castor{
       /***************************************************************************************/
 
       /* get or create subrequest uuid */
-      void castor::stager::StagerRequestHelper::setSubrequestUuid()
+      void StagerRequestHelper::setSubrequestUuid()
       {
 	Cuuid_t subrequest_uuid=NOT_VALID;//if we manage to get the cuuid version, we update 
 	char subrequest_uuid_as_string[CUUID_STRING_LEN+1];	
@@ -284,7 +227,7 @@ namespace castor{
       }
       
       /* get request uuid (we cannon' t create it!) */ 
-      void castor::stager::StagerRequestHelper::setRequestUuid()
+      void StagerRequestHelper::setRequestUuid()
       {
 	Cuuid_t request_uuid;
 
@@ -308,11 +251,11 @@ namespace castor{
 
 
 
-     /****************************************************************************************************/
+      /*******************************************************************************************************************************************/
       /*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
-      /**************************************************************************************************/
+      /*****************************************************************************************************************************************/
       
-      void friendLinkCastorFileToServiceClass(castor::stager::StagerCnsHelper stgCnsHelper)
+      void StagerRequestHelper::linkCastorFileToServiceClass(StagerCnsHelper stgCnsHelper)
       {
 	unsigned64 fileClassId = fileClass->id();
 	unsigned64 svcClassId = svcClass->id();
@@ -336,7 +279,7 @@ namespace castor{
       /****************************************************************************************************/
       /*  check if the castorFile is linked to the service Class: called in StagerRequest.jobOriented()*/
       /**************************************************************************************************/
-      void isCastorFileLinkedToSvcClass()
+      void StagerRequestHelper::isCastorFileLinkedToSvcClass()
       {
 	castor::stager::SvcClass* svcClass_from_castorFile = castorFile->svcClass();
 
@@ -363,7 +306,7 @@ namespace castor{
       /****************************************************************************************************/
       /*  initialize the partition mask with svcClass.name()  or get it:called in StagerRequest.jobOriented() */
       /**************************************************************************************************/
-      std::string getOrInitiatePartitionMask()
+      std::string StagerRequestHelper::getPartitionMask()
       {
 	if(svcClass->name().empty()){
 	  //throw exception!!!
@@ -381,7 +324,7 @@ namespace castor{
       /****************************************************************************************************/
       /*  fill castorFile's FileClass: called in StagerRequest.jobOriented()                             */
       /**************************************************************************************************/
-      void setFileClassOnCastorFile()
+      void StagerRequestHelper::setFileClassOnCastorFile()
       {
 	castorFile->setFileClass(fileClass);
 	
@@ -400,7 +343,7 @@ namespace castor{
       /************************************************************************************/
       /* set the username and groupname string versions using id2name c function  */
       /**********************************************************************************/
-      void castor::stager::StagerRequestHelper::setUsernameAndGroupname()
+      void StagerRequestHelper::setUsernameAndGroupname()
       {
 	struct passwd *this_passwd;
 	struct group *this_gr;
@@ -441,7 +384,7 @@ namespace castor{
       /****************************************************************************************************/
       /* depending on fileExist and type, check the file needed is to be created or throw exception    */
       /********************************************************************************************/
-      bool castor::stager::StagerRequestHelper::isFileToCreateOrException(bool fileExist)
+      bool StagerRequestHelper::isFileToCreateOrException(bool fileExist)
       {
 
 	bool toCreate=FALSE;
@@ -468,7 +411,7 @@ namespace castor{
       /* check if the user (euid,egid) has the ritght permission for the request's type                   */
       /* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */
       /**************************************************************************************************/
-      bool castor::stager::StagerRequestHelper::checkFilePermission()
+      bool StagerRequestHelper::checkFilePermission()
       {
 	bool filePermission = true;
 	int type =  this->subrequest.type();
@@ -510,7 +453,7 @@ namespace castor{
       /* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
       /* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
       /**************************************************************************************************/
-      struct rmjob buildRmJobHelperPart(struct rmjob &rmjob)//after processReplica (if it is necessary)
+      struct rmjob StagerRequestHelper::buildRmJobHelperPart(struct rmjob &rmjob)//after processReplica (if it is necessary)
       {
 
 
@@ -578,7 +521,7 @@ namespace castor{
       /* to get the real subrequest size required on disk                           */
       /* this function is just called for the Update and PrepareToUpdate subrequest*/
       /****************************************************************************/
-      u_signed64 castor::stager::StagerRequestHelper::getRealSubrequestXsize(u_signed64 cnsFilestatXsize)
+      u_signed64 StagerRequestHelper::getRealSubrequestXsize(u_signed64 cnsFilestatXsize)
       {
 	u_signed64 realXsize;
 
