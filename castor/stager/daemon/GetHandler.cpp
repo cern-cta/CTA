@@ -20,7 +20,7 @@
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "castor/IClientFactory.h"
-#include "castor/stager/SuBRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include <iostream>
 #include <string>
