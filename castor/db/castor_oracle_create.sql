@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.418  Date: 2007/05/10 06:55:56  Author: waldron 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.419  Date: 2007/05/11 09:56:34  Author: waldron 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.418  Date: 2007/05/10 06:55:56 ');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.419  Date: 2007/05/11 09:56:34 ');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -774,6 +774,26 @@ BEGIN
    WHERE id = fs;
 END;
 
+CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
+END;
+
+CREATE OR REPLACE PROCEDURE updateRecallerFileOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbRecallerStreams = nbRecallerStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbRecallerStreams = nbRecallerStreams + 1,
+                        free = free - fileSize   -- just an evaluation, monitoring will update it
+   WHERE id = fs;
+END;
+
 /* PL/SQL method to update FileSystem free space when file are closed */
 CREATE OR REPLACE PROCEDURE updateFsFileClosed(fs IN INTEGER) AS
   ds INTEGER;
@@ -909,7 +929,7 @@ BEGIN
    WHERE child = tapeCopyId;
 
   -- Update Filesystem state
-  updateFSFileOpened(fsDiskServer, fileSystemId, 0);
+  updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- No data found means the selected filesystem has no
@@ -968,7 +988,7 @@ BEGIN
        AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
-     updateFsFileOpened(fsDiskServer, fileSystemId, 0);
+     updateFsRecallerOpened(fsDiskServer, fileSystemId, 0);
    EXCEPTION WHEN NO_DATA_FOUND THEN
      -- Error, the filesystem or the machine was probably disabled in between
      raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
@@ -1024,7 +1044,7 @@ BEGIN
         raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
       END IF;      
       UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
-      updateFsFileOpened(fsDiskServer, fileSystemId, fileSize);
+      updateFsRecallerOpened(fsDiskServer, fileSystemId, fileSize);
     END;
   END IF;
 END;
