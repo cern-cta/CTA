@@ -28,6 +28,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
@@ -118,6 +119,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Stream_lastFileSystemChange
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_lastFileSystemChange(castor::stager::Stream* instance, u_signed64* var) {
+    *var = instance->lastFileSystemChange();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_setLastFileSystemChange
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_setLastFileSystemChange(castor::stager::Stream* instance, u_signed64 new_var) {
+    instance->setLastFileSystemChange(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Stream_id
   //----------------------------------------------------------------------------
   int Cstager_Stream_id(castor::stager::Stream* instance, u_signed64* var) {
@@ -175,6 +192,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Stream_setTape(castor::stager::Stream* instance, castor::stager::Tape* new_var) {
     instance->setTape(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_lastFileSystemUsed
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_lastFileSystemUsed(castor::stager::Stream* instance, castor::stager::FileSystem** var) {
+    *var = instance->lastFileSystemUsed();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_setLastFileSystemUsed
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_setLastFileSystemUsed(castor::stager::Stream* instance, castor::stager::FileSystem* new_var) {
+    instance->setLastFileSystemUsed(new_var);
     return 0;
   }
 

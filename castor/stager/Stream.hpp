@@ -48,6 +48,7 @@ namespace castor {
     class TapePool;
     class TapeCopy;
     class Tape;
+    class FileSystem;
 
     /**
      * class Stream
@@ -123,6 +124,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_lastFileSystemChange
+       * Time of the last change of filesystem for this stream. Given in seconds since
+       * the EPOCH (1st Jan 1970)
+       * @return the value of m_lastFileSystemChange
+       */
+      u_signed64 lastFileSystemChange() const {
+        return m_lastFileSystemChange;
+      }
+
+      /**
+       * Set the value of m_lastFileSystemChange
+       * Time of the last change of filesystem for this stream. Given in seconds since
+       * the EPOCH (1st Jan 1970)
+       * @param new_var the new value of m_lastFileSystemChange
+       */
+      void setLastFileSystemChange(u_signed64 new_var) {
+        m_lastFileSystemChange = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -186,6 +207,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_lastFileSystemUsed
+       * @return the value of m_lastFileSystemUsed
+       */
+      FileSystem* lastFileSystemUsed() const {
+        return m_lastFileSystemUsed;
+      }
+
+      /**
+       * Set the value of m_lastFileSystemUsed
+       * @param new_var the new value of m_lastFileSystemUsed
+       */
+      void setLastFileSystemUsed(FileSystem* new_var) {
+        m_lastFileSystemUsed = new_var;
+      }
+
+      /**
        * Get the value of m_tapePool
        * @return the value of m_tapePool
        */
@@ -222,12 +259,17 @@ namespace castor {
       /// Initial data volume to be migrated (needed by vmgr_gettape())
       u_signed64 m_initialSizeToTransfer;
 
+      /// Time of the last change of filesystem for this stream. Given in seconds since the EPOCH (1st Jan 1970)
+      u_signed64 m_lastFileSystemChange;
+
       /// The id of this object
       u_signed64 m_id;
 
       std::vector<TapeCopy*> m_tapeCopyVector;
 
       Tape* m_tape;
+
+      FileSystem* m_lastFileSystemUsed;
 
       TapePool* m_tapePool;
 

@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
@@ -45,8 +46,10 @@
 //------------------------------------------------------------------------------
 castor::stager::Stream::Stream() throw() :
   m_initialSizeToTransfer(0),
+  m_lastFileSystemChange(0),
   m_id(0),
   m_tape(0),
+  m_lastFileSystemUsed(0),
   m_tapePool(0),
   m_status(StreamStatusCodes(0)) {
 }
@@ -81,6 +84,7 @@ void castor::stager::Stream::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "initialSizeToTransfer : " << m_initialSizeToTransfer << std::endl;
+  stream << indent << "lastFileSystemChange : " << m_lastFileSystemChange << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
@@ -97,6 +101,12 @@ void castor::stager::Stream::print(std::ostream& stream,
   stream << indent << "Tape : " << std::endl;
   if (0 != m_tape) {
     m_tape->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
+  stream << indent << "LastFileSystemUsed : " << std::endl;
+  if (0 != m_lastFileSystemUsed) {
+    m_lastFileSystemUsed->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

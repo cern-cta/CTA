@@ -134,7 +134,7 @@ CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
-CREATE TABLE Stream (initialSizeToTransfer INTEGER, id INTEGER CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE Stream (initialSizeToTransfer INTEGER, lastFileSystemChange INTEGER, id INTEGER CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER) INITRANS 50 PCTFREE 50;
 CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
