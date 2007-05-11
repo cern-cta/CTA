@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.26 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2007/05/11 16:06:39 $ $Author: obarring $
  *
  * 
  *
@@ -497,14 +497,23 @@ int tapeStatus(
       strcpy(tapereq->density,vmgrTapeInfo.density);
       break;
     }
+    /*
+     * We are here because of an error
+     */
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
                     (struct Cns_fileid *)NULL,
-                    RTCPCLD_NB_PARAMS+3,
+                    RTCPCLD_NB_PARAMS+5,
                     "SYSCALL",
                     DLF_MSG_PARAM_STR,
                     "vmgr_querytape()",
+                    "",
+                    DLF_MSG_PARAM_TPVID,
+                    tapereq->vid,
+                    "DGN",
+                    DLF_MSG_PARAM_STR,
+                    tapereq->dgn,
                     "ERROR_STR",
                     DLF_MSG_PARAM_STR,
                     sstrerror(serrno),
@@ -513,6 +522,12 @@ int tapeStatus(
                     (vmgrErrMsg != NULL ? vmgrErrMsg : "(null)"),
                     RTCPCLD_LOG_WHERE
                     );
+    if ( (save_serrno == SECOMERR) || (save_serrno == EVMGRNACT) ) {
+      sleep(5);
+    } else {
+      serrno = save_serrno;
+      return(-1);
+    }
   }
   return(0);
 }
