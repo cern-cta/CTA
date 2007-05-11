@@ -53,7 +53,7 @@ namespace castor{
 	  }
 	  	  
 	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
-	  this->stgReplyHelper = new castor::stager::StagerReplyHelper*;	  
+	  this->stgReplyHelper = new StagerReplyHelper*;	  
 	  this->stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
 	  
