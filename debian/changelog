@@ -1,3 +1,151 @@
+castor (2.1.3-11) unstable; urgency=low
+
+  * Bug fix release on top of 3.10
+  * CASTOR2/castor/Imakefile:
+    [r1.146,2007-05-10,mmartins] Included rules for the C++ version of the stager db service
+  * CASTOR2/castor/db/castor_oracle_create.sql:
+  * CASTOR2/castor/db/castor_oracle_create.sqlplus:
+    [2007-05-11,sponcec3] added lastFileSystemChange and lastFileSystemUsed to Stream object
+  * CASTOR2/castor/db/cnv/DbDiskServerCnv.cpp:
+    [r1.13,2007-05-07,sponcec3] droped load and added aggregated read/write rates, read, write, read/write, migrator and recaller number of streams
+  * CASTOR2/castor/db/cnv/DbFileSystemCnv.cpp:
+    [r1.17,2007-05-07,sponcec3] Added mnMigratorStreams and nbRecallerStreams
+  * CASTOR2/castor/db/newora/OraCommonSvc.cpp:
+    [r1.21,2007-05-10,waldron] corrected indentation
+    [r1.20,2007-05-07,sponcec3] Adapted to changes in filesystem and diskserver objects
+  * CASTOR2/castor/db/ora/OraJobSvc.cpp:
+    [r1.21,2007-05-10,gtaur] fix for the putDone(bug 26177) and fix against the  accumulation of putDone requests
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.420,2007-05-14,sponcec3] Improved bestTapeCopyForStream by trying to reuse filesystems during 15mn when migrating from one
+    [r1.419,2007-05-11,waldron] added on behalf of seb for new procedures updateFSMigratorOpened and updateFsRecallerOpened
+    [r1.418,2007-05-10,waldron] fixed typos
+    [r1.417,2007-05-10,waldron] fixed all FileSystemRate calls and fixed the storeClusterStatus procedure writing incorrect data to the diskserver table which caused transfers to fail
+    [r1.416,2007-05-09,waldron] remove load from updateFsFileOpen and updateFsFileClosed
+    [r1.415,2007-05-09,waldron] dropped load and added migrator and recaller streams + fix in storeClusterStatus procedure
+    [r1.414,2007-05-07,sponcec3] Adapted to changes in filesystem and diskserver objects
+    [r1.413,2007-05-03,itglp] Better fix for double job scheduling in PutStart: the job is failed only when
+    [r1.413,2007-05-03,itglp] the new filesystem is different, so SRM Put cycle is properly accepted.
+    [r1.412,2007-05-02,sponcec3] Fixed sign in filesystemrating. This had for consequence to always take the busiest filesystem for any scheduling :-((
+    [r1.411,2007-05-02,itglp] Fixed stupid error in putStart (introduced when fixing the double job issue)
+    [r1.411,2007-05-02,itglp] Changed GC timing + added comments, but a revision is needed
+  * CASTOR2/castor/dlf/Param.hpp:
+    [r 1.5,2007-05-03,waldron] added constructor for sub request uuids
+  * CASTOR2/castor/gc/GcDaemon.cpp:
+  * CASTOR2/castor/gc/GcDaemon.hpp:
+  * CASTOR2/castor/gc/gcDaemon.man:
+    [2007-05-14,waldron] implemented random delay at startup
+  * CASTOR2/castor/io/StreamDiskServerMetricsReportCnv.cpp:
+  * CASTOR2/castor/monitoring/DiskServerMetricsReport.cpp:
+  * CASTOR2/castor/monitoring/DiskServerMetricsReport.hpp:
+    [2007-05-07,sponcec3] Dropped load
+  * CASTOR2/castor/monitoring/DiskServerStatus.cpp:
+  * CASTOR2/castor/monitoring/DiskServerStatus.hpp:
+    [r 1.4,2007-05-07,sponcec3] droped load and added aggregated read/write rates, read, write, read/write, migrator and recaller number of streams
+  * CASTOR2/castor/io/StreamFileSystemCnv.cpp:
+  * CASTOR2/castor/io/StreamFileSystemMetricsReportCnv.cpp:
+  * CASTOR2/castor/monitoring/FileSystemMetricsReport.cpp:
+  * CASTOR2/castor/monitoring/FileSystemMetricsReport.hpp:
+  * CASTOR2/castor/monitoring/FileSystemStatus.cpp:
+  * CASTOR2/castor/monitoring/FileSystemStatus.hpp:
+    [2007-05-07,sponcec3] Added nbMigratorStreams and nbRecallerStreams
+  * CASTOR2/castor/monitoring/RmGetNodes.cpp:
+    [r 1.8,2007-05-09,waldron] fixed alignment problems in output caused by incorrect indentation
+  * CASTOR2/castor/monitoring/rmmaster/ora/OraRmMasterSvc.cpp:
+    [r1.12,2007-05-09,waldron] fixed incorrect fill of oracle buffers
+    [r1.11,2007-05-07,sponcec3] Adapted to changes in filesystem and diskserver objects
+  * CASTOR2/castor/monitoring/rmmaster/ora/StatusUpdateHelper.cpp:
+    [r 1.6,2007-05-07,sponcec3] Adapted to changes in filesystem and diskserver objects
+  * CASTOR2/castor/monitoring/rmnode/MetricsThread.cpp:
+    [r1.16,2007-05-09,waldron] fixed write stream attribute
+    [r1.15,2007-05-09,waldron] modifications to distinguish user streams from migrators and recallers
+  * CASTOR2/castor/stager/DiskServer.cpp:
+  * CASTOR2/castor/stager/DiskServer.h:
+  * CASTOR2/castor/stager/DiskServer.hpp:
+  * CASTOR2/castor/stager/DiskServerCInt.cpp:
+    [2007-05-07,sponcec3] droped load and added aggregated read/write rates, read, write, read/write, migrator and recaller number of streams
+  * CASTOR2/castor/stager/FileSystem.cpp:
+  * CASTOR2/castor/stager/FileSystem.h:
+  * CASTOR2/castor/stager/FileSystem.hpp:
+  * CASTOR2/castor/stager/FileSystemCInt.cpp:
+    [2007-05-07,sponcec3] Added mnMigratorStreams and nbRecallerStreams
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.153,2007-05-14,sponcec3] resurected lost inheritance from StreamReport to IObject
+    [r1.152,2007-05-14,sponcec3] added lastButOneFileSystemUsed to Stream
+    [r1.151,2007-05-11,sponcec3] added lastFileSystemChange and lastFileSystemUsed to Stream object
+    [r1.150,2007-05-09,sponcec3] droped load and added aggregated read/write rates, read, write, read/write, migrator and recaller number of streams
+    [r1.149,2007-05-07,sponcec3] added nbMigratorStreams nbRecallerStreams to FileSystemMetricsReport and dropped load from DiskServerMetricsReport
+  * CASTOR2/config/Project.tmpl:
+  * CASTOR2/config/site.def:
+    [2007-05-10,mmartins] Included rules for the C++ version of the stager db service
+  * CASTOR2/debian/castor.conf:
+    [r1.50,2007-05-14,waldron] added MaxReadersWhileMigrating option
+    [r1.49,2007-05-14,waldron] added restriction on the maximum number of streams per filesystem
+    [r1.48,2007-05-09,waldron] added MaxWritersWhileMigrating option
+    [r1.47,2007-05-09,waldron] removed load coefficients
+    [r1.46,2007-05-08,wiebalck] Added new option TAPE CANCEL_ON_BADMIR [YES/NO] for the handling of tapes
+    [r1.46,2007-05-08,wiebalck] with invalid MIRs.
+  * CASTOR2/dlf/mysql.c:
+  * CASTOR2/dlf/oracle.pc:
+    [2007-05-03,waldron] null the subreqid field before database insertion
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sqlplus:
+    [2007-05-08,waldron] modified tape stats table and procedure
+  * CASTOR2/dlf/web/results.php:
+    [r1.18,2007-05-03,waldron] added title attribute to timestamp cell
+  * CASTOR2/hsmtools/c2probe.c:
+    [r 1.4,2007-05-07,waldron] fixed compiler warnings
+  * CASTOR2/hsmtools/enterFileClass.c:
+  * CASTOR2/hsmtools/enterSvcClass.c:
+  * CASTOR2/hsmtools/modifyFileClass.c:
+  * CASTOR2/hsmtools/modifySvcClass.c:
+    [2007-05-07,waldron] terminate on unknown command line option
+  * CASTOR2/hsmtools/reclaim.c:
+  * CASTOR2/job/RemoteJobSvc.c:
+  * CASTOR2/job/RemoteJobSvc.h:
+    [2007-05-10,waldron] fixed compiler warnings
+  * CASTOR2/rtcopy/rtcpcldVmgrInterface.c:
+    [r1.27,2007-05-11,obarring] Fix #23961: better handling of vmgr errors.
+  * CASTOR2/scheduler/LSF/schmod_castor.cpp:
+    [r1.26,2007-05-14,waldron] added MaxReadersWhileMigrating option
+    [r1.25,2007-05-14,waldron] added restriction on the maximum number of streams per filesystem
+    [r1.24,2007-05-10,sponcec3] Fixed error in allowStream (read streams counted instead of write ones)
+    [r1.23,2007-05-10,waldron] added random weight to filesystem selection
+    [r1.22,2007-05-09,waldron] added support for restricting the number of writing jobs on a filesystem while migrations are happending
+    [r1.21,2007-05-09,waldron] removed load coefficients
+    [r1.20,2007-05-03,waldron] Improved traceability by including request and sub request ids in all logging messages wherever possible
+  * CASTOR2/scheduler/LSF/schmod_castor.hpp:
+    [r 1.7,2007-05-14,waldron] added MaxReadersWhileMigrating option
+    [r 1.6,2007-05-09,waldron] added support for restricting the number of writing jobs on a filesystem while migrations are happending
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.159,2007-05-10,gtaur] fix for the putDone(bug 26177) and fix against the  accumulation of putDone requests
+    [r1.158,2007-05-08,gtaur] Fix against accumultion orphaned subrequest see bug report #26176
+  * CASTOR2/tape/mounttape.c:
+    [r1.51,2007-05-08,wiebalck] Bad MIR fix: take the operator out of the loop when handling a tape with
+    [r1.51,2007-05-08,wiebalck] an invalid MIR. Rely on the healing capabilities of the drive during the
+    [r1.51,2007-05-08,wiebalck] next access. (Controlled by new option TAPE CANCEL_ON_BADMIR [YES/NO])
+  * CASTOR2/tape/rbtsubr.c:
+    [r1.29,2007-05-09,wiebalck] Fixed a bogus function call of the tape logger interface.
+    [r1.28,2007-05-09,wiebalck] Fixed a bug in the number of parameters passed to the variadic log function
+    [r1.28,2007-05-09,wiebalck] of the tape logging interface.
+  * CASTOR2/test/CASTORTESTCONFIG:
+  * CASTOR2/test/CastorTestSuite.py:
+  * CASTOR2/test/UtilityForCastorTest.py:
+  * CASTOR2/test/rfio/RfioTest.py:
+  * CASTOR2/test/stager/ClientTest.py:
+    [2007-05-03,gtaur] small fix
+    [2007-05-02,gtaur] New recall/migration tests added in the new TapeTest
+    [2007-05-02,gtaur] File CASTORTESTCONFIG is not in /etc/castor but in the local dir
+    [2007-05-02,gtaur] CASTORTESTCONFIG modified to be more user friendly
+    [2007-05-02,gtaur] Added the UseEnv parameter to avoid to use castor 1 and to skip problems with castor.conf and castormap.conf
+    [2007-05-02,gtaur] keyboard interrupt exceptions now handled properly
+    [2007-05-02,gtaur] problems with runOnShell solved
+    [2007-05-02,gtaur] Pre-requisites tests are now mandatory and a function in UtilityForCastorTest has been added to check basic functionality in Castor
+  * CASTOR2/upgrades/dlf_2.1.2-x_to_2.1.3-x.sql:
+  * CASTOR2/upgrades/dlf_2.1.2-x_to_2.1.3-x.sqlplus:
+    [2007-05-10,waldron] updated to reflect latest changes
+	
 castor (2.1.3-10) unstable; urgency=low
 
   * Bug fix release on top of 3.9
@@ -22,21 +170,6 @@ castor (2.1.3-10) unstable; urgency=low
     [r1.405,2007-04-25,itglp] Really fix putStart for double job scheduling
   * CASTOR2/castor/db/pgsql/PgCnvSvc.cpp:
     [r 1.2,2007-04-30,waldron] newline characters are not permitted inside dlf messages
-  * CASTOR2/castor/io/StreamDiskPoolQueryResponseCnv.cpp:
-  * CASTOR2/castor/io/StreamDiskServerDescriptionCnv.cpp:
-  * CASTOR2/castor/io/StreamFileSystemDescriptionCnv.cpp:
-  * CASTOR2/castor/query/DiskPoolQueryResponse.cpp:
-  * CASTOR2/castor/query/DiskPoolQueryResponse.h:
-  * CASTOR2/castor/query/DiskPoolQueryResponse.hpp:
-  * CASTOR2/castor/query/DiskPoolQueryResponseCInt.cpp:
-  * CASTOR2/castor/query/DiskServerDescription.cpp:
-  * CASTOR2/castor/query/DiskServerDescription.h:
-  * CASTOR2/castor/query/DiskServerDescription.hpp:
-  * CASTOR2/castor/query/DiskServerDescriptionCInt.cpp:
-  * CASTOR2/castor/query/FileSystemDescription.cpp:
-  * CASTOR2/castor/query/FileSystemDescription.h:
-  * CASTOR2/castor/query/FileSystemDescription.hpp:
-  * CASTOR2/castor/query/FileSystemDescriptionCInt.cpp:
   * CASTOR2/stager/stager_client_api_query.cpp:
     [2007-04-25,sponcec3] Reintroduced reservedSpace for backward compatibility
   * CASTOR2/castor/io/UDPSocket.cpp:
