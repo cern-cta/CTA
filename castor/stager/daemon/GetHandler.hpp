@@ -3,8 +3,8 @@
 /* StagerGetHandler: Constructor and implementation of the get subrequest's handler */
 /***********************************************************************************/
 
-#ifndef STAGER_GET_REQUEST_HANDLER_HPP
-#define STAGER_GET_REQUEST_HANDLER_HPP 1
+#ifndef STAGER_GET_HANDLER_HPP
+#define STAGER_GET_HANDLER_HPP 1
 
 
 
@@ -15,7 +15,7 @@
 
 #include "castor/stager/dbService/StagerRequestHandler.hpp"
 #include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerGetHandler.hpp"
+
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -37,14 +37,15 @@ namespace castor{
   namespace stager{
     namespace dbService{
 
-      
+      class StagerRequestHelper;
+      class StagerCnsHelper;
 
       class StagerGetHandler :public StagerJobRequestHandler{
 
 	
       public:
 	/* constructor */
-	StagerGetHandler::StagerGetHandler(StagerRequestHelper* stgRequestHelper, StagerHelper* stgCnsHelper, std::string message) throw();
+	StagerGetHandler::StagerGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message) throw();
 	/* destructor */
 	StagerGetHandler::~StagerGetHandler() throw();
 	
