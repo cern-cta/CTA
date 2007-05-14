@@ -42,8 +42,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <stdio.h>
-//#include <string.h>
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -60,7 +60,7 @@
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::gc::GcDaemon::GcDaemon() : m_foreground(false) {
+castor::gc::GcDaemon::GcDaemon() : m_foreground(false), m_nodelay(false) {
   // gives a Cuuid to this server
   // XXX Interface to Cuuid has to be improved !
   // XXX its length has currently to be hardcoded
@@ -162,7 +162,7 @@ int castor::gc::GcDaemon::start()
 
   // set GC sleep interval, sec.
   // /etc/castor/castor.conf example: "GC  INTERVAL  600"
-  int  gcinterval;
+  int gcinterval;
   {
     char *p;
     if ((p = getenv ("GC_INTERVAL")) || (p = getconfent ("GC", "INTERVAL", 0)))
@@ -170,17 +170,34 @@ int castor::gc::GcDaemon::start()
     else
       gcinterval = GCINTERVAL;
   }
-  
+
+  // By default the first poll to the stager is deliberately offset by a random
+  // interval between 1 and 15 minutes. This randomised delay should prevent all
+  // GC's in an instance/setup from deleting files at the same time causing an
+  // oscillation in incoming network traffic due to deletions.
+  int delay = 0;
+  if (!m_nodelay) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    srand(tv.tv_usec * tv.tv_sec);
+    delay = 60 + (int) (900.0 * rand() / (RAND_MAX + 60.0));
+  }
+
   // "Garbage Collector started successfully" message
   castor::dlf::Param params[] =
     {castor::dlf::Param("Machine", diskServerName),
-     castor::dlf::Param("Sleep Interval", gcinterval)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 2, params);
+     castor::dlf::Param("Sleep Interval", gcinterval),
+     castor::dlf::Param("Startup Delay", delay)};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 3, params);
 
+  // Sleep a bit
+  if (delay) {
+    sleep(delay);
+  }
+  
   // Main loop
   // XXX need to wake up on UDP with a time out ?
   // XXX To be discussed with Ben that has the code to do that
-
   for (;;) {
     // "Checking for garbage" message
     castor::dlf::Param params[] =
@@ -360,18 +377,22 @@ void castor::gc::GcDaemon::GCparseCommandLine(int argc, char *argv[]) {
 
   static struct Coptions longopts[] =
     {
-      {"foreground",         NO_ARGUMENT,        NULL,      'f'},
-      {NULL,                 0,                  NULL,        0}
+      {"foreground", NO_ARGUMENT, NULL, 'f'},
+      {"nodelay",    NO_ARGUMENT, NULL, 'n'},
+      {NULL,         0,           NULL,  0 }
     };
 
   Coptind = 1;
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, "fs", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "fsn", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
+      break;
+    case 'n':
+      m_nodelay = true;
       break;
     }
   }

@@ -97,6 +97,12 @@ namespace castor {
        * run in foreground or background mode.
        */
       bool m_foreground;
+      
+      /**
+       * Flag indicating whether the server should
+       * use an initial random delay at start up.
+       */
+      bool m_nodelay;
 
     };
 
