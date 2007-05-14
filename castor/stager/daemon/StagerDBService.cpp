@@ -135,8 +135,8 @@ namespace castor{
 	    StagerGetHandler stgGetHandler(stgRequestHelper, stgCnsHelper, message);
 	    stgGetHandler.handle();
 	    // stgGetHandler.jobOriented();
-	    // int toBeScheduled=stagerService.isSubrequestToBeSchedule();
-	    // stgGetHandler.switchScheduling(toBeSchedule)
+	    // int caseToSchedule=stagerService.isSubrequestToBeSchedule();
+	    // stgGetHandler.switchScheduling(caseToSchedule)
 	    // stgRequestHelper.buildRmJobHelperPart
 	    // stgGetHandler.buildRmJobHandlerPart
 	    // rm_enterjob()
@@ -148,8 +148,8 @@ namespace castor{
 	    StagerPrepareToGetHandler stgPrepareToGetHandler(stgRequestHelper, stgCnsHelper, message);
 	    stgPrepareToGetHandler.handle();
 	    // stgRepackHandler.jobOriented();
-	    // int toBeScheduled=stagerService.isSubrequestToBeSchedule();
-	    // stgRepackHandler.switchScheduling(toBeScheduled);
+	    // int caseToSchedule=stagerService.isSubrequestToBeSchedule();
+	    // stgRepackHandler.switchScheduling(caseToSchedule);
 	    // stgRequestHelper.buildRmJobHelperPart
 	    // stgGetHandler.buildRmJobHandlerPart
 	    // rm_enterjob()
@@ -161,8 +161,8 @@ namespace castor{
 	    StagerRepackHandler stgRepackHandler(stgRequestHelper, stgCnsHelper, message);
 	    stgRepackHandler.handle();
 	    // stgRepackHandler.jobOriented();
-	    // int toBeScheduled=stagerService.isSubrequestToBeSchedule();
-	    // stgRepackHandler.switchScheduling(toBeScheduled);
+	    // int caseToSchedule=stagerService.isSubrequestToBeSchedule();
+	    // stgRepackHandler.switchScheduling(caseToSchedule);
 	    // stgRequestHelper.buildRmJobHelperPart
 	    // stgGetHandler.buildRmJobHandlerPart
 	    // rm_enterjob()
@@ -212,8 +212,8 @@ namespace castor{
 	    stgUpdateHandler.handle();
 	    // stgUpdateHandler.jobOriented();
 	    // if(fileExist && ((SubrequestFlags & O_TRUNC)==0))
-	    //	 int toBeScheduled=stagerService.isSubrequestToBeSchedule();
-	    //	 stgUpdateHandler.switchScheduling(toBeScheduled);
+	    //	 int caseToSchedule=stagerService.isSubrequestToBeSchedule();
+	    //	 stgUpdateHandler.switchScheduling(caseToSchedule);
 	    //   stgRequestHelper.buildRmJobHelperPart()
 	    //   stgUpdateHandler.buildRmJobHandlerPart()
 	    // else
