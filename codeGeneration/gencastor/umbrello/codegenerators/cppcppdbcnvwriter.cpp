@@ -225,6 +225,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (!first) *m_stream << ", ";
     *m_stream << mem->name;
     first = false;
@@ -235,6 +236,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       // One to One associations
@@ -249,6 +251,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (!first) *m_stream << ",";
     first = false;
     if (mem->name == "id") {
@@ -265,6 +268,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       if (!first) *m_stream << ",";
@@ -298,6 +302,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (n > 0) *m_stream << ", ";
     *m_stream << mem->name;
     n++;
@@ -306,6 +311,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       if (n > 0) *m_stream << ", ";
@@ -331,6 +337,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (mem->name == "id" ||
         mem->name == "creationTime" ||
         mem->name == "lastAccessTime" ||
@@ -343,6 +350,7 @@ void CppCppDbCnvWriter::writeConstants() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (isEnum(as->remotePart.typeName)) {
       if (n > 0) *m_stream << ", ";
       n++;
@@ -389,6 +397,7 @@ void CppCppDbCnvWriter::writeConstants() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -833,6 +842,7 @@ void CppCppDbCnvWriter::writeConstructors() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -933,6 +943,7 @@ void CppCppDbCnvWriter::writeReset() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -1024,6 +1035,7 @@ void CppCppDbCnvWriter::writeReset() {
        as = assocs.next()) {
     if (as->remotePart.name == "" ||
         isEnum(as->remotePart.typeName)) continue;
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {
       // N to N association
@@ -1117,6 +1129,7 @@ void CppCppDbCnvWriter::writeFillRep() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
+      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
@@ -1178,6 +1191,7 @@ void CppCppDbCnvWriter::writeFillRep() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
+      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
       if (as->type.multiRemote == MULT_ONE) {
         writeBasicMult1FillRep(as);
       } else if  (as->type.multiRemote == MULT_N) {
@@ -1231,6 +1245,7 @@ void CppCppDbCnvWriter::writeFillObj() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
+      if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
       if (as->type.multiRemote == MULT_ONE ||
           as->type.multiRemote == MULT_N) {
         addInclude(QString("\"") + s_topNS + "/Constants.hpp\"");
@@ -1269,11 +1284,18 @@ void CppCppDbCnvWriter::writeFillObj() {
   *m_stream << getIndent() << "}" << endl;
 
   // Now write the dedicated fillObj Methods
+  unsigned int n = 0;
   MemberList members = createMembersList();
-  unsigned int n = members.count();
+  for (Member* mem = members.first();
+       0 != mem;
+       mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
+    n++;
+  }
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
       if (as->type.multiRemote == MULT_ONE) {
@@ -2127,6 +2149,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (mem->name != "id" &&
         mem->name != "nbAccesses" &&
         mem->name != "lastAccessTime") {
@@ -2136,6 +2159,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       n++;
@@ -2177,6 +2201,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (mem->name != "id" &&
         mem->name != "nbAccesses" &&
         mem->name != "creationTime" &&
@@ -2196,6 +2221,7 @@ void CppCppDbCnvWriter::writeCreateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (isEnum(as->remotePart.typeName)) {
       writeSingleSetIntoStatement("insert", as->remotePart, n, true);
       n++;
@@ -2297,6 +2323,7 @@ void CppCppDbCnvWriter::writeUpdateRepContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     if (mem->name == "id") {
       idMem = mem;
       continue;
@@ -2319,6 +2346,7 @@ void CppCppDbCnvWriter::writeUpdateRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (isEnum(as->remotePart.typeName)) {
       writeSingleSetIntoStatement("update", as->remotePart, n, true);
       n++;
@@ -2411,6 +2439,7 @@ void CppCppDbCnvWriter::writeDeleteRepContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (!isEnum(as->remotePart.typeName) &&
         as->type.kind == COMPOS_PARENT) {
       fixTypeName(as->remotePart.typeName,
@@ -2597,6 +2626,7 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     writeSingleGetFromSelect(*mem, n);
     n++;
   }
@@ -2605,6 +2635,7 @@ void CppCppDbCnvWriter::writeCreateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       bool isenum = isEnum(as->remotePart.typeName);
@@ -2684,6 +2715,7 @@ void CppCppDbCnvWriter::writeUpdateObjContent() {
   for (Member* mem = members.first();
        0 != mem;
        mem = members.next()) {
+    if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
     writeSingleGetFromSelect(*mem, n);
     n++;
   }
@@ -2693,6 +2725,7 @@ void CppCppDbCnvWriter::writeUpdateObjContent() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (as->type.multiRemote == MULT_ONE &&
         as->remotePart.name != "") {
       // Enums are a simple case
@@ -2928,6 +2961,7 @@ void CppCppDbCnvWriter::printSQLError(QString name,
     for (Member* mem = members.first();
          0 != mem;
          mem = members.next()) {
+      if (m_ignoreButForDB.find(mem->name) != m_ignoreButForDB.end()) continue;
       *m_stream << endl << getIndent()
                 << "                << \"  "
                 << mem->name << " : \" << obj->"
@@ -2939,6 +2973,7 @@ void CppCppDbCnvWriter::printSQLError(QString name,
          as = assocs.next()) {
       if (as->type.multiRemote == MULT_ONE &&
           as->remotePart.name != "") {
+        if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
         *m_stream << endl << getIndent()
                   << "                << \"  "
                   << as->remotePart.name << " : \" << obj->"

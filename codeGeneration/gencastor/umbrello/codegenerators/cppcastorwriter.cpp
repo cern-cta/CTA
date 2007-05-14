@@ -42,6 +42,10 @@ CppCastorWriter::CppCastorWriter(UMLDoc* parent, const char *name) :
   // Types to ignore
   m_ignoreClasses.insert(QString("IPersistent"));
   m_ignoreClasses.insert(QString("IStreamable"));
+  // Associations and Members to ignore, except for dB stuff
+  m_ignoreButForDB.insert(QString("lastFileSystemUsed"));
+  m_ignoreButForDB.insert(QString("lastButOneFileSystemUsed"));
+  m_ignoreButForDB.insert(QString("lastFileSystemChange"));
 }
 
 //=============================================================================

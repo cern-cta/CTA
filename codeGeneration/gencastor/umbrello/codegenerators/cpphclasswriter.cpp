@@ -363,19 +363,21 @@ void CppHClassWriter::writeAttributeDecls(Uml::Visibility visibility,
     bool isFirstAttrib = true;
     QString documentation;
     for(UMLAttribute *at=list->first(); at; at=list->next()) {
-      documentation = at->getDoc();
-      isFirstAttrib = false;
-      QString varName = "m_" + at->getName();
-      QString staticValue = at->getStatic() ? "static " : "";
-      QString typeName = fixTypeName(at->getTypeName(),
-                                     getNamespace(at->getTypeName()),
-                                     m_classInfo->packageName );
-      if(!documentation.isEmpty())
-        writeComment(documentation, getIndent(), stream);
-      stream << getIndent() << staticValue << typeName
-             << " " << varName;
-      if (isLastTypeArray()) stream << arrayPart();
-      stream << ";" << endl << endl;
+      if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+        documentation = at->getDoc();
+        isFirstAttrib = false;
+        QString varName = "m_" + at->getName();
+        QString staticValue = at->getStatic() ? "static " : "";
+        QString typeName = fixTypeName(at->getTypeName(),
+                                       getNamespace(at->getTypeName()),
+                                       m_classInfo->packageName );
+        if(!documentation.isEmpty())
+          writeComment(documentation, getIndent(), stream);
+        stream << getIndent() << staticValue << typeName
+               << " " << varName;
+        if (isLastTypeArray()) stream << arrayPart();
+        stream << ";" << endl << endl;
+      }
     }
   }
 }
@@ -392,6 +394,7 @@ void CppHClassWriter::writeAssociationDecls(QPtrList<UMLAssociation> association
     for(UMLAssociation *a = associations.first();
         0 != a;
         a = associations.next()) {
+      if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) != m_ignoreButForDB.end()) continue;
       // it may seem counter intuitive, but you want to insert the role of the
       // *other* class into *this* class.
       if (a->getUMLRole(Uml::A)->getObject()->getID() == id && a->getRoleName(Uml::B) != "")
@@ -490,30 +493,34 @@ void CppHClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associat
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::B).isEmpty()) {
           QString fieldClassName = a->getObject(Uml::B)->getName();
-          if (writePointerVar && !isEnum(fieldClassName))
-            fieldClassName.append("*");
-          writeAssociationRoleMethod(fieldClassName,
-                                     getNamespace(fieldClassName),
-                                     a->getRoleName(Uml::B),
-                                     parseMulti(a->getMulti(Uml::B)),
-                                     a->getRoleDoc(Uml::B),
-                                     a->getChangeability(Uml::B),
-                                     stream);
+          if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+            if (writePointerVar && !isEnum(fieldClassName))
+              fieldClassName.append("*");
+            writeAssociationRoleMethod(fieldClassName,
+                                       getNamespace(fieldClassName),
+                                       a->getRoleName(Uml::B),
+                                       parseMulti(a->getMulti(Uml::B)),
+                                       a->getRoleDoc(Uml::B),
+                                       a->getChangeability(Uml::B),
+                                       stream);
+          }
         }
       }
       if (a->getUMLRole(Uml::B)->getObject()->getID() == myID && a->getVisibility(Uml::B) == permitVisib) {
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::A).isEmpty()) {
           QString fieldClassName = a->getObject(Uml::A)->getName();
-          if (writePointerVar && !isEnum(fieldClassName))
-            fieldClassName.append("*");
-          writeAssociationRoleMethod(fieldClassName,
-                                     getNamespace(fieldClassName),
-                                     a->getRoleName(Uml::A),
-                                     parseMulti(a->getMulti(Uml::A)),
-                                     a->getRoleDoc(Uml::A),
-                                     a->getChangeability(Uml::A),
-                                     stream);
+          if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+            if (writePointerVar && !isEnum(fieldClassName))
+              fieldClassName.append("*");
+            writeAssociationRoleMethod(fieldClassName,
+                                       getNamespace(fieldClassName),
+                                       a->getRoleName(Uml::A),
+                                       parseMulti(a->getMulti(Uml::A)),
+                                       a->getRoleDoc(Uml::A),
+                                       a->getChangeability(Uml::A),
+                                       stream);
+          }
         }
       }
     }
@@ -566,14 +573,16 @@ void CppHClassWriter::writeAttributeMethods(QPtrList <UMLAttribute> *attribs,
     QString varName = getAttributeVariableName(at);
     QString methodBaseName = at->getName();
     methodBaseName.stripWhiteSpace();
-    writeSingleAttributeAccessorMethods(at->getTypeName(),
-                                        getNamespace(at->getTypeName()),
-                                        varName,
-                                        methodBaseName,
-                                        at->getDoc(),
-                                        Uml::chg_Changeable,
-                                        at->getStatic(),
-                                        stream);
+    if (m_ignoreButForDB.find(methodBaseName) == m_ignoreButForDB.end()) {
+      writeSingleAttributeAccessorMethods(at->getTypeName(),
+                                          getNamespace(at->getTypeName()),
+                                          varName,
+                                          methodBaseName,
+                                          at->getDoc(),
+                                          Uml::chg_Changeable,
+                                          at->getStatic(),
+                                          stream);
+    }
   }
 }
 

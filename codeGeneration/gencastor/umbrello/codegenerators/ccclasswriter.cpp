@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2006/04/06 07:08:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ccclasswriter.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/05/14 14:38:09 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -210,11 +210,13 @@ void CCClassWriter::writeAttributeMethods(QPtrList <UMLAttribute>& attribs,
       at=attribs.next()) {
     QString methodBaseName = at->getName();
     methodBaseName.stripWhiteSpace();
-    writeSingleAttributeAccessorMethods(at->getTypeName(),
-                                        methodBaseName,
-                                        Uml::chg_Changeable,
-                                        at->getStatic(),
-                                        stream);
+    if (m_ignoreButForDB.find(methodBaseName) == m_ignoreButForDB.end()) {
+      writeSingleAttributeAccessorMethods(at->getTypeName(),
+                                          methodBaseName,
+                                          Uml::chg_Changeable,
+                                          at->getStatic(),
+                                          stream);
+    }
   }
 }
 
@@ -231,27 +233,31 @@ void CCClassWriter::writeAssociationMethods (QPtrList<UMLAssociation> associatio
       if (a->getUMLRole(Uml::A)->getObject()->getID() == myID && a->getVisibility(Uml::B) == Uml::Visibility::Public) {
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::B).isEmpty()) {
-          QString className = a->getObject(Uml::B)->getName();
-          if (!isEnum(className)) className.append("*");
-          writeAssociationRoleMethod
-            (className,
-             a->getRoleName(Uml::B),
-             parseMulti(a->getMulti(Uml::B)),
-             a->getChangeability(Uml::B),
-             stream);
+          if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+            QString className = a->getObject(Uml::B)->getName();
+            if (!isEnum(className)) className.append("*");
+            writeAssociationRoleMethod
+              (className,
+               a->getRoleName(Uml::B),
+               parseMulti(a->getMulti(Uml::B)),
+               a->getChangeability(Uml::B),
+               stream);
+          }
         }
       }
       if (a->getUMLRole(Uml::B)->getObject()->getID() == myID && a->getVisibility(Uml::A) == Uml::Visibility::Public) {
         // only write out IF there is a rolename given
         if(!a->getRoleName(Uml::A).isEmpty()) {
-          QString className = a->getObject(Uml::A)->getName();
-          if (!isEnum(className)) className.append("*");
-          writeAssociationRoleMethod
-            (className,
-             a->getRoleName(Uml::A),
-             parseMulti(a->getMulti(Uml::A)),
-             a->getChangeability(Uml::A),
-             stream);
+          if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+            QString className = a->getObject(Uml::A)->getName();
+            if (!isEnum(className)) className.append("*");
+            writeAssociationRoleMethod
+              (className,
+               a->getRoleName(Uml::A),
+               parseMulti(a->getMulti(Uml::A)),
+               a->getChangeability(Uml::A),
+               stream);
+          }
         }
       }
     }

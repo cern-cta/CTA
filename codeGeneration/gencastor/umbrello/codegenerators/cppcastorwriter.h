@@ -61,6 +61,9 @@ class CppCastorWriter : public SimpleCodeGenerator {
    */
   UMLDatatype* getDatatype(QString type);
 
+  /** The list of associations and members to ignore, except for dB stuff */
+  std::set<QString> m_ignoreButForDB;
+
  protected:
   /**
    * Map of castor types with the associated include files

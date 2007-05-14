@@ -75,9 +75,11 @@ void CppHDbCnvWriter::writeFillRep() {
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
-      if (as->type.multiRemote == MULT_ONE ||
-          as->type.multiRemote == MULT_N) {
-        writeBasicFillRep(as);
+      if (m_ignoreButForDB.find(as->remotePart.name) == m_ignoreButForDB.end()) {
+        if (as->type.multiRemote == MULT_ONE ||
+            as->type.multiRemote == MULT_N) {
+          writeBasicFillRep(as);
+        }
       }
     }
   }
@@ -116,16 +118,18 @@ void CppHDbCnvWriter::writeFillObj() {
             << ");"
             << endl << endl;
 
-  // Now write the dedicated fillRep Methods
+  // Now write the dedicated fillObj Methods
   AssocList assocs = createAssocsList();
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
     if (as->remotePart.name != "" &&
         !isEnum(as->remotePart.typeName)) {
-      if (as->type.multiRemote == MULT_ONE ||
-          as->type.multiRemote == MULT_N) {
-        writeBasicFillObj(as);
+      if (m_ignoreButForDB.find(as->remotePart.name) == m_ignoreButForDB.end()) {
+        if (as->type.multiRemote == MULT_ONE ||
+            as->type.multiRemote == MULT_N) {
+          writeBasicFillObj(as);
+        }
       }
     }
   }
@@ -316,6 +320,7 @@ void CppHDbCnvWriter::writeMembers() {
   for (Assoc* as = assocs.first();
        0 != as;
        as = assocs.next()) {
+    if (m_ignoreButForDB.find(as->remotePart.name) != m_ignoreButForDB.end()) continue;
     if (isEnum(as->remotePart.typeName)) continue;
     if (as->type.multiRemote == MULT_N &&
         as->type.multiLocal == MULT_N) {

@@ -109,20 +109,26 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
   for(UMLAttribute *at = m_classInfo->atpub.first();
       0 != at;
       at = m_classInfo->atpub.next()) {
-    writeInitInConstructor(QString("m_") + at->getName(),
-                           at->getTypeName(), first);
+    if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+      writeInitInConstructor(QString("m_") + at->getName(),
+                             at->getTypeName(), first);
+    }
   }
   for(UMLAttribute *at = m_classInfo->atprot.first();
       0 != at;
       at = m_classInfo->atprot.next()) {
-    writeInitInConstructor(QString("m_") + at->getName(),
-                           at->getTypeName(), first);
+    if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+      writeInitInConstructor(QString("m_") + at->getName(),
+                             at->getTypeName(), first);
+    }
   }
   for(UMLAttribute *at = m_classInfo->atpriv.first();
       0 != at;
       at = m_classInfo->atpriv.next()) {
-    writeInitInConstructor(QString("m_") + at->getName(),
-                           at->getTypeName(), first);
+    if (m_ignoreButForDB.find(at->getName()) == m_ignoreButForDB.end()) {
+      writeInitInConstructor(QString("m_") + at->getName(),
+                             at->getTypeName(), first);
+    }
   }
   // Put default values for associations. Always 0 since there are pointers
   for(UMLAssociation *a = m_classInfo->plainAssociations.first();
@@ -147,8 +153,8 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
       0 != at;
       at = m_classInfo->getAttList()->next()) {
     if (!at->getStatic()) {
-      QString type = fixTypeName (at->getTypeName(),"","");
       if (isLastTypeArray()) {
+        QString type = fixTypeName (at->getTypeName(),"","");
         QString length = arrayLength();
         stream << getIndent() << "memset("
                << "m_" << at->getName()
@@ -244,21 +250,25 @@ void CppCppClassWriter::writeAssocInitInConstructor (UMLAssociation *a,
       m_classInfo->allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
     if (a->getRoleName(Uml::B) != "") {
       if (parseMulti(a->getMulti(Uml::B)) == MULT_ONE) {
-        QString className = a->getObject(Uml::B)->getName();
-        if (!isEnum(className)) className.append("*");
-        writeInitInConstructor (QString("m_") + a->getRoleName(Uml::B),
-                                className,
-                                first);
+        if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+          QString className = a->getObject(Uml::B)->getName();
+          if (!isEnum(className)) className.append("*");
+          writeInitInConstructor (QString("m_") + a->getRoleName(Uml::B),
+                                  className,
+                                  first);
+        }
       }
     }
   } else {
     if (a->getRoleName(Uml::A) != "") {
       if (parseMulti(a->getMulti(Uml::A)) == MULT_ONE) {
-        QString className = a->getObject(Uml::A)->getName();
-        if (!isEnum(className)) className.append("*");
-        writeInitInConstructor (QString("m_") + a->getRoleName(Uml::A),
-                                className,
-                                first);
+        if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+          QString className = a->getObject(Uml::A)->getName();
+          if (!isEnum(className)) className.append("*");
+          writeInitInConstructor (QString("m_") + a->getRoleName(Uml::A),
+                                  className,
+                                  first);
+        }
       }
     }
   }
@@ -353,27 +363,31 @@ void CppCppClassWriter::writeAssocDeleteInDestructor(UMLAssociation *a) {
   if (m_classInfo->id() == a->getUMLRole(Uml::A)->getObject()->getID() ||
       m_classInfo->allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
     if (a->getRoleName(Uml::B) != "") {
-      UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
-      if (0 == cl || !isEnum(cl)) {
-        fixTypeName(a->getObject(Uml::B)->getName(),
-                    getNamespace(a->getObject(Uml::B)->getName()),
-                    m_classInfo->packageName);
-        writeDeleteInDestructor
-          (a->getRoleName(Uml::B), a->getRoleName(Uml::A),
-           multB, multA,
-           a->getAssocType() == Uml::at_Composition);
+      if (m_ignoreButForDB.find(a->getRoleName(Uml::B)) == m_ignoreButForDB.end()) {
+        UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
+        if (0 == cl || !isEnum(cl)) {
+          fixTypeName(a->getObject(Uml::B)->getName(),
+                      getNamespace(a->getObject(Uml::B)->getName()),
+                      m_classInfo->packageName);
+          writeDeleteInDestructor
+            (a->getRoleName(Uml::B), a->getRoleName(Uml::A),
+             multB, multA,
+             a->getAssocType() == Uml::at_Composition);
+        }
       }
     }
   } else {
     if (a->getRoleName(Uml::A) != "") {
-      UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
-      if (0 == cl || !isEnum(cl)) {
-        fixTypeName(a->getObject(Uml::A)->getName(),
-                    getNamespace(a->getObject(Uml::A)->getName()),
-                    m_classInfo->packageName);
-        writeDeleteInDestructor
-          (a->getRoleName(Uml::A), a->getRoleName(Uml::B),
-           multA, multB, false);
+      if (m_ignoreButForDB.find(a->getRoleName(Uml::A)) == m_ignoreButForDB.end()) {
+        UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
+        if (0 == cl || !isEnum(cl)) {
+          fixTypeName(a->getObject(Uml::A)->getName(),
+                      getNamespace(a->getObject(Uml::A)->getName()),
+                      m_classInfo->packageName);
+          writeDeleteInDestructor
+            (a->getRoleName(Uml::A), a->getRoleName(Uml::B),
+             multA, multB, false);
+        }
       }
     }
   }
@@ -490,16 +504,18 @@ void CppCppClassWriter::writeFullPrint(CppBaseWriter* obj,
   for(UMLAttribute *at = members->first();
       0 != at;
       at = members->next()) {
-    if (at->getName() == "content") {
-      // This probably means we deal with a castor type
-      // Then try to get the dedicated
-      if (obj->m_castorPrintImplementations.find(at->getTypeName()) !=
-          obj->m_castorPrintImplementations.end()) {
-        (*(obj->m_castorPrintImplementations[at->getTypeName()]))(obj, stream);
-        continue;
+    if (obj->m_ignoreButForDB.find(at->getName()) == obj->m_ignoreButForDB.end()) {
+      if (at->getName() == "content") {
+        // This probably means we deal with a castor type
+        // Then try to get the dedicated
+        if (obj->m_castorPrintImplementations.find(at->getTypeName()) !=
+            obj->m_castorPrintImplementations.end()) {
+          (*(obj->m_castorPrintImplementations[at->getTypeName()]))(obj, stream);
+          continue;
+        }
       }
+      writeSimplePrint(obj->getIndent(), at->getName(), stream);
     }
-    writeSimplePrint(obj->getIndent(), at->getName(), stream);
   }
   // Mark object as already printed
   stream << obj->getIndent()
@@ -531,72 +547,76 @@ void CppCppClassWriter::writeAssocPrint(UMLAssociation* a,
   if (obj->classInfo()->id() == a->getUMLRole(Uml::A)->getObject()->getID() ||
       obj->classInfo()->allSuperclassIds.contains(a->getUMLRole(Uml::A)->getObject()->getID())) {
     if (a->getRoleName(Uml::B) != "") {
-      Multiplicity multiB = obj->parseMulti(a->getMulti(Uml::B));
-      switch (multiB) {
-      case MULT_ONE:
-        {
-          UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
-          if (cl->isInterface() || (!cl->isInterface() && ! isEnum(cl))) {
-            writeAssoc1Print (a->getRoleName(Uml::B),
-                              a->getObject(Uml::B)->getName(),
-                              obj,
-                              stream);
-          } else if (!cl->isInterface() && isEnum(cl)) {
-	    QString rawType = a->getObject(Uml::B)->getName();
-	    QString type = obj->fixTypeName
-	      (rawType,
-	       obj->getNamespace(rawType),
-	       obj->classInfo()->packageName);
-            writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::B),
-                            type, stream);
-          } else {
-            writeSimplePrint (obj->getIndent(), a->getRoleName(Uml::B), stream);
+      if (obj->m_ignoreButForDB.find(a->getRoleName(Uml::B)) == obj->m_ignoreButForDB.end()) {
+        Multiplicity multiB = obj->parseMulti(a->getMulti(Uml::B));
+        switch (multiB) {
+        case MULT_ONE:
+          {
+            UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
+            if (cl->isInterface() || (!cl->isInterface() && ! isEnum(cl))) {
+              writeAssoc1Print (a->getRoleName(Uml::B),
+                                a->getObject(Uml::B)->getName(),
+                                obj,
+                                stream);
+            } else if (!cl->isInterface() && isEnum(cl)) {
+              QString rawType = a->getObject(Uml::B)->getName();
+              QString type = obj->fixTypeName
+                (rawType,
+                 obj->getNamespace(rawType),
+                 obj->classInfo()->packageName);
+              writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::B),
+                              type, stream);
+            } else {
+              writeSimplePrint (obj->getIndent(), a->getRoleName(Uml::B), stream);
+            }
           }
+          break;
+        case MULT_N:
+          writeAssocNPrint (a->getRoleName(Uml::B),
+                            a->getObject(Uml::B)->getName() + "*",
+                            obj,
+                            stream);
+          break;
+        default:
+          break;
         }
-        break;
-      case MULT_N:
-        writeAssocNPrint (a->getRoleName(Uml::B),
-                          a->getObject(Uml::B)->getName() + "*",
-                          obj,
-                          stream);
-        break;
-      default:
-        break;
       }
     }
   } else {
     if (a->getRoleName(Uml::A) != "") {
-      Multiplicity multiA = obj->parseMulti(a->getMulti(Uml::A));
-      switch (multiA) {
-      case MULT_ONE:
-        {
-          UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
-          if (cl->isInterface() || (!cl->isInterface() && ! isEnum(cl))) {
-            writeAssoc1Print (a->getRoleName(Uml::A),
-                              a->getObject(Uml::A)->getName(),
-                              obj,
-                              stream);
-          } else if (!cl->isInterface() && isEnum(cl)) {
-	    QString rawType = a->getObject(Uml::A)->getName();
-	    QString type = obj->fixTypeName
-	      (rawType,
-	       obj->getNamespace(rawType),
-	       obj->classInfo()->packageName);
-            writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::A),
-                            type, stream);
-          } else {
-            writeSimplePrint (obj->getIndent(), a->getRoleName(Uml::A), stream);
+      if (obj->m_ignoreButForDB.find(a->getRoleName(Uml::A)) == obj->m_ignoreButForDB.end()) {
+        Multiplicity multiA = obj->parseMulti(a->getMulti(Uml::A));
+        switch (multiA) {
+        case MULT_ONE:
+          {
+            UMLClassifier* cl = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
+            if (cl->isInterface() || (!cl->isInterface() && ! isEnum(cl))) {
+              writeAssoc1Print (a->getRoleName(Uml::A),
+                                a->getObject(Uml::A)->getName(),
+                                obj,
+                                stream);
+            } else if (!cl->isInterface() && isEnum(cl)) {
+              QString rawType = a->getObject(Uml::A)->getName();
+              QString type = obj->fixTypeName
+                (rawType,
+                 obj->getNamespace(rawType),
+                 obj->classInfo()->packageName);
+              writeEnumPrint (obj->getIndent(), a->getRoleName(Uml::A),
+                              type, stream);
+            } else {
+              writeSimplePrint (obj->getIndent(), a->getRoleName(Uml::A), stream);
+            }
           }
+          break;
+        case MULT_N:
+          writeAssocNPrint (a->getRoleName(Uml::A),
+                            a->getObject(Uml::A)->getName() + "*",
+                            obj,
+                            stream);
+          break;
+        default:
+          break;
         }
-        break;
-      case MULT_N:
-        writeAssocNPrint (a->getRoleName(Uml::A),
-                          a->getObject(Uml::A)->getName() + "*",
-                          obj,
-                          stream);
-        break;
-      default:
-        break;
       }
     }
   }
