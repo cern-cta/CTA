@@ -22,6 +22,7 @@
 #include "Cgrp.h"
 #include "castor/IClientFactory.h"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 
 #include <iostream>
 #include <string>
@@ -70,8 +71,10 @@ namespace castor{
 
 
 	  this.jobOriented();
-
-	  this->diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+	  
+	  /* use the stagerService to recreate castor file */
+	  castor::stager::DiskCopyForRecall* diskCopyForRecall;
+	  diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 
 	  if(diskCopyForRecall == NULL){
 	    // we throw exception!!!
