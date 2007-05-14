@@ -31,7 +31,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

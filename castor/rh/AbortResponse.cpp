@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/AbortResponse.hpp"
 #include "castor/rh/Response.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

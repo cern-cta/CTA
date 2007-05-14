@@ -33,7 +33,6 @@
 #include "castor/rh/Response.hpp"
 #include "castor/rh/StartResponse.hpp"
 #include "castor/stager/DiskCopy.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

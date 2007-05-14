@@ -33,7 +33,6 @@
 #include "castor/monitoring/FileSystemStateAck.hpp"
 #include "castor/monitoring/MonitorMessageAck.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

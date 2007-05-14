@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/monitoring/DiskServerMetricsReport.hpp"
 #include "castor/monitoring/FileSystemMetricsReport.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

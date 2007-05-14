@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 
