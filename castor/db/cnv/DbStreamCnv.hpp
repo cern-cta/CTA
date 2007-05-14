@@ -187,14 +187,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type FileSystem refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepFileSystem(castor::stager::Stream* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type TapePool refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -228,15 +220,6 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTape(castor::stager::Stream* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type FileSystem refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjFileSystem(castor::stager::Stream* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -332,18 +315,6 @@ namespace castor {
 
         /// SQL update statement object for member tape
         castor::db::IDbStatement *m_updateTapeStatement;
-
-        /// SQL checkExist statement for member lastFileSystemUsed
-        static const std::string s_checkFileSystemExistStatementString;
-
-        /// SQL checkExist statement object for member lastFileSystemUsed
-        castor::db::IDbStatement *m_checkFileSystemExistStatement;
-
-        /// SQL update statement for member lastFileSystemUsed
-        static const std::string s_updateFileSystemStatementString;
-
-        /// SQL update statement object for member lastFileSystemUsed
-        castor::db::IDbStatement *m_updateFileSystemStatement;
 
         /// SQL checkExist statement for member tapePool
         static const std::string s_checkTapePoolExistStatementString;

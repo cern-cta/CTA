@@ -39,7 +39,6 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/FileSystem.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
@@ -59,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbStreamCnv>* s_factoryDbStreamCnv =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbStreamCnv::s_insertStatementString =
-"INSERT INTO Stream (initialSizeToTransfer, lastFileSystemChange, id, tape, lastFileSystemUsed, tapePool, status) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5,:6) RETURNING id INTO :7";
+"INSERT INTO Stream (initialSizeToTransfer, id, tape, tapePool, status) VALUES (:1,ids_seq.nextval,:2,:3,:4) RETURNING id INTO :5";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbStreamCnv::s_deleteStatementString =
@@ -67,11 +66,11 @@ const std::string castor::db::cnv::DbStreamCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbStreamCnv::s_selectStatementString =
-"SELECT initialSizeToTransfer, lastFileSystemChange, id, tape, lastFileSystemUsed, tapePool, status FROM Stream WHERE id = :1";
+"SELECT initialSizeToTransfer, id, tape, tapePool, status FROM Stream WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbStreamCnv::s_updateStatementString =
-"UPDATE Stream SET initialSizeToTransfer = :1, lastFileSystemChange = :2, status = :3 WHERE id = :4";
+"UPDATE Stream SET initialSizeToTransfer = :1, status = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbStreamCnv::s_storeTypeStatementString =
@@ -115,14 +114,6 @@ const std::string castor::db::cnv::DbStreamCnv::s_checkTapeExistStatementString 
 const std::string castor::db::cnv::DbStreamCnv::s_updateTapeStatementString =
 "UPDATE Stream SET tape = :1 WHERE id = :2";
 
-/// SQL existence statement for member lastFileSystemUsed
-const std::string castor::db::cnv::DbStreamCnv::s_checkFileSystemExistStatementString =
-"SELECT id FROM FileSystem WHERE id = :1";
-
-/// SQL update statement for member lastFileSystemUsed
-const std::string castor::db::cnv::DbStreamCnv::s_updateFileSystemStatementString =
-"UPDATE Stream SET lastFileSystemUsed = :1 WHERE id = :2";
-
 /// SQL existence statement for member tapePool
 const std::string castor::db::cnv::DbStreamCnv::s_checkTapePoolExistStatementString =
 "SELECT id FROM TapePool WHERE id = :1";
@@ -150,8 +141,6 @@ castor::db::cnv::DbStreamCnv::DbStreamCnv(castor::ICnvSvc* cnvSvc) :
   m_remoteUpdateTapeStatement(0),
   m_checkTapeExistStatement(0),
   m_updateTapeStatement(0),
-  m_checkFileSystemExistStatement(0),
-  m_updateFileSystemStatement(0),
   m_checkTapePoolExistStatement(0),
   m_updateTapePoolStatement(0) {}
 
@@ -183,8 +172,6 @@ void castor::db::cnv::DbStreamCnv::reset() throw() {
     if(m_remoteUpdateTapeStatement) delete m_remoteUpdateTapeStatement;
     if(m_checkTapeExistStatement) delete m_checkTapeExistStatement;
     if(m_updateTapeStatement) delete m_updateTapeStatement;
-    if(m_checkFileSystemExistStatement) delete m_checkFileSystemExistStatement;
-    if(m_updateFileSystemStatement) delete m_updateFileSystemStatement;
     if(m_checkTapePoolExistStatement) delete m_checkTapePoolExistStatement;
     if(m_updateTapePoolStatement) delete m_updateTapePoolStatement;
   } catch (castor::exception::Exception ignored) {};
@@ -203,8 +190,6 @@ void castor::db::cnv::DbStreamCnv::reset() throw() {
   m_remoteUpdateTapeStatement = 0;
   m_checkTapeExistStatement = 0;
   m_updateTapeStatement = 0;
-  m_checkFileSystemExistStatement = 0;
-  m_updateFileSystemStatement = 0;
   m_checkTapePoolExistStatement = 0;
   m_updateTapePoolStatement = 0;
 }
@@ -240,9 +225,6 @@ void castor::db::cnv::DbStreamCnv::fillRep(castor::IAddress* address,
       break;
     case castor::OBJ_Tape :
       fillRepTape(obj);
-      break;
-    case castor::OBJ_FileSystem :
-      fillRepFileSystem(obj);
       break;
     case castor::OBJ_TapePool :
       fillRepTapePool(obj);
@@ -377,38 +359,6 @@ void castor::db::cnv::DbStreamCnv::fillRepTape(castor::stager::Stream* obj)
 }
 
 //------------------------------------------------------------------------------
-// fillRepFileSystem
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStreamCnv::fillRepFileSystem(castor::stager::Stream* obj)
-  throw (castor::exception::Exception) {
-  if (0 != obj->lastFileSystemUsed()) {
-    // Check checkFileSystemExist statement
-    if (0 == m_checkFileSystemExistStatement) {
-      m_checkFileSystemExistStatement = createStatement(s_checkFileSystemExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkFileSystemExistStatement->setUInt64(1, obj->lastFileSystemUsed()->id());
-    castor::db::IDbResultSet *rset = m_checkFileSystemExistStatement->executeQuery();
-    if (!rset->next()) {
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      cnvSvc()->createRep(&ad, obj->lastFileSystemUsed(), false);
-    }
-    // Close resultset
-    delete rset;
-  }
-  // Check update statement
-  if (0 == m_updateFileSystemStatement) {
-    m_updateFileSystemStatement = createStatement(s_updateFileSystemStatementString);
-  }
-  // Update local object
-  m_updateFileSystemStatement->setUInt64(1, 0 == obj->lastFileSystemUsed() ? 0 : obj->lastFileSystemUsed()->id());
-  m_updateFileSystemStatement->setUInt64(2, obj->id());
-  m_updateFileSystemStatement->execute();
-}
-
-//------------------------------------------------------------------------------
 // fillRepTapePool
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStreamCnv::fillRepTapePool(castor::stager::Stream* obj)
@@ -456,9 +406,6 @@ void castor::db::cnv::DbStreamCnv::fillObj(castor::IAddress* address,
     break;
   case castor::OBJ_Tape :
     fillObjTape(obj);
-    break;
-  case castor::OBJ_FileSystem :
-    fillObjFileSystem(obj);
     break;
   case castor::OBJ_TapePool :
     fillObjTapePool(obj);
@@ -541,7 +488,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTape(castor::stager::Stream* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = rset->getInt64(4);
+  u_signed64 tapeId = rset->getInt64(3);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -565,44 +512,6 @@ void castor::db::cnv::DbStreamCnv::fillObjTape(castor::stager::Stream* obj)
 }
 
 //------------------------------------------------------------------------------
-// fillObjFileSystem
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbStreamCnv::fillObjFileSystem(castor::stager::Stream* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
-  if (!rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 lastFileSystemUsedId = rset->getInt64(5);
-  // Close ResultSet
-  delete rset;
-  // Check whether something should be deleted
-  if (0 != obj->lastFileSystemUsed() &&
-      (0 == lastFileSystemUsedId ||
-       obj->lastFileSystemUsed()->id() != lastFileSystemUsedId)) {
-    obj->setLastFileSystemUsed(0);
-  }
-  // Update object or create new one
-  if (0 != lastFileSystemUsedId) {
-    if (0 == obj->lastFileSystemUsed()) {
-      obj->setLastFileSystemUsed
-        (dynamic_cast<castor::stager::FileSystem*>
-         (cnvSvc()->getObjFromId(lastFileSystemUsedId)));
-    } else {
-      cnvSvc()->updateObj(obj->lastFileSystemUsed());
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
 // fillObjTapePool
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
@@ -619,7 +528,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapePoolId = rset->getInt64(6);
+  u_signed64 tapePoolId = rset->getInt64(4);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -659,20 +568,18 @@ void castor::db::cnv::DbStreamCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(7, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setUInt64(1, obj->initialSizeToTransfer());
-    m_insertStatement->setUInt64(2, obj->lastFileSystemChange());
-    m_insertStatement->setUInt64(3, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setUInt64(4, (type == OBJ_FileSystem && obj->lastFileSystemUsed() != 0) ? obj->lastFileSystemUsed()->id() : 0);
-    m_insertStatement->setUInt64(5, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
-    m_insertStatement->setInt(6, (int)obj->status());
+    m_insertStatement->setUInt64(2, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(3, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
+    m_insertStatement->setInt(4, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(7));
+    obj->setId(m_insertStatement->getUInt64(5));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -690,10 +597,8 @@ void castor::db::cnv::DbStreamCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  initialSizeToTransfer : " << obj->initialSizeToTransfer() << std::endl
-                    << "  lastFileSystemChange : " << obj->lastFileSystemChange() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
-                    << "  lastFileSystemUsed : " << obj->lastFileSystemUsed() << std::endl
                     << "  tapePool : " << obj->tapePool() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
@@ -718,9 +623,8 @@ void castor::db::cnv::DbStreamCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setUInt64(1, obj->initialSizeToTransfer());
-    m_updateStatement->setUInt64(2, obj->lastFileSystemChange());
-    m_updateStatement->setInt(3, (int)obj->status());
-    m_updateStatement->setUInt64(4, obj->id());
+    m_updateStatement->setInt(2, (int)obj->status());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -804,9 +708,8 @@ castor::IObject* castor::db::cnv::DbStreamCnv::createObj(castor::IAddress* addre
     castor::stager::Stream* object = new castor::stager::Stream();
     // Now retrieve and set members
     object->setInitialSizeToTransfer(rset->getUInt64(1));
-    object->setLastFileSystemChange(rset->getUInt64(2));
-    object->setId(rset->getUInt64(3));
-    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(7));
+    object->setId(rset->getUInt64(2));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -845,9 +748,8 @@ void castor::db::cnv::DbStreamCnv::updateObj(castor::IObject* obj)
     castor::stager::Stream* object = 
       dynamic_cast<castor::stager::Stream*>(obj);
     object->setInitialSizeToTransfer(rset->getUInt64(1));
-    object->setLastFileSystemChange(rset->getUInt64(2));
-    object->setId(rset->getUInt64(3));
-    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(7));
+    object->setId(rset->getUInt64(2));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
