@@ -119,7 +119,7 @@ CREATE TABLE CastorFile (fileId INT8, nsHost VARCHAR(2048), fileSize INT8, creat
 CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, id INT8 CONSTRAINT I_DiskCopy_Id PRIMARY KEY, fileSystem INTEGER, castorFile INTEGER, status INTEGER);
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
+CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, nbMigratorStreams INT4, nbRecallerStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
 
 /* SQL statements for type SvcClass */
 CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), gcPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), id INT8 CONSTRAINT I_SvcClass_Id PRIMARY KEY);
@@ -134,7 +134,7 @@ CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
-CREATE TABLE Stream (initialSizeToTransfer INT8, id INT8 CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, tapePool INTEGER, status INTEGER);
+CREATE TABLE Stream (initialSizeToTransfer INT8, lastFileSystemChange INT8, id INT8 CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER);
 CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
@@ -143,7 +143,7 @@ CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
 CREATE TABLE FileClass (name VARCHAR(2048), minFileSize INT8, maxFileSize INT8, nbCopies INT4, id INT8 CONSTRAINT I_FileClass_Id PRIMARY KEY);
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR(2048), load INT4, id INT8 CONSTRAINT I_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER);
+CREATE TABLE DiskServer (name VARCHAR(2048), readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, nbMigratorStreams INT4, nbRecallerStreams INT4, id INT8 CONSTRAINT I_DiskServer_Id PRIMARY KEY, status INTEGER, adminStatus INTEGER);
 
 /* SQL statements for type SetFileGCWeight */
 CREATE TABLE SetFileGCWeight (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, weight float, id INT8 CONSTRAINT I_SetFileGCWeight_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
