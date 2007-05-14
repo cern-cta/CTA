@@ -35,7 +35,6 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/SubRequest.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

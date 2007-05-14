@@ -31,7 +31,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskCopyInfo.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

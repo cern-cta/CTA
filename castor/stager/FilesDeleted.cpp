@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/GCFileList.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

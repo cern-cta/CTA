@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/GetUpdateStartRequest.hpp"
 #include "castor/stager/StartRequest.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 

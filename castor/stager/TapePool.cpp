@@ -33,7 +33,6 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

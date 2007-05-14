@@ -35,7 +35,6 @@
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

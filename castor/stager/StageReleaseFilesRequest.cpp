@@ -32,7 +32,6 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/StageReleaseFilesRequest.hpp"
-#include "osdep.h"
 #include <iostream>
 #include <string>
 
