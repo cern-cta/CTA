@@ -94,8 +94,8 @@ namespace castor{
 	  /* so copy and paste for the exceptions !!!*/
 	  this->stgReplyHelper = new StagerReplyHelper*;
 
-	  this->stgReplyHelper->friendSetAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
-	  this->stgReplyHelper->friendEndReplyToClient(stgRequestHelper);
+	  this->stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
+	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
 	 
 	  
 
