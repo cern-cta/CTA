@@ -251,7 +251,7 @@ namespace castor{
 	}
 	
 	if((useHostlist)&&(!hostlist.empty())){
-	  strncpy(this->rmjob.hostlist, hostlist.c_str(), CA_MAXHOSTNAMELEN);
+	  strncpy(rmjob.hostlist, hostlist.c_str(), CA_MAXHOSTNAMELEN);
 	}
 
 	
@@ -259,6 +259,9 @@ namespace castor{
 	rmjob.ddisk = this->xsize;//depending on the request's type
 	rmjob.openflags = this->openflags;//depending on the request's type
 	
+	rmjob.castorFileId = stgCnsHelper->cnsFileid.fileid;
+	strncpy(rmjob.castorNsHost,stgCnsHelper->cnsFileid.server, CA_MAXHOSTNAMELEN);
+	rmjob.castorNsHost[CA_MAXHOSTNAMELEN] = '\0';
 	
       }
 
