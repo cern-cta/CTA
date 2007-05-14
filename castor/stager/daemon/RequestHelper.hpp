@@ -234,12 +234,7 @@ namespace castor{
 	
 	
      
-	/*******************************************************************************/
-	/* to get the real subrequest size required on disk                           */
-	/* this function is just called for the Update and PrepareToUpdate subrequest*/
-	/****************************************************************************/
-	inline  u_signed64 StagerRequestHelper::getRealSubrequestXsize(u_signed64 cnsFilestatXsize);
-     
+
 	
 	
 

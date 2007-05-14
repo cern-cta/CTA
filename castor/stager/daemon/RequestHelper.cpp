@@ -517,34 +517,6 @@ namespace castor{
 
 
      
-      /*******************************************************************************/
-      /* to get the real subrequest size required on disk                           */
-      /* this function is just called for the Update and PrepareToUpdate subrequest*/
-      /****************************************************************************/
-      u_signed64 StagerRequestHelper::getRealSubrequestXsize(u_signed64 cnsFilestatXsize)
-      {
-	u_signed64 realXsize;
-
-	
-	realXsize = this->subrequest->xsize();
-	if(realXsize > 0){
-	  
-	  if(realXsize < cnsFilestatXsize){
-	    //print an error message
-	    //user is requesting less bytes than the real size
-	  }
-	}else{//the user is requiring no bytes!
-	  u_signed64 defaultFileSize = this->svcClass->defaultFileSize();
-	  if(defaultFileSize <= 0){
-	    //print a warning 
-	    defaultFilesize = DEFAULTFILESIZE;
-	    reaXsize = defaultFilesize;
-	    
-	  }
-	}
-	return(realXsize);
-      }
-      
 
       
       
