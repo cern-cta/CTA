@@ -33,7 +33,6 @@
 #include "castor/stager/StreamStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct Cstager_FileSystem_t;
 struct Cstager_Stream_t;
 struct Cstager_TapeCopy_t;
 struct Cstager_TapePool_t;
@@ -104,20 +103,6 @@ int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, u_si
 int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of lastFileSystemChange
- * Time of the last change of filesystem for this stream. Given in seconds since
- * the EPOCH (1st Jan 1970)
- */
-int Cstager_Stream_lastFileSystemChange(struct Cstager_Stream_t* instance, u_signed64* var);
-
-/**
- * Set the value of lastFileSystemChange
- * Time of the last change of filesystem for this stream. Given in seconds since
- * the EPOCH (1st Jan 1970)
- */
-int Cstager_Stream_setLastFileSystemChange(struct Cstager_Stream_t* instance, u_signed64 new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */
@@ -154,16 +139,6 @@ int Cstager_Stream_tape(struct Cstager_Stream_t* instance, struct Cstager_Tape_t
  * Set the value of tape
  */
 int Cstager_Stream_setTape(struct Cstager_Stream_t* instance, struct Cstager_Tape_t* new_var);
-
-/**
- * Get the value of lastFileSystemUsed
- */
-int Cstager_Stream_lastFileSystemUsed(struct Cstager_Stream_t* instance, struct Cstager_FileSystem_t** var);
-
-/**
- * Set the value of lastFileSystemUsed
- */
-int Cstager_Stream_setLastFileSystemUsed(struct Cstager_Stream_t* instance, struct Cstager_FileSystem_t* new_var);
 
 /**
  * Get the value of tapePool
