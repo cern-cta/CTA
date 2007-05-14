@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.419 $ $Date: 2007/05/11 09:56:34 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.420 $ $Date: 2007/05/14 12:19:22 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.419 $ $Date: 2007/05/11 09:56:34 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.420 $ $Date: 2007/05/14 12:19:22 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -664,70 +664,124 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
   fileSystemId INTEGER := 0;  
   dsid NUMBER;  
   fsDiskServer NUMBER; 
-  
+  lastFSChange NUMBER;
+  lastFSUsed NUMBER;
+  lastButOneFSUsed NUMBER;
+  findNewFS NUMBER := 1;
+  nbMigrators NUMBER := 0;
 BEGIN
-  -- We lock here a given DiskServer. See the comment for the creation of the LockTable
-  -- table for a full explanation of why we need such a stupid UPDATE statement
-  UPDATE LockTable SET theLock = 1
-   WHERE diskServerId = (
-     SELECT DS.diskserver_id
-       FROM (
-         -- The double level of selects is due to the fact that ORACLE is unable
-         -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first compute
-         -- the maxRate and then select on it.
-         SELECT diskserver.id diskserver_id
-           FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
-          WHERE FS.id = NbTapeCopiesInFS.FS
-            AND NbTapeCopiesInFS.NbTapeCopies > 0
-            AND NbTapeCopiesInFS.Stream = StreamId
-            AND FS.status IN (0, 1)
-            AND DiskServer.id = FS.diskserver
-            AND DiskServer.status IN (0, 1)
-          ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
-          ) DS
-      WHERE ROWNUM < 2)
-  RETURNING diskServerId INTO dsid;
-
-  -- Now we got our Diskserver but we lost all other data (due to the fact we had
-  -- to do an update for the lock and we could not do a join in the update).
-  -- So here we select all we need
-  SELECT FN.name, FN.mountPoint, FN.diskserver, FN.id
-    INTO diskServerName, mountPoint, fsDiskServer, fileSystemId
-    FROM (
-      SELECT DiskServer.name, FS.mountPoint, FS.diskserver, FS.id
-        FROM FileSystem FS, NbTapeCopiesInFS, Diskserver
-       WHERE FS.id = NbTapeCopiesInFS.FS
-         AND DiskServer.id = FS.diskserver
-         AND NbTapeCopiesInFS.NbTapeCopies > 0
-         AND NbTapeCopiesInFS.Stream = StreamId
-         AND FS.status IN (0, 1)    -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
-         AND FS.diskserver = dsId
-       ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
-       ) FN
-   WHERE ROWNUM < 2;
-  SELECT P.path, P.diskcopy_id, P.castorfile,
-         C.fileId, C.nsHost, C.fileSize, P.id
-    INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
-    FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
-          D.path, D.diskcopy_id, D.castorfile, T.id
-            FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
-                         DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
-                    FROM DiskCopy
-                   WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
-                     AND DiskCopy.filesystem = fileSystemId) D,
-                  TapeCopy T, Stream2TapeCopy ST
-           WHERE T.castorfile = D.castorfile
-             AND ST.child = T.id
-             AND ST.parent = streamId
-             AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
-             AND ROWNUM < 2) P, castorfile C
-   WHERE P.castorfile = C.id;
+  -- First try to see whether we should resuse the same filesystem as last time
+  SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
+    INTO lastFSChange, lastFSUsed, lastButOneFSUsed
+    FROM Stream WHERE id = streamId;
+  IF getTime() < lastFSChange + 900 THEN
+    SELECT (SELECT count(*) FROM stream WHERE lastFileSystemUsed = lastButOneFSUsed) +
+           (SELECT count(*) FROM stream WHERE lastButOneFileSystemUsed = lastButOneFSUsed)
+      INTO nbMigrators FROM DUAL;
+    -- only go if we are the only migrator on the box
+    IF nbMigrators = 1 THEN
+      BEGIN
+        -- check states of the diskserver and filesystem and get mountpoint and diskserver name
+	SELECT name, mountPoint, FileSystem.id INTO diskServerName, mountPoint, fileSystemId
+          FROM FileSystem, DiskServer
+         WHERE FileSystem.diskServer = DiskServer.id
+           AND FileSystem.id = lastButOneFSUsed
+           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+           AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+        -- we are within the time range, so we try to reuse the filesystem
+        SELECT P.path, P.diskcopy_id, P.castorfile,
+             C.fileId, C.nsHost, C.fileSize, P.id
+        INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+        FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+              D.path, D.diskcopy_id, D.castorfile, T.id
+                FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
+                             DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
+                        FROM DiskCopy
+                       WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
+                         AND DiskCopy.filesystem = lastButOneFSUsed) D,
+                      TapeCopy T, Stream2TapeCopy ST
+               WHERE T.castorfile = D.castorfile
+                 AND ST.child = T.id
+                 AND ST.parent = streamId
+                 AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
+                 AND ROWNUM < 2) P, castorfile C
+         WHERE P.castorfile = C.id;
+        -- we found one, no need to go for new filesystem
+        findNewFS := 0;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- found no tapecopy or diskserver, filesystem are down. We'll go through the normal selection
+        NULL;
+      END;
+    END IF;
+  END IF;
+  IF findNewFS = 1 THEN
+    -- We lock here a given DiskServer. See the comment for the creation of the LockTable
+    -- table for a full explanation of why we need such a stupid UPDATE statement
+    UPDATE LockTable SET theLock = 1
+     WHERE diskServerId = (
+       SELECT DS.diskserver_id
+         FROM (
+           -- The double level of selects is due to the fact that ORACLE is unable
+           -- to use ROWNUM and ORDER BY at the same time. Thus, we have to first compute
+           -- the maxRate and then select on it.
+           SELECT diskserver.id diskserver_id
+             FROM FileSystem FS, NbTapeCopiesInFS, DiskServer
+            WHERE FS.id = NbTapeCopiesInFS.FS
+              AND NbTapeCopiesInFS.NbTapeCopies > 0
+              AND NbTapeCopiesInFS.Stream = StreamId
+              AND FS.status IN (0, 1)
+              AND DiskServer.id = FS.diskserver
+              AND DiskServer.status IN (0, 1)
+            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
+            ) DS
+        WHERE ROWNUM < 2)
+    RETURNING diskServerId INTO dsid;
+    -- Now we got our Diskserver but we lost all other data (due to the fact we had
+    -- to do an update for the lock and we could not do a join in the update).
+    -- So here we select all we need
+    SELECT FN.name, FN.mountPoint, FN.diskserver, FN.id
+      INTO diskServerName, mountPoint, fsDiskServer, fileSystemId
+      FROM (
+        SELECT DiskServer.name, FS.mountPoint, FS.diskserver, FS.id
+          FROM FileSystem FS, NbTapeCopiesInFS, Diskserver
+         WHERE FS.id = NbTapeCopiesInFS.FS
+           AND DiskServer.id = FS.diskserver
+           AND NbTapeCopiesInFS.NbTapeCopies > 0
+           AND NbTapeCopiesInFS.Stream = StreamId
+           AND FS.status IN (0, 1)    -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+           AND FS.diskserver = dsId
+         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
+         ) FN
+     WHERE ROWNUM < 2;
+    SELECT P.path, P.diskcopy_id, P.castorfile,
+           C.fileId, C.nsHost, C.fileSize, P.id
+      INTO path, dci, castorFileId, fileId, nsHost, fileSize, tapeCopyId
+      FROM (SELECT /*+ ORDERED USE_NL(D T) INDEX(T I_TAPECOPY_CF_STATUS_2) INDEX(ST I_PK_STREAM2TAPECOPY) */
+            D.path, D.diskcopy_id, D.castorfile, T.id
+              FROM (SELECT /*+ INDEX(DK I_DISKCOPY_FS_STATUS_10) */
+                           DiskCopy.path path, DiskCopy.id diskcopy_id, DiskCopy.castorfile
+                      FROM DiskCopy
+                     WHERE decode(DiskCopy.status,10,DiskCopy.status,null) = 10 -- CANBEMIGR
+                       AND DiskCopy.filesystem = fileSystemId) D,
+                    TapeCopy T, Stream2TapeCopy ST
+             WHERE T.castorfile = D.castorfile
+               AND ST.child = T.id
+               AND ST.parent = streamId
+               AND decode(T.status,2,T.status,null) = 2 -- WAITINSTREAMS
+               AND ROWNUM < 2) P, castorfile C
+     WHERE P.castorfile = C.id;
+  END IF;
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
-  UPDATE Stream SET status = 3 -- RUNNING
+  UPDATE Stream
+     SET status = 3, -- RUNNING
+         lastFileSystemUsed = fileSystemId, lastButOneFileSystemUsed = lastFileSystemUsed
    WHERE id = streamId;
-
+  IF findNewFS = 1 THEN
+    -- time only if we changed FS
+    UPDATE Stream SET lastFileSystemChange = getTime() WHERE id = streamId;
+  END IF;
   -- detach the tapecopy from the stream now that it is SELECTED
   -- the triggers will update NbTapeCopiesInFS accordingly
   DELETE FROM Stream2TapeCopy
@@ -1829,7 +1883,8 @@ BEGIN
         AND status = 2 -- TAPECOPY_WAITINSTREAMS
         AND ROWNUM < 2;
     -- We'we found one, update stream status
-    UPDATE Stream SET status = 0, tape = 0 WHERE id = sid; -- STREAM_PENDING
+    UPDATE Stream SET status = 0, tape = 0, lastFileSystemChange = 0
+     WHERE id = sid; -- STREAM_PENDING
   EXCEPTION  WHEN NO_DATA_FOUND THEN
     -- We've found nothing, delete stream
     DELETE FROM Stream2TapeCopy WHERE Parent = sid;
