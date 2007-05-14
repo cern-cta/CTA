@@ -46,8 +46,23 @@ namespace castor{
 #ifdef USE_HOSTLIST
 	this->useHostlist=true;
 #endif
-	/* no size requirements when we open a file on read mode */	
-	this->xsize=0;
+
+	
+	/* get the request's size required on disk */
+	/* depending if the file exist, we ll need to update this variable */
+	this->xsize = this->stgRequestHelper->subrequest->xsize();
+	
+	if( xsize > 0 ){
+	  if(xsize < (stgCnsHelper->cnsFilestat.filesize)){
+	    /* warning, user is requesting less bytes than the real size */
+	    //just print message
+	  }
+	  
+	  
+	}else{
+	  this->xsize = stgCnsHelper->cnsFilestat.filesize;
+	}
+
 	this->openflags=RM_O_RDONLY;
 	this->default_protocol = "rfio";	
       }
@@ -68,6 +83,12 @@ namespace castor{
 
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
 	  switchScheduling(caseToSchedule);
+	  
+	  if((rfs != NULL)&&(!rfs.empty())){
+	    /* if the file exists we don't have any size requirements */
+	    this->xsize = 0;
+	  }
+
 
 	  /* build the rmjob struct and submit the job */
 	  this->rmjob = stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */

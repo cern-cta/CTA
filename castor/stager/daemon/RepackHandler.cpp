@@ -47,8 +47,20 @@ namespace castor{
 #ifdef USE_HOSTLIST
 	this->useHostlist=true;
 #endif
-	/* there isn't any size requirement for a readMode request */
-	this->xsize=0;
+      	
+	/* get the request's size required on disk */
+	/* depending if the file exist, we ll need to update this variable */
+	this->xsize = this->stgRequestHelper->subrequest->xsize();
+
+	if( xsize <= 0 ){
+	  /* get the default filesize */
+	  u_signed64 defaultFileSize = this->stgRequestHelper->svcClass->defaultFileSize();
+	  if( defaultFileSize <= 0){
+	    xsize = this->stgCnsHelper->cnsFilestat.filesize;
+	    /* before enter the job, we ll need to print a message */
+	  }
+	}
+
 	this->openflags=RM_O_RDONLY;
 	this->default_protocol = "rfio";
 	
@@ -68,6 +80,10 @@ namespace castor{
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
 	  switchScheduling(caseToSchedule);
 
+	  if((rfs != NULL)&&(!rfs.empty())){
+	    /* if the file exists we don't have any size requirements */
+	    this->xsize = 0;
+	  }
 	  
 	  /* build the rmjob struct and submit the job */
 	  this->rmjob = stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
