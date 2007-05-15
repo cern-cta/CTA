@@ -103,7 +103,7 @@ namespace castor{
 	    }
 
 	  }else{/* we schedule, huge flow */
-
+	    
 	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
 	    switchScheduling(caseToSchedule);
 
@@ -117,13 +117,14 @@ namespace castor{
 	  /* updateSubrequestStatus Part: */
 	  SubRequestStatusCode currentSubrequestStatus = stgRequestHelper->subrequest->status();
 	  SubRequestStatusCodes newSubrequestStatus = SUBREQUEST_READY;
-	  //common for the StagerGetRequest
+	  
+	  if(newSubrequestStatus != currentSubrequestStatus){
 	  
 	    stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
 	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUSFILESTAGED);
 	    
 	  }
-	  
+	
 	  
 	  
 	  /* replyToClient Part: */
@@ -147,10 +148,10 @@ namespace castor{
       StagerPrepareToUpdateHandler::~StagerPrepareToUpdateHandler()throw(){
 	
       }
+      
+      
 
-
-
- 
+      
     }// end dbService namespace
   }// end stager namespace
 }//end castor namespace 
