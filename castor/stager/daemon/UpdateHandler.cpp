@@ -1,8 +1,9 @@
-/****************************************************************************************************************************/
-/* handler for the Update subrequest, since it is jobOriented, it uses the mostly part of the StagerJobRequestHandler class*/
-/* depending if the file exist, it can follow the huge flow (jobOriented, as Get) or a small one                          */
-/* we dont  need to reply to the client (just necessary )*/
-/************************************************************************************************************************/
+/************************************************************************************************************/
+/* StagerUpdateHandler: Contructor and implementation of the Update request handler                        */
+/* Since it is jobOriented, it uses the mostly part of the StagerJobRequestHandler class                  */
+/* Depending if the file exist, it can follow the huge flow (scheduled, as Get) or a small one (as Put)  */
+/* We dont  need to reply to the client (just in case of error )                                        */
+/*******************************************************************************************************/
 
 
 
@@ -45,8 +46,7 @@ namespace castor{
 	/* depending on this flag, we ll execute the huge flow or the small one*/
 	this->toRecreateCastorFile = toRecreateCastorFile;
 
-	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
-	
+	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
 
 	
@@ -55,19 +55,23 @@ namespace castor{
 	this->useHostlist=true;
 #endif
 	
-	/* get the request's size required on disk */
+	/* get the subrequest's size required on disk */
 	this->xsize = this->stgRequestHelper->subrequest->xsize();
-
-	if( xsize <= 0 ){
-	  /* get the default filesize */
-	  u_signed64 defaultFileSize = this->stgRequestHelper->svcClass->defaultFileSize();
-	  if( defaultFileSize <= 0){
+	if(this->xsize > 0){
+	  
+	  if( this->xsize < (this->stgCnsHelper->cnsFilestat.filesize) ){
+	    /* print warning! */
+	  }
+	}else{
+	  /* we get the defaultFileSize */
+	  xsize = stgRequestHelper->svcClass->defaultFileSize();
+	  if( xsize <= 0){
 	    xsize = DEFAULTFILESIZE;
-	    /* before enter the job, we ll need to print a message */
 	  }
 	}
+	
 
-	this->openflags=RM_O_WRONLY;
+	this->openflags=RM_O_RDWR;
 	this->default_protocol = "rfio";	
 	
       }
