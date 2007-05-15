@@ -39,6 +39,10 @@ namespace castor{
       class StagerCnsHelper;
 
       class StagerUpdateRequest : public StagerJobRequestHandler{
+
+      private:
+	/* flag to schedule or to recreateCastorFile depending if the file exists... */
+	bool toRecreateCastorFile;
 	
       public:
 	/* constructor */

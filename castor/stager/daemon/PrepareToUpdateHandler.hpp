@@ -44,6 +44,12 @@ namespace castor{
 
       class StagerPrepareToUpdateHandler : public StagerJobRequestHandler{
 
+      private:
+	/* flag to schedule or to recreateCastorFile depending if the file exists... */
+	bool toRecreateCastorFile;
+
+
+
       public:
 	/* constructor */
 	StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message, bool toRecreateCastorFile) throw();
