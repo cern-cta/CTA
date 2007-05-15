@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.420 $ $Date: 2007/05/14 12:19:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.421 $ $Date: 2007/05/15 15:29:45 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.420 $ $Date: 2007/05/14 12:19:22 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.421 $ $Date: 2007/05/15 15:29:45 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -83,6 +83,7 @@ CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
 CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
+create INDEX I_SubRequest_CF_ST_5 on SubRequest (castorFile, decode(status,5,status,null));
 
 /* function base indexes to speed up subrequestToDo, subrequestFailedToDo, and getLastRecalls */
 CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
@@ -588,7 +589,7 @@ BEGIN
   UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
 END;
 
-CREATE OR REPLACE PROCEDURE updateRecallerFileOpened
+CREATE OR REPLACE PROCEDURE updateRecallerOpened
 (ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
 BEGIN
   /* We lock first the diskserver in order to lock all the
@@ -1753,7 +1754,7 @@ BEGIN
        WHERE SubRequest.request = Id2Type.id
          AND Id2Type.type = 39       -- PutDone
          AND SubRequest.castorFile = cfId
-         AND SubRequest.status = 5); -- WAITSUBREQ
+         AND decode(SubRequest.status,5,subrequest.status,null) = 5); -- WAITSUBREQ
  END IF;
  COMMIT;
 END;
