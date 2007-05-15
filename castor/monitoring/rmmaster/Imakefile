@@ -41,6 +41,8 @@ RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuator
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(../../shlib,castorMonitor) \
+         DepSharedLibraryTargetName(../../shlib,castorCommonOra) \
+         DepSharedLibraryTargetName(../../shlib,castorCnvs) \
          DepSharedLibraryTargetName(../../shlib,shift)
 
 LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
@@ -51,6 +53,8 @@ all:ProgramTargetName(rmMasterDaemon)
 NormalProgramTarget(rmMasterDaemon,$(RMMASTERDAEMONBIN_OBJS),$(DEPLIB),$(LIBS))
 
 MakeDepSharedLibrary(../../shlib,castorMonitor)
+MakeDepSharedLibrary(../../shlib,castorCommonOra)
+MakeDepSharedLibrary(../../shlib,castorCnvs)
 MakeDepSharedLibrary(../../shlib,shift)
 
 Makefiles:
