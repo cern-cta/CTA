@@ -40,17 +40,13 @@ namespace castor{
 
       class StagerRequestHelper;
       class StagerCnsHelper;
-      class castor::stager::DiskCopyForRecall;
 
 
       class StagerPrepareToUpdateHandler : public StagerJobRequestHandler{
 
-      private:
-	castor::stager::DiskCopyForRecall* diskCopyForRecall;
-
       public:
 	/* constructor */
-	StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message) throw();
+	StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message, bool toRecreateCastorFile) throw();
 
 	/* destructor */
 	StagerPrepareToUpdateHandler::~StagerPrepareToUpdateHandler() throw();
