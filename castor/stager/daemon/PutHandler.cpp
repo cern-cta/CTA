@@ -47,22 +47,23 @@ namespace castor{
 	/* get the request's size required on disk */
 	this->xsize = this->stgRequestHelper->subrequest->xsize();
 
-	if( xsize <= 0 ){
-	  /* get the default filesize */
-	  u_signed64 defaultFileSize = this->stgRequestHelper->svcClass->defaultFileSize();
-	  if( defaultFileSize <= 0){
+	if(this->xsize > 0){
+	  
+	  if( this->xsize < (this->stgCnsHelper->cnsFilestat.filesize) ){
+	    /* print warning! */
+	  }
+	}else{
+	  /* we get the defaultFileSize */
+	  xsize = stgRequestHelper->svcClass->defaultFileSize();
+	  if( xsize <= 0){
 	    xsize = DEFAULTFILESIZE;
-	    /* before enter the job, we ll need to print a message */
 	  }
 	}
-
-
+	
+	
 	this->openflags=RM_O_WRONLY;
 	this->default_protocol = "rfio";	
-
-
-
-
+       
       }
 
 
