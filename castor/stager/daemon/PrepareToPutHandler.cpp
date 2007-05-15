@@ -97,7 +97,7 @@ namespace castor{
 
 
       StagerPrepareToPutHandler::~StagerPrepareToPutHandler()throw(){
-	
+	delete stgReplyHelper;
       }
 
 
