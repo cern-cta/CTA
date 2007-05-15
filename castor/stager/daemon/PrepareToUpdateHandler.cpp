@@ -1,6 +1,9 @@
-/*********************************************************************************************************/
-/* StagerPrepareToUpdatetHandler: Constructor and implementation of the PrepareToUpdate request handler */
-/*******************************************************************************************************/
+/***********************************************************************************************************/
+/* StagerPrepareToUpdatetHandler: Constructor and implementation of the PrepareToUpdate request handler   */
+/* Since it is jobOriented, it uses the mostly part of the StagerJobRequestHandler class                 */
+/* Depending if the file exist, it can follow the huge flow (scheduled, as Get) or a small one (as Put) */
+/* We need to reply to the client (just in case of error )                                             */
+/******************************************************************************************************/
 
 
 
@@ -22,6 +25,7 @@
 #include "Cgrp.h"
 #include "castor/IClientFactory.h"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 
 #include <iostream>
 #include <string>
@@ -32,16 +36,26 @@ namespace castor{
   namespace stager{
     namespace dbService{
      
-      StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message)
+      StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message, bool toRecreateCastorFile)
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	/* error message needed for the exceptions, for the replyToClient... */
-	this->message(message);
+	this->message(message);	/* error message needed for the exceptions, for the replyToClient... */
+		
+	/* depending on this flag, we ll execute the huge flow or the small one*/
+	this->toRecreateCastorFile = toRecreateCastorFile;
+
+	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
+	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
 	
-	/* we won' t execute the replication part so we don' t care about the maxReplicaNb or the replicationPolicy or useHostlist or whatever */
 	
-	
+	this->useHostlist = false;
+#ifdef USE_HOSTLIST
+	this->useHostlist=true;
+#endif
+
+
+	/* get the subrequest's size required on disk */
 	this->xsize = this->stgRequestHelper->subrequest->xsize();
 	if(this->xsize > 0){
 	  
@@ -49,11 +63,15 @@ namespace castor{
 	    /* print warning! */
 	  }
 	}else{
-	  //we don' t do nothing????
+	  /* we get the defaultFileSize */
+	  xsize = stgRequestHelper->svcClass->defaultFileSize();
+	  if( xsize <= 0){
+	    xsize = DEFAULTFILESIZE;
+	  }
 	}
 	
 	
-	this->openflags=RM_O_WRONLY; /* since we aren't gonna use the rm, we don't really need it */
+	this->openflags=RM_O_RDWR; /* since we aren't gonna use the rm, we don't really need it */
 	this->default_protocol = "rfio";
 	
       }
@@ -71,18 +89,35 @@ namespace castor{
 
 	  this.jobOriented();
 
-	  this->diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+	  /*************************/
+	  /* huge or small flow?? */
+	  /***********************/
 
-	  if(diskCopyForRecall == NULL){
-	    // we throw exception!!!
+	  if( toRecreateCastorFile){/* we recreate, small flow*/
+	    castor::stager::DiskCopyForRecall* diskCopyForRecall;
+	    /* use the stagerService to recreate the castor file*/
+	    diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+	    
+	    if(diskCopyForRecall == NULL){
+	      // we throw exception!!!
+	    }
+
+	  }else{/* we schedule, huge flow */
+
+	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
+	    switchScheduling(caseToSchedule);
+
+	    /* build the rmjob struct and submit the job */
+	    this->rmjob = stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
+	    rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)); //throw exception
+
 	  }
-
 
 	  /* updateSubrequestStatus Part: */
 	  SubRequestStatusCode currentSubrequestStatus = stgRequestHelper->subrequest->status();
 	  SubRequestStatusCodes newSubrequestStatus = SUBREQUEST_READY;
-	  
-	  if(newSubrequestStatus != currentSubrequestStatus){//common for the StagerGetRequest
+	  //common for the StagerGetRequest
 	  
 	    stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
 	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUSFILESTAGED);
