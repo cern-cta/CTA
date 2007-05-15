@@ -783,7 +783,7 @@ BEGIN
   UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
 END;
 
-CREATE OR REPLACE PROCEDURE updateRecallerFileOpened
+CREATE OR REPLACE PROCEDURE updateRecallerOpened
 (ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
 BEGIN
   /* We lock first the diskserver in order to lock all the
