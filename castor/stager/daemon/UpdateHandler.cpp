@@ -117,7 +117,7 @@ namespace castor{
 
 	  }else{
 
-	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest,&(this->sources));
+	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,&(this->sources));
 	    switchScheduling(caseToSchedule);
 	    
 	    /* since the file exist, we need the read flag */

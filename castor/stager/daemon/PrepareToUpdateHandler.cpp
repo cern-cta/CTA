@@ -104,7 +104,7 @@ namespace castor{
 
 	  }else{/* we schedule, huge flow */
 	    
-	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
+	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
 	    switchScheduling(caseToSchedule);
 
 	    /* build the rmjob struct and submit the job */

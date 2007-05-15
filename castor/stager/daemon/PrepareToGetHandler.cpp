@@ -79,7 +79,7 @@ namespace castor{
 
 	  /* scheduling Part */
 	  /* first use the stager service to get the possible sources for the required file */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
 	  
 	  switch(caseToSchedule){
 	    

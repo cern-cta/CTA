@@ -55,7 +55,7 @@ namespace castor{
 	if( xsize > 0 ){
 	  if(xsize < (stgCnsHelper->cnsFilestat.filesize)){
 	    /* warning, user is requesting less bytes than the real size */
-	    //just print message
+	    /* just print a message. we don't update xsize!!! */
 	  }
 	  
 	  
@@ -81,7 +81,7 @@ namespace castor{
 
 	  this.jobOriented();
 
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
 	  switchScheduling(caseToSchedule);
 	  
 	  if((rfs != NULL)&&(!rfs.empty())){
