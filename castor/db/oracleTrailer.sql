@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.421 $ $Date: 2007/05/15 15:29:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.422 $ $Date: 2007/05/15 15:34:59 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.421 $ $Date: 2007/05/15 15:29:45 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.422 $ $Date: 2007/05/15 15:34:59 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -589,7 +589,7 @@ BEGIN
   UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
 END;
 
-CREATE OR REPLACE PROCEDURE updateRecallerOpened
+CREATE OR REPLACE PROCEDURE updateFsRecallerOpened
 (ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
 BEGIN
   /* We lock first the diskserver in order to lock all the

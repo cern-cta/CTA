@@ -803,7 +803,7 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE PROCEDURE updateRecallerOpened
+CREATE OR REPLACE PROCEDURE updateFsRecallerOpened
 (ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
 BEGIN
   /* We lock first the diskserver in order to lock all the
