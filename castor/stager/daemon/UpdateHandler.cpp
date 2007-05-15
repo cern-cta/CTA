@@ -112,13 +112,16 @@ namespace castor{
 	    }
 	    this->hostlist.clear();
 	    
+	    /* since the file doesn't exist, we don't need the read flag */
+	    this->openflags = RM_O_WRONLY;
 
 	  }else{
 
 	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest,&(this->sources));
 	    switchScheduling(caseToSchedule);
 	    
-
+	    /* since the file exist, we need the read flag */
+	    this->openflags = RM_O_RDWR;
 	  }
 	  /* build the rmjob struct and submit the job */
 	  this->rmjob = stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
