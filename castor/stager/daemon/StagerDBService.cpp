@@ -183,7 +183,8 @@ namespace castor{
 	    break;
 
 	  case OBJ_StagePrepareToUpdateRequest:
-	    StagerPrepareToUpdateHandler stgPrepareToUpdateHandler(stgRequestHelper, stgCnsHelper, message);
+	    bool toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0));
+	    StagerPrepareToUpdateHandler stgPrepareToUpdateHandler(stgRequestHelper, stgCnsHelper, message, toRecreateCastorFile);
 	    stgPrepareToUpdateHandler.handle();
 	    // stgPutHandler.jobOriented;
 	    // diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile
