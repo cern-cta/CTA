@@ -40,23 +40,7 @@ namespace castor{
 	/* error message needed for the exceptions, for the replyToClient... */
 	this->message(message);
 	
-	/* we won' t execute the replication part so we don' t care about the maxReplicaNb or the replicationPolicy or useHostlist or whatever */
-	
-	
-	this->xsize = this->stgRequestHelper->subrequest->xsize();
-	if(this->xsize > 0){
-	  
-	  if( this->xsize < (this->stgCnsHelper->cnsFilestat.filesize) ){
-	    /* print warning! */
-	  }
-	}else{
-	  //we don' t do nothing????
-	}
-	
-	
-	this->openflags=RM_O_WRONLY; /* since we aren't gonna use the rm, we don't really need it */
-	this->default_protocol = "rfio";
-	
+	/* since we don't call the rm: we don't care about maxReplicaNb, ...xsize, ...  */	
       }
 
 
