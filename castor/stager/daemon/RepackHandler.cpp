@@ -50,15 +50,17 @@ namespace castor{
       	
 	/* get the request's size required on disk */
 	/* depending if the file exist, we ll need to update this variable */
-	this->xsize = this->stgRequestHelper->subrequest->xsize();
+	this->xsize = stgRequestHelper->subrequest->xsize();
 
-	if( xsize <= 0 ){
-	  /* get the default filesize */
-	  u_signed64 defaultFileSize = this->stgRequestHelper->svcClass->defaultFileSize();
-	  if( defaultFileSize <= 0){
-	    xsize = this->stgCnsHelper->cnsFilestat.filesize;
-	    /* before enter the job, we ll need to print a message */
+	if( xsize > 0){
+	  if( xsize < (stgCnsHelper->cnsFilestat.filesize)){
+	    /* warning, user is requesting less bytes than the real size */
+	    /* just print a message. we don't update xsize!!! */	 
 	  }
+
+	}else{
+	    xsize = stgCnsHelper->cnsFilestat.filesize;
+	    /* before enter the job, we ll need to print a message */
 	}
 
 	this->openflags=RM_O_RDONLY;
@@ -80,7 +82,7 @@ namespace castor{
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToBeScheduled(stgRequestHelper->subrequest, &(this->sources));
 	  switchScheduling(caseToSchedule);
 
-	  if((rfs != NULL)&&(!rfs.empty())){
+	  if((rfs != NULL) && (!rfs.empty())){
 	    /* if the file exists we don't have any size requirements */
 	    this->xsize = 0;
 	  }
