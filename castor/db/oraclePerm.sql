@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.422 $ $Date: 2007/05/15 15:34:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.423 $ $Date: 2007/05/16 14:39:42 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.422 $ $Date: 2007/05/15 15:34:59 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.423 $ $Date: 2007/05/16 14:39:42 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -687,7 +687,7 @@ BEGIN
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.id = lastButOneFSUsed
-           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+           AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT P.path, P.diskcopy_id, P.castorfile,
@@ -730,10 +730,16 @@ BEGIN
             WHERE FS.id = NbTapeCopiesInFS.FS
               AND NbTapeCopiesInFS.NbTapeCopies > 0
               AND NbTapeCopiesInFS.Stream = StreamId
-              AND FS.status IN (0, 1)
+              AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
               AND DiskServer.id = FS.diskserver
-              AND DiskServer.status IN (0, 1)
-            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
+              AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+	      -- Ignore diskservers where a migrator already exists
+              AND DiskServer.id NOT IN (
+                SELECT DISTINCT(FileSystem.diskServer)
+                  FROM FileSystem, Stream
+                 WHERE FileSystem.id = Stream.lastfilesystemused
+              )
+            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
         WHERE ROWNUM < 2)
     RETURNING diskServerId INTO dsid;
@@ -749,9 +755,9 @@ BEGIN
            AND DiskServer.id = FS.diskserver
            AND NbTapeCopiesInFS.NbTapeCopies > 0
            AND NbTapeCopiesInFS.Stream = StreamId
-           AND FS.status IN (0, 1)    -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+           AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
            AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
+         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
     SELECT P.path, P.diskcopy_id, P.castorfile,
