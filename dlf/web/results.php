@@ -353,8 +353,9 @@ setcookie("style", $_GET['style']);
 						echo "between <strong>".$_GET['from']." ".$_GET['fromtime']."</strong> ";
 						echo "and <strong>".$_GET['to']." ".$_GET['totime']."</strong>";
 					}
+					$orderby = ($tordering == "DESC") ? "Descending" : "Ascending";
 					echo "<br/>";
-					echo "Displaying messages <strong> $start_no </strong> through <strong> $end_no </strong><br />";	
+					echo "Displaying messages <strong> $start_no </strong> through <strong> $end_no </strong> - ordered by timestamp <strong>$orderby</strong><br />";
 								
 					$filters = array('severity:Severity', 
 									 'facility:Facility:', 
