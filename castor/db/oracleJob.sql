@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.423 $ $Date: 2007/05/16 14:39:42 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.424 $ $Date: 2007/05/18 12:13:42 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.423 $ $Date: 2007/05/16 14:39:42 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.424 $ $Date: 2007/05/18 12:13:42 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -660,11 +660,10 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   path OUT VARCHAR2, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                  tapeCopyId OUT INTEGER) AS
-                                                
-  fileSystemId INTEGER := 0;  
-  dsid NUMBER;  
-  fsDiskServer NUMBER; 
+                                                  tapeCopyId OUT INTEGER) AS                                              
+  fileSystemId INTEGER := 0;
+  dsid NUMBER;
+  fsDiskServer NUMBER;
   lastFSChange NUMBER;
   lastFSUsed NUMBER;
   lastButOneFSUsed NUMBER;
@@ -738,6 +737,7 @@ BEGIN
                 SELECT DISTINCT(FileSystem.diskServer)
                   FROM FileSystem, Stream
                  WHERE FileSystem.id = Stream.lastfilesystemused
+		   AND Stream.status IN (3)   -- SELECTED
               )
             ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
@@ -798,6 +798,10 @@ BEGIN
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Reset last filesystems used
+    UPDATE Stream
+       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
+     WHERE id = streamId;
     -- No data found means the selected filesystem has no
     -- tapecopies to be migrated. Thus we go to next one
     -- However, we reset the NbTapeCopiesInFS row that failed
