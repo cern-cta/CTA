@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.13 2007/02/08 07:08:48 waldron Exp $
+ * $Id: query.php,v 1.14 2007/05/18 13:07:11 waldron Exp $
  */
 
 require("utils.php");
@@ -235,12 +235,12 @@ setcookie("instance", $_GET['instance']);
 					echo "<option value=\"".$row[0]."\">".$row[1]."</option>";
 				}
 			?>
-			</select>
+			</select>		
 		</td>
 		<td width="30">&nbsp;</td>
 		<td width="120" align="left">Parameter Name:</td>
 		<td colspan="3">
-			<input type="text" name="paramname" class="queryInput" tabindex="11" />
+			<input type="text" name="paramname" class="queryInput" tabindex="11" />		
 		</td>
 		<td width="30">&nbsp;</td>
 		<td width="120" align="left">Last:</td>
@@ -253,7 +253,7 @@ setcookie("instance", $_GET['instance']);
 				<option value="360">6 hours</option>
 				<option value="1440">1 day</option>
 				<option value="-1">Everything</option>
-			</select>
+			</select>		
 		</td>
 		</tr>
 
@@ -261,7 +261,7 @@ setcookie("instance", $_GET['instance']);
 			<td width="30">&nbsp;</td>
 			<td align="left">Parameter Value:</td>
 			<td colspan="3">
-				<input type="text" name="paramvalue" class="queryInput" tabindex="12" />
+				<input type="text" name="paramvalue" class="queryInput" tabindex="12" />			
 			</td>
 			<td width="30">&nbsp;</td>
 			<td colspan="3" align="center">- OR -</td>
@@ -291,7 +291,7 @@ setcookie("instance", $_GET['instance']);
 			?> />
 			</td>
 			<td width="63" rowspan="2"><input name="fromtime" type="text" value="00:00" size="4" maxlength="5" tabindex="15" />
-				<a href="#" name="anchor1" class="vanish" id="anchor1"></a> 
+				<a href="#" name="anchor1" class="vanish" id="anchor1"></a>
 			</td>
 		</tr>
 
@@ -320,11 +320,11 @@ setcookie("instance", $_GET['instance']);
 			<td width="30">&nbsp;</td>
 			<td align="left">Default columns</td>
 			<td width="21">
-				<input name="columns" type="radio" value="default" checked="checked" onclick="check_all(true)" />                  
+				<input name="columns" type="radio" value="default" checked="checked" onclick="check_all(true)" />
 			</td>
 			<td width="100" align="left">Custom Colums</td>
 			<td width="21">
-				<input name="columns" type="radio" value="custom" onclick="check_all(false)" />                  
+				<input name="columns" type="radio" value="custom" onclick="check_all(false)" />
 			</td>
 			<td width="30">&nbsp;</td>
 			<td width="120" align="left">To:</td>
@@ -383,12 +383,12 @@ setcookie("instance", $_GET['instance']);
 			<td rowspan="2">
 			<select name="msg_no" class="querySelect" tabindex="4">
 				<option selected="selected">All</option>
-			</select>                  
+			</select>
 			</td>
 			<td width="30" rowspan="2">&nbsp;</td>
 			<td rowspan="2" align="left">Severity</td>
 			<td rowspan="2">
-				<input name="col_severity" type="checkbox" checked="checked" onclick="custom_columns()" />                  
+				<input name="col_severity" type="checkbox" checked="checked" onclick="custom_columns()" />
 			</td>
 			<td width="100" rowspan="2" align="left">NS File ID</td>
 			<td width="21" rowspan="2">
@@ -411,16 +411,16 @@ setcookie("instance", $_GET['instance']);
 		<tr>
 			<td align="left">Process ID:</td>
 			<td>
-				<input type="text" name="pid" class="queryInput" tabindex="5" />                  
+				<input type="text" name="pid" class="queryInput" tabindex="5" />
 			</td>
 			<td width="30">&nbsp;</td>
 			<td align="left">Hostname</td>
 			<td>
-				<input name="col_hostname" type="checkbox" checked="checked" onclick="custom_columns()" />                  
+				<input name="col_hostname" type="checkbox" checked="checked" onclick="custom_columns()" />
 			</td>
 			<td width="100" align="left">Message Text</td>
 			<td width="21">
-				<input name="col_msgtext" type="checkbox" checked="checked" onclick="custom_columns()" />                  
+				<input name="col_msgtext" type="checkbox" checked="checked" onclick="custom_columns()" />
 			</td>
 			<td width="30">&nbsp;</td>
 			<td width="120" align="left"><?php if ($schema_version > 1) { echo "UID:"; } ?></td>
@@ -429,7 +429,7 @@ setcookie("instance", $_GET['instance']);
 			if ($schema_version > 1) {
 				echo "<input name=\"uid\" type=\"text\" value=\"\" size=\"3\" maxlength=\"8\" tabindex=\"18\" /> &nbsp; &nbsp; &nbsp;GID:";
 			}
-			?>                  
+			?>
 			</td>
 			<td>
 			<?php
@@ -443,7 +443,7 @@ setcookie("instance", $_GET['instance']);
 		<tr>
 			<td align="left">Tape VID:</td>
 			<td>
-				<input type="text" name="tapevid" class="queryInput" tabindex="6" />                  
+				<input type="text" name="tapevid" class="queryInput" tabindex="6" />
 			</td>
 			<td width="30">&nbsp;</td>
 			<td align="left">Process ID</td>
@@ -499,7 +499,7 @@ setcookie("instance", $_GET['instance']);
 				<input name="col_tapevid" type="checkbox" checked="checked" onclick="custom_columns()" />
 			</td>
 			<td width="30">&nbsp;</td>
-			<td>&nbsp;</td>
+			<td align="left">&nbsp;</td>
 			<td colspan="2">&nbsp;</td>
 		</tr>
 
@@ -536,22 +536,12 @@ setcookie("instance", $_GET['instance']);
 			?>
 			</td>
 			<td width="30">&nbsp;</td>
-			<td align="left">Style:</td>
-			<td colspan="2">
-				<select name="style" size="1" class="querySelect" tabindex="21">
-				<?php
-				$i = 1;
-				foreach (array('Classic', 'Multi-line', 'Single') as $value) {
-					if ($HTTP_COOKIE_VARS['style'] == $i) {
-						echo "<option value=\"".$i."\" selected=\"selected\" >".$value."</option>";
-					} else {
-						echo "<option value=\"".$i."\">".$value."</option>";
-					}
-					$i++;
-				}
-				?>
-				</select>
-			</td>
+			<td align="left">Sort By:</td>
+			<td colspan="2"><select name="sort" size="1" class="querySelect" tabindex="21">
+                <option value="tdesc" selected="selected">Time (Descending)</option>
+                <option value="tasc">Time (Ascending)</option>
+              </select>
+            </td>
 		</tr>
 
 		<tr>
@@ -563,18 +553,21 @@ setcookie("instance", $_GET['instance']);
 			<td width="100">&nbsp;</td>
 			<td width="21">&nbsp;</td>
 			<td width="30">&nbsp;</td>
-			<td align="left">Lines per Page:</td>
-			<td colspan="2">
-			<select name="limit" size="1" class="querySelect" tabindex="22">
-				<option value="10">10</option>
-				<option value="20">20</option>
-				<option value="50">50</option>
-				<option value="100">100</option>
-				<option value="200" selected="selected">200</option>
-				<option value="500">500</option>
-				<option value="1000">1000</option>
-			</select>
-			</td>
+			<td align="left">Style:</td>
+			<td colspan="2"><select name="style" size="1" class="querySelect" tabindex="22">
+                <?php
+				$i = 1;
+				foreach (array('Classic', 'Multi-line', 'Single') as $value) {
+					if ($HTTP_COOKIE_VARS['style'] == $i) {
+						echo "<option value=\"".$i."\" selected=\"selected\" >".$value."</option>";
+					} else {
+						echo "<option value=\"".$i."\">".$value."</option>";
+					}
+					$i++;
+				}
+				?>
+              </select>
+            </td>
 		</tr>
 
 		<tr>
@@ -586,8 +579,17 @@ setcookie("instance", $_GET['instance']);
 			<td></td>
 			<td></td>
 			<td width="30"></td>
-			<td>&nbsp;</td>
-			<td colspan="2">&nbsp;</td>
+			<td align="left">Lines per Page:</td>
+			<td colspan="2"><select name="limit" size="1" class="querySelect" tabindex="23">
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200" selected="selected">200</option>
+                <option value="500">500</option>
+                <option value="1000">1000</option>
+              </select>
+            </td>
 		</tr>
 
 		<tr>
@@ -614,7 +616,6 @@ setcookie("instance", $_GET['instance']);
 		</table>
 		</form>
 
-
 		<!-- end form -->	
 		</td>
   	</tr>
@@ -628,13 +629,15 @@ setcookie("instance", $_GET['instance']);
 			} else {
 				echo $db_instances[$_GET['instance']]['username']."@".$db_instances[$_GET['instance']]['server']." (".$db_instances[$_GET['instance']]['type'].")";
 			}
-			?>		</td>
+			?>
+		</td>
 		<td align="right">
 			<?php
 			if ($show_partition_count) {
 				echo db_partition_count($dbh);
 			}
-			?>		</td>
+			?>
+		</td>
 	</tr>
 	
 	<!-- footer -->
@@ -647,7 +650,8 @@ setcookie("instance", $_GET['instance']);
     	<td width="33%" align="right" >
 			<a href="http://validator.w3.org/check?uri=referer"><img src="images/xhtml.png" alt="Valid XHTML 1.0 Strict" /></a>&nbsp;
 			<a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="images/css.png" alt="Valid CSS 2.0" /></a>&nbsp;
-			<a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>		</td>
+			<a href="http://www.php.net/"><img src="images/php.png" alt="Powered by PHP" /></a>
+		</td>
   	</tr>
 	</table>
 </body>

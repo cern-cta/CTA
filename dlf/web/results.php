@@ -94,6 +94,12 @@ setcookie("style", $_GET['style']);
 		}
 	}
 	
+	/* ordering */
+	$tordering = "DESC";
+	if (isset($_GET['sort']) && ($_GET['sort'] == "tasc")) {
+		$tordering = "ASC";
+	}
+
 	/* result limit */
 	if (DB_LAYER == 'mysql') {
 		$limit = "LIMIT ".(($_GET['page'] - 1) * $_GET['limit']).", ".$_GET['limit'];
@@ -102,7 +108,7 @@ setcookie("style", $_GET['style']);
 		$s_timeusec  = $schema_version > 1 ? "timeusec"  : "a.timeusec";
 		$limit = "SELECT * FROM (
 					 SELECT p.*, ROWNUM RNUM
-					 FROM (subquery ORDER BY $s_timestamp DESC, $s_timeusec DESC) p
+					 FROM (subquery ORDER BY $s_timestamp $tordering, $s_timeusec $tordering) p
 				  ) 
 				  WHERE (RNUM >  ".($_GET['page'] - 1) * $_GET['limit']."
 				  AND    RNUM <= ".($_GET['page'])     * $_GET['limit'].")";	
@@ -192,7 +198,7 @@ setcookie("style", $_GET['style']);
 	} else {
 		$exe_query = str_replace('subquery', $query, $limit);
 	}
-	$exe_query .= " ORDER BY timestamp DESC, timeusec DESC";
+	$exe_query .= " ORDER BY timestamp $tordering, timeusec $tordering";
 	echo '<!-- '.$exe_query.' -->';
 	
 	/* execute query */
