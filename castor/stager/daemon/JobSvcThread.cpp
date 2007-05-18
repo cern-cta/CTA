@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.39 2007/04/02 15:28:19 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.40 2007/05/18 10:01:11 sponcec3 Exp $
  */
 
 /*
@@ -370,6 +370,7 @@ namespace castor {
       castor::stager::SubRequest *subreq = 0;
       std::string error;
       castor::stager::MoverCloseRequest *mcReq;
+      castor::IObject *obj = 0;
 
       try {
 
@@ -382,7 +383,7 @@ namespace castor {
         /* -------------------------------*/
         STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from db");
         ad.setTarget(mcReq->subReqId());
-        castor::IObject *obj = svcs->createObj(&ad);
+        obj = svcs->createObj(&ad);
         if (0 == obj) {
           castor::exception::Internal e;
           e.getMessage() << "Found no object for ID:" << mcReq->subReqId();
@@ -415,6 +416,8 @@ namespace castor {
         delete obj;
 
       } catch (castor::exception::Exception e) {
+	// free memory
+	if (obj !=0) delete obj;
         serrno = e.code();
         error = e.getMessage().str().c_str();
         STAGER_LOG_DB_ERROR(NULL, func,
