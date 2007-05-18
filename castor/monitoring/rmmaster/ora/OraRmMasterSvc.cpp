@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/05/09 12:05:49 $ $Author: waldron $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/05/18 09:57:01 $ $Author: sponcec3 $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -155,6 +155,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   }
   // Compute array lengths
   unsigned int diskServersL = clusterStatus->size();
+  unsigned int diskServersFSL = 0;
   unsigned int fileSystemsL = 0;
   for (castor::monitoring::ClusterStatus::const_iterator it =
 	 clusterStatus->begin();
@@ -162,6 +163,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
        it++) {
     // don't send FileSystems for deleted nodes
     if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
+      diskServersFSL++;
       fileSystemsL += it->second.size();
     }
   }
@@ -312,21 +314,21 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     }
     // prepare the statement
     ub4 DSL = diskServersL;
-    ub4 FSL = diskServersL+fileSystemsL;
+    ub4 FSL = diskServersFSL+fileSystemsL;
     ub4 DSPL = 9*diskServersL;
     ub4 FSPL = 14*fileSystemsL;
     m_storeClusterStatusStatement->setDataBufferArray
       (1, bufferDS, oracle::occi::OCCI_SQLT_CHR,
-       diskServersL, &DSL, maxDSL, lensDS);
+       DSL, &DSL, maxDSL, lensDS);
     m_storeClusterStatusStatement->setDataBufferArray
       (2, bufferFS, oracle::occi::OCCI_SQLT_CHR,
-       diskServersL+fileSystemsL, &FSL, maxFSL, lensFS);
+       FSL, &FSL, maxFSL, lensFS);
     m_storeClusterStatusStatement->setDataBufferArray
       (3, bufferDSP, oracle::occi::OCCI_SQLT_NUM,
-       9*diskServersL, &DSPL, 21, lensDSP);
+       DSPL, &DSPL, 21, lensDSP);
     m_storeClusterStatusStatement->setDataBufferArray
       (4, bufferFSP, oracle::occi::OCCI_SQLT_NUM,
-       14 * fileSystemsL, &FSPL, 21, lensFSP);
+       FSPL, &FSPL, 21, lensFSP);
     // Finally execute the statement
     m_storeClusterStatusStatement->executeUpdate();
     // And release the memory
