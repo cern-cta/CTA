@@ -1,4 +1,5 @@
 -- For logging
+DROP TABLE CleanupLogTable;
 CREATE TABLE CleanupLogTable (fac NUMBER PRIMARY KEY, message VARCHAR2(256), logDate NUMBER);
 
 -- Cleanup old stage rm that were never deleted
@@ -14,16 +15,16 @@ BEGIN
    WHERE status = 6 AND request = id2type.id AND type = 42 AND subrequest.creationtime < getTime()-600000;
   LOOP
     nothingLeft := 1;
-    -- do it 500 by 500 in order to not slow down the normal requests
+    -- do it 2000 by 2000 in order to not slow down the normal requests
     FOR sr IN (SELECT subrequest.id FROM id2type, subrequest
                WHERE status = 6 AND request = id2type.id
-                 AND type = 42 AND rownum <= 500
+                 AND type = 42 AND rownum <= 2000
                  AND subrequest.creationtime < getTime()-600000) LOOP
       archiveSubReq(sr.id);
     nothingLeft := 0;
     END LOOP;
-    -- commit between each bunch of 500
-    done := done + 500;
+    -- commit between each bunch of 2000
+    done := done + 2000;
     UPDATE CleanupLogTable
        SET message = 'Cleanup old stage rm that were never deleted' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
@@ -32,7 +33,7 @@ BEGIN
     DBMS_LOCK.sleep(seconds => 1.0);
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'Old stage rm that were never deleted were cleaned', logDate = getTime()
+         SET message = 'Old stage rm that were never deleted were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 0;
       COMMIT;
       EXIT;
@@ -54,9 +55,9 @@ BEGIN
   COMMIT;
   SELECT COUNT(*) INTO totalCount FROM DiskCopy WHERE status = 9 AND creationTime < getTime() - 600000;
   LOOP
-    -- do it 1000 by 1000 in order to not slow down the normal requests
+    -- do it 5000 by 5000 in order to not slow down the normal requests
     UPDATE DiskCopy SET status = 8
-     WHERE status = 9 AND creationTime < getTime() - 600000 AND ROWNUM <= 1000;
+     WHERE status = 9 AND creationTime < getTime() - 600000 AND ROWNUM <= 5000;
     nbRowsUpdated := SQL%ROWCOUNT;
     done := done + nbRowsUpdated;
     UPDATE CleanupLogTable
@@ -66,12 +67,12 @@ BEGIN
     COMMIT;
     IF nbRowsUpdated = 0 THEN
       UPDATE CleanupLogTable
-         SET message = 'DiskCopies stuck in BEINGDELETED status cleaned', logDate = getTime()
+         SET message = 'DiskCopies stuck in BEINGDELETED status cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 1;
       COMMIT;
       EXIT;
     END IF;
-    DBMS_LOCK.sleep(seconds => 3.0);
+    DBMS_LOCK.sleep(seconds => 1.0);
   END LOOP;
 END;
 
@@ -168,15 +169,15 @@ BEGIN
   LOOP
     i := 1;
     files := emptyFileList; -- emptying collection
-    -- do it 1000 by 1000 in order to not slow down the normal requests
-    FOR dc IN (SELECT UNIQUE id FROM DiskCopy where status IN (4,7,8) and (filesystem = 0 or filesystem is null) AND ROWNUM <= 1000)
+    -- do it 5000 by 5000 in order to not slow down the normal requests
+    FOR dc IN (SELECT UNIQUE id FROM DiskCopy where status IN (4,7,8) and (filesystem = 0 or filesystem is null) AND ROWNUM <= 5000)
     LOOP
       files(i) := dc.id;
       i := i + 1;
     END LOOP;
     filesDeletedProcNoFS(files, fileIds);
-    -- commit between each bunch of 500
-    done := done + 1000;
+    -- commit between each bunch of 5000
+    done := done + 5000;
     UPDATE CleanupLogTable
        SET message = 'Cleaning the GC candidates that have no filesystem' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
@@ -185,7 +186,7 @@ BEGIN
     DBMS_LOCK.sleep(seconds => 1.0);
     IF i = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'GC candidates that have no filesystem were cleaned', logDate = getTime()
+         SET message = 'GC candidates that have no filesystem were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 2;
       COMMIT;
       EXIT;
@@ -219,7 +220,7 @@ BEGIN
         files := emptyFileList; -- emptying collection
         FOR dc IN (SELECT DiskCopy.id FROM DiskCopy, FileSystem
                     WHERE DiskCopy.status = 4 AND DiskCopy.fileSystem = fileSystem.id
-                      AND fileSystem.diskServer = ds.id AND ROWNUM <= 1000)
+                      AND fileSystem.diskServer = ds.id AND ROWNUM <= 5000)
         LOOP
           files(i) := dc.id;
           i := i + 1;
@@ -241,7 +242,7 @@ BEGIN
     END;
   END LOOP;
   UPDATE CleanupLogTable
-     SET message = 'Failed diskCopies were cleaned', logDate = getTime()
+     SET message = 'Failed diskCopies were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
    WHERE fac = 3;
   COMMIT;
 END;
@@ -295,7 +296,7 @@ BEGIN
     DBMS_LOCK.sleep(seconds => .5);
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'TapeCopies with no DiskCopies were cleaned', logDate = getTime()
+         SET message = 'TapeCopies with no DiskCopies were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 4;
       COMMIT;
       EXIT;
@@ -339,7 +340,7 @@ BEGIN
   END LOOP;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     UPDATE CleanupLogTable
-       SET message = 'FilesDeleted requests were cleaned', logDate = getTime()
+       SET message = 'FilesDeleted requests were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
      WHERE fac = 5;
     COMMIT;
 END;
@@ -380,45 +381,9 @@ BEGIN
   END LOOP;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     UPDATE CleanupLogTable
-       SET message = 'FilesDeletionFailed requests were cleaned', logDate = getTime()
+       SET message = 'FilesDeletionFailed requests were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
      WHERE fac = 6;
     COMMIT;
-END;
-
--- Cleanup of old subrequests stuck in status READY
-DECLARE
-  nothingLeft NUMBER;
-  totalCount NUMBER;
-  done NUMBER := 0;
-BEGIN
-  -- For logging
-  INSERT INTO CleanupLogTable VALUES (7, 'Cleaning old subrequests stuck in status READY', getTime());
-  COMMIT;
-  SELECT COUNT(*) INTO totalCount FROM SubRequest WHERE creationtime < getTime() - 600000 AND status = 6;
-  LOOP
-    nothingLeft := 1;
-    -- do it 100 by 100 in order to not slow down the normal requests
-    FOR sr IN (SELECT id FROM SubRequest
-                WHERE creationtime < getTime() - 600000
-                  AND status = 6 AND ROWNUM <= 100) LOOP
-      nothingLeft := 0;
-      archiveSubReq(sr.id);
-    END LOOP;
-    -- commit between each bunch of 100
-    done := done + 100;
-    UPDATE CleanupLogTable
-       SET message = 'Cleaning old subrequests stuck in status READY' ||
-           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
-     WHERE fac = 7;
-    COMMIT;
-    IF nothingLeft = 1 THEN
-      UPDATE CleanupLogTable
-         SET message = 'Old subrequests stuck in status READY were cleaned', logDate = getTime()
-       WHERE fac = 7;
-      COMMIT;
-      EXIT;
-    END IF;
-  END LOOP;
 END;
 
 -- Cleanup of old subrequests stuck in status WAITSUBREQ and
@@ -436,17 +401,17 @@ BEGIN
     AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL);
  LOOP
    nothingLeft := 1;
-   -- do it 100 by 100 in order to not slow down the normal requests
+   -- do it 1000 by 1000 in order to not slow down the normal requests
    FOR sr IN (SELECT id FROM SubRequest
                WHERE creationtime < getTime() - 600000
                  AND status = 5
                  AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL)
-                 AND ROWNUM <= 100) LOOP
+                 AND ROWNUM <= 1000) LOOP
      nothingLeft := 0;
      archiveSubReq(sr.id);
    END LOOP;
-   -- commit and wait 5 seconds between each bunch of 100
-   done := done + 100;
+   -- commit and wait 5 seconds between each bunch of 1000
+   done := done + 1000;
    UPDATE CleanupLogTable
       SET message = 'Cleaning SubRequests stuck in WAITSUBREQ' ||
           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
@@ -454,7 +419,7 @@ BEGIN
    COMMIT;
    IF nothingLeft = 1 THEN
      UPDATE CleanupLogTable
-        SET message = 'SubRequests stuck in WAITSUBREQ were cleaned', logDate = getTime()
+        SET message = 'SubRequests stuck in WAITSUBREQ were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
       WHERE fac = 8;
      COMMIT;
      EXIT;
@@ -478,11 +443,11 @@ BEGIN
    WHERE sub is null;
   LOOP
     nothingLeft := 1;
-    -- do it 100 by 100 in order to not slow down the normal requests
+    -- do it 1000 by 1000 in order to not slow down the normal requests
     FOR r IN (SELECT req FROM (SELECT UNIQUE r.id AS req, s.id AS sub
                                  FROM stageGetRequest r, subrequest s
                                 WHERE s.request(+) = r.id)
-               WHERE sub IS NULL AND ROWNUM <= 100) LOOP
+               WHERE sub IS NULL AND ROWNUM <= 1000) LOOP
      -- Delete the request
      DELETE FROM Id2Type WHERE id = r.req;
      DELETE FROM StageGetRequest WHERE id = r.req RETURNING client into rclient;
@@ -491,8 +456,8 @@ BEGIN
      DELETE FROM Client WHERE id = rclient;
      nothingLeft := 0;
     END LOOP;
-    -- commit between each bunch of 100
-    done := done + 100;
+    -- commit between each bunch of 1000
+    done := done + 1000;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stageGetRequest having no subrequest' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
@@ -500,7 +465,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stageGetRequest having no subrequest were cleaned', logDate = getTime()
+         SET message = 'stageGetRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 9;
       COMMIT;
       EXIT;
@@ -524,11 +489,11 @@ BEGIN
    WHERE sub is null;
   LOOP
     nothingLeft := 1;
-    -- do it 100 by 100 in order to not slow down the normal requests
+    -- do it 1000 by 1000 in order to not slow down the normal requests
     FOR r IN (SELECT req FROM (SELECT UNIQUE r.id AS req, s.id AS sub
                                  FROM stagePrepareToGetRequest r, subrequest s
                                 WHERE s.request(+) = r.id)
-               WHERE sub IS NULL AND ROWNUM <= 100) LOOP
+               WHERE sub IS NULL AND ROWNUM <= 1000) LOOP
      -- Delete the request
      DELETE FROM Id2Type WHERE id = r.req;
      DELETE FROM stagePrepareToGetRequest WHERE id = r.req RETURNING client into rclient;
@@ -537,8 +502,8 @@ BEGIN
      DELETE FROM Client WHERE id = rclient;
      nothingLeft := 0;
     END LOOP;
-    -- commit between each bunch of 100
-    done := done + 100;
+    -- commit between each bunch of 1000
+    done := done + 1000;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stagePrepareToGetRequest having no subrequest' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
@@ -546,7 +511,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stagePrepareToGetRequest having no subrequest were cleaned', logDate = getTime()
+         SET message = 'stagePrepareToGetRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 10;
       COMMIT;
       EXIT;
@@ -570,11 +535,11 @@ BEGIN
    WHERE sub is null;
   LOOP
     nothingLeft := 1;
-    -- do it 100 by 100 in order to not slow down the normal requests
+    -- do it 1000 by 1000 in order to not slow down the normal requests
     FOR r IN (SELECT req FROM (SELECT UNIQUE r.id AS req, s.id AS sub
                                  FROM stagePutRequest r, subrequest s
                                 WHERE s.request(+) = r.id)
-               WHERE sub IS NULL AND ROWNUM <= 100) LOOP
+               WHERE sub IS NULL AND ROWNUM <= 1000) LOOP
      -- Delete the request
      DELETE FROM Id2Type WHERE id = r.req;
      DELETE FROM stagePutRequest WHERE id = r.req RETURNING client into rclient;
@@ -583,8 +548,8 @@ BEGIN
      DELETE FROM Client WHERE id = rclient;
      nothingLeft := 0;
     END LOOP;
-    -- commit between each bunch of 100
-    done := done + 100;
+    -- commit between each bunch of 1000
+    done := done + 1000;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stagePutRequest having no subrequest' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
@@ -592,7 +557,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stagePutRequest having no subrequest were cleaned', logDate = getTime()
+         SET message = 'stagePutRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 11;
       COMMIT;
       EXIT;
@@ -616,11 +581,11 @@ BEGIN
    WHERE sub is null;
   LOOP
     nothingLeft := 1;
-    -- do it 100 by 100 in order to not slow down the normal requests
+    -- do it 1000 by 1000 in order to not slow down the normal requests
     FOR r IN (SELECT req FROM (SELECT UNIQUE r.id AS req, s.id AS sub
                                  FROM stagePutDoneRequest r, subrequest s
                                 WHERE s.request(+) = r.id)
-               WHERE sub IS NULL AND ROWNUM <= 100) LOOP
+               WHERE sub IS NULL AND ROWNUM <= 1000) LOOP
      -- Delete the request
      DELETE FROM Id2Type WHERE id = r.req;
      DELETE FROM stagePutDoneRequest WHERE id = r.req RETURNING client into rclient;
@@ -629,8 +594,8 @@ BEGIN
      DELETE FROM Client WHERE id = rclient;
      nothingLeft := 0;
     END LOOP;
-    -- commit between each bunch of 100
-    done := done + 100;
+    -- commit between each bunch of 1000
+    done := done + 1000;
     UPDATE CleanupLogTable
        SET message = 'Cleaning stagePutDoneRequest having no subrequest' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
@@ -638,7 +603,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stagePutDoneRequest having no subrequest were cleaned', logDate = getTime()
+         SET message = 'stagePutDoneRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
        WHERE fac = 12;
       COMMIT;
       EXIT;
@@ -647,42 +612,165 @@ BEGIN
 END;
 
 -- Cleanup of old subrequests (code from deleteOutOfDateRequests)
+
+DROP TABLE ReqCleaning;
+CREATE TABLE REQCLEANING
+    ( ID NUMBER NOT NULL ENABLE,
+      TYPE NUMBER(*,0) NOT NULL ENABLE
+    )
+ PCTFREE 0 TABLESPACE STAGER_DATA
+ PARTITION BY LIST (TYPE)
+  (PARTITION P_35  VALUES (35),
+   PARTITION P_40  VALUES (40),
+   PARTITION P_42  VALUES (42),
+   PARTITION P_39  VALUES (39),
+   PARTITION P_36  VALUES (36),
+   PARTITION P_37  VALUES (37),
+   PARTITION P_NOTDEFINED  VALUES (default)
+  );
+
+-- Using the APPEND hint to use Direct Option load mechanism
 DECLARE
-  nothingLeft NUMBER;
   totalCount NUMBER;
-  done NUMBER := 0;
 BEGIN
   -- For logging
-  INSERT INTO CleanupLogTable VALUES (13, 'Cleaning old subrequests', getTime());
+  INSERT INTO CleanupLogTable VALUES (13, 'Cleaning all old subrequests', getTime());
   COMMIT;
-  SELECT COUNT(*) INTO totalCount FROM (SELECT UNIQUE request FROM SubRequest GROUP BY request
-    HAVING min(status) >= 8 AND max(status) <= 11 AND max(lastModificationTime) < getTime() - 600000);
-  LOOP
-    nothingLeft := 1;
-    -- do it 100 by 100 in order to not slow down the normal requests
-    FOR s IN (SELECT * FROM (SELECT request FROM SubRequest GROUP BY request
-              HAVING min(status) >= 8 AND max(status) <= 11 
-                 AND max(lastModificationTime) < getTime() - 600000) WHERE ROWNUM <= 100) LOOP
-      nothingLeft := 0;
-      deleteRequest(s.request);
-    END LOOP;
-    -- commit between each bunch of 100
-    done := done + 100;
-    UPDATE CleanupLogTable
-       SET message = 'Cleaning old subrequests' ||
-           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
-     WHERE fac = 13;
-    COMMIT;
-    DBMS_LOCK.sleep(seconds => 1.0);
-    IF nothingLeft = 1 THEN
-      UPDATE CleanupLogTable
-         SET message = 'Old subrequests were cleaned', logDate = getTime()
-       WHERE fac = 13;
-      COMMIT;
-      EXIT;
-    END IF;
-  END LOOP;
+  INSERT /*+ APPEND */ INTO ReqCleaning
+    SELECT UNIQUE request, type 
+    FROM SubRequest, id2type
+    WHERE subrequest.request = id2type.id
+    GROUP BY request, type
+    HAVING min(status) >= 6    -- here we're deleting subrequests stuck in READY as well 
+       AND max(status) <= 11 
+       AND max(lastModificationTime) < getTime() - 600000;
+  COMMIT;
+  SELECT count(*) INTO totalCount FROM ReqCleaning;
+
+  -- Delete SubRequests
+
+  DELETE FROM Id2Type WHERE id in (
+    SELECT SubRequest.id FROM SubRequest, ReqCleaning
+     WHERE SubRequest.request = ReqCleaning.id);
+  
+  DELETE FROM SubRequest WHERE request in (
+    SELECT id FROM ReqCleaning);
+  
+  -- Delete Request + Clients 
+              ---- Get ----
+  
+  DELETE FROM Id2Type WHERE id in (
+    SELECT client FROM StageGetRequest, ReqCleaning
+     WHERE StageGetRequest.id = ReqCleaning.id);
+  
+  DELETE FROM Client WHERE id in (
+    SELECT client FROM StageGetRequest, ReqCleaning
+     WHERE StageGetRequest.id = ReqCleaning.id);
+  
+  DELETE FROM StageGetRequest WHERE id in (
+    SELECT id FROM ReqCleaning WHERE type = 35);
+  
+              ---- Put ----
+  
+  DELETE FROM Id2Type WHERE id in (
+    SELECT client FROM StagePutRequest, ReqCleaning
+     WHERE StagePutRequest.id = ReqCleaning.id);
+  
+  DELETE FROM Client WHERE id in (
+    SELECT client FROM StagePutRequest, ReqCleaning
+     WHERE StagePutRequest.id = ReqCleaning.id);
+  
+  DELETE FROM StagePutRequest WHERE id in (
+    SELECT id FROM ReqCleaning WHERE type = 40);
+  
+              ---- Rm ----
+  
+  DELETE FROM Id2Type WHERE id in (
+    SELECT client FROM StageRmRequest, ReqCleaning
+     WHERE StageRmRequest.id = ReqCleaning.id);
+  
+  DELETE FROM Client WHERE id in (
+    SELECT client FROM StageRmRequest, ReqCleaning
+     WHERE StageRmRequest.id = ReqCleaning.id);
+  
+  DELETE FROM StageRmRequest WHERE id in (
+    SELECT id FROM ReqCleaning WHERE type = 42);
+  
+             ---- PutDone ----
+  
+  DELETE FROM Id2Type WHERE id in (
+    SELECT client FROM StagePutDoneRequest, ReqCleaning
+     WHERE StagePutDoneRequest.id = ReqCleaning.id);
+  
+  DELETE FROM Client WHERE id in (
+    SELECT client FROM StagePutDoneRequest, ReqCleaning
+     WHERE StagePutDoneRequest.id = ReqCleaning.id);
+  
+  DELETE FROM StagePutDoneRequest WHERE id in (
+    SELECT id FROM ReqCleaning WHERE type = 39);
+  
+            ---- PrepareToGet -----
+  
+  DELETE FROM Id2Type WHERE id in (
+    SELECT client FROM StagePrepareToGetRequest, ReqCleaning
+     WHERE StagePrepareToGetRequest.id = ReqCleaning.id);
+  
+  DELETE FROM Client WHERE id in (
+    SELECT client FROM StagePrepareToGetRequest, ReqCleaning
+     WHERE StagePrepareToGetRequest.id = ReqCleaning.id);
+  
+  DELETE FROM StagePrepareToGetRequest WHERE id in (
+    SELECT id FROM ReqCleaning WHERE type = 36);
+  
+            ---- PrepareToPut ----
+  
+  DELETE FROM Id2Type WHERE id in (
+    SELECT client FROM StagePrepareToPutRequest, ReqCleaning
+     WHERE StagePrepareToPutRequest.id = ReqCleaning.id);
+  
+  DELETE FROM Client WHERE id in (
+    SELECT client FROM StagePrepareToPutRequest, ReqCleaning
+     WHERE StagePrepareToPutRequest.id = ReqCleaning.id);
+  
+  DELETE FROM StagePrepareToPutRequest WHERE id in (
+    SELECT id FROM ReqCleaning WHERE type = 37);
+  
+  -- Finally delete all IDs
+  
+  DELETE FROM Id2Type WHERE id in (
+    SELECT id FROM ReqCleaning);
+  
+  -- Last step is to commit the operations
+  UPDATE CleanupLogTable
+     SET message = 'Old subrequests were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+   WHERE fac = 13;
+  COMMIT;
 END;
 
--- Remove log table
-DROP TABLE CleanupLogTable;
+
+-- Optional steps follow
+
+INSERT INTO CleanupLogTable VALUES (14, 'Shrinking tables', getTime());
+COMMIT;
+
+-- Shrinking space in the tables that have just been cleaned up
+ALTER TABLE Id2Type SHRINK SPACE CASCADE;
+ALTER TABLE Client SHRINK SPACE CASCADE;
+ALTER TABLE StagePrepareToPutRequest SHRINK SPACE CASCADE;
+ALTER TABLE StagePrepareToGetRequest SHRINK SPACE CASCADE;
+ALTER TABLE StagePutDoneRequest SHRINK SPACE CASCADE;
+ALTER TABLE StageRmRequest SHRINK SPACE CASCADE;
+ALTER TABLE StageGetRequest SHRINK SPACE CASCADE;
+ALTER TABLE StagePutRequest SHRINK SPACE CASCADE;
+
+-- Subrequest added here for completeness. For the moment it will not 
+-- work as it requires to drop the FBI created on the table first.
+-- ALTER TABLE SubRequest SHRINK SPACE CASCADE;
+
+UPDATE CleanupLogTable
+   SET message = 'All tables were shrunk', logDate = getTime()
+ WHERE fac = 14;
+COMMIT;
+
+-- To provide a summary of the performed cleanup
+SELECT * FROM CLeanupLogTable;
