@@ -5,8 +5,9 @@
 #ifndef STAGER_CNS_HELPER_HPP
 #define STAGER_CNS_HELPER_HPP 1
 
-#include "Cns_api.h"
-#include "castor/IObject.hpp"
+#include "../../../h/Cns_api.h"
+#include "../../IObject.hpp"
+
 
 
 
@@ -16,7 +17,7 @@ namespace castor{
 
       
      
-      class StagerCnsHelper :public::castor::IObject{
+      class StagerCnsHelper : public::castor::IObject{
 	
       public:
 	
@@ -26,10 +27,9 @@ namespace castor{
 	struct Cns_fileclass cnsFileclass;
 	int fileExist;	
 	
-
 	
-	StagerCnsHelper();
-	~StagerCnsHelper();
+	StagerCnsHelper::StagerCnsHelper() throw();
+	StagerCnsHelper::~StagerCnsHelper() throw();
 
 	
 
@@ -39,7 +39,7 @@ namespace castor{
 	
 	/*since we are gonna use dlf: we won' t probably need it*/
 	/* get the fileid pointer to print (since we are gonna use dlf: we won' t probably need it  */
-	inline void StagerCnsHelper::createCnsFileidPointer() throw(); 
+	inline void StagerCnsHelper::getFileid() throw(); 
 	
 	/* create cnsFileid, cnsFilestat and update fileExist using the "Cns_statx()" C function */
 	/* for a subrequest.filename */
@@ -62,17 +62,15 @@ namespace castor{
      
 
 
-      }//end class
+      }
       
 
 
 
 
-    }//end namespace dbService
-  }// end namespace stager
-}//end namespace castor
-
-
+    }
+  }
+}
 
 
 #endif
