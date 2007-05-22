@@ -1,12 +1,15 @@
-/************************************************************************/
-/* container for the c methods and structures related with the cns_api */
-/**********************************************************************/
+/***************************************************************************/
+/* helper class for the c methods and structures related with the cns_api */
+/*************************************************************************/
 
-#include "Cns_api.h"
-#include "castor/IObject.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/stager_uuid.h"
-
+#include "../../../h/Cns_api.h"
+#include "../../../h/Cglobals.h"
+#include "../../IObject.hpp"
+#include "StagerCnsHelper.hpp"
+#include "../../../stager/stager_uuid.h"
+#include "../../../h/dlf_api.h"
+#include "../../../dlf/Message.hpp"
+#include "../../../dlf/Param.hpp"
 
 namespace castor{
   namespace stager{
@@ -14,9 +17,11 @@ namespace castor{
 
 
       StagerCnsHelper::StagerCnsHelper() throw(){
-	///
+	/* set the initial value of our static variable */
+	this->fileid_ts_key = -1;
       }
       StagerCnsHelper::~StagerCnsHelper() throw(){
+	//
       }
 
 
@@ -24,11 +29,18 @@ namespace castor{
       /* Cns structures */
       /*****************/ 
 
-      /*since we are gonna use dlf: we won' t probably need it*/
-      /* get the fileid pointer to print (since we are gonna use dlf: we won' t probably need it  */
-      void StagerCnsHelper::createCnsFileidPointer() throw() 
+      /* get the fileid pointer to logging on dlf */
+      void StagerCnsHelper::getFileid() throw() 
       {
-	////to implement!
+	Cns_fileid *var;
+	Cglobals_get(&fileid_ts_key,(void**) &var, sizeof(struct Cns_fileid));
+	if(var == NULL){
+	  this->fileid = this->fileid_ts_static;
+	  castor::dlf::Param param[]={castor::dlf::Param("Standard message", "(Cglobals_get) Impossible to get the fileid needed to login")};
+	  castor::dlf::dlf_writep(this->fileid, DLF_LVL_SYSTEM,3,1,param);
+	}else{
+	  this->fileid = var;
+	}
       }
 
      
@@ -37,8 +49,8 @@ namespace castor{
       /* for a subrequest.filename */
       int StagerCnsHelper::createCnsFileIdAndStat_setFileExist(char* subrequestFileName) throw()/* update fileExist*/
       {
-	  memset(&cnsFileid, '\0', sizeof(cnsFileid)); /* reset cnsFileid structure  */
-	  this->fileExist = (0 == Cns_statx( subrequestFileName,&cnsFileid,&cnsFilestat));
+	  memset(&(this->cnsFileid), '\0', sizeof(this->cnsFileid)); /* reset cnsFileid structure  */
+	  this->fileExist = (0 == Cns_statx(subrequestFileName,&(this->cnsFileid),&(this->cnsFilestat)));
 	
 	  return(this->fileExist);
       }
@@ -48,7 +60,7 @@ namespace castor{
       /* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
       void StagerCnsHelper::getCnsFileclass() throw()
       {	
-	  Cns_queryclass(fileid.server,cnsFilestat.fileclass, NULL, &cnsFileclass);
+	  Cns_queryclass((this->fileid.server),(this->cnsFilestat.fileclass), NULL, &(this->cnsFileclass));
 	  //check if cnsFileclass is NULL
       }
      
@@ -72,10 +84,10 @@ namespace castor{
       /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
       void StagerCnsHelper::createFileAndUpdateCns(char* filename, mode_t mode) throw()
       {
-	if (Cns_creatx(filename, mode, &cnsFileid) != 0) {
+	if (Cns_creatx(filename, mode, &(this->cnsFileid)) != 0) {
 	  //throw exception
 	}
-	if (Cns_statx(filename,&cnsFileid,&cnsFilestat) != 0) {
+	if (Cns_statx(filename,&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
 	  //throw exception
 	}
       }

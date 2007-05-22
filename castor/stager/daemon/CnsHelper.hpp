@@ -26,6 +26,10 @@ namespace castor{
 	struct Cns_filestat cnsFilestat;
 	struct Cns_fileclass cnsFileclass;
 	int fileExist;	
+
+	/* static variables needed to get the fileid for logging */
+	static int fileid_ts_key;
+	static struct Cns_fileid fileid_ts_static;
 	
 	
 	StagerCnsHelper::StagerCnsHelper() throw();
