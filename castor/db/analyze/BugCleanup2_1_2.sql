@@ -1,6 +1,6 @@
 -- For logging
-DROP TABLE CleanupLogTable;
-CREATE TABLE CleanupLogTable (fac NUMBER PRIMARY KEY, message VARCHAR2(256), logDate NUMBER);
+--DROP TABLE CleanupLogTable;
+CREATE TABLE CleanupLogTable (fac NUMBER, message VARCHAR2(256), logDate NUMBER);
 
 -- Cleanup old stage rm that were never deleted
 DECLARE
@@ -611,7 +611,6 @@ END;
 
 -- Cleanup of old subrequests (code from deleteOutOfDateRequests)
 
-DROP TABLE ReqCleaning;
 CREATE TABLE REQCLEANING
     ( ID NUMBER NOT NULL ENABLE,
       TYPE NUMBER(*,0) NOT NULL ENABLE
@@ -743,6 +742,7 @@ BEGIN
      SET message = 'Old subrequests were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
    WHERE fac = 13;
   COMMIT;
+  DROP TABLE ReqCleaning;
 END;
 
 
@@ -751,7 +751,10 @@ END;
 INSERT INTO CleanupLogTable VALUES (14, 'Shrinking tables', getTime());
 COMMIT;
 
--- Shrinking space in the tables that have just been cleaned up
+-- Shrinking space in the tables that have just been cleaned up.
+-- This only works if tables have ROW MOVEMENT enabled, and it's
+-- not a big problem if we don't do that. Newer Castor versions
+-- do enable this feature in all involved tables.
 ALTER TABLE Id2Type SHRINK SPACE CASCADE;
 ALTER TABLE Client SHRINK SPACE CASCADE;
 ALTER TABLE StagePrepareToPutRequest SHRINK SPACE CASCADE;
@@ -760,10 +763,8 @@ ALTER TABLE StagePutDoneRequest SHRINK SPACE CASCADE;
 ALTER TABLE StageRmRequest SHRINK SPACE CASCADE;
 ALTER TABLE StageGetRequest SHRINK SPACE CASCADE;
 ALTER TABLE StagePutRequest SHRINK SPACE CASCADE;
-
--- Subrequest added here for completeness. For the moment it will not 
--- work as it requires to drop the FBI created on the table first.
--- ALTER TABLE SubRequest SHRINK SPACE CASCADE;
+ALTER TABLE DiskCopy SHRINK SPACE CASCADE;
+ALTER TABLE SubRequest SHRINK SPACE CASCADE;
 
 UPDATE CleanupLogTable
    SET message = 'All tables were shrunk', logDate = getTime()
@@ -771,4 +772,4 @@ UPDATE CleanupLogTable
 COMMIT;
 
 -- To provide a summary of the performed cleanup
-SELECT * FROM CLeanupLogTable;
+SELECT * FROM CleanupLogTable;
