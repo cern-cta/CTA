@@ -33,7 +33,7 @@ BEGIN
     DBMS_LOCK.sleep(seconds => 1.0);
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'Old stage rm that were never deleted were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'Old stage rm that were never deleted were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 0;
       COMMIT;
       EXIT;
@@ -67,7 +67,7 @@ BEGIN
     COMMIT;
     IF nbRowsUpdated = 0 THEN
       UPDATE CleanupLogTable
-         SET message = 'DiskCopies stuck in BEINGDELETED status cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'DiskCopies stuck in BEINGDELETED status cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 1;
       COMMIT;
       EXIT;
@@ -186,7 +186,7 @@ BEGIN
     DBMS_LOCK.sleep(seconds => 1.0);
     IF i = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'GC candidates that have no filesystem were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'GC candidates that have no filesystem were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 2;
       COMMIT;
       EXIT;
@@ -242,7 +242,7 @@ BEGIN
     END;
   END LOOP;
   UPDATE CleanupLogTable
-     SET message = 'Failed diskCopies were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+     SET message = 'Failed diskCopies were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
    WHERE fac = 3;
   COMMIT;
 END;
@@ -296,7 +296,7 @@ BEGIN
     DBMS_LOCK.sleep(seconds => .5);
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'TapeCopies with no DiskCopies were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'TapeCopies with no DiskCopies were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 4;
       COMMIT;
       EXIT;
@@ -340,7 +340,7 @@ BEGIN
   END LOOP;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     UPDATE CleanupLogTable
-       SET message = 'FilesDeleted requests were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+       SET message = 'FilesDeleted requests were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
      WHERE fac = 5;
     COMMIT;
 END;
@@ -381,7 +381,7 @@ BEGIN
   END LOOP;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     UPDATE CleanupLogTable
-       SET message = 'FilesDeletionFailed requests were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+       SET message = 'FilesDeletionFailed requests were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
      WHERE fac = 6;
     COMMIT;
 END;
@@ -401,25 +401,23 @@ BEGIN
     AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL);
  LOOP
    nothingLeft := 1;
-   -- do it 1000 by 1000 in order to not slow down the normal requests
+   -- do it in one go here because the heaviest part is the SELECT itself with the NOT IN clause
    FOR sr IN (SELECT id FROM SubRequest
                WHERE creationtime < getTime() - 600000
                  AND status = 5
-                 AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL)
-                 AND ROWNUM <= 1000) LOOP
-     nothingLeft := 0;
+                 AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL) LOOP
      archiveSubReq(sr.id);
    END LOOP;
    -- commit and wait 5 seconds between each bunch of 1000
-   done := done + 1000;
-   UPDATE CleanupLogTable
-      SET message = 'Cleaning SubRequests stuck in WAITSUBREQ' ||
-          TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
-    WHERE fac = 8;
+   -- done := done + 1000;
+   -- UPDATE CleanupLogTable
+   --   SET message = 'Cleaning SubRequests stuck in WAITSUBREQ' ||
+   --       TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
+   -- WHERE fac = 8;
    COMMIT;
    IF nothingLeft = 1 THEN
      UPDATE CleanupLogTable
-        SET message = 'SubRequests stuck in WAITSUBREQ were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+        SET message = 'SubRequests stuck in WAITSUBREQ were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
       WHERE fac = 8;
      COMMIT;
      EXIT;
@@ -465,7 +463,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stageGetRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'stageGetRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 9;
       COMMIT;
       EXIT;
@@ -511,7 +509,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stagePrepareToGetRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'stagePrepareToGetRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 10;
       COMMIT;
       EXIT;
@@ -557,7 +555,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stagePutRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'stagePutRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 11;
       COMMIT;
       EXIT;
@@ -603,7 +601,7 @@ BEGIN
     COMMIT;
     IF nothingLeft = 1 THEN
       UPDATE CleanupLogTable
-         SET message = 'stagePutDoneRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+         SET message = 'stagePutDoneRequest having no subrequest were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
        WHERE fac = 12;
       COMMIT;
       EXIT;
@@ -742,7 +740,7 @@ BEGIN
   
   -- Last step is to commit the operations
   UPDATE CleanupLogTable
-     SET message = 'Old subrequests were cleaned - ' || TO_CHAR(totalCount, '9') || ' entries', logDate = getTime()
+     SET message = 'Old subrequests were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
    WHERE fac = 13;
   COMMIT;
 END;
