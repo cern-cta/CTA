@@ -120,7 +120,7 @@ mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/%{LIB}
 mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/etc
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
 # Note: Only castor-job subpackage have a cron job
-mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly
+#mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.weekly
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.monthly
@@ -174,9 +174,9 @@ done
 #for i in debian/*.cron.d; do
 #    install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/cron.d/`basename ${i} | sed 's/\.cron\.d//g'`
 #done
-for i in debian/*.cron.hourly; do
-    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.hourly/`basename ${i} | sed 's/\.cron\.hourly//g'`
-done
+#for i in debian/*.cron.hourly; do
+#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.hourly/`basename ${i} | sed 's/\.cron\.hourly//g'`
+#done
 #for i in debian/*.cron.daily; do
 #    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.daily/`basename ${i} | sed 's/\.cron\.daily//g'`
 #done
