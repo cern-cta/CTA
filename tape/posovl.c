@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.28 $ $Date: 2007/03/13 16:22:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.29 $ $Date: 2007/05/23 13:51:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -174,17 +174,19 @@ char	**argv;
 			else {
 				usrmsg (func, TP042, path, "open",
 					strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "path",    TL_MSG_PARAM_STR, path,
-                                                    "Message", TL_MSG_PARAM_STR, "open" );
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "path"   , TL_MSG_PARAM_STR  , path,
+                                                    "Message", TL_MSG_PARAM_STR  , "open",
+                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 			goto reply;
 		}
 		if (chkdriveready_sony (tapefd) <= 0) {
 			usrmsg (func, TP054);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 1,
-                                            "func", TL_MSG_PARAM_STR, func );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 2,
+                                            "func" , TL_MSG_PARAM_STR  , func,
+                                            "TPVID", TL_MSG_PARAM_TPVID, vid );
 			c = ETNRDY;
 			goto reply;
 		}
@@ -209,8 +211,9 @@ char	**argv;
 			if (errno == EIO) {
 #endif
 				usrmsg (func, TP054);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 1,
-                                                    "func", TL_MSG_PARAM_STR, func );                        
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 2,
+                                                    "func" , TL_MSG_PARAM_STR  , func,
+                                                    "TPVID", TL_MSG_PARAM_TPVID, vid );                        
 				c = ETNRDY;
 				goto reply;
 			}
@@ -221,17 +224,19 @@ char	**argv;
 			else {
 				usrmsg (func, TP042, path, "open",
 					strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 3,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "path",    TL_MSG_PARAM_STR, path,
-                                                    "Message", TL_MSG_PARAM_STR, "open" );
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "path"   , TL_MSG_PARAM_STR  , path,
+                                                    "Message", TL_MSG_PARAM_STR  , "open",
+                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 			goto reply;
 		}
 		if (chkdriveready (tapefd) <= 0) {
 			usrmsg (func, TP054);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 1,
-                                            "func", TL_MSG_PARAM_STR, func );                        
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 54, 2,
+                                            "func" , TL_MSG_PARAM_STR  , func,
+                                            "TPVID", TL_MSG_PARAM_TPVID, vid );                        
 			c = ETNRDY;
 			goto reply;
 		}
@@ -242,13 +247,14 @@ char	**argv;
                                 char msg[32];
                                 sprintf( msg, "locating to blockid %02x%02x%02x%02x\n",
                                          blockid[0], blockid[1], blockid[2], blockid[3] );
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 6,
-                                                    "func",       TL_MSG_PARAM_STR, func,
-                                                    "Message",    TL_MSG_PARAM_STR, msg,
-                                                    "Block ID 0", TL_MSG_PARAM_INT, blockid[0],
-                                                    "Block ID 1", TL_MSG_PARAM_INT, blockid[1],
-                                                    "Block ID 2", TL_MSG_PARAM_INT, blockid[2],
-                                                    "Block ID 3", TL_MSG_PARAM_INT, blockid[3] );
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 7,
+                                                    "func",       TL_MSG_PARAM_STR  , func,
+                                                    "Message",    TL_MSG_PARAM_STR  , msg,
+                                                    "Block ID 0", TL_MSG_PARAM_INT  , blockid[0],
+                                                    "Block ID 1", TL_MSG_PARAM_INT  , blockid[1],
+                                                    "Block ID 2", TL_MSG_PARAM_INT  , blockid[2],
+                                                    "Block ID 3", TL_MSG_PARAM_INT  , blockid[3],
+                                                    "TPVID"     , TL_MSG_PARAM_TPVID, vid );
                         }
 			if ((c = locate (tapefd, path, blockid))) goto reply;
 			flags |= LOCATE_DONE;
@@ -402,9 +408,10 @@ char	**argv;
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 	} else {
 		usrmsg (func, "%s", errbuf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, errbuf );                        
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                    "Message", TL_MSG_PARAM_STR  , errbuf,
+                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );                        
         }
 reply:
 	if (c < 0) c = serrno;

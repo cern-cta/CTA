@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.35 $ $Date: 2007/03/28 13:39:57 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.36 $ $Date: 2007/05/23 13:51:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -124,12 +124,13 @@ char	**argv;
         vsnretry = 0;
 
 	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 5,
-                            "func",     TL_MSG_PARAM_STR, func,
-                            "Message",  TL_MSG_PARAM_STR, "rls",
-                            "dvn",      TL_MSG_PARAM_STR, dvn,
-                            "vid",      TL_MSG_PARAM_STR, vid,
-                            "rlsflags", TL_MSG_PARAM_INT, rlsflags );
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
+                            "func"    , TL_MSG_PARAM_STR  , func,
+                            "Message" , TL_MSG_PARAM_STR  , "rls",
+                            "dvn"     , TL_MSG_PARAM_STR  , dvn,
+                            "vid"     , TL_MSG_PARAM_STR  , vid,
+                            "rlsflags", TL_MSG_PARAM_INT  , rlsflags,
+                            "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 
 #if SONYRAW
 	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)
@@ -168,13 +169,14 @@ char	**argv;
                        mediaerror, 
                        readfailure,
                        writefailure);
-              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 103 : 111, 6,
-                                  "func",           TL_MSG_PARAM_STR, func,
-                                  "Message",        TL_MSG_PARAM_STR, "tape alerts",
-                                  "hardware error", TL_MSG_PARAM_INT, harderror,
-                                  "media error",    TL_MSG_PARAM_INT, mediaerror,
-                                  "read failure",   TL_MSG_PARAM_INT, readfailure,
-                                  "write failure",  TL_MSG_PARAM_INT, writefailure );
+              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 103 : 111, 7,
+                                  "func"          , TL_MSG_PARAM_STR,   func,
+                                  "Message"       , TL_MSG_PARAM_STR,   "tape alerts",
+                                  "hardware error", TL_MSG_PARAM_INT,   harderror,
+                                  "media error"   , TL_MSG_PARAM_INT,   mediaerror,
+                                  "read failure"  , TL_MSG_PARAM_INT,   readfailure,
+                                  "write failure" , TL_MSG_PARAM_INT,   writefailure,
+                                  "TPVID"         , TL_MSG_PARAM_TPVID, vid );
               
               if (tapealerts > 0) {
                       
@@ -185,22 +187,25 @@ char	**argv;
                               /* found a config entry */
                               if ( (0 == strcmp( p, "yes")) || (0 == strcmp( p, "YES"))) {                               
                                       tplogit( func, "Configure the drive down (config)\n" );
-                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                                          "func",    TL_MSG_PARAM_STR, func,
-                                                          "Message", TL_MSG_PARAM_STR, "Configure the drive down (config)" );
+                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                                          "func"   , TL_MSG_PARAM_STR  , func,
+                                                          "Message", TL_MSG_PARAM_STR  , "Configure the drive down (config)",
+                                                          "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                                       configdown (drive);
                               } else {
                                       tplogit( func, "Leave the drive up (config)\n" );
-                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
-                                                          "func",    TL_MSG_PARAM_STR, func,
-                                                          "Message", TL_MSG_PARAM_STR, "Leave the drive up (config)" );
+                                      tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                                          "func"   , TL_MSG_PARAM_STR  , func,
+                                                          "Message", TL_MSG_PARAM_STR  , "Leave the drive up (config)",
+                                                          "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                               }
                       } else {
                               /* default: configure the drive down */
                               tplogit( func, "Configure the drive down (default)\n" );
-                              tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                                  "func",    TL_MSG_PARAM_STR, func,
-                                                  "Message", TL_MSG_PARAM_STR, "Configure the drive down (default)" );
+                              tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                                  "func"   , TL_MSG_PARAM_STR  , func,
+                                                  "Message", TL_MSG_PARAM_STR  , "Configure the drive down (default)",
+                                                  "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                               configdown (drive);
                       }
               }
@@ -208,9 +213,10 @@ char	**argv;
     	  } else {
 
 	    	tplogit (func, "tape alerts: no information available\n");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "tape alerts: no information available" );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                    "Message", TL_MSG_PARAM_STR  , "tape alerts: no information available",
+                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
     	  }
 
 	  close (tapefd);
@@ -223,19 +229,21 @@ char	**argv;
 #endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "dvn",     TL_MSG_PARAM_STR, dvn,
-                                                    "Message", TL_MSG_PARAM_STR, "open",
-                                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "dvn"    , TL_MSG_PARAM_STR  , dvn,
+                                                    "Message", TL_MSG_PARAM_STR  , "open",
+                                                    "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
+                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
  	}
 #if SONYRAW
     } else {
        tplogit (func, "tape alerts: no information available\n");
-       tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                           "func",    TL_MSG_PARAM_STR, func,
-                           "Message", TL_MSG_PARAM_STR, "tape alerts: no information available" );
+       tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                           "func"   , TL_MSG_PARAM_STR,   func,
+                           "Message", TL_MSG_PARAM_STR,   "tape alerts: no information available",
+                           "TPVID"  , TL_MSG_PARAM_TPVID, vid );
     }
 #endif
 
@@ -250,19 +258,21 @@ char	**argv;
 	if (rlsflags & TPRLS_UNLOAD)
 		vdqm_status |= VDQM_FORCE_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)\n");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                            "func",    TL_MSG_PARAM_STR, func,
-                            "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)" );
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                            "func"   , TL_MSG_PARAM_STR  , func,
+                            "Message", TL_MSG_PARAM_STR  , "calling vdqm_UnitStatus(VDQM_UNIT_RELEASE)",
+                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
         while ((vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive,
 		&vdqm_status, NULL, jid)) &&
 		(serrno == SECOMERR || serrno == EVQHOLD))
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 3,
-                            "func",    TL_MSG_PARAM_STR, func,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 4,
+                            "func"   , TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
-                            "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok" );        
+                            "Error"  , TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok",
+                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );  
 	if (vdqm_rc == 0 && (vdqm_status & VDQM_VOL_UNMOUNT) == 0 &&
 	    (rlsflags & TPRLS_UNLOAD) == 0) {
 		rlsflags |= TPRLS_NOUNLOAD;
@@ -327,11 +337,12 @@ unload_loop:
 #endif
                         {
                                 tplogit (func, TP042, dvn, "open", strerror(errno));
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
-                                                    "func",    TL_MSG_PARAM_STR, func,
-                                                    "dvn",     TL_MSG_PARAM_STR, dvn,
-                                                    "Message", TL_MSG_PARAM_STR, "open",
-                                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "dvn"    , TL_MSG_PARAM_STR  , dvn,
+                                                    "Message", TL_MSG_PARAM_STR  , "open",
+                                                    "Error"  , TL_MSG_PARAM_STR  , strerror(errno),
+                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                         }
 	}
 #if SONYRAW
@@ -349,11 +360,12 @@ unload_loop:
 		close (tapefd);
 	} else {
 		tplogit (func, TP042, dvn, "open", strerror(errno));
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 4,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "dvn",     TL_MSG_PARAM_STR, dvn,
-                                    "Message", TL_MSG_PARAM_STR, "open",
-                                    "Error",   TL_MSG_PARAM_STR, strerror(errno) );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 42, 5,
+                                    "func"   , TL_MSG_PARAM_STR,   func,
+                                    "dvn"    , TL_MSG_PARAM_STR,   dvn,
+                                    "Message", TL_MSG_PARAM_STR,   "open",
+                                    "Error"  , TL_MSG_PARAM_STR,   strerror(errno),
+                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
         }
     }
 #endif
@@ -376,19 +388,21 @@ vol_unmount:
 #if VDQM
 	vdqm_status = VDQM_VOL_UNMOUNT;
 	tplogit (func, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)\n");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                            "func",    TL_MSG_PARAM_STR, func,
-                            "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)" );
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                            "func"   , TL_MSG_PARAM_STR,   func,
+                            "Message", TL_MSG_PARAM_STR,   "calling vdqm_UnitStatus(VDQM_VOL_UNMOUNT)",
+                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
 	while ((vdqm_rc = vdqm_UnitStatus (NULL, vid, dgn, NULL, drive,
 		&vdqm_status, NULL, 0)) &&
 		(serrno == SECOMERR || serrno == EVQHOLD))
 			sleep (60);
 	tplogit (func, "vdqm_UnitStatus returned %s\n",
 		vdqm_rc ? sstrerror(serrno) : "ok");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 3,
-                            "func",    TL_MSG_PARAM_STR, func,
-                            "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
-                            "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok" );        
+        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc ? 103 : 111, 4,
+                            "func"   , TL_MSG_PARAM_STR  , func,
+                            "Message", TL_MSG_PARAM_STR  , "vdqm_UnitStatus returned",
+                            "Error"  , TL_MSG_PARAM_STR  , vdqm_rc ? sstrerror(serrno) : "ok",
+                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );        
 #endif
 	goto freedrv;
 
@@ -422,9 +436,10 @@ freedrv:
  
 	if ((c = send2tpd (NULL, sendbuf, msglen, NULL, 0))) {
 		usrmsg (func, "%s", errbuf);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, errbuf );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
+                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                    "Message", TL_MSG_PARAM_STR  , errbuf,
+                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
         }
 	if (c < 0) c = serrno;
 

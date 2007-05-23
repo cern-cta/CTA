@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.8 2007/04/13 13:02:29 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.9 2007/05/23 13:51:06 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.8 $ $Date: 2007/04/13 13:02:29 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.9 $ $Date: 2007/05/23 13:51:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -1307,10 +1307,10 @@ char *clienthost;
 
 	tplogit (func, "mount request %s\n", vid);
         tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
-                            "func",     TL_MSG_PARAM_STR,   func,
-                            "Message",  TL_MSG_PARAM_STR,   "Mount request",
-                            "VID",      TL_MSG_PARAM_STR,   vid,
-                            "Tape VID", TL_MSG_PARAM_TPVID, vid );                        
+                            "func"   , TL_MSG_PARAM_STR  , func,
+                            "Message", TL_MSG_PARAM_STR  , "Mount request",
+                            "VID"    , TL_MSG_PARAM_STR  , vid,
+                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );                        
 	c = 0;
 
 	/* check if reserv done */
