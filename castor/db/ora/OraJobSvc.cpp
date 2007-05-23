@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/05/10 13:44:53 $ $Author: gtaur $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/05/23 09:00:56 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -59,7 +59,6 @@
 #include "castor/db/ora/OraJobSvc.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/SegmentNotAccessible.hpp"
 #include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
@@ -426,6 +425,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       m_prepareForMigrationStatement->getInt(7);
     // Update name server
     char cns_error_buffer[512];  /* Cns error buffer */
+    *cns_error_buffer = 0;
     if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
