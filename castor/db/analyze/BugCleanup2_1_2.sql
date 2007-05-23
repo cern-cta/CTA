@@ -652,6 +652,7 @@ BEGIN
   
   DELETE FROM SubRequest WHERE request in (
     SELECT id FROM ReqCleaning);
+  COMMIT;
   
   -- Delete Request + Clients 
               ---- Get ----
@@ -692,6 +693,7 @@ BEGIN
   
   DELETE FROM StageRmRequest WHERE id in (
     SELECT id FROM ReqCleaning WHERE type = 42);
+  COMMIT;
   
              ---- PutDone ----
   
