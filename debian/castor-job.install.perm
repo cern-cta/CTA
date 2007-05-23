@@ -1,5 +1,1 @@
-%attr(0644,root,bin) etc/sysconfig/stagerJob.example
-%attr(0755,stage,st) usr/bin/postlsfmsg
-%attr(0755,stage,st) usr/bin/readlsfmsg
 %attr(6755,stage,st) usr/bin/stagerJob
-%attr(0755,stage,st) usr/bin/stagerJob.sh
