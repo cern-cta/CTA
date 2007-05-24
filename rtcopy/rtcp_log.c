@@ -125,6 +125,10 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, SOCKET *client_socket) {
     }
 #if defined(RTCP_SERVER)
     if ( out == NULL && err == NULL ) {
+        if ( ((p = getenv("RTCOPY_LOGFILE")) != NULL) ||
+             ((p = getconfent("RTCOPY","LOGFILE",0)) != NULL) ) {
+            rtcpd_logfile=strdup(p);
+        }
         initlog("rtcopyd",loglevel,rtcpd_logfile);
         if ( msgbuf == NULL && client_socket == NULL ) {
             rtcp_log = (void (*)(int, const char *, ...))log;
