@@ -1,5 +1,5 @@
 /*
- * $Id: rtcpd.c,v 1.3 2007/02/23 09:30:12 sponcec3 Exp $
+ * $Id: rtcpd.c,v 1.4 2007/05/24 16:58:54 obarring Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -50,11 +50,15 @@ extern int Cinitdaemon _PROTO((char *, void (*)(int)));
 
 static int ChdirWorkdir() {
 #if !defined(_WIN32)
-    char workdir[] = WORKDIR;
+    char *workdir = WORKDIR, *p;
     struct stat st;
     mode_t save_mask;
     int rc;
 
+    if ( ((p = getenv("RTCOPY_WORKDIR")) != NULL) ||
+         ((p = getconfent("RTCOPY","WORKDIR",0)) != NULL) ) {
+        workdir = strdup(p);
+    }
     /*
      * Check and create if necessary the RTCOPY working directory
      */
