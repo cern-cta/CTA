@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: recaller.c,v $ $Revision: 1.26 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: recaller.c,v $ $Revision: 1.27 $ $Release$ $Date: 2007/05/24 17:00:43 $ $Author: obarring $
  *
  * 
  *
@@ -297,6 +297,11 @@ int recallerCallbackFileCopied(
                                      file
                                      );
       (void)rtcpcld_unlockTape();
+      /*
+       * SEINTERNAL means that there was either a database problem or a filesize
+       * inconsistency. Try to carry on with the next file.
+       */
+      if (save_serrno == SEINTERNAL) return(0);
       (void)updateSegmCount(0,0,1);
       serrno = save_serrno;
       return(-1);
