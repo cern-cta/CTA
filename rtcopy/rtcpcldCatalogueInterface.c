@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.159 $ $Release$ $Date: 2007/03/29 10:24:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.160 $ $Release$ $Date: 2007/05/24 17:03:10 $ $Author: obarring $
  *
  * 
  *
@@ -568,6 +568,7 @@ int rtcpcld_getTapesToDo(
   struct Cstager_ITapeSvc_t **stgsvc = NULL;
   struct C_Services_t **dbSvc;
   struct Cstager_TapePool_t *tapePool;
+  enum Cstager_TapeStatusCodes_t tapeStatus;
   rtcpTapeRequest_t *tapereq;
   tape_list_t *tape = NULL, *tl;
   char *vid, *tapePoolName;
@@ -623,8 +624,21 @@ int rtcpcld_getTapesToDo(
       tapereq->side = side;
       rc = rtcpcld_tapeOK(tl);
       if ( rc == -1 ) {
-        save_serrno = errno;
+        save_serrno = serrno;
         LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
+        if ( save_serrno == ENOENT ) {
+            tapeStatus = TAPE_FAILED;
+        } else {
+            /*
+             * Retry in next iteration (30 seconds)
+             */
+            tapeStatus = TAPE_PENDING;
+        }
+        (void) rtcpcld_updateTapeStatus(
+                                        tl,
+                                        TAPE_WAITDRIVE,
+                                        tapeStatus
+                                        );
         CLIST_DELETE(tape,tl);
         free(tl);
         continue;
