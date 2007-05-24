@@ -1282,6 +1282,10 @@ void *tapeIOthread(void *arg) {
          */
         rc = rtcpd_CtapeInit();
         if ( rc == -1 ) {
+            if ( (mode == WRITE_DISABLE) &&
+                 (proc_cntl.checkForMoreWork != 0) ) {
+                rtcpd_SetProcError(RTCP_FAILED);
+            }
             CHECK_PROC_ERR(tape,NULL,"rtcpd_CtapeInit() error");
         }
 #if defined(CTAPE_DUMMIES)
@@ -1304,6 +1308,10 @@ void *tapeIOthread(void *arg) {
         TP_STATUS(RTCP_PS_NOBLOCKING);
         if ( rc == -1 ) {
             (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
+            if ( (mode == WRITE_DISABLE) && 
+                 (proc_cntl.checkForMoreWork != 0) ) {
+                rtcpd_SetProcError(RTCP_FAILED);
+            }
         }
         CHECK_PROC_ERR(tape,NULL,"rtcpd_Reserv() error");
     }
@@ -1322,7 +1330,13 @@ void *tapeIOthread(void *arg) {
             rc = rtcpd_Mount(nexttape);
             TP_STATUS(RTCP_PS_NOBLOCKING);
             save_serrno = serrno; save_errno = errno;
-            if ( rc == -1 ) (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
+            if ( rc == -1 ) {
+                (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
+                if ( (mode == WRITE_DISABLE) &&
+                     (proc_cntl.checkForMoreWork != 0) ) {
+                    rtcpd_SetProcError(RTCP_FAILED);
+                }
+            }
             serrno = save_serrno; errno = save_errno;
             CHECK_PROC_ERR(nexttape,NULL,"rtcpd_Mount() error");
         }
