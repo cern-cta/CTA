@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/05/23 09:00:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/05/24 14:04:03 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -229,8 +229,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
         << "getUpdateStart : unable to schedule SubRequest.";
       throw ex;
     }
-    unsigned long euid = m_getUpdateStartStatement->getInt(7);
-    unsigned long egid = m_getUpdateStartStatement->getInt(8);
+
     // Check result
     u_signed64 id
       = (u_signed64)m_getUpdateStartStatement->getDouble(3);
@@ -302,7 +301,6 @@ castor::db::ora::OraJobSvc::putStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem)
   throw (castor::exception::Exception) {
-  castor::IObject *iobj = 0;
   castor::stager::DiskCopy* result = 0;
   try {
     // Check whether the statements are ok
@@ -474,7 +472,6 @@ void castor::db::ora::OraJobSvc::getUpdateDone
     m_getUpdateDoneStatement->setAutoCommit(true);
   }
   // Execute statement and get result
-  unsigned long id;
   try {
     m_getUpdateDoneStatement->setDouble(1, subReqId);
     m_getUpdateDoneStatement->executeUpdate();
@@ -501,7 +498,6 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
     m_getUpdateFailedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
-  unsigned long id;
   try {
     m_getUpdateFailedStatement->setDouble(1, subReqId);
     m_getUpdateFailedStatement->executeUpdate();
@@ -528,7 +524,6 @@ void castor::db::ora::OraJobSvc::putFailed
     m_putFailedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
-  unsigned long id;
   try {
     m_putFailedStatement->setDouble(1, subReqId);
     m_putFailedStatement->executeUpdate();
