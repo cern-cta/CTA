@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.2 $ $Release$ $Date: 2005/11/25 14:26:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.3 $ $Release$ $Date: 2007/05/24 13:53:35 $ $Author: waldron $
  *
  * command line for stager_setFileGCWeight
  *
@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stager_api.h>
 #include <serrno.h>
 #include "Cgetopt.h"

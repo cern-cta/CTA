@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/09 16:37:18 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.5 $ $Release$ $Date: 2007/05/24 13:53:35 $ $Author: waldron $
  *
  * command line for stager_rm
  *
@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <stager_api.h>
 #include <serrno.h>
 #include "Cgetopt.h"
