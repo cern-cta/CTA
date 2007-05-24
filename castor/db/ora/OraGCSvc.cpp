@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/04/17 20:28:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/05/24 11:25:01 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -104,7 +104,11 @@ const std::string castor::db::ora::OraGCSvc::s_selectFiles2DeleteStatementString
 const std::string castor::db::ora::OraGCSvc::s_filesDeletedStatementString =
   "BEGIN filesDeletedProc(:1, :2); END;";
 
-/// SQL statement for filesDeleted
+/// SQL statement for filesDeletedTruncate
+const std::string castor::db::ora::OraGCSvc::s_filesDeletedTruncateStatementString =
+  "TRUNCATE TABLE FilesDeletedProcOutput;";
+
+/// SQL statement for filesDeletionFailed
 const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementString =
   "BEGIN filesDeletionFailedProc(:1); END;";
 
@@ -120,6 +124,7 @@ castor::db::ora::OraGCSvc::OraGCSvc(const std::string name) :
   m_selectFiles2DeleteStatement(0),
   m_selectFiles2DeleteStatement2(0),
   m_filesDeletedStatement(0),
+  m_filesDeletedTruncateStatement(0),
   m_filesDeletionFailedStatement(0),
   m_requestToDoStatement(0) {
 }
@@ -156,6 +161,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
     if (m_selectFiles2DeleteStatement) deleteStatement(m_selectFiles2DeleteStatement);
     if (m_selectFiles2DeleteStatement2) deleteStatement(m_selectFiles2DeleteStatement2);
     if (m_filesDeletedStatement) deleteStatement(m_filesDeletedStatement);
+    if (m_filesDeletedTruncateStatement) deleteStatement(m_filesDeletedTruncateStatement);
     if (m_filesDeletionFailedStatement) deleteStatement(m_filesDeletionFailedStatement);
     if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -163,6 +169,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
   m_selectFiles2DeleteStatement = 0;
   m_selectFiles2DeleteStatement2 = 0;
   m_filesDeletedStatement = 0;
+  m_filesDeletedTruncateStatement = 0;
   m_filesDeletionFailedStatement = 0;
   m_requestToDoStatement = 0;
 }
@@ -275,6 +282,13 @@ void castor::db::ora::OraGCSvc::filesDeleted
       createStatement(s_filesDeletedStatementString);
     m_filesDeletedStatement->registerOutParam
       (2, oracle::occi::OCCICURSOR);
+    m_filesDeletedStatement->setAutoCommit(true);
+  }
+  // Check whether the statements are ok
+  if (0 == m_filesDeletedStatement) {
+    m_filesDeletedTruncateStatement =
+      createStatement(s_filesDeletedTruncateStatementString);
+    m_filesDeletedTruncateStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   //unsigned long id;
@@ -304,7 +318,6 @@ void castor::db::ora::OraGCSvc::filesDeleted
     m_filesDeletedStatement->executeUpdate();
     if (0 == nb) {
       // we want to commit anyway to release locks
-      cnvSvc()->commit();
       castor::exception::Internal ex;
       ex.getMessage() << "filesDeleted : no rows returned.";
       //free allocated memory
@@ -333,42 +346,28 @@ void castor::db::ora::OraGCSvc::filesDeleted
       static int nsErrBufKey = -1;
       void *errBuf = NULL;
       int errBufLen = 1024;
+      bool gotError = false;
       if (-1 == Cglobals_get(&nsErrBufKey, &errBuf, errBufLen)) {
         clog() << ERROR
                << "Unable to get thread safe variable in filesDeleted. "
                << "The following files won't be deleted from name server"
                << " while they should have been (we give fileids here) :"
                << std::endl;
-        try {
-          oracle::occi::ResultSet::Status status = rs->next();
-          while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-            //u_signed64 fileid = (u_signed64) rs->getDouble(1);
-            std::string nsHost = rs->getString(2);
-            clog() << ERROR << (u_signed64)rs->getDouble(1)
-                   << "@" << rs->getString(2)
-                   << std::endl;
-            status = rs->next();
-          }
-          m_filesDeletedStatement->closeResultSet(rs);
-        } catch (oracle::occi::SQLException e) {
-          clog() << ERROR << "Error caught while listing fileids :\n"
-                 << e.getMessage() << "\nGiving up." << std::endl;
+        gotError = true;
+      }
+      if (!gotError) {
+        // Now let's give this buffer to the name server
+        if (0 != Cns_seterrbuf((char*)errBuf, errBufLen)) {
+          clog() << ERROR
+                 << "Error caught when calling Cns_seterrbuf in filesDeleted. "
+                 << "The following files won't be deleted from name server"
+                 << " while they should have been (we give fileids here) :"
+                 << std::endl;
+          gotError = true;
         }
-        // commit everything into the DB
-        cnvSvc()->commit();
-        //free allocated memory
-        free(lens);
-        free(buffer);
-        return;
       }
 
-      // Now let's give this buffer to the name server
-      if (0 != Cns_seterrbuf((char*)errBuf, errBufLen)) {
-        clog() << ERROR
-               << "Error caught when calling Cns_seterrbuf in filesDeleted. "
-               << "The following files won't be deleted from name server"
-               << " while they should have been (we give fileids here) :"
-               << std::endl;
+      if (gotError) {
         try {
           oracle::occi::ResultSet::Status status = rs->next();
           while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
@@ -384,8 +383,13 @@ void castor::db::ora::OraGCSvc::filesDeleted
           clog() << ERROR << "Error caught while listing fileids :\n"
                  << e.getMessage() << "\nGiving up." << std::endl;
         }
-        // commit everything into the DB
-        cnvSvc()->commit();
+        // Cleanup the DB
+        try {
+          m_filesDeletedTruncateStatement->execute();
+        } catch (oracle::occi::SQLException e) {
+          clog() << ERROR << "Error caught while truncating FilesDeletedProcOutput :\n"
+                 << e.getMessage() << std::endl;
+        }
         //free allocated memory
         free(lens);
         free(buffer);
@@ -430,21 +434,18 @@ void castor::db::ora::OraGCSvc::filesDeleted
       }
     }
     m_filesDeletedStatement->closeResultSet(rs);
-    // commit everything into the DB
-    cnvSvc()->commit();
+    // Cleanup the DB
+    try {
+      m_filesDeletedTruncateStatement->execute();
+    } catch (oracle::occi::SQLException e) {
+      clog() << ERROR << "Error caught while truncating FilesDeletedProcOutput :\n"
+             << e.getMessage() << std::endl;
+    }
   } catch (oracle::occi::SQLException e) {
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to remove deleted files :\n"
       << e.getMessage();
-    // To be safe, let's try a last commit
-    try {
-      cnvSvc()->commit();
-    } catch (oracle::occi::SQLException e2) {
-      ex.getMessage()
-        << "Got an extra error while trying to commit connection :\n"
-        << e2.getMessage();
-    }
     handleException(e);
     //free allocated memory
     if (0 != lens) free(lens);

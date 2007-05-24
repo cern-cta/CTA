@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.424 $ $Date: 2007/05/18 12:13:42 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.425 $ $Date: 2007/05/24 11:25:31 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.424 $ $Date: 2007/05/18 12:13:42 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.425 $ $Date: 2007/05/24 11:25:31 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -140,7 +140,7 @@ END;
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
-ON COMMIT DELETE ROWS;
+ON COMMIT PRESERVE ROWS;
 
 /* Global temporary table to help selectFiles2Delete procedure */
 CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
@@ -2077,7 +2077,7 @@ BEGIN
    END LOOP;
    -- Delete the DiskCopies
    UPDATE DiskCopy
-      SET status = 7  -- GCCANDIDATE
+      SET status = 7  -- INVALID
     WHERE status = 2  -- WAITTAPERECALL
       AND castorFile = cfId;
    -- Mark the 'recall' SubRequests as failed
