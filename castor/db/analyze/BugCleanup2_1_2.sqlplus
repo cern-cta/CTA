@@ -310,6 +310,34 @@ BEGIN
 END;
 /
 
+-- Now the opposite: cleaning DiskCopies in WAITTAPERECALL with no TapeCopies (credits to Olof)
+DECLARE
+  totalCount NUMBER := 0;
+BEGIN
+  -- For logging
+  INSERT INTO CleanupLogTable VALUES (5, 'Failing diskCopies waiting for recall without TapeCopies', getTime());
+  COMMIT;
+  
+  -- do everything in one go: this case is relatively rare and the cleanup doesn't involve many requests          
+  FOR dc IN (select dc_id diskcopy_id , dc_c castorfile FROM (
+                select dc.id dc_id, dc.castorfile dc_c, tc.id tc_id
+                from tapecopy tc, diskcopy dc
+                where dc.status = 2
+                  and dc.castorfile = tc.castorfile(+))
+             where tc_id is null) LOOP
+    totalCount := totalCount + 1;
+    UPDATE DISKCOPY SET STATUS=4 WHERE STATUS=2 AND ID=dc.diskcopy_id;
+    UPDATE SUBREQUEST SET STATUS=1 WHERE STATUS IN (4,5) AND CASTORFILE=dc.castorfile;
+    COMMIT;
+  END LOOP;
+
+  UPDATE CleanupLogTable
+     SET message = 'DiskCopies waiting for recall with no TapeCopies were failed - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
+   WHERE fac = 5;
+  COMMIT;
+END;
+/
+
 -- Cleanup FilesDeleted requests that stayed due to dead locks
 DECLARE
   totalCount NUMBER;
@@ -318,7 +346,7 @@ DECLARE
   cl NUMBER;
 BEGIN
   -- For logging
-  INSERT INTO CleanupLogTable VALUES (5, 'Cleanup FilesDeleted requests', getTime());
+  INSERT INTO CleanupLogTable VALUES (6, 'Cleanup FilesDeleted requests', getTime());
   COMMIT;
   SELECT COUNT(*) INTO totalCount FROM FilesDeleted WHERE creationTime < getTime() - 600000;
   LOOP
@@ -341,13 +369,13 @@ BEGIN
     UPDATE CleanupLogTable
        SET message = 'Cleanup FilesDeleted requests' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
-     WHERE fac = 5;
+     WHERE fac = 6;
     COMMIT;
   END LOOP;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     UPDATE CleanupLogTable
        SET message = 'FilesDeleted requests were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
-     WHERE fac = 5;
+     WHERE fac = 6;
     COMMIT;
 END;
 /
@@ -360,7 +388,7 @@ DECLARE
   cl NUMBER;
 BEGIN
   -- For logging
-  INSERT INTO CleanupLogTable VALUES (6, 'Cleanup FilesDeletionFailed requests', getTime());
+  INSERT INTO CleanupLogTable VALUES (7, 'Cleanup FilesDeletionFailed requests', getTime());
   COMMIT;
   SELECT COUNT(*) INTO totalCount FROM FilesDeletionFailed WHERE creationTime < getTime() - 600000;
   LOOP
@@ -383,13 +411,13 @@ BEGIN
     UPDATE CleanupLogTable
        SET message = 'Cleanup FilesDeletionFailed requests' ||
            TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
-     WHERE fac = 6;
+     WHERE fac = 7;
     COMMIT;
   END LOOP;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     UPDATE CleanupLogTable
        SET message = 'FilesDeletionFailed requests were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
-     WHERE fac = 6;
+     WHERE fac = 7;
     COMMIT;
 END;
 /
@@ -406,7 +434,7 @@ BEGIN
  SELECT count(*) INTO totalCount FROM SubRequest
   WHERE creationtime < getTime() - 600000
     AND status = 5
-    AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL);
+    AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL)
  LOOP
    nothingLeft := 1;
    -- do it in one go here because the heaviest part is the SELECT itself with the NOT IN clause
