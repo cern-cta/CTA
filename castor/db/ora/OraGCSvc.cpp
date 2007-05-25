@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/05/24 11:25:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/05/25 09:57:10 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -285,7 +285,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     m_filesDeletedStatement->setAutoCommit(true);
   }
   // Check whether the statements are ok
-  if (0 == m_filesDeletedStatement) {
+  if (0 == m_filesDeletedTruncateStatement) {
     m_filesDeletedTruncateStatement =
       createStatement(s_filesDeletedTruncateStatementString);
     m_filesDeletedTruncateStatement->setAutoCommit(true);
