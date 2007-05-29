@@ -248,7 +248,7 @@ int castor::db::ora::OraTapeSvc::anySegmentsForTape
     }
     // execute the statement and see whether we found something
     m_anySegmentsForTapeStatement->setDouble(1, tape->id());
-    unsigned int nb = m_anySegmentsForTapeStatement->executeUpdate();
+    (void)m_anySegmentsForTapeStatement->executeUpdate();
     return m_anySegmentsForTapeStatement->getInt(2);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -803,7 +803,7 @@ void castor::db::ora::OraTapeSvc::resetStream
     }
     // execute the statement and see whether we found something
     m_resetStreamStatement->setDouble(1, stream->id());
-    unsigned int nb = m_resetStreamStatement->executeUpdate();
+    (void)m_resetStreamStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

@@ -19,8 +19,6 @@
  *
  * @(#)RCSfile: OraVdqmSvc.cpp  Revision: 1.0  Release Date: May 31, 2005  Author: mbraeger 
  *
- *
- *
  * @author Matthias Braeger
  *****************************************************************************/
 
@@ -48,7 +46,6 @@
 
 // Local includes
 #include "OraVdqmSvc.hpp"
-
 
 
 // -----------------------------------------------------------------------
@@ -157,10 +154,10 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectDeviceGroupNameStatement(0),
   m_selectTapeRequestQueueStatement(0),
   m_selectTapeDriveQueueStatement(0),
-  m_selectTapeRequestStatement(0),
   m_matchTape2TapeDriveStatement(0),
   m_selectCompatibilitiesForDriveModelStatement(0),
-  m_selectTapeAccessSpecificationsStatement(0) {
+  m_selectTapeAccessSpecificationsStatement(0),
+  m_selectTapeRequestStatement(0) {
 }
 
 

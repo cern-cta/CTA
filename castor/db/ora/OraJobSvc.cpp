@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/05/24 14:04:03 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/05/29 08:53:46 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -441,8 +441,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     // timeStamp is zero only if this function is used by putDone 
     // it that case with the putDone not scheduled the file size 
     // should NOT be updated
-
-    if ( timeStamp !=0 &&  Cns_setfsize(0, &fileid, fileSize) != 0) {
+    if ((timeStamp != 0) && (Cns_setfsize(0, &fileid, fileSize) != 0)) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
         << "prepareForMigration : Cns_setfsize failed :"
