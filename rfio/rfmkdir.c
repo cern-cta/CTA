@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.9 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.10 $ $Date: 2007/05/29 08:37:46 $ CERN/IT/PDP/DM Olof Barring";
 #endif /* not lint */
  
 /*
@@ -16,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: rfmkdir.c,v $ $Revision: 1.9 $ $Date: 2006
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <rfio_api.h>
 
@@ -34,7 +35,7 @@ char *argv[];
   extern int    optind ;
   int recursive = 0;
   char *path,*root_path,*p;
-  int rc, c;
+  int c, i;
   mode_t mode = 0777;
   long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
   char *endprt;             /* For conversion                        IN2P3*/
@@ -78,9 +79,12 @@ char *argv[];
 
   for (;optind<argc;optind++) {
     path = ckpath(argv[optind]);
-    
-    
-    if ( recursive) {
+    if (recursive) {
+      i = strlen(path);
+      while (i && (path[i - 1] == '/')) {
+	i--;
+      }
+      path[i] = '\0';
       root_path = (char *)malloc(strlen(path)+1);
       strcpy(root_path,path);
       while ( (p = strrchr(root_path,'/')) != NULL ) {
@@ -96,7 +100,7 @@ char *argv[];
       }
       free(root_path);
     } else {
-      if ( rfio_mkdir(path,mode) ) {
+      if (rfio_mkdir(path,mode) ) {
 	rfio_perror("mkdir()");
 	exit(1);
       }
@@ -111,13 +115,13 @@ char *path;
 {
   char *cp;
   static char newpath[BUFSIZ];
- /* Special treatment for filenames starting with /scratch/... */
+  /* Special treatment for filenames starting with /scratch/... */
   if (!strncmp ("/scratch/", path, 9) &&
       (cp = (char *)getconfent ("SHIFT", "SCRATCH", 0)) != NULL) {
     strcpy (newpath, cp);
     strcat (newpath, path+9);
   } else 
- /* Special treatment for filenames starting with /hpss/... */
+    /* Special treatment for filenames starting with /hpss/... */
     if ( !strncmp("/hpss/",path,6) &&
 	 (cp = (char *)getconfent("SHIFT","HPSS",0)) != NULL) {
       strcpy(newpath,cp);
