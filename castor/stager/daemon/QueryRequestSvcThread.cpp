@@ -1,15 +1,11 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.50 2006/10/16 14:20:04 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.51 2007/05/29 08:41:50 waldron Exp $
  */
 
 /*
  * Copyright (C) 2004 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.50 $ $Date: 2006/10/16 14:20:04 $ CERN IT-ADC/CA Ben Couturier";
-#endif
 
 /* ================================================================= */
 /* Local headers for threads : to be included before ANYTHING else   */
@@ -431,7 +427,6 @@ namespace castor {
                                              std::string &val,
                                              u_signed64 svcClassId,
                                              std::string reqId) {
-        char *func =  "castor::stager::queryService::handle_fileQueryRequest_byRequest";
 
         // Performing the query on the database
         std::list<castor::stager::DiskCopyInfo*>* result;
@@ -563,7 +558,6 @@ namespace castor {
             try {
 
               std::string fid, nshost, reqidtag;
-              int statcode;
               bool queryOk = false;
 
               switch(ptype) {
@@ -728,7 +722,6 @@ namespace castor {
                                      castor::Services* svcs,
                                      castor::query::IQuerySvc* qrySvc,
                                      castor::BaseAddress &ad) {
-        char *func = "handle_findRequestRequest";
         STAGER_LOG_VERBOSE(NULL,"Handling findRequestRequest");
       }
 
@@ -747,7 +740,6 @@ namespace castor {
                                       castor::Services* svcs,
                                       castor::query::IQuerySvc* qrySvc,
                                       castor::BaseAddress &ad) {
-        char *func = "handle_requestQueryRequest";
         STAGER_LOG_VERBOSE(NULL,"Handling requestQueryRequest");
       }
 

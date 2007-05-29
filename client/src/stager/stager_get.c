@@ -1,5 +1,5 @@
 /*
- * $Id: stager_get.c,v 1.9 2006/07/05 14:38:31 riojac3 Exp $
+ * $Id: stager_get.c,v 1.10 2007/05/29 08:41:49 waldron Exp $
  */
 
 /*
@@ -7,16 +7,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_get.c,v $ $Revision: 1.9 $ $Date: 2006/07/05 14:38:31 $ CERN IT-FIO/DS Benjamin Couturier";
-#endif /* not lint */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "stager_api.h"
 #include "serrno.h"
 #include "Cgetopt.h"
+#include "stager_client_commandline.h"
 
 #define BUFSIZE 1000
 #define DEFAULT_PROTOCOL "rfio"
@@ -92,6 +89,7 @@ int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
    that should be set to 0 before 1st call */
 static int _countFiles(char *filename) {
   filenb++;
+  return 0;
 }
 
 /* Uses the filenb global variable,
@@ -103,6 +101,7 @@ static int _fillStruct(char *filename) {
   requests[filenb].protocol = (char *)strdup(protocol);
   requests[filenb].priority = 0;
   filenb++;
+  return 0;
 }
 
 int main(argc, argv)

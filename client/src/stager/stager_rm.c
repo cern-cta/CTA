@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.5 $ $Release$ $Date: 2007/05/24 13:53:35 $ $Author: waldron $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/05/29 08:41:50 $ $Author: waldron $
  *
  * command line for stager_rm
  *
@@ -30,6 +30,7 @@
 #include <stager_api.h>
 #include <serrno.h>
 #include "Cgetopt.h"
+#include "stager_client_commandline.h"
 
 static struct Coptions longopts[] =
   {

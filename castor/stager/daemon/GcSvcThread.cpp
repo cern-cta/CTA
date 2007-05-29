@@ -1,15 +1,11 @@
 /*
- * $Id: GcSvcThread.cpp,v 1.13 2007/04/30 13:13:39 itglp Exp $
+ * $Id: GcSvcThread.cpp,v 1.14 2007/05/29 08:41:49 waldron Exp $
  */
 
 /*
  * Copyright (C) 2004 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.13 $ $Date: 2007/04/30 13:13:39 $ CERN IT-ADC/CA Ben Couturier";
-#endif
 
 /* ================================================================= */
 /* Local headers for threads : to be included before ANYTHING else   */

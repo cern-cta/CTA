@@ -1,15 +1,11 @@
 /*
- * $Id: stager_qry.c,v 1.24 2007/02/27 14:53:18 itglp Exp $
+ * $Id: stager_qry.c,v 1.25 2007/05/29 08:41:50 waldron Exp $
  */
 
 /*
  * Copyright (C) 2005 by CERN/IT/ADC/CA
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stager_qry.c,v $ $Revision: 1.24 $ $Date: 2007/02/27 14:53:18 $ $Author: itglp $ CERN IT-FIO/DS Benjamin Couturier";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -136,9 +132,8 @@ int parseCmdLineFileQuery(int argc, char *argv[], struct cmd_args *args);
  * @param svcClass the svcClass specified (if any), or NULL
  * @return 0 if parsing succeeded
  */
-int parseCmdLineDiskPool(int argc, char *argv[],
-                         char** diskpool, char** svcClass);
-
+int parseCmdLineDiskPoolQuery(int argc, char *argv[],
+			      char** diskpool, char** svcClass);
 
 // -----------------------------------------------------------------------
 // main
@@ -167,6 +162,7 @@ int main(int argc, char *argv[]) {
     handleDiskPoolQuery(argc, argv, nbArgs);
     break;    
   }
+  return 0;
 }
 
 // -----------------------------------------------------------------------
@@ -321,7 +317,7 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
 // -----------------------------------------------------------------------
 int parseCmdLineFileQuery(int argc, char *argv[],
                           struct cmd_args *args) {
-  int nbargs, Coptind, Copterr, errflg, getNextMode;
+  int nbargs, Coptind, Copterr, errflg, getNextMode, i;
   char c;
 
   Coptind = 1;
@@ -380,13 +376,13 @@ int parseCmdLineFileQuery(int argc, char *argv[],
   
   if(getNextMode) {
     errflg++;
-    for(c = 0; c < nbargs; c++) {
-      if(args->requests[c].type == BY_REQID) {
-        args->requests[c].type = BY_REQID_GETNEXT;
+    for(i = 0; i  < nbargs; i++) {
+      if(args->requests[i].type == BY_REQID) {
+        args->requests[i].type = BY_REQID_GETNEXT;
         errflg = 0;
       }
-      else if(args->requests[c].type == BY_USERTAG) {
-        args->requests[c].type = BY_USERTAG_GETNEXT;
+      else if(args->requests[i].type == BY_USERTAG) {
+        args->requests[i].type = BY_USERTAG_GETNEXT;
         errflg = 0;
       }
     }

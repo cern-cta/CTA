@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -111,7 +107,7 @@ main(int argc, char *argv[]) {
     printf ("\n");
 
   }
-
+  return 0;
 }
 
 

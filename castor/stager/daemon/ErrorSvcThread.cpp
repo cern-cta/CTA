@@ -1,15 +1,11 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.10 2006/08/18 15:35:22 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.11 2007/05/29 08:41:49 waldron Exp $
  */
 
 /*
  * Copyright (C) 2005 by CERN/IT/FIO/DS
  * All rights reserved
  */
-
-#ifndef lint
-static char *sccsid = "@(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.10 $ $Date: 2006/08/18 15:35:22 $ CERN IT-FIO/DS Sebastien Ponce";
-#endif
 
 /* ================================================================= */
 /* Local headers for threads : to be included before ANYTHING else   */
