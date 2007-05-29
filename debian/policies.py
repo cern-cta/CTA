@@ -42,15 +42,15 @@ filesystem            = ""
 # Note:
 #   A file size of 0 is normal for jobs which are classified as reads.
 #
-fileSize              = 0  
 fileDirection         = ""
+fileSize              = 0
 
 # The following variables define how many streams of various types are
 # running on a given file system.
 migratorStreams       = 0
-recallerStreams       = 0
 readStreams           = 0
 readWriteStreams      = 0
+recallerStreams       = 0
 writeStreams          = 0
 
 # The number of kilobytes being written too and read from the given
@@ -58,13 +58,19 @@ writeStreams          = 0
 readRate              = 0
 writeRate             = 0
 
-# The aggragate values for all file systems
-totalFileSystems      = 0
+# The total size of the file system in bytes and the total number of bytes
+# free.
+totalSize             = 0
+freeSpace             = 0
+
+# The aggregate values for all file systems
 totalMigratorStreams  = 0
-totalRecallerStreams  = 0
 totalReadStreams      = 0
 totalReadWriteStreams = 0
+totalRecallerStreams  = 0
 totalWriteStreams     = 0
+
+totalFileSystems      = 0
 totalReadRate         = 0
 totalWriteRate        = 0
 
@@ -121,9 +127,6 @@ def default():
 #
 def export():
     weight = 0.0
-
-    if totalWriteStreams > 4:
-	return 1.0
 		
     # If the direction of the stream is a write or readWrite check
     # to see if any migrators are present. If so, restrict the number
