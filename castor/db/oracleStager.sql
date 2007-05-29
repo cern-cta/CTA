@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.425 $ $Date: 2007/05/24 11:25:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.426 $ $Date: 2007/05/29 08:51:20 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.425 $ $Date: 2007/05/24 11:25:31 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.426 $ $Date: 2007/05/29 08:51:20 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -892,10 +892,10 @@ BEGIN
       OPEN c1;
       LOOP
         FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, fsDiskServer, fileSize;
-        -- Check that we don't alredy have a copy of this file on this filesystem.
+        -- Check that we don't already have a copy of this file on this filesystem.
         -- This will never happend in normal operations but may be the case if a filesystem
         -- was disabled and did come back while the tape recall was waiting.
-        -- Even if we could optimize by canceling remaining unneeded tape recalls when a
+        -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
         -- fileSystem comes backs, the ones running at the time of the come back will have
         -- the problem.
         EXIT WHEN c1%NOTFOUND;
@@ -1406,7 +1406,7 @@ BEGIN
      AND SubRequest.id = srId;
   -- Check that we did not cancel the SubRequest in the mean time
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
-    raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
+    raise_application_error(-20104, 'SubRequest cancelled while queuing in scheduler. Giving up.');
   END IF;
   IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
     -- this could happen if LSF schedules the same job twice!
