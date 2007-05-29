@@ -18,13 +18,14 @@
  ******************************************************************************************************/
 
 /**
- * $Id: common.c,v 1.5 2006/11/01 12:34:17 waldron Exp $
+ * $Id: common.c,v 1.6 2007/05/29 08:47:05 waldron Exp $
  */
 
 /* headers */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "common.h"
 #include "dlf_api.h"
@@ -93,6 +94,19 @@ void DLL_DECL strip_newline(char *msg, int len) {
 	if (msg[len - 1] == '\n') {
 		msg[len - 1] = '\0';
 	}
+}
+
+
+/*
+ * Strip whitespace from the end of a string
+ */
+
+void DLL_DECL rtrim(char *str) {
+	size_t i = strlen(str);
+	while (i && isspace(str[i - 1])){
+		i--;
+	}
+	str[i] = '\0';
 }
 
 

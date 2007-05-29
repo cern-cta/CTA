@@ -21,7 +21,7 @@
  * @file  dlf/common.h
  * @brief defines common definitions, prototypes and structures for use between all DLF applications
  *
- * $Id: common.h,v 1.5 2006/11/01 12:34:17 waldron Exp $
+ * $Id: common.h,v 1.6 2007/05/29 08:47:05 waldron Exp $
  */
 
 #ifndef _COMMON_H
@@ -186,6 +186,13 @@ EXTERN_C void DLL_DECL free_param _PROTO((param_t *param));
  * @returns     : void, this function is always successful.
  */
 EXTERN_C void DLL_DECL stip_newline _PROTO((char *msg, int len));
+
+
+/**
+ * Trim trailing whitespace from a string
+ * @param str   : the string to trim
+ */
+EXTERN_C void DLL_DECL rtrim _PROTO((char *str));
 
 
 #endif

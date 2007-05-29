@@ -21,7 +21,7 @@
  * @file  lib.h
  * @brief definitions and structures for api internals
  *
- * $Id: dlf_lib.h,v 1.4 2007/02/13 07:52:24 waldron Exp $
+ * $Id: dlf_lib.h,v 1.5 2007/05/29 08:47:05 waldron Exp $
  */
 
 #ifndef _API_H
@@ -90,6 +90,7 @@ static struct {
 	{ "Important",  DLF_LVL_IMPORTANT,  0x000200,  "LOGIMPORTANT"  },
 	{ "Debug",      DLF_LVL_DEBUG,      0x000400,  "LOGDEBUG"      },
 	{ "All",        -1,                 0x000800,  "LOGALL"        },
+	{ "Standard",   -2,                 0x001000,  "LOGSTANDARD"   },
 	{ NULL,         0,                  0,         NULL            }
 };
 

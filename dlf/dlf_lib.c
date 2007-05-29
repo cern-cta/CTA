@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.16 2007/04/25 09:27:33 waldron Exp $
+ * $Id: dlf_lib.c,v 1.17 2007/05/29 08:47:05 waldron Exp $
  */
 
 /* headers */
@@ -231,7 +231,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 
 	/* valid severity ? */
 	for (j = 0, found = 0; severitylist[j].name != NULL; j++) {
-		if (severitylist[j].sevno == severity) {
+		if ((severitylist[j].sevno == severity) && (severitylist[j].sevno > 0)) {
 			found = 1;
 			break;
 		}
@@ -333,6 +333,7 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 		}
 		else if (param->type == DLF_MSG_PARAM_STR) {
 			strncpy(value, params[i].par.par_string, DLF_LEN_STRINGVALUE);
+			rtrim(value);
 			value[DLF_LEN_STRINGVALUE] = '\0';
 		}
 		else if (param->type == DLF_MSG_PARAM_INT) {
@@ -364,11 +365,13 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 		}
 		else if (param->type == DLF_MSG_PARAM_STYPE) {
 			strncpy(value, params[i].par.par_string, DLF_LEN_STYPE);
+			rtrim(value);
 			strncpy(param->name, "SEC_TYPE", sizeof(param->name) - 1);
 			value[DLF_LEN_STYPE] = '\0';
 		}
 		else if (param->type == DLF_MSG_PARAM_SNAME) {
 			strncpy(value, params[i].par.par_string, DLF_LEN_SNAME);
+			rtrim(value);
 			strncpy(param->name, "SEC_NAME", sizeof(param->name) - 1);
 			value[DLF_LEN_SNAME] = '\0';
 		}
@@ -1156,6 +1159,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 	target_t     *t;
 	int          i;
 	int          j;
+	int          k;
 	int          rv;
 	int          port;
 	unsigned int perm;
@@ -1308,9 +1312,21 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 						continue;                    /* incorrect permissions */
 				}
 
-				/* alter severity mask */
-				targets[j]->sevmask |= severitylist[i].sevmask;
-
+				/* alter severity mask
+				 *   - for LOGSTANDARD (-2) we log everything apart from DEBUG and USAGE
+				 */
+				if (severitylist[i].sevno == -2) {
+					for (k = 0; severitylist[k].sevno > 0; k++) {
+						if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
+						    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
+							continue;
+						}
+						targets[j]->sevmask |= severitylist[k].sevmask;
+					}
+				} else {
+					targets[j]->sevmask |= severitylist[i].sevmask;
+				}
+				
 				found = 1;
 				break;
 			}
@@ -1356,7 +1372,18 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			t->queue_size = queue_size;
 			t->mode       = MODE_DEFAULT;
 			t->fac_no     = -1;
-			t->sevmask    = severitylist[i].sevmask;
+			t->sevmask    = 0x000000;
+			if (severitylist[i].sevno == -2) {
+				for (k = 0; severitylist[k].sevno > 0; k++) {
+					if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
+					    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
+						continue;
+					}
+					t->sevmask |= severitylist[k].sevmask;
+				}
+			} else {
+				t->sevmask = severitylist[i].sevmask;
+			}
 			t->path[0]    = '\0';
 			t->perm       = perm;
 			t->shutdown   = 0;
