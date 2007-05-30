@@ -35,6 +35,9 @@ key                   = "" # The LSF job name, aka subrequest id
 hostname              = "" 
 filesystem            = "" 
 
+# The total number of LSF job slots allocated to the machine
+slotsAlloc            = 0
+
 # The size of the file to be scheduled and the direction of its associated
 # stream. The 'filesDirection' can be one of [r/rw/w] representing read,
 # read write and write directions respectively. 
