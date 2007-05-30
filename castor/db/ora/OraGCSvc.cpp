@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/05/25 09:57:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/05/30 08:52:40 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -106,7 +106,7 @@ const std::string castor::db::ora::OraGCSvc::s_filesDeletedStatementString =
 
 /// SQL statement for filesDeletedTruncate
 const std::string castor::db::ora::OraGCSvc::s_filesDeletedTruncateStatementString =
-  "TRUNCATE TABLE FilesDeletedProcOutput;";
+  "TRUNCATE TABLE FilesDeletedProcOutput";
 
 /// SQL statement for filesDeletionFailed
 const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementString =
