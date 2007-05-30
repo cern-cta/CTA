@@ -14,22 +14,26 @@
 #include "../IStagerSvc.hpp"
 #include "../../Services.hpp"
 #include "../../BaseAddress.hpp"
-#include "../Subrequest.hpp"
+#include "../SubRequest.hpp"
 #include "../FileRequest.hpp"
 #include "../../IClient.hpp"
 #include "../SvcClass.hpp"
 #include "../CastorFile.hpp"
 #include "../FileClass.hpp"
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "serrno.h"
-#include "Cns_api.h"
-#include "rm_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "u64subr.h"
-#include "castor/IClientFactory.h"
+#include "../../../h/stager_uuid.h"
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../..//h/Cgrp.h"
+#include "../../../h/u64subr.h"
+
+#include "../../IClientFactory.h"
+
+#include "../../exception/Exception.hpp"
+#include "../../exception/Internal.hpp"
 
 #include <iostream>
 #include <string>
@@ -85,7 +89,7 @@ namespace castor{
 	castor::stager::CastorFile* castorFile;
 	
 	/* get from the stagerService using as key Cnsfileclass.name (JOB ORIENTED)*/
-	castor::stager::FileClass* fileclass;
+	castor::stager::FileClass* fileClass;
        
 	std::string username;
 	//[RM_MAXUSRNAMELEN+1];
@@ -105,7 +109,7 @@ namespace castor{
 	/* constructor */
 	/* destructor */
 	StagerRequestHelper() throw(castor::exception::Internal);
-	~StagerRequestHelper();
+	~StagerRequestHelper() throw();
 	
 
 	
@@ -177,7 +181,7 @@ namespace castor{
 	
       
 	/* get request uuid (we cannon' t create it!) */ 
-	void StagerRequestHelper::setRequestUuid() throw();
+	void StagerRequestHelper::setRequestUuid();
       
 
 
