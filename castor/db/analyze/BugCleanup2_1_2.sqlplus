@@ -1,3 +1,10 @@
+/*******************************************************************
+ *
+ * @(#)$RCSfile: BugCleanup2_1_2.sqlplus,v $ $Revision: 1.7 $ $Date: 2007/05/30 15:50:00 $ $Author: itglp $
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *******************************************************************/
+
 -- For logging
 --DROP TABLE CleanupLogTable;
 CREATE TABLE CleanupLogTable (fac NUMBER, message VARCHAR2(256), logDate NUMBER);
@@ -21,7 +28,7 @@ BEGIN
                  AND type = 42 AND rownum <= 2000
                  AND subrequest.creationtime < getTime()-600000) LOOP
       archiveSubReq(sr.id);
-    nothingLeft := 0;
+      nothingLeft := 0;
     END LOOP;
     -- commit between each bunch of 2000
     done := done + 2000;
@@ -319,12 +326,14 @@ BEGIN
   COMMIT;
   
   -- do everything in one go: this case is relatively rare and the cleanup doesn't involve many requests          
-  FOR dc IN (select dc_id diskcopy_id , dc_c castorfile FROM (
-                select dc.id dc_id, dc.castorfile dc_c, tc.id tc_id
-                from tapecopy tc, diskcopy dc
-                where dc.status = 2
-                  and dc.castorfile = tc.castorfile(+))
-             where tc_id is null) LOOP
+  FOR dc IN
+    (SELECT dc_id diskcopy_id , dc_c castorfile
+       FROM (
+          SELECT dc.id dc_id, dc.castorfile dc_c, tc.id tc_id
+            FROM tapecopy tc, diskcopy dc
+           WHERE dc.status = 2
+             AND dc.castorfile = tc.castorfile(+))
+     WHERE tc_id is null) LOOP
     totalCount := totalCount + 1;
     UPDATE DISKCOPY SET STATUS=4 WHERE STATUS=2 AND ID=dc.diskcopy_id;
     UPDATE SUBREQUEST SET STATUS=1 WHERE STATUS IN (4,5) AND CASTORFILE=dc.castorfile;
@@ -434,14 +443,14 @@ BEGIN
  SELECT count(*) INTO totalCount FROM SubRequest
   WHERE creationtime < getTime() - 600000
     AND status = 5
-    AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL)
+    AND parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL;
  LOOP
    nothingLeft := 1;
    -- do it in one go here because the heaviest part is the SELECT itself with the NOT IN clause
    FOR sr IN (SELECT id FROM SubRequest
                WHERE creationtime < getTime() - 600000
                  AND status = 5
-                 AND (parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL) LOOP
+                 AND parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL) LOOP
      archiveSubReq(sr.id);
    END LOOP;
    -- commit and wait 5 seconds between each bunch of 1000
@@ -785,9 +794,10 @@ BEGIN
      SET message = 'Old subrequests were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
    WHERE fac = 13;
   COMMIT;
-  DROP TABLE ReqCleaning;
 END;
 /
+
+DROP TABLE ReqCleaning;
 
 
 -- Optional steps follow
