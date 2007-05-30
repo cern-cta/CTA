@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.428 $ $Date: 2007/05/30 13:18:29 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.429 $ $Date: 2007/05/30 13:44:54 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.428 $ $Date: 2007/05/30 13:18:29 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.429 $ $Date: 2007/05/30 13:44:54 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -83,7 +83,6 @@ CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
 DROP TABLE SubRequest;
 CREATE TABLE SubRequest
    (
-        "ID" NUMBER(*,0) NOT NULL,
         "RETRYCOUNTER" NUMBER,
         "FILENAME" VARCHAR2(2048),
         "PROTOCOL" VARCHAR2(2048),
@@ -95,6 +94,7 @@ CREATE TABLE SubRequest
         "CREATIONTIME" NUMBER(*,0),
         "LASTMODIFICATIONTIME" NUMBER(*,0),
         "ANSWERED" NUMBER,
+        "ID" NUMBER(*,0) NOT NULL,
         "DISKCOPY" NUMBER(*,0),
         "CASTORFILE" NUMBER(*,0),
         "PARENT" NUMBER(*,0),
@@ -121,23 +121,22 @@ CREATE TABLE SubRequest
     PARTITION P_STATUS_OTHER VALUES (DEFAULT)
    );
 
-ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID)
- USING INDEX TABLESPACE STAGER_INDX;
+ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID);
  
-CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile) TABLESPACE STAGER_INDX;
-CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy) TABLESPACE STAGER_INDX;
-CREATE INDEX I_SubRequest_Request on SubRequest (request) TABLESPACE STAGER_INDX;
-CREATE INDEX I_SubRequest_Parent on SubRequest (parent) TABLESPACE STAGER_INDX;
-CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId) TABLESPACE STAGER_INDX;
+CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
+CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
+CREATE INDEX I_SubRequest_Request on SubRequest (request);
+CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
+CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
 /* Some index on the GCFile table to speed up garbage collection */
-CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST) TABLESPACE STAGER_INDX;
+CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST);
 
 /* Indexing segments by Tape */
-CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE) TABLESPACE STAGER_INDX COMPUTE STATISTICS;
+CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE);
 
 /* some constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
