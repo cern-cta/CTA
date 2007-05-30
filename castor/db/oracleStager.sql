@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.426 $ $Date: 2007/05/29 08:51:20 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.427 $ $Date: 2007/05/30 13:09:41 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,14 +10,13 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.426 $ $Date: 2007/05/29 08:51:20 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.427 $ $Date: 2007/05/30 13:09:41 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
 /* SQL statements for object types */
 CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
-CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
@@ -78,16 +77,57 @@ CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,stat
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
 
-CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
-CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
-CREATE INDEX I_SubRequest_Request on SubRequest (request);
-CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
-CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
-create INDEX I_SubRequest_CF_ST_5 on SubRequest (castorFile, decode(status,5,status,null));
+/* Redefinition of table SubRequest to make it partitioned by status */
+/* Unfortunately it has already been defined, so we drop and recreate it */
+/* Note that if the schema changes, this part has to be updated manually! */
+CREATE TABLE SubRequest
+   (
+        "ID" NUMBER(*,0) NOT NULL,
+        "RETRYCOUNTER" NUMBER,
+        "FILENAME" VARCHAR2(2048),
+        "PROTOCOL" VARCHAR2(2048),
+        "XSIZE" NUMBER(*,0),
+        "PRIORITY" NUMBER,
+        "SUBREQID" VARCHAR2(2048),
+        "FLAGS" NUMBER,
+        "MODEBITS" NUMBER,
+        "CREATIONTIME" NUMBER(*,0),
+        "LASTMODIFICATIONTIME" NUMBER(*,0),
+        "ANSWERED" NUMBER,
+        "DISKCOPY" NUMBER(*,0),
+        "CASTORFILE" NUMBER(*,0),
+        "PARENT" NUMBER(*,0),
+        "STATUS" NUMBER(*,0),
+        "REQUEST" NUMBER(*,0),
+        "GETNEXTSTATUS" NUMBER(*,0)
+    )
+  PCTFREE 50 PCTUSED 40 INITRANS 50
+  TABLESPACE "STAGER_DATA" ENABLE ROW MOVEMENT
+  PARTITION BY LIST (STATUS)
+   (
+    PARTITION P_STATUS_1 VALUES (1),
+    PARTITION P_STATUS_2 VALUES (2),
+    PARTITION P_STATUS_3 VALUES (3),
+    PARTITION P_STATUS_4 VALUES (4),
+    PARTITION P_STATUS_5 VALUES (5),
+    PARTITION P_STATUS_6 VALUES (6),
+    PARTITION P_STATUS_7 VALUES (7),
+    PARTITION P_STATUS_8 VALUES (8),
+    PARTITION P_STATUS_9 VALUES (9),
+    PARTITION P_STATUS_10 VALUES (10),
+    PARTITION P_STATUS_11 VALUES (11),
+    PARTITION P_STATUS_12 VALUES (12),
+    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+   );
 
-/* function base indexes to speed up subrequestToDo, subrequestFailedToDo, and getLastRecalls */
-CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
-CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,NULL));
+ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID)
+ USING INDEX TABLESPACE STAGER_INDX;
+ 
+CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile) TABLESPACE STAGER_INDX;
+CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy) TABLESPACE STAGER_INDX;
+CREATE INDEX I_SubRequest_Request on SubRequest (request) TABLESPACE STAGER_INDX;
+CREATE INDEX I_SubRequest_Parent on SubRequest (parent) TABLESPACE STAGER_INDX;
+CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId) TABLESPACE STAGER_INDX;
 
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
@@ -105,10 +145,11 @@ ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 ALTER TABLE SvcClass MODIFY (name NOT NULL);
 
-/* enable row movements in Diskcopy, TapeCopy, and SubRequest */
+/* enable row movement in most used tables */
 ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
 ALTER TABLE TapeCopy ENABLE ROW MOVEMENT;
-ALTER TABLE SubRequest ENABLE ROW MOVEMENT;
+ALTER TABLE Id2Type ENABLE ROW MOVEMENT;
+ALTER TABLE Client ENABLE ROW MOVEMENT;
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
@@ -2579,7 +2620,7 @@ BEGIN
 
   IF dcIds.COUNT > 0 THEN
     UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
-     WHERE id MEMBER OF dcIds;
+     WHERE id in (SELECT * FROM Table(dcIds));
     -- compute and update the filesystem's freed space
     sumSize := 0;
     FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
@@ -2613,17 +2654,16 @@ BEGIN
 END;
 
 BEGIN
-  -- creates a db job to be run every 5 mins for the garbage collector
-  -- given the 1 second sleep in garbageCollect, such interval allows for
-  -- ~300 filesystem to be processed for each round.
+  -- creates a db job to be run every 15 mins for the garbage collector.
+  -- Such interval allows for ~300 filesystem to be processed for each round
+  -- under normal conditions.
   -- XXX In case more are present, jobs will overlap during their run
-  -- XXX The GC procedure has to be improved! 
   DBMS_SCHEDULER.CREATE_JOB (
       JOB_NAME        => 'garbageCollectJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN garbageCollect(); END;',
       START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
       ENABLED         => TRUE,
       COMMENTS        => 'Castor Garbage Collector');
 END;
@@ -2891,7 +2931,7 @@ BEGIN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
      WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
-       AND request MEMBER OF reqs
+       AND request in (SELECT * FROM Table(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
@@ -2923,7 +2963,7 @@ BEGIN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
      WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
-       AND request MEMBER OF reqs
+       AND request in (SELECT * FROM Table(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
