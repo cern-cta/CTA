@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.22 2007/05/03 12:21:04 waldron Exp $
+ * $Id: oracle.pc,v 1.23 2007/05/30 08:53:39 waldron Exp $
  */
 
 /* headers */
@@ -1132,12 +1132,13 @@ void DLL_DECL db_worker(database_t *db) {
 				} else {
 					db->inserts += i;
 				}
-				Cthread_mutex_unlock(&db->mutex);
 
 				/* reset counters */
 				db->mtable->count = 0;
 				db->ntable->count = 0;
 				db->stable->count = 0;
+
+				Cthread_mutex_unlock(&db->mutex);
 			}
 
 			db->last_flush = time(NULL);
