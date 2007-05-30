@@ -17,6 +17,7 @@ gccVersion = {'SLC3' : 'gcc323', 'SLC4' : 'gcc34'}
 
 for plat in ('SLC3', 'SLC4'):
     for arch in ('i386', 'x86_64'):
+        if plat == 'SLC3' and arch == 'x86_64': continue
         archdir = afsdir + version + '/' + platformConversion[plat] + '_' + archConversion[arch] + '_' + gccVersion[plat]
         rpmdir = castordir + 'CASTOR.pkg/' + version + '/' + plat + '/' + arch + '/'
         print 'mkdir -p ' + archdir + ';cd ' + archdir
