@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.427 $ $Date: 2007/05/30 13:09:41 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.428 $ $Date: 2007/05/30 13:18:29 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.427 $ $Date: 2007/05/30 13:09:41 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.428 $ $Date: 2007/05/30 13:18:29 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -80,6 +80,7 @@ CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
 /* Redefinition of table SubRequest to make it partitioned by status */
 /* Unfortunately it has already been defined, so we drop and recreate it */
 /* Note that if the schema changes, this part has to be updated manually! */
+DROP TABLE SubRequest;
 CREATE TABLE SubRequest
    (
         "ID" NUMBER(*,0) NOT NULL,
