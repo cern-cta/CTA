@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StatusUpdateHelper.cpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: StatusUpdateHelper.cpp,v $ $Author: waldron $
  *
  * Status update helper class. Shared between the OraRmMasterSvc and the
  * Collector thread of the RmMasterDaemon.
@@ -274,28 +274,28 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
       return;
     }
     // Update FileSystem metrics
-    it2->second.setReadRate((*itFs)->readRate() + it2->second.deltaReadRate());
+    it2->second.setReadRate((*itFs)->readRate());
     it2->second.setDeltaReadRate(0);
     totalReadRate += it2->second.readRate();
-    it2->second.setWriteRate((*itFs)->writeRate() + it2->second.deltaWriteRate());
+    it2->second.setWriteRate((*itFs)->writeRate());
     it2->second.setDeltaWriteRate(0);
     totalWriteRate += it2->second.writeRate();
-    it2->second.setNbReadStreams((*itFs)->nbReadStreams() + it2->second.deltaNbReadStreams());
+    it2->second.setNbReadStreams((*itFs)->nbReadStreams());
     it2->second.setDeltaNbReadStreams(0);
     totalNbReadStreams += it2->second.nbReadStreams();
-    it2->second.setNbWriteStreams((*itFs)->nbWriteStreams() + it2->second.deltaNbWriteStreams());
+    it2->second.setNbWriteStreams((*itFs)->nbWriteStreams());
     it2->second.setDeltaNbWriteStreams(0);
     totalNbWriteStreams += it2->second.nbWriteStreams();
-    it2->second.setNbReadWriteStreams((*itFs)->nbReadWriteStreams() + it2->second.deltaNbReadWriteStreams());
+    it2->second.setNbReadWriteStreams((*itFs)->nbReadWriteStreams());
     it2->second.setDeltaNbReadWriteStreams(0);
     totalNbReadWriteStreams += it2->second.nbReadWriteStreams();
-    it2->second.setNbMigratorStreams((*itFs)->nbMigratorStreams() + it2->second.deltaNbMigratorStreams());
+    it2->second.setNbMigratorStreams((*itFs)->nbMigratorStreams());
     it2->second.setDeltaNbMigratorStreams(0);
     totalNbMigratorStreams += it2->second.nbMigratorStreams();
-    it2->second.setNbRecallerStreams((*itFs)->nbRecallerStreams() + it2->second.deltaNbRecallerStreams());
+    it2->second.setNbRecallerStreams((*itFs)->nbRecallerStreams());
     it2->second.setDeltaNbRecallerStreams(0);
     totalNbRecallerStreams += it2->second.nbRecallerStreams();
-    it2->second.setFreeSpace((u_signed64)((signed64)(*itFs)->freeSpace()) + it2->second.deltaFreeSpace());
+    it2->second.setFreeSpace((u_signed64)((signed64)(*itFs)->freeSpace()));
     it2->second.setDeltaFreeSpace(0);
     // Update lastUpdate
     it2->second.setLastMetricsUpdate(time(0));
