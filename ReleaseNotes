@@ -1,70 +1,210 @@
------------
-- 2.1.3-6 -
------------
+------------
+- 2.1.3-13 -
+------------
 
   New Features and Changes
   ------------------------
-  This release brings the new LSF plugin and a brand new monitoring architecture.
-  Details concerning the monitoring :
-   - rmmaster daemon is now only doing job scheduling and is not used anymore for monitoring
-     although it is still active. As a consequence, rmgetnodes won't give anything
-   - as a corrolate, rmnode is no more distributed and does not run anymore on the diskservers.
-     rmadminnode should not be used anymore and the fileSystem service of the stager was dropped.
-   - the new daemon is called rmMasterDaemon and should run on the scheduler node. It is distributed
-     in the same package castor-rmmaster as rmmaster so this package should be installed on both
-     the scheduler node and the rmmaster node even if both daemons are not needed in both places.
-   - rmMasterDaemon uses shared memory to store the data. This set of memory will survive it
-     in case of crash and be reused when restarting. In case of reboot, it can be reinitialized from
-     the data contained in the stager DB, which are constantly updated.
-   - the new command lines are rmAdminNode and rmGetNodes (the second one being only available on
-     the scheduler node).
-   - the new monitoring daemon is called rmNodeDaemon and is distributed in castor-rmnode. On top
-     of monitoring the node and sending data to the rmMasterDaemon, it also keeps the current status
-     of the node in the daemon in /etc/castor/status (default). It initializes the shared memory when
-     starting by reseting the metrics, setting statuses to Down and admin statuses to what they are
-     in the stager DB.
-   - the new monitoring monitors :
-     - for each diskserver : ram(total+free), memory(total+free), swap(total+free), load, status and adminStatus
-     - for each filesystem : space(total+free), nbRead/ReadWrite/WriteStreams, read/writeRate, status and adminstatus
-   - the status can be Production, Down or Draining
-   - the admin status can be None, Force or Deleted. If None, the status in the master is updated according
-     to monitoring. It Force, it is not updated. If Deleted, the diskServer/FileSystem is dropped from the
-     stager database and will disappear at the next reset of the shared memory (e.g. reboot).
-     rmAdminNode also uses the Release admin status to switch from Force to None.
-  Details concerning the LSF/shared memory part :
-   - there is a new LSF plugin with same name and same interface.
-   - it uses shared memory to get data from the rmMasterDaemon and thus has to run on the same machine
-   - this shared memory is also accessed by rmGetNodes that basically dumps it
-   - In case of corruption, the way to reset the shared memory is to stop rmMasterDaemon and LSF and
-     use ipcs/ipcrm. the key used is 0x946
-   - the new plugin uses 2 "equations" internally, one to rate filesystems when looking for the best
-     one, and one to modify the metrics of the selected filesystem in order to predict the future load.
-     Both "equations" are fully parametrized and parameters can be changed in castor.conf. In order to
-     take changes into account, one just has to ask LSF to reload the plugin (badmin reconfig will do it
-     without interrupting the service)
-  Other new parts :
-   - the DB schema was changed to integrate the new monitoring parts
-   - the external clips policy for the scheduling was dropped so clips is no more needed
-   - all executables and libraries now have a new symbol storing the CASTOR version number.
-     just do an "nm <exe or lib file> | grep CastorVersion" to get it
-  Improvements and bug fixes :
-   - the default values for the cleaning daemon time intervals were fixed
-   - Fixed handling of exception in createRecallCandidate that was leading to a segfault in stager_db_service. The point is that the link subrequest->diskCopy was not suppressed while the diskCopy was deleted.
-   - Fixed the problem of reservedSpace accumulation. Three cases were not covered properly, in the sense that the reserved space was not removed :
-      + puts with no file size given. Fixed in prepareForMigration
-      + disk2diskcopies. Fixed in disk2diskCopyDone
-      + aborted disk2diskCopies in the case LSF scheudules the copy on a filesystem already having the file. Fixed in getUpdateStart.
-   - Optimized several ORACLE procedures (getUpdateStart, bestTapeCopyForStream, internalStageQuery)
-   - putDones are not scheduled anymore
-   - many fixes on repack and in the tape part
-   - the maximum file name length in the nameserver was changed from 231 to 255 characters
-  
+  They are so numerous here that they were divided into categories
+
+    Broad view and transverse items
+    -------------------------------
+    - the monitoring has been fully rewritten, see details below
+    - the LSF plugin has been fully rewritten, see details below
+    - clips was dropped, python replaces it
+    - fully qualified domain names are used everywhere
+    - all executables and libraries have a new symbol storing the CASTOR version number.
+      just do an "nm <exe or lib file> | grep CastorVersion" to get it
+    - putDones are not scheduled anymore
+    - the maximum file name length in the nameserver was changed from 231 to 255 characters
+    - garbage collection on diskservers was "desynchronized". The point is to avoid that all GCs
+      start concurrently both for load and smoothing reasons
+
+    Monitoring
+    ----------
+    - rmmaster daemon is now only doing job scheduling and is not used anymore for monitoring
+      although it is still active. As a consequence, rmgetnodes won't give anything
+    - as a corrolate, rmnode is no more distributed and does not run anymore on the diskservers.
+      rmadminnode should not be used anymore and the fileSystem service of the stager was dropped.
+    - the new monitoring daemon is called rmMasterDaemon and should run on the scheduler node.
+      It is distributed in the same package castor-rmmaster as rmmaster so this package should be
+      installed on both the scheduler node and the rmmaster node even if both daemons are not
+      needed in both places.
+    - rmMasterDaemon uses shared memory to store the data. This set of memory will survive it
+      in case of crash and be reused when restarting. In case of reboot, it can be reinitialized from
+      the data contained in the stager DB, which are constantly updated.
+    - the new command lines are rmAdminNode and rmGetNodes (the second one being only available on
+      the scheduler node).
+    - the new monitoring daemon is called rmNodeDaemon and is distributed in castor-rmnode. On top
+      of monitoring the node and sending data to the rmMasterDaemon, it also keeps the current status
+      of the node in the daemon in /etc/castor/status (default). It initializes the shared memory when
+      starting by reseting the metrics, setting statuses to Down and Admin statuses to what they are
+      in the stager DB.
+    - the new monitoring monitors :
+      - for each diskserver : ram(total+free), memory(total+free), swap(total+free),
+        nbRead/ReadWrite/Write/Recaller/MigratorStreams, read/writeRate, status and adminStatus
+      - for each filesystem : space(total+free), nbRead/ReadWrite/Write/Recaller/MigratorStreams,
+        read/writeRate, status and adminstatus
+    - the status can be Production, Down, Draining.
+    - the admin status can be None, Force or Deleted. If None, the status in the master is updated according
+      to monitoring. It Force, it is not updated. If Deleted, the diskServer/FileSystem is dropped from the
+      stager database and will disappear at the next reset of the shared memory (e.g. reboot).
+    - the new monitoring system is able to disable diskservers that did not send data for too long
+
+    Around LSF
+    ----------
+    - there is a new LSF plugin with same name and same interface as the old one.
+    - it uses shared memory to get data from the rmMasterDaemon and thus has to run on the same machine
+    - this shared memory is also accessed by rmGetNodes that basically dumps it
+    - In case of corruption, the way to reset the shared memory is to stop rmMasterDaemon and LSF and
+      use ipcrm. the key used is 0x946
+    - scheduling policies are now defined in python and can be defined per svcclass.
+      The python code is precompiled at plugin start in order to speed up the execution.
+      Policies can be updated with no service interuption by reloading the plugin (badmin reconfig).
+      Default policy takes only the number of streams per filesystem into account.
+    - CASTOR now uses multiple queues in LSF, namely one queue per svcclass
+    - we don't use message boxes anymore inside LSF. The first one was dropped while the second one is
+      replaced by file sharing, either via distributed filesystem or via a web server running on the
+      scheduler machine. This also implies that jobs are no longer suspended and resumed.
+
+    Around the stage DB
+    -------------------
+    - all indexes and constraints in the stager DB schema are now properly named
+    - reservedSpace has been dropped from the filesystem table. It is replaced by loose heuristics
+      leading to imprecisions on the actual and expected free space but avoiding any accumulation
+      problems.
+    - the nullGCPolicy does not exist anymore since "INVALID" diskcopies are cleaned up independently.
+      In order to not use any garbage collection policy, an empty name should be used.
+    - the way to choose the best filesystem to be used for migration (migration policy) has changed
+      to favor the reuse of filesystems. Namely, filesystems will be reused during 15 minutes by
+      migrators (as long as there are candidates and the filesystems are in Production). This allows
+      the scheduler plugin to adapt its behavior by reducing the number of concurrent reads and has
+      very good effects on the migration speed.
+    - many schema changes took place. Here is an overview of the biggest ones :
+       - min/max/minAllowedFreeSpace were dropped. They now reside in the monitoring shared memory
+         of the new rmMasterDaemon and are defined in the castor.conf of the diskServers
+       - the load of diskServers and the weight of fileSystems have been dropped. They are replaced by
+         nbRead/ReadWrite/Write/Recaller/MigratorStreams and read/writeRate. The values stored in the
+         database are actually only copies from the mnitoring shared memory that is the primary source.
+       - procedure bestFilesystemForJob is gone, replaced by the python policies of the scheduler plugin.
+       - reservedSpace disappeared from the filesystem table as already mentionned.
+       - the stream table has new columns : lastFileSystemChange, lastFileSystemUsed and lastButOneFileSystemUsed.
+         This allows the migration policies to be more clever (see above).
+
+    Tape related
+    ------------
+    - Extended tpdaemon to use proper DFL logging
+    - Concerning bad MIRs, take the operator out of the loop and rely on the healing capabilities of the
+      drive during the next access. This can be controlled by new option TAPE CANCEL_ON_BADMIR.
+    - a restriction was added on the repack server to dismiss users with 0 id
+    - the repack -a has been modified. "repack -a Vid" is used to archive a specific finished tape
+      while "repack -A" archive all the finished one.
+    - repack -x has been extended to give information about the different segments that were on a
+      repacked tape querying the name server.
+    - A new couter has been added to repack with the STAGED files (properly migrated) and it will be
+      updated by the monitoring. At the end the last snapshot is taken before deleting the subrequest.
+
+    Bug Fixes
+    ---------
+    - #26534  GC policies are not taking gcWeight attribute into account
+    - #26489  Allow results to be displayed in reverse chronological order
+    - #26177  putDone does not to update the filesize in the nameserver?
+    - #26176  Accumulation of orphaned subrequests in SUBREQUEST_WAITSUBREQ (5)
+    - #26135  Customized pending reason number 20003
+    - #26060  enterSvcClass should fail if it detects illegal options
+    - #25344  misleading error message from rfcp
+    - #25029  reservedSpace leak for SRM 'put' request cycles
+    - #24864  Tape recalls do not work properly on 2.1.2.6 (itdc)
+    - #24407  errcode == 32102 doesn't resurrect
+    - #23961  Tape removed from vmgr makes rtcpclientd loop
+    - #23795  UID zero checking 
+    - #23794  FAILING file count
+    - #23793  repack -a
+    - #23709  Kill and terminate a repack session 
+    - #23705  repack -s status information
+    - #21953  problem with subdirectory creation on diskservers 
+    - #21823  putDone failure not well handled if file does not exist on diskserver
+    - #21745  RFE: CASTOR to support FQDN internally for disk servers
+    - #20353  The 'no valid copy found on tape' instead of 'Internal error' is still not fixed!
+    - #20079  filesystems not being updated are not taken out of production!
+    - #17153  LSF job can remain in PSUSP after a timeout between stager - rmmaster
+    - #15832  RMMASTER does not keep node states
+    - #11550  Leak in stager
+    - #1288   rfmkdir -p
+    - the default values for the cleaning daemon time intervals were fixed
+    - a PutDone is now accepted on a disabled diskserver
+    - read only jobs go through whatever the space situation is. However "false" read jobs
+      (read jobs that would trigger disk2diskCopy or recalls) don't
+    - fixed automatic renewal of the database connection for all hand-written services
+    - regular retries on disabled or archived tapes
+    - jump over files with bad size in tape recalls. This avoids looping blocking other correct files.
+      There will still be an alert log for the wrong file.
+    - fixed tape stuck in START problem. The code ignores consistency problems with the status of a tape in VMGR.
+    - fix for the device or resource busy problem leading to put all drives down. A simple retry worked here.
+    - fix tape stuck in UNKNOWN status in case of tape alert. The new parameter DOWN_ON_TPALERT allows
+      to configure whether to put the drive down or to ignore the alert.
+    - in case of time out in contacting the stager the  repack subrequest is not ending up into "FAILED" status.
+
+  Upgrade from 2.1.1-*
+  --------------------
+    - you first have to update to 2.1.2 and then follow the instructions for updating from 2.1.2-*
+    - depending on your current version you may have to apply 2.1.1-4_to_2.1.1-9 and then apply
+      2.1.1-9_to_2.1.2-4
+    - you will also have to drop the DLF DB
+
   Upgrade from 2.1.2-*
   --------------------
-  - Stop all the CASTOR daemons
-  - Upgrade the database;
-  - Upgrade all nodes (the order is not important)
-  - Restart the services
+    - stop all daemons and services (rhserver, stager, rtcpclientd, cleaningDaemon, rmmaster, dlf, expertd, rmnode, gcdaemon, LSF)
+    - upgrade the stager database
+       - first save somewhere the values of min/max/minAllowedFreeSpace for all filesystems. They will needed
+         when upgrading the diskservers.
+       - using script 2.1.2-*_to_2.1.3-14
+    - upgrade the diskServer names in the stager database to include the fully qualified domain :
+         UPDATE DiskServer SET name = name || '.cern.ch';
+    - update DLF DB using script dlf_2.1.2-x_to_2.1.3-x
+    - update the rpms on the different nodes. Some changes were made in the list of packages to install :
+       - on the scheduler machine, castor-rmmaster and castor-lib-monitor should be added
+       - on the diskservers, castor-lib-monitor should be added
+       - clips can be dropped from the expert machine
+    - update your monitoring tools according to the daemon changes :
+       - on the diskServer, rmnode was replaced by rmNodeDaemon
+       - on the scheduler machine, rmMasterDaemon was added
+    - upgrade to LSF7, also modify the configuration files :
+       - use fully qualified machine names :
+          - update machine names accordingly in all config files
+          - add LSF_STRICT_CHECKING in lsf.conf on all machines
+          - remove LSF_STRIP_DOMAIN from lsf.conf on all machines
+       - define one queue per svcclass in lsb.queues
+       - remove or increase the 1000 jobs limitation in lsb.params
+          - e.g. CERN has a 30000 limit on the number of jobs
+       - allow for extsched option in job submission :
+          - add LSF_ENABLE_EXTSCHEDULER in lsf.conf of the scheduler and rmmaster machines
+    - define python scheduling policies :
+       - create the policy python file from the .example one (/etc/castor/policies.py.example)
+       - optionnaly modify it to adapt policies
+       - optionnaly define different policies for different service classes
+    - update the CASTOR configuration files on all machines
+       - update castor.conf using the template giving in castor.conf.example
+       - define the way to share files between the scheduler machine and the diskservers
+         - on the scheduler machine, define the Sched/SharedLSFResource option giving the place where to put files
+           Note that this ca be either a shared filesystem or a local directory accessible through a web server
+           In both cases, lsfadmin needs write access to the directory
+         - on the rmmaster machine, define the RM/SharedLSFResource option giving the place where diskservers
+           can find the files. Again, this can be either a shared filesystem or an http location (e.g.
+           dir:/var/lsf/sharedfiles or http://castorscheduler.cern.ch/lsf)
+       - on diskservers :
+         - edit castor.conf to define the proper name for the RM/HOST option (scheduler machine)
+         - edit castor.conf to define proper mountPoints in the RmNode/MountPoints option. e.g.
+           RmNode MountPoints /srv/castor/01/ /srv/castor/02/ /srv/castor/03/
+         - optionnaly define option RmNode/StatusFile in castor.conf. The given file will contain the filesystem
+           and node status as seen by the central servers, constantly updated
+         - if needed, edit castor.conf to define the min/max/minAllowedFreeSpace according to the values
+           saved from the stager DB. Default values are .10, .15 and .05
+    - restart all daemons
+       - on diskservers : rmNodeDaemon, gcDaemon
+       - on scheduler : rmMasterDaemon, LSF
+       - on other nodes, nothing changed (including on rmmaster, the old rmmaster must still run)
+    - enable diskservers one by one using rmAdminNode :
+         rmAdminNode -n <fully qualified node name> -r -R
 
 -----------
 - 2.1.2-10-
