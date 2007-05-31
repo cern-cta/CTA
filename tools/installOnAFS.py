@@ -23,4 +23,4 @@ for plat in ('SLC3', 'SLC4'):
         print 'mkdir -p ' + archdir + ';cd ' + archdir
         for p in packages:
           print 'rpm2cpio ' + rpmdir + 'castor-' + p + '-' + version + '.' + arch + '.rpm | cpio -idmv'
-	print 'rpm2cpio ' + castordir + 'CASTOR-compat.pkg/castor-lib-compat-' + compatversion + '.' + platformConversion[plat] + '.' + arch + '.rpm | cpio -idmv'
+	print 'rpm2cpio ' + castordir + 'CASTOR-compat.pkg/' + version[0:version.index('-')] + '-\*/castor-lib-compat-' + compatversion + '.' + platformConversion[plat] + '.' + arch + '.rpm | cpio -idmv'
