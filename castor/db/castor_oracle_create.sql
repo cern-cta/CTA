@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.420  Date: 2007/05/14 12:19:22  Author: sponcec3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.429  Date: 2007/05/30 13:44:54  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,14 +205,13 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.420  Date: 2007/05/14 12:19:22 ');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.429  Date: 2007/05/30 13:44:54 ');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
 
 /* SQL statements for object types */
 CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
-CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
@@ -273,24 +272,66 @@ CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,stat
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
 
+/* Redefinition of table SubRequest to make it partitioned by status */
+/* Unfortunately it has already been defined, so we drop and recreate it */
+/* Note that if the schema changes, this part has to be updated manually! */
+DROP TABLE SubRequest;
+CREATE TABLE SubRequest
+   (
+        "RETRYCOUNTER" NUMBER,
+        "FILENAME" VARCHAR2(2048),
+        "PROTOCOL" VARCHAR2(2048),
+        "XSIZE" NUMBER(*,0),
+        "PRIORITY" NUMBER,
+        "SUBREQID" VARCHAR2(2048),
+        "FLAGS" NUMBER,
+        "MODEBITS" NUMBER,
+        "CREATIONTIME" NUMBER(*,0),
+        "LASTMODIFICATIONTIME" NUMBER(*,0),
+        "ANSWERED" NUMBER,
+        "ID" NUMBER(*,0) NOT NULL,
+        "DISKCOPY" NUMBER(*,0),
+        "CASTORFILE" NUMBER(*,0),
+        "PARENT" NUMBER(*,0),
+        "STATUS" NUMBER(*,0),
+        "REQUEST" NUMBER(*,0),
+        "GETNEXTSTATUS" NUMBER(*,0)
+    )
+  PCTFREE 50 PCTUSED 40 INITRANS 50
+  TABLESPACE "STAGER_DATA" ENABLE ROW MOVEMENT
+  PARTITION BY LIST (STATUS)
+   (
+    PARTITION P_STATUS_1 VALUES (1),
+    PARTITION P_STATUS_2 VALUES (2),
+    PARTITION P_STATUS_3 VALUES (3),
+    PARTITION P_STATUS_4 VALUES (4),
+    PARTITION P_STATUS_5 VALUES (5),
+    PARTITION P_STATUS_6 VALUES (6),
+    PARTITION P_STATUS_7 VALUES (7),
+    PARTITION P_STATUS_8 VALUES (8),
+    PARTITION P_STATUS_9 VALUES (9),
+    PARTITION P_STATUS_10 VALUES (10),
+    PARTITION P_STATUS_11 VALUES (11),
+    PARTITION P_STATUS_12 VALUES (12),
+    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+   );
+
+ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID);
+ 
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
 CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
 
-/* function base indexes to speed up subrequestToDo, subrequestFailedToDo, and getLastRecalls */
-CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
-CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,NULL));
-
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
 
 /* Some index on the GCFile table to speed up garbage collection */
-CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST) TABLESPACE STAGER_INDX;
+CREATE INDEX I_GCFILE_REQUEST ON GCFILE(REQUEST);
 
 /* Indexing segments by Tape */
-CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE) TABLESPACE STAGER_INDX COMPUTE STATISTICS;
+CREATE INDEX I_SEGMENT_TAPE ON SEGMENT (TAPE);
 
 /* some constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
@@ -299,10 +340,11 @@ ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 ALTER TABLE SvcClass MODIFY (name NOT NULL);
 
-/* enable row movements in Diskcopy, TapeCopy, and SubRequest */
+/* enable row movement in most used tables */
 ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
 ALTER TABLE TapeCopy ENABLE ROW MOVEMENT;
-ALTER TABLE SubRequest ENABLE ROW MOVEMENT;
+ALTER TABLE Id2Type ENABLE ROW MOVEMENT;
+ALTER TABLE Client ENABLE ROW MOVEMENT;
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
@@ -334,7 +376,7 @@ END;
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
-ON COMMIT DELETE ROWS;
+ON COMMIT PRESERVE ROWS;
 
 /* Global temporary table to help selectFiles2Delete procedure */
 CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
@@ -854,11 +896,10 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   path OUT VARCHAR2, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                  tapeCopyId OUT INTEGER) AS
-                                                
-  fileSystemId INTEGER := 0;  
-  dsid NUMBER;  
-  fsDiskServer NUMBER; 
+                                                  tapeCopyId OUT INTEGER) AS                                              
+  fileSystemId INTEGER := 0;
+  dsid NUMBER;
+  fsDiskServer NUMBER;
   lastFSChange NUMBER;
   lastFSUsed NUMBER;
   lastButOneFSUsed NUMBER;
@@ -881,7 +922,7 @@ BEGIN
           FROM FileSystem, DiskServer
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.id = lastButOneFSUsed
-           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+           AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
            AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
         -- we are within the time range, so we try to reuse the filesystem
         SELECT P.path, P.diskcopy_id, P.castorfile,
@@ -924,10 +965,17 @@ BEGIN
             WHERE FS.id = NbTapeCopiesInFS.FS
               AND NbTapeCopiesInFS.NbTapeCopies > 0
               AND NbTapeCopiesInFS.Stream = StreamId
-              AND FS.status IN (0, 1)
+              AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
               AND DiskServer.id = FS.diskserver
-              AND DiskServer.status IN (0, 1)
-            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
+              AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+	      -- Ignore diskservers where a migrator already exists
+              AND DiskServer.id NOT IN (
+                SELECT DISTINCT(FileSystem.diskServer)
+                  FROM FileSystem, Stream
+                 WHERE FileSystem.id = Stream.lastfilesystemused
+		   AND Stream.status IN (3)   -- SELECTED
+              )
+            ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
         WHERE ROWNUM < 2)
     RETURNING diskServerId INTO dsid;
@@ -943,9 +991,9 @@ BEGIN
            AND DiskServer.id = FS.diskserver
            AND NbTapeCopiesInFS.NbTapeCopies > 0
            AND NbTapeCopiesInFS.Stream = StreamId
-           AND FS.status IN (0, 1)    -- FILESYSTEM_PRODUCTION, FILESYSTEM_DRAINING
+           AND FS.status IN (0, 1)    -- PRODUCTION, DRAINING
            AND FS.diskserver = dsId
-         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC
+         ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
          ) FN
      WHERE ROWNUM < 2;
     SELECT P.path, P.diskcopy_id, P.castorfile,
@@ -986,6 +1034,10 @@ BEGIN
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Reset last filesystems used
+    UPDATE Stream
+       SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
+     WHERE id = streamId;
     -- No data found means the selected filesystem has no
     -- tapecopies to be migrated. Thus we go to next one
     -- However, we reset the NbTapeCopiesInFS row that failed
@@ -1076,10 +1128,10 @@ BEGIN
       OPEN c1;
       LOOP
         FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, fsDiskServer, fileSize;
-        -- Check that we don't alredy have a copy of this file on this filesystem.
+        -- Check that we don't already have a copy of this file on this filesystem.
         -- This will never happend in normal operations but may be the case if a filesystem
         -- was disabled and did come back while the tape recall was waiting.
-        -- Even if we could optimize by canceling remaining unneeded tape recalls when a
+        -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
         -- fileSystem comes backs, the ones running at the time of the come back will have
         -- the problem.
         EXIT WHEN c1%NOTFOUND;
@@ -1590,7 +1642,7 @@ BEGIN
      AND SubRequest.id = srId;
   -- Check that we did not cancel the SubRequest in the mean time
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
-    raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
+    raise_application_error(-20104, 'SubRequest cancelled while queuing in scheduler. Giving up.');
   END IF;
   IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
     -- this could happen if LSF schedules the same job twice!
@@ -1948,7 +2000,7 @@ BEGIN
        WHERE SubRequest.request = Id2Type.id
          AND Id2Type.type = 39       -- PutDone
          AND SubRequest.castorFile = cfId
-         AND SubRequest.status = 5); -- WAITSUBREQ
+         AND decode(SubRequest.status,5,subrequest.status,null) = 5); -- WAITSUBREQ
  END IF;
  COMMIT;
 END;
@@ -2261,7 +2313,7 @@ BEGIN
    END LOOP;
    -- Delete the DiskCopies
    UPDATE DiskCopy
-      SET status = 7  -- GCCANDIDATE
+      SET status = 7  -- INVALID
     WHERE status = 2  -- WAITTAPERECALL
       AND castorFile = cfId;
    -- Mark the 'recall' SubRequests as failed
@@ -2763,7 +2815,7 @@ BEGIN
 
   IF dcIds.COUNT > 0 THEN
     UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
-     WHERE id MEMBER OF dcIds;
+     WHERE id in (SELECT * FROM Table(dcIds));
     -- compute and update the filesystem's freed space
     sumSize := 0;
     FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
@@ -2797,17 +2849,16 @@ BEGIN
 END;
 
 BEGIN
-  -- creates a db job to be run every 5 mins for the garbage collector
-  -- given the 1 second sleep in garbageCollect, such interval allows for
-  -- ~300 filesystem to be processed for each round.
+  -- creates a db job to be run every 15 mins for the garbage collector.
+  -- Such interval allows for ~300 filesystem to be processed for each round
+  -- under normal conditions.
   -- XXX In case more are present, jobs will overlap during their run
-  -- XXX The GC procedure has to be improved! 
   DBMS_SCHEDULER.CREATE_JOB (
       JOB_NAME        => 'garbageCollectJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN garbageCollect(); END;',
       START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
       ENABLED         => TRUE,
       COMMENTS        => 'Castor Garbage Collector');
 END;
@@ -3075,7 +3126,7 @@ BEGIN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
      WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
-       AND request MEMBER OF reqs
+       AND request in (SELECT * FROM Table(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
@@ -3107,7 +3158,7 @@ BEGIN
     UPDATE SubRequest
        SET getNextStatus = 2 -- GETNEXTSTATUS_NOTIFIED
      WHERE decode(getNextStatus,1,getNextStatus,NULL) = 1 -- GETNEXTSTATUS_FILESTAGED
-       AND request MEMBER OF reqs
+       AND request in (SELECT * FROM Table(reqs))
     RETURNING castorfile BULK COLLECT INTO cfs;
     internalStageQuery(cfs, svcClassId, result);
   ELSE
