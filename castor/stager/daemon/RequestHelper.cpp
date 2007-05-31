@@ -24,16 +24,26 @@
 #include "../../../h/serrno.h"
 #include "../../../h/Cns_api.h"
 #include "../../../h/rm_api.h"
+#include "../../../h/rm_struct.h"
+
 #include "../../../h/Cpwd.h"
 #include "../../../h/Cgrp.h"
 #include "../../../h/u64subr.h"
-#include "../../IClientFactory.h"
+#include "../../../h/osdep.h"
+#include "../../IClientFactory.hpp"
 #include "../../exception/Exception.hpp"
 #include "../../exception/Internal.hpp"
 #include "../../../h/serrno.h"
+#include "../../Constants.hpp"
 
+#include <vector>
 #include <iostream>
 #include <string>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#define STAGER_OPTIONS 10
 
 
 namespace castor{
@@ -41,32 +51,47 @@ namespace castor{
     namespace dbService{
       
       /* contructor */
-      StagerRequestHelper::StagerRequestHelper() throw(castor::exception::Internal){
+      StagerRequestHelper::StagerRequestHelper() throw(castor::exception::Exception){
 	
-	this->stagerService =  new castor::stager::IStagerSvc*; 
+	this->stagerService =  new castor::stager::IStagerSvc; 
 	if(this->stagerService == NULL){
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the stagerService"<<std::endl;
 	  throw ex;
 	}
 	
-	this->dbService = new castor::Services*;
+	this->dbService = new castor::Services;
 	if(this->dbService == NULL){
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the dbService"<<std::endl;
 	  throw ex;
 	}
 	
-	this->baseAddr =  new castor::BaseAddress*; /* the settings ll be done afterwards */
+	this->baseAddr =  new castor::BaseAddress; /* the settings ll be done afterwards */
 	if(this->baseAddr == NULL){
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the baseAddress"<<std::endl;
 	  throw ex;
 	}
 	
 	this->partitionMask[0] = '\0';  
-	types = {OBJ_StageGetRequest,OBJ_StagePrepareToGetRequest,OBJ_StageRepackRequest,OBJ_StagePutRequest,OBJ_StagePrepareToPutRequest,OBJ_StageUpdateRequest,OBJ_StagePrepareToUpdateRequest,OBJ_StageRmRequest,OBJ_SetFileGCWeight,OBJ_StagePutDoneRequest};
+	this->types.resize(STAGER_OPTIONS);
+	ObjectsIds auxTypes[] = {OBJ_StageGetRequest,
+		       OBJ_StagePrepareToGetRequest,
+		       OBJ_StageRepackRequest,
+		       OBJ_StagePutRequest,
+		       OBJ_StagePrepareToPutRequest,
+		       OBJ_StageUpdateRequest,
+		       OBJ_StagePrepareToUpdateRequest,
+		       OBJ_StageRmRequest,
+		       OBJ_SetFileGCWeight,
+		       OBJ_StagePutDoneRequest};
 	
+	for(int i=0; i< STAGER_OPTIONS; i++){
+	  this->types.at(i) = auxTypes[i]; 
+	}
+
+	this->default_protocol = "rfio";
       
       }
 
@@ -90,7 +115,7 @@ namespace castor{
       void StagerRequestHelper::settingBaseAddress()
       {
 	  baseAddr->setCnvSvcName("DbCnvSvc");
-	  baseAddr->setCnvSvcType("SVC_DB_CNV");
+	  baseAddr->setCnvSvcType(SVC_DBCNV);
       }
      
 
@@ -100,12 +125,12 @@ namespace castor{
       /************************************************************************************/
       
       /* get subrequest using stagerService (and also types) */
-      void StagerRequestHelper::getSubrequest() throw(castor::exception::Internal)
+      void StagerRequestHelper::getSubrequest() throw(castor::exception::Exception)
       {
 	
-	this->subrequest=stagerService->subRequestToDo(&types);
+	this->subrequest=stagerService->subRequestToDo(types);
 	if(this->subrequest == NULL){
-	  castor::exception::Internal ex(SEENTTRYNFND);
+	  castor::exception::Exception ex(SEENTRYNFND);
 	  ex.getMessage()<<"(StagerRequestHelper getSubrequest) There is not subrequest to process"<<std::endl;
 	  throw ex;
 	}
@@ -114,7 +139,7 @@ namespace castor{
 
       /* get the link (fillObject~SELECT) between the subrequest and its associated fileRequest  */ 
       /* using dbService, and get the fileRequest */ 
-      void StagerRequestHelper::getFileRequest() throw(castor::exception::Internal)
+      void StagerRequestHelper::getFileRequest() throw(castor::exception::Exception)
       {
 	try{
 	  dbService->fillObj(baseAddr, subrequest, OBJ_FileRequest, 0);
@@ -126,7 +151,7 @@ namespace castor{
 	this->fileRequest=subrequest->request();
 	if(this->fileRequest == NULL){
 	  
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper getFileRequest) Impossible to get the fileRequest"<<std::endl;
 	  throw ex;
 	}
@@ -140,7 +165,7 @@ namespace castor{
       /* get the link (fillObject~SELECT) between fileRequest and its associated client */
       /* using dbService, and get the client                                           */
       /********************************************************************************/
-      void StagerRequestHelper::getIClient() throw(castor::exception::Internal)
+      void StagerRequestHelper::getIClient() throw(castor::exception::Exception)
       {
 	try{
 	  dbService->fillObj(baseAddr, fileRequest,OBJ_IClient, 0);
@@ -151,11 +176,12 @@ namespace castor{
 	this->iClient=fileRequest->client();
 	if(this->iClient == NULL){
 	  
-	    castor::exception::Internal ex(SEINTERNAL);
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper getIClient) Impossible to get the iClient"<<std::endl;
 	    throw ex;
 	}
-	this->iClientAsString=IClientFactory.client2string(iClient);/* IClientFactory singleton */
+	//const castor::IClient* iAuxClient = this->iClient;
+	this->iClientAsString = IClientFactory::client2String(*(this->iClient));/* IClientFactory singleton */
       }
       
 	
@@ -167,19 +193,19 @@ namespace castor{
       /* get svClass by selecting with stagerService                                         */
       /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
       /*************************************************************************************/
-      void StagerRequestHelper::getSvcClass() throw(castor::exception::Internal)
+      void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception)
       {
 
 	std::string className=fileRequest->svcClassName(); 
 	
-	if((className==NULL)||(className.empty())){  /* we set the default className */
+	if(className.empty()){  /* we set the default className */
 	    className="default";
 	    fileRequest->setSvcClassName(className);
 	    	    
 	    className=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly updated */
-	    if((className == NULL)||(className.empty())){
+	    if(className.empty()){
 	      
-	      castor::exception::Internal ex(SESVCCLASSNFND);
+	      castor::exception::Exception ex(SESVCCLASSNFND);
 	      ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to set properly the svcClassName on fileRequest"<<std::endl;
 	      throw ex;
 	    }
@@ -187,7 +213,7 @@ namespace castor{
 	
 	svcClass=stagerService->selectSvcClass(className);//check if it is NULL
 	if(this->svcClass == NULL){
-	  castor::exception::Internal ex(SESVCCLASSNFND);
+	  castor::exception::Exception ex(SESVCCLASSNFND);
 	  ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to get the svcClass"<<std::endl;
 	  throw ex; 
 	}
@@ -200,7 +226,7 @@ namespace castor{
       /*******************************************************************************/
       /* update request in DB, create and fill request->svcClass link on DB         */ 
       /*****************************************************************************/
-      void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Internal)
+      void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception)
       {
 	try{
 	  /* update request on DB */
@@ -229,12 +255,12 @@ namespace castor{
       /*******************************************************************************/
       /* get the castoFile associated to the subrequest                             */ 
       /*****************************************************************************/
-      void StagerRequestHelper::getCastorFile() throw(castor::exception::Internal)
+      void StagerRequestHelper::getCastorFile() throw(castor::exception::Exception)
       {
 
 	this->castorFile=subrequest->castorFile();
 	if(this->castorFile == NULL){
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper getCastorFile) Impossible to get the castorFile"<<std::endl;
 	  throw ex; 
 	}
@@ -248,12 +274,12 @@ namespace castor{
       /* get fileClass by selecting with stagerService                                       */
       /* using the CnsfileClass.name as key      (in StagerRequest.JobOriented)             */
       /*************************************************************************************/
-      void StagerRequestHelper::getFileClass(char* nameClass) throw(castor::exception::Internal)
+      void StagerRequestHelper::getFileClass(char* nameClass) throw(castor::exception::Exception)
       {
 	std::string fileClassName(nameClass);
 	fileClass=stagerService->selectFileClass(fileClassName);//throw exception if it is null
 	if(this->fileClass == NULL){
-	  castor::exception::Internal ex(SEENTRYNFND);
+	  castor::exception::Exception ex(SEENTRYNFND);
 	  ex.getMessage()<<"(StagerRequestHelper getFileClass) Impossible to get the fileClass"<<std::endl;
 	  throw ex; 
 	}
@@ -268,9 +294,9 @@ namespace castor{
       /***************************************************************************************/
 
       /* get or create subrequest uuid */
-      void StagerRequestHelper::setSubrequestUuid() throw(castor::exception::Internal)
+      void StagerRequestHelper::setSubrequestUuid() throw(castor::exception::Exception)
       {
-	Cuuid_t subrequest_uuid=NOT_VALID;//if we manage to get the cuuid version, we update 
+	Cuuid_t subrequest_uuid;//if we manage to get the cuuid version, we update 
 	char subrequest_uuid_as_string[CUUID_STRING_LEN+1];	
 
 	if (subrequest->subreqId().empty()){/* we create a new Cuuid_t, copy to thread-safe variable, and update it on subrequest...*/
@@ -279,7 +305,7 @@ namespace castor{
 	  
 	  /* convert to the string version, needed to update the subrequest and fill it on DB*/ 
 	  if(Cuuid2string(subrequest_uuid_as_string, CUUID_STRING_LEN+1, &subrequest_uuid) != 0){
-	    castor::exception::Internal ex(SEINTERNAL);
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setSubrequestUuid) error  on Cuuid2string"<<std::endl;
 	    throw ex;
 	  }else{
@@ -297,7 +323,7 @@ namespace castor{
 	  }
 	}else{ /* translate to the Cuuid_t version and copy to our thread-safe variable */
 	  if( string2Cuuid(&subrequest_uuid, (char *) subrequest_uuid_as_string)!=0){
-	    castor::exception::Internal ex(SEINTERNAL);
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setSubrequestUuid) error  on string2Cuuid"<<std::endl;
 	    throw ex;
 	  }else{
@@ -312,14 +338,14 @@ namespace castor{
 	Cuuid_t request_uuid;
 
 	if(fileRequest->reqId().empty()){/* we cannon' t generate one!*/
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper setRequestUuid) Request has no uuid"<<std::endl;
 	  throw ex;	  
 	}else{/*convert to the Cuuid_t version and copy in our thread safe variable */
 	   
-	  char* uuid_as_string = fileRequest->reqId();
-	  if (string2Cuuid(&request_uuid,(char *) uuid_as_string) != 0) {
-	    castor::exception::Internal ex(SEINTERNAL);
+	  //char* uuid_as_string = fileRequest->reqId().c_str();
+	  if (string2Cuuid(&request_uuid,(char*) fileRequest->reqId().c_str()) != 0) {
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setRequestUuid) error (but no exception) on string2Cuuid"<<std::endl;
 	    throw ex;
 	  }else{
@@ -337,10 +363,10 @@ namespace castor{
       /*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
       /*****************************************************************************************************************************************/
       
-      void StagerRequestHelper::linkCastorFileToServiceClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Internal)
+      void StagerRequestHelper::linkCastorFileToServiceClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception)
       {
-	unsigned64 fileClassId = fileClass->id();
-	unsigned64 svcClassId = svcClass->id();
+	u_signed64 fileClassId = fileClass->id();
+	u_signed64 svcClassId = svcClass->id();
 	
 	/* get the castorFile from the stagerService and fill it on the subrequest */
 	/* we use the stagerService.selectCastorFile to get it from DB */
@@ -355,7 +381,7 @@ namespace castor{
 	}
 
 	if(this->castorFile == NULL){
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper linkCastorFileToServiceClass) Impossible to get the castorFile"<<std::endl;
 	  throw ex; 
 	}
@@ -377,11 +403,10 @@ namespace castor{
       }
 
 
-
       /****************************************************************************************************/
       /*  check if the castorFile is linked to the service Class: called in StagerRequest.jobOriented()*/
       /**************************************************************************************************/
-      void StagerRequestHelper::isCastorFileLinkedToSvcClass() throw(castor::exception::Internal)
+      void StagerRequestHelper::isCastorFileLinkedToSvcClass() throw(castor::exception::Exception)
       {
 	castor::stager::SvcClass* svcClass_from_castorFile = castorFile->svcClass();
 
@@ -409,10 +434,10 @@ namespace castor{
       /****************************************************************************************************/
       /*  initialize the partition mask with svcClass.name()  or get it:called in StagerRequest.jobOriented() */
       /**************************************************************************************************/
-      std::string StagerRequestHelper::getPartitionMask() throw(castor::exception::Internal)
+      std::string StagerRequestHelper::getPartitionMask() throw(castor::exception::Exception)
       {
 	if(svcClass->name().empty()){
-	  castor::exception::Internal ex(SEINTERNAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper getPartitionMask) svcClassName is empty"<<std::endl;
 	  throw ex;
 	}else{
@@ -429,18 +454,18 @@ namespace castor{
       /****************************************************************************************************/
       /*  fill castorFile's FileClass: called in StagerRequest.jobOriented()                             */
       /**************************************************************************************************/
-      void StagerRequestHelper::setFileClassOnCastorFile() throw(castor::exception::Internal)
+      void StagerRequestHelper::setFileClassOnCastorFile() throw(castor::exception::Exception)
       {
 	try{
 	  if(this->castorFile == NULL){
-	    castor::exception::Internal ex(SEINTERNAL);
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setFileClassOnCastorFile) Impossible to get the castorFile"<<std::endl;
 	    throw ex;
 	  }else{
 	    castorFile->setFileClass(fileClass);
 	    dbService->fillRep(baseAddr, castorFile, OBJ_FileClass, STAGER_AUTOCOMMIT_TRUE);
 	  }
-	}catch(castor::exception::Internal ex){
+	}catch(castor::exception::Exception ex){
 	  throw ex;
 	}catch(castor::exception::Exception e){/* stagerService throw exception */
 	  castor::exception::Exception ex(SEINTERNAL);
@@ -458,7 +483,7 @@ namespace castor{
       /************************************************************************************/
       /* set the username and groupname string versions using id2name c function  */
       /**********************************************************************************/
-      void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Internal)
+      void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception)
       {
 	struct passwd *this_passwd;
 	struct group *this_gr;
@@ -466,31 +491,28 @@ namespace castor{
 	uid_t euid = fileRequest->euid();
 	uid_t egid = fileRequest->egid();
 
-	if((this_passw=Cgetpwuid(euid)) == NULL){
-	  castor::exception::Internal ex(SEURSERUNKN);
+	if((this_passwd = Cgetpwuid(euid)) == NULL){
+	  castor::exception::Exception ex(SEUSERUNKN);
 	  ex.getMessage()<<"(StagerRequestHelper setUsernameAndGroupname) Impossible to get the Username"<<std::endl;
 	  throw ex;
 	}
 	
 	if(egid != this_passwd->pw_gid){
-	  castor::exception::Internal ex(EINVAL);
+	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper setUsernameAndGroupname) Impossible to get the Username"<<std::endl;
 	  throw ex;
 	}
 	
 	if((this_gr=Cgetgrgid(egid))==NULL){
-	  castor::exception::Internal ex(SEUSERUNKN);
+	  castor::exception::Exception ex(SEUSERUNKN);
 	  ex.getMessage()<<"(StagerRequestHelper setUsernameAndGroupname) Impossible to get the Groupname"<<std::endl;
 	  throw ex;
 	}
 	
-	if(username!=NULL){
-	  username.copy(this_passwd->pw_name,RM_MAXUSRNAMELEN);
-	}
-	
-	if(groupname!=NULL){
-	  groupname.copy(this_gr->gr_name,RM_MAXGRPNAMELEN);
-	}     
+
+	this->username.copy(this_passwd->pw_name,RM_MAXUSRNAMELEN);
+	this->groupname.copy(this_gr->gr_name,RM_MAXGRPNAMELEN);
+	     
       }
 
 
@@ -500,25 +522,25 @@ namespace castor{
       /****************************************************************************************************/
       /* depending on fileExist and type, check the file needed is to be created or throw exception    */
       /********************************************************************************************/
-      bool StagerRequestHelper::isFileToCreateOrException(bool fileExist) throw(castor::exception::Internal)
+      bool StagerRequestHelper::isFileToCreateOrException(bool fileExist) throw(castor::exception::Exception)
       {
 
-	bool toCreate=FALSE;
-	int type = this->subrequest.type();
-	int subrequestFlags = this->subrequest.flags();
+	bool toCreate = false;
+	int type = this->subrequest->type();
+	int subRequestFlags = this->subrequest->flags();
 
 
 	if(!fileExist){
 	  if ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type)||((O_CREAT == (subRequestFlags & O_CREAT))&&((OBJ_StageUpdateRequest == type) ||(OBJ_StagePrepareToUpdateRequest == type)))) {
-	    if (serrno == ENOENT) {
-	      toCreate=TRUE;
-	    } else {
-	      castor::exception::Internal ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRequestHelper isFileToCreateOrException) Impossible to create the required file"<<std::endl;
-	      throw ex;
-	    }
+	    //if (serrno == ENOENT) {
+	    toCreate = true;
+	      //} else {
+	      // castor::exception::Exception ex(SEINTERNAL);
+	      //ex.getMessage()<<"(StagerRequestHelper isFileToCreateOrException) Impossible to create the required file"<<std::endl;
+	      //throw ex;
+	      //}
 	  }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
-	    castor::exception::Internal ex(SEINTERNAL);
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper isFileToCreateOrException) Asking for a file which doesn't exist"<<std::endl;
 	    throw ex;
 	  }
@@ -533,13 +555,13 @@ namespace castor{
       /* check if the user (euid,egid) has the ritght permission for the request's type                   */
       /* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */
       /**************************************************************************************************/
-      bool StagerRequestHelper::checkFilePermission() throw(castor::exception::Internal)
+      bool StagerRequestHelper::checkFilePermission() throw(castor::exception::Exception)
       {
 	bool filePermission = true;
-	int type =  this->subrequest.type();
-	std::string filename = this->subrequest.filename();
-	uid_t euid = this->fileRequest.euid();
-	uid_t egid = this->fileRequest.egid();
+	int type =  this->subrequest->type();
+	std::string filename = this->subrequest->fileName();
+	uid_t euid = this->fileRequest->euid();
+	uid_t egid = this->fileRequest->egid();
 
 	
 	switch(type) {
@@ -547,9 +569,9 @@ namespace castor{
 	case OBJ_StagePrepareToGetRequest:
 	case OBJ_StageRepackRequest:
 	  filePermission=R_OK;
-	  if ( Cns_accessUser(filename,R_OK,euid,egid) == -1 ) {
+	  if ( Cns_accessUser(filename.c_str(),R_OK,euid,egid) == -1 ) {
 	    filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
-	    castor::exception::Internal ex(SEINTERNAL);
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper checkFilePermission) Access denied: The user doesn't have the read permission"<<std::endl;
 	    throw ex;
 	  }
@@ -560,9 +582,9 @@ namespace castor{
 	case OBJ_StageRmRequest:
 	case OBJ_StageUpdateRequest:
 	  filePermission=W_OK;
-	  if ( Cns_accessUser(filename,W_OK,euid,egid) == -1 ) {
+	  if ( Cns_accessUser(filename.c_str(),W_OK,euid,egid) == -1 ) {
 	    filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
-	    castor::exception::Internal ex(SEINTERNAL);
+	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper checkFilePermission) Access denied: The user doesn't have the write permission"<<std::endl;
 	    throw ex;
 	    
@@ -579,7 +601,7 @@ namespace castor{
       /* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
       /* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
       /**************************************************************************************************/
-      struct rmjob StagerRequestHelper::buildRmJobHelperPart(struct rmjob &rmjob)//after processReplica (if it is necessary)
+      struct rmjob StagerRequestHelper::buildRmJobHelperPart(struct rmjob &rmjob) throw(castor::exception::Exception)//after processReplica (if it is necessary)
       {
 
 
@@ -592,35 +614,37 @@ namespace castor{
 	rmjob.gname[RM_MAXGRPNAMELEN] = '\0';
 
 	
-	strncpy(rmjob.partitionmask,getOrInitiatePartitionMask(),RM_MAXPARTITIONLEN);//partitionMask: char *
+	//strncpy(rmjob.partitionmask, getPartitionMask().c_str(),RM_MAXPARTITIONLEN);//partitionMask: char *  line 620
 	rmjob.partitionmask[RM_MAXPARTITIONLEN] = '\0';
 
 	std::string features;
-	features.rsize(RM_MAXFEATURELEN+1);
 
-	char* className = fileRequest->svcClassName().c_str(); 
-	if((className == NULL)||(className[0] == '\0')){
-	  className = "default" ;
+	std::string className("default");
+	if((fileRequest->svcClassName().empty()) == false){
+	  className = fileRequest->svcClassName();//620
 	}
-	features.copy(svcClass.className(), RM_MAXFEATURELEN, 0);
-	std::string protocol = subrequest->protocol();
-	if(!protocol.empty()){
+	features = className;//622
+	std::string protocol = this->subrequest->protocol();
+	if((protocol.empty()) == false){
 	  if((features.size()+1+protocol.size())<RM_MAXFEATURELEN){
 	    features+= ":";
 	    features+= protocol;
 	    
 	  }
 	}else{
-	  if((features.size()+1+default_protocol.size())<RM_MAXFEATURELEN){
-	    features+=":"+default_protocol;
+	  if((features.size()+1+ this->default_protocol.size())<RM_MAXFEATURELEN){
+	    features+=":"+this->default_protocol;
 	  }
 	}
-	
-	strncpy(rmjob.rfeatures, features.c_str(), RM_MAXFEATURELEN);
-	               
 
-	
-	u64tostr(subrequest.id(),rmjob.stageid,0);
+	if(features.size() > RM_MAXFEATURELEN){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerRequestHelper buildRmJobRequestPart) String features exceeds the max lenght"<<std::endl;
+	  throw ex;
+	}
+	strncpy(rmjob.rfeatures, features.c_str(), RM_MAXFEATURELEN);
+	               	
+	u64tostr(subrequest->id(),rmjob.stageid,0);
 	strcat(rmjob.stageid,"@");
 	
 	//adding request and subrequest uuid:
@@ -628,14 +652,13 @@ namespace castor{
 	  Cuuid_t thisuuid=requestUuid;
 	  Cuuid2string(rmjob.requestid, CUUID_STRING_LEN+1,&thisuuid);
 	  thisuuid=subrequestUuid;
-	  Cuuid2string(rmjob.subrequestid, CUUID_STRING-LEN+1,&thisuuid);
+	  Cuuid2string(rmjob.subrequestid, CUUID_STRING_LEN+1,&thisuuid);
 	}
-
-
-	std::string client_as_string = IClientFactory.client2String(iClient);
-	rmjob.clientStruct = client_as_string.c_str();//what is the max len for client?
+	
+	//strcpy(rmjob.clientStruct,iClientAsString.c_str());//what is the max len for client? 663
 	strcpy(rmjob.exec,"/usr/bin/stagerJob.sh");
-	strncpy(rmjob.account,fileRequest->svcClassName().c_str(),RM_MAXACCOUNTNAMELEN);
+	
+	strncpy(rmjob.account,className.c_str(),RM_MAXACCOUNTNAMELEN);
 	
 	return(rmjob);
       }
