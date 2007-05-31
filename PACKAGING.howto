@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.33 2007/04/11 08:48:52 sponcec3 Exp $
+## $Id: PACKAGING.howto,v 1.34 2007/05/31 12:25:13 sponcec3 Exp $
 #
 
 #
@@ -133,3 +133,8 @@ mv intReleases/x.y.z-r CERN/savannah/CASTOR.pkg/
 ./tools/installOnAFS.py > /tmp/afsInstallScript
 source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
 
+# 3. update the web pages
+vim /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/index.htm
+# and change last version statement
+vim /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/news.htm
+# and add a news
