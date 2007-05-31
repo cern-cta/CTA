@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.8 $ $Release$ $Date: 2007/05/16 13:49:07 $ $Author: waldron $
+ * @(#)$RCSfile: enterFileClass.c,v $ $Revision: 1.9 $ $Release$ $Date: 2007/05/31 12:58:16 $ $Author: waldron $
  *
  * 
  *
@@ -141,12 +141,16 @@ int main(int argc, char *argv[])
       maxFileSizeSet++;
       Cstager_FileClass_setMaxFileSize(fileClass,strtou64(Coptarg));
       break;
+    case GetFromCns:
+      break;
+    case 0:
+      break;
     default:
       usage(cmd);
       return(1);
     }
   }
-
+  
   if ( help_flag != 0 || name == NULL ) {
     if ( name == NULL ) fprintf(stderr,"FileClass 'name' is required\n");
     usage(cmd);
