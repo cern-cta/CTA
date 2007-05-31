@@ -484,10 +484,19 @@ The following error values are returned only by the remote tape copy package:
 .TP
 .B ERTBADREQ
 (1609) Bad request structure
+.TP
+.B ERTMORETODO
+(1610) Request partially processed (only used internally)
+.TP
 .B ERTDBERR
-(1610) Catalogue DB error
+(1611) Catalogue DB error
+.TP
 .B ERTZEROSIZE
-(1611) Zero sized file
+(1612) Zero sized file
+.TP
+.B ERTWRONGSIZE
+(1613) The size of the recalled tape file does not match the size in the
+castor name server
 
 .SH STAGE ERRORS
 The following error values are returned only by the stager package:

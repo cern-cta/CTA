@@ -238,6 +238,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
    "Request partially processed",
    "Catalogue DB error",
    "Zero sized file",
+   "Recalled file size incorrect",
    "BAD ERROR NUMBER"
   };
 
