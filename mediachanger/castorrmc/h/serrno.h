@@ -248,7 +248,8 @@
 #define ERTMORETODO	ERTBASEOFF+10	/* Request partially processed */
 #define ERTDBERR        ERTBASEOFF+11   /* Catalogue DB error */
 #define ERTZEROSIZE     ERTBASEOFF+12   /* Zero sized file */
-#define ERTMAXERR       ERTBASEOFF+12
+#define ERTWRONGSIZE    ERTBASEOFF+13   /* Recalled file size incorrect */
+#define ERTMAXERR       ERTBASEOFF+13
 
 /*
  *------------------------------------------------------------------------
