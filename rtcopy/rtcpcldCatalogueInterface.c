@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.160 $ $Release$ $Date: 2007/05/24 17:03:10 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.161 $ $Release$ $Date: 2007/05/31 09:42:17 $ $Author: obarring $
  *
  * 
  *
@@ -878,6 +878,7 @@ void rtcpcld_cleanupTape(
       segm = (struct Cstager_Segment_t *)file->dbRef->row;
       if ( segm != NULL ) Cstager_Segment_delete(segm);
       free(file->dbRef);
+      file->dbRef = NULL;
     }
     CLIST_DELETE(tape->file,file);
     free(file);
@@ -886,6 +887,7 @@ void rtcpcld_cleanupTape(
     tp = (struct Cstager_Tape_t *)tape->dbRef->row;
     if ( tp != NULL ) Cstager_Tape_delete(tp);
     free(tape->dbRef);
+    tape->dbRef = NULL;
   }
   free(tape);
   return;
@@ -928,6 +930,7 @@ void rtcpcld_cleanupFile(
       }
     }
     free(file->dbRef);
+    file->dbRef = NULL;
   }
   CLIST_DELETE(file->tape->file,file);
   free(file);
@@ -2843,8 +2846,6 @@ int rtcpcld_updcFileRecalled(
 
   tp = (struct Cstager_Tape_t *)tape->dbRef->row;
   segment = (struct Cstager_Segment_t *)file->dbRef->row;
-  free(file->dbRef);
-  file->dbRef = NULL;
   if ( segment != NULL ) Cstager_Segment_copy(segment,&tapeCopy);
   if ( tapeCopy == NULL ) {
     Cstager_Segment_id(segment,&key);
@@ -3099,7 +3100,13 @@ int rtcpcld_updcFileRecalled(
     }
   }
 
-  if ( segmentArray != NULL ) free(segmentArray);
+  if ( (file != NULL) && (file->dbRef != NULL) ) {
+    free(file->dbRef);
+    file->dbRef = NULL;
+  }
+  if ( segmentArray != NULL ) {
+    free(segmentArray);
+  }
   return(0);
 }
 
@@ -3160,11 +3167,11 @@ int rtcpcld_updcFileMigrated(
   C_BaseAddress_setCnvSvcType(baseAddr,SVC_DBCNV);
   iAddr = C_BaseAddress_getIAddress(baseAddr);
 
-  if ( tape->dbRef != NULL ) tp = (struct Cstager_Tape_t *)tape->dbRef->row;
+  if ( tape->dbRef != NULL ) {
+      tp = (struct Cstager_Tape_t *)tape->dbRef->row;
+  }
   if ( file->dbRef != NULL ) {
     segment = (struct Cstager_Segment_t *)file->dbRef->row;
-    free(file->dbRef);
-    file->dbRef = NULL;
   }
   if ( segment != NULL ) Cstager_Segment_copy(segment,&tapeCopy);
   if ( tapeCopy != NULL ) Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
@@ -3368,7 +3375,13 @@ int rtcpcld_updcFileMigrated(
    * also remove the associated TapeCopy(s) and Segment(s)
    */
   Cstager_CastorFile_delete(castorFile);
-  if ( fileid != NULL ) free(fileid);
+  if ( fileid != NULL ) {
+    free(fileid);
+  }
+  if ( (file != NULL) && (file->dbRef != NULL) )  {
+    free(file->dbRef);
+    file->dbRef = NULL;
+  }
 
   return(0);
 }
