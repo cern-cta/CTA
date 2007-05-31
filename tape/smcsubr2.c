@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.8 $ $Date: 2007/03/01 14:57:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.9 $ $Date: 2007/05/31 14:53:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -255,7 +255,35 @@ int invert;
 		RETURN (RBT_OMSG_NORTRY);
 	}
 	if (element_info.element_type != 2) {
-		usrmsg (func, SR018, "mount", vid, drvord, "volume in use");
+
+                /* compare requested and replied vid   */
+                usrmsg( func, "Asked for %s, got reply for %s\n", 
+                        vid, element_info.name );
+
+                /* detail on a tape's current location */
+                switch (element_info.element_type) {
+
+                case 1:
+                        usrmsg( func, "Location: medium transport element (0x%x)\n", 
+                                element_info.element_type );
+                        break;
+                case 2:                        
+                        /* normal case: in its home slot, not possible inside the if */
+                        break;
+                case 3:
+                        usrmsg( func, "Location: import/export element (0x%x)\n", 
+                                element_info.element_type );
+                        break;
+                case 4:
+                        usrmsg( func, "Location: data transfer element (0x%x)\n", 
+                                element_info.element_type );
+                        break;
+                default:
+                        usrmsg( func, "Location: unknown (0x%x)\n", 
+                                element_info.element_type );
+                }
+
+                usrmsg (func, SR018, "mount", vid, drvord, "volume in use");
 		RETURN (RBT_OMSG_SLOW_R);
 	}
 	if ((c = smc_move_medium (fd, loader, element_info.element_address,
