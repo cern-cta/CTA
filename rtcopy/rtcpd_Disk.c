@@ -1715,6 +1715,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     thread_arg_t *tharg;
     int rc, save_serrno, indxp, offset, next_offset, last_file,end_of_tpfile;
     int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex, mode;
+    int nb_diskIOactive = 0;
     register int Uformat;
     register int convert;
 
@@ -1853,6 +1854,18 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 serrno = save_serrno;
                 return(-1);
             }
+            rtcpd_CheckReqStatus(NULL,nextfile,NULL,&severity);
+            if ( (severity & RTCP_FAILED) != 0 ) {
+                (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+                nb_diskIOactive = proc_cntl.nb_diskIOactive;
+                if ( nb_diskIOactive <= 0 ) proc_cntl.diskIOfinished = 1;
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                if ( nb_diskIOactive <= 0 ) {
+                    rtcpd_SetProcError(severity);
+                    return(0);
+                }
+            }
+
             /*
              * Break out if there is nothing more to do
              */

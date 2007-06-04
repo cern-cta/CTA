@@ -1185,7 +1185,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                          tmpfile = tmpfile->next; \
                      if ( *tmpfile->filereq.err.errmsgtxt != '\0' ) nextfile = tmpfile; \
                  } \
-                if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
+                 if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
                     rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
                  (void) tellClient(&client_socket,X,Y,-1); \
                  (void) rtcpd_stageupdc(nexttape,(tmpfile!=NULL?tmpfile:nextfile)); \
@@ -1284,7 +1284,18 @@ void *tapeIOthread(void *arg) {
         if ( rc == -1 ) {
             if ( (mode == WRITE_DISABLE) &&
                  (proc_cntl.checkForMoreWork != 0) ) {
-                rtcpd_SetProcError(RTCP_FAILED);
+                /*
+                 * CASTOR2 clients have not yet assigned any file requests
+                 * so we have to make sure to unblock the WaitMoreWork in
+                 * DiskIO and also answer the client ourselves in this case
+                 */
+                (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+                proc_cntl.requestMoreWork = 0;
+                proc_cntl.diskIOfinished = 1; /* Disk IO hasn't really started*/
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                rtcpd_SetReqStatus(NULL,tape->file,tape->tapereq.err.errorcode,tape->tapereq.err.severity);
+                (void) tellClient(&client_socket,tape,tape->file,-1);
+                CHECK_PROC_ERR(NULL,tape->file,"rtcpd_CtapeInit() error");
             }
             CHECK_PROC_ERR(tape,NULL,"rtcpd_CtapeInit() error");
         }
@@ -1310,7 +1321,18 @@ void *tapeIOthread(void *arg) {
             (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
             if ( (mode == WRITE_DISABLE) && 
                  (proc_cntl.checkForMoreWork != 0) ) {
-                rtcpd_SetProcError(RTCP_FAILED);
+                /*
+                 * CASTOR2 clients have not yet assigned any file requests
+                 * so we have to make sure to unblock the WaitMoreWork in
+                 * DiskIO and also answer the client ourselves in this case
+                 */
+                (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+                proc_cntl.requestMoreWork = 0;
+                proc_cntl.diskIOfinished = 1; /* Disk IO hasn't really started*/
+                (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                rtcpd_SetReqStatus(NULL,tape->file,tape->tapereq.err.errorcode,tape->tapereq.err.severity);
+                (void) tellClient(&client_socket,tape,tape->file,-1);
+                CHECK_PROC_ERR(NULL,tape->file,"rtcpd_Reserv() error");
             }
         }
         CHECK_PROC_ERR(tape,NULL,"rtcpd_Reserv() error");
@@ -1334,7 +1356,19 @@ void *tapeIOthread(void *arg) {
                 (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
                 if ( (mode == WRITE_DISABLE) &&
                      (proc_cntl.checkForMoreWork != 0) ) {
-                    rtcpd_SetProcError(RTCP_FAILED);
+                    /*
+                     * CASTOR2 clients have not yet assigned any file requests
+                     * so we have to make sure to unblock the WaitMoreWork in
+                     * DiskIO and also answer the client ourselves in this case
+                     */
+                    (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
+                    proc_cntl.requestMoreWork = 0;
+                    proc_cntl.diskIOfinished = 1; /* Disk IO hasn't really started*/
+                    (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
+                    rtcpd_SetReqStatus(NULL,nexttape->file,nexttape->tapereq.err.errorcode,nexttape->tapereq.err.severity);
+                    (void) tellClient(&client_socket,nexttape,nexttape->file,-1);
+                    serrno = save_serrno; errno = save_errno;
+                    CHECK_PROC_ERR(NULL,nexttape->file,"rtcpd_Mount() error");
                 }
             }
             serrno = save_serrno; errno = save_errno;
