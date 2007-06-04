@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.429 $ $Date: 2007/05/30 13:44:54 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.430 $ $Date: 2007/06/04 12:50:33 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.429 $ $Date: 2007/05/30 13:44:54 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.430 $ $Date: 2007/06/04 12:50:33 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2718,6 +2718,7 @@ BEGIN
                AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
      WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
        AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
+  WHERE status != -1 -- when no diskcopy and no subrequest available, ignore garbage
   ORDER BY fileid, nshost;
  ELSE
   OPEN result FOR
