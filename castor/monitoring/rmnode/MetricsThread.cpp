@@ -394,7 +394,7 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   // entry found ?
   if (fsname == "") {
     castor::exception::InvalidArgument e; 
-    e.getMessage() << "invalid mountpoint " + filesystem->mountPoint();
+    e.getMessage() << "Invalid mountpoint " + filesystem->mountPoint();
     throw e;
   }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/24 14:08:08 $ $Author: itglp $
+ * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/06/05 15:03:14 $ $Author: waldron $
  *
  * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -97,7 +97,7 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void* par) throw() {
 	it->second.setStatus(castor::stager::DISKSERVER_DISABLED);
 	// remove disk server from production
 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Machine Name", it->first.c_str())};
+	  {castor::dlf::Param("Hostname", it->first.c_str())};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 38, 1, params);
 	// remove file systems from production
 	for (castor::monitoring::DiskServerStatus::iterator it2 =
