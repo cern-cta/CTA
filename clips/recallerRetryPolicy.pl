@@ -138,7 +138,8 @@ my $ESPIPE          = 29;      # Illegal seek
 my $EROFS           = 30;      # Read-only file system 
 my $EMLINK          = 31;      # Too many links 
 my $EPIPE           = 32;      # Broken pipe 
-
+my $ECONNRESET      = 104;     # Connection reset by peer
+my $EHOSTUNREACH    = 113;     # No route to host
 #
 # Define the RTCOPY severity constants (rtcp_constants.h)
 #
@@ -174,8 +175,21 @@ for ( my $i=0; $i<$#ARGV; $i+=3 ) {
     if ( (($ARGV[$i+1] & $RTCP_RESELECT_SERV) == 0) &&
          (($ARGV[$i+1] & $RTCP_FAILED) != 0) ) {
         if ( ($ARGV[$i] != $ENOSPC) &&
+             ($ARGV[$i] != $EBUSY) &&
+             ($ARGV[$i] != $EROFS) &&
+             ($ARGV[$i] != $EIO) &&
+             ($ARGV[$i] != $EBADF) &&
+             ($ARGV[$i] != $EROFS) &&
              ($ARGV[$i] != $ETPARIT) &&
              ($ARGV[$i] != $ETHWERR) &&
+             ($ARGV[$i] != $ETNRDY) &&
+             ($ARGV[$i] != $ETNOSNS) &&
+             ($ARGV[$i] != $ETVBSY) &&
+             ($ARGV[$i] != $ETRSV) &&
+             ($ARGV[$i] != $ETNDV) &&
+             ($ARGV[$i] != $ETNRS) &&
+             ($ARGV[$i] != $ETRSLT) &&
+             ($ARGV[$i] != $ETBADMIR) &&
              ($ARGV[$i] != $SETIMEDOUT) &&
              ($ARGV[$i] != $SESYSERR) &&
              ($ARGV[$i] != $SECOMERR) ) {
