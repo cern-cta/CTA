@@ -1,5 +1,32 @@
 ------------
-- 2.1.3-13 -
+- 2.1.3-15 -
+------------
+
+  New Features and Changes
+  ------------------------
+  * Fixed in stager_qry for the case of a file with no diskcopy and no subrequest but which still has a CASTOR file.
+    We were answering STAGED instead of File Not Found in previous releases.
+  * Added more retries on system and tape errors
+  * Fixed iptable rules for the range of open ports on a Castor client (port 30101 was open by mistake)
+  * Use new error code ERTWRONGSIZE to flag tape recalls with wrong filesize
+  * Added support for separate stager trace and rfiod log files
+  * Avoided that segments stay in SEGMENT_SELECTED if filesize is wrong on a tape recall
+  * Avoided deadlock with castor2 clients after errors in Ctape_reserve() or Ctape_mount()
+  * Expanded the list of customised pending errors to help in operational debugging
+  * Fixed missing Python 2.3 symbols at runtime
+  * Changed signal handling to prevent mount/dismount race in case of a killed mount request.
+    This should fix at least some of the 'volume in use' cases and the 'Destination Element Full' problems.
+
+  Upgrade from 2.1.3-14
+  ---------------------
+  - There is no need to stop the service for this upgrade
+    and the order in which the update steps are taken does
+    not matter
+  - Upgrade all head nodes and tapeServers
+  - Apply the SQL upgrade script
+
+------------
+- 2.1.3-14 -
 ------------
 
   New Features and Changes
