@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.429  Date: 2007/05/30 13:44:54  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.433  Date: 2007/06/04 16:07:31  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,7 +205,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.429  Date: 2007/05/30 13:44:54 ');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.433  Date: 2007/06/04 16:07:31 ');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -215,7 +215,7 @@ CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
-CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, PRIMARY KEY (type, id))
+CREATE TABLE newRequests (type NUMBER(38) NOT NULL, id NUMBER(38) NOT NULL, creation DATE NOT NULL, CONSTRAINT I_NewRequests_Type_Id PRIMARY KEY (type, id))
 organization index
 compress
 partition by list (type)
@@ -1651,9 +1651,9 @@ BEGIN
   END IF;
   
   -- Get older castorFiles with the same name and drop their lastKnownFileName
-  UPDATE /*+ INDEX (castorfile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
+  UPDATE /*+ INDEX (castorFile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
    WHERE id IN (
-    SELECT cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
+    SELECT /*+ INDEX (cfOld) */ cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
      WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
        AND cfOld.fileid <> cfNew.fileid
        AND cfNew.id = SubRequest.castorFile
@@ -2913,6 +2913,7 @@ BEGIN
                AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
      WHERE CastorFile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
        AND CastorFile.id = DC.castorFile(+))    -- search for valid diskcopy
+  WHERE status != -1 -- when no diskcopy and no subrequest available, ignore garbage
   ORDER BY fileid, nshost;
  ELSE
   OPEN result FOR
