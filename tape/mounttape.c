@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.52 $ $Date: 2007/05/23 13:51:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.53 $ $Date: 2007/06/06 12:35:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -68,6 +68,8 @@ int tapefd;
 uid_t uid;
 int updvsn_done = -1;
 char *vid;
+int do_cleanup_after_mount = 0;
+int mount_ongoing = 0;
 
 void configdown( char* );
 int  Ctape_updvsn( uid_t, gid_t, int, int, char*, char*, int, int, int );
@@ -199,7 +201,29 @@ char	**argv;
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfds);
 
-	signal (SIGINT, mountkilled);
+        /* signal (SIGINT, mountkilled); */
+        {
+                int rc = 0;
+                struct sigaction sa;
+                sigset_t sigset;
+
+                memset( &sa,'\0',sizeof( sa ) );
+
+                sigemptyset( &sigset );
+                sigaddset( &sigset, SIGINT );
+
+                sa.sa_handler = (void (*)(int))mountkilled;
+                sa.sa_mask    = sigset;
+                sa.sa_flags   = SA_RESTART;
+
+                rc = sigaction( SIGINT, &sa, NULL );
+                if( -1 == rc ) {
+                        tplogit (func, "Error in sigaction\n");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "Error in sigaction" );
+                }
+        }
 
 #if VDQM
 	vdqm_status = VDQM_UNIT_ASSIGN;
@@ -317,7 +341,13 @@ remount_loop:
 #endif
 		if (*loader != 'm' && needrbtmnt) {
 			do {
+                                mount_ongoing = 1;
 				c = rbtmount (vid, side, drive, dvn, mode, loader);
+				if ( do_cleanup_after_mount == 1 ) {
+					(void)cleanup();
+					exit(2);
+				}
+				mount_ongoing = 0;
 				if ((n = rbtmountchk (&c, drive, vid, dvn, loader)) < 0)
 					goto reply;
 			} while (n == 1);
@@ -1085,8 +1115,25 @@ void cleanup()
 	if (*loader == 'R')
 		closefbs();
 #endif
-	if (*loader == 's')
-		closesmc ();
+	if ((*loader == 's') && (do_cleanup_after_mount == 0)) {
+                do_cleanup_after_mount = 1;
+		closesmc();
+                /* 
+                   check if the SIGINT hit us in a mount;
+                   in that case we need to do the cleanup
+                   after the mount has finished in order 
+                   to prevent the dismount to overtake the 
+                   mount 
+                */                
+		if ( mount_ongoing == 1 ) {
+                        tplogit (func, "Cleanup triggered in a pending mount. Cleanup deferred.\n");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "Cleanup triggered in a pending mount. Cleanup deferred." );
+                        return;
+                }
+        }
+
 
 	if (msg_num)	/* cancel pending operator message */
 		omsgdel (func, msg_num);
@@ -1138,6 +1185,7 @@ char *drive;
 void mountkilled()
 {
 	cleanup();
+	if ( do_cleanup_after_mount == 1 ) return;
 	exit (2);
 }
 
