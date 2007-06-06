@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: sponcec3 $
+* @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: gtaur $
 *
 * @author Giulia Taurelli
 *****************************************************************************/
@@ -79,13 +79,13 @@ const std::string castor::db::ora::OraCleanSvc::s_removeOutOfDateDiskCopiesStrin
 castor::db::ora::OraCleanSvc::OraCleanSvc(const std::string name) :
 OraCommonSvc(name),
 m_removeOutOfDateRequestsStatement(0),
-m_removeArchivedRequestsStatement(0){
+m_removeArchivedRequestsStatement(0), m_removeOutOfDateDiskCopiesStatement(0){
   
   
 }
 
 // -----------------------------------------------------------------------
-// ~OraTapeSvc
+// ~OraCleanSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraCleanSvc::~OraCleanSvc() throw() {
   reset();
@@ -115,6 +115,8 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
   try {
     if (m_removeOutOfDateRequestsStatement) deleteStatement(m_removeOutOfDateRequestsStatement);
     if (m_removeArchivedRequestsStatement) deleteStatement(m_removeArchivedRequestsStatement);
+    if (m_removeOutOfDateDiskCopiesStatement) deleteStatement(m_removeOutOfDateDiskCopiesStatement);
+
   } catch (oracle::occi::SQLException e) {
     castor::dlf::Param params[] =
     {castor::dlf::Param("message", e.getMessage())};
@@ -125,6 +127,7 @@ void castor::db::ora::OraCleanSvc::reset() throw() {
   
   m_removeOutOfDateRequestsStatement = 0;
   m_removeArchivedRequestsStatement = 0;
+  m_removeOutOfDateDiskCopiesStatement=0;
   
   
 }
