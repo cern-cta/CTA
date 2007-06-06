@@ -9,12 +9,21 @@
 #ifndef STAGER_REPLY_HELPER_HPP
 #define STAGER_REPLY_HELPER_HPP 1
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/rh/IOResponse.hpp"
-#include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/FileRequest.hpp"
-#include "castor/stager/IStagerSvc.hpp"
+#include "StagerRequestHelper.hpp"
+#include "../../rh/IOResponse.hpp"
+#include "../../replier/RequestReplier.hpp"
+#include "../FileRequest.hpp"
+#include "../IStagerSvc.hpp"
+#include "../../exception/Exception.hpp"
+#include "../../exception/Internal.hpp"
 
+#include "../SubRequestStatusCodes.hpp"
+
+#include "../../../h/u64subr.h"
+
+
+#include "../../ObjectSet.hpp"
+#include "../../IObject.hpp"
 
 #include <iostream>
 #include <string>
@@ -32,7 +41,7 @@ namespace castor{
 
 
 
-      class StagerReplyHelper :public::castor::IObject{
+      class StagerReplyHelper : public castor::IObject{
 
       public:
 
@@ -40,25 +49,41 @@ namespace castor{
 	castor::replier::RequestReplier *requestReplier;
 	std::string uuid_as_string;
 
-	/* reserve memory for the attributes dinamically */
-	StagerReplyHelper::StagerReplyRequestHelper() throw();
-	/* free the ioResponse and the iResponse */
-	StagerReplyHelper::~StagerReplyRequestHelper() throw();
+	/* constructor  */
+	StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception);
+	/* destructor */
+	StagerReplyHelper::~StagerReplyHelper() throw();
 
 
 
 	/****************************************************************************/
 	/* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
 	/**************************************************************************/
-	inline void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw();
+	void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
 	
+
 	/*********************************************************************************************/
 	/* check if there is any subrequest left and send the endResponse to client if it is needed */
 	/*******************************************************************************************/
-	inline void StagerReplyHelper::endReplyToClient(StagerRequestHelper &stgRequestHelper) throw();
+	inline void StagerReplyHelper::endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
+	  bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
+	  if(requestLeft){
+	    this->requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
+	  }      
+	}
+
+	/*****************************************************************************************/
+	/* virtual functions inherited from IObject                                             */
+	/***************************************************************************************/
+	virtual void setId(u_signed64 id);
+	virtual u_signed64 id() const;
+	virtual int type() const;
+	virtual IObject* clone();
+	virtual void print() const;
+	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
+
 	
-	
-      }// end StagerReplyHelper  
+      }; // end StagerReplyHelper  
 
 
     }//end namespace dbService

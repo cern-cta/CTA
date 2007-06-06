@@ -6,14 +6,21 @@
 /* just in case of error, by all the handlers                                                                    */
 /****************************************************************************************************************/
 
-#ifndef STAGER_REPLY_HELPER_HPP
-#define STAGER_REPLY_HELPER_HPP 1
+#include "StagerReplyHelper.hpp"
+#include "StagerRequestHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/rh/IOResponse.hpp"
-#include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/FileRequest.hpp"
-#include "castor/stager/IStagerSvc.hpp"
+#include "../../rh/IOResponse.hpp"
+#include "../../replier/RequestReplier.hpp"
+#include "../FileRequest.hpp"
+#include "../SubRequest.hpp"
+#include "../IStagerSvc.hpp"
+
+#include "../SubRequestStatusCodes.hpp"
+
+#include "../../exception/Exception.hpp"
+#include "../../exception/Internal.hpp"
+
+#include "../../../h/serrno.h"
 
 #include <iostream>
 #include <string>
@@ -23,14 +30,31 @@ namespace castor{
     namespace dbService{
       
 
-      StagerReplyHelper::StagerReplyHelper()
-      {
-	this->ioResponse = new castor::rh::IOResponse*;
-	this->requestReplier = RequestReplier.getInstance();
-      }
-      
+      class StagerRequestHelper;
+      class castor::rh::IOResponse;
+      class castor::replier::RequestReplier;
 
-      StagerReplyHelper::~StagerReplyHelper()
+      StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception)
+      {
+
+	this->ioResponse = new castor::rh::IOResponse;
+	if(this->ioResponse == NULL){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerReplyHelper constructor) Impossible to get the ioResponse object"<<std::endl;
+	  throw ex;
+	  
+	}
+	this->requestReplier = RequestReplier::getInstance();
+	if(this->requestReplier == NULL){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerReplyHelper constructor) Impossible to get the requestReplier instance"<<std::endl;
+	  throw ex;
+	}
+
+      }
+	
+
+      StagerReplyHelper::~StagerReplyHelper() throw()
       {
 	delete ioResponse;
 	delete requestReplier;
@@ -40,53 +64,51 @@ namespace castor{
       /****************************************************************************/
       /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
       /**************************************************************************/
-      void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage)
+      void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
       {
 
 	ioResponse->setFileId(fileID==0?0:fileID->fileid);
-
-
-        this->uuid_as_string = stgRequestHelper->fileRequest->reqId();
+	
+	this->uuid_as_string = stgRequestHelper->fileRequest->reqId();
 	if(this->uuid_as_string != NULL){
 	  this->ioResponse->setReqAssociated(uuid_as_string);
 	}
-
-
+		
 	if(stgRequestHelper->castorFile != NULL){
 	  this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
 	}
-
-
+		
 	int newSubRequestStatus = stgRequestHelper->subrequest->status();
-	(newSubRequestStatus==SUBREQUEST_FAILED_FINISHED)?SUBREQUEST_FAILED:newSubRequestStatus;
+	if(newSubRequestStatus==SUBREQUEST_FAILED_FINISHED){
+	  newSubRequestStatus=SUBREQUEST_FAILED;
+	}
 	this->ioResponse->setStatus(newSubRequestStatus);
-
-
+		
 	this->ioResponse->setId(stgRequestHelper->subrequestUuid);
-
+	
 	/* errorCode = rc  */
 	if(errorCode != 0){
 	  this->ioResponse->setErrorCode(errorCode);
-	  this->ioResponse->setErrorMessage((errorMessage!=NULL)? errorMessage:strerror(serrno));
+	  std::string ioRespErrorMessage = errorMessage;
+	  if(errorMessage.empty()){
+	    ioRespErrorMessage = strerror(errorCode);
+	  }
+	  this->ioResponse->setErrorMessage(ioRespErrorMessage);
 	}
-
-	/* 0 = lastResponse parameter */
-	this->requestReplier->sendResponse(stgRequestHelper->iClient,ioResponse,0 );
+	
+	/* sendResponse(..,.., lastResponse = false)  */
+	this->requestReplier->sendResponse(stgRequestHelper->iClient,ioResponse,false);
+	
+	
       }
-
+	
 
 	
       /*********************************************************************************************/
       /* check if there is any subrequest left and send the endResponse to client if it is needed */
       /*******************************************************************************************/
-      void StagerReplyHelper::endReplyToClient(StagerRequestHelper &stgRequestHelper)
-      {
-	bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubrequest(stgRequestHelper->subrequest);
-	if(requestLeft){
-	  this->requestReplier->sendEnResponse(stgRequestHelper->iClient, this->uuid_as_string);
-	  }
-      }      
-
+      /*** inline void StagerReplyHelper::endReplyToClient(StagerRequestHelper* stgRequestHelper) throw() ***/
+      
 
 
     }//end namespace dbService
