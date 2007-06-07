@@ -1,0 +1,344 @@
+#!/usr/local/bin/perl -w
+#
+# *****************************************************************************/# *
+# * Displays diskcopy status for a (set of) fileid(s)
+# *
+# * @author Ignacio.Reguero@cern.ch
+# * Based on diskServer_qry from the Castor-dev team.
+# *****************************************************************************/
+#
+use strict;
+use diagnostics;
+#use lib "/afs/cern.ch/project/castor/deployment/tools/lib/perl/CASTOR";
+use lib "/usr/lib/perl/CASTOR";
+use castor_tools;
+use DBD::Oracle qw(:ora_types);
+
+$ENV{"ORACLE_HOME"}  = "/afs/cern.ch/project/oracle/\@sys/prod"
+    unless exists($ENV{"ORACLE_HOME"});
+$ENV{"TNS_ADMIN"}    = "/afs/cern.ch/project/oracle/admin"
+    unless exists($ENV{"TNS_ADMIN"});
+$ENV{"PATH"} = "/bin:/usr/bin:/sbin:/usr/sbin";
+
+# usage function
+sub usage {
+  printf("Usage : %s [-h] fileId | castorpath [...]\n", $0);
+}
+
+# first parse the options
+my $help;
+if (0 == Getopt::Long::GetOptions ('h|help' => \$help)) {
+  usage();
+  exit(1);
+}
+
+if ($help) {
+  usage();
+  exit(0);
+}
+
+my @FsStatus = ("FILESYSTEM_PRODUCTION",
+                "FILESYSTEM_DRAINING",
+                "FILESYSTEM_DISABLED",
+                "FILESYSTEM_NONE");
+my @ServerStatus = ("DISKSERVER_PRODUCTION",
+                    "DISKSERVER_DRAINING",
+                    "DISKSERVER_DISABLED",
+                    "DISKSERVER_NONE");
+my $filepath;
+my $tapensstat;
+my $segmentstat;
+my $copynum;
+my $filesegmentnum;
+my $vid;
+my $fileseqnumintape;
+my $blockid;
+my $segmentsize;
+my $compfactor;
+my $filename;
+my $fileclassid;
+my $perm;
+my $one;
+my $user;
+my $group;
+my $nslsfilesize;
+my $rest;
+
+# Parse command line
+my $arg;
+my $i;
+for ($i=0; $i<=$#ARGV; $i++) {
+  # avoid SQL injection by keeping only numbers
+  if ($ARGV[$i]  !~ /^[0-9]/) {
+    my $nsstat = `nsls -i $ARGV[$i]`;
+    if (length($nsstat) != 0 ) {
+      my ($nothing, $file_id, $rest) = split (/\s+/, $nsstat);
+      $ARGV[$i] = $file_id;
+    }else{
+      $ARGV[$i] = 0;
+      #print "Error : invalid argument \"$ARGV[$i]\"\n";
+      #usage();
+      #exit;
+    }
+  }
+}
+
+# If no arg, display usage
+if ($#ARGV == -1) {
+  usage();
+  exit;
+}
+
+#
+# Oracle connection
+#
+my @castor_conf = castor_conf_getOraStagerSvc();
+my $Dbh = DBI->connect("dbi:Oracle:", $castor_conf[0] ,$castor_conf[1],
+                    { RaiseError => 1,
+		      AutoCommit => 0})
+  or die "cannot connect to stgdb: $DBI::errstr";
+
+#
+# register Oracle disconnection
+#
+END {
+    $Dbh->disconnect if $Dbh;
+}
+
+#$Dbh->trace(1);
+
+my @results;
+my %server;
+my %serverstat;
+my %mountpoint;
+my %status;
+my %diskpool;
+$server{0} = "\tnone";
+$serverstat{0} = 3;
+$mountpoint{0} = "none ";
+$status{0} = 3;
+$diskpool{0} = "none";
+
+# MAIN
+for $arg (@ARGV) {
+  my $Sth = $Dbh->prepare(qq{
+			  select id, status, filesystem, path
+			  from castor_stager.diskcopy
+			 where castorfile in (
+				select id
+				from castor_stager.castorfile
+				where fileid=$arg)
+			 });
+  $Sth->execute;
+nextmac:
+  #printf ("\n$arg:\n");
+  while (my @list = $Sth->fetchrow_array) {
+    my $invalid=0;
+    die("columns mismatch: @list") unless @list == 4;
+    my ($id, $stat, $fsystem, $path) = @list;
+    push (@results, $arg, $id, $stat, $fsystem, $path);
+  }
+  $Sth->finish;
+}
+my $prevfileid = 0;
+while (@results) {
+  my $fileid = shift(@results);
+  my $diskcopyid = shift(@results);
+  my $stat = shift(@results);
+  my $fsystem = shift(@results);
+  my $path = shift(@results);
+
+  my $readable;
+  my $readablefs;
+  my $readableserver;
+
+  if (! $server{$fsystem} ){
+    my $Sth = $Dbh->prepare(qq{
+			select name, status
+			from castor_stager.diskserver
+			where id in (
+				select diskserver
+				from castor_stager.filesystem
+				where id=$fsystem)
+                         });
+    $Sth->execute;
+    while (my @list = $Sth->fetchrow_array) {
+      my $invalid=0;
+      die("columns mismatch: @list") unless @list == 2;
+      ($server{$fsystem}, $serverstat{$fsystem}) = @list;
+    }
+    $Sth->finish;
+  }
+
+  if (! $mountpoint{$fsystem} ){
+    my $Sth = $Dbh->prepare(qq{
+                        select castor_stager.FileSystem.mountPoint, castor_stager.FileSystem.status, castor_stager.diskpool.name
+                        from castor_stager.FileSystem, castor_stager.diskpool
+                        where castor_stager.FileSystem.id=$fsystem
+                        and   castor_stager.FileSystem.diskpool=castor_stager.diskpool.id
+                         });
+    $Sth->execute;
+    while (my @list = $Sth->fetchrow_array) {
+      my $invalid=0;
+      die("columns mismatch: @list") unless @list == 3;
+      ($mountpoint{$fsystem}, $status{$fsystem}, $diskpool{$fsystem}) = @list;
+    }
+    $Sth->finish;
+  }
+
+  if ($stat <= $#DiskCopyStatus) {
+    $readable = $DiskCopyStatus[$stat];
+  } else {
+    $readable = "Unknown status : " . $stat;
+  }
+  if ($status{$fsystem} <= $#FsStatus) {
+    $readablefs = $FsStatus[$status{$fsystem}];
+  } else {
+    $readablefs = "Unknown status : " . $status{$fsystem};
+  }
+  if ($serverstat{$fsystem} <= $#ServerStatus) {
+    $readableserver = $ServerStatus[$serverstat{$fsystem}];
+  } else {
+    $readableserver = "Unknown status : " . $serverstat{$fsystem};
+  }
+
+  if ($fileid != $prevfileid) { 
+     printf ("\nFileid=%-10lld: ",$fileid);
+     #$filepath = `/afs/cern.ch/project/castor/deployment/tools/bin/nsGetPath castorns $fileid`;
+     $filepath = `nsGetPath castorns $fileid`;
+     if (length($filepath) != 0 ) {
+         my $filestatus = `nsls -l --class $filepath`;
+         ($fileclassid, $perm, $one, $user, $group, $nslsfilesize, $rest) = split (/\s+/, $filestatus);
+         printf ("\nnsls -l: $filestatus");
+         if ($perm =~ m/^m\S+$/i ){ # migrated
+           printf ("File migrated\n");
+           $tapensstat = `nsls -T $filepath`;
+           ($segmentstat, $copynum, $filesegmentnum, $vid, $fileseqnumintape, $blockid, $segmentsize, $compfactor, $filename) = split (/\s+/, $tapensstat);
+           printf ("nsls -T: $tapensstat");
+           if ($segmentsize != $nslsfilesize){
+             printf ("Warning: NSLS SIZE=$nslsfilesize SEGMENT SIZE=$segmentsize,\n");
+           }
+         } else {
+           printf ("File not migrated\n");
+         }
+         open (NSLCLASS, "nslistclass --id $fileclassid |") or die "cannot open /usr/bin/nslistclass --id $fileclassid - $!\n";
+         while (<NSLCLASS>) {
+           if ( m/CLASS_NAME\s+(\S+)/i ){
+             printf ("FileClass ID=$fileclassid NAME=$1\n");
+           }
+           if ( m/NBCOPIES\s+(\d+)/i ){
+             my $nbcopies = $1;
+             if ($nbcopies == 0){
+               printf ("No tape fileclass\n");
+             } else {
+               printf ("Tape fileclass\n");
+             }
+           }
+         }
+         close(NSLCLASS);
+     }
+  }
+  printf ("DiskcopyId=%-12lld %-20s %-10s:%s%s %s %s DiskPool=%s\n",$diskcopyid,$readable,$server{$fsystem},$mountpoint{$fsystem},$path,$readableserver,$readablefs,$diskpool{$fsystem});
+  #printf ("%-12lld %-20s %-10lld %-20s\n",$diskcopyid,$readable,$fsystem,$server{$fsystem});
+  #printf ("$diskcopyid\t$readable\t$fsystem\t$server{$fsystem}\n");
+
+
+  if ($readable eq 'DISKCOPY_WAITTAPERECALL') {
+    my $vmgrstat = `vmgrlisttape -V $vid`;
+    printf ("Tape volume status = $vmgrstat");
+    my $shoqstat = `showqueues -x |grep $vid`;
+    printf ("Tape queue status = ");
+    if (length($shoqstat) != 0 ) {
+      printf ("$shoqstat");
+    }else{
+      printf ("nothing in showqueues for VID=$vid\n");
+    }
+    my $Sth = $Dbh->prepare(qq{
+      select id, vid, status
+      from castor_stager.tape
+      where vid='$vid'
+      and id IN (
+        select tape
+        from castor_stager.segment
+        where status = 0)
+                     });
+    $Sth->execute;
+    while (my @list = $Sth->fetchrow_array) {
+      my $invalid=0;
+      die("columns mismatch: @list") unless @list == 3;
+      my ($id, $dbvid, $tapedbstat) = @list;
+      printf ("Tape ID=$id VID=$dbvid linked with unprocessed segments STATUS=$tapedbstat\n");
+    }
+    $Sth->finish;
+    $Sth = $Dbh->prepare(qq{
+      select id, status
+      from castor_stager.tapecopy
+      where castorfile in (
+        select id
+        from castor_stager.castorfile
+        where fileid=$fileid)
+             });
+    $Sth->execute;
+    my $tapecopyid;
+    while (my @list = $Sth->fetchrow_array) {
+      my $invalid=0;
+      die("columns mismatch: @list") unless @list == 2;
+      my ($id, $tapecopystat) = @list;
+      printf ("TapeCopy ID=$id STATUS=$tapecopystat\n");
+      $tapecopyid = $id;
+    }
+    $Sth->finish;
+    $Sth = $Dbh->prepare(qq{
+      select id, status
+      from castor_stager.segment
+      where copy = $tapecopyid
+             });
+    $Sth->execute;
+    while (my @list = $Sth->fetchrow_array) {
+      my $invalid=0;
+      die("columns mismatch: @list") unless @list == 2;
+      my ($id, $segmentstat) = @list;
+      printf ("Segment ID=$id STATUS=$segmentstat\n");
+    }
+    $Sth->finish;
+    $Sth = $Dbh->prepare(qq{
+      select status,count(*)
+      from castor_stager.subrequest
+      where castorfile in (
+        select id
+        from castor_stager.castorfile
+        where fileid=$fileid) group by status
+             });
+    $Sth->execute;
+    printf ("SubRequest STATUS\tCOUNT(*)\n");
+    while (my @list = $Sth->fetchrow_array) {
+      my $invalid=0;
+      die("columns mismatch: @list") unless @list == 2;
+      my ($subrequeststat, $subrequestcount) = @list;
+    printf ("           $subrequeststat\t\t$subrequestcount\n");
+    }
+    $Sth->finish;
+    $Sth = $Dbh->prepare(qq{
+      select id, status
+      from castor_stager.subrequest
+      where diskcopy=$diskcopyid
+             });
+    $Sth->execute;
+    while (my @list = $Sth->fetchrow_array) {
+      my $invalid=0;
+      die("columns mismatch: @list") unless @list == 2;
+      my ($subrequestid, $subrequeststat) = @list;
+      printf ("SubRequest ID=$subrequestid, STATUS=$subrequeststat\n");
+      printf ("Could eventually restart SubRequest in stager DB with\n");
+      printf ("update diskcopy set status=8 where status=2 and id=$diskcopyid;\n");
+      printf ("update subrequest set status=1 where status=$subrequeststat and id=$subrequestid;\n");
+      printf ("commit;\n");
+    }
+    $Sth->finish;
+
+  }
+  if ($fileid != $prevfileid){ 
+    $prevfileid = $fileid;
+  }
+ 
+}
