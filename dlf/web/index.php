@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: index.php,v 1.3 2006/11/29 13:39:14 waldron Exp $
+ * $Id: index.php,v 1.4 2007/06/07 16:22:41 waldron Exp $
  */
 
 require("utils.php");
@@ -77,7 +77,11 @@ $gen_start = getmicrotime();
 							} else {
 								echo "<option value=\"".$name."\"";
 							}
-							echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['server'].")</option>";
+							if ($db_instances[$name]['displayname']) {
+								echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['displayname']."/".$db_instances[$name]['server'].")</option>";
+							} else {
+								echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['server'].")</option>";
+							}
 						}					
 					?>
 					</select>&nbsp;&nbsp;
