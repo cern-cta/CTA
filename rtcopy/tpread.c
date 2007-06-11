@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.21 $ $Date: 2004/03/08 14:24:42 $ CERN IT/ADC Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.22 $ $Date: 2007/06/11 08:40:27 $ CERN IT/ADC Olof Barring";
 #endif /* not lint */
 
 /*
@@ -15,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: tpread.c,v $ $Revision: 1.21 $ $Date: 2004
 #include <winsock2.h>
 #endif /* _WIN32 */
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
