@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.37 $ $Release$ $Date: 2007/04/30 11:30:56 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.38 $ $Release$ $Date: 2007/06/11 08:42:52 $ $Author: waldron $
  *
  *
  *
@@ -74,6 +74,8 @@ static int port = -1;
 static pid_t tapeErrorHandlerPid = 0;
 static char *cmdName = NULL;
 static sigset_t signalset;
+static int shutdownServiceFlag = 0;
+static int foreground = 0;
 
 static void startTapeErrorHandler _PROTO((void));
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
@@ -542,14 +544,6 @@ static int checkVdqmReqs()
   return(0);
 }
 
-static void workerFinished(
-                           signo
-                           )
-     int signo;
-{
-  return;
-}
-
 static void checkWorkerExit(
                             shutDownFlag
                             ) 
@@ -649,39 +643,15 @@ static void checkWorkerExit(
       (void)rtcpcld_cleanupTape(item->tape);
       free(item);
     }
-    if ( (shutDownFlag == 0) && (value != 0) ) {
+    if ((shutDownFlag == 0) && (value != 0) ) {
       startTapeErrorHandler();
     }
   }
   return;
 }
 
-static int blockChild(
-                      yesNo
-                      )
-     int yesNo;
-{
-  int rc = 0;
-#ifndef _WIN32
-  struct sigaction saChld;
-  sigset_t sigset;
-
-  memset(&saChld,'\0',sizeof(saChld));
-  sigemptyset(&sigset);
-  sigaddset(&sigset,SIGCHLD);
-  if ( yesNo != 0 ) rc = sigprocmask(SIG_BLOCK,&sigset,NULL);
-  else rc = sigprocmask(SIG_UNBLOCK,&sigset,NULL);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("sigprocmask()");
-  }
-  saChld.sa_mask = sigset;
-  saChld.sa_handler = (void (*)(int))workerFinished;
-  rc = sigaction(SIGCHLD,&saChld,NULL);
-  if ( rc == -1 ) {
-    LOG_SYSCALL_ERR("sigaction()");
-  }
-#endif /* WIN32 */
-  return(rc);
+static void sigchld_handler(int signo) {
+  (void)checkWorkerExit(shutdownServiceFlag);
 }
 
 static void shutdownService _PROTO((
@@ -689,13 +659,17 @@ static void shutdownService _PROTO((
                                     ));
 
 static void signal_handler(void *arg) {
-	int signal;
+  int signal;
 
-	while (1) {
-		if (sigwait(&signalset, &signal) == 0) {
-			shutdownService(signal);
-		}
-	}
+  while (1) {
+    if (sigwait(&signalset, &signal) == 0) {
+      if ((signal == SIGINT)  ||
+	  (signal == SIGTERM) ||
+	  (signal == SIGABRT)) {
+	shutdownService(signal);
+      }	
+    }
+  }
 }
 
 static void shutdownService(
@@ -704,6 +678,24 @@ static void shutdownService(
      int signo;
 {
   rtcpcld_RequestList_t *iterator = NULL;
+  int i, j;
+  shutdownServiceFlag = 1;
+  CLIST_ITERATE_BEGIN(requestList,iterator) {
+    if ( iterator->pid > 0 ) {
+      kill(iterator->pid,signo);
+    }
+  } CLIST_ITERATE_END(requestList,iterator);
+  // wait for all forked children to end  
+  for (i = 0, j = 0; i < 30; i++, j = 0) {
+    CLIST_ITERATE_BEGIN(requestList,iterator) {
+      j++;
+    } CLIST_ITERATE_END(requestList,iterator);
+    if (j == 0) {
+      break;  /* break out, all processes ended */
+    }
+    sleep(1);
+  }
+  (void)checkWorkerExit(shutdownServiceFlag);
   (void)dlf_write(
                   mainUuid,
                   RTCPCLD_LOG_MSG(RTCPCLD_MSG_SHUTDOWN),
@@ -713,18 +705,8 @@ static void shutdownService(
                   DLF_MSG_PARAM_INT,
                   signo
                   );
-  (void)blockChild(1);
-  CLIST_ITERATE_BEGIN(requestList,iterator) {
-    if ( iterator->pid > 0 ) {
-      kill(iterator->pid,signo);
-    }
-  } CLIST_ITERATE_END(requestList,iterator);
-  sleep(1);
-  (void)blockChild(0);
-  (void)checkWorkerExit(1);
   dlf_shutdown(5);
   exit(0);
-  return;
 }
 
 static void startTapeErrorHandler() 
@@ -733,7 +715,7 @@ static void startTapeErrorHandler()
   char **argv = NULL;
   int argc, c, maxfds, i, rc;
   pid_t pid;
-  sigset_t signal_set;
+  sigset_t new_set, old_set;
   
   /*
    * Never run more than one at a time
@@ -777,6 +759,7 @@ static void startTapeErrorHandler()
                       strerror(errno),
                       RTCPCLD_LOG_WHERE
                       );
+      
       return;
     }
     argv[0] = cmd;
@@ -802,27 +785,46 @@ static void startTapeErrorHandler()
                     );
 
     /* reset signal handler */
-    sigfillset(&signal_set);
-    rc = pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
+    sigfillset(&new_set);
+    rc = pthread_sigmask(SIG_UNBLOCK, &new_set, &old_set);
     if (rc != 0) {
       (void)dlf_write(
-		      mainUuid,
-		      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-		      (struct Cns_fileid *)NULL,
-		      RTCPCLD_NB_PARAMS+2,
-		      "SYSCALL",
-		      DLF_MSG_PARAM_STR,
-		      "pthread_sigmask()",
-		      "ERROR_STR",
-		      DLF_MSG_PARAM_STR,
-		      strerror(errno),
-		      RTCPCLD_LOG_WHERE
-		      );
+                      mainUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "pthread_sigmask()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      strerror(errno),
+                      RTCPCLD_LOG_WHERE
+                      );
       return;
     }
-   
+
     execv(cmd,argv);
 
+    /* restore original sigmask */
+    rc = pthread_sigmask(SIG_BLOCK, &old_set, NULL);
+    if (rc != 0) {
+      (void)dlf_write(
+                      mainUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                      (struct Cns_fileid *)NULL,
+                      RTCPCLD_NB_PARAMS+2,
+                      "SYSCALL",
+                      DLF_MSG_PARAM_STR,
+                      "pthread_sigmask()",
+                      "ERROR_STR",
+                      DLF_MSG_PARAM_STR,
+                      strerror(errno),
+                      RTCPCLD_LOG_WHERE
+                      );
+      return;
+    }
+    
     /*
      * If we got here something went very wrong
      */
@@ -846,6 +848,7 @@ static void startTapeErrorHandler()
     /*
      * fork() failed
      */
+    dlf_parent();
     (void)dlf_write(
                     mainUuid,
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
@@ -876,7 +879,7 @@ static int startWorker(
   char **argv, volReqIDStr[16], sideStr[16], tStartRequestStr[16], keyStr[32];
   char usePipeStr[16], startFseqStr[16];
   char cmd[CA_MAXLINELEN+1], cmdline[CA_MAXLINELEN+1];
-  sigset_t signal_set;
+  sigset_t new_set, old_set;
 
   if ( (s == NULL) || (*s == INVALID_SOCKET) || 
        (tape == NULL) || (tape->dbRef == NULL) || (tape->dbRef->key == 0) ||
@@ -1030,26 +1033,46 @@ static int startWorker(
                   );
 
   /* reset signal handler */
-  sigfillset(&signal_set);
-  rc = pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
+  sigfillset(&new_set);
+  rc = pthread_sigmask(SIG_UNBLOCK, &new_set, &old_set);
   if (rc != 0) {
-    (void)dlf_write(
-		    mainUuid,
-		    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-		    (struct Cns_fileid *)NULL,
-		    RTCPCLD_NB_PARAMS+2,
-		    "SYSCALL",
-		    DLF_MSG_PARAM_STR,
-		    "pthread_sigmask()",
-		    "ERROR_STR",
-		    DLF_MSG_PARAM_STR,
-		    strerror(errno),
-		    RTCPCLD_LOG_WHERE
-		    );
+    (void)dlf_write( 
+                    mainUuid, 
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL), 
+                    (struct Cns_fileid *)NULL, 
+                    RTCPCLD_NB_PARAMS+2, 
+                    "SYSCALL", 
+                    DLF_MSG_PARAM_STR, 
+                    "pthread_sigmask()", 
+                    "ERROR_STR", 
+                    DLF_MSG_PARAM_STR, 
+                    strerror(errno), 
+                    RTCPCLD_LOG_WHERE 
+                    ); 
+    return(-1); 
+  }
+
+  execv(cmd,argv);
+
+  /* restore original sigmask */
+  rc = pthread_sigmask(SIG_BLOCK, &old_set, NULL);
+  if (rc != 0) {
+    (void)dlf_write( 
+                    mainUuid, 
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL), 
+                    (struct Cns_fileid *)NULL, 
+                    RTCPCLD_NB_PARAMS+2, 
+                    "SYSCALL", 
+                    DLF_MSG_PARAM_STR, 
+                    "pthread_sigmask()", 
+                    "ERROR_STR", 
+                    DLF_MSG_PARAM_STR, 
+                    strerror(errno), 
+                    RTCPCLD_LOG_WHERE 
+                    ); 
     return(-1);
   }
- 
-  execv(cmd,argv);
+
   /*
    * If we got here something went very wrong
    */
@@ -1097,23 +1120,16 @@ int rtcpcld_main(
 #if !defined(_WIN32)
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
-
-  /* ignore all signals apart from INT, TERM and ABRT */
-  sigemptyset(&signalset);
-  sigaddset(&signalset, SIGINT);
-  sigaddset(&signalset, SIGTERM);
-  sigaddset(&signalset, SIGABRT);
-
-  rc = pthread_sigmask(SIG_BLOCK,&signalset,NULL);
-  if (rc != 0) {
-	  return(1);
-  }
-
-  rc = Cthread_create_detached((void *)signal_handler, NULL);
-  if (rc < 0) {
-	  return(1);
-  }
 #endif /* _WIN32 */
+  signal(SIGCHLD, sigchld_handler);
+
+  /* Recreate the signal handling thread previously lost in fork() */
+  if (foreground == 0) {
+    rc = Cthread_create_detached((void *)signal_handler, NULL);
+    if (rc < 0) {
+      return(1);
+    }
+  }
 
 #if defined(__DATE__) && defined (__TIME__)
   (void)dlf_write(
@@ -1214,9 +1230,8 @@ int rtcpcld_main(
     wr_setcp = wr_set;
     ex_setcp = ex_set;
     /*
-     * Allow child signal to interrupt the select
+     * Select
      */
-    (void)blockChild(0);
     errno = serrno = 0;
     rc = select(
                 maxfd, 
@@ -1226,15 +1241,12 @@ int rtcpcld_main(
                 &timeout_cp
                 );
     save_errno = errno;
-    /*
-     * Block the child signal to avoid EINTR in vmgr and other APIs
-     */
-    (void)blockChild(1);
     timeout_cp = timeout;
-    /*
-     * Cleanup from finished workers
-     */
-    checkWorkerExit(0);
+
+    if (shutdownServiceFlag) {
+      continue;
+    }
+
     if ( rc < 0 ) {
       /*
        * Error, probably a child exit. If so, ignore and continue, otherwise
@@ -1322,12 +1334,15 @@ int rtcpcld_main(
              tape->tapereq.unit,
              tapereq.unit
              );
+
+      dlf_parent();
 #if !defined(_WIN32)
       pid = (int)fork();
 #else  /* !_WIN32 */
       pid = 0;
 #endif /* _WIN32 */
       if ( pid == -1 ) {
+	dlf_parent();
         (void)dlf_write(
                         mainUuid,
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
@@ -1348,6 +1363,7 @@ int rtcpcld_main(
          * Parent, update the internal request list with the pid of
          * the newly forked child.
          */
+	dlf_parent();
         (void)dlf_write(
                         mainUuid,
                         RTCPCLD_LOG_MSG(RTCPCLD_MSG_REQSTARTED),
@@ -1378,6 +1394,7 @@ int rtcpcld_main(
       /*
        * Child, kick off the migrator/recaller program and exit.
        */
+      dlf_child();
       inChild = 1;
 #if !defined(_WIN32)
       signal(SIGPIPE,SIG_IGN);
@@ -1574,6 +1591,7 @@ int main(
     switch (c) {
     case 'd':
       Debug = TRUE;
+      foreground = 1;
       break;
     case 'f':
       rtcpcldFacilityName = strdup(Coptarg);
@@ -1611,25 +1629,47 @@ int main(
   
   Cuuid_create(&mainUuid);
 
+  /* setup signal handling, this must be done before initialising DLF otherwise the
+   * DLF thread doesn't inherit the masked signals
+   */
+  sigfillset(&signalset);
+  sigdelset(&signalset, SIGCHLD);
+  rc = pthread_sigmask(SIG_BLOCK, &signalset, NULL);
+  if (rc != 0) {
+    return(1);
+  }
+  
+  /* There is no point in creating the signal handling thread when in the background
+   * here as the Cinitdaemon (fork()) will not recreate the thread and the signal_handler
+   * will be useless
+   */
+  if (foreground == 1) {
+    rc = Cthread_create_detached((void *)signal_handler, NULL);
+    if (rc < 0) {
+      return(1);
+    }
+  }
+  
   (void)rtcpcld_initLogging(rtcpcldFacilityName);
 
-  if ( Debug == TRUE ) {
+  if (Debug == TRUE) {
     rc = rtcpcld_main(NULL);
   } else {
 #if defined(_WIN32)
     /*
      * Windows
      */
-    if ( Cinitservice("rtcpcld",rtcpcld_main) == -1 ) exit(1);
+    if (Cinitservice("rtcpcld",rtcpcld_main) == -1) 
+      exit(1);
 #else /* _WIN32 */
     /*
      * UNIX
      */
     dlf_prepare();
-    if ( Cinitdaemon("rtcpcld",SIG_IGN) == -1 ) {
-	    dlf_parent();
-	    dlf_shutdown(5);
-	    exit(1);
+    if (Cinitdaemon("rtcpcld",SIG_IGN) == -1) {
+      dlf_parent();
+      dlf_shutdown(5);
+      exit(1);
     }
 #endif /* _WIN32 */
     dlf_child();
