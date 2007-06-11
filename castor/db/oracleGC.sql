@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.433 $ $Date: 2007/06/04 16:07:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.434 $ $Date: 2007/06/11 12:07:23 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.433 $ $Date: 2007/06/04 16:07:31 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.434 $ $Date: 2007/06/11 12:07:23 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -77,52 +77,8 @@ CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,stat
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
 
-/* Redefinition of table SubRequest to make it partitioned by status */
-/* Unfortunately it has already been defined, so we drop and recreate it */
-/* Note that if the schema changes, this part has to be updated manually! */
-DROP TABLE SubRequest;
-CREATE TABLE SubRequest
-   (
-        "RETRYCOUNTER" NUMBER,
-        "FILENAME" VARCHAR2(2048),
-        "PROTOCOL" VARCHAR2(2048),
-        "XSIZE" NUMBER(*,0),
-        "PRIORITY" NUMBER,
-        "SUBREQID" VARCHAR2(2048),
-        "FLAGS" NUMBER,
-        "MODEBITS" NUMBER,
-        "CREATIONTIME" NUMBER(*,0),
-        "LASTMODIFICATIONTIME" NUMBER(*,0),
-        "ANSWERED" NUMBER,
-        "ID" NUMBER(*,0) NOT NULL,
-        "DISKCOPY" NUMBER(*,0),
-        "CASTORFILE" NUMBER(*,0),
-        "PARENT" NUMBER(*,0),
-        "STATUS" NUMBER(*,0),
-        "REQUEST" NUMBER(*,0),
-        "GETNEXTSTATUS" NUMBER(*,0)
-    )
-  PCTFREE 50 PCTUSED 40 INITRANS 50
-  TABLESPACE "STAGER_DATA" ENABLE ROW MOVEMENT
-  PARTITION BY LIST (STATUS)
-   (
-    PARTITION P_STATUS_1 VALUES (1),
-    PARTITION P_STATUS_2 VALUES (2),
-    PARTITION P_STATUS_3 VALUES (3),
-    PARTITION P_STATUS_4 VALUES (4),
-    PARTITION P_STATUS_5 VALUES (5),
-    PARTITION P_STATUS_6 VALUES (6),
-    PARTITION P_STATUS_7 VALUES (7),
-    PARTITION P_STATUS_8 VALUES (8),
-    PARTITION P_STATUS_9 VALUES (9),
-    PARTITION P_STATUS_10 VALUES (10),
-    PARTITION P_STATUS_11 VALUES (11),
-    PARTITION P_STATUS_12 VALUES (12),
-    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
-   );
-
-ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID);
- 
+CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
+CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,NULL));
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
