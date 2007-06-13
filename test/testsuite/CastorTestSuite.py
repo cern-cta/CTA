@@ -10,7 +10,7 @@ import TapeTest
 #import CommonTest
 #import CoreTest
 
-import signal
+
 
 ########################### for each module its own test suite ##########################
 

@@ -5,6 +5,10 @@ import sys
 import time
 from threading import Thread
 
+# castor parameters
+
+(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
+
 ticket="" 
 dirCastor=""
 inputFile=""
@@ -15,6 +19,8 @@ myTag=""
 numFiles=""
 filesToBeRecalled=""
 myCastor=""
+
+
 
 def getFilesToRecall(maxNum=None):
     tmpList=os.popen("nsls "+recallDir).read().split("\n")
@@ -42,25 +48,37 @@ class RecallingThread(Thread):
        self.dirOut=dirOut
       
    def run(self):
-       recalledRight=0
-       recallFailed=0
-       for file in self.listFile:
-           UtilityForCastorTest.runOnShell(["stager_get -M "+file],myScen)
-       while (recalledRight + recallFailed) != self.num:
-	   for i in range(self.num):
-		if self.listFile[i]== -1:
+       try:
+           recalledRight=0
+           recallFailed=0
+           strFiles=""
+           for file in self.listFile:
+               strFiles=" -M "+file
+           
+           #UtilityForCastorTest.runOnShell(["stager_rm "+strFiles,"stager_get "+strFiles],myScen)
+           os.system(myScen+"stager_rm "+strFiles+";"+myScen+"stager_get "+strFiles)
+	   time.sleep(120)		       
+           while (recalledRight + recallFailed) != self.num:
+               for i in range(self.num):
+                   if self.listFile[i]== -1:
 			continue
-		qryOut=os.popen4("stager_qry -M "+self.listFile[i])[1].read() 
-
-                if qryOut.find("INVALID")!=-1 or qryOut.find("No such file or directory")!=-1:
-                             
+                   qryOut=os.popen4(myScen+"stager_qry -M "+self.listFile[i])[1].read()           
+                   print qryOut
+                   if qryOut.find("No such file or directory")!=-1:
+                        time.sleep(30)
+                        qryOut=os.popen4(myScen+"stager_qry -M "+self.listFile[i])[1].read()
+                        
+                   if qryOut.find("INVALID")!=-1 or qryOut.find("No such file or directory")!=-1:
 			self.listFile[i]== -1
 			recallFailed= recallFailed+1
-           	else:
+                   else:
                 	if qryOut.find("STAGED")!=-1:
                    		outSize=((os.popen("nsls -l "+self.listFile[i]).read()).split())[4]
+
 				
-                                fileOut=os.popen4("rfcp "+self.listFile[i]+" "+self.dirOut+"file"+str(i)+"copy")[1].read()
+                                fileOut=os.popen4(myScen+"rfcp "+self.listFile[i]+" "+self.dirOut+"file"+str(i)+"copy")[1].read()
+                                print fileOut
+                                print myScen+"rfcp "+self.listFile[i]+" "+self.dirOut+"file"+str(i)+"copy"
                                 if fileOut.find(str(outSize)+" bytes") == -1:
                        			recallFailed=recallFailed+1
                                         self.listFile[i]=-1
@@ -68,13 +86,18 @@ class RecallingThread(Thread):
 					self.listFile[i]=-1
                        			recalledRight=recalledRight+1
                                 os.system("rm "+self.dirOut+"file"+str(i)+"copy")
-                time.sleep(60)
-       if recalledRight == self.num:
-           self.response="All files have been retrieved correctly"
-       else:
-           self.response=str(recalledRight)+" files recalled "+str(recallFailed)+" files not recalled"
-       print self.response
+                   time.sleep(30)
+                
+           if recalledRight == self.num:
+               self.response="All files have been retrieved correctly"
+           else:
+               self.response=str(recalledRight)+" files recalled "+str(recallFailed)+" files not recalled"
+           print self.response
+       except:
+           raise
 
+
+           
 class MigratingThread(Thread):
    def __init__ (self,listFile,num):
        Thread.__init__(self)
@@ -82,26 +105,33 @@ class MigratingThread(Thread):
        self.num=num
        self.response=""
    def run(self):
-       migratedRight=0
-       migratedFailed=0
-       while (migratedRight+migratedFailed) !=self.num:
-	   for i in range(self.num):
-		if self.listFile[i]== -1:
+       try:
+           migratedRight=0
+           migratedFailed=0
+           print self.num
+	   time.sleep(30*self.num);
+           while (migratedRight+migratedFailed) != self.num:
+               for i in range(self.num):
+                   if self.listFile[i]== -1:
 			continue
-		qryOut=os.popen4("stager_qry -M "+self.listFile[i])[1].read()
-                if qryOut.find("INVALID")!=-1 or  qryOut.find("No such file or directory")!=-1:
-                    migratedFailed=migratedFailed+1
-                    self.listFile[i]= -1
+                   qryOut=os.popen4(myScen+"stager_qry -M "+self.listFile[i])[1].read()
+                   print qryOut
+                   if qryOut.find("INVALID")!=-1 or  qryOut.find("No such file or directory")!=-1:
+                       migratedFailed=migratedFailed+1
+                       self.listFile[i]= -1
 			
-           	else:
-                    if qryOut.find("STAGED")!=-1:
-                        self.listFile[i]= -1
-                        migratedRight=migratedRight+1
-           time.sleep(60)
-       if migratedRight == self.num:
-           self.response="All files have been migrated correctly"
-       else:
-           self.response=str(migratedRight)+" files migrated and "+str(migratedFailed)+" didn't migrate"
+                   else:
+                       if qryOut.find("STAGED")!=-1:
+                           self.listFile[i]= -1
+                           migratedRight=migratedRight+1
+                   time.sleep(30)
+           
+           if migratedRight == self.num:
+               self.response="All files have been migrated correctly"
+           else:
+               self.response=str(migratedRight)+" files migrated and "+str(migratedFailed)+" didn't migrate"
+       except:
+           raise
        
 class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
@@ -112,7 +142,6 @@ class PreRequisitesCase(unittest.TestCase):
         myCastor=UtilityForCastorTest.prepareCastorString()
         global dirCastor
         dirCastor=myCastor+"tmpTapeTest"+ticket+"/"
-        (stagerHost,stagerPort,stagerSvcClass,stagerVersion)=UtilityForCastorTest.getCastorParameters()
         global myScen
         myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
         try:
@@ -147,14 +176,16 @@ class TapeBasicMigrationCase(unittest.TestCase):
         def simpleMigration(self):
             cmd=[]
             inputMigration=[]
-            
+            print numFiles
             for i in range(numFiles):
                 cmd.append("rfcp "+inputFile+" "+dirCastor+"fileSimpleMigr"+str(i)+myTag+ticket)               
                 inputMigration.append(dirCastor+"fileSimpleMigr"+str(i)+myTag+ticket)
+            print cmd
             UtilityForCastorTest.runOnShell(cmd,myScen)
             migration=MigratingThread(inputMigration,numFiles)
             migration.start()
             migration.join()
+                
             
             assert migration.response.find("All files have been migrated correctly") != -1, "Problems in migrating files: "+migration.response
 	
@@ -167,6 +198,7 @@ class TapeBasicMigrationCase(unittest.TestCase):
                 inputMigration.append(dirCastor+"fileMultMigr"+str(i)+myTag+ticket)
                 inputForCastor=" -M "+dirCastor+"fileMultMigr"+str(i)+myTag+ticket
                 cmdComplete=["stager_put "+ inputForCastor]+cmd+["stager_putdone "+inputForCastor]
+                print cmdComplete
                 UtilityForCastorTest.runOnShell(cmdComplete,myScen)
                 
             migration=MigratingThread(inputMigration,numFiles)
@@ -177,11 +209,6 @@ class TapeBasicMigrationCase(unittest.TestCase):
 	
 class TapeBasicRecallCase(unittest.TestCase):
     def simpleRecall(self):
-        recallString=""
-        for fileName in filesToBeRecalled:
-            recallString= recallString+" -M "+fileName
-        UtilityForCastorTest.runOnShell(["stager_rm "+recallString],myScen)
-
         recalling=RecallingThread(filesToBeRecalled,numFiles,localDir)
         recalling.start()
         recalling.join()
@@ -194,13 +221,12 @@ class TapeBasicMigrationAndRecallCase(unittest.TestCase):
         inputMigration=[]
         inputRecall=[]
         inputRecallForCastor=""
-        
+
         for i in range(numFiles):
             cmd.append("rfcp "+inputFile+" "+dirCastor+"fileMigrRec"+str(i)+myTag+ticket)
             inputMigration.append(dirCastor+"fileMigrRec"+str(i)+myTag+ticket)
             inputRecall.append(dirCastor+"fileMigrRec"+str(i)+myTag+ticket)
-            inputRecallForCastor=inputRecallForCastor+" -M "+dirCastor+"fileMigrRec"+str(i)+myTag+ticket
-            
+
         UtilityForCastorTest.runOnShell(cmd,myScen)
             
         migration=MigratingThread(inputMigration,numFiles)
@@ -209,9 +235,8 @@ class TapeBasicMigrationAndRecallCase(unittest.TestCase):
     
         print migration.response  
         assert migration.response.find("All files have been migrated correctly") != -1, "Problems in migrating files"
-        UtilityForCastorTest.runOnShell(["stager_rm "+inputRecallForCastor],myScen)
 
-        recalling=RecallingThread(inputRecall,numFiles,"localDir")
+        recalling=RecallingThread(inputRecall,numFiles,localDir)
         recalling.start()
         recalling.join()
         
@@ -222,21 +247,21 @@ class TapeBasicMigrationAndRecallCase(unittest.TestCase):
         inputMigration=[]
         inputRecall=[]
         inputRecallForCastor=""
+        print "numFiles"
+        print numFiles
+        
         for i in range(numFiles):
             cmd=["rfcp "+inputFile+" "+dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket]
             inputMigration.append(dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket)
             inputRecall.append(dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket)
-            inputRecallForCastor=inputRecallForCastor+" -M "+dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket
-            completeCmd=["stager_put -M "+dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket]+cmd+["stager_putdone -M "+dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket]
-            UtilityForCastorTest.runOnShell(completeCmd,myScen)
+            cmdComplete=["stager_put -M "+dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket]+cmd+["stager_putdone -M "+dirCastor+"fileMigrRecComplete"+str(i)+myTag+ticket]
+            UtilityForCastorTest.runOnShell(cmdComplete,myScen)
         
         migration=MigratingThread(inputMigration,numFiles)
         migration.start()
         migration.join()
         assert migration.response.find("All files have been migrated correctly") != -1, "Problems in migrating files"
     
-        UtilityForCastorTest.runOnShell(["stager_rm "+inputRecallForCastor],myScen)
-
         recalling=RecallingThread(inputRecall,numFiles,localDir)
         recalling.start()
         recalling.join()

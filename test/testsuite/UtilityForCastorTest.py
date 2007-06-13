@@ -2,7 +2,7 @@ import threading
 import os
 import sys
 import time
-
+import getopt
 
 
 def getListOfFiles(myDir):
@@ -68,15 +68,16 @@ def saveOnFile(namefile,cmdS,scen=None):
         t.cancel()
       
 def runOnShell(cmdS,scen=None):
+    buff=[]
     for singleCmd in cmdS:
         myTime=getTimeOut()
         t=threading.Timer(myTime,timeOut,[singleCmd])
         t.start()
         if scen != None:
             singleCmd=scen+singleCmd
-        os.system(singleCmd)
+        buff.append(os.popen4(singleCmd)[1].read())
         t.cancel()
-    
+    return buff  
     
 def logUser():
     
@@ -133,7 +134,7 @@ def checkUser():
 #different scenarium for env
 
 def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
-	myShell=os.popen('ls -l /bin/sh').read()
+        myShell=os.popen('ls -l /bin/sh').read()
 	myScen=""
 	if myShell.find("bash") != -1:
 		if host !=-1:
@@ -162,7 +163,6 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                         for envVar in opt:
                             if envVar[1] == -1:
                                 myScen+="unset "+envVar[0]+";"
-
                 return myScen
 
 	if myShell.find("tcsh"):
@@ -191,12 +191,11 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                     if opt != None:
                         for envVar in opt:
                             if envVar[1] == -1:
-                                myScen+="unsetenv "+envVar[0]+";"
-        print myScen        
+                                myScen+="unsetenv "+envVar[0]+";"        
 	return myScen
 
 
-def getCastorParameters():
+def getCastorParameters(myArg):
 	try:
             f=open("./CASTORTESTCONFIG")
             configFileInfo=f.read()
@@ -212,9 +211,39 @@ def getCastorParameters():
             stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
             stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
             stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
-            return (stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+	    stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
         except IOError:
             return (0,0,0,0)
+
+	myArg={"-s":"","-p":"","-d":"","-e":"","-v":""}
+	try:
+		optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p')
+		optionCmdLine=optionCmdLine[0]
+	except getopt.GetoptError:
+	    return (0,0,0,0)
+		
+    
+        for elemLine in optionCmdLine:
+		if elemLine !=[]:
+			myArg[elemLine[0]]=elemLine[1]
+
+	if myArg["-s"] !="":
+		stagerHost=myArg["-s"]
+	if myArg["-p"] != "":
+		stagerPort=myArg["-p"]
+	if myArg["-d"] != "":
+		stagerSvcClass=myArg["-d"]
+	if myArg["-v"] != "":
+		if myArg["-v"] == "2":
+			stagerVersion="yes"
+		else:
+			stagerVersion="no"
+			
+	if myArg["-e"] != "":
+		stagerExtraSvcClass=myArg["-e"]
+
+	return (stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass)
+
 
 # to test if the request handler and the stager are responding and the rfcp working
  

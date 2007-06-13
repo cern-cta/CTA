@@ -5,15 +5,11 @@ import sys
 import time
 import threading
 
-# Information to access Castor
+# castorParameters
 
-stagerHost=""
-stagerPort=""
-stagerSvcClass=""
-stagerVersion=""
-(stagerHost,stagerPort,stagerSvcClass,stagerVersion)=UtilityForCastorTest.getCastorParameters()
+(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
 
-#other parameters
+# parameters
 
 remoteHost=""
 stageMap="no"
@@ -72,11 +68,21 @@ class RfioPreRequisitesCase(unittest.TestCase):
 		        localDir=(configFileInfo[configFileInfo.find("LOG_DIR"):]).split()[1]+ticket+"/"
 			os.system("mkdir "+localDir)
 
-		 	remoteHost=(configFileInfo[configFileInfo.find("REMOTE_HOST"):]).split()[1]
+                        cmd=["stager_qry -s"]
+                        myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
+
+			myOut=UtilityForCastorTest.runOnShell(cmd,myScen)[0]
+			index=myOut.find("DiskServer")
+			assert index>=0, "Remote Host has not retrived correctly with the stager_qry"
+			myOut=myOut[index:]
+			linesToParse=myOut.split("\n")
+			for line in linesToParse:
+			    elems=line.split()
+			    if elems !=[] and elems[0]=="DiskServer" and elems[2]=="DISKSERVER_PRODUCTION":
+				    remoteHost=elems[1]
 
 			global remoteDir
-			remoteDir=(configFileInfo[configFileInfo.find("REMOTE_OUTPUT_DIR"):]).split()[1]
-			remoteDir=remoteHost+":"+remoteDir+"/tmpRfio"+ticket
+			remoteDir=remoteHost+":"+"/tmp/tmpRfio"+ticket
 			os.system("rfmkdir "+remoteDir)
 			
 			

@@ -1,9 +1,9 @@
 *** Test choice ***
 
-CLIENT		PUT		NO
-CLIENT		GET		NO
+CLIENT		PUT		YES
+CLIENT		GET		YES
 CLIENT		PUTDONE		NO
-CLIENT		RM		NO
+CLIENT		RM		YES
 CLIENT		EXTRAQRY	NO
 CLIENT          EXTRATEST       NO
  
@@ -37,9 +37,10 @@ CORE            TEST            NO
 
 STAGE_HOST        c2testrh
 STAGE_PORT        9002
-STAGE_SVCCLASS    defTape
+STAGE_SVCCLASS    default
 CASTOR_V2         yes 
-TIMEOUT           120
+EXTRA_SVCCLASS    defTape
+TIMEOUT           400
 
 *** Rfio test specific parameters ***
 
@@ -52,9 +53,6 @@ LOG_DIR      /tmp/tmpRfio
 INPUT_FILE        /etc/group
 STRESS_INPUT_DIR  /tmp/dir 
 
-REMOTE_HOST        lxfsrk384
-REMOTE_OUTPUT_DIR  /tmp 
-
 
 *** Client test specific parameters ***
 
@@ -62,10 +60,8 @@ LOG_DIR         /tmp/tmpClient
 INPUT_FILE      /etc/group
 STRESS_INPUT_DIR /castor/cern.ch/user/g/gtaur/testDir
 
-
 *** Tape test specific parameters ***
 
 LOG_DIR  /tmp/tmpTape
 INPUT_FILE  /tmp/bigFile
-INPUT_CASTOR_DIR /castor/cern.ch/user/g/gtaur/tmpRfioTest27096218/
-
+INPUT_CASTOR_DIR /castor/cern.ch/user/g/gtaur/RecallTestFile/
