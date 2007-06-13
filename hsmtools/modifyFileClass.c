@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifyFileClass.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/05/16 13:49:07 $ $Author: waldron $
+ * @(#)$RCSfile: modifyFileClass.c,v $ $Revision: 1.7 $ $Release$ $Date: 2007/06/13 11:40:43 $ $Author: waldron $
  *
  * 
  *
@@ -140,6 +140,10 @@ int main(int argc, char *argv[])
     case MaxFileSize:
       maxFileSizeSet++;
       maxFileSizeSet = strtou64(Coptarg);
+      break;
+    case GetFromCns:
+      break;
+    case 0:
       break;
     default:
       usage(cmd);
