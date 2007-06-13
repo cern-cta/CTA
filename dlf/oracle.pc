@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.23 2007/05/30 08:53:39 waldron Exp $
+ * $Id: oracle.pc,v 1.24 2007/06/13 07:15:49 waldron Exp $
  */
 
 /* headers */
@@ -160,10 +160,13 @@ int DLL_DECL db_init(int threads) {
         database_t *db;
         struct     sqlca sqlca;
         char       err_msg[512];
+	char       dbversion[125];
+	char       codeversion[125] = "1_0_0_0";
         size_t     err_size;
         size_t     err_len;
         int        i;
         int        rv;
+	int        verror;
 
         /* flush thread pool */
         for (i = 0; i < MAX_THREADS; i++) {
@@ -279,11 +282,24 @@ int DLL_DECL db_init(int threads) {
 	EXEC SQL WHENEVER SQLERROR GOTO error;
 	EXEC SQL CONTEXT USE :dpool[0]->ctx;
 
+	/* check database version */
+	verror = 1;
+	EXEC SQL SELECT version INTO :dbversion FROM dlf_version;
+	if (strcmp(dbversion, codeversion)) {
+		ClrActive(dpool[0]->mode);
+		Cthread_mutex_unlock(&dpool[0]->mutex);
+		log(LOG_ERR, "db_init() - version mismatch between the DLF daemon and database schema - "
+			     "db version: %s versus dlf version: %s\n", dbversion, codeversion);
+		return APP_FAILURE;
+	}
+
+	/* sequences */
+	verror = 0;
 	EXEC SQL SELECT seq_no INTO :seq_id       FROM dlf_sequences WHERE (seq_name = 'id');
 	EXEC SQL SELECT seq_no INTO :seq_hostid   FROM dlf_sequences WHERE (seq_name = 'hostid');
 	EXEC SQL SELECT seq_no INTO :seq_nshostid FROM dlf_sequences WHERE (seq_name = 'nshostid');
 
-	dpool[0]->selects = 3;
+	dpool[0]->selects = 4;
 
         ClrActive(dpool[0]->mode);
 	Cthread_mutex_unlock(&dpool[0]->mutex);
@@ -302,7 +318,11 @@ error:
         EXEC SQL WHENEVER SQLERROR CONTINUE;
 
 	strip_newline(err_msg, err_len);
-        log(LOG_ERR, "db_init() : %.*s\n", err_len, err_msg);
+	if (verror == 0) {
+        	log(LOG_ERR, "db_init() : %.*s\n", err_len, err_msg);
+	} else {
+		log(LOG_ERR, "db_init() : failed to check database schema version in dlf_version table: %.*s\n", err_len, err_msg);
+	}
 
         if ((sqlca.sqlcode == -12571) || (sqlca.sqlcode == -1012) || 
 	    (sqlca.sqlcode == -1089)  || (sqlca.sqlcode == -3114) ||

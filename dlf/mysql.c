@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.15 2007/05/03 12:21:04 waldron Exp $
+ * $Id: mysql.c,v 1.16 2007/06/13 07:15:49 waldron Exp $
  */
 
 /* headers */
@@ -112,8 +112,10 @@ int DLL_DECL db_init(int threads) {
 	MYSQL_ROW    row;
 	database_t   *db;
 	char         func[30];
+	char         codeversion[125] = "1_0_0_0";
 	int          i;
 	int          rv;
+	int          verror = 0;
 	unsigned int mysql_errnum;
 
 	/* flush thread pool */
@@ -217,6 +219,41 @@ int DLL_DECL db_init(int threads) {
 	Cthread_mutex_lock(&dpool[0]->mutex);
 	SetActive(dpool[0]->mode);
 
+	/* check database version */
+	verror = 1;
+	db->selects++;
+	if (mysql_query(&dpool[0]->mysql, "SELECT version FROM dlf_version") != APP_SUCCESS) {
+		strcpy(func, "mysql_query()");
+		goto error;
+	}
+
+	/* store the result */
+	if ((res = mysql_store_result(&dpool[0]->mysql)) == NULL) {
+		strcpy(func, "mysql_store_result()");
+		goto error;
+	}
+
+	row = mysql_fetch_row(res);
+	if (!row) {
+		mysql_free_result(res);
+		dpool[0]->errors++;
+		ClrActive(dpool[0]->mode);
+		Cthread_mutex_unlock(&dpool[0]->mutex);
+		log(LOG_ERR, "db_init() - unable to determine schema version from dlf_version table, now rows found"); 
+		return APP_FAILURE; 
+	}
+	if (strcmp(row[0], codeversion)) {
+		mysql_free_result(res);
+		dpool[0]->errors++;
+		ClrActive(dpool[0]->mode);
+		Cthread_mutex_unlock(&dpool[0]->mutex);	  
+		log(LOG_ERR, "db_init() - version mismatch between the DLF daemon and database schema - "
+			     "db version: %s versus dlf version: %s\n", row[0], codeversion);	  
+		return APP_FAILURE;
+	}	
+
+	/* sequences */
+	verror = 0;
 	db->selects++;
 	if (mysql_query(&dpool[0]->mysql, "SELECT * FROM dlf_sequences") != APP_SUCCESS) {
 		strcpy(func, "mysql_query()");
@@ -264,7 +301,11 @@ int DLL_DECL db_init(int threads) {
 		ClrConnected(dpool[0]->mode);
 	}
 
-	log(LOG_ERR, "db_init() - %s : %s\n", func, mysql_error(&dpool[0]->mysql));
+	if (verror == 0) {
+		log(LOG_ERR, "db_init() - %s : %s\n", func, mysql_error(&dpool[0]->mysql));
+	} else {
+		log(LOG_ERR, "db_init() : failed to check database schema version in dlf_version table: %s : %s\n", func, mysql_error(&dpool[0]->mysql));
+	}
 
 	mysql_free_result(res);
 	dpool[0]->errors++;
