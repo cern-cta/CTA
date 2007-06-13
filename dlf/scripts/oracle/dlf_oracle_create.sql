@@ -5,6 +5,16 @@
 /* and DBA privileges must be present for scheduling the maintenance job    */
 
 /*
+ * dlf_version
+ */
+CREATE TABLE dlf_version
+(
+	version 	VARCHAR2(100),
+	plsqlrevision 	VARCHAR2(100)
+)
+TABLESPACE dlf_data;
+
+/*
  * dlf_settings
  */
 CREATE TABLE dlf_settings
@@ -284,6 +294,8 @@ CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_i
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
+/* version number */
+INSERT INTO dlf_version VALUES ('1_0_0_0', '$Revision$ $Date$');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
