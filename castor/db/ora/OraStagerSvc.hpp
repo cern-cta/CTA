@@ -337,6 +337,9 @@ namespace castor {
          unsigned long egid)
           throw (castor::exception::Exception);
 
+        /// SQL statement for function subRequestToDo
+        static const std::string s_subRequestToDoStatementString;
+
         /// SQL statement object for function subRequestToDo
         oracle::occi::Statement *m_subRequestToDoStatement;
 

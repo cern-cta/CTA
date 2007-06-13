@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.199 $ $Release$ $Date: 2007/04/18 16:06:24 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.200 $ $Release$ $Date: 2007/06/13 10:24:13 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -91,6 +91,10 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
+/// SQL statement for subRequestToDo
+const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
+  "BEGIN subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
+
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
   // 10 = SUBREQUEST_FAILED_ANSWERING, 7 = SUBREQUEST_FAILED
@@ -230,40 +234,18 @@ castor::db::ora::OraStagerSvc::subRequestToDo
   try {
     // Check whether the statements are ok
     if (0 == m_subRequestToDoStatement) {
-      std::ostringstream stmtString;
-      stmtString
-        << "UPDATE SubRequest SET status = 3 " // SUBREQUEST_WAITSCHED
-        // Here use I_SubRequest_status index to retrieve SubRequests
-        // in START, RESTART and RETRY status
-        << " WHERE (decode(status,0,status,1,status,2,status,NULL)) < 3"
-        << " AND ROWNUM < 2 AND "
-        << "(SELECT type FROM Id2Type WHERE id = SubRequest.request)"
-        << " IN (";
-      for (std::vector<ObjectsIds>::const_iterator it = types.begin();
-           it!= types.end();
-           it++) {
-        if (types.begin() != it) stmtString << ", ";
-        stmtString << *it;
-      }
-      stmtString
-        << ") RETURNING id, retryCounter, fileName, "
-        << "protocol, xsize, priority, status, modeBits, flags, subReqId"
-        << " INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9, :10 ";
-
-      m_subRequestToDoStatement =
-        createStatement(stmtString.str());
+       m_subRequestToDoStatement =
+        createStatement(s_subRequestToDoStatementString);
       m_subRequestToDoStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
+        (2, oracle::occi::OCCIDOUBLE);
       m_subRequestToDoStatement->registerOutParam
-        (2, oracle::occi::OCCIINT);
-      m_subRequestToDoStatement->registerOutParam
-        (3, oracle::occi::OCCISTRING, 2048);
+        (3, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (4, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
-        (5, oracle::occi::OCCIDOUBLE);
+        (5, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
-        (6, oracle::occi::OCCIINT);
+        (6, oracle::occi::OCCIDOUBLE);
       m_subRequestToDoStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
@@ -271,10 +253,13 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (10, oracle::occi::OCCISTRING, 2048);
+        (10, oracle::occi::OCCIINT);
+      m_subRequestToDoStatement->registerOutParam
+        (11, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
-    // build the list of
+    // set the service - not used for the time being
+    m_subRequestToDoStatement->setString(1, "");
     // execute the statement and see whether we found something
     unsigned int nb =
       m_subRequestToDoStatement->executeUpdate();
@@ -285,18 +270,18 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     // Create result
     castor::stager::SubRequest* result =
       new castor::stager::SubRequest();
-    result->setId((u_signed64)m_subRequestToDoStatement->getDouble(1));
-    result->setRetryCounter(m_subRequestToDoStatement->getInt(2));
-    result->setFileName(m_subRequestToDoStatement->getString(3));
-    result->setProtocol(m_subRequestToDoStatement->getString(4));
-    result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(5));
-    result->setPriority(m_subRequestToDoStatement->getInt(6));
+    result->setId((u_signed64)m_subRequestToDoStatement->getDouble(2));
+    result->setRetryCounter(m_subRequestToDoStatement->getInt(3));
+    result->setFileName(m_subRequestToDoStatement->getString(4));
+    result->setProtocol(m_subRequestToDoStatement->getString(5));
+    result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(6));
+    result->setPriority(m_subRequestToDoStatement->getInt(7));
     result->setStatus
       ((enum castor::stager::SubRequestStatusCodes)
-       m_subRequestToDoStatement->getInt(7));
-    result->setModeBits(m_subRequestToDoStatement->getInt(8));
-    result->setFlags(m_subRequestToDoStatement->getInt(9));
-    result->setSubreqId(m_subRequestToDoStatement->getString(10));
+       m_subRequestToDoStatement->getInt(8));
+    result->setModeBits(m_subRequestToDoStatement->getInt(9));
+    result->setFlags(m_subRequestToDoStatement->getInt(10));
+    result->setSubreqId(m_subRequestToDoStatement->getString(11));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
