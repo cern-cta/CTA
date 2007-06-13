@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.200 $ $Release$ $Date: 2007/06/13 10:24:13 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.201 $ $Release$ $Date: 2007/06/13 17:22:24 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -98,7 +98,7 @@ const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
   // 10 = SUBREQUEST_FAILED_ANSWERING, 7 = SUBREQUEST_FAILED
-  "UPDATE SubRequest SET status = 10 WHERE decode(status,7,status,null) = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority,  status, modeBits, flags INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
+  "UPDATE SubRequest SET status = 10 WHERE status = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority,  status, modeBits, flags INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
