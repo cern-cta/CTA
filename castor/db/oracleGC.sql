@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.435 $ $Date: 2007/06/11 12:15:52 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.436 $ $Date: 2007/06/13 12:47:49 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.435 $ $Date: 2007/06/11 12:15:52 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.436 $ $Date: 2007/06/13 12:47:49 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -87,8 +87,7 @@ CREATE TABLE SubRequest
   TABLESPACE "STAGER_DATA" ENABLE ROW MOVEMENT
   PARTITION BY LIST (STATUS)
    (
-    PARTITION P_STATUS_1 VALUES (1),
-    PARTITION P_STATUS_2 VALUES (2),
+    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),
     PARTITION P_STATUS_3 VALUES (3),
     PARTITION P_STATUS_4 VALUES (4),
     PARTITION P_STATUS_5 VALUES (5),
@@ -395,6 +394,47 @@ BEGIN
    WHERE id = :new.castorFile FOR UPDATE;
 END;
 
+
+/* PL/SQL method to get the next SubRequest to do according to the given service */
+/* the service parameter is not used now, it will with the new stager */
+CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
+                                           srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
+                                           srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
+                                           srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
+                                           srSubReqId OUT VARCHAR2) AS
+ firstRow VARCHAR2(18);
+ CURSOR c IS
+  SELECT rowidtochar(rowid) FROM SubRequest
+   WHERE status in (0,1,2)    -- START, RESTART, RETRY
+     AND EXISTS
+       (SELECT /*+ index(I_Id2Type_id) */ 'x'
+         FROM Id2Type
+        WHERE type in (35,36,37,38,39,40,42,44,95,119)
+          AND Id2Type.id = SubRequest.request);
+        --AND Id2Type.type = Type2Obj.type
+        --AND Type2Obj.svcHandler = service;
+BEGIN
+  OPEN c;
+  FETCH c INTO firstRow;
+  UPDATE subrequest SET status = 3 WHERE rowid = CHARTOROWID(firstRow)   -- SUBREQUEST_WAITSCHED
+    RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
+    INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
+  CLOSE c;
+END;
+
+/* PL/SQL method to get the next request to do according to the given service */
+/*
+PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
+BEGIN
+ DELETE FROM NewRequests 
+  WHERE type IN (
+    SELECT Id2Type.type FROM Id2Type, Type2Obj
+     WHERE Id2Type.type = Type2Obj.type
+       AND Type2Obj.svcHandler = service
+    )
+  AND ROWNUM < 2 RETURNING id INTO rId;
+END;
+*/
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(srId IN INTEGER, dci IN INTEGER) AS
