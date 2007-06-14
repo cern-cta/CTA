@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.436 $ $Date: 2007/06/13 12:47:49 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.437 $ $Date: 2007/06/14 14:15:54 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -10,7 +10,7 @@
 
 /* A small table used to cross check code and DB versions */
 CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.436 $ $Date: 2007/06/13 12:47:49 $');
+INSERT INTO CastorVersion VALUES ('2_1_3_8', '$Revision: 1.437 $ $Date: 2007/06/14 14:15:54 $');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -2525,18 +2525,17 @@ CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
   bestValue NUMBER;
 BEGIN
   -- List policies to be applied
-  BEGIN
-    SELECT UNIQUE svcClass.gcPolicy
-           BULK COLLECT INTO policies
-      FROM SvcClass, DiskPool2SvcClass, FileSystem
-     WHERE FileSystem.id = fsId
-       AND DiskPool2SvcClass.Parent = FileSystem.diskPool
-       AND SvcClass.Id = DiskPool2SvcClass.Child
-       AND length(SvcClass.gcPolicy) IS NOT NULL; -- strange way ORACLE has to deal with empty strings...
-  EXCEPTION WHEN NO_DATA_FOUND THEN
+  SELECT UNIQUE svcClass.gcPolicy
+         BULK COLLECT INTO policies
+    FROM SvcClass, DiskPool2SvcClass, FileSystem
+   WHERE FileSystem.id = fsId
+     AND DiskPool2SvcClass.Parent = FileSystem.diskPool
+     AND SvcClass.Id = DiskPool2SvcClass.Child
+     AND length(SvcClass.gcPolicy) IS NOT NULL; -- strange way ORACLE has to deal with empty strings...
+  IF policies.COUNT = 0 THEN
     -- no policy defined, nothing to do
     RETURN;
-  END;  
+  END IF;
 
   -- Now get the DiskPool and the maxFree space we want to achieve
   SELECT diskPool, maxFreeSpace * totalSize - free - spaceToBeFreed
