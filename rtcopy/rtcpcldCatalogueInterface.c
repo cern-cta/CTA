@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.162 $ $Release$ $Date: 2007/05/31 13:32:58 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.163 $ $Release$ $Date: 2007/06/18 14:27:03 $ $Author: waldron $
  *
  * 
  *
@@ -3730,6 +3730,7 @@ int rtcpcld_returnStream(
   switch (tpStatus) {
   case TAPE_PENDING:
   case TAPE_WAITDRIVE:
+    rc = rtcpcld_updateTapeStatus(tape,tpStatus,TAPE_UNUSED);
   case TAPE_WAITMOUNT:
   case TAPE_MOUNTED:
   case TAPE_FINISHED:
