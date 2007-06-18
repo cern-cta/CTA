@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.24 2007/06/13 07:15:49 waldron Exp $
+ * $Id: oracle.pc,v 1.25 2007/06/18 13:56:22 waldron Exp $
  */
 
 /* headers */
@@ -160,8 +160,8 @@ int DLL_DECL db_init(int threads) {
         database_t *db;
         struct     sqlca sqlca;
         char       err_msg[512];
-	char       dbversion[125];
-	char       codeversion[125] = "1_0_0_0";
+	char       dbversion[50];
+	char       codeversion[50] = "2_1_2_0";
         size_t     err_size;
         size_t     err_len;
         int        i;
@@ -284,7 +284,7 @@ int DLL_DECL db_init(int threads) {
 
 	/* check database version */
 	verror = 1;
-	EXEC SQL SELECT version INTO :dbversion FROM dlf_version;
+	EXEC SQL SELECT schemaVer INTO :dbversion FROM dlf_version;
 	if (strcmp(dbversion, codeversion)) {
 		ClrActive(dpool[0]->mode);
 		Cthread_mutex_unlock(&dpool[0]->mutex);

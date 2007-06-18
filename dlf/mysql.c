@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.16 2007/06/13 07:15:49 waldron Exp $
+ * $Id: mysql.c,v 1.17 2007/06/18 13:56:22 waldron Exp $
  */
 
 /* headers */
@@ -112,7 +112,7 @@ int DLL_DECL db_init(int threads) {
 	MYSQL_ROW    row;
 	database_t   *db;
 	char         func[30];
-	char         codeversion[125] = "1_0_0_0";
+	char         codeversion[50] = "2_1_2_0";
 	int          i;
 	int          rv;
 	int          verror = 0;
@@ -222,7 +222,7 @@ int DLL_DECL db_init(int threads) {
 	/* check database version */
 	verror = 1;
 	db->selects++;
-	if (mysql_query(&dpool[0]->mysql, "SELECT version FROM dlf_version") != APP_SUCCESS) {
+	if (mysql_query(&dpool[0]->mysql, "SELECT schemaVer FROM dlf_version") != APP_SUCCESS) {
 		strcpy(func, "mysql_query()");
 		goto error;
 	}
