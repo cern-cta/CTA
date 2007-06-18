@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.38 $ $Release$ $Date: 2007/06/11 08:42:52 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.39 $ $Release$ $Date: 2007/06/18 14:28:30 $ $Author: waldron $
  *
  *
  *
@@ -75,8 +75,7 @@ static pid_t tapeErrorHandlerPid = 0;
 static char *cmdName = NULL;
 static sigset_t signalset;
 static int shutdownServiceFlag = 0;
-static int foreground = 0;
-
+static char *rtcpcldFacilityName = RTCPCLIENTD_FACILITY_NAME;
 static void startTapeErrorHandler _PROTO((void));
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
 extern int Cinitdaemon _PROTO((char *, void (*)(int)));
@@ -544,10 +543,8 @@ static int checkVdqmReqs()
   return(0);
 }
 
-static void checkWorkerExit(
-                            shutDownFlag
-                            ) 
-     int shutDownFlag;
+static void checkWorkerExit(shutDownFlag) 
+  int shutDownFlag;
 {
   int pid, status, rc = 0, sig=0, value = 0, stopped = 0;
   rtcpcld_RequestList_t *item = NULL;
@@ -627,7 +624,7 @@ static void checkWorkerExit(
          */
         rc = rtcpcld_restoreSelectedSegments(item->tape);
         if ( rc == -1 ) {
-          LOG_SYSCALL_ERR("rtcpcld_returnStream()");
+          LOG_SYSCALL_ERR("rtcpcld_restoreSelectedSegments()");
         } else if ( rc == 0 ) {
           /*
            * If no segments were restored and the recaller had failed
@@ -650,15 +647,15 @@ static void checkWorkerExit(
   return;
 }
 
-static void sigchld_handler(int signo) {
-  (void)checkWorkerExit(shutdownServiceFlag);
-}
-
 static void shutdownService _PROTO((
                                     int
                                     ));
 
-static void signal_handler(void *arg) {
+static void sigchld_handler(int signo) {
+  return;
+}
+
+static void *signal_handler(void *arg) {
   int signal;
 
   while (1) {
@@ -667,7 +664,9 @@ static void signal_handler(void *arg) {
 	  (signal == SIGTERM) ||
 	  (signal == SIGABRT)) {
 	shutdownService(signal);
-      }	
+      }	else if (signal == SIGCHLD) {
+	checkWorkerExit(shutdownServiceFlag);
+      }
     }
   }
 }
@@ -679,22 +678,30 @@ static void shutdownService(
 {
   rtcpcld_RequestList_t *iterator = NULL;
   int i, j;
+
   shutdownServiceFlag = 1;
   CLIST_ITERATE_BEGIN(requestList,iterator) {
-    if ( iterator->pid > 0 ) {
+    if (iterator->pid > 0) {
       kill(iterator->pid,signo);
+    } else if (iterator->tape != NULL) {
+      if (rtcpcld_returnStream(iterator->tape) == -1) {
+        LOG_SYSCALL_ERR("rtcpcld_returnStream()");
+      }
     }
   } CLIST_ITERATE_END(requestList,iterator);
-  // wait for all forked children to end  
+  // wait a while for all forked children to end  
   for (i = 0, j = 0; i < 30; i++, j = 0) {
+    (void)checkWorkerExit(shutdownServiceFlag);
     CLIST_ITERATE_BEGIN(requestList,iterator) {
-      j++;
+      if (iterator->pid > 0) {
+      	j++;
+      }
     } CLIST_ITERATE_END(requestList,iterator);
     if (j == 0) {
       break;  /* break out, all processes ended */
     }
-    sleep(1);
   }
+  sleep(1);
   (void)checkWorkerExit(shutdownServiceFlag);
   (void)dlf_write(
                   mainUuid,
@@ -1123,13 +1130,18 @@ int rtcpcld_main(
 #endif /* _WIN32 */
   signal(SIGCHLD, sigchld_handler);
 
-  /* Recreate the signal handling thread previously lost in fork() */
-  if (foreground == 0) {
-    rc = Cthread_create_detached((void *)signal_handler, NULL);
-    if (rc < 0) {
-      return(1);
-    }
+  sigfillset(&signalset);
+  rc = pthread_sigmask(SIG_BLOCK, &signalset, NULL);
+  if (rc != 0) {
+    return(1);
   }
+  
+  rc = Cthread_create_detached((void *)signal_handler, NULL);
+  if (rc < 0) {
+    return(1);
+  }
+  
+  (void)rtcpcld_initLogging(rtcpcldFacilityName);
 
 #if defined(__DATE__) && defined (__TIME__)
   (void)dlf_write(
@@ -1246,7 +1258,7 @@ int rtcpcld_main(
     if (shutdownServiceFlag) {
       continue;
     }
-
+    
     if ( rc < 0 ) {
       /*
        * Error, probably a child exit. If so, ignore and continue, otherwise
@@ -1569,7 +1581,6 @@ int main(
 {
   int c, rc;
   char *myUser, *myGroup;
-  char *rtcpcldFacilityName = RTCPCLIENTD_FACILITY_NAME;
 
   cmdName = argv[0];
 #ifdef RTCPCLD_USER
@@ -1591,7 +1602,6 @@ int main(
     switch (c) {
     case 'd':
       Debug = TRUE;
-      foreground = 1;
       break;
     case 'f':
       rtcpcldFacilityName = strdup(Coptarg);
@@ -1628,29 +1638,6 @@ int main(
   }
   
   Cuuid_create(&mainUuid);
-
-  /* setup signal handling, this must be done before initialising DLF otherwise the
-   * DLF thread doesn't inherit the masked signals
-   */
-  sigfillset(&signalset);
-  sigdelset(&signalset, SIGCHLD);
-  rc = pthread_sigmask(SIG_BLOCK, &signalset, NULL);
-  if (rc != 0) {
-    return(1);
-  }
-  
-  /* There is no point in creating the signal handling thread when in the background
-   * here as the Cinitdaemon (fork()) will not recreate the thread and the signal_handler
-   * will be useless
-   */
-  if (foreground == 1) {
-    rc = Cthread_create_detached((void *)signal_handler, NULL);
-    if (rc < 0) {
-      return(1);
-    }
-  }
-  
-  (void)rtcpcld_initLogging(rtcpcldFacilityName);
 
   if (Debug == TRUE) {
     rc = rtcpcld_main(NULL);
