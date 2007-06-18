@@ -9,8 +9,8 @@
  */
 CREATE TABLE dlf_version
 (
-	version 	VARCHAR2(100),
-	plsqlrevision 	VARCHAR2(100)
+	schemaVer 	VARCHAR2(20),
+	release 	VARCHAR2(20)
 )
 TABLESPACE dlf_data;
 

@@ -9,8 +9,8 @@
  */
 CREATE TABLE dlf_version
 (
-	version 	VARCHAR2(100),
-	plsqlrevision 	VARCHAR2(100)
+	schemaVer 	VARCHAR2(20),
+	release 	VARCHAR2(20)
 )
 TABLESPACE dlf_data;
 
@@ -25,7 +25,7 @@ CREATE TABLE dlf_settings
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_idx;
 
 /*
  * dlf_sequences
@@ -168,19 +168,19 @@ PARTITION BY RANGE (timestamp)
 TABLESPACE dlf_data;
 
 /* local indexes */
-CREATE INDEX i_msg_timestamp ON dlf_messages (timestamp) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_pid ON dlf_messages (pid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_subreqid ON dlf_messages (subreqid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_userid ON dlf_messages (userid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_groupid ON dlf_messages (groupid) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_sec_type ON dlf_messages (sec_type) LOCAL TABLESPACE dlf_indx;
-CREATE INDEX i_msg_sec_name ON dlf_messages (sec_name) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_timestamp ON dlf_messages (timestamp) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_pid ON dlf_messages (pid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_subreqid ON dlf_messages (subreqid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_userid ON dlf_messages (userid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_groupid ON dlf_messages (groupid) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_sec_type ON dlf_messages (sec_type) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_sec_name ON dlf_messages (sec_name) LOCAL TABLESPACE dlf_idx;
 
 /*
  * dlf_num_param_values
@@ -197,7 +197,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL TABLESPACE dlf_idx;
 
 /*
  * dlf_str_param_values
@@ -214,7 +214,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL TABLESPACE dlf_idx;
 
 /*
  * dlf_severities
@@ -226,8 +226,8 @@ CREATE TABLE dlf_severities
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name) TABLESPACE dlf_idx;
 
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_no UNIQUE (sev_no) ENABLE;
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_name UNIQUE (sev_name) ENABLE;
@@ -243,8 +243,8 @@ CREATE TABLE dlf_facilities
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name) TABLESPACE dlf_idx;
 
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_no UNIQUE (fac_no) ENABLE;
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_name UNIQUE (fac_name) ENABLE;
@@ -260,7 +260,7 @@ CREATE TABLE dlf_msg_texts
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_msg_texts ON dlf_msg_texts (fac_no, msg_no) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_msg_texts ON dlf_msg_texts (fac_no, msg_no) TABLESPACE dlf_idx;
 
 /*
  * dlf_host_map
@@ -272,8 +272,8 @@ CREATE TABLE dlf_host_map
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname) TABLESPACE dlf_idx;
 
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostid UNIQUE (hostid) ENABLE;
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostname UNIQUE (hostname) ENABLE;
@@ -288,8 +288,8 @@ CREATE TABLE dlf_nshost_map
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid) TABLESPACE dlf_indx;
-CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_idx;
 
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
