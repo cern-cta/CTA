@@ -17,25 +17,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Revision: 1.1 $ $Release$ $Date: 2006/11/15 17:30:02 $ $Author: itglp $
+ * @(#)$RCSfile: template.sql,v $ $Revision: 1.2 $ $Release$ $Date: 2007/06/18 13:58:55 $ $Author: itglp $
  *
  * This script upgrades a CASTOR v2x database into v2y
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+/* Stop on errors - this only works from sqlplus */
+WHENEVER SQLERROR EXIT FAILURE;
+
 /* Version cross check and update */
 DECLARE
   unused VARCHAR(100);
 BEGIN
-  SELECT plsqlrevision INTO unused FROM CastorVersion where plsqlrevision LIKE '%...%';
+  SELECT revision INTO unused FROM CastorVersion WHERE revision = '<prevRevision>';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
   raise_application_error(-20000, 'PL/SQL revision mismatch. Please run previous upgrade scripts before this one.');
 END;
+/
 
-UPDATE CastorVersion SET plsqlrevision = '<>';
-
+UPDATE CastorVersion SET revision = '<newRevision>';
+COMMIT;
 
 /* From now on, all PL-SQL code is updated */
 /*******************************************/
