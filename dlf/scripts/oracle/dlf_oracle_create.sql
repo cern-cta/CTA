@@ -9,7 +9,7 @@
  */
 CREATE TABLE dlf_version
 (
-	schemaVer 	VARCHAR2(20),
+	schemaVersion 	VARCHAR2(20),
 	release 	VARCHAR2(20)
 )
 TABLESPACE dlf_data;
