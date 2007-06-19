@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.438 $ $Date: 2007/06/18 09:06:42 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.439 $ $Date: 2007/06/19 14:15:42 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3172,10 +3172,10 @@ BEGIN
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
-        DELETE FROM DiskServer WHERE name = machines(i);
         DELETE FROM id2Type WHERE id = machine;
         DELETE FROM id2Type WHERE id IN (SELECT id FROM FileSystem WHERE diskServer = machine);
         DELETE FROM FileSystem WHERE diskServer = machine;
+        DELETE FROM DiskServer WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Fine, was already deleted
         NULL;
