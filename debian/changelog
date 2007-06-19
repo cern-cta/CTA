@@ -51,6 +51,8 @@ castor (2.1.3-16) unstable; urgency=low
     [2007-06-14,itglp] Use BEGIN/END syntax for gathering index statistics
   * CASTOR2/upgrades/template.sql:
     [r 1.2,2007-06-18,itglp] Updated initial revision check
+  * CASTOR2/tape/mounttape.c:
+    [r 1.54,2007-06-19,wiebalck] Added an automatic repair of corrupted tape directories (MIR). The repair is done by SPACE to EOD and REWIND SCSI commands. The handling of bad MIRs is controlled via the new option BADMIR_HANDLING.
 
 -- Sebastien Ponce <sponcec3@cern.ch>  Wed, 19 June 2007 17:00:00 +0100
 
