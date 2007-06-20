@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.201 $ $Release$ $Date: 2007/06/13 17:22:24 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.202 $ $Release$ $Date: 2007/06/20 16:38:17 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -261,16 +261,23 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     // set the service - not used for the time being
     m_subRequestToDoStatement->setString(1, "");
     // execute the statement and see whether we found something
-    unsigned int nb =
-      m_subRequestToDoStatement->executeUpdate();
-    if (0 == nb) {
+    unsigned int rc = m_subRequestToDoStatement->executeUpdate();
+    if (0 == rc) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "subRequestToDo : "
+        << "unable to get next SubRequest to process.";
+      throw ex;
+    }
+    u_signed64 srId = (u_signed64)m_subRequestToDoStatement->getDouble(2);
+    if (0 == srId) {
       // Found no SubRequest to handle
       return 0;
     }
     // Create result
     castor::stager::SubRequest* result =
       new castor::stager::SubRequest();
-    result->setId((u_signed64)m_subRequestToDoStatement->getDouble(2));
+    result->setId(srId);
     result->setRetryCounter(m_subRequestToDoStatement->getInt(3));
     result->setFileName(m_subRequestToDoStatement->getString(4));
     result->setProtocol(m_subRequestToDoStatement->getString(5));
