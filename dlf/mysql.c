@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.17 2007/06/18 13:56:22 waldron Exp $
+ * $Id: mysql.c,v 1.18 2007/06/20 12:20:07 itglp Exp $
  */
 
 /* headers */
@@ -222,7 +222,7 @@ int DLL_DECL db_init(int threads) {
 	/* check database version */
 	verror = 1;
 	db->selects++;
-	if (mysql_query(&dpool[0]->mysql, "SELECT schemaVer FROM dlf_version") != APP_SUCCESS) {
+	if (mysql_query(&dpool[0]->mysql, "SELECT schemaVersion FROM dlf_version") != APP_SUCCESS) {
 		strcpy(func, "mysql_query()");
 		goto error;
 	}

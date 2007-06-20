@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/06/18 09:07:30 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/06/20 12:21:03 $ $Author: itglp $
  *
  *
  *
@@ -136,7 +136,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     oracle::occi::Statement* stmt = 0;
     try {
       oracle::occi::Statement* stmt = m_connection->createStatement
-        ("SELECT schemaVer FROM CastorVersion");
+        ("SELECT schemaVersion FROM CastorVersion");
       oracle::occi::ResultSet *rset = stmt->executeQuery();
       if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
         DBVersion = rset->getString(1);
