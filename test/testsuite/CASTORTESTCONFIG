@@ -1,9 +1,9 @@
 *** Test choice ***
 
-CLIENT		PUT		YES
-CLIENT		GET		YES
+CLIENT		PUT		NO
+CLIENT		GET		NO
 CLIENT		PUTDONE		NO
-CLIENT		RM		YES
+CLIENT		RM		NO
 CLIENT		EXTRAQRY	NO
 CLIENT          EXTRATEST       NO
  
@@ -35,11 +35,11 @@ CORE            TEST            NO
 
 *** Generic parameters ***
 
-STAGE_HOST        c2testrh
+STAGE_HOST        c2ppsrh
 STAGE_PORT        9002
 STAGE_SVCCLASS    default
 CASTOR_V2         yes 
-EXTRA_SVCCLASS    defTape
+EXTRA_SVCCLASS    default
 TIMEOUT           400
 
 *** Rfio test specific parameters ***

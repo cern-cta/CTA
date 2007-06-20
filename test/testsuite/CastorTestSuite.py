@@ -14,7 +14,10 @@ import TapeTest
 
 ########################### for each module its own test suite ##########################
 
+
 class ClientSuite(unittest.TestSuite):
+    def setUp(self):
+        print "ciao"
     def __init__(self):    
 	unittest.TestSuite.__init__(self)
 
