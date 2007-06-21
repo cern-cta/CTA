@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2007/03/20 08:11:24 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/06/21 13:10:03 $ $Author: gtaur $
  *
  *
  *
@@ -41,7 +41,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 RepackWorker::RepackWorker(RepackServer* pserver)
 {
-  m_databasehelper = new castor::repack::DatabaseHelper();
+  m_databasehelper =NULL;  
   ptr_server = pserver;
 }
 
@@ -58,10 +58,14 @@ RepackWorker::~RepackWorker() throw()
 
 
 //------------------------------------------------------------------------------
-// runs the htread starts by threadassign()
+// runs the thread starts by threadassign()
 //------------------------------------------------------------------------------
 void RepackWorker::run(void* param) 
 {
+  if  (m_databasehelper == NULL){
+    m_databasehelper = new castor::repack::DatabaseHelper();
+  }
+
   stage_trace(3, "RepackWorker started and Request is now handled!");
   // Response for client
   RepackAck ack;
@@ -69,6 +73,7 @@ void RepackWorker::run(void* param)
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
 
   // Retrieve info on the client
+
   unsigned short port;
   unsigned long ip;
   try {

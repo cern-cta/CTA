@@ -253,7 +253,7 @@ castor::repack::RepackSubRequest*
              castor::repack::DatabaseHelper::getSubRequestByVid(
                                                                std::string vid,
                                                                bool fill)
-                                            throw (castor::exception::Exception)
+  throw (castor::exception::Exception)
 {
   RepackSubRequest* result = NULL;
   try {
@@ -594,7 +594,7 @@ std::vector<castor::repack::RepackSubRequest*>*
       m_selectAllSubRequestsStatement = 
                          createStatement(s_selectAllSubRequestsStatementString);
     }
-    result = internalgetSubRequests(m_selectAllSubRequestsStatusStatement);
+    result = internalgetSubRequests(m_selectAllSubRequestsStatement);
   }catch (castor::exception::Exception e){
     castor::exception::Internal ex;
     ex.getMessage() << "Exception caught in DatabaseHelper::getAllSubRequests(...)"

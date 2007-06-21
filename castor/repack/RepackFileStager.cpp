@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/03/29 08:34:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2007/06/21 13:10:02 $ $Author: gtaur $
  *
  *
  *
@@ -39,7 +39,7 @@ RepackFileStager::RepackFileStager(RepackServer* srv)
 {
   ptr_server = srv;
   m_filehelper = new FileListHelper(ptr_server->getNsName());
-  m_dbhelper = new DatabaseHelper();	
+  m_dbhelper = NULL;	
 }
 
 
@@ -56,6 +56,10 @@ RepackFileStager::~RepackFileStager() throw() {
 // run
 //------------------------------------------------------------------------------
 void RepackFileStager::run(void *param) throw() {
+    
+   if ( m_dbhelper == NULL){
+        m_dbhelper = new DatabaseHelper();
+   }
 
 		/// Lets see, if good old pal DB has a Job for us 
     RepackSubRequest* sreq = NULL;

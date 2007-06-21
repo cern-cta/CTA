@@ -38,7 +38,7 @@ namespace castor {
 // Constructor
 //------------------------------------------------------------------------------
   RepackMonitor::RepackMonitor(RepackServer *svr){
-    m_dbhelper = new DatabaseHelper();
+    m_dbhelper = NULL;
     ptr_server = svr;
   }
 
@@ -55,7 +55,10 @@ namespace castor {
 // run
 //------------------------------------------------------------------------------
   void RepackMonitor::run(void *param) throw() {
-
+    
+    if ( m_dbhelper == NULL ) {
+      m_dbhelper = new DatabaseHelper();
+    }
     //TODO: own query for this purpose
     Cuuid_t cuuid;
     std::vector<RepackSubRequest*>* tapelist = NULL;

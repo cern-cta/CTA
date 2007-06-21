@@ -35,7 +35,7 @@ namespace castor{
 // Constructor
 //------------------------------------------------------------------------------
 RepackCleaner::RepackCleaner(RepackServer* svr){
-  m_dbhelper = new DatabaseHelper();
+  m_dbhelper = NULL;
   ptr_server = svr;
 }
 
@@ -49,13 +49,14 @@ RepackCleaner::~RepackCleaner() throw() {
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------	
-void RepackCleaner::run(void* param) throw(){
+void RepackCleaner::run(void* param) {
 	
   RepackSubRequest* tape = NULL;
   Cuuid_t cuuid;
+  if (m_dbhelper==NULL) {
+    m_dbhelper = new DatabaseHelper();
+  }
 
-
-	
   try {
     tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORCLEANUP);
 

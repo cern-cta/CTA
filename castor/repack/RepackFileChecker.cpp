@@ -34,7 +34,7 @@ namespace castor{
 // Constructor
 //------------------------------------------------------------------------------
 RepackFileChecker::RepackFileChecker(RepackServer* svr){
-  m_dbhelper = new DatabaseHelper();
+  m_dbhelper = NULL;
   ptr_server = svr;
 }
 
@@ -49,7 +49,9 @@ RepackFileChecker::~RepackFileChecker() throw(){
 // run
 //------------------------------------------------------------------------------	
 void RepackFileChecker::run(void* param) throw(){
-	
+  if (m_dbhelper == NULL){
+    m_dbhelper = new DatabaseHelper();
+  }
   RepackSubRequest* sreq = NULL;
   Cuuid_t cuuid = nullCuuid;
   FileListHelper m_filehelper (ptr_server->getNsName());

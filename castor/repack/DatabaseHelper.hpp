@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
+ * @(#)$RCSfile: DatabaseHelper.hpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/06/21 13:10:02 $ $Author: gtaur $
  *
  *
  *
@@ -58,9 +58,9 @@ namespace castor {
     public:
 
       /**
-       * Empty Constructor
+       * Constructor
        */
-      DatabaseHelper() ;
+      DatabaseHelper();
 
       /**
        * Empty Destructor

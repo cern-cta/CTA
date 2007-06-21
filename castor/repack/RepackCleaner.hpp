@@ -50,7 +50,7 @@ namespace castor {
 		  /** 
 		   * Implementation from IThread
 		   */
-		  virtual void run(void* param) throw();
+		  virtual void run(void* param);
 		  /** 
 		   * Implementation from IThread
 		   */
