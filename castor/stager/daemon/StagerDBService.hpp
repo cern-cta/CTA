@@ -10,11 +10,11 @@
 #include "StagerRequestHelper.hpp"
 #include "StagerCnsHelper.hpp"
 #include "../../server/SelectProcessThread.hpp"
+#include "../../Constants.hpp"
 
 
 #include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
-#include ""
+
 #include <string>
 #include <iostream>
 
@@ -23,13 +23,13 @@ namespace castor {
     namespace dbService {
       
     
-      class StagerDBService : public castor::server::SelectProcessThread{
+      class StagerDBService : public virtual castor::server::SelectProcessThread{
 	
       private:
 	StagerRequestHelper* stgRequestHelper;
 	StagerCnsHelper* stgCnsHelper;
 	
-	std::string message;
+	
 	
       public: 
 	//constructor
@@ -37,13 +37,13 @@ namespace castor {
 	StagerDBService::~StagerDBService() throw();
 
 	void StagerDBService::run(void* param) throw();
-	virtual void StagerDBService::stop() throw();
+	virtual void StagerDBService::stop() throw() const;
 	
 	
 	std::vector<ObjectsIds> types;
 	
 	
-      };	// end class StagerDBService
+      };// end class StagerDBService
       
     }// end dbService
   } // end namespace stager

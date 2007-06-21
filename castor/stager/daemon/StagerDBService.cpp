@@ -41,7 +41,8 @@
 
 #include "../../exception/Exception.hpp"
 #include "../../exception/Internal.hpp"
-
+#include "../SubRequestStatusCodes.hpp"
+#include "../SubRequestGetNextStatusCodes.hpp"
 
 #include <iostream>
 #include <string>
@@ -74,8 +75,8 @@ namespace castor{
 	for(int i= 0; i< STAGER_OPTIONS; i++){
 	  this->types.at(i) = auxTypes[i];
 	}
-
-
+	
+	
 	castor::BaseObject::initLog("StagerDBService", castor::SVC_STDMSG);
 	/* Initializes the DLF logging */
 	/*	castor::dlf::Messages messages[]={{1, "Starting StagerDBService Thread"},{2, "StagerRequestHelper"},{3, "StagerCnsHelper"},{4, "StagerReplyHelper"},{5, "StagerRequestHelper failed"},{6, "StagerCnsHelper failed"},{7, "StagerReplyHelper failed"},{8, "StagerHandler"}, {9, "StagerHandler successfully finished"},{10,"StagerHandler failed finished"},{11, "StagerDBService Thread successfully finished"},{12, "StagerDBService Thread failed finished"}};
@@ -85,8 +86,7 @@ namespace castor{
       /****************/
       /* destructor  */
       /**************/
-      StagerDBService::~StagerDBService() throw(){
-      }
+      StagerDBService::~StagerDBService() throw(){};
       
 
       /*********************************************************/
@@ -140,7 +140,6 @@ namespace castor{
 	  stgRequestHelper->getIClient();
 	 
 
-
 	  /* get the stgCnsHelper->fileid needed for the logging in dlf */
 	  stgCnsHelper->getFileid();
 
@@ -157,11 +156,7 @@ namespace castor{
 
 	  /* create and fill request->svcClass link on DB */
 	  stgRequestHelper->linkRequestToSvcClassOnDB();
-	  
-	 
-
-	 
-	
+	  	
 	  
 	  /* ask sebastien about this!:  */
 	  /* #ifdef HAVE_REQUEST_UUID */
@@ -173,8 +168,6 @@ namespace castor{
 	  mode_t mask = (mode_t) stgRequestHelper->fileRequest->mask();
 	  stgCnsHelper->cnsSettings(stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), mask);//to do!!!
 	  stgRequestHelper->setUsernameAndGroupname();
-
-
 
 	  /* get the castorFile of the subrequest */
 	  stgRequestHelper->getCastorFile();
@@ -196,6 +189,9 @@ namespace castor{
 	  }
 
 	  /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
+
+
+
 	  stgRequestHelper->checkFilePermission();
 
 
@@ -215,19 +211,23 @@ namespace castor{
 	 
 	  case OBJ_StageGetRequest:
 	    {
-	      StagerGetHandler stgGetHandler(stgRequestHelper, stgCnsHelper);
+	      StagerGetHandler *stgGetHandler = new StagerGetHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgGetHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerGetHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","StagerGetHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	      
-	      
-	      stgGetHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerGetHandler successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+	      try{
+		castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","StagerGetHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+		stgGetHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerGetHandler successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgGetHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgGetHandler;
+		throw ex;
+	      }
 	     
 	    }
 	    break;
@@ -235,19 +235,23 @@ namespace castor{
 	  
 	  case OBJ_StagePrepareToGetRequest:
 	    {
-	      StagerPrepareToGetHandler stgPrepareToGetHandler(stgRequestHelper, stgCnsHelper);
+	      StagerPrepareToGetHandler *stgPrepareToGetHandler = new StagerPrepareToGetHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgPrepareToGetHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerPrepareToGetHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPrepareToGetHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	      
-	      
-	      stgPrepareToGetHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPrepareToGetHandler successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPrepareToGetHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+		stgPrepareToGetHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPrepareToGetHandler successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgPrepareToGetHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgPrepareToGetHandler;
+		throw ex;
+	      }
 	     
 	    }
 	    break;
@@ -255,38 +259,47 @@ namespace castor{
 
 	  case OBJ_StageRepackRequest:
 	    {
-	      StagerRepackHandler stgRepackHandler(stgRequestHelper, stgCnsHelper);
+	      StagerRepackHandler *stgRepackHandler = new StagerRepackHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgRepackHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerRepackHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerRepackHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerRepackHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+		stgRepackHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerRepackHandler successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgRepackHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgRepackHandler;
+		throw ex;
+	      }
 	      
-	      
-	      stgRepackHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerRepackHandler successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
-	      
+ 
 	    }
 	    break;
 
 	  case OBJ_StagePrepareToPutRequest:
 	    {
-	      StagerPrepareToPutHandler stgPrepareToPutHandler(stgRequestHelper, stgCnsHelper);
+	      StagerPrepareToPutHandler *stgPrepareToPutHandler = new StagerPrepareToPutHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgPrepareToPutHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerPrepareToPutHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPrepareToPutHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	      
-	      
-	      stgPrepareToPutHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPutHandler successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPrepareToPutHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);      
+		stgPrepareToPutHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPutHandler successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgPrepareToPutHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgPrepareToPutHandler;
+		throw ex;
+	      }
 	     
 	    }
 	    break;
@@ -294,37 +307,47 @@ namespace castor{
 	  case OBJ_StagePrepareToUpdateRequest:
 	    {
 	      bool toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0));
-	      StagerPrepareToUpdateHandler stgPrepareToUpdateHandler(stgRequestHelper, stgCnsHelper, toRecreateCastorFile);
+
+	      StagerPrepareToUpdateHandler *stgPrepareToUpdateHandler = new StagerPrepareToUpdateHandler(stgRequestHelper, stgCnsHelper, toRecreateCastorFile);
 	      if(stgPrepareToUpdateHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerPrepareToUpdateHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPrepareToUpdateHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	  
-	 
-	      stgPrepareToUpdateHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPrepareToUpdate successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPrepareToUpdateHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param); 
+		stgPrepareToUpdateHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPrepareToUpdate successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgPrepareToUpdateHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgPrepareToUpdateHandler;
+		throw ex;
+	      }
 	      
 	    }
 	    break;
 	    
 	  case OBJ_StagePutRequest:
 	    {
-	      StagerPutHandler stgPutHandler(stgRequestHelper, stgCnsHelper);
+	      StagerPutHandler *stgPutHandler = new StagerPutHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgPutHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerPutHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPutHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	      
-	      stgPutHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPutHandler successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPutHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+		stgPutHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPutHandler successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgPutHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgPutHandler;
+		throw ex;
+	      }
 	      
 	    }
 	    break;
@@ -332,143 +355,163 @@ namespace castor{
 	  case OBJ_StageUpdateRequest:
 	    {
 	      bool toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0));
-	      StagerUpdateHandler stgUpdateHandler(stgCnsHelper, stgCnsHelper, toRecreateCastorFile);
+	      StagerUpdateHandler *stgUpdateHandler = new StagerUpdateHandler(stgRequestHelper, stgCnsHelper, toRecreateCastorFile);
 	      if(stgUpdateHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerUpdateHandler"<<std::endl;
-	      throw ex;
+		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerUpdateHandler"<<std::endl;
+		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerUpdateHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	 
-	      stgUpdateHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerUpdateHandler successfully created")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
-	      
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerUpdateHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+		stgUpdateHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerUpdateHandler successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgUpdateHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgUpdateHandler;
+		throw ex;
+	      }
 	    }
 	    break;
 
 	  case OBJ_StagePutDoneRequest:
 	    {
-	      StagerPutDoneHandler stgPutDoneHandler(stgRequestHelper, stgCnsHelper);
+	      StagerPutDoneHandler *stgPutDoneHandler = new StagerPutDoneHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgPutDoneHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerPutDoneHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPutDoneHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	      
-	      
-	      stgPutDoneHandler.handle();
-	      castor::dlf::param2[]={castor::dlf::Param("Standard Message","StagerPutDone successfully created")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerPutDoneHandler starting")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+		stgPutDoneHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerPutDone successfully finished")};
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgPutDoneHandler;
 	      // stgPutDoneHandler.jobOriented;
+	      }catch(castor::exception::Exception ex){
+		delete stgPutDoneHandler;
+		throw ex;
+	      }
 	    }
 	    break;
 	      
 	  case OBJ_StageRmRequest:
 	    {
-	      StagerRmHandler stgRmHandler(stgRequestHelper, stgCnsHelper);
+	      StagerRmHandler *stgRmHandler = new StagerRmHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgRmHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerRmHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerRmHandler starting")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	      
-	      
-	      stgRmHandler.handle();
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerRmHandler successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
-	      
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerRmHandler starting")};/* 414 */
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);     
+		stgRmHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerRmHandler successfully finished")};/* 417 */
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgRmHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgRmHandler;
+		throw ex;
+	      }
 	    }
 	    break;
 
 	  case OBJ_SetFileGCWeight:
 	    {
-	      StagerSetGCHandler stgSetGCHandler(stgRequestHelper, stgCnsHelper);
+	      StagerSetGCHandler *stgSetGCHandler = new StagerSetGCHandler(stgRequestHelper, stgCnsHelper);
 	      if(stgSetGCHandler == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService) Impossible to execute the StagerSetFileGCWeightHandler"<<std::endl;
 		throw ex;
 	      }
-	      castor::dlf::Param param("Standard Message","StagerSetFileGCWeightHandler starting");
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
-	      
-	      
-	      stgSetGCHandler.handle();/* 401 */
-	      castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerSetFileGCWeightHandler successfully finished")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
-	     
+	      try{
+		castor::dlf::Param param[]={castor::dlf::Param("Standard Message","StagerSetFileGCWeightHandler starting")};/* 436 */
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param);
+		stgSetGCHandler->handle();/**/
+		castor::dlf::Param param2[]={castor::dlf::Param("Standard Message","StagerSetFileGCWeightHandler successfully finished")};/* 439*/
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
+		delete stgSetGCHandler;
+	      }catch(castor::exception::Exception ex){
+		delete stgSetGCHandler;
+		throw (ex);
+	      }
+		
 	    }
 	    break;
 	      
 	  }
 
+	  
+	  delete stgRequestHelper;
+	  delete stgCnsHelper;
+
 	  /* we have to process the exception and reply to the client in case of error  */
 	}catch(castor::exception::Exception ex){
 
 	  /* if the error happened before we had gotten the fileId needed for the dlf */
-	  if((stgCnsHelper == NULL)||(stgCnsHelper->fileid == NULL)){
+	  if((stgCnsHelper == NULL) || (stgCnsHelper->fileid == NULL)){
 	    std::cerr<<ex.getMessage()<<std::endl;
 	  }else{
-
-	    castor::dlf::Param params[] = {castor::dlf::Param("Standard Message",sstrerror(ex.code())),castor::dlf::Param("Precise Message",ex.getMessage().str())};
+	    castor::dlf::Param params[] = {castor::dlf::Param("Standard Message",sstrerror(ex.code())),castor::dlf::Param("Precise Message",ex.getMessage().str())};/* 459 */
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
 	  }
-	  /* we have to set the subrequest status to SUBREQUEST_FAILED */
-	  /* but not setGetNextSubrequestStatus!!  */
-	  if((stgRequestHelper != NULL) && (stgRequestHelper->subrequest != NULL)){
-	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED);
-	  }
-	  /* reply to the client in case of error*/
-	  if(stgRequestHelper->iClient != NULL){
-	    StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;
-	    stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,ex.code(),ex.getMessage().str());//429
-	    stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  }
-	  
 
+	  /* we have to set the subrequest status to SUBREQUEST_FAILED_FINISHED */
+	  /* but not setGetNextSubrequestStatus!!  */
+	  if(stgRequestHelper!=NULL){
+	    /* update subrequest status */
+	    if(stgRequestHelper->subrequest != NULL){
+	      stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	    }
+	    /* reply to the client in case of error*/
+	    if(stgRequestHelper->iClient != NULL){
+	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;
+	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,ex.code(),ex.getMessage().str());
+	      stgReplyHelper->endReplyToClient(stgRequestHelper);
+	      delete stgReplyHelper;
+	    }else{
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	    }
+	    delete stgRequestHelper;
+	  }
+	  if(stgCnsHelper != NULL){
+	    delete stgCnsHelper;
+	  }
+ 
 	}catch (...){
 	  if((stgCnsHelper == NULL)||(stgCnsHelper->fileid == NULL)){
 	    std::cerr<<"Caught general exception"<<std::endl;
 	  }else{
-	    castor::dlf::Param params[] = {castor::dlf::Param("Standard Message","Caught general exception in StagerDBService")};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);//439
+	    castor::dlf::Param params[] = {castor::dlf::Param("Standard Message","Caught general exception in StagerDBService")}; /* 485 */
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
 	  }
 	  /* we have to set the subrequest status to SUBREQUEST_FAILED */
 	  /* but not setGetNextSubrequestStatus!!  */
-	  if((stgRequestHelper != NULL) &&(stgRequestHelper->subrequest != NULL)){
-	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED);
+	  if(stgRequestHelper != NULL){
+	    if(stgRequestHelper->subrequest != NULL){
+	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
+	    }
+	    /* reply to the client in case of error*/
+	    if(stgRequestHelper->iClient != NULL){
+	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;	    
+	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid, SEINTERNAL, "General Exception");	      
+	      stgReplyHelper->endReplyToClient(stgRequestHelper);
+	      delete stgReplyHelper;
+	    }else{
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	    }
+	    delete stgRequestHelper;
 	  }
-	  /* reply to the client in case of error*/
-	  if(stgRequestHelper->iClient != NULL){
-	    StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;
-	    
-	    stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid, SEINTERNAL, "General Exception");	      
-	    stgReplyHelper->endReplyToClient(stgRequestHelper);//451
+	  if(stgCnsHelper != NULL){
+	    delete stgCnsHelper;
 	  }
-	 
 	}
+      }/* end StagerDBService::run */
 
-	
-	  
-	  
-      }
-
-      /***********************/
-      /* stop thread method */ 
-      /*********************/
-      void StagerDBService::stop() throw(){
-	delete stgRequestHelper;
-	delete stgCnsHelper;
-      }
-     
-      
-     
-   
       
      
    
