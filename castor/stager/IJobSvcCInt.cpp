@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/03/26 16:59:46 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/06/21 16:06:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -199,6 +199,23 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       jobSvc->jobSvc->disk2DiskCopyDone(diskCopyId, status);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      jobSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IJobSvc_disk2DiskCopyFailed
+  //-------------------------------------------------------------------------
+  int Cstager_IJobSvc_disk2DiskCopyFailed
+  (struct Cstager_IJobSvc_t* jobSvc,
+   u_signed64 diskCopyId) {
+    if (!checkIJobSvc(jobSvc)) return -1;
+    try {
+      jobSvc->jobSvc->disk2DiskCopyFailed(diskCopyId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/03/26 16:59:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/06/21 16:07:27 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -166,6 +166,16 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Updates database after a failure of a disk to disk copy.
+         * Changes are commited
+         * @param diskcopyId the id of the failed DiskCopy
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void disk2DiskCopyFailed
+        (u_signed64 diskCopyId)
+          throw (castor::exception::Exception);
+
+        /**
          * Prepares a file for migration, when needed.
          * This is called both when a stagePut is over and when a
          * putDone request is processed.
@@ -247,6 +257,12 @@ namespace castor {
 
         /// SQL statement object for function disk2DiskCopyDone
         oracle::occi::Statement *m_disk2DiskCopyDoneStatement;
+
+        /// SQL statement for function disk2DiskCopyFailed
+        static const std::string s_disk2DiskCopyFailedStatementString;
+
+        /// SQL statement object for function disk2DiskCopyFailed
+        oracle::occi::Statement *m_disk2DiskCopyFailedStatement;
 
         /// SQL statement for function prepareForMigration
         static const std::string s_prepareForMigrationStatementString;

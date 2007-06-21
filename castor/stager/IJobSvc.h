@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.6 $ $Release$ $Date: 2007/02/21 10:32:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.7 $ $Release$ $Date: 2007/06/21 16:06:19 $ $Author: sponcec3 $
  *
  *
  *
@@ -247,6 +247,20 @@ int Cstager_IJobSvc_disk2DiskCopyDone
 (struct Cstager_IJobSvc_t* jobSvc,
  u_signed64 diskCopyId,
  enum Cstager_DiskCopyStatusCodes_t status);
+
+/**
+ * Updates database after a failure of a disk to disk copy.
+ * Changes are commited
+ * @param jobSvc the IJobSvc used
+ * @param diskcopyId the id of the new DiskCopy
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IJobSvc_errorMsg
+ */
+int Cstager_IJobSvc_disk2DiskCopyFailed
+(struct Cstager_IJobSvc_t* jobSvc,
+ u_signed64 diskCopyId);
 
 /**
  * Prepares a file for migration, when needed.

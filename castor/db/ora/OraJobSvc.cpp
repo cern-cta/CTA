@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/06/19 14:12:37 $ $Author: riojac3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/06/21 16:07:27 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -104,6 +104,10 @@ const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
   "BEGIN disk2DiskCopyDone(:1, :2); END;";
 
+/// SQL statement for disk2DiskCopyDone
+const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
+  "BEGIN disk2DiskCopyFailed(:1); END;";
+
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
   "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6,:7); END;";
@@ -132,6 +136,7 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   m_getUpdateStartStatement(0),
   m_putStartStatement(0),
   m_disk2DiskCopyDoneStatement(0),
+  m_disk2DiskCopyFailedStatement(0),
   m_prepareForMigrationStatement(0),
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
@@ -171,6 +176,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
     if (m_getUpdateStartStatement) deleteStatement(m_getUpdateStartStatement);
     if (m_putStartStatement) deleteStatement(m_putStartStatement);
     if (m_disk2DiskCopyDoneStatement) deleteStatement(m_disk2DiskCopyDoneStatement);
+    if (m_disk2DiskCopyFailedStatement) deleteStatement(m_disk2DiskCopyFailedStatement);
     if (m_prepareForMigrationStatement) deleteStatement(m_prepareForMigrationStatement);
     if (m_getUpdateDoneStatement) deleteStatement(m_getUpdateDoneStatement);
     if (m_getUpdateFailedStatement) deleteStatement(m_getUpdateFailedStatement);
@@ -181,6 +187,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   m_getUpdateStartStatement = 0;
   m_putStartStatement = 0;
   m_disk2DiskCopyDoneStatement = 0;
+  m_disk2DiskCopyFailedStatement = 0;
   m_prepareForMigrationStatement = 0;
   m_getUpdateDoneStatement = 0;
   m_getUpdateFailedStatement = 0;
@@ -370,6 +377,32 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in disk2DiskCopyDone."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// disk2DiskCopyFailed
+// -----------------------------------------------------------------------
+void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
+(u_signed64 diskCopyId)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_disk2DiskCopyFailedStatement) {
+      m_disk2DiskCopyFailedStatement =
+        createStatement(s_disk2DiskCopyFailedStatementString);
+      m_disk2DiskCopyFailedStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+    m_disk2DiskCopyFailedStatement->setDouble(1, diskCopyId);
+    m_disk2DiskCopyFailedStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in disk2DiskCopyFailed."
       << std::endl << e.what();
     throw ex;
   }

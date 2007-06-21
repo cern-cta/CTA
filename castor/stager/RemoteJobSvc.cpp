@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/03/27 17:38:38 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/06/21 16:06:20 $ $Author: sponcec3 $
  *
  *
  *
@@ -322,6 +322,24 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
   castor::stager::Disk2DiskCopyDoneRequest req;
   req.setDiskCopyId(diskCopyId);
   req.setStatus(status);
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteJobClientTimeout());
+  client.setOption(NULL);
+  client.sendRequest(&req, &rh);
+}
+
+// -----------------------------------------------------------------------
+// disk2DiskCopyFailed
+// -----------------------------------------------------------------------
+void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
+(u_signed64 diskCopyId)
+  throw (castor::exception::Exception) {
+  // Build the Disk2DiskCopyDoneRequest
+  castor::stager::Disk2DiskCopyDoneRequest req;
+  req.setDiskCopyId(diskCopyId);
+  req.setStatus(castor::stager::DISKCOPY_FAILED);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/03/26 16:59:46 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/06/21 16:06:19 $ $Author: sponcec3 $
  *
  * This class provides stager methods related to job handling
  *
@@ -158,6 +158,16 @@ namespace castor {
       virtual void disk2DiskCopyDone
       (u_signed64 diskCopyId,
        castor::stager::DiskCopyStatusCodes status)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Updates database after a failure of a disk to disk copy.
+       * Changes are commited
+       * @param diskcopyId the id of the failed DiskCopy
+       * @exception Exception throws an Exception in case of error
+       */
+      virtual void disk2DiskCopyFailed
+      (u_signed64 diskCopyId)
         throw (castor::exception::Exception) = 0;
 
       /**
