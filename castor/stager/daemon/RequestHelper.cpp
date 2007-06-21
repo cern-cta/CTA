@@ -100,9 +100,15 @@ namespace castor{
       /* destructor */
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
-	delete stagerService;
-	delete dbService;
-	delete baseAddr;
+	if(stagerService != NULL){
+	  delete stagerService;
+	}
+	if(dbService != NULL){
+	  delete dbService;
+	}
+	if(baseAddr != NULL){
+	  delete baseAddr;
+	}
       }
 
 
