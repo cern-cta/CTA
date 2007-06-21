@@ -265,6 +265,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Request too long (socket buffer size)",
    "Stage configuration error",
    "Required tape segments are not all accessible",
+   "File replication failed",
    "BAD ERROR NUMBER"
   };
 
