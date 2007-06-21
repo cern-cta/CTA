@@ -27,8 +27,8 @@
 #include <Project.tmpl>
 
 DEBUG  = -g -O0
-MANPAGES = 
-EXPORTMANPAGES = 
+MANPAGES = FileName($(MANDIR),rmAdminNode.$(MANSUFFIX))
+EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rmAdminNode.$(MANSUFFIX)))
 
 INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 
