@@ -40,7 +40,7 @@ namespace castor{
 
 
 	/* main object needed to perform the SetFileGCRequest processing */
-	this->setFileGCWeight = new castor::stager::SetFileGCWeight(stgRequestHelper->fileRequest);
+	this->setFileGCWeight = new castor::stager::SetFileGCWeight(*(dynamic_cast<castor::stager::SetFileGCWeight*> (stgRequestHelper->fileRequest)));
 	if(this->setFileGCWeight == NULL){
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerSetFileGCWeightHandler constructor) Impossible to get setFileGCWeight"<<std::endl;
