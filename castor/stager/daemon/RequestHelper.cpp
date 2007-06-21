@@ -18,7 +18,6 @@
 #include "../SvcClass.hpp"
 #include "../CastorFile.hpp"
 #include "../FileClass.hpp"
-#include "../../IAddress.hpp"
 
 #include "../../../h/stager_uuid.h"
 #include "../../../h/stager_constants.h"
@@ -205,8 +204,8 @@ namespace castor{
 	    subrequest->setSubreqId(subrequest_uuid_as_string);
 	    /* update it in DB*/
 	    try{
-	      dbService->updateRep(iAddr, subrequest, STAGER_AUTOCOMMIT_TRUE);		
-	    }catch(castor::exception::Exception ex){
+	      dbService->updateRep(baseAddr, subrequest, true);	/*207*/	
+ 	    }catch(castor::exception::Exception ex){
 	      castor::exception::Exception e(SEINTERNAL);
 	      e.getMessage()<< "(StagerRequestHelper setSubrequestUuid) dbService->updateRep throws an exception"<<std::endl;
 	      throw e;
@@ -224,7 +223,7 @@ namespace castor{
       }
       
       /* get request uuid (we cannon' t create it!) */ 
-      void StagerRequestHelper::setRequestUuid()
+      void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
       {
 	Cuuid_t request_uuid;
 
@@ -280,9 +279,9 @@ namespace castor{
 	subrequest->setCastorFile(castorFile);
 	try{
 	  /* create the subrequest-> castorFile on DB*/
-	  dbService->fillRep(iAddr, subrequest, OBJ_CastorFile, STAGER_AUTOCOMMIT_TRUE);//throw exception
+	  dbService->fillRep(baseAddr, subrequest, OBJ_CastorFile, true);//throw exception
 	  /* create the castorFile-> svcClass link on DB */
-	  dbService->fillObj(iAddr, castorFile, OBJ_SvcClass, 0);//throw exception	
+	  dbService->fillObj(baseAddr, castorFile, OBJ_SvcClass, 0);//throw exception	
 
 	}catch(castor::exception::Exception ex){/* stagerService throw exception */
 	  castor::exception::Exception e(SEINTERNAL);
@@ -343,21 +342,21 @@ namespace castor{
       /* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
       /* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
       /**************************************************************************************************/
-      struct rmjob StagerRequestHelper::buildRmJobHelperPart(struct rmjob &rmjob) throw(castor::exception::Exception)//after processReplica (if it is necessary)
+      void StagerRequestHelper::buildRmJobHelperPart(struct rmjob* rmjob) throw(castor::exception::Exception)//after processReplica (if it is necessary)
       {
 
 
-	rmjob.uid = (uid_t) fileRequest->euid();
-	rmjob.gid = (uid_t) fileRequest->egid();
+	rmjob->uid = (uid_t) fileRequest->euid();
+	rmjob->gid = (uid_t) fileRequest->egid();
 	
-	strncpy(rmjob.uname, username.c_str(),RM_MAXUSRNAMELEN);
-	rmjob.uname[RM_MAXUSRNAMELEN] = '\0';
-	strncpy(rmjob.gname, groupname.c_str(),RM_MAXGRPNAMELEN);
-	rmjob.gname[RM_MAXGRPNAMELEN] = '\0';
+	strncpy(rmjob->uname, username.c_str(),RM_MAXUSRNAMELEN);
+	rmjob->uname[RM_MAXUSRNAMELEN] = '\0';
+	strncpy(rmjob->gname, groupname.c_str(),RM_MAXGRPNAMELEN);
+	rmjob->gname[RM_MAXGRPNAMELEN] = '\0';
 
 	
-	//strncpy(rmjob.partitionmask, getPartitionMask().c_str(),RM_MAXPARTITIONLEN);//partitionMask: char *  line 620
-	rmjob.partitionmask[RM_MAXPARTITIONLEN] = '\0';
+	strncpy(rmjob->partitionmask, getPartitionMask().c_str(),RM_MAXPARTITIONLEN);
+	rmjob->partitionmask[RM_MAXPARTITIONLEN] = '\0';
 
 	std::string features;
 
@@ -384,25 +383,25 @@ namespace castor{
 	  ex.getMessage()<<"(StagerRequestHelper buildRmJobRequestPart) String features exceeds the max lenght"<<std::endl;
 	  throw ex;
 	}
-	strncpy(rmjob.rfeatures, features.c_str(), RM_MAXFEATURELEN);
+	strncpy(rmjob->rfeatures, features.c_str(), RM_MAXFEATURELEN);
 	               	
-	u64tostr(subrequest->id(),rmjob.stageid,0);
-	strcat(rmjob.stageid,"@");
+	u64tostr(subrequest->id(),rmjob->stageid,0);
+	strcat(rmjob->stageid,"@");
 	
 	//adding request and subrequest uuid:
 	{
 	  Cuuid_t thisuuid=requestUuid;
-	  Cuuid2string(rmjob.requestid, CUUID_STRING_LEN+1,&thisuuid);
+	  Cuuid2string(rmjob->requestid, CUUID_STRING_LEN+1,&thisuuid);
 	  thisuuid=subrequestUuid;
-	  Cuuid2string(rmjob.subrequestid, CUUID_STRING_LEN+1,&thisuuid);
+	  Cuuid2string(rmjob->subrequestid, CUUID_STRING_LEN+1,&thisuuid);
 	}
 	
-	//strcpy(rmjob.clientStruct,iClientAsString.c_str());//what is the max len for client? 663
-	strcpy(rmjob.exec,"/usr/bin/stagerJob.sh");
+	strcpy(rmjob->clientStruct,iClientAsString.c_str());//what is the max len for client? 663
+	strcpy(rmjob->exec,"/usr/bin/stagerJob.sh");
 	
-	strncpy(rmjob.account,className.c_str(),RM_MAXACCOUNTNAMELEN);
+	strncpy(rmjob->account,className.c_str(),RM_MAXACCOUNTNAMELEN);
 	
-	return(rmjob);
+
       }
 
 

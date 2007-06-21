@@ -22,7 +22,6 @@
 #include "../SvcClass.hpp"
 #include "../CastorFile.hpp"
 #include "../FileClass.hpp"
-#include "../../IAddress.hpp"
 #include "../../../h/stager_uuid.h"
 #include "../../../h/stager_constants.h"
 #include "../../../h/serrno.h"
@@ -33,9 +32,9 @@
 #include "../../../h/u64subr.h"
 
 #include "../../IClientFactory.hpp"
-
+#include "../SubRequestStatusCodes.hpp"
+#include "../SubRequestGetNextStatusCodes.hpp"
 #include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
 
 #include "../../ObjectSet.hpp"
 #include "../../Constants.hpp"
@@ -153,7 +152,7 @@ namespace castor{
 	/* using dbService, and get the fileRequest */ 
 	inline void StagerRequestHelper::getFileRequest() throw(castor::exception::Exception){
 	  try{
-	    dbService->fillObj(baseAddr, subrequest, OBJ_FileRequest, false);
+	    dbService->fillObj(baseAddr, subrequest, OBJ_FileRequest, false); /* 155 */ 
 	  }catch(castor::exception::Exception e){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper getFileRequest) Exception throwed by the dbService->fillObj"<<std::endl;
@@ -207,8 +206,7 @@ namespace castor{
 	    fileRequest->setSvcClassName(className);
 	    
 	    className=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly updated */
-	    if(className.empty()){
-	      
+	    if(className.empty()){      
 	      castor::exception::Exception ex(SESVCCLASSNFND);
 	      ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to set properly the svcClassName on fileRequest"<<std::endl;
 	      throw ex;
@@ -231,7 +229,7 @@ namespace castor{
 	inline void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
 	  try{
 	    /* update request on DB */
-	    dbService->updateRep(baseAddr, fileRequest, STAGER_AUTOCOMMIT_TRUE);//EXCEPTION!
+	    dbService->updateRep(baseAddr, fileRequest, true);//EXCEPTION!
 	    
 	  }catch(castor::exception::Exception e){	  
 	    castor::exception::Exception ex(SEINTERNAL);
@@ -243,7 +241,7 @@ namespace castor{
 	  
 	  try{
 	    /* fill the svcClass object using the request as a key  */
-	    dbService->fillRep(baseAddr, fileRequest,OBJ_SvcClass,STAGER_AUTOCOMMIT_TRUE);
+	    dbService->fillRep(baseAddr, fileRequest,OBJ_SvcClass,true);
 	  }catch(castor::exception::Exception ex){
 	    castor::exception::Exception e(SEINTERNAL);
 	    e.getMessage()<< "(StagerRequestHelper linkRequestToSvcClassOnDB) dbService->fillRep throws an exception"<<std::endl;
@@ -292,7 +290,7 @@ namespace castor{
 	
       
 	/* get request uuid (we cannon' t create it!) */ 
-	void StagerRequestHelper::setRequestUuid();
+	void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception);
       
 
 
@@ -315,7 +313,7 @@ namespace castor{
 	  try{
 	    if(svcClass_from_castorFile == NULL){
 	      castorFile->setSvcClass(svcClass);
-	      dbService->fillRep(baseAddr, castorFile, OBJ_SvcClass, STAGER_AUTOCOMMIT_TRUE);//THROW EXCEPTION!
+	      dbService->fillRep(baseAddr, castorFile, OBJ_SvcClass, true);//THROW EXCEPTION!
 	      
 	    }else{
 	      if(svcClass == NULL){
@@ -354,22 +352,15 @@ namespace castor{
 	/*  fill castorFile's FileClass: called in StagerRequest.jobOriented()                             */
 	/**************************************************************************************************/
 	inline void StagerRequestHelper::setFileClassOnCastorFile() throw(castor::exception::Exception){
-	  try{
-	    if(this->castorFile == NULL){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRequestHelper setFileClassOnCastorFile) Impossible to get the castorFile"<<std::endl;
-	      throw ex;
-	    }else{
-	      castorFile->setFileClass(fileClass);
-	      dbService->fillRep(baseAddr, castorFile, OBJ_FileClass, STAGER_AUTOCOMMIT_TRUE);
-	    }
-	  }catch(castor::exception::Exception ex){
-	    throw ex;
-	  }catch(castor::exception::Exception e){/* stagerService throw exception */
+	  if(this->castorFile == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRequestHelper setFileClassOnCastorFile) dbService->fillRep  throws an exception"<<std::endl;
+	    ex.getMessage()<<"(StagerRequestHelper setFileClassOnCastorFile) Impossible to get the castorFile"<<std::endl;
 	    throw ex;
+	  }else{
+	    castorFile->setFileClass(fileClass);
+	    dbService->fillRep(baseAddr, castorFile, OBJ_FileClass, true);
 	  }
+	  
 	}
      
 
@@ -485,10 +476,21 @@ namespace castor{
 	/* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
 	/* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
 	/**************************************************************************************************/
-	struct rmjob StagerRequestHelper::buildRmJobHelperPart(struct rmjob &rmjob) throw(castor::exception::Exception);//after processReplica (if it is necessary)
+	void StagerRequestHelper::buildRmJobHelperPart(struct rmjob* rmjob) throw(castor::exception::Exception);//after processReplica (if it is necessary)
 	
 	
-	
+	/* function to update the subrequestStatus */
+	/* called within the normal flow and also the exception */
+	inline void StagerRequestHelper::updateSubrequestStatus(SubRequestStatusCodes newSubrequestStatus) throw(castor::exception::Exception){
+	  /* updateSubrequestStatus Part: */
+	  SubRequestStatusCodes currentSubrequestStatus = this->subrequest->status();	  
+	  if(newSubrequestStatus != currentSubrequestStatus){
+	    this->subrequest->setStatus(newSubrequestStatus);
+	    this->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+	    /* the status will be update on DB on each handler */
+	  }
+	}
+
      
 
 	
