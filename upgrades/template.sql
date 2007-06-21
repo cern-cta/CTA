@@ -1,5 +1,5 @@
 /******************************************************************************
- *              2x_to_2y.sql
+ *              prevRelease_to_newRelease.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Revision: 1.2 $ $Release$ $Date: 2007/06/18 13:58:55 $ $Author: itglp $
+ * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/06/21 08:17:05 $ $Author: itglp $
  *
- * This script upgrades a CASTOR v2x database into v2y
+ * This script upgrades a CASTOR vprevRelease database into vnewRelease
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -31,14 +31,14 @@ WHENEVER SQLERROR EXIT FAILURE;
 DECLARE
   unused VARCHAR(100);
 BEGIN
-  SELECT revision INTO unused FROM CastorVersion WHERE revision = '<prevRevision>';
+  SELECT release INTO unused FROM CastorVersion WHERE release = 'prevRelease';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
-  raise_application_error(-20000, 'PL/SQL revision mismatch. Please run previous upgrade scripts before this one.');
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
 /
 
-UPDATE CastorVersion SET revision = '<newRevision>';
+UPDATE CastorVersion SET release = 'newRelease';
 COMMIT;
 
 /* From now on, all PL-SQL code is updated */
