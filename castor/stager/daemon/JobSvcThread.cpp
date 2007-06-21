@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.40 2007/05/18 10:01:11 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.41 2007/06/21 16:09:12 sponcec3 Exp $
  */
 
 /*
@@ -326,10 +326,15 @@ namespace castor {
 
         /* Invoking the method                */
         /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyDone");
-        jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), 
-                                  (castor::stager::DiskCopyStatusCodes)uReq->status());
-
+        castor::stager::DiskCopyStatusCodes status =
+          (castor::stager::DiskCopyStatusCodes)uReq->status();
+        if (status == castor::stager::DISKCOPY_FAILED) {
+          STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyFailed");
+          jobSvc->disk2DiskCopyFailed(uReq->diskCopyId());
+        } else {
+          STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyDone");
+          jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), status);
+        }
       } catch (castor::exception::Exception e) {
         serrno = e.code();
         error = e.getMessage().str();
