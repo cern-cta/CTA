@@ -2,25 +2,27 @@
 /* StagerPutDoneHandler: Constructor and implementation of the PutDone request's handle        */
 /*********************************************************************************************** */
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerPutDoneHandler.hpp"
+#include "StagerRequestHandler.hpp"
+#include "StagerJobRequestHandler.hpp"
+#include "StagerPutDoneHandler.hpp"
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "serno.h"
-#include "Cns_api.h"
-#include "expert_api.h"
-#include "rm_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "castor/IClientFactory.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/DiskCopyForRecall.hpp"
+#include "../../../h/stager_uuid.h"
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/expert_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../../h/Cgrp.h"
+#include "../../IClientFactory.h"
+#include "../SubRequestStatusCodes.hpp"
+#include "../DiskCopyForRecall.hpp"
+
+#include "../../exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -36,68 +38,70 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
-      StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message)
+      StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
      	
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	this->message(message);
-
 	
       }
 
-      StagerPutDoneHandler::handle()
+      void StagerPutDoneHandler::handle() throw(castor::exception::Exception)
       {
 	
-	
 	try{
+
+	  jobOriented();/* until it will be explored */
 	  /* is PutDone jobOriented? I don' t think so, then I won't call this method */
 	  /* ask about the state of the sources */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
+	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), &(this->sources));
 	  
 	  if(sources->size()<=0){
-	    //case: putdone without a put
-	    //throw exception
-	  }
-	  this->jobService = new castor::stager::IJobSvc*;
-	  jobService->prepareForMigration(stgRequestHelper->subrequest(),0,0);
-
-
-
-	  /* updateSubrequestStatus Part: */
-	  SubRequestStatusCode currentSubrequestStatus = stgRequestHelper->subrequest->status();
-	  SubRequestStatusCodes newSubrequestStatus = SUBREQUEST_READY;
-	  
-	  if(newSubrequestStatus != currentSubrequestStatus){
-	    
-	    stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
-	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUSFILESTAGED);
-	    
+	    castor::exception::Exception ex(EPERM);
+	    ex.getMessage()<<"(StagerPutDoneHandler handle) PutDone without a Put (sources.size <0)"<<std::endl;
+	    throw ex;
 	  }
 	  
+	  this->jobService = new castor::stager::IJobSvc;
+	  if(this->jobService == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerPutDoneHandler handle) Impossible to get the jobService"<<std::endl;
+	    throw ex;
+	  }
+	  jobService->prepareForMigration(stgRequestHelper->subrequest,0,0);
+	  delete jobService;
+
+	  /* we never change the subrequestStatus !!!*/	  
 	  
 	  /* for the PutDone, if everything is ok, we archive the subrequest */
-	  stgRequestHelper->stagerService->archiveSubReq(stagerRequestHelper->subrequest->id());
-
+	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	  
 	  /* replyToClient Part: */
-	  /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
-	  /* so copy and paste for the exceptions !!!*/
-	  this->stgReplyHelper = new castor::stager::StagerReplyHelper*;
-	
-	  
-	  this->stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
+	  this->stgReplyHelper = new StagerReplyHelper;
+	  if((this->stgReplyHelper) == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	    throw ex;
+	  }
+	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  
-	  
-	}catch{
+	  delete stgReplyHelper;
+	   
+	}catch(castor::exception::Exception ex){
+	  if(jobService != NULL){
+	    delete jobService;
+	  }
+	  if(stgReplyHelper != NULL){
+	    delete stgReplyHelper;
+	  }
+	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	  throw ex;
 	}
       }
 
 
-      StagerPutDoneHandler::~StagerPutDoneHandler()
+      StagerPutDoneHandler::~StagerPutDoneHandler() throw()
       {
-	delete stgReplyHelper;
-	delete jobService;
       }
 
 

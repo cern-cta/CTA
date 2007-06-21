@@ -8,24 +8,29 @@
 #define STAGER_UPDATE_HANDLER_HPP 1
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "StagerRequestHandler.hpp"
+#include "StagerJobRequestHandler.hpp"
 
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "serno.h"
-#include "Cns_api.h"
-#include "expert_api.h"
-#include "rm_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "castor/IClientFactory.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "../../../h/stager_uuid.h"
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/expert_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../../h/Cgrp.h"
+#include "../../../h/u64subr.h"
+#include "../../IClientFactory.h"
+#include "../SubRequestStatusCodes.hpp"
+
+#include "../../IObject.hpp"
+#include "../../ObjectSet.hpp"
+#include "../../exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -38,7 +43,7 @@ namespace castor{
       class StagerRequestHelper;
       class StagerCnsHelper;
 
-      class StagerUpdateRequest : public StagerJobRequestHandler{
+      class StagerUpdateHandler : public virtual StagerJobRequestHandler{
 
       private:
 	/* flag to schedule or to recreateCastorFile depending if the file exists... */
@@ -46,14 +51,26 @@ namespace castor{
 	
       public:
 	/* constructor */
-	StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message, bool toRecreateCastorFile) throw();
+	StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception);
 	/* destructor */
 	StagerUpdateHandler::~StagerUpdateHandler() throw();
 
 	/* handler for the Update request  */
-	void StagerUpdateHandler::handle(void *param) throw();
-      
-      }//end StagerUpdateHandler class
+	void StagerUpdateHandler::handle() throw(castor::exception::Exception);
+
+
+
+      	/***********************************************************************************************/
+	/* virtual functions inherited from IObject                                                   */
+	/*********************************************************************************************/
+	virtual void setId(u_signed64 id);
+	virtual u_signed64 id() const;
+	virtual int type() const;
+	virtual IObject* clone();
+	virtual void print() const;
+	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
+	
+      }; //end StagerUpdateHandler class
 
 
     }//end namespace dbService

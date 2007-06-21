@@ -4,24 +4,28 @@
 /*******************************************************************************************/
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
+#include "StagerRequestHandler.hpp"
+#include "StagerJobRequestHandler.hpp"
+#include "StagerPrepareToGetHandler.hpp"
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "serno.h"
-#include "Cns_api.h"
-#include "expert_api.h"
-#include "rm_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "castor/IClientFactory.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "../../../h/stager_uuid.h"
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/expert_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../../h/Cgrp.h"
+#include "../../IClientFactory.h"
+#include "../SubRequestStatusCodes.hpp"
+#include "../SubRequestGetNextStatusCodes.hpp"
+#include "../../exception/Exception.hpp"
+#include "../../exception/Internal.hpp"
+
 
 #include <iostream>
 #include <string>
@@ -31,12 +35,10 @@ namespace castor{
   namespace stager{
     namespace dbService{
 
-      StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message)
+      StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	/* error message needed for the exceptions, for the replyToClient... */
-	this->message(message);
 
 	this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
@@ -69,71 +71,73 @@ namespace castor{
       }
 
 
-      void StagerPrepareToGetHandler::handle()
+      void StagerPrepareToGetHandler::handle() throw(castor::exception::Exception)
       {
-	/**/
 	try{
-
 	  /* job oriented part */
-	  this.jobOriented();
-
+	  jobOriented();
+	  
 	  /* scheduling Part */
 	  /* first use the stager service to get the possible sources for the required file */
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
 	  
 	  switch(caseToSchedule){
+	  case 0:
+	    /* we archive the subrequest, we don't need to update the subrequest status afterwards */
+	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	    break;
 	    
+	  default:
+	    /* second, process as a tapeRecall, as a replica or just change the subrequest.status */
+	    /* it corresponds to the huge switch on the stager_db_service.c  */
+	    switchScheduling(caseToSchedule);
 	    
-	    case 0:
-	      /* we archive the subrequest, we don't need to update the subrequest status afterwards */
-	      stgRequestHelper->stagerService->archiveSubrequest(stgRequestHelper->subrequest->id());
-	      /// ADD!! :  change_subrequest_status = 0
-	      break;
-
-	    default:
-	      /* second, process as a tapeRecall, as a replica or just change the subrequest.status */
-	      /* it corresponds to the huge switch on the stager_db_service.c  */
-	      switchScheduling(caseToSchedule);
-	      
-	      if((rfs != NULL)&&(!rfs.empty())){
-		/* if the file exists we don't have any size requirements */
-		this->xsize = 0;
-	      }
-
-	      /* build the rmjob struct and submit the job */
-	      this->rmjob = stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	      buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	      rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)); //throw exception
-	      
-	      
-	      
-	      /* updateSubrequestStatus Part: */
-	      SubRequestStatusCode currentSubrequestStatus = stgRequestHelper->subrequest->status();
-	      SubRequestStatusCodes newSubrequestStatus = SUBREQUEST_READY;
-	      
-	      if(newSubrequestStatus != currentSubrequestStatus){//common for the StagerGetRequest
-		
-		stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
-		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUSFILESTAGED);
-		
-	      }
-	      break;
+	    if((rfs.empty()) == false){
+	      /* if the file exists we don't have any size requirements */
+	      this->xsize = 0;
+	    }
+	    
+	    /* build the rmjob struct and submit the job */
+	    stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
+	    if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerPrepareToGetHandler handle) Error on rm_enterjob"<<std::endl;
+	      throw(ex);
+	    }	
+	    rm_freejob(rmjob_out);
+	    break;
 	  }
-
+	  
+	  /* updateSubrequestStatus Part: */
+	  if(caseToSchedule != 2){
+	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	  }
 
 	  /* replyToClient Part: */
 	  /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
 	  /* so copy and paste for the exceptions !!!*/
-	  this->stgReplyHelper = new StagerReplyHelper*;
-	  
-	  this->stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
+	  this->stgReplyHelper = new StagerReplyHelper;
+	  if((this->stgReplyHelper) == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	    throw(ex);
+	  }
+	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  
-	  
-	  
-	}catch{
+	  delete stgReplyHelper;
+
+	}catch(castor::exception::Exception ex){
+	  if(rmjob_out != NULL){
+	    rm_freejob(rmjob_out);
+	  }
+	  if(stgReplyHelper != NULL){
+	    delete stgReplyHelper;
+	  }
+	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	  throw ex;
 	}
-	
+
       }
 
 
@@ -147,14 +151,14 @@ namespace castor{
       /*                    +make the hostlist if it is needed                 */
       /* now we don't have anymore the case 0 for the PrepareToGet */
       /************************************************************************/
-      void StagerPrepareToGetHandler::switchScheduling(int caseToSchedule)
+      void StagerPrepareToGetHandler::switchScheduling(int caseToSchedule) throw(castor::exception::Exception)
       {
 	
 	switch(caseToSchedule){
 
 	case 2: //normal tape recall
 	 
-	  stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,(const) stgRequestHelper->filerequest->euid(), (const) stgRequestHelper->filerequest->egid());//throw exception
+	  stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,(const) stgRequestHelper->fileRequest->euid(), (const) stgRequestHelper->fileRequest->egid());//throw exception
 	  
 	  break;
 
@@ -172,7 +176,9 @@ namespace castor{
 
 	
 	default:
-	  //throw exception!
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->isSubRequestToSchedule returns an invalid value"<<std::endl;
+	  throw (ex);
 	  break;
 	}
 	
@@ -181,9 +187,9 @@ namespace castor{
 
       /***********************************************************************/
       /*    destructor                                                      */
-      StagerPrepareToGetHandler::~StagerPrepareToGetHandler()
+      StagerPrepareToGetHandler::~StagerPrepareToGetHandler() throw()
       {
-	delete stgReplyHelper;
+	
       }
       
     }//end namespace dbservice

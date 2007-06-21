@@ -4,24 +4,28 @@
 /*******************************************************************************************/
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerRepackHandler.hpp"
+#include "StagerRequestHandler.hpp"
+#include "StagerJobRequestHandler.hpp"
+#include "StagerRepackHandler.hpp"
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "serno.h"
-#include "Cns_api.h"
-#include "expert_api.h"
-#include "rm_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "castor/IClientFactory.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "../../../h/stager_uuid.h"
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/expert_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../../h/Cgrp.h"
+#include "../../IClientFactory.hpp"
+#include "../SubRequestStatusCodes.hpp"
+#include "../SubRequestGetNextStatusCodes.hpp"
+
+#include "../../exception/Exception.hpp"
+#include "../../exception/Internal.hpp"
 
 #include <iostream>
 #include <string>
@@ -32,12 +36,11 @@ namespace castor{
   namespace stager{
     namespace dbService{
      
-      StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message)
+      StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw (castor::exception::Exception)
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	/* error message needed for the exceptions, for the replyToClient... */
-	this->message(message);
+	
 	
 	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
@@ -69,67 +72,67 @@ namespace castor{
       }
 
 
-      void StagerRepackHandler::handle()
+      void StagerRepackHandler::handle() throw(castor::exception::Exception)
       {
 	/**/
 	try{
-
 	  /* job oriented part */
-	  this.jobOriented();
-
+	  jobOriented();
+	  
 	  /* scheduling Part */
 	  /* first use the stager service to get the possible sources for the required file */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));/*84 */
 	  switchScheduling(caseToSchedule);
-
-	  if((rfs != NULL) && (!rfs.empty())){
+	  
+	  if((rfs.empty()) == false){
 	    /* if the file exists we don't have any size requirements */
 	    this->xsize = 0;
 	  }
 	  
 	  /* build the rmjob struct and submit the job */
-	  this->rmjob = stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
 	  buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	  rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)); //throw exception
-
-
-
-	  /* updateSubrequestStatus Part: */
-	  SubRequestStatusCode currentSubrequestStatus = stgRequestHelper->subrequest->status();
-	  SubRequestStatusCodes newSubrequestStatus = SUBREQUEST_READY;
-
-	  if(newSubrequestStatus != currentSubrequestStatus){//common for the StagerGetRequest
-	  
-	    stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
-	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUSFILESTAGED);
-	    
+	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRepackHandler handle) Error on rm_enterjob"<<std::endl;
+	    throw ex;
 	  }
-
-
-
+	  rm_freejob(rmjob_out);
+	
+	  /* updateSubrequestStatus Part: */
+	  if((caseToSchedule != 2) && (caseToSchedule != 0)){
+	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	  }
 	  /* replyToClient Part: */
 	  /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
 	  /* so copy and paste for the exceptions !!!*/
-	  this->stgReplyHelper = new StagerReplyHelper*;
-
-	  this->stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
-	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	 
+	  this->stgReplyHelper = new StagerReplyHelper;
+	  if((this->stgReplyHelper) == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	    throw(ex);
+	  }
 	  
-
-	}catch{
+	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper;
+	}catch(castor::exception::Exception ex){
+	  if(rmjob_out != NULL){
+	    rm_freejob(rmjob_out);
+	  }
+	  if(stgReplyHelper != NULL){
+	    delete stgReplyHelper;
+	  }
+	  stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	  throw(ex);
 	}
-	
       }
-
 
 
       /***********************************************************************/
       /*    destructor                                                      */
-      StagerRepackHandler::~StagerRepackHandler()
+      StagerRepackHandler::~StagerRepackHandler() throw()
       {
-	
-	delete stgReplyHelper;
       }
 
       

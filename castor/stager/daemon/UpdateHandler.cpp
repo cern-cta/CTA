@@ -8,25 +8,27 @@
 
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerUpdateHandler.hpp"
+#include "StagerRequestHandler.hpp"
+#include "StagerJobRequestHandler.hpp"
+#include "StagerUpdateHandler.hpp"
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "serno.h"
-#include "Cns_api.h"
-#include "expert_api.h"
-#include "rm_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "castor/IClientFactory.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
-#include "castor/stager/DiskCopyForRecall.hpp"
+#include "../../../h/stager_uuid.h"
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/expert_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../../h/Cgrp.h"
+#include "../../IClientFactory.h"
+#include "../SubRequestStatusCodes.hpp"
+#include "../DiskCopyForRecall.hpp"
+
+#include "../../exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -37,11 +39,11 @@ namespace castor{
     namespace dbService{
       
       /* constructor */
-      StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message, bool toRecreateCastorFile)
+      StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception)
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	this->message(message);
+
 
 	/* depending on this flag, we ll execute the huge flow or the small one*/
 	this->toRecreateCastorFile = toRecreateCastorFile;
@@ -80,31 +82,27 @@ namespace castor{
       /************************************/
       /* handler for the update request  */
       /**********************************/
-      void :StagerUpdateHandler::handle(void *param) throw()
+      void StagerUpdateHandler::handle() throw(castor::exception::Exception)
       {
-	/**/
 	try{
+	  jobOriented();
+	  int caseToSchedule = -1;
 	  
-	  
-	  this.jobOriented();
-
-
 	  /* huge or small flow?? */
-	  if(toRecreateCastorFile){/* we skip the processReplica part :) */
-
-
+	  if(toRecreateCastorFile){/* we skip the processReplica part :) */    
 	    /* use the stagerService to recreate castor file */
 	    castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
-	    	    
+	    
 	    if(diskCopyForRecall == NULL){
-	      /*throw exception
-	       there is no need to change the subrequest status!!!
-	       archive_subrequest
-	      */
+	      /* we archive the subrequest */
+	      stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	      castor::exception::Exception ex(EBUSY);
+	      ex.getMessage()<<"(StagerUpdateHandler handle) Recreation is not possible"<<std::endl;
+	      throw ex;
 	    }
-
+	    
 	    /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
-	    std::string diskServername = diskCopyForRecall->diskServerName();
+	    std::string diskServerName = diskCopyForRecall->diskServer();
 	    std::string mountPoint = diskCopyForRecall->mountPoint();
 	    
 	    if((!diskServerName.empty())&&(!mountPoint.empty())){
@@ -114,43 +112,43 @@ namespace castor{
 	    
 	    /* since the file doesn't exist, we don't need the read flag */
 	    this->openflags = RM_O_WRONLY;
-
+	    
 	  }else{
-
-	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,&(this->sources));
+	    
+	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,&(this->sources));
 	    switchScheduling(caseToSchedule);
 	    
 	    /* since the file exist, we need the read flag */
 	    this->openflags = RM_O_RDWR;
 	  }
 	  /* build the rmjob struct and submit the job */
-	  this->rmjob = stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
 	  buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	  rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)); //throw exception
-	  
-	  
-	  SubRequestStatusCodes currentSubrequestStatus = stgRequestHelper->subrequest->status();
-	  SubRequestStatusCodes newSubrequestStatus = SUBREQUEST_READY;
-	  
-	  if(newSubrequestStatus != currentSubrequestStatus){
-	    
-	    stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
-	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUSFILESTAGED);
-
-	    /* since we don't reply to the client, we have to update explicitly the representation*/
-	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, iObj_subrequest, STAGER_AUTOCOMMIT_TRUE);
+	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerUpdateHandler handle) Error on rm_enterjob"<<std::endl;
+	    throw ex;
 	  }
-	  
-	  
-	  
-	  
-	  
-	}catch{
-	}	
-      
+	  rm_freejob(rmjob_out);
+	 	    
+	  if((caseToSchedule != 2) && (caseToSchedule != 0)){
+	    /* updateSubrequestStatus Part: */
+	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	  }
 	
+	}catch(castor::exception::Exception ex){
+	  if(rmjob_out != NULL){
+	    rm_freejob(rmjob_out);
+	  }
+	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	  throw ex;
+	}
       }
       
+
+
+
       /* destructor */
       StagerUpdateHandler::~StagerUpdateHandler() throw()
       {

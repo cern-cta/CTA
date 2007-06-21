@@ -9,25 +9,31 @@
 
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "StagerRequestHandler.hpp"
+#include "StagerJobRequestHandler.hpp"
 
 
-#include "stager_uuid.h"
-#include "stager_constants.h"
-#include "serno.h"
-#include "Cns_api.h"
-#include "expert_api.h"
-#include "rm_api.h"
-#include "Cpwd.h"
-#include "Cgrp.h"
-#include "castor/IClientFactory.h"
-#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "../../../h/stager_uuid.h"
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/expert_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../../h/Cgrp.h"
+#include "../../../h/u64subr.h"
+#include "../../IClientFactory.h"
+#include "../SubRequestStatusCodes.hpp"
+#include "../SubRequestGetNextStatusCodes.hpp"
 
+#include "../../exception/Exception.hpp"
+
+#include "../../ObjectSet.hpp"
+#include "../../IObject.hpp"
 #include <iostream>
 #include <string>
 
@@ -40,13 +46,13 @@ namespace castor{
       class StagerRequestHelper;
       class StagerCnsHelper;
       
-      class StagerPrepareToGetRequest : public StagerJobRequestHandler{
+      class StagerPrepareToGetHandler : public virtual StagerJobRequestHandler{
 
 	
       public:
 
 	/* constructor */
-	StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message) throw();
+	StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
 	StagerPrepareToGetHandler::~StagerPrepareToGetHandler() throw();
 
@@ -59,12 +65,24 @@ namespace castor{
 	/*         +processReplica if it is needed:                               */
 	/*                    +make the hostlist if it is needed                 */
 	/************************************************************************/
-	void StagerPrepareToGetHandler::switchScheduling(int caseToSchedule);
+	void StagerPrepareToGetHandler::switchScheduling(int caseToSchedule) throw(castor::exception::Exception);
 
 	/* PrepareToGet request handler */
-        void StagerPrepareToGetHandler::handle(void *param) throw();
+        void StagerPrepareToGetHandler::handle() throw(castor::exception::Exception);
 
-      }//end StagerPrepareToGetHandler class
+
+
+	/***********************************************************************************************/
+	/* virtual functions inherited from IObject                                                   */
+	/*********************************************************************************************/
+	virtual void setId(u_signed64 id);
+	virtual u_signed64 id() const;
+	virtual int type() const;
+	virtual IObject* clone();
+	virtual void print() const;
+	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
+
+      }; //end StagerPrepareToGetHandler class
 
 
     }//end namespace dbService

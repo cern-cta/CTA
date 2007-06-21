@@ -5,67 +5,82 @@
 /* it always needs to reply to the client                                        */
 /********************************************************************************/
 
-#include "castor/stager/dbService/StagerRmHandler.hpp"
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "StagerRmHandler.hpp"
+#include "StagerRequestHandler.hpp"
+#include "StagerJobRequestHandler.hpp"
 
-#include "castor/stager/IStagerSvc.hpp"
-#include "castor/stager/SubRequest.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
+
+
+
+#include "../IStagerSvc.hpp"
+
+#include "../../../h/stager_constants.h"
+#include "../../../h/serrno.h"
+#include "../../../h/Cns_api.h"
+#include "../../../h/expert_api.h"
+#include "../../../h/rm_api.h"
+#include "../../../h/Cpwd.h"
+#include "../../../h/Cgrp.h"
+#include "../../IClientFactory.h"
+#include "../SubRequestStatusCodes.hpp"
+#include "../SubRequestGetNextStatusCodes.hpp"
+#include "../../exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
+
 
 namespace castor{
   namespace stager{
     namespace dbService{
       
-      StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, std::string message)
+      StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	/* error message needed for the exceptions, for the replyToClient... */
-	this->message(message);
+	
       }
 
-
-      StagerRmHandler::handle()
+      void StagerRmHandler::handle() throw(castor::exception::Exception)
       {
-	
-	
 	try{
-	  
 	  /* execute the main function for the rm request                 */
 	  /* basically, a call to the corresponding stagerService method */
-	  stgRequestHelper->stagerService->stageRm(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server);
-	 
-	  /**********************************************************************************************/
-	  /* once the rm request is done, we update the status (if needed) and we reply to the client  */
+	  std::string server(stgCnsHelper->cnsFileid.server);
+	  stgRequestHelper->stagerService->stageRm(stgCnsHelper->cnsFileid.fileid, server);
+	  
+	  /**************************************************/
+	  /* we don t need to update the subrequestStatus  */
+	  /* but we have to archive the subrequest        */
+	  /* the same as for StagerSetGCHandler          */
+	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
 
-	  /* check subrequest status and update if needed */
-	  SubRequestStatusCode currentSubrequestStatus = stgRequestHelper->subrequest->status();
-	  SubRequestStatusCodes newSubrequestStatus = SUBREQUEST_READY;
-	  
-	  if(newSubrequestStatus != currentSubrequestStatus){
-	    stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
-	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUSFILESTAGED);
-	    
-	  }
-	  	  
 	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
-	  this->stgReplyHelper = new StagerReplyHelper*;	  
-	  this->stgReplyHelper->setAndSendIoResponse(*stgRequestHelper,stgCnsHelper->fileid,serrno, message);
+	  this->stgReplyHelper = new StagerReplyHelper;	  
+	  if((this->stgReplyHelper) == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	    throw(ex);
+	  }
+	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  
-	  
-	}catch{
+	  delete stgReplyHelper;
+
+	}catch(castor::exception::Exception ex){
+	  if(stgReplyHelper != NULL){
+	    delete stgReplyHelper;
+	  }
+	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	  throw ex;
 	}
       }
 
 
-      StagerRmHandler::~StagerRmHandler()
+      StagerRmHandler::~StagerRmHandler() throw()
       {
-	delete stgReplyHelper;
       }
       
     }//end dbService
