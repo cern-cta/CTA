@@ -22,7 +22,7 @@
 #include "../../../h/Cgrp.h"
 #include "../../../h/osdep.h"
 
-#include "../../IClientFactory.h"
+#include "../../IClientFactory.hpp"
 #include "../SubRequestStatusCodes.hpp"
 #include "../SubRequestGetNextStatusCodes.hpp"
 #include "../../exception/Exception.hpp"
@@ -87,7 +87,7 @@ namespace castor{
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
 	  switchScheduling(caseToSchedule);
 	  
-	  if(rfs.empty() != false){
+	  if(rfs.empty() == false){
 	    /* if the file exists we don't have any size requirements */
 	    this->xsize = 0;
 	  }
