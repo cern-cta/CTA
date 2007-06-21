@@ -15,7 +15,6 @@
 #include "../FileRequest.hpp"
 #include "../IStagerSvc.hpp"
 #include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
 
 #include "../SubRequestStatusCodes.hpp"
 
@@ -41,7 +40,7 @@ namespace castor{
 
 
 
-      class StagerReplyHelper : public castor::IObject{
+      class StagerReplyHelper : public virtual castor::IObject{
 
       public:
 
@@ -66,10 +65,26 @@ namespace castor{
 	/* check if there is any subrequest left and send the endResponse to client if it is needed */
 	/*******************************************************************************************/
 	inline void StagerReplyHelper::endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
-	  bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
-	  if(requestLeft){
-	    this->requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
-	  }      
+	  try{
+	    /* to update the subrequest on DB */
+	    bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
+	    if(requestLeft){
+	      this->requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
+	    }  
+
+	    /* delete the attributes */
+	    delete ioResponse;
+	    delete requestReplier;    
+
+	  }catch(castor::exception::Exception ex){
+	    if( ioResponse != NULL){
+	      delete ioResponse;
+	    }
+	    if(requestReplier){
+	      delete requestReplier;
+	    }
+	    throw ex;
+	  }
 	}
 
 	/*****************************************************************************************/

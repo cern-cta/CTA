@@ -18,7 +18,6 @@
 #include "../SubRequestStatusCodes.hpp"
 
 #include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
 
 #include "../../../h/serrno.h"
 
@@ -29,25 +28,30 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
-
-      class StagerRequestHelper;
-      class castor::rh::IOResponse;
-      class castor::replier::RequestReplier;
-
+      
       StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception)
       {
-
-	this->ioResponse = new castor::rh::IOResponse;
-	if(this->ioResponse == NULL){
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerReplyHelper constructor) Impossible to get the ioResponse object"<<std::endl;
-	  throw ex;
-	  
-	}
-	this->requestReplier = RequestReplier::getInstance();
-	if(this->requestReplier == NULL){
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerReplyHelper constructor) Impossible to get the requestReplier instance"<<std::endl;
+	try{
+	  this->ioResponse = new castor::rh::IOResponse;
+	  if(this->ioResponse == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerReplyHelper constructor) Impossible to get the ioResponse object"<<std::endl;
+	    throw ex; 
+	  }	
+	 
+	  this->requestReplier = castor::replier::RequestReplier::getInstance();
+	  if(this->requestReplier == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerReplyHelper constructor) Impossible to get the requestReplier instance"<<std::endl;
+	    throw ex;
+	  }
+	}catch(castor::exception::Exception ex){
+	  if( ioResponse != NULL){
+	    delete ioResponse;
+	  }
+	  if(requestReplier){
+	    delete requestReplier;
+	  }
 	  throw ex;
 	}
 
@@ -56,8 +60,7 @@ namespace castor{
 
       StagerReplyHelper::~StagerReplyHelper() throw()
       {
-	delete ioResponse;
-	delete requestReplier;
+	
       }
 
       
@@ -66,40 +69,56 @@ namespace castor{
       /**************************************************************************/
       void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
       {
-
-	ioResponse->setFileId(fileID==0?0:fileID->fileid);
-	
-	this->uuid_as_string = stgRequestHelper->fileRequest->reqId();
-	if(this->uuid_as_string != NULL){
-	  this->ioResponse->setReqAssociated(uuid_as_string);
-	}
-		
-	if(stgRequestHelper->castorFile != NULL){
-	  this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
-	}
-		
-	int newSubRequestStatus = stgRequestHelper->subrequest->status();
-	if(newSubRequestStatus==SUBREQUEST_FAILED_FINISHED){
-	  newSubRequestStatus=SUBREQUEST_FAILED;
-	}
-	this->ioResponse->setStatus(newSubRequestStatus);
-		
-	this->ioResponse->setId(stgRequestHelper->subrequestUuid);
-	
-	/* errorCode = rc  */
-	if(errorCode != 0){
-	  this->ioResponse->setErrorCode(errorCode);
-	  std::string ioRespErrorMessage = errorMessage;
-	  if(errorMessage.empty()){
-	    ioRespErrorMessage = strerror(errorCode);
+	try{
+	  ioResponse->setFileId(fileID==0?0:fileID->fileid);
+	  
+	  this->uuid_as_string = stgRequestHelper->fileRequest->reqId();
+	  if((uuid_as_string.empty()) == false){
+	    this->ioResponse->setReqAssociated(uuid_as_string);
+	  }else{
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerReplyHelper setAndSendIoResponse) The fileRequest has not uuid"<<std::endl;
+	    throw ex;
 	  }
-	  this->ioResponse->setErrorMessage(ioRespErrorMessage);
-	}
-	
-	/* sendResponse(..,.., lastResponse = false)  */
-	this->requestReplier->sendResponse(stgRequestHelper->iClient,ioResponse,false);
-	
-	
+	  
+	  if(stgRequestHelper->castorFile != NULL){
+	    this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
+	  }else{
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerReplyHelper setAndSendIoResponse) The castorFile is NULL"<<std::endl;
+	    throw ex;
+	  }
+	  
+	  int newSubRequestStatus = stgRequestHelper->subrequest->status();
+	  if(newSubRequestStatus==SUBREQUEST_FAILED_FINISHED){
+	    newSubRequestStatus=SUBREQUEST_FAILED;
+	  }
+	  this->ioResponse->setStatus(newSubRequestStatus);
+	  
+	  this->ioResponse->setId(stgRequestHelper->subrequestUuid);
+	  
+	  /* errorCode = rc  */
+	  if(errorCode != 0){
+	    this->ioResponse->setErrorCode(errorCode);
+	    std::string ioRespErrorMessage = errorMessage;
+	    if((errorMessage.empty()) == false){
+	      ioRespErrorMessage = strerror(errorCode);
+	    }
+	    this->ioResponse->setErrorMessage(ioRespErrorMessage);
+	  }
+	  
+	  /* sendResponse(..,.., lastResponse = false)  */
+	  this->requestReplier->sendResponse(stgRequestHelper->iClient,ioResponse,false);
+
+	}catch(castor::exception::Exception ex){
+	  if( ioResponse != NULL){
+	    delete ioResponse;
+	  }
+	  if(requestReplier){
+	    delete requestReplier;
+	  }
+	  throw ex;
+	}	
       }
 	
 
