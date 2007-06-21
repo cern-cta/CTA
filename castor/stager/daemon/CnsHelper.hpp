@@ -12,7 +12,6 @@
 
 #include "../../IObject.hpp"
 #include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
 
 #include "../../ObjectSet.hpp"
 
@@ -25,11 +24,17 @@
 
 
 
+
 namespace castor{
   namespace stager{
     namespace dbService{
 
-      
+    
+extern "C"{
+  int Cns_setid(uid_t, gid_t);
+  mode_t Cns_umask(mode_t);
+}
+  
      
       class StagerCnsHelper : public virtual castor::IObject{
 	
@@ -46,7 +51,7 @@ namespace castor{
 	static struct Cns_fileid fileid_ts_static;
 	
 	
-	StagerCnsHelper::StagerCnsHelper() throw();
+	StagerCnsHelper::StagerCnsHelper() throw(castor::exception::Exception);
 	StagerCnsHelper::~StagerCnsHelper() throw();
 
 	
@@ -89,7 +94,7 @@ namespace castor{
 	}
      
 	/* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
-	inline void StagerCnsHelper::getCnsFileclass() throw(castor::exception::Internal){
+	inline void StagerCnsHelper::getCnsFileclass() throw(castor::exception::Exception){
 	  memset(&(this->cnsFileclass),0, sizeof(cnsFileclass));
 	  if( Cns_queryclass((this->cnsFileid.server),(this->cnsFilestat.fileclass), NULL, &(this->cnsFileclass)) != 0 ){
 	    castor::exception::Exception ex(SEINTERNAL);
@@ -102,7 +107,7 @@ namespace castor{
 	/************************************************************************************/
 	/* get the parameters neededs and call to the Cns_setid and Cns_umask c functions  */
 	/**********************************************************************************/
-	inline void StagerCnsHelper::cnsSettings(uid_t euid, uid_t egid, mode_t mask) throw(castor::exception::Internal){
+	inline void StagerCnsHelper::cnsSettings(uid_t euid, uid_t egid, mode_t mask) throw(castor::exception::Exception){
 	  if (Cns_setid(euid,egid) != 0){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_setid"<<std::endl;
@@ -118,7 +123,7 @@ namespace castor{
 
 
 	/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-	inline void StagerCnsHelper::createFileAndUpdateCns(const char* filename, mode_t mode) throw(castor::exception::Internal){
+	inline void StagerCnsHelper::createFileAndUpdateCns(const char* filename, mode_t mode) throw(castor::exception::Exception){
 	  memset(&(this->cnsFileid),0, sizeof(cnsFileid));
 	  if (Cns_creatx(filename, mode, &(this->cnsFileid)) != 0) {
 	    castor::exception::Exception ex(SEINTERNAL);

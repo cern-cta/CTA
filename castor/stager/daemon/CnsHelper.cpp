@@ -21,7 +21,6 @@
 #include "../../../h/osdep.h"
 
 #include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
 #include "../../../h/serrno.h"
 #include "../../Constants.hpp"
 
@@ -34,12 +33,14 @@
 
 
 
+
+
 namespace castor{
   namespace stager{
     namespace dbService{
 
 
-      StagerCnsHelper::StagerCnsHelper() throw(){
+      StagerCnsHelper::StagerCnsHelper() throw(castor::exception::Exception){
 	/* set the initial value of our static variable */
 	this->fileid_ts_key = -1;
       }
