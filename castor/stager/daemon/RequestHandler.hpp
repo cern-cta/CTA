@@ -1,22 +1,26 @@
-/****************************************************************************************************************/
-/* Base class for all the request.                                                                             */
-/* Basically: handle AS METHOD + {StagerRequestHelper, StagerCnsHelper, StagerReplyHelper}      AS ATTRIBUTES */
-/*************************************************************************************************************/
-
-
+/*******************************************************************************************************/
+/* Base class for StagerJobRequestHandler and all the fileRequest handlers                            */
+/* Basically: handle() as METHOD  and  (stgRequestHelper,stgCnsHelper,stgReplyHelper)  as ATTRIBUTES */
+/****************************************************************************************************/
 
 #ifndef STAGER_REQUEST_HANDLER_HPP
 #define STAGER_REQUEST_HANDLER_HPP 1
 
-
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "StagerRequestHelper.hpp"
+#include "StagerCnsHelper.hpp"
+#include "StagerReplyHelper.hpp"
 
 
-#include <iostream>
+#include "../../exception/Exception.hpp"
+#include "../../IObject.hpp"
+#include "../../ObjectSet.hpp"
+
+
 #include <string>
+#include <iostream>
+
+#define DEFAULTFILESIZE (2 * (u_signed64) 1000000000)
+
 
 namespace castor{
   namespace stager{
@@ -26,28 +30,39 @@ namespace castor{
       class StagerCnsHelper;
       class StagerReplyHelper;
 
-
-      class StagerRequestHandler :public castor::IObject{
-
-      protected:
-	StagerRequestHelper* stgRequestHelper;
-	StagerCnsHelper* stgCnsHelper;
-	StagerReplyHelper* stgReplyHelper;
-	SubRequestStatusCodes newSubrequestStatus;
-
-	std::string message; /* string containing the error message, needed for exception handler and replyToClient(if necessary) */
-
+      class StagerRequestHandler : public virtual castor::IObject{
       public:
-	virtual void StagerRequestHandler::handle(void *param) const = 0;
-
-
+	/* empty destructor */
+	virtual StagerRequestHandler::~StagerRequestHandler() throw();
 	
+	/* main function for the specific request handler */
+	virtual void StagerRequestHandler::handle() throw (castor::exception::Exception) const;
 
-      }//end of StagerRequestHandler class
+	/*********************************************/
+	/* virtual functions inherited from IOBject */
+	/*******************************************/
+	virtual void setId(u_signed64 id);
+	virtual u_signed64 id() const;
+	virtual int type() const;
+	virtual IObject* clone();
+	virtual void print() const;
+	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
+ 
+      protected:
+	StagerRequestHelper *stgRequestHelper;
+	StagerCnsHelper *stgCnsHelper;
+	StagerReplyHelper *stgReplyHelper;
 
-    }//end of dbService space
-  }//end of stager space
-}//end of castor space
+     
+
+      };/* end StagerRequestHandler class */
+
+    }
+  }
+}
+
+
 
 
 #endif
+
