@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.441 $ $Date: 2007/06/21 13:10:39 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.442 $ $Date: 2007/06/21 16:13:36 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1568,6 +1568,31 @@ BEGIN
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
    WHERE parent = srId; -- SUBREQUEST_RESTART
+  -- update filesystem status
+  updateFsFileClosed(fsId);
+END;
+
+/* PL/SQL method implementing disk2DiskCopyFailed */
+CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
+(dcId IN INTEGER) AS
+  srId INTEGER;
+  fsId INTEGER;
+BEGIN
+  -- Delete the DiskCopy
+  -- Since it can not be the only one, don't try to delete
+  -- the Castorfile
+  DELETE FROM Id2Type WHERE Id = dcId;
+  DELETE FROM DiskCopy WHERE Id = dcId
+    RETURNING FileSystem INTO fsId;
+  -- Fail the corresponding subrequest. Answer was sent by the job
+  UPDATE SubRequest SET status = 9, -- SUBREQUEST_FAILEDFINISHED
+                        lastModificationTime = getTime()
+   WHERE diskCopy = dcId RETURNING id INTO srId;
+  -- Wake up other subrequests waiting on it
+  UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
+                        lastModificationTime = getTime(),
+                        parent = 0
+   WHERE parent = srId;
   -- update filesystem status
   updateFsFileClosed(fsId);
 END;
