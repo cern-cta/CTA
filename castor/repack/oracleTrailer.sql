@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.1 $ $Release$ $Date: 2007/06/18 12:52:50 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.2 $ $Release$ $Date: 2007/06/21 14:42:32 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -9,8 +9,8 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-CREATE TABLE CastorVersion (schemaVer VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('2_1_3_16', '2_1_3_16');
+CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
+INSERT INTO CastorVersion VALUES ('2_1_3_16', '2_1_3_17');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
