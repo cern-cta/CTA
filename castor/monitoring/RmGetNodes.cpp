@@ -44,16 +44,21 @@ int main(int argc, char** argv) {
     Coptind = 1; /* Required */
     Coptions_t longopts[] = {
       {"help", NO_ARGUMENT, NULL, 'h'},
+      {"all", NO_ARGUMENT, NULL, 'a'},
       {"node", REQUIRED_ARGUMENT, NULL, 'n'},
       {0, 0, 0, 0}
     };
     char c;
     char* node = 0;
-    while ((c = Cgetopt_long(argc, argv, "hn:", longopts, NULL)) != -1) {
+    int all = 0;
+    while ((c = Cgetopt_long(argc, argv, "han:", longopts, NULL)) != -1) {
       switch (c) {
       case 'n':
         node = strdup(Coptarg);
         break;
+      case 'a':
+	all = 1;
+	break;
       case 'h':
         help(argv[0]);
         exit(0);
@@ -91,17 +96,27 @@ int main(int argc, char** argv) {
 	   cs->begin();
 	 it != cs->end();
 	 it++) {
-      // Ignore deleted disk servers
-      if (it->second.adminStatus() == castor::monitoring::ADMIN_DELETED) {
-	continue;
-      }
       if (node != 0) {
 	if (strcmp(it->first.c_str(), node)) {
 	  continue;
 	}
       }
-      std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";
-      it->second.print(std::cout, dsIndent);
+
+      // Don't display all information if diskserver is deleted
+      if (it->second.adminStatus() == castor::monitoring::ADMIN_DELETED) {
+	if (all) {
+	  std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";
+	  std::cout << dsIndent << std::setw(24)
+		    << "status" << ": "
+		    << castor::stager::DiskServerStatusCodeStrings[it->second.status()] << "\n";
+	  std::cout << dsIndent << std::setw(24)
+		    << "adminStatus" << ": "
+		    << castor::monitoring::AdminStatusCodesStrings[it->second.adminStatus()] << "\n";
+	}
+      } else {
+	std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";	
+	it->second.print(std::cout, dsIndent); 
+      }
       found++;
     }
 
