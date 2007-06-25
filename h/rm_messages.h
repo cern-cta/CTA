@@ -111,5 +111,6 @@ EXTERN_C int DLL_DECL rm_msgsNbMessages _PROTO(());
 #define RM_DLF_MSG_JOB_WAS_UPDATED      99
 #define RM_DLF_MSG_NSURVEY_LT_ZERO     100
 #define RM_DLF_MSG_STARTJOB            101
+#define RM_DLF_MSG_UNKNOWN_LSF_QUEUE   102
 
 #endif /* __rm_messages_h */
