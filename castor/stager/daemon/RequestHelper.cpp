@@ -7,34 +7,41 @@
 /* **********************************************************************************************************/
 
 
-#include "StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
 
-#include "../IStagerSvc.hpp"
-#include "../../Services.hpp"
-#include "../../BaseAddress.hpp"
-#include "../SubRequest.hpp"
-#include "../FileRequest.hpp"
-#include "../../IClient.hpp"
-#include "../SvcClass.hpp"
-#include "../CastorFile.hpp"
-#include "../FileClass.hpp"
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/rm_struct.h"
+#include "castor/BaseAddress.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/IClient.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/FileClass.hpp"
 
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../../h/u64subr.h"
-#include "../../../h/osdep.h"
-#include "../../IClientFactory.hpp"
-#include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
-#include "../../../h/serrno.h"
-#include "../../Constants.hpp"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "rm_api.h"
+#include "rm_struct.h"
+
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "u64subr.h"
+#include "osdep.h"
+/* to get a instance of the services */
+#include "castor/Services.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/IService.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/db/DbCnvSvc.hpp"
+
+
+
+#include "castor/IClientFactory.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/Constants.hpp"
 
 #include <vector>
 #include <iostream>
@@ -53,22 +60,40 @@ namespace castor{
       /* contructor */
       StagerRequestHelper::StagerRequestHelper() throw(castor::exception::Exception){
 	
-	this->stagerService =  new castor::stager::IStagerSvc; 
-	if(this->stagerService == NULL){
+	castor::IService* svc =
+	  castor::BaseObject::services()->
+	  service("StagerSvc", castor::SVC_DBSTAGERSVC);
+	if (0 == svc) {
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the stagerService"<<std::endl;
 	  throw ex;
 	}
+	this->stagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+	if (0 == this->stagerService) {
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerRequestHelper constructor) Got a bad stagerService"<<std::endl;
+	  throw ex;
+	}
 	
-	this->dbService = new castor::Services;
-	if(this->dbService == NULL){
+	
+	castor::IService* svcDB =
+	  castor::BaseObject::services()->
+	  service("DbService", castor::SVC_DBCNV);
+	if (0 == svcDB) {
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the dbService"<<std::endl;
+	  throw ex;
+	}
+	this->dbService = dynamic_cast<castor::db::DbCnvSvc*>(svcDB);
+	if (0 == this->dbService) {
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerRequestHelper constructor) Got a bad dbService"<<std::endl;
 	  throw ex;
 	}
 	
 	this->baseAddr =  new castor::BaseAddress; /* the settings ll be done afterwards */
 	if(this->baseAddr == NULL){
+	  delete dbService;
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the baseAddress"<<std::endl;
 	  throw ex;
@@ -100,13 +125,7 @@ namespace castor{
       /* destructor */
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
-	if(stagerService != NULL){
-	  delete stagerService;
-	}
-	if(dbService != NULL){
-	  delete dbService;
-	}
-	if(baseAddr != NULL){
+       	if(baseAddr != NULL){
 	  delete baseAddr;
 	}
       }
@@ -285,9 +304,9 @@ namespace castor{
 	subrequest->setCastorFile(castorFile);
 	try{
 	  /* create the subrequest-> castorFile on DB*/
-	  dbService->fillRep(baseAddr, subrequest, OBJ_CastorFile, true);//throw exception
+	  dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, true);//throw exception
 	  /* create the castorFile-> svcClass link on DB */
-	  dbService->fillObj(baseAddr, castorFile, OBJ_SvcClass, 0);//throw exception	
+	  dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, 0);//throw exception	
 
 	}catch(castor::exception::Exception ex){/* stagerService throw exception */
 	  castor::exception::Exception e(SEINTERNAL);

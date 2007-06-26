@@ -9,20 +9,24 @@
 #ifndef STAGER_REPLY_HELPER_HPP
 #define STAGER_REPLY_HELPER_HPP 1
 
-#include "StagerRequestHelper.hpp"
-#include "../../rh/IOResponse.hpp"
-#include "../../replier/RequestReplier.hpp"
-#include "../FileRequest.hpp"
-#include "../IStagerSvc.hpp"
-#include "../../exception/Exception.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/rh/IOResponse.hpp"
+#include "castor/replier/RequestReplier.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/exception/Exception.hpp"
 
-#include "../SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
 
-#include "../../../h/u64subr.h"
+#include "u64subr.h"
+#include "serrno.h"
+#include "Cns_struct.h"
+#include "Cns_api.h"
+//#include "Cns.h"
 
 
-#include "../../ObjectSet.hpp"
-#include "../../IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/IObject.hpp"
 
 #include <iostream>
 #include <string>
@@ -65,26 +69,13 @@ namespace castor{
 	/* check if there is any subrequest left and send the endResponse to client if it is needed */
 	/*******************************************************************************************/
 	inline void StagerReplyHelper::endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
-	  try{
-	    /* to update the subrequest on DB */
-	    bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
-	    if(requestLeft){
-	      this->requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
-	    }  
-
-	    /* delete the attributes */
-	    delete ioResponse;
-	    delete requestReplier;    
-
-	  }catch(castor::exception::Exception ex){
-	    if( ioResponse != NULL){
-	      delete ioResponse;
-	    }
-	    if(requestReplier){
-	      delete requestReplier;
-	    }
-	    throw ex;
-	  }
+	  
+	  /* to update the subrequest on DB */
+	  bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
+	  if(requestLeft){
+	    this->requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
+	  }  
+	    
 	}
 
 	/*****************************************************************************************/

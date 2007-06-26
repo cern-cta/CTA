@@ -2,27 +2,27 @@
 /* helper class for the c methods and structures related with the cns_api */
 /*************************************************************************/
 
-#include "StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
 
 
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/Cns_struct.h"
-#include "../../../h/Cglobals.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/rm_struct.h"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "Cns_struct.h"
+#include "Cglobals.h"
+#include "rm_api.h"
+#include "rm_struct.h"
 
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../../h/u64subr.h"
-#include "../../../h/osdep.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "u64subr.h"
+#include "osdep.h"
 
-#include "../../exception/Exception.hpp"
-#include "../../../h/serrno.h"
-#include "../../Constants.hpp"
+#include "castor/exception/Exception.hpp"
+#include "serrno.h"
+#include "castor/Constants.hpp"
 
 
 #include <iostream>

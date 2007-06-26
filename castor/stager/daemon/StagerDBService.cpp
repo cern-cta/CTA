@@ -1,48 +1,59 @@
 /*********************************************************************************************************/
 /* cpp version of the "stager_db_service.c" represented by a thread calling the right request's handler */
 /*******************************************************************************************************/
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
-#include "StagerDBService.hpp"
 
-#include "StagerGetHandler.hpp"
-#include "StagerRepackHandler.hpp"
-#include "StagerPrepareToGetHandler.hpp"
-#include "StagerPrepareToPutHandler.hpp"
-#include "StagerPutHandler.hpp"
-#include "StagerPutDoneHandler.hpp"
-#include "StagerPrepareToUpdateHandler.hpp"
-#include "StagerUpdateHandler.hpp"
-#include "StagerRmHandler.hpp"
-#include "StagerSetGCHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerDBService.hpp"
+
+#include "castor/stager/dbService/StagerGetHandler.hpp"
+#include "castor/stager/dbService/StagerRepackHandler.hpp"
+#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/dbService/StagerPrepareToPutHandler.hpp"
+#include "castor/stager/dbService/StagerPutHandler.hpp"
+#include "castor/stager/dbService/StagerPutDoneHandler.hpp"
+#include "castor/stager/dbService/StagerPrepareToUpdateHandler.hpp"
+#include "castor/stager/dbService/StagerUpdateHandler.hpp"
+#include "castor/stager/dbService/StagerRmHandler.hpp"
+#include "castor/stager/dbService/StagerSetGCHandler.hpp"
 
 
-#include "../../server/SelectProcessThread.hpp"
-#include "../../BaseObject.hpp"
 
-#include "../../../h/stager_constants.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/serrno.h"
-#include "../../../h/dlf_api.h"
-#include "../../dlf/Dlf.hpp"
-#include "../../dlf/Param.hpp"
-#include "../../../h/rm_api.h"
-#include "../../../h/osdep.h"
-#include "../../../h/Cnetdb.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../../h/stager_uuid.h"
-#include "../../../h/Cuuid.h"
-#include "../../../h/u64subr.h"
 
-#include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
-#include "../SubRequestStatusCodes.hpp"
-#include "../SubRequestGetNextStatusCodes.hpp"
+#include "castor/server/SelectProcessThread.hpp"
+#include "castor/BaseObject.hpp"
+
+#include "stager_constants.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "serrno.h"
+#include "dlf_api.h"
+
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+
+#include "rm_api.h"
+#include "osdep.h"
+#include "Cnetdb.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "stager_uuid.h"
+#include "Cuuid.h"
+#include "u64subr.h"
+
+
+#include "castor/IAddress.hpp"
+#include "castor/IObject.hpp"
+#include "castor/Constants.hpp"
+
+
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
 #include <iostream>
 #include <string>
@@ -58,7 +69,6 @@ namespace castor{
       /**************/
       StagerDBService::StagerDBService() throw()
       {
-	//maybe print a nice message or login in rm
 	
 	this->types.resize(STAGER_OPTIONS);
 	ObjectsIds auxTypes[] = {OBJ_StageGetRequest,
@@ -147,8 +157,7 @@ namespace castor{
 	  /* get the uuid request string version and check if it is valid */
 	  stgRequestHelper->setRequestUuid();
 
-	  /*!! at this point in the c version, we get all the subrequest properties: mode, protocol, xsize...*/
-	  
+	 
 	  /* get the svcClass */
 	  stgRequestHelper->getSvcClass();
 	  
@@ -178,7 +187,7 @@ namespace castor{
 	  bool fileExist = stgCnsHelper->createCnsFileIdAndStat_setFileExist(filename.c_str());
 	  if(!fileExist){
 
-	    /* depending on fileExist and type, check the file needed is to be created or throw exception */
+	    /* depending on fileExist and type, check if the file needed is to be created or throw exception */
 	    if(stgRequestHelper->isFileToCreateOrException(fileExist)){
 
 	      mode_t mode = (mode_t) stgRequestHelper->subrequest->modeBits();
@@ -189,9 +198,6 @@ namespace castor{
 	  }
 
 	  /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
-
-
-
 	  stgRequestHelper->checkFilePermission();
 
 
@@ -199,8 +205,6 @@ namespace castor{
 	  castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","Starting specific subrequestHandler")};
 	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, parameter);
 	  
-	 
-
 
 	  /**************************************************/
 	  /* "from now on we can log the invariants in DLF"*/
@@ -445,10 +449,15 @@ namespace castor{
 	      
 	  }
 
-	  
-	  delete stgRequestHelper;
-	  delete stgCnsHelper;
 
+	  if(stgRequestHelper != NULL){
+	    if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
+	    delete stgRequestHelper;
+	  }
+	  
+	  if(stgCnsHelper) delete stgCnsHelper;
+	 
+	  
 	  /* we have to process the exception and reply to the client in case of error  */
 	}catch(castor::exception::Exception ex){
 
@@ -470,17 +479,30 @@ namespace castor{
 	    /* reply to the client in case of error*/
 	    if(stgRequestHelper->iClient != NULL){
 	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;
+	      if(stgReplyHelper == NULL){
+		castor::exception::Exception ex(SEINTERNAL);
+		ex.getMessage()<<"(StagerDBService catch exception) Impossible to get the stgReplyHelper"<<std::endl;
+		throw ex;
+	      }
 	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,ex.code(),ex.getMessage().str());
 	      stgReplyHelper->endReplyToClient(stgRequestHelper);
+	      delete stgReplyHelper->ioResponse;
 	      delete stgReplyHelper;
 	    }else{
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest)){
+		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      }
 	    }
-	    delete stgRequestHelper;
-	  }
-	  if(stgCnsHelper != NULL){
-	    delete stgCnsHelper;
-	  }
+
+	    if(stgRequestHelper != NULL){
+	      if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
+	      delete stgRequestHelper;
+	    }
+	    
+	    if(stgCnsHelper != NULL){
+	      delete stgCnsHelper;/* 567 */
+	    }
+	  }  
  
 	}catch (...){
 	  if((stgCnsHelper == NULL)||(stgCnsHelper->fileid == NULL)){
@@ -497,19 +519,31 @@ namespace castor{
 	    }
 	    /* reply to the client in case of error*/
 	    if(stgRequestHelper->iClient != NULL){
-	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;	    
-	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid, SEINTERNAL, "General Exception");	      
-	      stgReplyHelper->endReplyToClient(stgRequestHelper);
-	      delete stgReplyHelper;
+	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;	  
+	      if(stgReplyHelper != NULL){
+		stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid, SEINTERNAL, "General Exception");	      
+		stgReplyHelper->endReplyToClient(stgRequestHelper);
+		delete stgReplyHelper->ioResponse;
+		delete stgReplyHelper;
+	      }
 	    }else{
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest)){
+		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      }
 	    }
+	  }
+	 
+	  if(stgRequestHelper != NULL){
+	    if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
 	    delete stgRequestHelper;
 	  }
+	  
 	  if(stgCnsHelper != NULL){
 	    delete stgCnsHelper;
 	  }
 	}
+
+
       }/* end StagerDBService::run */
 
       

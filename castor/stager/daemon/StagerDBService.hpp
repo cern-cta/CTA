@@ -7,13 +7,13 @@
 #define STAGER_DB_SERVICE_HPP 1
 
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "../../server/SelectProcessThread.hpp"
-#include "../../Constants.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/server/SelectProcessThread.hpp"
+#include "castor/Constants.hpp"
 
 
-#include "../../exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
 #include <string>
 #include <iostream>
@@ -22,6 +22,8 @@ namespace castor {
   namespace stager{
     namespace dbService {
       
+      class StagerRequestHelper;
+      class StagerCnsHelper;
     
       class StagerDBService : public virtual castor::server::SelectProcessThread{
 	
@@ -32,12 +34,12 @@ namespace castor {
 	
 	
       public: 
-	//constructor
-	StagerDBService::StagerDBService() throw();
-	StagerDBService::~StagerDBService() throw();
+	/* constructor */
+	StagerDBService() throw();
+	~StagerDBService() throw();
 
-	void StagerDBService::run(void* param) throw();
-	virtual void StagerDBService::stop() throw() const;
+	void run(void* param) throw();
+	virtual void stop() throw() {};
 	
 	
 	std::vector<ObjectsIds> types;

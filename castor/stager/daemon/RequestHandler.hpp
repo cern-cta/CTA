@@ -6,14 +6,14 @@
 #ifndef STAGER_REQUEST_HANDLER_HPP
 #define STAGER_REQUEST_HANDLER_HPP 1
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
 
-#include "../../exception/Exception.hpp"
-#include "../../IObject.hpp"
-#include "../../ObjectSet.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
 
 
 #include <string>
@@ -31,12 +31,14 @@ namespace castor{
       class StagerReplyHelper;
 
       class StagerRequestHandler : public virtual castor::IObject{
+
+
       public:
 	/* empty destructor */
-	virtual StagerRequestHandler::~StagerRequestHandler() throw();
+	virtual ~StagerRequestHandler() throw() {};
 	
 	/* main function for the specific request handler */
-	virtual void StagerRequestHandler::handle() throw (castor::exception::Exception) const;
+	virtual void handle() throw (castor::exception::Exception) = 0;
 
 	/*********************************************/
 	/* virtual functions inherited from IOBject */

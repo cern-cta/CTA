@@ -10,34 +10,35 @@
 #ifndef STAGER_REQUEST_HELPER_HPP
 #define STAGER_REQUEST_HELPER_HPP 1
 
-#include "StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
 
-#include "../../IObject.hpp"
-#include "../IStagerSvc.hpp"
-#include "../../Services.hpp"
-#include "../../BaseAddress.hpp"
-#include "../SubRequest.hpp"
-#include "../FileRequest.hpp"
-#include "../../IClient.hpp"
-#include "../SvcClass.hpp"
-#include "../CastorFile.hpp"
-#include "../FileClass.hpp"
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/Cpwd.h"
-#include "../../..//h/Cgrp.h"
-#include "../../../h/u64subr.h"
+#include "castor/IObject.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/db/DbCnvSvc.hpp"
+#include "castor/BaseAddress.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/IClient.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/FileClass.hpp"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "u64subr.h"
 
-#include "../../IClientFactory.hpp"
-#include "../SubRequestStatusCodes.hpp"
-#include "../SubRequestGetNextStatusCodes.hpp"
-#include "../../exception/Exception.hpp"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/exception/Exception.hpp"
 
-#include "../../ObjectSet.hpp"
-#include "../../Constants.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/Constants.hpp"
+
 #include <vector>
 #include <iostream>
 #include <string>
@@ -50,7 +51,7 @@ namespace castor{
 
       
       class castor::stager::IStagerSvc;
-      class castor::Services;
+      class castor::db::DbCnvSvc;
       class castor::BaseAddress;
       class castor::stager::SubRequest;
       class castor::stager::FileRequest;
@@ -71,7 +72,7 @@ namespace castor{
 	  	
 	/* services needed: database and stager services*/
 	castor::stager::IStagerSvc* stagerService;
-	castor::Services* dbService;
+	castor::db::DbCnvSvc* dbService;
     
 
 	/* BaseAddress */
@@ -152,7 +153,7 @@ namespace castor{
 	/* using dbService, and get the fileRequest */ 
 	inline void StagerRequestHelper::getFileRequest() throw(castor::exception::Exception){
 	  try{
-	    dbService->fillObj(baseAddr, subrequest, OBJ_FileRequest, false); /* 155 */ 
+	    dbService->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false); /* 155 */ 
 	  }catch(castor::exception::Exception e){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper getFileRequest) Exception throwed by the dbService->fillObj"<<std::endl;
@@ -176,7 +177,7 @@ namespace castor{
 	/********************************************************************************/
 	inline void StagerRequestHelper::getIClient() throw(castor::exception::Exception){
 	  try{
-	    dbService->fillObj(baseAddr, fileRequest,OBJ_IClient, false);//196
+	    dbService->fillObj(baseAddr, fileRequest,castor::OBJ_IClient, false);//196
 	  }catch(castor::exception::Exception e){
 	    e.getMessage()<<"(StagerRequestHelper getIClient) Exception throwed by the dbService->fillObj"<<std::endl;
 	    throw e;
@@ -241,7 +242,7 @@ namespace castor{
 	  
 	  try{
 	    /* fill the svcClass object using the request as a key  */
-	    dbService->fillRep(baseAddr, fileRequest,OBJ_SvcClass,true);
+	    dbService->fillRep(baseAddr, fileRequest,castor::OBJ_SvcClass,true);
 	  }catch(castor::exception::Exception ex){
 	    castor::exception::Exception e(SEINTERNAL);
 	    e.getMessage()<< "(StagerRequestHelper linkRequestToSvcClassOnDB) dbService->fillRep throws an exception"<<std::endl;
@@ -313,7 +314,7 @@ namespace castor{
 	  try{
 	    if(svcClass_from_castorFile == NULL){
 	      castorFile->setSvcClass(svcClass);
-	      dbService->fillRep(baseAddr, castorFile, OBJ_SvcClass, true);//THROW EXCEPTION!
+	      dbService->fillRep(baseAddr, castorFile, castor::OBJ_SvcClass, true);//THROW EXCEPTION!
 	      
 	    }else{
 	      if(svcClass == NULL){
@@ -358,7 +359,7 @@ namespace castor{
 	    throw ex;
 	  }else{
 	    castorFile->setFileClass(fileClass);
-	    dbService->fillRep(baseAddr, castorFile, OBJ_FileClass, true);
+	    dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, true);
 	  }
 	  
 	}

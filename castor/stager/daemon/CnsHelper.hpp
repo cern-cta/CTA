@@ -5,21 +5,21 @@
 #ifndef STAGER_CNS_HELPER_HPP
 #define STAGER_CNS_HELPER_HPP 1
 
-#include "../../../h/Cns_api.h"
-#include "../../../h/Cns_struct.h"
-#include "../../../h/Cglobals.h"
-#include "../../../h/serrno.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "Cns_api.h"
+#include "Cns_struct.h"
+#include "Cglobals.h"
+#include "serrno.h"
 
-#include "../../IObject.hpp"
-#include "../../exception/Exception.hpp"
+#include "castor/IObject.hpp"
+#include "castor/exception/Exception.hpp"
 
-#include "../../ObjectSet.hpp"
+#include "castor/ObjectSet.hpp"
 
 #include <iostream>
 #include <string>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 
 
@@ -29,12 +29,6 @@ namespace castor{
   namespace stager{
     namespace dbService{
 
-    
-extern "C"{
-  int Cns_setid(uid_t, gid_t);
-  mode_t Cns_umask(mode_t);
-}
-  
      
       class StagerCnsHelper : public virtual castor::IObject{
 	

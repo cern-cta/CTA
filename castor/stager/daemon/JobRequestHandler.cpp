@@ -2,41 +2,41 @@
 /* base class for the 7 job handlers(Get,PrepareToGet,Update,PrepareToUpdate,Put,PrepareToPut,Repack) */
 /*****************************************************************************************************/
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
 
-#include "../IStagerSvc.hpp"
-#include "../../Services.hpp"
-#include "../../BaseAddress.hpp"
-#include "../SubRequest.hpp"
-#include "../FileRequest.hpp"
-#include "../../IClient.hpp"
-#include "../SvcClass.hpp"
-#include "../CastorFile.hpp"
-#include "../FileClass.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/Services.hpp"
+#include "castor/BaseAddress.hpp"
+#include "castor/stager/SubRequest.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/IClient.hpp"
+#include "castor/stager/SvcClass.hpp"
+#include "castor/stager/CastorFile.hpp"
+#include "castor/stager/FileClass.hpp"
 
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/Cglobals.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/rm_struct.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../IClientFactory.h"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "Cglobals.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "rm_struct.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
 
-#include "../DiskCopyForRecall.hpp"
-#include "../DiskCopyStatusCodes.hpp"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
+#include "castor/stager/DiskCopyStatusCodes.hpp"
 
-#include "../../exception/Exception.hpp"
-#include "../../../h/serrno.h"
-#include "../../Constants.hpp"
+#include "castor/exception/Exception.hpp"
+#include "serrno.h"
+#include "castor/Constants.hpp"
 
 #include <iostream>
 #include <string>
@@ -129,7 +129,7 @@ namespace castor{
 	    
 	  case 0:
 	  stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
-	  /// ADD!! :  change_subrequest_status = 0
+	  
 	  
 	  
 	  default:
@@ -167,7 +167,7 @@ namespace castor{
 	  }
 	
 	
-	if(sources.size()>0){
+	if(sources.size() > 0){
 	  if(maxReplicaNb>0){
 	    if(maxReplicaNb <= sources.size()){
 	      toProcessReplicate = true;
