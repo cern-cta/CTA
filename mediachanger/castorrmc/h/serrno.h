@@ -272,7 +272,7 @@
 #define ESTMEM          ESTBASEOFF+14	/* request too long (api) */
 #define ESTCONF         ESTBASEOFF+15	/* Stage configuration error */
 #define ESTSEGNOACC     ESTBASEOFF+16	/* Required tape segments are not all accessible */
-#define EREPLFAILED     ESTBASEOFF+17	/* File replication failed */
+#define ESTREPLFAILED   ESTBASEOFF+17	/* File replication failed */
 #define ESTMAXERR       ESTBASEOFF+17
 
 /*
