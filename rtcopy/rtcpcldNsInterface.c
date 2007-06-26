@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.39 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.40 $ $Release$ $Date: 2007/06/26 10:10:09 $ $Author: obarring $
  *
  * 
  *
@@ -73,6 +73,7 @@ WSADATA wsadata;
 #include <castor/stager/CastorFile.h>
 #include <castor/stager/TapeCopy.h>
 #include <castor/stager/SubRequest.h>
+#include <castor/stager/ITapeSvc.h>
 #include <castor/Constants.h>
 #include <rtcp_constants.h>
 #include <vdqm_api.h>
@@ -361,8 +362,8 @@ int rtcpcld_updateNsSegmentAttributes(
                   DLF_MSG_PARAM_STR,
                   nsSegAttrs->checksum_name,
                   "CKSUM",
-                  DLF_MSG_PARAM_INT64,
-                  nsSegAttrs->checksum
+                  DLF_MSG_PARAM_INT,
+                  (int)nsSegAttrs->checksum
                   );
   free(blkid);
 
@@ -624,14 +625,14 @@ int rtcpcld_checkNsSegment(
                       DLF_MSG_PARAM_STR,
                       currentSegattrs[i].checksum_name,
                       "OLDCKSUM",
-                      DLF_MSG_PARAM_INT64,
-                      currentSegattrs[i].checksum,
+                      DLF_MSG_PARAM_INT,
+                      (int)currentSegattrs[i].checksum,
                       "NEWALG",
                       DLF_MSG_PARAM_STR,
                       newSegattrs.checksum_name,
                       "NEWCKSUM",
-                      DLF_MSG_PARAM_INT64,
-                      newSegattrs.checksum
+                      DLF_MSG_PARAM_INT,
+                      (int)newSegattrs.checksum
                       );
       rc = Cns_updateseg_checksum(
                                   castorFileId->server,
@@ -671,11 +672,11 @@ int rtcpcld_checkNsSegment(
                           DLF_MSG_PARAM_STR,
                           blkid,
                           "NSCKSUM",
-                          DLF_MSG_PARAM_INT64,
-                          currentSegattrs[i].checksum,
+                          DLF_MSG_PARAM_INT,
+                          (int)currentSegattrs[i].checksum,
                           "SEGCKSUM",
-                          DLF_MSG_PARAM_INT64,
-                          filereq->castorSegAttr.segmCksum,
+                          DLF_MSG_PARAM_INT,
+                          (int)filereq->castorSegAttr.segmCksum,
                           RTCPCLD_LOG_WHERE
                           );
           save_serrno = SECHECKSUM;
@@ -702,8 +703,8 @@ int rtcpcld_checkNsSegment(
                           DLF_MSG_PARAM_STR,
                           blkid,
                           "SEGCKSUM",
-                          DLF_MSG_PARAM_INT64,
-                          filereq->castorSegAttr.segmCksum
+                          DLF_MSG_PARAM_INT,
+                          (int)filereq->castorSegAttr.segmCksum
                           );
         }
       } else {
@@ -734,14 +735,14 @@ int rtcpcld_checkNsSegment(
                         DLF_MSG_PARAM_STR,
                         currentSegattrs[i].checksum_name,
                         "OLDCKSUM",
-                        DLF_MSG_PARAM_INT64,
-                        currentSegattrs[i].checksum,
+                        DLF_MSG_PARAM_INT,
+                        (int)currentSegattrs[i].checksum,
                         "NEWALG",
                         DLF_MSG_PARAM_STR,
                         filereq->castorSegAttr.segmCksumAlgorithm,
                         "NEWCKSUM",
-                        DLF_MSG_PARAM_INT64,
-                        filereq->castorSegAttr.segmCksum
+                        DLF_MSG_PARAM_INT,
+                        (int)filereq->castorSegAttr.segmCksum
                         );
       }
     }
