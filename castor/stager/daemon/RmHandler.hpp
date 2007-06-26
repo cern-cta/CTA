@@ -7,20 +7,20 @@
 #ifndef STAGER_RM_HANDLER_HPP
 #define STAGER_RM_HANDLER_HPP 1
 
-#include "StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "../../../h/u64subr.h"
+#include "u64subr.h"
 
-#include "../IStagerSvc.hpp"
-#include "../SubRequest.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/stager/SubRequest.hpp"
 
-#include "../../IObject.hpp"
-#include "../../ObjectSet.hpp"
-#include "../../exception/Exception.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/exception/Exception.hpp"
 
 #include <iostream>
 #include <string>

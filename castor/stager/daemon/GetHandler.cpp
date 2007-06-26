@@ -3,29 +3,29 @@
 /***********************************************************************************/
 
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
-#include "StagerGetHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerGetHandler.hpp"
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/rm_struct.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../../h/osdep.h"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "rm_struct.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "osdep.h"
 
-#include "../../IClientFactory.hpp"
-#include "../SubRequestStatusCodes.hpp"
-#include "../SubRequestGetNextStatusCodes.hpp"
-#include "../../exception/Exception.hpp"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/exception/Exception.hpp"
 
 
 #include <iostream>
@@ -84,7 +84,7 @@ namespace castor{
 	try{
 	  jobOriented();
 	  
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	  switchScheduling(caseToSchedule);
 	  
 	  if(rfs.empty() == false){

@@ -7,26 +7,27 @@
 
 
 
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
-#include "StagerPrepareToUpdateHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerPrepareToUpdateHandler.hpp"
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../IClientFactory.hpp"
-#include "../SubRequestStatusCodes.hpp"
-#include "../DiskCopyForRecall.hpp"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 
-#include "../../exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
 
 #include <iostream>
@@ -109,7 +110,7 @@ namespace castor{
 
 	  }else{/* we schedule, huge flow */
 	    
-	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
+	    int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	    switchScheduling(caseToSchedule);
 	    
 	    /* build the rmjob struct and submit the job */
@@ -139,11 +140,13 @@ namespace castor{
 	  }
 	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 	
 	}catch(castor::exception::Exception ex){
 
 	  if(stgReplyHelper != NULL){
+	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
 	  if(rmjob_out != NULL){

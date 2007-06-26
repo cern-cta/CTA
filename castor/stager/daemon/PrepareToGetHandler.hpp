@@ -9,31 +9,32 @@
 
 
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
 
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../../h/u64subr.h"
-#include "../../IClientFactory.h"
-#include "../SubRequestStatusCodes.hpp"
-#include "../SubRequestGetNextStatusCodes.hpp"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "u64subr.h"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
-#include "../../exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
-#include "../../ObjectSet.hpp"
-#include "../../IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/IObject.hpp"
+
 #include <iostream>
 #include <string>
 

@@ -8,27 +8,27 @@
 
 
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
-#include "StagerUpdateHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerUpdateHandler.hpp"
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../IClientFactory.h"
-#include "../SubRequestStatusCodes.hpp"
-#include "../DiskCopyForRecall.hpp"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
 
-#include "../../exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -102,8 +102,8 @@ namespace castor{
 	    }
 	    
 	    /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
-	    std::string diskServerName = diskCopyForRecall->diskServer();
-	    std::string mountPoint = diskCopyForRecall->mountPoint();
+	    std::string diskServerName(diskCopyForRecall->diskServer());
+	    std::string mountPoint(diskCopyForRecall->mountPoint());
 	    
 	    if((!diskServerName.empty())&&(!mountPoint.empty())){
 	      this->rfs = diskServerName + ":" + mountPoint;
@@ -115,7 +115,7 @@ namespace castor{
 	    
 	  }else{
 	    
-	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,&(this->sources));
+	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
 	    switchScheduling(caseToSchedule);
 	    
 	    /* since the file exist, we need the read flag */

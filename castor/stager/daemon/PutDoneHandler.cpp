@@ -2,27 +2,36 @@
 /* StagerPutDoneHandler: Constructor and implementation of the PutDone request's handle        */
 /*********************************************************************************************** */
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
-#include "StagerPutDoneHandler.hpp"
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../IClientFactory.h"
-#include "../SubRequestStatusCodes.hpp"
-#include "../DiskCopyForRecall.hpp"
+#include "castor/Services.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/IService.hpp"
+#include "castor/stager/IJobSvc.hpp"
 
-#include "../../exception/Exception.hpp"
+
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerPutDoneHandler.hpp"
+
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "castor/Constants.hpp"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/stager/DiskCopyForRecall.hpp"
+
+#include "castor/exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -54,23 +63,33 @@ namespace castor{
 	  jobOriented();/* until it will be explored */
 	  /* is PutDone jobOriented? I don' t think so, then I won't call this method */
 	  /* ask about the state of the sources */
-	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), &(this->sources));
+	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
 	  
-	  if(sources->size()<=0){
+	  if(sources.size()<=0){
 	    castor::exception::Exception ex(EPERM);
 	    ex.getMessage()<<"(StagerPutDoneHandler handle) PutDone without a Put (sources.size <0)"<<std::endl;
 	    throw ex;
 	  }
 	  
-	  this->jobService = new castor::stager::IJobSvc;
-	  if(this->jobService == NULL){
+
+
+	  castor::IService* svc =
+	    castor::BaseObject::services()->
+	    service("JobSvc", castor::SVC_DBJOBSVC);
+	  if (0 == svc) {
 	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerPutDoneHandler handle) Impossible to get the jobService"<<std::endl;
+	    ex.getMessage()<<"(StagerPutDonHandler handle) Impossible to get the jobService"<<std::endl;
 	    throw ex;
 	  }
+	  this->jobService = dynamic_cast<castor::stager::IJobSvc*>(svc);
+	  if (0 == this->jobService) {
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerPutDoneHandler handle) Got a bad jobService"<<std::endl;
+	    throw ex;
+	  }
+	  
 	  jobService->prepareForMigration(stgRequestHelper->subrequest,0,0);
-	  delete jobService;
-
+	  
 	  /* we never change the subrequestStatus !!!*/	  
 	  
 	  /* for the PutDone, if everything is ok, we archive the subrequest */
@@ -85,13 +104,12 @@ namespace castor{
 	  }
 	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 	   
 	}catch(castor::exception::Exception ex){
-	  if(jobService != NULL){
-	    delete jobService;
-	  }
 	  if(stgReplyHelper != NULL){
+	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
 	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);

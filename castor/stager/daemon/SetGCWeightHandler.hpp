@@ -8,19 +8,19 @@
 #ifndef STAGER_SET_GC_HANDLER_HPP
 #define STAGER_SET_GC_HANDLER_HPP 1
 
-#include "StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "../../../h/u64subr.h"
+#include "u64subr.h"
 
-#include "../SetFileGCWeight.hpp"
+#include "castor/stager/SetFileGCWeight.hpp"
 
-#include "../../IObject.hpp"
-#include "../../ObjectSet.hpp"
-#include "../../exception/Exception.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/exception/Exception.hpp"
 
 #include <iostream>
 #include <string>

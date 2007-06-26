@@ -4,25 +4,25 @@
 /* it always needs to reply to the client                                                           */
 /***************************************************************************************************/
 
-#include "StagerSetGCHandler.hpp"
+#include "castor/stager/dbService/StagerSetGCHandler.hpp"
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
 
-#include "../SetFileGCWeight.hpp"
+#include "castor/stager/SetFileGCWeight.hpp"
 
-#include "../../IObject.hpp"
-#include "../../ObjectSet.hpp"
-#include "../IStagerSvc.hpp"
-#include "../SubRequest.hpp"
-#include "../SetFileGCWeight.hpp"
-#include "../FileRequest.hpp"
-#include "../SubRequestStatusCodes.hpp"
-#include "../SubRequestGetNextStatusCodes.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/stager/SubRequest.hpp"
 
-#include "../../exception/Exception.hpp"
+#include "castor/stager/FileRequest.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+
+#include "castor/exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -74,6 +74,7 @@ namespace castor{
 	  }
 	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No error");
 	  stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 
 	}catch(castor::exception::Exception ex){
@@ -81,6 +82,7 @@ namespace castor{
 	    delete setFileGCWeight;
 	  }
 	  if(stgReplyHelper != NULL){
+	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
 	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);

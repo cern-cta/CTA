@@ -4,27 +4,27 @@
 /*******************************************************************************************/
 
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
-#include "StagerPrepareToGetHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../IClientFactory.h"
-#include "../SubRequestStatusCodes.hpp"
-#include "../SubRequestGetNextStatusCodes.hpp"
-#include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 
 
 #include <iostream>
@@ -79,7 +79,7 @@ namespace castor{
 	  
 	  /* scheduling Part */
 	  /* first use the stager service to get the possible sources for the required file */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	  
 	  switch(caseToSchedule){
 	  case 0:
@@ -125,6 +125,7 @@ namespace castor{
 	  }
 	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 
 	}catch(castor::exception::Exception ex){
@@ -132,6 +133,7 @@ namespace castor{
 	    rm_freejob(rmjob_out);
 	  }
 	  if(stgReplyHelper != NULL){
+	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
 	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
@@ -158,7 +160,7 @@ namespace castor{
 
 	case 2: //normal tape recall
 	 
-	  stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,(const) stgRequestHelper->fileRequest->euid(), (const) stgRequestHelper->fileRequest->egid());//throw exception
+	  stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid());//throw exception
 	  
 	  break;
 

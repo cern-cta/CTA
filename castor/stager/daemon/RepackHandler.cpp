@@ -4,28 +4,27 @@
 /*******************************************************************************************/
 
 
-#include "StagerRequestHelper.hpp"
-#include "StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "StagerRequestHandler.hpp"
-#include "StagerJobRequestHandler.hpp"
-#include "StagerRepackHandler.hpp"
+#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerRepackHandler.hpp"
 
-#include "../../../h/stager_uuid.h"
-#include "../../../h/stager_constants.h"
-#include "../../../h/serrno.h"
-#include "../../../h/Cns_api.h"
-#include "../../../h/expert_api.h"
-#include "../../../h/rm_api.h"
-#include "../../../h/Cpwd.h"
-#include "../../../h/Cgrp.h"
-#include "../../IClientFactory.hpp"
-#include "../SubRequestStatusCodes.hpp"
-#include "../SubRequestGetNextStatusCodes.hpp"
+#include "stager_uuid.h"
+#include "stager_constants.h"
+#include "serrno.h"
+#include "Cns_api.h"
+#include "expert_api.h"
+#include "rm_api.h"
+#include "Cpwd.h"
+#include "Cgrp.h"
+#include "castor/IClientFactory.hpp"
+#include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
-#include "../../exception/Exception.hpp"
-#include "../../exception/Internal.hpp"
+#include "castor/exception/Exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -81,7 +80,7 @@ namespace castor{
 	  
 	  /* scheduling Part */
 	  /* first use the stager service to get the possible sources for the required file */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, &(this->sources));/*84 */
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);/*84 */
 	  switchScheduling(caseToSchedule);
 	  
 	  if((rfs.empty()) == false){
@@ -115,12 +114,15 @@ namespace castor{
 	  
 	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
 	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
+
 	}catch(castor::exception::Exception ex){
 	  if(rmjob_out != NULL){
 	    rm_freejob(rmjob_out);
 	  }
 	  if(stgReplyHelper != NULL){
+	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
 	  stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
