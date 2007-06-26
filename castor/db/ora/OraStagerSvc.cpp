@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.203 $ $Release$ $Date: 2007/06/26 14:16:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.204 $ $Release$ $Date: 2007/06/26 16:31:43 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -91,6 +91,7 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
+
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
   "BEGIN subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
@@ -129,7 +130,7 @@ const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
 
 /// SQL statement for stageRm
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
-  "BEGIN stageRm(:1, :2, :3); END;";
+  "BEGIN stageRm(:1, :2, :3, :4); END;";
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
@@ -233,7 +234,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
   try {
     // Check whether the statements are ok
     if (0 == m_subRequestToDoStatement) {
-       m_subRequestToDoStatement =
+      m_subRequestToDoStatement =
         createStatement(s_subRequestToDoStatementString);
       m_subRequestToDoStatement->registerOutParam
         (2, oracle::occi::OCCIDOUBLE);
@@ -796,7 +797,7 @@ void castor::db::ora::OraStagerSvc::stageRelease
 // stageRm
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::stageRm
-(const u_signed64 fileId, const std::string nsHost)
+(const u_signed64 fileId, const std::string nsHost, const u_signed64 svcClassId)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -804,12 +805,13 @@ void castor::db::ora::OraStagerSvc::stageRm
       m_stageRmStatement =
         createStatement(s_stageRmStatementString);
       m_stageRmStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
+        (4, oracle::occi::OCCIINT);
       m_stageRmStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_stageRmStatement->setDouble(1, fileId);
     m_stageRmStatement->setString(2, nsHost);
+    m_stageRmStatement->setDouble(3, svcClassId);
     unsigned int nb = m_stageRmStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -818,7 +820,7 @@ void castor::db::ora::OraStagerSvc::stageRm
       throw ex;
     }
     // In case of EBUSY, throw exception
-    int returnCode = m_stageRmStatement->getInt(3);
+    int returnCode = m_stageRmStatement->getInt(4);
     if (returnCode != 0) {
       castor::exception::Busy e;
       if (returnCode == 1) {
@@ -826,7 +828,7 @@ void castor::db::ora::OraStagerSvc::stageRm
       } else if (returnCode == 2) {
         e.getMessage() << "The file is being replicated.";
       } else {
-        e.getMessage() << "The file is being recalled from Tape.";
+        e.getMessage() << "The file is being recalled from tape.";
       }
       throw e;
     }

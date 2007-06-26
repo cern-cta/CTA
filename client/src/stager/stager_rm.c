@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.6 $ $Release$ $Date: 2007/05/29 08:41:50 $ $Author: waldron $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.7 $ $Release$ $Date: 2007/06/26 16:32:03 $ $Author: itglp $
  *
  * command line for stager_rm
  *
@@ -35,12 +35,14 @@
 static struct Coptions longopts[] =
   {
     {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+    {"svcClass",      REQUIRED_ARGUMENT,  NULL,      'S'},
     {"help",          NO_ARGUMENT,        NULL,      'h'},
+    {"all",           NO_ARGUMENT,        NULL,      'a'},
     {NULL,            0,                  NULL,        0}
   };
 
 void usage _PROTO((char *));
-int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs);
+int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs, struct stage_options* opts);
 int cmd_countHsmFiles(int argc, char *argv[]);
 
 #define ERRBUFSIZE 255
@@ -62,7 +64,7 @@ int main(int argc, char *argv[]) {
 
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));
-  errflg =  cmd_parse(argc, argv, &reqs, &nbreqs);
+  errflg = cmd_parse(argc, argv, &reqs, &nbreqs, &opts);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -108,7 +110,8 @@ int main(int argc, char *argv[]) {
 int cmd_parse(int argc,
               char *argv[],
               struct stage_filereq **reqs,
-              int* nbreqs) {
+              int* nbreqs,
+              struct stage_options* opts) {
   int nbfiles, Coptind, Copterr, errflg;
   char c;
 
@@ -128,11 +131,17 @@ int cmd_parse(int argc,
   errflg = 0;
   nbfiles = 0;
   while ((c = Cgetopt_long
-          (argc, argv, "M:h", longopts, NULL)) != -1) {
+          (argc, argv, "M:S:ha", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       (*reqs)[nbfiles].filename = Coptarg;
       nbfiles++;
+      break;
+    case 'S':
+      opts->service_class = (char *)strdup(Coptarg);
+      break;
+    case 'a':
+      opts->service_class = "*";
       break;
     case 'h':
     default:
@@ -160,7 +169,7 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
   Copterr = 1;
   errflg = 0;
   nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:h", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "S:M:ha", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
       nbargs++;;
@@ -184,5 +193,5 @@ int cmd_countHsmFiles(int argc, char *argv[]) {
 void usage(char* cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "[-h] -M hsmfile [-M ...]\n");
+           "[-h] [-S svcClass | -a] -M hsmfile [-M ...]\n");
 }

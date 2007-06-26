@@ -265,10 +265,12 @@ namespace castor {
          * garbage collection.
          * @param fileId the fileId of the CastorFile
          * @param nsHost the name server to use
+         * @param svcClassId the svcClass where to perform
+         * the rm operation; 0 for all svcClasses.
          * @exception in case of error or if the file is busy
          */
         virtual void stageRm
-        (const u_signed64 fileId, const std::string nsHost)
+        (const u_signed64 fileId, const std::string nsHost, const u_signed64 svcClassId)
           throw (castor::exception::Exception);
 
         /**
