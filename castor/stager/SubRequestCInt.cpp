@@ -282,6 +282,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_errorCode
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_errorCode(castor::stager::SubRequest* instance, int* var) {
+    *var = instance->errorCode();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setErrorCode
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setErrorCode(castor::stager::SubRequest* instance, int new_var) {
+    instance->setErrorCode(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_errorMessage
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_errorMessage(castor::stager::SubRequest* instance, const char** var) {
+    *var = instance->errorMessage().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setErrorMessage
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setErrorMessage(castor::stager::SubRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setErrorMessage(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_id
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_id(castor::stager::SubRequest* instance, u_signed64* var) {

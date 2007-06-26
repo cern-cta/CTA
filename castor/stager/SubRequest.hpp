@@ -316,6 +316,46 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_errorCode
+       * error code associated with this subrequest. Has a meaning only for subrequests
+       * in status SUBREQUEST_FAILED
+       * @return the value of m_errorCode
+       */
+      int errorCode() const {
+        return m_errorCode;
+      }
+
+      /**
+       * Set the value of m_errorCode
+       * error code associated with this subrequest. Has a meaning only for subrequests
+       * in status SUBREQUEST_FAILED
+       * @param new_var the new value of m_errorCode
+       */
+      void setErrorCode(int new_var) {
+        m_errorCode = new_var;
+      }
+
+      /**
+       * Get the value of m_errorMessage
+       * error message associated with this subrequest. Has a meaning only for
+       * subrequests in status SUBREQUEST_FAILED
+       * @return the value of m_errorMessage
+       */
+      std::string errorMessage() const {
+        return m_errorMessage;
+      }
+
+      /**
+       * Set the value of m_errorMessage
+       * error message associated with this subrequest. Has a meaning only for
+       * subrequests in status SUBREQUEST_FAILED
+       * @param new_var the new value of m_errorMessage
+       */
+      void setErrorMessage(std::string new_var) {
+        m_errorMessage = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -496,6 +536,12 @@ namespace castor {
        * This was introduced to deal with prepareToGet where the answer is sent before the status of the subrequest changes
       */
       int m_answered;
+
+      /// error code associated with this subrequest. Has a meaning only for subrequests in status SUBREQUEST_FAILED
+      int m_errorCode;
+
+      /// error message associated with this subrequest. Has a meaning only for subrequests in status SUBREQUEST_FAILED
+      std::string m_errorMessage;
 
       /// The id of this object
       u_signed64 m_id;

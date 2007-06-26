@@ -236,6 +236,34 @@ int Cstager_SubRequest_answered(struct Cstager_SubRequest_t* instance, int* var)
 int Cstager_SubRequest_setAnswered(struct Cstager_SubRequest_t* instance, int new_var);
 
 /**
+ * Get the value of errorCode
+ * error code associated with this subrequest. Has a meaning only for subrequests
+ * in status SUBREQUEST_FAILED
+ */
+int Cstager_SubRequest_errorCode(struct Cstager_SubRequest_t* instance, int* var);
+
+/**
+ * Set the value of errorCode
+ * error code associated with this subrequest. Has a meaning only for subrequests
+ * in status SUBREQUEST_FAILED
+ */
+int Cstager_SubRequest_setErrorCode(struct Cstager_SubRequest_t* instance, int new_var);
+
+/**
+ * Get the value of errorMessage
+ * error message associated with this subrequest. Has a meaning only for
+ * subrequests in status SUBREQUEST_FAILED
+ */
+int Cstager_SubRequest_errorMessage(struct Cstager_SubRequest_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * error message associated with this subrequest. Has a meaning only for
+ * subrequests in status SUBREQUEST_FAILED
+ */
+int Cstager_SubRequest_setErrorMessage(struct Cstager_SubRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
