@@ -209,7 +209,8 @@ throw (castor::exception::Exception) :
      {35, "Retrieving cluster status from database to shared memory"},
      {36, "Heartbeat Thread created."},
      {37, "Heartbeat Thread started."},
-     {38, "Heartbeat check failed for disk server, status changed to DISABLED."},
+     {38, "Heartbeat check failed for diskserver, status changed to DISABLED."},
+     {39, "Heartbeat resumed for diskserver, status changed to PRODUCTION."},
      {-1, ""}};
   castor::dlf::dlf_init("RmMaster", messages);
 
@@ -217,7 +218,7 @@ throw (castor::exception::Exception) :
   bool created = true;
   m_clusterStatus = castor::monitoring::ClusterStatus::getClusterStatus(created);
 
-  if(created) {
+  if (created) {
     // the cluster status has just been created and it's empty, probably RmMaster got restarted
     // get db service
     castor::IService* orasvc = castor::BaseObject::services()->service("OraRmMasterSvc", castor::SVC_ORARMMASTERSVC);
@@ -235,6 +236,6 @@ throw (castor::exception::Exception) :
 
     // now populate cluster status with last saved status in the database if any
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 35);
-    rmMasterService->retrieveClusterStatus(m_clusterStatus);    
+    rmMasterService->retrieveClusterStatus(m_clusterStatus);
   }
 }

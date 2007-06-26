@@ -81,6 +81,15 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
   it->second.setRam(state->ram());
   it->second.setMemory(state->memory());
   it->second.setSwap(state->swap());
+  // Announce a diskservers change of status ? (e.g. being re-enabled after
+  // heartbeat check failure)
+  if ((it->second.adminStatus() == ADMIN_NONE) && 
+      (it->second.status() == castor::stager::DISKSERVER_DISABLED) &&
+      (state->status() == castor::stager::DISKSERVER_PRODUCTION)) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Hostname", state->name())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 39, 1, params);
+  }
   // Update status if needed
   if (it->second.adminStatus() == ADMIN_NONE ||
       state->adminStatus() != ADMIN_NONE) {
