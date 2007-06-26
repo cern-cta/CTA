@@ -19,7 +19,7 @@
 #
 # @(#)Imakefile,v 1.2 $Release$ 2005/03/15 23:24:32 bcouturi
 #
-# Make Castor rmmaster daemon
+# Make Castor stagerDBService daemon
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #
@@ -27,15 +27,30 @@
 #include <Project.tmpl>
 
 DEBUG  = -g -O0
-MANPAGES = 
-EXPORTMANPAGES = 
+#MANPAGES = 
+#EXPORTMANPAGES = 
 
 INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
 LIBS = -lshift -lcastorCnvs 
-DBSERVICEDAEMONBIN_SRCS = StagerRequestHelper.cpp
+DBSERVICEDAEMONBIN_SRCS = \
+	StagerDBService.cpp\
+	StagerRequestHelper.cpp\
+	StagerCnsHelper.cpp\
+	StagerReplyHelper.cpp\
+	StagerJobRequestHandler.cpp\
+	StagerGetHandler.cpp\
+	StagerPrepareToGetHandler.cpp\
+	StagerRepackHandler.cpp\
+	StagerUpdateHandler.cpp\
+	StagerPrepareToUpdateHandler.cpp\
+	StagerPutHandler.cpp\
+	StagerPrepareToPutHandler.cpp\
+	StagerPutDoneHandler.cpp\
+	StagerRmHandler.cpp\
+	StagerSetGCHandler.cpp
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 
@@ -57,7 +72,7 @@ depend:
 	@echo Not supported on this platform
 #else
 depend:
-	makedepend $(INCLUDES) $(RMMASTERDAEMONBIN_SRCS) 2> /dev/null
+	makedepend $(INCLUDES) $(DBSERVICEDAEMONBIN_SRCS) 2> /dev/null
 #endif
 
 install.man: $(MANDIR) $(MANPAGES)
