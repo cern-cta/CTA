@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.35 2007/06/04 10:52:28 sponcec3 Exp $
+## $Id: PACKAGING.howto,v 1.36 2007/06/26 14:46:17 sponcec3 Exp $
 #
 
 #
@@ -130,7 +130,7 @@ mv intReleases/x.y.z-r CERN/savannah/CASTOR.pkg/
 # You should request the (automatic) creation of the volume by following the instructions at:
 # https://twiki.cern.ch/twiki/bin/view/SPI/SpiSpaceRequests
 #
-./tools/installOnAFS.py > /tmp/afsInstallScript
+./tools/installOnAFS.py x.y.z-r > /tmp/afsInstallScript
 source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
 
 # 3. update the web pages
