@@ -83,7 +83,7 @@ CREATE TABLE StageRequestQueryRequest (flags INTEGER, userName VARCHAR2(2048), e
 CREATE TABLE StageFindRequestRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageFindRequestRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, id INTEGER CONSTRAINT I_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50;
+CREATE TABLE SubRequest (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048), xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER, modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER, answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048), id INTEGER CONSTRAINT I_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER) INITRANS 50 PCTFREE 50;
 
 /* SQL statements for type StageReleaseFilesRequest */
 CREATE TABLE StageReleaseFilesRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageReleaseFilesRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50;
@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.441  Date: 2007/06/21 13:10:39  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.442  Date: 2007/06/21 16:13:36  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1763,6 +1763,31 @@ BEGIN
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
    WHERE parent = srId; -- SUBREQUEST_RESTART
+  -- update filesystem status
+  updateFsFileClosed(fsId);
+END;
+
+/* PL/SQL method implementing disk2DiskCopyFailed */
+CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
+(dcId IN INTEGER) AS
+  srId INTEGER;
+  fsId INTEGER;
+BEGIN
+  -- Delete the DiskCopy
+  -- Since it can not be the only one, don't try to delete
+  -- the Castorfile
+  DELETE FROM Id2Type WHERE Id = dcId;
+  DELETE FROM DiskCopy WHERE Id = dcId
+    RETURNING FileSystem INTO fsId;
+  -- Fail the corresponding subrequest. Answer was sent by the job
+  UPDATE SubRequest SET status = 9, -- SUBREQUEST_FAILEDFINISHED
+                        lastModificationTime = getTime()
+   WHERE diskCopy = dcId RETURNING id INTO srId;
+  -- Wake up other subrequests waiting on it
+  UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
+                        lastModificationTime = getTime(),
+                        parent = 0
+   WHERE parent = srId;
   -- update filesystem status
   updateFsFileClosed(fsId);
 END;
