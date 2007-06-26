@@ -195,7 +195,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.434  Date: 2007/06/11 12:07:23  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.441  Date: 2007/06/21 13:10:39  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -204,8 +204,8 @@ ALTER TABLE TapeDrive2TapeDriveComp
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-CREATE TABLE CastorVersion (version VARCHAR2(100), plsqlrevision VARCHAR2(100));
-INSERT INTO CastorVersion VALUES ('2_1_3_8', 'Revision: 1.434  Date: 2007/06/11 12:07:23 ');
+CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
+INSERT INTO CastorVersion VALUES ('2_1_3_16', '2_1_3_17');
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -253,6 +253,51 @@ partition by list (type)
   partition notlisted values (default) tablespace stager_data
  );
 
+/* Redefinition of table SubRequest to make it partitioned by status */
+/* Unfortunately it has already been defined, so we drop and recreate it */
+/* Note that if the schema changes, this part has to be updated manually! */
+DROP TABLE SubRequest;
+CREATE TABLE SubRequest
+   (
+        "RETRYCOUNTER" NUMBER,
+        "FILENAME" VARCHAR2(2048),
+        "PROTOCOL" VARCHAR2(2048),
+        "XSIZE" NUMBER(*,0),
+        "PRIORITY" NUMBER,
+        "SUBREQID" VARCHAR2(2048),
+        "FLAGS" NUMBER,
+        "MODEBITS" NUMBER,
+        "CREATIONTIME" NUMBER(*,0),
+        "LASTMODIFICATIONTIME" NUMBER(*,0),
+        "ANSWERED" NUMBER,
+        "ID" NUMBER(*,0) NOT NULL,
+        "DISKCOPY" NUMBER(*,0),
+        "CASTORFILE" NUMBER(*,0),
+        "PARENT" NUMBER(*,0),
+        "STATUS" NUMBER(*,0),
+        "REQUEST" NUMBER(*,0),
+        "GETNEXTSTATUS" NUMBER(*,0)
+    )
+  PCTFREE 50 PCTUSED 40 INITRANS 50
+  TABLESPACE "STAGER_DATA" ENABLE ROW MOVEMENT
+  PARTITION BY LIST (STATUS)
+   (
+    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),
+    PARTITION P_STATUS_3 VALUES (3),
+    PARTITION P_STATUS_4 VALUES (4),
+    PARTITION P_STATUS_5 VALUES (5),
+    PARTITION P_STATUS_6 VALUES (6),
+    PARTITION P_STATUS_7 VALUES (7),
+    PARTITION P_STATUS_8 VALUES (8),
+    PARTITION P_STATUS_9 VALUES (9),
+    PARTITION P_STATUS_10 VALUES (10),
+    PARTITION P_STATUS_11 VALUES (11),
+    PARTITION P_STATUS_12 VALUES (12),
+    PARTITION P_STATUS_OTHER VALUES (DEFAULT)
+   );
+
+ALTER TABLE SUBREQUEST ADD CONSTRAINT I_SUBREQUEST_PK PRIMARY KEY (ID);
+
 /* Indexes related to most used entities */
 CREATE UNIQUE INDEX I_DiskServer_name on DiskServer (name);
 
@@ -272,8 +317,6 @@ CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,stat
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
 
-CREATE INDEX I_SubRequest_Status on SubRequest (decode(status,0,status,1,status,2,status,NULL));
-CREATE INDEX I_SubRequest_Status7 on SubRequest (decode(status,7,status,NULL));
 CREATE INDEX I_SubRequest_Castorfile on SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
@@ -557,6 +600,49 @@ BEGIN
 END;
 /
 
+
+/* PL/SQL method to get the next SubRequest to do according to the given service */
+/* the service parameter is not used now, it will with the new stager */
+CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
+                                           srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
+                                           srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
+                                           srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
+                                           srSubReqId OUT VARCHAR2) AS
+ firstRow VARCHAR2(18);
+ CURSOR c IS
+  SELECT rowidtochar(rowid) FROM SubRequest
+   WHERE status in (0,1,2)    -- START, RESTART, RETRY
+     AND EXISTS
+       (SELECT /*+ index(I_Id2Type_id) */ 'x'
+         FROM Id2Type
+        WHERE type in (35,36,37,38,39,40,42,44,95,119)
+          AND Id2Type.id = SubRequest.request);
+        --AND Id2Type.type = Type2Obj.type
+        --AND Type2Obj.svcHandler = service;
+BEGIN
+  OPEN c;
+  FETCH c INTO firstRow;
+  UPDATE subrequest SET status = 3 WHERE rowid = CHARTOROWID(firstRow)   -- SUBREQUEST_WAITSCHED
+    RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
+    INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
+  CLOSE c;
+END;
+/
+
+/* PL/SQL method to get the next request to do according to the given service */
+/*
+PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
+BEGIN
+ DELETE FROM NewRequests 
+  WHERE type IN (
+    SELECT Id2Type.type FROM Id2Type, Type2Obj
+     WHERE Id2Type.type = Type2Obj.type
+       AND Type2Obj.svcHandler = service
+    )
+  AND ROWNUM < 2 RETURNING id INTO rId;
+END;
+/
+*/
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(srId IN INTEGER, dci IN INTEGER) AS
@@ -2696,18 +2782,17 @@ CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
   bestValue NUMBER;
 BEGIN
   -- List policies to be applied
-  BEGIN
-    SELECT UNIQUE svcClass.gcPolicy
-           BULK COLLECT INTO policies
-      FROM SvcClass, DiskPool2SvcClass, FileSystem
-     WHERE FileSystem.id = fsId
-       AND DiskPool2SvcClass.Parent = FileSystem.diskPool
-       AND SvcClass.Id = DiskPool2SvcClass.Child
-       AND length(SvcClass.gcPolicy) IS NOT NULL; -- strange way ORACLE has to deal with empty strings...
-  EXCEPTION WHEN NO_DATA_FOUND THEN
+  SELECT UNIQUE svcClass.gcPolicy
+         BULK COLLECT INTO policies
+    FROM SvcClass, DiskPool2SvcClass, FileSystem
+   WHERE FileSystem.id = fsId
+     AND DiskPool2SvcClass.Parent = FileSystem.diskPool
+     AND SvcClass.Id = DiskPool2SvcClass.Child
+     AND length(SvcClass.gcPolicy) IS NOT NULL; -- strange way ORACLE has to deal with empty strings...
+  IF policies.COUNT = 0 THEN
     -- no policy defined, nothing to do
     RETURN;
-  END;  
+  END IF;
 
   -- Now get the DiskPool and the maxFree space we want to achieve
   SELECT diskPool, maxFreeSpace * totalSize - free - spaceToBeFreed
@@ -3359,10 +3444,10 @@ BEGIN
     IF machineValues(ind + 1) = 3 THEN -- ADMIN DELETED
       BEGIN
         SELECT id INTO machine FROM DiskServer WHERE name = machines(i);
-        DELETE FROM DiskServer WHERE name = machines(i);
         DELETE FROM id2Type WHERE id = machine;
         DELETE FROM id2Type WHERE id IN (SELECT id FROM FileSystem WHERE diskServer = machine);
         DELETE FROM FileSystem WHERE diskServer = machine;
+        DELETE FROM DiskServer WHERE name = machines(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- Fine, was already deleted
         NULL;
