@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.11 2007/05/29 08:41:49 waldron Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.12 2007/06/26 14:42:09 sponcec3 Exp $
  */
 
 /*
@@ -230,12 +230,17 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
     // XXX A BasicResponse or a FileResponse could be enough
     // here but the client API would not like it !
     castor::rh::IOResponse res;
-    res.setErrorCode(SEINTERNAL);
-    std::stringstream ss;
-    ss << "Could not retrieve file.\n"
-       << "Please report error and mention file name and the "
-       << "following request ID : " << req->id();
-    res.setErrorMessage(ss.str());
+    if (0 == subReq->errorCode()) {
+      res.setErrorCode(SEINTERNAL);
+      std::stringstream ss;
+      ss << "Could not retrieve file.\n"
+	 << "Please report error and mention file name and the "
+	 << "following request ID : " << req->id();
+      res.setErrorMessage(ss.str());
+    } else {
+      res.setErrorCode(subReq->errorCode());
+      res.setErrorMessage(subReq->errorMessage());
+    }
     res.setStatus(castor::stager::SUBREQUEST_FAILED);
     res.setCastorFileName(subReq->fileName());
     res.setSubreqId(subReq->subreqId());
