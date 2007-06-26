@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.202 $ $Release$ $Date: 2007/06/20 16:38:17 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.203 $ $Release$ $Date: 2007/06/26 14:16:43 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -97,8 +97,7 @@ const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
-  // 10 = SUBREQUEST_FAILED_ANSWERING, 7 = SUBREQUEST_FAILED
-  "UPDATE SubRequest SET status = 10 WHERE status = 7 AND ROWNUM < 2 RETURNING id, retryCounter, fileName, protocol, xsize, priority,  status, modeBits, flags INTO :1, :2, :3, :4, :5 ,:6 , :7, :8, :9";
+  "BEGIN subrequestFailedToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
 
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
@@ -330,6 +329,12 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
         (8, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (10, oracle::occi::OCCISTRING);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (11, oracle::occi::OCCIINT);
+      m_subRequestFailedToDoStatement->registerOutParam
+        (12, oracle::occi::OCCISTRING);
       m_subRequestFailedToDoStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -353,6 +358,9 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
        m_subRequestFailedToDoStatement->getInt(7));
     result->setModeBits(m_subRequestFailedToDoStatement->getInt(8));
     result->setFlags(m_subRequestFailedToDoStatement->getInt(9));
+    result->setSubreqId(m_subRequestFailedToDoStatement->getString(10));
+    result->setErrorCode(m_subRequestFailedToDoStatement->getInt(11));
+    result->setErrorMessage(m_subRequestFailedToDoStatement->getString(12));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {

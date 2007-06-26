@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.442 $ $Date: 2007/06/21 16:13:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.443 $ $Date: 2007/06/26 14:16:41 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -419,6 +419,27 @@ BEGIN
   UPDATE subrequest SET status = 3 WHERE rowid = CHARTOROWID(firstRow)   -- SUBREQUEST_WAITSCHED
     RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
     INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
+  CLOSE c;
+END;
+
+/* PL/SQL method to get the next failed SubRequest to do according to the given service */
+/* the service parameter is not used now, it will with the new stager */
+CREATE OR REPLACE PROCEDURE subRequesttFailedToDo(srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
+                                                  srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
+                                                  srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
+                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
+                                                  srErrorMessage OUT VARCHAR2) AS
+ firstRow VARCHAR2(18);
+ CURSOR c IS
+  SELECT rowidtochar(rowid) FROM SubRequest WHERE status = 7;
+BEGIN
+  OPEN c;
+  FETCH c INTO firstRow;
+  UPDATE subrequest SET status = 10 WHERE rowid = CHARTOROWID(firstRow)   -- SUBREQUEST_FAILED_ANSWERING
+    RETURNING id, retryCounter, fileName, protocol, xsize, priority, status,
+              modeBits, flags, subReqId, errorCode, errorMessage
+    INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus,
+              srModeBits, srFlags, srSubReqId, srErrorCode, srErrorMessage;
   CLOSE c;
 END;
 
