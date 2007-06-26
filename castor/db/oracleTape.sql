@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.443 $ $Date: 2007/06/26 14:16:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.444 $ $Date: 2007/06/26 14:54:57 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2472,7 +2472,9 @@ BEGIN
           SELECT id, svcClass FROM StageUpdateRequest) Req
    WHERE id = reqId;
   -- take file closing into account
+  IF fsId > 0 then
   updateFsFileClosed(fsId);
+  END IF;
   -- Determine the context (Put inside PrepareToPut ?)
   BEGIN
     -- check that there is a PrepareToPut going on
