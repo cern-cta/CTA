@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.444 $ $Date: 2007/06/26 14:54:57 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.445 $ $Date: 2007/06/27 08:42:44 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2128,91 +2128,129 @@ END;
 /* PL/SQL method implementing stageRm */
 CREATE OR REPLACE PROCEDURE stageRm (fid IN INTEGER,
                                      nh IN VARCHAR2,
+                                     svcClassId IN INTEGER,
                                      ret OUT INTEGER) AS
   cfId INTEGER;
+  scId INTEGER;
   nbRes INTEGER;
+  dcsToRm "numList";
 BEGIN
- -- Lock the access to the CastorFile
- -- This, together with triggers will avoid new TapeCopies
- -- or DiskCopies to be added
- SELECT id INTO cfId FROM CastorFile
-  WHERE fileId = fid AND nsHost = nh FOR UPDATE;
- -- check if removal is possible for Migration
- SELECT count(*) INTO nbRes FROM TapeCopy
-  WHERE status IN (0, 1, 2, 3) -- CREATED, TOBEMIGRATED, WAITINSTREAMS, SELECTED
-    AND castorFile = cfId;
- IF nbRes > 0 THEN
-   -- We found something, thus we cannot recreate
-   ret := 1;
-   RETURN;
- END IF;
- -- check if removal is possible for Disk2DiskCopy
- SELECT count(*) INTO nbRes FROM DiskCopy
-  WHERE status = 1 -- DISKCOPY_WAITDISK2DISKCOPY
-    AND castorFile = cfId;
- IF nbRes > 0 THEN
-   -- We found something, thus we cannot remove
-   ret := 2;
-   RETURN;
- END IF;
- -- mark all get/put requests for the file as failed
- -- so the clients eventually get an answer
- -- don't touch recalls for the moment
- FOR sr IN (SELECT id, status
-              FROM SubRequest
-             WHERE castorFile = cfId) LOOP
-   IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-     UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
-   END IF;
- END LOOP;
- -- set DiskCopies to INVALID. Note that we keep
- -- WAITTAPERECALL diskcopies so that recalls can continue
- -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
- -- so they will only be taken by the cleaning daemon for the failed DCs.
- UPDATE DiskCopy SET status = 7 -- INVALID
-  WHERE castorFile = cfId
-    AND status IN (0, 5, 6, 10, 11); -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
- DECLARE
-  segId INTEGER;
-  unusedIds "numList";
- BEGIN
-   -- First lock all segments for the file
-   SELECT segment.id BULK COLLECT INTO unusedIds
-     FROM Segment, TapeCopy
-    WHERE TapeCopy.castorfile = cfId
-      AND TapeCopy.id = Segment.copy
-      FOR UPDATE;
-   -- Check whether we have any segment in SELECTED
-   SELECT segment.id INTO segId
-     FROM Segment, TapeCopy
-    WHERE TapeCopy.castorfile = cfId
-      AND TapeCopy.id = Segment.copy
-      AND Segment.status = 7 -- SELECTED
-      AND ROWNUM < 2;
-   -- Something is running, so give up
- EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- Nothing running
-   FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
-     FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
-       -- Delete the segment(s)
-       DELETE FROM Id2Type WHERE id = s.id;
-       DELETE FROM Segment WHERE id = s.id;
-     END LOOP;
-     -- Delete the TapeCopy
-     DELETE FROM Id2Type WHERE id = t.id;
-     DELETE FROM TapeCopy WHERE id = t.id;
-   END LOOP;
-   -- Delete the DiskCopies
-   UPDATE DiskCopy
-      SET status = 7  -- INVALID
-    WHERE status = 2  -- WAITTAPERECALL
+  -- Lock the access to the CastorFile
+  -- This, together with triggers will avoid new TapeCopies
+  -- or DiskCopies to be added
+  SELECT id INTO cfId FROM CastorFile
+   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+  -- First select involved diskCopies
+  scId := svcClassId;
+  IF scId > 0 THEN
+    SELECT DC.id BULK COLLECT INTO dcsToRm
+      FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
+     WHERE DC.castorFile = cfId
+       AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND DC.fileSystem = FileSystem.id
+       AND FileSystem.diskPool = DP2SC.parent
+       AND DP2SC.child = scId;
+    -- Check whether something else is left: if not, do as
+    -- we are performing a stageRm everywhere
+    SELECT count(*) INTO nbRes FROM DiskCopy
+     WHERE castorFile = cfId
+       AND status in (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND id not in (SELECT * FROM TABLE(dcsToRm));
+    IF nbRes = 0 THEN
+      scId := 0;
+    END IF;
+  END IF;
+  IF scId = 0 THEN
+    SELECT id BULK COLLECT INTO dcsToRm
+      FROM DiskCopy
+     WHERE castorFile = cfId
+       AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+  END IF;
+  -- Now perform the stageRm. scId is used hereafter as flag
+  -- to determine whether to perform full cleanup or not
+  IF scId = 0 THEN
+    -- check if removal is possible for Migration
+    SELECT count(*) INTO nbRes FROM TapeCopy
+     WHERE status IN (0, 1, 2, 3) -- CREATED, TOBEMIGRATED, WAITINSTREAMS, SELECTED
+       AND castorFile = cfId;
+    IF nbRes > 0 THEN
+      -- We found something, thus we cannot remove
+      ret := 1;
+      RETURN;
+    END IF;
+    -- check if removal is possible for Disk2DiskCopy
+    SELECT count(*) INTO nbRes FROM DiskCopy
+    WHERE status = 1 -- DISKCOPY_WAITDISK2DISKCOPY
       AND castorFile = cfId;
-   -- Mark the 'recall' SubRequests as failed
-   -- so that client get an answer
-   UPDATE SubRequest SET status = 7   -- FAILED
-   WHERE castorFile = cfId and status = 4;
- END;
- ret := 0;
+    IF nbRes > 0 THEN
+      -- We found something, thus we cannot remove
+      ret := 2;
+      RETURN;
+    END IF;
+  END IF;
+  -- mark all get/put requests for those diskcopies as failed
+  -- so that clients eventually get an answer;
+  -- don't touch recalls for the moment
+  FOR sr IN (SELECT id, status FROM SubRequest
+              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
+    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
+    END IF;
+  END LOOP;
+  -- Set selected DiskCopies to INVALID. In any case keep
+  -- WAITTAPERECALL diskcopies so that recalls can continue.
+  -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
+  -- so they will only be taken by the cleaning daemon for the failed DCs.
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE id IN (SELECT * FROM TABLE(dcsToRm));
+  ret := 0;
+  IF scId = 0 THEN
+    -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
+    -- This is not entirely clean: a proper operation here should be to
+    -- drop the SubRequest waiting for recall but keep the recall if somebody
+    -- else is doing it, and taking care of other WAITSUBREQ requests as well...
+    -- but it's fair enough, provided that the last stageRm will cleanup everything.
+    DECLARE
+      segId INTEGER;
+      unusedIds "numList";
+    BEGIN
+      -- First lock all segments for the file
+      SELECT segment.id BULK COLLECT INTO unusedIds
+        FROM Segment, TapeCopy
+       WHERE TapeCopy.castorfile = cfId
+         AND TapeCopy.id = Segment.copy
+      FOR UPDATE;
+      -- Check whether we have any segment in SELECTED
+      SELECT segment.id INTO segId
+        FROM Segment, TapeCopy
+       WHERE TapeCopy.castorfile = cfId
+         AND TapeCopy.id = Segment.copy
+         AND Segment.status = 7 -- SELECTED
+         AND ROWNUM < 2;
+      -- Something is running, so give up
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Nothing running
+      FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
+        FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+          -- Delete the segment(s)
+          DELETE FROM Id2Type WHERE id = s.id;
+          DELETE FROM Segment WHERE id = s.id;
+        END LOOP;
+        -- Delete the TapeCopy
+        DELETE FROM Id2Type WHERE id = t.id;
+        DELETE FROM TapeCopy WHERE id = t.id;
+      END LOOP;
+      -- Delete the DiskCopies
+      UPDATE DiskCopy
+         SET status = 7  -- INVALID
+       WHERE status = 2  -- WAITTAPERECALL
+         AND castorFile = cfId;
+      -- Mark the 'recall' SubRequests as failed
+      -- so that clients get an answer
+      UPDATE SubRequest SET status = 7   -- FAILED
+       WHERE castorFile = cfId and status = 4;
+    END;
+  END IF;
 END;
 
 CREATE OR REPLACE PACKAGE castorGC AS
