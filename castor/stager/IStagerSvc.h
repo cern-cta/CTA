@@ -335,6 +335,8 @@ int Cstager_IStagerSvc_stageRelease
  * @param stgSvc the IStagerSvc used
  * @param fileId the fileId of the CastorFile
  * @param nsHost the name server to use
+ * @param svcClassId the svcClass where to perform
+ * the rm operation; 0 for all svcClasses.
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -343,7 +345,8 @@ int Cstager_IStagerSvc_stageRelease
 int Cstager_IStagerSvc_stageRm
 (struct Cstager_IStagerSvc_t* stgSvc,
  const u_signed64 fileId,
- const char* nsHost);
+ const char* nsHost,
+ const u_signed64 svcClassId);
 
 /*
  * Updates the gcWeight of all copies a a given file.

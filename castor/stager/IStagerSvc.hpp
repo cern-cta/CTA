@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.71 $ $Release$ $Date: 2007/04/03 09:29:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.72 $ $Release$ $Date: 2007/06/27 09:37:03 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -261,10 +261,12 @@ namespace castor {
        * garbage collection.
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
+       * @param svcClassId the svcClass where to perform
+       * the rm operation; 0 for all svcClasses.
        * @exception in case of error or if the file is busy
        */
       virtual void stageRm
-      (const u_signed64 fileId, const std::string nsHost)
+      (const u_signed64 fileId, const std::string nsHost, const u_signed64 svcClassId)
         throw (castor::exception::Exception) = 0;
 
       /**
