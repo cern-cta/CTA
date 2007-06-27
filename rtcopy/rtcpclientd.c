@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.39 $ $Release$ $Date: 2007/06/18 14:28:30 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.40 $ $Release$ $Date: 2007/06/27 15:37:48 $ $Author: obarring $
  *
  *
  *
@@ -53,6 +53,8 @@ WSADATA wsadata;
 #include <castor/BaseObject.h>
 #include <castor/stager/TapeStatusCodes.h>
 #include <castor/stager/SegmentStatusCodes.h>
+#include <castor/stager/TapeCopy.h>
+#include <castor/stager/ITapeSvc.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <rtcp_api.h>
@@ -520,8 +522,8 @@ static int checkVdqmReqs()
                             RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQMINFO),
                             (struct Cns_fileid *)NULL,
                             3,
-                            "VID",
-                            DLF_MSG_PARAM_STR,
+                            "",
+                            DLF_MSG_PARAM_TPVID,
                             tape->tapereq.vid,
                             "MODE",
                             DLF_MSG_PARAM_INT,
@@ -1503,8 +1505,8 @@ int rtcpcld_main(
                           RTCPCLD_LOG_MSG(RTCPCLD_MSG_VDQMINFO),
                           (struct Cns_fileid *)NULL,
                           3,
-                          "VID",
-                          DLF_MSG_PARAM_STR,
+                          "",
+                          DLF_MSG_PARAM_TPVID,
                           tape->tapereq.vid,
                           "MODE",
                           DLF_MSG_PARAM_INT,
