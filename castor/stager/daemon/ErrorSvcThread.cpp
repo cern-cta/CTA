@@ -1,5 +1,5 @@
 /*
- * $Id: ErrorSvcThread.cpp,v 1.12 2007/06/26 14:42:09 sponcec3 Exp $
+ * $Id: ErrorSvcThread.cpp,v 1.13 2007/06/27 11:59:00 sponcec3 Exp $
  */
 
 /*
@@ -262,7 +262,7 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
       // We both update the DB and check whether this was
       // the last subrequest of the request
       if (!stgSvc->updateAndCheckSubRequest(subReq)) {
-        if (0 == rr) {
+        if (0 != rr) {
           rr->sendEndResponse(client, req->reqId());
         }
       }
