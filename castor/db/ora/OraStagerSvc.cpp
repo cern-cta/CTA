@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.204 $ $Release$ $Date: 2007/06/26 16:31:43 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.205 $ $Release$ $Date: 2007/06/27 12:00:48 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -331,17 +331,25 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
       m_subRequestFailedToDoStatement->registerOutParam
         (9, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
-        (10, oracle::occi::OCCISTRING);
+        (10, oracle::occi::OCCISTRING, 2048);
       m_subRequestFailedToDoStatement->registerOutParam
         (11, oracle::occi::OCCIINT);
       m_subRequestFailedToDoStatement->registerOutParam
-        (12, oracle::occi::OCCISTRING);
+        (12, oracle::occi::OCCISTRING, 2048);
       m_subRequestFailedToDoStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
-    unsigned int nb =
+    unsigned int rc =
       m_subRequestFailedToDoStatement->executeUpdate();
-    if (0 == nb) {
+    if (0 == rc) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "subRequestFailedToDo : "
+        << "unable to get next SubRequest to process.";
+      throw ex;
+    }
+    u_signed64 srId = (u_signed64)m_subRequestFailedToDoStatement->getDouble(1);
+    if (0 == srId) {
       // Found no SubRequest to handle
       return 0;
     }
@@ -440,7 +448,8 @@ int castor::db::ora::OraStagerSvc::isSubRequestToSchedule
                               */
 
     return rc; /* 2: TapeRecall 
-                * 0: no scheduling
+                * 0: no scheduling, request was put in WAIT
+		* 4: no scheduling, request was put in FAILED for lack of space
                 */ 
 
   } catch (oracle::occi::SQLException e) {

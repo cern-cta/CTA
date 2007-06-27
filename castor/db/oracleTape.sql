@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.445 $ $Date: 2007/06/27 08:42:44 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.446 $ $Date: 2007/06/27 12:00:48 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -424,11 +424,11 @@ END;
 
 /* PL/SQL method to get the next failed SubRequest to do according to the given service */
 /* the service parameter is not used now, it will with the new stager */
-CREATE OR REPLACE PROCEDURE subRequesttFailedToDo(srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
-                                                  srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
-                                                  srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
-                                                  srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
-                                                  srErrorMessage OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE subRequestFailedToDo(srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
+                                                 srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
+                                                 srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
+                                                 srSubReqId OUT VARCHAR2, srErrorCode OUT NUMBER,
+                                                 srErrorMessage OUT VARCHAR2) AS
  firstRow VARCHAR2(18);
  CURSOR c IS
   SELECT rowidtochar(rowid) FROM SubRequest WHERE status = 7;
@@ -1113,6 +1113,30 @@ CREATE OR REPLACE PACKAGE castor AS
 END castor;
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
+/* PL/SQL method checking whether a given service class
+   is declared disk only and had only full diskpools.
+   Returns 1 in such a case, 0 else */
+CREATE OR REPLACE FUNCTION checkFailJobsWhenNoSpace(svcClassId NUMBER)
+RETURN NUMBER AS
+  failJobFlag NUMBER;
+  unused NUMBER;
+BEGIN
+  SELECT FailJobsWhenNoSpace INTO failJobFlag FROM SvcClass WHERE id = svcClassId;
+  IF (failJobFlag = 1) THEN
+    SELECT count(*) INTO unused
+      FROM diskpool2svcclass, FileSystem, DiskServer
+     WHERE diskpool2svcclass.child = svcClassId
+       AND diskpool2svcclass.parent = FileSystem.diskPool
+       AND FileSystem.diskServer = DiskServer.id
+       AND FileSystem.status = 0 -- PRODUCTION
+       AND DiskServer.status = 0 -- PRODUCTION
+       AND totalSize * minAllowedFreeSpace < free;
+    IF (unused = 0) THEN
+      RETURN 1;
+    END IF;
+  END IF;
+  RETURN 0;
+END;
 
 /* PL/SQL method implementing isSubRequestToSchedule */
 CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
@@ -1263,6 +1287,18 @@ BEGIN
       END IF;
     ELSE
       -- No diskcopies available for this service class;
+      -- check whether we are a disk only pool that is already full.
+      -- In such a case, we should fail the request with an ENOSPACE error
+      IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
+        result := 4; -- no schedule
+        UPDATE SubRequest
+           SET status = 7, -- FAILED
+               errorCode = 28, -- ENOSPC
+               errorMessage = 'File creation canceled since diskPool is full'
+         WHERE id = rsubreqId;
+        COMMIT;
+        RETURN;
+      END IF;  
       -- check whether there are any diskcopies available for a disk2disk copy
       DECLARE
         unused NUMBER;
@@ -1662,6 +1698,31 @@ BEGIN
    contextPIPP := 0;
  END;
  IF contextPIPP = 0 THEN
+  -- check if there is space in the diskpool in case of
+  -- disk only pool
+  DECLARE
+    svcClassId NUMBER;
+  BEGIN
+    -- get the svcclass
+    SELECT svcClass INTO svcClassId
+      FROM Subrequest,
+           (SELECT id, svcClass from StagePutRequest UNION ALL
+            SELECT id, svcClass from StagePrepareToPutRequest) Request
+     WHERE SubRequest.id = srId
+       AND Request.id = SubRequest.request;
+    IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
+      -- The svcClass is declared disk only and has no space
+      -- thus we cannot recreate the file
+      dcId := 0;
+      UPDATE SubRequest
+         SET status = 7, -- FAILED
+             errorCode = 28, -- ENOSPC
+             errorMessage = 'File creation canceled since diskPool is full'
+       WHERE id = srId;
+      COMMIT;
+      RETURN;
+    END IF;
+  END;
   -- check if recreation is possible for TapeCopies
   SELECT count(*) INTO nbRes FROM TapeCopy
     WHERE status = 3 -- TAPECOPY_SELECTED
@@ -1669,6 +1730,11 @@ BEGIN
   IF nbRes > 0 THEN
     -- We found something, thus we cannot recreate
     dcId := 0;
+    UPDATE SubRequest
+       SET status = 7, -- FAILED
+           errorCode = 16, -- EBUSY
+           errorMessage = 'File recreation canceled since file is being migrated'
+     WHERE id = srId;
     COMMIT;
     RETURN;
   END IF;
@@ -1679,6 +1745,11 @@ BEGIN
   IF nbRes > 0 THEN
     -- We found something, thus we cannot recreate
     dcId := 0;
+    UPDATE SubRequest
+       SET status = 7, -- FAILED
+           errorCode = 16, -- EBUSY
+           errorMessage = 'File recreation canceled since file is either being recalled, or replicated or created by another user'
+     WHERE id = srId;
     COMMIT;
     RETURN;
   END IF;
