@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.72 $ $Release$ $Date: 2007/06/27 09:37:03 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.73 $ $Release$ $Date: 2007/06/27 11:58:05 $ $Author: sponcec3 $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -116,12 +116,14 @@ namespace castor {
        * 2: schedule + no sources, a disk2disk copy is necessary
        * 3: no schedule, no DiskCopy anywhere found, we need a
             Tape recall.
+       * 4: no schedule, no DiskCopy anywhere found, there is no
+            space left on the diskpool
        * @param subreq the SubRequest to consider
        * @param sources this is a list of DiskCopies that
        * can be used by the subrequest.
        * Note that the DiskCopies returned in sources must be
        * deallocated by the caller.
-       * @return 0,1,2,3
+       * @return 0,1,2,3,4
        * @exception Exception in case of error
        */
       virtual int isSubRequestToSchedule

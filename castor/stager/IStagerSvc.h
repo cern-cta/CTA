@@ -122,12 +122,14 @@ int Cstager_IStagerSvc_requestToDo
  * 2: schedule + no sources, a disk2disk copy is necessary
  * 3: no schedule, no DiskCopy anywhere found, we need a
       Tape recall.
+ * 4: no schedule, no DiskCopy anywhere found, there is no
+      space left on the diskpool
  * @param subreq the SubRequest to consider
  * @param sources this is a list of DiskCopies that
  * can be used by the subrequest.
  * Note that the DiskCopies returned in sources must be
  * deallocated by the caller.
- * @return 0,1,2,3
+ * @return 0,1,2,3,4
  * @exception Exception in case of error
 */
 int Cstager_IStagerSvc_isSubRequestToSchedule
