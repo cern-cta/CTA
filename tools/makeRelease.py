@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import sys, re, os, shutil
 
 # list of platforms as a tuple (OS, arch, machine where to build)
@@ -25,7 +26,8 @@ def runCommand(cmd, errorMessage):
 
 def findUpdates(d):
     res = []
-    updRegExp = re.compile('\d+.\d+.\d+-\d+_to_' + fullVersion + '.sql(plus)?')
+    # take all relevant update scripts (DLF included if needed)
+    updRegExp = re.compile('(\w*-)?\d+.\d+.\d+-\d+_to_' + fullVersion + '.sql(plus)?')
     for f in os.listdir(d):
         if updRegExp.match(f):
             res.append(f)
@@ -82,13 +84,19 @@ for f in findUpdates(updDir):
     shutil.copyfile(updDir + os.sep + f, intReleaseDir + os.sep + 'upgrades' + os.sep + f)
 
 # compile on the different architectures
+outputs = []
+print "Spawning remote builds..."
 for p in platforms:
     # first copy over the tar ball
     cmd = 'scp ' + workDir + os.sep + tarball + ' ' + p[2] + ':/tmp/' + tarball
     runCommand(cmd, 'Error while exporting tar ball to ' + p[2])
-    # then launch the compilation
-    cmd = 'ssh ' + p[2] + ' "python /afs/cern.ch/project/castor/CASTOR2/tools/buildRPMs.py ' + p[0] + ' ' + p[1] + ' ' + version + ' /tmp/' + tarball + '"'
-    runCommand(cmd, 'Error while launching compilation on ' + p[2])
+    # then launch the compilation in parallel
+    cmd = 'ssh ' + p[2] + ' "python /afs/cern.ch/project/castor/CASTOR2/tools/buildRPMs.py ' + p[0] + ' ' + p[1] + ' ' + fullversion + ' /tmp/' + tarball + '"'
+    outputs.append((p[2], os.popen4(cmd)[1]))
+
+for o in outputs:
+    if o[2].close() != None:
+        print "Error during remote build on", o[1]
 
 # cleanup
 cleanup()
