@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.9 $ $Date: 2006/06/23 08:04:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.10 $ $Date: 2007/06/27 16:14:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -577,8 +577,10 @@ struct Cns_srv_thread_info *thip;
 	if (uid != fmd_entry.uid &&
 	    Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
 		RETURN (EPERM);
-	if ((fmd_entry.filemode & S_IFDIR) == 0)
-		RETURN (ENOTDIR);
+	if (((fmd_entry.filemode & S_IFDIR) == 0) &&
+	    (0 != Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))) {
+	    RETURN (ENOTDIR);
+	}
 
 	/* update entries */
 
