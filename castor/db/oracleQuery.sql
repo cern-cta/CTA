@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.447 $ $Date: 2007/06/27 14:28:34 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.448 $ $Date: 2007/06/27 14:45:51 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2597,15 +2597,10 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- this means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
-    IF fsId = 0 THEN
-      -- Put failed before getting scheduled, drop DiskCopy
-      DELETE FROM DiskCopy WHERE id = dcId;
-      DELETE FROM Id2Type WHERE id = dcId;
-      deleteCastorFile(cfId);
-    ELSE
-      -- Put failed during transfer, let the GC clean it
-      UPDATE DiskCopy SET status = 7 WHERE id = dcId;
-    END IF;
+    -- (the physical file is dropped by the job)
+    DELETE FROM DiskCopy WHERE id = dcId;
+    DELETE FROM Id2Type WHERE id = dcId;
+    deleteCastorFile(cfId);
   END;
 END;
 
