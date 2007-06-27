@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.29 $ $Date: 2007/05/09 15:02:44 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.30 $ $Date: 2007/06/27 07:08:48 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -91,6 +91,7 @@ int smcdismount( char*, char*, int, int );
 int send2dmc( int*, DMCrequest_t * );
 int fromdmc( int*, DMCreply_t * );
 
+static int istapemounted( char*, int, char* );
 
 /*	rbtmount - mounts a volume on a specified drive  */
 
@@ -1522,15 +1523,20 @@ int vsnretry;
 	if ((c = opensmc (loader)) != 0)
 		RETURN (c);
 	if (rmc_host) {
+
 		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
+
                 if (c == EBUSY) {
-                        /* this will never happen, since c == -1 on error    */
+                        /* this will never happen, since c == -1 on error     */
                         RETURN(RBT_FAST_RETRY);
 
                 } else if ((-1 == c) && ((serrno - ERMCRBTERR) == EBUSY)) {
 
-                        /* this should trigger a retry on a busy error       */
-                        
+                        /* EBUSY: tape may be mounted none the less, so check 
+                           that and repeat mount only if appropriate          */
+
+                        int mounted, RETRIES = 3, retryCtr = 0;
+
                         p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
@@ -1542,13 +1548,36 @@ int vsnretry;
                                             "cur_unm", TL_MSG_PARAM_STR, cur_unm,
                                             "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         
-                        tplogit (func, "Encountered EBUSY. Will retry.\n" );
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 2,
-                                            "func"   , TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Will retry." );
+                        while (retryCtr < RETRIES) {
+                                
+                                /* check if the tape is mounted or not */
+                                mounted = istapemounted( vid, drvord, smc_ldr );
+                                if (0 == mounted) {
 
-                        RETURN (RBT_FAST_RETRY);
+                                        tplogit (func, "Encountered EBUSY. Tape not mounted. Retry Mount.\n" );
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                                            "func"   , TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Tape not mounted. Retry mount." );
+                                        RETURN (RBT_FAST_RETRY);
 
+                                } else if (1 == mounted) {
+                                
+                                        tplogit (func, "Encountered EBUSY. Tape mounted. Continue.\n" );
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                                            "func"   , TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Tape mounted. Continue." );
+                                        RETURN (0);
+
+                                } else {
+                                        
+                                        tplogit (func, "Encountered EBUSY. Error in istapemounted. Retry to retrieve info.\n" );
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                            "func"   , TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Error in istapemounted. Retry to retrieve info." );
+                                }                                
+                                retryCtr++;
+                        }
+                        
                 } else if (c) {
                         /* log information about the error condition         */
                         if (serrno != SECOMERR) {
@@ -1596,12 +1625,12 @@ int vsnretry;
 	}
 	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
 		c = smc_lasterror (&smc_status, &msgaddr);
-        if (c == EBUSY) {
-		    usrmsg (func, "%s\n", msgaddr);
-                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
-                                        "func",    TL_MSG_PARAM_STR, func,
-                                        "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
-                    RETURN(RBT_FAST_RETRY);
+                if (c == EBUSY) {
+                        usrmsg (func, "%s\n", msgaddr);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "msgaddr", TL_MSG_PARAM_STR, msgaddr ); 
+                        RETURN(RBT_FAST_RETRY);
 		} else if (smc_status.rc == -1 || smc_status.rc == -2) {
 			usrmsg (func, "%s\n", msgaddr);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
@@ -1854,4 +1883,83 @@ void closesmc ()
 	if (smc_fd >= 0)
 		close (smc_fd);
 	smc_fd = -1;
+}
+
+
+/*
+** istapemounted: check if the requested tape is already mounted
+**
+** returns 1 if yes
+**         0 if no
+**        -1 on error
+*/
+static int istapemounted( char *vid, int drvord, char *smc_ldr ) {
+        
+        char func[16];
+        int  rc = 0;
+        struct smc_element_info element_info;
+
+        ENTRY (istapemounted);        
+        
+        /* get robot geometry */
+        tplogit (func, "get robot geometry\n", vid );
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                            "func"   , TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "get robot geometry" );
+
+        if (rmc_get_geometry( rmc_host, smc_ldr, &robot_info) < 0) {
+                
+                tplogit( func, "could not get robot geometry\n" );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                    "func"   , TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "could not get robot geometry" );
+                rc = -1;
+                goto out;
+        }
+        
+        /* request drive info */
+        memset( &element_info, 0, sizeof( struct smc_element_info ) );
+        tplogit (func, "read element status\n", vid );
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                            "func"   , TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "read element status" );
+
+        if (rmc_read_elem_status (rmc_host, smc_ldr, 4,
+                                  robot_info.device_start+drvord, 1, &element_info) > 0) {
+                                
+                if (0 == strcmp( vid, element_info.name)) {
+
+                        tplogit (func, "%s is mounted\n", vid );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
+                                            "func"   , TL_MSG_PARAM_STR  , func,
+                                            "Message", TL_MSG_PARAM_STR  , "is mounted",
+                                            "VID"    , TL_MSG_PARAM_STR  , vid,
+                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
+                        rc = 1;
+                        goto out;
+
+                } else {
+
+                        tplogit (func, "%s is not mounted\n", vid );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
+                                            "func"   , TL_MSG_PARAM_STR  , func,
+                                            "Message", TL_MSG_PARAM_STR  , "is not mounted",
+                                            "VID"    , TL_MSG_PARAM_STR  , vid,
+                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
+                        rc = 0;
+                        goto out;
+                }
+                
+        } else {
+                
+                tplogit (func, "could not retrieve drive status\n");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                    "Message", TL_MSG_PARAM_STR  , "could not retrieve drive status" );
+                rc = -1;
+                goto out;
+        }
+        
+ out:
+        RETURN (rc);
 }
