@@ -5,8 +5,8 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
- *  copyright (C) 2002-2006                                                *
- *  Umbrello UML Modeller Authors <uml-devel@ uml.sf.net>                  *
+ *   copyright (C) 2002-2007                                               *
+ *   Umbrello UML Modeller Authors <uml-devel@uml.sf.net>                  *
  ***************************************************************************/
 
 #ifndef CLASSIFIER__H
@@ -50,10 +50,8 @@ public:
      *
      * @param name              The name of the Concept.
      * @param id                The unique id of the Concept.
-     * @param bIsInterface      True if this classifier shall be an interface.
      */
-    UMLClassifier(const QString & name = "", Uml::IDType id = Uml::id_None,
-                  bool bIsInterface = false);
+    UMLClassifier(const QString & name = "", Uml::IDType id = Uml::id_None);
 
     /**
      * Standard deconstructor.
@@ -191,17 +189,17 @@ public:
 
     /**
      * Checks whether an operation is valid based on its signature -
-     * An operation is "valid" if the operation's name and paramter list
+     * An operation is "valid" if the operation's name and parameter list
      * are unique in the classifier.
      *
      * @param name              Name of the operation to check.
-     * @param opParams  Pointer to the method argument list.
+     * @param opParams  The operation's argument list.
      * @param exemptOp  Pointer to the exempt method (optional.)
      * @return  NULL if the signature is valid (ok), else return a pointer
      *          to the existing UMLOperation that causes the conflict.
      */
-    UMLOperation * checkOperationSignature( QString name,
-                                            UMLAttributeList *opParams,
+    UMLOperation * checkOperationSignature( const QString& name,
+                                            UMLAttributeList opParams,
                                             UMLOperation *exemptOp = NULL);
 
     /**
@@ -235,7 +233,7 @@ public:
      *
      * @return  The UMLTemplate created
      */
-    UMLObject* createTemplate(QString name = QString::null);
+    UMLObject* createTemplate(const QString& name = QString::null);
 
     /**
      * Adds a template to the class if it is not there yet.
@@ -281,7 +279,7 @@ public:
     /**
      * Seeks the template parameter of the given name.
      */
-    UMLTemplate *findTemplate(QString name);
+    UMLTemplate *findTemplate(const QString& name);
 
     /**
      * Returns the number of templates for the class.
@@ -353,7 +351,8 @@ public:
      *
      * @return  The operation found.  Will return 0 if none found.
      */
-    UMLOperation* findOperation(QString name, Model_Utils::NameAndType_List params);
+    UMLOperation* findOperation(const QString& name,
+                                Model_Utils::NameAndType_List params);
 
     /**
      * Returns a list of concepts which this concept inherits from.
@@ -388,14 +387,40 @@ public:
     UMLAssociation *getClassAssoc();
 
     /**
-     * Controls whether this classifier represents an interface.
+     * Reimplementation of method from class UMLObject for controlling the
+     * exact type of this classifier: class, interface, or datatype.
      */
-    void setInterface(bool b = true);
+    void setBaseType(Uml::Object_Type ot);
 
     /**
      * Returns true if this classifier represents an interface.
      */
-    virtual bool isInterface() const;
+    bool isInterface() const;
+
+    /**
+     * Returns true if this classifier represents a datatype.
+     */
+    bool isDatatype() const;
+
+    /**
+     * Set the origin type (in case of e.g. typedef)
+     */
+    void setOriginType(UMLClassifier *origType);
+
+    /**
+     * Get the origin type (in case of e.g. typedef)
+     */
+    UMLClassifier * originType();
+
+    /**
+     * Set the m_isRef flag (true when dealing with a pointer type)
+     */
+    void setIsReference(bool isRef = true);
+
+    /**
+     * Get the m_isRef flag.
+     */
+    bool isReference();
 
     /**
      * Return true if this classifier has abstract operations.
@@ -409,7 +434,12 @@ public:
      * <UML:Attribute>, <UML:Operation>, or <UML:TemplateParameter>.
      * Used by the clipboard for paste operation.
      */
-    UMLClassifierListItem* makeChildObject(QString xmiTag);
+    UMLClassifierListItem* makeChildObject(const QString& xmiTag);
+
+    /**
+     * Return the list of unidirectional association that should show up in the code
+     */
+    virtual UMLAssociationList  getUniAssociationToBeImplemented();
 
 signals:
     /** Signals that a new UMLOperation has been added to the classifer.
@@ -432,9 +462,11 @@ private:
     /**
      * Initializes key variables of the class.
      */
-    void init(bool bIsInterface = false);
+    void init();
 
     UMLAssociation *m_pClassAssoc;
+
+    bool m_isRef;
 
 protected:
 

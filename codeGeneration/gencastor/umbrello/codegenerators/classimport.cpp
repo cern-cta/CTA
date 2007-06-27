@@ -19,11 +19,11 @@
 #include "../uml.h"
 #include "codeimport/cppimport.h"
 
-void ClassImport::importFiles(QStringList fileList) {
+void ClassImport::importFiles(const QStringList& fileList) {
     initialize();
     UMLDoc *umldoc = UMLApp::app()->getDocument();
     uint processedFilesCount = 0;
-    for (QStringList::Iterator fileIT = fileList.begin();
+    for (QStringList::ConstIterator fileIT = fileList.begin();
             fileIT != fileList.end(); ++fileIT) {
         QString fileName = (*fileIT);
         umldoc->writeToStatusBar(i18n("Importing file: %1 Progress: %2/%3").
@@ -34,7 +34,7 @@ void ClassImport::importFiles(QStringList fileList) {
     umldoc->writeToStatusBar(i18n("Ready."));
 }
 
-ClassImport *ClassImport::createImporterByFileExt(QString /*filename*/) {
+ClassImport *ClassImport::createImporterByFileExt(const QString& /*filename*/) {
     return 0;
 }
 

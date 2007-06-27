@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/05/14 14:38:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: chclasswriter.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/06/27 14:28:52 $ $Author: sponcec3 $
  *
  * This generator creates a .h file containing the C interface
  * to the corresponding C++ class
@@ -552,11 +552,11 @@ void CHClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
              << "* instance";
     }
     // method parameters
-    QPtrList<UMLAttribute>* pl = op->getParmList();
-    for (unsigned int i = 0; i < pl->count(); i++) {
-      UMLAttribute* at = pl->at(i);
+    QPtrList<UMLAttribute> pl = op->getParmList();
+    for (unsigned int i = 0; i < pl.count(); i++) {
+      UMLAttribute* at = pl.at(i);
       if (at) {
-        if (at != op->getParmList()->first() || !op->getStatic()) {
+        if (at != op->getParmList().first() || !op->getStatic()) {
           stream << "," << endl << getIndent(paramIndent);
         }
         stream << convertType(at->getTypeName(),
@@ -575,7 +575,7 @@ void CHClassWriter::writeOperations(QPtrList<UMLOperation> &oplist,
     methodReturnType = convertType(methodReturnType,
                                    getNamespace(methodReturnType));
     if (methodReturnType != "void" && methodReturnType != "") {
-      if (pl->count() > 0 || !op->getStatic()) {
+      if (pl.count() > 0 || !op->getStatic()) {
         stream << "," << endl << getIndent(paramIndent);
       }
       stream << methodReturnType;
@@ -657,7 +657,7 @@ QString CHClassWriter::convertType(QString type,
 bool CHClassWriter::isOpPrintable(UMLOperation* op) {
   // the full print function
   if (op->getName() == "print const" &&
-      3 == op->getParmList()->count()) {
+      3 == op->getParmList().count()) {
     return false;
   }
   return true;

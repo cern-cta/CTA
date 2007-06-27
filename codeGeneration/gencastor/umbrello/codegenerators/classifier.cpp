@@ -5,6 +5,8 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
+ *   copyright (C) 2002-2007                                               *
+ *   Umbrello UML Modeller Authors <uml-devel@uml.sf.net>                  *
  ***************************************************************************/
 // own header
 #include "classifier.h"
@@ -26,9 +28,9 @@
 #include "umldoc.h"
 #include "uml.h"
 #include "umllistview.h"
+#include "uniqueid.h"
 #include "object_factory.h"
 #include "model_utils.h"
-#include "uniqueid.h"
 #include "clipboard/idchangelog.h"
 #include "dialogs/umloperationdialog.h"
 #include "dialogs/umlattributedialog.h"
@@ -37,34 +39,47 @@
 
 using namespace Uml;
 
-UMLClassifier::UMLClassifier(const QString & name, Uml::IDType id, bool bIsInterface)
+UMLClassifier::UMLClassifier(const QString & name, Uml::IDType id)
         : UMLPackage(name, id)
 {
-    init(bIsInterface);
+    init();
 }
 
 UMLClassifier::~UMLClassifier() {
 }
 
-void UMLClassifier::init(bool bIsInterface /* = false */) {
-    setInterface(bIsInterface);
+void UMLClassifier::init() {
+    m_BaseType = Uml::ot_Class;  // default value
     m_pClassAssoc = NULL;
+    m_isRef = false;
 }
 
-void UMLClassifier::setInterface(bool b /* = true */) {
+void UMLClassifier::setBaseType(Uml::Object_Type ot) {
+    m_BaseType = ot;
+    Uml::Icon_Type newIcon;
+    switch (ot) {
+        case ot_Interface:
+            UMLObject::setStereotype("interface");
+            UMLObject::m_bAbstract = true;
+            newIcon = Uml::it_Interface;
+            break;
+        case ot_Class:
+            UMLObject::setStereotype(QString::null);
+            UMLObject::m_bAbstract = false;
+            newIcon = Uml::it_Class;
+            break;
+        case ot_Datatype:
+            UMLObject::setStereotype("datatype");
+            UMLObject::m_bAbstract = false;
+            newIcon = Uml::it_Datatype;
+            break;
+        default:
+            kError() << "UMLClassifier::setBaseType: cannot set to type "
+                << ot << endl;
+            return;
+    }
     // @todo get rid of direct dependencies to UMLListView
     //  (e.g. move utility methods to Model_Utils and/or use signals)
-    Uml::Icon_Type newIcon;
-    if (b) {
-        m_BaseType = ot_Interface;
-        UMLObject::setStereotype("interface");
-        UMLObject::m_bAbstract = true;
-        newIcon = Uml::it_Interface;
-    } else {
-        m_BaseType = ot_Class;
-        UMLObject::setStereotype(QString::null);
-        newIcon = Uml::it_Class;
-    }
     UMLListView *listView = UMLApp::app()->getListView();
     listView->changeIconOf(this, newIcon);
 }
@@ -73,14 +88,19 @@ bool UMLClassifier::isInterface() const {
     return (m_BaseType == ot_Interface);
 }
 
-UMLOperation * UMLClassifier::checkOperationSignature( QString name,
-        UMLAttributeList *opParams,
+bool UMLClassifier::isDatatype() const {
+    return (m_BaseType == ot_Datatype);
+}
+
+UMLOperation * UMLClassifier::checkOperationSignature(
+        const QString& name,
+        UMLAttributeList opParams,
         UMLOperation *exemptOp)
 {
     UMLOperationList list = findOperations(name);
     if( list.count() == 0 )
         return NULL;
-    int inputParmCount = (opParams ? opParams->count() : 0);
+    const int inputParmCount = opParams.count();
 
     // there is at least one operation with the same name... compare the parameter list
     for (UMLOperationListIt oit(list); oit.current(); ++oit)
@@ -88,22 +108,17 @@ UMLOperation * UMLClassifier::checkOperationSignature( QString name,
         UMLOperation* test = oit.current();
         if (test == exemptOp)
             continue;
-        UMLAttributeList *testParams = test->getParmList( );
-        if (!opParams) {
-            if (0 == testParams->count())
-                return test;
-            continue;
-        }
-        int pCount = testParams->count();
+        UMLAttributeList testParams = test->getParmList( );
+        const int pCount = testParams.count();
         if( pCount != inputParmCount )
             continue;
         int i = 0;
-        for( ; i < pCount; ++i )
-        {
+        while (i < pCount) {
             // The only criterion for equivalence is the parameter types.
             // (Default values are not considered.)
-            if( testParams->at(i)->getTypeName() != opParams->at(i)->getTypeName() )
+            if( testParams.at(i)->getTypeName() != opParams.at(i)->getTypeName() )
                 break;
+            i++;
         }
         if( i == pCount )
         {//all parameters matched -> the signature is not unique
@@ -114,7 +129,8 @@ UMLOperation * UMLClassifier::checkOperationSignature( QString name,
     return NULL;
 }
 
-UMLOperation* UMLClassifier::findOperation(QString name, Model_Utils::NameAndType_List params) {
+UMLOperation* UMLClassifier::findOperation(const QString& name,
+                                           Model_Utils::NameAndType_List params) {
     UMLOperationList list = findOperations(name);
     if (list.count() == 0)
         return NULL;
@@ -122,8 +138,8 @@ UMLOperation* UMLClassifier::findOperation(QString name, Model_Utils::NameAndTyp
     const int inputParmCount = params.count();
     UMLOperation* test = NULL;
     for (UMLOperationListIt oit(list); (test = oit.current()) != NULL; ++oit) {
-        UMLAttributeList *testParams = test->getParmList();
-        const int pCount = testParams->count();
+        UMLAttributeList testParams = test->getParmList();
+        const int pCount = testParams.count();
         if (inputParmCount == 0 && pCount == 0)
             break;
         if (inputParmCount != pCount)
@@ -132,7 +148,7 @@ UMLOperation* UMLClassifier::findOperation(QString name, Model_Utils::NameAndTyp
         for (; i < pCount; ++i) {
             Model_Utils::NameAndType_ListIt nt(params.at(i));
             UMLClassifier *c = dynamic_cast<UMLClassifier*>((*nt).m_type);
-            UMLClassifier *testType = testParams->at(i)->getType();
+            UMLClassifier *testType = testParams.at(i)->getType();
             if (c == NULL) {       //template parameter
                 if (testType->getName() != "class")
                     break;
@@ -207,31 +223,31 @@ UMLOperation* UMLClassifier::createOperation(const QString &name /*=null*/,
 bool UMLClassifier::addOperation(UMLOperation* op, int position )
 {
     if (m_List.findRef(op) != -1) {
-        kdDebug() << "UMLClassifier::addOperation: findRef("
+        kDebug() << "UMLClassifier::addOperation: findRef("
         << op->getName() << ") finds op (bad)"
         << endl;
         return false;
     }
     if (checkOperationSignature(op->getName(), op->getParmList()) ) {
-        kdDebug() << "UMLClassifier::addOperation: checkOperationSignature("
+        kDebug() << "UMLClassifier::addOperation: checkOperationSignature("
         << op->getName() << ") op is non-unique" << endl;
         return false;
     }
 
     if( position >= 0 && position <= (int)m_List.count() ) {
-        kdDebug() << "UMLClassifier::addOperation(" << op->getName()
+        kDebug() << "UMLClassifier::addOperation(" << op->getName()
             << "): inserting at position " << position << endl;
         m_List.insert(position,op);
         UMLClassifierListItemList itemList = getFilteredList(Uml::ot_Operation);
         UMLClassifierListItem* currentAtt;
         QString buf;
         for (UMLClassifierListItemListIt it0(itemList); (currentAtt = it0.current()); ++it0)
-            buf.append(" " + currentAtt->getName());
-        kdDebug() << "  UMLClassifier::addOperation list after change: " << buf << endl;
+            buf.append(' ' + currentAtt->getName());
+        kDebug() << "  UMLClassifier::addOperation list after change: " << buf << endl;
      } else
         m_List.append( op );
+    UMLObject::emitModified();
     emit operationAdded(op);
-    emit modified();
     connect(op,SIGNAL(modified()),this,SIGNAL(modified()));
     return true;
 }
@@ -247,35 +263,36 @@ bool UMLClassifier::addOperation(UMLOperation* Op, IDChangeLog* Log) {
 
 int UMLClassifier::removeOperation(UMLOperation *op) {
     if (op == NULL) {
-        kdDebug() << "UMLClassifier::removeOperation called on NULL op"
+        kDebug() << "UMLClassifier::removeOperation called on NULL op"
         << endl;
         return -1;
     }
     if(!m_List.remove(op)) {
-        kdDebug() << "UMLClassifier::removeOperation: can't find op "
+        kDebug() << "UMLClassifier::removeOperation: can't find op "
         << op->getName() << " in list" << endl;
         return -1;
     }
     // disconnection needed.
     // note that we don't delete the operation, just remove it from the Classifier
     disconnect(op,SIGNAL(modified()),this,SIGNAL(modified()));
+    UMLObject::emitModified();
     emit operationRemoved(op);
-    emit modified();
     return m_List.count();
 }
 
-UMLObject* UMLClassifier::createTemplate(QString currentName /*= QString::null*/) {
-    bool goodName = !currentName.isEmpty();
+UMLObject* UMLClassifier::createTemplate(const QString& currentName /*= QString::null*/) {
+    QString name = currentName;
+    bool goodName = !name.isEmpty();
     if (!goodName)
-        currentName = uniqChildName(Uml::ot_Template);
-    UMLTemplate* newTemplate = new UMLTemplate(this, currentName);
+        name = uniqChildName(Uml::ot_Template);
+    UMLTemplate* newTemplate = new UMLTemplate(this, name);
 
     int button = QDialog::Accepted;
 
     while (button==QDialog::Accepted && !goodName) {
         UMLTemplateDialog templateDialogue(0, newTemplate);
         button = templateDialogue.exec();
-        QString name = newTemplate->getName();
+        name = newTemplate->getName();
 
         if(name.length() == 0) {
             KMessageBox::error(0, i18n("That is an invalid name."), i18n("Invalid Name"));
@@ -366,7 +383,8 @@ UMLClassifierList UMLClassifier::findSubClassConcepts (ClassifierType type) {
             UMLObject* obj = a->getObject(A);
             UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
             if (concept && (type == ALL || (!concept->isInterface() && type == CLASS)
-                            || (concept->isInterface() && type == INTERFACE)))
+                            || (concept->isInterface() && type == INTERFACE))
+                        && (inheritingConcepts.findRef(concept) == -1))
                 inheritingConcepts.append(concept);
         }
     }
@@ -394,7 +412,8 @@ UMLClassifierList UMLClassifier::findSuperClassConcepts (ClassifierType type) {
             UMLObject* obj = a->getObject(B);
             UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
             if (concept && (type == ALL || (!concept->isInterface() && type == CLASS)
-                            || (concept->isInterface() && type == INTERFACE)))
+                            || (concept->isInterface() && type == INTERFACE))
+                        && (parentConcepts.findRef(concept) == -1))
                 parentConcepts.append(concept);
         }
     }
@@ -418,7 +437,7 @@ bool UMLClassifier::operator==( UMLClassifier & rhs ) {
 void UMLClassifier::copyInto(UMLClassifier *rhs) const
 {
     UMLCanvasObject::copyInto(rhs);
-    rhs->setInterface(isInterface());
+    rhs->setBaseType(m_BaseType);
     // CHECK: association property m_pClassAssoc is not copied
     m_List.copyInto(&(rhs->m_List));
 }
@@ -531,20 +550,23 @@ UMLAttribute* UMLClassifier::addAttribute(const QString &name, Uml::IDType id /*
     Uml::Visibility scope = Settings::getOptionState().classState.defaultAttributeScope;
     UMLAttribute *a = new UMLAttribute(this, name, id, scope);
     m_List.append(a);
-    emit modified();
-    connect(a,SIGNAL(modified()),this,SIGNAL(modified()));
+    UMLObject::emitModified();
     emit attributeAdded(a);
+    connect(a,SIGNAL(modified()),this,SIGNAL(modified()));
     return a;
 }
 
 UMLAttribute* UMLClassifier::addAttribute(const QString &name, UMLObject *type, Uml::Visibility scope) {
-    UMLAttribute *a = new UMLAttribute(this, name, Uml::id_None, scope);
+    UMLAttribute *a = new UMLAttribute(this);
+    a->setName(name);
+    a->setVisibility(scope);
+    a->setID(UniqueID::gen());
     if (type)
         a->setType(type);
     m_List.append(a);
-    emit modified();
-    connect(a,SIGNAL(modified()),this,SIGNAL(modified()));
+    UMLObject::emitModified();
     emit attributeAdded(a);
+    connect(a,SIGNAL(modified()),this,SIGNAL(modified()));
     return a;
 }
 
@@ -557,9 +579,9 @@ bool UMLClassifier::addAttribute(UMLAttribute* att, IDChangeLog* Log /* = 0 */,
             m_List.insert(position, att);
         else
             m_List.append(att);
-        emit modified();
-        connect(att, SIGNAL(modified()), this, SIGNAL(modified()));
+        UMLObject::emitModified();
         emit attributeAdded(att);
+        connect(att, SIGNAL(modified()), this, SIGNAL(modified()));
         return true;
     } else if (Log) {
         Log->removeChangeByNewID(att->getID());
@@ -570,12 +592,12 @@ bool UMLClassifier::addAttribute(UMLAttribute* att, IDChangeLog* Log /* = 0 */,
 
 int UMLClassifier::removeAttribute(UMLAttribute* a) {
     if (!m_List.remove(a)) {
-        kdDebug() << "can't find att given in list" << endl;
+        kDebug() << "can't find att given in list" << endl;
         return -1;
     }
+    UMLObject::emitModified();
     emit attributeRemoved(a);
-    emit modified();
-    // If we are deleteing the object, then we don't need to disconnect..this is done auto-magically
+    // If we are deleting the object, then we don't need to disconnect..this is done auto-magically
     // for us by QObject. -b.t.
     // disconnect(a,SIGNAL(modified()),this,SIGNAL(modified()));
     delete a;
@@ -611,10 +633,16 @@ UMLOperationList UMLClassifier::getOpList(bool includeInherited) {
             ops.append(static_cast<UMLOperation*>(li));
     }
     if (includeInherited) {
-        UMLClassifierList parents(findSuperClassConcepts());
-        for (UMLClassifierListIt pit(parents); pit.current(); ++pit) {
+        UMLClassifierList parents = findSuperClassConcepts();
+        UMLClassifier *c;
+        for (UMLClassifierListIt pit(parents); (c = pit.current()) != NULL; ++pit) {
+            if (c == this) {
+                kError() << "UMLClassifier::getOpList: class " << c->getName()
+                    << " is parent of itself ?!?" << endl;
+                continue;
+            }
             // get operations for each parent by recursive call
-            UMLOperationList pops = pit.current()->getOpList(true);
+            UMLOperationList pops = c->getOpList(true);
             // add these operations to operation list, but only if unique.
             for (UMLOperation *po = pops.first(); po; po = pops.next()) {
                 QString po_as_string(po->toString(Uml::st_SigNoVis));
@@ -649,9 +677,9 @@ UMLTemplate* UMLClassifier::addTemplate(const QString &name, Uml::IDType id) {
         return t;
     t = new UMLTemplate(this, name, id);
     m_List.append(t);
-    emit modified();
-    connect(t, SIGNAL(modified()), this, SIGNAL(modified()));
+    UMLObject::emitModified();
     emit templateAdded(t);
+    connect(t, SIGNAL(modified()), this, SIGNAL(modified()));
     return t;
 }
 
@@ -661,9 +689,9 @@ bool UMLClassifier::addTemplate(UMLTemplate* newTemplate, IDChangeLog* log /* = 
         newTemplate->parent()->removeChild(newTemplate);
         this->insertChild(newTemplate);
         m_List.append(newTemplate);
-        emit modified();
-        connect(newTemplate,SIGNAL(modified()),this,SIGNAL(modified()));
+        UMLObject::emitModified();
         emit templateAdded(newTemplate);
+        connect(newTemplate,SIGNAL(modified()),this,SIGNAL(modified()));
         return true;
     } else if (log) {
         log->removeChangeByNewID( newTemplate->getID() );
@@ -682,9 +710,9 @@ bool UMLClassifier::addTemplate(UMLTemplate* Template, int position)
             m_List.insert(position,Template);
         else
             m_List.append(Template);
-        emit modified();
-        connect(Template,SIGNAL(modified()),this,SIGNAL(modified()));
+        UMLObject::emitModified();
         emit templateAdded(Template);
+        connect(Template,SIGNAL(modified()),this,SIGNAL(modified()));
         return true;
     }
     //else
@@ -693,17 +721,17 @@ bool UMLClassifier::addTemplate(UMLTemplate* Template, int position)
 
 int UMLClassifier::removeTemplate(UMLTemplate* umltemplate) {
     if ( !m_List.remove(umltemplate) ) {
-        kdWarning() << "can't find att given in list" << endl;
+        kWarning() << "can't find att given in list" << endl;
         return -1;
     }
+    UMLObject::emitModified();
     emit templateRemoved(umltemplate);
-    emit modified();
     disconnect(umltemplate,SIGNAL(modified()),this,SIGNAL(modified()));
     return m_List.count();
 }
 
 
-UMLTemplate *UMLClassifier::findTemplate(QString name) {
+UMLTemplate *UMLClassifier::findTemplate(const QString& name) {
     UMLTemplateList templParams = getTemplateList();
     for (UMLTemplate *t = templParams.first(); t; t = templParams.next()) {
         if (t->getName() == name)
@@ -736,9 +764,9 @@ int UMLClassifier::takeItem(UMLClassifierListItem *item) {
             QString txt = currentAtt->getName();
             if (txt.isEmpty())
               txt = "Type-" + QString::number((int) currentAtt->getBaseType());
-            buf.append(" " + currentAtt->getName());
+            buf.append(' ' + currentAtt->getName());
         }
-        kdDebug() << "  UMLClassifier::takeItem (before): m_List is " << buf << endl;
+        kDebug() << "  UMLClassifier::takeItem (before): m_List is " << buf << endl;
     int index = m_List.findRef(item);
     if (index == -1)
         return -1;
@@ -797,12 +825,70 @@ int UMLClassifier::takeItem(UMLClassifierListItem *item) {
     return index;
 }
 
+void UMLClassifier::setOriginType(UMLClassifier *origType) {
+    m_pSecondary = origType;
+}
+
+UMLClassifier * UMLClassifier::originType() {
+    return static_cast<UMLClassifier*>(m_pSecondary);
+}
+
+void UMLClassifier::setIsReference(bool isRef) {
+    m_isRef = isRef;
+}
+
+bool UMLClassifier::isReference() {
+    return m_isRef;
+}
+
+UMLAssociationList  UMLClassifier::getUniAssociationToBeImplemented() {
+    UMLAssociationList associations = getSpecificAssocs(Uml::at_UniAssociation);
+    UMLAssociationList uniAssocListToBeImplemented;
+
+    for(UMLAssociation *a = associations.first(); a; a = associations.next()) {
+        if (a->getObjectId(Uml::B) == getID())
+            continue;  // we need to be at the A side
+
+        QString roleNameB = a->getRoleName(Uml::B);
+        if (!roleNameB.isEmpty()) {
+            UMLAttributeList atl = getAttributeList();
+            bool found = false;
+            //make sure that an attribute with the same name doesn't already exist
+            for (UMLAttribute *at = atl.first(); at ; at = atl.next()) {
+                if (at->getName() == roleNameB) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                uniAssocListToBeImplemented.append(a);
+            }
+        }
+    }
+    return uniAssocListToBeImplemented;
+}
+
 void UMLClassifier::saveToXMI(QDomDocument & qDoc, QDomElement & qElement) {
-    QDomElement classifierElement;
-    if (this->isInterface())
-        classifierElement = UMLObject::save("UML:Interface", qDoc);
-    else
-        classifierElement = UMLObject::save("UML:Class", qDoc);
+    QString tag;
+    switch (m_BaseType) {
+        case Uml::ot_Class:
+            tag = "UML:Class";
+            break;
+        case Uml::ot_Interface:
+            tag = "UML:Interface";
+            break;
+        case Uml::ot_Datatype:
+            tag = "UML:DataType";
+            break;
+        default:
+            kError() << "UMLClassifier::saveToXMI() internal error: basetype is "
+                << m_BaseType << endl;
+            return;
+    }
+    QDomElement classifierElement = UMLObject::save(tag, qDoc);
+    if (m_BaseType == Uml::ot_Datatype && m_pSecondary != NULL)
+        classifierElement.setAttribute( "elementReference",
+                                        ID2STR(m_pSecondary->getID()) );
 
     //save templates
     UMLClassifierListItemList list = getFilteredList(Uml::ot_Template);
@@ -855,7 +941,7 @@ void UMLClassifier::saveToXMI(QDomDocument & qDoc, QDomElement & qElement) {
     qElement.appendChild( classifierElement );
 }
 
-UMLClassifierListItem* UMLClassifier::makeChildObject(QString xmiTag) {
+UMLClassifierListItem* UMLClassifier::makeChildObject(const QString& xmiTag) {
     UMLClassifierListItem* pObject = NULL;
     if (tagEq(xmiTag, "Operation")) {
         pObject = new UMLOperation(this);
@@ -871,6 +957,11 @@ UMLClassifierListItem* UMLClassifier::makeChildObject(QString xmiTag) {
 
 bool UMLClassifier::load(QDomElement& element) {
     UMLClassifierListItem *child = NULL;
+    m_SecondaryId = element.attribute( "elementReference", "" );
+    if (!m_SecondaryId.isEmpty()) {
+        // @todo We do not currently support composition.
+        m_isRef = true;
+    }
     bool totalSuccess = true;
     for (QDomNode node = element.firstChild(); !node.isNull();
             node = node.nextSibling()) {
@@ -882,8 +973,10 @@ bool UMLClassifier::load(QDomElement& element) {
                 tagEq(tag, "Classifier.feature") ||
                 tagEq(tag, "Namespace.ownedElement") ||
                 tagEq(tag, "Namespace.contents")) {
-            if (! load(element))
-                return false;
+            load(element);
+            // Not evaluating the return value from load()
+            // because we want a best effort.
+
         } else if ((child = makeChildObject(tag)) != NULL) {
             if (child->loadFromXMI(element)) {
                 switch (child->getBaseType()) {
@@ -892,7 +985,7 @@ bool UMLClassifier::load(QDomElement& element) {
                         break;
                     case Uml::ot_Operation:
                         if (! addOperation(static_cast<UMLOperation*>(child)) ) {
-                            kdError() << "UMLClassifier::load: error from addOperation(op)"
+                            kError() << "UMLClassifier::load: error from addOperation(op)"
                                       << endl;
                             delete child;
                             totalSuccess = false;
@@ -905,7 +998,7 @@ bool UMLClassifier::load(QDomElement& element) {
                         break;
                 }
             } else {
-                kdWarning() << "UMLClassifier::load: failed to load " << tag << endl;
+                kWarning() << "UMLClassifier::load: failed to load " << tag << endl;
                 delete child;
                 totalSuccess = false;
             }
@@ -913,14 +1006,12 @@ bool UMLClassifier::load(QDomElement& element) {
             UMLDoc *umldoc = UMLApp::app()->getDocument();
             UMLObject *pObject = Object_Factory::makeObjectFromXMI(tag);
             if (pObject == NULL) {
-                totalSuccess = false;
+                // Not setting totalSuccess to false
+                // because we want a best effort.
                 continue;
             }
             pObject->setUMLPackage(this);
-            if (pObject->loadFromXMI(element)) {
-                if (tagEq(tag, "Generalization"))
-                    umldoc->addAssocToConcepts((UMLAssociation *) pObject);
-            } else {
+            if (! pObject->loadFromXMI(element)) {
                 removeObject(pObject);
                 delete pObject;
                 totalSuccess = false;
@@ -929,5 +1020,7 @@ bool UMLClassifier::load(QDomElement& element) {
     }
     return totalSuccess;
 }
+
+
 
 #include "classifier.moc"

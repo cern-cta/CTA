@@ -128,13 +128,13 @@ void CppWriter::writeClass(UMLClassifier *c) {
         new UMLAttribute(printOp, "stream",
                          "1", Uml::Visibility::Public, "ostream&");
       streamParam->setDoc("The stream where to print this object");
-      printOp->getParmList()->append(streamParam);
+      printOp->getParmList().append(streamParam);
       UMLAttribute* indentParam =
         new UMLAttribute(printOp, "indent",
                          "2", Uml::Visibility::Public,
                          "string");
       indentParam->setDoc("The indentation to use");
-      printOp->getParmList()->append(indentParam);
+      printOp->getParmList().append(indentParam);
       UMLAttribute* alreadyPrintedParam =
         new UMLAttribute(printOp, "alreadyPrinted",
                          "3", Uml::Visibility::Public,
@@ -142,7 +142,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
       alreadyPrintedParam->setDoc
         (QString("The set of objects already printed.\n") +
          "This is to avoid looping when printing circular dependencies");
-      printOp->getParmList()->append(alreadyPrintedParam);
+      printOp->getParmList().append(alreadyPrintedParam);
       c->getOpList().append(printOp);
       // Second print method, with no arguments
       printOp = c->createOperation("print const", NULL, &params);

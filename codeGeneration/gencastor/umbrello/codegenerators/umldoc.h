@@ -5,8 +5,8 @@
  *   the Free Software Foundation; either version 2 of the License, or     *
  *   (at your option) any later version.                                   *
  *                                                                         *
- *   copyright (C) 2002-2006                                               *
- *   Umbrello UML Modeller Authors <uml-devel@ uml.sf.net>                 *
+ *   copyright (C) 2002-2007                                               *
+ *   Umbrello UML Modeller Authors <uml-devel@uml.sf.net>                  *
  ***************************************************************************/
 
 #ifndef UMLDOC_H
@@ -36,7 +36,6 @@
 #include "umlobjectlist.h"
 #include "umlassociationlist.h"
 #include "umlclassifierlist.h"
-#include "umldatatypelist.h"
 #include "umlviewlist.h"
 #include "umlstereotypelist.h"
 
@@ -226,16 +225,6 @@ public:
      * @return  The Association created
      */
     UMLAssociation* createUMLAssociation(UMLObject *a, UMLObject *b, Uml::Association_Type type);
-    /**
-     * Adds an existing association to the matching concept in the list of concepts.
-     * The selection of the matching concept depends on the association type:
-     * For generalizations, the assoc is added to the concept that matches role A.
-     * For aggregations and compositions , the assoc is added to the concept
-     * that matches role B.
-     *
-     * @param assoc     The association to add
-     */
-    void addAssocToConcepts(UMLAssociation* assoc);
 
     /**
      * Adds an association.
@@ -248,8 +237,9 @@ public:
      * Removes an association.
      *
      * @param pAssoc    Pointer to the UMLAssociation to remove.
+     * @param doSetModified  Whether to mark the document as modified (default: true.)
      */
-    void removeAssociation(UMLAssociation *pAssoc);
+    void removeAssociation(UMLAssociation *pAssoc, bool doSetModified = true);
 
     /**
      * Finds an association.
@@ -398,7 +388,7 @@ public:
     /**
      * Set the name of this model.
      */
-    void setName(QString name);
+    void setName(const QString& name);
 
     /**
      * Return the name of this model.
@@ -445,24 +435,6 @@ public:
      * @param headerNode        The <XMI.header> node
      */
     bool validateXMIHeader(QDomNode& headerNode);
-
-    /**
-     * Internally sets the m_bNativeXMIFile flag.
-     *
-     * @param xmiId             A sample xmi.id from the current file.
-     *                  It is asumed that the nativeness of the
-     *                  XMI file can be determined using only
-     *                  this sample xmi.id.
-     *                  For native Umbrello XMI files, the
-     *                  xmi.id's are composed of only digits.
-     * @return  True if nativity could be determied.
-     */
-    bool determineNativity(const QString &xmiId);
-
-    /**
-     * Return the m_bNativeXMIFile flag.
-     */
-    bool isNativeXMIFile() const;
 
     /**
      * Loads all UML objects from XMI into the current UMLDoc.
@@ -550,9 +522,9 @@ public:
     /**
      * Returns a list of the datatypes in this UMLDoc.
      *
-     * @return  List of UML datatypes.
+     * @return  List of datatypes.
      */
-    UMLDatatypeList getDatatypes();
+    UMLClassifierList getDatatypes();
 
     /**
      * Returns a list of the associations in this UMLDoc.
@@ -577,7 +549,7 @@ public:
 
     /**
      * Assigns an already created UMLObject a new ID.
-     * If the object is a classifier then the operations/attributes 
+     * If the object is a classifier then the operations/attributes
      * are also assigned new IDs.
      *
      * @param Obj               Pointer to the UMLObject to add.
@@ -794,12 +766,6 @@ public:
 
 private:
     /**
-     * Remove this association from concepts list. This might be
-     * a public method if removeAssociation is removed.
-     */
-    void removeAssocFromConcepts(UMLAssociation *assoc);
-
-    /**
      * Sets up the autosave timer.
      */
     void initSaveTimer();
@@ -874,17 +840,12 @@ private:
     Uml::IDType m_nViewID;
 
     /**
-     * True when reading a native Umbrello XMI file.
-     */
-    bool m_bNativeXMIFile;
-
-    /**
      * True when type resolution pass has been executed.
      */
     bool m_bTypesAreResolved;
 
     /**
-     * the context menu on the tabs, 
+     * the context menu on the tabs,
      * plugs into umlview::slotMenuSelection()
      */
     KPopupMenu* m_pTabPopupMenu;

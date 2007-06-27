@@ -10,7 +10,6 @@
 #include "../codegenerator.h"
 #include "simplecodegenerator.h"
 #include "../classifier.h"
-#include "../datatype.h"
 
 /**
  * Castor cpp writer.
@@ -59,7 +58,7 @@ class CppCastorWriter : public SimpleCodeGenerator {
   /**
    * Gets the datatype for a given type
    */
-  UMLDatatype* getDatatype(QString type);
+  UMLClassifier* getDatatype(QString type);
 
   /** The list of associations and members to ignore, except for dB stuff */
   std::set<QString> m_ignoreButForDB;

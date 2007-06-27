@@ -555,7 +555,7 @@ void CppBaseWriter::writeOperations
   }
   if (skip) return;
   // Check we did not already generate this method
-  std::pair<QString, int> p(name, op->getParmList()->count());
+  std::pair<QString, int> p(name, op->getParmList().count());
   if (alreadyGenerated.find(p) != alreadyGenerated.end()) {
     // already done, skip
     return;
@@ -574,9 +574,9 @@ void CppBaseWriter::writeOperations
   if (isHeaderMethod) {
     // Build the documentation from the member list
     QString returnStr = "";
-    for(UMLAttribute *at = op->getParmList()->first();
+    for(UMLAttribute *at = op->getParmList().first();
         0 != at;
-        at = op->getParmList()->next()) {
+        at = op->getParmList().next()) {
       returnStr += "@param " + at->getName() +
         " " + at->getDoc() + "\n";
     }
@@ -618,11 +618,11 @@ void CppBaseWriter::writeOperations
   stream << name << "(";
   paramIndent += name.length() + 1;
   // method parameters
-  QPtrList<UMLAttribute>* pl = op->getParmList();
-  for (unsigned int i = 0; i < pl->count(); i++) {
-    UMLAttribute* at = pl->at(i);
+  QPtrList<UMLAttribute> pl = op->getParmList();
+  for (unsigned int i = 0; i < pl.count(); i++) {
+    UMLAttribute* at = pl.at(i);
     if (at) {
-      if (at != op->getParmList()->first()) {
+      if (at != op->getParmList().first()) {
         stream << "," << endl << getIndent(paramIndent);
       }
       stream << fixTypeName(at->getTypeName(),
@@ -650,7 +650,7 @@ void CppBaseWriter::writeOperations
               QTextStream &stream)>::iterator
       it = m_methodImplementations.find
       (std::pair<QString, int>
-       (op->getName(), op->getParmList()->count()));
+       (op->getName(), op->getParmList().count()));
     if (it != m_methodImplementations.end()) {
       // we've got an implemantation
       m_indent++;

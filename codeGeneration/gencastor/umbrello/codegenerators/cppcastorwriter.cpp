@@ -14,7 +14,6 @@
 #include "cppcastorwriter.h"
 #include "../attribute.h"
 #include "../classifier.h"
-#include "../datatype.h"
 
 //-----------------------------------------------------------------------------
 // Implementation file for class : cppcastorwriter
@@ -153,7 +152,7 @@ UMLClassifier* CppCastorWriter::getClassifier(QString type) {
 //=============================================================================
 // getDatatype
 //=============================================================================
-UMLDatatype* CppCastorWriter::getDatatype(QString type) {
+UMLClassifier* CppCastorWriter::getDatatype(QString type) {
   QString name = getSimpleType(type);
-  return new UMLDatatype(name);
+  return new UMLClassifier(name);
 }
