@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.448 $ $Date: 2007/06/27 14:45:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.449 $ $Date: 2007/06/27 14:51:03 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2375,8 +2375,7 @@ END;
 
 /* PL/SQL method to delete a CastorFile only when no Disk|TapeCopies are left for it */
 /* Internally used in filesDeletedProc and putFailedProc */
-CREATE OR PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
-DECLARE
+CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
   nb NUMBER;
 BEGIN
   -- See whether the castorfile has no other DiskCopy
