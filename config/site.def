@@ -293,7 +293,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildPgCpp		NO
 #define BuildCastorClientCPPLibrary	NO
 #define BuildCppTest	        NO
-#define BuildTankPerfMonLibrary	NO
 #define BuildRepack		NO
 #define BuildCleaning		NO
 
@@ -318,7 +317,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseScheduler    	YES
 #define UseExpert		YES
 #define UseMaui			NO
-#define UseStorageTank		NO
 #define UseCastorOnGlobalFileSystem	NO
 
 /* 
