@@ -1,9 +1,9 @@
 .lf 1 expertd.man
-.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.3 $ $Date: 2005/01/07 09:18:01 $ CERN IT-ADC Vitaly Motyakov
+.\" @(#)$RCSfile: expertd.man,v $ $Revision: 1.4 $ $Date: 2007/06/28 06:26:02 $ CERN IT-ADC Vitaly Motyakov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
 .\"
-.TH EXPERTD 1 "$Date: 2005/01/07 09:18:01 $" CASTOR "Expert Administrator Commands"
+.TH EXPERTD 1 "$Date: 2007/06/28 06:26:02 $" CASTOR "Expert Administrator Commands"
 .SH NAME
 expertd \- start the CASTOR Expert daemon
 .SH SYNOPSIS
@@ -35,7 +35,7 @@ setenv EXPERT_PORT 5045
 .RE
 .LP
 an entry in
-.B /etc/castor.conf
+.B /etc/castor/castor.conf
 like:
 .RS
 .HP
@@ -66,7 +66,7 @@ setenv EXPERT_HOST castorexp
 .RE
 .LP
 an entry in
-.B /etc/castor.conf
+.B /etc/castor/castor.conf
 for example:
 .RS
 .HP
@@ -131,7 +131,7 @@ The name of the configuration file can be defined also through the environment
 variable 
 .B EXPERT_CONFIG
 or via the entry in 
-.B /etc/castor.conf:
+.B /etc/castor/castor.conf:
 .RS
 .RS
 .HP
