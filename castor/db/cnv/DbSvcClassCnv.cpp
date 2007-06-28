@@ -473,7 +473,7 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(6, obj->gcPolicy());
     m_insertStatement->setString(7, obj->migratorPolicy());
     m_insertStatement->setString(8, obj->recallerPolicy());
-    m_insertStatement->setBoolean(9, obj->hasDiskOnlyBehavior());
+    m_insertStatement->setInt(9, obj->hasDiskOnlyBehavior());
     m_insertStatement->setString(10, obj->forcedFileClass());
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(11));
@@ -533,7 +533,7 @@ void castor::db::cnv::DbSvcClassCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(6, obj->gcPolicy());
     m_updateStatement->setString(7, obj->migratorPolicy());
     m_updateStatement->setString(8, obj->recallerPolicy());
-    m_updateStatement->setBoolean(9, obj->hasDiskOnlyBehavior());
+    m_updateStatement->setInt(9, obj->hasDiskOnlyBehavior());
     m_updateStatement->setString(10, obj->forcedFileClass());
     m_updateStatement->setUInt64(11, obj->id());
     m_updateStatement->execute();
@@ -626,7 +626,7 @@ castor::IObject* castor::db::cnv::DbSvcClassCnv::createObj(castor::IAddress* add
     object->setGcPolicy(rset->getString(6));
     object->setMigratorPolicy(rset->getString(7));
     object->setRecallerPolicy(rset->getString(8));
-    object->setHasDiskOnlyBehavior(rset->getBoolean(9));
+    object->setHasDiskOnlyBehavior(rset->getInt(9));
     object->setForcedFileClass(rset->getString(10));
     object->setId(rset->getUInt64(11));
     delete rset;
@@ -674,7 +674,7 @@ void castor::db::cnv::DbSvcClassCnv::updateObj(castor::IObject* obj)
     object->setGcPolicy(rset->getString(6));
     object->setMigratorPolicy(rset->getString(7));
     object->setRecallerPolicy(rset->getString(8));
-    object->setHasDiskOnlyBehavior(rset->getBoolean(9));
+    object->setHasDiskOnlyBehavior(rset->getInt(9));
     object->setForcedFileClass(rset->getString(10));
     object->setId(rset->getUInt64(11));
     delete rset;

@@ -49,7 +49,7 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_gcPolicy(""),
   m_migratorPolicy(""),
   m_recallerPolicy(""),
-  m_hasDiskOnlyBehavior(AIE : boolean),
+  m_hasDiskOnlyBehavior(false),
   m_forcedFileClass(""),
   m_id(0) {
 }

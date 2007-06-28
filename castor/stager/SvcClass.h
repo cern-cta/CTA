@@ -32,7 +32,6 @@
 /* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
-struct C_boolean_t;
 struct Cstager_DiskPool_t;
 struct Cstager_SvcClass_t;
 struct Cstager_TapePool_t;
@@ -203,7 +202,7 @@ int Cstager_SvcClass_setRecallerPolicy(struct Cstager_SvcClass_t* instance, cons
  * pools. This include failing jobs that want to allocate space when no space is
  * available and forcing the fileClass of files if forcedFileClass is not empty
  */
-int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, struct C_boolean_t* var);
+int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int* var);
 
 /**
  * Set the value of hasDiskOnlyBehavior
@@ -211,7 +210,7 @@ int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, st
  * pools. This include failing jobs that want to allocate space when no space is
  * available and forcing the fileClass of files if forcedFileClass is not empty
  */
-int Cstager_SvcClass_setHasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, struct C_boolean_t new_var);
+int Cstager_SvcClass_setHasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int new_var);
 
 /**
  * Get the value of forcedFileClass

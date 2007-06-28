@@ -265,7 +265,7 @@ namespace castor {
        * available and forcing the fileClass of files if forcedFileClass is not empty
        * @return the value of m_hasDiskOnlyBehavior
        */
-      boolean hasDiskOnlyBehavior() const {
+      bool hasDiskOnlyBehavior() const {
         return m_hasDiskOnlyBehavior;
       }
 
@@ -276,7 +276,7 @@ namespace castor {
        * available and forcing the fileClass of files if forcedFileClass is not empty
        * @param new_var the new value of m_hasDiskOnlyBehavior
        */
-      void setHasDiskOnlyBehavior(boolean new_var) {
+      void setHasDiskOnlyBehavior(bool new_var) {
         m_hasDiskOnlyBehavior = new_var;
       }
 
@@ -408,7 +408,7 @@ namespace castor {
       std::string m_recallerPolicy;
 
       /// Whether the diskpools under this serviceClass should behave like disk only pools. This include failing jobs that want to allocate space when no space is available and forcing the fileClass of files if forcedFileClass is not empty
-      boolean m_hasDiskOnlyBehavior;
+      bool m_hasDiskOnlyBehavior;
 
       /// In case hasDiskOnlyBehavior is set, this is the file class that will be used for all files created in this svcclass, independently of the fileclass of the directory where they are created
       std::string m_forcedFileClass;

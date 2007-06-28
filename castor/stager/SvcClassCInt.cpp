@@ -235,7 +235,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_SvcClass_hasDiskOnlyBehavior
   //----------------------------------------------------------------------------
-  int Cstager_SvcClass_hasDiskOnlyBehavior(castor::stager::SvcClass* instance, boolean* var) {
+  int Cstager_SvcClass_hasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool* var) {
     *var = instance->hasDiskOnlyBehavior();
     return 0;
   }
@@ -243,7 +243,7 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_SvcClass_setHasDiskOnlyBehavior
   //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setHasDiskOnlyBehavior(castor::stager::SvcClass* instance, boolean new_var) {
+  int Cstager_SvcClass_setHasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool new_var) {
     instance->setHasDiskOnlyBehavior(new_var);
     return 0;
   }
