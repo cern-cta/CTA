@@ -52,14 +52,15 @@ namespace castor {
       SUBREQUEST_FAILED_FINISHED = 9,
       SUBREQUEST_FAILED_ANSWERING = 10,
       SUBREQUEST_ARCHIVED = 11,
-      SUBREQUEST_REPACK = 12
+      SUBREQUEST_REPACK = 12,
+      SUBREQUEST_READYFORSCHED = 13
     }; /* end of enum SubRequestStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the SubRequestStatusCodes enum
      */
-    extern const char* SubRequestStatusCodesStrings[13];
+    extern const char* SubRequestStatusCodesStrings[14];
 
 #ifdef __cplusplus
   } /* end of namespace stager */
