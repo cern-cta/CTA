@@ -20,12 +20,12 @@
  ******************************************************************************************************/
 
 /**
- * $Id: index.php,v 1.4 2007/06/07 16:22:41 waldron Exp $
+ * $Id: index.php,v 1.5 2007/06/28 06:18:32 waldron Exp $
  */
 
 require("utils.php");
 include("config.php");
-include("login.php");
+include("/var/www/conf/dlf/login.conf");
 
 $gen_start = getmicrotime();
 
@@ -72,12 +72,12 @@ $gen_start = getmicrotime();
 					<?php
 						sort(array_keys($db_instances));
 						foreach (array_keys($db_instances) as $name) {
-							if ($HTTP_COOKIE_VARS['instance'] == $name) {
+							if (isset($HTTP_COOKIE_VARS['instance']) && ($HTTP_COOKIE_VARS['instance'] == $name)) {
 								echo "<option value=\"".$name."\" selected=\"selected\"";
 							} else {
 								echo "<option value=\"".$name."\"";
 							}
-							if ($db_instances[$name]['displayname']) {
+							if (isset($db_instances[$name]['displayname'])) {
 								echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['displayname']."/".$db_instances[$name]['server'].")</option>";
 							} else {
 								echo ">".$db_instances[$name]['type']." (".$db_instances[$name]['username']."@".$db_instances[$name]['server'].")</option>";

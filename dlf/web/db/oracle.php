@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.php,v 1.7 2007/02/27 15:56:28 waldron Exp $
+ * $Id: oracle.php,v 1.8 2007/06/28 06:18:31 waldron Exp $
  */
 
 /* definitions */
@@ -35,7 +35,7 @@ if (!defined("DB_LAYER")) {
 function db_connect($instance, $persistency, $stager) {
 	
 	include("config.php");
-	include("login.php");
+	include("/var/www/conf/dlf/login.conf");
 
 	/* variables */
 	$server   = "";
@@ -129,8 +129,8 @@ function db_fetch_row($results) {
 		for ($i = 1, $j = 0; $i <= ocinumcols($results); $i++, $j++) {
 			$row[$j] = ociresult($results, ocicolumnname($results, $i));
 		}
+		return $row;
 	}
-	return $row;
 }
 
 /*

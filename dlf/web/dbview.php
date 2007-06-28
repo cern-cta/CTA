@@ -20,12 +20,12 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dbview.php,v 1.5 2006/11/29 13:39:14 waldron Exp $
+ * $Id: dbview.php,v 1.6 2007/06/28 06:18:32 waldron Exp $
  */
 
 require("utils.php");
 include("config.php");
-include("login.php");
+include("/var/www/conf/dlf/login.conf");
 include("db/".strtolower($db_instances[$_GET['instance']]['type']).".php");
 
 $gen_start   = getmicrotime();
@@ -110,7 +110,7 @@ function navigation_form() {
 						$query_lookup = $stager_sql_tables[$entry]['lookup'];
 						
 						/* adjust the query to use a linklookup if needed */
-						if (($_GET['link'] == "yes") && ($stager_sql_tables[$entry]['linklookup'])) {
+						if (isset($_GET['link']) && ($_GET['link'] == "yes") && ($stager_sql_tables[$entry]['linklookup'])) {
 							$query_lookup = $stager_sql_tables[$entry]['linklookup'];
 						} 
 	

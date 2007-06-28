@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.php,v 1.3 2006/11/29 13:39:15 waldron Exp $
+ * $Id: mysql.php,v 1.4 2007/06/28 06:18:31 waldron Exp $
  */
 
 /* definitions */
@@ -35,7 +35,7 @@ if (!defined("DB_LAYER")) {
 function db_connect($instance, $persistency, $stager) {
 	
 	include("config.php");
-	include("login.php");
+	include("/var/www/conf/dlf/login.conf");
 
 	/* variables */
 	$server   = "";
