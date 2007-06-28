@@ -35,6 +35,7 @@ BEGIN
                  AND tablespace_name NOT IN ('DLF_DATA', 'DLF_IDX', 'DLF_INDX')
                  AND LENGTH(tablespace_name) = 12)
   LOOP
+    EXECUTE IMMEDIATE 'ALTER TABLESPACE '||rec.tablespace_name||' OFFLINE';
     EXECUTE IMMEDIATE 'DROP TABLESPACE '||rec.tablespace_name||'
                        INCLUDING CONTENTS AND DATAFILES';
   END LOOP;
