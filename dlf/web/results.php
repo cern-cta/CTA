@@ -21,7 +21,7 @@
 
 require("utils.php");
 include("config.php");
-include("login.php");
+include("/var/www/conf/dlf/login.conf");
 include("db/".strtolower($db_instances[$_GET['instance']]['type']).".php");
 
 $dbh            = db_connect($_GET['instance'], 1, 0);
@@ -29,7 +29,7 @@ $gen_start      = getmicrotime();
 $query_count    = 0;
 $schema_version = db_schema_version($dbh);
 
-if (!$_GET['style']) {
+if (!isset($_GET['style'])) {
 	$_GET['style'] = 1;
 }
 $_GET['col_facility'] = "on";
@@ -68,27 +68,28 @@ setcookie("style", $_GET['style']);
 	<?php
 
 	/* timestamp */
+	$timeframe = "";
 	if (DB_LAYER == 'mysql') {
-		if ($_GET['drilltime']) {
+		if (isset($_GET['drilltime'])) {
 			$timeframe = "((t1.timestamp >= DATE_SUB(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)) AND
 						  (t1.timestamp < DATE_ADD(STR_TO_DATE('".$_GET['drilltime']."', '%Y-%m-%d %H:%i:%s'), interval ".$db_drilldown_time." hour)))";
 		}
 		else if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
 			$timeframe = "t1.timestamp > DATE_SUB(NOW(), interval ".$_GET['last']." minute)";
 		} 
-		else if (($_GET['drilldown']) || ($_GET['last'] == 0)) {
+		else if ((isset($_GET['drilldown'])) || ($_GET['last'] == 0)) {
 			$timeframe = "((t1.timestamp >= STR_TO_DATE('".$_GET['from']." ".$_GET['fromtime'].":00', '%d/%m/%Y %H:%i:%s')) AND
 						  (t1.timestamp <  STR_TO_DATE('". $_GET['to']. " " .$_GET['totime'].":00', '%d/%m/%Y %H:%i:%s')))";
 		}	
 	} else {
-		if ($_GET['drilltime']) {
+		if (isset($_GET['drilltime'])) {
 			$timeframe = "((t1.timestamp >= (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') - ".$db_drilldown_time."/24)) AND
 						  (t1.timestamp <  (TO_DATE('".$_GET['drilltime']."', 'DD/MM/YYYY HH24:MI:SS') + ".$db_drilldown_time."/24)))"; 
 		}
 		else if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
 			$timeframe = "t1.timestamp > (SYSDATE - ".$_GET['last']."/1440)";
 		}
-		else if (($_GET['drilldown']) || ($_GET['last'] == 0)) {
+		else if ((isset($_GET['drilldown'])) || ($_GET['last'] == 0)) {
 			$timeframe = "((t1.timestamp >= TO_DATE('".$_GET['from'] ." " .$_GET['fromtime'].":00', 'DD/MM/YYYY HH24:MI:SS')) AND
 						  (t1.timestamp <  TO_DATE('".$_GET['to']." " .$_GET['totime'].":00', 'DD/MM/YYYY HH24:MI:SS')))";  
 		}
@@ -104,18 +105,25 @@ setcookie("style", $_GET['style']);
 	if (DB_LAYER == 'mysql') {
 		$limit = "LIMIT ".(($_GET['page'] - 1) * $_GET['limit']).", ".$_GET['limit'];
 	} else {
-		$s_timestamp = $schema_version > 1 ? "timestamp" : "a.timestamp";
-		$s_timeusec  = $schema_version > 1 ? "timeusec"  : "a.timeusec";
-		$limit = "SELECT * FROM (
-					 SELECT p.*, ROWNUM RNUM
-					 FROM (subquery ORDER BY $s_timestamp $tordering, $s_timeusec $tordering) p
-				  ) 
-				  WHERE (RNUM >  ".($_GET['page'] - 1) * $_GET['limit']."
-				  AND    RNUM <= ".($_GET['page'])     * $_GET['limit'].")";	
+		if ((((isset($_GET['paramvalue']) && isset($_GET['paramname']) && $_GET['paramvalue'] && $_GET['paramname'])) ||
+		   (isset($_GET['col_subreqid']) || isset($_GET['col_tapevid']) || ($_GET['columns'] == 'default'))) && 
+		   ($schema_version <= 1)) {
+			$s_timestamp = "a.timestamp";
+			$s_timeusec  = "a.timeusec";
+		} else {
+			$s_timestamp = "timestamp";
+			$s_timeusec  = "timeusec";
+		}
+
+		$limit = "SELECT * FROM (SELECT p.*, ROWNUM RNUM
+					 FROM (subquery ORDER BY $s_timestamp $tordering, $s_timeusec $tordering) p)
+					 WHERE (RNUM >  ".($_GET['page'] - 1) * $_GET['limit']."
+					 AND    RNUM <= ".($_GET['page'])     * $_GET['limit'].")";	
 	}
 	
 	/* construct filters */
-	if (is_array($_GET['severity']) && ($_GET['severity'][0] != 'All')) {
+	$filter = "";
+	if (isset($_GET['severity']) && is_array($_GET['severity']) && ($_GET['severity'][0] != 'All')) {
 		$filter = "WHERE t1.severity IN(";
 		foreach (array_keys($_GET['severity']) as $num) {
 			$filter .= $_GET['severity'][$num].",";
@@ -124,7 +132,7 @@ setcookie("style", $_GET['style']);
 	}
 
 	foreach (array('facility:1', 'hostid:1', 'pid:1', 'msg_no:1', 'reqid:1', 'nshostid:1', 'nsfileid:1', 'subreqid:2', 
-		           'tapevid:2', 'uid:2', 'gid:2', 'sec_type:2', 'sec_name:2') as $config) {
+		           'tapevid:2', 'userid:2', 'groupid:2', 'sec_type:2', 'sec_name:2') as $config) {
 		list ($name, $version_prereq) = split(":", $config, 2);
 		if ($schema_version < $version_prereq) {
 			continue;
@@ -136,8 +144,9 @@ setcookie("style", $_GET['style']);
 	}
 
 	/* additional columns */
+	$extra_column = "";
 	if ($schema_version > 1) {
-		$extra_column = ", tapevid, subreqid, userid, groupid, sec_type, sec_name";
+		$extra_column = ", t1.tapevid, t1.subreqid, t1.userid, t1.groupid, t1.sec_type, t1.sec_name";
 	}
 	if ($timeframe) {
 		$filter = ($filter) ? $filter." AND " : "WHERE ";
@@ -160,28 +169,28 @@ setcookie("style", $_GET['style']);
 	$c_timeframe = str_replace("t1", "c", $timeframe);
 
 	/* tape vid */
-	if (($schema_version < 2) && 
-	    ($_GET['tapevid'] || ($_GET['columns'] == 'default') || $_GET['col_tapevid'])) {
-		$query = sprintf("SELECT a.*, b.tapevid
-				  FROM (%s) a %s JOIN dlf_tape_ids b ON (b.id = a.id %s %s)",
-				 $query, 
-				 $_GET['tapevid'] ? "INNER" : "LEFT",
-				 $timeframe ? "AND $b_timeframe" : "", 
-				 $_GET['tapevid'] ? "AND b.tapevid = '".$_GET['tapevid']."'" : "");
-	}
-	
-	/* sub request */
-	if (($_GET['subreqid'] || ($_GET['columns'] == 'default') || $_GET['col_subreqid']) && ($schema_version < 2)) {
-		$query = sprintf("SELECT a.*, b.subreqid
-						  FROM (%s) a %s JOIN dlf_reqid_map b ON (b.id = a.id %s %s)",
-						 $query,
-				 		 $_GET['subreqid'] ? "INNER" : "LEFT",
-						 $timeframe ? "AND $b_timeframe" : "",
-						 $_GET['subreqid'] ? "AND b.subreqid = '".$_GET['subreqid']."'" : "");
-	}
+        if ((($_GET['columns'] == 'default') || isset($_GET['col_tapevid'])) && ($schema_version < 2)) {
+                $query = sprintf("SELECT a.*, b.tapevid
+                                  FROM (%s) a %s JOIN dlf_tape_ids b ON (b.id = a.id %s %s)",
+                                 $query,
+                                 isset($_GET['tapevid']) && $_GET['tapevid'] != "" ? "INNER" : "LEFT",
+                                 $timeframe ? "AND $b_timeframe" : "",
+                                 isset($_GET['tapevid']) && $_GET['tapevid'] ? "AND b.tapevid = '".$_GET['tapevid']."'" : "");
+        }
+
+        /* sub request */
+        if ((($_GET['columns'] == 'default') || isset($_GET['col_subreqid'])) && ($schema_version < 2)) {
+                $query = sprintf("SELECT a.*, b.subreqid
+                                                  FROM (%s) a %s JOIN dlf_reqid_map b ON (b.id = a.id %s %s)",
+                                                 $query,
+                                                 isset($_GET['subreqid']) && $_GET['subreqid'] != "" ? "INNER" : "LEFT",
+                                                 $timeframe ? "AND $b_timeframe" : "",
+                                                 isset($_GET['subreqid']) && $_GET['subreqid'] ? "AND b.subreqid = '".$_GET['subreqid']."'" : "");
+        }
+
 
 	/* search criteria by parameter supplied ? */
-	if ($_GET['paramvalue'] && $_GET['paramname']) {
+	if (isset($_GET['paramvalue']) && isset($_GET['paramname']) && $_GET['paramvalue'] && $_GET['paramname']) {
 	
 		$join = sprintf("INNER JOIN %s b 
 				 ON (b.id = a.id %s AND b.value = '%s' %s)",
@@ -200,13 +209,14 @@ setcookie("style", $_GET['style']);
 	}
 	$exe_query .= " ORDER BY timestamp $tordering, timeusec $tordering";
 	echo '<!-- '.$exe_query.' -->';
-	
+
 	/* execute query */
 	$results = db_query($exe_query, $dbh);
 	if (!$results) {
 		exit;
 	}
-	
+
+	$data = array();
 	while ($row = db_fetch_row($results)) {
 
 		$id = $row[0];
@@ -225,18 +235,18 @@ setcookie("style", $_GET['style']);
 			$data[$id]['col_subreqid'] = $row[17];
 			if ((($row[18] != -1) && ($row[18])) || (($row[19] != -1)  && ($row[19]))|| (($row[20] != "N/A") && ($row[20])) || (($row[21] != "N/A") && ($row[21]))) {
 				$data[$id]['col_security'] = "UID=".$row[18]." GID=".$row[19]." TYPE=\"".$row[20]."\" NAME=\"".$row[21]."\"";
-			}		
+			}
 		}
 		else {
 			$i = 16;
-			if ($_GET['tapevid'] || ($_GET['columns'] == 'default') || $_GET['col_tapevid']) {
+			if ((isset($_GET['tapevid']) && $_GET['tapevid']) || ($_GET['columns'] == 'default') || isset($_GET['col_tapevid'])) {
 				$data[$id]['col_tapevid']  = $row[$i];
 				$i++;
 			}
-			if ($_GET['subreqid'] || ($_GET['columns'] == 'default') || $_GET['col_subreqid']) {
-				$data[$id]['col_subreqid'] = $row[$i];
-				$i++;
-			}
+                        if ((isset($_GET['subreqid']) && $_GET['subreqid']) || ($_GET['columns'] == 'default') || isset($_GET['col_subreqid'])) {
+                                $data[$id]['col_subreqid'] = $row[$i];
+                                $i++;
+                        }
 		}
 			
 		$data[$id]['m_severity']     = $row[3];
@@ -259,7 +269,7 @@ setcookie("style", $_GET['style']);
 	/* if we are display messages on the boundary of the timeframe the elapsed execution time of the
 	 * previous query may make us miss the parameters
 	 */
-	if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
+	if (isset($_GET['last']) && ($_GET['last'] != 0) && ($_GET['last'] != -1)) {
 		$timeframe = str_replace($_GET['last']."/1440", ($_GET['last'] + 2)."/1440", $timeframe);
 	}
 
@@ -273,22 +283,31 @@ setcookie("style", $_GET['style']);
 	}
 	
 	/* parameters */
-	if ((($_GET['col_params']) || ($_GET['columns'] == "default")) && count($data)) {
+	if ((isset($_GET['col_params']) || ($_GET['columns'] == "default")) && count($data)) {
 	
 		foreach (array('dlf_str_param_values', 'dlf_num_param_values') as $table) {
 			$exe_query = sprintf("SELECT * FROM %s t1
-				  		  		  WHERE id %s %s", $table, $idlist, $timeframe ? "AND ".$timeframe : "");
+				  	      WHERE id %s %s", $table, $idlist, $timeframe ? "AND ".$timeframe : "");
 			echo '<!-- '.$exe_query.' -->';
 			
 			$results = db_query($exe_query, $dbh);
 			if (!$results) {
 				exit;
 			}
-			
+
+			$i = 0;
+			if (isset($data[$row[0]]['col_params'])) {
+				$i = count($data[$row[0]]['col_params']);
+			}
+
 			/* append the parameter information to the data structure */
-			for ($i = count($data[$row[0]]['col_params']); $row = db_fetch_row($results); $i++) {
+			for ($prev_row = ""; $row = db_fetch_row($results); $i++) {
 				if ($prev_row != $row[0]) {
-					$i = count($data[$row[0]]['col_params']);
+					if (isset($data[$row[0]]['col_params'])) {
+						$i = count($data[$row[0]]['col_params']);
+					} else {
+						$i = 0;
+					}
 				}
 				$prev_row = $row[0];
 				$data[$row[0]]['col_params'][$i] = $row[2]."=".$row[3];
@@ -335,7 +354,7 @@ setcookie("style", $_GET['style']);
 					$end_no   = $end_no > $query_total ? $query_total : $end_no;
 				
 					echo "Total number of messages found: <strong>".$query_total."</strong> ";
-					if ($_GET['drilltime']) {
+					if (isset($_GET['drilltime'])) {
 						$buf = explode(".", $_GET['drilltime']);
 						echo "from <strong>".$buf[0]." +/-".$db_drilldown_time."</strong> hours";
 					} else if (($_GET['last'] != 0) && ($_GET['last'] != -1)) {
@@ -356,7 +375,8 @@ setcookie("style", $_GET['style']);
 					$orderby = ($tordering == "DESC") ? "Descending" : "Ascending";
 					echo "<br/>";
 					echo "Displaying messages <strong> $start_no </strong> through <strong> $end_no </strong> - ordered by timestamp <strong>$orderby</strong><br />";
-								
+						
+					$filter_string = "";		
 					$filters = array('severity:Severity', 
 									 'facility:Facility:', 
 									 'hostid:Hostname', 
@@ -368,7 +388,11 @@ setcookie("style", $_GET['style']);
 									 'nshostid:NS Hostname', 
 									 'nsfileid:NS File ID', 
 									 'paramname:Parameter Name', 
-									 'paramvalue:Parameter Value');
+									 'paramvalue:Parameter Value',
+									 'userid:User ID',
+									 'groupid:Group ID',
+									 'sec_type:Security Type',
+									 'sec_name:Security Name');
 					foreach ($filters as $config) {
 						list ($form_name, $display_name) = split(":", $config);
 						if (!isset($_GET[$form_name]) || ($_GET[$form_name] == 'All')) {
@@ -452,17 +476,17 @@ setcookie("style", $_GET['style']);
 					<?php
 					
 					$columns = array('col_severity:Severity:', 
-									 'col_hostname:Hostname:m_hostname',
-								     'col_facility:Facility:m_facility',
-								     'col_pid:PID:pid',
-								     'col_tid:TID:',
-								     'col_msgtext:Message Text:',
-								     'col_nshostname:NS Hostname:m_nshostname',
-								     'col_nsfileid:NS File ID:nsfileid',
-								     'col_reqid:Request ID:reqid',
-								     'col_subreqid:Sub Request ID:subreqid',
-								     'col_tapevid:Tape VID:tapevid',
-					  			     'col_params:Parameters:');
+							 'col_hostname:Hostname:m_hostname',
+						         'col_facility:Facility:m_facility',
+						         'col_pid:PID:pid',
+						         'col_tid:TID:',
+						         'col_msgtext:Message Text:',
+						         'col_nshostname:NS Hostname:m_nshostname',
+						         'col_nsfileid:NS File ID:nsfileid',
+						         'col_reqid:Request ID:reqid',
+						         'col_subreqid:Sub Request ID:subreqid',
+						         'col_tapevid:Tape VID:tapevid',
+			  			         'col_params:Parameters:');
 					
 					if (!count($data)) {
 						echo "<strong>No results found!</strong>";
@@ -478,7 +502,7 @@ setcookie("style", $_GET['style']);
 						$columns_displayed = 0;
 						foreach ($columns as $value) {
 							list ($col_name, $act_name, $href_name) = split(":", $value, 3);
-							if (($_GET['columns'] == 'default') || (($_GET[$col_name]) == "on")) {
+							if (($_GET['columns'] == 'default') || (isset($_GET[$col_name]) && ($_GET[$col_name] == "on"))) {
 								if ((($_GET['style'] == 2) || ($_GET['style'] == 3)) && ($col_name == 'col_params')) {
 									continue;
 								}
@@ -493,10 +517,12 @@ setcookie("style", $_GET['style']);
 
 						foreach ($columns as $value) {
 							list ($col_name, $act_name, $href_name) = split(":", $value, 3);
-							$get_url .= "&amp;".$col_name."=".$_GET[$col_name];
+							if (isset($_GET[$col_name])) {
+								$get_url .= "&amp;".$col_name."=".$_GET[$col_name];
+							}
 						}
 			
-						if ($_GET['col_params']) {
+						if (isset($_GET['col_params'])) {
 							$get_url .= "&amp;col_params=".$_GET['col_params'];
 						}
 						
@@ -510,6 +536,9 @@ setcookie("style", $_GET['style']);
 							/* user defined fields */
 							foreach ($columns as $config) {
 								list ($col_name, $act_name, $href_name) = split(":", $config, 3);
+								if (!isset($_GET[$col_name])) {
+									continue;
+								}
 								if (($_GET['columns'] != 'default') && ($_GET[$col_name] != "on")) {
 									continue;
 								}
@@ -519,7 +548,7 @@ setcookie("style", $_GET['style']);
 
 								$value = $data[$keys[$i]][$col_name];
 								$class = str_replace("col_", "", $col_name);
-								
+					
 								/* apply correct css class for severity field */
 								if ($col_name == "col_severity") {
 									echo "<td class=\"sev_".strtolower($value)."\">".$value."</td>";  
@@ -558,10 +587,10 @@ setcookie("style", $_GET['style']);
 											
 									echo "<td class=\"".$class."\">";
 									if ($value != "N/A") {
-										if ($data[$keys[$i]][$href_name]) {
-											echo "<a href=\"".$PHP_SELF."?".$drill."&amp;".$get_url."&amp;".$href_name."=".$data[$keys[$i]][$href_name]."\">".$value."</a>";
+										if (isset($data[$keys[$i]][$href_name])) {
+											echo "<a href=\"".$_SERVER['PHP_SELF']."?".$drill."&amp;".$get_url."&amp;".str_replace("m_", "", $href_name)."=".$data[$keys[$i]][$href_name]."\">".$value."</a>";
 										} else {
-											echo "<a href=\"".$PHP_SELF."?".$drill."&amp;".$get_url."&amp;".$href_name."=".urlencode(str_replace("-<wbr />","-",$value))."\">".$value."</a>";
+											echo "<a href=\"".$_SERVER['PHP_SELF']."?".$drill."&amp;".$get_url."&amp;".str_replace("m_", "", $href_name)."=".urlencode(str_replace("-<wbr />","-",$value))."\">".$value."</a>";
 										}
 									} else {
 										echo $value;
@@ -576,9 +605,9 @@ setcookie("style", $_GET['style']);
 							}
 							
 							/* parameters */
-							if ((($_GET['col_params'] == "on") || ($_GET['columns'] == "default")) && ($_GET['style'] == 1)) {
+							if (((isset($_GET['col_params']) && ($_GET['col_params'] == "on")) || ($_GET['columns'] == "default")) && ($_GET['style'] == 1)) {
 								echo "<td class=\"parameters\">";
-								if (count($data[$keys[$i]]['col_params'])) {
+								if (isset($data[$keys[$i]]['col_params']) && count($data[$keys[$i]]['col_params'])) {
 									for ($j = 0; $j < count($data[$keys[$i]]['col_params']); $j++) {
 									
 										/* deal with long lines */
@@ -590,17 +619,17 @@ setcookie("style", $_GET['style']);
 									
 										echo $value."<br/>";
 									}
-								} else if (!$data[$keys[$i]]['col_security']) {
+								} else if (!isset($data[$keys[$i]]['col_security'])) {
 									echo "&nbsp;";
 								} 
 								
-								if ($data[$keys[$i]]['col_security']) {
+								if (isset($data[$keys[$i]]['col_security'])) {
 									echo $data[$keys[$i]]['col_security'];
 								}
 								echo "</td>";
 							}
 							
-							if ((($_GET['col_params'] == "on") || ($_GET['columns'] == "default")) && ($_GET['style'] == 2) || ($_GET['style'] == 3)) {
+							if (((isset($_GET['col_params']) && ($_GET['col_params'] == "on")) || ($_GET['columns'] == "default")) && ($_GET['style'] == 2) || ($_GET['style'] == 3)) {
 								if (count($data[$keys[$i]]['col_params'])) {
 									for ($j = 0, $value = ''; $j < count($data[$keys[$i]]['col_params']); $j++) {
 										$buf = $data[$keys[$i]]['col_params'][$j]. " ";
@@ -609,12 +638,12 @@ setcookie("style", $_GET['style']);
 										$value .= $buf;
 										$value .= ($_GET['style'] == 3) ? "&nbsp; &nbsp; " : "<br />";
 									}
-									if ($data[$keys[$i]]) {
+									if (isset($data[$keys[$i]]['col_security'])) {
 										$buf = $data[$keys[$i]]['col_security']. " ";
 										$buf = str_replace('GID=', '&nbsp; &nbsp; <strong>GID</strong>=', $buf);
 										$buf = str_replace('UID=', '<strong>UID</strong>=', $buf);
 										$buf = str_replace('TYPE=', '&nbsp; &nbsp; <strong>TYPE</strong>=', $buf);
-										$buf = str_replace('NAME=', '&nbsp; &nbsp; <strong>NAME</strong>=', $buf);
+										$buf = str_replace('NAME=', '&nbsp; &nbsp; <strong>NAME</strong>=', $buf);								
 										$value .= $buf;
 									}
 									
