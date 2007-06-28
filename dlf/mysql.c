@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.18 2007/06/20 12:20:07 itglp Exp $
+ * $Id: mysql.c,v 1.19 2007/06/28 15:43:58 waldron Exp $
  */
 
 /* headers */
@@ -523,7 +523,6 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	/* no connections available ? */
 	if (found == 0) {
 		log(LOG_ERR, "db_initfac() - no database connections available\n");
-		Cthread_mutex_unlock(&database_mutex);
 		return APP_FAILURE;
 	}
 	db = dpool[i];
@@ -600,6 +599,19 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 		rv = hash_search(msgtexthash, key, &v);
 		if (rv != APP_SUCCESS) {
 
+			/* we hold a global mutex here to prevent unique constraint violations from 
+			 * occurring when two different db threads try to insert the same message text
+			 */
+			Cthread_mutex_lock(&database_mutex);
+
+			/* re-check the hash */
+			rv = hash_search(msgtexthash, key, &v);
+			if (rv == APP_SUCCESS) {
+				free(key);
+				Cthread_mutex_unlock(&database_mutex);
+				continue;
+			}
+
 			/* clear any previous results gathered */
 			if (res != NULL) {
 				mysql_free_result(res);			
@@ -609,12 +621,14 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 				 id, texts[i]->msg_no);
 			if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 				strcpy(func, "mysql_query()");
+				Cthread_mutex_unlock(&database_mutex);
 				goto error;
 			}
 			
 			/* store the result */
 			if ((res = mysql_store_result(&db->mysql)) == NULL) {
 				strcpy(func, "mysql_store_result()");
+				Cthread_mutex_unlock(&database_mutex);
 				goto error;
 			}
 			
@@ -623,6 +637,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 			 */
 			if ((row = mysql_fetch_row(res)) == NULL) {
 				strcpy(func, "mysql_fetch_row()");
+				Cthread_mutex_unlock(&database_mutex);
 				goto error;
 			}
 			
@@ -639,6 +654,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 				/* execute query */
 				if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 					strcpy(func, "mysql_query()");
+					Cthread_mutex_unlock(&database_mutex);
 					goto error;
 				}
 			} else {
@@ -652,6 +668,7 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 				/* execute query */
 				if (mysql_query(&db->mysql, query) != APP_SUCCESS) {
 					strcpy(func, "mysql_query()");
+					Cthread_mutex_unlock(&database_mutex);
 					goto error;
 				}
 			}
@@ -665,10 +682,14 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 				db->errors++;
 				free(key);
 				Cthread_mutex_unlock(&db->mutex);
+				Cthread_mutex_unlock(&database_mutex);
 				return APP_FAILURE;
 			}
+
 			*value = 1;
-			hash_insert(msgtexthash, key, value);	
+			hash_insert(msgtexthash, key, value);
+
+			Cthread_mutex_unlock(&database_mutex);
 		}
 		free(key);
 	}

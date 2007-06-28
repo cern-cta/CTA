@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: oracle.pc,v 1.26 2007/06/20 12:20:08 itglp Exp $
+ * $Id: oracle.pc,v 1.27 2007/06/28 15:43:58 waldron Exp $
  */
 
 /* headers */
@@ -527,9 +527,9 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 	int        rv;
 	int        found;
 	int        id;
-	int        commit = 0;
-	int        *value = NULL;
-	void       *v     = NULL;
+	int        has_lock = 0;
+	int        *value   = NULL;
+	void       *v       = NULL;
 
 	/* attempt to find a database connection which is currently connected and not in a busy state
 	 *   - if no connection can be found pick any connected connection
@@ -613,6 +613,22 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 		/* entry already exists ? */
 		rv = hash_search(msgtexthash, key, &v);
 		if (rv != APP_SUCCESS) {
+			
+			/* we hold a global mutex here to prevent unique constraint violations from 
+			 * occurring when two different db threads try to insert the same message text
+			 */
+			Cthread_mutex_lock(&database_mutex);
+			has_lock = 1;
+			
+			/* re-check the hash */
+			rv = hash_search(msgtexthash, key, &v);
+			if (rv == APP_SUCCESS) {
+				free(key);
+				Cthread_mutex_unlock(&database_mutex);
+				has_lock = 0;
+				continue;
+			}
+
 			db->selects++;
 			EXEC SQL SELECT COUNT(*) INTO :found FROM dlf_msg_texts
 			WHERE (fac_no = :fac_no) AND (msg_no = :texts[i]->msg_no);
@@ -629,21 +645,18 @@ int DLL_DECL db_initfac(char *facility, msgtext_t *texts[], int *fac_no) {
 				EXEC SQL INSERT INTO dlf_msg_texts (fac_no, msg_no, msg_text)
 				VALUES (:fac_no, :texts[i]->msg_no, :texts[i]->msg_text);
 			}
-			commit = 1;
+			EXEC SQL COMMIT WORK;
 
 			/* update message text hash */
 			value  = malloc(sizeof(int));
 			*value = 1;
 			hash_insert(msgtexthash, key, value);
+
+			Cthread_mutex_unlock(&database_mutex);
+			has_lock = 0;
 		}
 		free(key);
 	}
-
-	if (commit) {
-		db->commits++;
-		EXEC SQL COMMIT WORK;
-	}
-
  	ClrActive(db->mode);
 
 	Cthread_mutex_unlock(&db->mutex);
@@ -661,6 +674,9 @@ not_found:
 		free(key);
 	}
 	Cthread_mutex_unlock(&db->mutex);
+	if (has_lock == 1) {
+		Cthread_mutex_unlock(&database_mutex);
+	}
 	return APP_FAILURE;
 
 error:
@@ -688,6 +704,9 @@ error:
 		free(key);
 	}
 	Cthread_mutex_unlock(&db->mutex);
+	if (has_lock == 1) {
+		Cthread_mutex_unlock(&database_mutex);
+	}
 	return APP_FAILURE;
 }
 
