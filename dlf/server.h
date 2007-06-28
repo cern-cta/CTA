@@ -21,7 +21,7 @@
  * @file  server.h
  * @brief definitions and structures associated with the server core
  *
- * $Id: server.h,v 1.5 2006/10/20 15:55:03 waldron Exp $
+ * $Id: server.h,v 1.6 2007/06/28 15:34:17 waldron Exp $
  */
 
 #ifndef _SERVER_H
@@ -90,7 +90,7 @@ struct handler_t {
 struct client_t {
 	int                fd;              /**< file descriptor of the clients socket               */
 	int                index;           /**< position of the client structure in the client pool */
-	char               ip[16];          /**< the clients ip address in 255.255.255.255 format    */
+	char               ip[17];          /**< the clients ip address in 255.255.255.255 format    */
 	time_t             timestamp;       /**< the last time a message was received                */
 	handler_t          *handler;        /**< a pointer to the handler associated with the client */
 };

@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: server.c,v 1.13 2006/11/29 13:43:35 waldron Exp $
+ * $Id: server.c,v 1.14 2007/06/28 15:34:17 waldron Exp $
  */
 
 /* headers */
@@ -107,8 +107,7 @@ void worker(handler_t *h) {
 						close(h->clients[i].fd);
 						h->clients[i].fd = -1;
 
-						log(LOG_DEBUG, "connection timed out thread=%d client=%d ip=%s\n",
-						    h->tid, i, h->clients[i].ip);
+						log(LOG_DEBUG, "connection timed out client=%d ip=%s\n", i, h->clients[i].ip);
 
 						Cthread_mutex_lock(&h->mutex);
 						h->timeouts++;
@@ -177,7 +176,7 @@ void worker(handler_t *h) {
 		 *     connections.
 		 */
 		if (connected == (MAX_CLIENTS - 1)) {
-			log(LOG_DEBUG, "handler thread=%d full, unable to accept further connections\n", h->tid);
+			log(LOG_DEBUG, "handler full, unable to accept further connections\n");
 			sleep(1);
 			continue;
 		}
@@ -249,7 +248,7 @@ void worker(handler_t *h) {
 
 			/* too many connections on this thread */
 			if (found == 0) {
-				log(LOG_ERR, "too many connections on thread=%d, rejecting accept()\n", h->tid);
+				log(LOG_ERR, "too many connections, rejecting accept()\n");
 				netclose(client_fd);
 				continue;
 			}
@@ -263,8 +262,8 @@ void worker(handler_t *h) {
 			h->clients[i].timestamp = time(NULL);
 		        h->clients[i].handler   = h;
 
-			log(LOG_DEBUG, "accepting connection on thread=%d client=%d from ip=%s fd=%d\n",
-			    h->tid, i, h->clients[i].ip, h->clients[i].fd);
+			log(LOG_DEBUG, "accepting connection on client=%d from ip=%s fd=%d\n",
+			    i, inet_ntoa(client_addr.sin_addr), h->clients[i].fd);
 
 			Cthread_mutex_lock(&h->mutex);
 			h->connections++;
@@ -471,7 +470,7 @@ int main(int argc, char **argv) {
 		log(LOG_CRIT, "Failed to create socket() - %s\n", strerror(errno));
 		return APP_FAILURE;
 	}
-	memset (&server_addr, 0, sizeof(server_addr));
+	memset(&server_addr, 0, sizeof(server_addr));
 
 	/* define server and port */
 	server_addr.sin_family      = AF_INET;
@@ -556,6 +555,7 @@ int main(int argc, char **argv) {
 		h->index       = i;
 		h->listen      = server_fd;
 		h->connections = 0;
+		h->connected   = 0;
 		h->clientpeak  = 0;
 		h->messages    = 0;
 		h->errors      = 0;
@@ -568,7 +568,7 @@ int main(int argc, char **argv) {
 			log(LOG_CRIT, "malloc() failed for handler client structure - %s\n", strerror(errno));
 			return APP_FAILURE;
 		}
-
+		
 		/* set main client attributes */
 		for (j = 0; j < MAX_CLIENTS; j++) {
 			h->clients[j].fd    = -1;
