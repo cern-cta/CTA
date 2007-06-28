@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/05/10 06:29:04 $ $Author: waldron $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/06/28 15:00:37 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -73,7 +73,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString =
-  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy FROM SvcClass WHERE name = :1";
+  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, forcedFileClass FROM SvcClass WHERE name = :1";
 
 /// SQL statement for selectFileClass
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
@@ -267,6 +267,8 @@ castor::db::ora::OraCommonSvc::selectSvcClass
     result->setGcPolicy(rset->getString(6));
     result->setMigratorPolicy(rset->getString(7));
     result->setRecallerPolicy(rset->getString(8));
+    result->setHasDiskOnlyBehavior(rset->getInt(9));
+    result->setForcedFileClass(rset->getString(10));
     result->setName(name);
     m_selectSvcClassStatement->closeResultSet(rset);
     return result;
