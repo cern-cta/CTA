@@ -156,37 +156,42 @@ void castor::server::BaseDaemon::signalHandler()
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::waitAllThreads() throw()
 {
-  std::vector<castor::server::SignalThreadPool*> idleTPools;
+  // create lit of thread pools to be stopped; skip listener pools as they can be stopped abruptly
+  std::vector<castor::server::SignalThreadPool*> busyTPools;
+  std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
+  for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
+    if(typeid(tp->second) == typeid(castor::server::SignalThreadPool)) {
+      busyTPools.push_back((castor::server::SignalThreadPool*)tp->second);
+    }
+  }
 
-  /* old C implementation in stager.c:1169 */
-  while(true) {
-    idleTPools.clear();
-
+  /* original C implementation in stager.c:1169. This one explicitly calls stop()
+     on all threads, before we were only relying on taking the mutexes until nbActiveThread == 0 */
+  while(busyTPools.size() > 0) {
     try {
-      std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
-      for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
-
-        if(typeid(tp->second) == typeid(castor::server::SignalThreadPool)) {
-          // only SignalThreadPools have to be checked
-          if(((castor::server::SignalThreadPool*)tp->second)->getActiveThreads() > 0) {
-            tp->second->getThread()->stop();    // this is advisory, but SelectProcessThread implements it
-            castor::exception::Internal ex;
-            throw ex;
-          }
-          else  // fine, it's idle
-            idleTPools.push_back((castor::server::SignalThreadPool*)tp->second);
+      std::vector<castor::server::SignalThreadPool*>::iterator btp;
+      for (btp = busyTPools.begin(); btp != busyTPools.end(); btp++) {
+        (*btp)->getMutex()->lock();
+        if((*btp)->getActiveThreads() > 0) {
+          // this is advisory, but SelectProcessThread implements it.
+          // It is recommended that db-oriented threads implement it to cleanup the db connection.
+          (*btp)->getThread()->stop();
+        }
+        else {    // fine, it's idle
+          busyTPools.erase(btp);
         }
       }
-      break;   // if all thread pools have 0 active threads, we're done
     }
     catch (castor::exception::Exception e) {
-      // a thread lock could not be acquired or a thread pool still has some threads running
-      // hence release previously acquired locks and try again
-      for(unsigned int i = 0; i < idleTPools.size(); i++) {
-        idleTPools[i]->getMutex()->release();
+        // a thread lock could not be acquired or a thread pool still has some threads running
+        // hence release previously acquired locks and try again
+      for(unsigned int i = 0; i < busyTPools.size(); i++) {
+        try {
+          busyTPools[i]->getMutex()->release();
+        } catch (castor::exception::Exception ignored) {}
       }
       
-      sleep(1);         // wait before trying again
+    sleep(1);         // wait before trying again
     }
   }
 }
@@ -223,8 +228,8 @@ void* castor::server::_signalThread_run(void* arg)
           break;
         
         default:
-	  // all other signals
-	  daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
+          // all other signals
+          daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
           break;
       }
 	  }

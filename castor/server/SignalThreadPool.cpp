@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/03/27 17:46:46 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/06/28 15:14:10 $ $Author: itglp $
  *
  *
  *
@@ -77,12 +77,16 @@ void castor::server::SignalThreadPool::init()
 //------------------------------------------------------------------------------
 void castor::server::SignalThreadPool::run()
 {
-  // create pool of detached threads
+  // don't do anything if nbThreads = 0
+  if(m_nbThreads == 0) {
+    return;
+  }
   int n = 0;
   struct threadArgs *args = new threadArgs();
   args->handler = this;
   args->param = this;
 
+  // create pool of detached threads
   // even if nbThreads = 1 it will run detached because we
   // always run the notification and the signal handler thread.
   for (int i = 0; i < m_nbThreads; i++) {
@@ -90,7 +94,7 @@ void castor::server::SignalThreadPool::run()
       ++n;
     }
   }
-  if (n <= 0 && m_nbThreads ) {
+  if (n <= 0) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to create pool " << m_poolName;
     throw ex;
@@ -115,7 +119,6 @@ void castor::server::SignalThreadPool::run()
     delete nArgs;
     delete m_notifTPool;
     m_notifTPool = 0;
-    return;
   }
 
   /* here we had a wait loop for nbNotifyThreads to change - not needed anymore */
