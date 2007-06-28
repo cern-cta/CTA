@@ -2,7 +2,8 @@
 /*                                                                          */
 /* This file contains SQL code that will generate the dlf database schema   */
 /* tablespaces DLF_INDX and DLF_DATA must be present on the target database */
-/* and DBA privileges must be present for scheduling the maintenance job    */
+/* and DBA privileges must be present for scheduling the maintenance jobs   */
+/* and to create and alter tablespaces                                      */
 
 /*
  * dlf_version
@@ -25,7 +26,7 @@ CREATE TABLE dlf_settings
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_set_name ON dlf_settings (name) TABLESPACE dlf_indx;
 
 /*
  * dlf_sequences
@@ -168,19 +169,19 @@ PARTITION BY RANGE (timestamp)
 TABLESPACE dlf_data;
 
 /* local indexes */
-CREATE INDEX i_msg_timestamp ON dlf_messages (timestamp) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_pid ON dlf_messages (pid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_subreqid ON dlf_messages (subreqid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_userid ON dlf_messages (userid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_groupid ON dlf_messages (groupid) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_sec_type ON dlf_messages (sec_type) LOCAL TABLESPACE dlf_idx;
-CREATE INDEX i_msg_sec_name ON dlf_messages (sec_name) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_msg_timestamp ON dlf_messages (timestamp) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_fac ON dlf_messages (facility) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_pid ON dlf_messages (pid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_reqid ON dlf_messages (reqid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_subreqid ON dlf_messages (subreqid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_hostid ON dlf_messages (hostid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_nshostid ON dlf_messages (nshostid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_fileid ON dlf_messages (nsfileid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_tapevid ON dlf_messages (tapevid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_userid ON dlf_messages (userid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_groupid ON dlf_messages (groupid) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_sec_type ON dlf_messages (sec_type) LOCAL TABLESPACE dlf_indx;
+CREATE INDEX i_msg_sec_name ON dlf_messages (sec_name) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_num_param_values
@@ -197,7 +198,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_num_id ON dlf_num_param_values (id) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_str_param_values
@@ -214,7 +215,7 @@ PARTITION BY RANGE (timestamp)
 )
 TABLESPACE dlf_data;
 
-CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL TABLESPACE dlf_idx;
+CREATE INDEX i_str_id ON dlf_str_param_values (id) LOCAL TABLESPACE dlf_indx;
 
 /*
  * dlf_severities
@@ -226,15 +227,14 @@ CREATE TABLE dlf_severities
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_sev_no ON dlf_severities (sev_no) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_sev_name ON dlf_severities (sev_name) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_no UNIQUE (sev_no) ENABLE;
 ALTER TABLE dlf_severities ADD CONSTRAINT i_sev_name UNIQUE (sev_name) ENABLE;
 
 /*
- * dlf_facilities - Note: dlf_maintenace() will automatically create new facility
- *                        subpartitions based upon the information in this table
+ * dlf_facilities
  */
 CREATE TABLE dlf_facilities
 (
@@ -243,8 +243,8 @@ CREATE TABLE dlf_facilities
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_fac_no ON dlf_facilities (fac_no) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_fac_name ON dlf_facilities (fac_name) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_no UNIQUE (fac_no) ENABLE;
 ALTER TABLE dlf_facilities ADD CONSTRAINT i_fac_name UNIQUE (fac_name) ENABLE;
@@ -260,7 +260,7 @@ CREATE TABLE dlf_msg_texts
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_msg_texts ON dlf_msg_texts (fac_no, msg_no) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_msg_texts ON dlf_msg_texts (fac_no, msg_no) TABLESPACE dlf_indx;
 
 /*
  * dlf_host_map
@@ -272,8 +272,8 @@ CREATE TABLE dlf_host_map
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_hostid ON dlf_host_map (hostid) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_hostname ON dlf_host_map (hostname) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostid UNIQUE (hostid) ENABLE;
 ALTER TABLE dlf_host_map ADD CONSTRAINT i_hostname UNIQUE (hostname) ENABLE;
@@ -288,14 +288,14 @@ CREATE TABLE dlf_nshost_map
 )
 TABLESPACE dlf_data;
 
-CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid) TABLESPACE dlf_idx;
-CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_idx;
+CREATE UNIQUE INDEX i_nshostid ON dlf_nshost_map (nshostid) TABLESPACE dlf_indx;
+CREATE UNIQUE INDEX i_nshostname ON dlf_nshost_map (nshostname) TABLESPACE dlf_indx;
 
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('1_0_0_0', '$Revision$ $Date$');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_3_17');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -344,7 +344,6 @@ INSERT INTO dlf_mode (name, enabled) VALUES ('queue_suspend',    0);
 INSERT INTO dlf_mode (name, enabled) VALUES ('database_suspend', 0);
 
 /* initialise settings */
-INSERT INTO dlf_settings VALUES ('ARCHIVE_MODE',     '1',  'Defines the archiving policy that should be performed on the database. Where a value of 1 = drop and 2 = archive and drop.');
 INSERT INTO dlf_settings VALUES ('ARCHIVE_EXPIRY',   '30', 'Defines how many days worth of data should remain online.');
 INSERT INTO dlf_settings VALUES ('ENABLE_JOBSTATS',  '0',  'Enable the automatic generation of job statistics.');
 INSERT INTO dlf_settings VALUES ('ENABLE_REQSTATS',  '0',  'Enable the automatic generation of request statistics.');
@@ -353,115 +352,92 @@ INSERT INTO dlf_settings VALUES ('ENABLE_TAPESTATS', '0',  'Enable the automatic
 /*
  * dlf_partition procedure
  */
-CREATE OR REPLACE PROCEDURE dlf_partition (boundary IN INTEGER)
+CREATE OR REPLACE PROCEDURE DLF_PARTITION 
 AS
 
-  -- variables
+  -- Variables
   v_partition_max INTEGER;
   v_high_value	  DATE;
   v_table_name	  VARCHAR2(20);
+  v_tablespace    VARCHAR2(20);
   v_exists        INTEGER;
   v_split_name    VARCHAR2(20);
-  
+
 BEGIN
 
-  -- set the nls_date_format
+  -- Set the nls_date_format
   EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
 
-  -- loop over all partitioned tables
-  FOR a IN (SELECT DISTINCT(TABLE_NAME)
-            FROM   USER_TAB_PARTITIONS
-            WHERE  TABLE_NAME LIKE 'DLF_%'
-            ORDER  BY TABLE_NAME)
+  -- Loop over all partitioned tables
+  FOR a IN (SELECT DISTINCT(table_name)
+              FROM user_tab_partitions
+             WHERE table_name LIKE 'DLF_%'
+             ORDER BY table_name)
   LOOP
-  
-   -- determine the name of the partition for table 'X' with the highest value
-    IF boundary = 0 THEN
 
-      -- automatic
-      SELECT MAX(SUBSTR(PARTITION_NAME, 3, 10))
-      INTO   v_partition_max
-      FROM   USER_TAB_PARTITIONS
-      WHERE  PARTITION_NAME <> 'MAX_VALUE'
-      AND    TABLE_NAME = a.table_name;
-      
+    -- Determine the high value on which to split the MAX_VALUE partition
+    SELECT MAX(SUBSTR(PARTITION_NAME, 3, 10))
+      INTO v_partition_max
+      FROM user_tab_partitions
+     WHERE partition_name <> 'MAX_VALUE'
+       AND table_name = a.table_name;
+
       v_partition_max := TO_NUMBER(
-          TO_CHAR(TRUNC(TO_DATE(v_partition_max, 'YYYYMMDD') + 1), 'YYYYMMDD'));
+        TO_CHAR(TRUNC(TO_DATE(v_partition_max, 'YYYYMMDD') + 1), 'YYYYMMDD'));
 
-      -- first run
-      IF v_partition_max IS NULL THEN
-        v_partition_max := TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD'));
-      END IF;
-      
-      FOR b IN (SELECT TO_DATE(v_partition_max, 'YYYYMMDD') + ROWNUM - 1 value
-                FROM   ALL_OBJECTS
-                WHERE  ROWNUM <=
-                TO_DATE(TO_CHAR(SYSDATE + 7, 'YYYYMMDD'), 'YYYYMMDD') -
-                TO_DATE(v_partition_max, 'YYYYMMDD') + 1)
-      LOOP    
-        v_high_value := TRUNC(b.value + 1);
-        EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' 
-                           SPLIT PARTITION MAX_VALUE 
-                           AT    ('''||TO_CHAR(v_high_value, 'DD-MON-YYYY')||''') 
-                           INTO  (PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||', 
-                                  PARTITION MAX_VALUE)
-                           UPDATE INDEXES';     
-      END LOOP;
-    ELSE
-    
-      -- user specified boundary
-      FOR b IN (SELECT TO_DATE(boundary, 'YYYYMMDD') value FROM DUAL)
-      LOOP
-        v_high_value := TRUNC(b.value + 1);
-
-        SELECT COUNT(PARTITION_NAME)
-        INTO   v_exists
-        FROM   USER_TAB_PARTITIONS
-        WHERE  PARTITION_NAME = CONCAT('P_', TO_CHAR(b.value, 'YYYYMMDD'))
-        AND    TABLE_NAME = a.table_name;
-
-        IF v_exists = 0 THEN
-
-          -- we cannot simply split MAX_VALUE like previously instead we must
-          -- find the next highest partition in the list and split this one
-          SELECT MIN(PARTITION_NAME)
-          INTO   v_split_name
-          FROM   USER_TAB_PARTITIONS
-          WHERE  PARTITION_NAME > CONCAT('P_', TO_CHAR(b.value, 'YYYYMMDD'))
-	  AND    PARTITION_NAME <> 'MAX_VALUE'
-          AND    TABLE_NAME = a.table_name;
-
-          IF v_split_name IS NULL THEN
-            v_split_name := 'MAX_VALUE';
-          END IF;
-          
-          EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' 
-                             SPLIT PARTITION '||v_split_name||'
-                             AT    ('''||TO_CHAR(v_high_value, 'DD-MON-YYYY')||''') 
-                             INTO  (PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||', 
-                                    PARTITION '||v_split_name||')
-                             UPDATE INDEXES';
-        END IF;       
-      END LOOP;
+    -- If this is the first execution there will be no high value, so
+    -- set it to today
+    IF v_partition_max IS NULL THEN
+      v_partition_max := TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD'));
     END IF;
-  END LOOP;
-
-  -- compress tables older the today
-  IF boundary = 0 THEN 
-    v_table_name := 'P_'||TO_CHAR(SYSDATE, 'YYYYMMDD');
-    FOR a IN (SELECT PARTITION_NAME, TABLE_NAME
-              FROM   USER_TAB_PARTITIONS
-              WHERE  COMPRESSION = 'DISABLED'
-              AND    TABLE_NAME LIKE 'DLF_%'
-              AND    (PARTITION_NAME <> 'MAX_VALUE' 
-              AND    PARTITION_NAME < v_table_name)
-              ORDER BY TABLE_NAME)
+ 
+    -- Create partitions
+    FOR b IN (SELECT TO_DATE(v_partition_max, 'YYYYMMDD') + rownum - 1 value
+                FROM all_objects
+               WHERE rownum <= 
+                     TO_DATE(TO_CHAR(SYSDATE + 7, 'YYYYMMDD'), 'YYYYMMDD') -
+                     TO_DATE(v_partition_max, 'YYYYMMDD') + 1)
     LOOP
+
+      -- To improve data management each daily partition has its own tablespace
+      -- http://www.oracle.com/technology/oramag/oracle/06-sep/o56partition.html
+
+      -- Check if a new tablespace is required before creating the partition
+      SELECT COUNT(*) INTO v_exists 
+        FROM  user_tablespaces
+       WHERE tablespace_name = 'DLF_'||TO_CHAR(b.value, 'YYYYMMDD');
+      
+      IF v_exists = 0 THEN
+        EXECUTE IMMEDIATE 'CREATE TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||'
+                           DATAFILE SIZE 50M
+                           AUTOEXTEND ON NEXT 100M 
+                           MAXSIZE 10G
+                           EXTENT MANAGEMENT LOCAL 
+                           SEGMENT SPACE MANAGEMENT AUTO';
+      END IF;      
+    
+      v_high_value := TRUNC(b.value + 1);
       EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' 
-                         MOVE PARTITION '||a.partition_name||' 
-                         COMPRESS UPDATE INDEXES';
+                         SPLIT PARTITION MAX_VALUE 
+                         AT    ('''||TO_CHAR(v_high_value, 'DD-MON-YYYY')||''') 
+                         INTO  (PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||'
+                                TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||', 
+                                PARTITION MAX_VALUE)
+                         UPDATE INDEXES';
     END LOOP;
-  END IF;
+  END LOOP;
+  
+  -- Set the status of tablespaces older then 3 days to read only
+  v_tablespace := 'DLF_'||TO_CHAR(SYSDATE - 3, 'YYYYMMDD');
+  FOR a IN (SELECT DISTINCT(tablespace_name)
+              FROM user_tablespaces
+             WHERE tablespace_name LIKE 'DLF_%'
+               AND tablespace_name NOT IN ('DLF_DATA', 'DLF_IDX', 'DLF_INDX')
+               AND tablespace_name < v_tablespace
+               AND status <> 'READ ONLY')
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' READ ONLY';
+  END LOOP;
 END;
 /
 
@@ -473,7 +449,7 @@ DBMS_SCHEDULER.CREATE_JOB (
 	JOB_NAME 	=> 'dlf_partition_job',
 	JOB_TYPE 	=> 'PLSQL_BLOCK',
 	JOB_ACTION 	=> 'BEGIN
-				DLF_PARTITION(0);
+				DLF_PARTITION();
 			   END;',
 	START_DATE 	=> TRUNC(SYSDATE) + 1/24,
 	REPEAT_INTERVAL => 'FREQ=DAILY',
@@ -484,7 +460,7 @@ END;
 
 /* trigger a partition run immediately */
 BEGIN
-	dlf_partition(0);
+	dlf_partition();
 END;
 /
 
@@ -494,140 +470,30 @@ END;
 CREATE OR REPLACE PROCEDURE dlf_archive
 AS
 
-  -- variables
+  -- Variables
   v_expire      NUMBER := 0;
-  v_mode        NUMBER := 0;
-  v_name        VARCHAR2(10);
   v_value       VARCHAR2(255);
 
-  -- data pump
-  dp_handle     NUMBER;
-  dp_job_state  VARCHAR(30);
-  dp_status     KU$_STATUS; 
-  
 BEGIN
 
-  -- set the nls_date_format
+  -- Set the nls_date_format
   EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
-
-  -- extract the settings 
-  SELECT value INTO v_value FROM dlf_settings WHERE name = 'ARCHIVE_MODE';
-  v_mode := TO_NUMBER(v_value);
 
   SELECT value INTO v_value FROM dlf_settings WHERE name = 'ARCHIVE_EXPIRY';
   v_expire := TO_NUMBER(v_value);
 
-  -- drop partition (no archiving) 
-  IF v_mode = 1 THEN
-    
-    FOR a IN (SELECT TABLE_NAME, PARTITION_NAME
-              FROM   USER_TAB_PARTITIONS
-              WHERE  PARTITION_NAME = CONCAT('P_', TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD'))
-              AND    TABLE_NAME IN ('DLF_MESSAGES',  'DLF_NUM_PARAM_VALUES', 
-                                    'DLF_STR_PARAM_VALUES')
-              ORDER BY PARTITION_NAME)
+  -- Drop partition (no archiving)
+  IF v_expire > 0 THEN
+    FOR a IN (SELECT table_name, partition_name
+                FROM user_tab_partitions
+               WHERE partition_name = CONCAT('P_', TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD'))
+                 AND table_name IN ('DLF_MESSAGES', 'DLF_NUM_PARAM_VALUES', 'DLF_STR_PARAM_VALUES')
+               ORDER BY partition_name)
     LOOP
       EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||'
-                         DROP PARTITION '||a.partition_name;          
+                         DROP PARTITION '||a.partition_name;
     END LOOP;
-
-  -- drop partition with archiving
-  ELSIF v_mode = 2 THEN
-    
-    -- retrieve a unique list of partition names older the 'v_expire' days old
-    FOR a IN (SELECT DISTINCT(PARTITION_NAME)
-              FROM   USER_TAB_PARTITIONS
-              WHERE  PARTITION_NAME = CONCAT('P_', TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD'))
-              AND    TABLE_NAME IN ('DLF_MESSAGES',  'DLF_NUM_PARAM_VALUES', 
-                                    'DLF_STR_PARAM_VALUES')
-              ORDER BY PARTITION_NAME)
-    LOOP    
-      v_name := SUBSTR(a.partition_name, 3, 10);
-      
-      -- open datapump handle
-      dp_handle := DBMS_DATAPUMP.OPEN(
-          OPERATION   => 'EXPORT',
-          JOB_MODE    => 'TABLE',
-          JOB_NAME    => CONCAT(v_name, 'DP'),
-          VERSION     => 'COMPATIBLE'
-      );
-      
-      -- add the log and dump files
-      DBMS_DATAPUMP.ADD_FILE(
-          HANDLE      => dp_handle,
-          FILENAME    => CONCAT(v_name, '.dmp'),
-          DIRECTORY   => 'DLF_DATAPUMP_DIR',
-          FILETYPE    => DBMS_DATAPUMP.KU$_FILE_TYPE_DUMP_FILE
-      );
-      DBMS_DATAPUMP.ADD_FILE(
-          HANDLE      => dp_handle,
-          FILENAME    => CONCAT(v_name, '.log'),
-          DIRECTORY   => 'DLF_DATAPUMP_DIR',
-          FILETYPE    => DBMS_DATAPUMP.KU$_FILE_TYPE_LOG_FILE
-      );
-    
-      DBMS_DATAPUMP.SET_PARAMETER(
-          HANDLE      => dp_handle,
-          NAME        => 'INCLUDE_METADATA',
-          VALUE       => 0
-      );   
-
-      -- setup the metadata filters to restrict the export to a select partition
-      FOR b IN (SELECT DISTINCT(TABLE_NAME) 
-                FROM   USER_TAB_PARTITIONS
-                WHERE  PARTITION_NAME <> 'MAX_VALUE'
-                AND    PARTITION_NAME = a.partition_name
-                ORDER BY TABLE_NAME ASC)
-      LOOP
-        DBMS_DATAPUMP.DATA_FILTER(
-            HANDLE     => dp_handle,
-            NAME       => 'PARTITION_EXPR',
-            VALUE      => '= '''||a.partition_name||'''',
-            TABLE_NAME => b.table_name
-        );      
-      END LOOP;    
-      
-      -- only include tables of interest
-      DBMS_DATAPUMP.METADATA_FILTER(
-          HANDLE      => dp_handle,
-          NAME	      => 'NAME_EXPR',
-          VALUE       => 'IN (''DLF_MESSAGES'',  ''DLF_NUM_PARAM_VALUES'',
-                              ''DLF_STR_PARAM_VALUES'')',
-          OBJECT_PATH => 'TABLE'
-      );  
-      
-      -- start the data pump job
-      DBMS_DATAPUMP.START_JOB(dp_handle);
-      
-      -- at this point we have a data pump job running we must wait for it to
-      -- finish successfully before we can drop the data!
-      dp_job_state := 'UNDEFINED';
-      
-      WHILE (dp_job_state != 'COMPLETED') AND (dp_job_state != 'STOPPED')
-      LOOP
-        DBMS_DATAPUMP.GET_STATUS(
-            HANDLE     => dp_handle,
-            MASK       => 15,
-            TIMEOUT    => NULL,
-            JOB_STATE  => dp_job_state,
-            STATUS     => dp_status
-        );     
-      END LOOP;
-      
-      -- a completed job equals successful export
-      IF dp_job_state = 'COMPLETED' THEN
-        FOR b IN (SELECT TABLE_NAME 
-                  FROM   USER_TAB_PARTITIONS
-                  WHERE  PARTITION_NAME = a.partition_name
-                  AND    TABLE_NAME IN ('DLF_MESSAGES',  'DLF_NUM_PARAM_VALUES', 
-                                        'DLF_STR_PARAM_VALUES'))
-        LOOP
-          EXECUTE IMMEDIATE 'ALTER TABLE '||b.table_name||'
-                             DROP PARTITION '||a.partition_name;       
-        END LOOP;      
-      END IF;    
-    END LOOP;
-  END IF;  
+  END IF;
 END;
 /
 
@@ -652,22 +518,22 @@ END;
 CREATE OR REPLACE PROCEDURE dlf_stats_jobs
 AS
 
-  -- variables
+  -- Variables
   v_time	DATE;
   v_mode        NUMBER := 0;
   v_value       VARCHAR2(255);
 
 BEGIN
 
-  -- job stats enabled ?
+  -- Job stats enabled ?
   SELECT value INTO v_value FROM dlf_settings WHERE name = 'ENABLE_JOBSTATS';
   v_mode := TO_NUMBER(v_value);
 
   IF v_mode = 1 THEN
-    -- set the nls_date_format
+    -- Set the nls_date_format
     EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
 
-    -- we define the time as a variable so that all data recorded will be synchronised
+    -- We define the time as a variable so that all data recorded will be synchronised
     v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
 
     FOR i IN 35..40 LOOP
@@ -679,7 +545,7 @@ BEGIN
       END IF;
     END LOOP;
 
-    -- update the exiting statistics data
+    -- Update the exiting statistics data
     FOR a IN (SELECT p.value, AVG(diff) avg, STDDEV_POP(diff) stddev, MIN(diff) min,
 	  	     MAX(diff) max, COUNT(*) count
                    
@@ -690,7 +556,7 @@ BEGIN
                       OVER (ORDER BY reqid) - TO_NUMBER(timestamp) diff
               FROM (
 
-		  -- intersection of request ids
+		  -- Intersection of request ids
 		  SELECT * FROM dlf_messages WHERE reqid IN(
 		    SELECT reqid FROM dlf_messages
                       WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
@@ -726,7 +592,7 @@ BEGIN
 			  AND   type      = '||a.value;    
     END LOOP;
        
-    -- update the starting statistics data
+    -- Update the starting statistics data
     FOR a IN (SELECT p.value, COUNT(m.reqid) count 
               FROM   dlf_messages m, dlf_num_param_values p
               WHERE  m.timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
@@ -751,22 +617,22 @@ END;
 CREATE OR REPLACE PROCEDURE dlf_stats_requests
 AS
 
-  -- variables
+  -- Variables
   v_time	DATE;
   v_mode        NUMBER := 0;
   v_value       VARCHAR2(255);
 
 BEGIN
 
-  -- request stats enabled ?
+  -- Request stats enabled ?
   SELECT value INTO v_value FROM dlf_settings WHERE name = 'ENABLE_REQSTATS';
   v_mode := TO_NUMBER(v_value);
 
   IF v_mode = 1 THEN
-    -- set the nls_date_format
+    -- Set the nls_date_format
     EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
 
-    -- we define the time as a variable so that all data recorded will be synchronised
+    -- We define the time as a variable so that all data recorded will be synchronised
     v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
 
     FOR i IN 35..40 LOOP
@@ -778,7 +644,7 @@ BEGIN
       END IF;
     END LOOP;
   
-    -- update the statistics data
+    -- Update the statistics data
     FOR a IN (SELECT type, avg(proctime) avg, stddev_pop(proctime) stddev, min(proctime) min,
 		     max(proctime) max, count(*) count
 	      FROM (
@@ -788,7 +654,7 @@ BEGIN
 			  OVER (PARTITION BY m.reqid ORDER BY m.timestamp, m.msg_no) type
 		  FROM (
 
-                    -- intersection of request ids
+                    -- Intersection of request ids
                     SELECT * FROM dlf_messages WHERE reqid IN (
                       SELECT reqid FROM dlf_messages
                         WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
@@ -851,25 +717,26 @@ END;
  */
 CREATE OR REPLACE PROCEDURE dlf_stats_tape
 AS
-  -- variables
+
+  -- Variables
   v_time        DATE;
   v_mode        NUMBER := 0;
   v_value       VARCHAR2(255);
 
 BEGIN
 
-  -- tape stats enabled ?
+  -- Tape stats enabled ?
   SELECT value INTO v_value FROM dlf_settings WHERE name = 'ENABLE_TAPESTATS';
   v_mode := TO_NUMBER(v_value);
 
   IF v_mode = 1 THEN
-    -- set the nls_date_format
+    -- Set the nls_date_format
     EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "YYYYMMDDHH24MISS"';
 
-    -- we define the time as a variable so that all data recorded will be synchronised
+    -- We define the time as a variable so that all data recorded will be synchronised
     v_time := TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS');
 
-    -- update statistics
+    -- Update statistics
     FOR a IN (SELECT svcclass, tapepool, COUNT(*) count, SUM(filesize) filesize
               FROM (
                 SELECT a.id,
@@ -879,7 +746,7 @@ BEGIN
                 FROM  dlf_str_param_values a, dlf_num_param_values b
                 WHERE a.id = b.id
                 AND   a.id IN (
-                  -- message ids of interest
+                  -- Message ids of interest
                   SELECT id FROM dlf_messages
                   WHERE facility = 1
                   AND   msg_no = 55
