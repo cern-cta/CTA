@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.449 $ $Date: 2007/06/27 14:51:03 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.450 $ $Date: 2007/06/28 14:42:06 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1121,7 +1121,7 @@ RETURN NUMBER AS
   failJobFlag NUMBER;
   unused NUMBER;
 BEGIN
-  SELECT FailJobsWhenNoSpace INTO failJobFlag FROM SvcClass WHERE id = svcClassId;
+  SELECT hasDiskOnlyBehavior INTO failJobFlag FROM SvcClass WHERE id = svcClassId;
   IF (failJobFlag = 1) THEN
     SELECT count(*) INTO unused
       FROM diskpool2svcclass, FileSystem, DiskServer
