@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      SelectProcessThread.hpp
+ *                      BaseDbThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,22 +17,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/06/28 15:13:01 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDbThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/06/28 15:13:00 $ $Author: itglp $
  *
- * Base thread for the select/process model: it loops until select() returns
- * something to do. If stop() is called, the underlying database connection is dropped.
+ * Base class for a database oriented thread. It correctly implements the stop
+ * method, but it can be used only for a pool with a single thread.
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_SELECTPROCESSTHREAD_HPP
-#define CASTOR_SERVER_SELECTPROCESSTHREAD_HPP 1
+#ifndef CASTOR_SERVER_BASEDBTHREAD_HPP
+#define CASTOR_SERVER_BASEDBTHREAD_HPP 1
 
 #include <iostream>
 #include <string>
-#include "castor/IObject.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/BaseObject.hpp"
+#include "castor/db/DbCnvSvc.hpp"
 
 namespace castor {
 
@@ -41,37 +41,31 @@ namespace castor {
   /**
    * Basic select/process thread for internal stager services.
    */
-  class SelectProcessThread : public virtual IThread, public castor::BaseObject {
+  class BaseDbThread : public virtual IThread, public castor::BaseObject {
   public:
 
     /**
-     * Initializes the thread
+     * Empty constructor
      */
-    SelectProcessThread() : stopped(false) {};
+    BaseDbThread() {};
 
     /**
-     * Select part of the service
-     */
-    virtual castor::IObject* select() = 0;
-
-    /**
-     * Process part of the service
-     */
-    virtual void process(castor::IObject* param) = 0;
-
-    /**
-     * Main work for this thread
+     * Main work for this thread. Creates a db connection
      */
     virtual void run(void* param);
 
     /**
-     * Mark the threads as to be stopped
+     * Stops the thread and drops its db connection
      */
     virtual void stop();
     
   private:
-    /// flag to stop the activity of all threads based on this class
-    bool stopped;
+    /** pointer to the db conversion service. This is shared,
+     * and it is used inside stop() to interrupt this thread's activity.
+     * Note that a thread pool running this thread must have nbThreads = 1
+     * to be thread-safe.
+     */
+    castor::db::DbCnvSvc* m_cnvSvc;
 
   };
 
