@@ -1,6 +1,0 @@
-#
-# $Id: lsf.sysconfig,v 1.5 2007/04/18 10:11:00 sponcec3 Exp $
-#
-# Global setup for LSF
-
-# no need for db configuration if cern-oracle-instantclient is used
