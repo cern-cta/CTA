@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.57 2007/04/19 14:54:47 waldron Exp $
+# $Id: maketar.sh,v 1.58 2007/06/28 06:24:55 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -289,7 +289,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	## regexp will generate a bad output
 	#
 	if [ "$package" = "castor-dlf-web" ]; then
-	    perl -pi -e 's/\/var\/www\/html\/dlf\/login.php/\%config\(noreplace\) \/var\/www\/html\/dlf\/login.php/g' debian/$package.install.perm.tmp
+	    perl -pi -e 's/\/var\/www\/conf\/dlf\/login.conf/\%config\(noreplace\) \/var\/www\/conf\/dlf\/login.conf/g' debian/$package.install.perm.tmp
 	else 
 	    if [ "$package" != "castor-lsf-tools" ]; then
 		perl -pi -e 's/\/etc\/castor\/expert/\%config\(noreplace\) \/etc\/castor\/expert/g' debian/$package.install.perm.tmp
