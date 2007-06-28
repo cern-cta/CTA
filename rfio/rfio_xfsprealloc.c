@@ -1,7 +1,7 @@
 /* RFIO XFS preallocation support */
-/* 2006/12/08 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
+/* 2007/06/28 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
 
-/* $Id: rfio_xfsprealloc.c,v 1.2 2006/12/08 14:31:53 fuji Exp $ */
+/* $Id: rfio_xfsprealloc.c,v 1.3 2007/06/28 20:22:26 fuji Exp $ */
 
 #include <xfs/libxfs.h>
 #include "log.h"
@@ -85,4 +85,4 @@ bailout:
 	return;
 }
 
-/* eof */
+/* End of file. */
