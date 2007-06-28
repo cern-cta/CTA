@@ -574,9 +574,9 @@ void CppBaseWriter::writeOperations
   if (isHeaderMethod) {
     // Build the documentation from the member list
     QString returnStr = "";
-    for(UMLAttribute *at = op->getParmList().first();
-        0 != at;
-        at = op->getParmList().next()) {
+    QPtrList<UMLAttribute> pl = op->getParmList();
+    for (unsigned int i = 0; i < pl.count(); i++) {
+      UMLAttribute* at = pl.at(i);
       returnStr += "@param " + at->getName() +
         " " + at->getDoc() + "\n";
     }

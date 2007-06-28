@@ -58,6 +58,15 @@ class ClassifierInfo {
     getFilteredOperationsList(Uml::Visibility permitVisibility,
                               bool keepAbstractOnly = false);
 
+  /**
+   * Return a list of the superclasses of this concept.
+   * Until version 3.5.5, we could use this method from
+   * umlCanvasObject but it then changed to include
+   * Realizations in the list.
+   * @return  The list of superclasses for the concept.
+   */
+  UMLClassifierList getSuperClasses(UMLClassifier *c);
+
 	/**
 	 * Returns a list of concepts which a given classifier inherits from.
    * @param c the classifier we're working on

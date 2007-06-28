@@ -128,13 +128,13 @@ void CppWriter::writeClass(UMLClassifier *c) {
         new UMLAttribute(printOp, "stream",
                          "1", Uml::Visibility::Public, "ostream&");
       streamParam->setDoc("The stream where to print this object");
-      printOp->getParmList().append(streamParam);
+      printOp->addParm(streamParam);
       UMLAttribute* indentParam =
         new UMLAttribute(printOp, "indent",
                          "2", Uml::Visibility::Public,
                          "string");
       indentParam->setDoc("The indentation to use");
-      printOp->getParmList().append(indentParam);
+      printOp->addParm(indentParam);
       UMLAttribute* alreadyPrintedParam =
         new UMLAttribute(printOp, "alreadyPrinted",
                          "3", Uml::Visibility::Public,
@@ -142,8 +142,8 @@ void CppWriter::writeClass(UMLClassifier *c) {
       alreadyPrintedParam->setDoc
         (QString("The set of objects already printed.\n") +
          "This is to avoid looping when printing circular dependencies");
-      printOp->getParmList().append(alreadyPrintedParam);
-      c->getOpList().append(printOp);
+      printOp->addParm(alreadyPrintedParam);
+      c->addOperation(printOp);
       // Second print method, with no arguments
       printOp = c->createOperation("print const", NULL, &params);
       printOp->setTypeName("virtual void");
@@ -152,7 +152,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
       if (classInfo.isInterface) {
         printOp->setAbstract(true);
       }
-      c->getOpList().append(printOp);
+      c->addOperation(printOp);
       // For first level of concrete implementations
       if (!c->getAbstract()) {
         // TYPE method
@@ -161,7 +161,7 @@ void CppWriter::writeClass(UMLClassifier *c) {
         typeOp->setID(UniqueID::get());
         typeOp->setDoc("Gets the type of this kind of objects");
         typeOp->setStatic(true);
-        c->getOpList().append(typeOp);
+        c->addOperation(typeOp);
         // check whether some ancester is non abstract
         // If yes, don't redefine id
         if (classInfo.allSuperclasses.count() ==

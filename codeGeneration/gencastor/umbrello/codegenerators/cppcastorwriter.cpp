@@ -88,7 +88,7 @@ QString CppCastorWriter::computeFileName(UMLClassifier* concept, QString ext) {
   
   // if package is given add this as a directory to the file name
   if (!package.isEmpty()) {
-    name = package + concept->getName();
+    name = package + "::" + concept->getName();
     package.replace(QRegExp("\\."), "/");
     package.replace(QString("::"),"/");
     package = "/" + package;

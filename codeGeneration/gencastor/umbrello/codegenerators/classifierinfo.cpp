@@ -23,16 +23,31 @@
 
 ClassifierInfo::ClassifierInfo( UMLClassifier *classifier, UMLDoc *doc)
 {
-	init(classifier, doc);
+  init(classifier, doc);
 }
 
 ClassifierInfo::~ClassifierInfo() { }
 
+UMLClassifierList ClassifierInfo::getSuperClasses
+(UMLClassifier *c) {
+  UMLClassifierList list;
+  UMLAssociationList assocs = c->getAssociations();
+  for (UMLAssociation* a = assocs.first(); a; a = assocs.next()) {
+    if ( a->getAssocType() != Uml::at_Generalization ||
+         a->getObjectId(Uml::A) != c->getID() )
+      continue;
+    UMLClassifier *c2 = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
+    if (c2)
+      list.append(c2);
+  }
+  return list;
+}
+
 UMLClassifierList ClassifierInfo::findSuperClassConcepts
 (UMLClassifier *c) {
   UMLAssociationList list = c->getSpecificAssocs(Uml::at_Generalization);
-	UMLClassifierList parentConcepts;
-	Uml::IDType myID = c->getID();
+  UMLClassifierList parentConcepts;
+  Uml::IDType myID = c->getID();
   for (UMLAssociation *a = list.first(); a; a = list.next()) {
     // Concepts on the "A" side inherit FROM this class
     // as long as the ID of the role A class isnt US (in
@@ -42,12 +57,12 @@ UMLClassifierList ClassifierInfo::findSuperClassConcepts
     // then its a concept which inherits from us
     if (a->getUMLRole(Uml::B)->getObject()->getID() != myID) {
       UMLObject* obj = a->getObject(Uml::B);
-			UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
-			if (concept)
-				parentConcepts.append(concept);
-		}
-	}
-	return parentConcepts;
+      UMLClassifier *concept = dynamic_cast<UMLClassifier*>(obj);
+      if (concept)
+        parentConcepts.append(concept);
+    }
+  }
+  return parentConcepts;
 }
 
 UMLClassifierList ClassifierInfo::findSuperInterfaceConcepts
@@ -154,78 +169,78 @@ ClassifierInfo::getFilteredOperationsList
 (UMLClassifier *c, Uml::Visibility permitVisibility, bool keepAbstractOnly) {
   UMLOperationList baseList = c->getOpList(false);
   QPtrList<UMLOperation>* operationList = new QPtrList<UMLOperation>;
-	for(UMLOperation* listItem = baseList.first(); listItem;
-	    listItem = baseList.next())  {
+  for(UMLOperation* listItem = baseList.first(); listItem;
+      listItem = baseList.next())  {
     if (listItem->getVisibility() == permitVisibility &&
         (!keepAbstractOnly || listItem->getAbstract())) {
       operationList->append(listItem);
     }
-	}
-	return operationList;
+  }
+  return operationList;
 }
 
 void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
 
-	// make all QPtrLists autoDelete false
-	atpub.setAutoDelete(false);
-	atprot.setAutoDelete(false);
-	atpriv.setAutoDelete(false);
+  // make all QPtrLists autoDelete false
+  atpub.setAutoDelete(false);
+  atprot.setAutoDelete(false);
+  atpriv.setAutoDelete(false);
 
-	static_atpub.setAutoDelete(false);
-	static_atprot.setAutoDelete(false);
-	static_atpriv.setAutoDelete(false);
+  static_atpub.setAutoDelete(false);
+  static_atprot.setAutoDelete(false);
+  static_atpriv.setAutoDelete(false);
 
-	// set default class, file names
-	packageName = c->getPackage();
-        fullPackageName = packageName;
-        fullPackageName.replace(".", "::");
-        if (!fullPackageName.isEmpty()&& !fullPackageName.endsWith("::")) fullPackageName.append("::");
-	className = c->getName();
-	fileName = c->getName().lower();
+  // set default class, file names
+  packageName = c->getPackage();
+  fullPackageName = packageName;
+  fullPackageName.replace(".", "::");
+  if (!fullPackageName.isEmpty()&& !fullPackageName.endsWith("::")) fullPackageName.append("::");
+  className = c->getName();
+  fileName = c->getName().lower();
 
-        // determine up-front what we are dealing with
-        isInterface = c->isInterface();
-        isAbstract = c->getAbstract();
+  // determine up-front what we are dealing with
+  isInterface = c->isInterface();
+  isAbstract = c->getAbstract();
 
-	// set id
-	m_nID = c->getID();
+  // set id
+  m_nID = c->getID();
 
-	// sort attributes by Visibility
-	if(!isInterface) {
-		UMLAttributeList atl = c->getAttributeList();
-		for(UMLAttribute *at=atl.first(); at ; at=atl.next()) {
-			switch(at->getVisibility())
-			{
-			case Uml::Visibility::Public:
-				if(at->getStatic())
-					static_atpub.append(at);
-				else
-					atpub.append(at);
-				break;
-			case Uml::Visibility::Protected:
-				if(at->getStatic())
-					static_atprot.append(at);
-				else
-					atprot.append(at);
-				break;
-			case Uml::Visibility::Private:
-				if(at->getStatic())
-					static_atprot.append(at);
-				else
-					atpriv.append(at);
-				break;
-			}
-			m_AttsList.append(at);
-		}
-	}
+  // sort attributes by Visibility
+  if(!isInterface) {
+    UMLAttributeList atl = c->getAttributeList();
+    for(UMLAttribute *at=atl.first(); at ; at=atl.next()) {
+      switch(at->getVisibility())
+      {
+      case Uml::Visibility::Public:
+        if(at->getStatic())
+          static_atpub.append(at);
+        else
+          atpub.append(at);
+        break;
+      case Uml::Visibility::Protected:
+        if(at->getStatic())
+          static_atprot.append(at);
+        else
+          atprot.append(at);
+        break;
+      case Uml::Visibility::Private:
+        if(at->getStatic())
+          static_atprot.append(at);
+        else
+          atpriv.append(at);
+        break;
+      }
+      m_AttsList.append(at);
+    }
+  }
 
-	// inheritance issues
-	superclasses = c->getSuperClasses(); // list of what we inherit from
-	superclasses.setAutoDelete(false);
+  // inheritance issues
+  superclasses = getSuperClasses(c); // list of what we inherit from
+  superclasses.setAutoDelete(false);
 
   // list of all classes we inherit from (recursively built)
-	allSuperclasses = findAllImplementedClasses(c);
-	allSuperclasses.setAutoDelete(false);
+  allSuperclasses = findAllImplementedClasses(c);
+  allSuperclasses.setAutoDelete(false);
   for (UMLClassifier *uc = allSuperclasses.first();
        0 != uc;
        uc = allSuperclasses.next()) {
@@ -245,11 +260,11 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
     findAllImplementedAbstractConcepts(c); // list of interfaces/abstract classes we implement
   allImplementedAbstracts.setAutoDelete(false);
 
-	subclasses = c->getSubClasses();     // list of what inherits from us
-	subclasses.setAutoDelete(false);
+  subclasses = c->getSubClasses();     // list of what inherits from us
+  subclasses.setAutoDelete(false);
 
-	// another preparation, determine what we have
-	plainAssociations = c->getSpecificAssocs(Uml::at_Association); // BAD! only way to get "general" associations.
+  // another preparation, determine what we have
+  plainAssociations = c->getSpecificAssocs(Uml::at_Association); // BAD! only way to get "general" associations.
   UMLAssociationList ul =
     c->getSpecificAssocs(Uml::at_UniAssociation);
   for (unsigned int i = 0; i < ul.count(); i++) {
@@ -260,19 +275,19 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
   for (unsigned int i = 0; i < dl.count(); i++) {
     plainAssociations.append(dl.at(i));
   }
-	plainAssociations.setAutoDelete(false);
+  plainAssociations.setAutoDelete(false);
 
-	aggregations = c->getAggregations();
-	aggregations.setAutoDelete(false);
+  aggregations = c->getAggregations();
+  aggregations.setAutoDelete(false);
 
-	compositions = c->getCompositions();
-	compositions.setAutoDelete(false);
+  compositions = c->getCompositions();
+  compositions.setAutoDelete(false);
 
-	generalizations = c->getSpecificAssocs(Uml::at_Generalization);
-	generalizations.setAutoDelete(false);
+  generalizations = c->getSpecificAssocs(Uml::at_Generalization);
+  generalizations.setAutoDelete(false);
 
-	realizations = c->getRealizations();
-	realizations.setAutoDelete(false);
+  realizations = c->getRealizations();
+  realizations.setAutoDelete(false);
 
   // List of all attributes
   allAttributes = m_AttsList;
@@ -285,33 +300,33 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
     }
   }
       
-	// set some summary information about the classifier now
-	hasAssociations = plainAssociations.count() > 0 || aggregations.count() > 0 || compositions.count() > 0;
+  // set some summary information about the classifier now
+  hasAssociations = plainAssociations.count() > 0 || aggregations.count() > 0 || compositions.count() > 0;
   hasAttributes[Uml::Visibility::Public] = false;
   hasAttributes[Uml::Visibility::Protected] = false;
-	hasAttributes[Uml::Visibility::Private] =
+  hasAttributes[Uml::Visibility::Private] =
     atpriv.count() > 0 || static_atpriv.count() > 0 ||
     atprot.count() > 0 || static_atprot.count() > 0 ||
     atpub.count() > 0 || static_atpub.count() > 0;
 
-	hasStaticAttributes[Uml::Visibility::Public] = static_atpub.count() > 0;
+  hasStaticAttributes[Uml::Visibility::Public] = static_atpub.count() > 0;
   hasStaticAttributes[Uml::Visibility::Protected] = static_atprot.count() > 0;
   hasStaticAttributes[Uml::Visibility::Private] = static_atpriv.count() > 0;
 
-	hasAccessorMethods[Uml::Visibility::Public] =
+  hasAccessorMethods[Uml::Visibility::Public] =
     atpub.count() > 0 || static_atpub.count() > 0 || hasAssociations;
-	hasAccessorMethods[Uml::Visibility::Protected] =
+  hasAccessorMethods[Uml::Visibility::Protected] =
     atprot.count() > 0 || static_atprot.count() > 0;
-	hasAccessorMethods[Uml::Visibility::Private] =
+  hasAccessorMethods[Uml::Visibility::Private] =
     atpriv.count() > 0 || static_atpriv.count() > 0;
 
   UMLOperationList opl = c->getOpList();
-	hasOperationMethods[Uml::Visibility::Public] = false;
-	hasOperationMethods[Uml::Visibility::Protected] = false;
-	hasOperationMethods[Uml::Visibility::Private] = false;
+  hasOperationMethods[Uml::Visibility::Public] = false;
+  hasOperationMethods[Uml::Visibility::Protected] = false;
+  hasOperationMethods[Uml::Visibility::Private] = false;
   for(UMLClassifierListItem* item = opl.first(); item; item = opl.next()) {
     hasOperationMethods[item->getVisibility()] = true;
-	}
+  }
   if (!c->getAbstract()) {
     for (UMLClassifier *interface = implementedAbstracts.first();
          interface !=0;
@@ -325,59 +340,59 @@ void ClassifierInfo::init(UMLClassifier *c, UMLDoc */*doc*/) {
     }
   }
 
-	hasMethods[Uml::Visibility::Public] =
+  hasMethods[Uml::Visibility::Public] =
     hasOperationMethods[Uml::Visibility::Public] || hasAccessorMethods[Uml::Visibility::Public];
-	hasMethods[Uml::Visibility::Protected] =
+  hasMethods[Uml::Visibility::Protected] =
     hasOperationMethods[Uml::Visibility::Protected] || hasAccessorMethods[Uml::Visibility::Protected];
-	hasMethods[Uml::Visibility::Private] =
+  hasMethods[Uml::Visibility::Private] =
     hasOperationMethods[Uml::Visibility::Private] || hasAccessorMethods[Uml::Visibility::Private];
 
-	// this is a bit too simplistic..some associations are for
-	// SINGLE objects, and WONT be declared as Vectors, so this
-	// is a bit overly inclusive (I guess that's better than the other way around)
-	hasVectorFields = hasAssociations ? true : false;
+  // this is a bit too simplistic..some associations are for
+  // SINGLE objects, and WONT be declared as Vectors, so this
+  // is a bit overly inclusive (I guess that's better than the other way around)
+  hasVectorFields = hasAssociations ? true : false;
 }
 
 UMLClassifierList ClassifierInfo::getPlainAssocChildClassifierList() {
-	return findAssocClassifierObjsInRoles(&plainAssociations);
+  return findAssocClassifierObjsInRoles(&plainAssociations);
 }
 
 UMLClassifierList ClassifierInfo::getAggregateChildClassifierList() {
-	return findAssocClassifierObjsInRoles(&aggregations);
+  return findAssocClassifierObjsInRoles(&aggregations);
 }
 
 UMLClassifierList ClassifierInfo::getCompositionChildClassifierList() {
-	return findAssocClassifierObjsInRoles(&compositions);
+  return findAssocClassifierObjsInRoles(&compositions);
 }
 
 UMLClassifierList ClassifierInfo::findAssocClassifierObjsInRoles (UMLAssociationList * list)
 {
 
 
-	UMLClassifierList classifiers;
-	classifiers.setAutoDelete(false);
+  UMLClassifierList classifiers;
+  classifiers.setAutoDelete(false);
 
-	for (UMLAssociation *a = list->first(); a; a = list->next()) {
-		// DONT accept a classfier IF the association role is empty, by
-		// convention, that means to ignore the classfier on that end of
-		// the association.
-		// We also ignore classfiers which are the same as the current one
-		// (e.g. id matches), we only want the "other" classfiers
-          if (a->getUMLRole(Uml::A)->getObject()->getID() == m_nID && a->getRoleName(Uml::B) != "") {
-			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
-			if(c)
-				classifiers.append(c);
-          } else if (a->getUMLRole(Uml::B)->getObject()->getID() == m_nID && a->getRoleName(Uml::A) != "") {
-			UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
-			if(c)
-				classifiers.append(c);
-		}
-	}
+  for (UMLAssociation *a = list->first(); a; a = list->next()) {
+    // DONT accept a classfier IF the association role is empty, by
+    // convention, that means to ignore the classfier on that end of
+    // the association.
+    // We also ignore classfiers which are the same as the current one
+    // (e.g. id matches), we only want the "other" classfiers
+    if (a->getUMLRole(Uml::A)->getObject()->getID() == m_nID && a->getRoleName(Uml::B) != "") {
+      UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(Uml::B));
+      if(c)
+        classifiers.append(c);
+    } else if (a->getUMLRole(Uml::B)->getObject()->getID() == m_nID && a->getRoleName(Uml::A) != "") {
+      UMLClassifier *c = dynamic_cast<UMLClassifier*>(a->getObject(Uml::A));
+      if(c)
+        classifiers.append(c);
+    }
+  }
 
-	return classifiers;
+  return classifiers;
 }
 
 UMLAttributeList* ClassifierInfo::getAttList() {
-	        return &m_AttsList;
+  return &m_AttsList;
 }
 
