@@ -233,6 +233,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SvcClass_hasDiskOnlyBehavior
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_hasDiskOnlyBehavior(castor::stager::SvcClass* instance, boolean* var) {
+    *var = instance->hasDiskOnlyBehavior();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setHasDiskOnlyBehavior
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setHasDiskOnlyBehavior(castor::stager::SvcClass* instance, boolean new_var) {
+    instance->setHasDiskOnlyBehavior(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_forcedFileClass
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_forcedFileClass(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->forcedFileClass().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setForcedFileClass
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setForcedFileClass(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setForcedFileClass(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SvcClass_id
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_id(castor::stager::SvcClass* instance, u_signed64* var) {

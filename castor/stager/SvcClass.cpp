@@ -49,6 +49,8 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_gcPolicy(""),
   m_migratorPolicy(""),
   m_recallerPolicy(""),
+  m_hasDiskOnlyBehavior(AIE : boolean),
+  m_forcedFileClass(""),
   m_id(0) {
 }
 
@@ -87,6 +89,8 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "gcPolicy : " << m_gcPolicy << std::endl;
   stream << indent << "migratorPolicy : " << m_migratorPolicy << std::endl;
   stream << indent << "recallerPolicy : " << m_recallerPolicy << std::endl;
+  stream << indent << "hasDiskOnlyBehavior : " << m_hasDiskOnlyBehavior << std::endl;
+  stream << indent << "forcedFileClass : " << m_forcedFileClass << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

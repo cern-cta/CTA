@@ -32,6 +32,7 @@
 /* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
+struct C_boolean_t;
 struct Cstager_DiskPool_t;
 struct Cstager_SvcClass_t;
 struct Cstager_TapePool_t;
@@ -195,6 +196,38 @@ int Cstager_SvcClass_recallerPolicy(struct Cstager_SvcClass_t* instance, const c
  * Policy ruling the recall of files.
  */
 int Cstager_SvcClass_setRecallerPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
+
+/**
+ * Get the value of hasDiskOnlyBehavior
+ * Whether the diskpools under this serviceClass should behave like disk only
+ * pools. This include failing jobs that want to allocate space when no space is
+ * available and forcing the fileClass of files if forcedFileClass is not empty
+ */
+int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, struct C_boolean_t* var);
+
+/**
+ * Set the value of hasDiskOnlyBehavior
+ * Whether the diskpools under this serviceClass should behave like disk only
+ * pools. This include failing jobs that want to allocate space when no space is
+ * available and forcing the fileClass of files if forcedFileClass is not empty
+ */
+int Cstager_SvcClass_setHasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, struct C_boolean_t new_var);
+
+/**
+ * Get the value of forcedFileClass
+ * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
+ * all files created in this svcclass, independently of the fileclass of the
+ * directory where they are created
+ */
+int Cstager_SvcClass_forcedFileClass(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of forcedFileClass
+ * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
+ * all files created in this svcclass, independently of the fileclass of the
+ * directory where they are created
+ */
+int Cstager_SvcClass_setForcedFileClass(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
  * Get the value of id

@@ -259,6 +259,50 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_hasDiskOnlyBehavior
+       * Whether the diskpools under this serviceClass should behave like disk only
+       * pools. This include failing jobs that want to allocate space when no space is
+       * available and forcing the fileClass of files if forcedFileClass is not empty
+       * @return the value of m_hasDiskOnlyBehavior
+       */
+      boolean hasDiskOnlyBehavior() const {
+        return m_hasDiskOnlyBehavior;
+      }
+
+      /**
+       * Set the value of m_hasDiskOnlyBehavior
+       * Whether the diskpools under this serviceClass should behave like disk only
+       * pools. This include failing jobs that want to allocate space when no space is
+       * available and forcing the fileClass of files if forcedFileClass is not empty
+       * @param new_var the new value of m_hasDiskOnlyBehavior
+       */
+      void setHasDiskOnlyBehavior(boolean new_var) {
+        m_hasDiskOnlyBehavior = new_var;
+      }
+
+      /**
+       * Get the value of m_forcedFileClass
+       * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
+       * all files created in this svcclass, independently of the fileclass of the
+       * directory where they are created
+       * @return the value of m_forcedFileClass
+       */
+      std::string forcedFileClass() const {
+        return m_forcedFileClass;
+      }
+
+      /**
+       * Set the value of m_forcedFileClass
+       * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
+       * all files created in this svcclass, independently of the fileclass of the
+       * directory where they are created
+       * @param new_var the new value of m_forcedFileClass
+       */
+      void setForcedFileClass(std::string new_var) {
+        m_forcedFileClass = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -362,6 +406,12 @@ namespace castor {
 
       /// Policy ruling the recall of files.
       std::string m_recallerPolicy;
+
+      /// Whether the diskpools under this serviceClass should behave like disk only pools. This include failing jobs that want to allocate space when no space is available and forcing the fileClass of files if forcedFileClass is not empty
+      boolean m_hasDiskOnlyBehavior;
+
+      /// In case hasDiskOnlyBehavior is set, this is the file class that will be used for all files created in this svcclass, independently of the fileclass of the directory where they are created
+      std::string m_forcedFileClass;
 
       /// The id of this object
       u_signed64 m_id;
