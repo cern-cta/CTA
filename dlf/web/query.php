@@ -20,12 +20,12 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.14 2007/05/18 13:07:11 waldron Exp $
+ * $Id: query.php,v 1.15 2007/06/28 06:20:08 waldron Exp $
  */
 
 require("utils.php");
 include("config.php");
-include("login.php");
+include("/var/www/conf/dlf/login.conf");
 
 /* include the correct database interface module */
 include("db/".strtolower($db_instances[$_GET['instance']]['type']).".php");
@@ -67,7 +67,7 @@ setcookie("instance", $_GET['instance']);
 	}
 
 	/* loop over results */
-	for ($i = 0; $row = db_fetch_row($results); $i++) {
+	for ($i = 0, $fac_no = -2, $all_msgtexts = ""; $row = db_fetch_row($results); $i++) {
 
 		/* a new facility ? */
 		if ($row[0] != $fac_no) {
@@ -162,6 +162,21 @@ setcookie("instance", $_GET['instance']);
 		}
 	}
 
+	// is a number ?
+	function is_num(str) {
+		var validChars = "0123456789.-+";
+		var isNum = true;
+		var char;
+
+		for (i = 0; i < str.length && isNum == true; i++) {
+			char = str.charAt(i);
+			if (validChars.indexOf(char) == -1) {
+				isNum = false;
+			}
+		}
+		return isNum;
+	}
+
 	// validate form content
 	function validate_form() {
 		if (document.query.last.value == 0) {
@@ -187,6 +202,38 @@ setcookie("instance", $_GET['instance']);
 			alert("When searching by parameter both 'name' and 'value' must be specified");
 			return false;
 		}
+		if (document.query.pid.value != "") {
+			if (!is_num(document.query.pid.value)) {
+				alert("Process id field contains an invalid number");
+				return false;
+			}
+		}
+		if (document.query.nsfileid.value != "") {
+                        if (!is_num(document.query.nsfileid.value)) {
+                                alert("NS file id field contains an invalid number");
+                                return false;
+                        }
+                }
+
+                <?php
+
+		if ($schema_version > 1) {
+                	echo "if (document.query.userid.value != \"\") {";
+       	                echo "	if (!is_num(document.query.userid.value)) {";
+               	        echo "        	alert(\"User id field contains an invalid number\");";
+                        echo "	        return false;";
+	                echo "  }";
+	                echo "}";
+	                echo "if (document.query.groupid.value != \"\") {";
+        	        echo "  if (!is_num(document.query.groupid.value)) {";
+			echo "		alert(\"Group id field contains an invalid number\");";
+			echo "		return false;";
+                        echo "	}";
+                	echo "}";
+		}
+
+		?>
+
 		return true;
 	}
 	
@@ -427,14 +474,14 @@ setcookie("instance", $_GET['instance']);
 			<td align="left">
 			<?php
 			if ($schema_version > 1) {
-				echo "<input name=\"uid\" type=\"text\" value=\"\" size=\"3\" maxlength=\"8\" tabindex=\"18\" /> &nbsp; &nbsp; &nbsp;GID:";
+				echo "<input name=\"userid\" type=\"text\" value=\"\" size=\"3\" maxlength=\"8\" tabindex=\"18\" /> &nbsp; &nbsp; &nbsp;GID:";
 			}
 			?>
 			</td>
 			<td>
 			<?php
 			if ($schema_version > 1) {
-				echo "<input name=\"gid\" type=\"text\" value=\"\" size=\"3\" maxlength=\"8\" tabindex=\"19\" />";
+				echo "<input name=\"groupid\" type=\"text\" value=\"\" size=\"3\" maxlength=\"8\" tabindex=\"19\" />";
 			}
 			?>
 			</td>
@@ -558,7 +605,7 @@ setcookie("instance", $_GET['instance']);
                 <?php
 				$i = 1;
 				foreach (array('Classic', 'Multi-line', 'Single') as $value) {
-					if ($HTTP_COOKIE_VARS['style'] == $i) {
+					if (isset($HTTP_COOKIE_VARS['style']) && ($HTTP_COOKIE_VARS['style'] == $i)) {
 						echo "<option value=\"".$i."\" selected=\"selected\" >".$value."</option>";
 					} else {
 						echo "<option value=\"".$i."\">".$value."</option>";
@@ -585,8 +632,8 @@ setcookie("instance", $_GET['instance']);
                 <option value="20">20</option>
                 <option value="50">50</option>
                 <option value="100">100</option>
-                <option value="200" selected="selected">200</option>
-                <option value="500">500</option>
+                <option value="200">200</option>
+                <option value="500" selected="selected">500</option>
                 <option value="1000">1000</option>
               </select>
             </td>
