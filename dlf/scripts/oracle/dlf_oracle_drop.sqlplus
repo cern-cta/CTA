@@ -5,7 +5,7 @@
 
 BEGIN
 
-  -- drop all objects (ignore monitoring ones!)
+  -- Drop all objects (ignore monitoring ones!)
   FOR rec IN (SELECT object_name, object_type FROM user_objects
               WHERE  object_name NOT LIKE 'PROC_%'
               AND    object_name NOT LIKE 'MONITORING_%'
@@ -28,37 +28,20 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- Drop tablespaces
+  FOR rec IN (SELECT tablespace_name
+                FROM user_tablespaces
+               WHERE tablespace_name LIKE 'DLF_%'
+                 AND tablespace_name NOT IN ('DLF_DATA', 'DLF_IDX', 'DLF_INDX')
+                 AND LENGTH(tablespace_name) = 12)
+  LOOP
+    EXECUTE IMMEDIATE 'DROP TABLESPACE '||rec.tablespace_name||'
+                       INCLUDING CONTENTS AND DATAFILES';
+  END LOOP;
+
   -- purge the recycle bin
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
 END;
 /
 
 /* End-of-File */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
