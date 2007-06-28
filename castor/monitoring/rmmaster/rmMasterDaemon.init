@@ -1,28 +1,31 @@
-#!/bin/sh
-
+#! /bin/sh
+#
+#/******************************************************************************
+#                      rmMasterDaemon.init
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: rmMasterDaemon.init,v $ $Revision: 1.4 $ $Release$ $Date: 2007/06/28 11:23:53 $ $Author: waldron $
+#
 # chkconfig: 345 74 31
-# description: rmMasterDaemon
-
-#------------------------------------------------------------------------------------------------------#
-#                                                                                                      #
-#  rmMasterDaemon.init - Castor Distribution Node monitoring Master Daemon                             #
-#  Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                 #
-#                                                                                                      #
-#  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
-#  General Public License as published by the Free Software Foundation; either version 2 of the        #
-#  License, or (at your option) any later version.                                                     #
-#                                                                                                      #
-#  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
-#  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
-#  General Public License for more details.                                                            #
-#                                                                                                      #
-#  You should have received a copy of the GNU General Public License along with this program; if not,  #
-#  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
-#  USA.                                                                                                #
-#                                                                                                      #
-#  Usage: rmMasterDaemon {start|stop|status|reload|restart|condrestart}                                #
-#                                                                                                      #
-#------------------------------------------------------------------------------------------------------#
+# description: Resource Monitoring Server Daemon Initialisation Script
+#
+# @author castor dev team
+#*****************************************************************************/
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -31,8 +34,11 @@
 prog="rmMasterDaemon"
 RETVAL=0
 
-# Source sysconfig
-if [ -f /etc/sysconfig/$prog ] ; then
+# Source sysconfig files
+if [ -f /etc/sysconfig/castor ]; then
+	. /etc/sysconfig/castor
+fi
+if [ -f /etc/sysconfig/$prog ]; then
 	. /etc/sysconfig/$prog
 fi
 
@@ -41,7 +47,7 @@ start() {
 	echo -n $"Starting $prog: "
 
 	# process sysconfig settings
-	if [ -f /etc/sysconfig/$prog ] ; then
+	if [ -f /etc/sysconfig/$prog ]; then
 
 		# enabled ?	    
 		if [ "${RMMASTERDAEMON_RUN}" != "YES" ]; then
@@ -50,17 +56,17 @@ start() {
 		fi
 	fi
 
-	# check if daemon is already running
-	if [ -e /var/lock/subsys/$prog ]; then
-		if [ -n "`/sbin/pidof $prog`" ]; then
-			echo -n $"already running"
-			failure
-			echo
-			return 1
-		fi
-	fi	
+        # check if daemon is already running
+        if [ -e /var/lock/subsys/$prog ]; then
+                if [ -n "`/sbin/pidof $prog`" ]; then
+                        echo -n $"already running"
+                        failure
+                        echo
+                        return 1
+                fi
+        fi
 
-	daemon /usr/bin/$prog $RMNODEDAEMON_OPTIONS
+	daemon /usr/bin/$prog $RMMASTERDAEMON_OPTIONS
 	
 	RETVAL=$?
 	[ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
@@ -78,13 +84,6 @@ stop() {
 	[ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
 	[ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
 	return $RETVAL	
-}
-
-reload() {
-	echo -n $"Reloading $prog: "
-	killproc $prog -HUP
-	RETVAL=$?
-	echo
 }
 
 restart() {
@@ -105,9 +104,6 @@ case "$1" in
 		status $prog
 		RETVAL=$?
 		;;
-	reload)
-		reload
-		;;
 	restart)
 		restart
 		;;
@@ -115,11 +111,8 @@ case "$1" in
 		[ -f /var/lock/subsys/$prog ] && restart || :
 		;;
 	*)
-		echo $"Usage: $0 {start|stop|status|reload|restart|condrestart}"
+		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
 		exit 1
 esac
 
 exit $RETVAL
-
-
-#-- End-of-File ---------------------------------------------------------------------------------------#

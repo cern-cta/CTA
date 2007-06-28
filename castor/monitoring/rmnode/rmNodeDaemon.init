@@ -1,28 +1,31 @@
-#!/bin/sh
-
+#! /bin/sh
+#
+#/******************************************************************************
+#                      rmNodeDaemon.init
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: rmNodeDaemon.init,v $ $Revision: 1.4 $ $Release$ $Date: 2007/06/28 11:23:53 $ $Author: waldron $
+#
 # chkconfig: 345 74 31
-# description: rmNodeDaemon
-
-#------------------------------------------------------------------------------------------------------#
-#                                                                                                      #
-#  rmNodeDaemon.init - Castor Distribution Node monitoring Daemon                                      #
-#  Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                 #
-#                                                                                                      #
-#  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
-#  General Public License as published by the Free Software Foundation; either version 2 of the        #
-#  License, or (at your option) any later version.                                                     #
-#                                                                                                      #
-#  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
-#  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
-#  General Public License for more details.                                                            #
-#                                                                                                      #
-#  You should have received a copy of the GNU General Public License along with this program; if not,  #
-#  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
-#  USA.                                                                                                #
-#                                                                                                      #
-#  Usage: rmNodeDaemon {start|stop|status|reload|restart|condrestart}                                  #
-#                                                                                                      #
-#------------------------------------------------------------------------------------------------------#
+# description: Resource Monitoring Daemon Initialisation Script
+#
+# @author castor dev team
+#*****************************************************************************/
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -31,8 +34,11 @@
 prog="rmNodeDaemon"
 RETVAL=0
 
-# Source sysconfig
-if [ -f /etc/sysconfig/$prog ] ; then
+# Source sysconfig files
+if [ -f /etc/sysconfig/castor ]; then
+	. /etc/sysconfig/castor
+fi
+if [ -f /etc/sysconfig/$prog ]; then
 	. /etc/sysconfig/$prog
 fi
 
@@ -41,7 +47,7 @@ start() {
 	echo -n $"Starting $prog: "
 
 	# process sysconfig settings
-	if [ -f /etc/sysconfig/$prog ] ; then
+	if [ -f /etc/sysconfig/$prog ]; then
 
 		# enabled ?	    
 		if [ "${RMNODEDAEMON_RUN}" != "YES" ]; then
@@ -80,13 +86,6 @@ stop() {
 	return $RETVAL	
 }
 
-reload() {
-	echo -n $"Reloading $prog: "
-	killproc $prog -HUP
-	RETVAL=$?
-	echo
-}
-
 restart() {
 	stop
         start 
@@ -105,9 +104,6 @@ case "$1" in
 		status $prog
 		RETVAL=$?
 		;;
-	reload)
-		reload
-		;;
 	restart)
 		restart
 		;;
@@ -115,11 +111,8 @@ case "$1" in
 		[ -f /var/lock/subsys/$prog ] && restart || :
 		;;
 	*)
-		echo $"Usage: $0 {start|stop|status|reload|restart|condrestart}"
+		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
 		exit 1
 esac
 
 exit $RETVAL
-
-
-#-- End-of-File ---------------------------------------------------------------------------------------#

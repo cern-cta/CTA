@@ -9,5 +9,5 @@
 #
 DLFSERVER_OPTIONS="-T 2 -D 2"
 
-# run the server by default ?
+# Should the dlfserver run ? Any string but "YES" will be equivalent to "NO"
 DLFSERVER_RUN="YES"

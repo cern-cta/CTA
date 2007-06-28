@@ -1,184 +1,140 @@
-#!/bin/sh
+#! /bin/sh
 #
-# MigHunter         Start/Stop MigHunters
+#/******************************************************************************
+#                      dlfserver.init
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.8 $ $Release$ $Date: 2007/06/28 11:23:52 $ $Author: waldron $
 #
 # chkconfig: 345 73 32
-# description: MigHunter daemons
+# description: MigHunter Daemons Initialisation Script
 #
-# $Id: MigHunter.init,v 1.7 2007/03/09 13:44:17 waldron Exp $
-#
-# @(#)$RCSfile: MigHunter.init,v $ $Revision: 1.7 $ $Date: 2007/03/09 13:44:17 $ CERN/IT/ADC Jean-Damien Durand
-#
+# @author castor dev team
+#*****************************************************************************/
 
-#
-## Oracle environment not needed if cern-instantclient is used
-#
-if [ -r /etc/sysconfig/castor ]; then
-        . /etc/sysconfig/castor
-fi
+# Source function library.
+. /etc/rc.d/init.d/functions
 
-sysname=`uname -s`
-
-# source function library
-if [ -r /etc/rc.d/init.d/functions ]; then
-	. /etc/rc.d/init.d/functions
-	DAEMON=daemon
-	FAILURE=failure
-	ECHO_FAILURE=failure
-	SUCCESS=success
-	ECHO_SUCCESS=echo_success
-	ECHO_END=echo
-	if [ $sysname = "Linux" ]; then
-		ECHOOPT=-n
-	fi
-else
-	DAEMON=
-	FAILURE=
-	ECHO_FAILURE=
-	SUCCESS=
-	ECHO_SUCCESS=
-	ECHOOPT=
-	ECHO_END=
-fi
-
-RETVAL=0
+# Variables
 prog="MigHunter"
-[ -z "$SILENTSTOP" ] && SILENTSTOP=0
-MIGHUNTER=/usr/bin/MigHunter
-OPTIONS=""
-SYSCONFIGMIGHUNTER=/etc/sysconfig/MigHunter
+RETVAL=0
 
-if [ $sysname = "HP-UX" ]; then
-	export UNIX95=1
+# Source sysconfig files
+if [ -f /etc/sysconfig/castor ]; then
+	. /etc/sysconfig/castor
 fi
-if [ $sysname = "SunOS" ]; then
-	format4comm="fname"
-else
-	format4comm="comm"
+if [ -f /etc/sysconfig/$prog ]; then
+	. /etc/sysconfig/$prog
 fi
 
-#
-## Unless sysconfig says no the default is to run the MigHunter
-#
-RUN_MIGHUNTER=yes
+start() {
+	# run daemon
+	echo -n $"Starting $prog(s): "
 
-case "$1" in
-  start)
-        if [ -r $SYSCONFIMIGHUNTER ]; then
-            #
-            ## Source the configuration
-            #
-            [ -r $SYSCONFIGMIGHUNTER ] && . $SYSCONFIGMIGHUNTER
-            if [ "${RUN_MIGHUNTER}" != "yes" ]; then
-                echo $ECHOOPT "$SYSCONFIGMIGHUNTER says NO: "
-                [ -n "$FAILURE" ] && $FAILURE "$SYSCONFIGMIGHUNTER says NO: "
-                RETVAL=1
-            fi
-            if [ -n "${ULIMIT_N}" ]; then
-                ulimit -n ${ULIMIT_N}
-            fi
-        fi
-        if [ $RETVAL -eq 0 ]; then
-            #
-            ## Because we might generate a core file
-            ## We explicitely chdir in the workdir
-            #
-	    cd /var/spool/rtcpclientd
-            if [ -z "${SVCCLASSES}" ]; then
-                echo $ECHOOPT "No Service Class to MigHunter'ise: "
-                [ -n "$FAILURE" ] && $FAILURE "No Service Class to MigHunter'ise: "
-                RETVAL=1
-	    else
-	        for i in ${SVCCLASSES}; do
-                  if [ -r $SYSCONFIGMIGHUNTER.$i ]; then
-		      . $SYSCONFIGMIGHUNTER.$i
-		  else
-		      #
-		      ## Reload the default
-		      #
-		      [ -r $SYSCONFIGMIGHUNTER ] && . $SYSCONFIGMIGHUNTER
-		  fi
-		  echo $ECHOOPT "Starting ${prog} for $i Service Class: "
-                  $DAEMON $MIGHUNTER $OPTIONS $i
-		  $ECHO_END
-	        done
-                RETVAL=0
-	    fi
-        fi
-	;;
-  stop)
-	pid=`ps -eo pid,ppid,$format4comm | egrep " 1 MigHunter\$" | awk '{print $1}'`
-	if [ -n "$pid" ]; then
-		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping ${prog}(s): "
-            if [ $SILENTSTOP -eq 0 ]; then
-                kill -2 $pid
-            else
-                kill -2 $pid >& /dev/null
-            fi
-	    RETVAL=$?
-	else
-		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "MigHunter already stopped: "
-		[ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "MigHunter already stopped: "
- 		RETVAL=1
-	fi
-	if [ $SILENTSTOP -eq 0 -a $sysname = "Linux" ]; then
-		if [ $RETVAL -eq 0 ]; then
- 			$ECHO_SUCCESS
-		else
- 			$ECHO_FAILURE
+	# process sysconfig settings
+	if [ -f /etc/sysconfig/$prog ]; then
+
+		# enabled ?	    
+		if [ "${RUN_MIGHUNTER}" != "YES" -a "${RUN_MIGHUNTER}" != "yes" -a "{MIGHUNTER_RUN}" != "YES" ]; then
+			echo -n $"$prog disabled in /etc/sysconfig/$prog" 
+			failure && echo && exit
 		fi
 	fi
-	[ $SILENTSTOP -eq 0 -a -n "$ECHO_END" ] && $ECHO_END
-    #
-    ## Basically: if SILENTSTOP is not 0 when we never print something
-    ## But if the stop is successful... One might want to see stop: OK
-    ## anyway ?
-    #
-	if [ $SILENTSTOP -ne 0 -a $RETVAL -eq 0 ]; then
-        echo $ECHOOPT "Stopping $prog: "
-        [ $sysname = "Linux" ] && $ECHO_SUCCESS
-        [ -n "$ECHO_END" ] && $ECHO_END
-    fi
-	;;
-  restart)
-	$0 stop
-	if [ $? -eq 0 -o $SILENTSTOP -eq 0 ]; then
-		$0 start
-		RETVAL=$?
-	else
-        #
-        ## It is legal to return zero it if was
-        ## a conditional restart
-        #
-        if [ $SILENTSTOP -eq 0 ]; then
-            RETVAL=1
-        else
-            RETVAL=0
+
+        # check if daemon is already running
+        if [ -e /var/lock/subsys/$prog ]; then
+                if [ -n "`/sbin/pidof $prog`" ]; then
+                        echo -n $"already running"
+                        failure
+                        echo
+                        return 1
+                fi
         fi
+
+	# check for service classes
+	if [ -z "${SVCCLASSES}" ]; then
+		echo -n $"No service classes defined" 
+		failure && echo && exit	    
 	fi
-	;;
-  condrestart)
-	SILENTSTOP=1
-    export SILENTSTOP
-	$0 restart
-    RETVAL=$?
-	;;
-  status)
-	pid=`ps -eo pid,ppid,$format4comm | egrep " 1 MigHunter\$" | awk '{print $1}' | xargs`
-	if [ -n "$pid" ]; then
-		echo $ECHOOPT "MigHunter (pid $pid) is running..."
-		$ECHO_SUCCESS
-		$ECHO_END
-	else
-		echo $ECHOOPT "MigHunter is stopped"
-		$ECHO_FAILURE
-		$ECHO_END
-	fi
-	;;
-  *)
-	echo "Usage: $0 {start|stop|status|restart|condrestart}"
-	RETVAL=1
-	;;
+	echo
+
+	# startup MigHunters
+	for i in ${SVCCLASSES}; do
+
+	        # load appropriate sysconfig file for service class
+	        if [ -f /etc/sysconfig/$prog.$i ]; then
+		        . /etc/sysconfig/$prog.$i
+		else
+			# load default
+			if [ -f /etc/sysconfig/$prog ]; then
+				. /etc/sysconfig/$prog
+			fi
+		fi
+		echo -n $"Starting $prog for Service Class: $i"
+		daemon /usr/bin/$prog $OPTIONS $i
+
+		RETVAL=$?
+		[ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+		echo
+		[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog		
+	done
+
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Stopping $prog(s): "
+	killproc $prog
+	
+	RETVAL=$?
+	echo
+	[ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
+	[ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
+	return $RETVAL	
+}
+
+restart() {
+	stop
+        start 
+}
+
+# See how we were called
+case "$1" in
+	
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status $prog
+		RETVAL=$?
+		;;
+	restart)
+		restart
+		;;
+	condrestart)
+		[ -f /var/lock/subsys/$prog ] && restart || :
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+		exit 1
 esac
 
 exit $RETVAL

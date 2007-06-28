@@ -1,28 +1,31 @@
-#!/bin/sh
-
+#! /bin/sh
+#
+#/******************************************************************************
+#                      dlfserver.init
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: dlfserver.init,v $ $Revision: 1.14 $ $Release$ $Date: 2007/06/28 11:23:52 $ $Author: waldron $
+#
 # chkconfig: 345 67 38
-# description: DLF server
-
-#------------------------------------------------------------------------------------------------------#
-#                                                                                                      #
-#  dlfserver.init - Castor Distribution Logging Facility Control Script                                #
-#  Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                 #
-#                                                                                                      #
-#  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
-#  General Public License as published by the Free Software Foundation; either version 2 of the        #
-#  License, or (at your option) any later version.                                                     #
-#                                                                                                      #
-#  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
-#  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
-#  General Public License for more details.                                                            #
-#                                                                                                      #
-#  You should have received a copy of the GNU General Public License along with this program; if not,  #
-#  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
-#  USA.                                                                                                #
-#                                                                                                      #
-#  Usage: dlfserver {start|stop|status|reload|restart|condrestart}                                     #
-#                                                                                                      #
-#------------------------------------------------------------------------------------------------------#
+# description: Distributed Logging Facility Initialisation Script
+#
+# @author castor dev team
+#*****************************************************************************/
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -31,8 +34,11 @@
 prog="dlfserver"
 RETVAL=0
 
-# Source sysconfig
-if [ -f /etc/sysconfig/$prog ] ; then
+# Source sysconfig files
+if [ -f /etc/sysconfig/castor ]; then
+	. /etc/sysconfig/castor
+fi
+if [ -f /etc/sysconfig/$prog ]; then
 	. /etc/sysconfig/$prog
 fi
 
@@ -41,7 +47,7 @@ start() {
 	echo -n $"Starting $prog: "
 
 	# process sysconfig settings
-	if [ -f /etc/sysconfig/$prog ] ; then
+	if [ -f /etc/sysconfig/$prog ]; then
 
 		# enabled ?	    
 		if [ "${DLFSERVER_RUN}" != "YES" ]; then
@@ -120,6 +126,3 @@ case "$1" in
 esac
 
 exit $RETVAL
-
-
-#-- End-of-File ---------------------------------------------------------------------------------------#

@@ -1,29 +1,9 @@
-#------------------------------------------------------------------------------------------------------#
-#                                                                                                      #
-#  rmMasterDaemon.sysconfig - Castor Distribution node monitoring master Daemon                        #
-#  Copyright (C) 2006 CERN IT/FIO (castor-dev@cern.ch)                                                 #
-#                                                                                                      #
-#  This program is free software; you can redistribute it and/or modify it under the terms of the GNU  #
-#  General Public License as published by the Free Software Foundation; either version 2 of the        #
-#  License, or (at your option) any later version.                                                     #
-#                                                                                                      #
-#  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without   #
-#  even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU      #
-#  General Public License for more details.                                                            #
-#                                                                                                      #
-#  You should have received a copy of the GNU General Public License along with this program; if not,  #
-#  write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,   #
-#  USA.                                                                                                #
-#                                                                                                      #
-#------------------------------------------------------------------------------------------------------#
-
-# Should rmMasterDaemon run ? Any string but "YES" will equivalent to "NO"
-RMMASTERDAEMON_RUN="YES"
-
-# If any option should be passed to rmMasterDaemon, this is the place
+# Arguments for the rmMasterDaemon
+#   -c <path>      configuration file
+#   -f             keep process in the foreground, do not fork
+#
+# Options ot pass to the rmMasterDaemon
 #RMMASTERDAEMON_OPTIONS=
 
-# Source the standards castor setup file if present
-if [ -r /etc/sysconfig/castor ]; then
-  . /etc/sysconfig/castor
-fi
+# Should the rmMasterDaemon run ? Any string but "YES" will be equivalent to "NO"
+RMMASTERDAEMON_RUN="YES"
