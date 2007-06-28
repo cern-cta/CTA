@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.12 $ $Date: 2006/01/26 13:09:56 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: LibraryDeps.tmpl,v $ $Revision: 1.13 $ $Date: 2007/06/28 15:40:08 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 /* ================================ */
@@ -111,13 +111,6 @@
 #if !BuildDlfLibrary
 #undef BuildDlfLibrary
 #define BuildDlfLibrary YES
-#endif
-#endif
-
-#if UseStorageTank
-#if !BuildTankPerfMonLibrary
-#undef BuildTankPerfMonLibrary
-#define BuildTankPerfMonLibrary YES
 #endif
 #endif
 

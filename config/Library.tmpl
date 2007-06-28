@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.29 $ $Date: 2006/10/26 15:00:59 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.30 $ $Date: 2007/06/28 15:40:08 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 #include <Project.tmpl>
@@ -77,9 +77,6 @@ CNVSLIB = DepLibraryTargetName(castor/db/cnv,castorCnvs)
 #endif
 #if BuildSecurity
 SECURITYLIB = DepLibraryTargetName(security,security)
-#endif
-#if UseStorageTank
-TANKLIB = DepLibraryTargetName(tank,castorTankPerfMon)
 #endif
 #if BuildVDQMCpp
 #if BuildOraCpp

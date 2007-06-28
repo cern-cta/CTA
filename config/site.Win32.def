@@ -1,6 +1,6 @@
 
 /*
- * $Id: site.Win32.def,v 1.3 2007/04/17 15:07:32 sponcec3 Exp $
+ * $Id: site.Win32.def,v 1.4 2007/06/28 15:40:08 itglp Exp $
 */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.3 $ $Date: 2007/04/17 15:07:32 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.4 $ $Date: 2007/06/28 15:40:08 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Platform is normally guessed from the CPP predefined symbols
    But you may define special flags, for example
@@ -295,7 +295,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildMyCpp              NO
 #define BuildCastorClientCPPLibrary	YES
 #define BuildCppTest	NO
-#define BuildTankPerfMonLibrary	NO
 
 #define Accounting	YES
 #define ClientLogging	NO
@@ -315,7 +314,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseScheduler	NO
 #define UseExpert	NO
 #define UseMaui	NO
-#define UseStorageTank		NO
 #define UseCastorOnGlobalFileSystem	NO
 
 /* 
