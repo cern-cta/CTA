@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/19 13:22:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/06/29 15:03:27 $ $Author: waldron $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -73,8 +73,8 @@ int main(int argc, char *argv[]) {
     
     // global variable declarations
     char* progName = argv[0];
-    char* rmHostName = 0;
-    int rmPort = -1;
+    char* rmMasterHost = 0;
+    int rmMasterPort = -1;
     char* nodeName = 0;
     bool force = false;
     char* stateName = 0;
@@ -99,10 +99,10 @@ int main(int argc, char *argv[]) {
 	usage(progName);
 	return 0;
       case 'o':
-	rmHostName = Coptarg;
+	rmMasterHost = Coptarg;
 	break;
       case 'p':
-	rmPort = atoi(Coptarg);
+	rmMasterPort = atoi(Coptarg);
 	break;
       case 'n':
 	nodeName = Coptarg;
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
     }
 
     // RmMaster Port
-    if (-1 ==  rmPort) {
+    if (-1 ==  rmMasterPort) {
       char* p;
       // check environment
       p = getenv("RM_PORT");
@@ -188,24 +188,24 @@ int main(int argc, char *argv[]) {
 	p = getconfent ("RM", "PORT", 0);
 	if (0 == p) {
 	  // take default
-	  rmPort = RMMASTER_DEFAULT_PORT;
+	  rmMasterPort = RMMASTER_DEFAULT_PORT;
 	} else {
-	  rmPort = atoi(p);
+	  rmMasterPort = atoi(p);
 	}
       } else {
-	rmPort = atoi(p);
+	rmMasterPort = atoi(p);
       }
     }
 
     // Get default values for some arguments when needed
     // RmMaster Host Name
-    if (0 == rmHostName) {
+    if (0 == rmMasterHost) {
       // check environment
-      rmHostName = getenv ("RM_HOST");
-      if (0 == rmHostName) {
+      rmMasterHost = getenv ("RM_HOST");
+      if (0 == rmMasterHost) {
 	// check configuration file
-	rmHostName = getconfent ("RM", "HOST", 0);
-	if (0 == rmHostName) {
+	rmMasterHost = getconfent ("RM", "HOST", 0);
+	if (0 == rmMasterHost) {
 	  // error
 	  std::cerr << "Error : Could not figure out the RmMaster host\n"
 		    << "Please use --host option, set RM_HOST environment variable "
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
     }
 
     // send request to rmMaster
-    castor::io::ClientSocket s(rmPort, rmHostName);
+    castor::io::ClientSocket s(rmMasterPort, rmMasterHost);
     s.connect();
     s.sendObject(*obj);
 
@@ -274,8 +274,8 @@ int main(int argc, char *argv[]) {
       dynamic_cast<castor::MessageAck*>(ackObj);
     if (0 == ack) {
       std::cerr << "No Acknowledgement from the RmMaster\n"
-	       << "Not sure the action was taken into account"
-	       << std::endl;
+		<< "Not sure the action was taken into account"
+		<< std::endl;
       exit(1);
     }
     if (!ack->status()) {
