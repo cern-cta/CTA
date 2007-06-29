@@ -292,12 +292,14 @@ namespace castor {
          * @param subreq the subreq of the file to recall
          * @param euid the user id
          * @param egid the group id of the user
+	 * @ param svcClass the svcClass to be use for the recall policy
          * @exception in case of error
          */
         virtual void createRecallCandidate
         (castor::stager::SubRequest* subreq,
          unsigned long euid,
-         unsigned long egid)
+         unsigned long egid,
+	 castor::stager::SvcClass* svcClass)
            throw (castor::exception::Exception);
           
         /**
@@ -333,12 +335,14 @@ namespace castor {
          * @castorFile the Castorfile, from wich the fileid is taken for the segments
          * @param euid the userid from the user
          * @param guid the groupid from the user
+	 * @param svcClass the id of the used svcclass 
          *  
          */
         int createTapeCopySegmentsForRecall
         (castor::stager::CastorFile *castorFile, 
          unsigned long euid, 
-         unsigned long egid)
+         unsigned long egid,
+	 castor::stager::SvcClass* svcClass)
           throw (castor::exception::Exception);
 
         /// SQL statement for function subRequestToDo

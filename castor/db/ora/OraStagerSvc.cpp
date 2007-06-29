@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.205 $ $Release$ $Date: 2007/06/27 12:00:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.206 $ $Release$ $Date: 2007/06/29 09:04:42 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -466,9 +466,10 @@ int castor::db::ora::OraStagerSvc::isSubRequestToSchedule
 // createRecallCandidate
 // -----------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::createRecallCandidate
-(castor::stager::SubRequest* subreq,
+(castor::stager::SubRequest *subreq,
  unsigned long euid,
- unsigned long egid)
+ unsigned long egid,
+ castor::stager::SvcClass *svcClass)
   throw (castor::exception::Exception) {
 
   castor::BaseAddress ad;
@@ -481,7 +482,7 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
       castor::stager::CastorFile* cf = subreq->castorFile();
 
       // create needed TapeCopy(ies) and Segment(s)
-      createTapeCopySegmentsForRecall(cf, euid, egid);
+      createTapeCopySegmentsForRecall(cf, euid, egid, svcClass);
 
       // if we are here, we do have segments to recall
       // create DiskCopy
@@ -944,15 +945,18 @@ extern "C" {
 int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 (castor::stager::CastorFile *castorFile,
  unsigned long euid,
- unsigned long egid)
+ unsigned long egid,
+ castor::stager::SvcClass *svcClass)
   throw (castor::exception::Exception) {
   // check argument
+
   if (0 == castorFile) {
     castor::exception::Internal e;
     e.getMessage() << "createTapeCopySegmentsForRecall "
                    << "called with null argument";
     throw e;
   }
+
   // check nsHost name length
   if (castorFile->nsHost().length() > CA_MAXHOSTNAMELEN) {
     castor::exception::InvalidArgument e;
@@ -1070,17 +1074,29 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
       selectTape(nsSegmentAttrs[i].vid,
                  nsSegmentAttrs[i].side,
                  WRITE_DISABLE);
-    switch (tape->status()) {
-    case castor::stager::TAPE_UNUSED:
-    case castor::stager::TAPE_FINISHED:
-    case castor::stager::TAPE_FAILED:
-    case castor::stager::TAPE_UNKNOWN:
-      tape->setStatus(castor::stager::TAPE_PENDING);
-      break;
-    default:
-      break;
-    }
-    cnvSvc()->updateRep(&ad, tape, false);
+
+    //  recaller policy retrieved
+    //  in case it is given the tape status won't change into TAPE_PENDING
+     
+    
+    std::string recallerPolicyStr = svcClass->recallerPolicy();
+
+    if (recallerPolicyStr.empty()){
+         switch (tape->status()) {
+             case castor::stager::TAPE_UNUSED:
+             case castor::stager::TAPE_FINISHED:
+             case castor::stager::TAPE_FAILED:
+             case castor::stager::TAPE_UNKNOWN:
+                tape->setStatus(castor::stager::TAPE_PENDING);
+                break;
+             default:
+                break;
+         }
+         cnvSvc()->updateRep(&ad, tape, false);
+     }
+
+     // In any case with or without recaller policy the following operation are executed
+
     // Link Tape with Segment
     segment->setTape(tape);
     tape->addSegments(segment);
