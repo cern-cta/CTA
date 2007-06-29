@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.451 $ $Date: 2007/06/29 11:49:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.452 $ $Date: 2007/06/29 13:58:03 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1161,7 +1161,7 @@ BEGIN
      AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
      AND DiskServer.id(+) = FileSystem.diskServer
      AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
-     AND DiskCopy.status IN (1, 2, 5, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
+     AND DiskCopy.status IN (1, 2); -- WAITDISK2DISKCOPY, WAITTAPERECALL
   IF stat.COUNT > 0 THEN
     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(rsubreqId, dci(1));
@@ -1318,31 +1318,40 @@ BEGIN
         result := 3;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- We found no diskcopies at all. We should not schedule
-        -- and make a tape recall... except ... if there is some
-	-- temporarily unavailable diskcopy that is in CANBEMIGR or STAGEOUT
-	-- in such a case, what we have is an existing file, that
+        -- and make a tape recall... except ... in 2 cases :
+        --   - if there is some temporarily unavailable diskcopy
+        --     that is in CANBEMIGR or STAGEOUT
+        -- in such a case, what we have is an existing file, that
 	-- was migrated, then overwritten but never migrated again.
         -- So the unavailable diskCopy is the only copy that is valid.
-	-- We will tell the client that the file is unavailable in
-	-- such a case and he/she will retry later
-        BEGIN
-          SELECT DiskCopy.id INTO unused
-            FROM DiskCopy
-           WHERE DiskCopy.castorfile = cfId
-             AND DiskCopy.status IN (6, 10); -- STAGEOUT, CANBEMIGR
-          -- We are in the special case. Don't schedule, don't recall
+	-- We will tell the client that the file is unavailable
+        -- and he/she will retry later
+        --   - if we have a WAITFS or WAITFSSCHEDULING copy in such
+        -- a case, we tell the client that the file is BUSY
+        SELECT DiskCopy.status BULK COLLECT INTO stat
+          FROM DiskCopy
+         WHERE DiskCopy.castorfile = cfId
+           AND DiskCopy.status IN (5, 6, 10, 11); -- WAITFS, STAGEOUT, CANBEMIGR, WAITFSSCHEDULING
+        IF (stat.count() > 0) THEN
+          -- We are in on of the special cases. Don't schedule, don't recall
           result := 4; -- no schedule
           UPDATE SubRequest
              SET status = 7, -- FAILED
-                 errorCode = 1718, -- ESTNOTAVAIL
-                 errorMessage = 'All copies of this file are unavailable for now. Please retry later'
+                 errorCode = CASE
+                   WHEN stat(1) IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
+                   ELSE 1718 -- ESTNOTAVAIL
+                 END,
+                 errorMessage = CASE
+                   WHEN stat(1) IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
+                     'File is being (re)created right now by another user'
+                   ELSE 'All copies of this file are unavailable for now. Please retry later'
+                 END
            WHERE id = rsubreqId;
           COMMIT;
-          RETURN;         
-	EXCEPTION WHEN NO_DATA_FOUND THEN
+        ELSE
 	  -- We did not found the very special case, go for recall
           result := 2;
-        END;
+        END IF;
       END;
     END IF;
   END IF;   -- IF type = PutDone
