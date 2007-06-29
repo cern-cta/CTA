@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2007/06/27 09:37:03 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2007/06/29 09:00:21 $ $Author: gtaur $
  *
  *
  *
@@ -330,11 +330,12 @@ extern "C" {
   (struct Cstager_IStagerSvc_t* stgSvc,
    castor::stager::SubRequest* subreq,
    const unsigned long euid,
-   const unsigned long egid) {
+   const unsigned long egid,
+   castor::stager::SvcClass* svcClass) {
    
    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      stgSvc->stgSvc->createRecallCandidate(subreq, euid, egid);
+      stgSvc->stgSvc->createRecallCandidate(subreq, euid, egid, svcClass);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

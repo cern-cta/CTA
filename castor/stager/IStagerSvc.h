@@ -373,13 +373,15 @@ int Cstager_IStagerSvc_setFileGCWeight
  * @param subreq the subreq of the file to recall
  * @param euid the user id
  * @param egid the group id of the user
+ * @param svcclass for recall policy
  * @return -1 in case of an error.
  */
 int Cstager_IStagerSvc_createRecallCandidate
 (struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_SubRequest_t* subreq,
  const unsigned long euid,
- const unsigned long egid);
+ const unsigned long egid,
+ struct Cstager_SvcClass_t* svcClass);
 
 /**
  * Retrieves a DiskPool from the database based on name.
