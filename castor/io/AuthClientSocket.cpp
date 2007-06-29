@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2005/12/12 10:22:54 $ $Author: lopic3 $
+ * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/06/29 14:22:41 $ $Author: waldron $
  *
  *
  *
@@ -96,7 +96,9 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 castor::io::AuthClientSocket::~AuthClientSocket() throw () {
   Csec_clearContext(&m_security_context);
-  close(m_socket);
+  if (m_socket >= 0) {
+    close(m_socket);
+  }
 }
 
 

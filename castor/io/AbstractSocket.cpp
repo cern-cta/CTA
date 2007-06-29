@@ -282,10 +282,12 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 // close
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::close() throw () {
+  if (m_socket >= 0) {
 #if !defined(_WIN32)
-  ::close(m_socket);
+    ::close(m_socket);
 #else
-  closesocket(m_socket);
+    closesocket(m_socket);
 #endif
+  }
   m_socket = -1;
 }
