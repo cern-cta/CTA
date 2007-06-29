@@ -153,7 +153,8 @@ const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementStri
 // OraTapeSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
-  OraCommonSvc(name), BaseTapeSvc(),
+  BaseTapeSvc(),  
+  OraCommonSvc(name), 
   m_tapesToDoStatement(0),
   m_streamsToDoStatement(0),
   m_anyTapeCopyForStreamStatement(0),
