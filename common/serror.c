@@ -266,6 +266,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Stage configuration error",
    "Required tape segments are not all accessible",
    "File replication failed",
+   "File is currently not available",
    "BAD ERROR NUMBER"
   };
 

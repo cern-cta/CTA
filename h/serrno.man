@@ -551,6 +551,9 @@ The following error values are returned only by the stager package:
 .TP
 .B ESTREPLFAILED
 (1717) File replication failed
+.TP
+.B ESTNOTAVAIL
+(1718) File is currently not available
 
 .SH SYSREQ ERRORS
 The following error value is returned only by the sysreq package:
