@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.450 $ $Date: 2007/06/28 14:42:06 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.451 $ $Date: 2007/06/29 11:49:51 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1317,9 +1317,32 @@ BEGIN
         -- not available to this svcclass
         result := 3;
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- We found no diskcopies at all. Don't schedule
-        -- and make a tape recall instead.
-        result := 2;
+        -- We found no diskcopies at all. We should not schedule
+        -- and make a tape recall... except ... if there is some
+	-- temporarily unavailable diskcopy that is in CANBEMIGR or STAGEOUT
+	-- in such a case, what we have is an existing file, that
+	-- was migrated, then overwritten but never migrated again.
+        -- So the unavailable diskCopy is the only copy that is valid.
+	-- We will tell the client that the file is unavailable in
+	-- such a case and he/she will retry later
+        BEGIN
+          SELECT DiskCopy.id INTO unused
+            FROM DiskCopy
+           WHERE DiskCopy.castorfile = cfId
+             AND DiskCopy.status IN (6, 10); -- STAGEOUT, CANBEMIGR
+          -- We are in the special case. Don't schedule, don't recall
+          result := 4; -- no schedule
+          UPDATE SubRequest
+             SET status = 7, -- FAILED
+                 errorCode = 1718, -- ESTNOTAVAIL
+                 errorMessage = 'All copies of this file are unavailable for now. Please retry later'
+           WHERE id = rsubreqId;
+          COMMIT;
+          RETURN;         
+	EXCEPTION WHEN NO_DATA_FOUND THEN
+	  -- We did not found the very special case, go for recall
+          result := 2;
+        END;
       END;
     END IF;
   END IF;   -- IF type = PutDone
