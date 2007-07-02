@@ -295,7 +295,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_3_17');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_3_18');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -427,8 +427,8 @@ BEGIN
     END LOOP;
   END LOOP;
   
-  -- Set the status of tablespaces older then 3 days to read only
-  v_tablespace := 'DLF_'||TO_CHAR(SYSDATE - 3, 'YYYYMMDD');
+  -- Set the status of tablespaces older then 2 days to read only
+  v_tablespace := 'DLF_'||TO_CHAR(SYSDATE - 2, 'YYYYMMDD');
   FOR a IN (SELECT DISTINCT(tablespace_name)
               FROM user_tablespaces
              WHERE tablespace_name LIKE 'DLF_%'
@@ -447,10 +447,8 @@ END;
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
 	JOB_NAME 	=> 'dlf_partition_job',
-	JOB_TYPE 	=> 'PLSQL_BLOCK',
-	JOB_ACTION 	=> 'BEGIN
-				DLF_PARTITION();
-			   END;',
+	JOB_TYPE 	=> 'STORED_PROCEDURE',
+	JOB_ACTION	=> 'DLF_PARTITION',
 	START_DATE 	=> TRUNC(SYSDATE) + 1/24,
 	REPEAT_INTERVAL => 'FREQ=DAILY',
 	ENABLED 	=> TRUE,
@@ -482,7 +480,7 @@ BEGIN
   SELECT value INTO v_value FROM dlf_settings WHERE name = 'ARCHIVE_EXPIRY';
   v_expire := TO_NUMBER(v_value);
 
-  -- Drop partition (no archiving)
+  -- Drop partition
   IF v_expire > 0 THEN
     FOR a IN (SELECT table_name, partition_name
                 FROM user_tab_partitions
@@ -559,15 +557,15 @@ BEGIN
 		  -- Intersection of request ids
 		  SELECT * FROM dlf_messages WHERE reqid IN(
 		    SELECT reqid FROM dlf_messages
-                      WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
-                      AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-                      AND   facility = 5
-                      AND   msg_no   = 15
+                     WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
+                       AND timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                       AND facility = 5
+                       AND msg_no   = 15
                   INTERSECT
                     SELECT reqid FROM dlf_messages
-                      WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-                      AND   facility = 5
-                      AND   msg_no   = 12)
+                     WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+                       AND facility = 5
+                       AND msg_no   = 12)
 	 	  AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
 		  AND facility = 5
 		  AND ((msg_no = 12) OR (msg_no = 15))
@@ -576,10 +574,10 @@ BEGIN
 	      ) m, dlf_num_param_values p
 
 	      WHERE m.msg_no = 12
-	      AND   m.id = p.id
-              AND   p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-	      AND   p.name = 'type'
-	      AND   p.value IN (35, 36, 37, 40)
+	        AND m.id = p.id
+                AND p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+	        AND p.name = 'type'
+	        AND p.value IN (35, 36, 37, 40)
 	      GROUP BY p.value ORDER BY p.value)
     LOOP
       EXECUTE IMMEDIATE 'UPDATE dlf_jobstats SET
@@ -589,23 +587,23 @@ BEGIN
                                 std_dev   = '||a.stddev||',
                                 exiting   = '||a.count||'
 			  WHERE timestamp = '''||v_time||'''
-			  AND   type      = '||a.value;    
+			    AND type      = '||a.value;    
     END LOOP;
        
     -- Update the starting statistics data
     FOR a IN (SELECT p.value, COUNT(m.reqid) count 
-              FROM   dlf_messages m, dlf_num_param_values p
-              WHERE  m.timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
-              AND    m.timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-              AND    m.facility = 5
-              AND    m.msg_no   = 12
-              AND    m.id       = p.id
-              AND    p.name     = 'type'
-              GROUP BY p.value)
+                FROM dlf_messages m, dlf_num_param_values p
+               WHERE m.timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
+                 AND m.timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                 AND m.facility = 5
+                 AND m.msg_no   = 12
+                 AND m.id       = p.id
+                 AND p.name     = 'type'
+               GROUP BY p.value)
     LOOP
       EXECUTE IMMEDIATE 'UPDATE dlf_jobstats SET starting = '||a.count||'
-                         WHERE  timestamp = '''||v_time||'''
-                         AND    type = '||a.value;
+                          WHERE timestamp = '''||v_time||'''
+                            AND type = '||a.value;
     END LOOP;
   END IF;
 END;
@@ -657,15 +655,15 @@ BEGIN
                     -- Intersection of request ids
                     SELECT * FROM dlf_messages WHERE reqid IN (
                       SELECT reqid FROM dlf_messages
-                        WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
-                        AND   timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-                        AND   facility = 4
-                        AND   msg_no   = 10
+                       WHERE timestamp >  TO_DATE(SYSDATE - 25/1440, 'YYYYMMDDHH24MISS')
+                         AND timestamp <= TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                         AND facility = 4
+                         AND msg_no   = 10
                     INTERSECT
                       SELECT reqid FROM dlf_messages
-                        WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-                        AND   facility = 4
-                        AND   msg_no   = 12
+                       WHERE timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
+                         AND facility = 4
+                         AND msg_no   = 12
                     )
 		    AND timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
                     AND facility = 4
@@ -673,12 +671,12 @@ BEGIN
 
 		  ) m, dlf_num_param_values p
 		  WHERE p.timestamp > TO_DATE(SYSDATE - 2, 'YYYYMMDDHH24MISS')
-		  AND   m.id = p.id
-		  AND   p.name IN ('Type', 'ProcTime')
+		    AND m.id = p.id
+		    AND p.name IN ('Type', 'ProcTime')
 
 	      )
 	      WHERE msg_no = 10
-	      AND   type IN (35, 36, 37, 40)
+	        AND type IN (35, 36, 37, 40)
 	      GROUP BY type ORDER BY type)
     LOOP
       EXECUTE IMMEDIATE 'UPDATE dlf_reqstats SET
@@ -688,7 +686,7 @@ BEGIN
                                 std_dev   = '||a.stddev||',
                                 req_count = '||a.count||'
 			  WHERE timestamp = '''||v_time||'''
-			  AND   type      = '||a.type;    
+			    AND type      = '||a.type;    
     END LOOP;
   END IF;
 END;
@@ -743,22 +741,23 @@ BEGIN
                        MAX(DECODE(a.name, 'SVCCLASS',    a.value, NULL)) svcclass,
                        MAX(DECODE(a.name, 'TAPEPOOL',    a.value, NULL)) tapepool,
                        MAX(DECODE(b.name, 'FILESIZE',    b.value, NULL)) filesize
-                FROM  dlf_str_param_values a, dlf_num_param_values b
+                 FROM dlf_str_param_values a, dlf_num_param_values b
                 WHERE a.id = b.id
-                AND   a.id IN (
-                  -- Message ids of interest
-                  SELECT id FROM dlf_messages
-                  WHERE facility = 1
-                  AND   msg_no = 55
-                  AND   timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-                  AND   timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
-                )
-                AND   a.timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-                AND   a.timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
-                AND   b.timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
-                AND   b.timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
-                AND   a.name IN ('SVCCLASS', 'TAPEPOOL')
-                AND   b.name IN ('FILESIZE', 'ELAPSEDTIME')
+                  AND a.id IN (
+
+                    -- Message ids of interest
+                    SELECT id FROM dlf_messages
+                     WHERE facility = 1
+                       AND msg_no = 55
+                       AND timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                       AND timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
+                  )
+                  AND a.timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                  AND a.timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
+                  AND b.timestamp >  TO_DATE(SYSDATE - 10/1440, 'YYYYMMDDHH24MISS')
+                  AND b.timestamp <= TO_DATE(SYSDATE - 5/1440,  'YYYYMMDDHH24MISS')
+                  AND a.name IN ('SVCCLASS', 'TAPEPOOL')
+                  AND b.name IN ('FILESIZE', 'ELAPSEDTIME')
                 GROUP BY a.id
               )
               GROUP BY svcclass, tapepool)
@@ -777,10 +776,8 @@ END;
 BEGIN
 DBMS_SCHEDULER.CREATE_JOB (
 	JOB_NAME 	=> 'DLF_STATS_5MINS',
-	JOB_TYPE 	=> 'PLSQL_BLOCK',
-	JOB_ACTION 	=> 'BEGIN
-				DLF_STATS_TAPE();
-			   END;',
+        JOB_TYPE        => 'STORED_PROCEDURE',
+        JOB_ACTION      => 'DLF_STATS_TAPE',
 	START_DATE 	=> SYSDATE,
 	REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
 	ENABLED 	=> TRUE,
