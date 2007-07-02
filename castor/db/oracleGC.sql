@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.452 $ $Date: 2007/06/29 13:58:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.453 $ $Date: 2007/07/02 14:01:15 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1149,19 +1149,27 @@ CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
   cfId NUMBER;
   reqType NUMBER;
 BEGIN
+ ---- retrieve the castorfile and the request id --- 
+   SELECT SubRequest.castorfile, SubRequest.request
+    INTO cfId, reqId
+    FROM SubRequest
+   WHERE SubRequest.id = rsubreqId;
+  --- lock the castor file to be safe in case of two concurrent subrequest
+   SELECT id into cfId FROM CastorFile where CastorFile.id=cfId FOR UPDATE;
+  
   -- First see whether we should wait on an ongoing request
   SELECT DiskCopy.status, DiskCopy.id
     BULK COLLECT INTO stat, dci
-    FROM DiskCopy, SubRequest, FileSystem, DiskServer, Id2Type
-   WHERE SubRequest.id = rsubreqId
-     AND SubRequest.request = Id2Type.id  -- Avoid that PutDone waits
+    FROM DiskCopy,  FileSystem, DiskServer, Id2Type
+   WHERE  reqId  = Id2Type.id  -- Avoid that PutDone waits
      AND Id2Type.type != 39               -- on the prepareToPut
-     AND SubRequest.castorfile = DiskCopy.castorfile
+     AND cfId = DiskCopy.castorfile
      AND FileSystem.id(+) = DiskCopy.fileSystem
      AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
      AND DiskServer.id(+) = FileSystem.diskServer
      AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
      AND DiskCopy.status IN (1, 2); -- WAITDISK2DISKCOPY, WAITTAPERECALL
+
   IF stat.COUNT > 0 THEN
     -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(rsubreqId, dci(1));
