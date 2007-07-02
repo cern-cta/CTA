@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/03/20 08:11:24 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/07/02 06:46:40 $ $Author: waldron $
  *
  *
  *
@@ -36,7 +36,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
-	try {
+  try {
 
     castor::repack::RepackServer server;
 	
@@ -308,7 +308,6 @@ castor::repack::RepackServer::~RepackServer() throw()
 //------------------------------------------------------------------------------
 void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
 {
-  const char* cmdParams = m_cmdLineParams.str().c_str();
   Coptions_t* longopts = new Coptions_t[m_threadPools.size()+4];
   char tparam[] = "Xthreads";
   
@@ -329,7 +328,7 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
     longopts[i].has_arg = REQUIRED_ARGUMENT;
     longopts[i].flag = NULL;
     longopts[i].val = tp->first;
-    };
+  };
   longopts[i].name = 0;
 
   Coptind = 1;
@@ -337,7 +336,7 @@ void castor::repack::RepackServer::parseCommandLine(int argc, char *argv[])
   char c;
   castor::server::BaseThreadPool* p= NULL;
 
-  while ((c = Cgetopt_long(argc, argv, (char*)cmdParams, longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, (char*)m_cmdLineParams.str().c_str(), longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;

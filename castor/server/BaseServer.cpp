@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/04/16 13:20:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/07/02 06:46:40 $ $Author: waldron $
  *
  *
  *
@@ -58,6 +58,7 @@
 castor::server::BaseServer::BaseServer(const std::string serverName) :
   m_foreground(false), m_serverName(serverName)
 {
+  m_cmdLineParams.clear();
   m_cmdLineParams << "fc:h";
 }
 
@@ -104,8 +105,8 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
   // Ignore SIGPIPE (connection lost with client),
   // SIGXFSZ (a file is too big), SIGCHLD (zombies)
 #if !defined(_WIN32)
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGXFSZ, SIG_IGN);
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGXFSZ, SIG_IGN);
   signal(SIGCHLD, SIG_IGN);
 #endif
 }
@@ -166,7 +167,6 @@ castor::server::BaseThreadPool* castor::server::BaseServer::getThreadPool(const 
 //------------------------------------------------------------------------------
 void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
 {
-  const char* cmdParams = m_cmdLineParams.str().c_str();
   Coptions_t* longopts = new Coptions_t[m_threadPools.size()+4];
   char tparam[] = "Xthreads";
   
@@ -191,14 +191,14 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
     longopts[i].has_arg = REQUIRED_ARGUMENT;
     longopts[i].flag = NULL;
     longopts[i].val = tp->first;
-    };
+  };
   longopts[i].name = 0;
 
   Coptind = 1;
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long(argc, argv, (char*)cmdParams, longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, (char*)m_cmdLineParams.str().c_str(), longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
