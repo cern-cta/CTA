@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.17 2007/05/29 08:47:05 waldron Exp $
+ * $Id: dlf_lib.c,v 1.18 2007/07/02 06:30:41 waldron Exp $
  */
 
 /* headers */
@@ -145,10 +145,13 @@ int dlf_send(target_t *t, char *data, int len) {
 		server_addr.sin_family = AF_INET;
 		server_addr.sin_port   = htons(t->port);
 
+		Cthread_mutex_lock(&t->mutex);
 		hp = Cgethostbyname(t->server);
 		if (hp == NULL) {
+			Cthread_mutex_unlock(&t->mutex);
 			return h_errno;
 		}
+		Cthread_mutex_unlock(&t->mutex);
 		server_addr.sin_addr.s_addr = ((struct in_addr *)hp->h_addr)->s_addr;
 
 		/* open socket */
