@@ -37,7 +37,7 @@ CppCppDbCnvWriter::~CppCppDbCnvWriter() {
 void CppCppDbCnvWriter::startSQLFile() {
   // Preparing SQL files for creation/deletion of the database(s)
   QFile file;
-  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_create.sql",
+  openFile(file, s_topNS + "/db/oracleSchema.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/oracleGeneratedCore_create.sql",
@@ -47,7 +47,7 @@ void CppCppDbCnvWriter::startSQLFile() {
            IO_WriteOnly | IO_Truncate);
   file.close();  
 
-  openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_create.sql",
+  openFile(file, s_topNS + "/db/postgresSchema.sql",
            IO_WriteOnly | IO_Truncate);
   file.close();
   openFile(file, s_topNS + "/db/postgresGeneratedCore_create.sql",
@@ -90,20 +90,19 @@ void CppCppDbCnvWriter::insertFileintoStream(QTextStream &stream,
 void CppCppDbCnvWriter::endSQLFile() {
   // Finalizing SQL files for creation/deletion of the database(s)
   QFile file;
-  openFile(file, s_topNS + "/db/" + s_topNS + "_oracle_create.sql",
+  openFile(file, s_topNS + "/db/oracleSchema.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamO(&file);
   insertFileintoStream(streamO, s_topNS + "/db/oracleGeneratedCore_create.sql");
   insertFileintoStream(streamO, s_topNS + "/db/oracleGeneratedTrailer_create.sql");
-  insertFileintoStream(streamO, s_topNS + "/db/oracleTrailer.sql");
+  // don't append oracleTrailer, this will be done at release time
   file.close();
 
-  openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_create.sql",
+  openFile(file, s_topNS + "/db/postgresSchema.sql",
            IO_WriteOnly | IO_Append);
   QTextStream streamP(&file);
   insertFileintoStream(streamP, s_topNS + "/db/postgresGeneratedCore_create.sql");
   insertFileintoStream(streamP, s_topNS + "/db/postgresGeneratedTrailer_create.sql");
-  insertFileintoStream(streamP, s_topNS + "/db/postgresTrailer.sql");
   file.close();
 
   openFile(file, s_topNS + "/db/" + s_topNS + "_postgres_drop.sql",

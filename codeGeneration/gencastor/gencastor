@@ -5,7 +5,7 @@
 #
 # @author Castor dev team, castor-dev@cern.ch
 #
-# @(#)$RCSfile: gencastor,v $ $Revision: 1.16 $ $Release$ $Date: 2007/04/30 12:47:38 $ $Author: itglp $
+# @(#)$RCSfile: gencastor,v $ $Revision: 1.17 $ $Release$ $Date: 2007/07/02 14:32:25 $ $Author: itglp $
 # 
 
 if ("$1" == "-h") then
@@ -40,19 +40,18 @@ rm -rf ${TMPDIR}
 mkdir -p ${TMPDIR}/${TOPNS}/db
 cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
 grep 'CREATE OR REPLACE' ${TMPDIR}/${TOPNS}/db/postgresTrailer.sql | grep -v 'TRIGGER' | grep -v I_CastorFile_fileIdNsHost | awk 'BEGIN { FS="[ (]+" } { print "DROP " $4, $5 ";" }' > ${TMPDIR}/${TOPNS}/db/postgresTrailer_drop.sql
-# removes CVS keywords
-sed 's/\$//g' ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql > ${TMPDIR}/ora.sql
-mv ${TMPDIR}/ora.sql ${TMPDIR}/${TOPNS}/db/oracleTrailer.sql
 
 (/usr/bin/gencastor.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE} > /dev/tty) >& /dev/null
 
-sed 's/^END;/END;\n\//' ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > ${TMPDIR}/${TOPNS}/db/${TOPNS}_oracle_create.sqlplus
+if ($? > 0) then
+  echo Error during code generation, exiting
+  exit
+endif
 
 set pushdsilent
 pushd ${TMPDIR}
 rm -f ${TOPNS}/db/*Generated*
-rm -f ${TOPNS}/db/*Trailer_drop*
-rm -f ${TOPNS}/db/oracleTrailer.sql
+rm -f ${TOPNS}/db/*Trailer*
 
 foreach f (`find . -type f`)
   #echo $f
