@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.32 2007/04/25 10:21:46 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.33 2007/07/02 14:16:35 riojac3 Exp $
  */
 
 /*
@@ -80,6 +80,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId();
     if (ret==-1){free(opts);}
     
     // Preparing the requests
@@ -211,6 +212,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     castor::stager::RequestHelper reqh(&req);  
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId();
     if(ret==-1){free(opts);}
     // Preparing the requests
     for(int i=0; i<nbreqs; i++) {
@@ -365,6 +367,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     ret = setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId();
     if (-1 == ret) { free(opts); }
 
     // Using the VectorResponseHandler which stores everything in
@@ -442,6 +445,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     ret = setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId(); 
     if (-1 == ret) { free(opts); }
 
     // Using the VectorResponseHandler which stores everything in

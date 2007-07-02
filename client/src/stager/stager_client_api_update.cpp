@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.13 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stager_client_api_update.cpp,v 1.14 2007/07/02 14:16:35 riojac3 Exp $
  */
 
 /*
@@ -80,6 +80,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId(); 
     if (ret==-1){free(opts);}
 
    if (0 != userTag) {
@@ -210,6 +211,7 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
     ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId(); 
     if (ret==-1){free(opts);}  
     if (0 != protocol) {
       subreq->setProtocol(protocol);

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.8 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.9 2007/07/02 14:16:35 riojac3 Exp $
  */
 
 /*
@@ -72,6 +72,7 @@ static int _processFileRequest(char *func,
     castor::stager::RequestHelper reqh(&req);
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId(); 
     if(ret==-1){free(opts);}
 
     // Preparing the requests
@@ -248,6 +249,7 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
     ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);   
+    client.setAuthorizationId(); 
     if(ret==-1){free(opts);}
 
     // Using the VectorResponseHandler which stores everything in

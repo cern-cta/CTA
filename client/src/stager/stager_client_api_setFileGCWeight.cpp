@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_setFileGCWeight.cpp,v 1.4 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stager_client_api_setFileGCWeight.cpp,v 1.5 2007/07/02 14:16:35 riojac3 Exp $
  */
 
 /*
@@ -69,6 +69,7 @@ static int _processFileRequest(char *func,
     ret=setDefaultOption(opts);
     reqh.setOptions(opts);
     client.setOption(opts);
+    client.setAuthorizationId(); 
     if (ret==-1){free(opts);}
 
     // Preparing the requests
