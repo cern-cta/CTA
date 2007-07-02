@@ -106,7 +106,14 @@ namespace castor {
                               castor::client::IResponseHandler* rh)
         throw(castor::exception::Exception);
       
+      /**
+      * Get the userid and groupid and set the authorization values.
+      */
 
+      void setAuthorizationId() throw(castor::exception::Exception);
+
+
+	
       /**
        * Sets the authorization ID under which the request should be sent.
        */

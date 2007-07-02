@@ -458,6 +458,25 @@ std::string castor::client::BaseClient::requestId() {
   return m_requestId;
 }
 
+//------------------------------------------------------------------------------
+// setAutorizationId
+//----------------------------------------------------------------------------
+
+void castor::client::BaseClient::setAuthorizationId( ) throw(castor::exception::Exception) {
+
+  uid_t authUid;
+  gid_t authGid;
+
+  if (stage_getid(&m_authUid, &m_authGid) < 0) {
+    castor::exception::Exception e(serrno);
+    e.getMessage()
+      << "Error in stage_getid" << std::endl;
+    throw e;
+  }
+  else
+    m_hasAuthorizationId = true;
+}
+
 
 //------------------------------------------------------------------------------
 // setAutorizationId
