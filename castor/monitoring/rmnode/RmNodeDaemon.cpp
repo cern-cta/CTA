@@ -73,6 +73,7 @@ int main(int argc, char* argv[]) {
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, initParams);
       }
     }
+
     intervalStr = getconfent("RmNode","MetricsUpdateInterval", 0);
     if (intervalStr) {
       metricsInterval = std::strtol(intervalStr,0,10);
@@ -88,7 +89,7 @@ int main(int argc, char* argv[]) {
 
     // Try to retrieve the rmmaster machine and port from the
     // config file. No default provided for the machine.
-    char* rmMasterHost = getconfent("RM","HOST", 0);
+    char* rmMasterHost = getconfent("RM", "HOST", 0);
     if (0 == rmMasterHost) {
       // Raise an exception
       castor::exception::NoEntry e;
@@ -98,7 +99,7 @@ int main(int argc, char* argv[]) {
       rmMasterHost = strdup(rmMasterHost);
     }
     int rmMasterPort = RMMASTER_PORT;
-    char* rmMasterPortStr = getconfent("RM","PORT", 0);
+    char* rmMasterPortStr = getconfent("RM", "PORT", 0);
     if (rmMasterPortStr){
       rmMasterPort = std::strtol(rmMasterPortStr,0,10);
       if (0 == rmMasterPort) {
@@ -113,8 +114,8 @@ int main(int argc, char* argv[]) {
 
     // Inform user : "Starting RmNode Daemon"
     castor::dlf::Param initParams[] =
-      {castor::dlf::Param("Update state interval value", stateInterval),
-       castor::dlf::Param("Update metrics interval value", metricsInterval),
+      {castor::dlf::Param("State interval", stateInterval),
+       castor::dlf::Param("Metrics interval", metricsInterval),
        castor::dlf::Param("Rmmaster host", rmMasterHost),
        castor::dlf::Param("Rmmaster port", rmMasterPort)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 4, 4, initParams);
@@ -129,7 +130,7 @@ int main(int argc, char* argv[]) {
         stateInterval));
     daemon.getThreadPool('S')->setNbThreads(1);
 
-    // Create a thread for DiskServer State monitoring
+    // Create a thread for DiskServer Metrics monitoring
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Metrics",
@@ -152,13 +153,11 @@ int main(int argc, char* argv[]) {
     return -1;
   }
   catch (...) {
-
     std::cerr << "Caught general exception!" << std::endl;
     castor::dlf::Param params2[] =
       {castor::dlf::Param("Standard Message", "Caught general exception in cleaning daemon.")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, params2);
     return -1;
-
   }
   return 0;
 }
@@ -167,14 +166,13 @@ int main(int argc, char* argv[]) {
 // RmNodeDaemon Constructor
 // also initialises the logging facility
 //------------------------------------------------------------------------------
-
 castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
   castor::server::BaseDaemon("RmNodeDaemon") {
 
   castor::BaseObject::initLog("RmNode", castor::SVC_DLFMSG);
+
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
-
   castor::dlf::Message messages[] =
     {{ 0, ""},
      { 1, "Bad state interval value in configuration file"},
@@ -197,8 +195,5 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
      {20, "Bad minAllowedFreeSpace interval value in configuration file"},
      {-1, ""}};
   castor::dlf::dlf_init("RmNode", messages);
-
 }
-
-
 

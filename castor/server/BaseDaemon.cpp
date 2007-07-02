@@ -101,16 +101,16 @@ void castor::server::BaseDaemon::signalHandler()
 {
   try {
     m_signalMutex->lock();
-
+    
     while (!m_signalMutex->getValue()) {
       // Note: Without COND_TIMEOUT > 0 this will never work - because the condition variable
       // is changed in a signal handler - we cannot use condition signal in this signal handler
       m_signalMutex->wait();
     }
-
+    
     m_signalMutex->release();
     int sigValue = m_signalMutex->getValue();
-	
+    
     switch (sigValue) {
       case RESTART_GRACEFULLY:
         clog() << SYSTEM << "GRACEFUL RESTART [SIGHUP]" << std::endl;
@@ -119,7 +119,7 @@ void castor::server::BaseDaemon::signalHandler()
         /* and restart them all */
         start();   // XXX this is a blind attempt to restart, as it was implemented in stager.c:1065
         break;
-      
+	
       case STOP_GRACEFULLY:
         clog() << SYSTEM << "GRACEFUL STOP [SIGTERM]" << std::endl;
         /* wait on all threads to terminate */
@@ -140,7 +140,6 @@ void castor::server::BaseDaemon::signalHandler()
         dlf_shutdown(1);
         exit(EXIT_FAILURE);
     }
-
   }
   catch (castor::exception::Exception e) {
     clog() << ERROR << "Exception during wait for signal loop: " << e.getMessage().str() << std::endl;
@@ -183,15 +182,15 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
       }
     }
     catch (castor::exception::Exception e) {
-        // a thread lock could not be acquired or a thread pool still has some threads running
-        // hence release previously acquired locks and try again
+      // a thread lock could not be acquired or a thread pool still has some threads running
+      // hence release previously acquired locks and try again
       for(unsigned int i = 0; i < busyTPools.size(); i++) {
         try {
           busyTPools[i]->getMutex()->release();
         } catch (castor::exception::Exception ignored) {}
       }
       
-    sleep(1);         // wait before trying again
+      sleep(1);         // wait before trying again
     }
   }
 }
@@ -204,7 +203,7 @@ void* castor::server::_signalThread_run(void* arg)
 {
   int sig_number = SIGHUP;
   castor::server::BaseDaemon* daemon = (castor::server::BaseDaemon*)arg;
-
+  
   // keep looping until any caught signal except restart
   while (sig_number == SIGHUP) {
     if (sigwait(&daemon->m_signalSet, &sig_number) == 0) {
@@ -232,7 +231,7 @@ void* castor::server::_signalThread_run(void* arg)
           daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
           break;
       }
-	  }
+    }
   }
   return 0;
 }
