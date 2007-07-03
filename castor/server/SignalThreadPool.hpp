@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/08/14 19:12:41 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/03 08:32:18 $ $Author: itglp $
  *
  *
  *
@@ -131,7 +131,7 @@ namespace castor {
     /**
      * Gets this thread pool's mutex.
      * used by threads for thread-safe operations.
-     * @return a Mutex.
+     * @return m_poolMutex.
      */
     Mutex* getMutex() {
       return m_poolMutex;
@@ -139,13 +139,13 @@ namespace castor {
 
     /**
      * Get this thread pool's active threads count.
-     * The function is thread-safe as counter is obtained
-     * by locking the mutex.
-     * @return int nbActiveThreads
+     * The function is not taking any lock, hence its clients
+     * (e.g. BaseDaemon::waitAllThreads()) shall handle
+     * this pool's mutex accordingly.
+     * @return int m_nbActiveThreads
      */
     int getActiveThreads()
       throw (castor::exception::Exception) {
-      m_poolMutex->lock();
       return m_nbActiveThreads;
     }
 
