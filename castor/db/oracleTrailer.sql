@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.454 $ $Date: 2007/07/02 17:48:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.455 $ $Date: 2007/07/03 09:16:25 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1067,6 +1067,13 @@ CREATE OR REPLACE PACKAGE castor AS
         fileName VARCHAR2(2048),
         diskCopyId INTEGER);
   TYPE GCLocalFiles_Cur IS REF CURSOR RETURN GCLocalFileCore;
+  TYPE StreamCore IS RECORD (
+        id INTEGER,
+        initialSizeToTransfer INTEGER,
+        status NUMBER,
+        tapePoolId NUMBER,
+        tapePoolName VARCHAR2(2048));
+  TYPE Stream_Cur IS REF CURSOR RETURN StreamCore;
   TYPE "strList" IS TABLE OF VARCHAR2(2048) index by binary_integer;
   TYPE "cnumList" IS TABLE OF NUMBER index by binary_integer;
   TYPE QueryLine IS RECORD (
@@ -1135,6 +1142,29 @@ BEGIN
     END IF;
   END IF;
   RETURN 0;
+END;
+
+/* PL/SQL method implementing streamsToDo */
+CREATE OR REPLACE PROCEDURE streamsToDo(res OUT castor.Stream_Cur) AS
+  streams "numList";
+BEGIN
+  SELECT UNIQUE Stream.id BULK COLLECT INTO streams
+    FROM Stream, NbTapeCopiesInFS, FileSystem, DiskServer
+   WHERE Stream.status = 0 --PENDING
+     AND NbTapeCopiesInFS.stream = Stream.id
+     AND NbTapeCopiesInFS.NbTapeCopies > 0
+     AND FileSystem.id = NbTapeCopiesInFS.FS
+     AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+     AND DiskServer.id = FileSystem.DiskServer
+     AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+  UPDATE Stream SET status = 1 -- WAITDRIVE
+   WHERE id MEMBER OF streams;
+  OPEN res FOR
+    SELECT Stream.id, Stream.InitialSizeToTransfer, Stream.status,
+           TapePool.id, TapePool.name
+      FROM Stream, TapePool
+     WHERE Stream.id MEMBER OF streams
+       AND Stream.TapePool = TapePool.id;
 END;
 
 /* PL/SQL method implementing isSubRequestToSchedule */

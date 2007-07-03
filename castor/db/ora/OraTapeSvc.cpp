@@ -98,7 +98,7 @@ const std::string castor::db::ora::OraTapeSvc::s_tapesToDoStatementString =
 
 /// SQL statement for streamsToDo
 const std::string castor::db::ora::OraTapeSvc::s_streamsToDoStatementString =
-  "SELECT id FROM Stream WHERE status = :1";
+  "BEGIN streamsToDo(:1); END;";
 
 /// SQL statement for anyTapeCopyForStream
 const std::string castor::db::ora::OraTapeSvc::s_anyTapeCopyForStreamStatementString =
@@ -146,7 +146,7 @@ const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
 
 /// SQL statement for checkFileForRepack
 const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString = 
- "BEGIN checkFileForRepack(:1, :2); END;";
+  "BEGIN checkFileForRepack(:1, :2); END;";
 
 
 // -----------------------------------------------------------------------
@@ -701,37 +701,47 @@ castor::db::ora::OraTapeSvc::tapesToDo()
 std::vector<castor::stager::Stream*>
 castor::db::ora::OraTapeSvc::streamsToDo()
   throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  if (0 == m_streamsToDoStatement) {
-    m_streamsToDoStatement = createStatement(s_streamsToDoStatementString);
-    m_streamsToDoStatement->setInt(1, castor::stager::STREAM_PENDING);
-  }
   std::vector<castor::stager::Stream*> result;
   try {
-    oracle::occi::ResultSet *rset = m_streamsToDoStatement->executeQuery();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      IObject* obj = cnvSvc()->getObjFromId(rset->getInt(1));
-      castor::stager::Stream* stream =
-        dynamic_cast<castor::stager::Stream*>(obj);
-      if (0 == stream) {
-        castor::exception::Internal ex;
-        ex.getMessage()
-          << "In method OraTapeSvc::streamsToDo, got a non stream object";
-        delete obj;
-        throw ex;
-      }
-      // Change stream status
-      stream->setStatus(castor::stager::STREAM_WAITDRIVE);
-      cnvSvc()->updateRep(0, stream, true);
-      // Fill TapePool pointer
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      cnvSvc()->fillObj(&ad, obj, OBJ_TapePool);
-      result.push_back(stream);
+    // Check whether the statements are ok
+    if (0 == m_streamsToDoStatement) {
+      m_streamsToDoStatement = createStatement(s_streamsToDoStatementString);
+      m_streamsToDoStatement->registerOutParam(1, oracle::occi::OCCICURSOR);
+      m_streamsToDoStatement->setAutoCommit(true);
     }
-    m_streamsToDoStatement->closeResultSet(rset);
+    unsigned int nb = m_streamsToDoStatement->executeUpdate();
+    if (0 == nb) {
+      rollback();
+      castor::exception::Internal ex;
+      ex.getMessage()
+	<< "streamsToDo : Unable to get streams.";
+      throw ex;
+    }
+    oracle::occi::ResultSet *rs =
+      m_streamsToDoStatement->getCursor(1);
+    // Run through the cursor
+    oracle::occi::ResultSet::Status status = rs->next();
+    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+      castor::stager::Stream* stream = new castor::stager::Stream();
+      stream->setId(rs->getInt(1));
+      stream->setInitialSizeToTransfer(rs->getInt(2));
+      stream->setStatus((enum castor::stager::StreamStatusCodes)rs->getInt(3));
+      castor::stager::TapePool* tapePool = new castor::stager::TapePool();
+      tapePool->setId(rs->getInt(4));
+      tapePool->setName(rs->getString(5));
+      stream->setTapePool(tapePool);
+      tapePool->addStreams(stream);
+      result.push_back(stream);      
+      status = rs->next();
+    }
   } catch (oracle::occi::SQLException e) {
+    // cleanup memory if needed
+    for (std::vector<castor::stager::Stream*>::iterator it = result.begin();
+	 it != result.end();
+	 it++) {
+      if (0 != (*it)->tapePool()) delete (*it)->tapePool();
+      delete *it;
+    }
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -739,8 +749,6 @@ castor::db::ora::OraTapeSvc::streamsToDo()
       << std::endl << e.what();
     throw ex;
   }
-  // Commit all status changes
-  cnvSvc()->commit();
   return result;
 }
 
