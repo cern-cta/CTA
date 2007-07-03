@@ -463,10 +463,6 @@ std::string castor::client::BaseClient::requestId() {
 //----------------------------------------------------------------------------
 
 void castor::client::BaseClient::setAuthorizationId( ) throw(castor::exception::Exception) {
-
-  uid_t authUid;
-  gid_t authGid;
-
   if (stage_getid(&m_authUid, &m_authGid) < 0) {
     castor::exception::Exception e(serrno);
     e.getMessage()
