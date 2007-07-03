@@ -9,5 +9,7 @@ fi
 
 rm -rf $3 $3plus
 sed 's/releaseTag/'$1'/g' $2 > $3
-sed 's/^END;/END;\n\//' $3 | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > $3plus
+if [ "`echo $2 | grep oracle`" != "" ]; then
+  sed 's/^END;/END;\n\//' $3 | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > $3plus
+fi
 
