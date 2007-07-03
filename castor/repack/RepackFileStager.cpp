@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2007/06/21 13:10:02 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/07/03 06:20:20 $ $Author: waldron $
  *
  *
  *
@@ -411,6 +411,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
     }
     if ( fr->errorCode() || fr->status() != 6 ){
       struct Cns_fileid fileid;
+      memset(&fileid, '\0', sizeof(Cns_fileid));
       fileid.fileid = fr->fileId();
       castor::dlf::Param param[] = 
       {castor::dlf::Param("Filename",fr->castorFileName()),

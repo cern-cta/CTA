@@ -127,14 +127,15 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
   struct stage_filequery_resp *responses;
   struct stage_options opts;
   struct Cns_fileid fileid;
-  
+
   int nbresps, rc;
     
   /** iterate through the segments and check if there is another tapecopy for this segment
-     in a repack process. If so, check the status and in case of STAGED or CANBEMIGR
-     the file cannot be submitted as to be repacked, because the migration part would fail
-     due to the not existing tapecopy (see FILERECALLED PL/SQL procedure */
+      in a repack process. If so, check the status and in case of STAGED or CANBEMIGR
+      the file cannot be submitted as to be repacked, because the migration part would fail
+      due to the not existing tapecopy (see FILERECALLED PL/SQL procedure */
 
+  memset(&fileid, '\0', sizeof(Cns_fileid));
   try {
     while ( segment != sreq->segment().end() ) {
       retSeg = m_dbhelper->getTapeCopy( (*segment) );
