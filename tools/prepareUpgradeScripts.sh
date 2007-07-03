@@ -1,7 +1,11 @@
 #!/bin/sh
 
 # check arguments
-
+if [ $# != 2 ]; then
+  echo usage: $0 previousReleaseTag newReleaseTag
+  echo
+  exit
+fi
 
 # get versions in standard format
 ver1=`echo $1 | sed 's/v//' | sed 's/_/\./' | sed 's/_/\./' | sed 's/_/-/g'`
