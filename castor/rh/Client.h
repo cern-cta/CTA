@@ -125,6 +125,20 @@ int Crh_Client_port(struct Crh_Client_t* instance, unsigned short* var);
 int Crh_Client_setPort(struct Crh_Client_t* instance, unsigned short new_var);
 
 /**
+ * Get the value of version
+ * The client version. A free integer to be used by the server to know which kind
+ * of response to send back.
+ */
+int Crh_Client_version(struct Crh_Client_t* instance, int* var);
+
+/**
+ * Set the value of version
+ * The client version. A free integer to be used by the server to know which kind
+ * of response to send back.
+ */
+int Crh_Client_setVersion(struct Crh_Client_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

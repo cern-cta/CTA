@@ -144,6 +144,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_Client_version
+  //----------------------------------------------------------------------------
+  int Crh_Client_version(castor::rh::Client* instance, int* var) {
+    *var = instance->version();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Client_setVersion
+  //----------------------------------------------------------------------------
+  int Crh_Client_setVersion(castor::rh::Client* instance, int new_var) {
+    instance->setVersion(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_Client_id
   //----------------------------------------------------------------------------
   int Crh_Client_id(castor::rh::Client* instance, u_signed64* var) {

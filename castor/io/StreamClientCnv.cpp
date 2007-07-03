@@ -89,6 +89,7 @@ void castor::io::StreamClientCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->ipAddress();
   ad->stream() << obj->port();
+  ad->stream() << obj->version();
   ad->stream() << obj->id();
 }
 
@@ -108,6 +109,9 @@ castor::IObject* castor::io::StreamClientCnv::createObj(castor::IAddress* addres
   unsigned short port;
   ad->stream() >> port;
   object->setPort(port);
+  int version;
+  ad->stream() >> version;
+  object->setVersion(version);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

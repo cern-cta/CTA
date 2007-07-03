@@ -134,6 +134,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_version
+       * The client version. A free integer to be used by the server to know which kind
+       * of response to send back.
+       * @return the value of m_version
+       */
+      int version() const {
+        return m_version;
+      }
+
+      /**
+       * Set the value of m_version
+       * The client version. A free integer to be used by the server to know which kind
+       * of response to send back.
+       * @param new_var the new value of m_version
+       */
+      void setVersion(int new_var) {
+        m_version = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -157,6 +177,9 @@ namespace castor {
       unsigned long m_ipAddress;
 
       unsigned short m_port;
+
+      /// The client version. A free integer to be used by the server to know which kind of response to send back.
+      int m_version;
 
       /// The id of this object
       u_signed64 m_id;

@@ -51,7 +51,7 @@ static castor::CnvFactory<castor::db::cnv::DbClientCnv>* s_factoryDbClientCnv =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbClientCnv::s_insertStatementString =
-"INSERT INTO Client (ipAddress, port, id) VALUES (:1,:2,ids_seq.nextval) RETURNING id INTO :3";
+"INSERT INTO Client (ipAddress, port, version, id) VALUES (:1,:2,:3,ids_seq.nextval) RETURNING id INTO :4";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbClientCnv::s_deleteStatementString =
@@ -59,11 +59,11 @@ const std::string castor::db::cnv::DbClientCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbClientCnv::s_selectStatementString =
-"SELECT ipAddress, port, id FROM Client WHERE id = :1";
+"SELECT ipAddress, port, version, id FROM Client WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbClientCnv::s_updateStatementString =
-"UPDATE Client SET ipAddress = :1, port = :2 WHERE id = :3";
+"UPDATE Client SET ipAddress = :1, port = :2, version = :3 WHERE id = :4";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbClientCnv::s_storeTypeStatementString =
@@ -198,7 +198,7 @@ void castor::db::cnv::DbClientCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(3, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(4, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -206,8 +206,9 @@ void castor::db::cnv::DbClientCnv::createRep(castor::IAddress* address,
     // Now Save the current object
     m_insertStatement->setInt(1, obj->ipAddress());
     m_insertStatement->setInt(2, obj->port());
+    m_insertStatement->setInt(3, obj->version());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(3));
+    obj->setId(m_insertStatement->getUInt64(4));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -226,6 +227,7 @@ void castor::db::cnv::DbClientCnv::createRep(castor::IAddress* address,
                     << "and parameters' values were :" << std::endl
                     << "  ipAddress : " << obj->ipAddress() << std::endl
                     << "  port : " << obj->port() << std::endl
+                    << "  version : " << obj->version() << std::endl
                     << "  id : " << obj->id() << std::endl;
     throw ex;
   }
@@ -250,7 +252,8 @@ void castor::db::cnv::DbClientCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setInt(1, obj->ipAddress());
     m_updateStatement->setInt(2, obj->port());
-    m_updateStatement->setUInt64(3, obj->id());
+    m_updateStatement->setInt(3, obj->version());
+    m_updateStatement->setUInt64(4, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -335,7 +338,8 @@ castor::IObject* castor::db::cnv::DbClientCnv::createObj(castor::IAddress* addre
     // Now retrieve and set members
     object->setIpAddress(rset->getInt(1));
     object->setPort(rset->getInt(2));
-    object->setId(rset->getUInt64(3));
+    object->setVersion(rset->getInt(3));
+    object->setId(rset->getUInt64(4));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -375,7 +379,8 @@ void castor::db::cnv::DbClientCnv::updateObj(castor::IObject* obj)
       dynamic_cast<castor::rh::Client*>(obj);
     object->setIpAddress(rset->getInt(1));
     object->setPort(rset->getInt(2));
-    object->setId(rset->getUInt64(3));
+    object->setVersion(rset->getInt(3));
+    object->setId(rset->getUInt64(4));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
