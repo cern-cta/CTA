@@ -124,6 +124,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamBaseCnv.cpp \
               io/StreamBaseAddressCnv.cpp \
               io/StreamCastorFileCnv.cpp \
+              io/StreamOldClientCnv.cpp \
               io/StreamClientCnv.cpp \
 	      io/StreamStartResponseCnv.cpp \
               io/StreamCnvSvc.cpp \
