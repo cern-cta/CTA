@@ -12,7 +12,7 @@ def getListOfFiles(myDir):
 		return []
         for file in tmpList:
             defList.append(myDir+file)
-            return defList
+	return defList
 
 
 def getTimeOut():
