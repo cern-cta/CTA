@@ -42,7 +42,7 @@ namespace castor {
     OBJ_INVALID = 0,
     OBJ_Ptr = 1, /* Only used for streaming for circular dependencies */
     OBJ_CastorFile = 2,
-    OBJ_Client = 3,
+    OBJ_OldClient = 3,
     OBJ_Cuuid = 4,
     OBJ_DiskCopy = 5,
     OBJ_DiskFile = 6,
@@ -152,7 +152,9 @@ namespace castor {
     OBJ_FileSystemAdminReport = 125,
     OBJ_StreamReport = 126,
     OBJ_FileSystemStateAck = 127,
-    OBJ_MonitorMessageAck = 128
+    OBJ_MonitorMessageAck = 128,
+
+    OBJ_Client = 129
   };
 
   /**
@@ -230,7 +232,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 129;
+  static const unsigned int ObjectsIdsNb = 130;
 
   /**
    * Nb of ServicesIds currently existing
@@ -246,7 +248,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[129];
+  extern const char* ObjectsIdStrings[130];
 
   /**
    * Names of the differents Services, used to display
