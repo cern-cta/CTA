@@ -109,8 +109,8 @@ tar:
 deb:
 	sh ./makedeb.sh
 
-rpm:
-	sh ./makerpm.sh
+sql:
+	sh ./makesql.sh
 
 deploy: install FORCE 
 	@(cd deploy ; perl ./proto_deploy.pl)
