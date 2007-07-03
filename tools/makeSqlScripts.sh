@@ -26,10 +26,9 @@ cat oracleTrailer.sql >> $1_oracle_create.sql
 # remove CVS keywords
 sed 's/\$//g' $1_oracle_create.sql > ora.sql
 mv ora.sql $1_oracle_create.sql
+
+# generate sqlplus version
 sed 's/^END;/END;\n\//' $1_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > $1_oracle_create.sqlplus
 
-# commit and tag in CVS
-#cvs commit -m "Creation script for release" $1_oracle_create.sql $1_oracle_create.sqlplus
-#cvs tag -r $3 $1_oracle_create.sql $1_oracle_create.sqlplus
-echo Creation scripts for release $3 generated and tagged.
+echo Creation scripts for $1 generated with tag $3
 
