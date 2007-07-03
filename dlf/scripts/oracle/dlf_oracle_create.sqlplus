@@ -295,7 +295,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_3_18');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_3_17');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -441,6 +441,7 @@ BEGIN
 END;
 /
 
+
 /*
  * dlf_partition scheduler
  */
@@ -456,11 +457,13 @@ DBMS_SCHEDULER.CREATE_JOB (
 END;
 /
 
+
 /* trigger a partition run immediately */
 BEGIN
 	dlf_partition();
 END;
 /
+
 
 /*
  * archive/backup procedure 
@@ -495,6 +498,7 @@ BEGIN
 END;
 /
 
+
 /*
  * dlf_archive scheduler
  */
@@ -509,6 +513,7 @@ DBMS_SCHEDULER.CREATE_JOB (
 	COMMENTS	=> 'Daily archiving procedure');
 END;
 /
+
 
 /*
  * dlf_stats_jobs (Populates table: dlf_jobstats)
@@ -609,6 +614,7 @@ BEGIN
 END;
 /
 
+
 /*
  * dlf_stats_requests (Populates table: dlf_reqstats)
  */
@@ -692,6 +698,7 @@ BEGIN
 END;
 /
 
+
 /*
  * statistics scheduler (15 minutes)
  */
@@ -709,6 +716,7 @@ DBMS_SCHEDULER.CREATE_JOB (
 	COMMENTS	=> 'CASTOR2 Monitoring Statistics (15 Minute Frequency)');
 END;
 /
+
 
 /*
  * dlf_stats_tape (Populates table: dlf_tapestats)
@@ -770,6 +778,7 @@ BEGIN
 END;
 /
 
+
 /*
  * statistics scheduler (5 minutes)
  */
@@ -784,5 +793,6 @@ DBMS_SCHEDULER.CREATE_JOB (
 	COMMENTS	=> 'CASTOR2 Monitoring Statistics (5 Minute Frequency)');
 END;
 /
+
 
 /** End-of-File **/
