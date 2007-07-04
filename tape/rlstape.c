@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.36 $ $Date: 2007/05/23 13:51:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.37 $ $Date: 2007/07/04 13:14:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -169,7 +169,7 @@ char	**argv;
                        mediaerror, 
                        readfailure,
                        writefailure);
-              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 103 : 111, 7,
+              tl_tpdaemon.tl_log( &tl_tpdaemon, (harderror || mediaerror || mediaerror || writefailure) ? 80 : 82, 7,
                                   "func"          , TL_MSG_PARAM_STR,   func,
                                   "Message"       , TL_MSG_PARAM_STR,   "tape alerts",
                                   "hardware error", TL_MSG_PARAM_INT,   harderror,
@@ -213,7 +213,7 @@ char	**argv;
     	  } else {
 
 	    	tplogit (func, "tape alerts: no information available\n");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 81, 3,
                                     "func"   , TL_MSG_PARAM_STR  , func,
                                     "Message", TL_MSG_PARAM_STR  , "tape alerts: no information available",
                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
@@ -240,7 +240,7 @@ char	**argv;
 #if SONYRAW
     } else {
        tplogit (func, "tape alerts: no information available\n");
-       tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+       tl_tpdaemon.tl_log( &tl_tpdaemon, 81, 3,
                            "func"   , TL_MSG_PARAM_STR,   func,
                            "Message", TL_MSG_PARAM_STR,   "tape alerts: no information available",
                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
@@ -442,6 +442,11 @@ freedrv:
                                     "TPVID"  , TL_MSG_PARAM_TPVID, vid );
         }
 	if (c < 0) c = serrno;
+
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 75, 3,
+                            "func" , TL_MSG_PARAM_STR  , func,
+                            "vid"  , TL_MSG_PARAM_STR  , vid,
+                            "TPVID", TL_MSG_PARAM_TPVID, vid );
 
         tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 	exit (c);

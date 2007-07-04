@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.4 2007/02/14 09:31:51 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.5 2007/07/04 13:14:21 wiebalck Exp $
 */
 
 #include <string.h>
@@ -37,6 +37,7 @@
 */
 tplogger_message_t tplogger_messages[] = {
         
+        /* original tape messages */
         {   0, TL_LVL_ERROR,  "TP000 - tape daemon not available"               },  /* host      */
         {   1, TL_LVL_ERROR,  "TP001 - no response from tape daemon"            },
         {   2, TL_LVL_ERROR,  "TP002 - error"                                   },  /* error     */                 
@@ -107,7 +108,7 @@ tplogger_message_t tplogger_messages[] = {
                                                                                     /* no_files  */
         {  46, TL_LVL_ERROR,  "TP046 - request too large"                       },  /* max       */
         {  47, TL_LVL_ERROR,  "TP047 - reselect server requested by operator"   },
-        {  48, TL_LVL_ERROR,  "TP048 - config postponed"                        },  /* curr_ass  */
+        {  48, TL_LVL_WARNING, "TP048 - config postponed"                       },  /* curr_ass  */
         {  49, TL_LVL_ERROR,  "TP049 - option IGNOREEOI is not valid for label type al or sl" },
         {  50, TL_LVL_ERROR,  "TP050 - vid mismatch"},                              /* req_vid   */
                                                                                     /* drv_vid   */
@@ -120,7 +121,7 @@ tplogger_message_t tplogger_messages[] = {
                                                                                     /* par_req   */
                                                                                     /* par_TMS   */
 
-        {  56, TL_LVL_MONITORING,  "TP056 - request"                            },  /* type      */
+        {  56, TL_LVL_MONITORING, "TP056 - request"                             },  /* type      */
                                                                                     /* uid       */
                                                                                     /* gid       */
                                                                                     /* clienthost*/
@@ -142,6 +143,30 @@ tplogger_message_t tplogger_messages[] = {
                                                                                     /* host      */
                                                                                     /* name      */
                                                                                     /* pid       */
+        /* typical usage cycle, exclusive use of level IMPORTANT */
+        {  70, TL_LVL_IMPORTANT,  "TP070 - Drive put up"                        },
+        {  71, TL_LVL_IMPORTANT,  "TP071 - Reserve request"                     },
+        {  72, TL_LVL_IMPORTANT,  "TP072 - Mount request"                       },
+        {  73, TL_LVL_IMPORTANT,  "TP073 - Tape mounted"                        },
+        {  74, TL_LVL_IMPORTANT,  "TP074 - Release request"                     },
+        {  75, TL_LVL_IMPORTANT,  "TP075 - Tape released"                       },
+        {  76, TL_LVL_IMPORTANT,  "TP076 - Free drive request"                  },
+        {  77, TL_LVL_IMPORTANT,  "TP077 - Drive put down"                      },
+
+        /* tape alerts */
+        {  80, TL_LVL_ERROR,      "TP080 - Tape alerts error"                   },
+        {  81, TL_LVL_WARNING,    "TP081 - Tape alerts no data"                 },
+        {  82, TL_LVL_MONITORING, "TP082 - Tape alerts info"                    },
+
+        /* bad MIR */
+        {  85, TL_LVL_MONITORING, "TP085 - Bad MIR (general)"                   },
+        {  86, TL_LVL_WARNING,    "TP086 - Bad MIR detected"                    },
+        {  87, TL_LVL_ERROR,      "TP087 - Bad MIR request canceled"            },
+        {  88, TL_LVL_WARNING,    "TP088 - Bad MIR request continued"           },
+        {  89, TL_LVL_ERROR,      "TP089 - Bad MIR repair failed"               },
+        {  90, TL_LVL_MONITORING, "TP090 - Bad MIR repair finished"             },
+
+        /* general messages */
         { 101, TL_LVL_EMERGENCY , "TP101 - General Emergency Message"           },  
         { 102, TL_LVL_ALERT     , "TP102 - General Alert Message"               },
         { 103, TL_LVL_ERROR     , "TP103 - General Error Message"               },

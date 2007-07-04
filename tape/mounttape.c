@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.55 $ $Date: 2007/06/27 07:11:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.56 $ $Date: 2007/07/04 13:14:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -781,7 +781,7 @@ unload_loop1:
                     char *p = NULL;
 
                     tplogit(func, "Bad MIR detected vid=%s\n", vid );
-                    tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
+                    tl_tpdaemon.tl_log( &tl_tpdaemon, 86, 3,
                                         "func"   , TL_MSG_PARAM_STR  , func,
                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR detected",
                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );                    
@@ -797,7 +797,7 @@ unload_loop1:
                                     int mir_repaired       = 0;
 
                                     tplogit(func, "Bad MIR config=REPAIR vid=%s\n", vid );
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR config=REPAIR",
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );
@@ -806,20 +806,20 @@ unload_loop1:
                                     
                                             if ( repairbadmir( tapefd, path ) < 0) {
                                                     tplogit(func, "Bad MIR repair attempt=%d vid=%s\n", retry_counter, vid);
-                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 4,
                                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR repair attempt",
                                                                         "Attempt", TL_MSG_PARAM_INT  , retry_counter,
                                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                                             } else {
                                                     tplogit(func, "Bad MIR repair=finished vid=%s\n", vid);
-                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
+                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 90, 4,
                                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR repair=finished",
                                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
                                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                                                     tplogit(func, "Bad MIR request=continued vid=%s\n", vid);
-                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 88, 4,
                                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=continued",
                                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
@@ -833,14 +833,14 @@ unload_loop1:
                                             
                                             /* Cancel after failed repair */
                                             tplogit(func, "Bad MIR repair=failed vid=%s\n", vid);
-                                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                            tl_tpdaemon.tl_log( &tl_tpdaemon, 89, 4,
                                                                 "func"   , TL_MSG_PARAM_STR  , func,
                                                                 "Message", TL_MSG_PARAM_STR  , "Bad MIR repair=failed",
                                                                 "VID"    , TL_MSG_PARAM_STR  , vid, 
                                                                 "TPVID"  , TL_MSG_PARAM_TPVID, vid);
 
                                             tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                            tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
                                                                 "func"   , TL_MSG_PARAM_STR  , func,
                                                                 "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
                                                                 "VID"    , TL_MSG_PARAM_STR  , vid, 
@@ -854,12 +854,12 @@ unload_loop1:
                                     
                                      /* ignore the bad MIR and rely on the drive to repair it */
                                     tplogit(func, "Bad MIR config=IGNORE vid=%s\n", vid );
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR config=IGNORE",
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                                     tplogit(func, "Bad MIR request=continued vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 88, 4,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=continued",
                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
@@ -869,12 +869,12 @@ unload_loop1:
                                     
                                     /* cancel the request without operator intervention */
                                     tplogit(func, "Bad MIR config=CANCEL vid=%s\n", vid );
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR config=CANCEL",
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid);
                                     tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
@@ -887,13 +887,13 @@ unload_loop1:
                                     
                                     /* unknown option, regard as CANCEL */
                                     tplogit(func, "Bad MIR config=%s(unknown) vid=%s\n", p, vid );
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 4,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR config=unknown",
                                                         "Option" , TL_MSG_PARAM_STR  , p, 
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid);
                                     tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
@@ -914,12 +914,12 @@ unload_loop1:
                             checkorep (func, mirrepbuf);
                             if (strncmp (mirrepbuf, "cancel", 6) == 0) {
                                     tplogit(func, "Request canceled by operator due to bad MIR\n");
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 3,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Request canceled by operator due to bad MIR",
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                                     tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
@@ -929,12 +929,12 @@ unload_loop1:
                                     exit(0);
                             } else {
                                     tplogit(func, "Request continued by operator despite bad MIR\n");
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 3,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Request continued by operator despite bad MIR",
                                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );
                                     tplogit(func, "Bad MIR request=continued vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 88, 4,
                                                         "func"   , TL_MSG_PARAM_STR  , func,
                                                         "Message", TL_MSG_PARAM_STR  , "Bad MIR request=continued",
                                                         "VID"    , TL_MSG_PARAM_STR  , vid, 
@@ -1089,6 +1089,11 @@ reply:
 	}
 	sendrep (rpfd, TAPERC, c);
 
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 73, 3,
+                            "func" , TL_MSG_PARAM_STR  , func,
+                            "vid"  , TL_MSG_PARAM_STR  , vid,
+                            "TPVID", TL_MSG_PARAM_TPVID, vid );
+
         tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
 	exit (0);
 }
@@ -1208,7 +1213,7 @@ void cleanup()
 	char sendbuf[REQBUFSZ];
 
 	tplogit (func, "cleanup started\n");
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "cleanup started" );
 #ifdef TMS

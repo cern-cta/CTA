@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.9 2007/05/23 13:51:06 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.10 2007/07/04 13:14:21 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.9 $ $Date: 2007/05/23 13:51:06 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.10 $ $Date: 2007/07/04 13:14:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -498,7 +498,7 @@ int reason;
 #endif
 	if (status) {	/* tpconfig up */
 		tplogit (func, TP035, tunp->drive, "up");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 35, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 70, 3,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Drive",   TL_MSG_PARAM_STR, tunp->drive,
                                     "Message", TL_MSG_PARAM_STR, "up" );
@@ -515,7 +515,7 @@ int reason;
 				tdp->majmin = sbuf.st_rdev;
 	} else {
 		tplogit (func, TP035, tunp->drive, "down");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 35, 3,
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 77, 3,
                                     "func",    TL_MSG_PARAM_STR, func,
                                     "Drive",   TL_MSG_PARAM_STR, tunp->drive,
                                     "Message", TL_MSG_PARAM_STR, "down" );
@@ -1044,7 +1044,7 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "free drive", uid, gid, clienthost);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 76, 5,
                             "func",       TL_MSG_PARAM_STR, func,
                             "Message",    TL_MSG_PARAM_STR, "free drive",
                             "UID",        TL_MSG_PARAM_UID, uid,
@@ -1306,7 +1306,7 @@ char *clienthost;
 	unmarshall_LONG (rbp, vdqm_reqid);
 
 	tplogit (func, "mount request %s\n", vid);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 72, 4,
                             "func"   , TL_MSG_PARAM_STR  , func,
                             "Message", TL_MSG_PARAM_STR  , "Mount request",
                             "VID"    , TL_MSG_PARAM_STR  , vid,
@@ -1902,7 +1902,7 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "rls", uid, gid, clienthost);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 74, 5,
                             "func",       TL_MSG_PARAM_STR, func,
                             "Message",    TL_MSG_PARAM_STR, "rls",
                             "UID",        TL_MSG_PARAM_UID, uid,
@@ -2192,7 +2192,7 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "reserv", uid, gid, clienthost);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 71, 5,
                             "func",       TL_MSG_PARAM_STR, func,
                             "Message",    TL_MSG_PARAM_STR, "reserv",
                             "UID",        TL_MSG_PARAM_UID, uid,
