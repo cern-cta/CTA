@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/03 08:32:18 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/04 16:57:52 $ $Author: itglp $
  *
  *
  *
@@ -156,7 +156,6 @@ namespace castor {
     int m_timeout;
 
     /* Formerly struct singleService */
-    int m_nbTotalThreads;
     int m_nbActiveThreads;
     int m_notified;
     bool m_notTheFirstTime;

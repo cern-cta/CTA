@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/06/28 15:14:10 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/07/04 16:57:52 $ $Author: itglp $
  *
  *
  *
@@ -63,7 +63,6 @@ void castor::server::SignalThreadPool::init()
 {
   // Initialize shared variables (former singleService structure)
   m_nbActiveThreads = 0;  /* Number of threads currently running the service */
-  m_nbTotalThreads = 0;   /* Total number of threads for this service */
   m_notified = 0;         /* By default no signal yet has been received */
   m_notTheFirstTime = false;
 
@@ -134,22 +133,14 @@ void castor::server::SignalThreadPool::commitRun()
   // get lock on the shared mutex
   m_poolMutex->lock();
 
-  /* At startup we assume that a service can start at least once right /now/ */
+  // at startup we assume that a service can start at least once right /now/
   if (!m_notTheFirstTime) {
-    m_notified++; /* Hack to not pass in the mutex/cond loop the 1st time */
+    m_notified++;   // hack to not pass in the mutex/cond loop the 1st time, cf. ServiceThread
     m_notTheFirstTime = true;
   }
 
-  m_nbTotalThreads++;
-
-  /* Unlock the mutex */
-  try {
-    m_poolMutex->release();
-  }
-  catch (castor::exception::Exception e) {
-    m_nbTotalThreads--;
-    throw e;
-  }
+  // unlock the mutex
+  m_poolMutex->release();
 }
 
 

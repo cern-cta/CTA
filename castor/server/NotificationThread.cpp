@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/01/12 17:42:54 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/04 16:57:52 $ $Author: itglp $
  *
  *
  *
@@ -142,11 +142,11 @@ void castor::server::NotificationThread::run(void* param) {
 
       	m_owner->m_notified += nb_thread_wanted;
 
-      	/* We make sure that 0 <= singleService.notified <= NbThreadInactive */
+      	/* We make sure that 0 <= m_notified <= nbThreadInactive */
       	if(m_owner->m_notified < 0) {
       	  m_owner->m_notified = 1;
       	}
-      	int nbThreadInactive = m_owner->m_nbTotalThreads - m_owner->m_nbActiveThreads;
+      	int nbThreadInactive = m_owner->m_nbThreads - m_owner->m_nbActiveThreads;
       	if(nbThreadInactive < 0) {
           nbThreadInactive = 0;
       	}
