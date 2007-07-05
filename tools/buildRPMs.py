@@ -3,7 +3,7 @@ import sys, os, shutil, re
 
 def usage():
     print "Usage:", sys.argv[0], "os arch version tarball"
-    print "This script is for internal use only. Please use makeRelease.py"
+    print "This script is for internal use only. Please use makeRelease.py instead\n"
     sys.exit(1)
 
 # First check arguments
@@ -18,7 +18,7 @@ tarball = sys.argv[4]
 workDir = os.tempname('/build', 'CastorRelease')
 os.mkdir(workDir)
 os.chdir(workDir)
-os.mkdir(['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_64'])
+os.makedirs(['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_64'])
 
 # build RPMs
 print 'Building RPMs for ' + targetOs + '/' + targetArch + ' ...'
@@ -32,7 +32,7 @@ if rpmOutput.find('Wrote'):
 rpmLog = open(workDir + '/castorBuildOutput', 'w')
 rpmLog.write(rpmOutput)
 rpmLog.close()
-if not m || rpmOutput.close() != None:
+if not m or rpmOutput.close() != None:
     print 'The RPM build failed, output in ' + workDir + '/castorBuildOutput. Exiting'
     sys.exit(2)
 
@@ -44,7 +44,7 @@ if len(rpmList) != 54:
     print 'Warning, not all RPMs were correctly generated'
 for p in rpmList:
     shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch)
-if targetOs = 'SLC3' && targetArch = 'i386':
+if targetOs == 'SLC3' and targetArch == 'i386':
     # here we also copy the source RPM
     shutil.copyfile(rpmDir + '/../SRPMS/castor-' + fullVersion + '.src.rpm', intReleaseDir)
     # this is temporarily needed until we get rid of GridFTPv1, which is only built for 32 bit  
