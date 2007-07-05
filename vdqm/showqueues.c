@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.22 $ $Date: 2004/05/27 12:10:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.23 $ $Date: 2007/07/05 14:22:13 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -217,7 +217,8 @@ int main(int argc, char *argv[]) {
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             }
         } else if ( *tmp1->drvreq.drive != '\0' ) {
-            tp = localtime((time_t *)&tmp1->drvreq.recvtime);
+            time_t recvtime = tmp1->drvreq.recvtime;        
+            tp = localtime((time_t *)&recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
             if ( tmp1->drvreq.status & VDQM_UNIT_DOWN ) 
                 strcpy(drv_status,"DOWN");
@@ -235,7 +236,8 @@ int main(int argc, char *argv[]) {
                 fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
         } else if ( *server == '\0' || 
                     strcmp(server,tmp1->volreq.server) == 0 ) {
-            tp = localtime((time_t *)&tmp1->volreq.recvtime);
+            time_t recvtime = tmp1->volreq.recvtime;    
+            tp = localtime((time_t *)&recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
             fprintf(stdout,"QUEUED: %s ReqID: %d user (%d,%d)@%s received at %s\n",
                     tmp1->volreq.volid,
