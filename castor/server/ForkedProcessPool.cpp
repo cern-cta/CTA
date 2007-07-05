@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/07/03 09:54:24 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/05 18:10:29 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -38,7 +38,7 @@ extern "C" {
 //------------------------------------------------------------------------------
 castor::server::ForkedProcessPool::ForkedProcessPool(const std::string poolName,
                                  castor::server::IThread* thread) :
-  BaseThreadPool(poolName, thread),
+  BaseThreadPool(poolName, thread)
   {}
 
 //------------------------------------------------------------------------------
@@ -46,7 +46,9 @@ castor::server::ForkedProcessPool::ForkedProcessPool(const std::string poolName,
 //------------------------------------------------------------------------------
 castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
 {
-  delete m_poolMutex;
+  for(int i = 0; i < m_nbThreads; i++) {
+    delete childPipe[i];
+  }
 }
 
 
@@ -56,14 +58,7 @@ castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
 void castor::server::ForkedProcessPool::init()
   throw (castor::exception::Exception)
 {
-  // Initialize shared variables (former singleService structure)
-  m_nbActiveThreads = 0;  /* Number of threads currently running the service */
-  m_nbTotalThreads = 0;   /* Total number of threads for this service */
-  m_notified = 0;         /* By default no signal yet has been received */
-  m_notTheFirstTime = false;
-
-  // Create a mutex (could throw exception)
-  m_poolMutex = new Mutex(-1, m_timeout);
+  // nothing to do here ...
 }
 
 
@@ -76,24 +71,76 @@ void castor::server::ForkedProcessPool::run()
   if(m_nbThreads == 0) {
     return;
   }
-  int n = 0;
-  struct threadArgs *args = new threadArgs();
-  args->handler = this;
-  args->param = this;
-
+  
   // create pool of forked processes
   for (int i = 0; i < m_nbThreads; i++) {
-    ...
+    int pipeFromChild = 0; // XXX
+    int pipeToChild = 0; // XXX
+    int pid = fork();
+    if(pid < 0) { 
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to fork pool " << m_poolName;
+      throw ex;
+    }
+    if(pid == 0) {     
+      // child
+      dup2(pipeToChild, 0);    // stdin
+      dup2(pipeFromChild, 1);  // stdout
+      childRun();      // this is a blocking call
+    }
+    else {
+      // parent
+      childPipe.push_back(new castor::io::PipeSocket(pipeFromChild, pipeToChild));
+      // do we need to keep child's pid?
+    }
   }
-  if (n <= 0) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to create pool " << m_poolName;
-    throw ex;
+  clog() << DEBUG << "Thread pool " << m_poolName << " started with "
+         << m_nbThreads << " processes" << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// dispatch
+//------------------------------------------------------------------------------
+void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
+{
+  try {
+    // look for an idle process
+    // this is blocking in case all children are busy
+    int child = 0;
+    while(child == 0) {
+      //select(m_nbThreads, ...);
+      //child = ...
+    }
+    
+    // dispatch the object to the child
+    childPipe[child]->sendObject(obj);
   }
-  else {
-    m_nbThreads = n;
-    clog() << DEBUG << "Thread pool " << m_poolName << " started with "
-           << m_nbThreads << " processes" << std::endl;
+  catch(castor::exception::Exception any) {
+    clog() << ERROR << "Error while dispatching object to child: "
+           << any.getMessage().str() << std::endl;
   }
 }
 
+
+//------------------------------------------------------------------------------
+// childRun
+//------------------------------------------------------------------------------
+void castor::server::ForkedProcessPool::childRun()
+{
+  // create a socket from stdin,stdout
+  castor::io::PipeSocket* pipe = new castor::io::PipeSocket(0, 1);
+  
+  // loop forever waiting for something to do
+  for(;;) {
+    try {
+      castor::IObject* obj = pipe->readObject();
+      m_thread->run(obj);
+      delete obj;
+    }
+    catch(castor::exception::Exception any) {
+      clog() << ERROR << "Error while processing an object from the pipe: "
+             << any.getMessage().str() << std::endl;
+    }
+  }
+}

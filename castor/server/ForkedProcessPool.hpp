@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/07/03 09:54:24 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/05 18:10:29 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -35,17 +35,16 @@
 #include <sys/types.h>
 #include <iostream>
 #include <string>
+#include <vector>
 
 /* ============= */
 /* Local headers */
 /* ============= */
 #include "serrno.h"                     /* CASTOR error numbers */
-#include "Cnetdb.h"                     /* For Cgetservbyname() */
-#include "Cthread_api.h"
 
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/server/Mutex.hpp"
+#include "castor/io/PipeSocket.hpp"
 #include "castor/exception/Exception.hpp"
 
 
@@ -53,11 +52,9 @@ namespace castor {
 
  namespace server {
 
-  // Forward declaration
-  class Mutex;
-
   /**
    * CASTOR thread pool based on the fork() syscall
+   * and using pipes for inter-process communication
    */
   class ForkedProcessPool : public BaseThreadPool {
 
@@ -66,19 +63,19 @@ namespace castor {
     /**
      * empty constructor
      */
-     ForkedProcessPool() :
-       BaseThreadPool(), m_poolMutex(0) {};
+    ForkedProcessPool() :
+      BaseThreadPool() {};
 
     /**
      * constructor
      */
     ForkedProcessPool(const std::string poolName,
-                   castor::server::IThread* thread);
+                      castor::server::IThread* thread);
 		   
     /*
      * destructor
      */
-     virtual ~ForkedProcessPool() throw();
+    virtual ~ForkedProcessPool() throw();
 
     /**
      * Initializes the pool
@@ -86,43 +83,26 @@ namespace castor {
     virtual void init() throw (castor::exception::Exception);
 
     /**
-     * Creates and runs the pool starting the threads in detached mode.
-     * Moreover, it starts the notification thread for this pool.
+     * Creates and runs the pool by forking children processes
      */
     virtual void run();
-
+    
     /**
-     * Gets this thread pool's mutex.
-     * used by threads for thread-safe operations.
-     * @return a Mutex.
+     * Entry point to dispatch a task to an idle process
      */
-    Mutex* getMutex() {
-      return m_poolMutex;
-    }
-
-    /**
-     * Get this thread pool's active threads count.
-     * The function is thread-safe as counter is obtained
-     * by locking the mutex.
-     * @return int nbActiveThreads
-     */
-    int getActiveThreads()
-      throw (castor::exception::Exception) {
-      return m_nbActiveThreads;
-    }
-
-
+    virtual void dispatch(castor::IObject& obj);
+    
   private:
 
-    /* Formerly struct singleService */
-    int m_nbTotalThreads;
-    int m_nbActiveThreads;
-    int m_notified;
-    bool m_notTheFirstTime;
+    /**
+     * The main loop of the children processes
+     */
+    void childRun();
 
-    /// a mutex used by the threads to safely access this class' fields
-    Mutex* m_poolMutex;
-
+    /**
+     * A vector of PipeSockets to communicate to the children processes
+     */
+    std::vector<castor::io::PipeSocket*> childPipe;
   };
 
  } // end of namespace server
