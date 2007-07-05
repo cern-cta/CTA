@@ -66,8 +66,8 @@ export MINOR_CASTOR_VERSION
 %if ! %has_oracle
 echo "### Warning, no ORACLE environment"
 echo "The following packages will NOT be built:"
-echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-repack-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server"
-for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemon BuildVDQMCpp BuildDbTools BuildCleaning; do
+echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-repack-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server, castor-rmmaster-server"
+for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemon BuildVDQMCpp BuildDbTools BuildCleaning BuildRmMaster BuildRmMasterCpp; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %else
@@ -79,7 +79,7 @@ fi
 echo "### Warning, no LSF environment"
 echo "The following packages will NOT be built:"
 echo "castor-lsf-plugin, castor-job, castor-rmmaster-server"
-for this in BuildSchedPlugin BuildJob BuildRmMaster; do
+for this in BuildSchedPlugin BuildJob BuildRmMaster BuildRmMasterCpp; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %endif
@@ -119,7 +119,7 @@ mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
 mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/%{LIB}
 mkdir -p ${RPM_BUILD_ROOT}/usr/lsf/etc
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.d
-# Note: Only castor-job subpackage have a cron job
+# Note: Only castor-job subpackag/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/e have a cron job
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.hourly
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.daily
 #mkdir -p ${RPM_BUILD_ROOT}/etc/cron.weekly
