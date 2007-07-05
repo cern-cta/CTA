@@ -15,35 +15,32 @@ fullVersion = sys.argv[3]
 tarball = sys.argv[4]
 
 # Prepare directories
-workDir = os.tempname('/build', 'CastorRelease')
+workDir = os.tempnam('/build', 'CastorRelease')
 os.mkdir(workDir)
 os.chdir(workDir)
-os.makedirs(['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_64'])
+for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_64']: os.mkdir(m)
 
 # build RPMs
 print 'Building RPMs for ' + targetOs + '/' + targetArch + ' ...'
-cmd = 'RPM_BUILD_ROOT=`pwd` ORACLE_HOME=/afs/cern.ch/project/oracle/@sys/10203 LD_LIBRARY_PATH=$ORACLE_HOME/lib PATH=$ORACLE_HOME/bin:/usr/X11R6/bin:$PATH rpmbuild -ta ' + tarball
+oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
+cmd = "ORACLE_HOME=" + oraPath + " LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep + "' -ta " + tarball
 rpmOutput = os.popen4(cmd)[1].read()
-m = false
-if rpmOutput.find('Wrote'):
-    resultRegExp = re.compile('Wrote: ([\w/]+)castor-(\w+)-' + fullVersion + '.' + targetArch + '.rpm')
-    m = resultRegExp.match(rpmOutput)
-
-rpmLog = open(workDir + '/castorBuildOutput', 'w')
-rpmLog.write(rpmOutput)
-rpmLog.close()
-if not m or rpmOutput.close() != None:
+if rpmOutput.find('Wrote:') == -1:
+    # keep the output for debugging
+    rpmLog = open(workDir + '/castorBuildOutput', 'w')
+    rpmLog.write(rpmOutput)
+    rpmLog.close()
     print 'The RPM build failed, output in ' + workDir + '/castorBuildOutput. Exiting'
     sys.exit(2)
 
-rpmDir = m.group(1)
+rpmDir = workDir + os.sep + 'RPMS' + os.sep + targetArch
 # copy RPMs to internal releases space
 intReleaseDir = '/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/' + fullVersion
 rpmList = os.listdir(rpmDir)
 if len(rpmList) != 54:
     print 'Warning, not all RPMs were correctly generated'
 for p in rpmList:
-    shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch)
+    shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch + os.sep + p)
 if targetOs == 'SLC3' and targetArch == 'i386':
     # here we also copy the source RPM
     shutil.copyfile(rpmDir + '/../SRPMS/castor-' + fullVersion + '.src.rpm', intReleaseDir)
@@ -52,5 +49,4 @@ if targetOs == 'SLC3' and targetArch == 'i386':
 
 # cleanup
 shutil.rmtree(workDir)
-shutil.rmtree(rpmDir)
-#os.remove(rpmLog)
+    
