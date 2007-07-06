@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.10 $ $Date: 2007/06/27 16:14:20 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.11 $ $Date: 2007/07/06 16:12:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -3489,7 +3489,7 @@ DBLISTPTR *smdlistptr;
 		if (DIRXSIZE > direntsz)
 			direntsz = DIRXSIZE;
 	maxsize = DIRBUFSZ - direntsz;
-	sbp = dirbuf;
+        sbp = dirbuf;
 	marshall_WORD (sbp, nbentries);		/* will be updated */
 
 	if (endlist && getattr == 2)
@@ -3562,12 +3562,12 @@ DBLISTPTR *smdlistptr;
 	    fmd_entry, getattr, endlist, dblistptr)) == 0) {	/* loop on directory entries */
 		fnl = strlen (fmd_entry->name);
 		if (getattr == 0) {		/* readdir */
-			if (fnl > maxsize) break;
+			if (fnl  > maxsize) break;
 			marshall_STRING (sbp, fmd_entry->name);
 			nbentries++;
 			maxsize -= ((direntsz + fnl + 8) / 8) * 8;
 		} else if (getattr == 1) {	/* readdirx */
-			if (fnl > maxsize) break;
+			if (fnl + 1 > maxsize) break;
 			marshall_DIRX (&sbp, magic, fmd_entry);
 			nbentries++;
 			maxsize -= ((direntsz + fnl + 8) / 8) * 8;
