@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/09 10:25:21 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/09 17:05:16 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -122,6 +122,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
     if(FD_ISSET(child, &querypipes)) {
       // dispatch the object to the child (this can throw exceptions)
       childPipe[child]->sendObject(obj);
+      break;
     }
   }
 }
@@ -134,6 +135,9 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
 {
   // open pipe for reading
   ps->openRead();
+  
+  // initialize process
+  m_thread->init();
   
   // loop forever waiting for something to do
   while(true) {    // XXX todo: implement a way to stop the child
