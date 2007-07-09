@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/07/05 17:43:12 $ $Author: itglp $
+ * @(#)$RCSfile: PipeSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/09 17:12:19 $ $Author: itglp $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -34,6 +34,10 @@
 namespace castor {
 
   namespace io {
+    
+    const int PIPE_READ = 1;
+    const int PIPE_WRITE = 2;
+    const int PIPE_RW = 3;
 
     /**
      * Pipe version of the abstract socket class, able
@@ -45,13 +49,37 @@ namespace castor {
     public:
 
       /**
-       * Constructor building a socket on the given file descriptors
+       * Default constructor: creates a standard Unix pipe and builds a socket
+       * on its file descriptors.
+       * The socket is not readable/writable at the beginning and must
+       * be opened explicitly.
+       * @throw exception if the pipe cannot be created
+       */
+      PipeSocket()
+        throw (castor::exception::Exception);
+
+      /**
+       * Constructor building a socket on the given file descriptors.
+       * The socket is not readable/writable at the beginning and must
+       * be opened explicitly.
        * @param fdIn the fd for reading
        * @param fdOut the fd for writing
        */
       PipeSocket(const int fdIn, const int fdOut)
         throw (castor::exception::Exception);
 
+      /**
+       * Make pipe readable
+       * @return the internal file descriptor of the pipe being used for read
+       */
+      int openRead();
+      
+      /**
+       * Make pipe writable
+       * @return the internal file descriptor of the pipe being used for write
+       */
+      int openWrite();
+      
     protected:
 
       /**
@@ -92,6 +120,9 @@ namespace castor {
        /// file descriptors used for the I/O
        int m_fdIn, m_fdOut;
 
+       /// operation mode
+       int m_mode;
+       
     };
 
   } // end of namespace io

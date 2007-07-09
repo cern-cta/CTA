@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)PipeSocket.cpp,v 1.6 $Release$ 2006/01/17 09:52:22 itglp
+ * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/09 17:12:19 $ $Author: itglp $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -26,14 +26,11 @@
  *****************************************************************************/
 
 // Include Files
-#include <net.h>
-#include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <serrno.h>
 #include <sys/types.h>
-#include <sys/select.h>
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -42,17 +39,60 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
+castor::io::PipeSocket::PipeSocket()
+  throw (castor::exception::Exception) :
+  AbstractSocket(0, false), m_mode(0) 
+{
+    int fds[2];
+    if(pipe(fds) < 0) {
+      castor::exception::Exception ex(errno);
+      ex.getMessage() << "Failed to create a pipe";
+      throw ex;
+    }
+    else {
+      m_fdIn = fds[0];
+      m_fdOut = fds[1];
+    }
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::io::PipeSocket::PipeSocket(const int fdIn, const int fdOut)
   throw (castor::exception::Exception) :
-  AbstractSocket(0, false), m_fdIn(fdIn), m_fdOut(fdOut) {}
+  AbstractSocket(0, false), m_fdIn(fdIn), m_fdOut(fdOut), m_mode(0) {}
 
+//------------------------------------------------------------------------------
+// openWrite
+//------------------------------------------------------------------------------
+int castor::io::PipeSocket::openRead()
+{
+  m_mode |= castor::io::PIPE_READ;
+  return m_fdIn;
+}
+
+//------------------------------------------------------------------------------
+// openWrite
+//------------------------------------------------------------------------------
+int castor::io::PipeSocket::openWrite()
+{
+  m_mode |= castor::io::PIPE_WRITE;
+  return m_fdOut;
+}
+
+  
 //------------------------------------------------------------------------------
 // sendBuffer
 //------------------------------------------------------------------------------
 void castor::io::PipeSocket::sendBuffer(const unsigned int magic,
-                                       const char* buf,
-                                       const int n)
+                                        const char* buf,
+                                        const int n)
   throw (castor::exception::Exception) {
+  if (m_mode & castor::io::PIPE_WRITE == 0) {
+    castor::exception::Exception ex(0);
+    ex.getMessage() << "Pipe closed for writing";
+    throw ex;
+  }
   // Sends the buffer with a header (magic number + size)
   if (::write(m_fdOut,
             (char*)(&magic),
@@ -71,9 +111,14 @@ void castor::io::PipeSocket::sendBuffer(const unsigned int magic,
 // readBuffer
 //------------------------------------------------------------------------------
 void castor::io::PipeSocket::readBuffer(const unsigned int magic,
-                                       char** buf,
-                                       int& n)
+                                        char** buf,
+                                        int& n)
   throw (castor::exception::Exception) {
+  if (m_mode & castor::io::PIPE_READ == 0) {
+    castor::exception::Exception ex(0);
+    ex.getMessage() << "Pipe closed for reading";
+    throw ex;
+  }
   // First read the header
   unsigned int header[2];
   int ret = ::read(m_fdIn,
