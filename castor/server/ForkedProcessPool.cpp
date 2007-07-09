@@ -17,20 +17,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/05 18:10:29 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/09 10:25:21 $ $Author: itglp $
  *
  * A pool of forked processes
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
+// System headers
+#include "osdep.h"
+#include <errno.h>                      /* For EINVAL etc... */
+#include "serrno.h"                     /* CASTOR error numbers */
+#include <sys/types.h>
+#include <iostream>
+#include <string>
+#include <sys/select.h>
+
 // Include Files
 #include "castor/server/ForkedProcessPool.hpp"
 #include "castor/exception/Internal.hpp"
-
-extern "C" {
-  char* getconfent (const char *, const char *, int);
-}
 
 
 //------------------------------------------------------------------------------
@@ -39,7 +44,9 @@ extern "C" {
 castor::server::ForkedProcessPool::ForkedProcessPool(const std::string poolName,
                                  castor::server::IThread* thread) :
   BaseThreadPool(poolName, thread)
-  {}
+{
+  FD_ZERO(&pipes);
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -49,16 +56,6 @@ castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
   for(int i = 0; i < m_nbThreads; i++) {
     delete childPipe[i];
   }
-}
-
-
-//------------------------------------------------------------------------------
-// init
-//------------------------------------------------------------------------------
-void castor::server::ForkedProcessPool::init()
-  throw (castor::exception::Exception)
-{
-  // nothing to do here ...
 }
 
 
@@ -74,24 +71,25 @@ void castor::server::ForkedProcessPool::run()
   
   // create pool of forked processes
   for (int i = 0; i < m_nbThreads; i++) {
-    int pipeFromChild = 0; // XXX
-    int pipeToChild = 0; // XXX
+    // create a pipe for the child
+    castor::io::PipeSocket* ps = new castor::io::PipeSocket();
+    // fork child
     int pid = fork();
     if(pid < 0) { 
       castor::exception::Internal ex;
-      ex.getMessage() << "Failed to fork pool " << m_poolName;
+      ex.getMessage() << "Failed to fork in pool " << m_poolName;
       throw ex;
     }
     if(pid == 0) {     
       // child
-      dup2(pipeToChild, 0);    // stdin
-      dup2(pipeFromChild, 1);  // stdout
-      childRun();      // this is a blocking call
+      childRun(ps);      // this is a blocking call
     }
     else {
-      // parent
-      childPipe.push_back(new castor::io::PipeSocket(pipeFromChild, pipeToChild));
-      // do we need to keep child's pid?
+      // parent: save pipe
+      // XXX do we need to keep child's pid?
+      int fd = ps->openWrite();
+      FD_SET(fd, &pipes);
+      childPipe.push_back(ps);
     }
   }
   clog() << DEBUG << "Thread pool " << m_poolName << " started with "
@@ -103,22 +101,28 @@ void castor::server::ForkedProcessPool::run()
 // dispatch
 //------------------------------------------------------------------------------
 void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
+  throw (castor::exception::Exception)
 {
-  try {
-    // look for an idle process
-    // this is blocking in case all children are busy
-    int child = 0;
-    while(child == 0) {
-      //select(m_nbThreads, ...);
-      //child = ...
-    }
-    
-    // dispatch the object to the child
-    childPipe[child]->sendObject(obj);
+  // look for an idle process
+  // this is blocking in case all children are busy
+  fd_set querypipes = pipes;
+  int rc = 0;
+  do {
+    rc = select(m_nbThreads, NULL, &querypipes, NULL, NULL);
   }
-  catch(castor::exception::Exception any) {
-    clog() << ERROR << "Error while dispatching object to child: "
-           << any.getMessage().str() << std::endl;
+  while(rc == -1 && errno == EINTR); 
+  if (rc < 0) {
+    serrno = (errno == 0 ? SEINTERNAL : errno);
+    castor::exception::Exception e(serrno);
+    e.getMessage() << "ForkedProcessPool: failed on select()";
+  }
+  
+  // get the idle child
+  for(int child = 0; child < m_nbThreads; child++) {
+    if(FD_ISSET(child, &querypipes)) {
+      // dispatch the object to the child (this can throw exceptions)
+      childPipe[child]->sendObject(obj);
+    }
   }
 }
 
@@ -126,15 +130,15 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
 //------------------------------------------------------------------------------
 // childRun
 //------------------------------------------------------------------------------
-void castor::server::ForkedProcessPool::childRun()
+void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
 {
-  // create a socket from stdin,stdout
-  castor::io::PipeSocket* pipe = new castor::io::PipeSocket(0, 1);
+  // open pipe for reading
+  ps->openRead();
   
   // loop forever waiting for something to do
-  for(;;) {
+  while(true) {    // XXX todo: implement a way to stop the child
     try {
-      castor::IObject* obj = pipe->readObject();
+      castor::IObject* obj = ps->readObject();
       m_thread->run(obj);
       delete obj;
     }

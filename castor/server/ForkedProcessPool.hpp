@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/05 18:10:29 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/09 10:25:21 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -27,20 +27,7 @@
 #ifndef CASTOR_SERVER_FORKEDPROCESSPOOL_HPP
 #define CASTOR_SERVER_FORKEDPROCESSPOOL_HPP 1
 
-/* ============== */
-/* System headers */
-/* ============== */
-#include <errno.h>                      /* For EINVAL etc... */
-#include "osdep.h"
-#include <sys/types.h>
-#include <iostream>
-#include <string>
 #include <vector>
-
-/* ============= */
-/* Local headers */
-/* ============= */
-#include "serrno.h"                     /* CASTOR error numbers */
 
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
@@ -78,31 +65,38 @@ namespace castor {
     virtual ~ForkedProcessPool() throw();
 
     /**
-     * Initializes the pool
+     * Initializes the pool. Nothing to be done in this class.
      */
-    virtual void init() throw (castor::exception::Exception);
+     virtual void init() throw (castor::exception::Exception) {};
 
     /**
-     * Creates and runs the pool by forking children processes
+     * Creates and runs the pool by forking children processes.
+     * The parent process returns, children processes call childRun.
      */
     virtual void run();
     
     /**
      * Entry point to dispatch a task to an idle process
+     * @throw exception in case either select() or the transmission
+     * through the pipe fail.
      */
-    virtual void dispatch(castor::IObject& obj);
-    
-  private:
+    void dispatch(castor::IObject& obj)
+      throw (castor::exception::Exception);
+
+  protected:
 
     /**
-     * The main loop of the children processes
+     * The main loop of the children processes. This method is supposed
+     * to run forever or until the pipe is not broken.
      */
-    void childRun();
+    virtual void childRun(castor::io::PipeSocket* ps);
 
-    /**
-     * A vector of PipeSockets to communicate to the children processes
-     */
+    /// The vector of PipeSockets to communicate to the children processes
     std::vector<castor::io::PipeSocket*> childPipe;
+    
+    /// The set of pipes to the children, to be used with select
+    fd_set pipes;
+    
   };
 
  } // end of namespace server
