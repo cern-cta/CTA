@@ -58,8 +58,8 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
   /* Initialize CASTOR Thread interface */
   Cthread_init();
 
-  /* Initialize mutex variable in case of a signal */
-  m_signalMutex = new Mutex(0);
+  /* Initialize mutex variable in case of a signal. Timeout = 1 minute */
+  m_signalMutex = new Mutex(0, 60);
 
   /* Initialize errno, serrno */
   errno = serrno = 0;
@@ -69,6 +69,7 @@ void castor::server::BaseDaemon::init() throw(castor::exception::Exception)
   sigaddset(&m_signalSet, SIGTERM);
   sigaddset(&m_signalSet, SIGHUP);
   sigaddset(&m_signalSet, SIGABRT);
+  sigaddset(&m_signalSet, SIGCHLD);
 
   int c;
   if ((c = pthread_sigmask(SIG_BLOCK,&m_signalSet,NULL)) != 0) {
@@ -102,14 +103,16 @@ void castor::server::BaseDaemon::signalHandler()
   try {
     m_signalMutex->lock();
     
+    // poll the signalMutex every minute
     while (!m_signalMutex->getValue()) {
       // Note: Without COND_TIMEOUT > 0 this will never work - because the condition variable
       // is changed in a signal handler - we cannot use condition signal in this signal handler
       m_signalMutex->wait();
     }
     
-    m_signalMutex->release();
     int sigValue = m_signalMutex->getValue();
+    m_signalMutex->setValueNoMutex(0);
+    m_signalMutex->release();
     
     switch (sigValue) {
       case RESTART_GRACEFULLY:
@@ -135,6 +138,14 @@ void castor::server::BaseDaemon::signalHandler()
         exit(EXIT_SUCCESS);
         break;
       
+      case CHILD_STOPPED:
+        // XXX to be seen whether we have to restart forked children or keep running
+        // XXX for the time being, we exit
+        clog() << ERROR << "IMMEDIATE STOP [SIGCHLD]" << std::endl;
+        dlf_shutdown(1);
+        exit(EXIT_SUCCESS);
+        break;
+        
       default:
         clog() << ERROR << "Caught a not handled signal (" << (-1*sigValue) << ") - IMMEDIATE STOP" << std::endl;
         dlf_shutdown(1);
@@ -149,13 +160,12 @@ void castor::server::BaseDaemon::signalHandler()
 }
 
 
-
 //------------------------------------------------------------------------------
 // waitAllThreads
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::waitAllThreads() throw()
 {
-  // create lit of thread pools to be stopped; skip listener pools as they can be stopped abruptly
+  // create list of thread pools to be stopped; only SignalThreadPools are concerned here
   std::vector<castor::server::SignalThreadPool*> busyTPools;
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
@@ -175,8 +185,10 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
           // this is advisory, but SelectProcessThread implements it.
           // It is recommended that db-oriented threads implement it to cleanup the db connection.
           (*btp)->getThread()->stop();
+          (*btp)->getMutex()->release();
         }
-        else {    // fine, it's idle
+        else {    
+          // fine, it's idle. Don't release the lock so that it doesn't restart.
           busyTPools.erase(btp);
         }
       }
@@ -194,6 +206,7 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
     }
   }
 }
+
 
 
 //------------------------------------------------------------------------------
@@ -224,6 +237,10 @@ void* castor::server::_signalThread_run(void* arg)
         
         case SIGINT:
           daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
+          break;
+          
+        case SIGCHLD:
+          daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
           break;
         
         default:

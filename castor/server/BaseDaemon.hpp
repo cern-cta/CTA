@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/11/23 17:53:49 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/07/09 17:08:35 $ $Author: itglp $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -46,9 +46,10 @@ namespace castor {
   class BaseServer;
 
   ///  handled signals - see the signal handler thread
-  const int RESTART_GRACEFULLY = 0;
-  const int STOP_GRACEFULLY = 1;
-  const int STOP_NOW = 2;
+  const int RESTART_GRACEFULLY = 1;
+  const int STOP_GRACEFULLY = 2;
+  const int STOP_NOW = 3;
+  const int CHILD_STOPPED = 4;
 	
   /**
    * Basic CASTOR multithreaded daemon.
