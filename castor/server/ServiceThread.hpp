@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/10 16:53:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServiceThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/07/09 17:07:11 $ $Author: itglp $
  *
- *
+ * Internal thread to allow user service threads running forever
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -39,8 +39,8 @@ namespace castor {
  namespace server {
 
   /**
-   * Service thread for internal stager services.
-   * This thread can handle infinite loops from user threads.
+   * Internal service thread for daemonized services running forever.
+   * Original code in stager.c.
    */
   class ServiceThread : public IThread {
 
@@ -56,6 +56,14 @@ namespace castor {
      * Destructor
      */
     virtual ~ServiceThread() throw();
+
+    /**
+     * Convenience method to initialize the thread.
+     * Simply delegates to the user thread.
+     */
+    virtual void init() {
+      m_userThread->init();
+    };
 
     /**
      * Main work for this thread.

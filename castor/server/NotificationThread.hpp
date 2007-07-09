@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/01/12 17:42:54 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/07/09 17:11:27 $ $Author: itglp $
  *
- *
+ * A thread to handle notifications to wake up workers in a pool
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -44,7 +44,7 @@ namespace castor {
   class SignalThreadPool;
   
   /**
-   * Notification thread for internal stager notifications.
+   * Notification thread for internal daemon notifications.
    * This thread can handle infinite loops from user threads.
    */
   class NotificationThread : public virtual IThread {
@@ -59,6 +59,11 @@ namespace castor {
      */
     NotificationThread(int notifPort);
     
+    /**
+     * No initialization is needed for the notification thread.
+     */
+    virtual void init() {};
+
     /**
      * Main work for this thread.
      */

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDbThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/06/28 15:13:00 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDbThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/09 17:06:01 $ $Author: itglp $
  *
  * Base class for a database oriented thread. It correctly implements the stop
  * method, but it can be used only for a pool with a single thread.
@@ -48,6 +48,11 @@ namespace castor {
      * Empty constructor
      */
     BaseDbThread() {};
+
+    /**
+     * Empty init method
+     */
+    virtual void init() {};
 
     /**
      * Main work for this thread. Creates a db connection

@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/10 16:53:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ServiceThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/09 17:07:11 $ $Author: itglp $
  *
- *
+ * Internal thread to allow user service threads running forever
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -59,6 +59,9 @@ void castor::server::ServiceThread::run(void* param) {
     /* Notify the pool that we are starting */
     m_owner->commitRun();
 
+    /* Perform the user initialization */
+    m_userThread->init();
+    
     while (true) {
 
       /* wait to be woken up by a signal or for a timeout */

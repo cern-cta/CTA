@@ -46,7 +46,10 @@ namespace castor {
 		
 		  RepackFileChecker(RepackServer* svr);
 		  ~RepackFileChecker() throw();
-		
+                  
+		  ///empty initialization
+		  virtual void init() {};
+
 		  /** 
 		   * Implementation from IThread
 		   */

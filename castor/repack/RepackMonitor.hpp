@@ -53,6 +53,9 @@ namespace castor {
        */
       ~RepackMonitor() throw();
 
+      ///empty initialization
+      virtual void init() {};
+
       /**
        * runs an update of file statistics if all available RepackSubRequests.
        */

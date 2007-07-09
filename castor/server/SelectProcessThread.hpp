@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/06/28 15:13:01 $ $Author: itglp $
+ * @(#)$RCSfile: SelectProcessThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/09 17:06:01 $ $Author: itglp $
  *
  * Base thread for the select/process model: it loops until select() returns
  * something to do. If stop() is called, the underlying database connection is dropped.
@@ -45,9 +45,14 @@ namespace castor {
   public:
 
     /**
-     * Initializes the thread
+     * Standard constructor
      */
     SelectProcessThread() : stopped(false) {};
+
+    /**
+     * Thread initialization, empty in this case
+     */
+    virtual void init() {};
 
     /**
      * Select part of the service

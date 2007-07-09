@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/04 16:57:52 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/09 17:11:27 $ $Author: itglp $
  *
- *
+ * A thread to handle notifications to wake up workers in a pool
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/

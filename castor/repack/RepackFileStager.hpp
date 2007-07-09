@@ -43,6 +43,9 @@ namespace castor {
        */
       ~RepackFileStager() throw();
 
+      ///empty initialization
+      virtual void init() {};
+
       /**
        * Inherited from IThread : not implemented
        */

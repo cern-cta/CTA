@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2006/10/31 17:41:58 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/07/09 17:05:32 $ $Author: itglp $
  *
  *
  *
@@ -51,7 +51,10 @@ namespace castor {
        */
       virtual void run(void *param);
       
-      /// not implemented
+      /// not needed
+      virtual void init() {};
+
+      /// not needed
       virtual void stop() {};
       
     private:

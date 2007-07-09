@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/03/20 08:11:24 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/07/09 17:03:09 $ $Author: itglp $
  *
  *
  *
@@ -76,7 +76,8 @@ namespace castor {
        */
       ~RepackWorker() throw();
 
-
+      ///empty initialization
+      virtual void init() {};
 
       virtual void run(void* param);
       virtual void stop() ;
