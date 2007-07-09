@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/01/10 16:02:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/07/09 17:06:37 $ $Author: itglp $
  *
  * 
  *
@@ -39,6 +39,7 @@
 // -----------------------------------------------------------------------
 std::string castor::BaseObject::s_msgSvcName("");
 unsigned long castor::BaseObject::s_msgSvcId(0);
+castor::Services* castor::BaseObject::s_sharedServices(0);
 
 // -----------------------------------------------------------------------
 // constructor
@@ -78,6 +79,23 @@ castor::MsgSvc* castor::BaseObject::msgSvc(std::string name,
     throw(e);
   }
   return msgSvc;
+}
+
+//------------------------------------------------------------------------------
+// sharedServices
+//------------------------------------------------------------------------------
+castor::Services* castor::BaseObject::sharedServices()
+  throw (castor::exception::Exception) {
+  // since this is the shared version, the instantiation of the singleton
+  // has to be thread-safe.
+  if (0 == s_sharedServices) {
+    Cmutex_lock(&s_sharedServices, -1);
+    if (0 == s_sharedServices) {
+      s_sharedServices = new castor::Services();
+    }
+    Cmutex_unlock(&s_sharedServices);
+  }
+  return s_sharedServices;
 }
 
 //------------------------------------------------------------------------------

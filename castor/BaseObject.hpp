@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2005/04/05 11:51:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseObject.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/09 17:06:37 $ $Author: itglp $
  *
  * Basic object support, including pointer to Services and log support
  *
@@ -56,9 +56,14 @@ namespace castor {
     virtual ~BaseObject() throw();
     
     /**
-     * Static access to the underlying Services object
+     * Static access to the underlying thread-safe Services object
      */
     static Services* services() throw(castor::exception::Exception);
+    
+    /**
+     * Static access to the underlying thread-shared Services object
+     */
+    static Services* sharedServices() throw(castor::exception::Exception);
     
     /**
      * Non static access to the underlying Services object
@@ -113,7 +118,12 @@ namespace castor {
      * The type of MsgSvc to use
      */
     static unsigned long s_msgSvcId;
-
+    
+    /**
+     * The thread-shared services catalog
+     */
+    static Services* s_sharedServices;
+    
   }; // end of class BaseObject
 
 } // end of namespace castor  
