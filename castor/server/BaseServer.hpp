@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/12 13:37:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
  *
- *
+ * A base multithreaded server for simple listening servers
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -39,7 +39,7 @@ namespace castor {
  namespace server {
 
   /**
-   * Basic CASTOR multithreaded server.
+   * Basic CASTOR multithreaded server; cf. also BaseDaemon.
    * Credits to Ben Couturier.
    */
   class BaseServer : public castor::BaseObject {

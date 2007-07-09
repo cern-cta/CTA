@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/07/02 06:46:40 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
  *
- *
+ * A base multithreaded server for simple listening servers
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/

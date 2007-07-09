@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/04/12 13:37:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
  *
- *
+ * Abstract CASTOR thread pool
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -43,7 +43,8 @@ namespace castor {
   static const int DEFAULT_THREAD_NUMBER = 20;
 
   /**
-   * Basic CASTOR thread pool.
+   * Basic CASTOR thread pool. Should not be instantiated by
+   * user applications; other pools provide full functionality to run threads.
    */
   class BaseThreadPool : public BaseObject {
 

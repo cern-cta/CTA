@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/16 15:46:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -48,7 +48,7 @@ namespace castor {
      * empty constructor
      */
     ListenerThreadPool() throw() : 
-       BaseThreadPool() {};
+      BaseThreadPool() {};
 
     /**
      * constructor
@@ -57,7 +57,7 @@ namespace castor {
      * @param listenereOnOwnThread if false the listener loop is run directly. See run().
      */
     ListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-       int listenPort, bool listenerOnOwnThread = true) throw();
+                       int listenPort, bool listenerOnOwnThread = true) throw();
 
     /*
      * destructor
@@ -83,7 +83,7 @@ namespace castor {
   
     /**
      * The listening loop implementation for this Listener.
-     * Child classes must override this method to provide different listener behaviors;
+     * Children classes must override this method to provide different listener behaviors;
      * it is expected that this method implements a never-ending loop.
      */
     virtual void listenLoop() = 0;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/01/16 15:46:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -86,11 +86,11 @@ int castor::server::ListenerThreadPool::threadAssign(void *param) {
                                  args,
                                  -1);
     if (assign_rc < 0) {
-      clog() << "Error while forking thread in pool " << m_poolName << std::endl;
+      clog() << "Error while spawning thread in pool " << m_poolName << std::endl;
       return -1;
     }
   } else {
-  // for debugging purposes it could be useful to run the user thread code in the same thread. 
+    // for debugging purposes it could be useful to run the user thread code in the same thread. 
     castor::server::_thread_run(args);
   }
   return 0;

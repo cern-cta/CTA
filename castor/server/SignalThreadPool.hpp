@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/04 16:57:52 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
  *
- *
+ * Thread pool supporting wakeup on signals and periodical run after timeout
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -49,10 +49,6 @@
 #include "castor/server/NotificationThread.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
-
-
-// #define NOTIFY_PROTO "udp"         /* Notify Proto in /etc/services if any */
-#define NOTIFY_PORT  "NOTIFYPORT"  /* Sub-label in config file for notification port */
 
 
 namespace castor {

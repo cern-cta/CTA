@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/12 16:53:13 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
  *
- *
+ * C++ interface to mutex handling with the Cthread API
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -36,7 +36,7 @@ namespace castor {
  namespace server {
 
   /**
-   * C++ interface to mutex handling in Cthread API.
+   * C++ interface to mutex handling with the Cthread API
    */
   // template<class TYPE> class Mutex  could be next step
   class Mutex {
