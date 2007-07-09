@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.29 2007/02/21 11:04:18 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.30 2007/07/09 17:21:17 itglp Exp $
  */
 
 /*
@@ -193,7 +193,7 @@ EXTERN_C char *stage_requestStatusName(int statusCode) {
 
 #define NB_FILE_STATUS 8
 static char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
-  "INVALID_STATUS",
+  "INVALID",
   "STAGEOUT",
   "STAGEIN",
   "STAGED",
