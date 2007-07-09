@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/12 17:42:52 $ $Author: itglp $
+ * @(#)$RCSfile: IThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/09 17:03:32 $ $Author: itglp $
  *
- *
+ * Abstract interface for the CASTOR multithread framework
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -37,8 +37,8 @@ namespace castor {
  namespace server {
 
   /**
-   * Basic CASTOR thread interface.
-   * Can be used within ListenerThreadPool and SignalThreadPool.
+   * Abstract CASTOR thread interface.
+   * Can be used within any thread pool.
    */
   class IThread {
   
@@ -48,7 +48,14 @@ namespace castor {
      * default destructor
      */
     virtual ~IThread() throw() {}
-	
+
+    /**
+     * Initialization of the thread.
+     * This method will be called when the thread is just spawned.
+     * @throw any exception thrown here is handled in the BaseThreadPool. 
+     */
+    virtual void init() = 0;
+    
     /**
      * Main work for this thread.
      * This method will run on a dedicated thread, so it may
