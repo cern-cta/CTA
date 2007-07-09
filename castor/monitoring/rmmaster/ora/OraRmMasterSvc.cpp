@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/05/18 09:57:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/09 17:04:21 $ $Author: itglp $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -354,7 +354,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to store DB with monitoring data :"
+      << "Unable to store monitoring data to DB :"
       << std::endl << e.getMessage();
     throw ex;
   }
