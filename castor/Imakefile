@@ -118,6 +118,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/AbstractSocket.cpp \
               io/AbstractTCPSocket.cpp \
               io/UDPSocket.cpp \
+	      io/PipeSocket.cpp \
               io/ClientSocket.cpp \
               io/ServerSocket.cpp \
               io/StreamAddress.cpp \
@@ -226,6 +227,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               server/ListenerThreadPool.cpp \
               server/TCPListenerThreadPool.cpp \
               server/UDPListenerThreadPool.cpp \
+	      server/ForkedProcessPool.cpp \
               server/Mutex.cpp \
               server/ServiceThread.cpp \
               server/SignalThreadPool.cpp \
@@ -398,7 +400,7 @@ STGLIB_SRCSNW32 =  server/BaseDaemon.cpp  server/BaseServer.cpp server/Notificat
 #endif
 
 #if BuildSecurity
-STGLIB_SRCS1 = io/AuthServerSocket.cpp io/AuthClientSocket.cpp
+STGLIB_SRCS1 = io/AuthServerSocket.cpp io/AuthClientSocket.cpp server/AuthListenerThreadPool.cpp
 #endif
 
 #if BuildDlfLibrary
