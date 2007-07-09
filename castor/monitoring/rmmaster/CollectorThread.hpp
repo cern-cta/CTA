@@ -51,6 +51,9 @@ namespace castor {
          * @param clusterStatus pointer to the status of the cluster
          */
         CollectorThread(castor::monitoring::ClusterStatus* clusterStatus);
+	
+        /// empty initialization
+        virtual void init() {};
 
         /**
          * Method called once per request, where all the code resides

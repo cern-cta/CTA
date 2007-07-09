@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/24 14:08:08 $ $Author: itglp $
+ * @(#)$RCSfile: HeartbeatThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/09 17:04:33 $ $Author: itglp $
  *
  * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -54,6 +54,10 @@ namespace castor {
 	 */
 	HeartbeatThread(ClusterStatus* clusterStatus);
 	
+
+	/// empty initialization
+	virtual void init() {};
+
 	/**
 	 * Method called periodically to check whether an rmNodeDaemon is alive
 	 */

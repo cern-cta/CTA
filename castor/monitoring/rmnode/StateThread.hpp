@@ -61,6 +61,9 @@ namespace castor {
          */
         virtual ~StateThread() throw();
 
+        /// empty initialization
+        virtual void init() {};
+
         /**
          * Method called once per interval
          */

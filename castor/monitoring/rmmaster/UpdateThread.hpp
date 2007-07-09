@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UpdateThread.hpp,v $ $Author: waldron $
+ * @(#)$RCSfile: UpdateThread.hpp,v $ $Author: itglp $
  *
  * The Update thread of the RmMaster daemon.
  * It receives updates from the stager about openings and closings
@@ -55,7 +55,10 @@ namespace castor {
          */
         UpdateThread(castor::monitoring::ClusterStatus* clusterStatus);
 
-        /**
+        /// empty initialization
+        virtual void init() {};
+	
+	/**
          * Method called once per request, where all the code resides
          * @param param the socket obtained from the calling thread pool
          */
