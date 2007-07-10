@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.458 $ $Date: 2007/07/10 13:52:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.459 $ $Date: 2007/07/10 15:02:53 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -179,12 +179,22 @@ END;
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
   (fileid NUMBER, nshost VARCHAR2(2048))
-ON COMMIT PRESERVE ROWS;
+  ON COMMIT PRESERVE ROWS;
 
 /* Global temporary table to help selectFiles2Delete procedure */
 CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
   (id NUMBER, path VARCHAR2(2048))
-ON COMMIT DELETE ROWS;
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary tables for the cleanup procedures */
+CREATE GLOBAL TEMPORARY TABLE ArchivedRequestCleaning
+  (id NUMBER NOT NULL ENABLE, type NUMBER NOT NULL ENABLE)
+  ON COMMIT PRESERVE ROWS;
+
+CREATE GLOBAL TEMPORARY TABLE OutOfDateRequestCleaning
+  (id NUMBER NOT NULL ENABLE, type NUMBER NOT NULL ENABLE)
+  ON COMMIT PRESERVE ROWS;
+
 
 
 /****************************************************************/
@@ -505,7 +515,7 @@ BEGIN
 END;
 
 
-/* PL/SQL method to delete request */
+/* PL/SQL method to delete one single request */
 CREATE OR REPLACE PROCEDURE deleteRequest(rId IN INTEGER) AS
   rtype INTEGER;
   rclient INTEGER;
@@ -547,98 +557,144 @@ BEGIN  -- delete Request, Client and SubRequests
 END;
 
 
-/* Search and delete too old archived subrequests and its request */
-CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
-  myReq SubRequest.request%TYPE;
-  CURSOR cur IS
-    SELECT request FROM SubRequest
-     GROUP BY request
-        -- only requests with ALL subreqs in ARCHIVED are taken
-    HAVING min(status) = 11 AND max(status) = 11 
-       AND max(lastModificationTime) < getTime() - timeOut;
-  counter NUMBER := 0;
+/* A little generic method to delete efficiently */
+CREATE OR REPLACE PROCEDURE bulkDelete(sel IN VARCHAR2, tab IN VARCHAR2) AS
 BEGIN
-  OPEN cur;
+  EXECUTE IMMEDIATE
+  'DECLARE
+    cursor s IS '||sel||'
+    ids "numList";
+  BEGIN
+    OPEN s;
     LOOP
-      counter := counter + 1;
-      FETCH cur into myReq;
-        EXIT WHEN cur%NOTFOUND;
-      deleteRequest(myReq);
-      -- do it 100 by 100 and wait before the next bunch
-      IF (counter = 100) THEN
-        COMMIT;
-        counter := 0;
-        DBMS_LOCK.sleep(seconds => 5.0);
-      END IF;
+      FETCH s BULK COLLECT INTO ids LIMIT 10000;
+      DELETE FROM '||tab||' WHERE id in (SELECT * FROM TABLE(ids));
+      COMMIT;
+      EXIT WHEN s%NOTFOUND;
     END LOOP;
-  COMMIT;
-  CLOSE cur;
+  END;';
 END;
 
-/* Search and delete "out of date" subrequests and its request */
-CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
-  myReq SubRequest.request%TYPE;
-  CURSOR cur IS
-    SELECT request FROM SubRequest
-     GROUP BY request
-        -- only requests with ALL subreqs either FAILED or ARCHIVED are taken 
-    HAVING min(status) >= 8 AND max(status) <= 11 
-       AND max(lastModificationTime) < getTime() - timeOut;
-  counter NUMBER := 0;
+
+/* PL/SQL method to delete a group of requests from  */
+CREATE OR REPLACE PROCEDURE deleteRequests
+  (tab IN VARCHAR2, typ IN VARCHAR2, cleanTab IN VARCHAR2) AS
 BEGIN
-  OPEN cur;
-    LOOP
-      counter := counter + 1;
-      FETCH cur into myReq;
-        EXIT WHEN cur%NOTFOUND;
-      deleteRequest(myReq);
-      -- do it 100 by 100 and wait before the next bunch
-      IF (counter = 100) THEN
-        COMMIT;
-        counter := 0;
-        DBMS_LOCK.sleep(seconds => 5.0);
-      END IF;
-    END LOOP;
+  -- delete client id2type
+  bulkDelete(
+    'SELECT client FROM '||tab||', '||cleanTab||'
+       WHERE '||tab||'.id = '||cleanTab||'.id;',
+    'Id2Type');
+  -- delete client itself
+  bulkDelete(
+    'SELECT client FROM '||tab||', '||cleanTab||'
+       WHERE '||tab||'.id = '||cleanTab||'.id;',
+    'Client');
+  -- delete request id2type
+  bulkDelete(
+    'SELECT id FROM '||cleanTab||' WHERE type = '||typ||';',
+    'Id2Type');
+  -- delete request itself
+  bulkDelete(
+    'SELECT id FROM '||cleanTab||' WHERE type = '||typ||';',
+    tab);
+END;
+
+/* internal procedure to efficiently delete all requests in the cleanTab table */
+CREATE OR REPLACE PROCEDURE internalCleaningProc(cleanTab IN VARCHAR) AS
+BEGIN
+  -- Delete SubRequests
+    -- Starting with id
+  bulkDelete(
+     'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
+         WHERE SubRequest.request = '||cleanTab||'.id;',
+     'Id2Type');
+    -- Then the subRequests
+  bulkDelete('SELECT id FROM SubRequest;',
+     'SubRequest');
+  -- Delete Request + Clients 
+    ---- Get ----
+  deleteRequests('StageGetRequest', '35', cleanTab);
+    ---- Put ----
+  deleteRequests('StagePutRequest', '40', cleanTab);
+    ---- Update ----
+  deleteRequests('StageUpdateRequest', '44', cleanTab);
+    ---- Rm ----
+  deleteRequests('StageRmRequest', '42', cleanTab);
+    ---- PutDone ----
+  deleteRequests('StagePutDoneRequest', '39', cleanTab);
+    ---- PrepareToGet -----
+  deleteRequests('StagePrepareToGetRequest', '36', cleanTab);
+    ---- PrepareToPut ----
+  deleteRequests('StagePrepareToPutRequest', '37', cleanTab);
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE '||cleanTab;
+END;
+
+
+/* Search and delete too old archived subrequests and their requests */
+CREATE OR REPLACE PROCEDURE deleteArchivedRequests(timeOut IN NUMBER) AS
+BEGIN
+  INSERT /*+ APPEND */ INTO ArchivedRequestCleaning
+    SELECT UNIQUE request, type 
+    FROM SubRequest, id2type
+    WHERE subrequest.request = id2type.id
+    GROUP BY request, type
+    HAVING min(status) = 11
+       AND max(status) = 11 
+       AND max(lastModificationTime) < getTime() - timeOut;
   COMMIT;
-  CLOSE cur;
+  internalCleaningProc('ArchivedRequestCleaning');
+END;
+
+/* Search and delete "out of date" subrequests and their requests */
+CREATE OR REPLACE PROCEDURE deleteOutOfDateRequests(timeOut IN NUMBER) AS
+BEGIN
+  INSERT /*+ APPEND */ INTO OutOfDateRequestCleaning
+    SELECT UNIQUE request, type 
+    FROM SubRequest, id2type
+    WHERE subrequest.request = id2type.id
+    GROUP BY request, type
+    HAVING min(status) >= 8
+       AND max(status) <= 11 
+       AND max(lastModificationTime) < getTime() - timeOut;
+  COMMIT;
+  internalCleaningProc('OutOfDateRequestCleaning');
 END;
 
 /* Search and delete old diskCopies in bad states */
 CREATE OR REPLACE PROCEDURE deleteOutOfDateDiskCopies(timeOut IN NUMBER) AS
-  unused NUMBER;
+  dcIds "numList";
+  cfIds "numList";
+  ct INTEGER;
+  c INTEGER;
 BEGIN
-  LOOP
-    FOR dc IN (
-      -- select INVALID diskcopies without filesystem (they can exist after a
-      -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
-      -- ones (coming from failed recalls or failed removals from the gcDaemon).
-      -- Note that we don't select INVALID diskcopies from recreation of files
-      -- because they are taken by the standard GC as they physically exist on disk.
-      SELECT id, castorFile FROM DiskCopy
-       WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
-         AND creationTime < getTime() - timeOut
-         AND ROWNUM < 100)
-    LOOP
-      -- drop the DiskCopy; the SubRequests go with the other cleanup procedure
-      DELETE FROM DiskCopy WHERE id = dc.id;
-      DELETE FROM ID2Type WHERE id = dc.id;
-      BEGIN
-        SELECT id INTO unused FROM DiskCopy 
-         WHERE castorFile = dc.castorFile AND ROWNUM < 2;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- no DiskCopy is left for this CastorFile, let's drop it too
-        DELETE FROM CastorFile WHERE id = dc.castorFile;
-        DELETE FROM ID2Type WHERE id = dc.castorFile;
-      END;
+  -- select INVALID diskcopies without filesystem (they can exist after a
+  -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
+  -- ones (coming from failed recalls or failed removals from the gcDaemon).
+  -- Note that we don't select INVALID diskcopies from recreation of files
+  -- because they are taken by the standard GC as they physically exist on disk.
+  SELECT id, castorFile
+    BULK COLLECT INTO dcIds, cfIds 
+    FROM DiskCopy
+   WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
+     AND creationTime < getTime() - timeOut);
+  -- drop the DiskCopies
+  DELETE FROM DiskCopy WHERE id IN (SELECT * FROM TABLE(dcIds));
+  DELETE FROM Id2Type WHERE id IN (SELECT * FROM TABLE(dcIds));
+  COMMIT;
+  -- maybe delete the CastorFiles if nothing is left for them
+  ct := 0;
+  FOR c IN cfIds.FIRST..cfIds.LAST LOOP
+    deleteCastorFile(cfIds(c));
+    ct := ct + 1;
+    IF ct = 1000 THEN
+      -- commit every 1000, don't pause
+      ct := 0;
       COMMIT;
-    END LOOP;
-    -- do it 100 by 100 and wait before the next bunch
-    DBMS_LOCK.sleep(seconds => 5.0);
+    END IF;
   END LOOP;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  NULL;
+  COMMIT;
 END;
-
 
 
 /* PL/SQL method implementing anyTapeCopyForStream.
@@ -2452,7 +2508,7 @@ END;
 
 
 /* PL/SQL method to delete a CastorFile only when no Disk|TapeCopies are left for it */
-/* Internally used in filesDeletedProc and putFailedProc */
+/* Internally used in filesDeletedProc, putFailedProc and deleteOutOfDateDiskCopies */
 CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
   nb NUMBER;
 BEGIN
