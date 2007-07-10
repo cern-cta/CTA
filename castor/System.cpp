@@ -88,3 +88,45 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
   free(hostname);
   return res;
 }
+
+//------------------------------------------------------------------------------
+// getHostByName
+//------------------------------------------------------------------------------
+struct hostent* castor::System::getHostByName(std::string host)
+  throw (castor::exception::Exception)
+{
+  struct hostent *hp;
+#if defined(_WIN32)
+  // Windows client is not thread safe!
+  if ((hp = gethostbyname(host.c_str())) == 0) {
+    errno = WSAEHOSTUNREACH;
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "getHostByName: unknown host " << host << " (h_errno = " << h_errno << ")";
+    throw ex;
+  }
+#else
+  // use thread-safe structures and call reentrant version
+  // again, thanks to C, we have to loop and reallocate stuff if needed...
+  struct hostent hostbuf;
+  size_t hstbuflen;
+  char *tmphstbuf;
+  int res;
+  int herr;
+  hstbuflen = 1024;
+  tmphstbuf = (char*) malloc (hstbuflen);
+  while ((res = gethostbyname_r(host.c_str(), &hostbuf, tmphstbuf, hstbuflen, &hp, &herr)) == ERANGE) {
+    // Enlargeethe buffer
+    hstbuflen *= 2;
+    tmphstbuf = (char*) realloc (tmphstbuf, hstbuflen);
+  }
+  free (tmphstbuf);
+  if(!res && hp) {
+    return hp;
+  }
+  else {
+    castor::exception::Exception ex(EHOSTUNREACH);
+    ex.getMessage() << "getHostByName: unknown host " << host << " (h_errno = " << herr << ")";
+    throw ex;
+  }    
+#endif
+}
