@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.11 $ $Date: 2007/07/06 16:12:43 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.12 $ $Date: 2007/07/10 07:36:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -3514,7 +3514,7 @@ DBLISTPTR *smdlistptr;
 				if (c = Cns_get_smd_by_pfid (&thip->dbfd, bof, 
 				    fmd_entry->fileid, smd_entry, 0, NULL,
 				    0, smdlistptr)) break;
-				if (fnl > maxsize)
+				if (fnl >= maxsize)
 					goto reply;
 			}
 			(void) Cns_get_smd_by_pfid (&thip->dbfd, bof,
@@ -3562,12 +3562,12 @@ DBLISTPTR *smdlistptr;
 	    fmd_entry, getattr, endlist, dblistptr)) == 0) {	/* loop on directory entries */
 		fnl = strlen (fmd_entry->name);
 		if (getattr == 0) {		/* readdir */
-			if (fnl  > maxsize) break;
+			if (fnl >= maxsize) break;
 			marshall_STRING (sbp, fmd_entry->name);
 			nbentries++;
 			maxsize -= ((direntsz + fnl + 8) / 8) * 8;
 		} else if (getattr == 1) {	/* readdirx */
-			if (fnl + 1 > maxsize) break;
+			if (fnl >= maxsize) break;
 			marshall_DIRX (&sbp, magic, fmd_entry);
 			nbentries++;
 			maxsize -= ((direntsz + fnl + 8) / 8) * 8;
@@ -3577,7 +3577,7 @@ DBLISTPTR *smdlistptr;
 				if (c = Cns_get_smd_by_pfid (&thip->dbfd, bof,
 				    fmd_entry->fileid, smd_entry, 0, NULL,
 				    0, smdlistptr)) break;
-				if (fnl > maxsize)
+				if (fnl >= maxsize)
 					goto reply;
 				marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
 				nbentries++;
@@ -3594,7 +3594,7 @@ DBLISTPTR *smdlistptr;
 			    umd_entry, 0, NULL) && serrno != ENOENT)
 				RETURN (serrno);
 			cml = strlen (umd_entry->comments);
-			if (fnl + cml > maxsize) break;
+			if (fnl + cml + 1 >= maxsize) break;
 			marshall_STRING (sbp, fmd_entry->name);
 			marshall_STRING (sbp, umd_entry->comments);
 			nbentries++;
@@ -3605,7 +3605,7 @@ DBLISTPTR *smdlistptr;
 			    umd_entry, 0, NULL) && serrno != ENOENT)
 				RETURN (serrno);
 			cml = strlen (umd_entry->comments);
-			if (fnl + cml > maxsize) break;
+			if (fnl + cml + 1 >= maxsize) break;
 			marshall_DIRX (&sbp, magic, fmd_entry);
 			marshall_STRING (sbp, umd_entry->comments);
 			nbentries++;
@@ -3618,7 +3618,7 @@ DBLISTPTR *smdlistptr;
 				    NULL, NULL, fmd_entry, NULL, CNS_MUST_EXIST) == 0)
 					strcpy (fmd_entry->name, sav_name);
 			}
-			if (fnl > maxsize) break;
+			if (fnl >= maxsize) break;
 			bof = 1;
 			while (1) {	/* loop on replicas */
 				if (c = Cns_list_rep_entry (&thip->dbfd, bof,
@@ -3662,6 +3662,7 @@ DBLISTPTR *smdlistptr;
 		if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &direntry))
 			RETURN (serrno);
 	}
+
 reply:
 	if (sbpr > repbuf)
 		sendrep (thip->s, MSG_REPLICP, sbpr - repbuf, repbuf);
