@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.455 $ $Date: 2007/07/03 09:16:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.456 $ $Date: 2007/07/10 13:43:03 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1901,7 +1901,7 @@ BEGIN
     INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
    END LOOP;
    -- Restart any waiting Disk2DiskCopies
-   UPDATE SubRequest -- SUBREQUEST_RESTART
+   UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
       SET status = 1, lastModificationTime = getTime(), parent = 0
     WHERE status = 5 -- WAIT_SUBREQ
       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId);
