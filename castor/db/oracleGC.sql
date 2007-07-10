@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.456 $ $Date: 2007/07/10 13:43:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.457 $ $Date: 2007/07/10 13:49:27 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1904,7 +1904,7 @@ BEGIN
    UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
       SET status = 1, lastModificationTime = getTime(), parent = 0
     WHERE status = 5 -- WAIT_SUBREQ
-      AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId);
+      AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status = 6);
  END IF;
  -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
  -- then we have to archive the original preapareToPut/Update subRequest
