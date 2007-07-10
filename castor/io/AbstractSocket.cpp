@@ -41,6 +41,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/Services.hpp"
+#include "castor/System.hpp"
 #include "castor/io/StreamAddress.hpp"
 
 // Local Includes
@@ -243,18 +244,8 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
                                                      const std::string host)
   throw (castor::exception::Exception) {
   // get host information
-  struct hostent *hp;
-  if ((hp = gethostbyname(host.c_str())) == 0) {
-#if !defined(_WIN32)
-    errno = EHOSTUNREACH;
-#else
-    errno = WSAEHOSTUNREACH;
-#endif
-    castor::exception::Exception ex(errno);
-    ex.getMessage() << "Unknown host " << host << " (h_errno = " << h_errno << ")";
-    throw ex;
-  }
-  // Builds the address
+  struct hostent *hp = castor::System::getHostByName(host);
+  // builds the address
   struct sockaddr_in saddr;
   memset(&saddr, 0, sizeof(saddr));
   memcpy(&saddr.sin_addr, hp->h_addr, hp->h_length);
