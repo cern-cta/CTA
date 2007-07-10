@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.457 $ $Date: 2007/07/10 13:49:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.458 $ $Date: 2007/07/10 13:52:19 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -476,13 +476,12 @@ END;
 /*  PL/SQL method to archive a SubRequest */
 CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   rid INTEGER;
-  rtype INTEGER;
-  rclient INTEGER;
   nb INTEGER;
-  reqType INTEGER;
+  cfId NUMBER;
 BEGIN
   UPDATE SubRequest SET status = 8 -- FINISHED
-     WHERE id = srId RETURNING request INTO rid;
+     WHERE id = srId
+  RETURNING request, castorFile INTO rid, cfId;
 
   -- Try to see whether another subrequest in the same
   -- request is still processing
@@ -492,6 +491,16 @@ BEGIN
   -- Archive request if all subrequests have finished
   IF nb = 0 THEN
     UPDATE SubRequest SET status=11 WHERE request=rid and status=8;  -- ARCHIVED 
+    -- Check that we don't have too many requests for the file in the DB
+    SELECT count(request) INTO nb FROM SubRequest WHERE castorFile = cfId;
+    IF nb > 100  THEN
+      -- We are certain that there is only one too much, because we did the same
+      -- cleaning last time
+      SELECT request INTO rid FROM
+        (SELECT request FROM SubRequest WHERE castorFile = cfId ORDER BY creationTime ASC)
+      WHERE ROWNUM < 2;
+      deleteRequest(rid);
+    END IF;
   END IF;
 END;
 
