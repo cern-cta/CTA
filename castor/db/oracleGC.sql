@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.459 $ $Date: 2007/07/10 15:02:53 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.460 $ $Date: 2007/07/10 15:14:45 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -673,27 +673,33 @@ BEGIN
   -- ones (coming from failed recalls or failed removals from the gcDaemon).
   -- Note that we don't select INVALID diskcopies from recreation of files
   -- because they are taken by the standard GC as they physically exist on disk.
-  SELECT id, castorFile
-    BULK COLLECT INTO dcIds, cfIds 
+  SELECT id
+    BULK COLLECT INTO dcIds 
     FROM DiskCopy
    WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
-     AND creationTime < getTime() - timeOut);
+     AND creationTime < getTime() - timeOut;
+  SELECT UNIQUE castorFile
+    BULK COLLECT INTO cfIds
+    FROM DiskCopy
+   WHERE id IN (SELECT * FROM TABLE(dcIds));
   -- drop the DiskCopies
-  DELETE FROM DiskCopy WHERE id IN (SELECT * FROM TABLE(dcIds));
   DELETE FROM Id2Type WHERE id IN (SELECT * FROM TABLE(dcIds));
+  DELETE FROM DiskCopy WHERE id IN (SELECT * FROM TABLE(dcIds));
   COMMIT;
   -- maybe delete the CastorFiles if nothing is left for them
-  ct := 0;
-  FOR c IN cfIds.FIRST..cfIds.LAST LOOP
-    deleteCastorFile(cfIds(c));
-    ct := ct + 1;
-    IF ct = 1000 THEN
-      -- commit every 1000, don't pause
-      ct := 0;
-      COMMIT;
-    END IF;
-  END LOOP;
-  COMMIT;
+  IF cfIds.COUNT > 0 THEN
+    ct := 0;
+    FOR c IN cfIds.FIRST..cfIds.LAST LOOP
+      deleteCastorFile(cfIds(c));
+      ct := ct + 1;
+      IF ct = 1000 THEN
+        -- commit every 1000, don't pause
+        ct := 0;
+        COMMIT;
+      END IF;
+    END LOOP;
+    COMMIT;
+  END IF;
 END;
 
 
