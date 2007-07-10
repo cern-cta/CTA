@@ -50,7 +50,8 @@ DBSERVICEDAEMONBIN_SRCS = \
 	StagerPrepareToPutHandler.cpp\
 	StagerPutDoneHandler.cpp\
 	StagerRmHandler.cpp\
-	StagerSetGCHandler.cpp
+	StagerSetGCHandler.cpp\
+	StagerMainDaemon.cpp
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 
