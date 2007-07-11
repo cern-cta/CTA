@@ -28,6 +28,7 @@
 #include <errno.h>
 
 // Local includes
+#include <unistd.h>
 #include "System.hpp"
 
 //------------------------------------------------------------------------------

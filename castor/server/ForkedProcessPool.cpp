@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/09 17:05:16 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/07/11 14:59:19 $ $Author: sponcec3 $
  *
  * A pool of forked processes
  *
@@ -32,6 +32,7 @@
 #include <iostream>
 #include <string>
 #include <sys/select.h>
+#include <unistd.h>
 
 // Include Files
 #include "castor/server/ForkedProcessPool.hpp"
