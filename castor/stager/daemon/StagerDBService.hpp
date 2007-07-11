@@ -14,6 +14,7 @@
 
 
 #include "castor/exception/Exception.hpp"
+#include "castor/IObject.hpp"
 
 #include <string>
 #include <iostream>
@@ -40,6 +41,13 @@ namespace castor {
 
 	void run(void* param) throw();
 	virtual void stop() throw() {};
+	
+	/***************************************************************************/
+	/* abstract functions inherited from the SelectProcessThread to implement */
+	/*************************************************************************/
+	inline castor::IObject* StagerDBService::select(){ 
+	  return dynamic_cast<IObject*>(this); }
+	inline void StagerDBService::process(castor::IObject*){ };
 	
 	
 	std::vector<ObjectsIds> types;
