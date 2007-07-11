@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: System.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/10 15:27:32 $ $Author: itglp $
+ * @(#)$RCSfile: System.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/11 12:13:03 $ $Author: itglp $
  *
  * A class with static methods for system level utilities.
  *
@@ -30,11 +30,6 @@
 // Include Files
 #include <string>
 #include "castor/exception/Exception.hpp"
-#if !defined(_WIN32)
-#include <netdb.h>
-#else
-#include <winsock2.h>
-#endif
 
 namespace castor {
 
@@ -48,14 +43,6 @@ namespace castor {
      * @exception in case of an error 
      */
     static std::string getHostName() throw (castor::exception::Exception);
-    
-    /**
-     * Performs an host name lookup. Handles all errors that may occur with 
-     * the gethostbyname() API. On linux, the reentrant version is used.
-     * @exception in case of an error 
-     */
-    static struct hostent* getHostByName(std::string host)
-      throw (castor::exception::Exception);
      
   };
 
