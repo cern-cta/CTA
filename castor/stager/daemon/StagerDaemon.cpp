@@ -218,128 +218,128 @@ namespace castor{
 	}
 
 	/* take the configuration from the command line (if it is needed) */
-	if(stagerIgnoreCommandLine == false){
+	
 
-	  /* stager.c : parse the command line */
-	  int c = 0;
-	  /*	Coptarg = NULL; */
-	  bool badMainArguments = false;
-	  bool optionStagerSecure = false;
-	  
-	  while (badMainArguments == false && (c = Cgetopt_long(argc,argv,"A:C:dD:fE:F:G:hJ:l:np:P:Q:StT:Z:", longopts, NULL)) != -1) {
-	    switch (c) {
-	    case 'A':
-	      stagerAdminNbthread = atoi(Coptarg);
-	      break;
-	    case 'd':
-	      stagerDebug = 1;
-	      /* Option -d implies option -t */
-	      stagerTrace = 1;
-	      break;
-	    case 'C':
-	      stagerGCNbthread = atoi(Coptarg);
-	      break;
-	    case 'D':
-	      stagerDbNbthread = atoi(Coptarg);
-	      break;
-	    case 'E':
-	      stagerErrorNbthread = atoi(Coptarg);
-	      break;
-	    case 'f':
-	      stagerForeground = 1;
-	      break;
-	      /* case 'F':
-		 stagerFsUpdate = atoi(Coptarg);
-		 break; */
-	    case 'G':
-	      stagerGetNextNbthread = atoi(Coptarg);
-	      break;
-	    case 'h':
-	      stagerHelp = 1;
-	      break;
-	    case 'J':
-	      stagerJobNbthread = atoi(Coptarg);
-	      break;
-	    case 'l':
-	      if (strlen(Coptarg) > CA_MAXLINELEN) {
-		castor::exception::Exception ex(SENAMETOOLONG);
-		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg too long"<<std::endl;
-		throw(ex);
-	      }
-	      if (Coptarg[0] == '\0') {
-		castor::exception::Exception ex(EINVAL);
-		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg invalid"<<std::endl;
-		throw(ex);
-	      }
-	      stagerLog = Coptarg;
-	      break;
-	    case 'n':
-	      stagerNoDlf = 1;
-	      break;
-	    case 'p':
-	      stagerPort = atoi(Coptarg);
-	      if (stagerPort <= 0) {
-		castor::exception::Exception ex(EINVAL);
-		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Port must be >0"<<std::endl;
-		throw(ex);
-	      }
-	      break;
-	    case 'P':
-	      stagerSecurePort = atoi(Coptarg);
-	      if (stagerSecurePort <= 0) {
-		castor::exception::Exception ex(EINVAL);
-		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) SecurePort must be >0"<<std::endl;
-		throw(ex);
-	      }
-	      break;
-	    case 'Q':
-	      stagerQueryNbthread = atoi(Coptarg);
-	      break;
-	    case 'S':
-	      stagerSecure = 1;
-	      optionStagerSecure = true; 
-	      break;
-	    case 't':
-	      stagerTrace = 1;
-	      break;
-	    case 'T':
-	      stagerTimeout = atoi(Coptarg);
-	      break;
-	      /* case 'Z':
-		 stagerFsNbthread = atoi(Coptarg);
-		 break; */
-	    default:
-	      badMainArguments = true;
-	      std::string mainArgs = argv[0];
-	      help(mainArgs);
-	      break;
+	/* stager.c : parse the command line */
+	int c = 0;
+	Coptarg = NULL; 
+
+	bool optionStagerSecure = false;
+	
+	while (c = Cgetopt_long(argc,argv,"A:C:dD:fE:F:G:hJ:l:np:P:Q:StT:Z:", longopts, NULL) != -1) {
+	  switch (c) {
+	  case 'A':
+	    stagerAdminNbthread = stagerIgnoreCommandLine == true? stagerAdminNbthread : atoi(Coptarg);
+	    break;
+	  case 'd':
+	    stagerDebug = stagerIgnoreCommandLine == true? stagerDebug : 1;
+	    /* Option -d implies option -t */
+	    stagerTrace = stagerIgnoreCommandLine == true? stagerTrace : 1;
+	    break;
+	  case 'C':
+	    stagerGCNbthread = stagerIgnoreCommandLine == true? stagerGCNbthread : atoi(Coptarg);
+	    break;
+	  case 'D':
+	    stagerDbNbthread = stagerIgnoreCommandLine == true? stagerDbNbthread : atoi(Coptarg);
+	    break;
+	  case 'E':
+	    stagerErrorNbthread = stagerIgnoreCommandLine == true? stagerErrorNbthread : atoi(Coptarg);
+	    break;
+	  case 'f':
+	    stagerForeground = stagerIgnoreCommandLine == true? stagerForeground : 1;
+	    break;
+	    /* case 'F':
+	       stagerFsUpdate = atoi(Coptarg);
+	       break; */
+	  case 'G':
+	    stagerGetNextNbthread = stagerIgnoreCommandLine == true? stagerGetNextNbthread : atoi(Coptarg);
+	    break;
+	  case 'h':
+	    stagerHelp =stagerIgnoreCommandLine == true? stagerHelp : 1;
+	    break;
+	  case 'J':
+	    stagerJobNbthread = stagerIgnoreCommandLine == true? stagerJobNbthread : atoi(Coptarg);
+	    break;
+	  case 'l':
+	    if(strlen(Coptarg) > CA_MAXLINELEN){
+	      castor::exception::Exception ex(SENAMETOOLONG);
+	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg too long"<<std::endl;
+	      throw(ex); 
 	    }
-	  }
-	  
-#ifndef CSEC
-	  if(optionStagerSecure){
-	    castor::dlf::Param param[]={castor::dlf::Param("Standard Message","Stager not compiled with security, but started with security option")};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,STAGER_MSG_USAGE, 1, param);
-	    help(argv[0]);
-	  }
-#endif	
-	  
-	  if(stagerLog.empty() == false){
-	    if(strcmp(stagerLog.c_str(), "stderr")== 0 ){
-	      initlog("stager",LOG_DEBUG,"");	    
-	    }else{
-	      initlog("stager", LOG_DEBUG,(char*)stagerLog.c_str());
+	    if(Coptarg[0] == '\0'){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg invalid"<<std::endl;
+	      throw(ex); 
 	    }
-	  }
-	  
-	  if(stagerHelp){
+	    stagerLog = stagerIgnoreCommandLine == true? stagerLog : Coptarg;
+	    break;
+	  case 'n':
+	    stagerNoDlf = stagerIgnoreCommandLine == true? stagerNoDlf : 1;
+	  case 'p':
+	    stagerPort = stagerIgnoreCommandLine == true? stagerPort : atoi(Coptarg);
+	    if (stagerPort <= 0) {
+	      castor::exception::Exception ex(EINVAL);
+	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) SecurePort must be >0"<<std::endl;
+	      throw(ex);
+	    }
+	    break;
+	  case 'P':
+	    stagerSecurePort = stagerIgnoreCommandLine == true? stagerSecurePort : atoi(Coptarg);
+	    if (stagerSecurePort <= 0) {
+	      castor::exception::Exception ex(EINVAL);
+	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) SecurePort must be >0"<<std::endl;
+	      throw(ex);
+	    }
+	    break;
+	  case 'Q':
+	    stagerQueryNbthread = stagerIgnoreCommandLine == true? stagerQueryNbthread : atoi(Coptarg);
+	    break;
+	  case 'S':
+	    stagerSecure = stagerIgnoreCommandLine == true? stagerSecure : 1;
+	    optionStagerSecure = true; 
+	    break;
+	  case 't':
+	    stagerTrace = stagerIgnoreCommandLine == true? stagerTrace : 1;
+	    break;
+	  case 'T':
+	    stagerTimeout = stagerIgnoreCommandLine == true? stagerTimeout : atoi(Coptarg);
+	    break;
+	    /* case 'Z':
+	       stagerFsNbthread = atoi(Coptarg);
+	       break; */
+	  default:
 	    std::string mainArgs = argv[0];
 	    help(mainArgs);
+	    castor::exception::Exception ex(EINVAL);
+	    ex.getMessage()<<"(StagerMainDaemon parseCommandLine) invalid argument on the command line"<<std::endl;
+	    throw(ex);
+	    break;
 	  }
-	  
 	}
-
-	free(stgMainArguments);
+      
+      
+#ifndef CSEC
+      if(optionStagerSecure){
+	castor::dlf::Param param[]={castor::dlf::Param("Standard Message","Stager not compiled with security, but started with security option")};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,STAGER_MSG_USAGE, 1, param);
+	help(argv[0]);
+      }
+#endif	
+      
+      if(stagerLog.empty() == false){
+	if(strcmp(stagerLog.c_str(), "stderr")== 0 ){
+	  initlog("stager",LOG_DEBUG,"");	    
+	}else{
+	  initlog("stager", LOG_DEBUG,(char*)stagerLog.c_str());
+	}
+      }
+       
+      if(stagerHelp){
+	std::string mainArgs = argv[0];
+	help(mainArgs);
+      }
+	  
+      free(stgMainArguments);
       }
 
       
