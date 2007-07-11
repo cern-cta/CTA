@@ -1,12 +1,12 @@
 #
-# $Id: MigHunter.sysconfig,v 1.1 2005/06/30 11:01:04 jdurand Exp $
+# $Id: MigHunter.sysconfig,v 1.2 2007/07/11 11:48:29 waldron Exp $
 #
-# @(#)$RCSfile: MigHunter.sysconfig,v $ $Revision: 1.1 $ $Date: 2005/06/30 11:01:04 $ CERN/IT/ADC/CA Jean-Damien Durand
+# @(#)$RCSfile: MigHunter.sysconfig,v $ $Revision: 1.2 $ $Date: 2007/07/11 11:48:29 $ CERN/IT/ADC/CA Jean-Damien Durand
 #
 # should MigHUnter run?
-# any string but "yes" will equivalent to "NO"
+# any string but "YES" will equivalent to "NO"
 #
-RUN_MIGHUNTER="yes"
+MIGHUNTER_RUN="YES"
 OPTIONS="-t 300 -d"
 #
 # should we run with another limit on the number of file descriptors than the default?
@@ -14,10 +14,6 @@ OPTIONS="-t 300 -d"
 #ULIMIT_N=4096
 #
 
-if [ -f /etc/sysconfig/castor ]; then
-        . /etc/sysconfig/castor
-fi
-#
 ## What Service Classes should MigHunter'ised ?
 ## Default is all of them unless you give an explicit list below
 ## For each service class you can overwrite defaults providing a
