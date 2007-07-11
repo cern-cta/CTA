@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: mysql.c,v 1.19 2007/06/28 15:43:58 waldron Exp $
+ * $Id: mysql.c,v 1.20 2007/07/11 12:18:44 waldron Exp $
  */
 
 /* headers */
@@ -325,7 +325,7 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 	/* variables */
 	char    hostname[100];
 	char    username[100];
-	char    password[100];
+	char    password[300];
 	char    func[30];
 	char    buf[100];
 	int     count;
@@ -374,7 +374,7 @@ int DLL_DECL db_open(database_t *db, unsigned int retries) {
 		fclose(fp);
 
 		/* extract values */
-		if (sscanf(buf, "%25[^/]/%25[^@]@%25s", username, password, hostname) != 3) {
+		if (sscanf(buf, "%25[^/]/%256[^@]@%25s", username, password, hostname) != 3) {
 			log(LOG_ERR, "db_open() - invalid connect string in '%s'\n", DLFCONFIG);
 			continue;
 		}
