@@ -6,6 +6,11 @@
 
 
 #include "castor/server/BaseDaemon.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/IObject.hpp"
+
+#include <iostream>
+#include <string>
 
 namespace castor{
   namespace stager{
@@ -16,13 +21,60 @@ namespace castor{
 
       public:
 	/*** constructor ***/
-	StagerMainDaemon() throw(castor::exception::Exception);
+	StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception);
 	/*** destructor ***/
-	virtual ~StagerMainDaemon() throw() {};
-	/**********************************************************************************/
-	/* looped switch to get and set the configuration values (from the command line) */
-	/********************************************************************************/
-	bool StagerMainDaemon::switchSetConfig(int argc, char* argv[]) throw(castor::exception::Exception);
+	virtual StagerMainDaemon::~StagerMainDaemon() throw() {};
+
+
+
+
+
+
+	/*********************************************************************************/
+	/* BaseServer::parseCommandLine parses a command line to set the server options */
+	/*******************************************************************************/
+	void StagerMainDaemon::parseCommandLine(int argc, char* argv[]) throw(castor::exception::Exception);
+
+
+
+	/*****************************************************************/
+	/* BaseServer::help print the valid options for the commandLine */
+	/***************************************************************/
+	inline void StagerMainDaemon::help(std::string programName){
+	  std::cout << "Usage: " << programName << " [options]\n"
+	    "\n"
+	    "where options can be:\n"
+	    "\n"
+	    "\t--Adminthreads or -A {integer >= 0} \tNumber of admin threads (should be 1 or zero)\n"
+	    "\t--debug        or -d                \tDebug mode\n"
+	    "\t--Cthreads     or -C {integer >= 0}  \tNumber of garbage collector threads\n"
+	    "\t--Dbthreads    or -D {integer >= 0}  \tNumber of threads to the database\n"
+	    "\t--Ethreads     or -E {integer >= 0}  \tNumber of error threads\n"
+	    "\t--foreground   or -f                \tForeground\n"
+	    "\t--Gthreads     or -G {integer >= 0}  \tNumber of getnext threads\n"
+	    "\t--help         or -h                \tThis help\n"
+	    "\t--Jthreads     or -J {integer >= 0}  \tNumber of job threads\n"
+	    "\t--log          or -l {string}       \tForced logging outside of DLF (filename, or stderr, or stdout)\n"
+	    "\t--nodlf        or -n                \tForced no logging to DLF (then consider option --log)\n"
+	    "\t--port         or -p {integer > 0}  \tPort number to listen\n"
+	    "\t--Port         or -P {integer > 0}  \tSecure Port number to listen\n"
+	    "\t--Qthreads     or -Q {integer >= 0}  \tNumber of query threads\n"
+	    "\t--Secure       or -S                \tSecure mode\n"
+	    "\t--trace        or -t                \tTrace mode\n"
+	    "\t--Timeout      or -T {integer}      \tNetwork timeout\n"
+	    "\n"
+#ifndef CSEC
+	    "WARNING: Option -P will be refused\n"
+	    "Please re-compile stager with security support (-DCSEC)\n"
+	    "\n"
+#endif
+	    "\n"
+	    "Please note that option -d implies option -t\n"
+	    "\n"
+	    "Comments to: Castor.Support@cern.ch\n";
+	}
+
+	
 
      
 	/* option for the configuration(from the command line) */

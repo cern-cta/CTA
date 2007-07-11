@@ -1,22 +1,29 @@
 /**************************************************/
 /* Main function to test the new StagerDBService */
 /************************************************/
-
 #include "castor/Constants.hpp"
-#include "castor/Constants.h"
+#include "stager_constants.h"
+#include "stage_constants.h"
+#include "Cgetopt.h"
+#include "stager_admin_api.h"
+#include "stager_messages.h"
+#include "log.h"
+
 #include "castor/exception/Exception.hpp"
 
 #include "castor/stager/dbService/StagerMainDaemon.hpp"
 #include "castor/stager/dbService/StagerDBService.hpp"
 
 #include "castor/BaseObject.hpp"
+#include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/exception/Exception.h"
+#include "castor/exception/Exception.hpp"
 
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseServer.hpp"
-#include "castor/logstream.h"
+
 #include "castor/server/SelectProcessThread.hpp"
+#include "castor/server/SignalThreadPool.hpp"
 #include "castor/stager/dbService/StagerDBService.hpp"
 
 #include <iostream>
@@ -53,24 +60,23 @@ namespace castor{
 	    throw(ex);
 	  }
 
-	  stgMainDaemon.addThreadPool(new castor::server::SelectProcessThread("StagerDBService", new castor::stager::dbService::StagerDBService));
-	  stgMainDaemon.getThreadPool('S')->setNbThreads(stagerDbNbthread);
+	  stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("StagerDBService", new castor::stager::dbService::StagerDBService()));
+	  stgMainDaemon.getThreadPool('S')->setNbThreads(stgMainDaemon.stagerDbNbthread);
 	  stgMainDaemon.start();
 
 	}catch(castor::exception::Exception ex){
 	  std::cerr<<"(StagerMainDaemon main)"<<ex.getMessage()<<std::endl;
 	  // "Exception caught problem to start the daemon"
 	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	     castor::dlf::Param("Precise Message", e.getMessage().str())};
+	    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+	     castor::dlf::Param("Precise Message", ex.getMessage().str())};
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 2, params);
 	  return -1;
 
 	}catch(...){
 	  std::cerr<<"(StagerMainDaemon main) Catched unknow exception"<<std::endl;
 	  castor::dlf::Param params[] =
-	    {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	     castor::dlf::Param("Precise Message", e.getMessage().str())};
+	    {castor::dlf::Param("Standard Message","Caught general exception in StagerMainDaemon")};
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 2, params);
 	  return -1;
 	}
@@ -83,9 +89,7 @@ namespace castor{
       /******************************************************************************************/
       /* constructor: initiallizes the DLF logging and set the default value to its attributes */
       /****************************************************************************************/
-      StagerMainDaemon::StagerMainDaemon(): castor::server::BaseDaemon("StagerMainDaemon") throw(castor::exception::Exception){
-       
-
+      StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception) : castor::server::BaseDaemon("StagerMainDaemon"){      
 
 	/* initialite the DLF login */
 	castor::BaseObject::initLog("StagerMainDaemon", castor::SVC_STDMSG);
@@ -93,7 +97,7 @@ namespace castor{
 	castor::dlf::Message stagerMainMessages[]={
 	  { STAGER_MSG_EMERGENCY, "emergency"},
 	  { STAGER_MSG_ALERT, "alert"},
-	  { STAGER_MSG_ERROR, "error"},
+	  { STAGER_MSG_ERR, "error"},
 	  { STAGER_MSG_SYSCALL, "sytem call error"},
 	  { STAGER_MSG_WARNING, "authentication"},
 	  { STAGER_MSG_SECURITY, "security"},
@@ -129,9 +133,9 @@ namespace castor{
 	   stager_configTrace(&stagerTrace ) == 0 &&                       
 	   stager_configDbNbthread(&stagerDbNbthread) == 0 &&             
 	   stager_configGCNbthread(&stagerGCNbthread) == 0 &&             
-	   stager_configErrorNbThread(&stagerErrorNbthread) == 0 &&        
+	   stager_configErrorNbthread(&stagerErrorNbthread) == 0 &&        
 	   stager_configQueryNbthread(&stagerQueryNbthread) == 0 &&        
-	   stager_configGetNextNbthread(&stagerGetnextNbthread) == 0 &&    
+	   stager_configGetnextNbthread(&stagerGetNextNbthread) == 0 &&    
 	   stager_configJobNbthread(&stagerAdminNbthread) == 0 &&          
 	   stager_configAdminNbthread(&stagerAdminNbthread) == 0 &&        
 	   stager_configFacility(CA_MAXLINELEN, tmpStagerFacility) == 0 &&    
@@ -153,9 +157,6 @@ namespace castor{
       /******************************************************/
       void StagerMainDaemon::parseCommandLine(int argc, char* argv[]) throw(castor::exception::Exception){
 	
-	/* BaseServer::parseCommandLine common part */
-	const char* cmdParam = m_cmdLineParams.str().c_str();
-	char tparam[] = "Xthreads";
 	
 	/* stager.c : Command line parsing arguments: To switch the Cgetopt output */
 	static struct Coptions longopts[] =
@@ -187,7 +188,7 @@ namespace castor{
 	Copterr = 0;
 
 	/* stager.c : print the main arguments */
-	int sizeConcatenatedArgv = 0;
+	size_t sizeConcatenatedArgv = 0;
 	if(argc > 0){
 	  for(int c = 0; c<argc; c++){
 	    sizeConcatenatedArgv += strlen(argv[c]);
@@ -198,7 +199,7 @@ namespace castor{
 	  ex.getMessage()<<"(StagerMainDaemon parseCommandLine) error on the command line arguments"<<std::endl;
 	  throw(ex);
 	}
-	sizeConcatenatedAgv += argc;
+	sizeConcatenatedArgv += argc;
 
 	/* to print the main arguments */
 	char* stgMainArguments = (char*) calloc(1,sizeConcatenatedArgv);
@@ -218,173 +219,136 @@ namespace castor{
 
 	/* take the configuration from the command line (if it is needed) */
 	if(stagerIgnoreCommandLine == false){
-	  bool runHelp = switchSetConfig(argc, argv);
-	  if(runHelp == true){
+
+	  /* stager.c : parse the command line */
+	  int c = 0;
+	  /*	Coptarg = NULL; */
+	  bool badMainArguments = false;
+	  bool optionStagerSecure = false;
+	  
+	  while (badMainArguments == false && (c = Cgetopt_long(argc,argv,"A:C:dD:fE:F:G:hJ:l:np:P:Q:StT:Z:", longopts, NULL)) != -1) {
+	    switch (c) {
+	    case 'A':
+	      stagerAdminNbthread = atoi(Coptarg);
+	      break;
+	    case 'd':
+	      stagerDebug = 1;
+	      /* Option -d implies option -t */
+	      stagerTrace = 1;
+	      break;
+	    case 'C':
+	      stagerGCNbthread = atoi(Coptarg);
+	      break;
+	    case 'D':
+	      stagerDbNbthread = atoi(Coptarg);
+	      break;
+	    case 'E':
+	      stagerErrorNbthread = atoi(Coptarg);
+	      break;
+	    case 'f':
+	      stagerForeground = 1;
+	      break;
+	      /* case 'F':
+		 stagerFsUpdate = atoi(Coptarg);
+		 break; */
+	    case 'G':
+	      stagerGetNextNbthread = atoi(Coptarg);
+	      break;
+	    case 'h':
+	      stagerHelp = 1;
+	      break;
+	    case 'J':
+	      stagerJobNbthread = atoi(Coptarg);
+	      break;
+	    case 'l':
+	      if (strlen(Coptarg) > CA_MAXLINELEN) {
+		castor::exception::Exception ex(SENAMETOOLONG);
+		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg too long"<<std::endl;
+		throw(ex);
+	      }
+	      if (Coptarg[0] == '\0') {
+		castor::exception::Exception ex(EINVAL);
+		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg invalid"<<std::endl;
+		throw(ex);
+	      }
+	      stagerLog = Coptarg;
+	      break;
+	    case 'n':
+	      stagerNoDlf = 1;
+	      break;
+	    case 'p':
+	      stagerPort = atoi(Coptarg);
+	      if (stagerPort <= 0) {
+		castor::exception::Exception ex(EINVAL);
+		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Port must be >0"<<std::endl;
+		throw(ex);
+	      }
+	      break;
+	    case 'P':
+	      stagerSecurePort = atoi(Coptarg);
+	      if (stagerSecurePort <= 0) {
+		castor::exception::Exception ex(EINVAL);
+		ex.getMessage()<<"(StagerMainDaemon parseCommandLine) SecurePort must be >0"<<std::endl;
+		throw(ex);
+	      }
+	      break;
+	    case 'Q':
+	      stagerQueryNbthread = atoi(Coptarg);
+	      break;
+	    case 'S':
+	      stagerSecure = 1;
+	      optionStagerSecure = true; 
+	      break;
+	    case 't':
+	      stagerTrace = 1;
+	      break;
+	    case 'T':
+	      stagerTimeout = atoi(Coptarg);
+	      break;
+	      /* case 'Z':
+		 stagerFsNbthread = atoi(Coptarg);
+		 break; */
+	    default:
+	      badMainArguments = true;
+	      std::string mainArgs = argv[0];
+	      help(mainArgs);
+	      break;
+	    }
+	  }
+	  
+#ifndef CSEC
+	  if(optionStagerSecure){
+	    castor::dlf::Param param[]={castor::dlf::Param("Standard Message","Stager not compiled with security, but started with security option")};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,STAGER_MSG_USAGE, 1, param);
 	    help(argv[0]);
 	  }
+#endif	
+	  
+	  if(stagerLog.empty() == false){
+	    if(strcmp(stagerLog.c_str(), "stderr")== 0 ){
+	      initlog("stager",LOG_DEBUG,"");	    
+	    }else{
+	      initlog("stager", LOG_DEBUG,(char*)stagerLog.c_str());
+	    }
+	  }
+	  
+	  if(stagerHelp){
+	    std::string mainArgs = argv[0];
+	    help(mainArgs);
+	  }
+	  
 	}
 
 	free(stgMainArguments);
       }
 
-      /**********************************************************************************/
-      /* looped switch to get and set the configuration values (from the command line) */
-      /********************************************************************************/
-      bool StagerMainDaemon::switchSetConfig(int argc, char* argv[]) throw(castor::exception::Exception){
-	/* stager.c : parse the command line */
-	int c = 0;
-	Coptarg = NULL;
-	bool babArgs = false;
-	bool optionStagerSecure = false;
-	
-	while (badArgs == false && (c = Cgetopt_long(argc,argv,"A:C:dD:fE:F:G:hJ:l:np:P:Q:StT:Z:", longopts, NULL)) != -1) {
-	  switch (c) {
-	  case 'A':
-	    stagerAdminNbthread = atoi(Coptarg);
-	    break;
-	  case 'd':
-	    stagerDebug = 1;
-	    /* Option -d implies option -t */
-	    stagerTrace = 1;
-	    break;
-	  case 'C':
-	    stagerGCNbthread = atoi(Coptarg);
-	    optionStagerGCNbthread = 1;
-	    break;
-	  case 'D':
-	    stagerDbNbthread = atoi(Coptarg);
-	    break;
-	  case 'E':
-	    stagerErrorNbthread = atoi(Coptarg);
-	    break;
-	  case 'f':
-	    stagerForeground = 1;
-	    break;
-	  case 'F':
-	    stagerFsUpdate = atoi(Coptarg);
-	    break;
-	  case 'G':
-	    stagerGetnextNbthread = atoi(Coptarg);
-	    break;
-	  case 'h':
-	    stagerHelp = 1;
-	    break;
-	  case 'J':
-	    stagerJobNbthread = atoi(Coptarg);
-	    break;
-	  case 'l':
-	    if (strlen(Coptarg) > CA_MAXLINELEN) {
-	      castor::exception::Exception ex(SENAMETOOLONG);
-	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg too long"<<std::endl;
-	      throw(ex);
-	    }
-	    if (Coptarg[0] == '\0') {
-	      castor::exception::Exception ex(EINVAL);
-	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Coptarg invalid"<<std::endl;
-	      throw(ex);
-	    }
-	    stagerLog = Coptarg;
-	    break;
-	  case 'n':
-	    stagerNoDlf = 1;
-	    break;
-	  case 'p':
-	    stagerPort = atoi(Coptarg);
-	    if (stagerPort <= 0) {
-	      castor::exception::Exception ex(EINVAL);
-	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) Port must be >0"<<std::endl;
-	      throw(ex);
-	    }
-	    break;
-	  case 'P':
-	    stagerSecurePort = atoi(Coptarg);
-	    if (stagerSecurePort <= 0) {
-	      castor::exception::Exception ex(EINVAL);
-	      ex.getMessage()<<"(StagerMainDaemon parseCommandLine) SecurePort must be >0"<<std::endl;
-	      throw(ex);
-	    }
-	    break;
-	  case 'Q':
-	    stagerQueryNbthread = atoi(Coptarg);
-	    break;
-	  case 'S':
-	    stagerSecure = 1;
-	    optionStagerSecure = true; 
-	    break;
-	  case 't':
-	    stagerTrace = 1;
-	    break;
-	  case 'T':
-	    stagerTimeout = atoi(Coptarg);
-	    break;
-	  case 'Z':
-	    stagerFsNbthread = atoi(Coptarg);
-	    break;
-	  default:
-	    badArgs = true;
-	    break;
-	  }
-	}
-	
-#ifndef CSEC
-	if(optionStagerSecure){
-	  castor::dlf::Param param[]={castor::dlf::Param("Standard Message","Stager not compiled with security, but started with security option")};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,STAGER_MSG_USAGE, 1, param);
-	  help(argv[0]);
-	}
-#endif	
-
-	if(stagerLog.empty() == false){
-	  if(strcmp(stagerLog.str(), "stderr")== 0 ){
-	    initlog("stager",LOG_DEBUG,"");	    
-	  }else{
-	    initlog("stager", LOG_DEBUG,stagerLog.str());
-	  }
-	}
-	
-	if(stagerHelp){
-	  help(argv[0]);
-	}
-	return(badArgs);
-      }
-
-
+      
       /**************************************************************/
       /* help method for the configuration (from the command line) */
-      /************************************************************/
-      void StagerMainDaemon::help(std::string programName){
-	std::cout << "Usage: " << programName << " [options]\n"
-	  "\n"
-	  "where options can be:\n"
-	  "\n"
-	  "\t--Adminthreads or -A {integer >= 0} \tNumber of admin threads (should be 1 or zero)\n"
-	  "\t--debug        or -d                \tDebug mode\n"
-	  "\t--Cthreads     or -C {integer >= 0}  \tNumber of garbage collector threads\n"
-	  "\t--Dbthreads    or -D {integer >= 0}  \tNumber of threads to the database\n"
-	  "\t--Ethreads     or -E {integer >= 0}  \tNumber of error threads\n"
-	  "\t--foreground   or -f                \tForeground\n"
-	  "\t--Gthreads     or -G {integer >= 0}  \tNumber of getnext threads\n"
-	  "\t--help         or -h                \tThis help\n"
-	  "\t--Jthreads     or -J {integer >= 0}  \tNumber of job threads\n"
-	  "\t--log          or -l {string}       \tForced logging outside of DLF (filename, or stderr, or stdout)\n"
-	  "\t--nodlf        or -n                \tForced no logging to DLF (then consider option --log)\n"
-	  "\t--port         or -p {integer > 0}  \tPort number to listen\n"
-	  "\t--Port         or -P {integer > 0}  \tSecure Port number to listen\n"
-	  "\t--Qthreads     or -Q {integer >= 0}  \tNumber of query threads\n"
-	  "\t--Secure       or -S                \tSecure mode\n"
-	  "\t--trace        or -t                \tTrace mode\n"
-	  "\t--Timeout      or -T {integer}      \tNetwork timeout\n"
-	  "\n"
-#ifndef CSEC
-	  "WARNING: Option -P will be refused\n"
-	  "Please re-compile stager with security support (-DCSEC)\n"
-	  "\n"
-#endif
-	  "\n"
-	  "Please note that option -d implies option -t\n"
-	  "\n"
-	  "Comments to: Castor.Support@cern.ch\n";
-      }
+      /****************************************************************/
+      /* inline void StagerMainDaemon::help(std::string programName) */
+
+
     }/* end namespace dbService */
   }/* end namespace stager */
 }/* end namespace castor */
