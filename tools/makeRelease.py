@@ -9,13 +9,8 @@ platforms = (('SLC4', 'x86_64', 'lxbuild085.cern.ch'),
 def usage():
     print sys.argv[0] + " <CVS tag of the release>"
 
-def cleanup():
-    global intReleaseDir
-    shutil.rmtree(workDir)
-    if intReleaseDir != '':
-        shutil.rmtree(intReleaseDir)
-
 def runCommand(cmd, errorMessage):
+    global intReleaseDir
     f = os.popen(cmd)
     f.read()
     if (f.close() != None):
@@ -23,7 +18,9 @@ def runCommand(cmd, errorMessage):
         print "Was running :"
         print cmd
         print "Exiting"
-        cleanup()
+        shutil.rmtree(workDir)
+        if intReleaseDir != '':
+            shutil.rmtree(intReleaseDir)
         sys.exit(1)    
 
 def findUpdates(d):
@@ -108,4 +105,4 @@ for o in outputs:
         print "Error during remote build on", o[0]
 
 # cleanup
-cleanup()
+shutil.rmtree(workDir)

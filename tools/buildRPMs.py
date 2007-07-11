@@ -22,7 +22,10 @@ for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_6
 
 # build RPMs
 print 'Building RPMs for ' + targetOs + '/' + targetArch + ' ...'
-oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
+if targetOs == 'SLC3':
+    oraPath = '/afs/cern.ch/project/oracle/@sys/10201'
+else:
+    oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
 cmd = "ORACLE_HOME=" + oraPath + " LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep + "' -ta " + tarball
 rpmOutput = os.popen4(cmd)[1].read()
 if rpmOutput.find('Wrote:') == -1:
@@ -35,6 +38,7 @@ if rpmOutput.find('Wrote:') == -1:
 
 rpmDir = workDir + os.sep + 'RPMS' + os.sep + targetArch
 # copy RPMs to internal releases space
+print 'Copying RPMs to internal release area ...'
 intReleaseDir = '/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/' + fullVersion
 rpmList = os.listdir(rpmDir)
 if len(rpmList) != 54:
@@ -42,10 +46,11 @@ if len(rpmList) != 54:
 for p in rpmList:
     shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch + os.sep + p)
 if targetOs == 'SLC3' and targetArch == 'i386':
+    print 'Copying source RPM to internal release area ...'
     # here we also copy the source RPM
-    shutil.copyfile(rpmDir + '/../SRPMS/castor-' + fullVersion + '.src.rpm', intReleaseDir)
-    # this is temporarily needed until we get rid of GridFTPv1, which is only built for 32 bit  
-    shutil.copyfile(rpmDir + os.sep + 'castor-lib-' + fullVersion + '.i386.rpm', intReleaseDir + os.sep + 'SLC4/x86_64')
+    shutil.copyfile(rpmDir + '/../../SRPMS/castor-' + fullVersion + '.src.rpm', intReleaseDir + os.sep + 'castor-' + fullVersion + '.src.rpm')
+# all was fine
+print 'Release done successfully on ' + targetOs + '/' + targetArch
 
 # cleanup
 shutil.rmtree(workDir)
