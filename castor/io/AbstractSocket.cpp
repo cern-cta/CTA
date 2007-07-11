@@ -25,15 +25,9 @@
  *****************************************************************************/
 
 // Include Files
-#include <net.h>
-#if !defined(_WIN32)
-#include <netdb.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#else
-#include <winsock2.h>
-#endif
+#include <net.h>
+#include <Cnetdb.h>
 #include <errno.h>
 #include <serrno.h>
 #include <sys/types.h>
@@ -41,7 +35,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/Services.hpp"
-#include "castor/System.hpp"
 #include "castor/io/StreamAddress.hpp"
 
 // Local Includes
@@ -111,11 +104,7 @@ void castor::io::AbstractSocket::getPortIp(unsigned short& port,
                                            unsigned long& ip) const
   throw (castor::exception::Exception) {
   // get address
-#if !defined(_WIN32)
   unsigned int soutlen = sizeof(struct sockaddr_in);
-#else
-  int soutlen = sizeof(struct sockaddr_in);
-#endif
   struct sockaddr_in sout;
   if (getsockname(m_socket, (struct sockaddr*)&sout, &soutlen) < 0) {
     castor::exception::Exception ex(errno);
@@ -135,11 +124,7 @@ void castor::io::AbstractSocket::getPeerIp(unsigned short& port,
                                            unsigned long& ip) const
   throw (castor::exception::Exception) {
   // get address
-#if !defined(_WIN32)
   unsigned int soutlen = sizeof(struct sockaddr_in);
-#else
-  int soutlen = sizeof(struct sockaddr_in);
-#endif
   struct sockaddr_in sout;
   if (getpeername(m_socket, (struct sockaddr*)&sout, &soutlen) < 0) {
     castor::exception::Exception ex(errno);
@@ -243,8 +228,13 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port)
 sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
                                                      const std::string host)
   throw (castor::exception::Exception) {
-  // get host information
-  struct hostent *hp = castor::System::getHostByName(host);
+  // get host information, reentrant in linux
+  struct hostent *hp = Cgethostbyname(host.c_str());
+  if(hp == 0) {
+    castor::exception::Exception ex(EHOSTUNREACH);
+    ex.getMessage() << "Unknown host " << host << " (h_errno = " << h_errno << ")";
+    throw ex;
+  }
   // builds the address
   struct sockaddr_in saddr;
   memset(&saddr, 0, sizeof(saddr));
@@ -274,11 +264,8 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::close() throw () {
   if (m_socket >= 0) {
-#if !defined(_WIN32)
-    ::close(m_socket);
-#else
-    closesocket(m_socket);
-#endif
+    // CLOSE is a system independent macro defined in Cnetdb.h
+    CLOSE(m_socket);
   }
   m_socket = -1;
 }
