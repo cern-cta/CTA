@@ -54,4 +54,4 @@ print 'Release done successfully on ' + targetOs + '/' + targetArch
 
 # cleanup
 shutil.rmtree(workDir)
-    
+os.remove(tarball)
