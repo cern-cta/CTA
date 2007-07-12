@@ -39,15 +39,14 @@ namespace castor {
 	StagerDBService() throw();
 	~StagerDBService() throw();
 
-	void run(void* param) throw();
+	virtual void run(void* param) throw();
 	virtual void stop() throw() {};
 	
 	/***************************************************************************/
 	/* abstract functions inherited from the SelectProcessThread to implement */
 	/*************************************************************************/
-	inline castor::IObject* StagerDBService::select(){ 
-	  return dynamic_cast<IObject*>(this); }
-	inline void StagerDBService::process(castor::IObject*){ };
+	castor::IObject* StagerDBService::select() throw(castor::exception::Exception);
+	void StagerDBService::process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
 	
 	
 	std::vector<ObjectsIds> types;

@@ -47,11 +47,14 @@
 
 #include "castor/IAddress.hpp"
 #include "castor/IObject.hpp"
+#include "castor/Services.hpp"
+#include "castor/stager/IStagerSvc.hpp"
+#include "castor/BaseObject.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "castor/Constants.hpp"
 
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
@@ -97,12 +100,39 @@ namespace castor{
       /* destructor  */
       /**************/
       StagerDBService::~StagerDBService() throw(){};
-      
+
+
+
+      /*************************************************************/
+      /* Method to get a subrequest to do using the StagerService */
+      /***********************************************************/
+      castor::IObject* StagerDBService::select() throw(castor::exception::Exception){
+	castor::stager::IStagerSvc* stgService;
+	castor::IService* svc =
+	  castor::BaseObject::services()->
+	  service("StagerSvc", castor::SVC_DBSTAGERSVC);
+	if (0 == svc) {
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerDBService) Impossible to get the stgService"<<std::endl;
+	  throw ex;
+	}
+	stgService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+	if (0 == stgService) {
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerDBService) Got a bad stgService"<<std::endl;
+	  throw ex;
+	}
+	
+	castor::stager::SubRequest* subrequestToProcess = stgService->subRequestToDo(this->types);
+	
+	return(subrequestToProcess);
+      }
+
 
       /*********************************************************/
       /* Thread calling the specific request's handler        */
       /***************************************************** */
-      void StagerDBService::run(void* param) throw(){
+      void StagerDBService::process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception){
 	try {
 
 
@@ -131,8 +161,8 @@ namespace castor{
 	  
 	 
 
-	  /* get the subrequest: if there isn' t subrequest: we stop the program here */
-	  stgRequestHelper->getSubrequest();
+	  /* set the subrequest on the helper(obtained on the select() thread method) */
+	  stgRequestHelper->setSubrequest(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess));
 	 
 
 	  /* settings BaseAddress */

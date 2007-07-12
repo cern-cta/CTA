@@ -140,11 +140,11 @@ namespace castor{
 	/************************************************************************************/
 	
 	/* get subrequest using stagerService (and also types) */
-	inline void StagerRequestHelper::getSubrequest() throw(castor::exception::Exception){
-	  this->subrequest=stagerService->subRequestToDo(types);
+	inline void StagerRequestHelper::setSubrequest(castor::stager::SubRequest* subRequestToProcess) throw(castor::exception::Exception){
+	  this->subrequest=subRequestToProcess;
 	  if(this->subrequest == NULL){
 	    castor::exception::Exception ex(SEENTRYNFND);
-	    ex.getMessage()<<"(StagerRequestHelper getSubrequest) There is not subrequest to process"<<std::endl;
+	    ex.getMessage()<<"(StagerRequestHelper setSubrequest) Got a NULL subrequest"<<std::endl;
 	    throw ex;
 	  }
 	}
@@ -161,7 +161,6 @@ namespace castor{
 	  }
 	  this->fileRequest=subrequest->request();
 	  if(this->fileRequest == NULL){
-	    
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper getFileRequest) Impossible to get the fileRequest"<<std::endl;
 	    throw ex;
