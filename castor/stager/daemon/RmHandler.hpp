@@ -54,6 +54,9 @@ namespace castor{
 	virtual IObject* clone();
 	virtual void print() const;
 	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
+
+      private: 
+	u_signed64 svcClassId;
 	
       }; // end StagerRmHandler class
 

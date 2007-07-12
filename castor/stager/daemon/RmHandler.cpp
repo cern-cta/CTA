@@ -42,6 +42,12 @@ namespace castor{
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
+
+
+	/* get the right svcClassId needed to call stagerService->stageRm  */
+	if(!strcmp(className.c_str(),"*")){
+	  this->svcClassId = 0;
+	}
 	
       }
 
@@ -51,7 +57,7 @@ namespace castor{
 	  /* execute the main function for the rm request                 */
 	  /* basically, a call to the corresponding stagerService method */
 	  std::string server(stgCnsHelper->cnsFileid.server);
-	  stgRequestHelper->stagerService->stageRm(stgCnsHelper->cnsFileid.fileid, server);
+	  stgRequestHelper->stagerService->stageRm(stgCnsHelper->cnsFileid.fileid, server,this->svcClassId);
 	  
 	  /**************************************************/
 	  /* we don t need to update the subrequestStatus  */
