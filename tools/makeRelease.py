@@ -68,6 +68,7 @@ runCommand('make -f Makefile.ini Makefiles', 'could not create makefiles')
 runCommand('make tar', 'could not create tar ball')
 os.chdir(workDir)
 tarBall = 'castor-' + str(majversion) + '.' + str(minversion) + '.' + str(majrelease) + '.tar.gz'
+os.chmod(tarBall, 0664)
 
 # Prepare internal Release space
 print "Preparing internal release space"
