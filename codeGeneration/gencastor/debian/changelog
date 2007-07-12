@@ -1,3 +1,12 @@
+gencastor (7.0-0) unstable; urgency=low
+
+  * Port to KDE 3.5.7
+  * Named all indexes created by PK constraints in the SQL scripts
+  * Generated SQL schema without trailer part
+  * Dropped the generation of the *_oracle_drop SQL scripts
+
+ -- Giuseppe Lo Presti <itglp@cern.ch>  Wed, 10 Jul 2007 20:00:00 +0200
+
 gencastor (6.0-1) unstable; urgency=low
 
   * Removed Oracle-specific converters
