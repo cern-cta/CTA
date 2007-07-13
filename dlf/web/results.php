@@ -55,7 +55,7 @@ setcookie("style", $_GET['style']);
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-	<meta name="author" content="Dennis Waldron" />
+	<meta name="author" content="Castor Dev" />
 	<meta name="description" content="Distributed Logging Facility" />
 	<meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 	<meta http-equiv="Pragma" content="no-cache" />
@@ -200,6 +200,7 @@ setcookie("style", $_GET['style']);
 				$_GET['paramname'] ? "AND b.name = '".$_GET['paramname']."'" : "");		
 
 		$query = "SELECT a.* FROM (".$query.") a ".$join;
+		$limit = str_replace('ORDER BY timestamp', 'ORDER BY a.timestamp', $limit);
 	}
 
 	if (DB_LAYER == 'mysql') {
@@ -564,17 +565,24 @@ setcookie("style", $_GET['style']);
 								/* hyperlink required for drill down */
 								else if ($href_name) {
 
-									/* adjustments required to handle ns file id */
-									if (($act_name == "NS File ID") && ($use_database_view)) {
-										echo "<td class=\"".$class."\">";
-										echo "<a href=\"dbview.php?instance=".$_GET['instance']."&amp;entry=castorfile&amp;param=".urlencode($value)."\" target=\"blank\">".$value."</a>";
-										echo "</td>";
-										continue;
-									} 
-			
 									$drill = explode(".", $data[$keys[$i]]['col_timestamp']);
 									$drill = "drilltime=".urlencode($drill[0]);
 								
+									/* adjustments required to handle ns file id */
+									if ($act_name == "NS File ID") {
+										if ($use_database_view) {
+											echo "<td class=\"".$class."\">";
+											echo "<a href=\"".$_SERVER['PHP_SELF']."?".$drill."&amp;".$get_url."&amp;".str_replace("m_", "", $href_name)."=".$value."\">".$value."</a></br>";
+											echo "<a href=\"dbview.php?instance=".$_GET['instance']."&amp;entry=castorfile&amp;param=".urlencode($value)."\" target=\"blank\">Stager DB</a>";
+											echo "</td>";
+										} else {
+											echo "<td class=\"".$class."\">";
+											echo "<a href=\"".$_SERVER['PHP_SELF']."?".$drill."&amp;".$get_url."&amp;".str_replace("m_", "", $href_name)."=".$value."\">".$value."</a>";
+											echo "</td>";
+										}
+										continue;
+									}
+			
 									/* add an invisible word-break to request and sub request ids */
 									if (($act_name == "Request ID") ||
 										($act_name == "Sub Request ID")) {

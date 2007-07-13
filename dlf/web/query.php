@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: query.php,v 1.15 2007/06/28 06:20:08 waldron Exp $
+ * $Id: query.php,v 1.16 2007/07/13 08:04:52 waldron Exp $
  */
 
 require("utils.php");
@@ -43,7 +43,7 @@ setcookie("instance", $_GET['instance']);
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<meta name="author" content="Dennis Waldron" />
+	<meta name="author" content="Castor Dev" />
 	<meta name="description" content="Distributed Logging Facility" />
 	<meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 	<meta http-equiv="Pragma" content="no-cache" />

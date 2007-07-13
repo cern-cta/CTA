@@ -20,7 +20,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: index.php,v 1.5 2007/06/28 06:18:32 waldron Exp $
+ * $Id: index.php,v 1.6 2007/07/13 08:04:51 waldron Exp $
  */
 
 require("utils.php");
@@ -34,7 +34,7 @@ $gen_start = getmicrotime();
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-	<meta name="author" content="Dennis Waldron" />
+	<meta name="author" content="Castor Dev" />
 	<meta name="description" content="Distributed Logging Facility" />
 	<meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 	<meta http-equiv="Pragma" content="no-cache" />
