@@ -276,9 +276,8 @@ namespace castor{
 
       /*******************************************************************************************************************************************/
       /*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
-      /*****************************************************************************************************************************************/
-      
-      void StagerRequestHelper::linkCastorFileToServiceClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception)
+      /*****************************************************************************************************************************************/      
+      void StagerRequestHelper::getCastorFileFromSvcClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception)
       {
 	u_signed64 fileClassId = fileClass->id();
 	u_signed64 svcClassId = svcClass->id();

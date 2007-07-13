@@ -71,11 +71,9 @@ namespace castor{
 	  stgRequestHelper->getFileClass(stgCnsHelper->cnsFileclass.name);/* first we need to get the FileClass */
 	  
 	  /* the exception is throwing internally in the helper method */
-	  stgRequestHelper->linkCastorFileToServiceClass(*stgCnsHelper);
+	  stgRequestHelper->getCastorFileFromSvcClass(*stgCnsHelper);
 	  
-	  /*check if the castorFile is linked to the service Class */
-	  /* the exception is throwing internally in the helper method */ 
-	  stgRequestHelper->isCastorFileLinkedToSvcClass();
+	  
 	  
 	  /* set svcClass.name() as a partitionMask (it'll be copy to rmjob.partitionmask) */
 	  /*the exception is throwing internally in the helper method */
@@ -107,11 +105,12 @@ namespace castor{
       {
 	
 	try{
+	  
 	  switch(caseToSchedule){
 	    
 	  case 2: //normal tape recall
 	    try{
-	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid());//throw exception
+	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
 	    }catch(castor::exception::Exception ex){
 	      castor::exception::Exception e(ESTSEGNOACC);
 	      e.getMessage()<<"(Stager__Handler switchScheduling) stagerService->createRecallCandidate"<<std::endl;
@@ -126,7 +125,12 @@ namespace castor{
 	      processReplicaAndHostlist();
 	    }
 	    break;
-	    
+
+	  case 4:
+	    /* in order to avoid to: changeSubrequestStatus, archiveSubrequest, replyToCLient */
+	    this->caseSubrequestFailed = true;
+	    break;
+ 
 	  case 0:
 	  stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
 	  

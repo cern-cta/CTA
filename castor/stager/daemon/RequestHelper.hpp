@@ -89,6 +89,7 @@ namespace castor{
 	std::string iClientAsString;
 	
 	/* service class */
+	std::string svcClassName;
 	castor::stager::SvcClass* svcClass;
 	
 	char partitionMask[RM_MAXPARTITIONLEN+1];/* initialized to svcClass.name on stagerRequest.jobOriented ()*/
@@ -199,21 +200,21 @@ namespace castor{
 	/* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
 	/*************************************************************************************/
 	inline void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception){
-	  std::string className=fileRequest->svcClassName(); 
+	  this->svcClassName=fileRequest->svcClassName(); 
 	  
-	  if(className.empty()){  /* we set the default className */
-	    className="default";
-	    fileRequest->setSvcClassName(className);
+	  if(this->svcClassName.empty()){  /* we set the default svcClassName */
+	    this->svcClassName="default";
+	    fileRequest->setSvcClassName(this->svcClassName);
 	    
-	    className=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly updated */
-	    if(className.empty()){      
+	    this->svcClassName=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly updated */
+	    if(this->svcClassName.empty()){      
 	      castor::exception::Exception ex(SESVCCLASSNFND);
 	      ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to set properly the svcClassName on fileRequest"<<std::endl;
 	      throw ex;
 	    }
 	  }
 	  
-	  svcClass=stagerService->selectSvcClass(className);//check if it is NULL
+	  svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
 	  if(this->svcClass == NULL){
 	    castor::exception::Exception ex(SESVCCLASSNFND);
 	    ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to get the svcClass"<<std::endl;
@@ -299,48 +300,25 @@ namespace castor{
 	/*******************************************************************************************************************************************/
 	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
 	/*****************************************************************************************************************************************/
-       	void StagerRequestHelper::linkCastorFileToServiceClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception);
+       	void StagerRequestHelper::getCastorFileFromSvcClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception);
      
 
 
 
-	/****************************************************************************************************/
-	/*  check if the castorFile is linked to the service Class: called in StagerRequest.jobOriented()*/
-	/**************************************************************************************************/
-	inline void StagerRequestHelper::isCastorFileLinkedToSvcClass() throw(castor::exception::Exception){
-	  castor::stager::SvcClass* svcClass_from_castorFile = castorFile->svcClass();
-	  
-	  try{
-	    if(svcClass_from_castorFile == NULL){
-	      castorFile->setSvcClass(svcClass);
-	      dbService->fillRep(baseAddr, castorFile, castor::OBJ_SvcClass, true);//THROW EXCEPTION!
-	      
-	    }else{
-	      if(svcClass == NULL){
-		delete svcClass; /***** just a call to the delete cpp (including the destructor) ***/
-	      }
-	      svcClass = castorFile->svcClass();
-	    }
-	  }catch(castor::exception::Exception ex){/* stagerService throw exception */
-	    castor::exception::Exception e(SEINTERNAL);
-	    e.getMessage()<<"(StagerRequestHelper isCastorFileLinkedToSvcClass) dbService->fill___  throws an exception"<<std::endl;
-	    throw e;
-	  }
-	}
+
      
 
 
       
-	/****************************************************************************************************/
+	/*********************************************************************************************************/
 	/*  initialize the partition mask with svcClass.name()  or get it:called in StagerRequest.jobOriented() */
-	/**************************************************************************************************/
+	/*******************************************************************************************************/
 	inline std::string StagerRequestHelper::getPartitionMask() throw(castor::exception::Exception){
 	  if(svcClass->name().empty()){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper getPartitionMask) svcClassName is empty"<<std::endl;
 	    throw ex;
 	  }else{
-	    std::string svcClassName =  svcClass->name();
 	    strncpy(partitionMask, svcClassName.c_str(),RM_MAXPARTITIONLEN+1);
 	  }
 	  
