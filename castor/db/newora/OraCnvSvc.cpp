@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/07/02 17:48:36 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/07/13 10:25:07 $ $Author: itglp $
  *
- *
+ * The conversion service to Oracle
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -29,15 +29,15 @@
 #include "castor/IConverter.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/IObject.hpp"
+#include "castor/Services.hpp"
 #include "castor/SvcFactory.hpp"
+#include "castor/db/DbParamsSvc.hpp"
 #include "castor/BaseAddress.hpp"
-#include "castor/db/DbBaseObj.hpp"
 #include "castor/db/newora/OraStatement.hpp"
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/NoEntry.hpp"
 #include <iomanip>
 
 // Local Files
@@ -53,8 +53,8 @@ extern "C" {
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraCnvSvc> s_factoryOraCnvSvc;
-const castor::IFactory<castor::IService>& OraCnvSvcFactory = s_factoryOraCnvSvc;
+static castor::SvcFactory<castor::db::ora::OraCnvSvc>* s_factoryOraCnvSvc =
+  new castor::SvcFactory<castor::db::ora::OraCnvSvc>();
 
 // -----------------------------------------------------------------------
 // OraCnvSvc
@@ -99,72 +99,87 @@ const unsigned int castor::db::ora::OraCnvSvc::getPhysRepType() const {
 // getConnection
 // -----------------------------------------------------------------------
 oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
-  throw (oracle::occi::SQLException,
-         castor::exception::Exception) {
+  throw (oracle::occi::SQLException, castor::exception::Exception) {
   // Quick answer if connection available
   if (0 != m_connection) return m_connection;
+  
   // Else try to build one
   if (0 == m_environment) {
     m_environment = oracle::occi::Environment::createEnvironment
       (oracle::occi::Environment::THREADED_MUTEXED);
   }
-  if (0 == m_connection) {
-    if ("" == m_user || "" == m_dbName) {
-      // get the new values
-      std::string full_name = name();
-      if (char* p = getenv("CASTOR_INSTANCE")) full_name = full_name + "_" + p;
-      char* cuser = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "user", 0);
-      if (0 != cuser) m_user = std::string(cuser);
-      char* cpasswd = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "passwd", 0);
-      if (0 != cpasswd) m_passwd = std::string(cpasswd);
-      char* cdbName = getconfent_fromfile(ORASTAGERCONFIGFILE, full_name.c_str(), "dbName", 0);
-      if (0 != cdbName) m_dbName = std::string(cdbName);
-      if ("" == m_user || "" == m_dbName) {
-        // If still empty, try to avoid connecting with empty string, since
-        // ORACLE would core dump !
-        castor::exception::InvalidArgument e;
-        e.getMessage() << "Empty user name or db name, cannot connect to database.";
-        throw e;
-      }
-    }
-    m_connection =
-      m_environment->createConnection(m_user, m_passwd, m_dbName);
-    clog() << SYSTEM << "Created new Oracle connection" << std::endl;
-
-    std::string codeVersion = "2_1_4_0";
-    std::string DBVersion = "";
-    oracle::occi::Statement* stmt = 0;
-    try {
-      oracle::occi::Statement* stmt = m_connection->createStatement
-        ("SELECT schemaVersion FROM CastorVersion");
-      oracle::occi::ResultSet *rset = stmt->executeQuery();
-      if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-        DBVersion = rset->getString(1);
-      }   
-      m_connection->terminateStatement(stmt);
-      if (codeVersion != DBVersion) {
-        castor::exception::BadVersion e;
-        e.getMessage() << "Version mismatch between the database and the code : \""
-                       << DBVersion << "\" versus \""
-                       << codeVersion << "\"";
-        throw e;
-      }
-    } catch (oracle::occi::SQLException e) {
-      // No CastorVersion table ?? This means bad version
-      if (0 != stmt) m_connection->terminateStatement(stmt);
-      castor::exception::BadVersion ex;
-      ex.getMessage() << "Not able to find the version of castor in the database"
-                      << " Original error was " << e.what();
-      throw ex;
-    }
-    
-    // Uncomment this to unable tracing of the DB
-    //stmt = m_connection->createStatement
-    //  ("alter session set events '10046 trace name context forever, level 8'");
-    //stmt->executeUpdate();
-    //m_connection->terminateStatement(stmt);
-    //m_connection->commit();
+  
+  // get the parameters service to resolve the schema version and the config file
+  castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", SVC_DBPARAMSSVC);
+  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+  if(params == 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Fail to instantiate a DbParamsSvc, cannot connect to database.";
+    throw e;
   }
+  
+  if ("" == m_user || "" == m_dbName) {
+    // get the config file name. Defaults to ORASTAGERCONFIG
+    std::string confFile = params->getDbAccessConfFile();
+    if(confFile == "") {
+      confFile = std::string(ORASTAGERCONFIGFILE);
+    }
+    // get the new values
+    char* cuser = getconfent_fromfile(confFile.c_str(), name().c_str(), "user", 0);
+    if (0 != cuser) m_user = std::string(cuser);
+    char* cpasswd = getconfent_fromfile(confFile.c_str(), name().c_str(), "passwd", 0);
+    if (0 != cpasswd) m_passwd = std::string(cpasswd);
+    char* cdbName = getconfent_fromfile(confFile.c_str(), name().c_str(), "dbName", 0);
+    if (0 != cdbName) m_dbName = std::string(cdbName);
+    if ("" == m_user || "" == m_dbName) {
+      // If still empty, try to avoid connecting with empty string, since
+      // ORACLE would core dump !
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "Empty user name or db name, cannot connect to database.";
+      throw e;
+    }
+  }
+  m_connection =
+    m_environment->createConnection(m_user, m_passwd, m_dbName);
+
+  // get the schema version. No hardcoded default here, but DbParamsSvc contains
+  // the Castor hardcoded value for it.
+  std::string codeVersion = params->getSchemaVersion();
+  std::string DBVersion = "";
+  oracle::occi::Statement* stmt = 0;
+  try {
+    oracle::occi::Statement* stmt = m_connection->createStatement
+      ("SELECT schemaVersion FROM CastorVersion");
+    oracle::occi::ResultSet *rset = stmt->executeQuery();
+    if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      DBVersion = rset->getString(1);
+    }   
+    m_connection->terminateStatement(stmt);
+    if (codeVersion != DBVersion) {
+      castor::exception::BadVersion e;
+      e.getMessage() << "Version mismatch between the database and the code : \""
+                     << DBVersion << "\" versus \""
+                     << codeVersion << "\"";
+      throw e;
+    }
+  } catch (oracle::occi::SQLException e) {
+    // No CastorVersion table ?? This means bad version
+    if (0 != stmt) m_connection->terminateStatement(stmt);
+    castor::exception::BadVersion ex;
+    ex.getMessage() << "Not able to find the version of castor in the database"
+                    << " Original error was " << e.what();
+    throw ex;
+  }
+  
+  clog() << SYSTEM << "Created new Oracle connection" << std::endl;
+
+  // Uncomment this to enable tracing of the DB
+  //stmt = m_connection->createStatement
+  //  ("alter session set events '10046 trace name context forever, level 8'");
+  //stmt->executeUpdate();
+  //m_connection->terminateStatement(stmt);
+  //m_connection->commit();
+
   return m_connection;
 }
 
