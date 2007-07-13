@@ -98,6 +98,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbTapeServerCnv.cpp \
      ../DbBaseObj.cpp \
      ../DbCnvSvc.cpp \
+     ../DbParamsSvc.cpp \
      ../../server/SelectProcessThread.cpp \
      ../../server/BaseDbThread.cpp
 
