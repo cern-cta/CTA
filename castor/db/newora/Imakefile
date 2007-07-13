@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Release$ $Date: 2007/04/13 13:16:28 $ $Author: itglp $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Release$ $Date: 2007/07/13 08:00:40 $ $Author: waldron $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -92,7 +92,7 @@ depend:
 
 clean:
 	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
+	-@RemoveFiles(FilesToClean $(ORALIB_OBJS) $(ORAVDQMLIB_OBJS))
 
 clobber:	clean
 	@echo clobbering in CurDir

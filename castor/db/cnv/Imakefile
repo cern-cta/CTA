@@ -124,7 +124,7 @@ depend:
 
 clean:
 	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean ../DbBaseObj.o ../DbCnvSvc.o ../DbCommonSvc.o)
+	-@RemoveFiles(FilesToClean $(CNVSLIB_OBJS))
 
 clobber:	clean
 	@echo clobbering in CurDir
