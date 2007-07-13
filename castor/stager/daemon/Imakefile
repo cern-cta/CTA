@@ -60,11 +60,17 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,castorCnvs) \
 
 LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
 LD = g++
+GLOBLIB = -L../shlib -lshift -lcastorCnvs
 
-all:$(DBSERVICEDAEMONBIN_OBJS)
+PROGS_STAGER = ProgramTargetName(stagerMainDaemon)
+IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerMainDaemon))
+
+all:$(DBSERVICEDAEMONBIN_OBJS) $(PROGS_STAGER)
 
 MakeDepSharedLibrary(../../shlib,castorCnvs)
 MakeDepSharedLibrary(../../shlib,shift)
+
+NormalProgramTarget(stagerMainDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(GLOBLIB))
 
 Makefiles:
 
@@ -76,6 +82,11 @@ depend:
 	makedepend $(INCLUDES) $(DBSERVICEDAEMONBIN_SRCS) 2> /dev/null
 #endif
 
+install: $(BIN) $(IPROGS_STAGER)
+
+InstallProgram(stagerMainDaemon,$(BIN),root,bin,0750)
+MakeDir($(BIN),root,bin,0755)
+
 install.man: $(MANDIR) $(MANPAGES)
 
 exportman: $(EXPORTMANPAGES)
@@ -86,6 +97,7 @@ clean:
 
 clobber:	clean
 	@echo clobbering in CurDir
+	-@RemoveFiles($(PROGS_STAGER))
 
 FORCE:
 
