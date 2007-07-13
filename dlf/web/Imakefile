@@ -38,9 +38,9 @@ IFILES = $(DLFWEB)/config.php          \
 
 all:
 
-install: $(DLFWEB) $(IFILES)
+install: directories $(IFILES)
 
-$(DLFWEB):
+directories:
 	mkdir -p $(DESTDIR)$(DLFWEB)/db
 	mkdir -p $(DESTDIR)$(DLFWEB)/js
 	mkdir -p $(DESTDIR)$(DLFWEB)/images
