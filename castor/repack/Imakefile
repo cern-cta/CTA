@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Release$ $Date: 2007/04/04 10:22:56 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.19 $ $Release$ $Date: 2007/07/13 10:51:27 $ $Author: itglp $
 #
 # Make Castor Repack System
 #
@@ -35,7 +35,7 @@ DEBUG  = -g
 #endif
 
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKCONFIGFILE=\"/etc/castor/ORAREPACKCONFIG\"
 
 REPACKLIB = LibraryTargetName(castorRepack)
 
