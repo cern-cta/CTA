@@ -36,22 +36,23 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
 LIBS = -lshift -lcastorCnvs 
 DBSERVICEDAEMONBIN_SRCS = \
-	StagerDBService.cpp\
-	StagerRequestHelper.cpp\
-	StagerCnsHelper.cpp\
-	StagerReplyHelper.cpp\
-	StagerJobRequestHandler.cpp\
-	StagerGetHandler.cpp\
-	StagerPrepareToGetHandler.cpp\
-	StagerRepackHandler.cpp\
-	StagerUpdateHandler.cpp\
-	StagerPrepareToUpdateHandler.cpp\
-	StagerPutHandler.cpp\
-	StagerPrepareToPutHandler.cpp\
-	StagerPutDoneHandler.cpp\
-	StagerRmHandler.cpp\
-	StagerSetGCHandler.cpp\
-	StagerMainDaemon.cpp
+	StagerCnsHelper.cpp \
+	StagerDBService.cpp \
+	StagerGetHandler.cpp \
+	StagerJobRequestHandler.cpp \
+	StagerMainDaemon.cpp \
+	StagerPrepareToGetHandler.cpp \
+	StagerPrepareToPutHandler.cpp \
+	StagerPrepareToUpdateHandler.cpp \
+	StagerPutDoneHandler.cpp \
+	StagerPutHandler.cpp \
+	StagerRepackHandler.cpp \
+	StagerReplyHelper.cpp \
+	StagerRequestHelper.cpp \
+	StagerRmHandler.cpp \
+	StagerSetGCHandler.cpp \
+	StagerUpdateHandler.cpp \
+
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 
@@ -60,7 +61,7 @@ DEPLIB = DepSharedLibraryTargetName(../../shlib,castorCnvs) \
 
 LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
 LD = g++
-GLOBLIB = -L../shlib -lshift -lcastorCnvs
+GLOBLIB = -lshift -lcastorCnvs
 
 PROGS_STAGER = ProgramTargetName(stagerMainDaemon)
 IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerMainDaemon))
