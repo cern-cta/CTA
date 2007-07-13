@@ -7,7 +7,7 @@
 #include "Cgetopt.h"
 #include "stager_admin_api.h"
 #include "stager_messages.h"
-#include "log.h"
+
 
 #include "castor/exception/Exception.hpp"
 
@@ -326,13 +326,17 @@ namespace castor{
       }
 #endif	
       
-      if(stagerLog.empty() == false){
+      /* if(stagerLog.empty() == false){
 	if(strcmp(stagerLog.c_str(), "stderr")== 0 ){
+	   castor::dlf::Param params[] =
+	     {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+	      castor::dlf::Param("Precise Message", ex.getMessage().str())};
+	   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 2, params);
 	  initlog("stager",LOG_DEBUG,"");	    
 	}else{
 	  initlog("stager", LOG_DEBUG,(char*)stagerLog.c_str());
 	}
-      }
+	}*/
        
       if(stagerHelp){
 	std::string mainArgs = argv[0];
