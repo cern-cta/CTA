@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.460 $ $Date: 2007/07/10 15:14:45 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.461 $ $Date: 2007/07/13 15:54:35 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -607,10 +607,12 @@ BEGIN
     -- Starting with id
   bulkDelete(
      'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
-         WHERE SubRequest.request = '||cleanTab||'.id;',
+       WHERE SubRequest.request = '||cleanTab||'.id;',
      'Id2Type');
     -- Then the subRequests
-  bulkDelete('SELECT id FROM SubRequest;',
+  bulkDelete(
+     'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
+       WHERE SubRequest.request = '||cleanTab||'.id;',
      'SubRequest');
   -- Delete Request + Clients 
     ---- Get ----
@@ -1975,7 +1977,7 @@ BEGIN
    UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
       SET status = 1, lastModificationTime = getTime(), parent = 0
     WHERE status = 5 -- WAIT_SUBREQ
-      AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status = 6);
+      AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status IN (3, 6));
  END IF;
  -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
  -- then we have to archive the original preapareToPut/Update subRequest
