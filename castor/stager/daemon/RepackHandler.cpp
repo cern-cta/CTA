@@ -68,6 +68,7 @@ namespace castor{
 	this->openflags=RM_O_RDONLY;
 	this->default_protocol = "rfio";
 	
+	this->caseSubrequestFailed = false;
       }
 
 
@@ -98,24 +99,26 @@ namespace castor{
 	  }
 	  rm_freejob(rmjob_out);
 	
-	  /* updateSubrequestStatus Part: */
-	  if((caseToSchedule != 2) && (caseToSchedule != 0)){
-	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	  if(this->caseSubrequestFailed == false){
+	    /* updateSubrequestStatus Part: */
+	    if((caseToSchedule != 2) && (caseToSchedule != 0)){
+	      stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	    }
+	    /* replyToClient Part: */
+	    /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
+	    /* so copy and paste for the exceptions !!!*/
+	    this->stgReplyHelper = new StagerReplyHelper;
+	    if((this->stgReplyHelper) == NULL){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	      throw(ex);
+	    }
+	    
+	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	    delete stgReplyHelper->ioResponse;
+	    delete stgReplyHelper;
 	  }
-	  /* replyToClient Part: */
-	  /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
-	  /* so copy and paste for the exceptions !!!*/
-	  this->stgReplyHelper = new StagerReplyHelper;
-	  if((this->stgReplyHelper) == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	    throw(ex);
-	  }
-	  
-	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
-	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  delete stgReplyHelper->ioResponse;
-	  delete stgReplyHelper;
 
 	}catch(castor::exception::Exception ex){
 	  if(rmjob_out != NULL){

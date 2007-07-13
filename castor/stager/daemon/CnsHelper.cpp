@@ -41,9 +41,8 @@ namespace castor{
 
 
       StagerCnsHelper::StagerCnsHelper() throw(castor::exception::Exception){
-	/* set the initial value of our static variable */
-	this->fileid_ts_key = -1;
       }
+
       StagerCnsHelper::~StagerCnsHelper() throw(){
 	//
       }

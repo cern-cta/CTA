@@ -213,8 +213,8 @@ namespace castor{
 	 
 	  
 	  /* for the required file: check existence (and create if necessary), and permission */
-	  std::string filename = stgRequestHelper->subrequest->fileName();
-	  bool fileExist = stgCnsHelper->createCnsFileIdAndStat_setFileExist(filename.c_str());
+	  stgCnsHelper->setSubrequestFileName(stgRequestHelper->subrequest->fileName());
+	  bool fileExist = stgCnsHelper->createCnsFileIdAndStat_setFileExist();
 	  if(!fileExist){
 
 	    /* depending on fileExist and type, check if the file needed is to be created or throw exception */
@@ -222,7 +222,7 @@ namespace castor{
 
 	      mode_t mode = (mode_t) stgRequestHelper->subrequest->modeBits();
 	      /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-	      stgCnsHelper->createFileAndUpdateCns(filename.c_str(), mode);
+	      stgCnsHelper->createFileAndUpdateCns(mode, (stgRequestHelper->svcClass));
 	    }
 	    
 	  }

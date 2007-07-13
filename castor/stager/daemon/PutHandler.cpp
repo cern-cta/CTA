@@ -67,6 +67,8 @@ namespace castor{
 	
 	this->openflags=RM_O_WRONLY;
 	this->default_protocol = "rfio";	
+
+	this->caseSubrequestFailed = false;
        
       }
 
@@ -85,11 +87,8 @@ namespace castor{
 	  castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	  
 	  if(diskCopyForRecall == NULL){
-	    /* we archive the subrequest */
-	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-	    castor::exception::Exception ex(EBUSY);
-	    ex.getMessage()<<"(StagerPutHandler handle) Recreation is not possible"<<std::endl;
-	    throw ex;
+	    /* we don't archiveSubrequest, changeSubrequestStatus or replyToClient */
+	    this->caseSubrequestFailed = true;
 	  }
 	  
 	  
@@ -113,8 +112,10 @@ namespace castor{
 	  rm_freejob(rmjob_out);
 	  
 	  /* updateSubrequestStatus Part: */
-	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	  stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest,true);
+	  if(this->caseSubrequestFailed == false){
+	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest,true);
+	  }
 
 	}catch(castor::exception::Exception ex){
 	  if(rmjob_out != NULL){

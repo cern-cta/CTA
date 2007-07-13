@@ -43,7 +43,7 @@ namespace castor{
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
 	
-	
+	this->caseSubrequestFailed = false;
 	/* since we don't call the rm: we don't care about maxReplicaNb, ...xsize, ...  */	
       }
 
@@ -61,31 +61,28 @@ namespace castor{
 	  castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	  
 	  if(diskCopyForRecall == NULL){
-	    /* we have to archive the subrequest */
-	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-	    castor::exception::Exception ex(EBUSY);
-	    ex.getMessage()<<"(StagerPrepareToPutHandler handle) Recreation is not possible"<<std::endl;
-	    throw(ex);
+	    /* we don't archiveSubrequest, changeSubrequestStatus or replyToClient */
+	    this->caseSubrequestFailed = true;	    
+	  }
+	  
+	  if(this->caseSubrequestFailed == false){
+	    /* updateSubrequestStatus Part: */
+	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY); 	    
 	    
+	    /* replyToClient Part: */
+	    /* to take into account!!!! if an exception happens, we need also to send the response to the client */
+	    /* so copy and paste for the exceptions !!!*/
+	    this->stgReplyHelper = new StagerReplyHelper;
+	    if((this->stgReplyHelper) == NULL){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	      throw(ex);
+	    }
+	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	    delete stgReplyHelper->ioResponse;
+	    delete stgReplyHelper;
 	  }
-	  
-	  /* updateSubrequestStatus Part: */
-	  stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY); 
-	
-	  
-	  /* replyToClient Part: */
-	  /* to take into account!!!! if an exception happens, we need also to send the response to the client */
-	  /* so copy and paste for the exceptions !!!*/
-	  this->stgReplyHelper = new StagerReplyHelper;
-	  if((this->stgReplyHelper) == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	    throw(ex);
-	  }
-	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
-	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  delete stgReplyHelper->ioResponse;
-	  delete stgReplyHelper;
 
 	}catch(castor::exception::Exception ex){
 	  if(stgReplyHelper != NULL){

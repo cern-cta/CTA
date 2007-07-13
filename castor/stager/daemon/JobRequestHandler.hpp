@@ -146,6 +146,9 @@ namespace castor{
 	int nrmjob_out;
 	struct rmjob* rmjob_out;
 	
+	/* flag to dont reply to the client, changeSubrequestStatus and archiveSubrequest */
+	/* when "isSubRequestToSchedule" returns "4" or when "diskCopyForRecall == NULL" */
+	bool caseSubrequestFailed;
 
       }; //end class StagerJobRequestHandler
 

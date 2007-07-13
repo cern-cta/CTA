@@ -1,3 +1,4 @@
+
 /***************************************************************************************************/
 /* StagerPutDoneHandler: Constructor and implementation of the PutDone request's handle        */
 /*********************************************************************************************** */
@@ -48,11 +49,9 @@ namespace castor{
     namespace dbService{
       
       StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
-      {
-     	
+      {     	
 	this->stgRequestHelper = stgRequestHelper;
-	this->stgCnsHelper = stgCnsHelper;
-	
+	this->stgCnsHelper = stgCnsHelper;	
       }
 
       void StagerPutDoneHandler::handle() throw(castor::exception::Exception)

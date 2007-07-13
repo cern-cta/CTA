@@ -14,6 +14,7 @@
 
 #include "castor/IObject.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/stager/SvcClass.hpp"
 
 #include "castor/ObjectSet.hpp"
 
@@ -38,11 +39,10 @@ namespace castor{
 	struct Cns_fileid cnsFileid;
 	struct Cns_filestat cnsFilestat;
 	struct Cns_fileclass cnsFileclass;
+	std::string subrequestFileName;
 	int fileExist;	
 
-	/* static variables needed to get the fileid for logging */
-	static int fileid_ts_key;
-	static struct Cns_fileid fileid_ts_static;
+
 	
 	
 	StagerCnsHelper::StagerCnsHelper() throw(castor::exception::Exception);
@@ -64,14 +64,23 @@ namespace castor{
 	/*******************/
 	/* Cns structures */
 	/*****************/ 
+
+	/****************************************************************************/
+	/* set the subrequestFileName from stgRequestHelper->subrequest->fileName()*/
+	inline void setSubrequestFileName(std::string subReqFileName){
+	  this->subrequestFileName = subReqFileName;
+	}
 	
 	/*since we are gonna use dlf: we won' t probably need it*/
 	/* get the fileid pointer to print (since we are gonna use dlf: we won' t probably need it  */
 	inline void StagerCnsHelper::getFileid(){
+	  /* static variables needed to get the fileid for logging */
+	  static int fileid_ts_key = -1;
+	  static struct Cns_fileid fileid_ts_static;
 	  Cns_fileid *var;
 	  Cglobals_get(&fileid_ts_key,(void**) &var, sizeof(struct Cns_fileid));
 	  if(var == NULL){
-	    this->fileid =&(this->fileid_ts_static);
+	    this->fileid =&(fileid_ts_static);
 	  }else{
 	    this->fileid = var;
 	  }
@@ -79,10 +88,10 @@ namespace castor{
 	
 	/* create cnsFileid, cnsFilestat and update fileExist using the "Cns_statx()" C function */
 	/* for a subrequest.filename *//* update fileExist*/
-	inline int StagerCnsHelper::createCnsFileIdAndStat_setFileExist(const char* subrequestFileName){
+	inline int StagerCnsHelper::createCnsFileIdAndStat_setFileExist(){
 
 	  memset(&(this->cnsFileid), '\0', sizeof(this->cnsFileid)); /* reset cnsFileid structure  */
-	  this->fileExist = (0 == Cns_statx(subrequestFileName,&(this->cnsFileid),&(this->cnsFilestat)));
+	  this->fileExist = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
 	  
 	  return(this->fileExist);
 	}
@@ -117,15 +126,26 @@ namespace castor{
 
 
 	/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-	inline void StagerCnsHelper::createFileAndUpdateCns(const char* filename, mode_t mode) throw(castor::exception::Exception){
+	inline void StagerCnsHelper::createFileAndUpdateCns( mode_t mode, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
 	  memset(&(this->cnsFileid),0, sizeof(cnsFileid));
-	  if (Cns_creatx(filename, mode, &(this->cnsFileid)) != 0) {
+	  if (Cns_creatx(this->subrequestFileName.c_str(), mode, &(this->cnsFileid)) != 0) {
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_creatx"<<std::endl;
 	    throw ex;
 	  }
+
+	  /* in case of Disk1 pool, we want to force the fileClass of the file */
+	  if(svcClass->hasDiskOnlyBehavior() == true){
+	    std::string forcedFileClassName = svcClass->forcedFileClass();
+	    if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
+	       castor::exception::Exception ex(SEINTERNAL);
+	       ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_chclass"<<std::endl;
+	       throw ex;
+	    }
+
+	  }
 	  memset(&(this->cnsFileclass),0, sizeof(cnsFileclass));
-	  if (Cns_statx(filename,&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
+	  if (Cns_statx(subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_statx"<<std::endl;
 	    throw ex;

@@ -74,7 +74,10 @@ namespace castor{
 	
 
 	this->openflags=RM_O_RDWR;
-	this->default_protocol = "rfio";	
+	this->default_protocol = "rfio";
+
+	/***/
+	this->caseSubrequestFailed = false;
 	
       }
       
@@ -94,49 +97,58 @@ namespace castor{
 	    castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	    
 	    if(diskCopyForRecall == NULL){
-	      /* we archive the subrequest */
-	      stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-	      castor::exception::Exception ex(EBUSY);
-	      ex.getMessage()<<"(StagerUpdateHandler handle) Recreation is not possible"<<std::endl;
-	      throw ex;
+	      this->caseSubrequestFailed = true;
+	    }else{
+	      /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
+	      std::string diskServerName(diskCopyForRecall->diskServer());
+	      std::string mountPoint(diskCopyForRecall->mountPoint());
+	      
+	      if((!diskServerName.empty())&&(!mountPoint.empty())){
+		this->rfs = diskServerName + ":" + mountPoint;
+	      }
+	      this->hostlist.clear();
+	      
+	      /* since the file doesn't exist, we don't need the read flag */
+	      this->openflags = RM_O_WRONLY;
+	     
+	      /* build the rmjob struct and submit the job */
+	      stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	      buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
+	      if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
+		castor::exception::Exception ex(SEINTERNAL);
+		ex.getMessage()<<"(StagerUpdateHandler handle) Error on rm_enterjob"<<std::endl;
+		throw ex;
+	      }
+	      rm_freejob(rmjob_out);
 	    }
-	    
-	    /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
-	    std::string diskServerName(diskCopyForRecall->diskServer());
-	    std::string mountPoint(diskCopyForRecall->mountPoint());
-	    
-	    if((!diskServerName.empty())&&(!mountPoint.empty())){
-	      this->rfs = diskServerName + ":" + mountPoint;
-	    }
-	    this->hostlist.clear();
-	    
-	    /* since the file doesn't exist, we don't need the read flag */
-	    this->openflags = RM_O_WRONLY;
-	    
 	  }else{
-	    
+	      
 	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
 	    switchScheduling(caseToSchedule);
 	    
 	    /* since the file exist, we need the read flag */
 	    this->openflags = RM_O_RDWR;
+
+	    /* build the rmjob struct and submit the job */
+	    stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
+	    if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerUpdateHandler handle) Error on rm_enterjob"<<std::endl;
+	      throw ex;
+	    }
+	    rm_freejob(rmjob_out);
 	  }
-	  /* build the rmjob struct and submit the job */
-	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	  buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerUpdateHandler handle) Error on rm_enterjob"<<std::endl;
-	    throw ex;
+	  
+	  
+	  if(this->caseSubrequestFailed ==false){
+	    if(toRecreateCastorFile || ((caseToSchedule != 2) && (caseToSchedule != 0))){
+	      /* updateSubrequestStatus Part: */
+	      this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	    }
 	  }
-	  rm_freejob(rmjob_out);
-	 	    
-	  if((caseToSchedule != 2) && (caseToSchedule != 0)){
-	    /* updateSubrequestStatus Part: */
-	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	  }
-	
+
 	}catch(castor::exception::Exception ex){
 	  if(rmjob_out != NULL){
 	    rm_freejob(rmjob_out);
