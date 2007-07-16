@@ -29,8 +29,6 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
-#include "castor/IObject.hpp"
-#include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 
 #include <iostream>
@@ -59,17 +57,6 @@ namespace castor{
 	/* handler for the Update request  */
 	void handle() throw(castor::exception::Exception);
 
-
-
-      	/***********************************************************************************************/
-	/* virtual functions inherited from IObject                                                   */
-	/*********************************************************************************************/
-	virtual void setId(u_signed64 id);
-	virtual u_signed64 id() const;
-	virtual int type() const;
-	virtual IObject* clone();
-	virtual void print() const;
-	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
 	
       }; //end StagerUpdateHandler class
 

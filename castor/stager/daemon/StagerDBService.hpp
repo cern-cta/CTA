@@ -39,8 +39,8 @@ namespace castor {
 	StagerDBService() throw();
 	~StagerDBService() throw();
 
-	virtual void run(void* param) throw();
-	virtual void stop() throw() {};
+	inline void run(void* param) throw() { };
+	inline void stop() throw() { };
 	
 	/***************************************************************************/
 	/* abstract functions inherited from the SelectProcessThread to implement */

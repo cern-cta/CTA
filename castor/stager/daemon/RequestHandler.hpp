@@ -12,7 +12,7 @@
 
 
 #include "castor/exception/Exception.hpp"
-#include "castor/IObject.hpp"
+#include "castor/BaseObject.hpp"
 #include "castor/ObjectSet.hpp"
 
 
@@ -30,7 +30,7 @@ namespace castor{
       class StagerCnsHelper;
       class StagerReplyHelper;
 
-      class StagerRequestHandler : public virtual castor::IObject{
+      class StagerRequestHandler : public virtual castor::BaseObject{
 
 
       public:
@@ -40,16 +40,7 @@ namespace castor{
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;
 
-	/*********************************************/
-	/* virtual functions inherited from IOBject */
-	/*******************************************/
-	virtual void setId(u_signed64 id);
-	virtual u_signed64 id() const;
-	virtual int type() const;
-	virtual IObject* clone();
-	virtual void print() const;
-	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
- 
+
       protected:
 	StagerRequestHelper *stgRequestHelper;
 	StagerCnsHelper *stgCnsHelper;

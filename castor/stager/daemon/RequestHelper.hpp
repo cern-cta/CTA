@@ -64,7 +64,7 @@ namespace castor{
     
       
 
-      class StagerRequestHelper : public virtual castor::IObject{
+      class StagerRequestHelper : public virtual castor::BaseObject{
 
 
 
@@ -118,15 +118,7 @@ namespace castor{
 	~StagerRequestHelper() throw();
 	
 
-	/***************************************************************************************/
-	/*  virtual functions inherited from IObject                                          */
-	/*************************************************************************************/
-	virtual void setId(u_signed64 id);
-	virtual u_signed64 id() const;
-	virtual int type() const;
-	virtual IObject* clone();
-	virtual void print() const;
-	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
+
 	
 	/**********************/
 	/* baseAddr settings */ 

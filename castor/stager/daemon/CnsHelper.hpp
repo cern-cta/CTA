@@ -12,7 +12,7 @@
 #include "Cglobals.h"
 #include "serrno.h"
 
-#include "castor/IObject.hpp"
+#include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SvcClass.hpp"
 
@@ -31,7 +31,7 @@ namespace castor{
     namespace dbService{
 
      
-      class StagerCnsHelper : public virtual castor::IObject{
+      class StagerCnsHelper : public virtual castor::BaseObject{
 	
       public:
 	
@@ -50,15 +50,6 @@ namespace castor{
 
 	
 
-	/***************************************************************************************/
-	/*  virtual functions inherited from IObject                                          */
-	/*************************************************************************************/
-	virtual void setId(u_signed64 id);
-	virtual u_signed64 id() const;
-	virtual int type() const;
-	virtual IObject* clone();
-	virtual void print() const;
-	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const; 
 
 
 	/*******************/

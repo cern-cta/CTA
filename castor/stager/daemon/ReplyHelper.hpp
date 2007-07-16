@@ -25,7 +25,7 @@
 
 
 #include "castor/ObjectSet.hpp"
-#include "castor/IObject.hpp"
+#include "castor/BaseObject.hpp"
 
 #include <iostream>
 #include <string>
@@ -43,7 +43,7 @@ namespace castor{
 
 
 
-      class StagerReplyHelper : public virtual castor::IObject{
+      class StagerReplyHelper : public virtual castor::BaseObject{
 
       public:
 
@@ -77,15 +77,6 @@ namespace castor{
 	    
 	}
 
-	/*****************************************************************************************/
-	/* virtual functions inherited from IObject                                             */
-	/***************************************************************************************/
-	virtual void setId(u_signed64 id);
-	virtual u_signed64 id() const;
-	virtual int type() const;
-	virtual IObject* clone();
-	virtual void print() const;
-	virtual void print(std::ostream& stream, std::string indent, castor::ObjectSet& alreadyPrinted) const;
 
 	
       }; // end StagerReplyHelper  
