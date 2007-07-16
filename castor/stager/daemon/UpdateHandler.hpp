@@ -52,12 +52,12 @@ namespace castor{
 	
       public:
 	/* constructor */
-	StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception);
+	StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception);
 	/* destructor */
-	StagerUpdateHandler::~StagerUpdateHandler() throw();
+	~StagerUpdateHandler() throw();
 
 	/* handler for the Update request  */
-	void StagerUpdateHandler::handle() throw(castor::exception::Exception);
+	void handle() throw(castor::exception::Exception);
 
 
 

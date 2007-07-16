@@ -38,12 +38,12 @@ namespace castor{
 	
       public:
 	/* constructor */
-	StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+	StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
-	StagerRmHandler::~StagerRmHandler() throw();
+	~StagerRmHandler() throw();
 
 	/* rm subrequest handler */
-	void StagerRmHandler::handle() throw(castor::exception::Exception);
+	void handle() throw(castor::exception::Exception);
      
 	/***********************************************************************************************/
 	/* virtual functions inherited from IObject                                                   */

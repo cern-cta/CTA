@@ -38,12 +38,12 @@ namespace castor{
      
       public:
 	/* constructor */
-	StagerSetGCHandler::StagerSetGCHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+	StagerSetGCHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
-	StagerSetGCHandler::~StagerSetGCHandler() throw();
+	~StagerSetGCHandler() throw();
 
 	/* SetFileGCWeight handle implementation */
-	void StagerSetGCHandler::handle() throw(castor::exception::Exception);
+	void handle() throw(castor::exception::Exception);
 
 	/***********************************************************************************************/
 	/* virtual functions inherited from IObject                                                   */

@@ -49,12 +49,12 @@ namespace castor{
      
       public:
 	/* constructor */
-	StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+	StagerRepackHandler(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
-	StagerRepackHandler::~StagerRepackHandler() throw();
+	~StagerRepackHandler() throw();
 
 	/* repack subrequest' s handler*/
-	void StagerRepackHandler::handle() throw(castor::exception::Exception);
+	void handle() throw(castor::exception::Exception);
 
 
 

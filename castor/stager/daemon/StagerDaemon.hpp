@@ -21,9 +21,9 @@ namespace castor{
 
       public:
 	/*** constructor ***/
-	StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception);
+	StagerMainDaemon() throw(castor::exception::Exception);
 	/*** destructor ***/
-	virtual StagerMainDaemon::~StagerMainDaemon() throw() {};
+	virtual ~StagerMainDaemon() throw() {};
 
 
 
@@ -33,14 +33,14 @@ namespace castor{
 	/*********************************************************************************/
 	/* BaseServer::parseCommandLine parses a command line to set the server options */
 	/*******************************************************************************/
-	void StagerMainDaemon::parseCommandLine(int argc, char* argv[]) throw(castor::exception::Exception);
+	void parseCommandLine(int argc, char* argv[]) throw(castor::exception::Exception);
 
 
 
 	/*****************************************************************/
 	/* BaseServer::help print the valid options for the commandLine */
 	/***************************************************************/
-	inline void StagerMainDaemon::help(std::string programName){
+	inline void help(std::string programName){
 	  std::cout << "Usage: " << programName << " [options]\n"
 	    "\n"
 	    "where options can be:\n"

@@ -22,7 +22,6 @@
 #include "serrno.h"
 #include "Cns_struct.h"
 #include "Cns_api.h"
-//#include "Cns.h"
 
 
 #include "castor/ObjectSet.hpp"
@@ -53,22 +52,22 @@ namespace castor{
 	std::string uuid_as_string;
 
 	/* constructor  */
-	StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception);
+	StagerReplyHelper() throw(castor::exception::Exception);
 	/* destructor */
-	StagerReplyHelper::~StagerReplyHelper() throw();
+	~StagerReplyHelper() throw();
 
 
 
 	/****************************************************************************/
 	/* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
 	/**************************************************************************/
-	void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
+	void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
 	
 
 	/*********************************************************************************************/
 	/* check if there is any subrequest left and send the endResponse to client if it is needed */
 	/*******************************************************************************************/
-	inline void StagerReplyHelper::endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
+	inline void endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
 	  
 	  /* to update the subrequest on DB */
 	  bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);

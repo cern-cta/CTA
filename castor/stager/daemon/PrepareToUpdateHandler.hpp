@@ -53,13 +53,13 @@ namespace castor{
 
       public:
 	/* constructor */
-	StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception);
+	StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception);
 
 	/* destructor */
-	StagerPrepareToUpdateHandler::~StagerPrepareToUpdateHandler() throw();
+	~StagerPrepareToUpdateHandler() throw();
 
 	/* PrepareToUpdate request handler */
-	void StagerPrepareToUpdateHandler::handle() throw(castor::exception::Exception);
+	void handle() throw(castor::exception::Exception);
 	
 
 	/***********************************************************************************************/

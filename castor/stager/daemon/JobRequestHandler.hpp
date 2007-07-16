@@ -52,7 +52,7 @@ namespace castor{
 	/****************************************************************************************/
 	/* job oriented block  */
 	/****************************************************************************************/
-	void StagerJobRequestHandler::jobOriented() throw(castor::exception::Exception);
+	void jobOriented() throw(castor::exception::Exception);
 
 
 	/****************************************************************************************/
@@ -62,7 +62,7 @@ namespace castor{
 	/*         +processReplica if it is needed: */
 	/*                    +make the hostlist if it is needed */
 	/****************************************************************************************/
-	void StagerJobRequestHandler::switchScheduling(int caseToSchedule) throw(castor::exception::Exception);
+	void switchScheduling(int caseToSchedule) throw(castor::exception::Exception);
 	
 	
 	/************************************************************************************/
@@ -71,13 +71,13 @@ namespace castor{
 	/* - maxReplicaNb */
 	/* - replicationPolicy (call to the expert system) */
 	/**********************************************************************************/
-	bool StagerJobRequestHandler::replicaSwitch() throw(castor::exception::Exception);
+	bool replicaSwitch() throw(castor::exception::Exception);
 
 
 	/***************************************************************************************************************************/
 	/* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
 	/**************************************************************************************************************************/
-	int StagerJobRequestHandler::checkReplicationPolicy() throw(castor::exception::Exception);
+	int checkReplicationPolicy() throw(castor::exception::Exception);
 
 
 	/************************************************************************************/
@@ -87,14 +87,14 @@ namespace castor{
 	/* - hostlist + = (":") + diskServerName ()if it isn' t already in hostlist  */
 	/*  */
 	/**********************************************************************************/
-	void StagerJobRequestHandler::processReplicaAndHostlist() throw(castor::exception::Exception);
+	void processReplicaAndHostlist() throw(castor::exception::Exception);
 
 	
 	/*****************************************************************************************************/
 	/* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
 	/* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
 	/**************************************************************************************************/
-	inline void StagerJobRequestHandler::buildRmJobRequestPart() throw(castor::exception::Exception) 
+	inline void buildRmJobRequestPart() throw(castor::exception::Exception) 
 	{
 	  if(!rfs.empty()){
 	    strncpy(this->rmjob.rfs,rfs.c_str(), CA_MAXPATHLEN);

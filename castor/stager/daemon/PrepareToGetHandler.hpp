@@ -53,9 +53,9 @@ namespace castor{
       public:
 
 	/* constructor */
-	StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+	StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
-	StagerPrepareToGetHandler::~StagerPrepareToGetHandler() throw();
+	~StagerPrepareToGetHandler() throw();
 
 	/********************************************************************************************************/
 	/* we are overwritting this function inherited from the StagerJobRequestHandler  because of the case 0 */
@@ -66,10 +66,10 @@ namespace castor{
 	/*         +processReplica if it is needed:                               */
 	/*                    +make the hostlist if it is needed                 */
 	/************************************************************************/
-	void StagerPrepareToGetHandler::switchScheduling(int caseToSchedule) throw(castor::exception::Exception);
+	void switchScheduling(int caseToSchedule) throw(castor::exception::Exception);
 
 	/* PrepareToGet request handler */
-        void StagerPrepareToGetHandler::handle() throw(castor::exception::Exception);
+        void handle() throw(castor::exception::Exception);
 
 
 
