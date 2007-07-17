@@ -1,5 +1,18 @@
 BEGIN
 dbms_scheduler.create_job(
+  job_name => 'task_tablesize',
+  job_type => 'PLSQL_BLOCK',
+  job_action => 'BEGIN
+      castor_stager.Proc_tablesize();
+  END;',
+  start_date => sysdate,
+  repeat_interval => 'FREQ=DAILY',
+  enabled => TRUE,
+  comments => 'count of rows in various tables');
+END;
+/
+BEGIN
+dbms_scheduler.create_job(
   job_name => 'task_DiskServerStat',
   job_type => 'PLSQL_BLOCK',
   job_action => 'BEGIN

@@ -10,6 +10,23 @@ grant select on stream to castor_read;
 grant select on segment to castor_read;
 
 
+CREATE TABLE monitoring_TableSize (
+  runtime 	DATE NOT NULL,
+  subrequest	NUMBER,
+  diskcopy      NUMBER,
+  tapecopy      NUMBER,
+  castorfile    NUMBER,
+  id2type       NUMBER
+);
+
+GRANT SELECT ON castor_stager.monitoring_TableSize TO castor_read;
+GRANT INSERT ON castor_stager.monitoring_TableSize TO castor_read;
+
+@ ../procedures/tablesize.sql
+
+GRANT execute ON castor_stager.Proc_TableSize TO castor_read;
+
+
 CREATE TABLE monitoring_DiskServerStat (
   runtime 	DATE NOT NULL,
   diskserver    VARCHAR2(2048),

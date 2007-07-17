@@ -1,5 +1,11 @@
 BEGIN
 dbms_scheduler.drop_job(
+  job_name => 'task_tablesize'
+  );
+END;
+/
+BEGIN
+dbms_scheduler.drop_job(
   job_name => 'task_Segment'
   );
 END;
