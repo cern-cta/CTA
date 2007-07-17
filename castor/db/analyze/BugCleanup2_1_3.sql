@@ -86,7 +86,9 @@ BEGIN
          WHERE SubRequest.request = ReqCleaning.id;',
      'Id2Type');
     -- Then the subRequests
-  efficientDelete('SELECT id FROM SubRequest;',
+  efficientDelete('
+      SELECT SubRequest.id FROM SubRequest, ReqCleaning
+       WHERE SubRequest.request = ReqCleaning.id;',
      'SubRequest');
   -- Delete Request + Clients 
     ---- Get ----
