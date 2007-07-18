@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/07/11 14:59:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/07/18 10:01:57 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -32,6 +32,7 @@
 #include <iostream>
 #include <string>
 #include <sys/select.h>
+#include <signal.h>
 #include <unistd.h>
 
 // Include Files
@@ -55,6 +56,10 @@ castor::server::ForkedProcessPool::ForkedProcessPool(const std::string poolName,
 castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
 {
   for(int i = 0; i < m_nbThreads; i++) {
+    childPipe[i]->close();
+    if (childPid[i] > 0) {
+      kill(childPid[i], SIGKILL);
+    }
     delete childPipe[i];
   }
 }
@@ -71,26 +76,40 @@ void castor::server::ForkedProcessPool::run()
   }
   
   // create pool of forked processes
+  childPid = new int[m_nbThreads];
   for (int i = 0; i < m_nbThreads; i++) {
     // create a pipe for the child
     castor::io::PipeSocket* ps = new castor::io::PipeSocket();
-    // fork child
+    childPid[i] = 0;
+    // fork worker process
+    dlf_prepare();
     int pid = fork();
     if(pid < 0) { 
+      dlf_parent();
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to fork in pool " << m_poolName;
       throw ex;
     }
-    if(pid == 0) {     
+    if(pid == 0) {
+      // close all child file descriptors which are not used for inter-process
+      // communication
+      for (int j = 0; j < getdtablesize(); j++) {
+	if ((j != ps->openRead()) && (j != ps->openWrite())) {
+	  close(j);
+	}
+      }
       // child
+      dlf_child();
       childRun(ps);      // this is a blocking call
+      exit(EXIT_SUCCESS);
     }
     else {
       // parent: save pipe
-      // XXX do we need to keep child's pid?
+      dlf_parent();
       int fd = ps->openWrite();
       FD_SET(fd, &pipes);
       childPipe.push_back(ps);
+      childPid[i] = pid;
     }
   }
   clog() << DEBUG << "Thread pool " << m_poolName << " started with "
