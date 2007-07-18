@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/09 17:11:27 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/07/18 09:58:00 $ $Author: waldron $
  *
  * A thread to handle notifications to wake up workers in a pool
  *
@@ -54,142 +54,140 @@ void castor::server::NotificationThread::run(void* param) {
 
   try {
 
-  struct sockaddr_in serverAddress, clientAddress;
-  int on = 1;	/* for REUSEADDR */
-  int ibind;
-
+    struct sockaddr_in serverAddress, clientAddress;
+    int on = 1;	/* for REUSEADDR */
+    int ibind;
+    
 #if defined(_WIN32)
-  WSADATA wsadata;
-  if (WSAStartup(MAKEWORD (2, 0), &wsadata)) {
-    serrno = SEINTERNAL;
-    return(NULL);
-  }
+    WSADATA wsadata;
+    if (WSAStartup(MAKEWORD (2, 0), &wsadata)) {
+      serrno = SEINTERNAL;
+      return(NULL);
+    }
 #endif
 
-  /* Create a socket */
-  if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "NotificationThread: failed to create socket";
-    throw ex;
-  }
-  memset ((char *)&serverAddress, 0, sizeof(serverAddress));
-  serverAddress.sin_family = AF_INET;
-  serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-  serverAddress.sin_port = htons(m_notifPort);
-  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
-
-  /* Bind on it - we know that the port can be reused but not always immediately */
-  ibind = 0;
-  while (ibind++ < MAX_BIND_RETRY) {
-    if (bind(s, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) >= 0)
-      break;
-  }
-  if (ibind == MAX_BIND_RETRY) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "NotificationThread: failed to bind to port " << m_notifPort;
-    throw ex;
-  }
-
-  /* Say to our parent that we successfully started - not needed in principle */
-  //m_owner->m_poolMutex->lock();
-
-  //m_owner->nbNotifyThreads = 1;
-
-  //m_owner->m_poolMutex->signal();
-  //m_owner->m_poolMutex->release();
-
-  /* Wait for a notification */
-  while(true) {
-    int magic;
-    int nb_recv;
-    char buf[HYPERSIZE + LONGSIZE];
-    char *p;
-    int nb_thread_wanted;
-    socklen_t clientAddressLen;
-    struct timeval timeout;
-    fd_set read_handles;
-
-    memset(buf, 0, sizeof(buf));
-    clientAddressLen = sizeof(clientAddress);
-
-    /* Use select() to avoid blocking on recvfrom() */
-    FD_ZERO(&read_handles);
-    FD_SET(s,&read_handles);
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
-    if (select(s + 1, &read_handles, NULL, NULL, &timeout) > 0) {
-
-      /* Reading the header - blocks until there is something to read */
-      nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen );
-
-      if (nb_recv != (HYPERSIZE+LONGSIZE)) {
-      	/* Ignore this packet */
-      	continue;
-      }
-
-      p = buf;
-      unmarshall_HYPER(p, magic);
-      unmarshall_LONG(p, nb_thread_wanted);
-
-      if (magic != NOTIFY_MAGIC) {
-      	/* Not a packet for us (!?) */
-      	continue;
-      }
-
-      /* Okay - we have received a notification - we signal our condition variable */
-      try {
-        m_owner->m_poolMutex->lock();
-
-      	m_owner->m_notified += nb_thread_wanted;
-
-      	/* We make sure that 0 <= m_notified <= nbThreadInactive */
-      	if(m_owner->m_notified < 0) {
-      	  m_owner->m_notified = 1;
-      	}
-      	int nbThreadInactive = m_owner->m_nbThreads - m_owner->m_nbActiveThreads;
-      	if(nbThreadInactive < 0) {
-          nbThreadInactive = 0;
-      	}
-      	if (nbThreadInactive == 0) {
-      	  /* All threads are already busy : try to get one counting on timing windows */
-      	  m_owner->m_notified = 1;
-      	} else {
-      	  if (m_owner->m_notified > nbThreadInactive) {
-      	    m_owner->m_notified = nbThreadInactive;
-      	  }
-      	}
-
-      	if (m_owner->m_notified > 0) {
-          m_owner->m_poolMutex->signal();
-      	}
-
-        m_owner->m_poolMutex->release();
-      }
-      catch (castor::exception::Exception any) {
-        /* just ignore for this loop all mutex errors and try again */
-        try {
-          m_owner->m_poolMutex->release();
-        } catch(...) {}
-      }
+    /* Create a socket */
+    if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "NotificationThread: failed to create socket";
+      throw ex;
     }
-
-  /* And we continue for ever */
-  }
-
+    memset ((char *)&serverAddress, 0, sizeof(serverAddress));
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverAddress.sin_port = htons(m_notifPort);
+    setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
+    
+    /* Bind on it - we know that the port can be reused but not always immediately */
+    ibind = 0;
+    while (ibind++ < MAX_BIND_RETRY) {
+      if (bind(s, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) >= 0)
+	break;
+    }
+    if (ibind == MAX_BIND_RETRY) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "NotificationThread: failed to bind to port " << m_notifPort;
+      throw ex;
+    }
+    
+    /* Say to our parent that we successfully started - not needed in principle */
+    //m_owner->m_poolMutex->lock();
+    
+    //m_owner->nbNotifyThreads = 1;
+    
+    //m_owner->m_poolMutex->signal();
+    //m_owner->m_poolMutex->release();
+    
+    /* Wait for a notification */
+    while(true) {
+      int magic;
+      int nb_recv;
+      char buf[HYPERSIZE + LONGSIZE];
+      char *p;
+      int nb_thread_wanted;
+      socklen_t clientAddressLen;
+      struct timeval timeout;
+      fd_set read_handles;
+      
+      memset(buf, 0, sizeof(buf));
+      clientAddressLen = sizeof(clientAddress);
+      
+      /* Use select() to avoid blocking on recvfrom() */
+      FD_ZERO(&read_handles);
+      FD_SET(s,&read_handles);
+      timeout.tv_sec = 1;
+      timeout.tv_usec = 0;
+      if (select(s + 1, &read_handles, NULL, NULL, &timeout) > 0) {
+	
+	/* Reading the header - blocks until there is something to read */
+	nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen );
+	
+	if (nb_recv != (HYPERSIZE+LONGSIZE)) {
+	  /* Ignore this packet */
+	  continue;
+	}
+	
+	p = buf;
+	unmarshall_HYPER(p, magic);
+	unmarshall_LONG(p, nb_thread_wanted);
+	
+	if (magic != NOTIFY_MAGIC) {
+	  /* Not a packet for us (!?) */
+	  continue;
+	}
+	
+	/* Okay - we have received a notification - we signal our condition variable */
+	try {
+	  m_owner->m_poolMutex->lock();
+	  
+	  m_owner->m_notified += nb_thread_wanted;
+	  
+	  /* We make sure that 0 <= m_notified <= nbThreadInactive */
+	  if(m_owner->m_notified < 0) {
+	    m_owner->m_notified = 1;
+	  }
+	  int nbThreadInactive = m_owner->m_nbThreads - m_owner->m_nbActiveThreads;
+	  if(nbThreadInactive < 0) {
+	    nbThreadInactive = 0;
+	  }
+	  if (nbThreadInactive == 0) {
+	    /* All threads are already busy : try to get one counting on timing windows */
+	    m_owner->m_notified = 1;
+	  } else {
+	    if (m_owner->m_notified > nbThreadInactive) {
+	      m_owner->m_notified = nbThreadInactive;
+	    }
+	  }
+	  
+	  if (m_owner->m_notified > 0) {
+	    m_owner->m_poolMutex->signal();
+	  }
+	  
+	  m_owner->m_poolMutex->release();
+	}
+	catch (castor::exception::Exception any) {
+	  /* just ignore for this loop all mutex errors and try again */
+	  try {
+	    m_owner->m_poolMutex->release();
+	  } catch(...) {}
+	}
+      }
+      
+      /* And we continue for ever */
+    }
   }
   catch (castor::exception::Exception any) {
     if (s >= 0) {
       netclose(s);
     }
-
-    #if defined(_WIN32)
-      WSACleanup();
-    #endif
-
+    
+#if defined(_WIN32)
+    WSACleanup();
+#endif
+  
     try {
       m_owner->m_poolMutex->release();
     } catch(...) {}
-
     m_owner->clog() << WARNING << any.getMessage().str() << std::endl;
   }
 }

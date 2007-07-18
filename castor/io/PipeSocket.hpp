@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/09 17:12:19 $ $Author: itglp $
+ * @(#)$RCSfile: PipeSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/18 09:58:00 $ $Author: waldron $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -83,10 +83,10 @@ namespace castor {
     protected:
 
       /**
-       * internal method to create the inner socket
+       * Internal method to create the inner socket
        * not needed for this implementation
        */
-       virtual void createSocket() throw (castor::exception::Exception) {};
+      virtual void createSocket() throw (castor::exception::Exception) {};
 
       /**
        * Internal method to send the content of a buffer

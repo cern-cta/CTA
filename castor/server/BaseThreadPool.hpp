@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/07/18 09:58:00 $ $Author: waldron $
  *
  * Abstract CASTOR thread pool
  *
@@ -77,7 +77,7 @@ namespace castor {
      * the threads and immediately return.
      * Specialized pools implement it according to their needs.
      */
-     virtual void run() {};
+    virtual void run() {};
 
     /**
      * Sets the number of threads
