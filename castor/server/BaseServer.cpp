@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/07/18 09:59:28 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -49,6 +49,7 @@
 #include <unistd.h>
 #include <netdb.h>                      /* For struct servent */
 #include <net.h>
+#include <stdio.h>
 #endif
 
 
@@ -88,26 +89,37 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
   // init daemon if to be run in background 
   if (!m_foreground) {
 
-    // prepare the DLF interface for forking
-    dlf_prepare();
-
-    int rc;
-    if ((rc = Cinitdaemon((char *)m_serverName.c_str(), 0)) < 0) {
+    // we could set our working directory to '/' here with a call to chdir(2).
+    // For the time being we don't and leave it to the initd script to change
+    // to a suitable directory for us!
+    int pid = fork();
+    if (pid < 0) {
       castor::exception::Internal ex;
       ex.getMessage() << "Background daemon initialization failed with result "
-                      << rc << std::endl;
-      dlf_parent();
+		      << pid << std::endl;
+      throw ex;
+    } else if (pid > 0) {
+      exit(EXIT_SUCCESS);
+    }
+    setsid();
+    setpgrp();
+    
+    // close the standard file descriptors
+    if ((freopen("/dev/null", "r", stdin)  == NULL) ||
+	(freopen("/dev/null", "w", stdout) == NULL) ||
+	(freopen("/dev/null", "w", stderr) == NULL)) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to redirect standard file descriptors to "
+		      << "/dev/null" << std::endl;
       throw ex;
     }
-    dlf_child();
   }
 
   // Ignore SIGPIPE (connection lost with client),
-  // SIGXFSZ (a file is too big), SIGCHLD (zombies)
+  // SIGXFSZ (a file is too big)
 #if !defined(_WIN32)
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
-  signal(SIGCHLD, SIG_IGN);
 #endif
 }
 
