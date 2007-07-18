@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.12 $ $Release$ $Date: 2006/06/13 14:32:12 $ $Author: waldron $
+ * @(#)$RCSfile: dlfbuf.h,v $ $Revision: 1.13 $ $Release$ $Date: 2007/07/18 09:54:09 $ $Author: waldron $
  *
  * A string buffer for logging into dlf
  *
@@ -59,7 +59,7 @@ namespace castor {
         // It could be that somebody was quicker
         if (!s_dlfInitCalled) {
           int rc;
-          if ((rc = dlf_init(name.c_str(), dlfErrBuf)) != 0) {
+          if ((rc = dlf_init(name.c_str(), dlfErrBuf, 0)) != 0) {
             castor::exception::Internal e;
 	    e.getMessage() << "Unable to initialize DLF :\n"
 		           << dlfErrBuf << "\n";

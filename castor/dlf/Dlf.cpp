@@ -35,7 +35,7 @@ void castor::dlf::dlf_init
   // Initialise the DLF interface, ignore any errors that may be generated
   char dlfErrBuf[CA_MAXLINELEN+1];  
 
-  ::dlf_init(facilityName, dlfErrBuf);
+  ::dlf_init(facilityName, dlfErrBuf, 0);
 
   // Register the facility's messages with the interface. We do this even
   // if the interface fails to initialisation as it is used for local 
