@@ -26,17 +26,6 @@ namespace castor{
 	virtual ~StagerMainDaemon() throw() {};
 
 
-
-
-
-
-	/*********************************************************************************/
-	/* BaseServer::parseCommandLine parses a command line to set the server options */
-	/*******************************************************************************/
-	void parseCommandLine(int argc, char* argv[]) throw(castor::exception::Exception);
-
-
-
 	/*****************************************************************/
 	/* BaseServer::help print the valid options for the commandLine */
 	/***************************************************************/
