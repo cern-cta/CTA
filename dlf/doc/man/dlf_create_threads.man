@@ -1,0 +1,16 @@
+.lf 3 dlf_create_threads.man
+.TH dlf_create_threads 3 "CERN IT-FIO" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_create_threads \- starts the dlf threads
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "void dlf_create_threads (void)"
+.SH DESCRIPTION
+.B dlf_create_threads
+used to create the dlf threads enabling communication between client and server. This call is only required if remote logging is enabled and dlf_init() was called with the usethreads argument set to 0
+.SH "SEE ALSO"
+.BR dlf_init (3)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
