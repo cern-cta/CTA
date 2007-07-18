@@ -1,5 +1,33 @@
 BEGIN
 dbms_scheduler.create_job(
+  job_name => 'task_migstall',
+  job_type => 'PLSQL_BLOCK',
+  job_action => 'BEGIN
+      castor_stager.Proc_migstall();
+  END;',
+  start_date => sysdate,
+  repeat_interval => 'FREQ=HOURLY',
+  enabled => TRUE,
+  comments => 'migstall info');
+END;
+/
+BEGIN
+dbms_scheduler.create_job(
+  job_name => 'task_recallstall',
+  job_type => 'PLSQL_BLOCK',
+  job_action => 'BEGIN
+      castor_stager.Proc_recallstall();
+  END;',
+  start_date => sysdate,
+  repeat_interval => 'FREQ=HOURLY',
+  enabled => TRUE,
+  comments => 'recall stall info');
+END;
+/
+
+
+BEGIN
+dbms_scheduler.create_job(
   job_name => 'task_tablesize',
   job_type => 'PLSQL_BLOCK',
   job_action => 'BEGIN
