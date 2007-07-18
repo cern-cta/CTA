@@ -1,10 +1,10 @@
 CREATE OR REPLACE PROCEDURE Proc_TABLESIZE AS
 
-    TYPE first   IS NUMBER;
+    TYPE first   IS TABLE OF NUMBER;
     a first;
     b first;
     c first;
-    d firest;
+    d first;
     e first;
 
     mytime DATE := SYSDATE;
