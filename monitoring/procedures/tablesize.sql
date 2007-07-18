@@ -1,6 +1,6 @@
 CREATE OR REPLACE PROCEDURE Proc_TABLESIZE AS
 
-    TYPE first   IS 
+    TYPE first   IS NUMBER;
     a first;
     b first;
     c first;
