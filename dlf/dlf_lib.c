@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.18 2007/07/02 06:30:41 waldron Exp $
+ * $Id: dlf_lib.c,v 1.19 2007/07/18 09:52:08 waldron Exp $
  */
 
 /* headers */
@@ -1045,6 +1045,39 @@ void DLL_DECL dlf_parent(void) {
 
 
 /*
+ * dlf_create_threads
+ */
+
+void DLL_DECL dlf_create_threads(void) {
+
+	/* variables */
+	int i;
+
+	/* previously initialised ? */
+	if (!IsInitialised(api_mode)) {
+		return;
+	}
+	Cthread_mutex_lock(&global_mutex);
+
+	/* create server threads */
+	for (i = 0; i < API_MAX_TARGETS; i++) {
+		if (targets[i] == NULL)
+			continue;
+		if (!IsServer(targets[i]->mode))
+			continue;            /* not a server */
+		
+		/* create thread */
+		if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
+			Cthread_mutex_unlock(&global_mutex);
+			return;
+		}
+	}
+
+	Cthread_mutex_unlock(&global_mutex);  
+}
+
+
+/*
  * dlf_regtext
  */
 
@@ -1154,7 +1187,7 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
  * dlf_init
  */
 
-int DLL_DECL dlf_init(const char *facility, char *errptr) {
+int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 
 	/* variables */
 	struct servent *servent;
@@ -1436,12 +1469,13 @@ int DLL_DECL dlf_init(const char *facility, char *errptr) {
 			Cthread_mutex_unlock(&global_mutex);
 			return -1;
 		}
-
-		/* create thread */
-		if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
-			snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create_detached() : %s", strerror(errno));
-			Cthread_mutex_unlock(&global_mutex);
-			return -1;
+		if (usethreads) {
+			/* create thread */
+			if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
+				snprintf(errptr, CA_MAXLINELEN, "dlf_init(): failed to Cthread_create_detached() : %s", strerror(errno));
+				Cthread_mutex_unlock(&global_mutex);
+				return -1;
+			}
 		}
 	}
 

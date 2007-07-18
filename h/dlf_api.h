@@ -145,17 +145,23 @@ struct dlf_write_param_t {
  *
  * Once the interface is initialised it cannot be re-initialised without a prior call to dlf_shutdown()
  *
- * @param facility : the name of the facility to initialise
- * @param errptr   : the error text returned from the function on -1, terminated by a '\n'. The error
- *                   buffer must have a minimum size of CA_MAXLINELEN bytes
+ * @param facility   : the name of the facility to initialise
+ * @param errptr     : the error text returned from the function on -1, terminated by a '\n'. The error
+ *                     buffer must have a minimum size of CA_MAXLINELEN bytes
+ * @param usethreads : boolean to indicate whether the api should use threads ie. to record information
+ *                     remotely or surrender control of the thread creation to the user via a separate
+ *                     call to dlf_create_threads(). This is useful if you wish to have log file only 
+ *                     logging before daemonization and then turn on remote logging afterwards avoiding 
+ *                     the need to recreate the dlf threads in the child process.
  *
- * @returns        : 0 on success
- * @returns        : -1 on failure and *errptr will contain the associated error message
+ * @see              : dlf_prepare(), dlf_parent(), dlf_child(), dlf_create_threads()
+ * @returns          : 0 on success
+ * @returns          : -1 on failure and *errptr will contain the associated error message
  *
  * @note the interface is restricted to API_MAX_TARGETS and API_MAX_THREADS.
  */
 
-EXTERN_C int DLL_DECL dlf_init _PROTO((const char *facility, char *errptr));
+EXTERN_C int DLL_DECL dlf_init _PROTO((const char *facility, char *errptr, int usethreads));
 
 
 /**
@@ -279,10 +285,19 @@ EXTERN_C void DLL_DECL dlf_child _PROTO((void));
 
 /**
  * This function should be called from within the parent process after a fork(2). It essentially removes 
- * all locks and allows the api to resume normal logging for the parent
+ * all locks and allows the api to resume normal logging for the parent.
  */
 
 EXTERN_C void DLL_DECL dlf_parent _PROTO((void));
+
+
+/**
+ * This function creates the dlf threads enabling communication between a client and server. This call
+ * is only required if remote logging is enabled and dlf_init() was called with the usethreads 
+ * argument set to 0.
+ */
+
+EXTERN_C void DLL_DECL dlf_create_threads _PROTO((void));
 
 
 #endif
