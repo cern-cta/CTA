@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.5 2007/02/14 09:31:51 wiebalck Exp $
+** $Id: tplogger.c,v 1.6 2007/07/18 09:48:57 waldron Exp $
 */
 
 #include <string.h>
@@ -236,7 +236,7 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
                 goto err_out;
         }
 
-        rv = dlf_init( self->tl_name, error );
+        rv = dlf_init( self->tl_name, error, 1 );
         if (rv != 0) {
                 fprintf( stderr, "dlf_init() - %s\n", error );
                 free( self->tl_name );

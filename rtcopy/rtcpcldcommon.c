@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.35 $ $Release$ $Date: 2007/02/23 09:30:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldcommon.c,v $ $Revision: 1.36 $ $Release$ $Date: 2007/07/18 09:48:58 $ $Author: waldron $
  *
  * 
  *
@@ -143,7 +143,7 @@ int rtcpcld_initLogging(
   int rc, i;
   char dlfErrBuf[CA_MAXLINELEN+1];
 
-  rc = dlf_init(facilityName,dlfErrBuf);
+  rc = dlf_init(facilityName,dlfErrBuf,1);
   
   i=-1;
   while ( *rtcpcldMessages[++i].messageTxt != '\0' ) {

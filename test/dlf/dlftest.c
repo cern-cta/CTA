@@ -259,7 +259,7 @@ int main (int argc, char **argv) {
 	 *   - note: the facility should be registered prior to the test, self registration from a client
 	 *     is not supported!!
 	 */
-	rv = dlf_init(facility, error);
+	rv = dlf_init(facility, error, 1);
        	if (rv != 0) {
 		fprintf(stderr, "dlf_init() - %s\n", error);
 		free(facility);
