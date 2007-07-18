@@ -9,6 +9,41 @@ grant select on subrequest to castor_read;
 grant select on stream to castor_read;
 grant select on segment to castor_read;
 
+CREATE TABLE monitoring_RecallStall (
+  runtime 	DATE NOT NULL,
+  svcclass      VARCHAR2(2048),
+  onehour	NUMBER,
+  sixhour	NUMBER,
+  twelvehour	NUMBER,
+  day		NUMBER,
+  twoday	NUMBER,
+  older		NUMBER
+);
+
+GRANT SELECT ON castor_stager.monitoring_RecallStall TO castor_read;
+GRANT INSERT ON castor_stager.monitoring_RecallStall TO castor_read;
+
+@ ../procedures/recallstall.sql
+
+GRANT execute ON castor_stager.Proc_RecallStall TO castor_read;
+
+CREATE TABLE monitoring_MigStall (
+  runtime 	DATE NOT NULL,
+  svcclass      VARCHAR2(2048),
+  onehour	NUMBER,
+  sixhour	NUMBER,
+  twelvehour	NUMBER,
+  day		NUMBER,
+  twoday	NUMBER,
+  older		NUMBER 
+);
+
+GRANT SELECT ON castor_stager.monitoring_MigStall TO castor_read;
+GRANT INSERT ON castor_stager.monitoring_MigStall TO castor_read;
+
+@ ../procedures/migstall.sql
+
+GRANT execute ON castor_stager.Proc_MigStall TO castor_read;
 
 CREATE TABLE monitoring_TableSize (
   runtime 	DATE NOT NULL,

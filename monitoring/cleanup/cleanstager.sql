@@ -1,3 +1,5 @@
+drop table monitoring_migstall;
+drop table monitoring_recallstall;
 drop table monitoring_tablesize;
 drop table monitoring_Segment;
 drop table monitoring_STREAM;
@@ -16,6 +18,8 @@ drop table monitoring_MetaMigPending;
 drop table monitoring_MetaMigSelected;
 drop table monitoring_MetaRecallRunning;
 
+drop procedure Proc_migstall;
+drop procedure Proc_recallstall;
 drop procedure Proc_tablesize;
 drop procedure Proc_Segment;
 drop procedure Proc_STREAM;
