@@ -5,7 +5,7 @@ dlf_init \- initialise the DLF interface
 .SH SYNOPSIS
 .B #include "dlf_api.h"
 
-.BI "int dlf_init (const char * " facility, " char * " error ")"
+.BI "int dlf_init (const char * " facility, " char * " errptr, " int " usethreads ")"
 .SH DESCRIPTION
 .B dlf_init
 initialises the DLF (Distributed Logging Facility) interface and must be called before any other DLF library related functions. All other function calls relating to the DLF library will fail upon unsuccessful initialisation.
@@ -21,14 +21,19 @@ characters in length.
 
 The
 .I errptr
-argument is a  pointer to a buffer to store an error message on error. The message is terminated by a
-newline character
-'\n' and the buffer must have a minimum size of CA_MAXLINELEN. If the errptr is NULL,
+argument is a pointer to a buffer to store an error message on error. The message is terminated by a newline character
+'\n' and the buffer must have a minimum size of CA_MAXLINELEN. If the errptr is NULL, 
 .BR "dlf_init" (3)
 returns immediately with -1. The
 .I errptr
 is only ever written too during calls to
 .BR "dlf_init" (3)
+
+The
+.I usethreads
+argument specifies whether the api should use threads ie. to record information remotely or surrender control of the thread creation to the user via a separate call to 
+.BR "dlf_create_threads" (3). 
+This is useful if you wish to have log file only logging before daemonization and then turn on remote logging afterwards avoiding the need to recreate the dlf threads in the child process.
 
 .SH "CONFIGURATION"
 /etc/castor/castor.conf provides a configuration file for defining the log destinations. A log destination must be defined in the following way either in the config file or by using environment variables (environment variables take precendense over the configuration file):
@@ -111,7 +116,8 @@ library calls. If you fail to use these sending messages to remote DLF servers w
 .BR dlf_write (3),
 .BR dlf_prepare (3),
 .BR dlf_child (3),
-.BR dlf_parent (3)
+.BR dlf_parent (3),
+.BR dlf_create_threads(3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
