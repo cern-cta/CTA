@@ -82,22 +82,24 @@ DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
 CFLAGS    = -pedantic -Wno-long-long $(CCOPTIM) -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(ORAINC)
 DEPLIB    = DepSharedLibraryTargetName(shlib,shift)
 
-MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)    \
-	    $(MANDIR)/dlf_child.$(MANSUFFIX)    \
-	    $(MANDIR)/dlf_init.$(MANSUFFIX)     \
-	    $(MANDIR)/dlf_parent.$(MANSUFFIX)   \
-	    $(MANDIR)/dlf_prepare.$(MANSUFFIX)  \
-	    $(MANDIR)/dlf_regtext.$(MANSUFFIX)  \
-	    $(MANDIR)/dlf_write.$(MANSUFFIX)    \
+MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)           \
+	    $(MANDIR)/dlf_child.$(MANSUFFIX)           \
+	    $(MANDIR)/dlf_create_threeads.$(MANSUFFIX) \
+	    $(MANDIR)/dlf_init.$(MANSUFFIX)            \
+	    $(MANDIR)/dlf_parent.$(MANSUFFIX)          \
+	    $(MANDIR)/dlf_prepare.$(MANSUFFIX)         \
+	    $(MANDIR)/dlf_regtext.$(MANSUFFIX)         \
+	    $(MANDIR)/dlf_write.$(MANSUFFIX)           \
 	    $(MANDIR)/dlf_shutdown.$(MANSUFFIX)
 
-EXPORTMANPAGES = $(EXPORTMAN)/man1/dlfserver.$(MANSUFFIX)       \
-		 $(EXPORTMAN)/man3/dlf_child.$(LIBMANSUFFIX)    \
-		 $(EXPORTMAN)/man3/dlf_init.$(LIBMANSUFFIX)     \
-		 $(EXPORTMAN)/man3/dlf_parent.$(LIBMANSUFFIX)   \
-		 $(EXPORTMAN)/man3/dlf_prepare.$(LIBMANSUFFIX)  \
-		 $(EXPORTMAN)/man3/dlf_regtext.$(LIBMANSUFFIX)  \
-		 $(EXPORTMAN)/man3/dlf_write.$(LIBMANSUFFIX)    \
+EXPORTMANPAGES = $(EXPORTMAN)/man1/dlfserver.$(MANSUFFIX)             \
+		 $(EXPORTMAN)/man3/dlf_child.$(LIBMANSUFFIX)          \
+		 $(EXPORTMAN)/man3/dlf_create_threads.$(LIBMANSUFFIX) \
+		 $(EXPORTMAN)/man3/dlf_init.$(LIBMANSUFFIX)           \
+		 $(EXPORTMAN)/man3/dlf_parent.$(LIBMANSUFFIX)         \
+		 $(EXPORTMAN)/man3/dlf_prepare.$(LIBMANSUFFIX)        \
+		 $(EXPORTMAN)/man3/dlf_regtext.$(LIBMANSUFFIX)        \
+		 $(EXPORTMAN)/man3/dlf_write.$(LIBMANSUFFIX)          \
 		 $(EXPORTMAN)/man3/dlf_shutdown.$(LIBMANSUFFIX)
 
 #if BuildDlfLibrary
