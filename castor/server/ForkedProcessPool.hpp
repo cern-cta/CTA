@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/18 10:01:57 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/07/23 14:52:16 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -92,13 +92,19 @@ namespace castor {
     virtual void childRun(castor::io::PipeSocket* ps);
 
     /// The vector of PipeSockets to communicate to the children processes
-    std::vector<castor::io::PipeSocket*> childPipe;
+    std::vector<castor::io::PipeSocket*> m_childPipe;
 
     /// The process id of the child processes
-    int *childPid;
+    int *m_childPid;
     
     /// The set of pipes to the children, to be used with select
-    fd_set pipes;
+    fd_set m_pipes;
+
+    /// The highest numbered file descriptor
+    int m_highFd;
+
+    /// The first call to dispatch ?
+    bool m_firstRun;
     
   };
 
