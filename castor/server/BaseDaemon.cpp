@@ -139,12 +139,16 @@ void castor::server::BaseDaemon::signalHandler()
         exit(EXIT_SUCCESS);
         break;
       
-      case CHILD_STOPPED:
-        clog() << ERROR << "IMMEDIATE STOP [SIGCHLD]" << std::endl;
+      case CHILD_STOPPED: {
 	// Reap dead processes to prevent defunct processes, we don't care about
 	// the exit. However, in the future we may want to re-fork it!
-	while (waitpid(-1, NULL, WNOHANG) > 0) {}
+	pid_t pid = 0;
+	while ((pid = waitpid(-1, NULL, WNOHANG)) != 0) {
+	  clog() << WARNING << "CHILD STOPPED [SIGCHLD] - PID " 
+		 << pid << std::endl;
+	}
       	break;
+      }
         
       default:
         clog() << ERROR << "Signal caught but not handled (" << (-1*sigValue) << ") - IMMEDIATE STOP" << std::endl;
