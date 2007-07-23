@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.461 $ $Date: 2007/07/13 15:54:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.462 $ $Date: 2007/07/23 08:38:53 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -15,7 +15,7 @@ UPDATE CastorVersion SET schemaVersion = '2_1_4_0';
 CREATE SEQUENCE ids_seq CACHE 300;
 
 /* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER PRIMARY KEY, type NUMBER);
+CREATE TABLE Id2Type (id INTEGER CONSTRAINT I_Id2Type_Id PRIMARY KEY, type NUMBER);
 
 /* SQL statements for requests status */
 /* Partitioning enables faster response (more than indexing) for the most frequent queries - credits to Nilo Segura */
@@ -62,28 +62,13 @@ partition by list (type)
 /* Note that if the schema changes, this part has to be updated manually! */
 DROP TABLE SubRequest;
 CREATE TABLE SubRequest
-   (
-        "RETRYCOUNTER" NUMBER,
-        "FILENAME" VARCHAR2(2048),
-        "PROTOCOL" VARCHAR2(2048),
-        "XSIZE" NUMBER(*,0),
-        "PRIORITY" NUMBER,
-        "SUBREQID" VARCHAR2(2048),
-        "FLAGS" NUMBER,
-        "MODEBITS" NUMBER,
-        "CREATIONTIME" NUMBER(*,0),
-        "LASTMODIFICATIONTIME" NUMBER(*,0),
-        "ANSWERED" NUMBER,
-        "ID" NUMBER(*,0) NOT NULL,
-        "DISKCOPY" NUMBER(*,0),
-        "CASTORFILE" NUMBER(*,0),
-        "PARENT" NUMBER(*,0),
-        "STATUS" NUMBER(*,0),
-        "REQUEST" NUMBER(*,0),
-        "GETNEXTSTATUS" NUMBER(*,0)
-    )
+  (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
+   xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
+   modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER,
+   answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048)
+  )
   PCTFREE 50 PCTUSED 40 INITRANS 50
-  TABLESPACE "STAGER_DATA" ENABLE ROW MOVEMENT
+  ENABLE ROW MOVEMENT
   PARTITION BY LIST (STATUS)
    (
     PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),
@@ -1951,7 +1936,6 @@ CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
                                                  context IN INTEGER,
                                                  nbTC IN INTEGER) AS
   tcId INTEGER;
-  fsId INTEGER;
   dcId INTEGER;
 
 BEGIN
@@ -1959,13 +1943,12 @@ BEGIN
  -- so we go directly to status STAGED
  IF nbTC = 0 OR fs = 0 THEN
    UPDATE DiskCopy SET status = 0 -- STAGED
-    WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-   RETURNING fileSystem INTO fsId;
+    WHERE castorFile = cfId AND status = 6; -- STAGEOUT
  ELSE
    -- update the DiskCopy status to CANBEMIGR
    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-    RETURNING fileSystem, id INTO fsId, dcId;
+    RETURNING id INTO dcId;
    -- Create TapeCopies
    FOR i IN 1..nbTC LOOP
     INSERT INTO TapeCopy (id, copyNb, castorFile, status)
