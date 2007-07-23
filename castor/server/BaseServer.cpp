@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/07/18 09:59:28 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/07/23 14:49:55 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -92,15 +92,20 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
     // we could set our working directory to '/' here with a call to chdir(2).
     // For the time being we don't and leave it to the initd script to change
     // to a suitable directory for us!
+    dlf_prepare();
     int pid = fork();
     if (pid < 0) {
       castor::exception::Internal ex;
       ex.getMessage() << "Background daemon initialization failed with result "
 		      << pid << std::endl;
+      dlf_parent();
       throw ex;
     } else if (pid > 0) {
       exit(EXIT_SUCCESS);
     }
+    dlf_child();
+
+    // run the program in a new session
     setsid();
     setpgrp();
     
