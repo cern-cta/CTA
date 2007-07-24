@@ -90,7 +90,6 @@ namespace castor{
 	}
 	
 	
-	castor::BaseObject::initLog("StagerDBService", castor::SVC_STDMSG);
 	/* Initializes the DLF logging */
 	/*	castor::dlf::Messages messages[]={{1, "Starting StagerDBService Thread"},{2, "StagerRequestHelper"},{3, "StagerCnsHelper"},{4, "StagerReplyHelper"},{5, "StagerRequestHelper failed"},{6, "StagerCnsHelper failed"},{7, "StagerReplyHelper failed"},{8, "StagerHandler"}, {9, "StagerHandler successfully finished"},{10,"StagerHandler failed finished"},{11, "StagerDBService Thread successfully finished"},{12, "StagerDBService Thread failed finished"}};
 		castor::dlf::dlf_init("StagerDBService", messages);*/
@@ -108,6 +107,11 @@ namespace castor{
       /***********************************************************/
       castor::IObject* StagerDBService::select() throw(castor::exception::Exception){
 	castor::stager::IStagerSvc* stgService;
+
+	/*****/  
+	castor::dlf::Param param1[]= {castor::dlf::Param("Standard Message","(StagerDBService select) getting the stagerService")};
+	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param1);/*   */
+	/*****/
 	castor::IService* svc =
 	  castor::BaseObject::services()->
 	  service("StagerSvc", castor::SVC_DBSTAGERSVC);
@@ -123,8 +127,18 @@ namespace castor{
 	  throw ex;
 	}
 	
+	/*****/  
+	castor::dlf::Param param2[]= {castor::dlf::Param("Standard Message","(StagerDBService select) got stagerService")};
+	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param2);/*   */
+	/*****/
+
 	castor::stager::SubRequest* subrequestToProcess = stgService->subRequestToDo(this->types);
-	
+
+	/*****/  
+	castor::dlf::Param param3[]= {castor::dlf::Param("Standard Message","(StagerDBService select) subRequestToDo")};
+	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param3);/*   */
+	/*****/
+
 	return(subrequestToProcess);
       }
 

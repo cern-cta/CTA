@@ -39,12 +39,11 @@ namespace castor {
 	StagerDBService() throw();
 	~StagerDBService() throw();
 
-
 	/***************************************************************************/
 	/* abstract functions inherited from the SelectProcessThread to implement */
 	/*************************************************************************/
-	castor::IObject* select() throw(castor::exception::Exception);
-	void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
+	virtual castor::IObject* select() throw(castor::exception::Exception);
+	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
 	
 	
 	std::vector<ObjectsIds> types;
