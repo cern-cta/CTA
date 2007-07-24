@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.463 $ $Date: 2007/07/23 09:24:45 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.464 $ $Date: 2007/07/24 15:37:26 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -65,7 +65,9 @@ CREATE TABLE SubRequest
   (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
    xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
    modeBits NUMBER, creationTime INTEGER, lastModificationTime INTEGER,
-   answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048)
+   answered NUMBER, errorCode NUMBER, errorMessage VARCHAR2(2048),
+   diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER,
+   request INTEGER, getNextStatus INTEGER   
   )
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
