@@ -1,11 +1,46 @@
 ------------
+- 2.1.3-22 -
+------------
+
+  Bug Fixes
+  ---------
+  - #27196 request waiting on D2D copy
+  - #26789 streamsToDo returns streams with nothing to do
+  - #27206 bad decision to STAGEIN if diskcopy in CANBEMIGR in disabled filesystem
+  - #27302 spacetobefreed has negative values
+  - #27564 MigHunter startup does not check for duplicates
+  - #27130 rmNodeDaemon problems on start-up
+  - #27507 recaller crash for old castor files without checksum
+  - 'volume in use' after EBUSY leading to disabled tapes
+  - Streamlined logging output in case of the new 'Bad MIR'
+  - getHostByName not thread safe, as well as the CASTOR clients using it
+  - #27794 cleaning daemon too slow to cope with heavy loads
+  - internalPutDoneFunc suffered from bad execution plans from ORACLE
+  - corrupted ns hostname logging in repack
+  - fixed broken http downloads in stagerJob due to unintialised variable
+
+  Upgrade from 2.1.3-17
+  ---------------------
+  - GRANT new privileges on the DLF DB. Here is an example of what to run,
+    has to be modified for each site :
+      alter system set db_create_file_dest='/ORA/dbs03/oradata/CASTORDLF/' scope=both ;
+      grant create tablespace to castor_dlf;
+      grant unlimited tablespace to castor_dlf;
+      grant alter tablespace to castor_dlf;
+  - Apply the SQL upgrade script to the dlf DB
+  - Stop all daemons
+  - Apply the SQL upgrade script to the stager DB
+  - Upgrade all nodes
+  - Restart all daemons
+
+------------
 - 2.1.3-17 -
 ------------
 
   New Features and Changes
   ------------------------
   - Better naming of version and releases within the stager DB
-  - introduced partitionning the the subrequest table. This allows to avoid
+  - introduced partitionning the subrequest table. This allows to avoid
     function based indexes and thus to shrink tables dynamically
   - Fixed updating of the stager database for monitoring information when
     a diskserver was deleted via rmAdminNode
