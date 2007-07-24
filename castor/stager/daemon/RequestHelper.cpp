@@ -62,7 +62,7 @@ namespace castor{
 	
 	castor::IService* svc =
 	  castor::BaseObject::services()->
-	  service("StagerSvc", castor::SVC_DBSTAGERSVC);
+	  service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
 	if (0 == svc) {
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the stagerService"<<std::endl;
@@ -78,7 +78,7 @@ namespace castor{
 	
 	castor::IService* svcDB =
 	  castor::BaseObject::services()->
-	  service("DbService", castor::SVC_DBCNV);
+	  service("DbCnvSvc", castor::SVC_DBCNV);
 	if (0 == svcDB) {
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the dbService"<<std::endl;

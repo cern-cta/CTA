@@ -114,7 +114,7 @@ namespace castor{
 	/*****/
 	castor::IService* svc =
 	  castor::BaseObject::services()->
-	  service("StagerSvc", castor::SVC_DBSTAGERSVC);
+	  service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
 	if (0 == svc) {
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerDBService) Impossible to get the stgService"<<std::endl;
