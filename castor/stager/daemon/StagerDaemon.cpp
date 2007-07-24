@@ -64,9 +64,6 @@ int main(int argc, char* argv[]){
     stgMainDaemon.parseCommandLine(argc, argv);
     
 
-    stgMainDaemon.start();
-    
-
     stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("StagerDBService", new castor::stager::dbService::StagerDBService()));
     stgMainDaemon.getThreadPool('S')->setNbThreads(stgMainDaemon.stagerDbNbthread);
 
@@ -75,8 +72,6 @@ int main(int argc, char* argv[]){
       {castor::dlf::Param("Standard Message","added thread pool")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 2, params1);
     /******/
-
-    stgMainDaemon.parseCommandLine(argc, argv);
 
     stgMainDaemon.start();  
 
