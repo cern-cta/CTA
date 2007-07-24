@@ -47,31 +47,23 @@ int main(int argc, char* argv[]){
       throw(ex);
     }
 
-
+   
+    
     /***************/
     castor::stager::dbService::StagerDBService* stgDBService = new castor::stager::dbService::StagerDBService();
     /***************/
     stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("StagerDBService", stgDBService));
+
+    /* we need to call this function before setting the number of threads */
+    stgMainDaemon.parseCommandLine(argc, argv);
+
     stgMainDaemon.getThreadPool('S')->setNbThreads(stgMainDaemon.stagerDbNbthread);
     
     /******/
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message","added thread pool")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 2, params);
-    /******/
-
-    /* we need to call this function before setting the number of threads */
-    stgMainDaemon.parseCommandLine(argc, argv);
-    
-
-    stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("StagerDBService", new castor::stager::dbService::StagerDBService()));
-    stgMainDaemon.getThreadPool('S')->setNbThreads(stgMainDaemon.stagerDbNbthread);
-
-    /******/
-    castor::dlf::Param params1[] =
-      {castor::dlf::Param("Standard Message","added thread pool")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 2, params1);
-    /******/
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, STAGER_MSG_ERROR, 2, params);
+    /******/ 
 
     stgMainDaemon.start();  
 
