@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 15:46:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: UDPListenerThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
  *
  * Listener thread pool based on UDP
  *
@@ -63,13 +63,13 @@ namespace castor {
       UDPListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
                             int listenPort, bool listenerOnOwnThread = true) throw();
 
+    protected:
+
       /**
        * Binds a standard UDPSocket to the given port.
        * @throw castor::exception::Internal if the port is busy.
        */
-      virtual void init() throw (castor::exception::Exception);
-
-    protected:
+      virtual void bind() throw (castor::exception::Exception);
 
       /**
        * The listening loop implementation for this Listener, based on standard UDPSocket.
@@ -77,9 +77,6 @@ namespace castor {
        * it is expected that this method implements a never-ending loop.
        */
       virtual void listenLoop();
-
-      /// The server socket used to accept connections
-      castor::io::UDPSocket* m_sock;
 
     };
 

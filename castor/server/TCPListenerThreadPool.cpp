@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/04/12 16:54:03 $ $Author: itglp $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
  *
  * Listener thread pool based on TCP
  *
@@ -42,10 +42,9 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
   ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread) {}
 
 //------------------------------------------------------------------------------
-// init
+// bind
 //------------------------------------------------------------------------------
-void castor::server::TCPListenerThreadPool::init() throw (castor::exception::Exception) {
-  castor::server::ListenerThreadPool::init();  
+void castor::server::TCPListenerThreadPool::bind() throw (castor::exception::Exception) {
   /* Create a socket for the server, bind, and listen */
   try {
     m_sock = new castor::io::ServerSocket(m_port, true);
@@ -63,7 +62,7 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
   for (;;) {
     try {
       // accept connections
-      castor::io::ServerSocket* s = m_sock->accept();
+      castor::io::ServerSocket* s = ((castor::io::ServerSocket*)m_sock)->accept();
       // handle the command
       threadAssign(s);
     }

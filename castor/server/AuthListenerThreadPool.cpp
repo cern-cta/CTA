@@ -17,12 +17,12 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: AuthListenerThreadPool.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/07/09 17:10:35 $ $Author: itglp $
+* @(#)$RCSfile: AuthListenerThreadPool.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
 *
 * A ListenerThreadPool which uses AuthSockets to handle the connections
 *
 * @author Giuseppe Lo Presti
-*****************************************************************************/
+******************************************************** *********************/
 
 // Include Files
 #include <signal.h>
@@ -31,14 +31,10 @@
 #include "castor/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
-// init
+// bind
 //------------------------------------------------------------------------------
-void castor::server::AuthListenerThreadPool::init()
-  throw (castor::exception::Exception)
+void castor::server::AuthListenerThreadPool::bind() throw (castor::exception::Exception)
 {
-  // we don't call TCPListenerThreadPool::init because we want to override it
-  castor::server::ListenerThreadPool::init();
-  
   // create a secure socket for the server, bind, and listen
   try {
     m_sock = new castor::io::AuthServerSocket(m_port, true);

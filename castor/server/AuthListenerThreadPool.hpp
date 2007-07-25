@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthListenerThreadPool.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/07/09 17:10:35 $ $Author: itglp $
+ * @(#)$RCSfile: AuthListenerThreadPool.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
  *
  * A ListenerThreadPool which uses AuthSockets to handle the connections
  *
@@ -67,7 +67,7 @@ namespace castor {
     /**
      * Performs the bind with an AuthServerSocket here
      */
-    virtual void init() throw (castor::exception::Exception);
+    virtual void bind() throw (castor::exception::Exception);
 
   };
 

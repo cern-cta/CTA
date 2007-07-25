@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -44,11 +44,30 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
   BaseThreadPool(poolName, thread), m_port(listenPort),
   m_spawnListener(listenerOnOwnThread) {}
 
-
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::run() {  
+void castor::server::ListenerThreadPool::run() throw (castor::exception::Exception) {  
+  // bind the socket (this can fail, we just propagate the exception)
+  bind();
+
+  // create the thread pool
+  int actualNbThreads;
+  m_threadPoolId = Cpool_create(m_nbThreads, &actualNbThreads);
+  if (m_threadPoolId < 0) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Thread pool '" << m_poolName << "' creation error: "
+           << m_threadPoolId << std::endl;
+    clog() << ALERT << ex.getMessage().str();
+    throw ex;
+  }
+  else {
+    m_nbThreads = actualNbThreads;
+    clog() << DEBUG << "Thread pool '" << m_poolName << "' created with "
+           << m_nbThreads << " threads" << std::endl;
+  }
+  
+  // start the listening loop
   if(m_spawnListener) {
     Cthread_create_detached(castor::server::_listener_run, this);
   } else {
@@ -57,10 +76,19 @@ void castor::server::ListenerThreadPool::run() {
 }
 
 //------------------------------------------------------------------------------
-// init
+// shutdown
 //------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::init() throw (castor::exception::Exception) {
-  castor::server::BaseThreadPool::init();  
+bool castor::server::ListenerThreadPool::shutdown() throw() {
+  // stop accepting connections
+  if(m_sock != 0) {
+    m_sock->close();
+  }
+  
+  // For the time being we assume threads will end very soon, so we just inherit
+  // the default behavior.
+  // A better implementation is to call Cpool_next_index_timeout(m_threadPoolId, 0)
+  // until it says that all threads are idle.
+  return castor::server::BaseThreadPool::shutdown();
 }
 
 //------------------------------------------------------------------------------
@@ -75,24 +103,22 @@ void* castor::server::_listener_run(void* param) {
 //------------------------------------------------------------------------------
 // threadAssign
 //------------------------------------------------------------------------------
-int castor::server::ListenerThreadPool::threadAssign(void *param) {
+void castor::server::ListenerThreadPool::threadAssign(void *param) {
   // Initializing the arguments to pass to the static request processor
   struct threadArgs *args = new threadArgs();
   args->handler = this;
   args->param = param;
-  if (m_nbThreads > 0) {   // always true
+  if (m_nbThreads > 0) {
     int assign_rc = Cpool_assign(m_threadPoolId,
                                  &castor::server::_thread_run,
                                  args,
                                  -1);
     if (assign_rc < 0) {
       clog() << "Error while spawning thread in pool " << m_poolName << std::endl;
-      return -1;
     }
   } else {
     // for debugging purposes it could be useful to run the user thread code in the same thread. 
     castor::server::_thread_run(args);
   }
-  return 0;
 }
 

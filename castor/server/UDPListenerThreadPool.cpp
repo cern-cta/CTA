@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/26 12:32:47 $ $Author: waldron $
+ * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
  *
  * A listener thread pool listening on an UDP port
  *
@@ -42,10 +42,9 @@ castor::server::UDPListenerThreadPool::UDPListenerThreadPool
   ListenerThreadPool(poolName, thread, listenPort, listenerOnOwnThread) {}
 
 //------------------------------------------------------------------------------
-// init
+// bind
 //------------------------------------------------------------------------------
-void castor::server::UDPListenerThreadPool::init() throw (castor::exception::Exception) {
-  castor::server::ListenerThreadPool::init();  
+void castor::server::UDPListenerThreadPool::bind() throw (castor::exception::Exception) {
   /* Create a socket for the server, bind, and listen */
   try {
     m_sock = new castor::io::UDPSocket(m_port, true, true);
@@ -63,7 +62,7 @@ void castor::server::UDPListenerThreadPool::listenLoop() {
   for (;;) {
     try {
       // Read next datagram
-      castor::IObject* obj = m_sock->readObject();
+      castor::IObject* obj = ((castor::io::UDPSocket*)m_sock)->readObject();
       // handle the command
       threadAssign(obj);
     } catch (castor::exception::Exception e) {
