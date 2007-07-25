@@ -1,5 +1,5 @@
 /******************************************************************************
- *              dlf_2.1.3-17_to_2.1.3-18.sql
+ *              dlf_2.1.3-17_to_2.1.3-23.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_2.1.3-17_to_2.1.3-23.sql,v $ $Revision: 1.1 $ $Release$ $Date: 2007/07/02 06:43:39 $ $Author $
+ * @(#)$RCSfile: dlf_2.1.3-17_to_2.1.3-23.sql,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/25 11:17:27 $ $Author $
  *
- * This script upgrades a CASTOR v2.1.3-17 DLF database to 2.1.3-18
+ * This script upgrades a CASTOR v2.1.3-17 DLF database to 2.1.3-23
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -40,7 +40,7 @@ END;
 
 
 /* upgrade dlf_version to new model */
-UPDATE dlf_version SET release = '2_1_3_18';
+UPDATE dlf_version SET release = '2_1_3_23';
 
 /* remove deprecated option */
 DELETE FROM dlf_settings WHERE name = 'ARCHIVE_MODE';
