@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/07/18 09:58:00 $ $Author: waldron $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/25 15:30:39 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -68,16 +68,27 @@ namespace castor {
     virtual ~BaseThreadPool() throw();
 
     /**
-     * Initializes the pool
+     * Initializes the pool. This implementation throws an error.
      */
     virtual void init() throw (castor::exception::Exception);
 
     /**
      * Runs the pool. This function is supposed to spawn
      * the threads and immediately return.
-     * Specialized pools implement it according to their needs.
+     * Specialized pools implement it according to their needs,
      */
-    virtual void run() {};
+    virtual void run() throw (castor::exception::Exception) {};
+    
+    /**
+     * Performs a graceful shutdown of the pool. This function is
+     * supposed to asynchronously signal all threads in the pool 
+     * in order to stop them. This implementation only calls the
+     * thread's stop() method.
+     * @return true if the pool is idle, false if it is not: in the
+     * second case, the caller is supposed to wait and try again later.
+     */
+    virtual bool shutdown() throw();
+     
 
     /**
      * Sets the number of threads

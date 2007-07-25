@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/25 15:30:39 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -51,8 +51,8 @@ castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool::~BaseThreadPool() throw()
 {
+  shutdown();
   if(m_thread != 0) {
-    m_thread->stop();
     delete m_thread;
   }
 }
@@ -62,21 +62,23 @@ castor::server::BaseThreadPool::~BaseThreadPool() throw()
 //------------------------------------------------------------------------------
 void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 {
-  // create the thread pool
-  int actualNbThreads;
-  m_threadPoolId = Cpool_create(m_nbThreads, &actualNbThreads);
-  if (m_threadPoolId < 0) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Thread pool '" << m_poolName << "' creation error: "
-           << m_threadPoolId << std::endl;
-    clog() << ALERT << ex.getMessage().str();
-    throw ex;
+  castor::exception::Internal notImpl;
+  notImpl.getMessage() << 
+    "BaseThreadPool is (pseudo)abstract, you must use its derived classes";
+  throw notImpl;
+}
+
+//------------------------------------------------------------------------------
+// shutdown
+//------------------------------------------------------------------------------
+bool castor::server::BaseThreadPool::shutdown() throw()
+{
+  if(m_thread != 0) {
+    try {
+      m_thread->stop();
+    } catch(castor::exception::Exception ignored) {}
   }
-  else {
-    clog() << DEBUG << "Thread pool '" << m_poolName << "' created with "
-           << m_nbThreads << " threads" << std::endl;
-    m_nbThreads = actualNbThreads;
-  }
+  return true;
 }
 
 //------------------------------------------------------------------------------
