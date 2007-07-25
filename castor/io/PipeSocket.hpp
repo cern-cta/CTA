@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/18 09:58:00 $ $Author: waldron $
+ * @(#)$RCSfile: PipeSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/25 15:35:15 $ $Author: itglp $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -51,8 +51,9 @@ namespace castor {
       /**
        * Default constructor: creates a standard Unix pipe and builds a socket
        * on its file descriptors.
-       * The socket is not readable/writable at the beginning and must
-       * be opened explicitly.
+       * The socket is considered bidirectional at the beginning
+       * but it must be closed on one direction: typically, a forked child
+       * keeps one end and the parent keeps the other end.
        * @throw exception if the pipe cannot be created
        */
       PipeSocket()
@@ -60,25 +61,38 @@ namespace castor {
 
       /**
        * Constructor building a socket on the given file descriptors.
-       * The socket is not readable/writable at the beginning and must
-       * be opened explicitly.
+       * The socket is considered readable/writable according to the passed mode
        * @param fdIn the fd for reading
        * @param fdOut the fd for writing
+       * @param mode one of PIPE_READ, PIPE_WRITE, PIPE_RW
        */
-      PipeSocket(const int fdIn, const int fdOut)
+      PipeSocket(const int fdIn, const int fdOut, const int mode)
         throw (castor::exception::Exception);
 
       /**
-       * Make pipe readable
-       * @return the internal file descriptor of the pipe being used for read
+       * Default destructor. Closes the pipe.
        */
-      int openRead();
+      virtual ~PipeSocket() throw();
       
       /**
-       * Make pipe writable
-       * @return the internal file descriptor of the pipe being used for write
+       * Closes the socket for reading
        */
-      int openWrite();
+      void closeRead();
+      
+      /**
+       * Closes the socket for writing
+       */
+      void closeWrite();
+
+      /**
+       * Returns the fd for reading
+       */
+      int getFdRead() const { return m_fdIn; };
+
+      /**
+       * Returns the fd for writing
+       */
+      int getFdWrite() const { return m_fdOut; };
       
     protected:
 
@@ -130,3 +144,4 @@ namespace castor {
 } // end of namespace castor
 
 #endif // CASTOR_IO_PIPESOCKET_HPP
+

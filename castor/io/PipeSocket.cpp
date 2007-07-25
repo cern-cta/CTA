@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/09 17:12:19 $ $Author: itglp $
+ * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/25 15:35:15 $ $Author: itglp $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -31,6 +31,7 @@
 #include <string.h>
 #include <serrno.h>
 #include <sys/types.h>
+#include <Cnetdb.h>
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -41,7 +42,7 @@
 //------------------------------------------------------------------------------
 castor::io::PipeSocket::PipeSocket()
   throw (castor::exception::Exception) :
-  AbstractSocket(0, false), m_mode(0) 
+  AbstractSocket(0, false), m_mode(castor::io::PIPE_RW) 
 {
     int fds[2];
     if(pipe(fds) < 0) {
@@ -58,26 +59,39 @@ castor::io::PipeSocket::PipeSocket()
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::PipeSocket::PipeSocket(const int fdIn, const int fdOut)
+castor::io::PipeSocket::PipeSocket(const int fdIn, const int fdOut, const int mode)
   throw (castor::exception::Exception) :
-  AbstractSocket(0, false), m_fdIn(fdIn), m_fdOut(fdOut), m_mode(0) {}
+  AbstractSocket(0, false), m_fdIn(fdIn), m_fdOut(fdOut), m_mode(mode) {}
 
 //------------------------------------------------------------------------------
-// openWrite
+// destructor
 //------------------------------------------------------------------------------
-int castor::io::PipeSocket::openRead()
+castor::io::PipeSocket::~PipeSocket() throw()
 {
-  m_mode |= castor::io::PIPE_READ;
-  return m_fdIn;
+  closeRead();
+  closeWrite();
 }
 
 //------------------------------------------------------------------------------
-// openWrite
+// closeWrite
 //------------------------------------------------------------------------------
-int castor::io::PipeSocket::openWrite()
+void castor::io::PipeSocket::closeWrite()
 {
-  m_mode |= castor::io::PIPE_WRITE;
-  return m_fdOut;
+  if(m_mode & castor::io::PIPE_WRITE != 0) {
+    CLOSE(m_fdOut);
+    m_mode &= !castor::io::PIPE_WRITE;
+  }
+}
+
+//------------------------------------------------------------------------------
+// closeRead
+//------------------------------------------------------------------------------
+void castor::io::PipeSocket::closeRead()
+{
+  if(m_mode & castor::io::PIPE_READ != 0) {
+    CLOSE(m_fdIn);
+    m_mode &= !castor::io::PIPE_READ;
+  }
 }
 
   
