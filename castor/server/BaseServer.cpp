@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/07/23 14:49:55 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/07/25 15:36:56 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -31,6 +31,7 @@
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/dlf/Message.hpp"
 
 #include "Cgetopt.h"
 #include "Cinit.h"
@@ -68,7 +69,7 @@ castor::server::BaseServer::BaseServer(const std::string serverName) :
 //------------------------------------------------------------------------------
 castor::server::BaseServer::~BaseServer() throw()
 {
-  // tries to stop and free all thread pools
+  // tries to free all thread pools
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     delete tp->second;
@@ -88,11 +89,11 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 {
   // init daemon if to be run in background 
   if (!m_foreground) {
+    dlf_prepare();
 
     // we could set our working directory to '/' here with a call to chdir(2).
     // For the time being we don't and leave it to the initd script to change
     // to a suitable directory for us!
-    dlf_prepare();
     int pid = fork();
     if (pid < 0) {
       castor::exception::Internal ex;
@@ -100,7 +101,9 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 		      << pid << std::endl;
       dlf_parent();
       throw ex;
-    } else if (pid > 0) {
+    }
+    else if (pid > 0) {
+      // the parent exits normally
       exit(EXIT_SUCCESS);
     }
     dlf_child();
@@ -111,8 +114,8 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
     
     // close the standard file descriptors
     if ((freopen("/dev/null", "r", stdin)  == NULL) ||
-	(freopen("/dev/null", "w", stdout) == NULL) ||
-	(freopen("/dev/null", "w", stderr) == NULL)) {
+        (freopen("/dev/null", "w", stdout) == NULL) ||
+        (freopen("/dev/null", "w", stderr) == NULL)) {
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to redirect standard file descriptors to "
 		      << "/dev/null" << std::endl;
@@ -120,8 +123,8 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
     }
   }
 
-  // Ignore SIGPIPE (connection lost with client),
-  // SIGXFSZ (a file is too big)
+  // Ignore SIGPIPE (connection lost with client)
+  // and SIGXFSZ (a file is too big)
 #if !defined(_WIN32)
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
@@ -129,28 +132,37 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 }
 
 //------------------------------------------------------------------------------
+// dlfInit
+//------------------------------------------------------------------------------
+void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
+{
+  castor::BaseObject::initLog(m_serverName, 
+    m_foreground ? castor::SVC_DLFMSG : castor::SVC_STDMSG);
+  castor::dlf::dlf_init((char*)m_serverName.c_str(), messages);
+  // if missing, add an entry for the framework messages coming with the streaming
+  if(messages[0].number != 0) {
+    castor::dlf::Message frameworkMsg[] = 
+      {{ 0, "Framework message"}, {-1, ""}};
+    castor::dlf::dlf_addMessages(0, frameworkMsg);
+  }
+}
+
+//------------------------------------------------------------------------------
 // start
 //------------------------------------------------------------------------------
 void castor::server::BaseServer::start() throw (castor::exception::Exception)
 {
-  init();
   std::cout << "Starting " << m_serverName << std::endl;
-  
-  bool checkTPType = typeid(this) == typeid(castor::server::BaseServer);
 
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
-
-    if(checkTPType && typeid(tp->second) == typeid(castor::server::SignalThreadPool)) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Fatal: to use a SignalThreadPool you need to inherit your server from BaseDaemon.";
-      throw ex;
-    }
-    else
-      tp->second->init();
+    tp->second->init();
     // in case of exception, don't go further and propagate it
   }
 
+  // daemonization
+  init();
+  
   // if we got here, we're ready to start all the pools and detach corresponding threads
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     tp->second->run();  // here run returns immediately

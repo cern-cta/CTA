@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/07/25 15:36:56 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -33,6 +33,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseThreadPool.hpp"
+#include "castor/dlf/Message.hpp"
 
 namespace castor {
 
@@ -71,6 +72,13 @@ namespace castor {
      * Sets the foreground flag
      */
     void setForeground(bool value) { m_foreground = value; }
+    
+    /**
+     * Initializes the DLF, both for streaming and regular messages
+     * Does not create the DLF thread, this is created after daemonization
+     * @param messages the messages to be passed to dlf_init
+     */
+    void dlfInit(castor::dlf::Message messages[]);
 
     /**
      * Adds a thread pool to this server
