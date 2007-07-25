@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/07/23 14:52:16 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/07/25 15:36:11 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -65,15 +65,21 @@ namespace castor {
     virtual ~ForkedProcessPool() throw();
 
     /**
-     * Initializes the pool. Nothing to be done in this class.
-     */
-     virtual void init() throw (castor::exception::Exception) {};
-
-    /**
-     * Creates and runs the pool by forking children processes.
+     * Creates the pool by forking children processes.
      * The parent process returns, children processes call childRun.
      */
-    virtual void run();
+     virtual void init() throw (castor::exception::Exception);
+     
+    /**
+     * Shutdowns the pool. Kills all children.
+     */
+     virtual bool shutdown() throw ();
+
+    /**
+     * Runs the pool. The forking phase is done in init, thus this
+     * method is almost empty.
+     */
+    virtual void run() throw (castor::exception::Exception);
     
     /**
      * Entry point to dispatch a task to an idle process
@@ -105,6 +111,9 @@ namespace castor {
 
     /// The first call to dispatch ?
     bool m_firstRun;
+    
+    /// Is the pool able to dispatch ?
+    bool m_stopped;
     
   };
 

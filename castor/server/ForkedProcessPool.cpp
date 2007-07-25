@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/23 14:52:16 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/07/25 15:36:11 $ $Author: itglp $
  *
  * A pool of forked processes
  *
@@ -45,7 +45,7 @@
 //------------------------------------------------------------------------------
 castor::server::ForkedProcessPool::ForkedProcessPool(const std::string poolName,
                                  castor::server::IThread* thread) :
-  BaseThreadPool(poolName, thread), m_highFd(0), m_firstRun(true)
+  BaseThreadPool(poolName, thread), m_highFd(0), m_firstRun(true), m_stopped(true)
 {
   FD_ZERO(&m_pipes);
 }
@@ -56,21 +56,37 @@ castor::server::ForkedProcessPool::ForkedProcessPool(const std::string poolName,
 castor::server::ForkedProcessPool::~ForkedProcessPool() throw()
 {
   for(int i = 0; i < m_nbThreads; i++) {
-    m_childPipe[i]->close();
-    // we need to kill children processes, otherwise they stay waiting
-    // to read on the closed pipe!
+    if(m_childPipe[i] != NULL) {
+      delete m_childPipe[i];
+    }
+  }
+  delete[] m_childPid;
+}
+
+//------------------------------------------------------------------------------
+// shutdown
+//------------------------------------------------------------------------------
+bool castor::server::ForkedProcessPool::shutdown() throw()
+{
+  m_stopped = true;
+  // for the time being, we just kill the children without notifying them
+  // that we have to shutdown. We need to kill otherwise they stay waiting
+  // to read on the pipe being closed!
+  for(int i = 0; i < m_nbThreads; i++) {
     if (m_childPid[i] > 0) {
       kill(m_childPid[i], SIGKILL);
     }
     delete m_childPipe[i];
+    m_childPipe[i] = NULL;
   }
+  return true;
 }
 
 
 //------------------------------------------------------------------------------
-// run
+// init
 //------------------------------------------------------------------------------
-void castor::server::ForkedProcessPool::run()
+void castor::server::ForkedProcessPool::init() throw (castor::exception::Exception)
 {
   // don't do anything if nbThreads = 0
   if(m_nbThreads == 0) {
@@ -78,6 +94,7 @@ void castor::server::ForkedProcessPool::run()
   }
   
   // create pool of forked processes
+  // we do it here so it is done before daemonization (BaseServer::init())
   m_childPid = new int[m_nbThreads];
   for (int i = 0; i < m_nbThreads; i++) {
     // create a pipe for the child
@@ -86,6 +103,7 @@ void castor::server::ForkedProcessPool::run()
     // fork worker process
     dlf_prepare();
     int pid = fork();
+    
     if(pid < 0) { 
       dlf_parent();
       castor::exception::Internal ex;
@@ -93,30 +111,41 @@ void castor::server::ForkedProcessPool::run()
       throw ex;
     }
     if(pid == 0) {
-      // close all child file descriptors which are not used for inter-process
-      // communication
-      for (int j = 2; j < getdtablesize(); j++) {
-	if ((j != ps->openRead()) && (j != ps->openWrite())) {
-	  close(j);
-	}
+      // close all child file descriptors which are not used
+      // for inter-process communication
+      ps->closeWrite();
+      for (int fd = 0; fd < getdtablesize(); fd++) {
+        if ((fd != ps->getFdRead()) && (fd != ps->getFdWrite())) {
+          close(fd);
+        }
       }
-      // child
       dlf_child();
       childRun(ps);      // this is a blocking call
       exit(EXIT_SUCCESS);
     }
     else {
-      // parent: save pipe
+      // parent: save pipe and pid
       dlf_parent();
-      int fd = ps->openWrite();
-      FD_SET(fd, &m_pipes);
-      m_childPipe.push_back(ps);
       m_childPid[i] = pid;
+      m_childPipe.push_back(ps);
+      ps->closeRead();
+      int fd = ps->getFdWrite();
+      FD_SET(fd, &m_pipes);
       if (fd > m_highFd) {
       	m_highFd = fd;
       } 
     }
   }
+}
+
+//------------------------------------------------------------------------------
+// run
+//------------------------------------------------------------------------------
+void castor::server::ForkedProcessPool::run() throw (castor::exception::Exception)
+{
+  // we already forked all processes, so not much to do here
+  // open dispatch
+  m_stopped = false;
 
   clog() << DEBUG << "Thread pool " << m_poolName << " started with "
          << m_nbThreads << " processes" << std::endl;
@@ -129,6 +158,10 @@ void castor::server::ForkedProcessPool::run()
 void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
   throw (castor::exception::Exception)
 {
+  if (m_stopped) {
+    return;
+  }
+  
   // XXX we have observed that without this waiting time at the beginning
   // the first objects written into the pipes get screwed. We should understand
   // why... in the meantime we hack this way
@@ -136,7 +169,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
     sleep(1);
     m_firstRun = false;
   }
-
+  
   // look for an idle process
   // this is blocking in case all children are busy
   fd_set querypipes = m_pipes;
@@ -153,7 +186,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
 
   // get the idle child
   for(int child = 0; child < m_nbThreads; child++) {
-    if(FD_ISSET(m_childPipe[child]->openWrite(), &querypipes)) {
+    if(FD_ISSET(m_childPipe[child]->getFdWrite(), &querypipes)) {
       // dispatch the object to the child (this can throw exceptions)
       m_childPipe[child]->sendObject(obj);
       break;
@@ -167,9 +200,6 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
 //------------------------------------------------------------------------------
 void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
 {
-  // open pipe for reading
-  ps->openRead();
-  
   // initialize process
   try {
     m_thread->init();
