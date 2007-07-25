@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/07/25 15:33:13 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -70,11 +70,44 @@ void castor::server::SignalThreadPool::init()
   m_poolMutex = new Mutex(-1, m_timeout);
 }
 
+//------------------------------------------------------------------------------
+// shutdown
+//------------------------------------------------------------------------------
+bool castor::server::SignalThreadPool::shutdown() throw()
+{
+  if(m_notifTPool) {
+    delete m_notifTPool;
+    m_notifTPool = 0;
+  }
+  try {
+    m_poolMutex->lock();
+    if(m_nbActiveThreads > 0) {
+      // This is advisory, but SelectProcessThread and BaseDbThread implement it.
+      // It is recommended that db-oriented threads implement it to
+      // properly cleanup the db connection.
+      m_thread->stop();
+      m_poolMutex->release();
+      return false;
+    }
+    else
+      return true;
+  }
+  catch (castor::exception::Exception e) {
+    // this can happen if the user thread threw an exception when stopping,
+    // or in case of mutex problems. We just try again at the next round.
+    try {
+      m_poolMutex->release();
+    } catch(castor::exception::Exception ignored) {};
+    return false;
+  }
+}
+
 
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
 void castor::server::SignalThreadPool::run()
+  throw (castor::exception::Exception)
 {
   // don't do anything if nbThreads = 0
   if(m_nbThreads == 0) {
