@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.465 $ $Date: 2007/07/24 16:30:20 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.466 $ $Date: 2007/07/25 14:46:01 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -893,12 +893,12 @@ BEGIN
               AND FS.status IN (0, 1)         -- PRODUCTION, DRAINING
               AND DiskServer.id = FS.diskserver
               AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-	      -- Ignore diskservers where a migrator already exists
+              -- Ignore diskservers where a migrator already exists
               AND DiskServer.id NOT IN (
                 SELECT DISTINCT(FileSystem.diskServer)
                   FROM FileSystem, Stream
                  WHERE FileSystem.id = Stream.lastfilesystemused
-		   AND Stream.status IN (3)   -- SELECTED
+                   AND Stream.status IN (3)   -- SELECTED
               )
             ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
@@ -1321,12 +1321,8 @@ BEGIN
         -- no put waiting, we can continue
         result := 1;
         OPEN sources
-          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                     FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
-				    FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams),
-                     FileSystem.mountPoint,
-                     DiskServer.name
+          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, 0,   -- fs rate does not apply here
+                     FileSystem.mountPoint, DiskServer.name
                 FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
                WHERE SubRequest.id = rsubreqId
                  AND SubRequest.castorfile = DiskCopy.castorfile
@@ -1365,12 +1361,8 @@ BEGIN
       ELSE
         result := 1;
         OPEN sources
-          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                     FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
-				    FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams),
-                     FileSystem.mountPoint,
-                     DiskServer.name
+          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, 0,   -- fs rate does not apply here
+                     FileSystem.mountPoint, DiskServer.name
                 FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
                WHERE SubRequest.id = rsubreqId
                  AND SubRequest.castorfile = DiskCopy.castorfile
