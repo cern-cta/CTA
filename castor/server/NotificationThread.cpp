@@ -1,28 +1,28 @@
 /******************************************************************************
- *                      NotificationThread.cpp
- *
- * This file is part of the Castor project.
- * See http://castor.web.cern.ch/castor
- *
- * Copyright (C) 2004  CERN
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
- *
- * @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/07/18 09:58:00 $ $Author: waldron $
- *
- * A thread to handle notifications to wake up workers in a pool
- *
- * @author Giuseppe Lo Presti
- *****************************************************************************/
+*                      NotificationThread.cpp
+*
+* This file is part of the Castor project.
+* See http://castor.web.cern.ch/castor
+*
+* Copyright (C) 2004  CERN
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* as published by the Free Software Foundation; either version 2
+* of the License, or (at your option) any later version.
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+*
+* @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/25 15:34:12 $ $Author: itglp $
+*
+* A thread to handle notifications to wake up workers in a pool
+*
+* @author Giuseppe Lo Presti
+*****************************************************************************/
 
 // Include Files
 #include "castor/server/NotificationThread.hpp"
@@ -43,7 +43,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::NotificationThread::NotificationThread(int notifPort) :
-  m_notifPort(notifPort), m_owner(0) {}
+m_notifPort(notifPort), m_owner(0), m_stopped(false) {}
 
 //------------------------------------------------------------------------------
 // run
@@ -51,21 +51,21 @@ castor::server::NotificationThread::NotificationThread(int notifPort) :
 void castor::server::NotificationThread::run(void* param) {
   m_owner = (SignalThreadPool*)param;
   int s = -1;
-
+  
   try {
-
+    
     struct sockaddr_in serverAddress, clientAddress;
     int on = 1;	/* for REUSEADDR */
     int ibind;
     
-#if defined(_WIN32)
+    #if defined(_WIN32)
     WSADATA wsadata;
     if (WSAStartup(MAKEWORD (2, 0), &wsadata)) {
       serrno = SEINTERNAL;
       return(NULL);
     }
-#endif
-
+    #endif
+    
     /* Create a socket */
     if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
       castor::exception::Internal ex;
@@ -82,7 +82,7 @@ void castor::server::NotificationThread::run(void* param) {
     ibind = 0;
     while (ibind++ < MAX_BIND_RETRY) {
       if (bind(s, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) >= 0)
-	break;
+        break;
     }
     if (ibind == MAX_BIND_RETRY) {
       castor::exception::Internal ex;
@@ -98,8 +98,8 @@ void castor::server::NotificationThread::run(void* param) {
     //m_owner->m_poolMutex->signal();
     //m_owner->m_poolMutex->release();
     
-    /* Wait for a notification */
-    while(true) {
+    /* Wait for a notification or until we are told to stop */
+    while(!m_stopped) {
       int magic;
       int nb_recv;
       char buf[HYPERSIZE + LONGSIZE];
@@ -118,62 +118,60 @@ void castor::server::NotificationThread::run(void* param) {
       timeout.tv_sec = 1;
       timeout.tv_usec = 0;
       if (select(s + 1, &read_handles, NULL, NULL, &timeout) > 0) {
-	
-	/* Reading the header - blocks until there is something to read */
-	nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen );
-	
-	if (nb_recv != (HYPERSIZE+LONGSIZE)) {
-	  /* Ignore this packet */
-	  continue;
-	}
-	
-	p = buf;
-	unmarshall_HYPER(p, magic);
-	unmarshall_LONG(p, nb_thread_wanted);
-	
-	if (magic != NOTIFY_MAGIC) {
-	  /* Not a packet for us (!?) */
-	  continue;
-	}
-	
-	/* Okay - we have received a notification - we signal our condition variable */
-	try {
-	  m_owner->m_poolMutex->lock();
-	  
-	  m_owner->m_notified += nb_thread_wanted;
-	  
-	  /* We make sure that 0 <= m_notified <= nbThreadInactive */
-	  if(m_owner->m_notified < 0) {
-	    m_owner->m_notified = 1;
-	  }
-	  int nbThreadInactive = m_owner->m_nbThreads - m_owner->m_nbActiveThreads;
-	  if(nbThreadInactive < 0) {
-	    nbThreadInactive = 0;
-	  }
-	  if (nbThreadInactive == 0) {
-	    /* All threads are already busy : try to get one counting on timing windows */
-	    m_owner->m_notified = 1;
-	  } else {
-	    if (m_owner->m_notified > nbThreadInactive) {
-	      m_owner->m_notified = nbThreadInactive;
-	    }
-	  }
-	  
-	  if (m_owner->m_notified > 0) {
-	    m_owner->m_poolMutex->signal();
-	  }
-	  
-	  m_owner->m_poolMutex->release();
-	}
-	catch (castor::exception::Exception any) {
-	  /* just ignore for this loop all mutex errors and try again */
-	  try {
-	    m_owner->m_poolMutex->release();
-	  } catch(...) {}
-	}
+        
+        /* Reading the header - blocks until there is something to read */
+        nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen );
+        
+        if (nb_recv != (HYPERSIZE+LONGSIZE)) {
+          /* Ignore this packet */
+          continue;
+        }
+        
+        p = buf;
+        unmarshall_HYPER(p, magic);
+        unmarshall_LONG(p, nb_thread_wanted);
+        
+        if (magic != NOTIFY_MAGIC) {
+          /* Not a packet for us (!?) */
+          continue;
+        }
+        
+        /* Okay - we have received a notification - we signal our condition variable */
+        try {
+          m_owner->m_poolMutex->lock();
+          
+          m_owner->m_notified += nb_thread_wanted;
+          
+          /* We make sure that 0 <= m_notified <= nbThreadInactive */
+          if(m_owner->m_notified < 0) {
+            m_owner->m_notified = 1;
+          }
+          int nbThreadInactive = m_owner->m_nbThreads - m_owner->m_nbActiveThreads;
+          if(nbThreadInactive < 0) {
+            nbThreadInactive = 0;
+          }
+          if (nbThreadInactive == 0) {
+            /* All threads are already busy : try to get one counting on timing windows */
+            m_owner->m_notified = 1;
+          } else {
+            if (m_owner->m_notified > nbThreadInactive) {
+              m_owner->m_notified = nbThreadInactive;
+            }
+          }
+          
+          if (m_owner->m_notified > 0) {
+            m_owner->m_poolMutex->signal();
+          }
+          
+          m_owner->m_poolMutex->release();
+        }
+        catch (castor::exception::Exception any) {
+          /* just ignore for this loop all mutex errors and try again */
+          try {
+            m_owner->m_poolMutex->release();
+	        } catch(...) {}
+        }
       }
-      
-      /* And we continue for ever */
     }
   }
   catch (castor::exception::Exception any) {
@@ -181,10 +179,10 @@ void castor::server::NotificationThread::run(void* param) {
       netclose(s);
     }
     
-#if defined(_WIN32)
+    #if defined(_WIN32)
     WSACleanup();
-#endif
-  
+    #endif
+    
     try {
       m_owner->m_poolMutex->release();
     } catch(...) {}
@@ -192,3 +190,10 @@ void castor::server::NotificationThread::run(void* param) {
   }
 }
 
+
+//------------------------------------------------------------------------------
+// stop
+//------------------------------------------------------------------------------
+void castor::server::NotificationThread::stop() {
+  m_stopped = true;
+}

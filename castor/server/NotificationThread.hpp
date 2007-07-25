@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/07/09 17:11:27 $ $Author: itglp $
+ * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/25 15:34:12 $ $Author: itglp $
  *
  * A thread to handle notifications to wake up workers in a pool
  *
@@ -70,9 +70,9 @@ namespace castor {
     virtual void run(void* param);
 
     /**
-     * The notification thread is never stopped.
+     * Stops the main loop of the thread.
      */
-    virtual void stop() {};
+    virtual void stop();
 
   private:
 
@@ -81,6 +81,9 @@ namespace castor {
     
     /// the thread pool which controls this notification thread
     SignalThreadPool* m_owner;
+    
+    /// flag to stop the activity of this thread
+    bool m_stopped;
 
   };
 
