@@ -211,15 +211,15 @@ namespace castor{
       /* get or create subrequest uuid */
       void StagerRequestHelper::setSubrequestUuid() throw(castor::exception::Exception)
       {
-	Cuuid_t subrequest_uuid;//if we manage to get the cuuid version, we update 
+
 	char subrequest_uuid_as_string[CUUID_STRING_LEN+1];	
 
 	if (subrequest->subreqId().empty()){/* we create a new Cuuid_t, copy to thread-safe variable, and update it on subrequest...*/
-	  Cuuid_create(&subrequest_uuid);
-	  this->subrequestUuid = subrequest_uuid;/* COPY TO THREAD-SAFE VARIABLE*/
+	  Cuuid_create(&(this->subrequestUuid));
+	  
 	  
 	  /* convert to the string version, needed to update the subrequest and fill it on DB*/ 
-	  if(Cuuid2string(subrequest_uuid_as_string, CUUID_STRING_LEN+1, &subrequest_uuid) != 0){
+	  if(Cuuid2string(subrequest_uuid_as_string, CUUID_STRING_LEN+1, &(this->subrequestUuid)) != 0){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setSubrequestUuid) error  on Cuuid2string"<<std::endl;
 	    throw ex;
@@ -237,20 +237,19 @@ namespace castor{
 	    }
 	  }
 	}else{ /* translate to the Cuuid_t version and copy to our thread-safe variable */
-	  if( string2Cuuid(&subrequest_uuid, (char *) subrequest_uuid_as_string)!=0){
+	  if( string2Cuuid(&(this->subrequestUuid), (char *) subrequest_uuid_as_string)!=0){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setSubrequestUuid) error  on string2Cuuid"<<std::endl;
 	    throw ex;
-	  }else{
-	    this->subrequestUuid = subrequest_uuid; /* COPY TO THREAD-SAFE VARIABLE*/ 
 	  }
+
 	}
       }
       
       /* get request uuid (we cannon' t create it!) */ 
       void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
       {
-	Cuuid_t request_uuid;
+
 
 	if(fileRequest->reqId().empty()){/* we cannon' t generate one!*/
 	  castor::exception::Exception ex(SEINTERNAL);
@@ -259,13 +258,13 @@ namespace castor{
 	}else{/*convert to the Cuuid_t version and copy in our thread safe variable */
 	   
 	  //char* uuid_as_string = fileRequest->reqId().c_str();
-	  if (string2Cuuid(&request_uuid,(char*) fileRequest->reqId().c_str()) != 0) {
+	  if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setRequestUuid) error (but no exception) on string2Cuuid"<<std::endl;
 	    throw ex;
-	  }else{
-	    this->requestUuid = request_uuid;
 	  }
+
+
 	}
 
       }
