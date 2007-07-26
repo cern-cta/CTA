@@ -74,8 +74,8 @@ BEGIN
     FROM SubRequest, id2type
     WHERE subrequest.request = id2type.id
     GROUP BY request, type
-    HAVING min(status) >= 6    -- here we're deleting subrequests stuck in READY as well 
-       AND max(status) <= 11 
+    HAVING min(status) >= 8
+       AND max(status) <= 11
        AND max(lastModificationTime) < getTime() - 43200;
   COMMIT;
   SELECT count(*) INTO totalCount FROM ReqCleaning;
