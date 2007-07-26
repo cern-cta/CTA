@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.41 $ $Release$ $Date: 2007/03/14 10:57:23 $ $Author: waldron $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.42 $ $Release$ $Date: 2007/07/26 16:02:02 $ $Author: obarring $
  *
  * 
  *
@@ -1028,12 +1028,14 @@ static int addTapeCopyToStreams(
   struct Cstager_Stream_t **streamArray = NULL;
   struct Cstager_CastorFile_t *castorFile = NULL;
   char *tapePoolName = NULL, *migratorPolicyName = NULL, *nsHost = NULL;
+  char *svcClassName;
   char castorFileName[CA_MAXPATHLEN+1];
   struct Cns_filestat statbuf;
   struct Cns_fileid fileId;
   int rc, i, j, nbTapePools = 0, nbStreams = 0, addedToStream = 0;
   int save_serrno = 0;
   unsigned int cpNb = 0;
+  ID_TYPE key;
 
   if ( (svcClass == NULL) || (tapeCopy == NULL) ) {
     if ( runAsDaemon == 0 ) {
@@ -1049,6 +1051,28 @@ static int addTapeCopyToStreams(
   if ( (migratorPolicyName != NULL) && (*migratorPolicyName != '\0') ) {
     Cstager_TapeCopy_copyNb(tapeCopy,&cpNb);
     Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+    if ( castorFile == NULL ) {
+      svcClassName = NULL;
+      Cstager_TapeCopy_id(tapeCopy,&key);
+      Cstager_SvcClass_name(
+                            svcClass,
+                            (CONST char **)&svcClassName
+                            );
+      (void)dlf_write(
+                      mainUuid,
+                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_NOCASTORFILE),
+                      (struct Cns_fileid *)NULL,
+                      2,
+                      "SVCCLASS",
+                      DLF_MSG_PARAM_STR,
+                      (svcClassName != NULL ? svcClassName : "null"),
+                      "DBKEY",
+                      DLF_MSG_PARAM_INT64,
+                      key
+                      );
+      serrno = EINVAL;
+      return(-1);
+    }
     memset(&fileId,'\0',sizeof(fileId));
     Cstager_CastorFile_fileId(castorFile,&(fileId.fileid));
     nsHost = NULL;
@@ -1466,10 +1490,12 @@ static int addMigrationCandidatesToStreams(
       Cstager_TapeCopy_id(tapeCopyArray[i],&key);
       Cstager_TapeCopy_castorFile(tapeCopyArray[i],&castorFile);
       memset(&fileid,'\0',sizeof(fileid));
-      nsHost = NULL;
-      Cstager_CastorFile_fileId(castorFile,&(fileid.fileid));
-      Cstager_CastorFile_nsHost(castorFile,(CONST char **)&nsHost);
-      strcpy(fileid.server,nsHost);
+      if ( castorFile != NULL ) {
+        nsHost = NULL;
+        Cstager_CastorFile_fileId(castorFile,&(fileid.fileid));
+        Cstager_CastorFile_nsHost(castorFile,(CONST char **)&nsHost);
+        strcpy(fileid.server,nsHost);
+      }
       if ( rc == -1 ) {
         (void)dlf_write(
                         (inChild == 0 ? mainUuid : childUuid),
