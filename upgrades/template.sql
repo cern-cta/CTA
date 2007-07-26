@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/07/17 18:10:11 $ $Author: itglp $
+ * @(#)$RCSfile: template.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/07/26 09:18:24 $ $Author: itglp $
  *
  * This script upgrades a CASTOR vprevRelease database into vnewRelease
  *
@@ -36,7 +36,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
-/
 
 UPDATE CastorVersion SET release = 'newRelTag';
 COMMIT;
