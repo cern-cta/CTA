@@ -82,14 +82,14 @@ DFLAGS    = -DLOGFILE=\"$(LOGFILE)\" -DDLFCONFIG=\"$(DLFCONFIG)\" $(DBFLAG)
 CFLAGS    = -pedantic -Wno-long-long $(CCOPTIM) -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(ORAINC)
 DEPLIB    = DepSharedLibraryTargetName(shlib,shift)
 
-MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)           \
-	    $(MANDIR)/dlf_child.$(MANSUFFIX)           \
-	    $(MANDIR)/dlf_create_threeads.$(MANSUFFIX) \
-	    $(MANDIR)/dlf_init.$(MANSUFFIX)            \
-	    $(MANDIR)/dlf_parent.$(MANSUFFIX)          \
-	    $(MANDIR)/dlf_prepare.$(MANSUFFIX)         \
-	    $(MANDIR)/dlf_regtext.$(MANSUFFIX)         \
-	    $(MANDIR)/dlf_write.$(MANSUFFIX)           \
+MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)          \
+	    $(MANDIR)/dlf_child.$(MANSUFFIX)          \
+	    $(MANDIR)/dlf_create_threads.$(MANSUFFIX) \
+	    $(MANDIR)/dlf_init.$(MANSUFFIX)           \
+	    $(MANDIR)/dlf_parent.$(MANSUFFIX)         \
+	    $(MANDIR)/dlf_prepare.$(MANSUFFIX)        \
+	    $(MANDIR)/dlf_regtext.$(MANSUFFIX)        \
+	    $(MANDIR)/dlf_write.$(MANSUFFIX)          \
 	    $(MANDIR)/dlf_shutdown.$(MANSUFFIX)
 
 EXPORTMANPAGES = $(EXPORTMAN)/man1/dlfserver.$(MANSUFFIX)             \
@@ -175,6 +175,7 @@ MakeDir($(LIBMANDIR),root,bin,0755)
 
 IMANPAGE(dlfserver,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_child,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_create_threads,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_init,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_parent,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_prepare,$(MANDIR),$(MANSUFFIX))
@@ -184,6 +185,7 @@ IMANPAGE(dlf_shutdown,$(MANDIDR),$(MANSUFFIX))
 
 EMANPAGE(dlfserver,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(dlf_child,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(dlf_create_threads,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_init,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_parent,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_prepare,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
