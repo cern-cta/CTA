@@ -1,5 +1,5 @@
 ------------
-- 2.1.3-22 -
+- 2.1.3-23 -
 ------------
 
   Bug Fixes
@@ -17,7 +17,7 @@
   - #27794 cleaning daemon too slow to cope with heavy loads
   - internalPutDoneFunc suffered from bad execution plans from ORACLE
   - corrupted ns hostname logging in repack
-  - fixed broken http downloads in stagerJob due to unintialised variable
+  - broken http downloads in stagerJob due to unintialised variable
 
   Upgrade from 2.1.3-17
   ---------------------
