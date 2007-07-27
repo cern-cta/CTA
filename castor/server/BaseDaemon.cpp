@@ -120,14 +120,12 @@ void castor::server::BaseDaemon::handleSignals()
       }
       
       int sigValue = m_signalMutex->getValue();
-      m_signalMutex->setValueNoMutex(0);
-      m_signalMutex->release();
-      
+
       switch (sigValue) {
         case STOP_GRACEFULLY:
           clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shutting down the service" << std::endl;
           // Wait on all threads/processes to terminate
-          waitAllThreads(STOP_GRACEFULLY);
+          waitAllThreads(true);
           clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shut down successfully completed" << std::endl;
           dlf_shutdown(10);
           exit(EXIT_SUCCESS);
@@ -135,9 +133,9 @@ void castor::server::BaseDaemon::handleSignals()
         
         case STOP_NOW:
           clog() << ERROR << "IMMEDIATE STOP [SIGINT]" << std::endl;
-	  waitAllThreads(STOP_NOW);
-	  // Stop as fast as possible
-	  dlf_shutdown(1);
+          // Stop as fast as possible
+          waitAllThreads(false);
+          dlf_shutdown(1);
           exit(EXIT_SUCCESS);
           break;
       
@@ -158,6 +156,10 @@ void castor::server::BaseDaemon::handleSignals()
           dlf_shutdown(1);
           exit(EXIT_FAILURE);
       }
+
+      // release the mutex
+      m_signalMutex->setValueNoMutex(0);
+      m_signalMutex->release();
     }
     catch (castor::exception::Exception e) {
       try {
@@ -174,7 +176,7 @@ void castor::server::BaseDaemon::handleSignals()
 //------------------------------------------------------------------------------
 // waitAllThreads
 //------------------------------------------------------------------------------
-void castor::server::BaseDaemon::waitAllThreads(const int signal) throw()
+void castor::server::BaseDaemon::waitAllThreads(bool beGraceful) throw()
 {
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   std::vector<castor::server::BaseThreadPool*> busyTPools;
@@ -192,8 +194,10 @@ void castor::server::BaseDaemon::waitAllThreads(const int signal) throw()
 	   << pid << std::endl;
   }
 
-  if (signal != STOP_GRACEFULLY)
+  if(!beGraceful) {
+    // on a SIGINT we want to stop as soon as possible
     return;
+  }
 
   // now loop waiting on the remaining busy ones 
   while(busyTPools.size() > 0) {
