@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.466 $ $Date: 2007/07/25 14:46:01 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.467 $ $Date: 2007/07/27 10:07:16 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1727,6 +1727,8 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srId INTEGER;
   cfId INTEGER;
   fsId INTEGER;
+  maxRepl INTEGER;
+  repl INTEGER;
 BEGIN
   -- update DiskCopy
   UPDATE DiskCopy set status = dcStatus WHERE id = dcId
@@ -1736,6 +1738,35 @@ BEGIN
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id INTO srId;
+  -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
+  -- DRAINING filesystem to INVALID.
+  -- We do the check only for Get requests as for the update requests we still
+  -- have the fixUpdateRequestProblem procedure...
+  BEGIN
+    SELECT maxReplicaNb into maxRepl
+      FROM SvcClass, (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
+                      SELECT id, svcClass FROM StageGetRequest) Request,
+           SubRequest
+     WHERE SubRequest.id = srId
+       AND SubRequest.request = Request.id
+       AND Request.svcClass = SvcClass.id;
+    SELECT count(*) into repl FROM DiskCopy
+     WHERE castorFile = cfId
+       AND status in (0, 10);
+    IF repl > maxRepl THEN
+      -- We did replicate only because of the DRAINING filesystem.
+      -- Invalidate one of the original diskcopies, not all of them for fault resiliency purposes
+      UPDATE DiskCopy set status = 7
+       WHERE status in (0, 10)
+         AND castorFile = cfId
+         AND fileSystem in (SELECT id FROM FileSystem WHERE status = 1)  -- DRAINING
+         AND ROWNUM < 2;
+    END IF;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- this is not a Get request, ignore
+    NULL;
+  END;
+  
   -- In case of an update, we should update the new copy to STAGEOUT,
   -- independently of the original status make the other copies INVALID.
   -- We should NOT do so, and we should wait for the first byte to be
@@ -2114,7 +2145,12 @@ BEGIN
    WHERE id = dci RETURNING fileSystem INTO fsid;
   -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
   DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
-  DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;
+  DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;   -- FAILED
+  -- mark as invalid any previous diskcopy in disabled filesystems, which may have triggered this recall
+  UPDATE DiskCopy SET status = 7  -- INVALID
+   WHERE fileSystem IN (SELECT id FROM FileSystem WHERE status = 2)  -- DISABLED
+     AND castorFile = cfId
+     AND status = 0;  -- STAGED
   
   -- Repack handling:
   -- create the number of tapecopies for waiting subrequests and update their diskcopy.
