@@ -8,9 +8,13 @@ dlf_create_threads \- starts the dlf threads
 .BI "void dlf_create_threads (void)"
 .SH DESCRIPTION
 .B dlf_create_threads
-used to create the dlf threads enabling communication between client and server. This call is only required if remote logging is enabled and dlf_init() was called with the usethreads argument set to 0
+used to create the dlf threads enabling communication between client and server. This call is only required if remote logging is enabled and dlf_init() was called with the usethreads = 0. This call is designed to be used in special cases whereby creation of the dlf threads should not be done with a call to
+.BR dlf_child()
+but at the discretion of the callee. For example, at daemonization time the callee may decide in the child process that the first thing to create is a signal handler thread before the creation of dlf thread. Why before? because the re-creation of the dlf threads will inherit the signal mask of the child. If the signal mask has not been setup correctly, the dlf threads have the potential of trapping signals sent to the process as opposed to the dedicated signal handler. This will cause signals to be interrupted incorrectly.
+
 .SH "SEE ALSO"
 .BR dlf_init (3)
+.BR dlf_child (3)
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

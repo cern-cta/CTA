@@ -273,9 +273,11 @@ EXTERN_C void DLL_DECL dlf_prepare _PROTO((void));
 
 
 /**
- * This function should be called from within the child process after a fork(2). It essential reverse the
+ * This function should be called from within the child process after a fork(2). It essentially reverse the
  * locks imposed by dlf_prepare and recreates all the dlf server threads. The threads must be recreated as
- * fork(2)'ing does not duplicate additional threads other then the main calling thread.
+ * fork(2)'ing does not duplicate additional threads other then the main calling thread. If dlf_init() was
+ * called with usethreads = 0, then the threads will not be recreated. To create the threads under this
+ * condition a call to dlf_create_threads() is required.
  *
  * @warn failure to call dlf_child after a fork(2) will result in NO logging through the dlf api
  */
@@ -293,8 +295,7 @@ EXTERN_C void DLL_DECL dlf_parent _PROTO((void));
 
 /**
  * This function creates the dlf threads enabling communication between a client and server. This call
- * is only required if remote logging is enabled and dlf_init() was called with the usethreads 
- * argument set to 0.
+ * is only required if remote logging is enabled and dlf_init() was called with usethreads = 0.
  */
 
 EXTERN_C void DLL_DECL dlf_create_threads _PROTO((void));
