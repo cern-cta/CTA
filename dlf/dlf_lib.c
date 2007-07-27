@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.19 2007/07/18 09:52:08 waldron Exp $
+ * $Id: dlf_lib.c,v 1.20 2007/07/27 12:09:44 waldron Exp $
  */
 
 /* headers */
@@ -64,6 +64,7 @@ static char api_facname[DLF_LEN_FACNAME + 1];   /**< facility name as provided t
 static char api_ucfacname[DLF_LEN_FACNAME + 1]; /**< facility name in upper case             */
 static int  api_targetcount = 0;                /**< the number of targets the client should
 						     write too                               */
+static int  api_usethreads = 0;                 /**< the value of the usethreads arg to init */
 
 /* prototype for common/socket_timeout.c */
 EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
@@ -722,7 +723,9 @@ void dlf_worker(target_t *t) {
 				Cthread_mutex_unlock(&t->mutex);
 				break;
 			}
-			pause = 0;
+			if (IsInitialised(t->mode)) {
+				pause = 0;
+			}
 		}
 		Cthread_mutex_unlock(&t->mutex);
 
@@ -744,7 +747,7 @@ void dlf_worker(target_t *t) {
 
 			/* calculate message size */
 			len = strlen(api_facname) + 1;
-			rv  = Cthread_mutex_timedlock(&global_mutex, 1);
+			rv  = Cthread_mutex_lock(&global_mutex);
                         for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
                                 if (texts[i] == NULL)
                                         continue;
@@ -820,7 +823,6 @@ void dlf_worker(target_t *t) {
 				SetInitialised(t->mode);
 				t->fac_no = code;
 			}
-
 			free(buffer);
 			continue;
 		}
@@ -991,6 +993,8 @@ void DLL_DECL dlf_child(void) {
 			continue;
 		queue_unlock(targets[i]->queue);
 		Cthread_mutex_unlock(&targets[i]->mutex);
+		if (!api_usethreads) 
+			continue;
 
 		/* recreate the server's internal queue */
 		(void)queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
@@ -1057,6 +1061,8 @@ void DLL_DECL dlf_create_threads(void) {
 	if (!IsInitialised(api_mode)) {
 		return;
 	}
+	if (api_usethreads)
+		return;
 	Cthread_mutex_lock(&global_mutex);
 
 	/* create server threads */
@@ -1065,7 +1071,7 @@ void DLL_DECL dlf_create_threads(void) {
 			continue;
 		if (!IsServer(targets[i]->mode))
 			continue;            /* not a server */
-		
+
 		/* create thread */
 		if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
 			Cthread_mutex_unlock(&global_mutex);
@@ -1220,6 +1226,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 		return 0;
 	}
 	SetInitialised(api_mode);
+	api_usethreads = usethreads;
 
 	/* flush pools and tables */
 	for (i = 0; i < API_MAX_TARGETS; i++) {
