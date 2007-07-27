@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/07/25 15:36:11 $ $Author: itglp $
+ * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/27 12:02:41 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -108,9 +108,6 @@ namespace castor {
 
     /// The highest numbered file descriptor
     int m_highFd;
-
-    /// The first call to dispatch ?
-    bool m_firstRun;
     
     /// Is the pool able to dispatch ?
     bool m_stopped;
