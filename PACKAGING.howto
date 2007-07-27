@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.37 2007/07/24 18:12:05 itglp Exp $
+## $Id: PACKAGING.howto,v 1.38 2007/07/27 10:08:59 itglp Exp $
 #
 
 #
@@ -12,6 +12,8 @@ cvs -d:kserver:isscvs.cern.ch:2000/local/reps/castor co CASTOR2
 #
 ## To make a release:
 ## 1) Full release from CVS HEAD or from a Version branch
+#
+# send a 'code freeze' mail to castor-dev mailing list before starting
 #
 # if in a branch, update CVS to the branch
 cvs update -rvx_y_z_rVersion
