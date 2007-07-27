@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/25 15:35:15 $ $Author: itglp $
+ * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/27 11:55:06 $ $Author: waldron $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -108,12 +108,12 @@ void castor::io::PipeSocket::sendBuffer(const unsigned int magic,
     throw ex;
   }
   // Sends the buffer with a header (magic number + size)
+  unsigned int header[2];
+  header[0] = magic;
+  header[1] = (unsigned int)n;
   if (::write(m_fdOut,
-            (char*)(&magic),
-            sizeof(unsigned int)) != sizeof(unsigned int) ||
-      ::write(m_fdOut,
-            (char*)(&n),
-            sizeof(unsigned int)) != sizeof(unsigned int) ||
+            (char*)(&header),
+            2 * sizeof(unsigned int)) != 2 * sizeof(unsigned int) ||
       ::write(m_fdOut, (char *)buf, n) != n) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "Unable to send data";
