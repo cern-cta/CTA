@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/07/25 15:36:56 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/07/27 11:59:22 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -112,7 +112,7 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
     setsid();
     setpgrp();
     
-    // close the standard file descriptors
+    // redirect the standard file descriptors to /dev/null
     if ((freopen("/dev/null", "r", stdin)  == NULL) ||
         (freopen("/dev/null", "w", stdout) == NULL) ||
         (freopen("/dev/null", "w", stderr) == NULL)) {
@@ -122,7 +122,7 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
       throw ex;
     }
   }
-
+  
   // Ignore SIGPIPE (connection lost with client)
   // and SIGXFSZ (a file is too big)
 #if !defined(_WIN32)
@@ -136,13 +136,12 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
 {
-  castor::BaseObject::initLog(m_serverName, 
-    m_foreground ? castor::SVC_DLFMSG : castor::SVC_STDMSG);
+  castor::BaseObject::initLog(m_serverName, castor::SVC_DLFMSG);
   castor::dlf::dlf_init((char*)m_serverName.c_str(), messages);
   // if missing, add an entry for the framework messages coming with the streaming
   if(messages[0].number != 0) {
     castor::dlf::Message frameworkMsg[] = 
-      {{ 0, "Framework message"}, {-1, ""}};
+      {{ 0, "Framework message"}, { -1, ""}};
     castor::dlf::dlf_addMessages(0, frameworkMsg);
   }
 }
@@ -289,7 +288,6 @@ void castor::server::BaseServer::help(std::string programName)
 void castor::server::BaseServer::sendNotification(std::string host, int port, int nbThreads)
   throw(castor::exception::Exception)
 {
-  //char serviceHost[CA_MAXHOSTNAMELEN+1];
   struct hostent *hp;
   struct sockaddr_in sin;
   int s;
