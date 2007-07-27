@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/27 12:02:41 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/07/27 13:22:04 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -42,7 +42,7 @@
 
 // We use a global variable here to indicate whether the child should stop or
 // countinue waiting for requests from the dispatcher. 
-static bool m_childStop = false;
+static bool _childStop = false;
 
 //------------------------------------------------------------------------------
 // constructor
@@ -122,13 +122,9 @@ void castor::server::ForkedProcessPool::init() throw (castor::exception::Excepti
       ps->closeWrite();
       for (int fd = 0; fd < getdtablesize(); fd++) {
         if ((fd != ps->getFdRead()) && (fd != ps->getFdWrite())) {
-	  //  close(fd);
+	  close(fd);
         }
       }
-      signal(SIGTERM, SIG_IGN);
-      dlf_child();
-      dlf_create_threads();
-      m_childStop = false;
       childRun(ps);      // this is a blocking call
       exit(EXIT_SUCCESS);
     }
@@ -209,7 +205,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
 //------------------------------------------------------------------------------
 extern "C" {
   void handleSignals(int signal) {
-    m_childStop = true;
+    _childStop = true;
   }
 }
 
@@ -218,6 +214,11 @@ extern "C" {
 //------------------------------------------------------------------------------
 void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
 {
+  // ignore SIGTERM while recreating dlf thread
+  signal(SIGTERM, SIG_IGN);
+  dlf_child();
+  dlf_create_threads();
+  _childStop = false;
 
   // setup a signal handler 'C sytle'
   signal(SIGTERM, handleSignals);
@@ -229,9 +230,10 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
   catch(castor::exception::Exception any) {
     clog() << ERROR << "Exception caught while initializing the child process: "
            << any.getMessage().str() << std::endl;
+    _childStop = true;
   }
   // loop forever waiting for something to do
-  while(!m_childStop) { 
+  while(!_childStop) { 
     try {
       castor::IObject* obj = ps->readObject();
       m_thread->run(obj);
@@ -243,9 +245,9 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
 
       // we shutdown here as communication failures across a pipe are rare! If
       // we got this far its most likely that the parent has disappeared e.g.
-      // via a kill -9 therefore missing the call to the destructor ask the
+      // via a kill -9 therefore missing the call to the destructor asking the
       // children to stop.
-      dlf_shutdown(10);
+      dlf_shutdown(1);
       exit(EXIT_FAILURE);
     }
   }
