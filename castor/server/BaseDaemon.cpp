@@ -71,6 +71,7 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
   sigaddset(&m_signalSet, SIGHUP);
   sigaddset(&m_signalSet, SIGABRT);
   sigaddset(&m_signalSet, SIGCHLD);
+  sigaddset(&m_signalSet, SIGPIPE);
 
   int c;
   if ((c = pthread_sigmask(SIG_BLOCK,&m_signalSet,NULL)) != 0) {
@@ -126,7 +127,7 @@ void castor::server::BaseDaemon::handleSignals()
         case STOP_GRACEFULLY:
           clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shutting down the service" << std::endl;
           // Wait on all threads/processes to terminate
-          waitAllThreads();
+          waitAllThreads(STOP_GRACEFULLY);
           clog() << SYSTEM << "GRACEFUL STOP [SIGTERM] - Shut down successfully completed" << std::endl;
           dlf_shutdown(10);
           exit(EXIT_SUCCESS);
@@ -134,8 +135,9 @@ void castor::server::BaseDaemon::handleSignals()
         
         case STOP_NOW:
           clog() << ERROR << "IMMEDIATE STOP [SIGINT]" << std::endl;
-          // Stop as fast as possible
-          dlf_shutdown(1);
+	  waitAllThreads(STOP_NOW);
+	  // Stop as fast as possible
+	  dlf_shutdown(1);
           exit(EXIT_SUCCESS);
           break;
       
@@ -144,7 +146,7 @@ void castor::server::BaseDaemon::handleSignals()
           // Reap dead processes to prevent defunct processes, we don't care about
           // the exit. However, in the future we may want to re-fork it!
           pid_t pid = 0;
-          while ((pid = waitpid(-1, NULL, WNOHANG)) != 0) {
+          while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
             clog() << WARNING << "CHILD STOPPED [SIGCHLD] - PID " 
              << pid << std::endl;
           }
@@ -172,7 +174,7 @@ void castor::server::BaseDaemon::handleSignals()
 //------------------------------------------------------------------------------
 // waitAllThreads
 //------------------------------------------------------------------------------
-void castor::server::BaseDaemon::waitAllThreads() throw()
+void castor::server::BaseDaemon::waitAllThreads(const int signal) throw()
 {
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   std::vector<castor::server::BaseThreadPool*> busyTPools;
@@ -183,6 +185,16 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
     }
   }
   
+  // Reap child processes
+  pid_t pid = 0;
+  while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+    clog() << WARNING << "CHILD STOPPED [SIGCHLD] - PID " 
+	   << pid << std::endl;
+  }
+
+  if (signal != STOP_GRACEFULLY)
+    return;
+
   // now loop waiting on the remaining busy ones 
   while(busyTPools.size() > 0) {
     sleep(1);     // wait before trying again
@@ -238,7 +250,10 @@ void* castor::server::_signalThread_run(void* arg)
         case SIGCHLD:
           daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
           break;
-        
+	 
+        case SIGPIPE:
+	  break;
+
         default:
           // all other signals
           daemon->m_signalMutex->setValueNoMutex(-1*sig_number);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/25 15:38:35 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/07/27 11:58:02 $ $Author: waldron $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -90,9 +90,12 @@ namespace castor {
 
     /**
      * wait all threads to terminate before exiting.
-     * This implements a graceful kill and is triggered by kill -2.
+     * This implements a graceful kill if the signal is STOP_GRACEFULLY
+     * otherwise it simply calls the shutdown method of all thread/
+     * process pools.
+     * @param signal The signal to handle
      */
-    void waitAllThreads() throw ();
+    void waitAllThreads(const int signal) throw ();
 
   private:
 
