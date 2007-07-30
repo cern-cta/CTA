@@ -160,7 +160,7 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 fi=open(localDir+"RfioSimpleLocalToRemote","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1, "rfio doesn't work from local to remote"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1, "rfio doesn't work from local to remote"
         def remoteToLocal(self):
                 cmd=["rfcp "+inputFile+" "+remoteDir+"fileRfioRemoteToLocal"+ticket,"rfcp "+remoteDir+"fileRfioRemoteToLocal"+ticket+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket,"diff "+inputFile+" "+localDir+"fileRfioRemoteToLocalCopy"+ticket]
 		UtilityForCastorTest.saveOnFile(localDir+"RfioSimpleRemoteToLocal",cmd)
@@ -168,12 +168,12 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 fi=open(localDir+"RfioSimpleRemoteToLocal","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1, "rfio doesn't work from local to remote"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1, "rfio doesn't work from local to remote"
 
                 fi=open(localDir+"RfioSimpleRemoteToLocal1","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and local (out)") != -1, "rfio doesn't work from  remote  to local"
+        	assert buffOut.rfind("through eth1 (in) and local (out)") != -1, "rfio doesn't work from  remote  to local"
 
                 assert os.stat(localDir+"fileRfioRemoteToLocalCopy"+ticket)[6] != 0, "rfio doesn't work from remote to local"
                 assert os.stat(localDir+"RfioSimpleRemoteToLocal2")[6] == 0, "rfio doesn't work from remote to local"
@@ -186,17 +186,17 @@ class RfioRfcpSimpleCase(unittest.TestCase):
                 fi=open(localDir+"RfioSimpleRemoteToRemote","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1, "rfio doesn't work from local to remote"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1, "rfio doesn't work from local to remote"
 
                 fi=open(localDir+"RfioSimpleRemoteToRemote1","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and eth0 (out)") != -1, "rfio doesn't work from  remote  to remote"
+        	assert buffOut.rfind("through eth1 (in) and eth1 (out)") != -1, "rfio doesn't work from  remote  to remote"
 
                 fi=open(localDir+"RfioSimpleRemoteToRemote2","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and local (out)") != -1, "rfio doesn't work from  remote  to local"
+        	assert buffOut.rfind("through eth1 (in) and local (out)") != -1, "rfio doesn't work from  remote  to local"
 
                 assert os.stat(localDir+"fileRfioRemoteToRemoteCopyCopy"+ticket)[6] != 0, "rfio doesn't work from remote to remote"
                 assert os.stat(localDir+"RfioSimpleRemoteToRemote3")[6] == 0, "rfio doesn't work from remote to remote"
@@ -609,7 +609,7 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpLocalToCastor"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
                 
 	def castorToLocal(self):
                 cmd=["rfcp "+inputFile+" "+myTurl+"fileRfioCastorToLocal"+myTag+ticket,"rfcp "+myTurl+"fileRfioCastorToLocal"+myTag+ticket+" "+localDir+"fileRfioCastorToLocalCopy"+myTag+ticket,"diff "+inputFile+" "+localDir+"fileRfioCastorToLocalCopy"+myTag+ticket]
@@ -620,12 +620,12 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpCastorToLocal"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to castor"
 
                 fi=open(localDir+"RfioRfcpCastorToLocal"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor to local"
+        	assert buffOut.rfind("through eth1 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor to local"
 
                 assert os.stat(localDir+"fileRfioCastorToLocalCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to local"
                 assert os.stat(localDir+"RfioRfcpCastorToLocal"+myTag+"2")[6] == 0, "rfio doesn't work from castor to local"
@@ -638,17 +638,17 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpRemoteToCastor"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to remote"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from local to remote"
 
                 fi=open(localDir+"RfioRfcpRemoteToCastor"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  remote  to castor"
+        	assert buffOut.rfind("through eth1 (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  remote  to castor"
 
                 fi=open(localDir+"RfioRfcpRemoteToCastor"+myTag+"2","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
+        	assert buffOut.rfind("through eth1 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
 
                 assert os.stat(localDir+"fileRfioRemoteToCastorCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from remote to castor"
                 assert os.stat(localDir+"RfioRfcpRemoteToCastor"+myTag+"3")[6] == 0, "rfio doesn't work from remote to castor"
@@ -662,17 +662,17 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpCastorToRemote"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
 
                 fi=open(localDir+"RfioRfcpCastorToRemote"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to remote"
+        	assert buffOut.rfind("through eth1 (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to remote"
 
                 fi=open(localDir+"RfioRfcpCastorToRemote"+myTag+"2","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from  remote  to local"
+        	assert buffOut.rfind("through eth1 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from  remote  to local"
 
                 assert os.stat(localDir+"fileRfioCastorToRemoteCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to remote"
                 assert os.stat(localDir+"RfioRfcpCastorToRemote"+myTag+"3")[6] == 0, "rfio doesn't work from castor to remote"
@@ -686,17 +686,17 @@ class RfioRfcpCastor(unittest.TestCase):
                 fi=open(localDir+"RfioRfcpCastorToCastor"+myTag,"r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through local (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
+        	assert buffOut.rfind("through local (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1 , "rfio doesn't work from local to castor"
 		
                 fi=open(localDir+"RfioRfcpCastorToCastor"+myTag+"1","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and eth0 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to castor"
+        	assert buffOut.rfind("through eth1 (in) and eth1 (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to castor"
 
                 fi=open(localDir+"RfioRfcpCastorToCastor"+myTag+"2","r")
                 buffOut=fi.read()
                 fi.close()
-        	assert buffOut.rfind("through eth0 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
+        	assert buffOut.rfind("through eth1 (in) and local (out)") != -1 or buffOut.rfind(" bytes ready for migration") != -1, "rfio doesn't work from  castor  to local"
 
                 assert os.stat(localDir+"fileRfioCastorToCastorCopyCopy"+myTag+ticket)[6] != 0, "rfio doesn't work from castor to castor"
                 assert os.stat(localDir+"RfioRfcpCastorToCastor"+myTag+"3")[6] == 0, "rfio doesn't work from castor to castor"
