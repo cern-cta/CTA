@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.42 $ $Release$ $Date: 2007/07/26 16:02:02 $ $Author: obarring $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.43 $ $Release$ $Date: 2007/07/31 10:00:40 $ $Author: waldron $
  *
  * 
  *
@@ -1558,13 +1558,13 @@ static int addMigrationCandidatesToStreams(
 }
 
 static void signal_handler(void *arg) {
-	int signal;
-
-	while (1) {
-		if (sigwait(&signalset, &signal) == 0) {
-			shutdownService(signal);
-		}
-	}
+  int signal;
+  
+  while (1) {
+    if (sigwait(&signalset, &signal) == 0) {
+      shutdownService(signal);
+    }
+  }
 }
 
 static void shutdownService(
@@ -1663,36 +1663,19 @@ int main(int argc, char *argv[])
   Cuuid_create(
                &mainUuid
                );
-  (void)rtcpcld_initLogging(migHunterFacilityName);
-
-#if defined(__DATE__) && defined (__TIME__)
-  (void)dlf_write(
-                  mainUuid,
-                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_STARTUP),
-                  (struct Cns_fileid *)NULL,
-                  3,
-                  "GENERATED_DATE",DLF_MSG_PARAM_STR,__DATE__,
-                  "GENERATED_TIME",DLF_MSG_PARAM_STR,__TIME__,
-                  "SERVICE",DLF_MSG_PARAM_STR,
-                  (cmdName != NULL ? cmdName : "(null)")
-                  );
-#endif /* __DATE__ && __TIME__ */
-  
-  signal(SIGPIPE, SIG_IGN);
-  signal(SIGXFSZ, SIG_IGN);
 
   if ( runAsDaemon == 1 ) {
-    dlf_prepare();
     if ( (Cinitdaemon("MigHunter",SIG_IGN) == -1) ) {
-      dlf_parent();
       dlf_shutdown(5);
       exit(1);
     }
-    dlf_child();
     if ( sleepTime == 0 ) sleepTime = 300;
   }
   
 #if !defined(_WIN32)
+  
+  signal(SIGPIPE, SIG_IGN);
+  signal(SIGXFSZ, SIG_IGN);
 
   /* ignore all signals apart from INT, TERM and ABRT */
   sigemptyset(&signalset);
@@ -1714,6 +1697,21 @@ int main(int argc, char *argv[])
 
 #endif /* _WIN32 */
 
+  (void)rtcpcld_initLogging(migHunterFacilityName);
+  
+#if defined(__DATE__) && defined (__TIME__)
+  (void)dlf_write(
+                  mainUuid,
+                  RTCPCLD_LOG_MSG(RTCPCLD_MSG_STARTUP),
+                  (struct Cns_fileid *)NULL,
+                  3,
+                  "GENERATED_DATE",DLF_MSG_PARAM_STR,__DATE__,
+                  "GENERATED_TIME",DLF_MSG_PARAM_STR,__TIME__,
+                  "SERVICE",DLF_MSG_PARAM_STR,
+                  (cmdName != NULL ? cmdName : "(null)")
+                  );
+#endif /* __DATE__ && __TIME__ */
+  
   rc = prepareForDBAccess(&dbSvc,&tpSvc,&iAddr);
   if ( rc == -1 ) {
     if ( runAsDaemon == 0 ) {
