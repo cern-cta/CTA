@@ -82,14 +82,8 @@ namespace castor{
 	  throw ex;
 	}
 	
-	if(stgRequestHelper->castorFile != NULL){
-	  this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
-	}else{
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerReplyHelper setAndSendIoResponse) The castorFile is NULL"<<std::endl;
-	  throw ex;
-	}
-	
+	this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
+
 	int newSubRequestStatus = stgRequestHelper->subrequest->status();
 	if(newSubRequestStatus==SUBREQUEST_FAILED_FINISHED){
 	  newSubRequestStatus=SUBREQUEST_FAILED;
