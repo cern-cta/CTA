@@ -108,7 +108,7 @@ namespace castor{
 	    throw ex;
 	  }
 	  
-	  if (Cns_umask((mode_t) mask) != 0){
+	  if (Cns_umask(mask) < 0){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_umask"<<std::endl;
 	    throw ex;

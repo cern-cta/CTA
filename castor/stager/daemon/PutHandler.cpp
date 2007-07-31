@@ -67,8 +67,6 @@ namespace castor{
 	
 	this->openflags=RM_O_WRONLY;
 	this->default_protocol = "rfio";	
-
-	this->caseSubrequestFailed = false;
        
       }
 
@@ -86,42 +84,43 @@ namespace castor{
 	  /* use the stagerService to recreate castor file */
 	  castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	  
-	  if(diskCopyForRecall == NULL){
-	    /* we don't archiveSubrequest, changeSubrequestStatus or replyToClient */
-	    this->caseSubrequestFailed = true;
-	  }
-	  
-	  
-	  /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
-	  std::string diskServerName(diskCopyForRecall->diskServer());
-	  std::string mountPoint(diskCopyForRecall->mountPoint());
-	  
-	  if((!diskServerName.empty())&&(!mountPoint.empty())){
-	    this->rfs = diskServerName + ":" + mountPoint;
-	  }
-	  this->hostlist.clear();
-	  
-	  /* build the rmjob struct and submit the job */
-	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	  buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) !=0){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerPutHandler handle) Error on rm_enterjob"<<std::endl;
-	    throw ex;
-	  }
-	  rm_freejob(rmjob_out);
-	  
-	  /* updateSubrequestStatus Part: */
-	  if(this->caseSubrequestFailed == false){
+	  if(diskCopyForRecall != NULL){  	  
+	    /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
+	    std::string diskServerName(diskCopyForRecall->diskServer());
+	    std::string mountPoint(diskCopyForRecall->mountPoint());
+	    
+	    if((!diskServerName.empty())&&(!mountPoint.empty())){
+	      this->rfs = diskServerName + ":" + mountPoint;
+	    }
+	    this->hostlist.clear();
+	    
+	    /* build the rmjob struct and submit the job */
+	    stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
+	    if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) !=0){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerPutHandler handle) Error on rm_enterjob"<<std::endl;
+	      throw ex;
+	    }
+	    rm_freejob(rmjob_out);
+	    
+	    /* updateSubrequestStatus Part: */
 	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
 	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest,true);
-	  }
 
+	  }else{
+	    /* in this case we have to archiveSubrequest */
+	    /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
+	    this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
+	    castor::exception::Exception ex(EBUSY);
+	    ex.getMessage()<<"(StagerPutHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
+	    throw ex; 
+	  }
+	  
 	}catch(castor::exception::Exception ex){
 	  if(rmjob_out != NULL){
 	    rm_freejob(rmjob_out);
 	  }
-	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
 	  throw ex;
 	}
       }/* end StagerPutHandler::handle()*/

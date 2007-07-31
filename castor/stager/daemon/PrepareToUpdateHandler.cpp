@@ -77,7 +77,7 @@ namespace castor{
 	this->openflags=RM_O_RDWR; /* since we aren't gonna use the rm, we don't really need it */
 	this->default_protocol = "rfio";
 
-	this->caseSubrequestFailed = false;	
+	
       }
 
 
@@ -92,7 +92,7 @@ namespace castor{
 	  jobOriented();
 
 	  
-	  int caseToSchedule;
+	  int caseToSchedule=-1;
 	  /*************************/
 	  /* huge or small flow?? */
 	  /***********************/
@@ -101,8 +101,12 @@ namespace castor{
 	    castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	    
 	    if(diskCopyForRecall == NULL){
-	      /* we don't archiveSubrequest, changeSubrequestStatus or replyToClient */
-	      this->caseSubrequestFailed = true;
+	      /* in this case we have to archiveSubrequest */
+	      /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
+	      this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
+	      castor::exception::Exception ex(EBUSY);
+	      ex.getMessage()<<"(StagerPrepareToUpdateHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
+	      throw ex;
 	    }
 	    
 	  }else{/* we schedule, huge flow */
@@ -121,26 +125,22 @@ namespace castor{
 	    rm_freejob(this->rmjob_out);
 	  }
 	  
-	  if(this->caseSubrequestFailed == false){
-	    if(toRecreateCastorFile || ( (caseToSchedule != 2) && (caseToSchedule != 0))){
-	      /* updateSubrequestStatus Part: */
-	      stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	    }
-	    
-	    /* replyToClient Part: */
-	    this->stgReplyHelper = new StagerReplyHelper;
-	    if((this->stgReplyHelper) == NULL){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	      throw(ex);
-	    }
-	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
-	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete stgReplyHelper->ioResponse;
-	    delete stgReplyHelper;
+	  
+	  if(toRecreateCastorFile || ( (caseToSchedule != 2) && (caseToSchedule != 0))){
+	    /* updateSubrequestStatus Part: */
+	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
 	  }
-	 
-	 
+	  /* replyToClient Part: */
+	  this->stgReplyHelper = new StagerReplyHelper;
+	  if((this->stgReplyHelper) == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	    throw(ex);
+	  }
+	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
+	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper->ioResponse;
+	  delete stgReplyHelper; 
 	
 	}catch(castor::exception::Exception ex){
 
@@ -151,7 +151,6 @@ namespace castor{
 	  if(rmjob_out != NULL){
 	    rm_freejob(this->rmjob_out);
 	  }
-	  stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
 	  throw(ex);
 	}
       }

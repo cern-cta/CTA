@@ -125,9 +125,6 @@ namespace castor{
       /* destructor */
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
-       	if(baseAddr != NULL){
-	  delete baseAddr;
-	}
       }
 
 
@@ -229,12 +226,12 @@ namespace castor{
 	    subrequest->setSubreqId(subrequest_uuid_as_string);
 	    /* update it in DB*/
 	    try{
-	      dbService->updateRep(baseAddr, subrequest, true);	/*207*/	
+	      dbService->updateRep(baseAddr, subrequest, true);	
  	    }catch(castor::exception::Exception ex){
 	      castor::exception::Exception e(SEINTERNAL);
 	      e.getMessage()<< "(StagerRequestHelper setSubrequestUuid) dbService->updateRep throws an exception"<<std::endl;
 	      throw e;
-	    }
+	    } 
 	  }
 	}else{ /* translate to the Cuuid_t version and copy to our thread-safe variable */
 	  if( string2Cuuid(&(this->subrequestUuid), (char *) subrequest_uuid_as_string)!=0){

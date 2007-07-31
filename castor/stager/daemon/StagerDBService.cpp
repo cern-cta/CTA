@@ -108,10 +108,6 @@ namespace castor{
       castor::IObject* StagerDBService::select() throw(castor::exception::Exception){
 	castor::stager::IStagerSvc* stgService;
 
-	/*****/  
-	castor::dlf::Param param1[]= {castor::dlf::Param("Standard Message","(StagerDBService select) getting the stagerService")};
-	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param1);/*   */
-	/*****/
 	castor::IService* svc =
 	  castor::BaseObject::services()->
 	  service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
@@ -127,18 +123,8 @@ namespace castor{
 	  throw ex;
 	}
 	
-	/*****/  
-	castor::dlf::Param param2[]= {castor::dlf::Param("Standard Message","(StagerDBService select) got stagerService")};
-	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param2);/*   */
-	/*****/
-
 	castor::stager::SubRequest* subrequestToProcess = stgService->subRequestToDo(this->types);
-
-	/*****/  
-	castor::dlf::Param param3[]= {castor::dlf::Param("Standard Message","(StagerDBService select) subRequestToDo")};
-	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param3);/*   */
-	/*****/
-
+	
 	return(subrequestToProcess);
       }
 
@@ -223,7 +209,7 @@ namespace castor{
 	  stgRequestHelper->setUsernameAndGroupname();
 
 	  /* get the castorFile of the subrequest */
-	  stgRequestHelper->getCastorFile();
+	  /*  stgRequestHelper->getCastorFile(); */
 	 
 	  
 	  /* for the required file: check existence (and create if necessary), and permission */
@@ -505,13 +491,8 @@ namespace castor{
 	  /* we have to process the exception and reply to the client in case of error  */
 	}catch(castor::exception::Exception ex){
 
-	  /* if the error happened before we had gotten the fileId needed for the dlf */
-	  if((stgCnsHelper == NULL) || (stgCnsHelper->fileid == NULL)){
-	    std::cerr<<ex.getMessage()<<std::endl;
-	  }else{
-	    castor::dlf::Param params[] = {castor::dlf::Param("Standard Message",sstrerror(ex.code())),castor::dlf::Param("Precise Message",ex.getMessage().str())};/* 459 */
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
-	  }
+	  castor::dlf::Param params[] = {castor::dlf::Param("Standard Message",sstrerror(ex.code())),castor::dlf::Param("Precise Message",ex.getMessage().str())};/* 459 */
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
 
 	  /* we have to set the subrequest status to SUBREQUEST_FAILED_FINISHED */
 	  /* but not setGetNextSubrequestStatus!!  */
@@ -549,12 +530,10 @@ namespace castor{
 	  }  
  
 	}catch (...){
-	  if((stgCnsHelper == NULL)||(stgCnsHelper->fileid == NULL)){
-	    std::cerr<<"Caught general exception"<<std::endl;
-	  }else{
-	    castor::dlf::Param params[] = {castor::dlf::Param("Standard Message","Caught general exception in StagerDBService")}; /* 485 */
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
-	  }
+	  
+	  castor::dlf::Param params[] = {castor::dlf::Param("Standard Message","Caught general exception in StagerDBService")}; /* 485 */
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
+	  
 	  /* we have to set the subrequest status to SUBREQUEST_FAILED */
 	  /* but not setGetNextSubrequestStatus!!  */
 	  if(stgRequestHelper != NULL){

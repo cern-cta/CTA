@@ -75,9 +75,6 @@ namespace castor{
 
 	this->openflags=RM_O_RDWR;
 	this->default_protocol = "rfio";
-
-	/***/
-	this->caseSubrequestFailed = false;
 	
       }
       
@@ -97,7 +94,13 @@ namespace castor{
 	    castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	    
 	    if(diskCopyForRecall == NULL){
-	      this->caseSubrequestFailed = true;
+	      /* in this case we have to archiveSubrequest */
+	      /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
+	      this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
+	      castor::exception::Exception ex(EBUSY);
+	      ex.getMessage()<<"(StagerUpdateHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
+	      throw ex;
+
 	    }else{
 	      /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
 	      std::string diskServerName(diskCopyForRecall->diskServer());
@@ -141,19 +144,18 @@ namespace castor{
 	  }
 	  
 	  
-	  if(this->caseSubrequestFailed ==false){
-	    if(toRecreateCastorFile || ((caseToSchedule != 2) && (caseToSchedule != 0))){
-	      /* updateSubrequestStatus Part: */
-	      this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	    }
+	  
+	  if(toRecreateCastorFile || ((caseToSchedule != 2) && (caseToSchedule != 0))){
+	    /* updateSubrequestStatus Part: */
+	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 	  }
+	  
 
 	}catch(castor::exception::Exception ex){
 	  if(rmjob_out != NULL){
 	    rm_freejob(rmjob_out);
 	  }
-	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
 	  throw ex;
 	}
       }

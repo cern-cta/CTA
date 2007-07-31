@@ -247,14 +247,14 @@ namespace castor{
 	/*******************************************************************************/
 	/* get the castoFile associated to the subrequest                             */ 
 	/*****************************************************************************/
-	inline void getCastorFile() throw(castor::exception::Exception){
+	/* inline void getCastorFile() throw(castor::exception::Exception){
 	  this->castorFile=subrequest->castorFile();
 	  if(this->castorFile == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper getCastorFile) Impossible to get the castorFile"<<std::endl;
 	    throw ex; 
 	  }
-	}
+	  } */
       
       
       
@@ -377,7 +377,7 @@ namespace castor{
 	/********************************************************************************************/
 	inline bool isFileToCreateOrException(bool fileExist) throw(castor::exception::Exception){
 	  bool toCreate = false;
-	  int type = this->subrequest->type();
+	  int type = this->fileRequest->type();
 	  int subRequestFlags = this->subrequest->flags();
 	  
 	  if(!fileExist){

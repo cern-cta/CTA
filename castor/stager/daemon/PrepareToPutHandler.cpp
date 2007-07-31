@@ -43,7 +43,6 @@ namespace castor{
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
 	
-	this->caseSubrequestFailed = false;
 	/* since we don't call the rm: we don't care about maxReplicaNb, ...xsize, ...  */	
       }
 
@@ -60,18 +59,12 @@ namespace castor{
 	  /* use the stagerService to recreate castor file */
 	  castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	  
-	  if(diskCopyForRecall == NULL){
-	    /* we don't archiveSubrequest, changeSubrequestStatus or replyToClient */
-	    this->caseSubrequestFailed = true;	    
-	  }
 	  
-	  if(this->caseSubrequestFailed == false){
+	  if(diskCopyForRecall != NULL){
 	    /* updateSubrequestStatus Part: */
 	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY); 	    
 	    
 	    /* replyToClient Part: */
-	    /* to take into account!!!! if an exception happens, we need also to send the response to the client */
-	    /* so copy and paste for the exceptions !!!*/
 	    this->stgReplyHelper = new StagerReplyHelper;
 	    if((this->stgReplyHelper) == NULL){
 	      castor::exception::Exception ex(SEINTERNAL);
@@ -80,16 +73,22 @@ namespace castor{
 	    }
 	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
 	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete stgReplyHelper->ioResponse;
+	    delete (stgReplyHelper->ioResponse);
 	    delete stgReplyHelper;
+	  }else{
+	    /* in this case we have to archiveSubrequest */
+	    /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
+	    this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
+	    castor::exception::Exception ex(EBUSY);
+	    ex.getMessage()<<"(StagerPrepareToPutHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
+	    throw ex;
 	  }
 
 	}catch(castor::exception::Exception ex){
 	  if(stgReplyHelper != NULL){
-	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
+	    if(stgReplyHelper->ioResponse) delete (stgReplyHelper->ioResponse);
 	     delete stgReplyHelper;
 	  }
-	  stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
 	  throw(ex);
 	}
 	
