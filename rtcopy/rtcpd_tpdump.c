@@ -43,6 +43,7 @@ extern char *geterr();
 #include <rtcp_server.h>
 #include <serrno.h>
 #include <stdio.h>
+#include "tplogger_api.h"
 
 #define TP_STATUS(X) (proc_stat.tapeIOstatus.current_activity = (X))
 extern processing_status_t proc_stat;
@@ -75,6 +76,11 @@ void dmp_usrmsg(int dmpmsg_level, char *format, ...) {
     if ( rc == -1 || (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
         rtcp_log(LOG_ERR,"rtcpd_tpdump() %s, errno=%d, serrno=%d\n",(Z), \
                  save_errno,save_serrno); \
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, \
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_tpdump", \
+                         "Message", TL_MSG_PARAM_STR, (Z), \
+                         "errno"  , TL_MSG_PARAM_INT, save_errno, \
+                         "serrno" , TL_MSG_PARAM_INT, save_serrno ); \
         if ( rc == -1 ) { \
             rtcpd_SetProcError(RTCP_FAILED); \
             (void) tellClient(client_socket,X,Y,-1); \
@@ -105,6 +111,10 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     if ( client_socket == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_tpdump() malloc(SOCKET): %s\n",
                  sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_tpdump",
+                         "Message", TL_MSG_PARAM_STR, "malloc(SOCKET)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     *client_socket = INVALID_SOCKET;
@@ -195,6 +205,10 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
         (void) rtcp_NewFileList(&tl,&fl,WRITE_DISABLE);
         if ( fl == NULL ) {
             rtcp_log(LOG_ERR,"rtcpd_tpdump() rtcp_NewFileList(): %s\n",sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_tpdump",
+                             "Message", TL_MSG_PARAM_STR, "rtcp_NewFileList",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             rc = -1;
             break;
         }

@@ -50,6 +50,7 @@ extern char *geterr();
 #include <rtcp_server.h>
 #include <serrno.h>
 #include <u64subr.h>
+#include "tplogger_api.h"
 
 #define DK_STATUS(X) (diskIOstatus->current_activity = (X))
 #define DK_SIZE(X)   (diskIOstatus->nbbytes = (X))
@@ -100,15 +101,27 @@ static int DiskIOstarted() {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"DiskIOstarted(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"       , TL_MSG_PARAM_STR, "DiskIOstarted",
+                         "Message"    , TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                         "Client Name", TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     proc_cntl.diskIOstarted = 1;
     rtcp_log(LOG_DEBUG,"DiskIOstarted() nb active disk IO threads=%d\n",
              proc_cntl.nb_diskIOactive);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                     "func"   , TL_MSG_PARAM_STR, "DiskIOstarted",
+                     "Message", TL_MSG_PARAM_STR, "nb active disk IO threads",
+                     "Number" , TL_MSG_PARAM_INT, proc_cntl.nb_diskIOactive );
     rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"DiskIOstarted(): Cthread_cond_broadcast_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "DiskIOstarted",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
         return(-1);
     }
@@ -116,6 +129,10 @@ static int DiskIOstarted() {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"DiskIOstarted(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "DiskIOstarted",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     return(0);
@@ -126,6 +143,10 @@ static void DiskIOfinished() {
     proc_cntl.nb_diskIOactive--;
     rtcp_log(LOG_DEBUG,"DiskIOfinished() nb active disk IO threads=%d\n",
              proc_cntl.nb_diskIOactive);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                     "func"   , TL_MSG_PARAM_STR, "DiskIOfinished",
+                     "Message", TL_MSG_PARAM_STR, "nb active disk IO threads",
+                     "Number" , TL_MSG_PARAM_INT, proc_cntl.nb_diskIOactive );
     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
     return;
@@ -135,6 +156,9 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
     int rc,severity;
 
     rtcp_log(LOG_DEBUG,"rtcpd_WaitForPosition() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
+                     "Message", TL_MSG_PARAM_STR, "called" );
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
         return(-1);
@@ -146,6 +170,10 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     while ( file->filereq.proc_status == RTCP_WAITING ) {
@@ -159,6 +187,10 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_cond_broadcast_ext(proc_cntl) : %s\n", 
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
+                             "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
             return(-1);
         }
@@ -167,9 +199,16 @@ int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_WaitForPosition() returns\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
+                     "Message", TL_MSG_PARAM_STR, "returns" );
     return(0);
 }
 
@@ -197,6 +236,10 @@ static int GetNewFortranUnit(int pool_index, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"GetNewFortranUnit(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "GetNewFortranUnit",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     AssignedUnit = -1;
@@ -214,6 +257,10 @@ static int GetNewFortranUnit(int pool_index, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"GetNewFortranUnit(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "GetNewFortranUnit",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
 
@@ -248,6 +295,10 @@ static int ReturnFortranUnit(int pool_index, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"ReturnFortranUnit(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "ReturnFortranUnit",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     FortranUnitTable[file->FortranUnit] = FALSE;
@@ -255,6 +306,10 @@ static int ReturnFortranUnit(int pool_index, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"ReturnFortranUnit(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "ReturnFortranUnit",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
     file->FortranUnit = -1;
@@ -268,6 +323,11 @@ static int LockForAppend(const int lock) {
 
     rtcp_log(LOG_DEBUG,"LockForAppend(%d) current_lock=%d\n",
              lock,proc_cntl.DiskFileAppend);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                     "func"        , TL_MSG_PARAM_STR, "LockForAppend",
+                     "Message"     , TL_MSG_PARAM_STR, "current_lock",
+                     "Lock"        , TL_MSG_PARAM_INT, lock,
+                     "Current Lock", TL_MSG_PARAM_INT, proc_cntl.DiskFileAppend );
     return(rtcpd_SerializeLock(lock,&proc_cntl.DiskFileAppend,
            proc_cntl.DiskFileAppend_lock,&nb_waiters,&next_entry,&wait_list));
 }
@@ -315,6 +375,11 @@ static int DiskFileOpen(int pool_index,
         if ( rc == -1 ) {
              rtcp_log(LOG_ERR,"DiskFileOpen(%s) LockForAppend(0): %s\n",
                      filereq->file_path,sstrerror(serrno));
+             tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                              "func"     , TL_MSG_PARAM_STR, "DiskFileOpen",
+                              "Message"  , TL_MSG_PARAM_STR, "LockForAppend",
+                              "File Path", TL_MSG_PARAM_STR, filereq->file_path,
+                              "Error"    , TL_MSG_PARAM_STR, sstrerror(serrno) );
             return(-1);
         }
         if ( (severity & RTCP_EOD) != 0 ) return(-1);
@@ -368,6 +433,15 @@ static int DiskFileOpen(int pool_index,
         errno = 0;
         rtcp_log(LOG_DEBUG,"DiskFileOpen() open(%s,0x%x)\n",filereq->file_path,
             flags);
+        {
+                char __flags[32];
+                sprintf( __flags, "0x%x", flags );
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                                 "func"     , TL_MSG_PARAM_STR, "DiskFileOpen",
+                                 "Message"  , TL_MSG_PARAM_STR, "open",
+                                 "File Path", TL_MSG_PARAM_STR, filereq->file_path,
+                                 "Flags"    , TL_MSG_PARAM_STR, __flags );
+        }
         DK_STATUS(RTCP_PS_OPEN);
         rc = rfio_open64(filereq->file_path,flags,0666);
         DK_STATUS(RTCP_PS_NOBLOCKING);
@@ -378,18 +452,38 @@ static int DiskFileOpen(int pool_index,
             rtcp_log(LOG_ERR,
                 "DiskFileOpen() rfio_open64(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                 filereq->file_path,flags,errno,serrno,rfio_errno);
+            {
+                    char __flags[32];
+                    sprintf( __flags, "0x%x", flags );
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 7, 
+                                     "func"      , TL_MSG_PARAM_STR, "DiskFileOpen",
+                                     "Message"   , TL_MSG_PARAM_STR, "open",
+                                     "File Path" , TL_MSG_PARAM_STR, filereq->file_path,
+                                     "Flags"     , TL_MSG_PARAM_STR, __flags,
+                                     "errno"     , TL_MSG_PARAM_INT, errno,
+                                     "serrno"    , TL_MSG_PARAM_INT, serrno,
+                                     "rfio_errno", TL_MSG_PARAM_INT, rfio_errno );
+            }
         } else {
             disk_fd = rc;
             rc = 0;
         }
         rtcp_log(LOG_DEBUG,"DiskFileOpen() rfio_open() returned fd=%d\n",
             disk_fd);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
+                         "Message", TL_MSG_PARAM_STR, "rfio_open returned",
+                         "fd"     , TL_MSG_PARAM_INT, disk_fd );                         
         if ( rc == 0 && filereq->offset > 0 ) {
 			char tmpbuf[21];
 			char tmpbuf2[21];
 			off64_t rc64;
             rtcp_log(LOG_DEBUG,"DiskFileOpen() attempt to set offset %s\n",
                      u64tostr((u_signed64) filereq->offset, tmpbuf, 0));
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
+                             "Message", TL_MSG_PARAM_STR, "attempt to set offset",
+                             "offset" , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0) );
             rfio_errno = 0;
             serrno = 0;
             errno = 0;
@@ -401,13 +495,37 @@ static int DiskFileOpen(int pool_index,
                 rtcp_log(LOG_ERR,
                  "DiskFileOpen() rfio_lseek64(%d,%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
                  disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,errno,serrno,rfio_errno);
-				rc = -1;
+                {
+                        char __seek_set[32];
+                        sprintf( __seek_set, "0x%x", SEEK_SET );
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 8, 
+                                         "func"      , TL_MSG_PARAM_STR, "DiskFileOpen",
+                                         "Message"   , TL_MSG_PARAM_STR, "rfio_lseek64",
+                                         "disk_fd"   , TL_MSG_PARAM_INT, disk_fd,                                 
+                                         "offset"    , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
+                                         "SEEK_SET"  , TL_MSG_PARAM_STR, SEEK_SET, 
+                                         "errno"     , TL_MSG_PARAM_INT, errno,
+                                         "serrno"    , TL_MSG_PARAM_INT, serrno,
+                                         "rfio_errno", TL_MSG_PARAM_INT, rfio_errno );
+                }
+                rc = -1;
             } else if ( rc64 != (off64_t)filereq->offset ) {
                 save_errno = errno;
                 save_serrno = serrno;
                 save_rfio_errno = rfio_errno;
                 rtcp_log(LOG_ERR,"rfio_lseek64(%d,%s,%d) returned %s\n",
                          disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,u64tostr((u_signed64)rc64,tmpbuf2,0));
+                {
+                        char __seek_set[32];
+                        sprintf( __seek_set, "0x%x", SEEK_SET );
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
+                                         "func"        , TL_MSG_PARAM_STR, "DiskFileOpen",
+                                         "Message"     , TL_MSG_PARAM_STR, "rfio_lseek64 returned",
+                                         "disk_fd"     , TL_MSG_PARAM_INT, disk_fd,                                 
+                                         "offset"      , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
+                                         "SEEK_SET"    , TL_MSG_PARAM_STR, SEEK_SET, 
+                                         "Return Value", TL_MSG_PARAM_STR, u64tostr((u_signed64)rc64,tmpbuf2,0) );
+                }                
                 if ( save_rfio_errno == 0 && save_serrno == 0 &&
                      save_errno == 0 ) save_rfio_errno = SEINTERNAL;
                 rc = -1;
@@ -422,6 +540,9 @@ static int DiskFileOpen(int pool_index,
         rc = GetNewFortranUnit(pool_index,file);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"DiskFileOpen() GetNewFortranUnit() failed\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                             "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
+                             "Message", TL_MSG_PARAM_STR, "GetNewFortranUnit() failed" );
             serrno = SEINTERNAL;
             if ( tapereq->mode == WRITE_ENABLE ) 
                 rtcpd_AppendClientMsg(NULL, file,RT110,"CPDSKTP",
@@ -460,12 +581,29 @@ static int DiskFileOpen(int pool_index,
             rtcp_log(LOG_ERR,
                 "DiskFileOpen() rfio_xyopen(%s,%d): errno = %d, serrno = %d, rfio_errno = %d\n",
                 filereq->file_path,Uformat_flags,errno,serrno,rfio_errno);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 7, 
+                             "func"         , TL_MSG_PARAM_STR, "DiskFileOpen",
+                             "Message"      , TL_MSG_PARAM_STR, "rfio_xyopen",
+                             "File Path"    , TL_MSG_PARAM_STR, filereq->file_path,
+                             "Uformat Flags", TL_MSG_PARAM_INT, Uformat_flags,
+                             "errno"        , TL_MSG_PARAM_INT, errno,
+                             "serrno"       , TL_MSG_PARAM_INT, serrno,
+                             "rfio_errno"   , TL_MSG_PARAM_INT, rfio_errno );
         } else {
             disk_fd = file->FortranUnit;
         }
     } else {
         rtcp_log(LOG_ERR,"DiskFileOpen() unknown recfm %s + convert 0x%x\n",
             filereq->recfm,filereq->convert);
+        {
+                char __convert[32];
+                sprintf( __convert, "0x%x", filereq->convert );
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                 "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
+                                 "Message", TL_MSG_PARAM_STR, "unknown recfm + convert",
+                                 "recfm"  , TL_MSG_PARAM_STR, filereq->recfm,
+                                 "convert", TL_MSG_PARAM_STR, __convert );
+        }
         serrno = EINVAL;
         return(-1);
     }
@@ -521,6 +659,15 @@ static int DiskFileOpen(int pool_index,
             strcpy(filereq->ifce,ifce);
     }
 
+    if (disk_fd>0) {
+
+            tl_rtcpd.tl_log( &tl_rtcpd, 27, 4, 
+                             "func"     , TL_MSG_PARAM_STR, "DiskFileOpen",
+                             "Message"  , TL_MSG_PARAM_STR, "successful",
+                             "File Path", TL_MSG_PARAM_STR, filereq->file_path,
+                             "fd"       , TL_MSG_PARAM_INT, disk_fd );                                     
+    }
+
     return(disk_fd);
 }
 
@@ -538,6 +685,11 @@ static int DiskFileClose(int disk_fd,
 
     rtcp_log(LOG_DEBUG,"DiskFileClose(%s) close file descriptor %d\n",
              filereq->file_path,disk_fd);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                     "func"           , TL_MSG_PARAM_STR, "DiskFileClose",
+                     "Message"        , TL_MSG_PARAM_STR, "close file descriptor",
+                     "File Path"      , TL_MSG_PARAM_STR, filereq->file_path,
+                     "File Descriptor", TL_MSG_PARAM_INT, disk_fd );
 
     save_rfio_errno = rfio_errno;
     save_serrno = serrno;
@@ -563,14 +715,32 @@ static int DiskFileClose(int disk_fd,
                   ((filereq->convert & NOF77CW) != 0) ) ? 
                  "rfio_close()" : "rfio_xyclose()"),
                  save_errno,save_serrno,save_rfio_errno);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                         "func"      , TL_MSG_PARAM_STR, "DiskFileClose",
+                         "Message"   , TL_MSG_PARAM_STR, (((*filereq->recfm == 'F') || 
+                                                           ((filereq->convert & NOF77CW) != 0) ) ? 
+                                                          "rfio_close()" : "rfio_xyclose()"),
+                         "errno"     , TL_MSG_PARAM_INT, save_errno,
+                         "serrno"    , TL_MSG_PARAM_INT, save_serrno,
+                         "rfio_errno", TL_MSG_PARAM_INT, save_rfio_errno );
+
         if ( save_rfio_errno == ENOSPC || (save_rfio_errno == 0 &&
                                            save_errno == ENOSPC) ) {
             save_rfio_errno = ENOSPC;
             rtcp_log(LOG_DEBUG,"DiskFileClose(%s) ENOSPC detected\n",
                                   filereq->file_path);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                             "func"     , TL_MSG_PARAM_STR, "DiskFileClose",
+                             "Message"  , TL_MSG_PARAM_STR, "ENOSPC detected",
+                             "File Path", TL_MSG_PARAM_STR, filereq->file_path );
+
             if ( *filereq->stageID != '\0' ) {
                 rtcp_log(LOG_DEBUG,"DiskFileClose(%s) stageID=<%s>, request local retry\n",
                           filereq->file_path,filereq->stageID);
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "DiskFileClose",
+                                 "Message", TL_MSG_PARAM_STR, "request local retry",
+                                 "stageID", TL_MSG_PARAM_STR, filereq->stageID );
                 rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_LOCAL_RETRY);
             } else {
                 rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_FAILED);
@@ -592,13 +762,30 @@ static int DiskFileClose(int disk_fd,
            (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 ) ) {
         rtcp_log(LOG_DEBUG,"DiskFileClose(%s) unlock file for concatenation\n",
                  filereq->file_path);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"     , TL_MSG_PARAM_STR, "DiskFileClose",
+                         "Message"  , TL_MSG_PARAM_STR, "unlock file for concatenation",
+                         "File Path", TL_MSG_PARAM_STR, filereq->file_path );
         rc = LockForAppend(0);
         if ( rc == -1 && serrno > 0 ) {
             rtcp_log(LOG_ERR,"DiskFileClose(%s) LockForAppend(0): %s\n",
                      filereq->file_path,sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                             "func"     , TL_MSG_PARAM_STR, "DiskFileClose",
+                             "Message"  , TL_MSG_PARAM_STR, "LockForAppend(0)",
+                             "File Path", TL_MSG_PARAM_STR, filereq->file_path,
+                             "Error"    , TL_MSG_PARAM_STR, sstrerror(serrno) );
         }
     }
     filereq->TEndTransferDisk = (int)time(NULL);
+
+    if (0==rc) {
+
+            tl_rtcpd.tl_log( &tl_rtcpd, 38, 3, 
+                             "func"     , TL_MSG_PARAM_STR, "DiskFileClose",
+                             "Message"  , TL_MSG_PARAM_STR, "successful",
+                             "File Path", TL_MSG_PARAM_STR, filereq->file_path );
+    }
 
     return(rc);
 }
@@ -661,6 +848,10 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_mutex_lock_ext(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                             "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             if ( convert_buffer != NULL ) free(convert_buffer);
             if ( f77conv_context != NULL ) free(f77conv_context);
             return(-1);
@@ -688,6 +879,10 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( f77conv_context != NULL ) free(f77conv_context);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -765,6 +960,13 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             rtcp_log(LOG_ERR,"Buffer overflow!! databuf %d, (%d,%d,%d)\n",
                      i,databufs[i]->data_length,databufs[i]->length,
                      databufs[i]->maxlength);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
+                             "func"       , TL_MSG_PARAM_STR, "MemoryToDisk",
+                             "Message"    , TL_MSG_PARAM_STR, "Buffer overflow",
+                             "Data Buffer", TL_MSG_PARAM_INT, i, 
+                             "Data Length", TL_MSG_PARAM_INT, databufs[i]->data_length, 
+                             "Length"     , TL_MSG_PARAM_INT, databufs[i]->length, 
+                             "Max Length" , TL_MSG_PARAM_INT, databufs[i]->maxlength );
             rtcpd_AppendClientMsg(NULL,file,"Internal error. %s: buffer overflow\n",
                                   filereq->file_path);
             rtcpd_SetReqStatus(NULL,file,SEINTERNAL,RTCP_FAILED);
@@ -779,6 +981,9 @@ static int MemoryToDisk(int disk_fd, int pool_index,
          */
         if ( (databufs[i]->length % blksiz) != 0 || blksiz < 0 ) {
             rtcp_log(LOG_ERR,"MemoryToDisk() blocksize mismatch\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                             "func"       , TL_MSG_PARAM_STR, "MemoryToDisk",
+                             "Message"    , TL_MSG_PARAM_STR, "blocksize mismatch" );
             rtcpd_AppendClientMsg(NULL, file, "Internal error. %s: blocksize mismatch (%d,%d)\n",
                         filereq->file_path,databufs[i]->length,blksiz);
             rtcpd_SetReqStatus(NULL,file,SEINTERNAL,RTCP_FAILED);
@@ -800,6 +1005,10 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                 (void)rtcpd_AppendClientMsg(NULL,file,RT105,sstrerror(errno));
                 rtcp_log(LOG_ERR,"MemoryToDisk() malloc(): %s\n",
                     sstrerror(errno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                 "Message", TL_MSG_PARAM_STR, "malloc",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 if ( f77conv_context != NULL ) free(f77conv_context);
@@ -862,6 +1071,12 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                         last_errno = errno;
                         save_serrno = rfio_serrno();
                         rtcp_log(LOG_ERR,"rfio_write(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                                         "func"      , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                         "Message"   , TL_MSG_PARAM_STR, "rfio_write",
+                                         "last_errno", TL_MSG_PARAM_INT, last_errno, 
+                                         "serrno"    , TL_MSG_PARAM_INT, serrno, 
+                                         "save_errno", TL_MSG_PARAM_INT, save_serrno );
                     }
                 } else {
                     /*
@@ -879,6 +1094,12 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                             last_errno = errno;
                             save_serrno = rfio_serrno();
                             rtcp_log(LOG_ERR,"rfio_xywrite(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                                             "func"      , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                             "Message"   , TL_MSG_PARAM_STR, "rfio_xywrite",
+                                             "last_errno", TL_MSG_PARAM_INT, last_errno, 
+                                             "serrno"    , TL_MSG_PARAM_INT, serrno, 
+                                             "rfio_errno", TL_MSG_PARAM_INT, save_serrno );
                             if ( status == ENOSPC || irc == ENOSPC )
                                 save_serrno = ENOSPC;
                             rc = -1;
@@ -901,8 +1122,17 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                          save_serrno = ENOSPC;
                          rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) ENOSPC detected\n",
                                   filereq->file_path);
+                         tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                          "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                          "Message", TL_MSG_PARAM_STR, "ENOSPC detected",
+                                          "Path"   , TL_MSG_PARAM_STR, filereq->file_path ); 
                          if ( *filereq->stageID != '\0' ) {
                              rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) stageID=<%s>, request local retry\n",filereq->file_path,filereq->stageID);
+                             tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                                              "func"    , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                              "Message" , TL_MSG_PARAM_STR, "request local retry",
+                                              "Path"    , TL_MSG_PARAM_STR, filereq->file_path,
+                                              "Stage ID", TL_MSG_PARAM_STR, filereq->stageID ); 
                              rtcpd_SetReqStatus(NULL,file,save_serrno,
                                                 RTCP_LOCAL_RETRY);
                          } else {
@@ -966,6 +1196,10 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_cond_broadcast_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( f77conv_context != NULL ) free(f77conv_context);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -976,6 +1210,10 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"MemoryToDisk() Cthread_mutex_unlock_ext(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                             "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             if ( convert_buffer != NULL ) free(convert_buffer);
             if ( f77conv_context != NULL ) free(f77conv_context);
             return(-1);
@@ -993,14 +1231,28 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToDisk() DiskFileClose(%d): %s\n",
                          disk_fd,rfio_serror());
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                 "func"       , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                 "Message"    , TL_MSG_PARAM_STR, "DiskFileClose",
+                                 "disk_fd"    , TL_MSG_PARAM_INT, disk_fd,
+                                 "rfio_serror", TL_MSG_PARAM_STR, rfio_serror() );
                 if ( convert_buffer != NULL ) free(convert_buffer);
                 if ( f77conv_context != NULL ) free(f77conv_context);
 
                 if ( save_serrno == ENOSPC ) {
                     rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) ENOSPC detected\n",
                         filereq->file_path);
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                     "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                     "Message", TL_MSG_PARAM_STR, "ENOSPC detected",
+                                     "Path"   , TL_MSG_PARAM_STR, filereq->file_path );
                     if ( *filereq->stageID != '\0' ) {
-                        rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) stageID=<%s>, request local retry\n",filereq->file_path,filereq->stageID);
+                            rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) stageID=<%s>, request local retry\n",filereq->file_path,filereq->stageID);
+                            tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                                             "func"    , TL_MSG_PARAM_STR, "MemoryToDisk",
+                                             "Message" , TL_MSG_PARAM_STR, "request local retry",
+                                             "Path"    , TL_MSG_PARAM_STR, filereq->file_path,
+                                             "Stage ID", TL_MSG_PARAM_STR, filereq->stageID );
                         rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_LOCAL_RETRY);
                     } else {
                         rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
@@ -1088,6 +1340,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"DiskToMemory() Cthread_mutex_lock_ext(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "DiskToMemory",
+                             "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             return(-1);
         }
         /*
@@ -1109,6 +1365,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"DiskToMemory() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "DiskToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
@@ -1212,6 +1472,12 @@ static int DiskToMemory(int disk_fd, int pool_index,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"DiskToMemory() rfio_read(): errno = %d, serrno = %d, rfio_errno = %d\n",
                 errno,serrno,rfio_errno);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                             "func"      , TL_MSG_PARAM_STR, "DiskToMemory",
+                             "Message"   , TL_MSG_PARAM_STR, "rfio_read",
+                             "errno"     , TL_MSG_PARAM_INT, errno,
+                             "serrno"    , TL_MSG_PARAM_INT, serrno, 
+                             "rfio_errno", TL_MSG_PARAM_INT, rfio_errno );
             strncpy(save_rfio_errmsg,rfio_serror(),CA_MAXLINELEN);
             rtcpd_AppendClientMsg(NULL, file,RT112,"CPDSKTP",
                 save_rfio_errmsg);
@@ -1232,6 +1498,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
              */
             rtcp_log(LOG_ERR,"File %s: size changed during request!\n",
                      filereq->file_path);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
+                             "Message", TL_MSG_PARAM_STR, "File size changed during request!",
+                             "File"   , TL_MSG_PARAM_STR, filereq->file_path );
             rtcpd_AppendClientMsg(NULL,file,RT150,"CPDSKTP",filereq->file_path);
             rtcpd_SetReqStatus(NULL,file,SEWOULDBLOCK,RTCP_USERR | RTCP_FAILED);
             (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
@@ -1297,6 +1567,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"DiskToMemory() Cthread_cond_broadcast_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "DiskToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
@@ -1306,6 +1580,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"DiskToMemory() Cthread_mutex_unlock_ext(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "DiskToMemory",
+                             "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             return(-1);
         }
 
@@ -1319,6 +1597,12 @@ static int DiskToMemory(int disk_fd, int pool_index,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"DiskToMemory() DiskFileClose(%d), file=%s: %s\n",
                     disk_fd,filereq->file_path,rfio_serror());
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                                 "func"   , TL_MSG_PARAM_STR, "DiskToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "DiskFileClose",
+                                 "disk_fd", TL_MSG_PARAM_INT, disk_fd,
+                                 "Path"   , TL_MSG_PARAM_STR, filereq->file_path,
+                                 "Error"  , TL_MSG_PARAM_STR, rfio_serror() );
                 rtcpd_AppendClientMsg(NULL, file,RT108,"CPDSKTP",
                         rfio_serror());
                 rtcpd_SetReqStatus(NULL,file,rfio_errno,RTCP_FAILED);
@@ -1362,6 +1646,13 @@ static int DiskToMemory(int disk_fd, int pool_index,
         (rtcpd_CheckProcError() & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { \
         rtcp_log(LOG_ERR,"diskIOthread() %s, rc=%d, severity=%d, errno=%d, serrno=%d\n",\
         (Z),rc,severity,save_errno,save_serrno); \
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, \
+                         "func"    , TL_MSG_PARAM_STR, "diskIOthread", \
+                         "Message" , TL_MSG_PARAM_STR, (Z), \
+                         "rc"      , TL_MSG_PARAM_INT, rc, \
+                         "severity", TL_MSG_PARAM_INT, severity, \
+                         "errno"   , TL_MSG_PARAM_INT, save_errno, \
+                         "serrno"  , TL_MSG_PARAM_INT, save_serrno ); \
         if ( mode == WRITE_DISABLE && \
           (rc == -1 || (severity & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0) && \
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
@@ -1376,11 +1667,17 @@ static int DiskToMemory(int disk_fd, int pool_index,
             } \
             if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
                 rtcp_log(LOG_DEBUG,"diskIOthread() return RC=-1 to client\n"); \
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, \
+                                 "func"   , TL_MSG_PARAM_STR, "diskIOthread", \
+                                 "Message", TL_MSG_PARAM_STR, "return RC=-1 to client" ); \
                 if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
                     rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
                 (void) tellClient(&client_socket,X,Y,-1); \
             } else { \
                 rtcp_log(LOG_DEBUG,"diskIOthread() return RC=0 to client\n"); \
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, \
+                                 "func"   , TL_MSG_PARAM_STR, "diskIOthread", \
+                                 "Message", TL_MSG_PARAM_STR, "return RC=0 to client" ); \
                 (void) tellClient(&client_socket,X,Y,0); \
             } \
             if ( AbortFlag == 0 ) \
@@ -1417,8 +1714,14 @@ void *diskIOthread(void *arg) {
     extern int ENOSPC_occurred;
 
     rtcp_log(LOG_DEBUG,"diskIOthread() started\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "diskIOthread",
+                     "Message", TL_MSG_PARAM_STR, "started" );
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"diskIOthread() received NULL argument\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                         "func"   , TL_MSG_PARAM_STR, "diskIOthread",
+                         "Message", TL_MSG_PARAM_STR, "received NULL argument" );
         rtcpd_SetProcError(RTCP_FAILED);
         DiskIOfinished();
         return((void *)&failure);
@@ -1436,6 +1739,9 @@ void *diskIOthread(void *arg) {
 
     if ( file == NULL || tape == NULL ) {
         rtcp_log(LOG_ERR,"diskIOthread() received NULL tape/file element\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                         "func"   , TL_MSG_PARAM_STR, "diskIOthread",
+                         "Message", TL_MSG_PARAM_STR, "received NULL tape/file element" );        
         rtcpd_SetProcError(RTCP_FAILED);
         DiskIOfinished();
         return((void *)&failure);
@@ -1477,6 +1783,9 @@ void *diskIOthread(void *arg) {
             CHECK_PROC_ERR(NULL,file,"rtcpd_stageupdc() error");
             if ( ENOSPC_occurred == TRUE ) {
                 rtcp_log(LOG_INFO,"diskIOthread() exit for synchronization due to ENOSPC\n");
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                                 "func"   , TL_MSG_PARAM_STR, "diskIOthread",
+                                 "Message", TL_MSG_PARAM_STR, "exit for synchronization due to ENOSPC" );        
                 filereq->proc_status = RTCP_WAITING;
                 DiskIOfinished();
                 return((void *)&success);
@@ -1586,10 +1895,16 @@ void *diskIOthread(void *arg) {
         p = u64tostr(nbbytes,u64buf,0);
         p = strchr(u64buf,' ');
         if ( p != NULL ) p = '\0';
-        if ( nbbytes > 0 ) 
+        if ( nbbytes > 0 ) { 
             rtcp_log(LOG_INFO,
                      "network interface for data transfer (%s bytes) is %s\n",
                      u64buf,filereq->ifce);
+            tl_rtcpd.tl_log( &tl_rtcpd, 10, 4, 
+                             "func"   , TL_MSG_PARAM_STR, "diskIOthread",
+                             "Message", TL_MSG_PARAM_STR, "network interface for data transfer",
+                             "bytes"  , TL_MSG_PARAM_STR, u64buf,
+                             "ifce"   , TL_MSG_PARAM_STR, filereq->ifce );        
+        }
 
         fl = NULL;
         if ( (filereq->convert & FIXVAR) != 0 ) {
@@ -1616,6 +1931,13 @@ void *diskIOthread(void *arg) {
            "diskIOthread() send %d status for FSEQ %d, FSEC %d on volume %s\n",
            filereq->proc_status,filereq->tape_fseq,
            file->tape_fsec,tapereq->vid);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 6, 
+                         "func"   , TL_MSG_PARAM_STR, "diskIOthread",
+                         "Message", TL_MSG_PARAM_STR, "send status",
+                         "status" , TL_MSG_PARAM_INT, filereq->proc_status,
+                         "FSEQ"   , TL_MSG_PARAM_INT, filereq->tape_fseq,
+                         "FSEC"   , TL_MSG_PARAM_INT, file->tape_fsec,
+                         "volume" , TL_MSG_PARAM_STR, tapereq->vid );        
 
         rc = tellClient(&client_socket,NULL,file,save_rc);
         CHECK_PROC_ERR(NULL,file,"tellClient() error");
@@ -1643,6 +1965,16 @@ void *diskIOthread(void *arg) {
             filereq->tape_fseq,filereq->file_path,
             (unsigned long)file->diskbytes_sofar,filereq->cprc,
             filereq->proc_status,severity);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 8, 
+                         "func"       , TL_MSG_PARAM_STR,   "diskIOthread",
+                         "Message"    , TL_MSG_PARAM_STR,   "copied bytes",
+                         "FSEQ"       , TL_MSG_PARAM_INT,   filereq->tape_fseq,
+                         "Path"       , TL_MSG_PARAM_STR,   filereq->file_path,
+                         "Bytes"      , TL_MSG_PARAM_INT64, file->diskbytes_sofar, 
+                         "rc"         , TL_MSG_PARAM_INT,   filereq->cprc,
+                         "proc_status", TL_MSG_PARAM_INT,   filereq->proc_status,
+                         "severity"   , TL_MSG_PARAM_INT,   severity );
+
         if ( (filereq->convert & FIXVAR) != 0 && fl != NULL ) free(fl);
     } /* if ( mode == WRITE_DISABLE ) */
 
@@ -1677,6 +2009,11 @@ int rtcpd_InitDiskIO(int *poolsize) {
     rc = Cpool_create(*poolsize,poolsize);
     rtcp_log(LOG_DEBUG,"rtcpd_InitDiskIO() thread pool (id=%d): pool size = %d\n",
         rc,*poolsize);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                     "func"     , TL_MSG_PARAM_STR, "rtcpd_InitDiskIO",
+                     "Message"  , TL_MSG_PARAM_STR, "thread pool",
+                     "ID"       , TL_MSG_PARAM_INT, rc,
+                     "Pool size", TL_MSG_PARAM_INT, *poolsize );
     /*
      * Create the diskIOstatus array in the processing status structure
      */
@@ -1684,6 +2021,12 @@ int rtcpd_InitDiskIO(int *poolsize) {
     if ( proc_stat.diskIOstatus == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_InitDiskIO() calloc(%d,%d): %s\n",
             *poolsize,sizeof(diskIOstatus_t),sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_InitDiskIO",
+                         "Message", TL_MSG_PARAM_STR, "calloc",
+                         "nmemb"  , TL_MSG_PARAM_INT, *poolsize,
+                         "size"   , TL_MSG_PARAM_INT, sizeof(diskIOstatus_t),
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
         rc = -1;
     }
     proc_stat.nb_diskIO = *poolsize;
@@ -1726,6 +2069,9 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     }
 
     rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                     "Message", TL_MSG_PARAM_STR, "called" );
     /*
      * Reserve a thread argument table
      */
@@ -1735,6 +2081,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             save_serrno = errno;
             rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() malloc(): %s\n",
                 sstrerror(errno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                             "Message", TL_MSG_PARAM_STR, "malloc",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
             serrno = save_serrno;
             return(-1);
         }
@@ -1755,6 +2105,12 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 save_serrno = serrno;
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_ConnectToClient(%s,%d): %s\n",
                     client->clienthost,client->clientport,sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                                 "func"       , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message"    , TL_MSG_PARAM_STR, "rtcpd_ConnectToClient",
+                                 "Client Host", TL_MSG_PARAM_STR, client->clienthost,
+                                 "Client Port", TL_MSG_PARAM_INT, client->clientport,
+                                 "Error"      , TL_MSG_PARAM_STR, sstrerror(errno) );
                 serrno = save_serrno;
                 return(-1);
             }
@@ -1813,11 +2169,19 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_next_index(): %s\n",
                          sstrerror(save_serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message", TL_MSG_PARAM_STR, "Cpool_next_index",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
                 serrno = save_serrno;
                 return(-1);
             }
             rtcp_log(LOG_INFO,"rtcpd_StartDiskIO() check with client for more work. Use socket %d\n",
                 thargs[thIndex].client_socket);
+            tl_rtcpd.tl_log( &tl_rtcpd, 10, 3, 
+                             "func"      , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                             "Message"   , TL_MSG_PARAM_STR, "check with client for more work",
+                             "Use socket", TL_MSG_PARAM_INT, thargs[thIndex].client_socket );
             rc = rtcpd_checkMoreWork(&(thargs[thIndex].client_socket),
                 nexttape,nextfile);
             if ( rc == -1 ) {
@@ -1832,12 +2196,19 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_checkMoreWork(): %s\n",
                          sstrerror(save_serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message", TL_MSG_PARAM_STR, "rtcpd_checkMoreWork",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
                 serrno = save_serrno;
                 return(-1);
             }
             if ( rc == 1 ) break;
         } else {
             rtcp_log(LOG_INFO,"rtcpd_StartDiskIO() end of filereqs. Wait for tapeIO to check for more work\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                             "Message", TL_MSG_PARAM_STR, "End of filereqs. Wait for tapeIO to check for more work" );
             rc = rtcpd_waitMoreWork(nextfile);
             if ( rc == -1 ) {
                 save_serrno = serrno;
@@ -1851,6 +2222,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() rtcpd_waitMoreWork(): %s\n",
                          sstrerror(save_serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message", TL_MSG_PARAM_STR, "rtcpd_waitMoreWork",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
                 serrno = save_serrno;
                 return(-1);
             }
@@ -1891,6 +2266,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                                    RTCP_RESELECT_SERV | RTCP_SYERR);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_lock_ext(): %s\n",
                     sstrerror(save_serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
                 serrno = save_serrno;
                 return(-1);
             }
@@ -1903,6 +2282,15 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             rc= rtcpd_CheckProcError();
             if ( rc != RTCP_OK ) {
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() processing error detected, severity=0x%x (%d)\n",rc,rc);
+                {
+                        char __severity[32];
+                        sprintf( __severity, "0x%x", rc );
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                         "func"          , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                         "Message"       , TL_MSG_PARAM_STR, "processing error detected",
+                                         "Severity (hex)", TL_MSG_PARAM_STR, __severity,
+                                         "Severity (dec)", TL_MSG_PARAM_INT, rc );
+                }
                 proc_cntl.diskIOfinished = 1;
                 (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -1939,6 +2327,15 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                     proc_cntl.nb_reserved_bufs,nb_bufs,mode,
                     proc_cntl.diskIOstarted,proc_cntl.tapeIOfinished,
                     filereq->blocksize);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 7, 
+                             "func"            , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                             "nb_reserver_bufs", TL_MSG_PARAM_INT, proc_cntl.nb_reserved_bufs ,
+                             "nb_bufs"         , TL_MSG_PARAM_INT, nb_bufs,
+                             "mode"            , TL_MSG_PARAM_INT, mode,
+                             "diskIOstarted"   , TL_MSG_PARAM_INT, proc_cntl.diskIOstarted ,
+                             "tapeIOfinished"  , TL_MSG_PARAM_INT, proc_cntl.tapeIOfinished ,
+                             "blocksize"       , TL_MSG_PARAM_INT, filereq->blocksize );
+
             while ( (proc_cntl.diskIOstarted == 0) ||
                     (proc_cntl.nb_reserved_bufs >= nb_bufs &&
                      (mode == WRITE_ENABLE || 
@@ -1951,6 +2348,11 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                      ((filereq->concat & NOCONCAT) != 0)) ) {
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() waiting... (nb_reserved_bufs=%d, diskIOstarted=%d\n",
                          proc_cntl.nb_reserved_bufs,proc_cntl.diskIOstarted);
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                                 "func"            , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message"         , TL_MSG_PARAM_STR, "waiting ...",
+                                 "nb_reserver_bufs", TL_MSG_PARAM_INT, proc_cntl.nb_reserved_bufs ,
+                                 "diskIOstarted"   , TL_MSG_PARAM_INT, proc_cntl.diskIOstarted );
                 rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
                 if ( rc == -1 ) {
                     save_serrno = serrno;
@@ -1960,6 +2362,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                                       RTCP_SYERR | RTCP_RESELECT_SERV);
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_cond_wait_ext(proc_cntl): %s\n",
                         sstrerror(save_serrno));
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                     "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                     "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext(proc_cntl)",
+                                     "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
                     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                     serrno = save_serrno;
                     return(-1);
@@ -1970,6 +2376,15 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 rc= rtcpd_CheckProcError();
                 if ( rc != RTCP_OK ) {
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() processing error detected, severity=0x%x (%d)\n",rc,rc);
+                    {
+                            char __severity[32];
+                            sprintf( __severity, "0x%x", rc );
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                             "func"          , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                             "Message"       , TL_MSG_PARAM_STR, "processing error detected",
+                                             "Severity (hex)", TL_MSG_PARAM_STR, __severity,
+                                             "Severity (dec)", TL_MSG_PARAM_INT, rc );
+                    }
                     proc_cntl.diskIOfinished = 1;
                     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
                     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
@@ -2030,11 +2445,16 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             }
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() number of reserved buffs %d + %d\n",
                 proc_cntl.nb_reserved_bufs,next_nb_bufs);
-
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                             "func"                    , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                             "number of reserved buffs", TL_MSG_PARAM_INT, proc_cntl.nb_reserved_bufs,
+                             "next number of buffs    ", TL_MSG_PARAM_INT, next_nb_bufs );
             proc_cntl.nb_reserved_bufs += next_nb_bufs;
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() new number of reserved buffs %d\n",
                 proc_cntl.nb_reserved_bufs);
-
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                             "func"                        , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                             "new number of reserved buffs", TL_MSG_PARAM_INT, proc_cntl.nb_reserved_bufs );
             rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
             if ( rc == -1 ) {
                 save_serrno = serrno;
@@ -2045,6 +2465,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 rtcp_log(LOG_ERR,
                          "rtcpd_StartDiskIO() Cthread_mutex_unlock_ext(): %s\n",
                          sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
                 serrno = save_serrno;
                 return(-1);
             }
@@ -2068,6 +2492,11 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                     prev_filesz = prevfile->filereq.bytes_out;
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() prev. file size %d, buffer sz %d, indxp %d\n",
                         (int)prev_filesz,prev_bufsz,indxp);
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                                 "func"           , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "prev. file size", TL_MSG_PARAM_INT, (int)prev_filesz,
+                                 "buffer size"    , TL_MSG_PARAM_INT, prev_bufsz,
+                                 "indxp"          , TL_MSG_PARAM_INT, indxp );                
                 if ( mode == WRITE_ENABLE ) 
                     indxp = (indxp + (int)(((u_signed64)offset + prev_filesz) /
                             ((u_signed64)prev_bufsz)));
@@ -2075,7 +2504,9 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                     indxp = prevfile->end_index;
                 rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() new indxp %d\n",
                         indxp);
-
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                                 "func"     , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "new indxp", TL_MSG_PARAM_INT, indxp );                
                 indxp = indxp % nb_bufs;
                 if ( mode == WRITE_ENABLE ) {
                     if ( (filereq->concat & NOCONCAT) != 0 ||
@@ -2090,7 +2521,11 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                          */
                         rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): no concatenate (%d != %d), indxp %d\n",
                             nextfile->filereq.tape_fseq,prevfile->filereq.tape_fseq,indxp);
-
+                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                                         "func"     , TL_MSG_PARAM_STR, "no concatenate",
+                                         "Next FSEQ", TL_MSG_PARAM_INT, nextfile->filereq.tape_fseq,
+                                         "Prev FSEQ", TL_MSG_PARAM_INT, prevfile->filereq.tape_fseq,
+                                         "indxp"    , TL_MSG_PARAM_INT, indxp );                
                         if ( prev_filesz != 0 ) 
                             indxp = (indxp + 1) % nb_bufs;
                         offset = next_offset = 0;
@@ -2110,6 +2545,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                          */
                         rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(): concatenate (%d == %d)\n",
                             nextfile->filereq.tape_fseq,prevfile->filereq.tape_fseq);
+                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                                         "func"     , TL_MSG_PARAM_STR, "concatenate",
+                                         "Next FSEQ", TL_MSG_PARAM_INT, nextfile->filereq.tape_fseq,
+                                         "Prev FSEQ", TL_MSG_PARAM_INT, prevfile->filereq.tape_fseq );
                         offset = (int)(((u_signed64)offset + prev_filesz) %
                                        ((u_signed64)prev_bufsz));
                         next_offset = (int)(((u_signed64)offset + filereq->bytes_in) %
@@ -2130,6 +2569,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                                    RTCP_SYERR | RTCP_RESELECT_SERV);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_next_index(): %s\n",
                          sstrerror(save_serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message", TL_MSG_PARAM_STR, "Cpool_next_index",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
                 serrno = save_serrno;
                 return(-1);
             }
@@ -2154,11 +2597,26 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
              */
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO(thIndex=%d,arg=0x%lx) start with indxp=%d, offset=%d, end_of_tpfile=%d\n",
                 thIndex,tharg,indxp,offset,end_of_tpfile);
+            {
+                    char __arg[32];
+                    sprintf( __arg, "%p", tharg );
+                    tl_rtcpd.tl_log( &tl_rtcpd, 11, 6, 
+                                     "func"         , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                     "thIndex"      , TL_MSG_PARAM_INT, thIndex,
+                                     "arg"          , TL_MSG_PARAM_STR, __arg,
+                                     "indxp"        , TL_MSG_PARAM_INT, indxp,
+                                     "offset"       , TL_MSG_PARAM_INT, offset,
+                                     "end_of_tpfile", TL_MSG_PARAM_INT, end_of_tpfile );
+            }
             rc = Cpool_assign(poolID,diskIOthread,(void *)tharg,-1);
             if ( rc == -1 ) {
                 save_serrno = serrno;
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_assign(%d): %s\n",
                          poolID,sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                                 "Message", TL_MSG_PARAM_STR, "Cpool_assign",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
                 serrno = save_serrno;
                 return(-1);
             }
@@ -2173,6 +2631,13 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() skipping finished request (%d,%d,%s,concat:%d\n",
                      nextfile->filereq.tape_fseq,nextfile->filereq.disk_fseq,
                      nextfile->filereq.file_path,nextfile->filereq.concat);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 6, 
+                             "func"     , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                             "Message"  , TL_MSG_PARAM_STR, "skipping finished request",
+                             "Tape FSEQ", TL_MSG_PARAM_INT, nextfile->filereq.tape_fseq,
+                             "Disk FSEQ", TL_MSG_PARAM_INT, nextfile->filereq.disk_fseq,
+                             "Path"     , TL_MSG_PARAM_STR, nextfile->filereq.file_path,
+                             "concat"   , TL_MSG_PARAM_INT, nextfile->filereq.concat );
         }
     } CLIST_ITERATE_END(nexttape->file,nextfile);
     /*
@@ -2183,6 +2648,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_lock_ext(): %s\n",
                  sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         serrno = save_serrno;
         return(-1);
     }
@@ -2192,6 +2661,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_cond_broadcast_ext(): %s\n",
                  sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );       
         serrno = save_serrno;
         return(-1);
     }
@@ -2200,6 +2673,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_unlock_ext(): %s\n",
                  sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );       
         serrno = save_serrno;
         return(-1);
     }

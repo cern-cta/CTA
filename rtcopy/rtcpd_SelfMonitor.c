@@ -35,6 +35,7 @@
 #include <rtcp_server.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include "tplogger_api.h"
 
 extern processing_status_t proc_stat;
 
@@ -65,6 +66,12 @@ void *rtcpd_MonitorThread(void *arg) {
     if ( ps_check.diskIOstatus == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() calloc(%d,%d): %s\n",
             nb_diskIO,sizeof(diskIOstatus_t),sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                         "func"                  , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                         "Message"               , TL_MSG_PARAM_STR, "calloc",
+                         "Nb DiskIO"             , TL_MSG_PARAM_INT, nb_diskIO,
+                         "Sizeof(diskIOstatus_t)", TL_MSG_PARAM_INT, sizeof(diskIOstatus_t),
+                         "Error"                 , TL_MSG_PARAM_STR, sstrerror(errno) );
         return(NULL);
     }
 
@@ -78,6 +85,10 @@ void *rtcpd_MonitorThread(void *arg) {
         sleep(30);
         if ( nbKillTries * 30 > RTCP_KILL_TIMEOUT ) {
             rtcp_log(LOG_ERR,"rtcpd_MonitorThread() exit from non-killable process after %d attempts\n",nbKillTries);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"    , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                             "Message" , TL_MSG_PARAM_STR, "exit from non-killable process",
+                             "Attempts", TL_MSG_PARAM_INT, nbKillTries );
             exit(1);
         }
         if ( memcmp(&ps_check.tapeIOstatus,&proc_stat.tapeIOstatus,
@@ -89,14 +100,30 @@ void *rtcpd_MonitorThread(void *arg) {
                 time_hung = (int)(time(NULL) - ps_check.timestamp);
                 if ( current_activity == RTCP_PS_FINISHED ) {
                     rtcp_log(LOG_DEBUG,"rtcpd_MonitorThread() processing finished\n");
+                    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                                     "func"    , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                     "Message" , TL_MSG_PARAM_STR, "processing finished" );
                     return(NULL);
                 }
                 rtcp_log(LOG_DEBUG,
                     "rtcpd_MonitorThread() proc hung since %d seconds\n",
                     time_hung);
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                 "Message", TL_MSG_PARAM_STR, "proc hung",
+                                 "Seconds", TL_MSG_PARAM_INT, time_hung );                
                 rtcp_log(LOG_DEBUG,"rtcpd_MonitorThread() tapeIO status 0x%x (%s), %ld KB\n",
                     current_activity,
                     proc_status_strings[current_activity],nbKB);
+                {
+                        char __current_activity[32];
+                        sprintf( __current_activity, "0x%x", current_activity );
+                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                                         "func"          , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Tape IO Status", TL_MSG_PARAM_STR, __current_activity,
+                                         "Status String" , TL_MSG_PARAM_STR, proc_status_strings[current_activity],
+                                         "kBytes"        , TL_MSG_PARAM_INT, nbKB );
+                }
                 switch (current_activity) {
                 case RTCP_PS_MOUNT:
                     /*
@@ -105,6 +132,9 @@ void *rtcpd_MonitorThread(void *arg) {
                     PS_LIMIT(RTCOPYD,MOUNT_TIME,max_time);
                     if ( time_hung > max_time ) {
                         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() mount time exceeded\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Message", TL_MSG_PARAM_STR, "mount time exceeded" );
                         nbKillTries++;
                         rtcpd_SetProcError(RTCP_FAILED);
                     }
@@ -116,6 +146,9 @@ void *rtcpd_MonitorThread(void *arg) {
                     PS_LIMIT(RTCOPYD,POSITION_TIME,max_time);
                     if ( time_hung > max_time ) {
                         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() position time exceeded\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Message", TL_MSG_PARAM_STR, "position time exceeded" );                        
                         nbKillTries++;
                         rtcpd_SetProcError(RTCP_FAILED);
                     }
@@ -127,6 +160,9 @@ void *rtcpd_MonitorThread(void *arg) {
                     PS_LIMIT(RTCOPYD,OPEN_TIME,max_time);
                     if ( time_hung > max_time ) {
                         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() tape open time exceeded\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Message", TL_MSG_PARAM_STR, "tape open time exceeded" );
                         nbKillTries++;
                         rtcpd_SetProcError(RTCP_FAILED);
                     }
@@ -138,6 +174,9 @@ void *rtcpd_MonitorThread(void *arg) {
                     PS_LIMIT(RTCOPYD,READ_TIME,max_time);
                     if ( time_hung > max_time ) {
                         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() tape read time exceeded\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Message", TL_MSG_PARAM_STR, "tape read time exceeded" );                        
                         nbKillTries++;
                         rtcpd_SetProcError(RTCP_FAILED);
                     }
@@ -149,6 +188,9 @@ void *rtcpd_MonitorThread(void *arg) {
                     PS_LIMIT(RTCOPYD,WRITE_TIME,max_time);
                     if ( time_hung > max_time ) {
                         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() tape write time exceeded\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Message", TL_MSG_PARAM_STR, "tape write time exceeded" );                        
                         nbKillTries++;
                         rtcpd_SetProcError(RTCP_FAILED);
                     }
@@ -161,6 +203,9 @@ void *rtcpd_MonitorThread(void *arg) {
                     PS_LIMIT(RTCOPYD,CLOSE_TIME,max_time);
                     if ( time_hung > max_time ) {
                         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() tape close time exceeded\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Message", TL_MSG_PARAM_STR, "tape close time exceeded" );
                         nbKillTries++;
                         rtcpd_SetProcError(RTCP_FAILED);
                     }
@@ -172,6 +217,9 @@ void *rtcpd_MonitorThread(void *arg) {
                     PS_LIMIT(RTCOPYD,STAGEUPDC_TIME,max_time);
                     if ( time_hung > max_time ) {
                         rtcp_log(LOG_ERR,"rtcpd_MonitorThread() stageupdc() time exceeded\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                         "Message", TL_MSG_PARAM_STR, "stageupdc() time exceeded" );
                         nbKillTries++;
                         rtcpd_SetProcError(RTCP_FAILED);
                     }
@@ -185,6 +233,16 @@ void *rtcpd_MonitorThread(void *arg) {
                     rtcp_log(LOG_DEBUG,"rtcpd_MonitorThread() diskIO thread %d, status 0x%x (%s), %ld KB\n",
                         i,current_activity,
                         proc_status_strings[current_activity],nbKB);
+                    {
+                            char __current_activity[32];
+                            sprintf( __current_activity, "0x%x", current_activity );
+                            tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
+                                             "func"          , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                             "Disk IO Thread", TL_MSG_PARAM_INT, i, 
+                                             "Status"        , TL_MSG_PARAM_STR, __current_activity,
+                                             "Status String" , TL_MSG_PARAM_STR, proc_status_strings[current_activity],
+                                             "kBytes"        , TL_MSG_PARAM_INT, nbKB );
+                    }
                     switch (current_activity) {
                     case RTCP_PS_OPEN:
                        /*
@@ -193,6 +251,9 @@ void *rtcpd_MonitorThread(void *arg) {
                         PS_LIMIT(RTCOPYD,OPEN_TIME,max_time);
                         if ( time_hung > max_time ) {
                             rtcp_log(LOG_ERR,"rtcpd_MonitorThread() disk open time exceeded\n");
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                             "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                             "Message", TL_MSG_PARAM_STR, "disk open time exceeded" ); 
                             nbKillTries++;
                             rtcpd_SetProcError(RTCP_FAILED);
                         }
@@ -204,6 +265,9 @@ void *rtcpd_MonitorThread(void *arg) {
                         PS_LIMIT(RTCOPYD,READ_TIME,max_time);
                         if ( time_hung > max_time ) {
                             rtcp_log(LOG_ERR,"rtcpd_MonitorThread() disk read time exceeded\n");
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                             "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                             "Message", TL_MSG_PARAM_STR, "disk read time exceeded" ); 
                             nbKillTries++;
                             rtcpd_SetProcError(RTCP_FAILED);
                         }
@@ -215,6 +279,9 @@ void *rtcpd_MonitorThread(void *arg) {
                         PS_LIMIT(RTCOPYD,WRITE_TIME,max_time);
                         if ( time_hung > max_time ) {
                             rtcp_log(LOG_ERR,"rtcpd_MonitorThread() disk write time exceeded\n");
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                             "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                             "Message", TL_MSG_PARAM_STR, "disk write time exceeded" ); 
                             nbKillTries++;
                             rtcpd_SetProcError(RTCP_FAILED);
                         }
@@ -226,6 +293,9 @@ void *rtcpd_MonitorThread(void *arg) {
                         PS_LIMIT(RTCOPYD,CLOSE_TIME,max_time);
                         if ( time_hung > max_time ) {
                             rtcp_log(LOG_ERR,"rtcpd_MonitorThread() disk close time exceeded\n");
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                             "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                             "Message", TL_MSG_PARAM_STR, "disk close time exceeded" ); 
                             nbKillTries++;
                             rtcpd_SetProcError(RTCP_FAILED);
                         }
@@ -237,6 +307,9 @@ void *rtcpd_MonitorThread(void *arg) {
                         PS_LIMIT(RTCOPYD,STAGEUPDC_TIME,max_time);
                         if ( time_hung > max_time ) {
                             rtcp_log(LOG_ERR,"rtcpd_MonitorThread() stageupdc() time exceeded\n");
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                             "func"   , TL_MSG_PARAM_STR, "rtcpd_MonitorThread", 
+                                             "Message", TL_MSG_PARAM_STR, "disk stageupdc time exceeded" ); 
                             nbKillTries++;
                             rtcpd_SetProcError(RTCP_FAILED);
                         }

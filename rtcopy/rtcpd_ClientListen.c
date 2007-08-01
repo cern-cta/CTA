@@ -33,6 +33,7 @@
 #include <rtcp.h>
 #include <rtcp_api.h>
 #include <rtcp_server.h>
+#include "tplogger_api.h"
 
 extern int success;
 extern int failure;
@@ -49,6 +50,9 @@ void *rtcpd_CLThread(void *arg) {
 
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_CLThread() NULL argument\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                         "Message", TL_MSG_PARAM_STR, "NULL argument" ); 
         return((void *)&failure);
     }
     client_socket = *(SOCKET *)arg;
@@ -61,12 +65,20 @@ void *rtcpd_CLThread(void *arg) {
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_CLThread() rtcpd_Listen(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                             "Message", TL_MSG_PARAM_STR, "rtcpd_Listen",
+                             "Error",   TL_MSG_PARAM_STR, sstrerror(serrno) ); 
             stop_request = 1;
         } else {
             rc = rtcp_RecvReq(&client_socket,&hdr,NULL,NULL,NULL);
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcp_CLThread() rtcp_RecvReq(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                 "Message", TL_MSG_PARAM_STR, "rtcp_RecvReq",
+                                 "Error",   TL_MSG_PARAM_STR, sstrerror(serrno) ); 
                 stop_request = 1;
             } else {
                 if ( hdr.magic == RTCOPY_MAGIC_SHIFT ) {
@@ -84,6 +96,14 @@ void *rtcpd_CLThread(void *arg) {
                          */
                         rtcp_log(LOG_ERR,"rtcp_CLThread() unexpected SHIFT request 0x%x\n",
                                  hdr.reqtype);
+                        {
+                                char __reqtype[32];
+                                sprintf( __reqtype, "0x%x", hdr.reqtype );
+                                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                                 "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                                 "Message" , TL_MSG_PARAM_STR, "unexpected SHIFT request",
+                                                 "Req Type", TL_MSG_PARAM_STR, __reqtype ); 
+                        }
                         stop_request = 1;
                         break;
                     }
@@ -94,24 +114,39 @@ void *rtcpd_CLThread(void *arg) {
                               (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) {
                             rtcp_InitLog(NULL,NULL,NULL,NULL);
                             rtcp_log(LOG_INFO,"request aborted by user\n");
+                            tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                                             "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                             "Message" , TL_MSG_PARAM_STR, "request aborted by user" );
                         }
                         stop_request = 1;
                         break;
                     case RTCP_ENDOF_REQ:
                         rtcp_log(LOG_DEBUG,"rtcp_CLThread() End Of Request received on main socket\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                                         "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                         "Message" , TL_MSG_PARAM_STR, "End Of Request received on main socket" );
                         stop_request = 1;
                         (void)rtcp_SendAckn(&client_socket,hdr.reqtype);
                         break;
                     case RTCP_KILLJID_REQ:
                         rtcp_log(LOG_INFO,"request killed by operator\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                                         "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                         "Message" , TL_MSG_PARAM_STR, "request killed by operator" );
                         stop_request = 1;
                         break;
                     case RTCP_RSLCT_REQ:
                         rtcp_log(LOG_INFO,"reselect server request by operator\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                                         "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                         "Message" , TL_MSG_PARAM_STR, "reselect server request by operator" );
                         stop_request = 1;
                         break;
                     case RTCP_PING_REQ:
                         rtcp_log(LOG_DEBUG,"rtcp_CLThread() ping request from client\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                                         "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                         "Message" , TL_MSG_PARAM_STR, "ping request from client" );
                         /*
                          * If we are waited for it means that request has
                          * finished and client should normally have sent an
@@ -125,6 +160,9 @@ void *rtcpd_CLThread(void *arg) {
                             nb_pings++;
                             if ( nb_pings > 1 ) {
                                 rtcp_log(LOG_ERR,"rtcp_CLThread() client has not noticed end of request\n");
+                                tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                                 "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                                 "Message" , TL_MSG_PARAM_STR, "client has not noticed end of request" );
                                 stop_request = 1;
                             }
                         }
@@ -132,6 +170,10 @@ void *rtcpd_CLThread(void *arg) {
                     default:
                         rtcp_log(LOG_ERR,"rtcp_CLThread() unexpected request %d\n",
                             hdr.reqtype);
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                         "func"   , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
+                                         "Message", TL_MSG_PARAM_STR, "unexpected request",
+                                         "Request", TL_MSG_PARAM_INT, hdr.reqtype );
                         stop_request = 1;
                         break;
                     }
@@ -173,6 +215,10 @@ int rtcpd_ClientListen(SOCKET s) {
         serrno = errno;
         rtcp_log(LOG_ERR,"rtcpd_ClientListen() malloc(): %s\n",
             sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_ClientListen", 
+                         "Message", TL_MSG_PARAM_STR, "malloc",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
         return(-1);
     }
     *client_socket = s;
@@ -181,6 +227,10 @@ int rtcpd_ClientListen(SOCKET s) {
         save_serrno = serrno;
         rtcp_log(LOG_ERR,"rtcpd_ClientListen() Cthread_create(): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_ClientListen", 
+                         "Message", TL_MSG_PARAM_STR, "Cthread_create",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
         serrno = save_serrno;
         return(-1);
     }
@@ -193,6 +243,10 @@ int rtcpd_WaitCLThread(int CLThId, int *status) {
     int rc,*_status;
 
     rtcp_log(LOG_DEBUG,"rtcpd_WaitCLThread() waiting for Client Listen thread (%d)\n",CLThId);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                     "func"     , TL_MSG_PARAM_STR, "rtcpd_WaitCLThread", 
+                     "Message"  , TL_MSG_PARAM_STR, "waiting for Client Listen thread",
+                     "Thread ID", TL_MSG_PARAM_INT, CLThId );
 
     _status = NULL;
     wait_to_be_joined = TRUE;
@@ -200,6 +254,10 @@ int rtcpd_WaitCLThread(int CLThId, int *status) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_WaitCLThread() Cthread_join(): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitCLThread", 
+                         "Message", TL_MSG_PARAM_STR, "Cthread_join",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     } else {
         if ( status != NULL && _status != NULL ) *status = *_status;
     }

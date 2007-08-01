@@ -45,6 +45,7 @@ extern char *geterr();
 #include <rtcp_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include "tplogger_api.h"
 
 /*
  * Special unmarshall_STRING macro to avoid unnecessary copies.
@@ -69,6 +70,10 @@ static int rtcp_CheckClientHost(SOCKET *s,
     if ( rc == SOCKET_ERROR ) {
         rtcp_log(LOG_ERR,"rtcp_CheckClientHost() getpeername(): %s\n",
                 neterror());
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_CheckClientHost",
+                         "Message", TL_MSG_PARAM_STR, "getpeername",
+                         "Error"  , TL_MSG_PARAM_STR, neterror() );
         return(-1);
     }
     hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
@@ -76,6 +81,11 @@ static int rtcp_CheckClientHost(SOCKET *s,
     if ( hp == NULL ) {
         rtcp_log(LOG_ERR,"rtcp_CheckClientHost() Cgethostbyaddr(): h_errno=%d, %s\n",
                      h_errno, neterror());
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_CheckClientHost",
+                         "Message", TL_MSG_PARAM_STR, "Cgethostbyaddr",
+                         "h_errno", TL_MSG_PARAM_INT, h_errno,
+                         "Error"  , TL_MSG_PARAM_STR, neterror() );
         return(-1);
     }
     strcpy(req->clienthost,hp->h_name);
@@ -84,6 +94,10 @@ static int rtcp_CheckClientHost(SOCKET *s,
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_CheckClientHost() gethostname(): %s\n",
                  neterror());
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_CheckClientHost",
+                         "Message", TL_MSG_PARAM_STR, "gethostname",
+                         "Error"  , TL_MSG_PARAM_STR, neterror() );
         return(-1);
     }
 
@@ -113,12 +127,24 @@ static int rtcp_CheckClientAuth(rtcpHdr_t *hdr, shift_client_t *req) {
     authorized = 0;
     if ( req->islocal != 0 ) {
         rtcp_log(LOG_DEBUG,"Local access authorized\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_CheckClientAuth",
+                         "Message", TL_MSG_PARAM_STR, "Local access authorized" );
         authorized = 1;
     } else {
         rtcp_log(LOG_DEBUG,"Check %s authorization in %s\n",
                  req->clienthost,AUTH_HOSTS);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                         "func"      , TL_MSG_PARAM_STR, "rtcp_CheckClientAuth",
+                         "Message"   , TL_MSG_PARAM_STR, "Check authorization",
+                         "Host"      , TL_MSG_PARAM_STR, req->clienthost,
+                         "AUTH_HOSTS", TL_MSG_PARAM_STR, AUTH_HOSTS );
         if ( (fs = fopen(AUTH_HOSTS,"r")) == NULL ) {
             rtcp_log(LOG_DEBUG,"File %s does not exist. Any host is authorized\n",AUTH_HOSTS);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcp_CheckClientAuth",
+                             "Message", TL_MSG_PARAM_STR, "File does not exist. Any host is authorized.",
+                             "File"   , TL_MSG_PARAM_STR, AUTH_HOSTS );
             authorized = 1;
         } else {
             while( fscanf(fs, "%s%*[^\n]\n", buf) != EOF ) {
@@ -143,6 +169,10 @@ static int rtcp_CheckClientAuth(rtcpHdr_t *hdr, shift_client_t *req) {
         }
         rtcp_log(LOG_DEBUG,"Host %s %s authorized\n",req->clienthost,
                  (authorized == 0 ? "not" : ""));
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"         , TL_MSG_PARAM_STR, "rtcp_CheckClientAuth",
+                         "Host"         , TL_MSG_PARAM_STR, req->clienthost,
+                         "Authorization", TL_MSG_PARAM_STR, (authorized == 0 ? "no" : "yes") );
     }
     if ( authorized == 0 ) {
         if ( hdr->reqtype == RQST_INFO ) return(HOSTNOTAUTH);
@@ -180,12 +210,22 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         if ( *req == NULL ) {
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() calloc(1,%d): %s\n",
                 sizeof(shift_client_t),sstrerror(errno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                             "Message", TL_MSG_PARAM_STR, "calloc",
+                             "Size"   , TL_MSG_PARAM_INT, sizeof(shift_client_t),
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
             return(-1);
         }
         msgbuf = (char *)malloc(hdr->len);
         if ( msgbuf == NULL ) {
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() malloc(%d): %s\n",
                 hdr->len,sstrerror(errno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                             "Message", TL_MSG_PARAM_STR, "malloc",
+                             "Size"   , TL_MSG_PARAM_INT, hdr->len,
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
             return(-1);
         }
 
@@ -194,11 +234,20 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         case -1:
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() netread(%d): %s\n",
                 hdr->len,neterror());
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                             "Message", TL_MSG_PARAM_STR, "netread",
+                             "Size"   , TL_MSG_PARAM_INT, hdr->len,
+                             "Error"  , TL_MSG_PARAM_STR, neterror() );
             free(msgbuf);
             return(-1);
         case 0:
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() netread(%d): connection dropped\n",
                 hdr->len);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                             "Message", TL_MSG_PARAM_STR, "netread: connection dropped",
+                             "Size"   , TL_MSG_PARAM_INT, hdr->len );
             free(msgbuf);
             return(-1);
         }
@@ -224,6 +273,10 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             unmarshall_LONG(p,argc);
             if ( argc < 0 ) {
                 rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() argc=%d received\n",argc);
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                                 "Message", TL_MSG_PARAM_STR, "argc received",
+                                 "argc"   , TL_MSG_PARAM_INT, argc );
                 free(msgbuf);
                 serrno = SEINTERNAL;
                 return(-1);
@@ -232,6 +285,11 @@ static int rtcp_GetOldCMsg(SOCKET *s,
             if ( argv == NULL ) {
                 rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() malloc(%d): %s\n",
                          (argc+1) * sizeof(char *),sstrerror(errno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                                 "Message", TL_MSG_PARAM_STR, "malloc",
+                                 "Size"   , TL_MSG_PARAM_INT, (argc+1) * sizeof(char *),
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
                 free(msgbuf);
                 serrno = SEINTERNAL;
                 return(-1);
@@ -260,6 +318,14 @@ static int rtcp_GetOldCMsg(SOCKET *s,
         } else {
             rtcp_log(LOG_ERR,"rtcp_GetOldCMsg() unknown request type 0x%x\n",
                 hdr->reqtype);
+            {
+                    char __reqtype[32];
+                    sprintf( __reqtype, "0x%x", hdr->reqtype );
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                     "func"    , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                                     "Message" , TL_MSG_PARAM_STR, "unknown request type",
+                                     "Req Type", TL_MSG_PARAM_STR, __reqtype );
+            }
             free(msgbuf);
             serrno = SEINTERNAL;
             return(-1);
@@ -333,9 +399,17 @@ static int rtcp_SendRC(SOCKET *s,
     switch (rc) {
     case -1:
         rtcp_log(LOG_ERR,"rtcp_SendRC() netwrite(): %s\n",neterror());
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_SendRC",
+                         "Message", TL_MSG_PARAM_STR, "netwrite",
+                         "Error"  , TL_MSG_PARAM_STR, neterror() );
         return(-1);
     case 0:
         rtcp_log(LOG_ERR,"rtcp_SendRC() netwrite(): connection dropped\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_SendRC",
+                         "Message", TL_MSG_PARAM_STR, "netwrite",
+                         "Error"  , TL_MSG_PARAM_STR, "connection dropped" );
         return(-1);
     }
     return(0);
@@ -370,14 +444,26 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     if ( client_msg_buf == NULL ) {
         rtcp_log(LOG_ERR,"rtcp_RunOld() calloc(1,%d): %s\n",
                  RTCP_SHIFT_BUFSZ,sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                         "Message", TL_MSG_PARAM_STR, "calloc",
+                         "Size"   , TL_MSG_PARAM_INT, RTCP_SHIFT_BUFSZ,
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
         serrno = SESYSERR;
         return(-1);
     }
 
     rtcp_log(LOG_DEBUG,"rtcp_RunOld() Get SHIFT request\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                     "Message", TL_MSG_PARAM_STR, "Get SHIFT request" );
 
     rc = rtcp_GetOldCMsg(s,hdr,&req);
     rtcp_log(LOG_DEBUG,"rtcp_RunOld() rtcp_GetOldCMsg(): rc=%d\n",rc);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                     "func"       , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                     "Message"    , TL_MSG_PARAM_STR, "rtcp_GetOldCMsg",
+                     "Return Code", TL_MSG_PARAM_INT, rc );
     if ( rc == -1 ) {
         retval = USERR;
         if ( hdr->reqtype != RQST_INFO ) (void) rtcp_SendRC(s,hdr,&retval,NULL);
@@ -390,13 +476,31 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     if ( hdr->reqtype == RQST_INFO ) {
         rtcp_log(LOG_INFO,"info request by user %s (%d,%d) from %s\n",
                  req->name,req->uid,req->gid,req->clienthost);
+        tl_rtcpd.tl_log( &tl_rtcpd, 10, 6, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                         "Message", TL_MSG_PARAM_STR, "info request",
+                         "User"   , TL_MSG_PARAM_STR, req->name,
+                         "UID"    , TL_MSG_PARAM_UID, req->uid,
+                         "GID"    , TL_MSG_PARAM_GID, req->gid,
+                         "Host"   , TL_MSG_PARAM_STR, req->clienthost );
 
         rc = rtcp_GetOldCinfo(hdr,req);
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcp_RunOld() rtcp_GetOldCinfo(): %s\n",sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                             "Message", TL_MSG_PARAM_STR, "rtcp_GetOldCinfo",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
         }
         rtcp_log(LOG_DEBUG,"info request returns status=%d, used=%d, queue=%d, units=%d\n",req->info.status,req->info.nb_used,req->info.nb_queued,req->info.nb_units);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 6, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                         "Message", TL_MSG_PARAM_STR, "info request returns",
+                         "Status" , TL_MSG_PARAM_INT, req->info.status,
+                         "Used"   , TL_MSG_PARAM_INT, req->info.nb_used,
+                         "Queue"  , TL_MSG_PARAM_INT, req->info.nb_queued,
+                         "Units"  , TL_MSG_PARAM_INT, req->info.nb_units );
 
         rc = rtcp_SendOldCinfo(s,hdr,req);
 
@@ -416,6 +520,11 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_RunOld() rtcp_InitLog(): %s\n",
                  sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                         "Message", TL_MSG_PARAM_STR, "rtcp_InitLog",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
+
         return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
     }
     /*
@@ -427,16 +536,30 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
 #if !defined(_WIN32)
             if ( setgid((gid_t)req->gid) == -1 ) {
                 rtcp_log(LOG_ERR,"setgid(%d): %s\n",req->gid,sstrerror(errno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                                 "Message", TL_MSG_PARAM_STR, "setgid",
+                                 "GID"    , TL_MSG_PARAM_GID, req->gid,
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
                 return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
             }
             if ( setuid((uid_t)req->uid) == -1 ) {
                 rtcp_log(LOG_ERR,"setuid(%d): %s\n",req->uid,sstrerror(errno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                                 "Message", TL_MSG_PARAM_STR, "setuid",
+                                 "GID"    , TL_MSG_PARAM_GID, req->uid,
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
                 return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
             }
             if ( *req->acctstr != '\0' ) {
                 (void) sprintf(envacct,"ACCOUNT=%s",req->acctstr);
                 if ( putenv(envacct) != 0 ) {
                     rtcp_log(LOG_ERR,"putenv(%s) failed\n",envacct);
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                     "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                                     "Message", TL_MSG_PARAM_STR, "putenv failed",
+                                     "envacct", TL_MSG_PARAM_STR, envacct );
                     return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,-1));
                 }
             }
@@ -486,6 +609,10 @@ int rtcp_RunOld(SOCKET *s, rtcpHdr_t *hdr) {
     rtcp_log = (void (*)(int, const char *, ...))log;
     rtcp_log(LOG_DEBUG,"rtcp_RunOld() sent back status=%d to client\n",
              retval);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcp_RunOld",
+                     "Message", TL_MSG_PARAM_STR, "sent back status to client",
+                     "Status" , TL_MSG_PARAM_INT, retval );
 
     if ( CLThId != -1 ) (void)rtcpd_WaitCLThread(CLThId,&status);
     return(rtcpd_CleanUpSHIFT(&req,&client_msg_buf,rc));

@@ -1,5 +1,5 @@
 /*
- * $Id: rtcpd.c,v 1.4 2007/05/24 16:58:54 obarring Exp $
+ * $Id: rtcpd.c,v 1.5 2007/08/01 14:00:50 wiebalck Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -41,6 +41,8 @@ WSADATA wsadata;
 #include <rtcp_constants.h>
 #include <rtcp.h>
 #include <rtcp_server.h>
+#include "tplogger_api.h"
+
 extern char *rtcpd_logfile;
 extern int use_port;
 extern int Debug;
@@ -67,16 +69,37 @@ static int ChdirWorkdir() {
             save_mask = umask(0);
             rc = mkdir(workdir,S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IWGRP|
 S_IXGRP|S_IROTH|S_IWOTH|S_IXOTH);
-            if ( rc == -1 ) rtcp_log(LOG_ERR,"Cannot create directory %s: %s\n",
-                                     workdir,sstrerror(errno)); 
-            else rtcp_log(LOG_INFO,"Created directory %s\n",workdir);
+            if ( rc == -1 ) {
+                    rtcp_log(LOG_ERR,"Cannot create directory %s: %s\n",
+                                      workdir,sstrerror(errno)); 
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
+                                     "func"   , TL_MSG_PARAM_STR, "ChdirWorkdir",
+                                     "Message", TL_MSG_PARAM_STR, "Cannot create directory",
+                                     "Workdir", TL_MSG_PARAM_STR, workdir,                    
+                                     "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );                    
+            } else { 
+                    rtcp_log(LOG_INFO,"Created directory %s\n",workdir);
+                    tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
+                                     "func"   , TL_MSG_PARAM_STR, "ChdirWorkdir",
+                                     "Message", TL_MSG_PARAM_STR, "Created directory",
+                                     "Workdir", TL_MSG_PARAM_STR, workdir );                    
+            }
             umask(save_mask);
         }
     } else if ( !S_ISDIR(st.st_mode) ) {
         rtcp_log(LOG_ERR,"%s should be a directory !\n",workdir);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "ChdirWorkdir",
+                         "Message", TL_MSG_PARAM_STR, "Should be a directory",
+                         "Workdir", TL_MSG_PARAM_STR, workdir );                    
     }
     if ( chdir(workdir) == -1 ) {
         rtcp_log(LOG_ERR,"chdir(%s): %s\n",workdir,sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
+                         "func"   , TL_MSG_PARAM_STR, "ChdirWorkdir",
+                         "Message", TL_MSG_PARAM_STR, "chdir",
+                         "Workdir", TL_MSG_PARAM_STR, workdir, 
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );                    
         return(-1);
     }
 #endif /* _WIN32 */
@@ -103,16 +126,28 @@ int rtcpd_main(struct main_args *main_args) {
 
     rtcp_InitLog(NULL,NULL,NULL,NULL);
 
+    /* init the tplogger interface */
+    tl_init_handle( &tl_rtcpd, "dlf" );
+    tl_rtcpd.tl_init( &tl_rtcpd, 1 );
+
     request_socket = (SOCKET *)calloc(1,sizeof(SOCKET));
     if ( request_socket == NULL ) {
-        rtcp_log(LOG_ERR,"main() calloc(SOCKET): %s\n",sstrerror(errno));
-        return(1);
+            rtcp_log(LOG_ERR,"main() calloc(SOCKET): %s\n",sstrerror(errno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
+                             "Message", TL_MSG_PARAM_STR, "main() calloc (SOCKET)",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
+            return(1);
     }
 
     rc = rtcpd_InitNW(&listen_socket);
     if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"main() rtcpd_InitNW(): %s\n",sstrerror(serrno));
-        return(1);
+            rtcp_log(LOG_ERR,"main() rtcpd_InitNW(): %s\n",sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
+                             "Message", TL_MSG_PARAM_STR, "main() rtcpd_InitNW()",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
+            return(1);
     }
 
 #if defined(CTAPE_DUMMIES)
@@ -120,7 +155,11 @@ int rtcpd_main(struct main_args *main_args) {
 #endif /* CTAPE_DUMMIES */
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"main() Ctape_InitDummy(): %s\n",
-            sstrerror(serrno));
+                 sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
+                         "Message", TL_MSG_PARAM_STR, "main() Ctape_InitDummy()",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(1);
     }
     /*
@@ -129,6 +168,10 @@ int rtcpd_main(struct main_args *main_args) {
     rc = ChdirWorkdir();
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"main() ChdirWorkdir(): %s\n",sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
+                         "Message", TL_MSG_PARAM_STR, "main() ChdirWorkdir()",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
         return(1);
     }
 
@@ -137,6 +180,12 @@ int rtcpd_main(struct main_args *main_args) {
 #if defined(__DATE__) && defined (__TIME__)
     rtcp_log(LOG_INFO,"Rtcopy server generated at %s %s. Started in %s:%s\n",
              __DATE__,__TIME__,tpserver,workdir);
+    tl_rtcpd.tl_log( &tl_rtcpd,  11, 5,
+                     "Message",  TL_MSG_PARAM_STR, "Rtcopy server generated",
+                     "date",     TL_MSG_PARAM_STR, __DATE__,
+                     "time",     TL_MSG_PARAM_STR, __TIME__,
+                     "tpserver", TL_MSG_PARAM_STR, tpserver,                     
+                     "workdir",  TL_MSG_PARAM_STR, workdir );
 #endif /* __DATE__ && __TIME__ */
  
     rc = 0;
@@ -145,8 +194,15 @@ int rtcpd_main(struct main_args *main_args) {
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"main() rtcp_Listen(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
+                             "Message", TL_MSG_PARAM_STR, "main() rtcp_Listen()",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
             continue;
         }
+        
+        tl_rtcpd.tl_fork_prepare( &tl_rtcpd ); 
+
 #if !defined(_WIN32) && !defined(CTAPE_DUMMIES)
         pid = (int)fork();
 #else  /* !_WIN32 && !CTAPE_DUMMIES */
@@ -154,10 +210,15 @@ int rtcpd_main(struct main_args *main_args) {
 #endif /* _WIN32 */
         if ( pid == -1 ) {
             rtcp_log(LOG_ERR,"main() failed to fork(): %s\n",
-                sstrerror(errno));
+                     sstrerror(errno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
+                             "Message", TL_MSG_PARAM_STR, "main() failed to fork()",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );
             continue;
         }
         if ( pid != 0 ) {
+            tl_rtcpd.tl_fork_parent( &tl_rtcpd );    
             closesocket(accept_socket);
             continue; /* Parent */
         }
@@ -165,6 +226,7 @@ int rtcpd_main(struct main_args *main_args) {
         /*
          * Child
          */
+        tl_rtcpd.tl_fork_child( &tl_rtcpd );    
 #if !defined(_WIN32) && !defined(CTAPE_DUMMIES)
         signal(SIGPIPE,SIG_IGN);
         /*
@@ -183,6 +245,9 @@ int rtcpd_main(struct main_args *main_args) {
     }
     (void)rtcp_CleanUp(&listen_socket,rc);
     if ( request_socket != NULL ) free(request_socket);
+
+    tl_rtcpd.tl_exit( &tl_rtcpd, 0 );
+
     return(0);
 }
 

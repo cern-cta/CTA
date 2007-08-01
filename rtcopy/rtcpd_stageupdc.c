@@ -45,6 +45,7 @@ extern char *geterr();
 #include <rtcp_server.h>
 #include <serrno.h>
 #include <stage_api.h>
+#include "tplogger_api.h"
 
 extern processing_cntl_t proc_cntl;
 
@@ -85,6 +86,11 @@ int rtcpd_LockForTpPos(const int lock) {
 
     rtcp_log(LOG_DEBUG,"rtcpd_LockForTpPos(%d), current_lock=%d\n",
              lock,proc_cntl.TpPos);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                     "func"        , TL_MSG_PARAM_STR, "rtcpd_LockForTpPos",
+                     "lock"        , TL_MSG_PARAM_INT, lock,
+                     "current_lock", TL_MSG_PARAM_INT, proc_cntl.TpPos );
+
     return(rtcpd_SerializeLock(lock,&proc_cntl.TpPos,proc_cntl.TpPos_lock,
                                &nb_waiters,&next_entry,&wait_list));
 }
@@ -129,6 +135,12 @@ int rtcpd_stageupdc(tape_list_t *tape,
 
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc(): fseq=%d, status=%d, concat=%d, err=%d\n",
              filereq->tape_fseq,filereq->proc_status,filereq->concat,filereq->err.errorcode);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
+                     "func"  , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                     "fseq"  , TL_MSG_PARAM_INT, filereq->tape_fseq,
+                     "status", TL_MSG_PARAM_INT, filereq->proc_status,
+                     "concat", TL_MSG_PARAM_INT, filereq->concat,
+                     "err"   , TL_MSG_PARAM_INT, filereq->err.errorcode );
 
     for ( retry=0; retry<RTCP_STGUPDC_RETRIES; retry++ ) {
         status = filereq->err.errorcode;
@@ -150,6 +162,11 @@ int rtcpd_stageupdc(tape_list_t *tape,
                  (rtcpd_LockForTpPos(1) == -1) ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() rtcpd_LockForTpPos(1): returned without lock (serrno=%d, errno=%d)\n",
                          serrno,errno);
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                                 "Message", TL_MSG_PARAM_STR, "rtcpd_LockForTpPos(1): returned without lock",
+                                 "serrno" , TL_MSG_PARAM_INT, serrno,
+                                 "errno"  , TL_MSG_PARAM_INT, errno );
                 return(-1);
             }
             if ( ENOSPC_occurred == TRUE ) {
@@ -177,6 +194,19 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      filereq->recordlength,
                      recfm,
                      newpath);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 12, 
+                             "func"           , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                             "Message"        , TL_MSG_PARAM_STR, "stage_updc_tppos",
+                             "Stage ID"       , TL_MSG_PARAM_STR, filereq->stageID,
+                             "Stage Subreq ID", TL_MSG_PARAM_INT, filereq->stageSubreqID,
+                             "Status"         , TL_MSG_PARAM_INT, status,
+                             "Block Size"     , TL_MSG_PARAM_INT, filereq->blocksize,
+                             "Unit"           , TL_MSG_PARAM_STR, tapereq->unit,
+                             "FID"            , TL_MSG_PARAM_STR, filereq->fid,
+                             "Fseq"           , TL_MSG_PARAM_INT, filereq->tape_fseq,
+                             "Record Length"  , TL_MSG_PARAM_INT, filereq->recordlength,
+                             "Recfm"          , TL_MSG_PARAM_STR, recfm,                             
+                             "New Path"       , TL_MSG_PARAM_STR, newpath );
 
             rc = stage_updc_tppos(filereq->stageID,
                                   filereq->stageSubreqID,
@@ -192,6 +222,10 @@ int rtcpd_stageupdc(tape_list_t *tape,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_tppos(): %s\n",
                          sstrerror(save_serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                                 "Message", TL_MSG_PARAM_STR, "stage_updc_tppos",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
                 switch (save_serrno) {
                 case EINVAL:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
@@ -297,6 +331,23 @@ int rtcpd_stageupdc(tape_list_t *tape,
                      filereq->recordlength,
                      recfm,
                      newpath);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 16, 
+                             "func"           , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                             "Message"        , TL_MSG_PARAM_STR, "stage_updc_filcp",
+                             "Stage ID"       , TL_MSG_PARAM_STR, filereq->stageID,
+                             "Stage Subreq ID", TL_MSG_PARAM_INT, filereq->stageSubreqID,
+                             "Return Value"   , TL_MSG_PARAM_INT, -retval,
+                             "ifce"           , TL_MSG_PARAM_STR, filereq->ifce,
+                             "Nb Bytes"       , TL_MSG_PARAM_INT, (int)nb_bytes,
+                             "Wait time"      , TL_MSG_PARAM_INT, WaitTime,
+                             "Transfer Time"  , TL_MSG_PARAM_INT, TransferTime,
+                             "Block Size"     , TL_MSG_PARAM_INT, filereq->blocksize,
+                             "Unit"           , TL_MSG_PARAM_STR, tapereq->unit,
+                             "FID"            , TL_MSG_PARAM_STR, filereq->fid,
+                             "Fseq"           , TL_MSG_PARAM_INT, filereq->tape_fseq,
+                             "Record Length"  , TL_MSG_PARAM_INT, filereq->recordlength,
+                             "Recfm"          , TL_MSG_PARAM_STR, recfm,                             
+                             "New Path"       , TL_MSG_PARAM_STR, newpath );
 
             rc = stage_updc_filcp(filereq->stageID,
                                   filereq->stageSubreqID,
@@ -319,12 +370,21 @@ int rtcpd_stageupdc(tape_list_t *tape,
                  (rtcpd_LockForTpPos(0) == -1) ) {
                 rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() rtcpd_LockForTpPos(0): error releasing lock (serrno=%d, errno=%d)\n",
                          serrno,errno);
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                                 "Message", TL_MSG_PARAM_STR, "rtcpd_LockForTpPos(0): error releasing lock",
+                                 "serrno" , TL_MSG_PARAM_INT, serrno,
+                                 "errno"  , TL_MSG_PARAM_INT, errno );
                 return(-1); 
             }   
 
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"rtcpd_stageupdc() stage_updc_filcp(): %s\n",
                          sstrerror(save_serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                                 "Message", TL_MSG_PARAM_STR, "stage_updc_filcp",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
                 switch (save_serrno) {
                 case EINVAL:
                     rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED|RTCP_USERR);
@@ -391,11 +451,20 @@ int rtcpd_stageupdc(tape_list_t *tape,
          strcmp(newpath,filereq->file_path) ) {
         rtcp_log(LOG_INFO,"New path obtained from stager: %s\n",
             newpath);
+        tl_rtcpd.tl_log( &tl_rtcpd, 10, 3, 
+                         "func"    , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                         "Message" , TL_MSG_PARAM_STR, "New path obtained from stager",
+                         "New Path", TL_MSG_PARAM_STR, newpath );
         strcpy(filereq->file_path,newpath);
         return(NEWPATH);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_stageupdc() stageupdc returns %d, %s\n",
              rc,newpath);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 4, 
+                     "func"       , TL_MSG_PARAM_STR, "rtcpd_stageupdc",
+                     "Message"    , TL_MSG_PARAM_STR, "stageupdc returns",
+                     "Return code", TL_MSG_PARAM_INT, rc,
+                     "New Path"   , TL_MSG_PARAM_STR, newpath );   
     if ( (*newpath == '\0' && tapereq->mode == WRITE_DISABLE) || rc != 0 ) {
         if ( rc != 0 ) {
             rtcpd_AppendClientMsg(NULL,file,

@@ -42,6 +42,7 @@ extern char *geterr();
 #include <rtcp.h>
 #include <rtcp_server.h>
 #include <serrno.h>
+#include "tplogger_api.h"
 char *getconfent _PROTO((char *, char *, int));
 
 
@@ -91,6 +92,9 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
     int rc;
 
     rtcp_log(LOG_DEBUG,"rtcpd_SignalFilePositioned() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                     "Message", TL_MSG_PARAM_STR, "called" );
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
         return(-1);
@@ -100,12 +104,20 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );        
         return(-1);
     }
     rc = Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_cond_broadcast_ext(proc_cntl): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                
         (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
         return(-1);
     }
@@ -113,9 +125,16 @@ int rtcpd_SignalFilePositioned(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_SignalFilePositioned(): Cthread_mutex_unlock_ext(proc_cntl): %s\n",
                  sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext(proc_cntl)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );                        
         return(-1);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_SignalFilePositioned() returns\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_SignalFilePositioned",
+                     "Message", TL_MSG_PARAM_STR, "returns" );
     return(0);
 }
 
@@ -127,11 +146,19 @@ static int WaitDiskIO() {
 
     rtcp_log(LOG_DEBUG,"WaitDiskIO(): diskIOfinished=%d, nb_diskIOactive=%d\n",
              proc_cntl.diskIOfinished,proc_cntl.nb_diskIOactive);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                     "func"           , TL_MSG_PARAM_STR, "WaitDiskIO",
+                     "diskIOfinished" , TL_MSG_PARAM_INT, proc_cntl.diskIOfinished,
+                     "nb_diskIOactive", TL_MSG_PARAM_INT, proc_cntl.nb_diskIOactive );
     while ( proc_cntl.diskIOfinished == 0 || proc_cntl.nb_diskIOactive > 0 ) {
         rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
         if ( rc == -1 ) return(-1);
         rtcp_log(LOG_DEBUG,"WaitDiskIO(): diskIOfinished=%d, nb_diskIOactive=%d\n",
                  proc_cntl.diskIOfinished,proc_cntl.nb_diskIOactive);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                         "func"           , TL_MSG_PARAM_STR, "WaitDiskIO",
+                         "diskIOfinished" , TL_MSG_PARAM_INT, proc_cntl.diskIOfinished,
+                         "nb_diskIOactive", TL_MSG_PARAM_INT, proc_cntl.nb_diskIOactive );
     }
     rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
     return(rc);
@@ -193,6 +220,9 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
     filereq = &file->filereq;
     if ( last_block_done != 0 ) {
         rtcp_log(LOG_ERR,"MemoryToTape() called beyond last block!!!\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                         "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                         "Message", TL_MSG_PARAM_STR, "called beyond last block" );
         return(-1);
     }
 
@@ -230,7 +260,16 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                        i,
                        nbFullBufs,
                        pileupWaitTime);
+              tl_rtcpd.tl_log( &tl_rtcpd, 10, 5, 
+                               "func"           , TL_MSG_PARAM_STR, "MemoryToTape",
+                               "Message"        , TL_MSG_PARAM_STR, "Tape IO protection against disk IO slack",
+                               "index"          , TL_MSG_PARAM_INT, i,
+                               "nb full buffers", TL_MSG_PARAM_INT, nbFullBufs,
+                               "wait seconds"   , TL_MSG_PARAM_INT, pileupWaitTime );
               rtcp_log(LOG_INFO,"path=%s\n",filereq->file_path);
+              tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                               "func", TL_MSG_PARAM_STR, "MemoryToTape",
+                               "path", TL_MSG_PARAM_STR, filereq->file_path);
               sleep(pileupWaitTime);
             }
             TP_STATUS(RTCP_PS_WAITMTX);
@@ -239,6 +278,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() Cthread_mutex_lock_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message" , TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
+                                 "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
@@ -266,6 +309,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
 
             if ( NoSyncAccess == 1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() unexpected empty buffer %d after diskIO finished\n",i);
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "unexpected empty buffer after diskIO finished",
+                                 "buffer" , TL_MSG_PARAM_INT, i );
                 (void)rtcpd_SetReqStatus(NULL,file,SEINTERNAL,
                                          RTCP_FAILED|RTCP_UNERR);
                 (void)rtcpd_AppendClientMsg(NULL,file,"Internal error: %s\n",
@@ -279,6 +326,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
@@ -311,6 +362,9 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          */
         if ( (databufs[i]->length % blksiz) != 0 ) {
             rtcp_log(LOG_ERR,"MemoryToTape() blocksize mismatch\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                             "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
+                             "Messsage", TL_MSG_PARAM_STR, "blocksize mismatch" );
             if ( NoSyncAccess == 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -333,6 +387,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 (void)rtcpd_AppendClientMsg(NULL,file,RT105,sstrerror(errno));
                 rtcp_log(LOG_ERR,"MemoryToTape() malloc(): %s\n",
                     sstrerror(errno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "malloc",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 if ( NoSyncAccess == 0 ) {
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -458,6 +516,9 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             
 	    if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() tape write error\n");
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "tape write error" );
                 if ( NoSyncAccess == 0 ) {
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -491,6 +552,9 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
       
                 if (file == NULL || filereq == NULL) {
                     rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                     "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                     "Message", TL_MSG_PARAM_STR, "MONITOR - file or filereq is NULL" );
                 } else {
                     forceSend = (file->tapebytes_sofar == 0) || (file->tapebytes_sofar ==  filereq->bytes_in);
                     rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
@@ -554,6 +618,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() Cthread_cond_broadcast_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
@@ -567,6 +635,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() Cthread_mutex_unlock_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
@@ -584,6 +656,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() Cthread_mutex_lock_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
@@ -603,6 +679,9 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                  proc_cntl.diskIOstarted == 1 &&
                  proc_cntl.nb_diskIOactive == 0 ) {
                 rtcp_log(LOG_DEBUG,"MemoryToTape() disk IO has finished! Sync. not needed anymore\n");
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message", TL_MSG_PARAM_STR, "disk IO has finished! Sync. not needed anymore" );
                 NoSyncAccess = *diskIOfinished = 1;
             }
 
@@ -614,6 +693,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 if ( rc == -1 ) {
                     rtcp_log(LOG_ERR,"MemoryToTape() Cthread_cond_broadcast_ext(proc_cntl): %s\n",
                         sstrerror(serrno));
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                     "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
+                                     "Message" , TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
+                                     "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
                     if ( (convert & FIXVAR) != 0 ) {
                         if ( convert_buffer != NULL ) free(convert_buffer);
                         if ( convert_context != NULL ) free(convert_context);
@@ -627,6 +710,10 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToTape() Cthread_mutex_unlock_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
+                                 "Message" , TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
+                                 "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
                 if ( (convert & FIXVAR) != 0 ) {
                     if ( convert_buffer != NULL ) free(convert_buffer);
                     if ( convert_context != NULL ) free(convert_context);
@@ -670,6 +757,11 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
          */
         rtcp_log(LOG_DEBUG,"MemoryToTape() FIXVAR spill: %d, proc_err=%d\n",
                  spill,proc_err);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
+                         "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
+                         "Message" , TL_MSG_PARAM_STR, "FIXVAR",
+                         "spill"   , TL_MSG_PARAM_INT, spill,
+                         "proc_err", TL_MSG_PARAM_INT, proc_err );
         if ( proc_err == 0  && spill > 0 ) {
             if ( (convert & EBCCONV) != 0 ) asc2ebc(convert_buffer,spill);
             rc = twrite(tape_fd,
@@ -759,6 +851,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_lock_ext(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                             "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
             return(-1);
         }
         /*
@@ -782,6 +878,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_wait_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
@@ -860,6 +960,9 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 if ( rc == -1 ) {
                     rtcp_log(LOG_ERR,"TapeToMemory() tape read error\n");
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                     "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                     "Message", TL_MSG_PARAM_STR, "tape read error" );
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                     return(-1);
@@ -919,6 +1022,9 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
 
                     if (file == NULL || filereq == NULL) {
                         rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                                         "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                         "Message", TL_MSG_PARAM_STR, "MONITOR - file or filereq is NULL" );                        
                     } else {
                         forceSend = (file->tapebytes_sofar == 0) || 
                                     (file->tapebytes_sofar ==  filereq->bytes_in);
@@ -984,6 +1090,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 if ( rc == -1 ) {
                     rtcp_log(LOG_ERR,"TapeToMemory() tclose(): %s\n",
                         sstrerror(serrno));
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                     "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                     "Message", TL_MSG_PARAM_STR, "tclose",
+                                     "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                     return(-1);
@@ -1041,6 +1151,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_lock_ext(proc_cntl): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
@@ -1054,6 +1168,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(proc_cntl): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -1063,6 +1181,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_unlock_ext(proc_cntl): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext(proc_cntl)",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
@@ -1080,6 +1202,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"TapeToMemory() Cthread_cond_broadcast_ext(): %s\n",
                     sstrerror(serrno));
+                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                                 "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                                 "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext",
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
@@ -1088,6 +1214,10 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"TapeToMemory() Cthread_mutex_unlock_ext(): %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                             "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
+                             "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
             return(-1);
         }
 
@@ -1163,6 +1293,13 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
         (rtcpd_CheckProcError() & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { \
          rtcp_log(LOG_ERR,"tapeIOthread() %s, rc=%d, severity=%d, errno=%d, serrno=%d\n",Z,\
                   rc,severity,save_errno,save_serrno); \
+         tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, \
+                          "func"    , TL_MSG_PARAM_STR, "tapeIOthread", \
+                          "Message" , TL_MSG_PARAM_STR, (Z), \
+                          "rc"      , TL_MSG_PARAM_INT, rc, \
+                          "severity", TL_MSG_PARAM_INT, severity, \
+                          "errno"   , TL_MSG_PARAM_INT, save_errno, \
+                          "serrno"  , TL_MSG_PARAM_INT, save_serrno ); \
          if ( mode == WRITE_ENABLE && \
           (rc == -1 || (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0) && \
           (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
@@ -1177,6 +1314,9 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
          if ( ((severity|rtcpd_CheckProcError()) & RTCP_LOCAL_RETRY) == 0 ) { \
              if ( mode == WRITE_ENABLE ) { \
                  rtcp_log(LOG_DEBUG,"tapeIOthread() return RC=-1 to client\n");\
+                 tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, \
+                                  "func"   , TL_MSG_PARAM_STR, "tapeIOthread", \
+                                  "Message", TL_MSG_PARAM_STR, "return RC=-1 to client" ); \
                  tmpfile = nextfile; \
                  if ( (rc != -1) && (nextfile != NULL) && (nextfile->next->filereq.concat & CONCAT) != 0 ) { \
                      while (tmpfile->next!=nexttape->file && \
@@ -1239,6 +1379,9 @@ void *tapeIOthread(void *arg) {
 
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"tapeIOthread() received NULL argument\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                         "func"   , TL_MSG_PARAM_STR, "tapeIOthread",
+                         "Message", TL_MSG_PARAM_STR, "received NULL argument" );
         rtcpd_SetProcError(RTCP_FAILED);
         return((void *)&failure);
     }
@@ -1249,6 +1392,9 @@ void *tapeIOthread(void *arg) {
 
     if ( tape == NULL ) {
         rtcp_log(LOG_ERR,"tapeIOthread() received NULL tape request\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
+                         "func"   , TL_MSG_PARAM_STR, "tapeIOthread",
+                         "Message", TL_MSG_PARAM_STR, "received NULL tape request" );
         rtcpd_SetProcError(RTCP_FAILED);
         return((void *)&failure);
     }
@@ -1399,11 +1545,18 @@ void *tapeIOthread(void *arg) {
             if ( mode == WRITE_DISABLE ) {
                 rtcp_log(LOG_INFO,"tapeIOthread() check with client for more work. Use socket %d\n",
                     client_socket);
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 3, 
+                                 "func"      , TL_MSG_PARAM_STR, "tapeIOthread",
+                                 "Message"   , TL_MSG_PARAM_STR, "check with client for more work",
+                                 "Use socket", TL_MSG_PARAM_INT, client_socket );
                 rc = rtcpd_checkMoreWork(&client_socket, nexttape, nextfile);
                 CHECK_PROC_ERR(NULL,nextfile,"rtcpd_checkMoreWork() error");
                 if ( rc == 1 ) break;
             } else {
                 rtcp_log(LOG_INFO,"tapeIOthread() end of filereqs. Wait for diskIO to check for more work\n");
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
+                                 "func"   , TL_MSG_PARAM_STR, "tapeIOthread",
+                                 "Message", TL_MSG_PARAM_STR, "End of filereqs. Wait for diskIO to check for more work" );
                 rc = rtcpd_waitMoreWork(nextfile);
                 CHECK_PROC_ERR(NULL,nextfile,"rtcpd_waitMoreWork() error");
                 if ( rc == 1 ) break;
@@ -1459,6 +1612,18 @@ void *tapeIOthread(void *arg) {
             rtcp_log(LOG_DEBUG,"tapeIOthread(): file iteration: fseq=%d,%d concat=0x%x, previous file proc_stat=%d\n",
                      nextfile->filereq.tape_fseq,nextfile->filereq.disk_fseq,
                      nextfile->filereq.concat,prevfile->filereq.proc_status);
+            {
+                    char __fseq[32];
+                    char __concat[32];
+                    sprintf( __fseq, "%d,%d", nextfile->filereq.tape_fseq, nextfile->filereq.disk_fseq );
+                    sprintf( __concat, "0x%x", nextfile->filereq.concat );
+                    tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
+                                     "func"                   , TL_MSG_PARAM_STR, "tapeIOthread",
+                                     "Message"                , TL_MSG_PARAM_STR, "file iteration",
+                                     "fseq"                   , TL_MSG_PARAM_STR, __fseq,
+                                     "concat"                 , TL_MSG_PARAM_STR, __concat,
+                                     "previous file proc_stat", TL_MSG_PARAM_INT, prevfile->filereq.proc_status );
+            }
             if ( (nextfile->filereq.proc_status < RTCP_FINISHED) &&
                  ((nexttape->tapereq.mode == WRITE_DISABLE) ||
                   ((nexttape->tapereq.mode == WRITE_ENABLE) &&
@@ -1519,6 +1684,10 @@ void *tapeIOthread(void *arg) {
                         tmpfile->end_index = -1;
                         CLIST_INSERT(nexttape->file,tmpfile);
                         rtcp_log(LOG_DEBUG,"tapeIOthread() create temporary file element for tape fseq=%d\n",tmpfile->filereq.tape_fseq);
+                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
+                                         "func"   , TL_MSG_PARAM_STR, "tapeIOthread",
+                                         "Message", TL_MSG_PARAM_STR, "create temporary file element for tape",
+                                         "fseq"   , TL_MSG_PARAM_INT, tmpfile->filereq.tape_fseq );
                     }
                 }
                 /*
@@ -1677,6 +1846,12 @@ void *tapeIOthread(void *arg) {
                                  nextfile->filereq.tape_fseq,
                                  nexttape->tapereq.vid,
                                  nexttape->next->tapereq.vid);
+                        tl_rtcpd.tl_log( &tl_rtcpd, 11, 5, 
+                                         "func"     , TL_MSG_PARAM_STR, "tapeIOthread",
+                                         "Message"  , TL_MSG_PARAM_STR, "file spanns volumes",
+                                         "fseq"     , TL_MSG_PARAM_INT, nextfile->filereq.tape_fseq,
+                                         "First VID", TL_MSG_PARAM_STR, nexttape->tapereq.vid,
+                                         "Last VID" , TL_MSG_PARAM_STR, nexttape->next->tapereq.vid );
                     }
                 }
 
@@ -1704,6 +1879,9 @@ void *tapeIOthread(void *arg) {
                         if ( nextfile->filereq.maxsize !=
                             nextfile->next->filereq.maxsize ) {
                             rtcp_log(LOG_DEBUG,"tapeIOthread() inconsistent maxsize for concat to disk. Repaired.\n");
+                            tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                                             "func"     , TL_MSG_PARAM_STR, "tapeIOthread",
+                                             "Message"  , TL_MSG_PARAM_STR, "Inconsistent maxsize for concat to disk. Repaired." );
                             nextfile->next->filereq.maxsize = 
                                 nextfile->filereq.maxsize;
                         }
@@ -1797,6 +1975,11 @@ void *tapeIOthread(void *arg) {
                     rtcp_log(LOG_INFO,
                        "network interface for data transfer (%s bytes) is %s\n",
                        u64buf,nextfile->filereq.ifce);
+                    tl_rtcpd.tl_log( &tl_rtcpd, 10, 4, 
+                                     "func"   , TL_MSG_PARAM_STR, "tapeIOthread",
+                                     "Message", TL_MSG_PARAM_STR, "network interface for data transfer",
+                                     "bytes"  , TL_MSG_PARAM_STR, u64buf,
+                                     "ifce"   , TL_MSG_PARAM_STR, nextfile->filereq.ifce );        
                 }
                 rc = tellClient(&client_socket,NULL,nextfile,0);
                 CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
@@ -1850,6 +2033,10 @@ int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape) {
     if ( tharg == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_StartTapeIO() malloc(): %s\n",
             sstrerror(errno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_StartTapeIO",
+                         "Message", TL_MSG_PARAM_STR, "malloc",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(errno) );        
         return(-1);
     }
 
@@ -1863,6 +2050,12 @@ int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_StartTapeIO() rtcp_ConnectToClient(%s,%d): %s\n",
                  client->clienthost,client->clientport,sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_StartTapeIO",
+                         "Message", TL_MSG_PARAM_STR, "rtcp_ConnectToClient",
+                         "Host"   , TL_MSG_PARAM_STR, client->clienthost,
+                         "Port"   , TL_MSG_PARAM_INT, client->clientport,
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );        
         return(-1);
     }
 
@@ -1870,11 +2063,16 @@ int rtcpd_StartTapeIO(rtcpClientInfo_t *client, tape_list_t *tape) {
     tharg->client = client;
 
     rc = Cthread_create(tapeIOthread,(void *)tharg);
-    if ( rc == -1 )
+    if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_StartTapeIO() Cthread_create(): %s\n",
-            sstrerror(serrno));
-    else 
+                 sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_StartTapeIO",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_create",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );        
+    } else {
         proc_cntl.tapeIOthreadID = rc;
+    }
 
     return(rc);
 }
@@ -1883,13 +2081,19 @@ int rtcpd_WaitTapeIO(int *status) {
     int rc,*_status;
 
     rtcp_log(LOG_DEBUG,"rtcpd_WaitTapeIO() waiting for tape I/O thread\n");
-
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitTapeIO",
+                     "Message", TL_MSG_PARAM_STR, "waiting for tape I/O thread" );
     _status = NULL;
     WaitToJoin = TRUE;
     rc = Cthread_join(proc_cntl.tapeIOthreadID,&_status);
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_WaitTapeIO() Cthread_joint(): %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitTapeIO",
+                         "Message", TL_MSG_PARAM_STR, "Cthread_join",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );        
     } else {
         if ( status != NULL && _status != NULL ) *status = *_status;
     }
@@ -1929,7 +2133,9 @@ int rtcpd_sendMonitoring(u_signed64 transfered, u_signed64 total, int forceSend)
     } else {
  
       rtcp_log(LOG_DEBUG, "MONITOR - Denominator is 0, no message sent\n");
-
+      tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
+                       "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitTapeIO",
+                       "Message", TL_MSG_PARAM_STR, "MONITOR - Denominator is 0, no message sent" );
     }
 
     lasttime_monitor_msg_sent = tm;

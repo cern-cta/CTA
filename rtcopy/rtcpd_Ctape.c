@@ -42,6 +42,7 @@ extern char *geterr();
 #include <rtcp_server.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include "tplogger_api.h"
 
 #define CTP_ERRTXT rtcpd_CtapeErrMsg()
 #ifndef EBUSY_RETRIES
@@ -117,6 +118,12 @@ int rtcpd_Assign(tape_list_t *tape) {
 
     rtcp_log(LOG_DEBUG,"rtcpd_Assign() VolReqID=%d, dgn=%s, unit=%s, jobID=%d\n",
         tapereq->VolReqID,tapereq->dgn,tapereq->unit,jobID);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 5,
+                     "func"    , TL_MSG_PARAM_STR, "rtcpd_Assign",
+                     "VolReqID", TL_MSG_PARAM_INT, tapereq->VolReqID,
+                     "gdn"     , TL_MSG_PARAM_STR, tapereq->dgn,
+                     "unit"    , TL_MSG_PARAM_STR, tapereq->unit,
+                     "jobID"   , TL_MSG_PARAM_INT, jobID );
 
     rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
         &status,&value,jobID);
@@ -125,11 +132,19 @@ int rtcpd_Assign(tape_list_t *tape) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_Assign() vdqm_UnitStatus() %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"    , TL_MSG_PARAM_STR, "rtcpd_Assign",
+                         "Message" , TL_MSG_PARAM_STR, "vdqm_UnitStatus",
+                         "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno) );
         return(-1);
     }
 
     rtcp_log(LOG_DEBUG,"rtcpd_Assign() vdqm_UnitStatus() jobID=%d\n",
         value);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
+                     "func"    , TL_MSG_PARAM_STR, "rtcpd_Assign",
+                     "Message" , TL_MSG_PARAM_STR, "vdqm_UnitStatus",
+                     "jobID"   , TL_MSG_PARAM_INT, value );   
 
     tapereq->jobID = value;
 
@@ -152,10 +167,16 @@ int rtcpd_Deassign(int VolReqID,
     save_errno = errno;
     if ( tapereq == NULL ) {
         rtcp_log(LOG_ERR,"rtcpd_Deassign() called with NULL tapereq\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                         "func"    , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                         "Message" , TL_MSG_PARAM_STR, "called with NULL tapereq" );
         serrno = EINVAL;
         return(-1);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_Deassign() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                     "func"    , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                     "Message" , TL_MSG_PARAM_STR, "called" );
 
     /*
      * Check whether there is a volume physically mounted (could be
@@ -169,6 +190,10 @@ int rtcpd_Deassign(int VolReqID,
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_QUERY) %s\n",
                 sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"    , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                         "Message" , TL_MSG_PARAM_STR, "vdqm_UnitStatus(UNIT_QUERY)",
+                         "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno) );
     } else if ( (status & (VDQM_UNIT_ASSIGN|VDQM_FORCE_UNMOUNT)) != 0 ) {
         /*
          * If tape software has already assigned the unit or called for
@@ -176,6 +201,14 @@ int rtcpd_Deassign(int VolReqID,
          */
         rtcp_log(LOG_INFO,"rtcpd_Deassign() unit status=0x%x. Cleanup not needed\n",
                  status);
+        {
+                char __status[32];
+                sprintf( __status, "0x%x", status );
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
+                                 "func"    , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                                 "Message" , TL_MSG_PARAM_STR, "Cleanup not needed",
+                                 "Error"   , TL_MSG_PARAM_STR, __status );
+        }
         return(0);
     } else if ( *vid != '\0' ) {
         /*
@@ -183,6 +216,9 @@ int rtcpd_Deassign(int VolReqID,
          * physically unmounted.
          */
         rtcp_log(LOG_INFO,"rtcpd_Deassign() volume on drive. Trying to unmount\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 10, 2,
+                         "func"    , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                         "Message" , TL_MSG_PARAM_STR, "Volume on drive. Trying to unmount." );
         tape = NULL;
         nexttape = (tape_list_t *)calloc(1,sizeof(tape_list_t));
         CLIST_INSERT(tape,nexttape);
@@ -246,21 +282,39 @@ int rtcpd_Deassign(int VolReqID,
 
         rtcp_log(LOG_INFO,"rtcpd_Deassign() ASSIGN volreq ID %d -> jobID %d\n",
             value,jobID);
+        tl_rtcpd.tl_log( &tl_rtcpd, 10, 4,
+                         "func"    , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                         "Message" , TL_MSG_PARAM_STR, "Assign volreq and jobID",
+                         "VolReqID", TL_MSG_PARAM_INT, value,
+                         "jobID"   , TL_MSG_PARAM_INT, jobID );
+
         rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
             &status,&value,jobID);
         if ( rc == -1 ) {
             rtcp_log(LOG_INFO,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_ASSIGN) %s\n",
                 sstrerror(serrno));
+            tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                             "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus(UNIT_ASSIGN)",
+                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
         }
     } else jobID = tapereq->jobID;
     status = VDQM_UNIT_RELEASE;
 
     rtcp_log(LOG_INFO,"rtcpd_Deassign() RELEASE job ID %d\n",jobID);
+    tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
+                     "func"    , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                     "Message" , TL_MSG_PARAM_STR, "Release job ID",
+                     "jobID"   , TL_MSG_PARAM_INT, jobID );
     rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
         &status,NULL,jobID);
     if ( rc == -1 ) {
         rtcp_log(LOG_INFO,"rtcpd_Deassign() vdqm_UnitStatus(UNIT_RELEASE) %s\n",
             sstrerror(serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_Deassign",
+                         "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus(UNIT_RELEASE)",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     }
     serrno = save_serrno;
     errno = save_errno;
@@ -285,7 +339,9 @@ int rtcpd_Reserve(tape_list_t *tape) {
 
     count = 1;
     rtcp_log(LOG_DEBUG,"rtcpd_Reserve() dgn=%s\n",tapereq->dgn);
-
+    tl_rtcpd.tl_log( &tl_rtcpd, 28, 2,
+                     "func", TL_MSG_PARAM_STR, "rtcpd_Reserve",
+                     "dgn" , TL_MSG_PARAM_STR, tapereq->dgn );
     strcpy(rsv.name,tapereq->dgn);
     rsv.num = 1;
 
@@ -296,6 +352,9 @@ int rtcpd_Reserve(tape_list_t *tape) {
     save_serrno = serrno;
     if ( AbortFlag == 1 ) {
         rtcp_log(LOG_ERR,"rtcpd_Reserve() ABORTING!\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_Reserve",
+                         "Message", TL_MSG_PARAM_STR, "ABORTING!" );
         severity = RTCP_FAILED | RTCP_USERR;
         rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
         return(-1);
@@ -304,6 +363,10 @@ int rtcpd_Reserve(tape_list_t *tape) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcp_Reserve() Ctape_reserve(): %s\n",
             CTP_ERRTXT);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_Reserve",
+                         "Message", TL_MSG_PARAM_STR, "Ctape_reserve",
+                         "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT );
         if ( save_serrno == ETNDV ) {
             rtcpd_SetReqStatus(tape,NULL,save_serrno,RTCP_RESELECT_SERV);
         } else {
@@ -314,6 +377,9 @@ int rtcpd_Reserve(tape_list_t *tape) {
     }
 
     rtcp_log(LOG_DEBUG,"rtcpd_Reserve() successful\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 29, 2,
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_Reserve",
+                     "Message", TL_MSG_PARAM_STR, "successful" );
     return(0);
 }
 
@@ -355,7 +421,19 @@ int rtcpd_Mount(tape_list_t *tape) {
                  tapereq->vsn,
                  tapereq->label,
                  tapereq->VolReqID);
-
+        tl_rtcpd.tl_log( &tl_rtcpd, 30, 12,
+                         "func"     , TL_MSG_PARAM_STR  , "rtcpd_Mount",
+                         "Tape Path", TL_MSG_PARAM_STR  , filereq->tape_path,
+                         "VID"      , TL_MSG_PARAM_STR  , tapereq->vid,
+                         "Side"     , TL_MSG_PARAM_INT  , tapereq->side,
+                         "dgn"      , TL_MSG_PARAM_STR  , tapereq->dgn,
+                         "density"  , TL_MSG_PARAM_STR  , tapereq->density,
+                         "unit"     , TL_MSG_PARAM_STR  , tapereq->unit,
+                         "mode"     , TL_MSG_PARAM_INT  , tapereq->mode,
+                         "vsn"      , TL_MSG_PARAM_STR  , tapereq->vsn,
+                         "label"    , TL_MSG_PARAM_STR  , tapereq->label,
+                         "VolReqID" , TL_MSG_PARAM_INT  , tapereq->VolReqID,
+                         "TPVID"    , TL_MSG_PARAM_TPVID, tapereq->vid );
         severity = RTCP_OK;
 
         serrno = errno = 0;
@@ -385,6 +463,9 @@ int rtcpd_Mount(tape_list_t *tape) {
         tapereq->TEndMount = (int)time(NULL);
         if ( AbortFlag == 1 ) {
             rtcp_log(LOG_ERR,"rtcpd_Mount() ABORTING!\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                             "func"   , TL_MSG_PARAM_STR  , "rtcpd_Mount",
+                             "Message", TL_MSG_PARAM_STR  , "ABORTING!" );
             severity = RTCP_FAILED | RTCP_USERR;
             rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
             return(-1);
@@ -399,6 +480,10 @@ int rtcpd_Mount(tape_list_t *tape) {
              */
             rtcp_log(LOG_ERR,"rtcpd_Mount() Ctape_mount() %s\n",
                      CTP_ERRTXT);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
+                             "Message", TL_MSG_PARAM_STR, "Ctape_mount",
+                             "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT );
             if ( save_serrno != ETVBSY && save_serrno != EBUSY ) 
                 rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
 
@@ -476,6 +561,11 @@ int rtcpd_Mount(tape_list_t *tape) {
             case EBUSY:
                 rtcp_log(LOG_INFO,"rtcpd_Mount() retry %d on EBUSY, drive=%s\n",
                          retry,tapereq->unit);
+                tl_rtcpd.tl_log( &tl_rtcpd, 10, 4,
+                                 "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
+                                 "Message", TL_MSG_PARAM_STR, "retry on EBUSY",
+                                 "Retry"  , TL_MSG_PARAM_INT, retry,
+                                 "Drive"  , TL_MSG_PARAM_STR, tapereq->unit );
                 sleep(5);
                 break;
             default:
@@ -497,12 +587,22 @@ int rtcpd_Mount(tape_list_t *tape) {
     if ( rc == -1 && save_serrno == EBUSY ) {
          rtcp_log(LOG_ERR,"rtcpd_Mount() giving up after %d retries on EBUSY\n",
                   retry);
+         tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                          "func"   , TL_MSG_PARAM_STR, "rtcpd_Mount",
+                          "Message", TL_MSG_PARAM_STR, "giving up after retries on EBUSY",
+                          "Retries", TL_MSG_PARAM_INT, retry );
          severity = RTCP_FAILED | RTCP_USERR;
          rtcpd_SetReqStatus(tape,NULL,save_serrno,severity);
     }
 
-    if ( rc == 0 ) 
+    if ( rc == 0 ) { 
         rtcp_log(LOG_DEBUG,"rtcpd_Mount() Ctape_mount() successful\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 31, 4,
+                         "func"   , TL_MSG_PARAM_STR  , "rtcpd_Mount",
+                         "Message", TL_MSG_PARAM_STR  , "Ctape_mount() successful",
+                         "VID"    , TL_MSG_PARAM_STR  , tapereq->vid,
+                         "TPVID"  , TL_MSG_PARAM_TPVID, tapereq->vid  );
+    }
 
     return(rc);
 }
@@ -530,6 +630,9 @@ int rtcpd_Position(tape_list_t *tape,
         else {
             rtcpd_AppendClientMsg(NULL, file,"rtcpd_Position(): cannot determine tape path\n");
             rtcp_log(LOG_DEBUG,"rtcpd_Position(): cannot determine tape path\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_Position",
+                             "Message", TL_MSG_PARAM_STR, "cannot determine tape path" );
             severity = RTCP_FAILED|RTCP_UNERR;
             save_serrno = SEINTERNAL;
             rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
@@ -541,6 +644,13 @@ int rtcpd_Position(tape_list_t *tape,
     rtcp_log(LOG_DEBUG,"rtcpd_Position(%s) vid=%s, fseq=%d, fsec=%d\n",
         filereq->tape_path,tapereq->vid,filereq->tape_fseq,
         file->tape_fsec);
+    tl_rtcpd.tl_log( &tl_rtcpd, 32, 6,
+                     "func"     , TL_MSG_PARAM_STR  , "rtcpd_Position",
+                     "Tape Path", TL_MSG_PARAM_STR  , filereq->tape_path,
+                     "VID"      , TL_MSG_PARAM_STR  , tapereq->vid,
+                     "fseq"     , TL_MSG_PARAM_INT  , filereq->tape_fseq,
+                     "fsec"     , TL_MSG_PARAM_INT  , file->tape_fsec,
+                     "TPVID"    , TL_MSG_PARAM_TPVID, tapereq->vid );
 
     flags = filereq->tp_err_action;
     /*
@@ -590,6 +700,34 @@ int rtcpd_Position(tape_list_t *tape,
                  filereq->blocksize,
                  filereq->recordlength,
                  filereq->retention,flags);
+        {
+                char __position_method[32], __check_fid[32], __flags[32];                
+                sprintf( __position_method, "0x%x", filereq->position_method );
+                sprintf( __check_fid, "0x%x", filereq->check_fid );
+                sprintf( __flags, "0x%x", flags );
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 20,
+                                 "func"           , TL_MSG_PARAM_STR, "rtcpd_Position",
+                                 "Message"        , TL_MSG_PARAM_STR, "Ctape_position",
+                                 "Tape Path"      , TL_MSG_PARAM_STR, filereq->tape_path,
+                                 "Position Method", TL_MSG_PARAM_STR, __position_method,
+                                 "fseq"           , TL_MSG_PARAM_INT, filereq->tape_fseq,
+                                 "fsec"           , TL_MSG_PARAM_INT, file->tape_fsec,
+                                 "block 0"        , TL_MSG_PARAM_INT, (int)filereq->blockid[0],
+                                 "block 1"        , TL_MSG_PARAM_INT, (int)filereq->blockid[1],
+                                 "block 2"        , TL_MSG_PARAM_INT, (int)filereq->blockid[2],
+                                 "block 3"        , TL_MSG_PARAM_INT, (int)filereq->blockid[3],
+                                 "Start File"     , TL_MSG_PARAM_INT, tapereq->start_file,
+                                 "End File"       , TL_MSG_PARAM_INT, tapereq->start_file,
+                                 "Check FID"      , TL_MSG_PARAM_STR, __check_fid,
+                                 "fid"            , TL_MSG_PARAM_STR, filereq->fid,
+                                 "vsn"            , TL_MSG_PARAM_STR, tapereq->vsn,
+                                 "recfm"          , TL_MSG_PARAM_STR, filereq->recfm,
+                                 "blocksize"      , TL_MSG_PARAM_INT, filereq->blocksize,
+                                 "record length"  , TL_MSG_PARAM_INT, filereq->recordlength,
+                                 "retention"      , TL_MSG_PARAM_INT, filereq->retention,
+                                 "flags"          , TL_MSG_PARAM_STR, __flags );
+        }
+
         serrno = errno = 0;
         rtcpd_ResetCtapeError();
         rc = Ctape_position(filereq->tape_path,
@@ -613,6 +751,9 @@ int rtcpd_Position(tape_list_t *tape,
         tape_path[0] = '\0';
         if ( AbortFlag == 1 ) {
             rtcp_log(LOG_ERR,"rtcpd_Position() ABORTING!\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_Position",
+                             "Message", TL_MSG_PARAM_STR, "ABORTING!" );
             severity = RTCP_FAILED | RTCP_USERR;
             save_serrno = EINTR;
             rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
@@ -621,6 +762,11 @@ int rtcpd_Position(tape_list_t *tape,
         if ( rc == -1 ) {
             rtcp_log(LOG_ERR,"rtcpd_Position() Ctape_position() serrno=%d, %s\n",
                 save_serrno,CTP_ERRTXT);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_Position",
+                             "Message", TL_MSG_PARAM_STR, "Ctape_position",
+                             "serrno" , TL_MSG_PARAM_INT, save_serrno, 
+                             "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT );
             rtcpd_AppendClientMsg(NULL, file, "%s\n",CTP_ERRTXT);
             severity = 0;
 
@@ -749,8 +895,14 @@ int rtcpd_Position(tape_list_t *tape,
             }
         } else do_retry = 0;
     } /* end while (do_retry) */
-    if ( rc == 0 ) 
+    if ( rc == 0 ) {
         rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position() successful\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 33, 4,
+                         "func"   , TL_MSG_PARAM_STR  , "rtcpd_Position",
+                         "Message", TL_MSG_PARAM_STR  , "Ctape_position successful",
+                         "VID"    , TL_MSG_PARAM_STR  , tapereq->vid,
+                         "TPVID"  , TL_MSG_PARAM_TPVID, tapereq->vid );
+    }
     return(rc);
 }
 
@@ -767,6 +919,14 @@ int rtcpd_drvinfo(tape_list_t *tape) {
     rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() called with vid=%s, unit=%s, mode=%d, check_fid=%d\n",
         tape->tapereq.vid,tape->tapereq.unit,
         tape->tapereq.mode,fl->filereq.check_fid);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 7,
+                     "func"     , TL_MSG_PARAM_STR  , "rtcpd_drvinfo",
+                     "Message"  , TL_MSG_PARAM_STR  , "called",
+                     "VID"      , TL_MSG_PARAM_STR  , tape->tapereq.vid,
+                     "Unit"     , TL_MSG_PARAM_STR  , tape->tapereq.unit,
+                     "Mode"     , TL_MSG_PARAM_INT  , tape->tapereq.mode,
+                     "check_fid", TL_MSG_PARAM_INT  , fl->filereq.check_fid,
+                     "TPVID"    , TL_MSG_PARAM_TPVID, tape->tapereq.vid );
     if ( tape->tapereq.mode == WRITE_DISABLE ||
          fl->filereq.check_fid == CHECK_FILE ) return(0);
 
@@ -774,18 +934,38 @@ int rtcpd_drvinfo(tape_list_t *tape) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_drvinfo() (ingored) Ctape_drvinfo() %s\n",    
             CTP_ERRTXT);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_drvinfo",
+                         "Message", TL_MSG_PARAM_STR, "(ignored) Ctape_drvinfo",
+                         "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT );
         return(0);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() Ctape_drvinfo() returned default blocksize=%d\n",
         devInfo.defblksize);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
+                     "func"      , TL_MSG_PARAM_STR, "rtcpd_drvinfo",
+                     "Message"   , TL_MSG_PARAM_STR, "Ctape_drvinfo() returned default blocksize",
+                     "block size", TL_MSG_PARAM_INT, devInfo.defblksize );
     CLIST_ITERATE_BEGIN(tape->file,fl) {
         if ( fl->filereq.blocksize <= 0 ) {
             rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() set default blocksize (%d) for fseq=%d, file=%s\n",
                 devInfo.defblksize,fl->filereq.tape_fseq,fl->filereq.file_path);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rtcpd_drvinfo",
+                             "Message"   , TL_MSG_PARAM_STR, "set default blocksize",
+                             "block size", TL_MSG_PARAM_INT, devInfo.defblksize,
+                             "fseq"      , TL_MSG_PARAM_INT, fl->filereq.tape_fseq,
+                             "file"      , TL_MSG_PARAM_STR, fl->filereq.file_path );
             fl->filereq.blocksize = devInfo.defblksize;
         } else {
             rtcp_log(LOG_DEBUG,"rtcpd_drvinfo() blocksize (%d) already set by client for fseq=%d, file=%s\n",
                 fl->filereq.blocksize,fl->filereq.tape_fseq,fl->filereq.file_path);
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 5,
+                             "func"      , TL_MSG_PARAM_STR, "rtcpd_drvinfo",
+                             "Message"   , TL_MSG_PARAM_STR, "blocksize already set by client",
+                             "block size", TL_MSG_PARAM_INT, fl->filereq.blocksize,
+                             "fseq"      , TL_MSG_PARAM_INT, fl->filereq.tape_fseq,
+                             "file"      , TL_MSG_PARAM_STR, fl->filereq.file_path );
         }
     } CLIST_ITERATE_END(tape->file,fl);
     return(0);
@@ -810,6 +990,13 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
     rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) vid=%s, fseq=%d, fsec=%d\n",
         filereq->tape_path,tapereq->vid,filereq->tape_fseq,
         file->tape_fsec);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 6,
+                     "func"     , TL_MSG_PARAM_STR  , "rtcpd_Info",
+                     "Tape Path", TL_MSG_PARAM_STR  , filereq->tape_path,
+                     "VID"      , TL_MSG_PARAM_STR  , tapereq->vid,
+                     "fseq"     , TL_MSG_PARAM_INT  , filereq->tape_fseq,
+                     "fsec"     , TL_MSG_PARAM_INT  , file->tape_fsec,
+                     "TPVID"    , TL_MSG_PARAM_TPVID, tapereq->vid );
 
     *recfm = '\0';
     rtcpd_ResetCtapeError();
@@ -828,6 +1015,11 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_Info() Ctape_info() %s\n",    
             CTP_ERRTXT);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_Info",
+                         "Message", TL_MSG_PARAM_STR, "Ctape_info",
+                         "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT );
+
         rtcpd_AppendClientMsg(NULL, file, "%s\n",CTP_ERRTXT);
         switch (save_serrno) {
         case SENOSHOST:
@@ -849,12 +1041,21 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
         rtcp_log(LOG_ERR,
             "rtcpd_Info() tape mount on wrong unit, expected %s found %s\n",
             tapereq->unit,unit);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
+                         "func"    , TL_MSG_PARAM_STR, "rtcpd_Info",
+                         "Message" , TL_MSG_PARAM_STR, "tape mount on wrong unit",
+                         "expected", TL_MSG_PARAM_STR, tapereq->unit,
+                         "found"   , TL_MSG_PARAM_STR, unit );
         rc = -1;
     }
     if ( fseq > 0 && filereq->blocksize <= 0 ) {
         rtcp_log(LOG_ERR,
             "rtcpd_Info() Ctape_info() returns blocksize = %d\n",
             filereq->blocksize);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"      , TL_MSG_PARAM_STR, "rtcpd_Info",
+                         "Message"   , TL_MSG_PARAM_STR, "Ctape_info returns blocksize",
+                         "block size", TL_MSG_PARAM_INT, filereq->blocksize );
         rtcpd_AppendClientMsg(NULL, file, 
             "rtcpd_Info() Ctape_info() returns blocksize = %d\n",
             filereq->blocksize);
@@ -866,12 +1067,29 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
      */
     if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,recfm);
     if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,"U");
-    if ( rc == 0 )
+    if ( rc == 0 ) {
         rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) returned vid=%s, fseq=%d, fsec=%d, unit=%s, blocksize=%d, recordlength=%d, recfm=%s, blockid=%d:%d:%d:%d\n",
                  filereq->tape_path,tapereq->vid,filereq->tape_fseq,
                  file->tape_fsec,unit,filereq->blocksize,filereq->recordlength,
                  recfm,(int)filereq->blockid[0],(int)filereq->blockid[1],
                  (int)filereq->blockid[2],(int)filereq->blockid[3]);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 15,
+                         "func"         , TL_MSG_PARAM_STR  , "rtcpd_Info",
+                         "Message"      , TL_MSG_PARAM_STR  , "returned",
+                         "Tape Path"    , TL_MSG_PARAM_STR  , filereq->tape_path, 
+                         "VID"          , TL_MSG_PARAM_STR  , tapereq->vid, 
+                         "fseq"         , TL_MSG_PARAM_INT  , filereq->tape_fseq,
+                         "fsec"         , TL_MSG_PARAM_INT  , file->tape_fsec,
+                         "unit"         , TL_MSG_PARAM_STR  , unit,
+                         "block size"   , TL_MSG_PARAM_INT  , filereq->blocksize,
+                         "record length", TL_MSG_PARAM_INT  , filereq->recordlength,
+                         "recfm"        , TL_MSG_PARAM_STR  , recfm,
+                         "block 0"      , TL_MSG_PARAM_INT  , (int)filereq->blockid[0],
+                         "block 1"      , TL_MSG_PARAM_INT  , (int)filereq->blockid[1],
+                         "block 2"      , TL_MSG_PARAM_INT  , (int)filereq->blockid[2],
+                         "block 3"      , TL_MSG_PARAM_INT  , (int)filereq->blockid[3],
+                         "TPVID"        , TL_MSG_PARAM_TPVID, tapereq->vid );
+    }
 
     return(rc);
 }
@@ -895,6 +1113,10 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
 
     rtcp_log(LOG_DEBUG,"rtcpd_Release() called with path=%s\n",
         (path == NULL ? "(nil)" : path));
+    tl_rtcpd.tl_log( &tl_rtcpd, 36, 3,
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_Release",
+                     "Message", TL_MSG_PARAM_STR, "called",
+                     "Path"   , TL_MSG_PARAM_STR, (path == NULL ? "(nil)" : path) ); 
 
     rtcpd_ResetCtapeError();
     if ( tapereq != NULL ) tapereq->TStartUnmount = (int)time(NULL);
@@ -906,6 +1128,10 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     if ( rc == -1 && save_serrno != ETRLSP) {
         rtcp_log(LOG_ERR,"rtcpd_Release() Ctape_rls() %s\n",
             CTP_ERRTXT);
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_Release",
+                         "Message", TL_MSG_PARAM_STR, "Ctape_rls",
+                         "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT ); 
         if ( file != NULL ) {
             rtcpd_AppendClientMsg(NULL, file, "%s\n",CTP_ERRTXT);
             severity = 0;
@@ -934,6 +1160,9 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     } else {
         rc = 0;
         rtcp_log(LOG_DEBUG,"rtcpd_Release() Ctape_rls() successful\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 37, 2,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_Release",
+                         "Message", TL_MSG_PARAM_STR, "successful" );
     }
 
     serrno = save_serrno;
@@ -952,6 +1181,9 @@ int rtcpd_DmpInit(tape_list_t *tape) {
     else code = DMP_ASC;
 
     rtcp_log(LOG_DEBUG,"rtcpd_DmpInit() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpInit",
+                     "Message", TL_MSG_PARAM_STR, "called" );
 
     rtcp_log(LOG_DEBUG,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d)\n",
              tape->file->filereq.tape_path,
@@ -967,7 +1199,22 @@ int rtcpd_DmpInit(tape_list_t *tape) {
              tape->dumpreq.maxfile,
              code,
              tape->dumpreq.tp_err_action);
-
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 15,
+                     "func"      , TL_MSG_PARAM_STR  , "rtcpd_DmpInit",
+                     "Tape Path" , TL_MSG_PARAM_STR  , tape->file->filereq.tape_path,
+                     "VID"       , TL_MSG_PARAM_STR  , tape->tapereq.vid,
+                     "Density"   , TL_MSG_PARAM_STR  , tape->tapereq.density,
+                     "Unit"      , TL_MSG_PARAM_STR  , tape->tapereq.unit,                     
+                     "Dev Type"  , TL_MSG_PARAM_STR  , tape->tapereq.devtype,                     
+                     "Block size", TL_MSG_PARAM_INT  , tape->dumpreq.blocksize,
+                     "From block", TL_MSG_PARAM_INT  , tape->dumpreq.fromblock,
+                     "To block"  , TL_MSG_PARAM_INT  , tape->dumpreq.toblock,
+                     "Max byte"  , TL_MSG_PARAM_INT  , tape->dumpreq.maxbyte,
+                     "Start file", TL_MSG_PARAM_INT  , tape->dumpreq.startfile,
+                     "Max file"  , TL_MSG_PARAM_INT  , tape->dumpreq.maxfile,
+                     "Code"      , TL_MSG_PARAM_INT  , code,
+                     "Err action", TL_MSG_PARAM_INT  , tape->dumpreq.tp_err_action,
+                     "TPVID"     , TL_MSG_PARAM_TPVID, tape->tapereq.vid );
 
     rc = Ctape_dmpinit(tape->file->filereq.tape_path,
                        tape->tapereq.vid,
@@ -987,8 +1234,17 @@ int rtcpd_DmpInit(tape_list_t *tape) {
     if ( rc == -1 ) {
         rtcp_log(LOG_ERR,"rtcpd_DmpInit() Ctape_dmpinit(): %s\n",
                  sstrerror(save_serrno));
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                         "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpInit",
+                         "Message", TL_MSG_PARAM_STR, "Ctape_dmpinit",
+                         "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) ); 
         serrno = save_serrno;
-    } else rtcp_log(LOG_DEBUG,"rtcpd_DmpInit() Ctape_dmpinit() successful\n");
+    } else {
+            rtcp_log(LOG_DEBUG,"rtcpd_DmpInit() Ctape_dmpinit() successful\n");
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpInit",
+                             "Message", TL_MSG_PARAM_STR, "Ctape_dmpinit() successful" );
+    }
     return(rc);
 }
 
@@ -1001,20 +1257,35 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
         return(-1);
     }
     rtcp_log(LOG_DEBUG,"rtcpd_DmpFile() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
+                     "Message", TL_MSG_PARAM_STR, "called" );
 
     memset(&filereq,'\0',sizeof(filereq));
 
-   rtcp_log(LOG_DEBUG,"call Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
-            tape->file->filereq.tape_path,
-            tape->tapereq.label,
-            filereq.blocksize,
-            filereq.fid,
-            tape->file->tape_fsec,
-            filereq.tape_fseq,
-            filereq.recordlength,
-            filereq.recfm,
-            (int)filereq.maxsize);
-
+    rtcp_log(LOG_DEBUG,"call Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
+             tape->file->filereq.tape_path,
+             tape->tapereq.label,
+             filereq.blocksize,
+             filereq.fid,
+             tape->file->tape_fsec,
+             filereq.tape_fseq,
+             filereq.recordlength,
+             filereq.recfm,
+             (int)filereq.maxsize);
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 11,
+                     "func"         , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
+                     "Message"      , TL_MSG_PARAM_STR, "call Ctape_dmpfil",
+                     "Tape path"    , TL_MSG_PARAM_STR, tape->file->filereq.tape_path,
+                     "Label"        , TL_MSG_PARAM_STR, tape->tapereq.label,
+                     "Block size"   , TL_MSG_PARAM_INT, filereq.blocksize,
+                     "FID"          , TL_MSG_PARAM_STR, filereq.fid,
+                     "fsec"         , TL_MSG_PARAM_INT, tape->file->tape_fsec,
+                     "fseq"         , TL_MSG_PARAM_INT, filereq.tape_fseq,
+                     "Record length", TL_MSG_PARAM_INT, filereq.recordlength,
+                     "recfm"        , TL_MSG_PARAM_STR, filereq.recfm,
+                     "Max size"     , TL_MSG_PARAM_INT, (int)filereq.maxsize );
+    
     rc = Ctape_dmpfil(tape->file->filereq.tape_path,
                       tape->tapereq.label,
                       &filereq.blocksize,
@@ -1035,15 +1306,33 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
             filereq.recordlength,
             filereq.recfm,
             (int)filereq.maxsize);
-
+   tl_rtcpd.tl_log( &tl_rtcpd, 11, 11,
+                    "func"         , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
+                    "Message"      , TL_MSG_PARAM_STR, "returned Ctape_dmpfil",
+                    "Tape path"    , TL_MSG_PARAM_STR, tape->file->filereq.tape_path,
+                    "Label"        , TL_MSG_PARAM_STR, tape->tapereq.label,
+                    "Block size"   , TL_MSG_PARAM_INT, filereq.blocksize,
+                    "FID"          , TL_MSG_PARAM_STR, filereq.fid,
+                    "fsec"         , TL_MSG_PARAM_INT, tape->file->tape_fsec,
+                    "fseq"         , TL_MSG_PARAM_INT, filereq.tape_fseq,
+                    "Record length", TL_MSG_PARAM_INT, filereq.recordlength,
+                    "recfm"        , TL_MSG_PARAM_STR, filereq.recfm,
+                    "Max size"     , TL_MSG_PARAM_INT, (int)filereq.maxsize );
 
      save_serrno = serrno;
      if ( rc == -1 ) {
          rtcp_log(LOG_ERR,"rtcpd_DmpFile() Ctape_dmpfil(): %s\n",
                   sstrerror(save_serrno));
+         tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+                          "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
+                          "Message", TL_MSG_PARAM_STR, "Ctape_dmpfil",
+                          "Error"  , TL_MSG_PARAM_STR, sstrerror(save_serrno) );
          serrno = save_serrno;
      } else {
          rtcp_log(LOG_DEBUG,"rtcpd_DmpFile() Ctape_dmpfil() successful\n");
+         tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                          "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
+                          "Message", TL_MSG_PARAM_STR, "Ctape_dmpfil() successful" );
          if ( file != NULL ) file->filereq = filereq;
      }
      return(rc);
@@ -1051,7 +1340,13 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file) {
 
 int rtcpd_DmpEnd() {
     rtcp_log(LOG_DEBUG,"rtcpd_DmpEnd() called\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpEnd",
+                     "Message", TL_MSG_PARAM_STR, "called" );   
     (void)Ctape_dmpend();
     rtcp_log(LOG_DEBUG,"rtcpd_DmpEnd() Ctape_dmpend() successful\n");
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
+                     "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpEnd",
+                     "Message", TL_MSG_PARAM_STR, "Ctape_dmpend() successful" );   
     return(0);
 }
