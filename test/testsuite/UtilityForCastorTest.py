@@ -217,7 +217,7 @@ def getCastorParameters(myArg):
 
 	myArg={"-s":"","-p":"","-d":"","-e":"","-v":""}
 	try:
-		optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p')
+		optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:')
 		optionCmdLine=optionCmdLine[0]
 	except getopt.GetoptError:
 	    return (0,0,0,0)
