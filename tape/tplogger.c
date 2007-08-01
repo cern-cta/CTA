@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.6 2007/07/18 09:48:57 waldron Exp $
+** $Id: tplogger.c,v 1.7 2007/08/01 13:59:14 wiebalck Exp $
 */
 
 #include <string.h>
@@ -216,8 +216,8 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
 
                 self->tl_name = strdup( "tpdaemon" );  
                 
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon ); */
-                tl_set_msg_tbl_dlf( self, tplogger_messages );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon ); 
+                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
                 break;
 
@@ -225,8 +225,8 @@ int DLL_DECL tl_init_dlf( tplogger_t *self, int init ) {
 
                 self->tl_name = strdup( "rtcpd" );    
 
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd ); */
-                tl_set_msg_tbl_dlf( self, tplogger_messages );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
+                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
                 break;
 
@@ -738,14 +738,14 @@ int DLL_DECL tl_init_stdio( tplogger_t *self, int init ) {
         switch( init ) {
 
         case 0:
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon ); */
-                tl_set_msg_tbl_dlf( self, tplogger_messages );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon );
+                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
                 break;
 
         case 1:
-                /* tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd ); */
-                tl_set_msg_tbl_dlf( self, tplogger_messages );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
+                /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
                 break;
 

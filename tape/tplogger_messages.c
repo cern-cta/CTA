@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.5 2007/07/04 13:14:21 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.6 2007/08/01 13:59:14 wiebalck Exp $
 */
 
 #include <string.h>
@@ -29,14 +29,24 @@
 /**
  * @file  tplogger_messages.c
  * @brief predefined messages for tpdaemon; mainly taken from h/Ctape.h
+ *        predefined messages for rtcpd; mainly taken from h/rtcp_constants.h
  */
 
+
 /*
-** The messages struct.
-** The comments contain some information on what parameters are to be added.
+** The messages array.
 */
 tplogger_message_t tplogger_messages[] = {
         
+        {   0, TL_LVL_ERROR,  "TP000 - Dummy" }
+};
+
+
+/*
+** The predefined messages for rtcpd/tpdaemon 
+*/
+tplogger_message_t tplogger_messages_tpdaemon[] = {
+
         /* original tape messages */
         {   0, TL_LVL_ERROR,  "TP000 - tape daemon not available"               },  /* host      */
         {   1, TL_LVL_ERROR,  "TP001 - no response from tape daemon"            },
@@ -180,23 +190,141 @@ tplogger_message_t tplogger_messages[] = {
         { 111, TL_LVL_DEBUG     , "TP111 - General Debug Message"               }
 };
 
-
-
-/*
-** The predefined messages for rtcpd/tpdaemon 
-** (emtpy for the time being since it
-** it is not clear if different tables 
-** for the different tape related facilities 
-** are needed or not)  
-*/
-tplogger_message_t tplogger_messages_tpdaemon[] = {
-
-        {   0, TL_LVL_DEBUG     , "Dummy message"                               }  
-};
-
 tplogger_message_t tplogger_messages_rtcpd[] = {
 
-        {   0, TL_LVL_DEBUG     , "Dummy message"                               }  
+        /* general messages */
+        {   1, TL_LVL_EMERGENCY , "RT001 - General Emergency Message"           },  
+        {   2, TL_LVL_ALERT     , "RT002 - General Alert Message"               },
+        {   3, TL_LVL_ERROR     , "RT003 - General Error Message"               },
+        {   4, TL_LVL_WARNING   , "RT004 - General Warning Message"             },
+        {   5, TL_LVL_AUTH      , "RT005 - General Auth Message"                },
+        {   6, TL_LVL_SECURITY  , "RT006 - General Security Message"            },
+        {   7, TL_LVL_USAGE     , "RT007 - General Usage Message"               },
+        {   8, TL_LVL_SYSTEM    , "RT008 - General System Message"              },
+        {   9, TL_LVL_IMPORTANT , "RT009 - General Important Message"           },
+        {  10, TL_LVL_MONITORING, "RT010 - General Monitoring Message"          },
+        {  11, TL_LVL_DEBUG     , "RT011 - General Debug Message"               },
+
+        /* typical usage cycle, exclusive use of level IMPORTANT */
+        {  20, TL_LVL_IMPORTANT , "RT020 - Connection from authorized host"     },
+        {  21, TL_LVL_IMPORTANT , "RT021 - Assigned request"                    },
+        {  22, TL_LVL_IMPORTANT , "RT022 - CPDSKTP request"                     },
+        {  23, TL_LVL_IMPORTANT , "RT023 - CPTPDSK request"                     },
+        {  24, TL_LVL_IMPORTANT , "RT024 - DUMP request"                        },
+        {  25, TL_LVL_IMPORTANT , "RT025 - Tape used"                           },
+        {  26, TL_LVL_IMPORTANT , "RT026 - File used"                           },
+        {  27, TL_LVL_IMPORTANT , "RT027 - Disk file opened"                    },
+        {  28, TL_LVL_IMPORTANT , "RT028 - Tape reserve request"                },
+        {  29, TL_LVL_IMPORTANT , "RT029 - Tape reserved"                       },
+        {  30, TL_LVL_IMPORTANT , "RT030 - Tape mount request"                  },
+        {  31, TL_LVL_IMPORTANT , "RT031 - Tape mounted"                        },
+        {  32, TL_LVL_IMPORTANT , "RT032 - Tape position request"               },
+        {  33, TL_LVL_IMPORTANT , "RT033 - Tape positioned"                     },
+        {  34, TL_LVL_IMPORTANT , "RT034 - Tape file opened"                    },
+        {  35, TL_LVL_IMPORTANT , "RT035 - Tape file closed"                    },
+        {  36, TL_LVL_IMPORTANT , "RT036 - Tape release request"                },
+        {  37, TL_LVL_IMPORTANT , "RT037 - Tape released"                       },
+        {  38, TL_LVL_IMPORTANT , "RT038 - Disk file closed"                    },
+        {  39, TL_LVL_DEBUG     , "RT039 - Waiting time"                        },
+        {  40, TL_LVL_DEBUG     , "RT040 - Service time"                        },
+        {  41, TL_LVL_DEBUG     , "RT041 - Data transfer rate"                  },
+        {  42, TL_LVL_IMPORTANT , "RT042 - Request successful"                  },
+        {  43, TL_LVL_ERROR     , "RT043 - Request failed"                      },
+        {  44, TL_LVL_IMPORTANT , "RT044 - Request statistics"                  },
+
+        { 101, TL_LVL_ERROR     , "RT101 - -qn OPTION INVALID FOR CPTPDSK"      },  /* obsolete  */
+        { 102, TL_LVL_ERROR     , "RT102 - ABORT BECAUSE INVALID OPTION"        },  /* obsolete  */
+        { 103, TL_LVL_ERROR     , "RT103 - BLOCK REQUESTED SMALLER THAN BLOCK ON TAPE" },  
+                                                                                   /* block no  */
+        { 104, TL_LVL_ERROR     , "RT104 - BLOCK SIZE CANNOT BE EQUAL TO ZERO"  },
+        { 105, TL_LVL_ERROR     , "RT105 - BUFFER ALLOCATION ERROR"             },
+        { 106, TL_LVL_ERROR     , "RT106 - DISK FILE FORMAT NOT UNFORMATTED SEQUENTIAL FORTRAN" },
+        { 107, TL_LVL_ERROR     , "RT107 - DISK FILE PATHNAMES MUST BE SPECIFIED" },
+        { 108, TL_LVL_ERROR     , "RT108 - ERROR CLOSING DISK FILE"             },
+        { 109, TL_LVL_ERROR     , "RT109 - ERROR GETTING DEVICE STATUS"         },
+        { 110, TL_LVL_ERROR     , "RT110 - ERROR OPENING DISK FILE"             },
+        { 111, TL_LVL_ERROR     , "RT111 - ERROR OPENING TAPE FILE"             },
+        { 112, TL_LVL_ERROR     , "RT112 - ERROR READING DISK FILE"             },
+        { 113, TL_LVL_ERROR     , "RT113 - ERROR READING FROM TAPE"             },  /* error     */
+                                                                                    /* block no  */
+        { 114, TL_LVL_ERROR     , "RT114 - ERROR SETTING LIST TAPE I/O"         },  /* error     */
+        { 115, TL_LVL_ERROR     , "RT115 - ERROR WRITING ON DISK"               },  /* error     */ 
+        { 116, TL_LVL_ERROR     , "RT116 - ERROR WRITING ON TAPE"               },  /* error     */
+                                                                                    /* block no  */
+        { 117, TL_LVL_ERROR     , "RT117 - ERROR WRITING ON TAPE"               },  /* erreg     */
+                                                                                    /* block no  */
+        { 118, TL_LVL_ERROR     , "RT118 - ERROR, BLANK CHECK"                  },  /* block no  */
+        { 119, TL_LVL_ERROR     , "RT119 - ERROR, BLOCK TOO LARGE OR TOO SMALL" },  /* block no  */
+        { 120, TL_LVL_ERROR     , "RT120 - ERROR, DISK FILE NAME MISSING"       },
+        { 121, TL_LVL_ERROR     , "RT121 - ERROR, DISK FILES ARE EMPTY"         },
+        { 122, TL_LVL_ERROR     , "RT122 - ERROR, NEXTVOL INTERRUPTED"          },
+        { 123, TL_LVL_ERROR     , "RT123 - ERROR, RECORD LENGTH GREATER THAN SPECIFIED SIZE" },
+                                                                                    /* size      */
+        { 124, TL_LVL_ERROR     , "RT124 - ERROR, TAPE VOLUMES OVERFLOW"        },
+        { 125, TL_LVL_ERROR     , "RT125 - I/O ERROR READING FROM TAPE"         },  /* error     */
+                                                                                    /* block no  */
+        { 126, TL_LVL_ERROR     , "RT126 - I/O ERROR WRITING ON TAPE"           },  /* error     */
+                                                                                    /* block no  */
+        { 127, TL_LVL_ERROR     , "RT127 - INCORRECT NUMBER OF FILENAMES SPECIFIED" },  
+                                                                                    /* error     */
+        { 128, TL_LVL_ERROR     , "RT128 - INCORRECT OR MISSING TRAILER LABEL ON TAPE" },  
+        { 129, TL_LVL_ERROR     , "RT129 - INVALID BLOCK SIZE SPECIFIED"        },
+        { 130, TL_LVL_ERROR     , "RT130 - INVALID FORMAT SPECIFIED"            },
+        { 131, TL_LVL_ERROR     , "RT131 - INVALID LABEL TYPE"                  },  /* lbl type  */
+        { 132, TL_LVL_ERROR     , "RT132 - INVALID MAX. SIZE OF FILE SPECIFIED" }, 
+        { 133, TL_LVL_ERROR     , "RT133 - INVALID NUMBER OF RECORDS SPECIFIED" }, 
+        { 134, TL_LVL_ERROR     , "RT134 - INVALID OPTION FOR -E"               },  /* option    */ 
+        { 135, TL_LVL_ERROR     , "RT135 - INVALID RECORD LENGTH SPECIFIED"     },
+        { 136, TL_LVL_ERROR     , "RT136 - NETWORK ERROR DURING RFIO OPERATION" },
+        { 137, TL_LVL_ERROR     , "RT137 - PARITY ERROR OR BLANK TAPE"          },  /* block no  */
+        { 138, TL_LVL_ERROR     , "RT138 - RECORD LENGTH CAN'T BE GREATER THAN BLOCK SIZE"},  
+                                                                                   /* rec len   */
+                                                                                   /* blk size  */
+        { 139, TL_LVL_ERROR     , "RT139 - RECORD LENGTH HAS TO BE SPECIFIED"   },  
+        { 140, TL_LVL_ERROR     , "RT140 - TAPE DEVICE NOT OPERATIONAL"         },  
+        { 141, TL_LVL_ERROR     , "RT141 - TAPE IS NOW INCORRECTLY TERMINATED"  },  
+        { 142, TL_LVL_ERROR     , "RT142 - THE FILE SEQUENCE LIST IS NOT VALID" },  
+        { 143, TL_LVL_ERROR     , "RT143 - TRAILING MINUS IN -q SEQUENCE LIST IS INVALID FOR CPDSKTP" },  
+        { 144, TL_LVL_ERROR     , "RT144 - VSN OR VID MUST BE SPECIFIED"        },  
+        { 145, TL_LVL_ERROR     , "RT145 - CANNOT TRANSFER DATA TO AN AFS BASED FILE" },  
+        { 146, TL_LVL_ERROR     , "RT146 - INTERNAL ERROR ON STARTUP SIZES"     },  
+        { 147, TL_LVL_ERROR     , "RT147 - ALREADY APPENDED"                    }, /* kB2File   */  
+                                                                                   /* limit     */
+        { 148, TL_LVL_ERROR     , "RT148 - INVALID BUFFER SIZE SPECIFIED. CHECK BLOCK SIZE AND RECORD LENGTH!"},
+                                                                                   /* spec size */
+        { 149, TL_LVL_ERROR     , "RT149 - SPECIFIED lrecl DOES NOT CORRESPOND TO f77 lrecl" },  
+                                                                                   /* lrecl     */
+                                                                                   /* f77 lrecl */
+        { 150, TL_LVL_ERROR     , "RT150 - DISK FILE MODIFIED DURING REQUEST"   },  
+        { 151, TL_LVL_ERROR     , "RT151 - TAPE FILES MUST BE IN SEQUENCE"      },  
+        { 152, TL_LVL_ERROR     , "RT152 - DISK FILE CANNOT BE A CASTOR HSM FILE" },  
+        { 153, TL_LVL_ERROR     , "RT153 - INVALID SETTING FOR CONCAT_TO_EOD FLAG" },  
+        { 154, TL_LVL_ERROR     , "RT154 - INVALID SETTING FOR NOCONCAT_TO_EOD FLAG" },   
+
+        { 201, TL_LVL_MONITORING, "RT201 - BYTES COPIED"                        },   
+        { 202, TL_LVL_MONITORING, "RT202 - RECORDS COPIED"                      },   
+        { 203, TL_LVL_MONITORING, "RT203 - APPEND MODE"                         },   
+        { 204, TL_LVL_MONITORING, "RT204 - BLOCK SIZE"                          },  /* blk size   */   
+        { 205, TL_LVL_MONITORING, "RT205 - END OF FILE"                         },   
+        { 206, TL_LVL_MONITORING, "RT206 - END OF TRANSFER"                     },   
+        { 207, TL_LVL_MONITORING, "RT207 - MAX. NB OF RECORDS"                  },   
+        { 208, TL_LVL_MONITORING, "RT208 - MAX. SIZE OF FILE"                   },  /* max size   */   
+        { 209, TL_LVL_MONITORING, "RT209 - RECORD FORMAT"                       },  /* format     */  
+        { 210, TL_LVL_MONITORING, "RT210 - RECORD LENGTH"                       },  /* length     */     
+        { 211, TL_LVL_MONITORING, "RT211 - SKIPPING TO NEXT BLOCK"              },   
+        { 212, TL_LVL_MONITORING, "RT212 - FILE TRUNCATED"                      },   
+        { 213, TL_LVL_MONITORING, "RT213 - CONVERTING DISK DATA FROM ASCII TO EBCDIC" },   
+        { 214, TL_LVL_MONITORING, "RT214 - CONVERTING TAPE DATA FROM EBCDIC TO ASCII" },   
+        { 215, TL_LVL_MONITORING, "RT215 - KBYTES SENT BY HOST"                 },  /* kbytes     */
+        { 216, TL_LVL_MONITORING, "RT216 - KBYTES WRITTEN TO TAPE"              },  /* kbytes     */  
+        { 217, TL_LVL_MONITORING, "RT217 - COMPRESSION RATE ON TAPE"            },  /* rate       */  
+        { 218, TL_LVL_MONITORING, "RT218 - KBYTES RECEIVED BY HOST"             },  /* kbytes     */  
+        { 219, TL_LVL_MONITORING, "RT219 - KBYTES READ BY TAPE DRIVE"           },  /* kbytes     */  
+        { 220, TL_LVL_MONITORING, "RT220 - KBYTES RECEIVED BY HOST"             },  /* kbytes     */  
+        { 221, TL_LVL_MONITORING, "RT221 - DATA TRANSFER BANDWIDTH"             }, 
+        { 222, TL_LVL_MONITORING, "RT222 - RECORD(S) TRUNCATED"                 },  /* # recs     */  
+        { 223, TL_LVL_MONITORING, "RT223 - MULTI VOLUME FILE! COMPRESSION DATA PER FILE SECTION" }, 
+                                                                                    /* kbytes     */  
 };
 
 
@@ -211,19 +339,18 @@ int DLL_DECL tplogger_nb_messages( tplogger_t *self ) {
   
         if( 0 == strcmp( self->tl_name, "tpdaemon" ) ) {
                 
-                /* return( ARRAY_ENTRIES( tplogger_messages_tpdaemon ) ); */
-                return( ARRAY_ENTRIES( tplogger_messages ) );
+                return( ARRAY_ENTRIES( tplogger_messages_tpdaemon ) ); 
+                /* return( ARRAY_ENTRIES( tplogger_messages ) ); */
         }
 
         if( 0 == strcmp( self->tl_name, "rtcpd" ) ) {
                 
-                /* return( ARRAY_ENTRIES( tplogger_messages_rtcpd ) ); */
-                return( ARRAY_ENTRIES( tplogger_messages ) );
+                return( ARRAY_ENTRIES( tplogger_messages_rtcpd ) );
+                /* return( ARRAY_ENTRIES( tplogger_messages ) ); */
         }
 
         if( 0 == strcmp( self->tl_name, "stdio" ) ) {
                 
-                /* return( ARRAY_ENTRIES( tplogger_messages_rtcpd ) ); */
                 return( ARRAY_ENTRIES( tplogger_messages ) );
         }
         
