@@ -724,7 +724,7 @@ castor::db::ora::OraTapeSvc::streamsToDo()
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::Stream* stream = new castor::stager::Stream();
       stream->setId(rs->getInt(1));
-      stream->setInitialSizeToTransfer(rs->getInt(2));
+      stream->setInitialSizeToTransfer((u_signed64)rs->getDouble(2));
       stream->setStatus((enum castor::stager::StreamStatusCodes)rs->getInt(3));
       castor::stager::TapePool* tapePool = new castor::stager::TapePool();
       tapePool->setId(rs->getInt(4));
