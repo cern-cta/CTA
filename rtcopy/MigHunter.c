@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.43 $ $Release$ $Date: 2007/07/31 10:00:40 $ $Author: waldron $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.44 $ $Release$ $Date: 2007/08/02 13:11:40 $ $Author: gtaur $
  *
  * 
  *
@@ -927,6 +927,7 @@ static int startStreams(
   int rc, i, j, nbDrives = 0, nbTapePools = 0, nbStreams = 0;
   u_signed64 initialSizeCeiling = 0, gettapeSize = 0;
   
+  
   if ( svcClass == NULL ) {
     if ( runAsDaemon == 0 ) {
       fprintf(stderr,"startStreams() called with NULL argument\n");
@@ -962,6 +963,29 @@ static int startStreams(
           fprintf(stdout,"Start %d stream for tape pool %s\n",
                   j,tapePoolName);
         }
+        /*  Added fillObj*/
+
+        iObj = Cstager_Stream_getIObject(streamArray[j]);
+	rc = C_Services_fillObj(
+                            dbSvc,
+                            iAddr,
+                            iObj,
+                            OBJ_Stream,
+                            0
+                            );
+	if ( rc == -1 ) {
+	  if ( runAsDaemon == 0 ) {
+	    fprintf(stderr,"C_Services_fillObj(streamObj,OBJ_Stream): %s, %s\n",
+            sstrerror(serrno),
+            C_Services_errorMsg(dbSvc));
+	  }
+	  LOG_DBCALL_ERR("C_Services_fillObj()",
+                     C_Services_errorMsg(dbSvc));
+	  
+	}
+
+        /* end fillObj */ 
+
         if ( (streamStatus == STREAM_CREATED) ||
              (streamStatus == STREAM_WAITSPACE) ) {
           Cstager_Stream_setStatus(streamArray[j],STREAM_PENDING);
@@ -987,6 +1011,7 @@ static int startStreams(
                                                   streamArray[j],
                                                   gettapeSize
                                                   );
+          
         }
         iObj = Cstager_Stream_getIObject(streamArray[j]);
         rc = C_Services_updateRep(
@@ -1121,6 +1146,7 @@ static int addTapeCopyToStreams(
         Cstager_Stream_addTapeCopy(streamArray[j],tapeCopy);
         Cstager_TapeCopy_addStream(tapeCopy,streamArray[j]);
       }
+
       if ( streamArray != NULL ) free(streamArray);
     }
   }

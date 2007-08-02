@@ -286,10 +286,30 @@ namespace castor {
 	  * @return the name of the tape
 	  * @exception in case of an error
           */
+
         virtual std::string checkFileForRepack 
         (const u_signed64 file)	 throw (castor::exception::Exception);
 
 
+        /**
+          * Give the ammount of bytes by stream 
+          * @param streamId id of the stream
+	  * @return the number of bytes
+	  * @exception in case of an error
+          */
+
+
+	virtual u_signed64 getBytesByStream (const u_signed64 streamId) throw (castor::exception::Exception);
+
+
+        /**
+          * Give the number of files by stream 
+          * @param streamId id of the stream
+	  * @return the number of bytes
+	  * @exception in case of an error
+          */
+
+	virtual u_signed64 getNumFilesByStream(const u_signed64 streamId) throw (castor::exception::Exception);
 
       private:
 
@@ -376,6 +396,21 @@ namespace castor {
 
         /// SQL statement object for function checkFileForRepack
         oracle::occi::Statement *m_checkFileForRepackStatement;
+
+
+	 /// SQL statement for getBytesByStream
+        static const std::string s_getBytesByStreamStatementString;
+
+        /// SQL statement object for function getBytesByStream 
+        oracle::occi::Statement *m_getBytesByStreamStatement;
+
+
+	 /// SQL statement for getNumFilesByStream
+        static const std::string s_getNumFilesByStreamStatementString;
+
+        /// SQL statement object for function getNumFilesByStream 
+        oracle::occi::Statement *m_getNumFilesByStreamStatement;
+
 
       }; // end of class OraTapeSvc
 

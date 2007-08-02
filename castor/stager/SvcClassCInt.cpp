@@ -266,6 +266,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SvcClass_streamPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_streamPolicy(castor::stager::SvcClass* instance, const char** var) {
+    *var = instance->streamPolicy().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setStreamPolicy
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setStreamPolicy(castor::stager::SvcClass* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setStreamPolicy(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SvcClass_id
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_id(castor::stager::SvcClass* instance, u_signed64* var) {

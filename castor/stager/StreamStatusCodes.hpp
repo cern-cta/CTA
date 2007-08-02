@@ -45,14 +45,15 @@ namespace castor {
       STREAM_WAITMOUNT = 2,
       STREAM_RUNNING = 3,
       STREAM_WAITSPACE = 4,
-      STREAM_CREATED = 5
+      STREAM_CREATED = 5,
+      STREAM_STOPPED = 6
     }; /* end of enum StreamStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the StreamStatusCodes enum
      */
-    extern const char* StreamStatusCodesStrings[6];
+    extern const char* StreamStatusCodesStrings[7];
 
 #ifdef __cplusplus
   } /* end of namespace stager */

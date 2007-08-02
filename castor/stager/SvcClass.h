@@ -229,6 +229,16 @@ int Cstager_SvcClass_forcedFileClass(struct Cstager_SvcClass_t* instance, const 
 int Cstager_SvcClass_setForcedFileClass(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
+ * Get the value of streamPolicy
+ */
+int Cstager_SvcClass_streamPolicy(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of streamPolicy
+ */
+int Cstager_SvcClass_setStreamPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

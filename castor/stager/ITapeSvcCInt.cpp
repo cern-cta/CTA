@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/04/02 15:26:09 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/02 13:11:20 $ $Author: gtaur $
  *
  *
  *
@@ -435,5 +435,52 @@ extern "C" {
     }
     tpSvc->tpSvc->sendStreamReport(diskServer, fileSystem, dir, (created != 0));
   }
+
+
+
+
+//----------------------------------------------------------------------------
+//  Cstager_ITapeSvc_getBytesByStream
+//----------------------------------------------------------------------------
+
+
+int Cstager_ITapeSvc_getBytesByStream
+(struct Cstager_ITapeSvc_t* tpSvc, 
+ const u_signed64 streamId, 
+ u_signed64* numByte){
+  u_signed64 byteByStream=0;
+  if (!checkITapeSvc(tpSvc)) return -1;
+  try {
+      byteByStream=tpSvc->tpSvc->getBytesByStream(streamId);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      tpSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    *numByte= byteByStream;
+    return 0;
+
+}
+
+//----------------------------------------------------------------------------
+//  Cstager_ITapeSvc_getNumFilesByStream
+//----------------------------------------------------------------------------
+
+int Cstager_ITapeSvc_getNumFilesByStream
+(struct Cstager_ITapeSvc_t* tpSvc, 
+ const u_signed64 streamId, 
+ u_signed64 *numFile){
+  u_signed64 numByStream=0;
+  if (!checkITapeSvc(tpSvc)) return -1;
+  try {
+      numByStream=tpSvc->tpSvc->getNumFilesByStream(streamId);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      tpSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    *numFile=numByStream; 
+    return 0;
+}
 
 }

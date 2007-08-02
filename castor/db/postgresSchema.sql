@@ -2,7 +2,7 @@
 CREATE TABLE BaseAddress (objType INT4, cnvSvcName VARCHAR(2048), cnvSvcType INT4, target INT8, id INT8 CONSTRAINT I_BaseAddress_Id PRIMARY KEY);
 
 /* SQL statements for type Client */
-CREATE TABLE Client (ipAddress INT4, port INT4, id INT8 CONSTRAINT I_Client_Id PRIMARY KEY);
+CREATE TABLE Client (ipAddress INT4, port INT4, version INT4, id INT8 CONSTRAINT I_Client_Id PRIMARY KEY);
 
 /* SQL statements for type ClientIdentification */
 CREATE TABLE ClientIdentification (machine VARCHAR(2048), userName VARCHAR(2048), port INT4, euid INT4, egid INT4, magic INT4, id INT8 CONSTRAINT I_ClientIdentification_Id PRIMARY KEY);
@@ -122,7 +122,7 @@ CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, id
 CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, nbMigratorStreams INT4, nbRecallerStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
 
 /* SQL statements for type SvcClass */
-CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), gcPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), hasDiskOnlyBehavior INT4, forcedFileClass VARCHAR(2048), id INT8 CONSTRAINT I_SvcClass_Id PRIMARY KEY);
+CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), gcPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), hasDiskOnlyBehavior INT4, forcedFileClass VARCHAR(2048), streamPolicy VARCHAR(2048), id INT8 CONSTRAINT I_SvcClass_Id PRIMARY KEY);
 CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_SvcClass2TapePool_C on SvcClass2TapePool (child);
 CREATE INDEX I_SvcClass2TapePool_P on SvcClass2TapePool (parent);
@@ -134,7 +134,7 @@ CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
-CREATE TABLE Stream (initialSizeToTransfer INT8, lastFileSystemChange INT8, id INT8 CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER);
+CREATE TABLE Stream (initialSizeToTransfer INT8, lastFileSystemChange INT8, byteVolume INT8, id INT8 CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER);
 CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);

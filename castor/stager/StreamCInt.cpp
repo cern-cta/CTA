@@ -118,6 +118,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Stream_byteVolume
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_byteVolume(castor::stager::Stream* instance, u_signed64* var) {
+    *var = instance->byteVolume();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Stream_setByteVolume
+  //----------------------------------------------------------------------------
+  int Cstager_Stream_setByteVolume(castor::stager::Stream* instance, u_signed64 new_var) {
+    instance->setByteVolume(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Stream_id
   //----------------------------------------------------------------------------
   int Cstager_Stream_id(castor::stager::Stream* instance, u_signed64* var) {

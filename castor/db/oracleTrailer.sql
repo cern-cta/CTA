@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.467 $ $Date: 2007/07/27 10:07:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.468 $ $Date: 2007/08/02 13:11:18 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -301,12 +301,15 @@ END;
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is linked to a Stream */
 
-CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Insert
-AFTER INSERT ON Stream2TapeCopy
+CREATE OR REPLACE TRIGGER tr_stream2tapecopy_insert
+AFTER INSERT  ON STREAM2TAPECOPY
+REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
+DECLARE
+  cfSize NUMBER(38);
 BEGIN
--- added this lock because of severaval copies of different file systems 
---  from different streams which can cause deadlock  
+  --added this lock because of severaval copies of different file systems
+ -- from different streams which can cause deadlock
   LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS IN (SELECT DiskCopy.FileSystem
@@ -315,13 +318,21 @@ BEGIN
                    AND TapeCopy.id = :new.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
+ -- added for the stream policy
+   SELECT castorfile.filesize INTO cfSize FROM TapeCopy,CastorFile
+        WHERE TapeCopy.castorfile = CastorFile.id AND TapeCopy.id = :new.child;
+  UPDATE Stream set byteVolume = byteVolume + cfSize
+  WHERE Stream.id = :new.parent;
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is unlinked from a Stream */
-CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Delete
-BEFORE DELETE ON Stream2TapeCopy
+
+CREATE OR REPLACE TRIGGER tr_stream2tapecopy_delete
+BEFORE DELETE  ON STREAM2TAPECOPY
+REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
+DECLARE cfSize NUMBER(38);
 BEGIN  
 -- added this lock because of severaval copies of different file systems 
 --  from different streams which can cause deadlock
@@ -333,6 +344,11 @@ BEGIN
                    AND TapeCopy.id = :old.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
+
+-- added for the stream policy
+
+   SELECT CastorFile.filesize INTO cfSize FROM CastorFile,TapeCopy WHERE CastorFile.id = TapeCopy.castorFile AND TapeCopy.id = :old.child; 
+   UPDATE Stream SET byteVolume = byteVolume - cfSize WHERE Stream.id = :old.parent;
 END;
 
 
@@ -3582,4 +3598,21 @@ BEGIN
       ind := ind + 14;
     END IF;
   END LOOP;
+END;
+
+/* PL/SQL method to retrieve the sum of all the filesize of all the tapecopies attached to a stream */
+
+CREATE OR REPLACE PROCEDURE getBytesByStream (streamId IN NUMBER, valByte OUT NUMBER) AS
+BEGIN
+  SELECT stream.byteVolume INTO valByte FROM stream 
+  	WHERE stream.id=streamId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    valByte:=0;
+END;
+
+/* PL/SQL method to know the number of tapecopies attached to a specific stream */
+
+CREATE OR REPLACE PROCEDURE getNumFilesByStream (streamId IN NUMBER, numFiles OUT NUMBER) AS
+BEGIN
+  SELECT count(*) INTO numFiles FROM stream2tapecopy WHERE stream2tapecopy.parent=streamId;
 END;
