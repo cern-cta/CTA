@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.44 $ $Release$ $Date: 2007/08/02 13:11:40 $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunter.c,v $ $Revision: 1.45 $ $Release$ $Date: 2007/08/02 15:51:11 $ $Author: gtaur $
  *
  * 
  *
@@ -963,28 +963,6 @@ static int startStreams(
           fprintf(stdout,"Start %d stream for tape pool %s\n",
                   j,tapePoolName);
         }
-        /*  Added fillObj*/
-
-        iObj = Cstager_Stream_getIObject(streamArray[j]);
-	rc = C_Services_fillObj(
-                            dbSvc,
-                            iAddr,
-                            iObj,
-                            OBJ_Stream,
-                            0
-                            );
-	if ( rc == -1 ) {
-	  if ( runAsDaemon == 0 ) {
-	    fprintf(stderr,"C_Services_fillObj(streamObj,OBJ_Stream): %s, %s\n",
-            sstrerror(serrno),
-            C_Services_errorMsg(dbSvc));
-	  }
-	  LOG_DBCALL_ERR("C_Services_fillObj()",
-                     C_Services_errorMsg(dbSvc));
-	  
-	}
-
-        /* end fillObj */ 
 
         if ( (streamStatus == STREAM_CREATED) ||
              (streamStatus == STREAM_WAITSPACE) ) {
@@ -1013,6 +991,16 @@ static int startStreams(
                                                   );
           
         }
+	/* 
+	   at this point is still used the old object without the modification of byteVolume 
+           at this point the byteVolume is the same as initialSizeToTransfer   
+        */    
+    
+	Cstager_Stream_setByteVolume( 
+                                      streamArray[j],
+                                      initialSizeToTransfer
+                                      );
+
         iObj = Cstager_Stream_getIObject(streamArray[j]);
         rc = C_Services_updateRep(
                                   dbSvc,
