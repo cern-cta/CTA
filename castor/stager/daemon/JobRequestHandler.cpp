@@ -127,8 +127,7 @@ namespace castor{
 	    break;
 
 	  case 4:
-	    /* in order to avoid to: changeSubrequestStatus, archiveSubrequest, replyToCLient */
-	    this->caseSubrequestFailed = true;
+	    /* in this case we wont: changeSubrequestStatus, archiveSubrequest or replyToClient */
 	    break;
  
 	  case 0:

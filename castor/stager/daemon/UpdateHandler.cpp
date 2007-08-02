@@ -145,7 +145,7 @@ namespace castor{
 	  
 	  
 	  
-	  if(toRecreateCastorFile || ((caseToSchedule != 2) && (caseToSchedule != 0))){
+	  if(toRecreateCastorFile || ((caseToSchedule != 2) && (caseToSchedule != 4))){
 	    /* updateSubrequestStatus Part: */
 	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
 	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);

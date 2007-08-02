@@ -68,7 +68,6 @@ namespace castor{
 	this->openflags=RM_O_RDONLY;
 	this->default_protocol = "rfio";
 	
-	this->caseSubrequestFailed = false;
       }
 
 
@@ -99,11 +98,11 @@ namespace castor{
 	  }
 	  rm_freejob(rmjob_out);
 	
-	  if(this->caseSubrequestFailed == false){
-	    /* updateSubrequestStatus Part: */
-	    if((caseToSchedule != 2) && (caseToSchedule != 0)){
-	      stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	    }
+	  /* updateSubrequestStatus Part: */
+	  if((caseToSchedule != 2) && (caseToSchedule != 4)){
+	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	  }
+	  if(caseToSchedule != 4){
 	    /* replyToClient Part: */
 	    /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
 	    /* so copy and paste for the exceptions !!!*/
@@ -119,7 +118,6 @@ namespace castor{
 	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-
 	}catch(castor::exception::Exception ex){
 	  if(rmjob_out != NULL){
 	    rm_freejob(rmjob_out);

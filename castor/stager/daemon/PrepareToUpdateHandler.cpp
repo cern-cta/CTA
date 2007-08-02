@@ -126,21 +126,24 @@ namespace castor{
 	  }
 	  
 	  
-	  if(toRecreateCastorFile || ( (caseToSchedule != 2) && (caseToSchedule != 0))){
+	  if(toRecreateCastorFile || ( (caseToSchedule != 2) && (caseToSchedule != 4))){
 	    /* updateSubrequestStatus Part: */
 	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
 	  }
 	  /* replyToClient Part: */
-	  this->stgReplyHelper = new StagerReplyHelper;
-	  if((this->stgReplyHelper) == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	    throw(ex);
+	  if(caseToSchedule != 4){
+	    this->stgReplyHelper = new StagerReplyHelper;
+	    if((this->stgReplyHelper) == NULL){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	      throw(ex);
+	    }
+	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
+	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	    delete stgReplyHelper->ioResponse;
+	    delete stgReplyHelper; 
 	  }
-	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
-	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  delete stgReplyHelper->ioResponse;
-	  delete stgReplyHelper; 
+	  
 	
 	}catch(castor::exception::Exception ex){
 

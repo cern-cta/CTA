@@ -72,7 +72,6 @@ namespace castor{
 	this->openflags=RM_O_RDONLY;
 	this->default_protocol = "rfio";
 
-	this->caseSubrequestFailed = false;
       }
       
 
@@ -105,21 +104,18 @@ namespace castor{
 	  }
 	  rm_freejob(this->rmjob_out);
 
-	  if(this->caseSubrequestFailed == false){
-	    /*  Update subrequestStatus */
-	    if((caseToSchedule != 2) && (caseToSchedule != 0)){
-	      stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	    }
+	  /*  Update subrequestStatus */
+	  if((caseToSchedule != 2) && (caseToSchedule != 4)){
+	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
+	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 	  }
-
+	  
 	}catch(castor::exception::Exception ex){
 	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
 	  /* we don t execute: dbService->updateRep ..*/
 	  if(rmjob_out != NULL){
 	    rm_freejob(this->rmjob_out);
 	  }
-	  stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
 	  throw(ex);
 	}
 	
