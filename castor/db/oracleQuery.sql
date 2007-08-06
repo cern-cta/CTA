@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.468 $ $Date: 2007/08/02 13:11:18 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.469 $ $Date: 2007/08/06 13:19:41 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -113,6 +113,13 @@ CREATE INDEX I_SubRequest_DiskCopy on SubRequest (diskCopy);
 CREATE INDEX I_SubRequest_Request on SubRequest (request);
 CREATE INDEX I_SubRequest_Parent on SubRequest (parent);
 CREATE INDEX I_SubRequest_SubReqId on SubRequest (subReqId);
+
+CREATE INDEX I_StagePTGRequest_ReqId on StagePrepareToGetRequest (reqId);
+CREATE INDEX I_StagePTPRequest_ReqId on StagePrepareToPutRequest (reqId);
+CREATE INDEX I_StagePTURequest_ReqId on StagePrepareToUpdateRequest (reqId);
+CREATE INDEX I_StageGetRequest_ReqId on StageGetRequest (reqId);
+CREATE INDEX I_StagePutRequest_ReqId on StagePutRequest (reqId);
+CREATE INDEX I_StageRepackRequest_ReqId on StageRepackRequest (reqId);
 
 /* A primary key index for better scan of Stream2TapeCopy */
 CREATE UNIQUE INDEX I_pk_Stream2TapeCopy ON Stream2TapeCopy (parent, child);
