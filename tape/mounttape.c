@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.56 $ $Date: 2007/07/04 13:14:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.57 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -91,7 +91,6 @@ char	**argv;
 	struct devinfo *devinfo;
 	char *dgn;
 	char *dvn;
-	int get_reply;
 	char hdr1[81];
 	char hdr2[81];
 	static char labels[6][4] = {"", "al", "nl", "sl", "blp", "aul"};
@@ -329,16 +328,6 @@ reselect_loop:
 
 	while (1) {
 
-		/* send mount message to operator and get message number */
-
-		sprintf (msg, TP020, vid, labels[lblcode], rings, drive, hostname,
-			name, jid, why);
-		if ((n = omsgr (func, msg, 1)) < 0) {
-			c = n;
-			goto reply;
-		} else
-			msg_num = n;
-		get_reply = 0;
 #if defined(RS6000PCTA) || defined(ADSTAR) || defined(CDK)
 remount_loop:
 #endif
@@ -354,10 +343,6 @@ remount_loop:
 				if ((n = rbtmountchk (&c, drive, vid, dvn, loader)) < 0)
 					goto reply;
 			} while (n == 1);
-			if (n == 2) {
-				get_reply = 1;
-				goto procorep;
-			}
 		}
 
 		while (1) {	/* wait for drive ready or operator cancel */
@@ -453,11 +438,6 @@ remount_loop:
 
 				goto reply;
 			}
-			if (testorep (&readfds)) {
-				get_reply = 1;
-				needrbtmnt = 0;
-				break;
-			}
 #if defined(_AIX) && defined(_IBMR2) && (defined(RS6000PCTA) || defined(ADSTAR))
 			if (*loader == 'l')
 				c = qmid3495 (&status);
@@ -471,10 +451,6 @@ remount_loop:
 				if ((n = rbtmountchk (&c, drive, vid, dvn, loader)) < 0)
 					goto reply;
 				if (n == 1) goto remount_loop;
-				if (n == 2) {
-					get_reply = 1;
-					break;
-				}
 			}
 #endif
 			memcpy (&readfds, &readmask, sizeof(readmask));
@@ -486,88 +462,6 @@ remount_loop:
 			}
 		}
 
-procorep:
-		if (get_reply) {
-			checkorep (func, orepbuf);
-			if (strlen (orepbuf) == 0) continue;
-			if (strncmp (orepbuf, "cancel", 6) == 0) {
-				usrmsg (func, TP023, orepbuf);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 23, 3,
-                                                    "func"   , TL_MSG_PARAM_STR  , func,
-                                                    "orepbuf", TL_MSG_PARAM_STR  , orepbuf,
-                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid);
-				c = ETOPAB;
-				goto reply;
-			} else if (strcmp (orepbuf, "reselect server") == 0) {
-				usrmsg (func, TP047);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 47, 2,
-                                                    "func"   , TL_MSG_PARAM_STR  , func,
-                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid);
-				c = ETRSLT;
-				goto reply;
-			} else if ((int) strlen (orepbuf) < CA_MAXUNMLEN+1) {
-				/* reselect ? */
-				if (devinfo->lddtype == 0)
-					lddisplay (-1, path, 0x20, "", "", 0);
-				else if (devinfo->lddtype == 1)
-					lddisplay (-1, path, 0x20, "", "", 1);
-				else if (strstr (devtype, "/VB"))
-					lddisplay (-1, path, 0x80, "", "", 2);
-unload_loop1:
-#ifndef SOLARIS
-				if ((tapefd = open (path, O_RDONLY|O_NDELAY)) >= 0) {
-#else
-				if ((tapefd = open (path, O_RDONLY)) >= 0) {
-#endif
-					if (chkdriveready (tapefd) > 0) {
-						if (*loader != 'n')
-							if ((n = unldtape (tapefd, path))) {
-								c = n;
-								goto reply;
-							}
-#if SACCT
-						tapeacct (TPUNLOAD, uid, gid, jid,
-						    dgn, drive, vid, 0, TPU_RSLT);
-#endif
-					}
-					close (tapefd);
-				}
-				if (*loader != 'm') {
-					demountforce = 0;
-					do {
-						c = rbtdemount (vid, drive, dvn,
-							loader, demountforce);
-						if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
-							goto reply;
-					} while (n == 1);
-					if (n == 2)	/* tape has become ready */
-						goto unload_loop1;
-				}
-				if (strcmp (drive, orepbuf) == 0) { /* same drive */
-					why = "reselect same";
-#if SACCT
-					why4a = TPM_RSLT;
-#endif
-					goto reselect_loop;
-				}
-				if (Ctape_rslt (uid, gid, jid, drive, orepbuf,
-				    &ux, loader, dvn)) {
-					why = "reselect failed";
-				} else {
-#if TMS
-					if (c = sendtmsmount (mode, "PE", vid,
-					    jid, name, acctname, drive))
-						goto reply;
-#endif
-					why = "reselect";
-				}
-#if SACCT
-				why4a = TPM_RSLT;
-#endif
-				goto reselect_loop;
-			} else continue;	/* bad reply */
-		}
-
 		/* tape is ready */
 
 		if (devinfo->lddtype == 0)
@@ -577,7 +471,6 @@ unload_loop1:
 		else if (strstr (devtype, "/VB"))
 			lddisplay (tapefd, path, 0x80, msg1, "", 2);
 
-		omsgdel (func, msg_num);
 
 		/* check if the volume is write protected */
 
@@ -591,7 +484,6 @@ unload_loop1:
                                             "VID"    , TL_MSG_PARAM_STR  , vid,
                                             "Drive"  , TL_MSG_PARAM_STR  , drive,
                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid);
-			omsgr (func, msg, 0);
 			c = ETWPROT;
 			goto reply;
 		}
@@ -686,18 +578,6 @@ unload_loop1:
                                             "VID"    , TL_MSG_PARAM_STR  , vid,
                                             "VSN"    , TL_MSG_PARAM_STR  , tpvsn,
                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-			strcat (msg, ", ok to continue?");
-			omsgr (func, msg, 0);
-			checkorep (func, orepbuf);
-			if (strcmp (orepbuf, "ok") && strcmp (orepbuf, "yes")) {
-				usrmsg (func, TP023, orepbuf);
-                                tl_tpdaemon.tl_log( &tl_tpdaemon, 23, 3,
-                                                    "func"   , TL_MSG_PARAM_STR  , func,
-                                                    "orepbuf", TL_MSG_PARAM_STR  , orepbuf,
-                                                    "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-				c = ETOPAB;
-				goto reply;
-			}
 			break;	/* operator gave ok */
 		}
 		if (tplbl == NL && lblcode == NL) break;
@@ -905,41 +785,21 @@ unload_loop1:
                             
                     } else {
 
-                            /* default: ask the operator what to do */
-                            char mirmsg[OPRMSGSZ];
-                            char mirrepbuf[OPRMSGSZ];            
-                            sprintf (mirmsg, TP065, vid, labels[lblcode], drive, hostname,
-                                     name, jid);
-                            omsgr(func, mirmsg, 1);
-                            checkorep (func, mirrepbuf);
-                            if (strncmp (mirrepbuf, "cancel", 6) == 0) {
-                                    tplogit(func, "Request canceled by operator due to bad MIR\n");
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
-                                                        "func"   , TL_MSG_PARAM_STR  , func,
-                                                        "Message", TL_MSG_PARAM_STR  , "Request canceled by operator due to bad MIR",
-                                                        "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-                                    tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
-                                                        "func"   , TL_MSG_PARAM_STR  , func,
-                                                        "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
-                                                        "VID"    , TL_MSG_PARAM_STR  , vid, 
-                                                        "TPVID"  , TL_MSG_PARAM_TPVID, vid);                                    
-                                    cleanup();
-                                    sendrep (rpfd, TAPERC, ETBADMIR);
-                                    exit(0);
-                            } else {
-                                    tplogit(func, "Request continued by operator despite bad MIR\n");
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
-                                                        "func"   , TL_MSG_PARAM_STR  , func,
-                                                        "Message", TL_MSG_PARAM_STR  , "Request continued by operator despite bad MIR",
-                                                        "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-                                    tplogit(func, "Bad MIR request=continued vid=%s\n", vid);
-                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 88, 4,
-                                                        "func"   , TL_MSG_PARAM_STR  , func,
-                                                        "Message", TL_MSG_PARAM_STR  , "Bad MIR request=continued",
-                                                        "VID"    , TL_MSG_PARAM_STR  , vid, 
-                                                        "TPVID"  , TL_MSG_PARAM_TPVID, vid);                                    
-                            }
+                            tplogit(func, "Bad MIR config=unspecified vid=%s\n", vid );
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 3,
+                                                "func"   , TL_MSG_PARAM_STR  , func,
+                                                "Message", TL_MSG_PARAM_STR  , "Bad MIR config=unspecified",
+                                                "TPVID"  , TL_MSG_PARAM_TPVID, vid);
+                            
+                            tplogit(func, "Bad MIR request=canceled vid=%s\n", vid);
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 87, 4,
+                                                "func"   , TL_MSG_PARAM_STR  , func,
+                                                "Message", TL_MSG_PARAM_STR  , "Bad MIR request=canceled",
+                                                "VID"    , TL_MSG_PARAM_STR  , vid, 
+                                                "TPVID"  , TL_MSG_PARAM_TPVID, vid);
+                            cleanup();
+                            sendrep (rpfd, TAPERC, ETBADMIR);
+                            exit(0);                 
                     } 
                     
             } else {
@@ -1254,9 +1114,6 @@ void cleanup()
         }
 
 
-	if (msg_num)	/* cancel pending operator message */
-		omsgdel (func, msg_num);
-
 	/* must unload and deassign */
 
 	flags = TPRLS_KEEP_RSV|TPRLS_UNLOAD|TPRLS_NOWAIT;
@@ -1297,7 +1154,7 @@ char *drive;
                             "Message",  TL_MSG_PARAM_STR, msg,
                             "Drive",    TL_MSG_PARAM_STR, drive, 
                             "Hostname", TL_MSG_PARAM_STR, hostname );
-	omsgr ("configdown", msg, 0);
+
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
 
@@ -1324,19 +1181,28 @@ unsigned int *demountforce;
 		*c = EIO;
 		return (-1);
 	case RBT_FAST_RETRY:
-		omsgr (func, msg, 0);
+                tplogit (func, "RBT_FAST_RETRY: %s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, msg );        
+
+
 		rbttimeval.tv_sec = RBTFASTRI;
-		rbttimeval.tv_usec = 0;
+		rbttimeval.tv_usec = 0;                
 		memcpy (&readfds, &readmask, sizeof(readmask));
-		if (select (maxfds, &readfds, (fd_set *)0,
-		    (fd_set *)0, &rbttimeval) > 0 && testorep (&readfds)) {
-			checkorep (func, orepbuf);
-			if (strncmp (orepbuf, "cancel", 6) == 0) {
-				*c = EIO;
-				return (-1);
-			}
-		}
-		return (1);	/* retry */
+                if (select (maxfds, &readfds, (fd_set *)0,
+                            (fd_set *)0, &rbttimeval) > 0) {
+                        /* usually the operator's reply was 
+                           checked here; should not happen,
+                           retry none the less ... */
+                        tplogit (func, "select returned >0\n");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
+                        return (1);
+                }         
+                /* retry after timeout */
+                return (1);
 	case RBT_DMNT_FORCE:
 		if (*demountforce) {
 			*c = EIO;
@@ -1349,19 +1215,6 @@ unsigned int *demountforce;
 		configdown (drive);
 		*c = EIO;
 		return (-1);
-	case RBT_OMSG_NORTRY:
-		omsgr (func, msg, 0);
-		*c = ETABSENT;
-		return (-1);
-	case RBT_OMSG_SLOW_R:
-	case RBT_OMSGR:
-		omsgr (func, msg, 0);
-		checkorep (func, orepbuf);
-		if (strncmp (orepbuf, "cancel", 6) == 0) {
-			*c = EIO;
-			return (-1);
-		}
-		return (1);	/* retry */
 	case RBT_UNLD_DMNT:
 		*c = EIO;
 		return (2);	/* may be unload and retry */
@@ -1394,14 +1247,27 @@ char *loader;
 		*c = ETVBSY;	/* volume in use (ifndef TMS) */
 		return (-1);
 	case RBT_FAST_RETRY:
+                tplogit (func, "RBT_FAST_RETRY %s", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, msg );        
+
 		rbttimeval.tv_sec = RBTFASTRI;
 		rbttimeval.tv_usec = 0;
 		memcpy (&readfds, &readmask, sizeof(readmask));
-		if (select (maxfds, &readfds, (fd_set *)0,
-		    (fd_set *)0, &rbttimeval) > 0 && testorep (&readfds))
-			return (2);	/* get & process operator reply */
-		else
-			return (1);	/* retry */
+                if (select (maxfds, &readfds, (fd_set *)0,
+                            (fd_set *)0, &rbttimeval) > 0) {
+                        /* usually the operator's reply was 
+                           checked here; should not happen,
+                           retry none the less ... */
+                        tplogit (func, "select returned >0\n");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
+                        return (1);
+                }            
+                /* retry after timeout */
+                return (1);  
 	case RBT_DMNT_FORCE:
 		if ((tapefd = open (dvn, O_RDONLY|O_NDELAY)) < 0) {
 			*c = errno;
@@ -1428,17 +1294,6 @@ char *loader;
 		configdown (drive);
 		*c = EIO;
 		return (-1);
-	case RBT_OMSG_NORTRY:
-		omsgr (func, msg, 0);
-		*c = ETABSENT;	/* volume not in library */
-		return (-1);
-	case RBT_OMSG_SLOW_R:
-		omsgr (func, msg, 0);
-		*c = ETVBSY;	/* volume in use or inaccessible */
-		return (-1);
-	case RBT_OMSGR:
-		omsgr (func, msg, 0);
-		return (2);	/* get & process operator reply */
 	default:
 		return (-1);	/* unrecoverable error */
 	}

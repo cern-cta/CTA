@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.9 $ $Date: 2007/05/31 14:53:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: smcsubr2.c,v $ $Revision: 1.10 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -252,7 +252,7 @@ int invert;
 	}
 	if (c == 0) {
 		usrmsg (func, SR018, "mount", vid, drvord, "volume not in library");
-		RETURN (RBT_OMSG_NORTRY);
+		RETURN (RBT_NORETRY);
 	}
 	if (element_info.element_type != 2) {
 
@@ -284,7 +284,7 @@ int invert;
                 }
 
                 usrmsg (func, SR018, "mount", vid, drvord, "volume in use");
-		RETURN (RBT_OMSG_SLOW_R);
+		RETURN (RBT_SLOW_RETRY);
 	}
 	if ((c = smc_move_medium (fd, loader, element_info.element_address,
 	    robot_info->device_start+drvord, invert)) < 0) {

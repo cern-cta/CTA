@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.37 $ $Date: 2007/07/04 13:14:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.38 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -460,7 +460,6 @@ char *drive;
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                             "func",    TL_MSG_PARAM_STR, "rlstape",
                             "Message", TL_MSG_PARAM_STR, msg );        
-	omsgr ("configdown", msg, 0);
 	(void) Ctape_config (drive, CONF_DOWN, TPCD_SYS);
 }
 
@@ -476,20 +475,27 @@ unsigned int *demountforce;
 	case 0:
 		return (0);
 	case RBT_FAST_RETRY:
-		omsgr (func, msg, 0);
+                tplogit (func, "RBT_FAST_RETRY %s", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, msg );        
+
 		rbttimeval.tv_sec = RBTFASTRI;
 		rbttimeval.tv_usec = 0;
 		memcpy (&readfds, &readmask, sizeof(readmask));
-		if (select (maxfds, &readfds, (fd_set *)0,
-		    (fd_set *)0, &rbttimeval) > 0 && testorep (&readfds)) {
-			checkorep (func, orepbuf);
-			if (strncmp (orepbuf, "cancel", 6) == 0) {
-				configdown (drive);
-				*c = EIO;
-				return (-1);
-			}
-		}
-		return (1);
+                if (select (maxfds, &readfds, (fd_set *)0,
+                            (fd_set *)0, &rbttimeval) > 0) {
+                        /* usually the operator's reply was 
+                           checked here; should not happen,
+                           retry none the less ... */
+                        tplogit (func, "select returned >0\n");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
+                        return (1);
+                }
+                /* retry after timeout */
+                return (1);	
 	case RBT_DMNT_FORCE:
 		if (*demountforce) {
 			configdown (drive);
@@ -503,16 +509,6 @@ unsigned int *demountforce;
 		configdown (drive);
 		*c = EIO;
 		return (-1);
-	case RBT_OMSG_SLOW_R:
-	case RBT_OMSGR:
-		omsgr (func, msg, 0);
-		checkorep (func, orepbuf);
-		if (strncmp (orepbuf, "cancel", 6) == 0) {
-			configdown (drive);
-			*c = EIO;
-			return (-1);
-		}
-		return (1);	/* retry */
 	case RBT_UNLD_DMNT:
 		return (2);	/* should unload and retry */
 	default:

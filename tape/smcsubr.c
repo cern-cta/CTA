@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.11 $ $Date: 2007/02/22 17:26:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: smcsubr.c,v $ $Revision: 1.12 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -479,10 +479,10 @@ struct scsierr_codact {
 struct scsierr_codact scsierr_acttbl[] = {
     {0x02, 0x04, 0x00, RBT_FAST_RETRY, "Logical Unit Not Ready, Cause Not Reportable"},
     {0x02, 0x04, 0x01, RBT_FAST_RETRY, "Logical Unit Is In Process of Becoming Ready"},
-    {0x02, 0x04, 0x02, RBT_OMSGR, "Logical Unit Not Ready, initialization required"},
-    {0x02, 0x04, 0x03, RBT_OMSGR, "Logical Unit Not Ready, Manual Intervention Required"},
-    {0x0B, 0x08, 0x00, RBT_OMSGR, "Logical Unit Communication Failure"},
-    {0x0B, 0x08, 0x01, RBT_OMSGR, "Logical Unit Communication Time-out"},
+    {0x02, 0x04, 0x02, RBT_NORETRY, "Logical Unit Not Ready, initialization required"},
+    {0x02, 0x04, 0x03, RBT_NORETRY, "Logical Unit Not Ready, Manual Intervention Required"},
+    {0x0B, 0x08, 0x00, RBT_NORETRY, "Logical Unit Communication Failure"},
+    {0x0B, 0x08, 0x01, RBT_NORETRY, "Logical Unit Communication Time-out"},
     {0x05, 0x1A, 0x00, RBT_NORETRY, "Parameter List Length Error"},
     {0x05, 0x20, 0x00, RBT_NORETRY, "Invalid Command Operation Code"},
     {0x05, 0x21, 0x01, RBT_NORETRY, "Invalid Element Address"},
@@ -501,19 +501,19 @@ struct scsierr_codact scsierr_acttbl[] = {
     {0x05, 0x3A, 0x00, RBT_XTRA_PROC, "Medium Not Present"},
     {0x05, 0x3B, 0x0D, RBT_XTRA_PROC, "Medium Destination Element Full"},
     {0x05, 0x3B, 0x0E, RBT_XTRA_PROC, "Medium Source Element Empty"},
-    {0x04, 0x40, 0x01, RBT_OMSGR, "Hardware Error, General"},
-    {0x04, 0x40, 0x02, RBT_OMSGR, "Hardware Error, Tape Transport"},
-    {0x04, 0x40, 0x03, RBT_OMSGR, "Hardware Error, CAP"},
+    {0x04, 0x40, 0x01, RBT_NORETRY, "Hardware Error, General"},
+    {0x04, 0x40, 0x02, RBT_NORETRY, "Hardware Error, Tape Transport"},
+    {0x04, 0x40, 0x03, RBT_NORETRY, "Hardware Error, CAP"},
     {0x0B, 0x43, 0x00, RBT_NORETRY, "Message Error"},
-    {0x02, 0x44, 0x00, RBT_OMSGR, "Internal Target Failure"},
-    {0x0B, 0x45, 0x00, RBT_OMSGR, "Select or Reselect Failure"},
-    {0x0B, 0x47, 0x00, RBT_OMSGR, "SCSI Parity Error"},
-    {0x0B, 0x48, 0x00, RBT_OMSGR, "Initiator Detected Error"},
-    {0x02, 0x4C, 0x00, RBT_OMSGR, "Logical Unit Failed Self-Configuration"},
+    {0x02, 0x44, 0x00, RBT_NORETRY, "Internal Target Failure"},
+    {0x0B, 0x45, 0x00, RBT_NORETRY, "Select or Reselect Failure"},
+    {0x0B, 0x47, 0x00, RBT_NORETRY, "SCSI Parity Error"},
+    {0x0B, 0x48, 0x00, RBT_NORETRY, "Initiator Detected Error"},
+    {0x02, 0x4C, 0x00, RBT_NORETRY, "Logical Unit Failed Self-Configuration"},
     {0x05, 0x4E, 0x00, RBT_NORETRY, "Overlapped Commands Attempted"},
-    {0x05, 0x53, 0x02, RBT_OMSGR, "Medium Removal Prevented"},
-    {0x06, 0x54, 0x00, RBT_OMSGR, "SCSI To Host System Interface Failure"},
-    {0x02, 0x5A, 0x01, RBT_OMSGR, "Operator Medium Removal Request"}
+    {0x05, 0x53, 0x02, RBT_NORETRY, "Medium Removal Prevented"},
+    {0x06, 0x54, 0x00, RBT_NORETRY, "SCSI To Host System Interface Failure"},
+    {0x02, 0x5A, 0x01, RBT_NORETRY, "Operator Medium Removal Request"}
 };
 
 int smc_lasterror(smc_stat, msgaddr)

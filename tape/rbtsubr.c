@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.30 $ $Date: 2007/06/27 07:08:48 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.31 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -485,18 +485,18 @@ int req_type;	/* 0 --> mount, 1 --> dismount */
 int cc;		/* error returned by the mount/dismount routine */
 {
 	struct rbterr_codact era_acttbl[] = {
-	  0x60, RBT_OMSGR, RBT_OMSGR,	/* Library Attachement Facility Equipment Check */
-	  0x62, RBT_OMSGR, RBT_OMSGR,	/* Library Manager Offline to Subsystem */
+	  0x60, RBT_NORETRY, RBT_FAST_RETRY,	/* Library Attachement Facility Equipment Check */
+	  0x62, RBT_NORETRY, RBT_FAST_RETRY,	/* Library Manager Offline to Subsystem */
 #if TMS
-	  0x64, RBT_OMSG_SLOW_R, RBT_NORETRY,	/* Library Volser in Use */
+	  0x64, RBT_SLOW_RETRY, RBT_NORETRY,	/* Library Volser in Use */
 #else
 	  0x64, RBT_SLOW_RETRY, RBT_NORETRY, 
 #endif
-	  0x66, RBT_OMSG_NORTRY, RBT_OK,	/* Library Volser Not in Library */
+	  0x66, RBT_NORETRY, RBT_OK,	/* Library Volser Not in Library */
 	  0x68, RBT_DMNT_FORCE, RBT_OK,		/* Library Order Sequence Check */
-	  0x6B, RBT_OMSG_SLOW_R, RBT_NORETRY,	/* Library Volume Misplaced */
+	  0x6B, RBT_SLOW_RETRY, RBT_NORETRY,	/* Library Volume Misplaced */
 	  0x6D, RBT_NORETRY, RBT_UNLD_DMNT,	/* Library Drive Not Unloaded */
-	  0x75, RBT_OMSG_SLOW_R, RBT_OMSG_SLOW_R, /* Library Volume Inaccessible */
+	  0x75, RBT_SLOW_RETRY, RBT_SLOW_RETRY, /* Library Volume Inaccessible */
 	};
 	int i;
 
@@ -575,15 +575,15 @@ int cc;		/* error returned by the mount/dismount routine */
 {
 	struct rbterr_codact liberr_acttbl[] = {
 	  MTCC_CANCEL_ORDERSEQ, RBT_DMNT_FORCE, RBT_OK,		/* Order sequence */
-	  MTCC_FAILED_HARDWARE, RBT_OMSGR, RBT_OMSGR,		/* Unexpected hardware failure */
-	  MTCC_FAILED_INACC, RBT_OMSG_SLOW_R, RBT_OMSG_SLOW_R,	/* Volume inaccessible */
-	  MTCC_FAILED_MISPLACED, RBT_OMSG_SLOW_R, RBT_NORETRY,	/* Volume misplaced */
-	  MTCC_FAILED_INVENTORY, RBT_OMSGR, RBT_OMSGR,		/* Volume not in inventory */
+	  MTCC_FAILED_HARDWARE, RBT_NORETRY, RBT_FAST_RETRY,		/* Unexpected hardware failure */
+	  MTCC_FAILED_INACC, RBT_SLOW_RETRY, RBT_SLOW_RETRY,	/* Volume inaccessible */
+	  MTCC_FAILED_MISPLACED, RBT_SLOW_RETRY, RBT_NORETRY,	/* Volume misplaced */
+	  MTCC_FAILED_INVENTORY, RBT_NORETRY, RBT_FAST_RETRY,		/* Volume not in inventory */
 	  MTCC_FAILED_NOTAVAIL, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN, /* Device no longer available */
 	  MTCC_FAILED_LOADFAIL, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN, /* Unrecoverable Load Failure */
-	  MTCC_FAILED_DAMAGED, RBT_OMSGR, RBT_OMSGR,		/* Damaged Cartridge Ejected */
+	  MTCC_FAILED_DAMAGED, RBT_NORETRY, RBT_FAST_RETRY,		/* Damaged Cartridge Ejected */
 	  MTCC_NO_DEVLIB, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN,	/* Device is not in library */
-	  MTCC_LIB_OFFLINE, RBT_OMSGR, RBT_OMSGR,		/* Library is Offline to Host */
+	  MTCC_LIB_OFFLINE, RBT_NORETRY, RBT_FAST_RETRY,		/* Library is Offline to Host */
 	};
 	int i;
 
@@ -662,23 +662,23 @@ int cc;		/* error returned by the mount/dismount routine */
 	  {STATUS_DRIVE_IN_USE, RBT_DMNT_FORCE, RBT_DMNT_FORCE},
 	  {STATUS_DRIVE_OFFLINE, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN},
 	  {STATUS_INVALID_VOLUME, RBT_NORETRY, RBT_NORETRY},	/* syntax error in vid */
-	  {STATUS_IPC_FAILURE, RBT_OMSGR, RBT_OMSGR},
+	  {STATUS_IPC_FAILURE, RBT_NORETRY, RBT_FAST_RETRY},
 	  {STATUS_LIBRARY_FAILURE, RBT_CONF_DRV_DN, RBT_CONF_DRV_DN},
 	  {STATUS_LIBRARY_NOT_AVAILABLE, RBT_FAST_RETRY, RBT_FAST_RETRY},
-	  {STATUS_LSM_OFFLINE, RBT_OMSGR, RBT_OMSGR},
-	  {STATUS_MISPLACED_TAPE, RBT_OMSG_NORTRY, RBT_OMSG_NORTRY},
+	  {STATUS_LSM_OFFLINE, RBT_NORETRY, RBT_FAST_RETRY},
+	  {STATUS_MISPLACED_TAPE, RBT_NORETRY, RBT_NORETRY},
 	  {STATUS_PENDING, RBT_DMNT_FORCE, RBT_DMNT_FORCE},	/* corrupted database */
 #if TMS
-	  {STATUS_VOLUME_IN_DRIVE, RBT_OMSG_SLOW_R, RBT_NORETRY},	/* volume in use */
+	  {STATUS_VOLUME_IN_DRIVE, RBT_SLOW_RETRY, RBT_NORETRY},	/* volume in use */
 #else
 	  {STATUS_VOLUME_IN_DRIVE, RBT_SLOW_RETRY, RBT_NORETRY}, 
 #endif
 	  {STATUS_VOLUME_NOT_IN_DRIVE, RBT_NORETRY, RBT_DMNT_FORCE}, /* vid mismatch on unload */
-	  {STATUS_VOLUME_NOT_IN_LIBRARY, RBT_OMSG_NORTRY, RBT_OK},
+	  {STATUS_VOLUME_NOT_IN_LIBRARY, RBT_NORETRY, RBT_OK},
 	  {STATUS_VOLUME_IN_USE, RBT_FAST_RETRY, RBT_FAST_RETRY},	/* volume in transit */
-	  {STATUS_NI_FAILURE, RBT_OMSGR, RBT_OMSGR},		/* contact with ACSLS lost */
-	  {STATUS_INVALID_MEDIA_TYPE, RBT_OMSG_NORTRY, RBT_OMSG_NORTRY},
-	  {STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_OMSGR, RBT_NORETRY},
+	  {STATUS_NI_FAILURE, RBT_NORETRY, RBT_FAST_RETRY},		/* contact with ACSLS lost */
+	  {STATUS_INVALID_MEDIA_TYPE, RBT_NORETRY, RBT_NORETRY},
+	  {STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_NORETRY, RBT_NORETRY},
 	};
 	int i;
 
@@ -1013,17 +1013,17 @@ int req_type;	/* 0 --> mount, 1 --> dismount */
 int cc;		/* error returned by the mount/dismount routine */
 {
 	struct rbterr_codact dmserr_acttbl[] = {
-	  EFBS_COM_NOTEXE, RBT_OMSGR, RBT_OMSGR,	/* FBS not running */
+	  EFBS_COM_NOTEXE, RBT_NORETRY, RBT_FAST_RETRY,	/* FBS not running */
 	  EFBS_DMS_INIT, RBT_FAST_RETRY, RBT_FAST_RETRY, /* DMS initializing */
-	  EFBS_DMS_DOPEN, RBT_OMSGR, RBT_OMSGR,		/* DMS door open */
-	  EFBS_ME_DOROPN1, RBT_OMSGR, RBT_OMSGR,	/* door open 1 */
+	  EFBS_DMS_DOPEN, RBT_NORETRY, RBT_FAST_RETRY,		/* DMS door open */
+	  EFBS_ME_DOROPN1, RBT_NORETRY, RBT_FAST_RETRY,	/* door open 1 */
 	  EFBS_DMP_DIRUSE, RBT_DMNT_FORCE, RBT_DMNT_FORCE, /* DIR is in use */
-	  EFBS_DMP_NOSHCAS, RBT_OMSG_NORTRY, RBT_OK,	/* no such cassette */
-	  EFBS_DMP_NOTREDY, RBT_OMSGR, RBT_OMSGR,	/* DMS not ready */
-	  EFBS_DMP_DIRINTO, RBT_OMSGR, RBT_OMSGR,	/* DIR IN timeout */
+	  EFBS_DMP_NOSHCAS, RBT_NORETRY, RBT_OK,	/* no such cassette */
+	  EFBS_DMP_NOTREDY, RBT_NORETRY, RBT_FAST_RETRY,	/* DMS not ready */
+	  EFBS_DMP_DIRINTO, RBT_NORETRY, RBT_FAST_RETRY,	/* DIR IN timeout */
 	  EFBS_DMP_UKNCASS, RBT_DMNT_FORCE, RBT_DMNT_FORCE, /* unknown cassette */
-	  EFBS_DMP_LOCAL, RBT_OMSGR, RBT_OMSGR,	/* DIR remote selector is OFF */
-	  EFBS_PSY_STOP, RBT_OMSGR, RBT_OMSGR,		/* FBS will stop soon */
+	  EFBS_DMP_LOCAL, RBT_NORETRY, RBT_FAST_RETRY,	/* DIR remote selector is OFF */
+	  EFBS_PSY_STOP, RBT_NORETRY, RBT_FAST_RETRY,		/* FBS will stop soon */
 	};
 	int i;
 
@@ -1657,7 +1657,7 @@ int vsnretry;
                                     "cur_vid", TL_MSG_PARAM_STR, vid,
                                     "cur_unm", TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "volume not in library" );
-		RETURN (RBT_OMSG_NORTRY);
+		RETURN (RBT_NORETRY);
 	}
 	if (element_info.element_type != 2) {
 		sprintf (msg, TP041, "mount", vid, cur_unm, "volume in use");
@@ -1668,7 +1668,7 @@ int vsnretry;
                                     "cur_vid", TL_MSG_PARAM_STR, vid,
                                     "cur_unm", TL_MSG_PARAM_STR, cur_unm,
                                     "Message", TL_MSG_PARAM_STR, "volume in use" );
-		RETURN (RBT_OMSG_SLOW_R);
+		RETURN (RBT_SLOW_RETRY);
 	}
 	if ((c = smc_move_medium (smc_fd, smc_ldr, element_info.element_address,
 	    robot_info.device_start+drvord, side)) < 0) {
