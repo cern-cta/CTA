@@ -67,9 +67,7 @@ namespace castor{
 
 	this->openflags=RM_O_RDONLY;
 	this->default_protocol = "rfio";
-	
-	
-	
+		
       }
 
 
@@ -92,22 +90,8 @@ namespace castor{
 	  default:
 	    /* second, process as a tapeRecall, as a replica or just change the subrequest.status */
 	    /* it corresponds to the huge switch on the stager_db_service.c  */
-	    switchScheduling(caseToSchedule);
+	    switchScheduling(caseToSchedule);/* we call internally the rmjob */
 	    
-	    if((rfs.empty()) == false){
-	      /* if the file exists we don't have any size requirements */
-	      this->xsize = 0;
-	    }
-	    
-	    /* build the rmjob struct and submit the job */
-	    stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	    if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerPrepareToGetHandler handle) Error on rm_enterjob"<<std::endl;
-	      throw(ex);
-	    }	
-	    rm_freejob(rmjob_out);
 	    break;
 	  }
 	  
@@ -131,18 +115,18 @@ namespace castor{
 	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
+	}catch(castor::exception::Exception e){
 
-	}catch(castor::exception::Exception ex){
-	  if(rmjob_out != NULL){
-	    rm_freejob(rmjob_out);
-	  }
+	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
+	  /* we don t execute: dbService->updateRep ..*/
 	  if(stgReplyHelper != NULL){
-	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
+	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerPrepareToGetHandler) Error"<<e.getMessage()<<std::endl;
 	  throw ex;
-	}
+	}  
 
       }
 
@@ -160,39 +144,55 @@ namespace castor{
       void StagerPrepareToGetHandler::switchScheduling(int caseToSchedule) throw(castor::exception::Exception)
       {
 	
-	switch(caseToSchedule){
+	try{
+	  switch(caseToSchedule){
+	    
+	  case 2: //normal tape recall
+	    
+	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
+	    
+	    break;
+	    
+	    
+	  case 4:
+	    break;
 
-	case 2: //normal tape recall
-	 
-	  stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
-	  
-	  break;
-
-
-	case 4:
-	  break;
-	case 1:	 
-	  
-	  bool isToReplicate=replicaSwitch();
-	  
-	  if(isToReplicate){
-
-	    processReplicaAndHostlist();
+	  case 1:	 
+	    
+	    bool isToReplicate=replicaSwitch();
+	    
+	    if(isToReplicate){	      
+	      processReplicaAndHostlist();
+	    }
+	    /**********************************************/
+	    /* build the rmjob struct and submit the job */
+	     if(rfs.empty() == false){
+	      /* if the file exists we don't have any size requirements */
+	      this->xsize = 0;
+	    }
+	    rmMasterProcessJob();   	  
+	    break;
+	    
+	    
+	  default:
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->isSubRequestToSchedule returns an invalid value"<<std::endl;
+	    throw (ex);
+	    break;
 	  }
 
-	  break;
 
-	
-	default:
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->isSubRequestToSchedule returns an invalid value"<<std::endl;
-	  throw (ex);
-	  break;
+	}catch(castor::exception::Exception e){
+	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
+	  /* we don t execute: dbService->updateRep ..*/
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerPrepareToGetHandler) Error"<<e.getMessage()<<std::endl;
+	  throw ex;
 	}
 	
       }//end switchScheduling
-      
-
+	
+	
       /***********************************************************************/
       /*    destructor                                                      */
       StagerPrepareToGetHandler::~StagerPrepareToGetHandler() throw()

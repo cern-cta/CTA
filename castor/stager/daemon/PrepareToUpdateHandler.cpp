@@ -74,7 +74,7 @@ namespace castor{
 	}
 	
 	
-	this->openflags=RM_O_RDWR; /* since we aren't gonna use the rm, we don't really need it */
+	this->openflags=RM_O_RDWR;
 	this->default_protocol = "rfio";
 
 	
@@ -114,15 +114,6 @@ namespace castor{
 	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	    switchScheduling(caseToSchedule);
 	    
-	    /* build the rmjob struct and submit the job */
-	    stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	    if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerPrepareToUpdateHandler handle) Error on rm_enterjob"<<std::endl;
-	      throw ex;
-	    }
-	    rm_freejob(this->rmjob_out);
 	  }
 	  
 	  
@@ -145,16 +136,16 @@ namespace castor{
 	  }
 	  
 	
-	}catch(castor::exception::Exception ex){
+	}catch(castor::exception::Exception e){
 
 	  if(stgReplyHelper != NULL){
 	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	  if(rmjob_out != NULL){
-	    rm_freejob(this->rmjob_out);
-	  }
-	  throw(ex);
+	 
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerPrepareToUpdateHandler) Error"<<e.getMessage()<<std::endl;
+	  throw ex;
 	}
       }
 

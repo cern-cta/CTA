@@ -114,33 +114,15 @@ namespace castor{
 	      /* since the file doesn't exist, we don't need the read flag */
 	      this->openflags = RM_O_WRONLY;
 	     
-	      /* build the rmjob struct and submit the job */
-	      stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	      buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	      if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
-		castor::exception::Exception ex(SEINTERNAL);
-		ex.getMessage()<<"(StagerUpdateHandler handle) Error on rm_enterjob"<<std::endl;
-		throw ex;
-	      }
-	      rm_freejob(rmjob_out);
+	      rmMasterProcessJob();
 	    }
 	  }else{
-	      
-	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
-	    switchScheduling(caseToSchedule);
-	    
+	   
 	    /* since the file exist, we need the read flag */
 	    this->openflags = RM_O_RDWR;
+	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
+	    switchScheduling(caseToSchedule);/* we call internally the rmjob */
 
-	    /* build the rmjob struct and submit the job */
-	    stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	    if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0 ){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerUpdateHandler handle) Error on rm_enterjob"<<std::endl;
-	      throw ex;
-	    }
-	    rm_freejob(rmjob_out);
 	  }
 	  
 	  
@@ -152,10 +134,10 @@ namespace castor{
 	  }
 	  
 
-	}catch(castor::exception::Exception ex){
-	  if(rmjob_out != NULL){
-	    rm_freejob(rmjob_out);
-	  }
+	}catch(castor::exception::Exception e){
+	 
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerUpdateHandler) Error"<<e.getMessage()<<std::endl;
 	  throw ex;
 	}
       }

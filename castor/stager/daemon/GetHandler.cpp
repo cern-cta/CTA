@@ -86,45 +86,25 @@ namespace castor{
 	  jobOriented();
 	  
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
-	  switchScheduling(caseToSchedule);
-	  
-	  if(rfs.empty() == false){
-	    /* if the file exists we don't have any size requirements */
-	    this->xsize = 0;
-	  }
-	  
-	  
-	  /* build the rmjob struct and submit the job */
-	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	  this->buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerGetHandler handle) Error on rm_enterjob"<<std::endl;
-	    throw(ex);	  
-	  }
-	  rm_freejob(this->rmjob_out);
+	  switchScheduling(caseToSchedule);/* we call internally the rmjob */
+	   
 
 	  /*  Update subrequestStatus */
 	  if((caseToSchedule != 2) && (caseToSchedule != 4)){
 	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
 	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	  }
-	  
-	}catch(castor::exception::Exception ex){
+	  }	  
+
+	}catch(castor::exception::Exception e){
+
 	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
 	  /* we don t execute: dbService->updateRep ..*/
-	  if(rmjob_out != NULL){
-	    rm_freejob(this->rmjob_out);
-	  }
-	  throw(ex);
-	}
-	
-	  
+
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerGetHandler) Error"<<e.getMessage()<<std::endl;
+	  throw ex;
+	}  
       }
-
-
-      
-
 
       StagerGetHandler::~StagerGetHandler()throw(){
 	

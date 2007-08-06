@@ -94,15 +94,7 @@ namespace castor{
 	    }
 	    this->hostlist.clear();
 	    
-	    /* build the rmjob struct and submit the job */
-	    stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	    buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	    if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) !=0){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerPutHandler handle) Error on rm_enterjob"<<std::endl;
-	      throw ex;
-	    }
-	    rm_freejob(rmjob_out);
+	    rmMasterProcessJob();
 	    
 	    /* updateSubrequestStatus Part: */
 	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
@@ -117,12 +109,15 @@ namespace castor{
 	    throw ex; 
 	  }
 	  
-	}catch(castor::exception::Exception ex){
-	  if(rmjob_out != NULL){
-	    rm_freejob(rmjob_out);
-	  }
+	}catch(castor::exception::Exception e){
+	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
+	  /* we don t execute: dbService->updateRep ..*/
+	  
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerGetHandler) Error"<<e.getMessage()<<std::endl;
 	  throw ex;
 	}
+	
       }/* end StagerPutHandler::handle()*/
       
       

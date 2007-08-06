@@ -80,29 +80,15 @@ namespace castor{
 	  
 	  /* scheduling Part */
 	  /* first use the stager service to get the possible sources for the required file */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);/*84 */
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	  switchScheduling(caseToSchedule);
-	  
-	  if((rfs.empty()) == false){
-	    /* if the file exists we don't have any size requirements */
-	    this->xsize = 0;
-	  }
-	  
-	  /* build the rmjob struct and submit the job */
-	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	  buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Error on rm_enterjob"<<std::endl;
-	    throw ex;
-	  }
-	  rm_freejob(rmjob_out);
-	
+
 	  /* updateSubrequestStatus Part: */
 	  if((caseToSchedule != 2) && (caseToSchedule != 4)){
 	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
 	  }
 	  if(caseToSchedule != 4){
+
 	    /* replyToClient Part: */
 	    /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
 	    /* so copy and paste for the exceptions !!!*/
@@ -118,16 +104,17 @@ namespace castor{
 	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	}catch(castor::exception::Exception ex){
-	  if(rmjob_out != NULL){
-	    rm_freejob(rmjob_out);
-	  }
+
+	}catch(castor::exception::Exception e){
+	 
 	  if(stgReplyHelper != NULL){
 	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	  stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
-	  throw(ex);
+	  
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerRepackHandler) Error"<<e.getMessage()<<std::endl;
+	  throw ex;
 	}
       }
 

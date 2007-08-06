@@ -124,6 +124,10 @@ namespace castor{
 	    if(isToReplicate){  
 	      processReplicaAndHostlist();
 	    }
+
+	    /**********************************************/
+	    /* build the rmjob struct and submit the job */
+	    rmMasterProcessJob();   
 	    break;
 
 	  case 4:
@@ -131,9 +135,8 @@ namespace castor{
 	    break;
  
 	  case 0:
-	  stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
-	  
-	  
+	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
+	    break;
 	  
 	  default:
 	    castor::exception::Exception ex(SEINTERNAL);
@@ -142,6 +145,8 @@ namespace castor{
 	    break;
 	  }
 	}catch (castor::exception::Exception e){
+	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
+	  /* we don t execute: dbService->updateRep ..*/
 	  castor::exception::Exception ex(e.code());
 	  ex.getMessage()<<"(Stager__Handler) Error"<<e.getMessage()<<std::endl;
 	  throw ex;
@@ -288,6 +293,38 @@ namespace castor{
 
       }
 
+	
+      /*******************************************************************************************/
+      /* build the rmjob needed structures(buildRmJobHelperPart() and buildRmJobRequestPart())  */
+      /* and submit the job  */
+      /****************************************************************************************/
+      void StagerJobRequestHandler::rmMasterProcessJob() throw(castor::exception::Exception){
+	try{
+	  int type = stgRequestHelper->fileRequest->type();
+	  if((type==OBJ_StageGetRequest)||(type==OBJ_StagePrepareToGetRequest)||(type==OBJ_StageRepackRequest)){
+	    if(rfs.empty() == false){
+	      /* if the file exists we don't have any size requirements */
+	      this->xsize = 0;
+	    }
+	  }
+	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
+	  this->buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
+	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerGetHandler handle) Error on rm_enterjob"<<std::endl;
+	    throw(ex);	  
+	  }
+	  rm_freejob(this->rmjob_out);
+	
+	}catch(castor::exception::Exception e){
+	  if(rmjob_out != NULL){
+	    rm_freejob(this->rmjob_out);
+	  }
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(Stager__Handler) Error"<<e.getMessage()<<std::endl;
+	  throw ex;
+	}
+      }
 
 
       /*****************************************************************************************************/
