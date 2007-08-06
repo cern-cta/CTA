@@ -42,7 +42,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
-
+#include <string.h>
 
 
 namespace castor{
@@ -100,10 +100,8 @@ namespace castor{
 	/* get from the stagerService using as key Cnsfileclass.name (JOB ORIENTED)*/
 	castor::stager::FileClass* fileClass;
        
-	std::string username;
-	//[RM_MAXUSRNAMELEN+1];
-	std::string groupname;
-	//[RM_MAXGRPNAMELEN+1];
+	char username[RM_MAXUSRNAMELEN+1];
+	char groupname[RM_MAXGRPNAMELEN+1];
 
 	/* Cuuid_t thread safe variables */ 
 	Cuuid_t subrequestUuid;
@@ -197,7 +195,10 @@ namespace castor{
 	  if(this->svcClassName.empty()){  /* we set the default svcClassName */
 	    this->svcClassName="default";
 	    fileRequest->setSvcClassName(this->svcClassName);
-	    
+
+	    /* it isnt really necessary and it causes and segFault on SvcClass.hpp */
+	    /*  svcClass->setName(this->svcClassName);*/
+
 	    this->svcClassName=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly updated */
 	    if(this->svcClassName.empty()){      
 	      castor::exception::Exception ex(SESVCCLASSNFND);
@@ -306,7 +307,7 @@ namespace castor{
 	/*  initialize the partition mask with svcClass.name()  or get it:called in StagerRequest.jobOriented() */
 	/*******************************************************************************************************/
 	inline std::string getPartitionMask() throw(castor::exception::Exception){
-	  if(svcClass->name().empty()){
+	  if(svcClassName.empty()){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper getPartitionMask) svcClassName is empty"<<std::endl;
 	    throw ex;
@@ -363,8 +364,14 @@ namespace castor{
 	    throw ex;
 	  }
    
-	  this->username.copy(this_passwd->pw_name,RM_MAXUSRNAMELEN);
-	  this->groupname.copy(this_gr->gr_name,RM_MAXGRPNAMELEN);
+	  if((this->username) != NULL){
+	    strncpy(username,this_passwd->pw_name,RM_MAXUSRNAMELEN);
+	    username[RM_MAXUSRNAMELEN]='\0';
+	  }
+	  if((this->groupname) != NULL){
+	    strncpy(groupname,this_gr->gr_name,RM_MAXGRPNAMELEN);
+	    groupname[RM_MAXUSRNAMELEN]='\0';
+	  }
 	}
       
 
@@ -402,7 +409,7 @@ namespace castor{
 	/**************************************************************************************************/
 	inline bool checkFilePermission() throw(castor::exception::Exception){
 	  bool filePermission = true;
-	  int type =  this->subrequest->type();
+	  int type =  this->fileRequest->type();
 	  std::string filename = this->subrequest->fileName();
 	  uid_t euid = this->fileRequest->euid();
 	  uid_t egid = this->fileRequest->egid();
