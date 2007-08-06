@@ -553,22 +553,12 @@ int s ;
      if ( (status == 0) &&
           (status = unmarshall_STRINGN( p, path, MAXFILENAMSIZE)) == -1 )
        rcode = E2BIG;
-     if ( (setgid(gid)<0) || (setuid(uid)<0) )  {
+     if ( (setgroups(0, NULL)<0) || (setgid(gid)<0) || (setuid(uid)<0) )  {
        status= -1 ;
        rcode= errno ;
        log(LOG_ERR,"srreadlink(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
      }
      
-#if ( defined ( _AIX ) && defined(_IBMR2))
-     /* 
-      * for RS6000, setgid() and setuid() is not enough 
-      */
-     if ( !status && setgroups( 0 , NULL) <0 ) {
-       status= -1 ;
-       rcode= errno ;
-       log(LOG_ERR,"srreadlink(): Unable to setup the process to group ID\n");
-     }
-#endif
      log(LOG_INFO,"srreadlink() : Solving %s\n",path);
      if (status == 0) {
        rcode = readlink( path, lpath, MAXFILENAMSIZE) ;
@@ -1057,7 +1047,7 @@ int     fd;
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
-     if ( (setgid(gid)<0) || (setuid(uid)<0) )  {
+     if ( (setgroups(0, NULL)<0) || (setgid(gid)<0) || (setuid(uid)<0) )  {
        status= -1 ;
        rcode= errno ;
        log(LOG_ERR,"srlockf(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
@@ -1441,20 +1431,11 @@ int     rt;
        log(LOG_ERR,"raccess: wrong mode 0x%x\n", mode);
      }
      
-     if ( (! status) && ((setgid(gid)<0) || (setuid(uid)<0)) )  {
+     if ( (! status) && ((setgroups(0, NULL)<0) || (setgid(gid)<0) || (setuid(uid)<0)) )  {
        status= errno ;
        log(LOG_ERR,"raccess: unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
      }
      
-#if ( defined ( _AIX ) && defined(_IBMR2))
-     /* 
-      * for RS6000, setgid() and setuid() is not enough 
-      */
-     if ( !status && setgroups( 0 , NULL) <0 ) {
-       status = errno ;
-       log(LOG_ERR,"Unable to setup the process to group ID\n");
-     }
-#endif
      if (!status) {
        if ((mode & (R_OK | W_OK | X_OK)) != 0) {
          if ((mode & R_OK) == R_OK) {
@@ -3616,21 +3597,11 @@ char *permstr;          /* permission string for the request */
       log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
       return -2 ;
    }
-   if ( setgid((gid_t)gid)<0 || setuid((uid_t)uid)<0 )  {
+   if ( (setgroups(0, NULL)<0) || (setgid((gid_t)gid)<0) || (setuid((uid_t)uid)<0) )  {
       *ptrcode = errno ;
       log(LOG_ERR,"chsuser(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
       return -2 ;
    }
-#if ( defined ( _AIX ) && defined(_IBMR2))
-   /*
-    * for RS6000, setgid() and setuid() is not enough
-    */
-   if ( setgroups(0 , NULL) <0 ) {
-      *ptrcode = errno ;
-      log(LOG_ERR,"chsuser():Unable to setup the process to group ID\n");
-      return -1 ;
-   }
-#endif
    return 0 ;
 }
 

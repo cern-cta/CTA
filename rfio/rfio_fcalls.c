@@ -1,5 +1,5 @@
 /*
- * $Id: rfio_fcalls.c,v 1.2 2004/12/07 14:17:19 jdurand Exp $
+ * $Id: rfio_fcalls.c,v 1.3 2007/08/06 13:05:17 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.2 $ $Date: 2004/12/07 14:17:19 $ CERN/IT/PDP/DM Felix Hassine" ;
+static char sccsid[] = "@(#)$RCSfile: rfio_fcalls.c,v $ $Revision: 1.3 $ $Date: 2007/08/06 13:05:17 $ CERN/IT/PDP/DM Felix Hassine" ;
 #endif /* not lint */
 
 /* rfio_fcalls.c        - Remote file I/O - server FORTRAN calls        */
@@ -295,23 +295,13 @@ int 	bet ;
        append = openopt & FFOOPT_A;
        trunc = openopt & FFOOPT_T;
 #if !defined(_WIN32)
-       if ((setgid(gid)<0) || (setuid(uid)<0))  {
+       if ( (setgroups(0, NULL)<0) || (setgid(gid)<0) || (setuid(uid)<0))  {
          status = errno;
          log(LOG_ERR, "rxyopen: unable to setuid,gid(%d,%d): %s\n", uid, gid, strerror(errno));
        }
        else
 #endif	     
-       {
-#if ( defined ( _AIX ) && defined(_IBMR2))
-         /*
-          * for RS6000, setgid() and setuid() is not enough
-          */
-         if ( setgroups( 0 , NULL) <0 ) {
-           status = errno ;
-           log(LOG_ERR,"Unable to setup the process to group ID\n");
-         }
-#endif
-         
+       {         
          status=switch_open(access, &lun, filename, &filen, &lrecl, (LONG *)&append,(LONG *)&trunc,LLTM);
          log(LOG_DEBUG, "rxyopen: %d\n", status);
        }
