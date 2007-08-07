@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/06/29 15:03:27 $ $Author: waldron $
+ * @(#)$RCSfile: RmAdminNode.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/07 15:08:39 $ $Author: waldron $
  *
  * command line that allows to change a node status and admin status in RmMaster
  *
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
     }
 
     // RmMaster Port
-    if (-1 ==  rmMasterPort) {
+    if (-1 == rmMasterPort) {
       char* p;
       // check environment
       p = getenv("RM_PORT");
