@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_drop.sql,v $ $Revision: 1.40 $ $Date: 2007/07/23 14:53:12 $ $Author: waldron $
+ * @(#)$RCSfile: castor_oracle_drop.sql,v $ $Revision: 1.41 $ $Date: 2007/08/07 15:36:35 $ $Author: waldron $
  *
  * This file drops all defined entities from a (stager) database.
  * For the time being, it does NOT drop the monitoring-related ones. 
@@ -10,10 +10,10 @@
 
 BEGIN
 
-  -- purge the recycle bin
+  -- Purge the recycle bin
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
  
-  -- drop all objects (ignore monitoring ones!)
+  -- Drop all objects (ignore monitoring ones!)
   FOR rec IN (SELECT object_name, object_type FROM user_objects
               WHERE  object_name NOT LIKE 'PROC_%'
               AND    object_name NOT LIKE 'MONITORING_%'
@@ -35,4 +35,7 @@ BEGIN
       DBMS_SCHEDULER.DROP_JOB(JOB_NAME => rec.object_name, FORCE => TRUE);
     END IF;
   END LOOP;
+
+  -- Purge the recycle bin
+  EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
 END;
