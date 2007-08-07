@@ -80,7 +80,6 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/deleteFileClass.$(MANSUFFIX) \
 	   $(MANDIR)/deleteSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/diskServer_qry.$(MANSUFFIX) \
-	   $(MANDIR)/diskUsage.$(MANSUFFIX) \
 	   $(MANDIR)/listFileClass.$(MANSUFFIX) \
 	   $(MANDIR)/listSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/printFileClass.$(MANSUFFIX) \
@@ -103,7 +102,6 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteFileClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),deleteSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),diskServer_qry.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),diskUsage.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listFileClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printFileClass.$(MANSUFFIX))) \
@@ -127,7 +125,6 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(modifySvcClass) \
 	 ProgramTargetName(deleteFileClass) \
 	 ProgramTargetName(deleteSvcClass) \
-	 ProgramTargetName(diskUsage) \
 	 ProgramTargetName(printFileClass) \
 	 ProgramTargetName(printSvcClass) \
 	 ProgramTargetName(c2probe) \
@@ -163,7 +160,6 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(deleteFileClass)) \
 	 FileName($(BIN),ProgramTargetName(deleteSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(diskServer_qry)) \
-	 FileName($(BIN),ProgramTargetName(diskUsage)) \
 	 FileName($(BIN),ProgramTargetName(listFileClass)) \
 	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(printFileClass)) \
@@ -193,7 +189,6 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/deleteFileClass \
 	 $(EXPORTBIN)/deleteSvcClass \
 	 $(EXPORTBIN)/diskServer_qry \
-	 $(EXPORTBIN)/diskUsage \
 	 $(EXPORTBIN)/listFileClass \
 	 $(EXPORTBIN)/listSvcClass \
 	 $(EXPORTBIN)/printFileClass \
@@ -229,7 +224,6 @@ NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(diskUsage,diskUsage.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(nsGetPath,nsGetPath.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB2),$(LIBS2) $(CKSUMLIB))
 NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB2),-pthread $(LIBS2))
@@ -271,9 +265,6 @@ IEXPORT(deleteSvcClass,$(EXPORTBIN),755);
 
 InstallProgram(diskServer_qry,$(BIN),root,bin,755)
 IEXPORT(diskServer_qry,$(EXPORTBIN),755);
-
-InstallProgram(diskUsage,$(BIN),root,bin,755)
-IEXPORT(diskUsage,$(EXPORTBIN),755);
 
 InstallProgram(listFileClass,$(BIN),root,bin,755)
 IEXPORT(listFileClass,$(EXPORTBIN),755);
@@ -341,7 +332,6 @@ IMANPAGE(modifySvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(deleteFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(deleteSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(diskServer_qry,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(diskUsage,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(listFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(listSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printFileClass,$(MANDIR),$(MANSUFFIX))
@@ -364,7 +354,6 @@ EMANPAGE(modifySvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(deleteFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(deleteSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(diskServer_qry,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(diskUsage,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(listFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(listSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
