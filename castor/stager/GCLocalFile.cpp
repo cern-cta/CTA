@@ -40,6 +40,8 @@
 castor::stager::GCLocalFile::GCLocalFile() throw() :
   m_fileName(""),
   m_diskCopyId(0),
+  m_fileId(0),
+  m_nsHost(""),
   m_id(0) {
 }
 
@@ -64,6 +66,8 @@ void castor::stager::GCLocalFile::print(std::ostream& stream,
   // Output of all members
   stream << indent << "fileName : " << m_fileName << std::endl;
   stream << indent << "diskCopyId : " << m_diskCopyId << std::endl;
+  stream << indent << "fileId : " << m_fileId << std::endl;
+  stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

@@ -90,6 +90,8 @@ void castor::io::StreamGCLocalFileCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->type();
   ad->stream() << obj->fileName();
   ad->stream() << obj->diskCopyId();
+  ad->stream() << obj->fileId();
+  ad->stream() << obj->nsHost();
   ad->stream() << obj->id();
 }
 
@@ -109,6 +111,12 @@ castor::IObject* castor::io::StreamGCLocalFileCnv::createObj(castor::IAddress* a
   u_signed64 diskCopyId;
   ad->stream() >> diskCopyId;
   object->setDiskCopyId(diskCopyId);
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  std::string nsHost;
+  ad->stream() >> nsHost;
+  object->setNsHost(nsHost);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

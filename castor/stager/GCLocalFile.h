@@ -111,6 +111,30 @@ int Cstager_GCLocalFile_diskCopyId(struct Cstager_GCLocalFile_t* instance, u_sig
 int Cstager_GCLocalFile_setDiskCopyId(struct Cstager_GCLocalFile_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of fileId
+ * The id of this castor file. This identifies it uniquely
+ */
+int Cstager_GCLocalFile_fileId(struct Cstager_GCLocalFile_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ * The id of this castor file. This identifies it uniquely
+ */
+int Cstager_GCLocalFile_setFileId(struct Cstager_GCLocalFile_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ * The name server hosting this castor file
+ */
+int Cstager_GCLocalFile_nsHost(struct Cstager_GCLocalFile_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ * The name server hosting this castor file
+ */
+int Cstager_GCLocalFile_setNsHost(struct Cstager_GCLocalFile_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

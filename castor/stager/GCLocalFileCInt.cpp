@@ -130,6 +130,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_GCLocalFile_fileId
+  //----------------------------------------------------------------------------
+  int Cstager_GCLocalFile_fileId(castor::stager::GCLocalFile* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GCLocalFile_setFileId
+  //----------------------------------------------------------------------------
+  int Cstager_GCLocalFile_setFileId(castor::stager::GCLocalFile* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GCLocalFile_nsHost
+  //----------------------------------------------------------------------------
+  int Cstager_GCLocalFile_nsHost(castor::stager::GCLocalFile* instance, const char** var) {
+    *var = instance->nsHost().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GCLocalFile_setNsHost
+  //----------------------------------------------------------------------------
+  int Cstager_GCLocalFile_setNsHost(castor::stager::GCLocalFile* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_GCLocalFile_id
   //----------------------------------------------------------------------------
   int Cstager_GCLocalFile_id(castor::stager::GCLocalFile* instance, u_signed64* var) {

@@ -256,6 +256,10 @@ int castor::gc::GcDaemon::start()
             files2Delete->begin();
           it != files2Delete->end();
           it++) {
+	// Construct Cns invariant
+	Cns_fileid fileId;
+	fileId.fileid = (*it)->fileId();
+	strncpy(fileId.server, (*it)->nsHost().c_str(), sizeof(fileId.server));	
         try {
           gcfilestotal++;
           u_signed64 gcfilesize = gcRemoveFilePath((*it)->fileName());
@@ -265,7 +269,7 @@ int castor::gc::GcDaemon::start()
           castor::dlf::Param params[] =
             {castor::dlf::Param("File name", (*it)->fileName()),
              castor::dlf::Param("File size", gcfilesize)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 2, params);
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11, 2, params, &fileId);
           // Add the file to the list of deleted ones
           u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
           deletedFiles.push_back(gcfileid);
@@ -276,14 +280,14 @@ int castor::gc::GcDaemon::start()
             {castor::dlf::Param("File name", (*it)->fileName()),
              castor::dlf::Param("Error", e.getMessage().str()),
              castor::dlf::Param("Origin", strerror(e.code()))};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 3, params);
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 12, 3, params, &fileId);
           // Add the file to the list of failed ones
           u_signed64 *gcfileid = new u_signed64((*it)->diskCopyId());
           failedFiles.push_back(gcfileid);
         }
       } // end of delete files loop
-
-        // log to DLF
+      
+      // log to DLF
       if (0 < gcfilestotal) {
         // "Summary of files removed" message
         castor::dlf::Param params[] =
