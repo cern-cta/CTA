@@ -605,7 +605,7 @@ void CppCppDbCnvWriter::writeOraSqlStatements() {
   // free space (meaning low number of rows) per block
   // The global aim is to reduce the contention on a
   // block because of too many transactions dealing with it
-  stream << ") INITRANS 50 PCTFREE 50;" << endl;
+  stream << ") INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;" << endl;
   // Associations dedicated statements
   for (Assoc* as = assocs.first();
        0 != as;
