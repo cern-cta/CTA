@@ -87,7 +87,7 @@ The following example would configure all ERROR and EMERGENCY messages created b
 .B RHLOG_LOGERROR file:///var/spool/dlf/log x-dlf://castordev.cern.ch
 .B RHLOG_LOGEMERGENCY file:///var/spool/dlf/log x-dlf://castordev2.cern.ch
 
-For convenience a _LOGALL severity level exists to allow all messages to be logged without the need for defining each severity level on its own. Likewise a _LOGSTANDARD severity can also be used to log all messages excluding USAGE and DEBUG severities. Multiple targets of the same type are supported.
+For convenience a _LOGALL severity level exists to allow all messages to be logged without the need for defining each severity level on its own. Likewise a _LOGSTANDARD severity can also be used to log all messages excluding DEBUG messages. Additionally USAGE messages are not recorded remotely. Multiple targets of the same type are supported.
 
 .SH "RETURN VALUE"
 The function returns 0 on success and -1 on error and an appropriate message is stored in
