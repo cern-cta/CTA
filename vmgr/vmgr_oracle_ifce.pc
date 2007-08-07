@@ -4,12 +4,13 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.29 $ $Date: 2006/03/21 15:06:38 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.30 $ $Date: 2007/08/07 14:33:49 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <sqlca.h>
 #ifndef USE_ORACLE
 #define USE_ORACLE
@@ -19,9 +20,12 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_oracle_ifce.pc,v $ $Revision: 1.29 $ 
 #include "vmgr.h"
 #include "vmgr_server.h"
 
+/* prototypes */
+int vmgrlogit(char *func, char *msg, ...);
+
 static sql_context ctx[VMGR_NBTHREADS];
 
-vmgr_init_dbpkg()
+int vmgr_init_dbpkg()
 {
 	int i;
 
@@ -34,7 +38,7 @@ vmgr_init_dbpkg()
 
 EXEC SQL CONTEXT USE :ctx[dbfd->idx];
 
-vmgr_abort_tr(dbfd)
+int vmgr_abort_tr(dbfd)
 struct vmgr_dbfd *dbfd;
 {
 	EXEC SQL ROLLBACK WORK;
@@ -42,14 +46,14 @@ struct vmgr_dbfd *dbfd;
 	return (0);
 }
 
-vmgr_closedb(dbfd)
+int vmgr_closedb(dbfd)
 struct vmgr_dbfd *dbfd;
 {
 	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
 	return (0);
 }
 
-vmgr_delete_denmap_entry(dbfd, rec_addr)
+int vmgr_delete_denmap_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -69,7 +73,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_delete_dgnmap_entry(dbfd, rec_addr)
+int vmgr_delete_dgnmap_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -89,7 +93,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_delete_library_entry(dbfd, rec_addr)
+int vmgr_delete_library_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -109,7 +113,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_delete_model_entry(dbfd, rec_addr)
+int vmgr_delete_model_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -129,7 +133,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_delete_pool_entry(dbfd, rec_addr)
+int vmgr_delete_pool_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -149,7 +153,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_delete_side_entry(dbfd, rec_addr)
+int vmgr_delete_side_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -169,7 +173,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_delete_tag_entry(dbfd, rec_addr)
+int vmgr_delete_tag_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -189,7 +193,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_delete_tape_entry(dbfd, rec_addr)
+int vmgr_delete_tape_entry(dbfd, rec_addr)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 {
@@ -209,7 +213,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (0);
 }
 
-vmgr_end_tr(dbfd)
+int vmgr_end_tr(dbfd)
 struct vmgr_dbfd *dbfd;
 {
 	EXEC SQL COMMIT WORK;
@@ -217,7 +221,7 @@ struct vmgr_dbfd *dbfd;
 	return (0);
 }
 
-vmgr_get_denmap_entry(dbfd, model, media_letter, density, denmap_entry, lock, rec_addr)
+int vmgr_get_denmap_entry(dbfd, model, media_letter, density, denmap_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *model;
 char *media_letter;
@@ -284,7 +288,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_dgnmap_entry(dbfd, model, library, dgnmap_entry, lock, rec_addr)
+int vmgr_get_dgnmap_entry(dbfd, model, library, dgnmap_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *model;
 char *library;
@@ -348,7 +352,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_library_entry(dbfd, library_name, library_entry, lock, rec_addr)
+int vmgr_get_library_entry(dbfd, library_name, library_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *library_name;
 struct vmgr_tape_library *library_entry;
@@ -413,7 +417,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_model_entry(dbfd, model, model_entry, lock, rec_addr)
+int vmgr_get_model_entry(dbfd, model, model_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *model;
 struct vmgr_tape_media *model_entry;
@@ -478,7 +482,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_pool_entry(dbfd, pool_name, pool_entry, lock, rec_addr)
+int vmgr_get_pool_entry(dbfd, pool_name, pool_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *pool_name;
 struct vmgr_tape_pool *pool_entry;
@@ -545,7 +549,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_side_by_fullid (dbfd, vid, side, side_entry, lock, rec_addr)
+int vmgr_get_side_by_fullid (dbfd, vid, side, side_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *vid;
 int side;
@@ -611,7 +615,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_tag_by_vid(dbfd, vid, tag_entry, lock, rec_addr)
+int vmgr_get_tag_by_vid(dbfd, vid, tag_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *vid;
 struct vmgr_tape_tag *tag_entry;
@@ -672,7 +676,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_tape_by_vid(dbfd, vid, tape_entry, lock, rec_addr)
+int vmgr_get_tape_by_vid(dbfd, vid, tape_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *vid;
 struct vmgr_tape_info *tape_entry;
@@ -751,7 +755,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_get_side_by_size(dbfd, poolname, Size, side_entry, lock, rec_addr)
+int vmgr_get_side_by_size(dbfd, poolname, Size, side_entry, lock, rec_addr)
 struct vmgr_dbfd *dbfd;
 char *poolname;
 u_signed64 Size;
@@ -765,27 +769,41 @@ vmgr_dbrec_addr *rec_addr;
 	struct sqlca sqlca;
 	EXEC SQL DECLARE tape_size_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		 vid, side, poolname, status, estimated_free_space, nbfiles
 		FROM vmgr_tape_side
-		WHERE estimated_free_space =
-			(SELECT min(estimated_free_space)
-			FROM vmgr_tape_side
-			WHERE poolname = :poolname AND status = 0 AND
-			 estimated_free_space >= :reqsize)
-		AND poolname = :poolname AND status = 0
-		AND ROWNUM < 2
-		FOR UPDATE;
+		WHERE vid = (
+                  SELECT vid FROM (
+                    SELECT vid
+		    FROM vmgr_tape_side
+		    WHERE estimated_free_space =
+                          (SELECT min(estimated_free_space)
+			     FROM vmgr_tape_side
+			    WHERE poolname = :poolname
+			      AND status = 0 
+			      AND estimated_free_space >= :reqsize)
+		    AND poolname = :poolname
+		    AND status = 0
+		    ORDER BY DBMS_RANDOM.VALUE
+                  ) WHERE ROWNUM < 2
+                ) FOR UPDATE;
 	EXEC SQL DECLARE tape_maxsize_cursor4upd CURSOR FOR
 		SELECT ROWID,
-		 VID, SIDE, POOLNAME, STATUS, ESTIMATED_FREE_SPACE, NBFILES
+		 vid, side, poolname, status, estimated_free_space, nbfiles
 		FROM vmgr_tape_side
-		WHERE estimated_free_space =
-			(SELECT max(estimated_free_space)
-			FROM vmgr_tape_side
-			WHERE poolname = :poolname AND status = 0)
-		AND poolname = :poolname AND status = 0
-		AND ROWNUM < 2
-		FOR UPDATE;
+		WHERE vid = (
+                  SELECT vid FROM (
+                    SELECT vid
+		    FROM vmgr_tape_side
+		    WHERE estimated_free_space =
+                          (SELECT max(estimated_free_space)
+			     FROM vmgr_tape_side
+			    WHERE poolname = :poolname
+			      AND status = 0)
+		    AND poolname = :poolname
+		    AND status = 0
+		    ORDER BY DBMS_RANDOM.VALUE
+                  ) WHERE ROWNUM < 2
+                ) FOR UPDATE;
 
 	strcpy (func, "vmgr_get_tape_by_size");
 	EXEC SQL OPEN tape_size_cursor4upd;
@@ -830,7 +848,7 @@ vmgr_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-vmgr_insert_denmap_entry(dbfd, denmap_entry)
+int vmgr_insert_denmap_entry(dbfd, denmap_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_denmap *denmap_entry;
 {
@@ -862,7 +880,7 @@ struct vmgr_tape_denmap *denmap_entry;
 	return (-1);
 }
 
-vmgr_insert_dgnmap_entry(dbfd, dgnmap_entry)
+int vmgr_insert_dgnmap_entry(dbfd, dgnmap_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_dgnmap *dgnmap_entry;
 {
@@ -894,7 +912,7 @@ struct vmgr_tape_dgnmap *dgnmap_entry;
 	return (-1);
 }
 
-vmgr_insert_library_entry(dbfd, library_entry)
+int vmgr_insert_library_entry(dbfd, library_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_library *library_entry;
 {
@@ -926,7 +944,7 @@ struct vmgr_tape_library *library_entry;
 	return (-1);
 }
 
-vmgr_insert_model_entry(dbfd, model_entry)
+int vmgr_insert_model_entry(dbfd, model_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_media *model_entry;
 {
@@ -958,7 +976,7 @@ struct vmgr_tape_media *model_entry;
 	return (-1);
 }
 
-vmgr_insert_pool_entry(dbfd, pool_entry)
+int vmgr_insert_pool_entry(dbfd, pool_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_pool *pool_entry;
 {
@@ -994,7 +1012,7 @@ struct vmgr_tape_pool *pool_entry;
 	return (-1);
 }
 
-vmgr_insert_side_entry(dbfd, side_entry)
+int vmgr_insert_side_entry(dbfd, side_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_side *side_entry;
 {
@@ -1027,7 +1045,7 @@ struct vmgr_tape_side *side_entry;
 	return (-1);
 }
 
-vmgr_insert_tag_entry(dbfd, tag_entry)
+int vmgr_insert_tag_entry(dbfd, tag_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_tag *tag_entry;
 {
@@ -1058,7 +1076,7 @@ struct vmgr_tape_tag *tag_entry;
 	return (-1);
 }
 
-vmgr_insert_tape_entry(dbfd, tape_entry)
+int vmgr_insert_tape_entry(dbfd, tape_entry)
 struct vmgr_dbfd *dbfd;
 struct vmgr_tape_info *tape_entry;
 {
@@ -1097,7 +1115,7 @@ struct vmgr_tape_info *tape_entry;
 	return (-1);
 }
 
-vmgr_list_denmap_entry(dbfd, bol, denmap_entry, endlist, dblistptr)
+int vmgr_list_denmap_entry(dbfd, bol, denmap_entry, endlist, dblistptr)
 struct vmgr_dbfd *dbfd;
 int bol;
 struct vmgr_tape_denmap *denmap_entry;
@@ -1140,7 +1158,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-vmgr_list_dgnmap_entry(dbfd, bol, dgnmap_entry, endlist, dblistptr)
+int vmgr_list_dgnmap_entry(dbfd, bol, dgnmap_entry, endlist, dblistptr)
 struct vmgr_dbfd *dbfd;
 int bol;
 struct vmgr_tape_dgnmap *dgnmap_entry;
@@ -1183,7 +1201,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-vmgr_list_library_entry(dbfd, bol, library_entry, endlist, dblistptr)
+int vmgr_list_library_entry(dbfd, bol, library_entry, endlist, dblistptr)
 struct vmgr_dbfd *dbfd;
 int bol;
 struct vmgr_tape_library *library_entry;
@@ -1226,7 +1244,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-vmgr_list_model_entry(dbfd, bol, model_entry, endlist, dblistptr)
+int vmgr_list_model_entry(dbfd, bol, model_entry, endlist, dblistptr)
 struct vmgr_dbfd *dbfd;
 int bol;
 struct vmgr_tape_media *model_entry;
@@ -1269,7 +1287,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-vmgr_list_pool_entry(dbfd, bol, pool_entry, endlist, dblistptr)
+int vmgr_list_pool_entry(dbfd, bol, pool_entry, endlist, dblistptr)
 struct vmgr_dbfd *dbfd;
 int bol;
 struct vmgr_tape_pool *pool_entry;
@@ -1316,7 +1334,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-vmgr_list_side_entry(dbfd, bol, vid, pool_name, side_entry, endlist, dblistptr)
+int vmgr_list_side_entry(dbfd, bol, vid, pool_name, side_entry, endlist, dblistptr)
 struct vmgr_dbfd *dbfd;
 int bol;
 char *vid;
@@ -1408,13 +1426,12 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-vmgr_opendb(db_srvr, db_user, db_pwd, dbfd)
+int vmgr_opendb(db_srvr, db_user, db_pwd, dbfd)
 char *db_srvr;
 char *db_user;
 char *db_pwd;
 struct vmgr_dbfd *dbfd;
 {
-	int c;
 	char func[16];
 	int ntries;
 	struct sqlca sqlca;
@@ -1435,7 +1452,7 @@ struct vmgr_dbfd *dbfd;
 	return (-1);
 }
 
-vmgr_start_tr(s, dbfd)
+int vmgr_start_tr(s, dbfd)
 int s;
 struct vmgr_dbfd *dbfd;
 {
@@ -1443,7 +1460,7 @@ struct vmgr_dbfd *dbfd;
 	return (0);
 }
 
-vmgr_update_library_entry(dbfd, rec_addr, library_entry)
+int vmgr_update_library_entry(dbfd, rec_addr, library_entry)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 struct vmgr_tape_library *library_entry;
@@ -1468,7 +1485,7 @@ struct vmgr_tape_library *library_entry;
 	return (0);
 }
 
-vmgr_update_model_entry(dbfd, rec_addr, model_entry)
+int vmgr_update_model_entry(dbfd, rec_addr, model_entry)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 struct vmgr_tape_media *model_entry;
@@ -1491,7 +1508,7 @@ struct vmgr_tape_media *model_entry;
 	return (0);
 }
 
-vmgr_update_pool_entry(dbfd, rec_addr, pool_entry)
+int vmgr_update_pool_entry(dbfd, rec_addr, pool_entry)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 struct vmgr_tape_pool *pool_entry;
@@ -1521,7 +1538,7 @@ struct vmgr_tape_pool *pool_entry;
 	return (0);
 }
 
-vmgr_update_side_entry(dbfd, rec_addr, side_entry)
+int vmgr_update_side_entry(dbfd, rec_addr, side_entry)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 struct vmgr_tape_side *side_entry;
@@ -1547,7 +1564,7 @@ struct vmgr_tape_side *side_entry;
 	return (0);
 }
 
-vmgr_update_tag_entry(dbfd, rec_addr, tag_entry)
+int vmgr_update_tag_entry(dbfd, rec_addr, tag_entry)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 struct vmgr_tape_tag *tag_entry;
@@ -1570,7 +1587,7 @@ struct vmgr_tape_tag *tag_entry;
 	return (0);
 }
 
-vmgr_update_tape_entry(dbfd, rec_addr, tape_entry)
+int vmgr_update_tape_entry(dbfd, rec_addr, tape_entry)
 struct vmgr_dbfd *dbfd;
 vmgr_dbrec_addr *rec_addr;
 struct vmgr_tape_info *tape_entry;
