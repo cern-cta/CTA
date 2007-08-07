@@ -5,6 +5,9 @@
 
 BEGIN
 
+  -- Purge the recycle bin
+  EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
+
   -- Drop all objects (ignore monitoring ones!)
   FOR rec IN (SELECT object_name, object_type FROM user_objects
               WHERE  object_name NOT LIKE 'PROC_%'
@@ -40,7 +43,7 @@ BEGIN
                        INCLUDING CONTENTS AND DATAFILES';
   END LOOP;
 
-  -- purge the recycle bin
+  -- Purge the recycle bin
   EXECUTE IMMEDIATE 'PURGE RECYCLEBIN';
 END;
 
