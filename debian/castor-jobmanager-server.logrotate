@@ -1,0 +1,6 @@
+/var/log/jobmanager /var/spool/jobmanager/log {
+    compress
+    daily
+    missingok
+    rotate 15
+}
