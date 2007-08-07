@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# File		$Id: castorStart.sh,v 1.4 2007/06/13 13:33:49 itglp Exp $
+# File		$Id: castorStart.sh,v 1.5 2007/08/07 15:27:33 waldron Exp $
 #
 # Purpose	Start up CASTOR DAEMONS 
 #
@@ -15,7 +15,7 @@
 #
 
 # global vars:
-DAEMONS="dlfserver rmmaster rmMasterDaemon stager rtcpclientd expertd rhserver"
+DAEMONS="dlfserver jobManager rmMasterDaemon stager rtcpclientd expertd rhserver"
 CONFIGFILE="/etc/castor/castor.conf"
 PID=''
 
@@ -89,7 +89,6 @@ function start_daemons() {
 	for DAEMON in ${DAEMONS[*]}; do
 		echo "Starting ${DAEMON}.."
 		case "$DAEMON" in
-		rmmaster)  /usr/bin/rmmaster --lsf ;;
 		MigHunter) /usr/bin/MigHunter -d ;;
 		*) /usr/bin/${DAEMON} ;;
 		esac
