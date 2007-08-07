@@ -2,18 +2,17 @@
  * Copyright (C) 2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrenterdgnmap.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrenterdgnmap - enter a new triplet dgn/model/library */
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

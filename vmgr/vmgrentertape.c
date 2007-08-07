@@ -2,19 +2,19 @@
  * Copyright (C) 2000-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrentertape.c,v $ $Revision: 1.8 $ $Date: 2002/02/07 06:07:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrentertape - enter a new tape volume */
+#include <ctype.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

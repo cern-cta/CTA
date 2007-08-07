@@ -2,17 +2,15 @@
  * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistdenmap.c,v $ $Revision: 1.4 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*      vmgrlistdenmap - list quadruplets model/media_letter/density/capacity */
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -20,11 +18,11 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistdenmap.c,v $ $Revision: 1.4 $ $Dat
 #include "u64subr.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {
-	int c;
 	int errflg = 0;
 	int flags;
 	vmgr_list list;

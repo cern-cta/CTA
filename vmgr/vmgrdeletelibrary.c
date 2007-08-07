@@ -3,18 +3,17 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletelibrary.c,v $ $Revision: 1.2 $ $Date: 2002/01/18 08:15:11 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	vmgrdeletelibrary - delete a tape library definition */
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

@@ -2,19 +2,18 @@
  * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletepool.c,v $ $Revision: 1.2 $ $Date: 2002/01/18 08:15:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrdeletepool - delete a tape pool definition */
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

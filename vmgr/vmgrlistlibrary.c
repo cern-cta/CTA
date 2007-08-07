@@ -2,18 +2,16 @@
  * Copyright (C) 2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistlibrary.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrlistlibrary - query a given library or list all existing tape libraries */
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -21,7 +19,19 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistlibrary.c,v $ $Revision: 1.1 $ $Da
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+void listentry(library_name, capacity, nb_free_slots, status)
+char *library_name;
+int capacity;
+int nb_free_slots;
+int status;
+{
+	printf ("%-8s CAPACITY %d FREE %d (%5.1f%%)\n",
+		library_name, capacity, nb_free_slots,
+		capacity ? (float)nb_free_slots * 100. / (float)capacity : 0);
+}
+
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -94,15 +104,4 @@ char **argv;
 	WSACleanup();
 #endif
 	exit (0);
-}
-
-listentry(library_name, capacity, nb_free_slots, status)
-char *library_name;
-int capacity;
-int nb_free_slots;
-int status;
-{
-	printf ("%-8s CAPACITY %d FREE %d (%5.1f%%)\n",
-	    library_name, capacity, nb_free_slots,
-	    capacity ? (float)nb_free_slots * 100. / (float)capacity : 0);
 }

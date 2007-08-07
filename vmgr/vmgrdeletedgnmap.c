@@ -2,19 +2,18 @@
  * Copyright (C) 2002 by CERN/IT/DS/HSM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrdeletedgnmap.c,v $ $Revision: 1.1 $ $Date: 2002/01/18 09:02:20 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrdeletedgnmap - delete a triplet dgn/model/library */
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

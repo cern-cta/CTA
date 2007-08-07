@@ -3,17 +3,15 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrgettag.c,v $ $Revision: 1.1 $ $Date: 2003/10/28 11:13:25 $ CERN IT-GD/CT Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	vmgrgettag - get the tag associated with a tape volume */
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -22,7 +20,8 @@ static char sccsid[] = "@(#)$RCSfile: vmgrgettag.c,v $ $Revision: 1.1 $ $Date: 2
 #include "vmgr_api.h"
 extern	char	*optarg;
 extern	int	optind;
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

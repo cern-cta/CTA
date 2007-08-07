@@ -2,18 +2,16 @@
  * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.8 $ $Date: 2003/10/29 07:48:59 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*      vmgrlistmodel - list cartridge model entries */
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -21,7 +19,8 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlistmodel.c,v $ $Revision: 1.8 $ $Date
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

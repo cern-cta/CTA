@@ -2,17 +2,15 @@
  * Copyright (C) 2000-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.17 $ $Date: 2003/01/28 12:51:10 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrlisttape - query a given volume or list all existing tapes */
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
@@ -22,18 +20,96 @@ static char sccsid[] = "@(#)$RCSfile: vmgrlisttape.c,v $ $Revision: 1.17 $ $Date
 #include "vmgr_api.h"
 extern	char	*optarg;
 extern	int	optind;
-main(argc, argv)
+
+void listentry(lp, xflag)
+struct vmgr_tape_info *lp;
+int xflag;
+{
+	time_t ltime;
+	char p_stat = '\0';
+	struct tm *tm;
+	char tmpbuf[9];
+	u_signed64 u64;
+
+	u64 = ((u_signed64) lp->estimated_free_space) * 1024;
+	if (lp->nbsides > 1)
+		printf ("%-6s/%d ", lp->vid, lp->side);
+	else
+		printf ("%-6s   ", lp->vid);
+	printf ("%-6s %-8s %-8s %-3s ",
+		lp->vsn, lp->library, lp->density, lp->lbltype);
+	if (! xflag) {
+		printf ("%-15s %-8sB ", lp->poolname, u64tostru (u64, tmpbuf, 8));
+		ltime = (lp->wtime < lp->rtime) ? lp->rtime : lp->wtime;
+		if (ltime) {
+			tm = localtime (&ltime);
+			printf ("%04d%02d%02d ",
+				tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
+		} else
+			printf ("00000000 ");
+	} else {
+		printf ("%-6s %-2s %-12s %-25s %-15s ",
+			lp->model, lp->media_letter, lp->manufacturer, lp->sn,
+			lp->poolname);
+		if (lp->etime) {
+			tm = localtime (&lp->etime);
+			printf ("%04d%02d%02d ",
+				tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
+		} else
+			printf ("00000000 ");
+		printf ("%-8sB %6d %5d %5d %-10s %-10s %10d %10d ",
+			u64tostru (u64, tmpbuf, 8), lp->nbfiles, lp->rcount,
+			lp->wcount, lp->rhost, lp->whost, lp->rjid, lp->wjid);
+		if (lp->rtime) {
+			tm = localtime (&lp->rtime);
+			printf ("%04d%02d%02d ",
+				tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
+		} else
+			printf ("00000000 ");
+		if (lp->wtime) {
+			tm = localtime (&lp->wtime);
+			printf ("%04d%02d%02d ",
+				tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
+		} else
+			printf ("00000000 ");
+	}
+	if (lp->status & TAPE_FULL) {
+		printf ("FULL");
+		p_stat = '|';
+	}
+	if (lp->status & TAPE_BUSY) {
+		printf (p_stat ? "|BUSY" : "BUSY");
+		p_stat = '|';
+	}
+	if (lp->status & TAPE_RDONLY) {
+		printf (p_stat ? "|RDONLY" : "RDONLY");
+		p_stat = '|';
+	}
+	if (lp->status & EXPORTED) {
+		printf (p_stat ? "|EXPORTED" : "EXPORTED");
+		p_stat = '|';
+	}
+	if (lp->status & DISABLED) {
+		printf (p_stat ? "|DISABLED" : "DISABLED");
+		p_stat = '|';
+	}
+	if (lp->status & ARCHIVED) {
+		printf (p_stat ? "|ARCHIVED" : "ARCHIVED");
+		p_stat = '|';
+	}
+	printf ("\n");
+}
+
+int main(argc, argv)
 int argc;
 char **argv;
 {
 	int c;
-	char dgn[CA_MAXDGNLEN+1];
 	int errflg = 0;
 	int flags;
 	vmgr_list list;
 	struct vmgr_tape_info *lp;
 	char pool_name[CA_MAXPOOLNAMELEN+1];
-	struct vmgr_tape_info *tape_info;
 	char vid[CA_MAXVIDLEN+1];
 #if defined(_WIN32)
 	WSADATA wsadata;
@@ -100,83 +176,4 @@ char **argv;
 	WSACleanup();
 #endif
 	exit (0);
-}
-
-listentry(lp, xflag)
-struct vmgr_tape_info *lp;
-int xflag;
-{
-	time_t ltime;
-	char p_stat = '\0';
-	struct tm *tm;
-	char tmpbuf[9];
-	u_signed64 u64;
-
-	u64 = ((u_signed64) lp->estimated_free_space) * 1024;
-	if (lp->nbsides > 1)
-		printf ("%-6s/%d ", lp->vid, lp->side);
-	else
-		printf ("%-6s   ", lp->vid);
-	printf ("%-6s %-8s %-8s %-3s ",
-	    lp->vsn, lp->library, lp->density, lp->lbltype);
-	if (! xflag) {
-		printf ("%-15s %-8sB ", lp->poolname, u64tostru (u64, tmpbuf, 8));
-		ltime = (lp->wtime < lp->rtime) ? lp->rtime : lp->wtime;
-		if (ltime) {
-			tm = localtime (&ltime);
-			printf ("%04d%02d%02d ",
-			    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
-		} else
-			printf ("00000000 ");
-	} else {
-		printf ("%-6s %-2s %-12s %-25s %-15s ",
-		    lp->model, lp->media_letter, lp->manufacturer, lp->sn,
-		    lp->poolname);
-		if (lp->etime) {
-			tm = localtime (&lp->etime);
-			printf ("%04d%02d%02d ",
-			    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
-		} else
-			printf ("00000000 ");
-		printf ("%-8sB %6d %5d %5d %-10s %-10s %10d %10d ",
-		    u64tostru (u64, tmpbuf, 8), lp->nbfiles, lp->rcount,
-		    lp->wcount, lp->rhost, lp->whost, lp->rjid, lp->wjid);
-		if (lp->rtime) {
-			tm = localtime (&lp->rtime);
-			printf ("%04d%02d%02d ",
-			    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
-		} else
-			printf ("00000000 ");
-		if (lp->wtime) {
-			tm = localtime (&lp->wtime);
-			printf ("%04d%02d%02d ",
-			    tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
-		} else
-			printf ("00000000 ");
-	}
-	if (lp->status & TAPE_FULL) {
-		printf ("FULL");
-		p_stat = '|';
-	}
-	if (lp->status & TAPE_BUSY) {
-		printf (p_stat ? "|BUSY" : "BUSY");
-		p_stat = '|';
-	}
-	if (lp->status & TAPE_RDONLY) {
-		printf (p_stat ? "|RDONLY" : "RDONLY");
-		p_stat = '|';
-	}
-	if (lp->status & EXPORTED) {
-		printf (p_stat ? "|EXPORTED" : "EXPORTED");
-		p_stat = '|';
-	}
-	if (lp->status & DISABLED) {
-		printf (p_stat ? "|DISABLED" : "DISABLED");
-		p_stat = '|';
-	}
-	if (lp->status & ARCHIVED) {
-		printf (p_stat ? "|ARCHIVED" : "ARCHIVED");
-		p_stat = '|';
-	}
-	printf ("\n");
 }

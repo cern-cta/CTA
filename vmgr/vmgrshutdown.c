@@ -2,14 +2,12 @@
  * Copyright (C) 1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrshutdown.c,v $ $Revision: 1.1 $ $Date: 1999/12/15 13:57:08 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrshutdown - shutdown the volume manager */
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -19,7 +17,9 @@ static char sccsid[] = "@(#)$RCSfile: vmgrshutdown.c,v $ $Revision: 1.1 $ $Date:
 #include "serrno.h"
 extern	int	optind;
 #include "vmgr.h"
-main(argc, argv)
+#include "vmgr_api.h"
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

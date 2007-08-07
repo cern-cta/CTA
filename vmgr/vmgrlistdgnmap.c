@@ -2,28 +2,26 @@
  * Copyright (C) 2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlistdgnmap.c,v $ $Revision: 1.1 $ $Date: 2001/03/08 15:22:19 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*      vmgrlistdgnmap - list triplets dgn/model/library */
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {
-	int c;
 	int errflg = 0;
 	int flags;
 	vmgr_list list;

@@ -2,20 +2,19 @@
  * Copyright (C) 2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrenterpool.c,v $ $Revision: 1.5 $ $Date: 2001/02/21 06:05:21 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	vmgrenterpool - define a new tape pool */
 #include <grp.h>
 #include <pwd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include "Cgetopt.h"
 #include "serrno.h"
 #include "vmgr_api.h"
-main(argc, argv)
+
+int main(argc, argv)
 int argc;
 char **argv;
 {

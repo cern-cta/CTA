@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.6 $ $Date: 2006/03/21 15:00:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -30,6 +26,10 @@ static char sccsid[] = "@(#)$RCSfile: vmgr_procreq.c,v $ $Revision: 1.6 $ $Date:
 
 extern int being_shutdown;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
+
+/* prototypes */
+int vmgrlogit(char *func, char *msg, ...);
+int sendrep(int rpfd, int rep_type, ...);
 
 #define RESETID(UID,GID) resetid(&UID, &GID, thip);
  
@@ -89,7 +89,7 @@ char *logbuf;
 
 /*	vmgr_srv_deletedenmap - delete a triplet model/media_letter/density */
 
-vmgr_srv_deletedenmap(magic, req_data, clienthost, thip)
+int vmgr_srv_deletedenmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -140,7 +140,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_deletedgnmap - delete a triplet dgn/model/library */
 
-vmgr_srv_deletedgnmap(magic, req_data, clienthost, thip)
+int vmgr_srv_deletedgnmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -188,7 +188,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_deletelibrary - delete a tape library definition */
 
-vmgr_srv_deletelibrary(magic, req_data, clienthost, thip)
+int vmgr_srv_deletelibrary(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -233,7 +233,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_deletemodel - delete a cartridge model */
 
-vmgr_srv_deletemodel(magic, req_data, clienthost, thip)
+int vmgr_srv_deletemodel(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -283,7 +283,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_deletepool - delete a tape pool definition */
 
-vmgr_srv_deletepool(magic, req_data, clienthost, thip)
+int vmgr_srv_deletepool(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -330,7 +330,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_deletetape - delete a tape volume */
 
-vmgr_srv_deletetape(magic, req_data, clienthost, thip)
+int vmgr_srv_deletetape(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -424,7 +424,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_deltag - delete a tag associated with a tape volume */
 
-vmgr_srv_deltag(magic, req_data, clienthost, thip)
+int vmgr_srv_deltag(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -486,7 +486,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_enterdenmap - enter a new quadruplet model/media_letter/density/capacity */
 
-vmgr_srv_enterdenmap(magic, req_data, clienthost, thip)
+int vmgr_srv_enterdenmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -552,7 +552,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_enterdgnmap - enter a new triplet dgn/model/library */
 
-vmgr_srv_enterdgnmap(magic, req_data, clienthost, thip)
+int vmgr_srv_enterdgnmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -612,7 +612,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_enterlibrary - enter a new tape library definition */
 
-vmgr_srv_enterlibrary(magic, req_data, clienthost, thip)
+int vmgr_srv_enterlibrary(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -659,7 +659,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_entermodel - enter a new cartridge model */
 
-vmgr_srv_entermodel(magic, req_data, clienthost, thip)
+int vmgr_srv_entermodel(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -706,7 +706,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_enterpool - define a new tape pool */
 
-vmgr_srv_enterpool(magic, req_data, clienthost, thip)
+int vmgr_srv_enterpool(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -750,7 +750,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_entertape - enter a new tape volume */
 
-vmgr_srv_entertape(magic, req_data, clienthost, thip)
+int vmgr_srv_entertape(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -832,22 +832,25 @@ struct vmgr_srv_thread_info *thip;
 	/* check if pool exists and lock entry */
 
 	if (vmgr_get_pool_entry (&thip->dbfd, side_entry.poolname, &pool_entry,
-	    1, &rec_addr))
+	    1, &rec_addr)) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such pool\n");
 			RETURN (EINVAL);
-		} else
+		} else 
 			RETURN (serrno);
+	}
 
 	/* check if model exists */
 
 	memset((void *) &cartridge, 0, sizeof(struct vmgr_tape_media));
-	if (vmgr_get_model_entry (&thip->dbfd, tape.model, &cartridge, 0, NULL))
+	if (vmgr_get_model_entry (&thip->dbfd, tape.model, &cartridge, 0, NULL)) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such model\n");
 			RETURN (EINVAL);
 		} else
 			RETURN (serrno);
+	}
+
 	if (*tape.media_letter && strcmp (tape.media_letter, " ") &&
 	    strcmp (tape.media_letter, cartridge.m_media_letter))
 		RETURN (EINVAL);
@@ -857,35 +860,38 @@ struct vmgr_srv_thread_info *thip;
 
 	memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
 	if (vmgr_get_library_entry (&thip->dbfd, tape.library, &library_entry,
-	    1, &rec_addrl))
+	    1, &rec_addrl)) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such library\n");
 			RETURN (EINVAL);
 		} else
 			RETURN (serrno);
+	}
 
 	/* check if the combination library/model exists */
 
 	if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, tape.library,
-	    &dgnmap_entry, 0, NULL))
+	    &dgnmap_entry, 0, NULL)) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR,
 			    "Combination library/model does not exist\n");
 			RETURN (EINVAL);
 		} else
 			RETURN (serrno);
+	}
 
 	/* check if density is valid for this model and get native capacity */
 
 	memset((void *) &denmap_entry, 0, sizeof(struct vmgr_tape_denmap));
 	if (vmgr_get_denmap_entry (&thip->dbfd, tape.model,
-	    tape.media_letter, tape.density, &denmap_entry, 0, NULL))
+	    tape.media_letter, tape.density, &denmap_entry, 0, NULL)) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR,
 			    "Unsupported density for this model\n");
 			RETURN (EINVAL);
-		} else
+		} else 
 			RETURN (serrno);
+	}
 	side_entry.estimated_free_space = denmap_entry.native_capacity;
 
 	tape.etime = time (0);
@@ -915,7 +921,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_gettag - get the tag associated with a tape volume */
 
-vmgr_srv_gettag(magic, req_data, clienthost, thip)
+int vmgr_srv_gettag(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -954,7 +960,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_gettape - get a tape volume to store a given amount of data */
 
-vmgr_srv_gettape(magic, req_data, clienthost, thip)
+int vmgr_srv_gettape(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1102,7 +1108,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*      vmgr_srv_listdenmap - list triplets model/media_letter/density */
 
-vmgr_srv_listdenmap(magic, req_data, clienthost, thip, endlist, dblistptr)
+int vmgr_srv_listdenmap(magic, req_data, clienthost, thip, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1169,7 +1175,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listdgnmap - list triplets model/media_letter/density */
 
-vmgr_srv_listdgnmap(magic, req_data, clienthost, thip, endlist, dblistptr)
+int vmgr_srv_listdgnmap(magic, req_data, clienthost, thip, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1232,7 +1238,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listlibrary - list tape library entries */
 
-vmgr_srv_listlibrary(magic, req_data, clienthost, thip, endlist, dblistptr)
+int vmgr_srv_listlibrary(magic, req_data, clienthost, thip, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1242,14 +1248,12 @@ DBLISTPTR *dblistptr;
 {
 	int bol;	/* beginning of list flag */
 	int c;
-	int capacity;
 	int eol = 0;	/* end of list flag */
 	char func[21];
 	gid_t gid;
 	struct vmgr_tape_library library_entry;
 	int listentsz;	/* size of client machine vmgr_tape_library structure */
 	int maxnbentries;	/* maximum number of entries/call */
-	int nb_free_slots;
 	int nbentries = 0;
 	char outbuf[LISTBUFSZ+4];
 	char *p;
@@ -1298,7 +1302,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listmodel - list cartridge model entries */
 
-vmgr_srv_listmodel(magic, req_data, clienthost, thip, endlist, dblistptr)
+int vmgr_srv_listmodel(magic, req_data, clienthost, thip, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1363,7 +1367,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listpool - list tape pool entries */
 
-vmgr_srv_listpool(magic, req_data, clienthost, thip, endlist, dblistptr)
+int vmgr_srv_listpool(magic, req_data, clienthost, thip, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1432,7 +1436,7 @@ DBLISTPTR *dblistptr;
 
 /*      vmgr_srv_listtape - list tape volume entries */
 
-vmgr_srv_listtape(magic, req_data, clienthost, thip, tape, endlist, dblistptr)
+int vmgr_srv_listtape(magic, req_data, clienthost, thip, tape, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1544,7 +1548,7 @@ DBLISTPTR *dblistptr;
 
 /*	vmgr_srv_modifylibrary - modify an existing tape library */
 
-vmgr_srv_modifylibrary(magic, req_data, clienthost, thip)
+int vmgr_srv_modifylibrary(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1606,7 +1610,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_modifymodel - modify an existing cartridge model */
 
-vmgr_srv_modifymodel(magic, req_data, clienthost, thip)
+int vmgr_srv_modifymodel(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1670,7 +1674,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_modifypool - modify an existing tape pool definition */
 
-vmgr_srv_modifypool(magic, req_data, clienthost, thip)
+int vmgr_srv_modifypool(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1730,14 +1734,13 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_modifytape - modify an existing tape volume */
 
-vmgr_srv_modifytape(magic, req_data, clienthost, thip)
+int vmgr_srv_modifytape(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
 {
 	int capacity_changed = 0;
-	struct vmgr_tape_media cartridge;
 	struct vmgr_tape_denmap denmap_entry;
 	char density[CA_MAXDENLEN+1];
 	int density_changed = 0;
@@ -1828,23 +1831,25 @@ struct vmgr_srv_thread_info *thip;
 	if (*library && strcmp (library, tape.library)) {
 		memset((void *) &library_entry, 0, sizeof(struct vmgr_tape_library));
 		if (vmgr_get_library_entry (&thip->dbfd, library, &library_entry,
-		    1, &rec_addrl))
+		    1, &rec_addrl)) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR, "No such library\n");
 				RETURN (EINVAL);
 			} else
 				RETURN (serrno);
+		}
 
 		/* check if the combination library/model exists */
 
 		if (vmgr_get_dgnmap_entry (&thip->dbfd, tape.model, library,
-		    &dgnmap_entry, 0, NULL))
+		    &dgnmap_entry, 0, NULL)) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR,
 				    "Combination library/model does not exist\n");
 				RETURN (EINVAL);
 			} else
 				RETURN (serrno);
+		}
 
 		library_entry.nb_free_slots--;
 		if (vmgr_update_library_entry (&thip->dbfd, &rec_addrl,
@@ -1874,13 +1879,14 @@ struct vmgr_srv_thread_info *thip;
 	if (*density && strcmp (density, tape.density)) {
 		memset((void *) &denmap_entry, 0, sizeof(struct vmgr_tape_denmap));
 		if (vmgr_get_denmap_entry (&thip->dbfd, tape.model,
-		    tape.media_letter, density, &denmap_entry, 0, NULL))
+		    tape.media_letter, density, &denmap_entry, 0, NULL)) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR,
 				    "Unsupported density for this model\n");
 				RETURN (EINVAL);
 			} else
 				RETURN (serrno);
+		}
 		strcpy (tape.density, density);
 		density_changed = 1;
 		if (denmap_entry.native_capacity != olddenmap_entry.native_capacity)
@@ -1999,7 +2005,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_querypool - query about a tape pool */
 
-vmgr_srv_querypool(magic, req_data, clienthost, thip)
+int vmgr_srv_querypool(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2048,13 +2054,12 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_querylibrary - query about a tape library */
 
-vmgr_srv_querylibrary(magic, req_data, clienthost, thip)
+int vmgr_srv_querylibrary(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
 struct vmgr_srv_thread_info *thip;
 {
-	int capacity;
 	char func[22];
 	gid_t gid;
 	char library[CA_MAXTAPELIBLEN+1];
@@ -2093,7 +2098,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_querymodel - query about a cartridge model */
 
-vmgr_srv_querymodel(magic, req_data, clienthost, thip)
+int vmgr_srv_querymodel(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2143,7 +2148,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_querytape - query about a tape volume */
 
-vmgr_srv_querytape(magic, req_data, clienthost, thip)
+int vmgr_srv_querytape(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2232,7 +2237,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_reclaim - reset tape volume content information */
 
-vmgr_srv_reclaim(magic, req_data, clienthost, thip)
+int vmgr_srv_reclaim(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2310,7 +2315,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_settag - add/replace a tag associated with a tape volume */
 
-vmgr_srv_settag(magic, req_data, clienthost, thip)
+int vmgr_srv_settag(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2381,7 +2386,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_shutdown - shutdown the volume manager */
 
-vmgr_srv_shutdown(magic, req_data, clienthost, thip)
+int vmgr_srv_shutdown(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2412,7 +2417,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_tpmounted - update tape volume content information */
 
-vmgr_srv_tpmounted(magic, req_data, clienthost, thip)
+int vmgr_srv_tpmounted(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2465,7 +2470,7 @@ struct vmgr_srv_thread_info *thip;
 	/* update entry */
 
 	strcpy (hostname, clienthost);
-	if (p = strchr (hostname, '.')) *p = '\0';
+	if ((p = strchr (hostname, '.'))) *p = '\0';
 	*(hostname + CA_MAXSHORTHOSTLEN) = '\0';
 	if (mode) {
 		tape.wcount++;
@@ -2486,7 +2491,7 @@ struct vmgr_srv_thread_info *thip;
 
 /*	vmgr_srv_updatetape - update tape volume content information */
 
-vmgr_srv_updatetape(magic, req_data, clienthost, thip)
+int vmgr_srv_updatetape(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2632,5 +2637,6 @@ struct vmgr_srv_thread_info *thip;
 		if (vmgr_update_pool_entry (&thip->dbfd, &rec_addrp, &pool_entry))
 			RETURN (serrno);
 	}
+
 	RETURN (0);
 }

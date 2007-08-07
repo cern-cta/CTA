@@ -1,13 +1,9 @@
 /*
- * $Id: vmgr_main.c,v 1.6 2005/12/12 10:25:53 lopic3 Exp $
+ * $Id: vmgr_main.c,v 1.7 2007/08/07 14:32:12 waldron Exp $
  *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.6 $ $Date: 2005/12/12 10:25:53 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 #include <errno.h>
 #include <signal.h>
@@ -25,6 +21,7 @@ static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.6 $ $Date: 2005/1
 #include <arpa/inet.h>
 #endif
 #include "Cinit.h"
+#include "Cdomainname.h"
 #include "Cnetdb.h"
 #include "Cpool_api.h"
 #include "Cupv_api.h"
@@ -37,6 +34,11 @@ static char sccsid[] = "$RCSfile: vmgr_main.c,v $ $Revision: 1.6 $ $Date: 2005/1
 #include "Csec_api.h"
 #endif
 
+/* prototypes */
+int vmgrlogit(char *func, char *msg, ...);
+int sendrep(int rpfd, int rep_type, ...);
+int vmgr_init_dbpkg();
+
 int being_shutdown;
 char db_pwd[33];
 char db_srvr[33];
@@ -47,13 +49,11 @@ char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
 struct vmgr_srv_thread_info vmgr_srv_thread_info[VMGR_NBTHREADS];
 
-vmgr_main(main_args)
+int vmgr_main(main_args)
 struct main_args *main_args;
 {
-	int c;
 	FILE *fopen(), *cf;
 	char cfbuf[80];
-	struct vmgr_dbfd dbfd;
 	void *doit(void *);
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct sockaddr_in from;
@@ -148,7 +148,7 @@ struct main_args *main_args;
 #else
 	if ((p = getenv ("VMGR_PORT")) || (p = getconfent ("VMGR", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if (sp = getservbyname ("vmgr", "tcp")) {
+	} else if ((sp = getservbyname ("vmgr", "tcp"))) {
 		sin.sin_port = sp->s_port;
 	} else {
 		sin.sin_port = htons ((unsigned short)VMGR_PORT);
@@ -222,59 +222,7 @@ main()
 #endif
 }
 
-void *
-doit(arg)
-void *arg;
-{
-	int c;
-	char *clienthost;
-	int magic;
-	char req_data[REQBUFSZ-3*LONGSIZE];
-	int req_type = 0;
-	struct vmgr_srv_thread_info *thip = (struct vmgr_srv_thread_info *) arg;
-#ifdef CSEC
-	char *username;
-	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
-	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
-	  vmgrlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
-	  netclose (thip->s);
-	  thip->s = -1;
-	  return (NULL);
-	}
-	/* Connection could be done from another castor service */
-	if ((c = Csec_server_isClientAService(&(thip->sec_ctx))) >= 0) {
-	  vmgrlogit(func, "CSEC: Client is castor service type: %d\n", c);
-	  thip->Csec_service_type = c;
-	}
-	else {
-	  if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username, &(thip->Csec_uid), &(thip->Csec_gid)) == 0) {
-	    vmgrlogit(func, "CSEC: Client is %s (%d/%d)\n",
-		      username,
-		      thip->Csec_uid,
-		      thip->Csec_gid);
-	    thip->Csec_service_type = -1;
-	  }
-	  else {
-	    vmgrlogit(func, "CSEC: Can't get client username\n");
-	    netclose (thip->s);
-	    thip->s = -1;
-	    return (NULL);
-	  }
-	}
-
-#endif
-
-	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)
-		procreq (magic, req_type, req_data, clienthost, thip);
-	else if (c > 0)
-		sendrep (thip->s, VMGR_RC, c);
-	else
-		netclose (thip->s);
-	thip->s = -1;
-	return (NULL);
-}
-
-getreq(s, magic, req_type, req_data, clienthost)
+int getreq(s, magic, req_type, req_data, clienthost)
 int s;
 int *magic;
 int *req_type;
@@ -328,7 +276,7 @@ char **clienthost;
 	}
 }
 
-proclistreq(magic, req_type, req_data, clienthost, thip)
+int proclistreq(magic, req_type, req_data, clienthost, thip)
 int magic;
 int req_type;
 char *req_data;
@@ -353,33 +301,33 @@ struct vmgr_srv_thread_info *thip;
 	while (1) {
 		switch (req_type) {
 		case VMGR_LISTDENMAP:
-			if (c = vmgr_srv_listdenmap (magic, req_data,
-			    clienthost, thip, endlist, &dblistptr))
+			if ((c = vmgr_srv_listdenmap (magic, req_data,
+			    clienthost, thip, endlist, &dblistptr)))
 				return (c);
 			break;
 		case VMGR_LISTDGNMAP:
-			if (c = vmgr_srv_listdgnmap (magic, req_data,
-			    clienthost, thip, endlist, &dblistptr))
+			if ((c = vmgr_srv_listdgnmap (magic, req_data,
+			    clienthost, thip, endlist, &dblistptr)))
 				return (c);
 			break;
 		case VMGR_LISTLIBRARY:
-			if (c = vmgr_srv_listlibrary (magic, req_data,
-			    clienthost, thip, endlist, &dblistptr))
+			if ((c = vmgr_srv_listlibrary (magic, req_data,
+			    clienthost, thip, endlist, &dblistptr)))
 				return (c);
 			break;
 		case VMGR_LISTMODEL:
-			if (c = vmgr_srv_listmodel (magic, req_data,
-			    clienthost, thip, endlist, &dblistptr))
+			if ((c = vmgr_srv_listmodel (magic, req_data,
+			    clienthost, thip, endlist, &dblistptr)))
 				return (c);
 			break;
 		case VMGR_LISTPOOL:
-			if (c = vmgr_srv_listpool (magic, req_data,
-			    clienthost, thip, endlist, &dblistptr))
+			if ((c = vmgr_srv_listpool (magic, req_data,
+			    clienthost, thip, endlist, &dblistptr)))
 				return (c);
 			break;
 		case VMGR_LISTTAPE:
-			if (c = vmgr_srv_listtape (magic, req_data,
-			    clienthost, thip, &tape, endlist, &dblistptr))
+			if ((c = vmgr_srv_listtape (magic, req_data,
+			    clienthost, thip, &tape, endlist, &dblistptr)))
 				return (c);
 			break;
 		}
@@ -392,7 +340,7 @@ struct vmgr_srv_thread_info *thip;
 			endlist = 1;
 			continue;
 		}
-		if (rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost) != 0) {
+		if ((rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost)) != 0) {
 			endlist = 1;
 			continue;
 		}
@@ -402,7 +350,7 @@ struct vmgr_srv_thread_info *thip;
 	return (rc);
 }
 
-procreq(magic, req_type, req_data, clienthost, thip)
+void procreq(magic, req_type, req_data, clienthost, thip)
 int magic;
 int req_type;
 char *req_data;
@@ -529,4 +477,56 @@ struct vmgr_srv_thread_info *thip;
 		c = SEINTERNAL;
 	}
 	sendrep (thip->s, VMGR_RC, c);
+}
+
+void *
+doit(arg)
+void *arg;
+{
+	int c;
+	char *clienthost;
+	int magic;
+	char req_data[REQBUFSZ-3*LONGSIZE];
+	int req_type = 0;
+	struct vmgr_srv_thread_info *thip = (struct vmgr_srv_thread_info *) arg;
+#ifdef CSEC
+	char *username;
+	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
+	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
+	  vmgrlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
+	  netclose (thip->s);
+	  thip->s = -1;
+	  return (NULL);
+	}
+	/* Connection could be done from another castor service */
+	if ((c = Csec_server_isClientAService(&(thip->sec_ctx))) >= 0) {
+	  vmgrlogit(func, "CSEC: Client is castor service type: %d\n", c);
+	  thip->Csec_service_type = c;
+	}
+	else {
+	  if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username, &(thip->Csec_uid), &(thip->Csec_gid)) == 0) {
+	    vmgrlogit(func, "CSEC: Client is %s (%d/%d)\n",
+		      username,
+		      thip->Csec_uid,
+		      thip->Csec_gid);
+	    thip->Csec_service_type = -1;
+	  }
+	  else {
+	    vmgrlogit(func, "CSEC: Can't get client username\n");
+	    netclose (thip->s);
+	    thip->s = -1;
+	    return (NULL);
+	  }
+	}
+
+#endif
+
+	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)
+		procreq (magic, req_type, req_data, clienthost, thip);
+	else if (c > 0)
+		sendrep (thip->s, VMGR_RC, c);
+	else
+		netclose (thip->s);
+	thip->s = -1;
+	return (NULL);
 }

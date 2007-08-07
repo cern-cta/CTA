@@ -3,21 +3,19 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vmgrlogit.c,v $ $Revision: 1.5 $ $Date: 2003/08/28 10:16:41 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
+#include <unistd.h>
 #include <time.h>
 #include <stdarg.h>
 #include "Cglobals.h"
 #include "vmgr.h"
 extern int jid;
 
-vmgrlogit(char *func, char *msg, ...)
+int vmgrlogit(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[LOGBUFSZ];
