@@ -61,13 +61,11 @@
 #define	CA_MAXUSRNAMELEN  14	/* maximum length for a login name */
 #define	CA_MAXVIDLEN       6	/* maximum length for a VID */
 #define	CA_MAXVSNLEN       6	/* maximum length for a VSN */
-#define CA_MAXCKSUMNAMELEN 15    /* maximum length for a checksum algorithm name */
-#define CA_MAXDMPROTNAMELEN 15    /* maximum length for Disk Mover protocol name */
+#define CA_MAXCKSUMNAMELEN 15   /* maximum length for a checksum algorithm name */
+#define CA_MAXDMPROTNAMELEN 15  /* maximum length for Disk Mover protocol name */
 #define CA_MAXJOBIDLEN     36   /* Maximum length for the representation of the Cuuid */
-#define CA_MAXUSERTAGLEN    63   /* Maximum length for a user tag (stage request) */
-
-#define CA_MAXSVCCLASSNAMELEN 63 /*Maximum lenght for a Svc Class name */
-
+#define CA_MAXUSERTAGLEN    63  /* Maximum length for a user tag (stage request) */
+#define CA_MAXRFSLINELEN 2047   /* maximum length for the requested filesystem string */
 
 /* Max allowed uid/gif */
 #define CA_MAXUID    0x7FFFFFFF /* Maximum uid */
