@@ -71,8 +71,11 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
     ack.setStatus(true);
     // get the incoming object
     castor::IObject* obj = 0;
+    unsigned short port;
+    unsigned long  ip;
     try {
       obj = sock->readObject();
+      sock->getPeerIp(port, ip);
     } catch (castor::exception::Exception e) {
       // "Unable to read Object from socket" message
       castor::dlf::Param params[] =
@@ -100,11 +103,11 @@ void castor::monitoring::rmmaster::CollectorThread::run(void* par) throw() {
         } else if (OBJ_DiskServerAdminReport == obj->type()) {
           castor::monitoring::admin::DiskServerAdminReport* dss =
             dynamic_cast<castor::monitoring::admin::DiskServerAdminReport*>(obj);
-          m_updater->handleDiskServerAdminUpdate(dss);
+          m_updater->handleDiskServerAdminUpdate(dss, ip);
         } else if (OBJ_FileSystemAdminReport == obj->type()) {
           castor::monitoring::admin::FileSystemAdminReport* dss =
             dynamic_cast<castor::monitoring::admin::FileSystemAdminReport*>(obj);
-          m_updater->handleFileSystemAdminUpdate(dss);
+          m_updater->handleFileSystemAdminUpdate(dss, ip);
         } else {
           // "Received unknown object from socket"
           castor::dlf::Param params[] =

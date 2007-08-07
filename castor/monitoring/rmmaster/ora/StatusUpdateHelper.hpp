@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: StatusUpdateHelper.hpp,v $ $Author: itglp $
+* @(#)$RCSfile: StatusUpdateHelper.hpp,v $ $Author: waldron $
 *
 * Status update helper class. Shared between the OraRmMasterSvc and the
 * Collector thread of the RmMasterDaemon.
@@ -66,6 +66,7 @@ namespace castor {
              * handles state updates; this method is public because
              * it is also used by OraRmMasterSvc.retrieveClusterStatus
              * @param state the new state
+	     * @exception Exception in case of error
              */
             void handleStateUpdate
             (castor::monitoring::DiskServerStateReport* state)
@@ -74,6 +75,7 @@ namespace castor {
             /**
              * handles metrics updates
              * @param metrics the new metrics
+	     * @exception Exception in case of error
              */
             void handleMetricsUpdate
             (castor::monitoring::DiskServerMetricsReport* metrics)
@@ -82,20 +84,25 @@ namespace castor {
             /**
              * handles DiskServer admin updates
              * @param admin the new admin report
+	     * @param ip the address of the client
+	     * @exception Exception in case of error
              */
             void handleDiskServerAdminUpdate
-            (castor::monitoring::admin::DiskServerAdminReport* admin)
+            (castor::monitoring::admin::DiskServerAdminReport* admin,
+	     unsigned long ip)
             throw (castor::exception::Exception);
             
             /**
              * handles FileSystem admin updates
              * @param admin the new admin report
+	     * @param ip the address of the client
+	     * @exception Exception in case of error
              */
             void handleFileSystemAdminUpdate
-            (castor::monitoring::admin::FileSystemAdminReport* admin)
+            (castor::monitoring::admin::FileSystemAdminReport* admin,
+	     unsigned long ip)
             throw (castor::exception::Exception);
-            
-            
+	  
           private:
             
             /*

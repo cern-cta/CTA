@@ -27,7 +27,6 @@
  *****************************************************************************/
 
 // Include Files
-
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/SignalThreadPool.hpp"
@@ -211,6 +210,10 @@ throw (castor::exception::Exception) :
      {37, "Heartbeat Thread started."},
      {38, "Heartbeat check failed for diskserver, status changed to DISABLED."},
      {39, "Heartbeat resumed for diskserver, status changed to PRODUCTION."},
+     {40, "Admin change request detected, filesystem DELETED"},
+     {41, "Admin change request detected for filesystem, setting new status"},
+     {42, "Admin change request detected, diskserver DELETED"},
+     {43, "Admin change request detected for diskserver, setting new status"},
      {-1, ""}};
   castor::dlf::dlf_init("RmMaster", messages);
 

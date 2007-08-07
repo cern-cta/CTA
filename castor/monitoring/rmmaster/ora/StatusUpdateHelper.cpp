@@ -120,7 +120,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     if ((*itFs)->mountPoint().size() == 0) {
       // "Ignored state report for filesystem with empty name"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("Machine", state->name())};
+        {castor::dlf::Param("MachineName", state->name())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
       continue;
     }
@@ -335,7 +335,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
 // handleDiskServerAdminUpdate
 //------------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdminUpdate
-(castor::monitoring::admin::DiskServerAdminReport* admin)
+(castor::monitoring::admin::DiskServerAdminReport* admin, unsigned long ip)
   throw (castor::exception::Exception) {
   // Throw away reports with no name cause the build of
   // a shared memory string fails for empty strings. This
@@ -349,7 +349,9 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
   // created the empty string).
   if (admin->diskServerName().size() == 0) {
     // "Ignored admin diskserver report for machine with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23);
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23, 1, params);
     return;
   }
   // cast normal string into sharedMemory one in order to be able
@@ -366,14 +368,27 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
   if (it == m_clusterStatus->end()) {
     // "Ignored admin diskServer report for unknown machine"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Machine name", admin->diskServerName())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 29, 1, params);
-    // inform user via the exception mechanism
+      {castor::dlf::Param("MachineName", admin->diskServerName()),
+       castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 29, 2, params);
+    // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown machine '"
 		   << admin->diskServerName()
 		   << "'. Please check the name and provide the domain.";
     throw e;
+  }
+  // Ignore all status changes apart from release when the diskserver
+  // is in a deleted status
+  if (it->second.adminStatus() == ADMIN_DELETED) {
+    if (admin->adminStatus() != ADMIN_RELEASE) {
+      // Inform user via the exception mechanism
+      castor::exception::NoEntry e;
+      e.getMessage() << "Unknown machine '"
+		     << admin->diskServerName()
+		     << "'. Diskserver has been previously deleted";
+      throw e;
+    }
   }
   // Update status if needed
   if (it->second.adminStatus() == ADMIN_NONE ||
@@ -381,6 +396,11 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
     if (admin->adminStatus() == ADMIN_DELETED) {
       it->second.setStatus(castor::stager::DISKSERVER_DISABLED);
       it->second.setAdminStatus(ADMIN_DELETED);
+      // "Admin change request detected, diskserver DELETED"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 2, params);
     } else {
       it->second.setStatus(admin->status());
       if (admin->adminStatus() == ADMIN_FORCE) {
@@ -388,6 +408,16 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       } else {
 	it->second.setAdminStatus(ADMIN_NONE);
       }
+      // "Admin change request detected for diskserver, setting new status"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	 castor::dlf::Param("Status", 
+	   castor::stager::DiskServerStatusCodeStrings[admin->status()]),
+	 castor::dlf::Param("AdminStatus", 
+	   castor::monitoring::AdminStatusCodesStrings[admin->adminStatus()]),
+	 castor::dlf::Param("Recursive", admin->recursive() ? "yes" : "no")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 43, 5, params);
     }
   }
   // Go over the fileSystems if required
@@ -428,7 +458,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
 // handleFileSystemAdminUpdate
 //------------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdminUpdate
-(castor::monitoring::admin::FileSystemAdminReport* admin)
+(castor::monitoring::admin::FileSystemAdminReport* admin, unsigned long ip)
   throw (castor::exception::Exception) {
   // Throw away reports with no name cause the build of
   // a shared memory string fails for empty strings. This
@@ -442,12 +472,16 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
   // created the empty string).
   if (admin->diskServerName().size() == 0) {
     // "Ignored admin filesystem report for machine with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 24);
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 24, 1, params);
     return;
   }
   if (admin->mountPoint().size() == 0) {
     // "Ignored admin filesystem report for filesystem with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 25);
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 25, 1, params);
     return;
   }
   // cast normal string into sharedMemory one in order to be able
@@ -464,9 +498,10 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
   if (it == m_clusterStatus->end()) {
     // "Ignored admin fileSystem report for unknown machine"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Machine name", admin->diskServerName())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 30, 1, params);
-    // inform user via the exception mechanism
+      {castor::dlf::Param("MachineName", admin->diskServerName()),
+       castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 30, 2, params);
+    // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown machine '"
 		   << admin->diskServerName()
@@ -487,10 +522,11 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
   if (it2 == it->second.end()) {
     // "Ignored admin fileSystem report for unknown mountPoint"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Machine name", admin->diskServerName()),
-       castor::dlf::Param("MountPoint", admin->mountPoint())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 31, 2, params);
-    // inform user via the exception mechanism
+      {castor::dlf::Param("MachineName", admin->diskServerName()),
+       castor::dlf::Param("MountPoint", admin->mountPoint()),
+       castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 31, 3, params);
+    // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown mountPoint '"
 		   << admin->mountPoint()
@@ -499,12 +535,40 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
 		   << "'.";
     throw e;
   }
+  // Ignore all status changes apart from release when the filesystem or
+  // diskserver is in a deleted status
+  if (it2->second.adminStatus() == ADMIN_DELETED) {
+    if (admin->adminStatus() != ADMIN_RELEASE) {
+      // Inform user via the exception mechanism
+      castor::exception::NoEntry e;
+      if (it2->second.adminStatus() == ADMIN_DELETED) {
+	e.getMessage() << "Unknown mountPoint '"
+		       << admin->mountPoint()
+		       << "' on machine '"
+		       << admin->diskServerName()
+		       << "'. Filesystem has been previously deleted.";
+      } else {
+	e.getMessage() << "Unknown mountPoint '"
+		       << admin->mountPoint()
+		       << "' on machine '"
+		       << admin->diskServerName()
+		       << "'. Diskserver has been previously deleted.";
+      }
+      throw e;
+    }
+  }
   // Update status if needed
   if (it2->second.adminStatus() == ADMIN_NONE ||
       admin->adminStatus() != ADMIN_NONE) {
     if (admin->adminStatus() == ADMIN_DELETED) {
       it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
       it2->second.setAdminStatus(ADMIN_DELETED);
+      // "Admin change request detected, filesystem DELETED"
+      castor::dlf::Param params[] = 
+	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	 castor::dlf::Param("MountPoint", admin->mountPoint()),
+	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 40, 3, params);
     } else {
       it2->second.setStatus(admin->status());
       if (admin->adminStatus() == ADMIN_FORCE) {
@@ -512,6 +576,16 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       } else {
 	it2->second.setAdminStatus(ADMIN_NONE);
       }
+      // "Admin change request detected for filesystem, setting new status"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	 castor::dlf::Param("MountPoint", admin->mountPoint()),
+	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	 castor::dlf::Param("Status", 
+           castor::stager::FileSystemStatusCodesStrings[admin->status()]),
+	 castor::dlf::Param("AdminStatus", 
+           castor::monitoring::AdminStatusCodesStrings[admin->adminStatus()])};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 41, 5, params);
     }
   }
 }
