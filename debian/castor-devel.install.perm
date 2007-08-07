@@ -21,12 +21,6 @@
 %attr(0644,root,bin) usr/include/shift/Cpwd.h
 %attr(0644,root,bin) usr/include/shift/Cregexp.h
 %attr(0644,root,bin) usr/include/shift/Cregexp_magic.h
-%attr(0644,root,bin) usr/include/shift/Crmd_checkpoint.h
-%attr(0644,root,bin) usr/include/shift/Crmd_recv_from_maui.h
-%attr(0644,root,bin) usr/include/shift/Crmd_recv_from_rmnode.h
-%attr(0644,root,bin) usr/include/shift/Crmd_recv_from_users.h
-%attr(0644,root,bin) usr/include/shift/Crmd_survey.h
-%attr(0644,root,bin) usr/include/shift/Crmd_tape_feature.h
 %attr(0644,root,bin) usr/include/shift/Csched_api.h
 %attr(0644,root,bin) usr/include/shift/Csched_flags.h
 %attr(0644,root,bin) usr/include/shift/Csec.h
@@ -75,12 +69,6 @@
 %attr(0644,root,bin) usr/include/shift/rfio_constants.h
 %attr(0644,root,bin) usr/include/shift/rfio_errno.h
 %attr(0644,root,bin) usr/include/shift/rfio_lcastorfdt.h
-%attr(0644,root,bin) usr/include/shift/rm_api.h
-%attr(0644,root,bin) usr/include/shift/rm_constants.h
-%attr(0644,root,bin) usr/include/shift/rm_limits.h
-%attr(0644,root,bin) usr/include/shift/rm_macros.h
-%attr(0644,root,bin) usr/include/shift/rm_messages.h
-%attr(0644,root,bin) usr/include/shift/rm_struct.h
 %attr(0644,root,bin) usr/include/shift/rmc.h
 %attr(0644,root,bin) usr/include/shift/rmc_api.h
 %attr(0644,root,bin) usr/include/shift/rmc_constants.h
