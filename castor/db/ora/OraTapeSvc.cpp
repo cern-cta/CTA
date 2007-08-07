@@ -106,7 +106,7 @@ const std::string castor::db::ora::OraTapeSvc::s_anyTapeCopyForStreamStatementSt
 
 /// SQL statement for bestTapeCopyForStream
 const std::string castor::db::ora::OraTapeSvc::s_bestTapeCopyForStreamStatementString =
-  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
+  "BEGIN bestTapeCopyForStream(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
 
 /// SQL statement for streamsForTapePool
 const std::string castor::db::ora::OraTapeSvc::s_streamsForTapePoolStatementString =
@@ -148,12 +148,11 @@ const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
 const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString = 
   "BEGIN checkFileForRepack(:1, :2); END;";
 
-/// SQL statement for  getBytesByStream
+/// SQL statement for getBytesByStream
 const std::string castor::db::ora::OraTapeSvc::s_getBytesByStreamStatementString = 
   "BEGIN getBytesByStream(:1, :2); END;";
 
-/// SQL statement for  getNumFilesByStream
-
+/// SQL statement for getNumFilesByStream
 const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementString = 
   "BEGIN getNumFilesByStream(:1,:2); END;";
 
@@ -245,7 +244,6 @@ void castor::db::ora::OraTapeSvc::reset() throw() {
   m_checkFileForRepackStatement = 0;
   m_getBytesByStreamStatement = 0;
   m_getNumFilesByStreamStatement = 0;
-
 }
 
 // -----------------------------------------------------------------------
@@ -475,6 +473,7 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
     }
     // execute the statement and see whether we found something
     m_bestTapeCopyForStreamStatement->setDouble(1, searchItem->id());
+    m_bestTapeCopyForStreamStatement->setInt(11, 1);
     unsigned int nb =
       m_bestTapeCopyForStreamStatement->executeUpdate();
     if (nb == 0) {
@@ -532,7 +531,6 @@ castor::db::ora::OraTapeSvc::bestTapeCopyForStream
       << "Error caught in bestTapeCopyForStream."
       << std::endl << e.what();
     throw ex;
-    
   }
 }
 
@@ -596,7 +594,6 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
       << "Error caught in streamsForTapePool."
         << std::endl << e.what();
       throw ex;
-    
   }
 }
 
@@ -710,7 +707,6 @@ castor::db::ora::OraTapeSvc::tapesToDo()
   return result;
 }
 
-
 // -----------------------------------------------------------------------
 // streamsToDo
 // -----------------------------------------------------------------------
@@ -740,7 +736,6 @@ castor::db::ora::OraTapeSvc::streamsToDo()
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::stager::Stream* stream = new castor::stager::Stream();
       stream->setId(rs->getInt(1));
-      stream->setInitialSizeToTransfer((u_signed64)rs->getDouble(2));
       stream->setInitialSizeToTransfer((u_signed64)rs->getDouble(2));
       stream->setStatus((enum castor::stager::StreamStatusCodes)rs->getInt(3));
       castor::stager::TapePool* tapePool = new castor::stager::TapePool();
@@ -899,18 +894,14 @@ castor::db::ora::OraTapeSvc::failedSegments ()
   return result;
 }
 
-
 // -----------------------------------------------------------------------
 // checkFileForRepack
 // -----------------------------------------------------------------------
 std::string castor::db::ora::OraTapeSvc::checkFileForRepack
 (const u_signed64 fileId)
   throw (castor::exception::Exception) {
-  
   std::string repackvid = "";
- 
   try {
-    
     if (0 == m_checkFileForRepackStatement) {
       m_checkFileForRepackStatement =
         createStatement(s_checkFileForRepackStatementString);
@@ -919,7 +910,6 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
     }
     m_checkFileForRepackStatement->setDouble(1, fileId); 
     m_checkFileForRepackStatement->setAutoCommit(true);
-
     m_checkFileForRepackStatement->executeUpdate();
 
     repackvid = m_checkFileForRepackStatement->getString(2);
@@ -937,30 +927,24 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
   return repackvid;
 }
 
-
-
 // -----------------------------------------------------------------------
 //  getBytesByStream
 // -----------------------------------------------------------------------
-u_signed64 castor::db::ora::OraTapeSvc::getBytesByStream (const u_signed64 streamId) 
+u_signed64 castor::db::ora::OraTapeSvc::getBytesByStream
+(const u_signed64 streamId) 
   throw (castor::exception::Exception) {
-
-  u_signed64 numByte= 0;
- 
+  u_signed64 numByte = 0;
   try {
-    
     if (0 == m_getBytesByStreamStatement) {
       m_getBytesByStreamStatement =
         createStatement(s_getBytesByStreamStatementString);
       m_getBytesByStreamStatement->registerOutParam
-        (2, oracle::occi::OCCIINT);
+        (2, oracle::occi::OCCIDOUBLE);
     }
-    m_getBytesByStreamStatement->setInt(1, streamId); 
-    // m_getBytesByStreamStatement->setAutoCommit(true);
-
+    m_getBytesByStreamStatement->setDouble(1, streamId); 
     m_getBytesByStreamStatement->executeUpdate();
 
-    numByte = m_getBytesByStreamStatement->getInt(2);
+    numByte = (u_signed64)m_getBytesByStreamStatement->getDouble(2);
     
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -974,29 +958,24 @@ u_signed64 castor::db::ora::OraTapeSvc::getBytesByStream (const u_signed64 strea
   return numByte;
 }
 
-
-
 // -----------------------------------------------------------------------
 // getNumFilesByStream
 // -----------------------------------------------------------------------
-u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream (const u_signed64 streamId)
+u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream
+(const u_signed64 streamId)
   throw (castor::exception::Exception) {
-  
-  u_signed64  numFile =0;
- 
+  u_signed64 numFile =0;
   try {
-    
     if (0 == m_getNumFilesByStreamStatement) {
       m_getNumFilesByStreamStatement =
         createStatement(s_getNumFilesByStreamStatementString);
-      m_getNumFilesByStreamStatement->registerOutParam(2, oracle::occi::OCCIINT);
+      m_getNumFilesByStreamStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
     }
-    m_getNumFilesByStreamStatement->setInt(1, streamId); 
-    // m_getNumFilesByStreamStatement->setAutoCommit(true);
-
+    m_getNumFilesByStreamStatement->setDouble(1, streamId); 
     m_getNumFilesByStreamStatement->executeUpdate();
 
-    numFile = m_getNumFilesByStreamStatement->getInt(2);
+    numFile = (u_signed64)m_getNumFilesByStreamStatement->getDouble(2);
     
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1009,5 +988,3 @@ u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream (const u_signed64 st
   }
   return numFile;
 }
-
-

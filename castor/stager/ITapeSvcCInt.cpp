@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/02 13:11:20 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeSvcCInt.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/07 15:17:17 $ $Author: waldron $
  *
  *
  *
@@ -382,7 +382,6 @@ extern "C" {
     return 0;
   }
 
-
   //-------------------------------------------------------------------------
   // C_stager_ITapeSvc_checkFileForRepack
   //-------------------------------------------------------------------------
@@ -412,7 +411,6 @@ extern "C" {
     return 0;
   }
 
-
   //-------------------------------------------------------------------------
   // C_stager_ITapeSvc_sendStreamReport
   //-------------------------------------------------------------------------
@@ -436,21 +434,16 @@ extern "C" {
     tpSvc->tpSvc->sendStreamReport(diskServer, fileSystem, dir, (created != 0));
   }
 
-
-
-
-//----------------------------------------------------------------------------
-//  Cstager_ITapeSvc_getBytesByStream
-//----------------------------------------------------------------------------
-
-
-int Cstager_ITapeSvc_getBytesByStream
-(struct Cstager_ITapeSvc_t* tpSvc, 
- const u_signed64 streamId, 
- u_signed64* numByte){
-  u_signed64 byteByStream=0;
-  if (!checkITapeSvc(tpSvc)) return -1;
-  try {
+  //-------------------------------------------------------------------------
+  // Cstager_ITapeSvc_getBytesByStream
+  //-------------------------------------------------------------------------
+  int Cstager_ITapeSvc_getBytesByStream
+  (struct Cstager_ITapeSvc_t* tpSvc, 
+   const u_signed64 streamId, 
+   u_signed64* numByte){
+    u_signed64 byteByStream=0;
+    if (!checkITapeSvc(tpSvc)) return -1;
+    try {
       byteByStream=tpSvc->tpSvc->getBytesByStream(streamId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
@@ -459,20 +452,18 @@ int Cstager_ITapeSvc_getBytesByStream
     }
     *numByte= byteByStream;
     return 0;
+  }  
 
-}
-
-//----------------------------------------------------------------------------
-//  Cstager_ITapeSvc_getNumFilesByStream
-//----------------------------------------------------------------------------
-
-int Cstager_ITapeSvc_getNumFilesByStream
-(struct Cstager_ITapeSvc_t* tpSvc, 
- const u_signed64 streamId, 
- u_signed64 *numFile){
-  u_signed64 numByStream=0;
-  if (!checkITapeSvc(tpSvc)) return -1;
-  try {
+  //-------------------------------------------------------------------------
+  // Cstager_ITapeSvc_getNumFilesByStream
+  //-------------------------------------------------------------------------
+  int Cstager_ITapeSvc_getNumFilesByStream
+  (struct Cstager_ITapeSvc_t* tpSvc, 
+   const u_signed64 streamId, 
+   u_signed64 *numFile){
+    u_signed64 numByStream=0;
+    if (!checkITapeSvc(tpSvc)) return -1;
+    try {
       numByStream=tpSvc->tpSvc->getNumFilesByStream(streamId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
@@ -481,6 +472,5 @@ int Cstager_ITapeSvc_getNumFilesByStream
     }
     *numFile=numByStream; 
     return 0;
-}
-
+  }
 }
