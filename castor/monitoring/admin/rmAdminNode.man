@@ -1,4 +1,4 @@
-.TH RMADMINNODE 1 "$Date: 2007/04/19 13:22:47 $" CASTOR "stager catalogue administrative commands"
+.TH RMADMINNODE 1 "$Date: 2007/08/07 15:05:42 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 rmAdminNode \- handle statuses in rmMaster
 .SH SYNOPSIS
@@ -62,7 +62,8 @@ the next call to rmAdminNode for this item.
 .TP
 .BI \-r,\-\-release
 Releases the state of the diskServer/filesystem. The state will now be taken
-from the regular monitoring.
+from the regular monitoring. If a diskserver was previously deleted, it can be
+reinstated using this option.
 .TP
 .BI \-d,\-\-delete
 Deletes the diskServer/filesystem from the stager DB and marks it as deleted in
