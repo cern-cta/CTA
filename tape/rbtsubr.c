@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.31 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.32 $ $Date: 2007/08/07 07:21:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -92,6 +92,7 @@ int send2dmc( int*, DMCrequest_t * );
 int fromdmc( int*, DMCreply_t * );
 
 static int istapemounted( char*, int, char* );
+static int show_element_info( struct smc_element_info* );
 
 /*	rbtmount - mounts a volume on a specified drive  */
 
@@ -1527,13 +1528,16 @@ int vsnretry;
 		c = rmc_mount (rmc_host, smc_ldr, vid, side, drvord);
 
                 if (c == EBUSY) {
+
                         /* this will never happen, since c == -1 on error     */
                         RETURN(RBT_FAST_RETRY);
 
                 } else if ((-1 == c) && ((serrno - ERMCRBTERR) == EBUSY)) {
 
-                        /* EBUSY: tape may be mounted none the less, so check 
-                           that and repeat mount only if appropriate          */
+                        /* 
+                           EBUSY: tape may be mounted none the less, so check 
+                           that and repeat mount only if appropriate          
+                        */
 
                         int mounted, RETRIES = 3, retryCtr = 0;
 
@@ -1577,7 +1581,65 @@ int vsnretry;
                                 }                                
                                 retryCtr++;
                         }
+
+                } else if ((-1 == c) && ((serrno - ERMCRBTERR) == 7)) {
                         
+                        /* 
+                           'Volume in use': this may happen when we try to 
+                           mount a tape that's in our drive already (after a 
+                           spoiled EBUSY check), so check again and return 
+                           the error only if appropriate.
+
+                           NB: Error code 7 is not exactly 'Volume in use', it 
+                           is rather a request for a slow retry (RBT_OMSG_SLOW_R). 
+                           In order to be sure rmc_errbuf should be checked. OTHO,
+                           if the tape is in the drive there should be no need 
+                           for a retry.                                           
+                        */
+                        
+                        int mounted, RETRIES = 3, retryCtr = 0;
+
+                        p = strrchr (rmc_errbuf, ':');
+			sprintf (msg, TP041, "mount", vid, cur_unm,
+                                 p ? p + 2 : rmc_errbuf);
+                        tplogit (func, "%s", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "action",  TL_MSG_PARAM_STR, "mount",
+                                            "cur_vid", TL_MSG_PARAM_STR, vid,
+                                            "cur_unm", TL_MSG_PARAM_STR, cur_unm,
+                                            "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
+                        
+                        while (retryCtr < RETRIES) {
+                                
+                                /* check if the tape is mounted or not */
+                                mounted = istapemounted( vid, drvord, smc_ldr );
+                                if (0 == mounted) {
+
+                                        tplogit (func, "Encountered 'Volume in Use'. Tape not mounted locally. Return Error.\n" );
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                                            "func"   , TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Tape not mounted locally. Return Error." );
+                                        RETURN (c);
+
+                                } else if (1 == mounted) {
+                                
+                                        tplogit (func, "Encountered 'Volume in Use'. Tape mounted locally. Continue.\n" );
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
+                                                            "func"   , TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Tape mounted locally. Continue." );
+                                        RETURN (0);
+
+                                } else {
+                                        
+                                        tplogit (func, "Encountered 'Volume in Use'. Error in istapemounted. Retry to retrieve info.\n" );
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                            "func"   , TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Error in istapemounted. Retry to retrieve info." );
+                                }                                
+                                retryCtr++;
+                        }
+
                 } else if (c) {
                         /* log information about the error condition         */
                         if (serrno != SECOMERR) {
@@ -1926,7 +1988,7 @@ static int istapemounted( char *vid, int drvord, char *smc_ldr ) {
 
         if (rmc_read_elem_status (rmc_host, smc_ldr, 4,
                                   robot_info.device_start+drvord, 1, &element_info) > 0) {
-                                
+
                 if (0 == strcmp( vid, element_info.name)) {
 
                         tplogit (func, "%s is mounted\n", vid );
@@ -1945,7 +2007,8 @@ static int istapemounted( char *vid, int drvord, char *smc_ldr ) {
                                             "func"   , TL_MSG_PARAM_STR  , func,
                                             "Message", TL_MSG_PARAM_STR  , "is not mounted",
                                             "VID"    , TL_MSG_PARAM_STR  , vid,
-                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );
+                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );                        
+                        show_element_info( &element_info );
                         rc = 0;
                         goto out;
                 }
@@ -1961,5 +2024,61 @@ static int istapemounted( char *vid, int drvord, char *smc_ldr ) {
         }
         
  out:
+        RETURN (rc);
+}
+
+
+/*
+** show_element_info: dump the contents of a struct smc_element_info
+**
+** return value: 0 on success
+**              -1 in case a NULL ptr is passed
+*/
+static int show_element_info( struct smc_element_info *element_info ) {
+
+        char func[16];
+        int  rc = 0;
+
+        ENTRY (show_element_info);
+
+        if (NULL != element_info ) {
+
+                tplogit (func,\
+                         "element_address: %d, "\
+                         "element_type: %d, "\
+                         "state: %d, "\
+                         "asc: %d, "\
+                         "ascq: %d, "\
+                         "flags: %d, "\
+                         "source_address: %d, "\
+                         "name: %s\n", element_info->element_address, element_info->element_type,
+                         element_info->state, element_info->asc, 
+                         element_info->ascq, element_info->flags,
+                         element_info->source_address, element_info->name );
+                {
+                        char __asc[32], __ascq[32];
+                        sprintf( __asc, "%d (0x%x)", element_info->asc, element_info->asc );
+                        sprintf( __ascq, "%d (0x%x)", element_info->ascq, element_info->ascq );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 9,
+                                            "func"           , TL_MSG_PARAM_STR, func,
+                                            "element_address", TL_MSG_PARAM_INT, element_info->element_address,
+                                            "element_type"   , TL_MSG_PARAM_INT, element_info->element_type,
+                                            "state"          , TL_MSG_PARAM_INT, element_info->state,
+                                            "asc"            , TL_MSG_PARAM_STR, __asc,
+                                            "ascq"           , TL_MSG_PARAM_STR, __ascq,
+                                            "flags"          , TL_MSG_PARAM_INT, element_info->flags,
+                                            "source_address" , TL_MSG_PARAM_INT, element_info->source_address,
+                                            "name"           , TL_MSG_PARAM_STR, element_info->name );
+                }
+
+        } else {
+
+                tplogit (func, "element_info is NULL\n" );
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                    "Message", TL_MSG_PARAM_STR  , "element_info is NULL" );
+                rc = -1;
+        }
+
         RETURN (rc);
 }
