@@ -1,9 +1,9 @@
-.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.7 $ $Date: 2004/09/24 13:09:36 $ CERN CERN IT-PDP/DM Olof Barring
+.\" @(#)$RCSfile: rtcpd.man,v $ $Revision: 1.8 $ $Date: 2007/08/07 14:36:10 $ CERN CERN IT-PDP/DM Olof Barring
 .\" Copyright (C) 2000-2004 by CERN IT-ADC
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2004/09/24 13:09:36 $" CASTOR "RTCOPY daemon"
+.TH RTCPD 1 "$Date: 2007/08/07 14:36:10 $" CASTOR "RTCOPY daemon"
 .SH NAME
 rtcpd \- CASTOR remote tape copy daemon
 .SH SYNOPSIS
@@ -30,7 +30,7 @@ with input disk file data, while it is waiting for the tape to be mounted and
 positioned. \fBrtcpd\fP is highly multi-threaded and able to process 
 disk+network I/O in parallel with the tape I/O.
 .PP
-To access the tapes \fBrtcpd\fP uses the character devices created by the tape daemon in the /var/tmp/RTCOPY directory. This directory is created by \fBrtcpd\fP at startup time, and must not be removed.
+To access the tapes \fBrtcpd\fP uses the character devices created by the tape daemon in the /var/lib/castor/rtcopy directory. This directory is created by \fBrtcpd\fP at startup time, and must not be removed.
  
 .SH ENVIRONMENT
 The \fBrtcpd\fP daemon does not take any arguments. A set of configuration
@@ -152,7 +152,7 @@ failure with \fBRTCP_NORETRY\fP severity in case of tape media errors
 .B /etc/shift.conf
 CASTOR configuration file
 .TP
-.B /var/tmp/RTCOPY
+.B /var/lib/castor/RTCOPY
 Directory where the tape daemon creates the character devices
 .TP
 .B /usr/spool/rtcopy/rtcopyd.log
