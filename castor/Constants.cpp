@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2007/07/13 10:34:57 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2007/08/07 15:13:07 $ $Author: waldron $
  *
  *
  *
@@ -166,7 +166,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "FileSystemStateAck",
   "MonitorMessageAck",
 
-  "Client"
+  "Client",
+
+  "JobSubmissionRequest"
 };
 
 //=============================================================================
@@ -217,7 +219,8 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   
   "ORACLEANSVC",
   "ORARMMASTERSVC",
-  "DBPARAMSSVC"
+  "DBPARAMSSVC",
+  "ORAJOBMANAGERSVC"
 };
 
 //=============================================================================

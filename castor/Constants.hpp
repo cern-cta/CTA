@@ -154,7 +154,9 @@ namespace castor {
     OBJ_FileSystemStateAck = 127,
     OBJ_MonitorMessageAck = 128,
 
-    OBJ_Client = 129
+    OBJ_Client = 129,
+
+    OBJ_JobSubmissionRequest = 130
   };
 
   /**
@@ -194,7 +196,8 @@ namespace castor {
 
     SVC_ORACLEANSVC = 37,
     SVC_ORARMMASTERSVC = 38,
-    SVC_DBPARAMSSVC = 39
+    SVC_DBPARAMSSVC = 39,
+    SVC_ORAJOBMANAGERSVC = 30
   };
 
   /**
@@ -222,12 +225,12 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 130;
+  static const unsigned int ObjectsIdsNb = 131;
 
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 40;
+  static const unsigned int ServicesIdsNb = 41;
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -238,13 +241,13 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[130];
+  extern const char* ObjectsIdStrings[131];
 
   /**
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[40];
+  extern const char* ServicesIdStrings[41];
 
   /**
    * Names of the differents representations, used to display
