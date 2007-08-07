@@ -145,8 +145,10 @@ void castor::server::BaseDaemon::handleSignals()
           // the exit. However, in the future we may want to re-fork it!
           pid_t pid = 0;
           while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-            clog() << WARNING << "CHILD STOPPED [SIGCHLD] - PID " 
-             << pid << std::endl;
+	    // For now we log no message here because some threads call API 
+	    // functions which fork and this results in an uncessary message!
+	    // clog() << WARNING << "CHILD STOPPED [SIGCHLD] - PID " 
+	    //	      << pid << std::endl;
           }
           break;
         }
@@ -188,11 +190,8 @@ void castor::server::BaseDaemon::waitAllThreads(bool beGraceful) throw()
   }
   
   // Reap child processes
-  pid_t pid = 0;
-  while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-    clog() << WARNING << "CHILD STOPPED [SIGCHLD] - PID " 
-	   << pid << std::endl;
-  }
+  pid_t pid;
+  while (( pid = waitpid(-1, NULL, WNOHANG)) > 0) {}
 
   if(!beGraceful) {
     // on a SIGINT we want to stop as soon as possible
