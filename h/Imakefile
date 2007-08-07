@@ -68,12 +68,6 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),Cmonitd.h) \
 	 FileName($(DESTDIRCASTOR),Cmonitd_lock.h) \
 	 FileName($(DESTDIRCASTOR),Cmutex.h) \
-	 FileName($(DESTDIRCASTOR),Crmd_checkpoint.h) \
-	 FileName($(DESTDIRCASTOR),Crmd_recv_from_maui.h) \
-	 FileName($(DESTDIRCASTOR),Crmd_recv_from_rmnode.h) \
-	 FileName($(DESTDIRCASTOR),Crmd_recv_from_users.h) \
-	 FileName($(DESTDIRCASTOR),Crmd_survey.h) \
-	 FileName($(DESTDIRCASTOR),Crmd_tape_feature.h) \
 	 FileName($(DESTDIRCASTOR),Csec.h) \
 	 FileName($(DESTDIRCASTOR),Csec_api.h) \
 	 FileName($(DESTDIRCASTOR),Csec_common.h) \
@@ -98,12 +92,6 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),getconfent.h) \
 	 FileName($(DESTDIRCASTOR),md5.h) \
 	 FileName($(DESTDIRCASTOR),msg.h) \
-	 FileName($(DESTDIRCASTOR),rm_api.h) \
-	 FileName($(DESTDIRCASTOR),rm_constants.h) \
-	 FileName($(DESTDIRCASTOR),rm_limits.h) \
-	 FileName($(DESTDIRCASTOR),rm_macros.h) \
-	 FileName($(DESTDIRCASTOR),rm_messages.h) \
-	 FileName($(DESTDIRCASTOR),rm_struct.h) \
 	 FileName($(DESTDIRCASTOR),rmc.h) \
 	 FileName($(DESTDIRCASTOR),rmc_api.h) \
 	 FileName($(DESTDIRCASTOR),rmc_constants.h) \
@@ -167,12 +155,6 @@ ECOMMON_H = \
 	 $(EXPORTH)/Cmonitd.h \
 	 $(EXPORTH)/Cmonitd_lock.h \
 	 $(EXPORTH)/Cmutex.h \
-	 $(EXPORTH)/Crmd_checkpoint.h \
-	 $(EXPORTH)/Crmd_recv_from_maui.h \
-	 $(EXPORTH)/Crmd_recv_from_rmnode.h \
-	 $(EXPORTH)/Crmd_recv_from_users.h \
-	 $(EXPORTH)/Crmd_survey.h \
-	 $(EXPORTH)/Crmd_tape_feature.h \
 	 $(EXPORTH)/Csec.h \
 	 $(EXPORTH)/Csec_api.h \
 	 $(EXPORTH)/Csec_common.h \
@@ -197,12 +179,6 @@ ECOMMON_H = \
 	 $(EXPORTH)/getconfent.h \
 	 $(EXPORTH)/md5.h \
 	 $(EXPORTH)/msg.h \
-	 $(EXPORTH)/rm_api.h \
-	 $(EXPORTH)/rm_constants.h \
-	 $(EXPORTH)/rm_limits.h \
-	 $(EXPORTH)/rm_macros.h \
-	 $(EXPORTH)/rm_messages.h \
-	 $(EXPORTH)/rm_struct.h \
 	 $(EXPORTH)/rmc.h \
 	 $(EXPORTH)/rmc_api.h \
 	 $(EXPORTH)/rmc_constants.h \
@@ -454,24 +430,6 @@ IEXPORT(Cregexp.h,$(EXPORTH),644)
 InstallNonExecFile(Cregexp_magic.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cregexp_magic.h,$(EXPORTH),644)
 
-InstallNonExecFile(Crmd_checkpoint.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Crmd_checkpoint.h,$(EXPORTH),644)
-
-InstallNonExecFile(Crmd_recv_from_maui.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Crmd_recv_from_maui.h,$(EXPORTH),644)
-
-InstallNonExecFile(Crmd_recv_from_rmnode.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Crmd_recv_from_rmnode.h,$(EXPORTH),644)
-
-InstallNonExecFile(Crmd_recv_from_users.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Crmd_recv_from_users.h,$(EXPORTH),644)
-
-InstallNonExecFile(Crmd_survey.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Crmd_survey.h,$(EXPORTH),644)
-
-InstallNonExecFile(Crmd_tape_feature.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Crmd_tape_feature.h,$(EXPORTH),644)
-
 InstallNonExecFile(Csec.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Csec.h,$(EXPORTH),644)
 
@@ -612,24 +570,6 @@ IEXPORT(rfio_constants.h,$(EXPORTH),644)
 
 InstallNonExecFile(rfio_errno.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rfio_errno.h,$(EXPORTH),644)
-
-InstallNonExecFile(rm_api.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(rm_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(rm_constants.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(rm_constants.h,$(EXPORTH),644)
-
-InstallNonExecFile(rm_limits.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(rm_limits.h,$(EXPORTH),644)
-
-InstallNonExecFile(rm_macros.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(rm_macros.h,$(EXPORTH),644)
-
-InstallNonExecFile(rm_messages.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(rm_messages.h,$(EXPORTH),644)
-
-InstallNonExecFile(rm_struct.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(rm_struct.h,$(EXPORTH),644)
 
 InstallNonExecFile(rmc.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(rmc.h,$(EXPORTH),644)
