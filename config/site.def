@@ -1,7 +1,6 @@
-
 /*
  * $Id$
-*/
+ */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -55,12 +54,8 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define CupvSpool	/var/spool/upv
 #define JobSpool	/var/spool/job
 #define RmMasterSpool	/var/spool/rmmaster
-#if defined(_WIN32)
-#define RmMasterConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\RMMASTERCONFIG
-#else
-#define RmMasterConfigFile	/etc/castor/RMMASTERCONFIG
-#endif
 #define RmNodeSpool	/var/spool/rmnode
+#define JobManagerSpool /var/spool/jobmanager
 #define	DMSCDir	/dms/fbs/src
 #if defined(_WIN32)
 #define DbConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\DBCONFIG
@@ -149,7 +144,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define RfioSpool	/var/spool/rfio
 #define RmcSpool	/var/spool/rmc
 #define RtcopySpool	/var/spool/rtcopy
-#define RtcopyWorkDir	/var/RTCOPY
+#define RtcopyWorkDir	/var/lib/castor/rtcopy
 #define	RtcpclientdHost	"castorrtcpcld"
 #define SacctDir	/var/spool/sacct
 #if defined(_WIN32)
@@ -251,6 +246,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildRmcServer		NO
 #define BuildRmcLibrary		NO
 #define BuildJob		NO
+#define BuildJobManagerCpp	NO
 #define BuildRtcopyClient	NO
 #define BuildRtcopyServer	NO
 #define BuildRtcopyLibrary	NO
@@ -261,12 +257,8 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildStageDaemon	NO
 #define BuildStageDaemonCpp	NO
 #define BuildStageLibrary	NO
-#define BuildRmMaster		NO
 #define BuildRmMasterCpp	NO
-#define BuildRmNode		NO
 #define BuildRmNodeCpp  	NO
-#define BuildRmClient		NO
-#define	BuildRmLibrary		NO
 #define BuildTapeClient		NO
 #define BuildTapeDaemon		NO
 #define BuildTapeLibrary	NO
@@ -301,7 +293,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define HasNis			NO
 #define HasNroff		YES
 #define HasCDK			NO
-#define RFIODaemonRealTime 	NO	
+#define RFIODaemonRealTime 	NO
 #define UseXFSPrealloc		YES
 #define UseAdns			NO
 #define UseCupv			YES

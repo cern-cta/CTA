@@ -20,28 +20,6 @@
 #endif
 #endif
 
-/* RMMASTER needs [1]maui or lsf */
-/* ----------------------------- */
-#if BuildRmMaster
-#if !UseMaui && !UseLsf
-#undef UseMaui
-#define UseMaui YES
-#endif
-#endif
-
-/* JOB needs some ResourceMonitoring tools and daemon */
-/* -------------------------------------------------- */
-#if BuildJob
-#if !BuildRmClient
-#undef BuildRmClient
-#define BuildRmClient YES
-#endif
-#if !BuildRmNode
-#undef BuildRmNode
-#define BuildRmNode YES
-#endif
-#endif
-
 /* ========================================== */
 /* Implicit dependencies because of libraries */
 /* ========================================== */
@@ -79,10 +57,6 @@
 #if !BuildStageLibrary
 #undef BuildStageLibrary
 #define BuildStageLibrary YES
-#endif
-#if !BuildRmLibrary
-#undef BuildRmLibrary
-#define BuildRmLibrary YES
 #endif
 #if UseVmgr
 #if !BuildVolumeMgrLibrary
@@ -189,10 +163,6 @@
 #if !BuildRfioLibrary
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
-#endif
-#if !BuildRmLibrary
-#undef BuildRmLibrary
-#define BuildRmLibrary YES
 #endif
 #endif
 
@@ -330,10 +300,6 @@
 #undef BuildDlfLibrary
 #define BuildDlfLibrary	YES
 #endif
-#if BuildRmLibrary != YES
-#undef BuildRmLibrary
-#define BuildRmLibrary YES
-#endif
 #if !BuildRfioLibrary
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
@@ -351,31 +317,6 @@
 #if !BuildRfioLibrary
 #undef BuildRfioLibrary
 #define BuildRfioLibrary YES
-#endif
-#endif
-
-/* -------------------------------------------- */
-/* RM (and job because job uses few RM clients) */
-/*------------------------------------------ -- */
-#if BuildRmMaster
-#if !BuildRmLibrary
-#undef BuildRmLibrary
-#define BuildRmLibrary YES
-#endif
-#if !BuildRfioLibrary
-#undef BuildRfioLibrary
-#define BuildRfioLibrary YES
-#endif
-#if !BuildVdqmLibrary
-#undef BuildVdqmLibrary
-#define BuildVdqmLibrary YES
-#endif
-#endif
-
-#if BuildRmNode || BuildRmClient || BuildJob
-#if !BuildRmLibrary
-#undef BuildRmLibrary
-#define BuildRmLibrary YES
 #endif
 #endif
 
@@ -475,7 +416,6 @@
 #define BuildExpertLibrary YES
 #endif
 #endif
-
 /* ---------------*/
 /* REQUEST HANDLER */
 /* --------------- */
@@ -502,7 +442,6 @@
 #endif
 #endif
 
-
 /* --------------- */
 /* New VDQM Server */
 /* --------------- */
@@ -520,8 +459,6 @@
 #define BuildDlfLibrary YES
 #endif
 #endif
-
-
 
 /* ----------------- */
 /* New Repack        */
@@ -544,7 +481,6 @@
 #define BuildDlfLibrary YES
 #endif
 #endif
-
 
 /* ----------------- */
 /* Cleaning          */
@@ -582,7 +518,6 @@
 #endif
 #endif
 
-
 /* ------------ */
 /* New RmMaster */
 /* ------------ */
@@ -593,6 +528,15 @@
 #endif
 #endif
 
+/******************/
+/* New JobManager */
+/******************/
+#if BuidlJobManagerCpp
+#if BuildDlfLibrary != YES
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
+#endif
 
 /* ------- */
 /* CPPTEST */
@@ -607,7 +551,6 @@
 #define BuildCastorClientCPPLibrary YES
 #endif
 #endif
-
 
 /* -------- */
 /* SECURITY */
@@ -672,9 +615,6 @@ DBSERVICEDIR = dbService
 #endif
 #if BuildStageClientOld
 STAGEDIROLD = stage
-#endif
-#if BuildRmClient || BuildRmMaster || BuildRmNode || BuildRmLibrary
-RESOURCEMONITORINGDIR = resourcemonitoring
 #endif
 #if BuildTapeClient || BuildTapeDaemon || BuildTapeLibrary || BuildTpusage
 TAPEDIR = tape
@@ -751,6 +691,9 @@ RMADMINDIR = admin
 #if BuildRmNodeCpp
 MONITORINGDIR = monitoring
 RMNODEDIR = rmnode
+#endif
+#if BuildJobManagerCpp
+JOBMANAGERDIR = jobmanager
 #endif
 
 /* Those directories are always defined because we always build at least */

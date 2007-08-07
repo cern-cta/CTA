@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.58 2007/06/28 06:24:55 waldron Exp $
+# $Id: maketar.sh,v 1.59 2007/08/07 15:35:59 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -66,7 +66,7 @@ echo "### INFO ### Customizing build directory"
 #
 ## Force build rules to YES for a lot of things
 #
-for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildMonitorClient BuildMonitorLibrary BuildMonitorServer BuildMsgClient BuildMsgLibrary BuildMsgServer BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmClient BuildRmLibrary BuildRmMaster BuildRmNode BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemon BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB4 UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc; do
+for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildMonitorClient BuildMonitorLibrary BuildMonitorServer BuildMsgClient BuildMsgLibrary BuildMsgServer BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemon BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB4 UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc; do
     perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
 done
 

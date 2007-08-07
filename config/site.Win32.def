@@ -1,14 +1,13 @@
-
 /*
- * $Id: site.Win32.def,v 1.4 2007/06/28 15:40:08 itglp Exp $
-*/
+ * $Id: site.Win32.def,v 1.5 2007/08/07 15:35:59 waldron Exp $
+ */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
  * All rights reserved
  */
 
 /*
- * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.4 $ $Date: 2007/06/28 15:40:08 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.5 $ $Date: 2007/08/07 15:35:59 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Platform is normally guessed from the CPP predefined symbols
    But you may define special flags, for example
@@ -55,12 +54,8 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define CupvSpool	/var/spool/upv
 #define JobSpool	/var/spool/job
 #define RmMasterSpool	/var/spool/rmmaster
-#if defined(_WIN32)
-#define RmMasterConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\RMMASTERCONFIG
-#else
-#define RmMasterConfigFile	/etc/castor/RMMASTERCONFIG
-#endif
 #define RmNodeSpool	/var/spool/rmnode
+#deifne JobManagerSpool /var/spool/jobmanager
 #if defined(_WIN32)
 #define RmNodeConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\RMNODECONFIG
 #else
@@ -154,7 +149,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define RfioSpool	/var/spool/rfio
 #define RmcSpool	/var/spool/rmc
 #define RtcopySpool	/var/spool/rtcopy
-#define RtcopyWorkDir	/var/tmp/RTCOPY
+#define RtcopyWorkDir	/var/lib/castor/rtcopy
 #define	RtcpclientdHost	"castorrtcpcld"
 #define SacctDir	/var/spool/sacct
 #if defined(_WIN32)
@@ -266,10 +261,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildStageClientOld	YES
 #define BuildStageDaemon	NO
 #define BuildStageLibrary	YES
-#define BuildRmMaster	NO
-#define BuildRmNode	YES
-#define BuildRmClient	YES
-#define	BuildRmLibrary	YES
 #define BuildTapeClient	YES
 #define BuildTapeDaemon	NO
 #define BuildTapeLibrary	YES
