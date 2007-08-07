@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_server.h,v 1.2 2004/07/26 15:15:29 motiakov Exp $
+ * $Id: vmgr_server.h,v 1.3 2007/08/07 15:25:42 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.2 $ $Date: 2004/07/26 15:15:29 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.3 $ $Date: 2007/08/07 15:25:42 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_SERVER_H
@@ -47,16 +47,17 @@
 
 #define CHECKI	5	/* max interval to check for work to be done */
 #define VMGR_NBTHREADS	6
-#define RETURN(x) \
-	{ \
+#define RETURN(x) { \
 	vmgrlogit (func, "returns %d\n", (x)); \
-	if (thip->dbfd.tr_started) \
-		if (x) \
+	if (thip->dbfd.tr_started) { \
+		if (x) { \
 			(void) vmgr_abort_tr (&thip->dbfd); \
-		else \
+		} else { \
 			(void) vmgr_end_tr (&thip->dbfd); \
+		} \
+	} \
 	return ((x)); \
-	}
+}
 
 			/* volume manager tables and structures */
 
@@ -171,4 +172,40 @@ EXTERN_C int vmgr_update_pool_entry _PROTO((struct vmgr_dbfd *, vmgr_dbrec_addr 
 EXTERN_C int vmgr_update_side_entry _PROTO((struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_side *));
 EXTERN_C int vmgr_update_tag_entry _PROTO((struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_tag *));
 EXTERN_C int vmgr_update_tape_entry _PROTO((struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_info *));
+
+EXTERN_C int vmgr_srv_deletedenmap _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_deletedgnmap _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_deletelibrary _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_deletemodel _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_deletepool _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_deletetape _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_deltag _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_enterdenmap _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_enterdgnmap _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_enterlibrary _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_entermodel _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_enterpool _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_entertape _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_gettag _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_gettape _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_listdenmap _PROTO((int, char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *));
+EXTERN_C int vmgr_srv_listdgnmap _PROTO((int, char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *));
+EXTERN_C int vmgr_srv_listlibrary _PROTO((int, char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *));
+EXTERN_C int vmgr_srv_listmodel _PROTO((int, char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *));
+EXTERN_C int vmgr_srv_listpool _PROTO((int, char *, char *, struct vmgr_srv_thread_info *, int, DBLISTPTR *));
+EXTERN_C int vmgr_srv_listtape _PROTO((int, char *, char *, struct vmgr_srv_thread_info *, struct vmgr_tape_info *, int, DBLISTPTR *));
+EXTERN_C int vmgr_srv_modifylibrary _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_modifymodel _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_modifypool _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_modifytape _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_querypool _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_querylibrary _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_querymodel _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_querytape _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_reclaim _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_settag _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_shutdown _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_tpmounted _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+EXTERN_C int vmgr_srv_updatetape _PROTO((int, char *, char *, struct vmgr_srv_thread_info *));
+
 #endif
