@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.20 2007/07/27 12:09:44 waldron Exp $
+ * $Id: dlf_lib.c,v 1.21 2007/08/07 14:43:38 waldron Exp $
  */
 
 /* headers */
@@ -1356,12 +1356,17 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 				}
 
 				/* alter severity mask
-				 *   - for LOGSTANDARD (-2) we log everything apart from DEBUG and USAGE
+				 *   - for LOGSTANDARD (-2) we log everything apart from DEBUG messages.
+				 *     Additionally usage messages are not recorded remotely.
 				 */
 				if (severitylist[i].sevno == -2) {
 					for (k = 0; severitylist[k].sevno > 0; k++) {
-						if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
-						    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
+						if (IsServer(targets[j]->mode)) {
+							if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
+							    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
+								continue;
+							}				      
+						} else if (severitylist[k].sevno == DLF_LVL_DEBUG) {
 							continue;
 						}
 						targets[j]->sevmask |= severitylist[k].sevmask;
