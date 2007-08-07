@@ -315,6 +315,23 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_SubRequest_requestedFileSystems
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_requestedFileSystems(castor::stager::SubRequest* instance, const char** var) {
+    *var = instance->requestedFileSystems().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SubRequest_setRequestedFileSystems
+  //----------------------------------------------------------------------------
+  int Cstager_SubRequest_setRequestedFileSystems(castor::stager::SubRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setRequestedFileSystems(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_SubRequest_id
   //----------------------------------------------------------------------------
   int Cstager_SubRequest_id(castor::stager::SubRequest* instance, u_signed64* var) {

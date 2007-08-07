@@ -356,6 +356,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_requestedFileSystems
+       * The filesystems requested to fulfil the jobs resource requirements in the
+       * scheduler
+       * @return the value of m_requestedFileSystems
+       */
+      std::string requestedFileSystems() const {
+        return m_requestedFileSystems;
+      }
+
+      /**
+       * Set the value of m_requestedFileSystems
+       * The filesystems requested to fulfil the jobs resource requirements in the
+       * scheduler
+       * @param new_var the new value of m_requestedFileSystems
+       */
+      void setRequestedFileSystems(std::string new_var) {
+        m_requestedFileSystems = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -542,6 +562,9 @@ namespace castor {
 
       /// error message associated with this subrequest. Has a meaning only for subrequests in status SUBREQUEST_FAILED
       std::string m_errorMessage;
+
+      /// The filesystems requested to fulfil the jobs resource requirements in the scheduler
+      std::string m_requestedFileSystems;
 
       /// The id of this object
       u_signed64 m_id;

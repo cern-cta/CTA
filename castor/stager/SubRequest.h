@@ -264,6 +264,20 @@ int Cstager_SubRequest_errorMessage(struct Cstager_SubRequest_t* instance, const
 int Cstager_SubRequest_setErrorMessage(struct Cstager_SubRequest_t* instance, const char* new_var);
 
 /**
+ * Get the value of requestedFileSystems
+ * The filesystems requested to fulfil the jobs resource requirements in the
+ * scheduler
+ */
+int Cstager_SubRequest_requestedFileSystems(struct Cstager_SubRequest_t* instance, const char** var);
+
+/**
+ * Set the value of requestedFileSystems
+ * The filesystems requested to fulfil the jobs resource requirements in the
+ * scheduler
+ */
+int Cstager_SubRequest_setRequestedFileSystems(struct Cstager_SubRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */
