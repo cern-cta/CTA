@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2007/06/29 09:00:21 $ $Author: gtaur $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2007/08/07 15:14:49 $ $Author: waldron $
  *
  *
  *
@@ -347,15 +347,15 @@ extern "C" {
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectDiskPool
   //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_selectDiskPool(struct Cstager_IStagerSvc_t* stagerSvc,
+  int Cstager_IStagerSvc_selectDiskPool(struct Cstager_IStagerSvc_t* stgSvc,
 					castor::stager::DiskPool** diskPool,
 					const char* name) {
-    if (!checkIStagerSvc(stagerSvc)) return -1;
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *diskPool = stagerSvc->stgSvc->selectDiskPool(name);
+      *diskPool = stgSvc->stgSvc->selectDiskPool(name);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
-      stagerSvc->errorMsg = e.getMessage().str();
+      stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;
@@ -364,15 +364,15 @@ extern "C" {
   //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_selectTapePool
   //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_selectTapePool(struct Cstager_IStagerSvc_t* stagerSvc,
+  int Cstager_IStagerSvc_selectTapePool(struct Cstager_IStagerSvc_t* stgSvc,
 					castor::stager::TapePool** tapePool,
 					const char* name) {
-    if (!checkIStagerSvc(stagerSvc)) return -1;
+    if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *tapePool = stagerSvc->stgSvc->selectTapePool(name);
+      *tapePool = stgSvc->stgSvc->selectTapePool(name);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
-      stagerSvc->errorMsg = e.getMessage().str();
+      stgSvc->errorMsg = e.getMessage().str();
       return -1;
     }
     return 0;

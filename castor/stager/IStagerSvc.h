@@ -370,6 +370,7 @@ int Cstager_IStagerSvc_setFileGCWeight
 /**
  * Creates a candidate for a recall. This includes TapeCopy with
  * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
+ * @param stgSvc the IStagerSvc used
  * @param subreq the subreq of the file to recall
  * @param euid the user id
  * @param egid the group id of the user
@@ -387,16 +388,16 @@ int Cstager_IStagerSvc_createRecallCandidate
  * Retrieves a DiskPool from the database based on name.
  * Caller is in charge of the deletion of the allocated
  * memory.
- * @param fsSvc the IFSSvc used
+ * @param stgSvc the IStagerSvc used
  * @param diskPool the DiskPool object returned, or 0 if none found
  * @param name the name of the DiskPool
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
- * Cstager_IFSSvc_errorMsg
+ * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IFSSvc_selectDiskPool
-(struct Cstager_IStagerSvc_t* fsSvc,
+int Cstager_IStagerSvc_selectDiskPool
+(struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_DiskPool_t** diskPool,
  const char* name);
 
@@ -404,16 +405,16 @@ int Cstager_IFSSvc_selectDiskPool
  * Retrieves a TapePool from the database based on name.
  * Caller is in charge of the deletion of the allocated
  * memory.
- * @param fsSvc the IFSSvc used
+ * @param stgSvc the IStagerSvc used
  * @param tapePool the TapePool object returned, or 0 if none found
  * @param name the name of the TapePool
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
- * Cstager_IFSSvc_errorMsg
+ * Cstager_IStagerSvc_errorMsg
  */
-int Cstager_IFSSvc_selectTapePool
-(struct Cstager_IStagerSvc_t* fsSvc,
+int Cstager_IStagerSvc_selectTapePool
+(struct Cstager_IStagerSvc_t* stgSvc,
  struct Cstager_TapePool_t** tapePool,
  const char* name);
 
