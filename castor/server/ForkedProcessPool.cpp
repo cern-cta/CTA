@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/07/27 13:22:04 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/07 14:38:55 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -119,8 +119,12 @@ void castor::server::ForkedProcessPool::init() throw (castor::exception::Excepti
     if(pid == 0) {
       // close all child file descriptors which are not used
       // for inter-process communication
+      freopen("/dev/null", "r", stdin);
+      freopen("/dev/null", "w", stdout);
+      freopen("/dev/null", "w", stderr);
+      
       ps->closeWrite();
-      for (int fd = 0; fd < getdtablesize(); fd++) {
+      for (int fd = ps->getFdWrite(); fd < getdtablesize(); fd++) {
         if ((fd != ps->getFdRead()) && (fd != ps->getFdWrite())) {
 	  close(fd);
         }
