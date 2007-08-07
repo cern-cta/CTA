@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 
     // Handle case of empty list
     if (cs->begin() == cs->end()) {
-      std::cout << "No diskServer registered" << std::endl;
+      std::cout << "No diskserver registered" << std::endl;
       return 0;
     }
     
@@ -121,7 +121,7 @@ int main(int argc, char** argv) {
     }
 
     if ((0 == found) && (node != 0)) {
-      std::cerr << "No diskServer found with name '"
+      std::cerr << "No diskserver found with name '"
 		<< node << "'. Maybe check the domain."
 		<< std::endl;     
     }
