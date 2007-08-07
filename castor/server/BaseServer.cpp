@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/07/27 11:59:22 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/08/07 14:39:28 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -274,13 +274,12 @@ void castor::server::BaseServer::help(std::string programName)
 	  "\n"
 	  "where options can be:\n"
 	  "\n"
-	  "\t--foreground      or -f                \tForeground\n"
-	  "\t--config cfgFile  or -c                \tConfiguration\n"
-	  "\t--help            or -h                \tThis help\n"
+	  "\t--foreground            or -f         \tForeground\n"
+	  "\t--config <config-file>  or -c         \tConfiguration file\n"
+	  "\t--help                  or -h         \tThis help\n"
 	  "\n"
 	  "Comments to: Castor.Support@cern.ch\n";
 }
-
 
 //------------------------------------------------------------------------------
 // sendNotification
@@ -294,7 +293,7 @@ void castor::server::BaseServer::sendNotification(std::string host, int port, in
   char buf[HYPERSIZE + LONGSIZE];
   char *p;
 
-  /* Resolve host address */
+  // Resolve host address
   if ((hp = Cgethostbyname(host.c_str())) == NULL) {
     serrno = errno;
     castor::exception::Internal ex;
@@ -302,12 +301,12 @@ void castor::server::BaseServer::sendNotification(std::string host, int port, in
     throw ex;
   }
 
-  /* Prepare the request */
+  // Prepare the request
   p = buf;
-  marshall_HYPER(p, castor::server::NotificationThread::NOTIFY_MAGIC);
+  marshall_LONG(p, castor::server::NotificationThread::NOTIFY_MAGIC);
   marshall_LONG(p, nbThreads);
 
-  /* Create socket */
+  // Create socket
   if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     serrno = errno;
     castor::exception::Internal ex;
@@ -315,7 +314,7 @@ void castor::server::BaseServer::sendNotification(std::string host, int port, in
     throw ex;
   }
 
-  /* Send packet containing notification magic number + service number */
+  // Send packet containing notification magic number + service number
   memset((char *) &sin, 0, sizeof(sin));
   sin.sin_family = AF_INET;
   sin.sin_port = htons(port);

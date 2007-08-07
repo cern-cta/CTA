@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/25 15:34:12 $ $Author: itglp $
+* @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/08/07 14:37:20 $ $Author: waldron $
 *
 * A thread to handle notifications to wake up workers in a pool
 *
@@ -55,7 +55,7 @@ void castor::server::NotificationThread::run(void* param) {
   try {
     
     struct sockaddr_in serverAddress, clientAddress;
-    int on = 1;	/* for REUSEADDR */
+    int on = 1;	// for REUSEADDR 
     int ibind;
     
     #if defined(_WIN32)
@@ -66,7 +66,7 @@ void castor::server::NotificationThread::run(void* param) {
     }
     #endif
     
-    /* Create a socket */
+    // Create a socket 
     if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
       castor::exception::Internal ex;
       ex.getMessage() << "NotificationThread: failed to create socket";
@@ -78,7 +78,7 @@ void castor::server::NotificationThread::run(void* param) {
     serverAddress.sin_port = htons(m_notifPort);
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on));
     
-    /* Bind on it - we know that the port can be reused but not always immediately */
+    // Bind on it - we know that the port can be reused but not always immediately
     ibind = 0;
     while (ibind++ < MAX_BIND_RETRY) {
       if (bind(s, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) >= 0)
@@ -89,17 +89,9 @@ void castor::server::NotificationThread::run(void* param) {
       ex.getMessage() << "NotificationThread: failed to bind to port " << m_notifPort;
       throw ex;
     }
-    
-    /* Say to our parent that we successfully started - not needed in principle */
-    //m_owner->m_poolMutex->lock();
-    
-    //m_owner->nbNotifyThreads = 1;
-    
-    //m_owner->m_poolMutex->signal();
-    //m_owner->m_poolMutex->release();
-    
-    /* Wait for a notification or until we are told to stop */
-    while(!m_stopped) {
+
+    // Wait for a notification or until we are told to stop 
+    while (!m_stopped) {
       int magic;
       int nb_recv;
       char buf[HYPERSIZE + LONGSIZE];
@@ -112,37 +104,37 @@ void castor::server::NotificationThread::run(void* param) {
       memset(buf, 0, sizeof(buf));
       clientAddressLen = sizeof(clientAddress);
       
-      /* Use select() to avoid blocking on recvfrom() */
+      // Use select() to avoid blocking on recvfrom()
       FD_ZERO(&read_handles);
       FD_SET(s,&read_handles);
       timeout.tv_sec = 1;
       timeout.tv_usec = 0;
       if (select(s + 1, &read_handles, NULL, NULL, &timeout) > 0) {
         
-        /* Reading the header - blocks until there is something to read */
-        nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen );
+        // Reading the header - blocks until there is something to read
+        nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen);
         
-        if (nb_recv != (HYPERSIZE+LONGSIZE)) {
-          /* Ignore this packet */
+        if (nb_recv != (HYPERSIZE + LONGSIZE)) {
+          // Ignore this packet
           continue;
         }
         
         p = buf;
-        unmarshall_HYPER(p, magic);
+        unmarshall_LONG(p, magic);
         unmarshall_LONG(p, nb_thread_wanted);
-        
+
         if (magic != NOTIFY_MAGIC) {
-          /* Not a packet for us (!?) */
+          // Not a packet for us (!?)
           continue;
         }
-        
-        /* Okay - we have received a notification - we signal our condition variable */
+
+        // Okay - we have received a notification - we signal our condition variable
         try {
           m_owner->m_poolMutex->lock();
           
           m_owner->m_notified += nb_thread_wanted;
           
-          /* We make sure that 0 <= m_notified <= nbThreadInactive */
+          // We make sure that 0 <= m_notified <= nbThreadInactive
           if(m_owner->m_notified < 0) {
             m_owner->m_notified = 1;
           }
@@ -151,7 +143,7 @@ void castor::server::NotificationThread::run(void* param) {
             nbThreadInactive = 0;
           }
           if (nbThreadInactive == 0) {
-            /* All threads are already busy : try to get one counting on timing windows */
+            // All threads are already busy : try to get one counting on timing windows
             m_owner->m_notified = 1;
           } else {
             if (m_owner->m_notified > nbThreadInactive) {
@@ -166,10 +158,10 @@ void castor::server::NotificationThread::run(void* param) {
           m_owner->m_poolMutex->release();
         }
         catch (castor::exception::Exception any) {
-          /* just ignore for this loop all mutex errors and try again */
+          // just ignore for this loop all mutex errors and try again
           try {
             m_owner->m_poolMutex->release();
-	        } catch(...) {}
+	  } catch(...) {}
         }
       }
     }
