@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.469 $ $Date: 2007/08/06 13:19:41 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.470 $ $Date: 2007/08/07 15:39:18 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -307,16 +307,15 @@ END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is linked to a Stream */
-
 CREATE OR REPLACE TRIGGER tr_stream2tapecopy_insert
-AFTER INSERT  ON STREAM2TAPECOPY
+AFTER INSERT ON STREAM2TAPECOPY
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
 DECLARE
   cfSize NUMBER(38);
 BEGIN
-  --added this lock because of severaval copies of different file systems
- -- from different streams which can cause deadlock
+  -- added this lock because of severaval copies of different file systems
+  -- from different streams which can cause deadlock
   LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
    WHERE FS IN (SELECT DiskCopy.FileSystem
@@ -325,24 +324,25 @@ BEGIN
                    AND TapeCopy.id = :new.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
- -- added for the stream policy
-   SELECT castorfile.filesize INTO cfSize FROM TapeCopy,CastorFile
-        WHERE TapeCopy.castorfile = CastorFile.id AND TapeCopy.id = :new.child;
+
+  -- added for the stream policy
+  SELECT castorfile.filesize INTO cfSize FROM TapeCopy,CastorFile
+   WHERE TapeCopy.castorfile = CastorFile.id AND TapeCopy.id = :new.child;
+
   UPDATE Stream set byteVolume = byteVolume + cfSize
-  WHERE Stream.id = :new.parent;
+   WHERE Stream.id = :new.parent;
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is unlinked from a Stream */
-
 CREATE OR REPLACE TRIGGER tr_stream2tapecopy_delete
-BEFORE DELETE  ON STREAM2TAPECOPY
+BEFORE DELETE ON STREAM2TAPECOPY
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
 DECLARE cfSize NUMBER(38);
 BEGIN  
--- added this lock because of severaval copies of different file systems 
---  from different streams which can cause deadlock
+  -- added this lock because of severaval copies of different file systems 
+  -- from different streams which can cause deadlock
   LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
    WHERE FS IN (SELECT DiskCopy.FileSystem
@@ -352,10 +352,9 @@ BEGIN
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
 
--- added for the stream policy
-
-   SELECT CastorFile.filesize INTO cfSize FROM CastorFile,TapeCopy WHERE CastorFile.id = TapeCopy.castorFile AND TapeCopy.id = :old.child; 
-   UPDATE Stream SET byteVolume = byteVolume - cfSize WHERE Stream.id = :old.parent;
+   -- added for the stream policy
+  SELECT CastorFile.filesize INTO cfSize FROM CastorFile,TapeCopy WHERE CastorFile.id = TapeCopy.castorFile AND TapeCopy.id = :old.child; 
+  UPDATE Stream SET byteVolume = byteVolume - cfSize WHERE Stream.id = :old.parent;
 END;
 
 
@@ -844,7 +843,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
                                                   path OUT VARCHAR2, dci OUT INTEGER,
                                                   castorFileId OUT INTEGER, fileId OUT INTEGER,
                                                   nsHost OUT VARCHAR2, fileSize OUT INTEGER,
-                                                  tapeCopyId OUT INTEGER) AS                                              
+                                                  tapeCopyId OUT INTEGER, optimized IN INTEGER) AS
   fileSystemId INTEGER := 0;
   dsid NUMBER;
   fsDiskServer NUMBER;
@@ -922,6 +921,7 @@ BEGIN
                   FROM FileSystem, Stream
                  WHERE FileSystem.id = Stream.lastfilesystemused
                    AND Stream.status IN (3)   -- SELECTED
+                   AND optimized = 1
               )
             ORDER BY FileSystemRate(FS.readRate, FS.writeRate, FS.nbReadStreams, FS.nbWriteStreams, FS.nbReadWriteStreams, FS.nbMigratorStreams, FS.nbRecallerStreams) DESC, dbms_random.value
             ) DS
@@ -982,6 +982,29 @@ BEGIN
   updateFSMigratorOpened(fsDiskServer, fileSystemId, 0);
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- If the procedure was called with optimization enabled,
+    -- rerun it again with optimization disabled to make sure
+    -- there is really nothing to migrate!! Why? optimization
+    -- excludes filesystems as being migration candidates if
+    -- a migration stream is already running there. This allows
+    -- us to maximise bandwidth to tape and not to saturate a
+    -- diskserver with too many streams. However, in small disk
+    -- pools this behaviour results in mounting, writing one
+    -- file and dismounting of tapes as the tpdaemon reads ahead
+    -- many files at a time! (#28097)
+    IF optimized = 1 THEN
+      bestTapeCopyForStream(streamId,
+                            diskServerName,
+                            mountPoint,
+                            path,
+                            dci,
+                            castorFileId,
+                            fileId,
+                            nsHost,
+                            fileSize,
+                            tapeCopyId,
+			    0);
+    END IF;
     -- Reset last filesystems used
     UPDATE Stream
        SET lastFileSystemUsed = 0, lastButOneFileSystemUsed = 0
@@ -1005,7 +1028,8 @@ BEGIN
                             fileId,
                             nsHost,
                             fileSize,
-                            tapeCopyId);
+                            tapeCopyId,
+			    optimized);
     END IF;
 END;
 
@@ -1013,94 +1037,100 @@ END;
 /* PL/SQL method implementing bestFileSystemForSegment */
 CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskServerName OUT VARCHAR2,
                                                      rmountPoint OUT VARCHAR2, rpath OUT VARCHAR2,
-                                                     dci OUT INTEGER) AS
- fileSystemId NUMBER;
- castorFileId NUMBER;
- fsDiskServer NUMBER;
- fileSize NUMBER;
+                                                     dci OUT INTEGER, optimized IN INTEGER) AS
+  fileSystemId NUMBER := 0;
+  fsDiskServer NUMBER;
+  dcid NUMBER;
+  cfid NUMBER;
+  nb NUMBER := 0;
 BEGIN
- -- First get the DiskCopy and see whether it already has a fileSystem
- -- associated (case of a multi segment file)
- -- We also select on the DiskCopy status since we know it is
- -- in WAITTAPERECALL status and there may be other ones
- -- INVALID, GCCANDIDATE, DELETED, etc...
- SELECT DiskCopy.fileSystem, DiskCopy.path, DiskCopy.id, DiskCopy.CastorFile
-   INTO fileSystemId, rpath, dci, castorFileId
-   FROM TapeCopy, Segment, DiskCopy
-    WHERE Segment.id = segmentId
+  -- First get the DiskCopy and see whether it already has a fileSystem
+  -- associated (case of a multi segment file)
+  -- We also select on the DiskCopy status since we know it is
+  -- in WAITTAPERECALL status and there may be other ones
+  -- INVALID, GCCANDIDATE, DELETED, etc...
+  SELECT DiskCopy.fileSystem, DiskCopy.path, DiskCopy.id, DiskCopy.CastorFile
+    INTO fileSystemId, rpath, dcid, cfid
+    FROM TapeCopy, Segment, DiskCopy
+   WHERE Segment.id = segmentId
      AND Segment.copy = TapeCopy.id
      AND DiskCopy.castorfile = TapeCopy.castorfile
      AND DiskCopy.status = 2; -- WAITTAPERECALL
- -- Check if the DiskCopy had a FileSystem associated
- IF fileSystemId > 0 THEN
-   BEGIN
-     -- it had one, force filesystem selection, unless it was disabled.
-     SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint
-     INTO diskServerName, fsDiskServer, rmountPoint
-     FROM DiskServer, FileSystem
-      WHERE FileSystem.id = fileSystemId
-       AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-       AND DiskServer.id = FileSystem.diskServer
-       AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
-     updateFsRecallerOpened(fsDiskServer, fileSystemId, 0);
-   EXCEPTION WHEN NO_DATA_FOUND THEN
-     -- Error, the filesystem or the machine was probably disabled in between
-     raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
-   END;
- ELSE
-   DECLARE
-     CURSOR c1 IS SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
-                       FileSystem.diskserver, CastorFile.fileSize
-                    FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                         (SELECT id, svcClass from StageGetRequest UNION ALL
-                          SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
-                          SELECT id, svcClass from StageRepackRequest UNION ALL
-                          SELECT id, svcClass from StageGetNextRequest UNION ALL
-                          SELECT id, svcClass from StageUpdateRequest UNION ALL
-                          SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
-                          SELECT id, svcClass from StageUpdateNextRequest) Request,
-                         SubRequest, CastorFile
-                   WHERE CastorFile.id = castorfileId
-                     AND SubRequest.castorfile = castorfileId
-                     AND Request.id = SubRequest.request
-                     AND Request.svcclass = DiskPool2SvcClass.child
-                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                     AND FileSystem.free > CastorFile.fileSize
-                     AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-                     AND DiskServer.id = FileSystem.diskServer
-                     AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-                   ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC;
-      NotOk NUMBER := 1;
-      nb NUMBER;
+  -- Check if the DiskCopy had a FileSystem associated
+  IF fileSystemId > 0 THEN
     BEGIN
-      OPEN c1;
-      LOOP
-        FETCH c1 INTO diskServerName, rmountPoint, fileSystemId, fsDiskServer, fileSize;
-        -- Check that we don't already have a copy of this file on this filesystem.
-        -- This will never happend in normal operations but may be the case if a filesystem
-        -- was disabled and did come back while the tape recall was waiting.
-        -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
-        -- fileSystem comes backs, the ones running at the time of the come back will have
-        -- the problem.
-        EXIT WHEN c1%NOTFOUND;
-        SELECT count(*) INTO nb
-          FROM DiskCopy
-         WHERE fileSystem = fileSystemId
-           AND CastorFile = castorfileId
-           AND status = 0; -- STAGED
-        IF nb = 0 THEN
-          NotOk := 0;
-          EXIT;
-        END IF;
-      END LOOP;
-      CLOSE c1;
-      IF NotOk != 0 THEN
-        raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
-      END IF;      
-      UPDATE DiskCopy SET fileSystem = fileSystemId WHERE id = dci;
-      updateFsRecallerOpened(fsDiskServer, fileSystemId, fileSize);
+      -- It had one, force filesystem selection, unless it was disabled.
+      SELECT DiskServer.name, DiskServer.id, FileSystem.mountPoint
+        INTO diskServerName, fsDiskServer, rmountPoint
+        FROM DiskServer, FileSystem
+       WHERE FileSystem.id = fileSystemId
+         AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+         AND DiskServer.id = FileSystem.diskServer
+         AND DiskServer.status = 0; -- DISKSERVER_PRODUCTION
+      updateFsRecallerOpened(fsDiskServer, fileSystemId, 0);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Error, the filesystem or the machine was probably disabled in between
+      raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
     END;
+  ELSE
+   -- The DiskCopy had no FileSystem assoicated with it which indicates that
+   -- This is a new recall. We try and select a good FileSystem for it!
+   FOR a IN (SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+                    FileSystem.diskserver, CastorFile.fileSize
+               FROM DiskServer, FileSystem, DiskPool2SvcClass,
+                    (SELECT id, svcClass from StageGetRequest UNION ALL
+                     SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+                     SELECT id, svcClass from StageRepackRequest UNION ALL
+                     SELECT id, svcClass from StageGetNextRequest UNION ALL
+                     SELECT id, svcClass from StageUpdateRequest UNION ALL
+                     SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
+                     SELECT id, svcClass from StageUpdateNextRequest) Request,
+                     SubRequest, CastorFile
+              WHERE CastorFile.id = cfid
+                AND SubRequest.castorfile = cfid
+                AND Request.id = SubRequest.request
+                AND Request.svcclass = DiskPool2SvcClass.child
+                AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                AND FileSystem.free > CastorFile.fileSize
+                AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+                AND DiskServer.id = FileSystem.diskServer
+                AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+                -- Ignore diskservers where a recaller already exists
+                AND DiskServer.id NOT IN (
+                  SELECT DISTINCT(FileSystem.diskServer)
+                    FROM FileSystem
+                   WHERE nbRecallerStreams != 0
+                     AND optimized = 1
+                )
+           ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
+   LOOP
+     -- Check that we don't already have a copy of this file on this filesystem.
+     -- This will never happen in normal operations but may be the case if a filesystem
+     -- was disabled and did come back while the tape recall was waiting.
+     -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
+     -- fileSystem comes backs, the ones running at the time of the come back will have
+     SELECT count(*) INTO nb
+       FROM DiskCopy
+      WHERE fileSystem = fileSystemId
+        AND castorfile = cfid
+        AND status = 0; -- STAGED
+     IF nb = 0 THEN
+       raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+     END IF;
+   END LOOP;  
   END IF;
+  -- Set the diskcopy's filesystem
+  UPDATE DiskCopy 
+     SET fileSystem = fileSystemId
+   WHERE id = dcid;
+      
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Just like in bestTapeCopyForStream if we were called with optimization enabled
+    -- and nothing was found, rerun the procedure again with optimization disabled to
+    -- truly make sure nothing is found!
+    IF optimized = 1 THEN
+      bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dci, 0);
+    END IF;
 END;
 
 
@@ -1146,10 +1176,6 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskCopy_Cur IS REF CURSOR RETURN DiskCopyCore;
   TYPE TapeCopy_Cur IS REF CURSOR RETURN TapeCopy%ROWTYPE;
   TYPE Segment_Cur IS REF CURSOR RETURN Segment%ROWTYPE;
-  TYPE GCLocalFileCore IS RECORD (
-        fileName VARCHAR2(2048),
-        diskCopyId INTEGER);
-  TYPE GCLocalFiles_Cur IS REF CURSOR RETURN GCLocalFileCore;
   TYPE StreamCore IS RECORD (
         id INTEGER,
         initialSizeToTransfer INTEGER,
@@ -2510,7 +2536,9 @@ CREATE OR REPLACE PACKAGE castorGC AS
   TYPE policiesList IS TABLE OF VARCHAR2(2048);
   TYPE SelectFiles2DeleteLine IS RECORD (
         path VARCHAR2(2048),
-        id NUMBER);
+        id NUMBER,
+	fileId NUMBER,
+	nsHost VARCHAR2(2048));
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
 END castorGC;
 
@@ -2525,8 +2553,9 @@ BEGIN
      WHERE FileSystem.diskServer = DiskServer.id
        AND DiskServer.name = diskServerName;
   OPEN files FOR
-    SELECT SelectFiles2DeleteProcHelper.path||DiskCopy.path, DiskCopy.id
-      FROM DiskCopy, SelectFiles2DeleteProcHelper
+    SELECT SelectFiles2DeleteProcHelper.path||DiskCopy.path, DiskCopy.id,
+	   Castorfile.fileid, Castorfile.nshost
+      FROM DiskCopy, SelectFiles2DeleteProcHelper, Castorfile
      WHERE (DiskCopy.status = 8
            OR DiskCopy.status = 9 AND DiskCopy.creationTime < getTime() - 1800)
            -- for failures recovery we also take all DiskCopies which were
@@ -2534,6 +2563,7 @@ BEGIN
            -- after 30 mins. The creationTime field is actually updated
            -- for this purpose when status changes to 9 in updateFiles2Delete.
        AND DiskCopy.fileSystem = SelectFiles2DeleteProcHelper.id
+       AND DiskCopy.castorfile = Castorfile.fileid
        FOR UPDATE;
 END;
 
@@ -3608,7 +3638,6 @@ BEGIN
 END;
 
 /* PL/SQL method to retrieve the sum of all the filesize of all the tapecopies attached to a stream */
-
 CREATE OR REPLACE PROCEDURE getBytesByStream (streamId IN NUMBER, valByte OUT NUMBER) AS
 BEGIN
   SELECT stream.byteVolume INTO valByte FROM stream 
@@ -3618,8 +3647,86 @@ BEGIN
 END;
 
 /* PL/SQL method to know the number of tapecopies attached to a specific stream */
-
 CREATE OR REPLACE PROCEDURE getNumFilesByStream (streamId IN NUMBER, numFiles OUT NUMBER) AS
 BEGIN
   SELECT count(*) INTO numFiles FROM stream2tapecopy WHERE stream2tapecopy.parent=streamId;
+END;
+
+/* PL/SQL method implementing failSchedulerJob */
+
+CREATE OR REPLACE PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, srErrorMessage IN VARCHAR2, res OUT INTEGER) AS
+BEGIN
+  -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
+  -- status. We only concern ourselves in the termnination of a job waiting to
+  -- start i.e. in a SUBREQUEST_STAGEOUT status. Requests in other statuses are
+  -- left unaltered!
+  res := 0;
+  UPDATE SubRequest
+     SET status = 7,      -- SUBREQUEST_FAILED
+         errorCode = srErrorCode,
+         errorMessage = case srErrorCode
+           when 1719 then -- ESTJOBKILLED
+             'Job killed by service administrator'
+           when 1720 then -- ESTJOBTIMEDOUT
+             'Job timed out while waiting to be scheduled'
+           when 1033 then -- SEUSERUNKN
+             'Username unknown to scheduler'
+           when 1708 then -- ESTUSER
+             'Job not scheduled as recorded username does not match uid'
+           when 1706 then -- ESTGROUP
+             'User group invalid for given user'
+           when 1015 then -- SEINTERNAL
+             'Internal error'
+           else srErrorMessage
+         end,
+         lastModificationTime = getTime()
+   WHERE subreqid = srSubReqId
+     AND status IN (6, 14) -- SUBREQUEST_STAGEOUT, SUBREQUEST_BEINGSCHED
+  RETURNING id INTO res;
+END;
+
+/* PL/SQL method implementing jobToSchedule */
+CREATE OR REPLACE
+PROCEDURE jobToSchedule (srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OUT VARCHAR2, 
+			 srXsize OUT INTEGER, srRequestedFileSystems OUT VARCHAR2, 
+			 reqId OUT VARCHAR2, cfFileId OUT INTEGER, cfNsHost OUT VARCHAR2, 
+			 sSvcClass OUT VARCHAR2, reqType OUT INTEGER, reqEuid OUT INTEGER,
+			 reqEgid OUT INTEGER, reqUsername OUT VARCHAR2, direction OUT VARCHAR2,
+			 cIp OUT INTEGER, cPort OUT INTEGER, cVersion OUT INTEGER, cType OUT INTEGER) AS
+BEGIN
+    -- Get the next subrequest to be scheduled.
+    UPDATE SubRequest 
+       SET status = 14, lastModificationTime = getTime() -- SUBREQUEST_BEINGSCHED
+     WHERE status = 13 -- SUBREQUEST_READYFORSCHED
+       AND rownum < 2
+ RETURNING id, subReqId, protocol, xsize, requestedFileSystems
+      INTO srId, srSubReqId, srProtocol, srXsize, srRequestedFileSystems;
+
+    -- Extract the rest of the information required to submit a job into
+    -- the scheduler through the job manager.
+    SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
+           Request.reqId, Request.euid, Request.egid, Request.username, Request.direction,
+	   Client.ipAddress, Client.port, Client.version,
+	   (SELECT type 
+              FROM Id2type 
+             WHERE id = Client.id) clientType
+      INTO cfFileId, cfNsHost, sSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
+           direction, cIp, cPort, cVersion, cType
+      FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
+           (SELECT id, username, euid, egid, reqid, client, 'w' direction 
+	      FROM StagePutRequest 
+             UNION ALL
+            SELECT id, username, euid, egid, reqid, client, 'r' direction 
+              FROM StageGetRequest 
+             UNION ALL
+            SELECT id, username, euid, egid, reqid, client, 'o' direction 
+              FROM StageUpdateRequest) Request
+     WHERE SubRequest.id = srId
+       AND SubRequest.castorFile = CastorFile.id
+       AND CastorFile.svcClass = SvcClass.id
+       AND Id2type.id = SubRequest.request
+       AND Request.id = SubRequest.request
+       AND Request.client = Client.id;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    NULL;
 END;
