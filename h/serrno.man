@@ -554,6 +554,15 @@ The following error values are returned only by the stager package:
 .TP
 .B ESTNOTAVAIL
 (1718) File is currently not available
+.TP
+.B ESTJOBKILLED
+(1719) Job killed by service administrator
+.TP
+.B ESTJOBTIMEDOUT
+(1720) Job timed out while waiting to be scheduled
+.TP
+.B ESTSCHEDERR
+(1721) Scheduler error
 
 .SH SYSREQ ERRORS
 The following error value is returned only by the sysreq package:

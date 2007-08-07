@@ -267,6 +267,9 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Required tape segments are not all accessible",
    "File replication failed",
    "File is currently not available",
+   "Job killed by service administrator",
+   "Job timed out while waiting to be scheduled",
+   "Scheduler error",
    "BAD ERROR NUMBER"
   };
 

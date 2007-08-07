@@ -274,7 +274,10 @@
 #define ESTSEGNOACC     ESTBASEOFF+16	/* Required tape segments are not all accessible */
 #define ESTREPLFAILED   ESTBASEOFF+17	/* File replication failed */
 #define ESTNOTAVAIL     ESTBASEOFF+18	/* File is currently not available */
-#define ESTMAXERR       ESTBASEOFF+18
+#define ESTJOBKILLED	ESTBASEOFF+19   /* Job killed by service administrator */
+#define ESTJOBTIMEDOUT	ESTBASEOFF+20	/* Job timed out while waiting to be scheduled */
+#define ESTSCHEDERR     ESTBASEOFF+21   /* Scheduler error */
+#define ESTMAXERR       ESTBASEOFF+21
 
 /*
  *------------------------------------------------------------------------
