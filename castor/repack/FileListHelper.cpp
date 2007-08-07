@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.27 $ $Release$ 
- * $Date: 2007/03/29 08:34:37 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.28 $ $Release$ 
+ * $Date: 2007/08/07 15:09:05 $ $Author: waldron $
  *
  *
  *
@@ -234,10 +234,10 @@ void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
     //if(file_uniqueid.server) free(file_uniqueid.server);
   
     if (ret<0){
-      std::cout << "Error in retrieving file " << file_uniqueid.fileid << "from the nameserver." << std::endl;
+      std::cout << "Error in retrieving file " << file_uniqueid.fileid << " from the nameserver." << std::endl;
     }
     if (nbseg == 0){
-      std::cout << "File " << file_uniqueid.fileid << "not found int the nameserver." << std::endl;
+      std::cout << "File " << file_uniqueid.fileid << " not found in the nameserver." << std::endl;
     }
     ret=-1;
     for(i=0; i<nbseg; i++) {
@@ -258,7 +258,7 @@ void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
       }
     }
     if (ret<0){
-      std::cout << "File " << file_uniqueid.fileid << "not found int the nameserver with copyno "<< copyno << std::endl;
+      std::cout << "File " << file_uniqueid.fileid << " not found in the nameserver with copyno "<< copyno << std::endl;
     }
 }	  
 
