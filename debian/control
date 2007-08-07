@@ -94,6 +94,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate
 Description: castor (Cern Advanced STORage system)
  The job giving user access to data on the worder nodes
 
+Package: castor-jobmanager-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets, castor-lib-monitor
+Description: castor (Cern Advanced STORage system)
+ The Job Manager server used to submit jobs into the scheduler
+
 Package: castor-lib
 Architecture: any
 Provides: libshift.so
