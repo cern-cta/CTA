@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/08 15:44:40 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -258,14 +258,20 @@ void castor::jobmanager::SubmissionProcess::lsfSubmit
   for (u_signed64 i = 0; i < LSF_RLIM_NLIMITS; i++) {
     m_job.rLimits[i] = DEFAULT_RLIMIT;
   }
-  m_job.options     = SUB_JOB_NAME | SUB_QUEUE | SUB_PROJECT_NAME;
+  m_job.options     = SUB_JOB_NAME | SUB_PROJECT_NAME;
   m_job.options2    = 0;
   m_job.beginTime   = 0;
   m_job.termTime    = 0;
   m_job.jobName     = (char *)request->subReqId().c_str();
   m_job.projectName = (char *)request->svcClass().c_str();
-  m_job.queue       = (char *)request->svcClass().c_str();
-  
+
+  // Only change the queue if the job is not meant to run in the default 
+  // svcclass. LSF will decide which queue to use.
+  if (request->svcClass() != "default") {
+    m_job.options   |= SUB_QUEUE;
+    m_job.queue     = (char *)request->svcClass().c_str();
+  }
+
   // Set the initial number of processors needed by the job and max number of
   // processors required to run the job to 0. Is this correct?
   m_job.numProcessors    = 0;
