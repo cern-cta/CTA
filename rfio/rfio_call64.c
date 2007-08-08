@@ -1818,7 +1818,8 @@ char        *host;         /* Where the request comes from        */
 #if defined(_WIN32)
    struct thData *td;
 #endif
-   
+   struct timeval tv;
+   fd_set read_fds;
 #if defined(_WIN32)
    td = (struct thData*)TlsGetValue(tls_i);
 #endif
@@ -1832,6 +1833,8 @@ char        *host;         /* Where the request comes from        */
    myinfo.readop = myinfo.writop = myinfo.flusop = myinfo.statop = myinfo.seekop
       = myinfo.presop = 0;
    myinfo.rnbr = myinfo.wnbr = (off64_t)0;
+   /* Initialize the fd set */
+   FD_ZERO(&read_fds);
    /* Will remain at this value (indicates that the new sequential transfer mode has been used) */
    myinfo.aheadop = 1;
    byte_read_from_network = (off64_t)0;
@@ -2096,7 +2099,7 @@ char        *host;         /* Where the request comes from        */
        sin.sin_port = htons(port);
        sin.sin_addr.s_addr = htonl(INADDR_ANY);
        sin.sin_family = AF_INET;
-       
+
 #if defined(_WIN32)           
        if( bind(data_s, (struct sockaddr*)&sin, sizeof(sin)) == SOCKET_ERROR) 
        {
@@ -2201,6 +2204,27 @@ char        *host;         /* Where the request comes from        */
          data_s, max_rcvbuf);
       for (;;) 
       {
+	 log(LOG_DEBUG, "ropen64_v3: doing select\n");
+	 FD_ZERO(&read_fds);
+	 FD_SET(data_s, &read_fds);
+	 tv.tv_sec  = 10;
+	 tv.tv_usec = 0;
+#if defined (_WIN32)
+	 if ( select(FD_SETSIZE, &read_fds, NULL, NULL, &tv) == SOCKET_ERROR ) {
+	   log(LOG_ERR, "ropen64_v3: select failed: %s\n", geterr());
+	   return -1;	   
+	 }
+#else
+	 if ( select(FD_SETSIZE, &read_fds, NULL, NULL, &tv) < 0 ) {
+	   log(LOG_ERR, "ropen64_v3: select failed: %s\n", strerror(errno));
+	   return -1;
+	 }
+#endif
+	 /* Anything received on the data socket ? */
+	 if ( !FD_ISSET(data_s, &read_fds) ) {
+	   log(LOG_ERR, "ropen64_v3: timeout in accept(%d)\n", data_s);
+	   return(-1);
+	 }
          fromlen = sizeof(from);
          log(LOG_DEBUG, "ropen64_v3: wait for accept to complete\n");
          data_sock = accept(data_s, (struct sockaddr*)&from, &fromlen);
