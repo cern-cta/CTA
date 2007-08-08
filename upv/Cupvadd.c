@@ -119,7 +119,7 @@ int main(int argc,char **argv)
 
   if (errflg) {
     fprintf (stderr, "usage: %s %s%s%s%s", argv[0],
-	     "[--uid uid | --user username] [--gid gid | --group groupname] --src SourceHost --tgt TargetHost --priv privilege\n",
+	     "(--uid uid | --user username) (--gid gid | --group groupname) --src SourceHost --tgt TargetHost --priv privilege\n",
 	     "Where priv is one of:", STR_PRIV_LIST ,"\n");
     exit (USERR);
   }

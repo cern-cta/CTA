@@ -1,17 +1,17 @@
-.\" @(#)$RCSfile: Cupvadd.man,v $ $Revision: 1.4 $ $Date: 2004/02/05 10:39:51 $ CERN IT-DS/HSM Ben Couturier
+.\" @(#)$RCSfile: Cupvadd.man,v $ $Revision: 1.5 $ $Date: 2007/08/08 16:09:01 $ CERN IT-DS/HSM Ben Couturier
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupvadd" "1" "$Date: 2004/02/05 10:39:51 $" "CASTOR" "UPV Administrator commands"
+.TH "Cupvadd" "1" "$Date: 2007/08/08 16:09:01 $" "CASTOR" "UPV Administrator commands"
 .SH "NAME"
 Cupvadd \- Adds an entry to the user privilege validation system
 .SH "SYNOPSIS"
 .B Cupvadd
-[
+(
 .BI \-\-uid " uid " | \-\-user " username"
-] [
+) (
 .BI \-\-gid " gid " | \-\-group " groupname"
-]
+)
 .BI \-\-src " source_host"
 .BI \-\-tgt " target_host"
 .BI \-\-priv " privilege"
