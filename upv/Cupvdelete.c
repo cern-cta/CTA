@@ -112,7 +112,7 @@ int main(int argc,char **argv)
 
  if (errflg) {
     fprintf (stderr, "usage: %s %s", argv[0],
-	     "[--uid uid | --user username] [--gid gid | --group groupname] --src SourceHost --tgt TargetHost\n");
+	     "(--uid uid | --user username) (--gid gid | --group groupname) --src SourceHost --tgt TargetHost\n");
     exit (USERR);
   }
 
