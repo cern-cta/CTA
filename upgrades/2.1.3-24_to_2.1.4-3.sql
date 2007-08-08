@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/08 12:52:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/08 13:19:10 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.3-23 database into v2.1.4-0
  *
@@ -45,6 +45,7 @@ COMMIT;
 ALTER TABLE SvcClass ADD (hasDiskOnlyBehavior NUMBER, forcedFileClass VARCHAR2(2048), streamPolicy VARCHAR2(2048));
 ALTER TABLE SubRequest ADD (errorCode NUMBER, errorMessage VARCHAR2(2048), requestedFileSystems VARCHAR2(2048));
 ALTER TABLE Client ADD (version VARCHAR2(2038));
+ALTER TABLE Stream ADD (byteVolume INTEGER);
 
 DROP TABLE FilesDeletedProcOutput;
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput (fileid NUMBER, nshost VARCHAR2(2048)) ON COMMIT PRESERVE ROWS;
@@ -59,39 +60,6 @@ END;
 
 /* From now on, all PL-SQL code is updated */
 /*******************************************/
-
-/*********************/
-/* FileSystem rating */
-/*********************/
-
-/* Computes a 'rate' for the filesystem which is an agglomeration
-   of weight and fsDeviation. The goal is to be able to classify
-   the fileSystems using a single value and to put an index on it */
-CREATE OR REPLACE FUNCTION FileSystemRate
-(readRate IN NUMBER,
- writeRate IN NUMBER,
- nbReadStreams IN NUMBER,
- nbWriteStreams IN NUMBER,
- nbReadWriteStreams IN NUMBER,
- nbMigratorStreams IN NUMBER,
- nbRecallerStreams IN NUMBER)
-RETURN NUMBER DETERMINISTIC IS
-BEGIN
-  RETURN - nbReadStreams - nbWriteStreams - nbReadWriteStreams - nbMigratorStreams - nbRecallerStreams;
-END;
-
-/* FileSystem index based on the rate. */
-CREATE INDEX I_FileSystem_Rate
-    ON FileSystem(FileSystemRate(readRate, writeRate,
-	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
-
-
-/*******************************************/
-/*                                         */
-/*   Triggers and Procedures definitions   */
-/*                                         */
-/*******************************************/
-
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    FileSystem is created */
@@ -2881,23 +2849,6 @@ BEGIN
     END;
   END LOOP;
 END;
-
-BEGIN
-  -- creates a db job to be run every 15 mins for the garbage collector.
-  -- Such interval allows for ~300 filesystem to be processed for each round
-  -- under normal conditions.
-  -- XXX In case more are present, jobs will overlap during their run
-  DBMS_SCHEDULER.CREATE_JOB (
-      JOB_NAME        => 'garbageCollectJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN garbageCollect(); END;',
-      START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Castor Garbage Collector');
-END;
-
-
 
 /*
  * PL/SQL method implementing the core part of stage queries
