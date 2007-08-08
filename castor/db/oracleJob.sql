@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.470 $ $Date: 2007/08/07 15:39:18 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.471 $ $Date: 2007/08/08 12:50:48 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -136,12 +136,6 @@ ALTER TABLE FileSystem MODIFY (status NOT NULL);
 ALTER TABLE FileSystem MODIFY (diskServer NOT NULL);
 ALTER TABLE DiskServer MODIFY (status NOT NULL);
 ALTER TABLE SvcClass MODIFY (name NOT NULL);
-
-/* enable row movement in most used tables */
-ALTER TABLE DiskCopy ENABLE ROW MOVEMENT;
-ALTER TABLE TapeCopy ENABLE ROW MOVEMENT;
-ALTER TABLE Id2Type ENABLE ROW MOVEMENT;
-ALTER TABLE Client ENABLE ROW MOVEMENT;
 
 /* an index to speed up queries in FileQueryRequest, FindRequestRequest, RequestQueryRequest */
 CREATE INDEX I_QueryParameter_Query on QueryParameter (query);
