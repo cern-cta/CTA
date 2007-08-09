@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.4 $ $Date: 2007/08/09 12:35:11 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.5 $ $Date: 2007/08/09 12:57:36 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH MODIFYSCVCLASS 1 "$Date: 2007/08/09 12:35:11 $" CASTOR "stager catalogue administrative commands"
+.TH MODIFYSCVCLASS 1 "$Date: 2007/08/09 12:57:36 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifySvcClass \- modify an existing service class in the stager catalogue
 .SH SYNOPSIS
@@ -102,7 +102,7 @@ is provided the existing policy setting (id any) will be revoked
 .TP
 .BI \-\-ForcedFileClass " forcedFileClass"
 Specifies the name of the file class to force on files written to this service class. The
-forced file class overrided the file class that the user specifies.
+forced file class overrides the file class that the user specifies.
 . If an empty string ("") the file class that the file was written too will be used.
 .TP
 .BI \-\-DiskOnlyBehavior " [yes|no]"
