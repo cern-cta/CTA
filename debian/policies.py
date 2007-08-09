@@ -1,7 +1,7 @@
 ######################################################################################
 #
 # CASTOR2 LSF Plugin - Sample Policy File
-# $Id: policies.py,v 1.4 2007/06/28 11:23:11 waldron Exp $
+# $Id: policies.py,v 1.5 2007/08/09 06:35:06 waldron Exp $
 #
 ######################################################################################
 
@@ -38,7 +38,7 @@ filesystem            = ""
 slotsAlloc            = 0
 
 # The size of the file to be scheduled and the direction of its associated stream. The 
-# 'filesDirection' can be one of [r/rw/w] representing read, read write and write 
+# 'filesDirection' can be one of [r/w/o] representing read, write and read write 
 # directions respectively. 
 #
 # Note:
