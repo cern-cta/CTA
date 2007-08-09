@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/08/07 15:11:04 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/08/09 06:32:37 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -105,8 +105,12 @@ const std::string castor::db::ora::OraGCSvc::s_filesDeletedStatementString =
   "BEGIN filesDeletedProc(:1, :2); END;";
 
 /// SQL statement for filesDeletedTruncate
+/// The statement behind this should really be a TRUNCATE as this is more
+/// efficient. However, for unexplained reasons this doesn't work and
+/// results in the stager continuously trying to delete the same files
+/// from the nameserver over and over again!
 const std::string castor::db::ora::OraGCSvc::s_filesDeletedTruncateStatementString =
-  "TRUNCATE TABLE FilesDeletedProcOutput";
+  "DELETE FROM FilesDeletedProcOutput";
 
 /// SQL statement for filesDeletionFailed
 const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementString =
