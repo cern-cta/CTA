@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.472 $ $Date: 2007/08/09 13:06:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.473 $ $Date: 2007/08/09 13:12:49 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1366,9 +1366,8 @@ BEGIN
         OPEN sources
           FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, 0,   -- fs rate does not apply here
                      FileSystem.mountPoint, DiskServer.name
-                FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-               WHERE SubRequest.id = rsubreqId
-                 AND SubRequest.castorfile = DiskCopy.castorfile
+                FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+               WHERE DiskCopy.castorfile = cfId
                  AND FileSystem.diskpool = DiskPool2SvcClass.parent
                  AND DiskPool2SvcClass.child = svcClassId
                  AND DiskCopy.status = 6 -- STAGEOUT
@@ -1458,32 +1457,48 @@ BEGIN
         -- So the unavailable diskCopy is the only copy that is valid.
 	-- We will tell the client that the file is unavailable
         -- and he/she will retry later
-        --   - if we have a WAITFS or WAITFSSCHEDULING copy in such
+        --   - if we have an available STAGEOUT copy. This can happen
+        -- when the copy is in a given svcclass and we were looking
+        -- in another one. Since disk to disk copy is impossible in this
+        -- case, the file is declared BUSY.
+        --   - if we have an available WAITFS, WAITFSSCHEDULING copy in such
         -- a case, we tell the client that the file is BUSY
-        SELECT DiskCopy.status BULK COLLECT INTO stat
-          FROM DiskCopy
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (5, 6, 10, 11); -- WAITFS, STAGEOUT, CANBEMIGR, WAITFSSCHEDULING
-        IF (stat.count() > 0) THEN
-          -- We are in on of the special cases. Don't schedule, don't recall
+        DECLARE
+          dcStatus NUMBER;
+          fsStatus NUMBER;
+          dsStatus NUMBER;
+        BEGIN
+          SELECT DiskCopy.status, nvl(FileSystem.status, 0), nvl(DiskServer.status, 0)
+            INTO dcStatus, fsStatus, dsStatus
+            FROM DiskCopy, FileSystem, DiskServer
+           WHERE DiskCopy.castorfile = cfId
+             AND DiskCopy.status IN (5, 6, 10, 11) -- WAITFS, STAGEOUT, CANBEMIGR, WAITFSSCHEDULING
+             AND FileSystem.id(+) = DiskCopy.fileSystem
+             AND DiskServer.id(+) = FileSystem.diskserver
+             AND ROWNUM < 2;
+          -- We are in one of the special cases. Don't schedule, don't recall
           result := 4; -- no schedule
           UPDATE SubRequest
              SET status = 7, -- FAILED
                  errorCode = CASE
-                   WHEN stat(1) IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
+                   WHEN dcStatus IN (5,11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
+                   WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
                    ELSE 1718 -- ESTNOTAVAIL
                  END,
                  errorMessage = CASE
-                   WHEN stat(1) IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
+                   WHEN dcStatus IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
                      'File is being (re)created right now by another user'
-                   ELSE 'All copies of this file are unavailable for now. Please retry later'
+                   WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN -- STAGEOUT, PRODUCTION, PRODUCTION
+                     'File is being written to in another SvcClass'
+                   ELSE
+                     'All copies of this file are unavailable for now. Please retry later'
                  END
            WHERE id = rsubreqId;
           COMMIT;
-        ELSE
+        EXCEPTION WHEN NO_DATA_FOUND THEN
 	  -- We did not found the very special case, go for recall
           result := 2;
-        END IF;
+        END;
       END;
     END IF;
   END IF;   -- IF type = PutDone
