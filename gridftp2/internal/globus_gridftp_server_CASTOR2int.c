@@ -65,7 +65,7 @@ globus_l_gfs_make_error(
 	
 	GlobusGFSName(globus_l_gfs_make_error);
 
-	err_str = globus_common_create_string("CASTOR2int Error: %s: %s", msg,  strerror(errno));
+	err_str = globus_common_create_string("%s error: %s", msg,  strerror(errno));
 	result = GlobusGFSErrorGeneric(err_str);
 
 	globus_free(err_str);
@@ -222,7 +222,7 @@ globus_l_gfs_CASTOR2int_stat(
     
     status=stat64(pathname,&statbuf);
     if(status!=0) {
-	    result=globus_l_gfs_make_error("fstat64 failed");
+	    result=globus_l_gfs_make_error("fstat64");
 	    globus_gridftp_server_finished_stat(op,result,NULL, 0);
 	    free(pathname);
 	    return;
@@ -231,7 +231,7 @@ globus_l_gfs_CASTOR2int_stat(
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: stat for the file: %s\n",func,pathname);
     stat_array = (globus_gfs_stat_t *) globus_calloc(1, sizeof(globus_gfs_stat_t));
     if(stat_array==NULL) {
-       result=GlobusGFSErrorGeneric("CASTOR2int Error: memory allocation error");
+       result=GlobusGFSErrorGeneric("error: memory allocation failed");
        globus_gridftp_server_finished_stat(op,result,NULL, 0);
        free(pathname);
        return;
@@ -278,7 +278,7 @@ globus_l_gfs_CASTOR2int_command(
     GlobusGFSName(globus_l_gfs_CASTOR2int_command);
     CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
     /* in gridftp disk server we do not allow to perform commads */
-    result=GlobusGFSErrorGeneric("CASTOR2int Error: commands denied");
+    result=GlobusGFSErrorGeneric("error: commands denied");
     globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);
     return;
 }
@@ -355,16 +355,17 @@ globus_l_gfs_file_net_read_cb(
 		else if(nbytes > 0) {
 			start_offset = lseek64(CASTOR2int_handle->fd, offset, SEEK_SET);
 			if(start_offset != offset) {
-				CASTOR2int_handle->cached_res = globus_l_gfs_make_error("seek failed");
+				CASTOR2int_handle->cached_res = globus_l_gfs_make_error("seek");
 				CASTOR2int_handle->done = GLOBUS_TRUE;
 			}
 			else {
 				globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: write %ld byte to fd %d \n",func,nbytes,CASTOR2int_handle->fd);
 				bytes_written = write(CASTOR2int_handle->fd, buffer, nbytes);
 				if(bytes_written < nbytes) {
-					CASTOR2int_handle->cached_res = globus_l_gfs_make_error("write failed");
+					if(bytes_written >= 0) errno = ENOSPC;
+					CASTOR2int_handle->cached_res = globus_l_gfs_make_error("write");
 					CASTOR2int_handle->done = GLOBUS_TRUE;
-				}
+				} else globus_gridftp_server_update_bytes_written(op,offset,nbytes);
 			}
 		}
 
@@ -402,7 +403,7 @@ globus_l_gfs_CASTOR2int_read_from_net(
 	while(CASTOR2int_handle->outstanding < CASTOR2int_handle->optimal_count) {
 		buffer=globus_malloc(CASTOR2int_handle->block_size);
 		if (buffer == NULL) {
-			result = GlobusGFSErrorGeneric("CASTOR2int Error: globus malloc failed");
+			result = GlobusGFSErrorGeneric("error: globus malloc failed");
 			CASTOR2int_handle->cached_res = result;
 			CASTOR2int_handle->done = GLOBUS_TRUE;
 			if(CASTOR2int_handle->outstanding == 0) {
@@ -456,13 +457,13 @@ globus_l_gfs_CASTOR2int_recv(
     
     if(CASTOR2int_handle->use_uuid) /* we use uuid mode to access files */
        if( strcmp(CASTOR2int_handle->access_mode,"w") != 0 && strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
-	    result=GlobusGFSErrorGeneric("CASTOR2int Error: incorect access mode");
+	    result=GlobusGFSErrorGeneric("error: incorect access mode");
 	    globus_gridftp_server_finished_transfer(op, result);
 	    return;
        }
     pathname=strdup(transfer_info->pathname);
     if(pathname==NULL) {
-	    result=GlobusGFSErrorGeneric("CASTOR2int Error: strdup failed");
+	    result=GlobusGFSErrorGeneric("error: strdup failed");
 	    globus_gridftp_server_finished_transfer(op, result);
 	    return;
     }
@@ -474,8 +475,8 @@ globus_l_gfs_CASTOR2int_recv(
     
     CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, flags, 0644,CASTOR2int_handle);
     
-    if(CASTOR2int_handle->fd <=0) {
-	    result=globus_l_gfs_make_error("open/create error");
+    if(CASTOR2int_handle->fd < 0) {
+	    result=globus_l_gfs_make_error("open/create");
 	    free(pathname);
 	    globus_gridftp_server_finished_transfer(op, result);
 	    return;
@@ -539,14 +540,14 @@ globus_l_gfs_CASTOR2int_send(
     
     if(CASTOR2int_handle->use_uuid) /* we use uuid mode to access files */
        if( strcmp(CASTOR2int_handle->access_mode,"r") != 0 && strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
-	    result=GlobusGFSErrorGeneric("CASTOR2int Error: incorect access mode");
+	    result=GlobusGFSErrorGeneric("error: incorect access mode");
 	    globus_gridftp_server_finished_transfer(op, result);
 	    return;
        }
     
     pathname=strdup(transfer_info->pathname);
     if (pathname == NULL) {
-	result = GlobusGFSErrorGeneric("CASTOR2int Error: strdup failed");
+	result = GlobusGFSErrorGeneric("error: strdup failed");
 	globus_gridftp_server_finished_transfer(op, result);
 	return;
     }
@@ -554,8 +555,8 @@ globus_l_gfs_CASTOR2int_send(
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
     CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, O_RDONLY, 0644,CASTOR2int_handle);
     
-    if(CASTOR2int_handle->fd <= 0) {
-	result = globus_l_gfs_make_error("open failed");
+    if(CASTOR2int_handle->fd < 0) {
+	result = globus_l_gfs_make_error("open");
 	free(pathname);
 	globus_gridftp_server_finished_transfer(op, result);
 	return;
@@ -628,7 +629,7 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 	start_offset = lseek64(CASTOR2int_handle->fd, CASTOR2int_handle->blk_offset, SEEK_SET);
 	/* verify that it worked */
 	if(start_offset != CASTOR2int_handle->blk_offset) {
-		result = globus_l_gfs_make_error("seek failed");
+		result = globus_l_gfs_make_error("seek");
 		close(CASTOR2int_handle->fd);
 	        CASTOR2int_handle->cached_res = result;
 		CASTOR2int_handle->done = GLOBUS_TRUE;
@@ -638,7 +639,7 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 	
 	buffer = globus_malloc(read_length);
 	if(buffer == NULL) {
-		result = GlobusGFSErrorGeneric("CASTOR2int Error: malloc failed");
+		result = GlobusGFSErrorGeneric("error: malloc failed");
 		close(CASTOR2int_handle->fd);
 	        CASTOR2int_handle->cached_res = result;
 		CASTOR2int_handle->done = GLOBUS_TRUE;
@@ -648,8 +649,8 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: allocated %ld bytes \n",func,read_length);
 	
 	nbread = read(CASTOR2int_handle->fd, buffer, read_length);
-	if(nbread <= 0) {
-		result = GLOBUS_SUCCESS; /* this may just be eof */
+	if(nbread == 0) { /* eof */
+		result = GLOBUS_SUCCESS; 
 		globus_free(buffer);
 		close(CASTOR2int_handle->fd);
 	        CASTOR2int_handle->cached_res = result;
@@ -661,6 +662,21 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished (eof)\n",func);
 		return CASTOR2int_handle->done;
 	}
+	if(nbread < 0) { /* error */
+		result = globus_l_gfs_make_error("read");; 
+		globus_free(buffer);
+		close(CASTOR2int_handle->fd);
+	        CASTOR2int_handle->cached_res = result;
+		CASTOR2int_handle->done = GLOBUS_TRUE;
+		if (CASTOR2int_handle->outstanding == 0) { 
+			globus_gridftp_server_finished_transfer(CASTOR2int_handle->op, CASTOR2int_handle->cached_res);
+			globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished transfer\n",func);
+		}
+		globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished (error)\n",func);
+		return CASTOR2int_handle->done;
+
+	}
+	
 	if(read_length>=nbread) {
 		/* if we have a file with size less than block_size we do not have use parrallel connections (one will be enough) */ 
 		CASTOR2int_handle->optimal_count--;
