@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.473 $ $Date: 2007/08/09 13:12:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.474 $ $Date: 2007/08/09 14:15:48 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2807,9 +2807,18 @@ BEGIN
     SELECT SubRequest.id INTO unused
       FROM StagePrepareToPutRequest, SubRequest
      WHERE SubRequest.CastorFile = cfId
-       AND StagePrepareToPutRequest.id = SubRequest.request;
+       AND StagePrepareToPutRequest.id = SubRequest.request
+       AND SubRequest.status = 6; -- READY
     -- the select worked out, so we have a prepareToPut
     -- In such a case, we do not cleanup DiskCopy and CastorFile
+    -- but we have to wake up a potential waiting putDone
+    UPDATE SubRequest SET status = 1 -- RESTART
+     WHERE id IN
+      (SELECT SubRequest.id
+        FROM StagePutDoneRequest, SubRequest
+       WHERE SubRequest.CastorFile = cfId
+         AND StagePutDoneRequest.id = SubRequest.request
+         AND SubRequest.status = 5); -- WAITSUBREQ
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- this means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
