@@ -1,5 +1,5 @@
 /******************************************************************************
- *              2.1.3-23_to_2.1.4-0.sql
+ *              2.1.3-24_to_2.1.4-0.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/09 06:29:49 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/09 07:34:05 $ $Author: waldron $
  *
- * This script upgrades a CASTOR v2.1.3-23 database into v2.1.4-0
+ * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-0
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
