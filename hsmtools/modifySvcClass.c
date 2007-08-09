@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.13 $ $Release$ $Date: 2007/05/16 13:49:07 $ $Author: waldron $
- *
- * 
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.14 $ $Release$ $Date: 2007/08/09 12:35:11 $ $Author: waldron $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -64,7 +62,10 @@ enum SvcClassAttributes {
   AddTapePools,
   AddDiskPools,
   RemoveTapePools,
-  RemoveDiskPools
+  RemoveDiskPools,
+  DiskOnlyBehavior,
+  ForcedFileClass,
+  StreamPolicy
 } svcClassAttributes;
 
 static struct Coptions longopts[] = {
@@ -81,6 +82,9 @@ static struct Coptions longopts[] = {
   {"AddDiskPools",REQUIRED_ARGUMENT,0,AddDiskPools},
   {"RemoveTapePools",REQUIRED_ARGUMENT,0,RemoveTapePools},
   {"RemoveDiskPools",REQUIRED_ARGUMENT,0,RemoveDiskPools},
+  {"DiskOnlyBehavior",REQUIRED_ARGUMENT,0,DiskOnlyBehavior},
+  {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
+  {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
   {NULL, 0, NULL, 0}
 };
 
@@ -387,6 +391,8 @@ int main(int argc, char *argv[])
   char **addTapePoolsArray = NULL, **addDiskPoolsArray = NULL;
   char *removeTapePoolsStr = NULL, *removeDiskPoolsStr = NULL;
   char **removeTapePoolsArray = NULL, **removeDiskPoolsArray = NULL;
+  char *diskOnlyBehavior = NULL, *forcedFileClass = NULL;
+  char *streamPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int nbAddTapePools = 0, nbRemoveTapePools = 0, nbAddDiskPools = 0, nbRemoveDiskPools = 0;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -464,6 +470,15 @@ int main(int argc, char *argv[])
     case RemoveDiskPools:
       removeDiskPoolsStr = strdup(Coptarg);
       break;
+    case DiskOnlyBehavior:
+      diskOnlyBehavior = strdup(Coptarg);
+      break;
+    case ForcedFileClass:
+      forcedFileClass = strdup(Coptarg);
+      break;
+    case StreamPolicy:
+      streamPolicy = strdup(Coptarg);
+      break;
     default:
       usage(cmd);
       return(1);
@@ -499,6 +514,25 @@ int main(int argc, char *argv[])
   if ( recallerPolicy != NULL ) {
     Cstager_SvcClass_setRecallerPolicy(svcClass,recallerPolicy);
   }
+  if ( streamPolicy != NULL) {
+    Cstager_SvcClass_setStreamPolicy(svcClass,streamPolicy);
+  }
+  if ( forcedFileClass != NULL) {
+    Cstager_SvcClass_setForcedFileClass(svcClass,forcedFileClass);
+  }
+  if ( diskOnlyBehavior != NULL) {
+    if (!strcasecmp(diskOnlyBehavior, "yes") ||
+	!strcasecmp(diskOnlyBehavior, "1")) {
+      Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
+    } else if (!strcasecmp(diskOnlyBehavior, "no") ||
+	       !strcasecmp(diskOnlyBehavior, "0")) {
+      Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
+    } else {
+      fprintf(stdout,
+	      "Invalid option for DiskOnlyBehavior, value must be 'yes' or 'no'\n");
+      return(1);
+    }
+  }
 
   rc = C_BaseAddress_create(&baseAddr);
   if ( rc == -1 ) return(-1);
@@ -525,7 +559,6 @@ int main(int argc, char *argv[])
     return(1);
   }
   
-
   rc = C_Services_fillObj(
                           svcs,
                           iAddr,
