@@ -5,12 +5,16 @@ debian/castor/usr/share/man/man1/nsdelcomment.1castor
 debian/castor/usr/share/man/man1/nsdeleteclass.1castor
 debian/castor/usr/share/man/man1/nsenterclass.1castor
 debian/castor/usr/share/man/man1/nsfind.1castor
+debian/castor/usr/share/man/man1/nsgetacl.1castor
 debian/castor/usr/share/man/man1/nslistclass.1castor
 debian/castor/usr/share/man/man1/nslisttape.1castor
+debian/castor/usr/share/man/man1/nsln.1castor
 debian/castor/usr/share/man/man1/nsls.1castor
 debian/castor/usr/share/man/man1/nsmkdir.1castor
 debian/castor/usr/share/man/man1/nsmodifyclass.1castor
 debian/castor/usr/share/man/man1/nsrename.1castor
 debian/castor/usr/share/man/man1/nsrm.1castor
+debian/castor/usr/share/man/man1/nssetacl.1castor
 debian/castor/usr/share/man/man1/nssetchecksum.1castor
 debian/castor/usr/share/man/man1/nssetcomment.1castor
+debian/castor/usr/share/man/man1/nstouch.1castor

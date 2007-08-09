@@ -172,7 +172,8 @@ MANPAGES = $(LIBMANDIR)/Cns_aborttrans.$(LIBMANSUFFIX) \
            $(MANDIR)/nssetchecksum.$(MANSUFFIX) \
            $(MANDIR)/nsrm.$(MANSUFFIX) \
            $(MANDIR)/nssetacl.$(MANSUFFIX) \
-           $(MANDIR)/nssetcomment.$(MANSUFFIX)
+           $(MANDIR)/nssetcomment.$(MANSUFFIX) \
+           $(MANDIR)/nstouch.$(MANSUFFIX)
 
 EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_access.$(LIBMANSUFFIX) \
@@ -253,7 +254,8 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetchecksum.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetacl.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetcomment.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/nsshutdown.$(MANSUFFIX)
+	   $(EXPORTMAN)/man1/nsshutdown.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/nstouch.$(MANSUFFIX)
 
 #if BuildNameServerLibrary
 NSLIBTARGET=LibraryTargetName(ns)
@@ -625,6 +627,7 @@ IMANPAGE(nsrm,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nssetchecksum,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nssetacl,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nssetcomment,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nstouch,$(MANDIR),$(MANSUFFIX))
 
 EMANPAGE(Cns_aborttrans,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_access,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -706,6 +709,7 @@ EMANPAGE(nssetchecksum,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nssetacl,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nssetcomment,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsshutdown,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(nstouch,$(EXPORTMAN)/man1,$(MANSUFFIX))
 
 export: $(EPROGS_C) $(EPROGS_D)
 
