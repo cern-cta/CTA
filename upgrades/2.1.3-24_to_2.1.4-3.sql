@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/08 13:19:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/09 06:29:49 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.3-23 database into v2.1.4-0
  *
@@ -49,6 +49,9 @@ ALTER TABLE Stream ADD (byteVolume INTEGER);
 
 DROP TABLE FilesDeletedProcOutput;
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput (fileid NUMBER, nshost VARCHAR2(2048)) ON COMMIT PRESERVE ROWS;
+
+/* Some constraints */
+ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 
 /* Enable row movement for all tables */
 BEGIN
