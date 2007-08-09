@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.471 $ $Date: 2007/08/08 12:50:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.472 $ $Date: 2007/08/09 13:06:38 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1350,7 +1350,7 @@ BEGIN
          WHERE SubRequest.castorfile = cfId
            AND SubRequest.request = Id2Type.id
            AND Id2Type.type = 40 -- Put
-           AND SubRequest.status IN (0, 1, 2, 3, 6) -- START, RESTART, RETRY, WAITSCHED, READY
+           AND SubRequest.status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
            AND ROWNUM < 2;
         -- we've found one, putDone will have to wait
         UPDATE SubRequest
@@ -1880,7 +1880,7 @@ BEGIN
        FROM StagePrepareToPutRequest, SubRequest
       WHERE SubRequest.CastorFile = cfId
         AND StagePrepareToPutRequest.id = SubRequest.request
-        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      -- if we got here, we are a Put inside a PrepareToPut
      contextPIPP := 1;
    EXCEPTION WHEN TOO_MANY_ROWS THEN
@@ -2098,7 +2098,7 @@ BEGIN
          SELECT id FROM StagePrepareToUpdateRequest) Request
       WHERE SubRequest.CastorFile = cfId
         AND Request.id = SubRequest.request
-        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      -- if we got here, we are a Put inside a PrepareToPut
      contextPIPP := 0;
    EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2825,7 +2825,7 @@ BEGIN
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
           WHERE DC.status = 0 AND diskcopy = DC.id 
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
     ORDER BY 3 DESC;
   RETURN result;
 END;
@@ -2857,7 +2857,7 @@ BEGIN
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
           WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      ORDER BY 3 DESC;
   RETURN result;
 END;
@@ -3011,7 +3011,7 @@ BEGIN
      AND NOT EXISTS (
        SELECT 'x' FROM SubRequest
         WHERE SubRequest.diskcopy = DC.id
-          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
 
   IF dcIds.COUNT > 0 THEN
     UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
