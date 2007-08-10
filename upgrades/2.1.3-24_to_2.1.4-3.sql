@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/09 07:34:05 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/10 08:58:58 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-0
  *
@@ -1155,7 +1155,7 @@ BEGIN
          WHERE SubRequest.castorfile = cfId
            AND SubRequest.request = Id2Type.id
            AND Id2Type.type = 40 -- Put
-           AND SubRequest.status IN (0, 1, 2, 3, 6) -- START, RESTART, RETRY, WAITSCHED, READY
+           AND SubRequest.status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
            AND ROWNUM < 2;
         -- we've found one, putDone will have to wait
         UPDATE SubRequest
@@ -1171,9 +1171,8 @@ BEGIN
         OPEN sources
           FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, 0,   -- fs rate does not apply here
                      FileSystem.mountPoint, DiskServer.name
-                FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-               WHERE SubRequest.id = rsubreqId
-                 AND SubRequest.castorfile = DiskCopy.castorfile
+                FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+               WHERE DiskCopy.castorfile = cfId
                  AND FileSystem.diskpool = DiskPool2SvcClass.parent
                  AND DiskPool2SvcClass.child = svcClassId
                  AND DiskCopy.status = 6 -- STAGEOUT
@@ -1263,32 +1262,48 @@ BEGIN
         -- So the unavailable diskCopy is the only copy that is valid.
 	-- We will tell the client that the file is unavailable
         -- and he/she will retry later
-        --   - if we have a WAITFS or WAITFSSCHEDULING copy in such
+        --   - if we have an available STAGEOUT copy. This can happen
+        -- when the copy is in a given svcclass and we were looking
+        -- in another one. Since disk to disk copy is impossible in this
+        -- case, the file is declared BUSY.
+        --   - if we have an available WAITFS, WAITFSSCHEDULING copy in such
         -- a case, we tell the client that the file is BUSY
-        SELECT DiskCopy.status BULK COLLECT INTO stat
-          FROM DiskCopy
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (5, 6, 10, 11); -- WAITFS, STAGEOUT, CANBEMIGR, WAITFSSCHEDULING
-        IF (stat.count() > 0) THEN
-          -- We are in on of the special cases. Don't schedule, don't recall
+        DECLARE
+          dcStatus NUMBER;
+          fsStatus NUMBER;
+          dsStatus NUMBER;
+        BEGIN
+          SELECT DiskCopy.status, nvl(FileSystem.status, 0), nvl(DiskServer.status, 0)
+            INTO dcStatus, fsStatus, dsStatus
+            FROM DiskCopy, FileSystem, DiskServer
+           WHERE DiskCopy.castorfile = cfId
+             AND DiskCopy.status IN (5, 6, 10, 11) -- WAITFS, STAGEOUT, CANBEMIGR, WAITFSSCHEDULING
+             AND FileSystem.id(+) = DiskCopy.fileSystem
+             AND DiskServer.id(+) = FileSystem.diskserver
+             AND ROWNUM < 2;
+          -- We are in one of the special cases. Don't schedule, don't recall
           result := 4; -- no schedule
           UPDATE SubRequest
              SET status = 7, -- FAILED
                  errorCode = CASE
-                   WHEN stat(1) IN (5, 11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
+                   WHEN dcStatus IN (5,11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
+                   WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
                    ELSE 1718 -- ESTNOTAVAIL
                  END,
                  errorMessage = CASE
-                   WHEN stat(1) IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
+                   WHEN dcStatus IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
                      'File is being (re)created right now by another user'
-                   ELSE 'All copies of this file are unavailable for now. Please retry later'
+                   WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN -- STAGEOUT, PRODUCTION, PRODUCTION
+                     'File is being written to in another SvcClass'
+                   ELSE
+                     'All copies of this file are unavailable for now. Please retry later'
                  END
            WHERE id = rsubreqId;
           COMMIT;
-        ELSE
+        EXCEPTION WHEN NO_DATA_FOUND THEN
 	  -- We did not found the very special case, go for recall
           result := 2;
-        END IF;
+        END;
       END;
     END IF;
   END IF;   -- IF type = PutDone
@@ -1685,7 +1700,7 @@ BEGIN
        FROM StagePrepareToPutRequest, SubRequest
       WHERE SubRequest.CastorFile = cfId
         AND StagePrepareToPutRequest.id = SubRequest.request
-        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      -- if we got here, we are a Put inside a PrepareToPut
      contextPIPP := 1;
    EXCEPTION WHEN TOO_MANY_ROWS THEN
@@ -1903,7 +1918,7 @@ BEGIN
          SELECT id FROM StagePrepareToUpdateRequest) Request
       WHERE SubRequest.CastorFile = cfId
         AND Request.id = SubRequest.request
-        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+        AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      -- if we got here, we are a Put inside a PrepareToPut
      contextPIPP := 0;
    EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -2597,9 +2612,18 @@ BEGIN
     SELECT SubRequest.id INTO unused
       FROM StagePrepareToPutRequest, SubRequest
      WHERE SubRequest.CastorFile = cfId
-       AND StagePrepareToPutRequest.id = SubRequest.request;
+       AND StagePrepareToPutRequest.id = SubRequest.request
+       AND SubRequest.status = 6; -- READY
     -- the select worked out, so we have a prepareToPut
     -- In such a case, we do not cleanup DiskCopy and CastorFile
+    -- but we have to wake up a potential waiting putDone
+    UPDATE SubRequest SET status = 1 -- RESTART
+     WHERE id IN
+      (SELECT SubRequest.id
+        FROM StagePutDoneRequest, SubRequest
+       WHERE SubRequest.CastorFile = cfId
+         AND StagePutDoneRequest.id = SubRequest.request
+         AND SubRequest.status = 5); -- WAITSUBREQ
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- this means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
@@ -2630,7 +2654,7 @@ BEGIN
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
           WHERE DC.status = 0 AND diskcopy = DC.id 
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
     ORDER BY 3 DESC;
   RETURN result;
 END;
@@ -2662,7 +2686,7 @@ BEGIN
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
           WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      ORDER BY 3 DESC;
   RETURN result;
 END;
@@ -2816,7 +2840,7 @@ BEGIN
      AND NOT EXISTS (
        SELECT 'x' FROM SubRequest
         WHERE SubRequest.diskcopy = DC.id
-          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
 
   IF dcIds.COUNT > 0 THEN
     UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
