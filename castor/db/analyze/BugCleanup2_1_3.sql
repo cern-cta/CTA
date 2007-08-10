@@ -114,9 +114,72 @@ END;
 
 DROP TABLE ReqCleaning;
 
+
+-- cleaning up files stuck with multiple concurrent recalls
+-- This can happen due to a race condition in castor < 2.1.4-0
+CREATE OR REPLACE PROCEDURE stageRmForConcurrentRecalls (cfid IN INTEGER) AS
+  segId INTEGER;
+  unusedIds "numList";
+BEGIN
+  -- First lock all segments for the file
+  SELECT segment.id BULK COLLECT INTO unusedIds
+    FROM Segment, TapeCopy
+   WHERE TapeCopy.castorfile = cfId
+     AND TapeCopy.id = Segment.copy
+  FOR UPDATE;
+  -- Check whether we have any segment in SELECTED
+  SELECT segment.id INTO segId
+    FROM Segment, TapeCopy
+   WHERE TapeCopy.castorfile = cfId
+     AND TapeCopy.id = Segment.copy
+     AND Segment.status = 7 -- SELECTED
+     AND ROWNUM < 2;
+  -- Something is running, so give up
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Nothing running
+  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
+    FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+      -- Delete the segment(s)
+      DELETE FROM Id2Type WHERE id = s.id;
+      DELETE FROM Segment WHERE id = s.id;
+    END LOOP;
+    -- Delete the TapeCopy
+    DELETE FROM Id2Type WHERE id = t.id;
+    DELETE FROM TapeCopy WHERE id = t.id;
+  END LOOP;
+  -- Delete the DiskCopies
+  UPDATE DiskCopy
+     SET status = 7  -- INVALID
+   WHERE status = 2  -- WAITTAPERECALL
+     AND castorFile = cfId;
+  -- Mark the 'recall' SubRequests as failed
+  -- so that clients get an answer
+  UPDATE SubRequest SET status = 7   -- FAILED
+   WHERE castorFile = cfId and status = 4;
+END;
+DECLARE
+  totalCount NUMBER := 0;
+BEGIN
+  -- For logging
+  INSERT INTO CleanupLogTable VALUES (14, 'Cleanup files stuck with multiple concurrent recalls', getTime());
+  COMMIT;
+  FOR cf IN (SELECT castorFile.id FROM
+              (SELECT castorfile cfid, count(*) AS c FROM diskcopy
+                WHERE status = 2 GROUP BY castorfile), CastorFile
+             WHERE c > 1 AND cfid = castorfile.id) LOOP
+    stageRmForConcurrentRecalls(cf.id);
+    totalCount := totalCount + 1;
+  END LOOP;
+  UPDATE CleanupLogTable
+     SET message = 'Cleanup files stuck with multiple concurrent recalls were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
+   WHERE fac = 14;
+  COMMIT;
+END;
+DROP PROCEDURE stageRmForConcurrentRecalls;
+
 -- Optional steps follow
 
-INSERT INTO CleanupLogTable VALUES (14, 'Shrinking tables', getTime());
+INSERT INTO CleanupLogTable VALUES (15, 'Shrinking tables', getTime());
 COMMIT;
 
 -- Shrinking space in the tables that have just been cleaned up.
@@ -136,7 +199,7 @@ ALTER TABLE SubRequest SHRINK SPACE CASCADE;
 
 UPDATE CleanupLogTable
    SET message = 'All tables were shrunk', logDate = getTime()
- WHERE fac = 14;
+ WHERE fac = 15;
 COMMIT;
 
 -- To provide a summary of the performed cleanup
