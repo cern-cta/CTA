@@ -15,7 +15,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "u64subr.h"
@@ -83,62 +83,32 @@ namespace castor{
 	/* process the replicas = build rfs string (and hostlist) */
 	/* diskServerName and mountPoint getting from sources (=diskCopyForRecall)*/
 	/* - rfs + = ("|") + diskServerName + ":" + mountPoint */
-	/* - hostlist + = (":") + diskServerName ()if it isn' t already in hostlist  */
-	/*  */
 	/**********************************************************************************/
-	void processReplicaAndHostlist() throw(castor::exception::Exception);
+	void processReplica() throw(castor::exception::Exception);
 
 	
-	/*****************************************************************************************************/
-	/* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
-	/* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
-	/**************************************************************************************************/
-	inline void buildRmJobRequestPart() throw(castor::exception::Exception) 
-	{
-	  if(!rfs.empty()){
-	    strncpy(this->rmjob.rfs,rfs.c_str(), CA_MAXPATHLEN);
-	  }
-	  
-	  if((useHostlist)&&(hostlist.empty() == false)){
-	    strncpy(rmjob.hostlist, hostlist.c_str(), CA_MAXHOSTNAMELEN);
-	  }
-	  
-	  
-	  
-	  rmjob.ddisk = this->xsize;//depending on the request's type
-	  rmjob.openflags = this->openflags;//depending on the request's type
-	  
-	  rmjob.castorFileId = stgCnsHelper->cnsFileid.fileid;
-	  strncpy(rmjob.castorNsHost,stgCnsHelper->cnsFileid.server, CA_MAXHOSTNAMELEN);
-	  rmjob.castorNsHost[CA_MAXHOSTNAMELEN] = '\0';
-	  
-	}/* used after processReplica (if it is necessary) */
-
-
-
+	/*******************************************************************************************/
+	/* build the rmjob needed structures(buildRmJobHelperPart() and buildRmJobRequestPart())  */
+	/* and submit the job  */
+	/****************************************************************************************/
+	void jobManagerPart() throw(castor::exception::Exception);
 	
+
       protected:
 	
 	int maxReplicaNb;
 	std::string replicationPolicy;
 	std::string default_protocol;
-	bool useHostlist;
+
 
 	std::string rfs;
-	std::string hostlist;
+
 	std::list<castor::stager::DiskCopyForRecall *> sources;
 
-	int xsize;
-	int openflags;
+	int xsize;	
 	bool replyToClient;
 
-	struct rmjob rmjob;
-	int nrmjob_out;
-	struct rmjob* rmjob_out;
-	
-	/* flag to dont reply to the client, changeSubrequestStatus and archiveSubrequest */
-	/* when "isSubRequestToSchedule" returns "4" or when "diskCopyForRecall == NULL" */
-	bool caseSubrequestFailed;
+
 
       }; //end class StagerJobRequestHandler
 

@@ -24,7 +24,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "castor/IClientFactory.hpp"

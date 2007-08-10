@@ -17,7 +17,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "castor/IClientFactory.hpp"
@@ -42,32 +42,6 @@ namespace castor{
 
 	this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
-
-
-	this->useHostlist = false;
-#ifdef USE_HOSTLIST
-	this->useHostlist=true;
-#endif
-	
-	/* get the request's size required on disk */
-	/* depending if the file exist, we ll need to update this variable */
-	this->xsize = this->stgRequestHelper->subrequest->xsize();
-
-	if( xsize > 0 ){
-	  if(xsize < (stgCnsHelper->cnsFilestat.filesize)){
-	    /* warning, user is requesting less bytes than the real size */
-	    //just print message
-	  }
-
-	  
-	}else{
-	  this->xsize = stgCnsHelper->cnsFilestat.filesize;
-	}
-
-
-	this->openflags=RM_O_RDONLY;
-	this->default_protocol = "rfio";
-		
       }
 
 
@@ -86,13 +60,25 @@ namespace castor{
 	    /* we archive the subrequest, we don't need to update the subrequest status afterwards */
 	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
 	    break;
+
+	  case 2: //normal tape recall
+	    
+	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
+	    break;
+	    
+	    
+	  case 4:
+	    break;
+
+	    /* case 1: NEVER for a PrepareToGet (coming from the latest stager_db_service.c) */
+	    
 	    
 	  default:
-	    /* second, process as a tapeRecall, as a replica or just change the subrequest.status */
-	    /* it corresponds to the huge switch on the stager_db_service.c  */
-	    switchScheduling(caseToSchedule);/* we call internally the rmjob */
-	    
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->isSubRequestToSchedule returns an invalid value"<<std::endl;
+	    throw (ex);
 	    break;
+	    
 	  }
 	  
 	  
@@ -130,68 +116,6 @@ namespace castor{
 
       }
 
-
-      /********************************************************************************/
-      /* we are overwritting this function inherited from the StagerJobRequestHandler */
-      /* because of the case 0                                                      */
-      /* after asking the stagerService is it is toBeScheduled                     */
-      /* - do a normal tape recall                                                */
-      /* - check if it is to replicate:                                          */
-      /*         +processReplica if it is needed:                               */
-      /*                    +make the hostlist if it is needed                 */
-      /* now we don't have anymore the case 0 for the PrepareToGet */
-      /************************************************************************/
-      void StagerPrepareToGetHandler::switchScheduling(int caseToSchedule) throw(castor::exception::Exception)
-      {
-	
-	try{
-	  switch(caseToSchedule){
-	    
-	  case 2: //normal tape recall
-	    
-	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
-	    
-	    break;
-	    
-	    
-	  case 4:
-	    break;
-
-	  case 1:	 
-	    
-	    bool isToReplicate=replicaSwitch();
-	    
-	    if(isToReplicate){	      
-	      processReplicaAndHostlist();
-	    }
-	    /**********************************************/
-	    /* build the rmjob struct and submit the job */
-	     if(rfs.empty() == false){
-	      /* if the file exists we don't have any size requirements */
-	      this->xsize = 0;
-	    }
-	    rmMasterProcessJob();   	  
-	    break;
-	    
-	    
-	  default:
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->isSubRequestToSchedule returns an invalid value"<<std::endl;
-	    throw (ex);
-	    break;
-	  }
-
-
-	}catch(castor::exception::Exception e){
-	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
-	  /* we don t execute: dbService->updateRep ..*/
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerPrepareToGetHandler) Error"<<e.getMessage()<<std::endl;
-	  throw ex;
-	}
-	
-      }//end switchScheduling
-	
 	
       /***********************************************************************/
       /*    destructor                                                      */

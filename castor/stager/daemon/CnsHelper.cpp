@@ -12,8 +12,7 @@
 #include "Cns_api.h"
 #include "Cns_struct.h"
 #include "Cglobals.h"
-#include "rm_api.h"
-#include "rm_struct.h"
+
 
 #include "Cpwd.h"
 #include "Cgrp.h"

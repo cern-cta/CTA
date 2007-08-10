@@ -35,7 +35,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
 
-#include "rm_api.h"
+
 #include "osdep.h"
 #include "Cnetdb.h"
 #include "Cpwd.h"

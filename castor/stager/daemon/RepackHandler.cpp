@@ -17,7 +17,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "castor/IClientFactory.hpp"
@@ -45,10 +45,6 @@ namespace castor{
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
 
 
-	this->useHostlist = false;
-#ifdef USE_HOSTLIST
-	this->useHostlist=true;
-#endif
       	
 	/* get the request's size required on disk */
 	/* depending if the file exist, we ll need to update this variable */
@@ -65,7 +61,6 @@ namespace castor{
 	    /* before enter the job, we ll need to print a message */
 	}
 
-	this->openflags=RM_O_RDONLY;
 	this->default_protocol = "rfio";
 	
       }

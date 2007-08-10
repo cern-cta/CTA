@@ -22,8 +22,7 @@
 #include "stager_constants.h"
 #include "serrno.h"
 #include "Cns_api.h"
-#include "rm_api.h"
-#include "rm_struct.h"
+
 
 #include "Cpwd.h"
 #include "Cgrp.h"
@@ -99,7 +98,7 @@ namespace castor{
 	  throw ex;
 	}
 	
-	this->partitionMask[0] = '\0';  
+
 	this->types.resize(STAGER_OPTIONS);
 	ObjectsIds auxTypes[] = {OBJ_StageGetRequest,
 		       OBJ_StagePrepareToGetRequest,
@@ -356,73 +355,6 @@ namespace castor{
       /**************************************************************************************************/
       /***  inline bool StagerRequestHelper::checkFilePermission() throw(castor::exception::Exception);  ***/
      
-
-
-      /*****************************************************************************************************/
-      /* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
-      /* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
-      /**************************************************************************************************/
-      void StagerRequestHelper::buildRmJobHelperPart(struct rmjob* rmjob) throw(castor::exception::Exception)//after processReplica (if it is necessary)
-      {
-
-
-	rmjob->uid = (uid_t) fileRequest->euid();
-	rmjob->gid = (uid_t) fileRequest->egid();
-	
-	strncpy(rmjob->uname, username.c_str(),RM_MAXUSRNAMELEN);
-	rmjob->uname[RM_MAXUSRNAMELEN] = '\0';
-	strncpy(rmjob->gname, groupname.c_str(),RM_MAXGRPNAMELEN);
-	rmjob->gname[RM_MAXGRPNAMELEN] = '\0';
-
-	
-	strncpy(rmjob->partitionmask, getPartitionMask().c_str(),RM_MAXPARTITIONLEN);
-	rmjob->partitionmask[RM_MAXPARTITIONLEN] = '\0';
-
-	std::string features;
-
-	std::string className("default");
-	if((fileRequest->svcClassName().empty()) == false){
-	  className = fileRequest->svcClassName();//620
-	}
-	features = className;//622
-	std::string protocol = this->subrequest->protocol();
-	if((protocol.empty()) == false){
-	  if((features.size()+1+protocol.size())<RM_MAXFEATURELEN){
-	    features+= ":";
-	    features+= protocol;
-	    
-	  }
-	}else{
-	  if((features.size()+1+ this->default_protocol.size())<RM_MAXFEATURELEN){
-	    features+=":"+this->default_protocol;
-	  }
-	}
-
-	if(features.size() > RM_MAXFEATURELEN){
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerRequestHelper buildRmJobRequestPart) String features exceeds the max lenght"<<std::endl;
-	  throw ex;
-	}
-	strncpy(rmjob->rfeatures, features.c_str(), RM_MAXFEATURELEN);
-	               	
-	u64tostr(subrequest->id(),rmjob->stageid,0);
-	strcat(rmjob->stageid,"@");
-	
-	//adding request and subrequest uuid:
-	{
-	  Cuuid_t thisuuid=requestUuid;
-	  Cuuid2string(rmjob->requestid, CUUID_STRING_LEN+1,&thisuuid);
-	  thisuuid=subrequestUuid;
-	  Cuuid2string(rmjob->subrequestid, CUUID_STRING_LEN+1,&thisuuid);
-	}
-	
-	strcpy(rmjob->clientStruct,iClientAsString.c_str());//what is the max len for client? 663
-	strcpy(rmjob->exec,"/usr/bin/stagerJob.sh");
-	
-	strncpy(rmjob->account,className.c_str(),RM_MAXACCOUNTNAMELEN);
-	
-
-      }
 
 
 

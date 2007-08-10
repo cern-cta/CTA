@@ -22,7 +22,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "u64subr.h"
@@ -57,23 +57,9 @@ namespace castor{
 	/* destructor */
 	~StagerPrepareToGetHandler() throw();
 
-	/********************************************************************************************************/
-	/* we are overwritting this function inherited from the StagerJobRequestHandler  because of the case 0 */
-	/*  it isn't included on the switchScheduling, it's processed on the handle main flow                 */
-	/* after asking the stagerService is it is toBeScheduled                     */
-	/* - do a normal tape recall                                                */
-	/* - check if it is to replicate:                                          */
-	/*         +processReplica if it is needed:                               */
-	/*                    +make the hostlist if it is needed                 */
-	/************************************************************************/
-	void switchScheduling(int caseToSchedule) throw(castor::exception::Exception);
 
 	/* PrepareToGet request handler */
         void handle() throw(castor::exception::Exception);
-
-
-
-
 
       }; //end StagerPrepareToGetHandler class
 

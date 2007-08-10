@@ -26,7 +26,7 @@
 #include "stager_constants.h"
 #include "serrno.h"
 #include "Cns_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "u64subr.h"
@@ -91,17 +91,15 @@ namespace castor{
 	/* service class */
 	std::string svcClassName;
 	castor::stager::SvcClass* svcClass;
-	
-	char partitionMask[RM_MAXPARTITIONLEN+1];/* initialized to svcClass.name on stagerRequest.jobOriented ()*/
-	
+		
 	/* castorFile attached to the subrequest*/
 	castor::stager::CastorFile* castorFile;
 	
 	/* get from the stagerService using as key Cnsfileclass.name (JOB ORIENTED)*/
 	castor::stager::FileClass* fileClass;
        
-	char username[RM_MAXUSRNAMELEN+1];
-	char groupname[RM_MAXGRPNAMELEN+1];
+	char username[CA_MAXLINELEN+1];
+	char groupname[CA_MAXLINELEN+1];
 
 	/* Cuuid_t thread safe variables */ 
 	Cuuid_t subrequestUuid;
@@ -303,20 +301,6 @@ namespace castor{
 
 
       
-	/*********************************************************************************************************/
-	/*  initialize the partition mask with svcClass.name()  or get it:called in StagerRequest.jobOriented() */
-	/*******************************************************************************************************/
-	inline std::string getPartitionMask() throw(castor::exception::Exception){
-	  if(svcClassName.empty()){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRequestHelper getPartitionMask) svcClassName is empty"<<std::endl;
-	    throw ex;
-	  }else{
-	    strncpy(partitionMask, svcClassName.c_str(),RM_MAXPARTITIONLEN+1);
-	  }
-	  
-	  return(this->partitionMask);
-	}
      
 
 	/****************************************************************************************************/
@@ -365,12 +349,12 @@ namespace castor{
 	  }
    
 	  if((this->username) != NULL){
-	    strncpy(username,this_passwd->pw_name,RM_MAXUSRNAMELEN);
-	    username[RM_MAXUSRNAMELEN]='\0';
+	    strncpy(username,this_passwd->pw_name,CA_MAXLINELEN);
+	    username[CA_MAXLINELEN]='\0';
 	  }
 	  if((this->groupname) != NULL){
-	    strncpy(groupname,this_gr->gr_name,RM_MAXGRPNAMELEN);
-	    groupname[RM_MAXUSRNAMELEN]='\0';
+	    strncpy(groupname,this_gr->gr_name,CA_MAXLINELEN);
+	    groupname[CA_MAXLINELEN]='\0';
 	  }
 	}
       
@@ -449,11 +433,7 @@ namespace castor{
      
 
 
-	/*****************************************************************************************************/
-	/* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
-	/* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
-	/**************************************************************************************************/
-	void buildRmJobHelperPart(struct rmjob* rmjob) throw(castor::exception::Exception);//after processReplica (if it is necessary)
+	
 	
 	
 	/* function to update the subrequestStatus */

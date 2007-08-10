@@ -25,8 +25,7 @@
 #include "Cglobals.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
-#include "rm_struct.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 
@@ -37,6 +36,9 @@
 #include "castor/exception/Exception.hpp"
 #include "serrno.h"
 #include "castor/Constants.hpp"
+
+#include "marshall.h"
+#include "net.h"
 
 #include <iostream>
 #include <string>
@@ -73,11 +75,6 @@ namespace castor{
 	  /* the exception is throwing internally in the helper method */
 	  stgRequestHelper->getCastorFileFromSvcClass(*stgCnsHelper);
 	  
-	  
-	  
-	  /* set svcClass.name() as a partitionMask (it'll be copy to rmjob.partitionmask) */
-	  /*the exception is throwing internally in the helper method */
-	  stgRequestHelper->getPartitionMask();
 	  
 	  /*  fill castorFile's FileClass: called in StagerRequest.jobOriented() */
 	  stgRequestHelper->setFileClassOnCastorFile();
@@ -122,12 +119,12 @@ namespace castor{
 	    bool isToReplicate=replicaSwitch();
 	    
 	    if(isToReplicate){  
-	      processReplicaAndHostlist();
+	      processReplica();
 	    }
 
 	    /**********************************************/
 	    /* build the rmjob struct and submit the job */
-	    rmMasterProcessJob();   
+	    jobManagerPart();   
 	    break;
 
 	  case 4:
@@ -169,12 +166,12 @@ namespace castor{
 	/*if the status of the unique copy is STAGE_OUT, then force to don' t replicate */
 	if((sources.size())==1)
 	  {
-	    if((sources.front()->status()) == STAGE_OUT){
+	    if((sources.front()->status()) == DISKCOPY_STAGEOUT){/* coming from the latest stager_db_service.c */
 	      maxReplicaNb = 1;
 	    }
 	  }
 	
-	
+	rfs.clear();/* coming from the latest stager_db_service.c */
 	if(sources.size() > 0){
 	  if(maxReplicaNb>0){
 	    if(maxReplicaNb <= sources.size()){
@@ -202,7 +199,7 @@ namespace castor{
       /***************************************************************************************************************************/
       /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
       /**************************************************************************************************************************/
-      int StagerJobRequestHandler::checkReplicationPolicy() throw(castor::exception::Exception)
+      int StagerJobRequestHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
       {
 	//ask the expert system...
 
@@ -216,14 +213,14 @@ namespace castor{
 	  ex.getMessage()<<"(StagerJobRequestHandler checkReplicationPolicy) Error on expert_send_request"<<std::endl;
 	  throw ex;
 	}
-	if(expert_send_data(fd,expQuestion.c_str(),expQuestion.size())){//sending question
+	if((expert_send_data(fd,expQuestion.c_str(),expQuestion.size())) != (expQuestion.size())){//sending question
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerJobRequestHandler checkReplicationPolicy) Error on expert_send_data"<<std::endl;
 	  throw ex;
 	}
 
 	memset(expAnswer, '\0',sizeof(expAnswer));
-	if(expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)){
+	if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
 	  castor::exception::Exception ex(SEINTERNAL);
 	  ex.getMessage()<<"(StagerJobRequestHandler checkReplicationPolicy) Error on expert_receive_data"<<std::endl;
 	  throw ex;
@@ -242,10 +239,9 @@ namespace castor{
       /************************************************************************************/
       /* process the replicas = build rfs string (and hostlist) */
       /* - rfs + = ("|") + diskServerName + ":" + mountPoint */
-      /* - hostlist + = (":") + diskServerName ()if it isn' t already in hostlist  */
-      /*  */
+      /* changes coming from the latest stager_db_service.c */
       /**********************************************************************************/
-      void StagerJobRequestHandler::processReplicaAndHostlist() throw(castor::exception::Exception)
+      void StagerJobRequestHandler::processReplica() throw(castor::exception::Exception)
       {	//it will represent the case1:
 	//build "rfs" (and "hostlist" if it is defined)
 	
@@ -254,40 +250,30 @@ namespace castor{
 	
 	/* rfs and hostlist are attributes !*/ 
 	rfs.clear();
-	hostlist.clear();
-	rfs.resize(CA_MAXLINELEN+1);
-	hostlist.resize(CA_MAXHOSTNAMELEN+1);
+	rfs.resize(CA_MAXRFSLINELEN);
+
 	
 	std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
 	for(int iReplica=0;(iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
 	  
 	  diskServerName=(*iter)->diskServer();
 	  fullMountPoint=diskServerName+":"+(*iter)->mountPoint();
-	  if(this->rfs.empty()== false){
+	  
+	  /* coming from the latest stager_db_service.c */
+	  if((rfs.empty() == true) && (fullMountPoint.size() > CA_MAXRFSLINELEN)){
+	    castor::exception::Exception ex(SENAMETOOLONG);
+	    ex.getMessage()<<"(Stager_Handler) Not enough space for filesystem constraint"<<std::endl;
+	    throw ex;
+	  }else if((fullMountPoint.size() + 1) > CA_MAXRFSLINELEN){
+	    /* +1 because of the "|"*/
+	    break; /* we dont add it to the rfs */
+	  }
+	  
+	  
+	  if(this->rfs.empty()==false){
 	    this->rfs+="|";
 	  }
 	  this->rfs+=fullMountPoint;
-	  if((this->rfs.size())>CA_MAXLINELEN){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerJobRequestHandler processReplicaAndHostlist) rfs string size surpased "<<std::endl;
-	    throw ex;
-	  }
-	  
-	  if(useHostlist){ //do we need to add the diskServer to the hostlist:
-	    //check if diskServerName is already in hostlist
-	    
-	    if((this->hostlist.find(diskServerName))==(std::string::npos)){//diskServerName not already 
-	      //diskServer NOT ALREADY in hostlist: ADD IT!
-	      if(hostlist.empty()==false){
-		hostlist+=":";
-	      }
-	      hostlist+=diskServerName;
-	      if(hostlist.size()>CA_MAXHOSTNAMELEN){
-		castor::exception::Exception ex(SEINTERNAL);
-		ex.getMessage()<<"(StagerJobRequestHandler processReplicaAndHostlist) hostlist size surpased"<<std::endl;
-	      }  
-	    }
-	  }
 	  
 	}//end for(iReplica)    
 
@@ -298,41 +284,32 @@ namespace castor{
       /* build the rmjob needed structures(buildRmJobHelperPart() and buildRmJobRequestPart())  */
       /* and submit the job  */
       /****************************************************************************************/
-      void StagerJobRequestHandler::rmMasterProcessJob() throw(castor::exception::Exception){
-	try{
-	  int type = stgRequestHelper->fileRequest->type();
-	  if((type==OBJ_StageGetRequest)||(type==OBJ_StagePrepareToGetRequest)||(type==OBJ_StageRepackRequest)){
-	    if(rfs.empty() == false){
-	      /* if the file exists we don't have any size requirements */
-	      this->xsize = 0;
-	    }
-	  }
-	  stgRequestHelper->buildRmJobHelperPart(&(this->rmjob)); /* add euid, egid... on the rmjob struct  */
-	  this->buildRmJobRequestPart();/* add rfs and hostlist strings on the rmjob struct */
-	  if(rm_enterjob(NULL,-1,(u_signed64) 0, &(this->rmjob), &(this->nrmjob_out), &(this->rmjob_out)) != 0){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerGetHandler handle) Error on rm_enterjob"<<std::endl;
-	    throw(ex);	  
-	  }
-	  rm_freejob(this->rmjob_out);
+      void StagerJobRequestHandler::jobManagerPart() throw(castor::exception::Exception){
+
+	int type = stgRequestHelper->fileRequest->type();
 	
-	}catch(castor::exception::Exception e){
-	  if(rmjob_out != NULL){
-	    rm_freejob(this->rmjob_out);
-	  }
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(Stager__Handler) Error"<<e.getMessage()<<std::endl;
+	/* just Get, Update and Put are allowed to call the JOB Manager (coming from the latest stager_db_service.c) */
+	if((type != OBJ_StageGetRequest) && (type != OBJ_StageUpdateRequest) && (type != OBJ_StagePutRequest)){
+	  castor::exception::Exception ex(SEOPNOTSUP);
+	  ex.getMessage()<<"(Stager__Handler) Invalid type to call the JOB Manager"<<std::endl;
 	  throw ex;
 	}
+	
+	if((type==OBJ_StageGetRequest)&& (rfs.empty() == false)){
+	  /* if the file exists we don't have any size requirements */
+	  this->xsize = 0;
+	}
+	
+	/* update the subrequest table (coming from the latest stager_db_service.c) */
+	if(rfs.empty() == false){
+	  stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
+	}
+	stgRequestHelper->subrequest->setXsize(this->xsize);
+	
       }
 
 
-      /*****************************************************************************************************/
-      /* build the struct rmjob necessary to submit the job on rm : rm_enterjob                           */
-      /* called on each request thread (not including PrepareToPut,PrepareToUpdate,Rm,SetFileGCWeight)   */
-      /**************************************************************************************************/
-      /* inline void StagerJobRequestHandler::buildRmJobRequestPart() throw(castor::exception::Exception)//after processReplica (if it is necessary) */
-      
+    
 
         
     }//end namespace dbService

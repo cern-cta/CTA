@@ -16,8 +16,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
-#include "rm_struct.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "osdep.h"
@@ -48,10 +47,6 @@ namespace castor{
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
 
 
-	this->useHostlist = false;
-#ifdef USE_HOSTLIST
-	this->useHostlist=true;
-#endif
 
 	
 	/* get the request's size required on disk */
@@ -69,7 +64,7 @@ namespace castor{
 	  this->xsize = stgCnsHelper->cnsFilestat.filesize;
 	}
 
-	this->openflags=RM_O_RDONLY;
+
 	this->default_protocol = "rfio";
 
       }

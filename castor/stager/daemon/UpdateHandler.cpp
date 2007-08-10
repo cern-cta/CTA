@@ -21,7 +21,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "castor/IClientFactory.hpp"
@@ -51,11 +51,7 @@ namespace castor{
 	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
 
-	
-	this->useHostlist = false;
-#ifdef USE_HOSTLIST
-	this->useHostlist=true;
-#endif
+
 	
 	/* get the subrequest's size required on disk */
 	this->xsize = this->stgRequestHelper->subrequest->xsize();
@@ -71,10 +67,6 @@ namespace castor{
 	    xsize = DEFAULTFILESIZE;
 	  }
 	}
-	
-
-	this->openflags=RM_O_RDWR;
-	this->default_protocol = "rfio";
 	
       }
       
@@ -101,30 +93,38 @@ namespace castor{
 	      ex.getMessage()<<"(StagerUpdateHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
 	      throw ex;
 
-	    }else{
+	    }else{ /* coming from the latest stager_db_service.c */
 	      /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
 	      std::string diskServerName(diskCopyForRecall->diskServer());
 	      std::string mountPoint(diskCopyForRecall->mountPoint());
 	      
-	      if((!diskServerName.empty())&&(!mountPoint.empty())){
+	      if((diskServerName.empty() == false) && (mountPoint.empty() == false)){
+		rfs.resize(CA_MAXRFSLINELEN);
+		rfs.clear();
 		this->rfs = diskServerName + ":" + mountPoint;
+		
+		if(rfs.size() >CA_MAXRFSLINELEN ){
+		  castor::exception::Exception ex(SENAMETOOLONG);
+		  ex.getMessage()<<"(Stager_Handler) Not enough space for filesystem constraint"<<std::endl;
+		  throw ex;
+		}else{
+		  /* update the subrequest table (coming from the latest stager_db_service.c) */
+		  stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
+		  stgRequestHelper->subrequest->setXsize(this->xsize);
+		  
+		} 
 	      }
-	      this->hostlist.clear();
-	      
-	      /* since the file doesn't exist, we don't need the read flag */
-	      this->openflags = RM_O_WRONLY;
-	     
-	      rmMasterProcessJob();
-	    }
+	      /* updateSubrequestStatus Part: */
+	      this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READYFORSCHED);
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest,true);
+	    }/* notSchedule && diskCopyForRecall != NULL  */
+
 	  }else{
 	   
 	    /* since the file exist, we need the read flag */
-	    this->openflags = RM_O_RDWR;
 	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
 	    switchScheduling(caseToSchedule);/* we call internally the rmjob */
-
 	  }
-	  
 	  
 	  
 	  if(toRecreateCastorFile || ((caseToSchedule != 2) && (caseToSchedule != 4))){

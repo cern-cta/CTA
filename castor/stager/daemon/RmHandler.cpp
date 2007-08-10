@@ -21,7 +21,7 @@
 #include "serrno.h"
 
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 

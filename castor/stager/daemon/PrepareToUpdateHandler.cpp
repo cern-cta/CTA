@@ -19,7 +19,7 @@
 #include "serrno.h"
 #include "Cns_api.h"
 #include "expert_api.h"
-#include "rm_api.h"
+
 #include "Cpwd.h"
 #include "Cgrp.h"
 #include "castor/IClientFactory.hpp"
@@ -50,12 +50,6 @@ namespace castor{
 
 	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
-	
-	
-	this->useHostlist = false;
-#ifdef USE_HOSTLIST
-	this->useHostlist=true;
-#endif
 
 
 	/* get the subrequest's size required on disk */
@@ -74,7 +68,6 @@ namespace castor{
 	}
 	
 	
-	this->openflags=RM_O_RDWR;
 	this->default_protocol = "rfio";
 
 	
