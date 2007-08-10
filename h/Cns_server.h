@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.7 2006/05/15 14:24:46 felixehm Exp $
+ * $Id: Cns_server.h,v 1.8 2007/08/10 08:37:34 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.7 $ $Date: 2006/05/15 14:24:46 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.8 $ $Date: 2007/08/10 08:37:34 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -35,11 +35,13 @@
 #define RETURN(x) \
 	{ \
 	nslogit (func, "returns %d\n", (x)); \
-	if (thip->dbfd.tr_started) \
-		if (x) \
+	if (thip->dbfd.tr_started) { \
+		if (x) { \
 			(void) Cns_abort_tr (&thip->dbfd); \
-		else if (! thip->dbfd.tr_mode) \
+		} else if (! thip->dbfd.tr_mode) { \
 			(void) Cns_end_tr (&thip->dbfd); \
+		} \
+	} \
 	return ((x)); \
 	}
 #define RETURNQ(x) \
