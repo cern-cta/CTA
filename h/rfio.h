@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio.h,v $ $Revision: 1.31 $ $Date: 2007/08/10 08:37:35 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio.h,v $ $Revision: 1.32 $ $Date: 2007/08/10 11:33:49 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -20,7 +20,6 @@
 #define CHECKI       5          /* max interval to check for work to be done */
 
 #include <stdio.h>              /* standard Input/Output                */
-#include <stdlib.h>             /* for malloc(), free()                 */
 #include <sys/types.h>          /* standard data types                  */
 
 #if !defined(_WIN32)
