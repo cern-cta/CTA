@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.40 $ $Release$ $Date: 2007/06/26 10:10:09 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.41 $ $Release$ $Date: 2007/08/10 12:35:04 $ $Author: obarring $
  *
  * 
  *
@@ -198,6 +198,7 @@ int rtcpcld_updateNsSegmentAttributes(
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
   int rc, save_serrno, nbSegms = 0, compressionFactor;
+  int retryNsUpdate = 0, maxRetryNsUpdate = 5;
   struct Cns_fileid castorFileId;
   struct Cns_segattrs *nsSegAttrs = NULL;
   char *blkid = NULL, *nsErrMsg = NULL;
@@ -393,81 +394,91 @@ int rtcpcld_updateNsSegmentAttributes(
     return (-1);
   }
 
-  if ( repackvid != NULL ) {
+  /*
+   * Protect against false ENOENT from name server. This is the last
+   * chance for this file, so let's be sure. There have been cases when
+   * the nsdaemon reports ENOENT but in fact the file is there...
+   */
+  for ( retryNsUpdate = 0; retryNsUpdate<maxRetryNsUpdate; retryNsUpdate++ ) {
+    if ( repackvid != NULL ) {
 
-     (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_REPACK),
-                      (struct Cns_fileid *)&castorFileId,
-                      1,
-                      "OldVid",
-                      DLF_MSG_PARAM_STR,
-                      repackvid);
+       (void)dlf_write(
+                       (inChild == 0 ? mainUuid : childUuid),
+                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_REPACK),
+                       (struct Cns_fileid *)&castorFileId,
+                       1,
+                       "OldVid",
+                       DLF_MSG_PARAM_STR,
+                       repackvid);
 
    
-    /* we found a repackfile initiate different NS behavior*/
-   
-    /* replace the old tapecopy. Note that the old segments are deleted!
-       and the old tapecopyno is assigned to the new tapecopy.*/
-    rc = Cns_replacetapecopy(
-                       &castorFileId,
-                       repackvid,
-                       nsSegAttrs->vid,
-                       nbSegms,
-                       nsSegAttrs
-                       );
-    free(repackvid);
-    repackvid = NULL;
-  }
-  else {
-  /* the normal Case */
-    rc = Cns_setsegattrs(
-                       (char *)NULL, // CASTOR file name 
-                       &castorFileId,
-                       nbSegms,
-                       nsSegAttrs
-                       );
-  }
-  
-  
-  if ( rc == -1 ) {
-    save_serrno = serrno;
-    if ( save_serrno == ENOENT ) {
-      /*
-       * We ignore ENOENT. This means that the user has removed the
-       * file before migrated to tape.
-       */
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
-                      (struct Cns_fileid *)&castorFileId,
-                      2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cns_setsegattrs/Cns_replacetapecopy",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno)
-                      );
-      rc = 0;
+      /* we found a repackfile initiate different NS behavior*/
+      /* replace the old tapecopy. Note that the old segments are deleted!
+         and the old tapecopyno is assigned to the new tapecopy.*/
+      rc = Cns_replacetapecopy(
+                               &castorFileId,
+                               repackvid,
+                               nsSegAttrs->vid,
+                               nbSegms,
+                               nsSegAttrs
+                               );
+      free(repackvid);
+      repackvid = NULL;
     } else {
-      (void)dlf_write(
-                      (inChild == 0 ? mainUuid : childUuid),
-                      RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
-                      (struct Cns_fileid *)&castorFileId,
-                      RTCPCLD_NB_PARAMS+2,
-                      "SYSCALL",
-                      DLF_MSG_PARAM_STR,
-                      "Cns_setsegattrs()/Cns_replacetapecopy()",
-                      "ERROR_STR",
-                      DLF_MSG_PARAM_STR,
-                      sstrerror(save_serrno),
-                      RTCPCLD_LOG_WHERE
-                      );
+      /* the normal Case */
+      rc = Cns_setsegattrs(
+                          (char *)NULL, // CASTOR file name 
+                          &castorFileId,
+                          nbSegms,
+                          nsSegAttrs
+                          );
     }
-    serrno = save_serrno;
+  
+    if ( rc == 0 ) {
+      break;
+    } else {
+      save_serrno = serrno;
+      if ( save_serrno == ENOENT ) {
+        /*
+         * We ignore ENOENT. This means that the user has removed the
+         * file before migrated to tape.
+         */
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
+                        (struct Cns_fileid *)&castorFileId,
+                        3,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "Cns_setsegattrs/Cns_replacetapecopy",
+                        "RETRY",
+                        DLF_MSG_PARAM_INT,
+                        retryNsUpdate,
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(save_serrno)
+                        );
+        rc = 0;
+      } else {
+        (void)dlf_write(
+                        (inChild == 0 ? mainUuid : childUuid),
+                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_SYSCALL),
+                        (struct Cns_fileid *)&castorFileId,
+                        RTCPCLD_NB_PARAMS+2,
+                        "SYSCALL",
+                        DLF_MSG_PARAM_STR,
+                        "Cns_setsegattrs()/Cns_replacetapecopy()",
+                        "ERROR_STR",
+                        DLF_MSG_PARAM_STR,
+                        sstrerror(save_serrno),
+                        RTCPCLD_LOG_WHERE
+                        );
+      }
+      serrno = save_serrno;
+      if ( rc == -1 ) break;
+    }
+    sleep(1);
   }
-
   if ( nsSegAttrs != NULL ) free(nsSegAttrs);
   return(rc);
 }
