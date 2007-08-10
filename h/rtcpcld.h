@@ -416,7 +416,8 @@ int rtcpcld_updateTape _PROTO((
                                tape_list_t *,
                                file_list_t *,
                                int,
-                               int
+                               int,
+                               int *
                                ));
 int rtcpcld_segmentOK _PROTO((
                               struct Cns_segattrs *
