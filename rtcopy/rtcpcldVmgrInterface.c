@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.27 $ $Release$ $Date: 2007/05/11 16:06:39 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.28 $ $Release$ $Date: 2007/08/10 11:11:53 $ $Author: obarring $
  *
  * 
  *
@@ -596,11 +596,13 @@ int rtcpcld_updateTape(
                        tape,
                        file,
                        endOfRequest,
-                       rtcpc_serrno
+                       rtcpc_serrno,
+                       _filesWritten
                        )
      tape_list_t *tape;
      file_list_t *file;
      int endOfRequest, rtcpc_serrno;
+     int *_filesWritten;
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq = NULL;
@@ -794,6 +796,7 @@ int rtcpcld_updateTape(
     serrno = save_serrno;
     return(-1);
   } else {
+    if ( _filesWritten != NULL ) *_filesWritten = filesWritten;
     (void)dlf_write(
                     (inChild == 0 ? mainUuid : childUuid),
                     RTCPCLD_LOG_MSG(RTCPCLD_MSG_UPDATETAPE),

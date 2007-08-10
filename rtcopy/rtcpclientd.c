@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.40 $ $Release$ $Date: 2007/06/27 15:37:48 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.41 $ $Release$ $Date: 2007/08/10 11:11:54 $ $Author: obarring $
  *
  *
  *
@@ -606,7 +606,8 @@ static void checkWorkerExit(shutDownFlag)
                                  item->tape,
                                  NULL,
                                  1,
-                                 0
+                                 0,
+                                 NULL
                                  );
         /*
          * Reset the stream or delete it in case it has finished

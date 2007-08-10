@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.50 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.51 $ $Release$ $Date: 2007/08/10 11:11:55 $ $Author: obarring $
  *
  * 
  *
@@ -179,6 +179,7 @@ int migratorCallbackFileCopied(
 {
   file_list_t *file = NULL;
   int rc, save_serrno, tapeCopyNb = 0, ownerUid = -1, ownerGid = -1;
+  int filesWritten = 0;
   struct Cns_fileid *castorFileId = NULL;
   char *blkid, *svcClassName = NULL;
 
@@ -231,15 +232,16 @@ int migratorCallbackFileCopied(
                             tape,
                             file,
                             0,
-                            0
+                            0,
+                            &filesWritten
                             );
-    if ( rc == -1 ) {
+    if ( (rc == -1) || (filesWritten == 0) ) {
       save_serrno = serrno;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDVMGRUPD),
                       (struct Cns_fileid *)castorFileId,
-                      RTCPCLD_NB_PARAMS+8,
+                      RTCPCLD_NB_PARAMS+9,
                       "",
                       DLF_MSG_PARAM_TPVID,
                       tapereq->vid,
@@ -261,6 +263,9 @@ int migratorCallbackFileCopied(
                       "OWNERGID",
                       DLF_MSG_PARAM_INT,
                       ownerGid,
+                      "FILES",
+                      DLF_MSG_PARAM_INT,
+                      filesWritten,
                       "ERROR",
                       DLF_MSG_PARAM_STR,
                       sstrerror(serrno),
@@ -276,7 +281,8 @@ int migratorCallbackFileCopied(
       return(-1);
     }
 
-    if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) ) {
+    if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) &&
+         (filesWritten == 1) ) {
       (void)rtcpcld_getTapeCopyNumber(file,&tapeCopyNb);
       rc = rtcpcld_updateNsSegmentAttributes(tape,file,tapeCopyNb,castorFileId);
       if ( rc == -1 ) {
