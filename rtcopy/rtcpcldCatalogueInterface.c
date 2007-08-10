@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.163 $ $Release$ $Date: 2007/06/18 14:27:03 $ $Author: waldron $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.164 $ $Release$ $Date: 2007/08/10 11:14:17 $ $Author: obarring $
  *
  * 
  *
@@ -759,7 +759,7 @@ int rtcpcld_getTapesToDo(
       if ( rc == -1 ) {
         save_serrno = serrno;
         LOG_SYSCALL_ERR("updateTapeFromDB()");
-        (void)rtcpcld_updateTape(tl,NULL,1,0);
+        (void)rtcpcld_updateTape(tl,NULL,1,0,NULL);
         if ( tl != NULL ) free(tl);
         continue;
       }
@@ -767,7 +767,7 @@ int rtcpcld_getTapesToDo(
       if ( rc == -1 ) {
         save_serrno = serrno;
         LOG_SYSCALL_ERR("rtcpcld_tapeOK()");
-        (void)rtcpcld_updateTape(tl,NULL,1,0);
+        (void)rtcpcld_updateTape(tl,NULL,1,0,NULL);
         if ( tl != NULL ) free(tl);
         continue;
       }
@@ -791,7 +791,7 @@ int rtcpcld_getTapesToDo(
         LOG_DBCALLANDKEY_ERR("C_Services_fillRep()",
                              C_Services_errorMsg(*dbSvc),
                              key);
-        (void)rtcpcld_updateTape(tl,NULL,1,0);
+        (void)rtcpcld_updateTape(tl,NULL,1,0,NULL);
         if ( tl != NULL ) free(tl);
         continue;
       }
@@ -811,7 +811,7 @@ int rtcpcld_getTapesToDo(
       if ( rc == -1 ) {
         save_serrno = serrno;
         LOG_SYSCALL_ERR("C_Services_updateRep()");
-        (void)rtcpcld_updateTape(tl,NULL,1,0);
+        (void)rtcpcld_updateTape(tl,NULL,1,0,NULL);
         if ( tl != NULL ) free(tl);
         continue;
       }
@@ -1665,7 +1665,24 @@ int nextSegmentToMigrate(
     serrno = SEINTERNAL;
     return(-1);
   }
+
   Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  if ( castorFile == NULL ) {
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+1,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "No CastorFile set for selected migration candidate",
+                    RTCPCLD_LOG_WHERE
+                    );
+    C_IAddress_delete(iAddr);
+    serrno = SEINTERNAL;
+    return(-1);
+  }
+
   Cstager_CastorFile_id(castorFile,&key);
   iObj = Cstager_CastorFile_getIObject(castorFile);
   rc = C_Services_fillObj(
@@ -3530,6 +3547,24 @@ int rtcpcld_putFailed(
   }
 
   Cstager_TapeCopy_castorFile(tapeCopy,&castorFile);
+  if ( castorFile == NULL ) {
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                    (struct Cns_fileid *)NULL,
+                    RTCPCLD_NB_PARAMS+2,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "No CastorFile set for FAILED TapeCopy",
+                    "DBKEY",
+                    DLF_MSG_PARAM_INT64,
+                    key,
+                    RTCPCLD_LOG_WHERE
+                    );
+    C_IAddress_delete(iAddr);
+    serrno = SEINTERNAL;
+    return(-1);
+  }
   iObj = Cstager_CastorFile_getIObject(castorFile);
   rc = C_Services_fillObj(
                           *svcs,
