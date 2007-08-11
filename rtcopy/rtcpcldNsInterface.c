@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.41 $ $Release$ $Date: 2007/08/10 12:35:04 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.42 $ $Release$ $Date: 2007/08/11 20:07:53 $ $Author: obarring $
  *
  * 
  *
@@ -188,7 +188,7 @@ int rtcpcld_updateNsSegmentAttributes(
                                       tape,
                                       file,
                                       tapeCopyNb,
-				      castorFile
+                                      castorFile
                                       )
      tape_list_t *tape;
      file_list_t *file;
@@ -197,11 +197,13 @@ int rtcpcld_updateNsSegmentAttributes(
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq;
-  int rc, save_serrno, nbSegms = 0, compressionFactor;
+  int rc, stat_rc, save_serrno = 0, nbSegms = 0, compressionFactor;
   int retryNsUpdate = 0, maxRetryNsUpdate = 5;
   struct Cns_fileid castorFileId;
   struct Cns_segattrs *nsSegAttrs = NULL;
+  struct Cns_filestat statbuf;
   char *blkid = NULL, *nsErrMsg = NULL;
+  char castorFileName[CA_MAXPATHLEN+1];
 
   if ( (tape == NULL) || (file == NULL) ) {
     serrno = EINVAL;
@@ -441,23 +443,43 @@ int rtcpcld_updateNsSegmentAttributes(
       if ( save_serrno == ENOENT ) {
         /*
          * We ignore ENOENT. This means that the user has removed the
-         * file before migrated to tape.
+         * file before migrated to tape. We should double check however...
          */
-        (void)dlf_write(
-                        (inChild == 0 ? mainUuid : childUuid),
-                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
-                        (struct Cns_fileid *)&castorFileId,
-                        3,
-                        "SYSCALL",
-                        DLF_MSG_PARAM_STR,
-                        "Cns_setsegattrs/Cns_replacetapecopy",
-                        "RETRY",
-                        DLF_MSG_PARAM_INT,
-                        retryNsUpdate,
-                        "ERROR_STR",
-                        DLF_MSG_PARAM_STR,
-                        sstrerror(save_serrno)
-                        );
+        *castorFileName = '\0';
+        stat_rc = Cns_statx(castorFileName,&castorFileId,&statbuf);
+        if ( stat_rc == 0 )  {
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_FALSE_ENOENT),
+                          (struct Cns_fileid *)&castorFileId,
+                          2,
+                          "SYSCALL",
+                           DLF_MSG_PARAM_STR,
+                          "Cns_setsegattrs/Cns_replacetapecopy",
+                          "RETRY",
+                          DLF_MSG_PARAM_INT,
+                          retryNsUpdate
+                          );
+          rc = -1;
+          serrno = SEINTERNAL;
+          break;
+        } else {
+          (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_IGNORE_ENOENT),
+                          (struct Cns_fileid *)&castorFileId,
+                          3,
+                          "SYSCALL",
+                          DLF_MSG_PARAM_STR,
+                          "Cns_setsegattrs/Cns_replacetapecopy",
+                          "RETRY",
+                          DLF_MSG_PARAM_INT,
+                          retryNsUpdate,
+                          "ERROR_STR",
+                          DLF_MSG_PARAM_STR,
+                          sstrerror(save_serrno)
+                          );
+        }
         rc = 0;
       } else {
         (void)dlf_write(
