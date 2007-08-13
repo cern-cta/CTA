@@ -1,4 +1,131 @@
 ------------
+- 2.1.3-14 -
+------------
+
+  New Features and Changes
+  ------------------------
+  This part lists the changes since the first release of the 2.1.3 serie, that is 2.1.3-14.
+  Many of the fixes were backported to later releases of the 2.1.3 serie, as mentionned.
+
+    Broad view and stager
+    ---------------------
+
+    - rmmaster has been dropped and replace by a jobManager deling with LSF and the job scheduling
+    - initd scripts and sysconfig files have been cleaned up and improved
+    - introduced hooks for recall policies. Policies themselves are not implemented yet
+    - implemented stageRm per service class
+    - added ability to declare a svcClass as disk only. In this case, requests that need to write to the diskpool (that is puts but also recalls and disk to disk copy) will fail if no space is available instead of filling the LSF queue
+    - added ability to force the fileClass of new files in the disk only pool
+    - 2 new status codes were added for SubRequest SUBREQUEST_BEINGSCHED and READYFORSCHED. These are used by the jobManager
+    - Handle properly cases where STAGEOUT diskcopies are unavailable (disable hardware) or in another fileclass.
+    - Added 'ENABLE ROW MOVEMENT' to all tables in order to be able to shrink them online
+    - Better naming of version and releases within the stager DB
+    - Introduced partitionning the subrequest table. This allows to avoid function based indexes and thus to shrink tables dynamically. This was actually backported to 2.1.3-17.
+
+    DiskServer
+    ----------
+
+    - Added proper cleaning after disk to disk copy failure
+    - Fail the job if the localhost does not match the hostname requested by the plugin (#28398)
+    - Fixed interrupted RFIO transfers not being correctly committed to the stager (#28372)
+
+    Central Services
+    ----------------
+    - rfiod :
+      + dropping secondary groups as well when doing setuid/setgid
+    - nameserver :
+      + allow nschclass to change the class for regular files, but only if the user has Cupv admin privilege
+      + Added missing man pages
+    - rtcopy, MigHunter
+      + Added /var/lib/castor as new character device directory for rtcopyd
+      + getNumFilesByStream function was added to the TapeSvc and gives the number of files to be migrated in a given stream. This will allow to have thresholds for the number of migrators started (#20052). They will be implemented via streamPolicies attached to service class. No there yet.
+    - DLF
+      + added separate stager link to ns file id results column in the DLF GUI
+      + added automatic creation of partition tablespaces
+      + support for large password lengths in connect string
+      + Added new loggin severity LOG_STANDARD. This is masking a standard set of rules, logging everything but the DEBUG level locally and everything but DEBUG and USAGE level remotely
+
+    Tape related
+    ------------
+    - Added load balancing of VMGR pools with tapes in multiple libraries (#27319)
+    - Extension of rtcpd to log into DLF (using the tplogger interface of the tape part).
+    - Removal of message daemon from the tape code. The "ask operator" actions in case of failures have been replaced by RTB_NORETRY and RBT_FAST_RETRY for mount and unmounts, respectively.
+    - Refinement of 'Volume in use' fix: re-check the mount status of the drive if a 'Volume in use' is encountered. Despite the first (negative) check after EBUSY, the tape may still be mounted (due to a flawed SMC response or a too early check).
+    - Refinement of EBUSY handling: an EBUSY error reported by the SCSI layer on a mount does not necessarily mean that the mount failed. A simple retry will hence cause in some cases 'volume in use' errors, which lead to disabled tapes. If receiving an EBUSY, the code will now check if the requested tape is mounted in our drive and retry only if appropriate.
+    - Streamlined logging output in case of the new 'Bad MIR' handling in order to ease parsing.
+
+    Bug Fixes
+    ---------
+
+    Only in 2.1.4 :
+    - #15841 jobs that have 'no candidate' in LSF loop
+    - #23293 Impossible to only target one service class with stager_rm
+    - #27319 RFE Loadbalancing of VMGR pools with tapes in multiple libraries
+    - #27320 RFE Get rid of msgdaemon
+    - #28168 putDone may wait on puts when the puts are already over
+    - #28398 New variant of files being scheduled to wrong filesystem
+    - #28438 rfiod may get stuck waiting for data connection in ropen(64)_v3() 
+    - #28619 Two concurrent stagerGetRequests may result in two DiskCopies in status WAITTAPERECALL
+    - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in failing migrator
+    - #22403 In the DLF gui, config.php has to be "world" readable
+    - #23303 Required improvements in CASTOR2 for proper handling of Disk1TapeX
+    - #26534 GC policies are not taking gcWeight attribute into account
+    - #28009 relocation of rtcopy work directory
+    - #28564 rfiod not resetting secondary group ID's
+    - #28411 rmAdminNode does not respect the deleted status of a diskserver when using the -f option
+    - #25159 need for constraints of filesystem table to avoid orphaned filesystems
+    - #28308 missing man-pages in castor-ns-client package
+    - #25468 nsls with big directories fails in 64 bit architectures
+    - #25997 Proper handling of castorVersion in DbCnvSvc
+    - #28097 migration not optimized if nb of diskservers < N * nb of migrators
+    - #26134 no interface to fail a transfer request in a proper manner
+    - #26842 cleaning daemon connection to db is not closed
+    - #27311 please ensure MAXREPLICANB is respected
+    - #27331 Command line option to specify location of config files
+    - #28679 Core dump when user or group are not in passwd or group file
+    - #23268 nsfind gives you paths with double slashes this makes stager_qry screw
+    - #27660 File with two concurrent tape recalls that get stuck.
+    - #27720 showqueues shows wrong queuing times on x86_64
+    - Fixed incorrectly logged checksum with DLF_MSG_PARAM_INT64 leading to segfault for old castorfiles without checksum
+    - Fixed creation of the rtcopy work directory
+    Already in 2.1.3-23:
+    - #27196 request waiting on D2D copy
+    - #26789 streamsToDo returns streams with nothing to do
+    - #27206 bad decision to STAGEIN if diskcopy in CANBEMIGR in disabled filesystem
+    - #27302 spacetobefreed has negative values
+    - #27564 MigHunter startup does not check for duplicates
+    - #27130 rmNodeDaemon problems on start-up
+    - #27507 recaller crash for old castor files without checksum
+    - 'volume in use' after EBUSY leading to disabled tapes
+    - Streamlined logging output in case of the new 'Bad MIR'
+    - getHostByName not thread safe, as well as the CASTOR clients using it
+    - #27794 cleaning daemon too slow to cope with heavy loads
+    - internalPutDoneFunc suffered from bad execution plans from ORACLE
+    - corrupted ns hostname logging in repack
+    - broken http downloads in stagerJob due to unintialised variable
+    Already in 2.1.3-17:
+    - Fixed updating of the stager database for monitoring information when a diskserver was deleted via rmAdminNode
+    - Fix garbage collector in case of FileSystems with no GC policy
+    - fixed handling of command line options in modifyFileClass
+    - flag tape as unused in resetStream when stream is in WAITDRIVER
+    - fixed signal handling in rtcpclientd and reset streams with no active process on shutdown.
+    - Added an automatic repair of corrupted tape directories (MIR). The repair is done by SPACE to EOD and REWIND SCSI commands. The handling of bad MIRs is controlled via the new option BADMIR_HANDLING.
+    Already in 2.1.3-15:
+    - Fixed in stager_qry for the case of a file with no diskcopy and no subrequest but which still has a CASTOR file. We were answering STAGED instead of File Not Found in previous releases.
+    - Added more retries on system and tape errors
+    - Fixed iptable rules for the range of open ports on a Castor client (port 30101 was open by mistake)
+    - Use new error code ERTWRONGSIZE to flag tape recalls with wrong filesize
+    - Added support for separate stager trace and rfiod log files
+    - Avoided that segments stay in SEGMENT_SELECTED if filesize is wrong on a tape recall
+    - Avoided deadlock with castor2 clients after errors in Ctape_reserve() or Ctape_mount()
+    - Expanded the list of customised pending errors to help in operational debugging
+    - Fixed missing Python 2.3 symbols at runtime
+    - Changed signal handling to prevent mount/dismount race in case of a killed mount request. This should fix at least some of the 'volume in use' cases and the 'Destination Element Full' problems.
+
+  Upgrade from 2.1.3-*
+  --------------------
+
+------------
 - 2.1.3-23 -
 ------------
 

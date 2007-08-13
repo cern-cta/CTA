@@ -1,3 +1,77 @@
+castor (2.1.4-0) unstable; urgency=low
+
+  * First test release of 2.1.4 serie
+  * Here is a list of everything that changed since version v2.1.3-17
+  * General
+    + rmmaster has been dropped and replace by a jobManager deling with LSF and the job scheduling
+    + scripts have been developed to build new releases easily and to generate all SQL creation scripts with the correct release value.
+    + tank specific code was finally dropped
+    + new initd scripts and sysconfig files
+    + introduced hooks for recall policies. Policies themselves are not implemented yet
+  * Disk only related
+    + Implemented stageRm per service class
+    + Added ability to declare a svcClass as disk only. In this case, requests that need to write to the diskpool (that is puts but also recalls and disk to disk copy) will fail if no space is available instead of filling the LSF queue
+    + Added ability to force the fileClass of new files in the disk only pool
+  * Stager
+    + 2 new status codes exist for SubRequest SUBREQUEST_BEINGSCHED and READYFORSCHED. These are used by the jobManager when dispatching jobs 
+    + Log the svcClass for all requests
+    + Handle properly requests sent of behalf of somebody else
+    + Handle properly cases where STAGEOUT diskcopies are unavailable (disable hardware) or in another fileclass.
+    + Added 'ENABLE ROW MOVEMENT' to all tables
+    + Added versionning to clients in order to support answering in different ways to different client versions
+    + Added check for existence of eligible migration candidates in streamsToDo (bug #26789). This avoids to mount tapes while all candidates are unavailable (disabled hardware)
+    + Fix for bug #27311, respect maxReplicaNb when replicating because of disabled/draining filesystems
+  * Framework
+    + BaseObject now has a thread-shared singleton for the services
+    + a new BaseDbThread exists that allows clean drop of db connections
+    + implemented easy way to deal with errors from the DB : setting errorMessage and errorCode in the subRequest table (on top of setting status to FAILED) is enough to send an error message to the client.
+    + Introduced forked process pools at the framework level. These are used by the jobDispatcher since LSF fork in its API and can thus not be called from a multithreaded daemon
+    + New starting sequence: pools' init is called before daemonization, so that ForkedProcessPools get forked before any other thread/process operation.
+    + Introduced a shutdown method for pools
+    + Refactored signal handling: now calls each pool's shutdown. Added SIGPIPE to the list of signals to ignore and modified the waitAllThreads method to signal all thread and process pools to stop on SIGINT
+  * Monitoring
+    + Log all status change requests initiated by users. Fixed bug #28411, rmAdminNode does not respect the deleted status of a diskserver when using the -f option
+    + announce when a diskserver is brought back into production after previously being disabled after heartbeat timeout
+  * GC
+    + Added logging of the fileid to log messages when files are deleted to improve traceability
+  * DiskServer
+    + Added proper cleaning after disk to disk copy failure
+    + Fail the job if the localhost does not match the hostname requested by the plugin (#28398)
+    + Fixed interrupted RFIO transfers not being correctly committed to the stager (#28372)
+  * VMGR
+    + Added load balancing of VMGR pools with tapes in multiple libraries (#27319)
+  * tape part
+    + Extension of the tplogger interface for rtcpd, mainly definition of new messages.
+    + Extension of rtcpd to log into DLF (using the tplogger interface of the tape part).
+    + Structured DLF logging to ease parsing for monitoring and accounting: added static messages for the typical tape cycle, for the handling of bad MIRs and for the tape alerts.
+    + Removal of message daemon from the tape code. The "ask operator" actions in case of failures have been replaced by RTB_NORETRY and RBT_FAST_RETRY for mount and unmounts, respectively.
+    + Refinement of 'Volume in use' fix: re-check the mount status of the drive if a 'Volume in use' is encountered. Despite the first (negative) check after EBUSY, the tape may still be mounted (due to a flawed SMC response or a too early check).
+    + Refinement of EBUSY handling: an EBUSY error reported by the SCSI layer on a mount does not necessarily mean that the mount failed. A simple retry will hence cause in some cases 'volume in use' errors, which lead to disabled tapes. If receiving an EBUSY, the code will now check if the requested tape is mounted in our drive and retry only if appropriate.
+    + Streamlined logging output in case of the new 'Bad MIR' handling in order to ease parsing.
+  * RFIO
+    + Dropping secondary groups as well when doing setuid/setgid
+    + Added timeout to data connection in accept call (#28438)
+  * Nameserver
+    + Allowed nschclass to change the class for regular files, but only if the user has Cupv admin privilege
+    + Added missing man pages
+    + fixed memory corruption in nsls on 64 bits (#25468)
+  * rtcopy, MigHunter
+    + Fixed incorrectly logged checksum with DLF_MSG_PARAM_INT64 leading to segfault for old castorfiles without checksum
+    + Added protection against tapecopy linked with NULL castorfile to the MigHunter (#28335)
+    + Fixed MigHunter's signal handler (#28414)
+    + fixed creation of the rtcopy work directory
+    + Added /var/lib/castor as new character device directory for rtcopyd
+    + getNumFilesByStream function was added to the TapeSvc and gives the number of files to be migrated in a given stream. This will allow to have thresholds for the number of migrators started (#20052). They will be implemented via streamPolicies attached to service class. No there yet.
+  * DLF
+    + added separate stager link to ns file id results column in the DLF GUI
+    + added automatic creation of partition tablespaces
+    + support for large password lengths in connect string
+    + Added new loggin severity LOG_STANDARD. This is masking a standard set of rules, logging everything but the DEBUG level locally and everything but DEBUG and USAGE level remotely
+  * codegeneration
+    + ported to kdesdk 3.5.7
+
+-- Sebastien Ponce <sponcec3@cern.ch>  Wed, 13 August 2007 15:30:00 +0100
+
 castor (2.1.3-17) unstable; urgency=low
 
   * Bug fix release on top of 2.1.3-16
