@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/13 15:42:19 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -38,7 +38,7 @@
 #define DEFAULT_KILLRETRY_INTERVAL 30
 #define DEFAULT_DISPATCH_INTERVAL  10
 #define DEFAULT_NOTIFICATION_PORT  15011
-#define DEFAULT_PREFORKED_WORKERS  20
+#define DEFAULT_PREFORKED_WORKERS  2
 
 
 //-----------------------------------------------------------------------------
