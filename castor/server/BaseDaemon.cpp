@@ -86,7 +86,7 @@ void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
 
   // Create the DLF related threads. This is done here because it is after
   // daemonization and signal handler creation.
-  dlf_create_threads(); 
+  dlf_create_threads(0); 
 }
 
 
