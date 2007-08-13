@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/07 14:38:55 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/08/13 15:37:53 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -221,7 +221,7 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
   // ignore SIGTERM while recreating dlf thread
   signal(SIGTERM, SIG_IGN);
   dlf_child();
-  dlf_create_threads();
+  dlf_create_threads(1);
   _childStop = false;
 
   // setup a signal handler 'C sytle'
@@ -244,7 +244,12 @@ void castor::server::ForkedProcessPool::childRun(castor::io::PipeSocket* ps)
       delete obj;
     }
     catch(castor::exception::Exception any) {
-      clog() << ERROR << "Error while processing an object from the pipe: "
+      if (any.getMessage().str().find("closed by remote end", 0)) {
+        clog() << DEBUG;
+      } else {
+        clog() << ERROR;
+      }
+      clog() << "Error while processing an object from the pipe: "
              << any.getMessage().str() << std::endl;
 
       // we shutdown here as communication failures across a pipe are rare! If
