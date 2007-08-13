@@ -553,7 +553,12 @@ int s ;
      if ( (status == 0) &&
           (status = unmarshall_STRINGN( p, path, MAXFILENAMSIZE)) == -1 )
        rcode = E2BIG;
-     if ( (setgroups(0, NULL)<0) || (setgid(gid)<0) || (setuid(uid)<0) )  {
+     /* While performing tape operations multiple calls to change uid are issued. As
+      * a result we ignore errors from setgroups if we are not running as the super-
+      * user because it is a super-user only command. If we do not do this all tape
+      * related activity will FAIL!!!
+      */
+     if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0) )  {
        status= -1 ;
        rcode= errno ;
        log(LOG_ERR,"srreadlink(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
@@ -1047,7 +1052,12 @@ int     fd;
    if ( (status = srchkreqsize(s,p,len)) == -1 ) {
      rcode = errno;
    } else {
-     if ( (setgroups(0, NULL)<0) || (setgid(gid)<0) || (setuid(uid)<0) )  {
+     /* While performing tape operations multiple calls to change uid are issued. As
+      * a result we ignore errors from setgroups if we are not running as the super-
+      * user because it is a super-user only command. If we do not do this all tape
+      * related activity will FAIL!!!
+      */
+     if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0) )  {
        status= -1 ;
        rcode= errno ;
        log(LOG_ERR,"srlockf(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
@@ -1431,7 +1441,12 @@ int     rt;
        log(LOG_ERR,"raccess: wrong mode 0x%x\n", mode);
      }
      
-     if ( (! status) && ((setgroups(0, NULL)<0) || (setgid(gid)<0) || (setuid(uid)<0)) )  {
+     /* While performing tape operations multiple calls to change uid are issued. As
+      * a result we ignore errors from setgroups if we are not running as the super-
+      * user because it is a super-user only command. If we do not do this all tape
+      * related activity will FAIL!!!
+      */
+     if ( (! status) && (((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0)) )  {
        status= errno ;
        log(LOG_ERR,"raccess: unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
      }
@@ -3597,7 +3612,12 @@ char *permstr;          /* permission string for the request */
       log(LOG_ERR,"chsuser(): user (%d,%d) does not exist at local host\n",uid,gid);
       return -2 ;
    }
-   if ( (setgroups(0, NULL)<0) || (setgid((gid_t)gid)<0) || (setuid((uid_t)uid)<0) )  {
+   /* While performing tape operations multiple calls to change uid are issued. As
+    * a result we ignore errors from setgroups if we are not running as the super-
+    * user because it is a super-user only command. If we do not do this all tape
+    * related activity will FAIL!!!
+    */
+   if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid((gid_t)gid)<0) || (setuid((uid_t)uid)<0) )  {
       *ptrcode = errno ;
       log(LOG_ERR,"chsuser(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid()) ;
       return -2 ;
