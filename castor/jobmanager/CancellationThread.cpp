@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/13 15:49:23 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a 
  * PENDING status for too long 
@@ -346,14 +346,12 @@ bool castor::jobmanager::CancellationThread::failSubRequest
     char jobName[CUUID_STRING_LEN + 1];
     Cuuid2string(jobName, CUUID_STRING_LEN + 1, &subRequestId);
 
-    bool result = 
-      m_jobManagerService->failSchedulerJob(jobName, errorCode, "");
-
-    // If we got this far we have successfully managed to call the database
-    // without any errors. We flag the job as processed, resulting in it being
-    // ignored
+    // Flag the job as being processed even if we didn't manager to update the
+    // database correctly. Failure to do so will cause the cancellation process
+    // to become recursive.
     m_processedCache[jobName] = time(NULL);
-    return result;
+
+    return m_jobManagerService->failSchedulerJob(jobName, errorCode, "");
 
   } catch (castor::exception::Exception e) {
 
