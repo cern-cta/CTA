@@ -296,9 +296,11 @@ EXTERN_C void DLL_DECL dlf_parent _PROTO((void));
 /**
  * This function creates the dlf threads enabling communication between a client and server. This call
  * is only required if remote logging is enabled and dlf_init() was called with usethreads = 0.
+ * 
+ * @param erase : Erase the contents of the threads message cache before creating the thread?
  */
 
-EXTERN_C void DLL_DECL dlf_create_threads _PROTO((void));
+EXTERN_C void DLL_DECL dlf_create_threads _PROTO((int erase));
 
 
 #endif

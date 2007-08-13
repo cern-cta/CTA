@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.21 2007/08/07 14:43:38 waldron Exp $
+ * $Id: dlf_lib.c,v 1.22 2007/08/13 15:07:53 waldron Exp $
  */
 
 /* headers */
@@ -1052,7 +1052,7 @@ void DLL_DECL dlf_parent(void) {
  * dlf_create_threads
  */
 
-void DLL_DECL dlf_create_threads(void) {
+void DLL_DECL dlf_create_threads(int erase) {
 
 	/* variables */
 	int i;
@@ -1071,6 +1071,11 @@ void DLL_DECL dlf_create_threads(void) {
 			continue;
 		if (!IsServer(targets[i]->mode))
 			continue;            /* not a server */
+
+		/* erase the threads cached messages ? */
+		(void)queue_destroy(targets[i]->queue, (void *(*)(void *))free_message);
+		free(targets[i]->queue);
+		(void)queue_create(&targets[i]->queue, targets[i]->queue_size);
 
 		/* create thread */
 		if (Cthread_create_detached((void *(*)(void *))dlf_worker, (target_t *)targets[i]) == -1) {
@@ -1423,8 +1428,12 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 			t->sevmask    = 0x000000;
 			if (severitylist[i].sevno == -2) {
 				for (k = 0; severitylist[k].sevno > 0; k++) {
-					if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
-					    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
+					if (strcasecmp(uri, "file")) {
+						if ((severitylist[k].sevno == DLF_LVL_USAGE) ||
+						    (severitylist[k].sevno == DLF_LVL_DEBUG)) {
+							continue;
+						}
+					} else if (severitylist[k].sevno == DLF_LVL_DEBUG) {
 						continue;
 					}
 					t->sevmask |= severitylist[k].sevmask;
