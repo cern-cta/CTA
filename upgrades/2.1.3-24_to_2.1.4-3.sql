@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/10 08:58:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/13 14:56:32 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-0
  *
@@ -36,7 +36,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we can't apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
-/
 
 UPDATE CastorVersion SET schemaVersion = '2_1_4_0', release = '2_1_4_0';
 COMMIT;
