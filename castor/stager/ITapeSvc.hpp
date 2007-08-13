@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/02 13:11:20 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/13 15:20:17 $ $Author: waldron $
  *
  * This class provides methods related to tape handling
  *
@@ -294,26 +294,14 @@ namespace castor {
 				    const std::string fileSystem,
 				    const castor::monitoring::StreamDirection direction,
 				    const bool created) throw() = 0;
-
-      /**
-       * get the number of bytes of a stream
-       * @param tpSvc the ITapeSvc used
-       * @param streamId  stream id 
-       */
-
-      virtual u_signed64 getBytesByStream
-      (const u_signed64 streamId) throw (castor::exception::Exception) = 0;
       
       /**
        * get the number of files of a stream
        * @param tpSvc the ITapeSvc used
        * @param streamId  stream id 
-       */
-     
+       */     
       virtual u_signed64 getNumFilesByStream
       (const u_signed64 streamId) throw (castor::exception::Exception) = 0;
-
-
 
     }; // end of class ITapeSvc
 

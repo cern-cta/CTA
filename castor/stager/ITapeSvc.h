@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.9 $ $Release$ $Date: 2007/08/02 13:11:20 $ $Author: gtaur $
+ * @(#)$RCSfile: ITapeSvc.h,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/13 15:20:17 $ $Author: waldron $
  *
  *
  *
@@ -352,7 +352,6 @@ int Cstager_ITapeSvc_checkFileForRepack
  char** repackvid,
  const u_signed64 key);
 
-
 /**
  * Sends a UDP message to the rmMasterDaemon to inform it
  * of the creation or deletion of a stream on a given
@@ -368,7 +367,6 @@ int Cstager_ITapeSvc_checkFileForRepack
  * @param created whether the stream was created or deleted.
  * 0 means deletion, other values mean creation.
  */
-
 void Cstager_ITapeSvc_sendStreamReport
 (struct Cstager_ITapeSvc_t* tpSvc,
  char* diskServer,
@@ -377,34 +375,16 @@ void Cstager_ITapeSvc_sendStreamReport
  int created);
 
 /**
- * get ammount of bytes of a stream
- * @param tpSvc the ITapeSvc used
- * @param streamId  stream id 
- * @param numByte (returned value)
- * return value -1 in case of error or the ammount of bytes
- */
-
-int Cstager_ITapeSvc_getBytesByStream
-(struct Cstager_ITapeSvc_t* tpSvc,
- const u_signed64 streamId, 
- u_signed64* numByte);
-
-
-/**
  * get the number of files of a stream
  * @param tpSvc the ITapeSvc used
  * @param streamId  stream id 
  * @param numFile (returned value)
  * return value -1 in case of error 
  */
-
-
 int Cstager_ITapeSvc_getNumFilesByStream
 (struct Cstager_ITapeSvc_t* tpSvc,
  const u_signed64 streamId, 
  u_signed64* numFile);
-
-
 
 #endif // CASTOR_ITAPESVC_H
 
