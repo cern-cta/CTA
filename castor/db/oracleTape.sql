@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.474 $ $Date: 2007/08/09 14:15:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.475 $ $Date: 2007/08/13 15:41:34 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -306,9 +306,9 @@ AFTER INSERT ON STREAM2TAPECOPY
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
 DECLARE
-  cfSize NUMBER(38);
+  cfSize NUMBER;
 BEGIN
-  -- added this lock because of severaval copies of different file systems
+  -- added this lock because of several copies of different file systems
   -- from different streams which can cause deadlock
   LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
@@ -320,11 +320,10 @@ BEGIN
      AND Stream = :new.parent;
 
   -- added for the stream policy
-  SELECT castorfile.filesize INTO cfSize FROM TapeCopy,CastorFile
-   WHERE TapeCopy.castorfile = CastorFile.id AND TapeCopy.id = :new.child;
-
-  UPDATE Stream set byteVolume = byteVolume + cfSize
-   WHERE Stream.id = :new.parent;
+  SELECT castorfile.filesize INTO cfSize 
+    FROM TapeCopy,CastorFile
+   WHERE TapeCopy.castorfile = CastorFile.id 
+     AND TapeCopy.id = :new.child;
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
@@ -333,9 +332,9 @@ CREATE OR REPLACE TRIGGER tr_stream2tapecopy_delete
 BEFORE DELETE ON STREAM2TAPECOPY
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
-DECLARE cfSize NUMBER(38);
+DECLARE cfSize NUMBER;
 BEGIN  
-  -- added this lock because of severaval copies of different file systems 
+  -- added this lock because of several copies of different file systems 
   -- from different streams which can cause deadlock
   LOCK TABLE NbTapeCopiesInFS IN ROW SHARE MODE;
   UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies - 1
@@ -347,8 +346,10 @@ BEGIN
      AND Stream = :old.parent;
 
    -- added for the stream policy
-  SELECT CastorFile.filesize INTO cfSize FROM CastorFile,TapeCopy WHERE CastorFile.id = TapeCopy.castorFile AND TapeCopy.id = :old.child; 
-  UPDATE Stream SET byteVolume = byteVolume - cfSize WHERE Stream.id = :old.parent;
+  SELECT CastorFile.filesize INTO cfSize 
+    FROM CastorFile,TapeCopy 
+   WHERE CastorFile.id = TapeCopy.castorFile 
+     AND TapeCopy.id = :old.child;
 END;
 
 
@@ -2572,7 +2573,7 @@ BEGIN
            -- after 30 mins. The creationTime field is actually updated
            -- for this purpose when status changes to 9 in updateFiles2Delete.
        AND DiskCopy.fileSystem = SelectFiles2DeleteProcHelper.id
-       AND DiskCopy.castorfile = Castorfile.fileid
+       AND DiskCopy.castorfile = Castorfile.id
        FOR UPDATE;
 END;
 
@@ -3655,19 +3656,12 @@ BEGIN
   END LOOP;
 END;
 
-/* PL/SQL method to retrieve the sum of all the filesize of all the tapecopies attached to a stream */
-CREATE OR REPLACE PROCEDURE getBytesByStream (streamId IN NUMBER, valByte OUT NUMBER) AS
-BEGIN
-  SELECT stream.byteVolume INTO valByte FROM stream 
-  	WHERE stream.id=streamId;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    valByte:=0;
-END;
-
 /* PL/SQL method to know the number of tapecopies attached to a specific stream */
 CREATE OR REPLACE PROCEDURE getNumFilesByStream (streamId IN NUMBER, numFiles OUT NUMBER) AS
 BEGIN
-  SELECT count(*) INTO numFiles FROM stream2tapecopy WHERE stream2tapecopy.parent=streamId;
+  SELECT count(*) INTO numFiles 
+    FROM stream2tapecopy 
+   WHERE stream2tapecopy.parent = streamId;
 END;
 
 /* PL/SQL method implementing failSchedulerJob */
