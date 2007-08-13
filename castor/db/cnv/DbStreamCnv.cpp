@@ -58,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbStreamCnv>* s_factoryDbStreamCnv =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbStreamCnv::s_insertStatementString =
-"INSERT INTO Stream (initialSizeToTransfer, byteVolume, id, tape, tapePool, status) VALUES (:1,:2,ids_seq.nextval,:3,:4,:5) RETURNING id INTO :6";
+"INSERT INTO Stream (initialSizeToTransfer, id, tape, tapePool, status) VALUES (:1,ids_seq.nextval,:2,:3,:4) RETURNING id INTO :5";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbStreamCnv::s_deleteStatementString =
@@ -66,11 +66,11 @@ const std::string castor::db::cnv::DbStreamCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbStreamCnv::s_selectStatementString =
-"SELECT initialSizeToTransfer, byteVolume, id, tape, tapePool, status FROM Stream WHERE id = :1";
+"SELECT initialSizeToTransfer, id, tape, tapePool, status FROM Stream WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbStreamCnv::s_updateStatementString =
-"UPDATE Stream SET initialSizeToTransfer = :1, byteVolume = :2, status = :3 WHERE id = :4";
+"UPDATE Stream SET initialSizeToTransfer = :1, status = :2 WHERE id = :3";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbStreamCnv::s_storeTypeStatementString =
@@ -488,7 +488,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTape(castor::stager::Stream* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = rset->getInt64(4);
+  u_signed64 tapeId = rset->getInt64(3);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -528,7 +528,7 @@ void castor::db::cnv::DbStreamCnv::fillObjTapePool(castor::stager::Stream* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapePoolId = rset->getInt64(5);
+  u_signed64 tapePoolId = rset->getInt64(4);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -568,19 +568,18 @@ void castor::db::cnv::DbStreamCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(6, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(5, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
     }
     // Now Save the current object
     m_insertStatement->setUInt64(1, obj->initialSizeToTransfer());
-    m_insertStatement->setUInt64(2, obj->byteVolume());
-    m_insertStatement->setUInt64(3, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setUInt64(4, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
-    m_insertStatement->setInt(5, (int)obj->status());
+    m_insertStatement->setUInt64(2, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(3, (type == OBJ_TapePool && obj->tapePool() != 0) ? obj->tapePool()->id() : 0);
+    m_insertStatement->setInt(4, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(6));
+    obj->setId(m_insertStatement->getUInt64(5));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -598,7 +597,6 @@ void castor::db::cnv::DbStreamCnv::createRep(castor::IAddress* address,
                     << s_insertStatementString << std::endl
                     << "and parameters' values were :" << std::endl
                     << "  initialSizeToTransfer : " << obj->initialSizeToTransfer() << std::endl
-                    << "  byteVolume : " << obj->byteVolume() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  tapePool : " << obj->tapePool() << std::endl
@@ -625,9 +623,8 @@ void castor::db::cnv::DbStreamCnv::updateRep(castor::IAddress* address,
     }
     // Update the current object
     m_updateStatement->setUInt64(1, obj->initialSizeToTransfer());
-    m_updateStatement->setUInt64(2, obj->byteVolume());
-    m_updateStatement->setInt(3, (int)obj->status());
-    m_updateStatement->setUInt64(4, obj->id());
+    m_updateStatement->setInt(2, (int)obj->status());
+    m_updateStatement->setUInt64(3, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -711,9 +708,8 @@ castor::IObject* castor::db::cnv::DbStreamCnv::createObj(castor::IAddress* addre
     castor::stager::Stream* object = new castor::stager::Stream();
     // Now retrieve and set members
     object->setInitialSizeToTransfer(rset->getUInt64(1));
-    object->setByteVolume(rset->getUInt64(2));
-    object->setId(rset->getUInt64(3));
-    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(6));
+    object->setId(rset->getUInt64(2));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -752,9 +748,8 @@ void castor::db::cnv::DbStreamCnv::updateObj(castor::IObject* obj)
     castor::stager::Stream* object = 
       dynamic_cast<castor::stager::Stream*>(obj);
     object->setInitialSizeToTransfer(rset->getUInt64(1));
-    object->setByteVolume(rset->getUInt64(2));
-    object->setId(rset->getUInt64(3));
-    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(6));
+    object->setId(rset->getUInt64(2));
+    object->setStatus((enum castor::stager::StreamStatusCodes)rset->getInt(5));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

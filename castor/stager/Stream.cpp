@@ -44,7 +44,6 @@
 //------------------------------------------------------------------------------
 castor::stager::Stream::Stream() throw() :
   m_initialSizeToTransfer(0),
-  m_byteVolume(0),
   m_id(0),
   m_tape(0),
   m_tapePool(0),
@@ -81,7 +80,6 @@ void castor::stager::Stream::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "initialSizeToTransfer : " << m_initialSizeToTransfer << std::endl;
-  stream << indent << "byteVolume : " << m_byteVolume << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

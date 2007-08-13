@@ -123,22 +123,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_byteVolume
-       * @return the value of m_byteVolume
-       */
-      u_signed64 byteVolume() const {
-        return m_byteVolume;
-      }
-
-      /**
-       * Set the value of m_byteVolume
-       * @param new_var the new value of m_byteVolume
-       */
-      void setByteVolume(u_signed64 new_var) {
-        m_byteVolume = new_var;
-      }
-
-      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -237,8 +221,6 @@ namespace castor {
 
       /// Initial data volume to be migrated (needed by vmgr_gettape())
       u_signed64 m_initialSizeToTransfer;
-
-      u_signed64 m_byteVolume;
 
       /// The id of this object
       u_signed64 m_id;

@@ -103,16 +103,6 @@ int Cstager_Stream_initialSizeToTransfer(struct Cstager_Stream_t* instance, u_si
 int Cstager_Stream_setInitialSizeToTransfer(struct Cstager_Stream_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of byteVolume
- */
-int Cstager_Stream_byteVolume(struct Cstager_Stream_t* instance, u_signed64* var);
-
-/**
- * Set the value of byteVolume
- */
-int Cstager_Stream_setByteVolume(struct Cstager_Stream_t* instance, u_signed64 new_var);
-
-/**
  * Get the value of id
  * The id of this object
  */
