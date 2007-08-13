@@ -1,7 +1,7 @@
 ######################################################################################
 #
 # CASTOR2 LSF Plugin - Sample Policy File
-# $Id: policies.py,v 1.5 2007/08/09 06:35:06 waldron Exp $
+# $Id: policies.py,v 1.6 2007/08/13 15:17:19 waldron Exp $
 #
 ######################################################################################
 
@@ -131,7 +131,7 @@ def export():
     # If the direction of the stream is a write or readWrite check to see if any 
     # migrators are present. If so, restrict the number of writers on the file system 
     # to 1
-    if fileDirection == "w" or fileDirection == "rw":
+    if fileDirection == "w" or fileDirection == "o":
 	if migratorStreams > 0 and writeStreams + readWriteStreams > 1:
 	    return 1.0
 
