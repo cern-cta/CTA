@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/06/05 15:03:14 $ $Author: waldron $
+ * @(#)$RCSfile: HeartbeatThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/08/13 15:55:54 $ $Author: waldron $
  *
  * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -84,28 +84,37 @@ void castor::monitoring::rmmaster::HeartbeatThread::run(void* par) throw() {
       return;
     }
     // check all disk servers
+    bool changed = false;
     for (castor::monitoring::ClusterStatus::iterator it =
 	   m_clusterStatus->begin();
 	 it != m_clusterStatus->end();
-	 it++) {
+	 it++, changed = false) {
       // ignore deleted and already disabled disk servers
       if ((it->second.status() == castor::stager::DISKSERVER_DISABLED) ||
 	  (it->second.adminStatus() == castor::monitoring::ADMIN_DELETED)) {
 	continue;
       }
-      if (it->second.lastMetricsUpdate() < (u_signed64)(time(NULL) - timeout)) { 
-	it->second.setStatus(castor::stager::DISKSERVER_DISABLED);
-	// remove disk server from production
-	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Hostname", it->first.c_str())};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 38, 1, params);
+      if (it->second.lastMetricsUpdate() < (u_signed64)(time(NULL) - timeout)) {
+	if (it->second.adminStatus() == castor::monitoring::ADMIN_NONE) {
+	  it->second.setStatus(castor::stager::DISKSERVER_DISABLED);
+	  changed = true;
+	}
 	// remove file systems from production
 	for (castor::monitoring::DiskServerStatus::iterator it2 =
 	       it->second.begin();
 	     it2 != it->second.end();
 	     it2++) {
-	  it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
+	  if (it2->second.adminStatus() == castor::monitoring::ADMIN_NONE) {
+	    it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
+	    changed = true;
+	  }
 	}
+      }
+      if (changed) {
+	// "Heartbeat check failed for diskserver, status changed to DISABLED."
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Hostname", it->first.c_str())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 38, 1, params);
       }
     }
   } catch (...) {
