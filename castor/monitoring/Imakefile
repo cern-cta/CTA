@@ -125,7 +125,7 @@ InstallProgram(rmAdminNode,$(BIN),root,bin,755)
 
 clean0:
 	@echo cleaning in CurDir
-	-@RemoveFiles($(STGLIB_OBJS))
+	-@RemoveFiles($(STGLIB_OBJS) $(RMGETNODESBIN_OBJS) $(RMADMINNODESBIN_OBJS) $(DUMPSHAREDMEMORYBIN_OBJS))
 
 clobber0:	clean
 	@echo clobbering in CurDir

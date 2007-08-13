@@ -80,7 +80,7 @@ exportman: $(EXPORTMANPAGES)
 
 clean:
 	@echo rmmaster in CurDir
-	-@RemoveFiles(FilesToClean)
+	-@RemoveFiles(FilesToClean $(RMMASTERDAEMONBIN_OBJS))
 
 clobber:	clean
 	@echo clobbering in CurDir
