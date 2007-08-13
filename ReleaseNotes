@@ -1,6 +1,6 @@
-------------
-- 2.1.3-14 -
-------------
+-----------
+- 2.1.4-0 -
+-----------
 
   New Features and Changes
   ------------------------
@@ -88,7 +88,7 @@
     - #27720 showqueues shows wrong queuing times on x86_64
     - Fixed incorrectly logged checksum with DLF_MSG_PARAM_INT64 leading to segfault for old castorfiles without checksum
     - Fixed creation of the rtcopy work directory
-    Already in 2.1.3-23:
+    Already in 2.1.3-24:
     - #27196 request waiting on D2D copy
     - #26789 streamsToDo returns streams with nothing to do
     - #27206 bad decision to STAGEIN if diskcopy in CANBEMIGR in disabled filesystem
