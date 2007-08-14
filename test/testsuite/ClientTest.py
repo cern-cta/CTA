@@ -579,6 +579,7 @@ class StagerDiskOnlyCase(unittest.TestCase):
                 expectedFileClassId = int(buffOut.split()[1])
 		fi.close()
                 assert fileClassId == expectedFileClassId, "Forcing of fileClass in Disk only pools does not work"
+                
 		
 class StagerExtraTestCase(unittest.TestCase):
 	def putDoneAndLongFile(self):
@@ -651,7 +652,7 @@ casesPutDone=("basicPutDone","putDoneAndRfcp","putDoneManyFiles","putDoneR")
 casesGet=("basicGet","getAndRfcp","getManyFiles","getTag","getSvcClass","getR","getStageOut")
 casesRm=("basicRm","rmAndRfcp","rmManyFiles","rmSvcClass")
 casesQuery=("queryS","queryE")
-casesDiskOnly=("forceFileClass","fullDiskPool")
+casesDiskOnly=("forceFileClass")
 casesExtraTest=("putDoneAndLongFile","srmSimulation","putSizeCheck")
 
 class StagerPreClientSuite(unittest.TestSuite):
