@@ -294,7 +294,7 @@ class StagerPutDoneCase(unittest.TestCase):
         	assert buffOut.find("CANBEMIGR") != -1, "stager_putdone doesn't work after a putDone -r"
 	
 class StagerGetCase(unittest.TestCase):
-	def basicGet(self):
+ 	def basicGet(self):
 		cmd=["stager_put -M "+dirCastor+"fileClientBasicGet"+ticket,"stager_get -M "+dirCastor+"fileClientBasicGet"+ticket,"stager_qry -M "+dirCastor+"fileClientBasicGet"+ticket]
 
 	        UtilityForCastorTest.saveOnFile(localDir+"ClientBasicGet",cmd,myScen)
@@ -440,6 +440,27 @@ class StagerGetCase(unittest.TestCase):
 		fi.close()
         	assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work after put"
         	
+ 	def getStageOut(self):
+		cmd=["stager_put -M "+dirCastor+"fileClientGetStageOut"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetStageOut"+ticket,"stager_qry -M "+dirCastor+"fileClientGetStageOut"+ticket,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S "+stagerExtraSvcClass]
+
+	        UtilityForCastorTest.saveOnFile(localDir+"ClientGetStageOut",cmd,myScen)
+                
+		fi=open(localDir+"ClientGetSvc2","r")
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.rfind("No such file") != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
+		assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
+		
+		fi=open(localDir+"ClientGetSvc3","r")
+	        buffOut=fi.read()
+		fi.close()
+            	assert buffOut.find("SUBREQUEST_FAILED") != -1, "stager_get doesn't work on a STAGEOUT file"
+
+		fi=open(localDir+"ClientGetSvc4","r")
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.rfind("SUBREQUEST_FAILED 16 File is being (re)created right now by another user") == -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
+		assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
 
 class StagerRmCase(unittest.TestCase):
 	def basicRm(self):
@@ -488,38 +509,38 @@ class StagerRmCase(unittest.TestCase):
 		fi.close()
 		assert buffOut.count("SUBREQUEST_READY") == 10, "stager_rm doesn't work with many files"
 		
-	#def rmSvcClass(self):
+	def rmSvcClass(self):
 		
-		#cmd=["stager_put -M "+dirCastor+"fileClientRmSvc"+ticket+" -S"+stagerSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientRmSvc"+ticket,"stager_put -M "+dirCastor+"fileClientRmSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass]
+		cmd=["stager_put -M "+dirCastor+"fileClientRmSvc"+ticket+" -S"+stagerSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientRmSvc"+ticket,"stager_put -M "+dirCastor+"fileClientRmSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass]
 		
-	        #UtilityForCastorTest.saveOnFile(localDir+"ClientRmSvc",cmd,myScen)
+	        UtilityForCastorTest.saveOnFile(localDir+"ClientRmSvc",cmd,myScen)
                 
-		#fi=open(localDir+"ClientRmSvc1","r")
-	        #buffOut=fi.read()
-		#fi.close()		
-        	#assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
+		fi=open(localDir+"ClientRmSvc1","r")
+	        buffOut=fi.read()
+		fi.close()		
+        	assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
 		
-		#fi=open(localDir+"ClientRmSvc2","r")
-	        #buffOut=fi.read()
-		#fi.close()		
-		#assert buffOut.rfind("STAGEOUT") != -1, "stager_rm doesn't work with svc class option -S"
+		fi=open(localDir+"ClientRmSvc2","r")
+	        buffOut=fi.read()
+		fi.close()		
+		assert buffOut.rfind("STAGEOUT") != -1, "stager_rm doesn't work with svc class option -S"
 
-		#fi=open(localDir+"ClientRmSvc3","r")
-		#buffOut=fi.read()
-		#fi.close()
-            	#assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
-		#assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
+		fi=open(localDir+"ClientRmSvc3","r")
+		buffOut=fi.read()
+		fi.close()
+            	assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
+		assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
 		
-	        #fi=open(localDir+"ClientRmSvc4","r")
-		#buffOut=fi.read()
-		#fi.close()
-            	#assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
-		#assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
+	        fi=open(localDir+"ClientRmSvc4","r")
+		buffOut=fi.read()
+		fi.close()
+            	assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
+		assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
 	
-		#fi=open(localDir+"ClientRmSvc5","r")
-		#buffOut=fi.read()
-		#fi.close()
-        	#assert buffOut.find("No such file") != -1, "stager_rm doesn't work with svc class option -S"
+		fi=open(localDir+"ClientRmSvc5","r")
+		buffOut=fi.read()
+		fi.close()
+        	assert buffOut.find("No such file") != -1, "stager_rm doesn't work with svc class option -S"
 		
 		
 class StagerSpecialQueryCase(unittest.TestCase):
@@ -612,9 +633,8 @@ class StagerExtraTestCase(unittest.TestCase):
 casesPreClient=("mainScenarium","stagerRfioFine")
 casesPut=("basicPut","putAndRfcp","putManyFiles","putTag","putSvcClass","putR")
 casesPutDone=("basicPutDone","putDoneAndRfcp","putDoneManyFiles","putDoneR")
-casesGet=("basicGet","getAndRfcp","getManyFiles","getTag","getSvcClass","getR")
-#casesRm=("basicRm","rmAndRfcp","rmManyFiles","rmSvcClass")
-casesRm=("basicRm","rmAndRfcp","rmManyFiles")
+casesGet=("basicGet","getAndRfcp","getManyFiles","getTag","getSvcClass","getR","getStageOut")
+casesRm=("basicRm","rmAndRfcp","rmManyFiles","rmSvcClass")
 casesQuery=("queryS","queryE")
 casesExtraTest=("putDoneAndLongFile","srmSimulation","putSizeCheck")
 
