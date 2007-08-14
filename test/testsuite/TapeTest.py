@@ -18,7 +18,7 @@ def handlerKeyInt(signum, frame):
     
 # castor parameters
 
-(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
+(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
 
 ticket="" 
 dirCastor=""

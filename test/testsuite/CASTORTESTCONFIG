@@ -5,6 +5,7 @@ CLIENT		GET		NO
 CLIENT		PUTDONE		NO
 CLIENT		RM		NO
 CLIENT		EXTRAQRY	NO
+CLIENT          DISKONLY        NO
 CLIENT          EXTRATEST       NO
  
 
@@ -41,6 +42,8 @@ STAGE_SVCCLASS    default
 CASTOR_V2         yes 
 EXTRA_SVCCLASS    default
 TIMEOUT           400
+DISKONLY_SVCCLASS default
+FORCED_FILECLASS  temp
 
 *** Rfio test specific parameters ***
 

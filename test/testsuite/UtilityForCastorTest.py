@@ -212,6 +212,8 @@ def getCastorParameters(myArg):
             stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
             stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
 	    stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
+	    stagerDiskOnlySvcClass=(configFileInfo[configFileInfo.find("DISKONLY_SVCCLASS"):]).split()[1]	
+	    stagerForcedFileClass=(configFileInfo[configFileInfo.find("FORCED_FILECLASS"):]).split()[1]	
         except IOError:
             return (0,0,0,0)
 
@@ -242,7 +244,7 @@ def getCastorParameters(myArg):
 	if myArg["-e"] != "":
 		stagerExtraSvcClass=myArg["-e"]
 
-	return (stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass)
+	return (stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass)
 
 
 # to test if the request handler and the stager are responding and the rfcp working

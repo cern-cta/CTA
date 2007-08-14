@@ -47,7 +47,7 @@ allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'TAPE':TapeSuite(),'
 
 ################ for each module all the possible test suites included #######################
 
-clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite(),'EXTRATEST':ClientTest.StagerExtraTestSuite()}
+clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite(),'DISKONLY':ClientTest.StagerDiskOnlySuite(),'EXTRATEST':ClientTest.StagerExtraTestSuite()}
 
 rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_NEW_TURL': RfioTest.RfioRfcpNewTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_NEW_TURL': RfioTest.RfioOtherCmdNewTurlSuite(),'API': RfioTest.RfioApiSuite(), 'STRESS':RfioTest.RfioApiSuite()}
 

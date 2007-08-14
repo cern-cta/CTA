@@ -7,7 +7,7 @@ import threading
 
 # castor parameters
 
-(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
+(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
 
 # parameters
 
@@ -564,6 +564,22 @@ class StagerSpecialQueryCase(unittest.TestCase):
 		fi.close()		
 		assert buffOut.find("STAGEOUT") != -1, "stager_qry -E doesn't work"
 		
+class StagerDiskOnlyCase(unittest.TestCase):
+	def forceFileClass(self):
+	        cmd=["stager_put -M "+dirCastor+"fileForceFileClass"+ticket+" -S "+stagerDiskOnlySvcClass,"nsls --class "+dirCastor+"fileForceFileClass"+ticket,"nslistclass --name "+stagerForcedFileClass+" | grep CLASS_ID"]
+	        UtilityForCastorTest.saveOnFile(localDir+"ClientForceFileClass",cmd,myScen)
+		
+		fi=open(localDir+"ClientForceFileClass1","r")
+	        buffOut=fi.read()
+                fileClassId = int(buffOut.split()[0])
+		fi.close()
+		
+		fi=open(localDir+"ClientForceFileClass2","r")
+	        buffOut=fi.read()
+                expectedFileClassId = int(buffOut.split()[1])
+		fi.close()
+                assert fileClassId == expectedFileClassId, "Forcing of fileClass in Disk only pools does not work"
+		
 class StagerExtraTestCase(unittest.TestCase):
 	def putDoneAndLongFile(self):
 		fileBig=makeBigFile(inputFile)
@@ -635,6 +651,7 @@ casesPutDone=("basicPutDone","putDoneAndRfcp","putDoneManyFiles","putDoneR")
 casesGet=("basicGet","getAndRfcp","getManyFiles","getTag","getSvcClass","getR","getStageOut")
 casesRm=("basicRm","rmAndRfcp","rmManyFiles","rmSvcClass")
 casesQuery=("queryS","queryE")
+casesDiskOnly=("forceFileClass","fullDiskPool")
 casesExtraTest=("putDoneAndLongFile","srmSimulation","putSizeCheck")
 
 class StagerPreClientSuite(unittest.TestSuite):
@@ -660,8 +677,11 @@ class StagerRmSuite(unittest.TestSuite):
 class StagerQuerySpecialSuite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(StagerSpecialQueryCase,casesQuery))
+
+class StagerDiskOnlySuite(unittest.TestSuite):
+    def __init__(self):
+        unittest.TestSuite.__init__(self,map(StagerDiskOnlyCase,casesDiskOnly))
+
 class StagerExtraTestSuite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(StagerExtraTestCase,casesExtraTest))
-
- 
