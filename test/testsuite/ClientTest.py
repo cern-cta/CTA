@@ -441,25 +441,24 @@ class StagerGetCase(unittest.TestCase):
         	assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work after put"
         	
  	def getStageOut(self):
-		cmd=["stager_put -M "+dirCastor+"fileClientGetStageOut"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetStageOut"+ticket,"stager_qry -M "+dirCastor+"fileClientGetStageOut"+ticket,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S "+stagerExtraSvcClass]
+		cmd=["stager_put -M "+dirCastor+"fileClientGetStageOut"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetStageOut"+ticket,"stager_qry -M "+dirCastor+"fileClientGetStageOut"+ticket,"stager_get -M "+dirCastor+"fileClientGetStageOut"+ticket,"stager_get -M "+dirCastor+"fileClientGetStageOut"+ticket+" -S "+stagerExtraSvcClass]
 
 	        UtilityForCastorTest.saveOnFile(localDir+"ClientGetStageOut",cmd,myScen)
                 
-		fi=open(localDir+"ClientGetSvc2","r")
+		fi=open(localDir+"ClientGetStageOut2","r")
 	        buffOut=fi.read()
 		fi.close()		
-        	assert buffOut.rfind("No such file") != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
-		assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
+        	assert buffOut.find("STAGEOUT") != -1, "stager_put doesn't work"
 		
-		fi=open(localDir+"ClientGetSvc3","r")
+		fi=open(localDir+"ClientGetStageOut3","r")
 	        buffOut=fi.read()
 		fi.close()
-            	assert buffOut.find("SUBREQUEST_FAILED") != -1, "stager_get doesn't work on a STAGEOUT file"
+            	assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work on a STAGEOUT file"
 
-		fi=open(localDir+"ClientGetSvc4","r")
+		fi=open(localDir+"ClientGetStageOut4","r")
 	        buffOut=fi.read()
 		fi.close()		
-        	assert buffOut.rfind("SUBREQUEST_FAILED 16 File is being (re)created right now by another user") == -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
+        	assert buffOut.rfind("SUBREQUEST_FAILED 16 File is being written to in another SvcClass") != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
 		assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
 
 class StagerRmCase(unittest.TestCase):
