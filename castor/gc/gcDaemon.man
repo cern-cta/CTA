@@ -1,4 +1,4 @@
-.lf 1 expertd.man
+.lf 1 gcDaemon.man
 .\" @(#)gcDaemon.man,v 1.1 2005/03/29 13:17:39 CERN IT-ADC Viktor Jiltsov
 .\" Copyright (C) 2004 by CERN/IT/ADC
 .\" All rights reserved
