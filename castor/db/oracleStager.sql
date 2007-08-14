@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.475 $ $Date: 2007/08/13 15:41:34 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.476 $ $Date: 2007/08/14 11:36:53 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -318,12 +318,6 @@ BEGIN
                    AND TapeCopy.id = :new.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :new.parent;
-
-  -- added for the stream policy
-  SELECT castorfile.filesize INTO cfSize 
-    FROM TapeCopy,CastorFile
-   WHERE TapeCopy.castorfile = CastorFile.id 
-     AND TapeCopy.id = :new.child;
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
@@ -344,12 +338,6 @@ BEGIN
                    AND TapeCopy.id = :old.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
-
-   -- added for the stream policy
-  SELECT CastorFile.filesize INTO cfSize 
-    FROM CastorFile,TapeCopy 
-   WHERE CastorFile.id = TapeCopy.castorFile 
-     AND TapeCopy.id = :old.child;
 END;
 
 
