@@ -522,6 +522,10 @@
 /* New RmMaster */
 /* ------------ */
 #if BuildRmMasterCpp
+#if !BuildCastorClientCPPLibrary
+#undef BuildCastorClientCPPLibrary
+#define BuildCastorClientCPPLibrary YES
+#endif
 #if BuildDlfLibrary != YES
 #undef BuildDlfLibrary
 #define BuildDlfLibrary	YES
