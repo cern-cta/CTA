@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/12 16:50:00 $ $Author: itglp $
+ * @(#)$RCSfile: SingletonBlock.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/08/15 11:42:56 $ $Author: sponcec3 $
  *
  * 
  *
@@ -52,9 +52,10 @@ namespace castor {
        * Initiates a block of shared memory.
        * @param key the key for this block
        * @param rawMem pointer to the raw memory to be used
+       * @param offset offset of the raw memory in the complete memory block
        * of the raw memory block
        */
-      SingletonBlock(BlockKey& key, void* rawMem)
+      SingletonBlock(BlockKey& key, void* rawMem, size_t offset)
         throw (castor::exception::Exception);
 
       /**
@@ -98,9 +99,9 @@ namespace castor {
 //------------------------------------------------------------------------------
 template<class T, class A>
 castor::sharedMemory::SingletonBlock<T,A>::SingletonBlock
-(castor::sharedMemory::BlockKey& key, void* rawMem)
+(castor::sharedMemory::BlockKey& key, void* rawMem, size_t offset)
   throw (castor::exception::Exception) :
-  Block<A>(key, (void*)((char*)rawMem + sizeof(T))) {
+  Block<A>(key, (void*)((char*)rawMem + sizeof(T)), offset + sizeof(T)) {
   m_singleton = new(rawMem)T();
 }
 

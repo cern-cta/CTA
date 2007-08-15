@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/04/12 12:00:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Block.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/08/15 11:42:56 $ $Author: sponcec3 $
  *
  * A block of shared memory with incorporated memory allocation
  *
@@ -72,9 +72,10 @@ namespace castor {
        * Constructor
        * @param key the key for this block
        * @param rawMem pointer to the raw memory to be used
+       * @param rawOffset rawOffset of the raw memory in the complete memory block
        * objects
        */
-      Block(BlockKey& key, void* rawMem)
+      Block(BlockKey& key, void* rawMem, size_t rawOffset)
         throw (castor::exception::Exception);
 
       /**
@@ -146,7 +147,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 template <typename A>
 castor::sharedMemory::Block<A>::Block
-(BlockKey& key, void* rawMem)
+(BlockKey& key, void* rawMem, size_t rawOffset)
   throw (castor::exception::Exception) :
   BasicBlock(key, rawMem), m_initializing(0) {
   // Register block in the dictionnary before it's fully
@@ -169,7 +170,7 @@ castor::sharedMemory::Block<A>::Block
   // However, since m_initializing is true, it won't allocate memory
   // but used the reserved node
   (*m_freeRegions)[(void*)((char*)m_sharedMemoryBlock + offset)] =
-    m_key.size() - offset;
+    m_key.size() - offset - rawOffset;
   // End of memory initialization
   m_initializing = 0;
 }

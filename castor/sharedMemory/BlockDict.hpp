@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/04/13 15:25:07 $ $Author: itglp $
+ * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/15 11:42:56 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -135,7 +135,7 @@ T* castor::sharedMemory::BlockDict::getBlock
     // will need the block to be registered, so we have to
     // register it before it's fully created
     tblock = new(sharedMemoryBlock)
-      T(key, (void*)((char*)sharedMemoryBlock + sizeof(T)));
+      T(key, (void*)((char*)sharedMemoryBlock + sizeof(T)), sizeof(T));
   } else {
     tblock = (T*)sharedMemoryBlock;
     if(tblock != 0) {
