@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/04/18 14:12:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/08/15 14:55:24 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -74,7 +74,9 @@ void castor::sharedMemory::BlockDict::createBlock
       // "Unable to get shared memory id. Giving up"
       castor::dlf::Param initParams[] =
         {castor::dlf::Param("Error Message", strerror(errno))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 1, initParams);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_SHAREDMEMORY, 1,
+                              initParams);
       castor::exception::Internal e;
       e.getMessage() << "Unable to get shared memory id. Giving up.";
       throw e;
@@ -85,13 +87,17 @@ void castor::sharedMemory::BlockDict::createBlock
       // "Unable to create shared memory. Giving up"
       castor::dlf::Param initParams[] =
         {castor::dlf::Param("Error Message", strerror(errno))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 1, initParams);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                              DLF_BASE_SHAREDMEMORY+1, 1,
+                              initParams);
       castor::exception::Internal e;
       e.getMessage() << "Unable to create shared memory. Giving up.";
       throw e;
     }
     // "Created the shared memory."
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 0, 0);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
+                            DLF_BASE_SHAREDMEMORY+2,
+                            0, 0);
   }
   else {
     // Regardless whether we were asked to create it, we found it.
@@ -104,7 +110,9 @@ void castor::sharedMemory::BlockDict::createBlock
     // "Unable to get pointer to shared memory. Giving up"
     castor::dlf::Param initParams[] =
       {castor::dlf::Param("Error Message", strerror(errno))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, initParams);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+                            DLF_BASE_SHAREDMEMORY+3, 1,
+                            initParams);
     castor::exception::Internal e;
     e.getMessage() << "Unable to get pointer to shared memory. Giving up.";
     throw e;
