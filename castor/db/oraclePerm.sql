@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.476 $ $Date: 2007/08/14 11:36:53 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.477 $ $Date: 2007/08/15 13:54:34 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2074,17 +2074,29 @@ CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  fId OUT NUMBER,
                                                  nh OUT VARCHAR2,
                                                  userId OUT INTEGER,
-                                                 groupId OUT INTEGER) AS
+                                                 groupId OUT INTEGER,
+                                                 errorCode OUT INTEGER) AS
   cfId INTEGER;
+  dcId INTEGER;
   fsId INTEGER;
   scId INTEGER;
   realFileSize INTEGER;
   unused INTEGER;
   contextPIPP INTEGER;
 BEGIN
+ errorCode := 0;
  -- get CastorFile
- SELECT castorFile INTO cfId FROM SubRequest where id = srId;
- 
+ SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest where id = srId;
+ -- Check whether the diskCopy is still in STAGEOUT. If not, the file
+ -- was deleted via stageRm while being written to. Thus, we should just give up
+ BEGIN
+   SELECT status INTO unused
+     FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
+ EXCEPTION WHEN NO_DATA_FOUND THEN
+   -- so we are in the case, we give up
+   errorCode := 1;
+   RETURN;
+ END;
  -- Determine the context (Put inside PrepareToPut or not)
  BEGIN
    -- check that we are a Put or an Update

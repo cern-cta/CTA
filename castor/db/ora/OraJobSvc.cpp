@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/06/21 16:07:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/08/15 13:54:34 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -110,7 +110,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementStri
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
-  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6,:7); END;";
+  "BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6, :7, :8); END;";
 
 /// SQL statement for getUpdateDone
 const std::string castor::db::ora::OraJobSvc::s_getUpdateDoneStatementString =
@@ -429,6 +429,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         (6, oracle::occi::OCCIINT);
       m_prepareForMigrationStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
+      m_prepareForMigrationStatement->registerOutParam
+        (8, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_prepareForMigrationStatement->setDouble(1, subreq->id());
@@ -439,6 +441,16 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       castor::exception::Internal ex;
       ex.getMessage()
         << "prepareForMigration did not return any result.";
+      throw ex;
+    }
+    // Check for errors
+    int errorCode = m_prepareForMigrationStatement->getInt(8);
+    if (errorCode > 0) {
+      // For now, the only situation when errorCode in not 0
+      // is when the file got deleted while it was written to
+      castor::exception::NoEntry ex;
+      ex.getMessage()
+        << "File was deleted while it was written to. Giving up with migration.";
       throw ex;
     }
     // collect output
