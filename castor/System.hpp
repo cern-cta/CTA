@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: System.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/11 12:13:03 $ $Author: itglp $
+ * @(#)$RCSfile: System.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/08/16 14:26:01 $ $Author: sponcec3 $
  *
  * A class with static methods for system level utilities.
  *
@@ -43,6 +43,15 @@ namespace castor {
      * @exception in case of an error 
      */
     static std::string getHostName() throw (castor::exception::Exception);
+
+    /**
+     * converts a string into a port number, checking
+     * that the value is in range [0-65535]
+     * @param str the string giving the port number
+     * @return the port as an int
+     * @exception in case of invalid value
+     */
+    static int porttoi(char* str) throw (castor::exception::Exception);
      
   };
 

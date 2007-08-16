@@ -29,6 +29,7 @@
 
 // Local includes
 #include <unistd.h>
+#include <stdlib.h>
 #include "System.hpp"
 
 //------------------------------------------------------------------------------
@@ -88,3 +89,27 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
   free(hostname);
   return res;
 }
+
+//------------------------------------------------------------------------------
+// porttoi
+//------------------------------------------------------------------------------
+int castor::System::porttoi(char* str)
+  throw (castor::exception::Exception) {
+  char* dp = str;
+  errno = 0;
+  int iport = strtoul(str, &dp, 0);
+  if (*dp != 0) {
+    castor::exception::Exception e(errno);
+    e.getMessage() << "Bad port value." << std::endl;
+    throw e;
+  }
+  if (iport > 65535) {
+    castor::exception::Exception e(errno);
+    e.getMessage()
+      << "Invalid port value : " << iport
+      << ". Must be < 65535." << std::endl;
+    throw e;
+  }
+  return iport;
+}
+
