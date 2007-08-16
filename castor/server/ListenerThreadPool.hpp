@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/16 14:28:40 $ $Author: sponcec3 $
  *
  * Abstract class defining a listener thread pool
  *
@@ -84,6 +84,11 @@ namespace castor {
      * @return true.
      */
     virtual bool shutdown() throw();
+
+    /**
+     * Sets the port on which this ThreadPool should listen
+     */
+    inline void setPort(int port) { m_port = port; }
 	
   protected:
   
