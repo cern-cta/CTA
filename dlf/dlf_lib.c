@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.22 2007/08/13 15:07:53 waldron Exp $
+ * $Id: dlf_lib.c,v 1.23 2007/08/16 15:45:41 sponcec3 Exp $
  */
 
 /* headers */
@@ -1147,7 +1147,7 @@ int DLL_DECL dlf_regtext(unsigned short msg_no, const char *msg_text) {
 	/* to provide fast msgtext to msgno lookups we use a global hash. Here we check to make sure
 	 * the next entry will not be a duplicate
 	 */
-	snprintf(num,  sizeof(int),  "%d", msg_no);
+	snprintf(num,  sizeof(num),  "%d", msg_no);
 	snprintf(text, sizeof(text), "%s", msg_text);
 
 	message = strdup(text);
