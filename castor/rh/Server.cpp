@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2007/01/16 15:57:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2007/08/16 14:36:02 $ $Author: sponcec3 $
  *
  *
  *
@@ -30,22 +30,43 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/rh/RHThread.hpp"
 
+#include "castor/System.hpp"
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
 #include "castor/Services.hpp"
+#include "common.h"   // for getconfent
 
 #include <iostream>
+
+//------------------------------------------------------------------------------
+// String constants
+//------------------------------------------------------------------------------
+const char *castor::rh::PORT_ENV = "RH_PORT";
+const char *castor::rh::CATEGORY_CONF = "RH";
+const char *castor::rh::PORT_CONF = "PORT";
 
 //------------------------------------------------------------------------------
 // main method
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
+    // retrieve the port to be used
+    int port = CSP_RHSERVER_PORT;
+    char* sport;
+    if ((sport = getenv (castor::rh::PORT_ENV)) != 0 
+        || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
+                               (char *)castor::rh::PORT_CONF,0)) != 0) {
+      port = castor::System::porttoi(sport);
+    }
+    // create the server
     castor::rh::Server server;
-    server.addThreadPool(
-      new castor::server::TCPListenerThreadPool("RH", new castor::rh::RHThread(), CSP_RHSERVER_PORT, false));
-      // we don't need a separated thread for the listener loop here
+    server.addThreadPool
+      (new castor::server::TCPListenerThreadPool
+       ("RH", new castor::rh::RHThread(), port, false));
+    // parse the command line (note that this may overwrite
+    // the port we are listening to)
     server.parseCommandLine(argc, argv);
+    // start the server
     server.start();
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught castor exception : "
@@ -120,10 +141,55 @@ void castor::rh::Server::help(std::string programName)
 	  "\n"
 	  "where options can be:\n"
 	  "\n"
-	  "\t--foreground      or -f                \tForeground\n"
-	  "\t--help            or -h                \tThis help\n"
-	  "\t--Rthreads        or -R {integer >= 0} \tNumber of Request Handler threads\n"
+	  "\t--foreground      or -f            \tForeground\n"
+	  "\t--help            or -h            \tThis help\n"
+	  "\t--port            or -p {integer } \tPort to be used\n"
+	  "\t--Rthreads        or -R {integer } \tNumber of Request Handler threads\n"
 	  "\n"
 	  "Comments to: Castor.Support@cern.ch\n";
 }
 
+//------------------------------------------------------------------------------
+// parseCommandLine
+//------------------------------------------------------------------------------
+void castor::rh::Server::parseCommandLine(int argc, char *argv[])
+{
+  Coptions_t longopts[] =
+    {
+      {"foreground", NO_ARGUMENT,       NULL, 'f'},
+      {"help",       NO_ARGUMENT,       NULL, 'h'},
+      {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
+      {"port",       REQUIRED_ARGUMENT, NULL, 'p'}
+    };
+  Coptind = 1;
+  Copterr = 0;
+  char c;
+  while ((c = Cgetopt_long(argc, argv, "fhR:p:", longopts, NULL)) != -1) {
+    switch (c) {
+    case 'f':
+      m_foreground = true;
+      break;
+    case 'h':
+      help(argv[0]);
+      exit(0);
+      break;
+    case 'R':
+      {
+        castor::server::BaseThreadPool* p = m_threadPools['R'];
+        p->setNbThreads(atoi(Coptarg));
+      }
+      break;
+    case 'p':
+      {
+        castor::server::TCPListenerThreadPool* p =
+          dynamic_cast<castor::server::TCPListenerThreadPool*>
+          (m_threadPools['R']);
+        p->setPort(castor::System::porttoi(Coptarg));
+      }
+      break;
+    default:
+      help(argv[0]);
+      exit(0);
+    } 
+  }
+}

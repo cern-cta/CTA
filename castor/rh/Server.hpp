@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2006/05/02 10:07:02 $ $Author: itglp $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/08/16 14:36:03 $ $Author: sponcec3 $
  *
  *
  *
@@ -39,6 +39,13 @@ namespace castor {
   namespace rh {
 
     /**
+     * Constants
+     */
+    extern const char* PORT_ENV;
+    extern const char* CATEGORY_CONF;
+    extern const char* PORT_CONF;
+
+    /**
      * The Request Handler server. This is where client requests
      * arrive. The main task of this component is to store them
      * for future processing.
@@ -51,6 +58,11 @@ namespace castor {
        * Constructor
        */
       Server();
+
+      /**
+       * Overloaded method from BaseServer for individual command line parser
+       */
+      virtual void parseCommandLine(int argc, char *argv[]);
 
     protected:
  
