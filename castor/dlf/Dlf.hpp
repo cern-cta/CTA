@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2006/09/25 13:28:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Dlf.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/08/16 15:51:46 $ $Author: sponcec3 $
  *
  * C++ interface to DLF
  *
@@ -31,23 +31,47 @@
 #include "dlf_api.h"
 #include "castor/dlf/Message.hpp"
 #include "castor/dlf/Param.hpp"
+#include "castor/exception/Exception.hpp"
+#include <vector>
 
 namespace castor {
 
   namespace dlf {
 
     /**
-     * Initialization of the DLF logging system
-     * @param facilityName name of the DLF facility to use
-     * @param messages array of messages to decalre in the
-     * facility. The end of the array is marked by a
-     * message with negative number.
+     * Whether DLF was already initialized.
      */
-    void dlf_init(char* facilityName,
-                  Message messages[]);
+    bool& dlf_isInitialized() throw();
 
     /**
-     * Adds messages to the current DLF facility
+     * Vector of messages that should be declared
+     * at initialization. These messages were sent to
+     * dlf_addMessage before it was initialized and
+     * thus have to wait here.
+     */
+    std::vector<std::pair<int, castor::dlf::Message*> >&
+    dlf_getPendingMessages() throw();
+
+    /**
+     * Initialization of the DLF logging system
+     * @param facilityName name of the DLF facility to use
+     * @param messages array of messages to declare in the
+     * facility. The end of the array is marked by a
+     * message with negative number.
+     * @param throws a CASTOR exception in case of failure
+     */
+    void dlf_init(char* facilityName,
+                  Message messages[])
+      throw (castor::exception::Exception);
+
+    /**
+     * Adds messages to the current DLF facility.
+     * This method can be called before the initialization of DLF
+     * if needed. In such a case, the messages will be stored
+     * and added at initialization time.
+     * Note that no exception will ever be thrown in case of failure.
+     * Failures will actually be silently ignored in order to not
+     * impact the processing.
      * @param offset the offset to add to each message number.
      * This is to avoid collisions with previously added messages
      * @param messages array of messages to decalre in the
@@ -55,10 +79,12 @@ namespace castor {
      * message with negative number.
      */
     void dlf_addMessages(int offset,
-                         Message messages[]);
+                         Message messages[]) throw();
 
     /**
-     * prints a message into dlf.
+     * prints a message into dlf. Note that no exception will ever
+     * be thrown in case of failure. Failures will actually be silently
+     * ignored in order to not impact the processing.
      * @param uuid the uuid of the component issuing the message
      * @param message_no the message number in the facility.
      * @param severity the severity of the message.
@@ -72,7 +98,7 @@ namespace castor {
                      int message_no,
                      int numparams = 0,
                      castor::dlf::Param params[] = 0,
-                     struct Cns_fileid *ns_invariant = 0);
+                     struct Cns_fileid *ns_invariant = 0) throw();
 
  } // end of namespace dlf
 

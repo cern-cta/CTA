@@ -26,32 +26,85 @@
 
 // Include Files
 #include "castor/dlf/Dlf.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+
+// -----------------------------------------------------------------------
+// dlf_isInitialized_initialized
+// -----------------------------------------------------------------------
+bool& castor::dlf::dlf_isInitialized() throw() {
+  static bool isInitialized = false;
+  return isInitialized;
+}
+
+// -----------------------------------------------------------------------
+// dlf_getPendingMessages
+// -----------------------------------------------------------------------
+std::vector<std::pair<int, castor::dlf::Message*> >&
+castor::dlf::dlf_getPendingMessages () throw() {
+  static std::vector<std::pair<int, castor::dlf::Message*> > pendingMessages;
+  return pendingMessages;
+}
 
 // -----------------------------------------------------------------------
 // dlf_init
 // -----------------------------------------------------------------------
 void castor::dlf::dlf_init
-(char* facilityName, Message messages[]) {
+(char* facilityName, castor::dlf::Message messages[])
+  throw (castor::exception::Exception) {
+  if (dlf_isInitialized()) {
+    // DLF is already initialized, give up
+    return;
+  }
   // Initialise the DLF interface, ignore any errors that may be generated
   char dlfErrBuf[CA_MAXLINELEN+1];  
-
-  ::dlf_init(facilityName, dlfErrBuf, 0);
-
+  if (::dlf_init(facilityName, dlfErrBuf, 0) != 0) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Unable to initialize DLF";
+    throw ex;
+  }
+  dlf_isInitialized() = true;
   // Register the facility's messages with the interface. We do this even
   // if the interface fails to initialisation as it is used for local 
   // logging
   dlf_addMessages(0, messages);
+  // Also register the pending messages
+  for (std::vector<std::pair<int, Message*> >::const_iterator it =
+	 dlf_getPendingMessages().begin();
+       it != dlf_getPendingMessages().end();
+       it++) {
+    dlf_addMessages(it->first, it->second);
+    delete[](it->second);
+  }
+  dlf_getPendingMessages().clear();
 }
 
 // -----------------------------------------------------------------------
 // dlf_addMessages
 // -----------------------------------------------------------------------
-void castor::dlf::dlf_addMessages (int offset, Message messages[]) {
-  int i = 0;
-  while (messages[i].number >= 0) {
-    ::dlf_regtext(offset + messages[i].number,
-		  messages[i].text.c_str());
-    i++;
+void castor::dlf::dlf_addMessages (int offset, Message messages[])
+throw () {
+  if (dlf_isInitialized()) {
+    int i = 0;
+    while (messages[i].number >= 0) {
+      ::dlf_regtext(offset + messages[i].number,
+		    messages[i].text.c_str());
+      i++;
+    }
+  } else {
+    // replicate message array
+    int len = 0;
+    while (messages[len].number >= 0) {
+      len++;
+    }
+    Message* lmessages = new Message[len+1];
+    lmessages[len].number = -1;
+    for (int i = 0; i < len; i++) {
+      lmessages[i].number = messages[i].number;
+      lmessages[i].text = messages[i].text;
+    }
+    // and store it for further usage when DLF will be initialized
+    dlf_getPendingMessages().push_back(std::pair<int, Message*>(offset, lmessages));
   }
 }
 
@@ -64,7 +117,7 @@ void castor::dlf::dlf_writep
  int message_no,
  int numparams,
  castor::dlf::Param params[],
- struct Cns_fileid *ns_invariant) {
+ struct Cns_fileid *ns_invariant) throw() {
   // Place holder for the C version of the parameters
   // dlf_write_param_t cparams[numparams]; // Doesn't work on windows compiler!!!
   dlf_write_param_t* cparams = new dlf_write_param_t[numparams];
