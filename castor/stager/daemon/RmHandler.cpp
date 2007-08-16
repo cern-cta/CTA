@@ -29,7 +29,7 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
-
+#include "castor/stager/SubRequestStatusCodes.hpp"
 #include <iostream>
 #include <string>
 
@@ -49,10 +49,12 @@ namespace castor{
 	  this->svcClassId = 0;
 	}
 	
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
 
       void StagerRmHandler::handle() throw(castor::exception::Exception)
       {
+	StagerReplyHelper* stgReplyHelper;
 	try{
 	  /* execute the main function for the rm request                 */
 	  /* basically, a call to the corresponding stagerService method */
@@ -66,14 +68,15 @@ namespace castor{
 	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
 
 	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
-	  this->stgReplyHelper = new StagerReplyHelper;	  
-	  if((this->stgReplyHelper) == NULL){
+	  this->newSubrequestStatus = SUBREQUEST_READY;/* even if we dont change the status, we need it toReplyToClient*/ 
+	  stgReplyHelper = new StagerReplyHelper(newSubrequestStatus);	  
+	  if(stgReplyHelper == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	    throw(ex);
 	  }
-	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
-	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	  stgReplyHelper->endReplyToClient(stgRequestHelper);
 	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 
@@ -82,7 +85,7 @@ namespace castor{
 	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	  
 	  throw ex;
 	}
       }

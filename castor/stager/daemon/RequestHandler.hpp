@@ -9,7 +9,7 @@
 #include "castor/stager/dbService/StagerRequestHelper.hpp"
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/StagerReplyHelper.hpp"
-
+#include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
@@ -39,14 +39,18 @@ namespace castor{
 	
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;
-
+	
+	inline SubRequestStatusCodes getNewSubrequestStatus(){
+	  return (this->newSubrequestStatus);
+	}
 
       protected:
 	StagerRequestHelper *stgRequestHelper;
 	StagerCnsHelper *stgCnsHelper;
-	StagerReplyHelper *stgReplyHelper;
 
-     
+	SubRequestStatusCodes currentSubrequestStatus;
+	SubRequestStatusCodes newSubrequestStatus;
+
 
       };/* end StagerRequestHandler class */
 

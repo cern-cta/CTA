@@ -46,12 +46,12 @@ namespace castor{
 	  ex.getMessage()<<"(StagerSetFileGCWeightHandler constructor) Impossible to get setFileGCWeight"<<std::endl;
 	  throw ex;
 	}
-
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
 
       void StagerSetGCHandler::handle() throw(castor::exception::Exception)
       {
-       
+	StagerReplyHelper* stgReplyHelper;
 	try{
 	  /* execute the main function for the setFileGCWeight request   */
 	  /* basically a call to the corresponding stagerService method */
@@ -66,8 +66,9 @@ namespace castor{
 	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
 	  
 	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
-	  this->stgReplyHelper = new StagerReplyHelper;
-	  if((this->stgReplyHelper) == NULL){
+	  this->newSubrequestStatus = SUBREQUEST_READY;
+	  stgReplyHelper = new StagerReplyHelper(newSubrequestStatus);
+	  if(stgReplyHelper == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	    throw(ex);
@@ -85,7 +86,7 @@ namespace castor{
 	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	 
 	  throw ex;
 	}
 	

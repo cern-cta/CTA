@@ -9,7 +9,7 @@
 #include "castor/stager/dbService/StagerReplyHelper.hpp"
 
 #include "castor/stager/dbService/StagerRequestHandler.hpp"
-
+#include "castor/stager/SubRequestStatusCodes.hpp"
 #include "stager_uuid.h"
 #include "stager_constants.h"
 #include "serrno.h"
@@ -106,9 +106,6 @@ namespace castor{
 	std::list<castor::stager::DiskCopyForRecall *> sources;
 
 	int xsize;	
-	bool replyToClient;
-
-
 
       }; //end class StagerJobRequestHandler
 

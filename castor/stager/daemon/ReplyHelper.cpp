@@ -34,7 +34,7 @@ namespace castor{
     namespace dbService{
       
       
-      StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception)
+      StagerReplyHelper::StagerReplyHelper(castor::stager::SubRequestStatusCodes newSubreqStatus) throw(castor::exception::Exception)
       {
 	try{
 	  this->ioResponse = new castor::rh::IOResponse;
@@ -50,6 +50,9 @@ namespace castor{
 	    ex.getMessage()<<"(StagerReplyHelper constructor) Impossible to get the requestReplier instance"<<std::endl;
 	    throw ex;
 	  }
+
+	  this->newSubrequestStatus = newSubreqStatus;
+
 	}catch(castor::exception::Exception ex){
 	  if( ioResponse != NULL){
 	    delete ioResponse;
@@ -84,11 +87,7 @@ namespace castor{
 	
 	this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
 
-	int newSubRequestStatus = stgRequestHelper->subrequest->status();
-	if(newSubRequestStatus==SUBREQUEST_FAILED_FINISHED){
-	  newSubRequestStatus=SUBREQUEST_FAILED;
-	}
-	this->ioResponse->setStatus(newSubRequestStatus);
+	this->ioResponse->setStatus((newSubrequestStatus == SUBREQUEST_FAILED_FINISHED)? SUBREQUEST_FAILED : newSubrequestStatus);
 	
 	this->ioResponse->setId(stgRequestHelper->subrequest->id());
 	

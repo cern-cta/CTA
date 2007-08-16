@@ -429,28 +429,8 @@ namespace castor{
 	    break;
 	  }
 	  return(filePermission);
-	};
-     
-
-
-	
-	
-	
-	/* function to update the subrequestStatus */
-	/* called within the normal flow and also the exception */
-	inline void updateSubrequestStatus(SubRequestStatusCodes newSubrequestStatus) throw(castor::exception::Exception){
-	  /* updateSubrequestStatus Part: */
-	  SubRequestStatusCodes currentSubrequestStatus = this->subrequest->status();	  
-	  if(newSubrequestStatus != currentSubrequestStatus){
-	    this->subrequest->setStatus(newSubrequestStatus);
-	    this->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
-	    /* the status will be update on DB on each handler */
-	  }
 	}
-
      
-
-	
 	
 
       }; //end StagerRequestHelper class

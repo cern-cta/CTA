@@ -52,15 +52,18 @@ namespace castor{
       {     	
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;	
+
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
 
       void StagerPutDoneHandler::handle() throw(castor::exception::Exception)
       {
-	
+	StagerReplyHelper* stgReplyHelper;
 	try{
 
+	 
 	  jobOriented();/* until it will be explored */
-	  /* is PutDone jobOriented? I don' t think so, then I won't call this method */
+	 
 	  /* ask about the state of the sources */
 	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
 	  
@@ -72,9 +75,7 @@ namespace castor{
 	  
 
 
-	  castor::IService* svc =
-	    castor::BaseObject::services()->
-	    service("JobSvc", castor::SVC_DBJOBSVC);
+	  castor::IService* svc = castor::BaseObject::services()->service("JobSvc", castor::SVC_DBJOBSVC);
 	  if (0 == svc) {
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerPutDonHandler handle) Impossible to get the jobService"<<std::endl;
@@ -89,20 +90,22 @@ namespace castor{
 	  
 	  jobService->prepareForMigration(stgRequestHelper->subrequest,0,0);
 	  
-	  /* we never change the subrequestStatus !!!*/	  
-	  
+	 
 	  /* for the PutDone, if everything is ok, we archive the subrequest */
 	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	 
+	  /* we never change the subrequestStatus, but we need the newSubrequestStatus for the replyToClient */	  
+	  this->newSubrequestStatus = SUBREQUEST_READY;
 	  
 	  /* replyToClient Part: */
-	  this->stgReplyHelper = new StagerReplyHelper;
-	  if((this->stgReplyHelper) == NULL){
+	  stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	  if(stgReplyHelper == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	    throw ex;
 	  }
-	  this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
-	  this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	  stgReplyHelper->endReplyToClient(stgRequestHelper);
 	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 	   
@@ -111,7 +114,7 @@ namespace castor{
 	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	  this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	 
 	  throw ex;
 	}
       }

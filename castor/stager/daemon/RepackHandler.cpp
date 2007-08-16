@@ -63,13 +63,17 @@ namespace castor{
 
 	this->default_protocol = "rfio";
 	
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status(); 
       }
+
 
 
       void StagerRepackHandler::handle() throw(castor::exception::Exception)
       {
 	/**/
+	StagerReplyHelper* stgReplyHelper;
 	try{
+
 	  /* job oriented part */
 	  jobOriented();
 	  
@@ -77,25 +81,21 @@ namespace castor{
 	  /* first use the stager service to get the possible sources for the required file */
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	  switchScheduling(caseToSchedule);
-
-	  /* updateSubrequestStatus Part: */
-	  if((caseToSchedule != 2) && (caseToSchedule != 4)){
-	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	  }
+	  /* we update the subrequestStatus internally */
+	
+	  /* we replyToClient on the cases: 2,0 */
+	  /* case 1 isnt for Repack, and on case 4 we dont replyToClient */
 	  if(caseToSchedule != 4){
 
-	    /* replyToClient Part: */
-	    /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
-	    /* so copy and paste for the exceptions !!!*/
-	    this->stgReplyHelper = new StagerReplyHelper;
-	    if((this->stgReplyHelper) == NULL){
+	    stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	    if(stgReplyHelper == NULL){
 	      castor::exception::Exception ex(SEINTERNAL);
 	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	      throw(ex);
 	    }
 	    
-	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
-	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	    stgReplyHelper->endReplyToClient(stgRequestHelper);
 	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }

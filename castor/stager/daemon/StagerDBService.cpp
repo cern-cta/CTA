@@ -192,6 +192,9 @@ namespace castor{
 	  stgRequestHelper->getIClient();
 	 
 
+	  /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
+	  stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
+
 	  /* get the stgCnsHelper->fileid needed for the logging in dlf */
 	  stgCnsHelper->getFileid();
 
@@ -217,7 +220,7 @@ namespace castor{
 	  
 
 	  mode_t mask = (mode_t) stgRequestHelper->fileRequest->mask();
-	  stgCnsHelper->cnsSettings(stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), mask);//to do!!!
+	  stgCnsHelper->cnsSettings(mask);//to do!!!
 	  stgRequestHelper->setUsernameAndGroupname();
 
 	  /* get the castorFile of the subrequest */
@@ -273,32 +276,32 @@ namespace castor{
 		/* for the GET and UPDATE we have to notify the Job Manager*/
 		if(stgGetHandler->getNewSubrequestStatus() == SUBREQUEST_READYFORSCHED){
 		  char jobManagerHost[CA_MAXHOSTNAMELEN+1];
+		  jobManagerHost[0]='\0';
 		  int jobManagerPort = DEFAULT_NOTIFICATION_PORT;
-		   
-		  char* value = getconfent("JOBMANAGER", "NOTIFYPORT", 0);
-		  if(value != NULL ){
+		  char *value= NULL;
+
+		  if((value= getconfent("JOBMANAGER", "NOTIFYPORT", 0)) != NULL){
+		    
 		    jobManagerPort = std::strtol(value, 0, 10);
-		    if (jobManagerPort == 0) {
+		    if (jobManagerPort < 0) {
 		      jobManagerPort = DEFAULT_NOTIFICATION_PORT;
 		    } else if (jobManagerPort > 65535) {
 		      castor::exception::Exception e(EINVAL);
-		      e.getMessage() << "Invalid NOTIFYPORT value configured: " << jobManagerPort
-				     << "- must be < 65535" << std::endl;
+		      e.getMessage() << "(StagerDBService stgGetHandler)Invalid NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
 		      throw e;
 		    }
 		  }else{
 		    castor::exception::Exception e(EINVAL);
-		    e.getMessage() << "Null JobManager NOTIFYPORT value configured: " << jobManagerPort << std::endl;
+		    e.getMessage() << "(StagerDBService stgGetHandler)Null JobManager NOTIFYPORT value configured: " << jobManagerPort << std::endl;
 		    throw e;
 		  }
 		  
-		  value = getconfent("JOBMANAGER", "HOST", 0);
-		  if(value != NULL ){
+		  if((value = getconfent("JOBMANAGER", "HOST", 0)) != NULL){
 		    strncpy(jobManagerHost, value, CA_MAXHOSTNAMELEN);
 		    jobManagerHost[CA_MAXHOSTNAMELEN] = '\0';
 		  }else{
 		    castor::exception::Exception e(EINVAL);
-		    e.getMessage() << "Null JobManager HOST value configured: "<< jobManagerHost<<std::endl;
+		    e.getMessage() << "(StagerDBService stgGetHandler)Null JobManager HOST value configured: "<< jobManagerHost<<std::endl;
 		    throw e;
 		  }
 
@@ -451,35 +454,33 @@ namespace castor{
 		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, param2);
 
 		/* for the GET and UPDATE we have to notify the Job Manager*/
-		if(stgUpdateHandler->getNewSubrequestStatus() == SUBREQUEST_READYFORSCHED){
-		  
+		if(stgUpdateHandler->getNewSubrequestStatus() == SUBREQUEST_READYFORSCHED){		  
 		  char jobManagerHost[CA_MAXHOSTNAMELEN+1];
+		  jobManagerHost[0]='\0';
 		  int jobManagerPort = DEFAULT_NOTIFICATION_PORT;
-		  
-		  char* value = getconfent("JOBMANAGER", "NOTIFYPORT", 0);
-		  if(value != NULL ){
+		  char *value= NULL;
+
+		  if((value = getconfent("JOBMANAGER", "NOTIFYPORT", 0)) != NULL){
 		    jobManagerPort = std::strtol(value, 0, 10);
-		    if (jobManagerPort == 0) {
+		    if (jobManagerPort < 0) {
 		      jobManagerPort = DEFAULT_NOTIFICATION_PORT;
 		    } else if (jobManagerPort > 65535) {
 		      castor::exception::Exception e(EINVAL);
-		      e.getMessage() << "Invalid NOTIFYPORT value configured: " << jobManagerPort
-				     << "- must be < 65535" << std::endl;
+		      e.getMessage() << "(StagerDBService stgUpdateHandler)Invalid NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
 		      throw e;
 		    }
 		  }else{
 		    castor::exception::Exception e(EINVAL);
-		    e.getMessage() << "Null JobManager NOTIFYPORT value configured: " << jobManagerPort << std::endl;
+		    e.getMessage() << "(StagerDBService stgUpdateHandler)Null JobManager NOTIFYPORT value configured: " << jobManagerPort << std::endl;
 		    throw e;
 		  }
 		  
-		  value = getconfent("JOBMANAGER", "HOST", 0);
-		  if(value != NULL ){
+		  if((value = getconfent("JOBMANAGER", "HOST", 0)) != NULL){
 		    strncpy(jobManagerHost, value, CA_MAXHOSTNAMELEN);
 		    jobManagerHost[CA_MAXHOSTNAMELEN] = '\0';
 		  }else{
 		    castor::exception::Exception e(EINVAL);
-		    e.getMessage() << "Null JobManager HOST value configured: "<< jobManagerHost<<std::endl;
+		    e.getMessage() << "(StagerDBService stgUpdateHandler)Null JobManager HOST value configured: "<< jobManagerHost<<std::endl;
 		    throw e;
 		  }
 		  
@@ -584,11 +585,11 @@ namespace castor{
 	  if(stgRequestHelper!=NULL){
 	    /* update subrequest status */
 	    if(stgRequestHelper->subrequest != NULL){
-	      stgRequestHelper->updateSubrequestStatus(SUBREQUEST_FAILED_FINISHED);
+	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
 	    }
 	    /* reply to the client in case of error*/
 	    if(stgRequestHelper->iClient != NULL){
-	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;
+	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper(SUBREQUEST_FAILED_FINISHED);
 	      if(stgReplyHelper == NULL){
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerDBService catch exception) Impossible to get the stgReplyHelper"<<std::endl;
@@ -627,7 +628,7 @@ namespace castor{
 	    }
 	    /* reply to the client in case of error*/
 	    if(stgRequestHelper->iClient != NULL){
-	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper;	  
+	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper(SUBREQUEST_FAILED_FINISHED);	  
 	      if(stgReplyHelper != NULL){
 		stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid, SEINTERNAL, "General Exception");	      
 		stgReplyHelper->endReplyToClient(stgRequestHelper);

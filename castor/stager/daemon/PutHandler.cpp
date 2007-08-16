@@ -65,7 +65,7 @@ namespace castor{
 	}
 	
 	this->default_protocol = "rfio";	
-       
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
 
 
@@ -82,40 +82,47 @@ namespace castor{
 	  /* use the stagerService to recreate castor file */
 	  castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	  
-	  if(diskCopyForRecall != NULL){  	  
-	    /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
-	    std::string diskServerName(diskCopyForRecall->diskServer());
-	    std::string mountPoint(diskCopyForRecall->mountPoint());
-
-	    if((diskServerName.empty() == false) && (mountPoint.empty() == false)){
-	      rfs.resize(CA_MAXRFSLINELEN);
-	      rfs.clear();
-	      this->rfs = diskServerName + ":" + mountPoint;
-
-	      if(rfs.size() >CA_MAXRFSLINELEN ){
-		 castor::exception::Exception ex(SENAMETOOLONG);
-		 ex.getMessage()<<"(Stager_Handler) Not enough space for filesystem constraint"<<std::endl;
-		 throw ex;
-	      }else{
-		/* update the subrequest table (coming from the latest stager_db_service.c) */
-		stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
-		stgRequestHelper->subrequest->setXsize(this->xsize);
-		
-	      } 
-	    }
-	    
-	    /* updateSubrequestStatus Part: */
-	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READYFORSCHED);
-	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest,true);
-
+	  if(diskCopyForRecall == NULL){  	  
+	     /* in this case we have to archiveSubrequest */
+	      /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
+	      this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
+	      castor::exception::Exception ex(EBUSY);
+	      ex.getMessage()<<"(StagerUpdateHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
+	      throw ex;
 	  }else{
-	    /* in this case we have to archiveSubrequest */
-	    /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
-	    this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
-	    castor::exception::Exception ex(EBUSY);
-	    ex.getMessage()<<"(StagerPutHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
-	    throw ex; 
-	  }
+	    /* coming from the latest stager_db_service.c */
+	      /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
+	      std::string diskServerName(diskCopyForRecall->diskServer());
+	      std::string mountPoint(diskCopyForRecall->mountPoint());
+	      
+	      if((diskServerName.empty() == false) && (mountPoint.empty() == false)){
+		rfs.resize(CA_MAXRFSLINELEN);
+		rfs.clear();
+		this->rfs = diskServerName + ":" + mountPoint;
+		
+		if(rfs.size() >CA_MAXRFSLINELEN ){
+		  castor::exception::Exception ex(SENAMETOOLONG);
+		  ex.getMessage()<<"(Stager_Handler) Not enough space for filesystem constraint"<<std::endl;
+		  throw ex;
+		}else{
+		  /* update the subrequest table (coming from the latest stager_db_service.c) */
+		  stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
+		  stgRequestHelper->subrequest->setXsize(this->xsize);
+		  
+		} 
+	      }
+
+	      /* updateSubrequestStatus Part: */
+	      this->newSubrequestStatus= SUBREQUEST_READYFORSCHED;
+	      if( (this->newSubrequestStatus) != (this->currentSubrequestStatus)){
+		stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+
+		/* since the newSubrequest... != SUBREQUEST_READY, we dont setGetNextStatus... = GETNEXTSTATUS_FILESTAGED */
+
+		/* we dontReplyToClient so we have to update the subrequest on DB explicitly  */
+		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      }
+	  }/* diskCopyForRecall != NULL */
 	  
 	}catch(castor::exception::Exception e){
 	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/

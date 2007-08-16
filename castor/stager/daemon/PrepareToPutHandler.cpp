@@ -44,6 +44,7 @@ namespace castor{
 	this->stgCnsHelper = stgCnsHelper;
 	
 	/* since we don't call the rm: we don't care about maxReplicaNb, ...xsize, ...  */	
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
 
 
@@ -53,41 +54,46 @@ namespace castor{
       /****************************************************************************************/
       void StagerPrepareToPutHandler::handle() throw(castor::exception::Exception)
       {
+	StagerReplyHelper* stgReplyHelper;
 	try{
+	  
 	  jobOriented();
 	  
 	  /* use the stagerService to recreate castor file */
 	  castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
 	  
 	  
-	  if(diskCopyForRecall != NULL){
-	    /* updateSubrequestStatus Part: */
-	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY); 	    
+	  if(diskCopyForRecall == NULL){
+	    /* WE DONT DO ANYTHING  */
+	  }else{
 	    
-	    /* replyToClient Part: */
-	    this->stgReplyHelper = new StagerReplyHelper;
-	    if((this->stgReplyHelper) == NULL){
+	    /* we update the subrequestSatus*/
+	    this->newSubrequestStatus = SUBREQUEST_READY;
+	    if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
+	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+	      /* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+	      
+	      /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
+	    }
+	    
+	    /*  replyToClient  */
+	    stgReplyHelper = new StagerReplyHelper(newSubrequestStatus);
+	    if(stgReplyHelper == NULL){
 	      castor::exception::Exception ex(SEINTERNAL);
 	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	      throw(ex);
 	    }
-	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
-	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete (stgReplyHelper->ioResponse);
-	    delete stgReplyHelper;
-	  }else{
-	    /* in this case we have to archiveSubrequest */
-	    /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
-	    this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
-	    castor::exception::Exception ex(EBUSY);
-	    ex.getMessage()<<"(StagerPrepareToPutHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
-	    throw ex;
+	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
+	    stgReplyHelper->endReplyToClient(stgRequestHelper);
+	    delete stgReplyHelper->ioResponse;
+	    delete stgReplyHelper; 
 	  }
 
 	}catch(castor::exception::Exception ex){
 	  if(stgReplyHelper != NULL){
 	    if(stgReplyHelper->ioResponse) delete (stgReplyHelper->ioResponse);
-	     delete stgReplyHelper;
+	    delete stgReplyHelper;
 	  }
 	  throw(ex);
 	}

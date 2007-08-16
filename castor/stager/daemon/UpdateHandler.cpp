@@ -67,7 +67,7 @@ namespace castor{
 	    xsize = DEFAULTFILESIZE;
 	  }
 	}
-	
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
       
 
@@ -114,26 +114,29 @@ namespace castor{
 		  
 		} 
 	      }
+
 	      /* updateSubrequestStatus Part: */
-	      this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READYFORSCHED);
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest,true);
+	      this->newSubrequestStatus= SUBREQUEST_READYFORSCHED;
+	      if( (this->newSubrequestStatus) != (this->currentSubrequestStatus)){
+		stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+
+		/* since the newSubrequest... != SUBREQUEST_READY, we dont setGetNextStatus... = GETNEXTSTATUS_FILESTAGED */
+
+		/* we dontReplyToClient so we have to update the subrequest on DB explicitly  */
+		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      }
+
 	    }/* notSchedule && diskCopyForRecall != NULL  */
 
-	  }else{
+	  }else{/*if notToRecreateCastorFile */
 	   
 	    /* since the file exist, we need the read flag */
 	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
 	    switchScheduling(caseToSchedule);/* we call internally the rmjob */
+	    /* we update internally the subrequestStatus */
 	  }
 	  
-	  
-	  if(toRecreateCastorFile || ((caseToSchedule != 2) && (caseToSchedule != 4))){
-	    /* updateSubrequestStatus Part: */
-	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	  }
-	  
-
+	 
 	}catch(castor::exception::Exception e){
 	 
 	  castor::exception::Exception ex(e.code());

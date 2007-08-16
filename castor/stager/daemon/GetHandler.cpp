@@ -66,6 +66,8 @@ namespace castor{
 
 
 	this->default_protocol = "rfio";
+	
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
 
       }
       
@@ -82,13 +84,7 @@ namespace castor{
 	  
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	  switchScheduling(caseToSchedule);/* we call internally the rmjob */
-	   
-
-	  /*  Update subrequestStatus */
-	  if((caseToSchedule != 2) && (caseToSchedule != 4)){
-	    stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	  }	  
+	  /* the update of the subrequestStatus is done internally */
 
 	}catch(castor::exception::Exception e){
 

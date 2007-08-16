@@ -42,13 +42,16 @@ namespace castor{
 
 	this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
+	
+	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
 
 
       void StagerPrepareToGetHandler::handle() throw(castor::exception::Exception)
       {
+	StagerReplyHelper* stgReplyHelper;
 	try{
-	  /* job oriented part */
+	
 	  jobOriented();
 	  
 	  /* scheduling Part */
@@ -56,18 +59,42 @@ namespace castor{
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
 	  
 	  switch(caseToSchedule){
+
 	  case 0:
-	    /* we archive the subrequest, we don't need to update the subrequest status afterwards */
+	    /* we update the subrequestStatus*/
+	    this->newSubrequestStatus = SUBREQUEST_READY;
+	    if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
+	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+	      /* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+	      
+	      /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
+	    }
+
+	    /* we archive the subrequest*/
 	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+
+	    /* we will replyToClient*/
 	    break;
 
+
 	  case 2: //normal tape recall
-	    
-	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
+	    try{
+	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
+	      
+	      /* we dont change subrequestStatus or archive the subrequest*/
+	      this->newSubrequestStatus = SUBREQUEST_READY;
+
+	    }catch(castor::exception::Exception ex){
+	      castor::exception::Exception e(ESTSEGNOACC);
+	      e.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->createRecallCandidate throws an exception, message:"<<ex.getMessage()<<std::endl;
+	      throw e;
+	    }
 	    break;
 	    
 	    
 	  case 4:
+	    /* we dont archiveSubrequest, changeSubrequestStatus or ReplyToClient */
 	    break;
 
 	    /* case 1: NEVER for a PrepareToGet (coming from the latest stager_db_service.c) */
@@ -82,25 +109,19 @@ namespace castor{
 	  }
 	  
 	  
-	  /* updateSubrequestStatus Part: */
-	  if((caseToSchedule != 2)&&(caseToSchedule != 4)){
-	    this->stgRequestHelper->updateSubrequestStatus(SUBREQUEST_READY);
-	  }
 	  if(caseToSchedule != 4){
-	    /* replyToClient Part: */
-	    /* to take into account!!!! if an exeption happens, we need also to send the response to the client */
-	    /* so copy and paste for the exceptions !!!*/
-	    this->stgReplyHelper = new StagerReplyHelper;
-	    if((this->stgReplyHelper) == NULL){
+	    stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	    if(stgReplyHelper == NULL){
 	      castor::exception::Exception ex(SEINTERNAL);
 	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	      throw(ex);
 	    }
-	    this->stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
-	    this->stgReplyHelper->endReplyToClient(stgRequestHelper);
+	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	    stgReplyHelper->endReplyToClient(stgRequestHelper);
 	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
+
 	}catch(castor::exception::Exception e){
 
 	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/

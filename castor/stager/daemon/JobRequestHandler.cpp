@@ -19,6 +19,7 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/FileClass.hpp"
 
+#include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -39,6 +40,7 @@
 
 #include "marshall.h"
 #include "net.h"
+#include "serrno.h"
 
 #include <iostream>
 #include <string>
@@ -102,10 +104,11 @@ namespace castor{
       {
 	
 	try{
-	  
+
 	  switch(caseToSchedule){
 	    
 	  case 2: //normal tape recall
+	    /* in this case we dont archiveSubrequest, we dont changeSubrequestStatus  */
 	    try{
 	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
 	    }catch(castor::exception::Exception ex){
@@ -115,16 +118,33 @@ namespace castor{
 	    }
 	    break;
 	    
-	  case 1:	 
-	    bool isToReplicate=replicaSwitch();
-	    
-	    if(isToReplicate){  
-	      processReplica();
-	    }
+	  case 1:
+	    int type = stgRequestHelper->fileRequest->type();
+	    if((type == OBJ_StageGetRequest)||(type == OBJ_StageUpdateRequest)){
+	      /* just for Get and Update(special) */
+	      /* in this case we dont archiveSubrequest, but we do changeSubrequestStatus, and we dont replyToClient */
+	      bool isToReplicate=replicaSwitch();
+	      
+	      if(isToReplicate){  
+		processReplica();
+	      }
+	      
+	      /**********************************************/
+	      /* build the rmjob struct and submit the job */
+	      jobManagerPart(); 
+	      
+	      this->newSubrequestStatus = SUBREQUEST_READYFORSCHED;
+	      if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
+		stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
+		/* since newSub... != SUBREQUEST_READY -> we dont have setGetNextSatus  */
+		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      }
+	    }else{
+	      castor::exception::Exception e(SEOPNOTSUP);
+	      e.getMessage()<<"(Stager__Handler switchScheduling) stagerService->createRecallCandidate"<<std::endl;
+	      throw(e);
 
-	    /**********************************************/
-	    /* build the rmjob struct and submit the job */
-	    jobManagerPart();   
+	    }
 	    break;
 
 	  case 4:
@@ -132,6 +152,8 @@ namespace castor{
 	    break;
  
 	  case 0:
+	    /* this function is reimplemented on PrepareToGet because of this case */
+	    /* and we dont updateRep on DB */
 	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
 	    break;
 	  

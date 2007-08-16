@@ -15,12 +15,14 @@
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "castor/stager/FileRequest.hpp"
 
 #include "castor/ObjectSet.hpp"
 
 #include <iostream>
 #include <string>
 #include <errno.h>
+#include "serrno.h"
 #include <fcntl.h>
 
 
@@ -39,7 +41,10 @@ namespace castor{
 	struct Cns_fileid cnsFileid;
 	struct Cns_filestat cnsFilestat;
 	struct Cns_fileclass cnsFileclass;
+	
 	std::string subrequestFileName;
+	uid_t euid;/* stgRequestHelper->fileRequest->euid() */ 
+	uid_t egid;/* stgRequestHelper->fileRequest->egid() */
 	int fileExist;	
 
 
@@ -97,11 +102,18 @@ namespace castor{
 	  }
 	}
       
-      
+	/***************************************************************/
+	/* set the user and group id needed to call the Cns functions */
+	/*************************************************************/
+	inline void cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest){
+	  this->euid = fileRequest->euid();
+	  this->egid = fileRequest->egid();
+	}
+
 	/************************************************************************************/
 	/* get the parameters neededs and call to the Cns_setid and Cns_umask c functions  */
 	/**********************************************************************************/
-	inline void cnsSettings(uid_t euid, uid_t egid, mode_t mask) throw(castor::exception::Exception){
+	inline void cnsSettings(mode_t mask) throw(castor::exception::Exception){
 	  if (Cns_setid(euid,egid) != 0){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_setid"<<std::endl;
@@ -115,31 +127,49 @@ namespace castor{
 	  }
 	}
 
-
+	/***************************************************************************************************************/
 	/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
+	/*************************************************************************************************************/
 	inline void createFileAndUpdateCns( mode_t mode, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
-	  memset(&(this->cnsFileid),0, sizeof(cnsFileid));
-	  if (Cns_creatx(this->subrequestFileName.c_str(), mode, &(this->cnsFileid)) != 0) {
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_creatx"<<std::endl;
-	    throw ex;
-	  }
-
-	  /* in case of Disk1 pool, we want to force the fileClass of the file */
-	  if(svcClass->hasDiskOnlyBehavior() == true){
-	    std::string forcedFileClassName = svcClass->forcedFileClass();
-	    if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
-	       castor::exception::Exception ex(SEINTERNAL);
-	       ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_chclass"<<std::endl;
-	       throw ex;
+	  if(serrno == ENOENT){
+	    memset(&(this->cnsFileid),0, sizeof(cnsFileid));
+	    if (Cns_creatx(this->subrequestFileName.c_str(), mode, &(this->cnsFileid)) != 0) {
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_creatx"<<std::endl;
+	      throw ex;
 	    }
+	    
+	    /* in case of Disk1 pool, we want to force the fileClass of the file */
+	    if(svcClass->hasDiskOnlyBehavior() == true){
+	      std::string forcedFileClassName = svcClass->forcedFileClass();
 
-	  }
-	  memset(&(this->cnsFileclass),0, sizeof(cnsFileclass));
-	  if (Cns_statx(subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
+	      if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
+		castor::exception::Exception ex(SEINTERNAL);
+		ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_unsetid"<<std::endl;
+		throw ex;
+	      }
+	      if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
+		castor::exception::Exception ex(SEINTERNAL);
+		ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_chclass"<<std::endl;
+		throw ex;
+	      }
+	      if(Cns_setid(euid, egid) != 0){
+		castor::exception::Exception ex(SEINTERNAL);
+		ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_setid"<<std::endl;
+		throw ex;
+	      }
+	    }/* end of "if(hasDiskOnly Behavior)" */
+
+	    memset(&(this->cnsFileclass),0, sizeof(cnsFileclass));
+	    if (Cns_statx(subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_statx"<<std::endl;
+	      throw ex;
+	    }
+	  }else{
 	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_statx"<<std::endl;
-	    throw ex;
+	    ex.getMessage()<<"(StagerCnsHelper createFileAndUpdateCns) Error on Cns_statx (serrno != ENOENT)"<<std::endl;
+	    throw ex; 
 	  }
 	}
      

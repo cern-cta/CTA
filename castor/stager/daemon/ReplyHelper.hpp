@@ -45,6 +45,11 @@ namespace castor{
 
       class StagerReplyHelper : public virtual castor::BaseObject{
 
+      private:
+
+	castor::stager::SubRequestStatusCodes newSubrequestStatus;
+
+
       public:
 
 	castor::rh::IOResponse *ioResponse;
@@ -52,7 +57,7 @@ namespace castor{
 	std::string uuid_as_string;
 
 	/* constructor  */
-	StagerReplyHelper() throw(castor::exception::Exception);
+	StagerReplyHelper(castor::stager::SubRequestStatusCodes newSubreqStatus) throw(castor::exception::Exception);
 	/* destructor */
 	~StagerReplyHelper() throw();
 
