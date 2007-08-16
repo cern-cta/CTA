@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.32 $ $Date: 2007/08/07 07:21:02 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.33 $ $Date: 2007/08/16 10:47:45 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1620,6 +1620,8 @@ int vsnretry;
                                         tl_tpdaemon.tl_log( &tl_tpdaemon, 104, 2,
                                                             "func"   , TL_MSG_PARAM_STR, func,
                                                             "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Tape not mounted locally. Return Error." );
+
+                                        c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
                                         RETURN (c);
 
                                 } else if (1 == mounted) {
