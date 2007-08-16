@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:33 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/16 12:40:27 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -133,7 +133,7 @@ bool castor::jobmanager::ora::OraJobManagerSvc::failSchedulerJob
   try {
     if (m_failSchedulerJobStatement == NULL) {
       m_failSchedulerJobStatement = createStatement(s_failSchedulerJobString);
-      m_failSchedulerJobStatement->registerOutParam(4, oracle::occi::OCCIINT);
+      m_failSchedulerJobStatement->registerOutParam(4, oracle::occi::OCCIDOUBLE);
       m_failSchedulerJobStatement->setAutoCommit(true);
     }
     
@@ -145,8 +145,8 @@ bool castor::jobmanager::ora::OraJobManagerSvc::failSchedulerJob
     
     // Return the result of the output parameter, this is an indicator to
     // notify the callee as to whether or not the job was cancelled i.e.
-    // a change was made to the subequest table    
-    if (m_failSchedulerJobStatement->getInt(4) > 0) {
+    // a change was made to the subrequest table  
+    if (m_failSchedulerJobStatement->getDouble(4) > 0) {
       return true;
     } 
   } catch (oracle::occi::SQLException e) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/08 15:44:40 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/16 12:40:27 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -144,7 +144,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
   // If reverse UID lookups are enabled, make sure that the resolution of the
   // uid matches the username reported and that the user belongs to the right
   // group.
-  u_signed64 errorCode = 0;
+  int errorCode = 0;
   if (m_reverseUidLookup) {
     passwd *pwd = getpwuid(request->euid());
     if (pwd == NULL) {
@@ -153,7 +153,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
     else if (strcmp(request->username().c_str(), pwd->pw_name)) {
       errorCode = ESTUSER;     // Invalid user
     }
-    else if (request->egid() != pwd->pw_gid) {
+    else if ((gid_t)request->egid() != pwd->pw_gid) {
       errorCode = ESTGROUP;    // Invalid user group
     }
   }
@@ -169,7 +169,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
        castor::dlf::Param("ID", request->id()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 42, 5, params, &m_fileId);
-    failSubRequest(request, errorCode, NULL);
+    failSubRequest(request, errorCode, "");
     return;
   }
 
@@ -187,7 +187,7 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
        castor::dlf::Param("ID", request->id()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 43, 5, params, &m_fileId);
-    failSubRequest(request, SEINTERNAL, NULL);
+    failSubRequest(request, SEINTERNAL, "");
     return;
   }
 
@@ -413,7 +413,7 @@ void castor::jobmanager::SubmissionProcess::lsfSubmit
 	 castor::dlf::Param("MaxAttempts", m_submitRetryAttempts),
 	 castor::dlf::Param(m_subRequestId)};
       castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 47, 3, params, &m_fileId);
-      failSubRequest(request, SEINTERNAL, NULL);
+      failSubRequest(request, SEINTERNAL, "");
       return;
     } 
 
