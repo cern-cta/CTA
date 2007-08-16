@@ -203,16 +203,6 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * converts a string into a port number, checking
-       * the values
-       * @param str the string giving the port number
-       * @return the port as an int
-       * @exception in case of invalid value
-       */
-      int porttoi(char* str)
-        throw (castor::exception::Exception);
-    
-      /**
        * Builds the Client for a Request. The userid, groupid, hostname, etc
        * are set and the Client object added to the Request.
        * @param req The StagerRequest the Client is to be added to
