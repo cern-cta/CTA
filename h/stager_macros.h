@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.23 2006/07/18 12:12:32 waldron Exp $
+ * $Id: stager_macros.h,v 1.24 2007/08/16 06:41:38 waldron Exp $
  */
 
 #ifndef __stager_macros_h
@@ -35,22 +35,22 @@
 
 /* Possible messages saying this is a string are: "STRING", "SIGNAL NAME" - everything else is an integer */
 #define STAGER_LOG(what,fileid,message,value,message2,value2) stager_log(func,__FILE__,__LINE__,what,fileid,message,value,message2,value2);
-#define STAGER_LOG_EMERGENCY(fileid,string)   STAGER_LOG(STAGER_MSG_EMERGENCY,fileid, "STRING", string, NULL, NULL)
-#define STAGER_LOG_ALERT(fileid,string)       STAGER_LOG(STAGER_MSG_ALERT    ,fileid, "STRING", string, NULL, NULL)
-#define STAGER_LOG_ERROR(fileid,string)       STAGER_LOG(STAGER_MSG_ERROR    ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_EMERGENCY(fileid,string)        STAGER_LOG(STAGER_MSG_EMERGENCY,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_ALERT(fileid,string)            STAGER_LOG(STAGER_MSG_ALERT    ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_ERROR(fileid,string)            STAGER_LOG(STAGER_MSG_ERROR    ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
 #define STAGER_LOG_DB_ERROR(fileid,string,string2) STAGER_LOG(STAGER_MSG_ERROR    ,fileid, "STRING", string, "STRING", string2)
-#define STAGER_LOG_SYSCALL(fileid,string)     STAGER_LOG(STAGER_MSG_SYSCALL  ,fileid, "STRING", string, NULL, NULL)
-#define STAGER_LOG_WARNING(fileid,string)     STAGER_LOG(STAGER_MSG_WARNING  ,fileid, "STRING", string, NULL, NULL)
-#define STAGER_LOG_AUTH(fileid,string)        STAGER_LOG(STAGER_MSG_AUTH     ,fileid, "STRING", string, NULL, NULL)
-#define STAGER_LOG_SECURITY(fileid,string)    STAGER_LOG(STAGER_MSG_SECURITY ,fileid, "STRING", string, NULL, NULL)
-#define STAGER_LOG_USAGE(fileid,string)       STAGER_LOG(STAGER_MSG_USAGE    ,fileid, "STRING", string, NULL, NULL)
-#define STAGER_LOG_SIGNAL(fileid,value)       STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NUMBER" ,  value, NULL, NULL)
-#define STAGER_LOG_SIGNAL_NAME(fileid,string) STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string, NULL, NULL)
+#define STAGER_LOG_SYSCALL(fileid,string)          STAGER_LOG(STAGER_MSG_SYSCALL  ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_WARNING(fileid,string)          STAGER_LOG(STAGER_MSG_WARNING  ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_AUTH(fileid,string)             STAGER_LOG(STAGER_MSG_AUTH     ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_SECURITY(fileid,string)         STAGER_LOG(STAGER_MSG_SECURITY ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_USAGE(fileid,string)            STAGER_LOG(STAGER_MSG_USAGE    ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_SIGNAL(fileid,value)            STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NUMBER" ,  value, (const char *)NULL, (const char *)NULL)
+#define STAGER_LOG_SIGNAL_NAME(fileid,string)      STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "SIGNAL NAME", string, (const char *)NULL, (const char *)NULL)
 #define STAGER_LOG_ENTER() {}
 #define STAGER_LOG_LEAVE() {return;}
 #define STAGER_LOG_RETURN(value) {return(value);}
 #define STAGER_LOG_RETURN_NULL() {return(NULL);}
-#define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_SYSTEM(fileid,string)    STAGER_LOG(STAGER_MSG_SYSTEM   ,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
 #define STAGER_LOG_STARTUP() { \
   if (! stagerNoDlf) { \
     int _save_serrno = serrno; \
@@ -131,9 +131,9 @@
     exit(value); \
   } \
 }
-#define STAGER_LOG_IMPORTANT(fileid,string) STAGER_LOG(STAGER_MSG_IMPORTANT,fileid, "STRING", string, NULL, NULL)
+#define STAGER_LOG_IMPORTANT(fileid,string) STAGER_LOG(STAGER_MSG_IMPORTANT,fileid, "STRING", string, (const char *)NULL, (const char *)NULL)
 #define STAGER_LOG_DEBUG(fileid,string)     { \
-  if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string, NULL, NULL);} \
+  if (stagerDebug) {STAGER_LOG(STAGER_MSG_DEBUG ,fileid,"STRING" ,string, (const char *)NULL, (const char *)NULL);} \
 }
 #define STAGER_LOG_VERBOSE(fileid,string)     { }
 
