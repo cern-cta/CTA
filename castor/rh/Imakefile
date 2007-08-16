@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Release$ $Date: 2007/04/04 10:22:56 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.12 $ $Release$ $Date: 2007/08/16 14:59:19 $ $Author: sponcec3 $
 #
 # Make Castor RH library
 #
@@ -48,6 +48,9 @@ DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 LDFLAGS += -L FileName(..,FileName(..,shlib)) $(MTLDFLAGS)
 LD = g++
 
+MANPAGES_RH = FileName($(MANDIR),rhserver.$(MANSUFFIX))
+EMANPAGES_RH = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rhserver.$(MANSUFFIX)))
+
 all: ProgramTargetName(rhserver)
 
 NormalProgramTarget(rhserver,$(RHBIN_OBJS),$(DEPLIB),$(LIBS))
@@ -68,9 +71,15 @@ install: FileName($(BIN),rhserver)
 
 InstallProgram(rhserver,$(BIN),root,bin,755)
 
-install.man:
+install.man: $(MANDIR) $(MANPAGES_RH)
 
-exportman:
+IMANPAGE(rhserver,$(MANDIR),$(MANSUFFIX))
+
+exportman: $(EMANPAGES_RH)
+
+EMANPAGE(rhserver,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
+
+MakeDir($(MANDIR),root,bin,0755)
 
 clean:
 	@echo cleaning in CurDir
