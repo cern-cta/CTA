@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2006/09/25 09:21:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/16 15:50:28 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the Shared memory part
  *
@@ -43,9 +43,6 @@ namespace castor {
        */
       DLFInit();
     };
-    
-    /// loading time creation of the DLF messages
-    DLFInit DLFInitInstance;
     
   }  // namespace sharedMemory
 

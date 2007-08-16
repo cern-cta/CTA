@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/01/30 09:25:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/08/16 15:50:28 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the Shared memory part
  *
@@ -27,6 +27,7 @@
 #include "castor/sharedMemory/DLFInit.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
+#include "castor/exception/Exception.hpp"
 
 //------------------------------------------------------------------------------
 // DLFInitInstance
@@ -36,7 +37,7 @@ castor::sharedMemory::DLFInit DLFInitInstance;
 //------------------------------------------------------------------------------
 // DLFInit
 //------------------------------------------------------------------------------
-castor::sharedMemory::DLFInit::DLFInit () {
+castor::sharedMemory::DLFInit::DLFInit() {
   castor::dlf::Message messages[] =
     {{ 0, "Unable to get shared memory id. Giving up"},
      { 1, "Unable to create shared memory. Giving up"},
@@ -47,5 +48,12 @@ castor::sharedMemory::DLFInit::DLFInit () {
      { 6, "Exception caught in allocate"},
      { 7, "Exception caught in deallocate"},
      { -1, ""} };
-  castor::dlf::dlf_addMessages(DLF_BASE_SHAREDMEMORY, messages);
+  try {
+    castor::dlf::dlf_addMessages(DLF_BASE_SHAREDMEMORY, messages);
+  } catch (castor::exception::Exception ex) {
+    // We failed to insert our messages into DLF
+    // So we cannot really log to DLF.
+    // On the other hand, we cannot be sure that that standard out is usable.
+    // So we have to ignore the error. Note really nice
+  }
 }

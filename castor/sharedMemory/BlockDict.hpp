@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/15 11:42:56 $ $Author: sponcec3 $
+ * @(#)$RCSfile: BlockDict.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/16 15:50:28 $ $Author: sponcec3 $
  *
  * A static dictionnary of blocks, referenced by their
  * BlockKey
@@ -107,7 +107,6 @@ namespace castor {
 
 #include "castor/exception/Internal.hpp"
 #include "castor/sharedMemory/LocalBlock.hpp"
-#include "castor/dlf/Dlf.hpp"
 #include <Cmutex.h>
 
 //------------------------------------------------------------------------------
