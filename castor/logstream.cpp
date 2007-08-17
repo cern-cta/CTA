@@ -46,12 +46,7 @@ MANIPULATORIMPL(USAGE)
 MANIPULATORIMPL(SYSTEM)
 MANIPULATORIMPL(IMPORTANT)
 MANIPULATORIMPL(DEBUG)
-
-// Added VERBOSE manually in case DLF supports it in the future
-castor::logstream& castor::VERBOSE(castor::logstream& s) {
-  s.setLevel(DLF_LVL_DEBUG);
-  return s;
-}
+MANIPULATORIMPL(VERBOSE)
 
 castor::logstream& castor::ip(castor::logstream& s) {
   s.setIsIP(true);
