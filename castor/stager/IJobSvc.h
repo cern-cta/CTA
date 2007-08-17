@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.7 $ $Release$ $Date: 2007/06/21 16:06:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/17 09:31:55 $ $Author: sponcec3 $
  *
  *
  *
@@ -28,7 +28,6 @@
 #define CASTOR_IJOBSVC_H 1
 
 #include "castor/Constants.h"
-#include "castor/stager/DiskCopyStatusCodes.h"
 
 /* Forward declarations for the C world */
 struct C_IService_t;
@@ -237,7 +236,7 @@ int Cstager_IJobSvc_selectFileSystem
  * Changes are commited
  * @param jobSvc the IJobSvc used
  * @param diskcopyId the id of the new DiskCopy
- * @param status the status of the new DiskCopy
+ * @param sourceDiskCopyId the id of the source diskCopy
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -246,7 +245,7 @@ int Cstager_IJobSvc_selectFileSystem
 int Cstager_IJobSvc_disk2DiskCopyDone
 (struct Cstager_IJobSvc_t* jobSvc,
  u_signed64 diskCopyId,
- enum Cstager_DiskCopyStatusCodes_t status);
+ u_signed64 sourceDiskCopyId);
 
 /**
  * Updates database after a failure of a disk to disk copy.

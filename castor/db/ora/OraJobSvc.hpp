@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/06/21 16:07:27 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/17 09:32:16 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -157,12 +157,12 @@ namespace castor {
          * status to SUBREQUEST_READY.
          * Changes are commited
          * @param diskcopyId the id of the new DiskCopy
-         * @param status the status of the new DiskCopy
+         * @param sourceDiskCopyId the id of the source diskCopy
          * @exception Exception throws an Exception in case of error
          */
         virtual void disk2DiskCopyDone
         (u_signed64 diskCopyId,
-         castor::stager::DiskCopyStatusCodes status)
+         u_signed64 sourceDiskCopyId)
           throw (castor::exception::Exception);
 
         /**

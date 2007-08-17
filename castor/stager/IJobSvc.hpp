@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/06/21 16:06:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/17 09:31:55 $ $Author: sponcec3 $
  *
  * This class provides stager methods related to job handling
  *
@@ -31,7 +31,6 @@
 #include "castor/Constants.hpp"
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/stager/DiskCopyStatusCodes.hpp"
 #include <vector>
 #include <string>
 #include <list>
@@ -152,12 +151,12 @@ namespace castor {
        * status to SUBREQUEST_READY.
        * Changes are commited
        * @param diskcopyId the id of the new DiskCopy
-       * @param status the status of the new DiskCopy
+       * @param sourceDiskCopyId the id of the source diskCopy
        * @exception Exception throws an Exception in case of error
        */
       virtual void disk2DiskCopyDone
       (u_signed64 diskCopyId,
-       castor::stager::DiskCopyStatusCodes status)
+       u_signed64 sourceDiskCopyId)
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/06/21 16:06:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/17 09:31:55 $ $Author: sponcec3 $
  *
  *
  *
@@ -316,12 +316,12 @@ castor::stager::RemoteJobSvc::selectFileSystem
 // -----------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
- castor::stager::DiskCopyStatusCodes status)
+ u_signed64 sourceDiskCopyId)
   throw (castor::exception::Exception) {
   // Build the Disk2DiskCopyDoneRequest
   castor::stager::Disk2DiskCopyDoneRequest req;
   req.setDiskCopyId(diskCopyId);
-  req.setStatus(status);
+  req.setSourceDiskCopyId(sourceDiskCopyId);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
@@ -339,7 +339,7 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
   // Build the Disk2DiskCopyDoneRequest
   castor::stager::Disk2DiskCopyDoneRequest req;
   req.setDiskCopyId(diskCopyId);
-  req.setStatus(castor::stager::DISKCOPY_FAILED);
+  req.setSourceDiskCopyId(0);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/08/17 06:55:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/08/17 09:32:16 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -105,7 +105,7 @@ const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
   "BEGIN disk2DiskCopyDone(:1, :2); END;";
 
-/// SQL statement for disk2DiskCopyDone
+/// SQL statement for disk2DiskCopyFailed
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
   "BEGIN disk2DiskCopyFailed(:1); END;";
 
@@ -360,7 +360,7 @@ castor::db::ora::OraJobSvc::putStart
 // -----------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
- castor::stager::DiskCopyStatusCodes status)
+ u_signed64 sourceDiskCopyId)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -371,7 +371,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
     }
     // execute the statement and see whether we found something
     m_disk2DiskCopyDoneStatement->setDouble(1, diskCopyId);
-    m_disk2DiskCopyDoneStatement->setDouble(2, status);
+    m_disk2DiskCopyDoneStatement->setDouble(2, sourceDiskCopyId);
     m_disk2DiskCopyDoneStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
