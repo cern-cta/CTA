@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/13 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/17 14:47:05 $ $Author: itglp $
  *
  * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-0
  *
@@ -48,6 +48,25 @@ ALTER TABLE Stream ADD (byteVolume INTEGER);
 
 DROP TABLE FilesDeletedProcOutput;
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput (fileid NUMBER, nshost VARCHAR2(2048)) ON COMMIT PRESERVE ROWS;
+ 
+/* Change SubRequest partitions to reflect new statuses for the jobManager */
+ALTER TABLE SubRequest MODIFY PARTITION P_STATUS_3 ADD VALUES (13, 14);
+ALTER TABLE SubRequest RENAME PARTITION P_STATUS_3 TO P_STATUS_3_13_14;
+/* We also merge the partitions for the failed ones. Note that we have to drop some,
+   but no SubRequest is left in status 7 or 10 when Castor is properly stopped */
+ALTER TABLE SubRequest DROP PARTITION P_STATUS_7;
+ALTER TABLE SubRequest DROP PARTITION P_STATUS_10;
+ALTER TABLE SubRequest MODIFY PARTITION P_STATUS_9 ADD VALUES (7, 10);
+ALTER TABLE SubRequest RENAME PARTITION P_STATUS_9 TO P_STATUS_7_9_10;
+
+/* Rebuild all indexes because they are left unusable after repartitioning */
+ALTER INDEX I_SubRequest_PK REBUILD;
+ALTER INDEX I_SubRequest_Castorfile REBUILD;
+ALTER INDEX I_SubRequest_DiskCopy REBUILD;
+ALTER INDEX I_SubRequest_Request REBUILD;
+ALTER INDEX I_SubRequest_Parent REBUILD;
+ALTER INDEX I_SubRequest_SubReqId REBUILD;
+
 
 /* Some constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
