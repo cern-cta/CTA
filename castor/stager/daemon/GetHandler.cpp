@@ -92,7 +92,7 @@ namespace castor{
 	  /* we don t execute: dbService->updateRep ..*/
 
 	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerGetHandler) Error"<<e.getMessage()<<std::endl;
+	  ex.getMessage()<<"(StagerGetHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}  
       }

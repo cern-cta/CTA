@@ -51,7 +51,7 @@ namespace castor{
 
       void StagerSetGCHandler::handle() throw(castor::exception::Exception)
       {
-	StagerReplyHelper* stgReplyHelper;
+	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
 	  /* execute the main function for the setFileGCWeight request   */
 	  /* basically a call to the corresponding stagerService method */
@@ -78,7 +78,7 @@ namespace castor{
 	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 
-	}catch(castor::exception::Exception ex){
+	}catch(castor::exception::Exception e){
 	  if(setFileGCWeight != NULL){
 	    delete setFileGCWeight;
 	  }
@@ -86,8 +86,10 @@ namespace castor{
 	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	 
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerSetGCHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
+       
 	}
 	
       }

@@ -49,7 +49,7 @@ namespace castor{
 
       void StagerPrepareToGetHandler::handle() throw(castor::exception::Exception)
       {
-	StagerReplyHelper* stgReplyHelper;
+	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
 	
 	  jobOriented();
@@ -82,13 +82,12 @@ namespace castor{
 	    try{
 	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
 	      
-	      /* we dont change subrequestStatus or archive the subrequest*/
+	      /* we dont change subrequestStatus or archive the subrequest: but we need to set the newSubrequestStatus to replyToClient */
 	      this->newSubrequestStatus = SUBREQUEST_READY;
 
 	    }catch(castor::exception::Exception ex){
-	      castor::exception::Exception e(ESTSEGNOACC);
-	      e.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->createRecallCandidate throws an exception, message:"<<ex.getMessage()<<std::endl;
-	      throw e;
+	      /* internally of the createRecallCandidate: we reply to the client and we setSubrequestStatus to FAILED */
+	      return;
 	    }
 	    break;
 	    
@@ -113,7 +112,7 @@ namespace castor{
 	    stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
 	    if(stgReplyHelper == NULL){
 	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	      ex.getMessage()<<"(StagerPrepareToGetHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	      throw(ex);
 	    }
 	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
@@ -131,7 +130,7 @@ namespace castor{
 	    delete stgReplyHelper;
 	  }
 	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerPrepareToGetHandler) Error"<<e.getMessage()<<std::endl;
+	  ex.getMessage()<<"(StagerPrepareToGetHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}  
 

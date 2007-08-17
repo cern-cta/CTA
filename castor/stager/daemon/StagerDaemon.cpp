@@ -62,7 +62,7 @@ int main(int argc, char* argv[]){
     /******/
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message","added thread pool")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, STAGER_MSG_ERROR, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, STAGER_MSG_ERROR, 1, params);
     /******/ 
 
     stgMainDaemon.start();  
@@ -80,7 +80,7 @@ int main(int argc, char* argv[]){
     std::cerr<<"(StagerMainDaemon main) Catched unknow exception"<<std::endl;
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message","Caught general exception in StagerMainDaemon")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_MSG_ERROR, 1, params);
     return -1;
   }
   
@@ -101,7 +101,7 @@ namespace castor{
 	this->stagerDbNbthread = 1;
 	
 	castor::dlf::Message stagerMainMessages[]={
-	  { STAGER_MSG_ERR, "error"},
+	  { STAGER_MSG_ERROR, "error"},
 	  {-1, ""}
 	};
 	

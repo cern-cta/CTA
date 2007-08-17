@@ -140,7 +140,7 @@ namespace castor{
 	}catch(castor::exception::Exception e){
 	 
 	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerUpdateHandler) Error"<<e.getMessage()<<std::endl;
+	  ex.getMessage()<<"(StagerUpdateHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}
       }

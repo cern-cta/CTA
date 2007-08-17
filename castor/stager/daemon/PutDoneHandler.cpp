@@ -58,7 +58,7 @@ namespace castor{
 
       void StagerPutDoneHandler::handle() throw(castor::exception::Exception)
       {
-	StagerReplyHelper* stgReplyHelper;
+	StagerReplyHelper* stgReplyHelper= NULL;
 	try{
 
 	 
@@ -109,12 +109,13 @@ namespace castor{
 	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 	   
-	}catch(castor::exception::Exception ex){
+	}catch(castor::exception::Exception e){
 	  if(stgReplyHelper != NULL){
 	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	 
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerPutDoneHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}
       }

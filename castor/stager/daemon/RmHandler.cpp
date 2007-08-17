@@ -54,7 +54,7 @@ namespace castor{
 
       void StagerRmHandler::handle() throw(castor::exception::Exception)
       {
-	StagerReplyHelper* stgReplyHelper;
+	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
 	  /* execute the main function for the rm request                 */
 	  /* basically, a call to the corresponding stagerService method */
@@ -80,13 +80,15 @@ namespace castor{
 	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;
 
-	}catch(castor::exception::Exception ex){
+	}catch(castor::exception::Exception e){
 	  if(stgReplyHelper != NULL){
 	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
 	  }
-	  
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"(StagerRmHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
+	 
 	}
       }
 

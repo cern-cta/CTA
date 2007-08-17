@@ -81,7 +81,7 @@ namespace castor{
       void StagerPrepareToUpdateHandler::handle() throw(castor::exception::Exception)
       {
 	/**/
-	StagerReplyHelper* stgReplyHelper;
+	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
 	  
 	 
@@ -151,7 +151,7 @@ namespace castor{
 	  }
 	 
 	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerPrepareToUpdateHandler) Error"<<e.getMessage()<<std::endl;
+	  ex.getMessage()<<"(StagerPrepareToUpdateHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}
       }

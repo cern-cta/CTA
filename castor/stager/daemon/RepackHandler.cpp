@@ -71,7 +71,7 @@ namespace castor{
       void StagerRepackHandler::handle() throw(castor::exception::Exception)
       {
 	/**/
-	StagerReplyHelper* stgReplyHelper;
+	StagerReplyHelper* stgReplyHelper= NULL;
 	try{
 
 	  /* job oriented part */
@@ -108,7 +108,7 @@ namespace castor{
 	  }
 	  
 	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerRepackHandler) Error"<<e.getMessage()<<std::endl;
+	  ex.getMessage()<<"(StagerRepackHandler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}
       }

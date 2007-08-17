@@ -85,7 +85,7 @@ namespace castor{
 	}catch (castor::exception::Exception e){
 	  /* maybe Cns_query throws an exception */
 	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerJobRequestHandler jobOriented)"<<e.getMessage()<<std::endl;
+	  ex.getMessage()<<"(StagerJobRequestHandler jobOriented)"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}
       }
@@ -111,10 +111,11 @@ namespace castor{
 	    /* in this case we dont archiveSubrequest, we dont changeSubrequestStatus  */
 	    try{
 	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
+	      /* we dont change subrequestStatus or archive the subrequest: but we need to set the newSubrequestStatus to replyToClient */
+	      this->newSubrequestStatus = SUBREQUEST_READY;
 	    }catch(castor::exception::Exception ex){
-	      castor::exception::Exception e(ESTSEGNOACC);
-	      e.getMessage()<<"(Stager__Handler switchScheduling) stagerService->createRecallCandidate"<<std::endl;
-	      throw(e);
+	      /* internally of the createRecallCandidate: we reply to the client and we setSubrequestStatus to FAILED */
+	      return;
 	    }
 	    break;
 	    
@@ -167,7 +168,7 @@ namespace castor{
 	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
 	  /* we don t execute: dbService->updateRep ..*/
 	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(Stager__Handler) Error"<<e.getMessage()<<std::endl;
+	  ex.getMessage()<<"(Stager__Handler) Error"<<e.getMessage().str()<<std::endl;
 	  throw ex;
 	}
 	
