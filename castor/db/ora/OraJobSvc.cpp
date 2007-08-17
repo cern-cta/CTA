@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/08/15 13:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/08/17 06:55:02 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -70,6 +70,7 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
+#include "castor/dlf/Dlf.hpp"
 #include "occi.h"
 #include <Cuuid.h>
 #include <string>
@@ -443,17 +444,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
         << "prepareForMigration did not return any result.";
       throw ex;
     }
-    // Check for errors
-    int errorCode = m_prepareForMigrationStatement->getInt(8);
-    if (errorCode > 0) {
-      // For now, the only situation when errorCode in not 0
-      // is when the file got deleted while it was written to
-      castor::exception::NoEntry ex;
-      ex.getMessage()
-        << "File was deleted while it was written to. Giving up with migration.";
-      throw ex;
-    }
-    // collect output
+    // collect NS related output
     struct Cns_fileid fileid;
     fileid.fileid =
       (u_signed64)m_prepareForMigrationStatement->getDouble(4);
@@ -462,6 +453,20 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     strncpy(fileid.server,
             nsHost.c_str(),
             CA_MAXHOSTNAMELEN);
+    // Check for errors
+    int errorCode = m_prepareForMigrationStatement->getInt(8);
+    if (errorCode > 0) {
+      // For now, the only situation when errorCode in not 0
+      // is when the file got deleted while it was written to
+      // This by itself is not an error, but we should no take
+      // any action here. We thus log something and return
+      // "File was deleted while it was written to. Giving up with migration."
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
+                              DLF_BASE_ORACLELIB, 0, 0, &fileid);
+
+      return;
+    }
+    // collect rest of output
     unsigned long euid =
       m_prepareForMigrationStatement->getInt(6);
     unsigned long egid =
