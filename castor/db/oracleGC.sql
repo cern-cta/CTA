@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.479 $ $Date: 2007/08/17 09:33:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.480 $ $Date: 2007/08/17 14:46:06 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -73,15 +73,13 @@ CREATE TABLE SubRequest
   ENABLE ROW MOVEMENT
   PARTITION BY LIST (STATUS)
    (
-    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),
-    PARTITION P_STATUS_3 VALUES (3),
+    PARTITION P_STATUS_0_1_2 VALUES (0, 1, 2),      -- *START
+    PARTITION P_STATUS_3_13_14 VALUES (3, 13, 14),  -- *SCHED
     PARTITION P_STATUS_4 VALUES (4),
     PARTITION P_STATUS_5 VALUES (5),
     PARTITION P_STATUS_6 VALUES (6),
-    PARTITION P_STATUS_7 VALUES (7),
+    PARTITION P_STATUS_7_9_10 VALUES (7, 9, 10),    -- FAILED*
     PARTITION P_STATUS_8 VALUES (8),
-    PARTITION P_STATUS_9 VALUES (9),
-    PARTITION P_STATUS_10 VALUES (10),
     PARTITION P_STATUS_11 VALUES (11),
     PARTITION P_STATUS_12 VALUES (12),
     PARTITION P_STATUS_OTHER VALUES (DEFAULT)
@@ -2849,6 +2847,7 @@ BEGIN
   OPEN result FOR
     SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
            getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
+           - nvl(DC.gcWeight, 0)   -- optional weight used by SRM2 for advisory pinning
       FROM DiskCopy DC, CastorFile CF
      WHERE CF.id = DC.castorFile
        AND DC.fileSystem = fsId
@@ -2881,6 +2880,7 @@ BEGIN
                WHEN 0 THEN 86400 -- non accessed last
                ELSE 20000 * CastorFile.nbAccesses -- most accessed last
              END
+           - nvl(DC.gcWeight, 0)   -- optional weight used by SRM2 for advisory pinning
       FROM DiskCopy, CastorFile
      WHERE CastorFile.id = DiskCopy.castorFile
        AND DiskCopy.fileSystem = fsId
