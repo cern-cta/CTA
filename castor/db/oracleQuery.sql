@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.477 $ $Date: 2007/08/15 13:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.478 $ $Date: 2007/08/17 09:08:16 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2035,7 +2035,7 @@ BEGIN
       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status IN (3, 6));
  END IF;
  -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
- -- then we have to archive the original preapareToPut/Update subRequest
+ -- then we have to archive the original prepareToPut/Update subRequest
  IF context = 2 THEN
    DECLARE
      srId NUMBER;
@@ -2095,6 +2095,10 @@ BEGIN
  EXCEPTION WHEN NO_DATA_FOUND THEN
    -- so we are in the case, we give up
    errorCode := 1;
+   -- but we still would like to have the fileId and nameserver
+   -- host for logging reasons
+   SELECT fileId, nsHost INTO fId, nh
+     FROM CastorFile WHERE id = cfId;
    RETURN;
  END;
  -- Determine the context (Put inside PrepareToPut or not)
