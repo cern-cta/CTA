@@ -1,13 +1,9 @@
 /*
- * $Id: vdqmapi.c,v 1.4 2005/03/15 22:57:11 bcouturi Exp $
+ * $Id: vdqmapi.c,v 1.5 2007/08/17 09:36:25 sponcec3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqmapi.c,v $ $Revision: 1.4 $ $Date: 2005/03/15 22:57:11 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
 
 /*
  * vdqmapi.c - VDQM client API routines (client only).
@@ -66,7 +62,6 @@ int DLL_DECL vdqm_Connect(vdqmnw_t **nw) {
     extern char * getenv() ;
     char *p ;
     int vdqm_port = -1;
-    int rc;
 #ifdef CSEC
     int n;
     int secure_connection = 0;
