@@ -95,19 +95,17 @@ namespace castor{
       /******************************************************************************************/
       /* constructor: initiallizes the DLF logging and set the default value to its attributes */
       /****************************************************************************************/
-      StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception) : castor::server::BaseDaemon("StagerMainDaemon"){      
+      StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception) : castor::server::BaseDaemon("Stager"){
 	
 	this->stagerHelp = false;
 	this->stagerDbNbthread = 1;
-	/* initialite the DLF login */
-	castor::BaseObject::initLog("Stager", castor::SVC_STDMSG);
 	
 	castor::dlf::Message stagerMainMessages[]={
 	  { STAGER_MSG_ERR, "error"},
 	  {-1, ""}
 	};
-	castor::dlf::dlf_init("Stager", stagerMainMessages);
 	
+        dlfInit(stagerMainMessages);
       }
 
       /**************************************************************/

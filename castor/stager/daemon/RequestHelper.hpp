@@ -196,20 +196,20 @@ namespace castor{
 
 	    /* it isnt really necessary and it causes and segFault on SvcClass.hpp */
 	    /*  svcClass->setName(this->svcClassName);*/
-
-	    this->svcClassName=fileRequest->svcClassName(); /* we retrieve it to know if it has been correctly updated */
-	    if(this->svcClassName.empty()){      
-	      castor::exception::Exception ex(SESVCCLASSNFND);
-	      ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to set properly the svcClassName on fileRequest"<<std::endl;
-	      throw ex;
-	    }
 	  }
-	  
-	  svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
-	  if(this->svcClass == NULL){
+
+	  try{
+	    svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
+	    if(this->svcClass == NULL){
+	      castor::exception::Exception ex(SESVCCLASSNFND);
+	      ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to get the svcClass"<<std::endl;
+	      throw ex; 
+	    }
+	  }catch(castor::exception::Exception ex){
 	    castor::exception::Exception ex(SESVCCLASSNFND);
 	    ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to get the svcClass"<<std::endl;
 	    throw ex; 
+	    
 	  }
 	}
      
