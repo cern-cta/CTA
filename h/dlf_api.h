@@ -42,6 +42,7 @@
 #define DLF_LVL_IMPORTANT     9             /**< informative                              */
 #define DLF_LVL_MONITORING    10            /**< monitoring and statistics                */
 #define DLF_LVL_DEBUG         11            /**< debug-level messages                     */
+#define DLF_LVL_VERBOSE       12            /**< these messages will just be ignored      */
 
 /* parameter types */
 #define DLF_MSG_PARAM_DOUBLE  1             /**< double precision floating point value    */
@@ -110,7 +111,8 @@
  *   0 - 999 is reserved for local messages
  */
 #define DLF_BASE_SHAREDMEMORY 1000 	    /**< Shared Memory related code               */
-#define DLF_BASE_STAGERLIB    1100 	    /**< Stager library related code              */
+#define DLF_BASE_STAGERIB     1100 	    /**< Stager library related code              */
+#define DLF_BASE_ORACLELIB    1200 	    /**< Oracle library related code              */
 
 /**
  * opaque structures
