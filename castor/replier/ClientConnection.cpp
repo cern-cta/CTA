@@ -149,7 +149,7 @@ void castor::replier::ClientConnection::close() throw() {
 	 << std::endl;
   while (!m_messages.empty()) {
     ClientResponse message = m_messages.front();
-    clog() << DEBUG << SETW func  << this->toString() << " Deleting msg "
+    clog() << VERBOSE << SETW func  << this->toString() << " Deleting msg "
 	   << message.messageId
 	   << std::endl;
     delete message.response;
@@ -289,7 +289,7 @@ void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::excep
   char *func = "cc::deleteNextMessage ";
   if (!m_messages.empty()) {
     ClientResponse message = m_messages.front();
-    clog() << DEBUG << SETW func  << this->toString() << " Deleting msg "
+    clog() << VERBOSE << SETW func  << this->toString() << " Deleting msg "
 	   << message.messageId
 	   << std::endl;
     delete message.response;

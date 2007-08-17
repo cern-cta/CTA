@@ -248,8 +248,8 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
     if (pollRc == 0) {
       // POLL TIMED OUT
 
-      clog() << DEBUG << SETW func
-             <<  "Poll timed out" << std::endl;
+      clog() << VERBOSE << SETW func
+             << "Poll timed out" << std::endl;
 
       // Poll timed-out grabage collect to free resources
       garbageCollect();
@@ -304,7 +304,7 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
         && newhost == c.ipAddress()) {
       // Found an existing connection !
       // XXX Should there be status testing ?
-      clog() << DEBUG << SETW func  <<  "Found existing connection "
+      clog() << VERBOSE << SETW func  <<  "Found existing connection "
              << (*iter).second->toString() << std::endl;
       r = (*iter).second;
       break;
@@ -390,7 +390,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
 
       // Terminating requestreplier
       toremove.push(cc->fd());
-      clog() << DEBUG << SETW func  <<  cc->toString()
+      clog() << VERBOSE << SETW func  <<  cc->toString()
              << " terminate:true and no more messages - to remove" << std::endl;
 
       if (m_connectionStatusCallback) {
@@ -461,7 +461,7 @@ castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
 
   }
 
-  clog() << DEBUG << SETW func  <<  "There are " << (i-1)
+  clog() << VERBOSE << SETW func  <<  "There are " << (i-1)
          << " client(s) to reply to ! (among "
          << m_connections->size() << " connections)"
          << std::endl;
@@ -497,7 +497,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
         continue;
       }
 
-      clog() << DEBUG << SETW func  <<  cr->toString()
+      clog() << VERBOSE << SETW func  <<  cr->toString()
              << " fd active : " << pl[i].fd
              << " Events:" << pl[i].revents << "("
              <<  pollStr(pl[i].revents)  << ")"
@@ -607,13 +607,13 @@ castor::replier::RequestReplier::readFromClientQueue() throw() {
   clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
   Cthread_mutex_lock(&m_clientQueue);
 
-  clog() << DEBUG << SETW func
+  clog() << VERBOSE << SETW func
          << "*** Before processing - Client Queue size:"  << m_clientQueue->size()
          << " Connection Queue size:"  << m_connections->size()
          << std::endl;
 
   if (m_clientQueue->size() == 0) {
-    clog() << DEBUG << SETW func  <<  "No client in queue, removing lock"
+    clog() << VERBOSE << SETW func  <<  "No client in queue, removing lock"
            << std::endl;
     Cthread_mutex_unlock(&m_clientQueue);
     return;
