@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.23 2007/08/16 15:45:41 sponcec3 Exp $
+ * $Id: dlf_lib.c,v 1.24 2007/08/17 09:58:48 waldron Exp $
  */
 
 /* headers */
@@ -929,6 +929,22 @@ void dlf_worker(target_t *t) {
  
 	/* exit */
 	Cthread_exit(0);
+}
+
+
+/*
+ * dlf_isinitialized
+ */
+
+int DLL_DECL dlf_isinitialized(void) {
+
+	Cthread_mutex_lock(&global_mutex);
+	if (!IsInitialised(api_mode)) {
+		Cthread_mutex_unlock(&global_mutex);
+		return 0;
+	}
+	Cthread_mutex_unlock(&global_mutex);
+	return 1;
 }
 
 

@@ -86,6 +86,7 @@ MANPAGES  = $(MANDIR)/dlfserver.$(MANSUFFIX)          \
 	    $(MANDIR)/dlf_child.$(MANSUFFIX)          \
 	    $(MANDIR)/dlf_create_threads.$(MANSUFFIX) \
 	    $(MANDIR)/dlf_init.$(MANSUFFIX)           \
+	    $(MANDIR)/dlf_initialized.$(MANSUFFIX)    \
 	    $(MANDIR)/dlf_parent.$(MANSUFFIX)         \
 	    $(MANDIR)/dlf_prepare.$(MANSUFFIX)        \
 	    $(MANDIR)/dlf_regtext.$(MANSUFFIX)        \
@@ -96,6 +97,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man1/dlfserver.$(MANSUFFIX)             \
 		 $(EXPORTMAN)/man3/dlf_child.$(LIBMANSUFFIX)          \
 		 $(EXPORTMAN)/man3/dlf_create_threads.$(LIBMANSUFFIX) \
 		 $(EXPORTMAN)/man3/dlf_init.$(LIBMANSUFFIX)           \
+		 $(EXPORTMAN)/man3/dlf_initialized.$(LIBMANSUFFIX)    \
 		 $(EXPORTMAN)/man3/dlf_parent.$(LIBMANSUFFIX)         \
 		 $(EXPORTMAN)/man3/dlf_prepare.$(LIBMANSUFFIX)        \
 		 $(EXPORTMAN)/man3/dlf_regtext.$(LIBMANSUFFIX)        \
@@ -177,6 +179,7 @@ IMANPAGE(dlfserver,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_child,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_create_threads,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_init,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(dlf_initialized,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_parent,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_prepare,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(dlf_regtext,$(MANDIR),$(MANSUFFIX))
@@ -187,6 +190,7 @@ EMANPAGE(dlfserver,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(dlf_child,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_create_threads,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_init,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(dlf_initialized,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_parent,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_prepare,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(dlf_regtext,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))

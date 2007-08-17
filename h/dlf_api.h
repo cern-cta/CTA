@@ -306,6 +306,14 @@ EXTERN_C void DLL_DECL dlf_parent _PROTO((void));
 EXTERN_C void DLL_DECL dlf_create_threads _PROTO((int erase));
 
 
+/**
+ * Check to see if the dlf interface has been initialised via a previous call to dlf_init().
+ * @returns : 1 if initialized, 0 if not
+ */
+
+EXTERN_C int DLL_DECL dlf_isinitialized _PROTO((void));
+
+
 #endif
 
 /** End-of-File **/
