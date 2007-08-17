@@ -281,16 +281,16 @@ int Cstager_Disk2DiskCopyDoneRequest_diskCopyId(struct Cstager_Disk2DiskCopyDone
 int Cstager_Disk2DiskCopyDoneRequest_setDiskCopyId(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64 new_var);
 
 /**
- * Get the value of status
- * The new status of the diskCopy created
+ * Get the value of sourceDiskCopyId
+ * The id of the source diskcopy
  */
-int Cstager_Disk2DiskCopyDoneRequest_status(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, int* var);
+int Cstager_Disk2DiskCopyDoneRequest_sourceDiskCopyId(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64* var);
 
 /**
- * Set the value of status
- * The new status of the diskCopy created
+ * Set the value of sourceDiskCopyId
+ * The id of the source diskcopy
  */
-int Cstager_Disk2DiskCopyDoneRequest_setStatus(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, int new_var);
+int Cstager_Disk2DiskCopyDoneRequest_setSourceDiskCopyId(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id
