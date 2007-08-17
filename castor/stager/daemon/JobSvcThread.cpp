@@ -1,5 +1,5 @@
 /*
- * $Id: JobSvcThread.cpp,v 1.42 2007/08/17 09:36:02 sponcec3 Exp $
+ * $Id: JobSvcThread.cpp,v 1.43 2007/08/17 16:05:12 sponcec3 Exp $
  */
 
 /*
@@ -326,7 +326,7 @@ namespace castor {
 
         /* Invoking the method                */
         /* ---------------------------------- */
-        u_signed64 srcDcId = uReq->srcDiskCOpyId();
+        u_signed64 srcDcId = uReq->sourceDiskCopyId();
         if (0 == srcDcId) {
           STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyFailed");
           jobSvc->disk2DiskCopyFailed(uReq->diskCopyId());
