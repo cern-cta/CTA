@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.478 $ $Date: 2007/08/17 09:08:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.479 $ $Date: 2007/08/17 09:33:53 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1770,7 +1770,7 @@ END;
 
 /* PL/SQL method implementing disk2DiskCopyDone */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
-(dcId IN INTEGER, dcStatus IN INTEGER) AS
+(dcId IN INTEGER, srcDcId IN INTEGER) AS
   srId INTEGER;
   cfId INTEGER;
   fsId INTEGER;
@@ -1778,7 +1778,9 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   repl INTEGER;
 BEGIN
   -- update DiskCopy
-  UPDATE DiskCopy set status = dcStatus WHERE id = dcId
+  UPDATE DiskCopy
+     SET status = (SELECT status FROM DiskCopy WHERE id = srcDcId)
+   WHERE id = dcId
   RETURNING CastorFile, FileSystem INTO cfId, fsId;
   -- update SubRequest
   UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
