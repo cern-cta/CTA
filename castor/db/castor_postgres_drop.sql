@@ -107,9 +107,6 @@ DROP TABLE StagePrepareToPutRequest;
 /* SQL statements for type StagePrepareToUpdateRequest */
 DROP TABLE StagePrepareToUpdateRequest;
 
-/* SQL statements for type StageGetRequest */
-DROP TABLE StageGetRequest;
-
 /* SQL statements for type StagePutRequest */
 DROP TABLE StagePutRequest;
 

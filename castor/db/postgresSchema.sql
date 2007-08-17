@@ -8,7 +8,7 @@ CREATE TABLE Client (ipAddress INT4, port INT4, version INT4, id INT8 CONSTRAINT
 CREATE TABLE ClientIdentification (machine VARCHAR(2048), userName VARCHAR(2048), port INT4, euid INT4, egid INT4, magic INT4, id INT8 CONSTRAINT I_ClientIdentification_Id PRIMARY KEY);
 
 /* SQL statements for type Disk2DiskCopyDoneRequest */
-CREATE TABLE Disk2DiskCopyDoneRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, status INT4, id INT8 CONSTRAINT I_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE Disk2DiskCopyDoneRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, sourceDiskCopyId INT8, id INT8 CONSTRAINT I_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type GetUpdateDone */
 CREATE TABLE GetUpdateDone (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, id INT8 CONSTRAINT I_GetUpdateDone_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -32,7 +32,7 @@ CREATE TABLE FilesDeletionFailed (flags INT8, userName VARCHAR(2048), euid INT4,
 CREATE TABLE GCFile (diskCopyId INT8, id INT8 CONSTRAINT I_GCFile_Id PRIMARY KEY, request INTEGER);
 
 /* SQL statements for type GCLocalFile */
-CREATE TABLE GCLocalFile (fileName VARCHAR(2048), diskCopyId INT8, id INT8 CONSTRAINT I_GCLocalFile_Id PRIMARY KEY);
+CREATE TABLE GCLocalFile (fileName VARCHAR(2048), diskCopyId INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_GCLocalFile_Id PRIMARY KEY);
 
 /* SQL statements for type MoverCloseRequest */
 CREATE TABLE MoverCloseRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileSize INT8, timeStamp INT8, id INT8 CONSTRAINT I_MoverCloseRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -58,9 +58,6 @@ CREATE TABLE StagePrepareToPutRequest (flags INT8, userName VARCHAR(2048), euid 
 /* SQL statements for type StagePrepareToUpdateRequest */
 CREATE TABLE StagePrepareToUpdateRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StagePrepareToUpdateReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type StageGetRequest */
-CREATE TABLE StageGetRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
 /* SQL statements for type StagePutRequest */
 CREATE TABLE StagePutRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StagePutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
@@ -83,7 +80,7 @@ CREATE TABLE StageRequestQueryRequest (flags INT8, userName VARCHAR(2048), euid 
 CREATE TABLE StageFindRequestRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageFindRequestRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type SubRequest */
-CREATE TABLE SubRequest (retryCounter INT4, fileName VARCHAR(2048), protocol VARCHAR(2048), xsize INT8, priority INT4, subreqId VARCHAR(2048), flags INT4, modeBits INT4, creationTime INT8, lastModificationTime INT8, answered INT4, errorCode INT4, errorMessage VARCHAR(2048), id INT8 CONSTRAINT I_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER);
+CREATE TABLE SubRequest (retryCounter INT4, fileName VARCHAR(2048), protocol VARCHAR(2048), xsize INT8, priority INT4, subreqId VARCHAR(2048), flags INT4, modeBits INT4, creationTime INT8, lastModificationTime INT8, answered INT4, errorCode INT4, errorMessage VARCHAR(2048), requestedFileSystems VARCHAR(2048), id INT8 CONSTRAINT I_SubRequest_Id PRIMARY KEY, diskcopy INTEGER, castorFile INTEGER, parent INTEGER, status INTEGER, request INTEGER, getNextStatus INTEGER);
 
 /* SQL statements for type StageReleaseFilesRequest */
 CREATE TABLE StageReleaseFilesRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageReleaseFilesRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -134,7 +131,7 @@ CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
 
 /* SQL statements for type Stream */
-CREATE TABLE Stream (initialSizeToTransfer INT8, lastFileSystemChange INT8, byteVolume INT8, id INT8 CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER);
+CREATE TABLE Stream (initialSizeToTransfer INT8, lastFileSystemChange INT8, id INT8 CONSTRAINT I_Stream_Id PRIMARY KEY, tape INTEGER, lastFileSystemUsed INTEGER, lastButOneFileSystemUsed INTEGER, tapePool INTEGER, status INTEGER);
 CREATE TABLE Stream2TapeCopy (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_Stream2TapeCopy_C on Stream2TapeCopy (child);
 CREATE INDEX I_Stream2TapeCopy_P on Stream2TapeCopy (parent);
