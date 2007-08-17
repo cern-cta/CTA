@@ -30,14 +30,6 @@
 #include "castor/exception/Internal.hpp"
 
 // -----------------------------------------------------------------------
-// dlf_isInitialized_initialized
-// -----------------------------------------------------------------------
-bool& castor::dlf::dlf_isInitialized() throw() {
-  static bool isInitialized = false;
-  return isInitialized;
-}
-
-// -----------------------------------------------------------------------
 // dlf_getPendingMessages
 // -----------------------------------------------------------------------
 std::vector<std::pair<int, castor::dlf::Message*> >&
@@ -52,10 +44,6 @@ castor::dlf::dlf_getPendingMessages () throw() {
 void castor::dlf::dlf_init
 (char* facilityName, castor::dlf::Message messages[])
   throw (castor::exception::Exception) {
-  if (dlf_isInitialized()) {
-    // DLF is already initialized, give up
-    return;
-  }
   // Initialise the DLF interface, ignore any errors that may be generated
   char dlfErrBuf[CA_MAXLINELEN+1];  
   if (::dlf_init(facilityName, dlfErrBuf, 0) != 0) {
@@ -63,7 +51,6 @@ void castor::dlf::dlf_init
     ex.getMessage() << "Unable to initialize DLF";
     throw ex;
   }
-  dlf_isInitialized() = true;
   // Register the facility's messages with the interface. We do this even
   // if the interface fails to initialisation as it is used for local 
   // logging
@@ -84,7 +71,7 @@ void castor::dlf::dlf_init
 // -----------------------------------------------------------------------
 void castor::dlf::dlf_addMessages (int offset, Message messages[])
 throw () {
-  if (dlf_isInitialized()) {
+  if (::dlf_isinitialized()) {
     int i = 0;
     while (messages[i].number >= 0) {
       ::dlf_regtext(offset + messages[i].number,
