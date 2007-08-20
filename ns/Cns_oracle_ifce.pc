@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.3 $ $Date: 2006/05/15 14:24:47 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.4 $ $Date: 2007/08/20 16:27:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1521,7 +1521,35 @@ struct Cns_seg_metadata *smd_entry;
 	case 0:
 		return (0);
 	case -1:
-		serrno = EEXIST;
+    {
+      unsigned int fileId;
+      EXEC SQL DECLARE check_segment CURSOR FOR
+        SELECT S_FILEID FROM Cns_seg_metadata
+        WHERE S_FILEID=TO_NUMBER(:fileid_str)
+        AND COPYNO=:smd_entry->copyno
+        AND FSEC=:smd_entry->fsec;
+      EXEC SQL OPEN check_segment;
+      if (sqlca.sqlcode) {
+        Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+        return (-1);
+      }
+      EXEC SQL FETCH check_segment INTO :fileId;
+      switch (sqlca.sqlcode) {
+      case 1403:
+        // Here the constraint violated is not the one expected (pk_s_fileid).
+        // It must then be tapeseg. This means that another file exists on
+        // the tape where we want to write the new one !
+        // We thus return EINTERNAL
+        serrno = SEINTERNAL;
+	break;
+      default:
+        // So the constraint pk_s_fileid was violated meaning that
+        // the segment we try to insert is already existing for that
+        // file. Fine, we thus return EEXIST
+        serrno = EEXIST;
+      }
+      return (-1);
+    }
 		break;
 	case -1631:
 	case -1632:
