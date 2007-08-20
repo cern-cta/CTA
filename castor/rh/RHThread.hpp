@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/07/09 17:05:32 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/08/20 10:27:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -33,6 +33,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/dlf/Param.hpp"
+#include "castor/rh/IRHSvc.hpp"
 
 namespace castor {
 
@@ -44,6 +45,16 @@ namespace castor {
     class RHThread : public castor::server::IThread, public castor::BaseObject {
 
     public:
+
+      /**
+       * constructor
+       * @param useAccessLists whether to use access lists
+       * @param rhSvc pointer to the requestHandler service
+       */
+      RHThread(bool useAccessLists,
+               castor::rh::IRHSvc* rhSvc) :
+        m_useAccessLists(useAccessLists),
+        m_rhSvc(rhSvc) {}
 
       /**
        * Method called once per request, where all the code resides
@@ -68,6 +79,17 @@ namespace castor {
       void handleRequest(castor::stager::Request* fr, Cuuid_t cuuid, 
       			 unsigned long peerIP, unsigned short peerPort)
         throw (castor::exception::Exception);
+
+    private:
+
+      /// whether to use access lists
+      bool m_useAccessLists;
+
+      /**
+       * request handler service
+       * Only used if m_useAccessLists is true
+       */
+      castor::rh::IRHSvc* m_rhSvc;
 
     }; // class RHThread
 

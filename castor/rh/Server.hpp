@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/08/16 14:36:03 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/20 10:27:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -44,6 +44,8 @@ namespace castor {
     extern const char* PORT_ENV;
     extern const char* CATEGORY_CONF;
     extern const char* PORT_CONF;
+    extern const char* ACCESSLISTS_ENV;
+    extern const char* ACCESSLISTS_CONF;
 
     /**
      * The Request Handler server. This is where client requests

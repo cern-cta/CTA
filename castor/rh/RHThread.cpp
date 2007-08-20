@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2006/10/31 17:41:58 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/20 10:27:40 $ $Author: sponcec3 $
  *
  *
  *
@@ -145,13 +145,13 @@ void castor::rh::RHThread::run(void* param) {
       ack.setStatus(true);
       
     } catch (castor::exception::Exception e) {
-    // "Exception caught" message
+      // "Exception caught" message
       castor::dlf::Param params[] =
         {castor::dlf::Param("Standard Message", sstrerror(e.code())),
          castor::dlf::Param("Precise Message", e.getMessage().str())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 9, 2, params);
       ack.setStatus(false);
-      ack.setErrorCode(1);
+      ack.setErrorCode(e.code());
       ack.setErrorMessage(e.getMessage().str());
     }
   }
@@ -185,6 +185,10 @@ void castor::rh::RHThread::run(void* param) {
 void castor::rh::RHThread::handleRequest
 (castor::stager::Request* fr, Cuuid_t cuuid, unsigned long peerIP, unsigned short peerPort)
   throw (castor::exception::Exception) {
+  // Checks access rights
+  if (m_useAccessLists) {
+    m_rhSvc->checkPermission(fr->svcClassName(), fr->euid(), fr->egid(), fr->type());
+  }
   // Number of subrequests (when applicable)
   unsigned int nbSubReqs = 1;
   // Stores it into DB
