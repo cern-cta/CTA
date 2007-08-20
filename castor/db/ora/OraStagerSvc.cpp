@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.206 $ $Release$ $Date: 2007/06/29 09:04:42 $ $Author: gtaur $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.207 $ $Release$ $Date: 2007/08/20 11:29:23 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -144,6 +144,10 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString
 const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString =
   "SELECT id FROM TapePool WHERE name = :1";
 
+/// SQL statement for lockCastorFile
+const std::string castor::db::ora::OraStagerSvc::s_lockCastorFileStatementString =
+  "SELECT id FROM CastorFile WHERE id = :1 FOR UPDATE";
+
 // -----------------------------------------------------------------------
 // OraStagerSvc
 // -----------------------------------------------------------------------
@@ -161,7 +165,8 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_stageRmStatement(0),
   m_setFileGCWeightStatement(0),
   m_selectDiskPoolStatement(0),
-  m_selectTapePoolStatement(0) {
+  m_selectTapePoolStatement(0),
+  m_lockCastorFileStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -206,6 +211,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
     if (m_selectDiskPoolStatement) deleteStatement(m_selectDiskPoolStatement);
     if (m_selectTapePoolStatement) deleteStatement(m_selectTapePoolStatement);
+    if (m_lockCastorFileStatement) deleteStatement(m_lockCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
@@ -221,6 +227,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_setFileGCWeightStatement = 0;
   m_selectDiskPoolStatement = 0;
   m_selectTapePoolStatement = 0;
+  m_lockCastorFileStatement = 0;
 }
 
 
@@ -481,7 +488,10 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
   try {
       castor::stager::CastorFile* cf = subreq->castorFile();
 
-      // create needed TapeCopy(ies) and Segment(s)
+      // create needed TapeCopy(ies) and Segment(s). This takes
+      // a lock on the castorfile that we will keep in order to
+      // prevent the concurrent creation of 2 recalls for a
+      // single file
       createTapeCopySegmentsForRecall(cf, euid, egid, svcClass);
 
       // if we are here, we do have segments to recall
@@ -1040,12 +1050,30 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     throw e;
   }
 
+  // take a lock on the castorfile
+  // Check whether the statements are ok
+  if (0 == m_lockCastorFileStatement) {
+    m_lockCastorFileStatement =
+      createStatement(s_lockCastorFileStatementString);
+  }
+  try {
+    m_lockCastorFileStatement->setDouble(1, castorFile->id());
+    m_lockCastorFileStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "createTapeCopySegmentsForRecall : "
+      << "unable to take lock on the CastorFile.";
+    throw ex;
+  }
+
   // DB address
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
-  // create TapeCopy
 
+  // create TapeCopy
   castor::stager::TapeCopy tapeCopy;
   tapeCopy.setCopyNb(useCopyNb);
   tapeCopy.setStatus(castor::stager::TAPECOPY_TOBERECALLED);
