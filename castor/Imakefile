@@ -378,6 +378,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               exception/OutOfMemory.cpp \
               exception/Communication.cpp \
               exception/NoEntry.cpp \
+              exception/PermissionDenied.cpp \
               exception/SQLError.cpp \
               exception/TooBig.cpp \
               exception/SegmentNotAccessible.cpp \
