@@ -119,13 +119,14 @@ namespace castor{
 	      this->newSubrequestStatus= SUBREQUEST_READYFORSCHED;
 	      if( (this->newSubrequestStatus) != (this->currentSubrequestStatus)){
 		stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
-
-		/* since the newSubrequest... != SUBREQUEST_READY, we dont setGetNextStatus... = GETNEXTSTATUS_FILESTAGED */
-
 		/* we dontReplyToClient so we have to update the subrequest on DB explicitly  */
 		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+		/* we have to setGetNextStatus */
+		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
 	      }
-
+	      /* and we have to notify the jobManager */
+	      this->notifyJobManager();
+	      
 	    }/* notSchedule && diskCopyForRecall != NULL  */
 
 	  }else{/*if notToRecreateCastorFile */
@@ -133,7 +134,7 @@ namespace castor{
 	    /* since the file exist, we need the read flag */
 	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
 	    switchScheduling(caseToSchedule);/* we call internally the rmjob */
-	    /* we update internally the subrequestStatus */
+	    /* we update internally the subrequestStatus, getNextStatus and we notify the jobManager */
 	  }
 	  
 	 

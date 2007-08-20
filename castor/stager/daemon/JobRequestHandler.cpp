@@ -20,7 +20,7 @@
 #include "castor/stager/FileClass.hpp"
 
 #include "castor/stager/SubRequestStatusCodes.hpp"
-
+#include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "stager_uuid.h"
 #include "stager_constants.h"
 #include "Cglobals.h"
@@ -41,6 +41,8 @@
 #include "marshall.h"
 #include "net.h"
 #include "serrno.h"
+#include "getconfent.h"
+#include "Cnetdb.h"
 
 #include <iostream>
 #include <string>
@@ -49,6 +51,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+/* (from the latest stager_db_service.cpp) copied from the JobManagerDaemon.cpp */
+#define DEFAULT_NOTIFICATION_PORT 15011
 
 
 namespace castor{
@@ -119,7 +124,7 @@ namespace castor{
 	    }
 	    break;
 	    
-	  case 1:
+	  case 1:/* just for get and the special update */
 	    int type = stgRequestHelper->fileRequest->type();
 	    if((type == OBJ_StageGetRequest)||(type == OBJ_StageUpdateRequest)){
 	      /* just for Get and Update(special) */
@@ -137,9 +142,14 @@ namespace castor{
 	      this->newSubrequestStatus = SUBREQUEST_READYFORSCHED;
 	      if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
 		stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
-		/* since newSub... != SUBREQUEST_READY -> we dont have setGetNextSatus  */
 		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+		/* we have to setGetNextStatus */
+		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);		
 	      }
+
+	      /* and we have to notify the jobManager */
+	      /* do the same for the special Update and for the put on the handle() method */
+	      this->notifyJobManager();
 	    }else{
 	      castor::exception::Exception e(SEOPNOTSUP);
 	      e.getMessage()<<"(Stager__Handler switchScheduling) stagerService->createRecallCandidate"<<std::endl;
@@ -332,7 +342,108 @@ namespace castor{
       }
 
 
-    
+      /*********************************************************************/
+      /* for Get, Update and Put, send the notification to the jobManager */
+      /*******************************************************************/    
+      void StagerJobRequestHandler::notifyJobManager() throw(castor::exception::Exception){
+
+	/* it should happen always, but we check the condition, just in case...*/
+	if(this->newSubrequestStatus == SUBREQUEST_READYFORSCHED){
+	  char jobManagerHost[CA_MAXHOSTNAMELEN+1];
+	  jobManagerHost[0]='\0';
+	  int jobManagerPort = DEFAULT_NOTIFICATION_PORT;
+	  char *value= NULL;
+	  
+	  if((value= getconfent("JOBMANAGER", "NOTIFYPORT", 0)) != NULL){
+	    
+	    jobManagerPort = std::strtol(value, 0, 10);
+	    if (jobManagerPort < 0) {
+	      jobManagerPort = DEFAULT_NOTIFICATION_PORT;
+	    } else if (jobManagerPort > 65535) {
+	      castor::exception::Exception e(EINVAL);
+	      e.getMessage() << "(StagerJobRequestHandler)Invalid NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
+	      throw e;
+	    }
+	  }else{
+	    castor::exception::Exception e(EINVAL);
+	    e.getMessage() << "(StagerJobRequestHandler)Null JobManager NOTIFYPORT value configured: " << jobManagerPort << std::endl;
+	    throw e;
+	  }
+	  
+	  if((value = getconfent("JOBMANAGER", "HOST", 0)) != NULL){
+	    strncpy(jobManagerHost, value, CA_MAXHOSTNAMELEN);
+	    jobManagerHost[CA_MAXHOSTNAMELEN] = '\0';
+	  }else{
+	    castor::exception::Exception e(EINVAL);
+	    e.getMessage() << "(StagerJobRequestHandler)Null JobManager HOST value configured: "<< jobManagerHost<<std::endl;
+	    throw e;
+	  }
+	  
+	  sendNotification(jobManagerHost, jobManagerPort, 1);
+	}
+      
+      }
+
+
+
+      /* --------------------------------------------------- */
+      /* sendNotification()                                  */
+      /*                                                     */
+      /* Send a notification message to another CASTOR2      */
+      /* daemon using the NotificationThread model. This     */
+      /* will wake up the process and trigger it to perform  */
+      /* a dedicated action.                                 */
+      /*                                                     */
+      /* This function is copied from BaseServer.cpp. We     */
+      /* could have wrapped the C++ call to be callable in   */
+      /* C. However, as the stager is being re-written in    */
+      /* C++ anyway we take this shortcut.                   */
+      /*                                                     */
+      /* Input:  (const char *) host - host to notify        */
+      /*         (const int) port - notification por         */
+      /*         (const int) nbThreads - number of threads   */
+      /*                      to wake up on the server       */
+      /*                                                     */
+      /* Return: nothing (void). All errors ignored          */
+      /* --------------------------------------------------- */
+      void StagerJobRequestHandler::sendNotification(const char *host, const int port, const int nbThreads) {
+	struct hostent *hp;
+	struct sockaddr_in sin;
+	int s;
+	char buf[HYPERSIZE + LONGSIZE];
+	char *p;
+	
+	/* Check arguments */
+	if ((host[0] == '\0') || !port) {
+	  return;
+	}
+	
+	/* Resolve host address */
+	if ((hp = Cgethostbyname(host)) == NULL) {
+	  return;
+	}
+	
+	/* Prepare the request */
+	p = buf;
+	const long NOTIFY_MAGIC = 0x44180876;
+	marshall_LONG(p, NOTIFY_MAGIC);
+	marshall_LONG(p, nbThreads);
+	
+	// Create socket
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+	  return;
+	}
+	
+	/* Send packet containing notification magic number + service number */
+	memset((char *) &sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(port);
+	sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
+	sendto(s, buf, sizeof(buf), 0, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
+	netclose(s);
+      }
+
+
 
         
     }//end namespace dbService

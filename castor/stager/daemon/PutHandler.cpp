@@ -116,12 +116,15 @@ namespace castor{
 	      this->newSubrequestStatus= SUBREQUEST_READYFORSCHED;
 	      if( (this->newSubrequestStatus) != (this->currentSubrequestStatus)){
 		stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
-
-		/* since the newSubrequest... != SUBREQUEST_READY, we dont setGetNextStatus... = GETNEXTSTATUS_FILESTAGED */
-
 		/* we dontReplyToClient so we have to update the subrequest on DB explicitly  */
 		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+		/* we have to setGetNextStatus */
+		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
 	      }
+	      /* and we have to notify the jobManager */
+	      /* do the same for the special Update and for the put on the handle() method */
+	      this->notifyJobManager();
+	      
 	  }/* diskCopyForRecall != NULL */
 	  
 	}catch(castor::exception::Exception e){
