@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.480 $ $Date: 2007/08/17 14:46:06 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.481 $ $Date: 2007/08/20 11:25:51 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3747,4 +3747,50 @@ BEGIN
        AND Request.client = Client.id;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     NULL;
+END;
+
+/**
+  * Black and while list mechanism
+  * In order to be able to enter a request for a given service class, you need :
+  *   - to be in the white list for this service class
+  *   - to not be in the black list for this services class
+  * Being in a list means :
+  *   - either that your uid,gid is explicitely in the list
+  *   - or that your gid is in the list with null uid (that is group wildcard)
+  *   - or there is an entry with null uid and null gid (full wild card)
+  * The permissions can also have a request type. Default is null, that is everything
+  */
+
+/* Check permissions */
+CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN NUMBER,
+                                            ieuid IN NUMBER,
+                                            iegid IN NUMBER,
+                                            ireqType IN NUMBER,
+                                            res OUT NUMBER) AS
+  unused NUMBER;
+BEGIN
+  SELECT reqType
+    INTO unused
+    FROM WhiteList
+   WHERE (svcClass = isvcClass OR svcClass IS NULL)
+     AND (egid = iegid OR egid IS NULL)
+     AND (euid = ieuid OR euid IS NULL)
+     AND (reqType = ireqType OR reqType IS NULL);
+  BEGIN
+    SELECT reqType
+      INTO unused
+      FROM BlackList
+     WHERE (svcClass = isvcClass OR svcClass IS NULL)
+       AND (egid = iegid OR egid IS NULL)
+       AND (euid = ieuid OR euid IS NULL)
+       AND (reqType = ireqType OR reqType IS NULL);
+    -- found in Black list -> no access
+    res := -1;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Not Found in Black list -> access
+    res := 0;
+  END;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Not found in White list -> no access
+  res := -1;
 END;
