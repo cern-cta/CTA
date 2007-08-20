@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2007/08/07 15:13:07 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2007/08/20 10:23:43 $ $Author: sponcec3 $
  *
  *
  *
@@ -220,7 +220,10 @@ const char* castor::ServicesIdStrings[ServicesIdsNb] = {
   "ORACLEANSVC",
   "ORARMMASTERSVC",
   "DBPARAMSSVC",
-  "ORAJOBMANAGERSVC"
+  "ORAJOBMANAGERSVC",
+
+  "DBRHSVC",
+  "ORARHSVC"
 };
 
 //=============================================================================

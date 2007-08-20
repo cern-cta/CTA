@@ -197,7 +197,10 @@ namespace castor {
     SVC_ORACLEANSVC = 37,
     SVC_ORARMMASTERSVC = 38,
     SVC_DBPARAMSSVC = 39,
-    SVC_ORAJOBMANAGERSVC = 30
+    SVC_ORAJOBMANAGERSVC = 40,
+
+    SVC_DBRHSVC = 41,
+    SVC_ORARHSVC = 42
   };
 
   /**
@@ -230,7 +233,7 @@ namespace castor {
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 41;
+  static const unsigned int ServicesIdsNb = 43;
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -247,7 +250,7 @@ namespace castor {
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[41];
+  extern const char* ServicesIdStrings[43];
 
   /**
    * Names of the differents representations, used to display
