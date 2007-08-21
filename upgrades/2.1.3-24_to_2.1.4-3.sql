@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/17 14:47:05 $ $Author: itglp $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/21 14:20:18 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-0
  *
@@ -48,7 +48,17 @@ ALTER TABLE Stream ADD (byteVolume INTEGER);
 
 DROP TABLE FilesDeletedProcOutput;
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput (fileid NUMBER, nshost VARCHAR2(2048)) ON COMMIT PRESERVE ROWS;
- 
+
+/* Define black and white list tables with open access */
+CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
+CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
+BEGIN
+  FOR sc IN (SELECT id FROM SvcClass) LOOP
+    INSERT INTO WhiteList VALUES (sc.id, NULL, NULL, NULL);
+  END LOOP;
+  COMMIT;
+END;
+
 /* Change SubRequest partitions to reflect new statuses for the jobManager */
 ALTER TABLE SubRequest MODIFY PARTITION P_STATUS_3 ADD VALUES (13, 14);
 ALTER TABLE SubRequest RENAME PARTITION P_STATUS_3 TO P_STATUS_3_13_14;
