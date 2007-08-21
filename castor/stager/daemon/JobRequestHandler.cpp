@@ -352,10 +352,10 @@ namespace castor{
 	  char jobManagerHost[CA_MAXHOSTNAMELEN+1];
 	  jobManagerHost[0]='\0';
 	  int jobManagerPort = DEFAULT_NOTIFICATION_PORT;
-	  char *value= NULL;
+
+	  char *value = getconfent("JOBMANAGER", "NOTIFYPORT", 0);
 	  
-	  if((value= getconfent("JOBMANAGER", "NOTIFYPORT", 0)) != NULL){
-	    
+	  if(value){	    
 	    jobManagerPort = std::strtol(value, 0, 10);
 	    if (jobManagerPort < 0) {
 	      jobManagerPort = DEFAULT_NOTIFICATION_PORT;
@@ -369,8 +369,10 @@ namespace castor{
 	    e.getMessage() << "(StagerJobRequestHandler)Null JobManager NOTIFYPORT value configured: " << jobManagerPort << std::endl;
 	    throw e;
 	  }
+
 	  
-	  if((value = getconfent("JOBMANAGER", "HOST", 0)) != NULL){
+	  value =  getconfent("JOBMANAGER", "HOST", 0);
+	  if(value){
 	    strncpy(jobManagerHost, value, CA_MAXHOSTNAMELEN);
 	    jobManagerHost[CA_MAXHOSTNAMELEN] = '\0';
 	  }else{

@@ -107,10 +107,9 @@ namespace castor{
 		}else{
 		  /* update the subrequest table (coming from the latest stager_db_service.c) */
 		  stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
-		  stgRequestHelper->subrequest->setXsize(this->xsize);
-		  
-		} 
-	      }
+		}
+	      }		 
+	      stgRequestHelper->subrequest->setXsize(this->xsize);
 
 	      /* updateSubrequestStatus Part: */
 	      this->newSubrequestStatus= SUBREQUEST_READYFORSCHED;
