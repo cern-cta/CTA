@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.484 $ $Date: 2007/08/21 15:27:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.485 $ $Date: 2007/08/21 15:33:09 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -180,6 +180,27 @@ CREATE GLOBAL TEMPORARY TABLE ArchivedRequestCleaning
 CREATE GLOBAL TEMPORARY TABLE OutOfDateRequestCleaning
   (id NUMBER NOT NULL ENABLE, type NUMBER NOT NULL ENABLE)
   ON COMMIT PRESERVE ROWS;
+
+/**
+  * Black and while list mechanism
+  * In order to be able to enter a request for a given service class, you need :
+  *   - to be in the white list for this service class
+  *   - to not be in the black list for this services class
+  * Being in a list means :
+  *   - either that your uid,gid is explicitely in the list
+  *   - or that your gid is in the list with null uid (that is group wildcard)
+  *   - or there is an entry with null uid and null gid (full wild card)
+  * The permissions can also have a request type. Default is null, that is everything.
+  * By default anybody can do anything
+  */
+CREATE TABLE WhiteList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
+CREATE TABLE BlackList (svcClass VARCHAR2(2048), euid NUMBER, egid NUMBER, reqType NUMBER);
+BEGIN
+  FOR sc IN (SELECT name FROM SvcClass) LOOP
+    INSERT INTO WhiteList VALUES (sc.name, NULL, NULL, NULL);
+  END LOOP;
+  COMMIT;
+END;
 
 
 
@@ -3749,18 +3770,6 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     NULL;
 END;
-
-/**
-  * Black and while list mechanism
-  * In order to be able to enter a request for a given service class, you need :
-  *   - to be in the white list for this service class
-  *   - to not be in the black list for this services class
-  * Being in a list means :
-  *   - either that your uid,gid is explicitely in the list
-  *   - or that your gid is in the list with null uid (that is group wildcard)
-  *   - or there is an entry with null uid and null gid (full wild card)
-  * The permissions can also have a request type. Default is null, that is everything
-  */
 
 /* Check permissions */
 CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
