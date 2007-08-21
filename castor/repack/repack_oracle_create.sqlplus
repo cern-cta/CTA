@@ -9,11 +9,11 @@ CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), cre
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_3_17');
+INSERT INTO CastorVersion VALUES ('-', '2_1_4_1');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.2  Release Date: 2007/06/21 14:42:32  Author: gtaur 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.3  Release Date: 2007/07/03 16:29:05  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code

@@ -295,7 +295,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_3_17');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_4_1');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -315,7 +315,7 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0, 'rtcpcld');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (1, 'migrator');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (2, 'recaller');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (3, 'stager');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (4, 'RHLog');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (4, 'RequestHandler');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (5, 'job');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (6, 'MigHunter');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (7, 'rmmaster');
@@ -327,7 +327,7 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (12, 'rfio');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (13, 'SRMServer');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (14, 'SRMDaemon');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (15, 'Repack');
-INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (16, 'cleaning');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (16, 'Cleaning');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (17, 'tpdaemon');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'RmMaster');
