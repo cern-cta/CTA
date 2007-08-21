@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PermissionDenied.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/20 10:17:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: PermissionDenied.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/21 10:31:18 $ $Author: sponcec3 $
  *
  * 
  *
@@ -33,4 +33,4 @@
 // Constructor
 // -----------------------------------------------------------------------
 castor::exception::PermissionDenied::PermissionDenied() :
-  castor::exception::Exception(EPERM) {}
+  castor::exception::Exception(EACCES) {}
