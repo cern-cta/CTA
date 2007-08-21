@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2007/08/20 10:27:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2007/08/21 15:56:20 $ $Author: itglp $
  *
  *
  *
@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "Caught general exception!" << std::endl;
   }
 
-  dlf_shutdown(10);
+  dlf_shutdown(1);
   return 0;
 }
 
@@ -110,14 +110,10 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Server::Server() :
-  castor::server::BaseServer("Request Handler") {
+  castor::server::BaseServer("RequestHandler") {
   // Initializes the DLF logging
-  // first the streaming way
-  initLog("RHLog", castor::SVC_DLFMSG);
-  // then with the predefined messages
   castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "New Request Arrival"},
+    {{ 1, "New Request Arrival"},
      { 2, "Could not get Conversion Service for Database"},
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
@@ -131,7 +127,7 @@ castor::rh::Server::Server() :
      {12, "Request stored in DB"},
      {13, "Waked up all services at once"},
      {-1, ""}};
-  castor::dlf::dlf_init("RHLog", messages);
+  dlfInit(messages);
   
   try {
     // create oracle and streaming conversion service
