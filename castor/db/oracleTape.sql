@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.481 $ $Date: 2007/08/20 11:25:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.482 $ $Date: 2007/08/21 06:27:37 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -480,7 +480,7 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   cfId NUMBER;
 BEGIN
   UPDATE SubRequest SET status = 8 -- FINISHED
-     WHERE id = srId
+   WHERE id = srId
   RETURNING request, castorFile INTO rid, cfId;
 
   -- Try to see whether another subrequest in the same
@@ -1279,8 +1279,8 @@ BEGIN
   -- First see whether we should wait on an ongoing request
   SELECT DiskCopy.status, DiskCopy.id
     BULK COLLECT INTO stat, dci
-    FROM DiskCopy,  FileSystem, DiskServer, Id2Type
-   WHERE  reqId  = Id2Type.id  -- Avoid that PutDone waits
+    FROM DiskCopy, FileSystem, DiskServer, Id2Type
+   WHERE reqId = Id2Type.id  -- Avoid that PutDone waits
      AND Id2Type.type != 39               -- on the prepareToPut
      AND cfId = DiskCopy.castorfile
      AND FileSystem.id(+) = DiskCopy.fileSystem
@@ -3671,7 +3671,6 @@ BEGIN
 END;
 
 /* PL/SQL method implementing failSchedulerJob */
-
 CREATE OR REPLACE PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, srErrorMessage IN VARCHAR2, res OUT INTEGER) AS
 BEGIN
   -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
@@ -3683,6 +3682,8 @@ BEGIN
      SET status = 7,      -- SUBREQUEST_FAILED
          errorCode = srErrorCode,
          errorMessage = case srErrorCode
+           when 1718 then -- ESTNOTAVAIL
+             'All copies of this file are unavailable for now. Please retry later'
            when 1719 then -- ESTJOBKILLED
              'Job killed by service administrator'
            when 1720 then -- ESTJOBTIMEDOUT
