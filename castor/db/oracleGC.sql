@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.482 $ $Date: 2007/08/21 06:27:37 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.483 $ $Date: 2007/08/21 14:17:48 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3763,7 +3763,7 @@ END;
   */
 
 /* Check permissions */
-CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN NUMBER,
+CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             ieuid IN NUMBER,
                                             iegid IN NUMBER,
                                             ireqType IN NUMBER,
