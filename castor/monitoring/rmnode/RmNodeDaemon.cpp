@@ -167,9 +167,7 @@ int main(int argc, char* argv[]) {
 // also initialises the logging facility
 //------------------------------------------------------------------------------
 castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
-  castor::server::BaseDaemon("RmNodeDaemon") {
-
-  castor::BaseObject::initLog("RmNode", castor::SVC_DLFMSG);
+  castor::server::BaseDaemon("RmNode") {
 
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
@@ -194,6 +192,6 @@ castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
      {19, "Bad maxFreeSpace interval value in configuration file"},
      {20, "Bad minAllowedFreeSpace interval value in configuration file"},
      {-1, ""}};
-  castor::dlf::dlf_init("RmNode", messages);
+  dlfInit(messages);
 }
 

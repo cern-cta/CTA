@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2007/07/13 10:51:30 $ $Author: itglp $
+ * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/08/21 15:57:47 $ $Author: itglp $
  *
  *
  *
@@ -118,16 +118,12 @@ int main(int argc, char *argv[]) {
 // also initialises the logging facility
 //------------------------------------------------------------------------------
 castor::repack::RepackServer::RepackServer() : 
-	castor::server::BaseDaemon("RepackServer")
+	castor::server::BaseDaemon("Repack")
 {
   // Initializes the DLF logging. This includes
   // defining the predefined messages
-   
-
-  castor::BaseObject::initLog("Repack", castor::SVC_STDMSG);
   castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "New Request Arrival"},
+    {{ 1, "New Request Arrival"},
      { 2, "Could not get Conversion Service for Database"},
      { 3, "Could not get Conversion Service for Streaming"},
      { 4, "Exception caught : server is stopping"},
@@ -176,7 +172,7 @@ castor::repack::RepackServer::RepackServer() :
      {48, "RepackMonitor: Stager doesn't know this request id. Assuming it is over."},
      {99, "TODO::MESSAGE"},
      {-1, ""}};
-  castor::dlf::dlf_init("Repack", messages);
+  dlfInit(messages);
 
   /** the Command line parameters */
   m_cmdLineParams << "fsh";
@@ -384,9 +380,9 @@ void castor::repack::RepackServer::help(std::string programName)
   std::cout << "\nUsage: " << programName << " [options]\n"
 	    << "where options can be:\n\n"
             << "\t--foreground      or -f                \tForeground\n"
-             << "\t--help            or -h                \tThis help\n"
-            << "\t-M  num  \tRepackMonitor threads(default 1)\n"
-            << "\t-C  num  \tRepackCleaner threads(default 1)\n"
+            << "\t--help            or -h                \tThis help\n"
+            << "\t-M num   \tRepackMonitor threads(default 1)\n"
+            << "\t-C num   \tRepackCleaner threads(default 1)\n"
             << "\t-c num   \tRepackFileChecker threads(default 1)\n"
             << "\t-S num   \tRepackFileStager threads(default 1)\n"
             << "\t-W num   \tRepackWorker threads(default 1)\n\n"

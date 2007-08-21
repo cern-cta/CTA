@@ -164,14 +164,12 @@ int main(int argc, char* argv[]) {
 //------------------------------------------------------------------------------
 castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon()
 throw (castor::exception::Exception) :
-  castor::server::BaseDaemon("RmMasterDaemon") {
+  castor::server::BaseDaemon("RmMaster") {
 
-  castor::BaseObject::initLog("RmMaster", castor::SVC_DLFMSG);
   // Initializes the DLF logging. This includes
   // registration of the predefined messages
   castor::dlf::Message messages[] =
-    {{ 0, ""},
-     { 1, "Bad interval value in configuration file"},
+    {{ 1, "Bad interval value in configuration file"},
      { 2, "Starting RmMaster Daemon"},
      { 3, "Starting of RmMaster Daemon failed"},
      { 4, "Unable to get shared memory id. Giving up"},
@@ -215,7 +213,7 @@ throw (castor::exception::Exception) :
      {42, "Admin change request detected, diskserver DELETED"},
      {43, "Admin change request detected for diskserver, setting new status"},
      {-1, ""}};
-  castor::dlf::dlf_init("RmMaster", messages);
+  dlfInit(messages);
 
   // get the cluster status singleton
   bool created = true;
