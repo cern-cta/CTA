@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/20 10:23:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/21 14:16:46 $ $Author: sponcec3 $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -46,7 +46,7 @@ static castor::SvcFactory<castor::db::ora::OraRHSvc>* s_factoryOraRHSvc =
 
 /// SQL statement for checkPermission
 const std::string castor::db::ora::OraRHSvc::s_checkPermissionStatementString =
-  "BEGIN checkPermission(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
+  "BEGIN checkPermission(:1, :2, :3, :4, :5); END;";
 
 // -----------------------------------------------------------------------
 // OraRHSvc
@@ -123,14 +123,20 @@ void castor::db::ora::OraRHSvc::checkPermission
       castor::exception::PermissionDenied ex;
       ex.getMessage() << "You don't have right to make a request of type "
                       << castor::ObjectsIdStrings[type]
-                      << " in service class " << svcClassName;
+                      << " in service class '";
+      if (0 == svcClassName.size()) {
+        ex.getMessage() << "default";
+      } else {
+        ex.getMessage() << svcClassName;
+      }
+      ex.getMessage() << "'\n";
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in updateAndCheckSubRequest."
+      << "Error caught in checkPermission."
       << std::endl << e.what();
     throw ex;
   }
