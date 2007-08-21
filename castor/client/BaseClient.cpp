@@ -232,10 +232,8 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   requestId = ack->requestId();
   setRequestId(requestId);
   if (!ack->status()) {
-    castor::exception::InvalidArgument e; // XXX To be changed
-    e.getMessage() << "Server Error "
-                   << ack->errorCode() << " :" << std::endl
-                   << ack->errorMessage();
+    castor::exception::Exception e(ack->errorCode()); // XXX To be changed
+    e.getMessage() << ack->errorMessage();
     delete ack;
     throw e;
   }
