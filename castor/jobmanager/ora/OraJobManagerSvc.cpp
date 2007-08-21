@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/16 12:40:27 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -61,6 +61,11 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleStri
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJobString =
   "UPDATE SubRequest SET status = :1 WHERE status = 14 AND id = :2";
 
+/// SQL statement for function fileSystemStates
+const std::string castor::jobmanager::ora::OraJobManagerSvc::s_fileSystemStatesString =
+  "SELECT diskserver.name, filesystem.mountpoint, diskserver.status, filesystem.status \
+     FROM filesystem, diskserver \
+    WHERE filesystem.diskserver = diskserver.id";
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -70,7 +75,8 @@ castor::jobmanager::ora::OraJobManagerSvc::OraJobManagerSvc
   OraCommonSvc(name),
   m_failSchedulerJobStatement(0),
   m_jobToScheduleStatement(0),
-  m_updateSchedulerJobStatement(0) {}
+  m_updateSchedulerJobStatement(0),
+  m_fileSystemStatesStatement(0) {}
 
 
 //-----------------------------------------------------------------------------
@@ -111,6 +117,8 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
       deleteStatement(m_jobToScheduleStatement);
     if (m_updateSchedulerJobStatement)
       deleteStatement(m_updateSchedulerJobStatement);
+    if (m_fileSystemStatesStatement)
+      deleteStatement(m_fileSystemStatesStatement);
   } catch (oracle::occi::SQLException e) {
     // Do nothing
   }
@@ -119,6 +127,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
   m_failSchedulerJobStatement = 0;
   m_jobToScheduleStatement = 0;
   m_updateSchedulerJobStatement = 0;
+  m_fileSystemStatesStatement = 0;
 }
 
 
@@ -300,3 +309,43 @@ void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
     throw ex;
   }
 }
+
+
+//-----------------------------------------------------------------------------
+// fileSystemStates
+//-----------------------------------------------------------------------------
+void castor::jobmanager::ora::OraJobManagerSvc::fileSystemStates
+(std::map<std::string, castor::stager::FileSystemStatusCodes> &result)
+  throw(castor::exception::Exception) {
+
+  // Initialize statements
+  try {
+    if (m_fileSystemStatesStatement == NULL) {
+      m_fileSystemStatesStatement = createStatement(s_fileSystemStatesString);
+      m_fileSystemStatesStatement->setAutoCommit(true);
+    }
+
+    // Run through the cursor
+    oracle::occi::ResultSet *rs = m_fileSystemStatesStatement->executeQuery();
+    while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
+      castor::stager::FileSystemStatusCodes status = 
+	(castor::stager::FileSystemStatusCodes)rs->getDouble(4);
+      if (rs->getDouble(3) == castor::stager::DISKSERVER_DISABLED) {
+	status = castor::stager::FILESYSTEM_DISABLED;
+      }
+
+      // We store the status under a diskserver:filesystem combination
+      std::ostringstream key(rs->getString(1));
+      key << ":" << rs->getString(2);
+      result[key.str()] = status;
+    }
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in fileSystemsStates."
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+}
+

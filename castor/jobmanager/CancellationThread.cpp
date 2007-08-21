@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/13 15:49:23 $ $Author: waldron $
+ * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a 
  * PENDING status for too long 
@@ -41,7 +41,10 @@
 //-----------------------------------------------------------------------------
 castor::jobmanager::CancellationThread::CancellationThread(int timeout)
   throw(castor::exception::Exception) :
-  m_cleanPeriod(3600), m_timeout(timeout), m_initialized(false) {
+  m_cleanPeriod(3600), 
+  m_timeout(timeout), 
+  m_initialized(false), 
+  m_resReqKill(false) {
 
   // Initialize the oracle job manager service.
   castor::IService *orasvc =
@@ -159,6 +162,40 @@ void castor::jobmanager::CancellationThread::run(void *param) {
     }
   }
 
+  // The job manager also has the ability to terminate any job in LSF if the
+  // all of the requested filesystems are no longer available. This prevents 
+  // the queues from accumulating jobs that will never run. For example, when a 
+  // diskserver is removed from production and never returns.
+  m_resReqKill = false;
+  char *value  = getconfent("JobManager", "ResReqKill", 0);
+  if (value != NULL) {
+    if (!strcasecmp(value, "yes")) {
+      m_resReqKill = true;
+    }
+  }
+
+  // First determine the status of all filesystems known by the stager. This
+  // will be used to cross reference jobs requested filesystems with those
+  // actually available
+  try {
+    m_fileSystemStates.clear();
+    if (m_resReqKill)
+      m_jobManagerService->fileSystemStates(m_fileSystemStates);
+  } catch (castor::exception::Exception e) {
+    
+    // "Exception caught in trying to get filesystem states, continuing anyway"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Code", sstrerror(e.code())),
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 30, 2, params);
+  } catch (...) {
+    
+    // "Failed to execute fileSystemStates procedure, continuing anyway"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", "General exception caught")};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 31, 1, params);
+  }
+
   // Retrieve a list of all LSF jobs recently finished. This will allow us to
   // determine those jobs which have exited abnormally. As this is a call to 
   // mbatch (LSF batch master) a response cannot be guaranteed. Should a 
@@ -239,13 +276,14 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
   // allows us to be more tolerant to changes in the extsched options in the 
   // future
   std::istringstream extsched(job->submit.extsched), iss;
+  std::vector<std::string> rfs;
   std::string key, value, token;
   u_signed64 type = 0;
   Cuuid_t requestId = nullCuuid, subRequestId = nullCuuid;
   Cns_fileid fileId;
   memset(&fileId, '\0', sizeof(fileId));
   
-  while (std::getline(extsched, token, ';')){
+  while (std::getline(extsched, token, ';')) {
     std::istringstream iss(token);
     std::getline(iss, key, '=');
     iss >> value;
@@ -260,6 +298,12 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
 	strncpy(fileId.server, value.c_str(), CA_MAXHOSTNAMELEN);
       } else if (key == "TYPE") {
 	type = strutou64(value.c_str());
+      } else if (key == "RFS") {
+	std::istringstream requestedFileSystems(value);
+	// Tokenize the requested filesystems using '|' as a delimiter
+	while (std::getline(requestedFileSystems, token, '|')) {
+	  rfs.push_back(token);
+	}
       }
     }
   }
@@ -301,6 +345,7 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
     m_pendingTimeouts.find(job->submit.queue);
   if (it != m_pendingTimeouts.end()) {
     if ((u_signed64)(time(NULL) - job->submitTime) > (*it).second) {
+
       // LSF has the capacity to kill jobs on bulk (lsb_killbulkjobs). 
       // However testing has shown that this call fails to invoke the 
       // deletion hook of the scheduler plugin and results in a memory 
@@ -328,9 +373,41 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
 	   castor::dlf::Param("Type", castor::ObjectsIdStrings[type]),
 	   castor::dlf::Param("Timeout", (*it).second),
 	   castor::dlf::Param(subRequestId)};
-	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 25, 5, params, &fileId);	  
+	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 25, 5, params, &fileId);
+	return;
       }
     }
+  }
+
+  // Check to see if at least on of the jobs requested filesystems is still
+  // available. If not we terminate the job to prevent it remaining in LSF 
+  // waiting for a resource that may never return.
+  if (m_resReqKill) {
+    for (std::vector<std::string>::const_iterator it = rfs.begin();
+	 it != rfs.end();
+	 it++) {
+
+      // If the diskserver:filesystem combination exists return control to the
+      // callee.
+      std::map<std::string, 
+	castor::stager::FileSystemStatusCodes>::const_iterator iter =
+	m_fileSystemStates.find(*it);
+      if (iter != m_fileSystemStates.end()) {
+	if (iter->second != castor::stager::FILESYSTEM_DISABLED) {
+	  return;
+	}
+      }    
+    }
+    // Terminate the job
+    failSubRequest(requestId, subRequestId, fileId, ESTNOTAVAIL);
+
+    // "Job terminated, all requested filesystems are DISABLED"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("JobId", (int)job->jobId),
+       castor::dlf::Param("User", job->user),
+       castor::dlf::Param("Type", castor::ObjectsIdStrings[type]),
+       castor::dlf::Param(subRequestId)};
+    castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 32, 4, params, &fileId);
   }
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/13 15:42:19 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -221,7 +221,10 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 27, "Cancellation thread interval is greater then CLEAN_PERIOD in lsb.params, detection of abnormally EXITING jobs disabled" },
      { 28, "Exception caught in trying to fail subrequest" },
      { 29, "Failed to execute failSchedulerJob procedure" },
-    
+     { 30, "Exception caught in trying to get filesystem states, continuing anyway" },
+     { 31, "Failed to execute fileSystemStates procedure, continuing anyway" },
+     { 32, "Job terminated, all requested filesystems are DISABLED" },
+
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },
      { 41, "Invalid JobManager/SubmitRetryInterval option, using default" },

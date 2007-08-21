@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
  *
  * This class provides methods for managing jobs
  *
@@ -30,8 +30,11 @@
 // Include files
 #include "castor/stager/ICommonSvc.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+#include "castor/stager/FileSystemStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/jobmanager/JobSubmissionRequest.hpp"
+#include <map>
+
 
 namespace castor {
 
@@ -82,7 +85,17 @@ namespace castor {
       (const castor::jobmanager::JobSubmissionRequest *request,
        const castor::stager::SubRequestStatusCodes status)
 	throw(castor::exception::Exception) = 0;
-      
+
+      /**
+       * Returns a map of all filesystems and their associated status. If
+       * the diskserver the filesystem is linked to is disabled. The
+       * filesystem will also appear as disabled.
+       * @exception Exception in case of error
+       */
+      virtual void fileSystemStates
+      (std::map<std::string, castor::stager::FileSystemStatusCodes> &result)
+	throw(castor::exception::Exception) = 0;
+
     };
 
   } // End of namespace jobmanager

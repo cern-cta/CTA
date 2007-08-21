@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CancellationThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: CancellationThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -82,7 +82,8 @@ namespace castor {
       
       /**
        * Process an LSF job to determine whether it exited the queue
-       * abnormally or has timed out waiting and needs to be killed
+       * abnormally, timed out or has resource requirements that can no longer
+       * by fulfilled.
        * @param job The LSF job structure
        */
       virtual void processJob(jobInfoEnt *job);
@@ -114,12 +115,20 @@ namespace castor {
       /// The LSF_API has been initialized ?
       bool m_initialized;
 
+      /// Kill jobs if all requested filesystems are no longer available?
+      bool m_resReqKill;
+
       /// A container holding the timeout values for all service classes
       std::map<std::string, u_signed64> m_pendingTimeouts;
       
       /// A container holding a list of jobs already processed
       std::map<std::string, u_signed64> m_processedCache;
 
+      /// A container holding the list of current filesystems and their status
+      /// as known by the stager
+      std::map
+        <std::string, castor::stager::FileSystemStatusCodes> m_fileSystemStates;
+      
     };
 
   } // End of namespace jobmanager
