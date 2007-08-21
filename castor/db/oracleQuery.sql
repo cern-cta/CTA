@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.483 $ $Date: 2007/08/21 14:17:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.484 $ $Date: 2007/08/21 15:27:46 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3773,7 +3773,8 @@ BEGIN
   SELECT reqType
     INTO unused
     FROM WhiteList
-   WHERE (svcClass = isvcClass OR svcClass IS NULL)
+   WHERE (svcClass = isvcClass OR svcClass IS NULL
+          OR (length(isvcClass) IS NULL AND svcClass = 'default'))
      AND (egid = iegid OR egid IS NULL)
      AND (euid = ieuid OR euid IS NULL)
      AND (reqType = ireqType OR reqType IS NULL);
@@ -3781,7 +3782,8 @@ BEGIN
     SELECT reqType
       INTO unused
       FROM BlackList
-     WHERE (svcClass = isvcClass OR svcClass IS NULL)
+     WHERE (svcClass = isvcClass OR svcClass IS NULL
+            OR (length(isvcClass) IS NULL AND svcClass = 'default'))
        AND (egid = iegid OR egid IS NULL)
        AND (euid = ieuid OR euid IS NULL)
        AND (reqType = ireqType OR reqType IS NULL);
