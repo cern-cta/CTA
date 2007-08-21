@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/08/21 15:57:34 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
 	interval = DEFAULT_KILLRETRY_INTERVAL;
       } else if (interval < 10) {
 	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "KillRetryInterval value too small: " << processes
+	e.getMessage() << "KillRetryInterval value too small: " << interval
 		       << "- must be > 10" << std::endl;
 	throw e;
       }
