@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDbThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/06/28 15:12:59 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDbThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/21 16:58:18 $ $Author: itglp $
  *
  * Base class for a database oriented thread. It correctly implements the stop
  * method, but it can be used only for a pool with a single thread.
@@ -31,13 +31,11 @@
 #include "castor/Services.hpp"
 
 //------------------------------------------------------------------------------
-// run
+// init
 //------------------------------------------------------------------------------
-void castor::server::BaseDbThread::run(void* param) {
-  if(m_cnvSvc == 0) {
-    castor::IService* s = svcs()->service("DbCnvSvc", castor::SVC_DBCNV);
-    m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(s);
-  }
+void castor::server::BaseDbThread::init() {
+  castor::IService* s = svcs()->service("DbCnvSvc", castor::SVC_DBCNV);
+  m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>(s);
 }
 
 //------------------------------------------------------------------------------

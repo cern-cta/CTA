@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDbThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/07/09 17:06:01 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDbThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/21 16:58:18 $ $Author: itglp $
  *
  * Base class for a database oriented thread. It correctly implements the stop
  * method, but it can be used only for a pool with a single thread.
@@ -39,7 +39,7 @@ namespace castor {
  namespace server {
 
   /**
-   * Basic select/process thread for internal stager services.
+   * Basic abstract db thread which drops the db connection upon stop
    */
   class BaseDbThread : public virtual IThread, public castor::BaseObject {
   public:
@@ -47,17 +47,12 @@ namespace castor {
     /**
      * Empty constructor
      */
-    BaseDbThread() {};
+    BaseDbThread() { m_cnvSvc = 0; };
 
     /**
-     * Empty init method
+     * Init method. Creates a db connection
      */
-    virtual void init() {};
-
-    /**
-     * Main work for this thread. Creates a db connection
-     */
-    virtual void run(void* param);
+    virtual void init();
 
     /**
      * Stops the thread and drops its db connection
