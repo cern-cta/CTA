@@ -620,13 +620,13 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srSubReqId OUT VARCHAR2) AS
  firstRow VARCHAR2(18);
  CURSOR c IS
-  SELECT rowidtochar(rowid) FROM SubRequest
-   WHERE status in (0,1,2)    -- START, RESTART, RETRY
-     AND EXISTS
-       (SELECT /*+ index(I_Id2Type_id) */ 'x'
-         FROM Id2Type
-        WHERE type in (35,36,37,38,39,40,42,44,95,119)
-          AND Id2Type.id = SubRequest.request);
+  SELECT rowidtochar(rowid) FROM SubRequest                                                                                  
+   WHERE status in (0,1,2)    -- START, RESTART, RETRY                                                                       
+     AND EXISTS                                                                                                              
+       (SELECT /*+ index(a I_Id2Type_id) */ 'x'                                                                                
+         FROM Id2Type a 
+        WHERE a.type in (35,36,37,38,39,40,42,44,95,119)                                                                       
+          AND a.id = SubRequest.request);
         --AND Id2Type.type = Type2Obj.type
         --AND Type2Obj.svcHandler = service;
 BEGIN
