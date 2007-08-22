@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/22 06:32:52 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.9 $ $Release$ $Date: 2007/08/22 11:51:15 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -72,15 +72,23 @@ start() {
                         failure && echo && exit
                 fi
         fi
-        echo
 
         # Start daemons
         if [ "$type" == "public" -o ! -n "$type" ]; then
+	        echo
                 echo -n $"Starting rhserver on public port: "
                 execute "public"
         fi
 
-        if [ "$type" == "private" -a "$port" != "" -o ! -n "$type" ]; then
+       	if [ "$type" == "private" ]; then
+		if [ "$port" == "" ]; then
+		        echo -n $"no private port defined"
+			failure && echo && exit
+		fi
+	fi
+
+        if [ "$type" == "private" -o "$type" == "" -a "$port" != "" ]; then
+	        echo
                 echo -n $"Starting rhserver on private port: "
                 execute "private"
         fi
@@ -90,10 +98,16 @@ start() {
 }
 
 execute() {
+        local pid
 
         # Check if daemon is already running
         if [ -e /var/lock/subsys/$prog.$1 ]; then
-                if [ -n "`/sbin/pidof $prog`" ]; then
+	        if [ "$1" == "public" ]; then
+		        pid=`pgrep -f "$prog\$" | xargs`
+		else
+                        pid=`pgrep -f "$prog $port\$" | xargs`	
+		fi
+                if [ -n "$pid" ]; then
                         echo -n $"already running"
                         failure
                         echo
@@ -121,6 +135,12 @@ stop() {
     
         RETVAL=0
         echo -n $"Stopping $prog $1: "
+	if [ "$type" == "private" ]; then
+	        if [ "$port" == "" ]; then
+		        echo -n $"no private port defined"
+			failure && echo && return 2
+		fi
+	fi
         if [ "$1" == "public" ]; then
                 pid=`pgrep -f "$prog\$" | xargs`
         else
@@ -201,7 +221,8 @@ case "$1" in
                 if [ "$type" == "public" -o ! -n "$type" ]; then
                         stop "public"
                 fi
-                if [ "$type" == "private" -a "$port" != "" -o ! -n "$type" ]; then
+
+                if [ "$type" == "private" -o "$type" == "" -a "$port" != "" ]; then
                         stop "private"
                 fi
                 ;;
@@ -210,7 +231,7 @@ case "$1" in
                         status "public"
                         RETVAL=$?
                 fi
-                if [ "$type" == "private" -a "$port" != "" -o ! -n "$type" ]; then
+                if [ "$type" == "private" -o "$type" == "" -a "$port" != "" ]; then
                         status "private"
                         RETVAL=$?
                 fi
