@@ -572,7 +572,7 @@ setcookie("style", $_GET['style']);
 									if ($act_name == "NS File ID") {
 										if ($use_database_view) {
 											echo "<td class=\"".$class."\">";
-											echo "<a href=\"".$_SERVER['PHP_SELF']."?".$drill."&amp;".$get_url."&amp;".str_replace("m_", "", $href_name)."=".$value."\">".$value."</a></br>";
+											echo "<a href=\"".$_SERVER['PHP_SELF']."?".$drill."&amp;".$get_url."&amp;".str_replace("m_", "", $href_name)."=".$value."\">".$value."</a><br />";
 											echo "<a href=\"dbview.php?instance=".$_GET['instance']."&amp;entry=castorfile&amp;param=".urlencode($value)."\" target=\"blank\">Stager DB</a>";
 											echo "</td>";
 										} else {
