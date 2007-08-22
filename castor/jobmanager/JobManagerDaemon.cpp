@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/08/21 15:57:34 $ $Author: itglp $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/08/22 06:31:34 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -72,8 +72,7 @@ int main(int argc, char *argv[]) {
 
     // Create the preforked workers used to submit jobs into LSF. We do this
     // before creating any threads to minimise duplication of thread specific
-    // data in the child process. The thread of course will be dead, its data
-    // however will not! fork(2)
+    // data in the child process. 
     char *value = getconfent("JobManager", "PreforkedWorkers", 0);
     int processes = DEFAULT_PREFORKED_WORKERS;
     if (value) {
