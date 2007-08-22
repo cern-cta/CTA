@@ -1,17 +1,22 @@
+# Arguments for the rhserver
+#   -c <path>      configuration file
+#   -f             keep process in the foreground, do not fork
+#   -p <integer>   port to be used
+#   -R <integer>   the number of request handling threads
 #
-# $Id: rhserver.sysconfig,v 1.2 2007/07/11 11:48:32 waldron Exp $
-#
-# @(#)$RCSfile: rhserver.sysconfig,v $ $Revision: 1.2 $ $Date: 2007/07/11 11:48:32 $ CERN/IT/ADC/CA Jean-Damien Durand
-#
-# should rhserver run?
-# any string but "YES" will equivalent to "NO"
-#
+# Options ot pass to the rmMasterDaemon
+#RHSERVER_OPTIONS=
+
+# Should the rhserver run ? Any string but "YES" will be equivalent to "NO"
 RHSERVER_RUN="YES"
-#
-# should we run with another limit on the number of file descriptors than the default?
-# any string will be passed to ulimit -n
+
+# A second rhserver should run on a private (internal) port?
+#RHSERVER_PRIVATE_PORT=9004
+
+# Should we run with another limit on the number of file descriptors 
+# different from the default? any string will be passed to ulimit -n
 #ULIMIT_N=4096
-#
-# should we run with another limit on the core file size than the default?
+
+# Should we run with another limit on the core file size than the default?
 # any string will be passed to ulimit -c
 ULIMIT_C=unlimited

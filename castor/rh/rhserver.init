@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.7 $ $Release$ $Date: 2007/06/28 11:23:53 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/22 06:32:52 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -32,6 +32,7 @@
 
 # Variables
 prog="rhserver"
+port=""
 RETVAL=0
 
 # Source sysconfig files
@@ -42,22 +43,56 @@ if [ -f /etc/sysconfig/$prog ]; then
 	. /etc/sysconfig/$prog
 fi
 
+# Get rhservers private port for internal use only
+if [ -n "${RHSERVER_PRIVATE_PORT}" ]; then
+        port="-p ${RHSERVER_PRIVATE_PORT}"
+fi
+
+# Check which type of rhserver to perform actions on
+if [ -n "$2" ]; then
+        if [ "$2" != "public" -a "$2" != "private" ]; then
+                echo $"Usage: $0 {start|stop|status|restart|condrestart} [public|private]"
+                exit 1
+        fi
+        type=$2
+fi
+
+# Functions
 start() {
-	# run daemon
-	echo -n $"Starting $prog: "
 
-	# process sysconfig settings
-	if [ -f /etc/sysconfig/$prog ]; then
+        # Run daemon
+        echo -n $"Starting $prog: "
 
-		# enabled ?	    
-		if [ "${RHSERVER_RUN}" != "YES" ]; then
-			echo -n $"$prog disabled in /etc/sysconfig/$prog" 
-			failure && echo && exit
-		fi
-	fi
+        # Process sysconfig settings
+        if [ -f /etc/sysconfig/$prog ]; then
+	
+                # Enabled ?	    
+                if [ "${RHSERVER_RUN}" != "YES" ]; then
+                        echo -n $"disabled in /etc/sysconfig/$prog" 
+                        failure && echo && exit
+                fi
+        fi
+        echo
 
-        # check if daemon is already running
-        if [ -e /var/lock/subsys/$prog ]; then
+        # Start daemons
+        if [ "$type" == "public" -o ! -n "$type" ]; then
+                echo -n $"Starting rhserver on public port: "
+                execute "public"
+        fi
+
+        if [ "$type" == "private" -a "$port" != "" -o ! -n "$type" ]; then
+                echo -n $"Starting rhserver on private port: "
+                execute "private"
+        fi
+
+        RETVAL=$?
+        return $RETVAL
+}
+
+execute() {
+
+        # Check if daemon is already running
+        if [ -e /var/lock/subsys/$prog.$1 ]; then
                 if [ -n "`/sbin/pidof $prog`" ]; then
                         echo -n $"already running"
                         failure
@@ -66,53 +101,130 @@ start() {
                 fi
         fi
 
-	daemon /usr/bin/$prog $RHSERVER_OPTIONS
-	
-	RETVAL=$?
-	[ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
-	echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
-	return $RETVAL
+        # Start the daemon
+        if [ "$1" == "public" ]; then
+                daemon /usr/bin/rhserver $RHSERVER_OPTION
+        else
+                daemon /usr/bin/rhserver $port $RHSERVER_OPTION
+        fi
+    
+        ETVAL=$?
+        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+        echo
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog.$1
+
+        return $RETVAL
 }
 
 stop() {
-	echo -n $"Stopping $prog: "
-	killproc $prog
-	
-	RETVAL=$?
-	echo
-	[ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
-	[ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
-	return $RETVAL	
+        local pid
+    
+        RETVAL=0
+        echo -n $"Stopping $prog $1: "
+        if [ "$1" == "public" ]; then
+                pid=`pgrep -f "$prog\$" | xargs`
+        else
+                pid=`pgrep -f "$prog $port\$" | xargs`	
+        fi
+    
+	# Attempt to stop the process with a TERM first then a KILL
+        if [ -n "$pid" ]; then
+                kill -TERM $pid >/dev/null 2>&1
+                usleep 100000
+                if [ "$1" == "public" ]; then
+                        pid=`pgrep -f "$prog\$" | xargs`
+                else
+                        pid=`pgrep -f "$prog $port\$" | xargs`	
+                fi
+                if [ -n "$pid" ]; then
+                        kill -KILL $pid >/dev/null 2>&1
+	        else
+                        success $"$prog $1 shutdown"
+	        fi
+        else
+                failure $"$base startup"
+        fi
+    
+        echo
+        [ -f /var/lock/subsys/$prog.$1 ] && rm -f /var/lock/subsys/$prog.$1
+        [ -f /var/run/$prog.$1.pid ] && rm -f /var/run/$prog.$1.pid   
+        return $RETVAL
 }
 
 restart() {
-	stop
-        start 
+        stop
+        start
+}
+
+status() {
+        local pid
+    
+        # First try "ps"
+        if [ "$1" == "public" ]; then
+                pid=`pgrep -f "$prog\$" | xargs`
+        else
+                pid=`pgrep -f "$prog $port\$" | xargs`	
+        fi
+        if [ -n "$pid" ]; then
+                echo $"$prog $1 (pid $pid) is running..."
+                return 0
+        fi
+
+        # Next we try "/var/run/*.pid" files
+        if [ -f /var/run/$prog.$1.pid ]; then
+                read pid < /var/run/$prog.$1.pid
+                if [ -n "$pid" ]; then
+                        echo $"$prog $1: dead but pid file exists"
+                        return 1
+                fi	
+        fi
+
+        # See if /var/lock/subsys/$prog.$1  exists
+        if [ -f /var/lock/subsys/$prog.$1 ]; then
+                echo $"$prog $1: dead but subsys locked"
+                return 2
+        fi    
+    
+        echo $"$prog $1 is stopped"
+        return 3
 }
 
 # See how we were called
 case "$1" in
-	
-	start)
-		start
-		;;
-	stop)
-		stop
-		;;
-	status)
-		status $prog
-		RETVAL=$?
-		;;
-	restart)
-		restart
-		;;
-	condrestart)
-		[ -f /var/lock/subsys/$prog ] && restart || :
-		;;
-	*)
-		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
-		exit 1
+    
+        start)
+                start
+                ;;
+        stop)
+                echo -n $"Stopping $prog: "
+                echo
+                if [ "$type" == "public" -o ! -n "$type" ]; then
+                        stop "public"
+                fi
+                if [ "$type" == "private" -a "$port" != "" -o ! -n "$type" ]; then
+                        stop "private"
+                fi
+                ;;
+        status)
+                if [ "$type" == "public" -o ! -n "$type" ]; then
+                        status "public"
+                        RETVAL=$?
+                fi
+                if [ "$type" == "private" -a "$port" != "" -o ! -n "$type" ]; then
+                        status "private"
+                        RETVAL=$?
+                fi
+
+                ;;
+        restart)
+                restart
+                ;;
+        condrestart)
+                [ -f /var/lock/subsys/$prog.public -o -f /var/local/subsys/$prog.private ] && restart || :
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|status|restart|condrestart} [public|private]"
+                exit 1	
 esac
 
 exit $RETVAL
