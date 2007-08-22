@@ -24,7 +24,7 @@
 #include "castor/stager/FileClass.hpp"
 #include "stager_uuid.h"
 #include "stager_constants.h"
-#include "serrno.h"
+
 #include "Cns_api.h"
 
 #include "Cpwd.h"
@@ -38,6 +38,9 @@
 
 #include "castor/ObjectSet.hpp"
 #include "castor/Constants.hpp"
+
+#include "serrno.h"
+#include <errno.h>
 
 #include <vector>
 #include <iostream>
@@ -366,21 +369,21 @@ namespace castor{
 	/****************************************************************************************************/
 	/* depending on fileExist and type, check the file needed is to be created or throw exception    */
 	/********************************************************************************************/
-	inline bool isFileToCreateOrException(bool fileExist) throw(castor::exception::Exception){
+	inline bool isFileToCreateOrException() throw(castor::exception::Exception){
 	  bool toCreate = false;
 	  int type = this->fileRequest->type();
 	  int subRequestFlags = this->subrequest->flags();
 	  
-	  if(!fileExist){
-	    if ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type)||((O_CREAT == (subRequestFlags & O_CREAT))&&((OBJ_StageUpdateRequest == type) ||(OBJ_StagePrepareToUpdateRequest == type)))) {
-	      /* here, we must check if serrno or its new equivalent is === ENOENT !!!!*/
-	      toCreate = true;
-	    }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRequestHelper isFileToCreateOrException) Asking for a file which doesn't exist"<<std::endl;
-	      throw ex;
-	    }
-	  }	
+	  
+	  if ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type)||((O_CREAT == (subRequestFlags & O_CREAT))&&((OBJ_StageUpdateRequest == type) ||(OBJ_StagePrepareToUpdateRequest == type)))) {
+	    /* here, we must check if serrno or its new equivalent is === ENOENT !!!!*/
+	    toCreate = true;
+	  }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRequestHelper isFileToCreateOrException) Asking for a file which doesn't exist"<<std::endl;
+	    throw ex;
+	  }
+	  
 	  return(toCreate);
 	  
 	}

@@ -59,7 +59,8 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
-
+#include "serrno.h"
+#include <errno.h>
 #include <iostream>
 #include <string>
 
@@ -226,7 +227,7 @@ namespace castor{
 	  if(!fileExist){
 
 	    /* depending on fileExist and type, check if the file needed is to be created or throw exception */
-	    if(stgRequestHelper->isFileToCreateOrException(fileExist)){
+	    if(stgRequestHelper->isFileToCreateOrException()){
 
 	      mode_t mode = (mode_t) stgRequestHelper->subrequest->modeBits();
 	      /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */

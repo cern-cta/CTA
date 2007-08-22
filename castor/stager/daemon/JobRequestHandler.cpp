@@ -35,15 +35,17 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 
 #include "castor/exception/Exception.hpp"
-#include "serrno.h"
+
 #include "castor/Constants.hpp"
 
 #include "marshall.h"
 #include "net.h"
-#include "serrno.h"
+
 #include "getconfent.h"
 #include "Cnetdb.h"
 
+#include "serrno.h"
+#include <errno.h>
 #include <iostream>
 #include <string>
 #include <list>

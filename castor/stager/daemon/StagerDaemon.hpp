@@ -9,6 +9,9 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/IObject.hpp"
 
+#include <errno.h>
+#include "serrno.h"
+
 #include <iostream>
 #include <string>
 

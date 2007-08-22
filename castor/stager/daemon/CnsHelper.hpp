@@ -19,10 +19,11 @@
 
 #include "castor/ObjectSet.hpp"
 
+#include "serrno.h"
+#include <errno.h>
 #include <iostream>
 #include <string>
-#include <errno.h>
-#include "serrno.h"
+
 #include <fcntl.h>
 
 

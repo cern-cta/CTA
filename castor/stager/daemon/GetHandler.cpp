@@ -13,7 +13,7 @@
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
-#include "serrno.h"
+
 #include "Cns_api.h"
 #include "expert_api.h"
 
@@ -26,6 +26,8 @@
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
 
+#include "serrno.h"
+#include <errno.h>
 
 #include <iostream>
 #include <string>

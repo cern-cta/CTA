@@ -18,7 +18,6 @@
 #include "castor/stager/IStagerSvc.hpp"
 
 #include "stager_constants.h"
-#include "serrno.h"
 
 #include "expert_api.h"
 
@@ -30,6 +29,9 @@
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+
+#include "serrno.h"
+#include <errno.h>
 #include <iostream>
 #include <string>
 

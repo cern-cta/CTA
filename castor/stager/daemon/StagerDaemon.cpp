@@ -5,6 +5,8 @@
 
 #include "Cgetopt.h"
 
+#include <errno.h>
+#include "serrno.h"
 
 #include "castor/exception/Exception.hpp"
 
@@ -32,6 +34,10 @@
 
 int main(int argc, char* argv[]){
   try{
+
+    /* initialize the error numbers */
+    errno = serrno =0;
+
     castor::stager::dbService::StagerMainDaemon stgMainDaemon;
     
 

@@ -17,7 +17,6 @@
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
-#include "serrno.h"
 #include "expert_api.h"
 
 #include "Cpwd.h"
@@ -36,6 +35,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 
+#include "serrno.h"
+#include <errno.h>
 #include <iostream>
 #include <string>
 

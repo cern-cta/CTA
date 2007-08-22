@@ -12,6 +12,8 @@
 #include "castor/server/SelectProcessThread.hpp"
 #include "castor/Constants.hpp"
 
+#include "serrno.h"
+#include <errno.h>
 
 #include "castor/exception/Exception.hpp"
 #include "castor/IObject.hpp"

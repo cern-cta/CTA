@@ -15,6 +15,8 @@
 #include "castor/BaseObject.hpp"
 #include "castor/ObjectSet.hpp"
 
+#include "serrno.h"
+#include <serrno.h>
 
 #include <string>
 #include <iostream>

@@ -22,6 +22,9 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
 
+#include "serrno.h"
+#include <errno.h>
+
 #include <iostream>
 #include <string>
 
