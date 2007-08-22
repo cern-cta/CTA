@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: repackserver.init,v $ $Revision: 1.5 $ $Release$ $Date: 2007/06/28 11:23:53 $ $Author: waldron $
+# @(#)$RCSfile: repackserver.init,v $ $Revision: 1.6 $ $Release$ $Date: 2007/08/22 06:29:27 $ $Author: waldron $
 #
 # chkconfig: 345 70 35
 # description: Repack Server Daemon Initialisation Script
@@ -43,20 +43,20 @@ if [ -f /etc/sysconfig/$prog ]; then
 fi
 
 start() {
-	# run daemon
+	# Run daemon
 	echo -n $"Starting $prog: "
 
-	# process sysconfig settings
+	# Process sysconfig settings
 	if [ -f /etc/sysconfig/$prog ]; then
 
-		# enabled ?	    
+		# Enabled ?	    
 		if [ "${REPACKSERVER_RUN}" != "YES" ]; then
-			echo -n $"$prog disabled in /etc/sysconfig/$prog" 
+			echo -n $"disabled in /etc/sysconfig/$prog" 
 			failure && echo && exit
 		fi
 	fi
 
-        # check if daemon is already running
+        # Check if daemon is already running
         if [ -e /var/lock/subsys/$prog ]; then
                 if [ -n "`/sbin/pidof $prog`" ]; then
                         echo -n $"already running"
