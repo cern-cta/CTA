@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.486 $ $Date: 2007/08/21 17:53:07 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.487 $ $Date: 2007/08/22 13:17:30 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2108,20 +2108,6 @@ BEGIN
  errorCode := 0;
  -- get CastorFile
  SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest where id = srId;
- -- Check whether the diskCopy is still in STAGEOUT. If not, the file
- -- was deleted via stageRm while being written to. Thus, we should just give up
- BEGIN
-   SELECT status INTO unused
-     FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
- EXCEPTION WHEN NO_DATA_FOUND THEN
-   -- so we are in the case, we give up
-   errorCode := 1;
-   -- but we still would like to have the fileId and nameserver
-   -- host for logging reasons
-   SELECT fileId, nsHost INTO fId, nh
-     FROM CastorFile WHERE id = cfId;
-   RETURN;
- END;
  -- Determine the context (Put inside PrepareToPut or not)
  BEGIN
    -- check that we are a Put or an Update
@@ -2152,7 +2138,21 @@ BEGIN
  END;
  
  IF contextPIPP != 2 THEN
-   -- update CastorFile's file size
+   -- Check whether the diskCopy is still in STAGEOUT. If not, the file
+   -- was deleted via stageRm while being written to. Thus, we should just give up
+   BEGIN
+     SELECT status INTO unused
+       FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
+   EXCEPTION WHEN NO_DATA_FOUND THEN
+     -- so we are in the case, we give up
+     errorCode := 1;
+     -- but we still would like to have the fileId and nameserver
+     -- host for logging reasons
+     SELECT fileId, nsHost INTO fId, nh
+       FROM CastorFile WHERE id = cfId;
+     RETURN;
+   END;
+   -- now we can safely update CastorFile's file size
    UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts 
     WHERE id = cfId AND (lastUpdateTime is NULL or ts > lastUpdateTime); 
    -- if ts < lastUpdateTime, we were late and another job already updated the
