@@ -1,9 +1,373 @@
+castor (2.1.4-1) unstable; urgency=low
+
+  * Second test release of the 2.1.4 series
+  * CASTOR2/castor/Constants.cpp:
+    [r1.44,2007-08-20,sponcec3] added new RH service
+  * CASTOR2/castor/Constants.hpp:
+    [r1.78,2007-08-20,sponcec3] added new RH service
+  * CASTOR2/castor/Imakefile:
+    [r1.150,2007-08-20,sponcec3] new exception PermissionDenied
+  * CASTOR2/castor/System.cpp:
+    [r 1.6,2007-08-16,sponcec3] Included a porttoi function parsing port numbers and checking the port range
+  * CASTOR2/castor/System.hpp:
+    [r 1.4,2007-08-16,sponcec3] Included a porttoi function parsing port numbers and checking the port range
+  * CASTOR2/castor/cleaning/HouseKeeping.cpp:
+    [r1.11,2007-08-21,itglp] Removed call, not needed any longer
+  * CASTOR2/castor/cleaning/SpringCleaning.cpp:
+    [r1.10,2007-08-21,itglp] Removed call, not needed any longer
+  * CASTOR2/castor/cleaning/cleaningDaemon.man:
+    [r 1.5,2007-08-14,waldron] Removed reference to expertd
+  * CASTOR2/castor/client/BaseClient.cpp:
+    [r1.63,2007-08-21,sponcec3] Fixed returned error code when acknowledgement from the RH has false status
+    [r1.62,2007-08-16,sponcec3] Dropped porttoi that was exported to castor::System and used new one
+  * CASTOR2/castor/client/BaseClient.hpp:
+    [r1.23,2007-08-16,sponcec3] Dropped porttoi that was exported to castor::System and used new one
+  * CASTOR2/castor/db/analyze/BugCleanup2_1_3.sql:
+    [r 1.4,2007-08-10,sponcec3] Added cleanup of files with multiple concurrent recalls (race condition in castor release < 2.1.4-0)
+  * CASTOR2/castor/db/analyze/BugCleanup2_1_3.sqlplus:
+    [r 1.2,2007-08-10,sponcec3] Added cleanup of files with multiple concurrent recalls (race condition in castor release < 2.1.4-0)
+  * CASTOR2/castor/db/castor_oracle_create.sql:
+    [r1.102,2007-08-22,waldron] Regenerated
+    [r1.101,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/castor/db/castor_oracle_create.sqlplus:
+    [r1.45,2007-08-22,waldron] Regenerated
+    [r1.44,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/castor/db/castor_postgres_create.sql:
+    [r1.25,2007-08-17,sponcec3] Recreated schemas according to latest code
+  * CASTOR2/castor/db/castor_postgres_drop.sql:
+    [r1.11,2007-08-17,sponcec3] Recreated schemas according to latest code
+  * CASTOR2/castor/db/cnv/DbDisk2DiskCopyDoneRequestCnv.cpp:
+    [r1.12,2007-08-17,sponcec3] Changed Disk2DiskCopyDoneRequest to store the id of the source diskCopy instead of its state
+  * CASTOR2/castor/db/cnv/DbStreamCnv.cpp:
+    [r1.15,2007-08-13,waldron] Remove byteVolume attribute from Stream object
+  * CASTOR2/castor/db/newora/Imakefile:
+    [r1.17,2007-08-20,sponcec3] added new RH service
+    [r1.16,2007-08-17,sponcec3] Added new range of DLF messages to be used by the ORACLE library
+  * CASTOR2/castor/db/ora/OraJobSvc.cpp:
+    [r1.29,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+    [r1.28,2007-08-17,sponcec3] Improved handling of prepareForMigration when file was deleted during transfer. Do not report any failure but log the fact that we recognized the situation and acted accordingly
+    [r1.27,2007-08-15,sponcec3] Added a check in prepareForMigration for the case where the file was deleted while being written to
+  * CASTOR2/castor/db/ora/OraJobSvc.hpp:
+    [r1.10,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+    [r1.207,2007-08-20,sponcec3] Avoid that two concurrent stagerGetRequests may result in two DiskCopies in status WAITTAPERECALL (#28619)
+  * CASTOR2/castor/db/ora/OraStagerSvc.hpp:
+    [r1.85,2007-08-20,sponcec3] Avoid that two concurrent stagerGetRequests may result in two DiskCopies in status WAITTAPERECALL (#28619)
+  * CASTOR2/castor/db/ora/OraTapeSvc.cpp:
+    [r1.27,2007-08-13,waldron] Removed getBytesByStream function
+  * CASTOR2/castor/db/ora/OraTapeSvc.hpp:
+    [r1.11,2007-08-13,waldron] Removed getBytesByStream function
+  * CASTOR2/castor/db/oracleSchema.sql:
+    [r 1.5,2007-08-17,sponcec3] Recreated schemas according to latest code
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.486,2007-08-21,waldron] Updated index hint in subrequestToDo to help execution plans, credits to Nilo
+    [r1.485,2007-08-21,sponcec3] White and black list creation
+    [r1.484,2007-08-21,sponcec3] take empty service class name into account
+    [r1.483,2007-08-21,sponcec3] fixed some wrong datatype
+    [r1.482,2007-08-21,waldron] Added ESTNOTAVAIL code to failSchedulerJob
+    [r1.481,2007-08-20,sponcec3] Black and White list implementation
+    [r1.480,2007-08-17,itglp] Adapted SubRequest partition values to newly introduced statuses.
+    [r1.480,2007-08-17,itglp] Fix for bug #26534: introduced DiskCopy.gcWeight in the GC policies.
+    [r1.479,2007-08-17,sponcec3] in disk2diskCopyDone,  use the id of the source diskCopy instead of its state. This fixes bug #28336 where a migration took place concurrently to replication and the status of the diskcopies were inconsistent at the end
+    [r1.478,2007-08-17,sponcec3] In prepareForMigration, will fill filid and nsHost in case of early exit for debug purposes
+    [r1.477,2007-08-15,sponcec3] Added a check in prepareForMigration for the case where the file was deleted while being written to
+    [r1.476,2007-08-14,waldron] Removed unnecessary select in stream2tapecopy triggers
+    [r1.475,2007-08-13,waldron] Fixed the selectFiles2Delete procedure which was not returning correctly the files that should be deleted. Also removed code related to byteVolume in the stream table
+  * CASTOR2/castor/db/postgresSchema.sql:
+    [r 1.4,2007-08-17,sponcec3] Recreated schemas according to latest code
+  * CASTOR2/castor/dlf/Dlf.cpp:
+    [r 1.7,2007-08-17,sponcec3] Use ::dlf_isinitialized instead of our own version so that it works also when DLF is initialized from C
+    [r 1.6,2007-08-16,sponcec3] Improved logging into DLF. You can now declare new messages even before DLF was initialized. Very useful for libraries loaded before the main is called \!
+  * CASTOR2/castor/dlf/Dlf.hpp:
+    [r 1.5,2007-08-17,sponcec3] Use ::dlf_isinitialized instead of our own version so that it works also when DLF is initialized from C
+    [r 1.4,2007-08-16,sponcec3] Improved logging into DLF. You can now declare new messages even before DLF was initialized. Very useful for libraries loaded before the main is called \!
+  * CASTOR2/castor/gc/gcDaemon.man:
+    [r 1.6,2007-08-14,waldron] Removed reference to expertd
+  * CASTOR2/castor/io/StreamDisk2DiskCopyDoneRequestCnv.cpp:
+    [r 1.9,2007-08-17,sponcec3] Changed Disk2DiskCopyDoneRequest to store the id of the source diskCopy instead of its state
+  * CASTOR2/castor/jobmanager/CancellationThread.cpp:
+    [r 1.3,2007-08-21,waldron] Added support for terminating jobs whose requested filesystems are no longer available
+    [r 1.2,2007-08-13,waldron] Fixed recursive calls to the database when an attempt to fail a job throws an exception
+  * CASTOR2/castor/jobmanager/CancellationThread.hpp:
+    [r 1.2,2007-08-21,waldron] Added support for terminating jobs whose requested filesystems are no longer available
+  * CASTOR2/castor/jobmanager/DispatchThread.cpp:
+    [r 1.2,2007-08-16,waldron] Fixed recursive submission into LSF observed on x86_64
+  * CASTOR2/castor/jobmanager/IJobManagerSvc.hpp:
+    [r 1.2,2007-08-21,waldron] Added support for terminating jobs whose requested filesystems are no longer available
+  * CASTOR2/castor/jobmanager/JobManagerDaemon.cpp:
+    [r 1.5,2007-08-22,waldron] Removed invalid comment
+    [r 1.4,2007-08-21,itglp] Fixed typo
+    [r 1.3,2007-08-21,waldron] Added support for terminating jobs whose requested filesystems are no longer available
+    [r 1.2,2007-08-13,waldron] Changed the default number of preforked workers to 2
+  * CASTOR2/castor/jobmanager/SubmissionProcess.cpp:
+    [r 1.3,2007-08-16,waldron] Fixed recursive submission into LSF observed on x86_64
+  * CASTOR2/castor/jobmanager/ora/OraJobManagerSvc.cpp:
+    [r 1.3,2007-08-21,waldron] Added support for terminating jobs whose requested filesystems are no longer available
+    [r 1.2,2007-08-16,waldron] Fixed recursive submission into LSF observed on x86_64
+  * CASTOR2/castor/jobmanager/ora/OraJobManagerSvc.hpp:
+    [r 1.2,2007-08-21,waldron] Added support for terminating jobs whose requested filesystems are no longer available
+  * CASTOR2/castor/logstream.cpp:
+    [r1.10,2007-08-17,sponcec3] Map VERBOSE mesages to verbose (and no more debug) so that they are ignored by DLF
+  * CASTOR2/castor/monitoring/Imakefile:
+    [r1.15,2007-08-13,waldron] Remove all objects when cleaning
+  * CASTOR2/castor/monitoring/rmmaster/HeartbeatThread.cpp:
+    [r 1.5,2007-08-21,waldron] Announce the disabling of a diskserver only once
+    [r 1.4,2007-08-13,waldron] Do not change the status of diskservers and filesystems who's admin status is not ADMIN_NONE
+  * CASTOR2/castor/monitoring/rmmaster/Imakefile:
+    [r1.10,2007-08-13,waldron] Remove all objects when cleaning
+  * CASTOR2/castor/monitoring/rmmaster/RmMasterDaemon.cpp:
+    [r1.14,2007-08-21,itglp] Use BaseServer::dlfInit
+  * CASTOR2/castor/monitoring/rmnode/RmNodeDaemon.cpp:
+    [r 1.6,2007-08-21,itglp] Use BaseServer::dlfInit
+  * CASTOR2/castor/repack/RepackServer.cpp:
+    [r1.31,2007-08-21,itglp] Use BaseServer::dlfInit
+  * CASTOR2/castor/repack/repack_oracle_create.sql:
+    [r 1.9,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/castor/repack/repack_oracle_create.sqlplus:
+    [r 1.2,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/castor/replier/ClientConnection.cpp:
+    [r1.12,2007-08-17,sponcec3] Fixed logging so that it stays reasonnable in DEBUG mode
+  * CASTOR2/castor/replier/RequestReplier.cpp:
+    [r1.32,2007-08-17,sponcec3] Fixed logging so that it stays reasonnable in DEBUG mode
+  * CASTOR2/castor/rh/Imakefile:
+    [r1.12,2007-08-16,sponcec3] Rules to install/export the man page of rhserver
+  * CASTOR2/castor/rh/RHThread.cpp:
+    [r1.11,2007-08-20,sponcec3] Used new RH service for implementing permission checks (when enabled in castor.conf)
+  * CASTOR2/castor/rh/RHThread.hpp:
+    [r 1.6,2007-08-20,sponcec3] Used new RH service for implementing permission checks (when enabled in castor.conf)
+  * CASTOR2/castor/rh/Server.cpp:
+    [r1.52,2007-08-21,itglp] Renamed facility to RequestHandler
+    [r1.51,2007-08-20,sponcec3] Used new RH service for implementing permission checks (when enabled in castor.conf)
+    [r1.50,2007-08-16,sponcec3] Revisited parsing of command line and added -p,--port option
+  * CASTOR2/castor/rh/Server.hpp:
+    [r 1.7,2007-08-20,sponcec3] Used new RH service for implementing permission checks (when enabled in castor.conf)
+    [r 1.6,2007-08-16,sponcec3] Revisited parsing of command line and added -p,--port option
+  * CASTOR2/castor/rh/rhserver.scripts:
+    [r 1.4,2007-08-22,waldron] Added support for running two rhservers on the same machine each on different ports
+  * CASTOR2/castor/rh/rhserver.sysconfig:
+    [r 1.3,2007-08-22,waldron] Added support for running two rhservers on the same machine each on different ports
+  * CASTOR2/castor/server/BaseDaemon.cpp:
+    [r1.23,2007-08-13,waldron] Changed call to dlf_create_threads to reflect changes in dlf api
+  * CASTOR2/castor/server/BaseDbThread.cpp:
+    [r 1.2,2007-08-21,itglp] Fixed implementation by using the more appropriate init() method
+  * CASTOR2/castor/server/BaseDbThread.hpp:
+    [r 1.3,2007-08-21,itglp] Fixed implementation by using the more appropriate init() method
+  * CASTOR2/castor/server/ForkedProcessPool.cpp:
+    [r1.12,2007-08-13,waldron] Changed the severity of logging messages when the pipe between parent and child is closed by the remote end. This only happens during shutdown and is not an error
+  * CASTOR2/castor/server/ListenerThreadPool.hpp:
+    [r1.11,2007-08-16,sponcec3] Added a method that allows to change the listening port
+  * CASTOR2/castor/sharedMemory/Block.hpp:
+    [r1.17,2007-08-15,sponcec3] Fixed bad size of the initial free memory block leading to memory corruptions
+  * CASTOR2/castor/sharedMemory/BlockDict.cpp:
+    [r 1.9,2007-08-15,sponcec3] Fixed logging by properly using the offset for shared memeory messages
+  * CASTOR2/castor/sharedMemory/BlockDict.hpp:
+    [r 1.8,2007-08-16,sponcec3] Fixed dlf logging
+    [r 1.7,2007-08-15,sponcec3] Fixed bad size of the initial free memory block leading to memory corruptions
+  * CASTOR2/castor/sharedMemory/DLFInit.cpp:
+    [r 1.5,2007-08-16,sponcec3] Fixed dlf logging
+  * CASTOR2/castor/sharedMemory/DLFInit.hpp:
+    [r 1.2,2007-08-16,sponcec3] Fixed dlf logging
+  * CASTOR2/castor/sharedMemory/SingletonBlock.hpp:
+    [r 1.9,2007-08-15,sponcec3] Fixed bad size of the initial free memory block leading to memory corruptions
+  * CASTOR2/castor/stager/Disk2DiskCopyDoneRequest.cpp:
+    [r 1.9,2007-08-17,sponcec3] Changed Disk2DiskCopyDoneRequest to store the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/Disk2DiskCopyDoneRequest.h:
+    [r 1.9,2007-08-17,sponcec3] Changed Disk2DiskCopyDoneRequest to store the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/Disk2DiskCopyDoneRequest.hpp:
+    [r 1.9,2007-08-17,sponcec3] Changed Disk2DiskCopyDoneRequest to store the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/Disk2DiskCopyDoneRequestCInt.cpp:
+    [r 1.7,2007-08-17,sponcec3] Changed Disk2DiskCopyDoneRequest to store the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/IJobSvc.h:
+    [r 1.8,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/IJobSvc.hpp:
+    [r 1.7,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/IJobSvcCInt.cpp:
+    [r 1.7,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/ITapeSvc.h:
+    [r1.10,2007-08-13,waldron] Removed getBytesByStream function
+  * CASTOR2/castor/stager/ITapeSvc.hpp:
+    [r 1.8,2007-08-13,waldron] Removed getBytesByStream function
+  * CASTOR2/castor/stager/ITapeSvcCInt.cpp:
+    [r1.12,2007-08-13,waldron] Removed getBytesByStream function
+  * CASTOR2/castor/stager/RemoteJobSvc.cpp:
+    [r1.11,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/RemoteJobSvc.hpp:
+    [r 1.9,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+  * CASTOR2/castor/stager/Stream.cpp:
+    [r1.24,2007-08-13,waldron] Remove byteVolume attribute from Stream object
+  * CASTOR2/castor/stager/Stream.h:
+    [r1.24,2007-08-13,waldron] Remove byteVolume attribute from Stream object
+  * CASTOR2/castor/stager/Stream.hpp:
+    [r1.17,2007-08-13,waldron] Remove byteVolume attribute from Stream object
+  * CASTOR2/castor/stager/StreamCInt.cpp:
+    [r1.16,2007-08-13,waldron] Remove byteVolume attribute from Stream object
+  * CASTOR2/castor/stager/dbService/StagerCnsHelper.hpp:
+  * CASTOR2/castor/stager/dbService/StagerDBService.cpp:
+  * CASTOR2/castor/stager/dbService/StagerDBService.hpp:
+  * CASTOR2/castor/stager/dbService/StagerGetHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerJobRequestHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerJobRequestHandler.hpp:
+  * CASTOR2/castor/stager/dbService/StagerMainDaemon.cpp:
+  * CASTOR2/castor/stager/dbService/StagerPrepareToGetHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerPrepareToPutHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerPrepareToUpdateHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerPutDoneHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerPutHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerRepackHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerReplyHelper.cpp:
+  * CASTOR2/castor/stager/dbService/StagerReplyHelper.hpp:
+  * CASTOR2/castor/stager/dbService/StagerRequestHandler.hpp:
+  * CASTOR2/castor/stager/dbService/StagerRequestHelper.hpp:
+  * CASTOR2/castor/stager/dbService/StagerRmHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerSetGCHandler.cpp:
+  * CASTOR2/castor/stager/dbService/StagerUpdateHandler.cpp:
+  * CASTOR2/codeGeneration/RH.xmi:
+    [r1.161,2007-08-17,sponcec3] Changed Disk2DiskCopyDoneRequest to store the id of the source diskCopy instead of its state
+    [r1.160,2007-08-13,waldron] Removed byteVolume from Stream object
+  * CASTOR2/config/Project.tmpl:
+    [r1.66,2007-08-15,sponcec3] Yet another missing dependency
+    [r1.65,2007-08-15,sponcec3] Fixed another missing dependency
+    [r1.64,2007-08-15,sponcec3] Fixed missing build dependency
+  * CASTOR2/debian/MigHunter.init:
+    [r1.10,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/castor-dlf-server.manpages:
+    [r 1.5,2007-08-22,waldron] Fixed missing manpage for dlf_isintialized
+  * CASTOR2/debian/castor.conf:
+    [r1.64,2007-08-21,itglp] Changed RHLog facility to RequestHandler, and cleaning to Cleaning
+    [r1.63,2007-08-21,waldron] Added JobManager/ResReqKill configuration option
+    [r1.62,2007-08-20,sponcec3] New library mapping for the RH service
+    [r1.61,2007-08-20,sponcec3] New entry to decide whether to user access lists
+    [r1.60,2007-08-16,sponcec3] Included new RH/PORT configuration into standard castor.conf (commented)
+    [r1.59,2007-08-13,waldron] Changed the default number of preforked jobmanager processes to 2 and corrected the value of JobManager/SharedLSFResource
+  * CASTOR2/debian/changelog:
+    [r1.164,2007-08-13,sponcec3] New release 2.1.4-0
+  * CASTOR2/debian/cleaning.init:
+    [r 1.4,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/dlfserver.init:
+    [r1.15,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/expertd.init:
+    [r 1.5,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/gcDaemon.init:
+    [r 1.4,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/jobManager.init:
+    [r 1.2,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/policies.py:
+    [r 1.6,2007-08-13,waldron] Updated the export function to conform too w/r/o conventions for the direction of transfers
+  * CASTOR2/debian/repackserver.init:
+    [r 1.6,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/rfiod.init:
+    [r 1.5,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/rhserver.init:
+    [r 1.8,2007-08-22,waldron] Added support for running two rhservers on the same machine each on different ports
+  * CASTOR2/debian/rmMasterDaemon.init:
+    [r 1.5,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/rmNodeDaemon.init:
+    [r 1.5,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/rtcpclientd.init:
+    [r1.10,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/debian/stager.init:
+    [r1.10,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/disksrv/src/gridftp2/external/Makefile:
+    [r 1.3,2007-08-16,kotlyar] added favor for x86_64
+  * CASTOR2/disksrv/src/gridftp2/external/mkheader.sh:
+    [r 1.2,2007-08-16,kotlyar] added favor for x86_64
+  * CASTOR2/disksrv/src/gridftp2/internal/Makefile:
+    [r 1.3,2007-08-16,kotlyar] added favor for x86_64
+  * CASTOR2/disksrv/src/gridftp2/internal/mkheader.sh:
+    [r 1.2,2007-08-16,kotlyar] added favor for x86_64
+  * CASTOR2/dlf/Imakefile:
+    [r1.19,2007-08-22,waldron] Fixed missing manpage for dlf_isintialized
+    [r1.18,2007-08-17,waldron] Added dlf_isinitialized function
+  * CASTOR2/dlf/dlf_lib.c:
+    [r1.24,2007-08-17,waldron] Added dlf_isinitialized function
+    [r1.23,2007-08-16,sponcec3] Fixed bad sizeof leading to bad handling of message numbers >= 1000
+    [r1.22,2007-08-13,waldron] Added an option to the dlf_create_threads function to erase the contents of a threads message buffer prior to thread creation
+  * CASTOR2/dlf/doc/man/dlf_create_threads.man:
+    [r 1.3,2007-08-13,waldron] Added an option to the dlf_create_threads function to erase the contents of a threads message buffer prior to thread creation
+  * CASTOR2/dlf/scripts/mysql/dlf_mysql_create.sql:
+    [r 2.8,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/dlf/scripts/mysql/mysqlCreate.sql:
+    [r 2.3,2007-08-21,itglp] Changed RHLog facility to RequestHandler, and cleaning to Cleaning
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+    [r 2.7,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+    [r 2.7,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sql:
+    [r 2.7,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sqlplus:
+    [r 2.6,2007-08-21,itglp] Regenerated for version 2.1.4-1
+  * CASTOR2/dlf/scripts/oracle/express/oracleCreate.sql:
+    [r 2.3,2007-08-21,itglp] Changed RHLog facility to RequestHandler, and cleaning to Cleaning
+  * CASTOR2/dlf/scripts/oracle/oracleCreate.sql:
+    [r 2.3,2007-08-21,itglp] Changed RHLog facility to RequestHandler, and cleaning to Cleaning
+  * CASTOR2/expert/expertd.scripts:
+    [r 1.3,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/h/dlf_api.h:
+    [r1.25,2007-08-17,waldron] Added dlf_isinitialized function
+    [r1.24,2007-08-17,sponcec3] Added message range for the ORACLE library and defined a VERBOSE error level for which messages are just ignored.
+    [r1.23,2007-08-16,sponcec3] Defined a new range for stager library messages
+    [r1.22,2007-08-13,waldron] Added an option to the dlf_create_threads function to erase the contents of a threads message buffer prior to thread creation
+  * CASTOR2/h/rtcpcld_messages.h:
+    [r1.51,2007-08-11,obarring] New error message for false ENOENT from Cns_setsegattr()
+  * CASTOR2/h/stager_macros.h:
+    [r1.24,2007-08-16,waldron] Fixed 64bit stager segmentation fault. In c++ NULL is an integral constant, while in C it is a defined pointer constant. As a result NULL in va_arg lists must be type cast to const char * especially on 64 bit platforms otherwise the behaviour is undefined. - Refer to http://lwn.net/Articles/93574/ for a nice article on NULL vs 0
+  * CASTOR2/job/stagerJob.c:
+    [r1.172,2007-08-17,sponcec3] Send properly the old diskCopy id to disk2diskCopyDone and no more the odl diskCopy status
+  * CASTOR2/ns/Cns_oracle_ifce.pc:
+    [r 1.4,2007-08-20,sponcec3] fixed Cns_seg_metadata to not return EEXIST when any constraint fails but only when the right one does
+  * CASTOR2/rfio/rfio_calls.c:
+    [r1.18,2007-08-13,waldron] Ignore setgroups failures if not root. Failure to do this causes all tape relation operations to fail with 'operation not permitted' as rfiod tries to give up its privileges multiple times. After the first successful attempt to give up its privileges, subsequent calls to setgroups fail as this is a super-user only call.
+  * CASTOR2/rfio/rfio_fcalls.c:
+    [r 1.4,2007-08-13,waldron] Ignore setgroups failures if not root. Failure to do this causes all tape relation operations to fail with 'operation not permitted' as rfiod tries to give up its privileges multiple times. After the first successful attempt to give up its privileges, subsequent calls to setgroups fail as this is a super-user only call.
+  * CASTOR2/rtcopy/rtcpcldNsInterface.c:
+    [r1.42,2007-08-11,obarring] Additional check with Cns_statx() if Cns_setsegattr() returns ENOENT
+  * CASTOR2/rtcopy/rtcpclientd.scripts:
+    [r 1.3,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/scheduler/LSF/Python.hpp:
+    [r 1.2,2007-08-16,itglp] Fixed a method's signature, gcc 4.1.3 + python 2.4.4 were complaining
+  * CASTOR2/stager/stager.scripts:
+    [r 1.3,2007-08-22,waldron] Minor update to prevent the process name being disabled twice if disabled in sysconfig
+  * CASTOR2/stager/stager_db_service.c:
+    [r1.174,2007-08-21,itglp] Call SubRequest.getNextStatus also for the new READYFORSCHED case
+  * CASTOR2/stager/stager_job_service.cpp:
+    [r1.43,2007-08-17,sponcec3] Fixing typo
+    [r1.42,2007-08-17,sponcec3] Changed disk2diskCopyDone api to use the id of the source diskCopy instead of its state
+  * CASTOR2/tape/rbtsubr.c:
+    [r1.33,2007-08-16,wiebalck] Corrected wrong return code in case of a self-checked volume in use (led
+    [r1.33,2007-08-16,wiebalck] to "tape not mounted or not ready").
+  * CASTOR2/test/CASTORTESTCONFIG:
+    [r1.10,2007-08-14,sponcec3] Created a Disk only test suite and included it in the framework. At the time, this tests only the forcing of fileclasses and needs 2 new extra parameters to be set in the config file : DISKONLY_SVCCLASS and FORCED_FILECLASS
+  * CASTOR2/test/CastorTestSuite.py:
+    [r1.13,2007-08-14,sponcec3] Created a Disk only test suite and included it in the framework. At the time, this tests only the forcing of fileclasses and needs 2 new extra parameters to be set in the config file : DISKONLY_SVCCLASS and FORCED_FILECLASS
+  * CASTOR2/test/UtilityForCastorTest.py:
+    [r1.12,2007-08-14,sponcec3] Created a Disk only test suite and included it in the framework. At the time, this tests only the forcing of fileclasses and needs 2 new extra parameters to be set in the config file : DISKONLY_SVCCLASS and FORCED_FILECLASS
+  * CASTOR2/test/rfio/RfioTest.py:
+    [r 1.9,2007-08-14,sponcec3] Created a Disk only test suite and included it in the framework. At the time, this tests only the forcing of fileclasses and needs 2 new extra parameters to be set in the config file : DISKONLY_SVCCLASS and FORCED_FILECLASS
+  * CASTOR2/test/stager/ClientTest.py:
+    [r1.17,2007-08-14,sponcec3] No fullDiskPool test for the time being
+    [r1.16,2007-08-14,sponcec3] Created a Disk only test suite and included it in the framework. At the time, this tests only the forcing of fileclasses and needs 2 new extra parameters to be set in the config file : DISKONLY_SVCCLASS and FORCED_FILECLASS
+    [r1.15,2007-08-14,sponcec3] Fixed getStageOut test
+    [r1.14,2007-08-14,sponcec3] Uncommented stageRm with SvcClass test and added a getStageOut test
+  * CASTOR2/test/tape/TapeTest.py:
+    [r 1.5,2007-08-14,sponcec3] Created a Disk only test suite and included it in the framework. At the time, this tests only the forcing of fileclasses and needs 2 new extra parameters to be set in the config file : DISKONLY_SVCCLASS and FORCED_FILECLASS
+  * CASTOR2/upgrades/2.1.3-24_to_2.1.4-1.sql:
+    [r 1.9,2007-08-21,sponcec3] Added creation of black and while lists of authorized users
+    [r 1.8,2007-08-17,itglp] Added update of SubRequest partitioning
+    [r 1.7,2007-08-13,waldron] Removed sqlplus conventions
+    [r1.10,2007-08-21,sponcec3] Fixed default content of the whitelist. The cake disturbed me and ORACLE has no type checking \!
+  * CASTOR2/upgrades/dlf_2.1.3-24_to_2.1.4-0.sql:
+    [r 1.2,2007-08-21,itglp] Renamed RHLog facility to RequestHandler, and cleaning to Cleaning
+  * CASTOR2/vdqm/vdqmapi.c:
+    [r 1.5,2007-08-17,sponcec3] Fixed compilation warnings
+
+-- Dennis Waldron <waldron@cern.ch>  Wed, 22 August 2007 18:30:00 +0100	
+
 castor (2.1.4-0) unstable; urgency=low
 
-  * First test release of 2.1.4 serie
+  * First test release of 2.1.4 series
   * Here is a list of everything that changed since version v2.1.3-17
   * General
-    + rmmaster has been dropped and replace by a jobManager deling with LSF and the job scheduling
+    + rmmaster has been dropped and replace by a jobManager dealing with LSF and the job scheduling
     + scripts have been developed to build new releases easily and to generate all SQL creation scripts with the correct release value.
     + tank specific code was finally dropped
     + new initd scripts and sysconfig files
@@ -18,7 +382,7 @@ castor (2.1.4-0) unstable; urgency=low
     + Handle properly requests sent of behalf of somebody else
     + Handle properly cases where STAGEOUT diskcopies are unavailable (disable hardware) or in another fileclass.
     + Added 'ENABLE ROW MOVEMENT' to all tables
-    + Added versionning to clients in order to support answering in different ways to different client versions
+    + Added versioning to clients in order to support answering in different ways to different client versions
     + Added check for existence of eligible migration candidates in streamsToDo (bug #26789). This avoids to mount tapes while all candidates are unavailable (disabled hardware)
     + Fix for bug #27311, respect maxReplicaNb when replicating because of disabled/draining filesystems
   * Framework
@@ -936,7 +1300,6 @@ castor (2.1.2-4) unstable; urgency=low
 
  -- Sebastien Ponce <sponce@cern.ch>  Mon, 15 Jan 2007 18:57:49 +0100
 
-
 castor (2.1.2-3) unstable; urgency=low
 
   * CASTOR2/PACKAGING.howto:
@@ -1110,7 +1473,6 @@ castor (2.1.2-3) unstable; urgency=low
     [r 1.4,2007-01-09,sponcec3] Fixed missing dereferencing. Thanks Olof for spotting it
 
  -- Giuseppe Lo Presti <itglp@cern.ch>  Thu, 11 Jan 2007 19:57:49 +0100
-
 
 castor (2.1.2-2) unstable; urgency=low
 
@@ -1308,7 +1670,6 @@ castor (2.1.2-1) unstable; urgency=low
     [2006-12-05,riojac3] 64 bits cleaned
 
  -- Felix Ehm <felix.ehm@cern.ch>  Wed, 06 Dez 2006 14:20:00 +0200
-
 
 castor (2.1.2-0) unstable; urgency=low
 
@@ -1588,7 +1949,6 @@ castor (2.1.2-0) unstable; urgency=low
 
  -- Felix Ehm <felix.ehm@cern.ch>  Mon, 04 Dez 2006 15:20:00 +0200
 
-
 castor (2.1.1-9) unstable; urgency=low
 
   * CASTOR2/castor/Imakefile:
@@ -1719,9 +2079,6 @@ castor (2.1.1-9) unstable; urgency=low
     [2006-11-03,gtaur] fix for enviroment variables for Client test
 
  -- Felix Ehm <felix.ehm@cern.ch>  Wed, 08 Nov 2006 18:20:00 +0200
-
-
-
 
 castor (2.1.1-8) unstable; urgency=low
 
@@ -1995,8 +2352,6 @@ castor (2.1.1-8) unstable; urgency=low
     [r 1.2,2006-10-30,itglp] Added latest SQL hotfixes to be run on top of version 2.1.1
 
  -- Felix Ehm <felix.ehm@cern.ch>  Wed, 25 Oct 2006 17:20:00 +0200
-
-
 
 castor (2.1.1-7) unstable; urgency=low
 
@@ -5706,7 +6061,6 @@ castor (2.0.3-0) unstable; urgency=low
   * PROTO2/tools/makeMagicNumbers.csh:
     [r 1.6,2006-02-15,sponcec3] better script that parses more files in order to not forget constants and put better titles
     [r 1.5,2006-01-31,itglp] Improved scan to take into account more codes files.
-
 
  -- Sebastien Ponce <sponcec3@pcitds13>  Fri, 17 Feb 2006 16:40:00 +0100
 

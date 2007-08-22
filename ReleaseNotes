@@ -1,11 +1,11 @@
 -----------
-- 2.1.4-0 -
+- 2.1.4-1 -
 -----------
 
   New Features and Changes
   ------------------------
-  This part lists the changes since the first release of the 2.1.3 serie, that is 2.1.3-14.
-  Many of the fixes were backported to later releases of the 2.1.3 serie, as mentioned.
+  This part lists the changes since the first release of the 2.1.3 series, that is 2.1.3-14.
+  Many of the fixes were backported to later releases of the 2.1.3 series, as mentioned.
 
     Broad view and stager
     ---------------------
@@ -21,6 +21,7 @@
     - Added 'ENABLE ROW MOVEMENT' to all tables in order to be able to shrink them online
     - Better naming of version and releases within the stager DB
     - Introduced partitioning of the subrequest table. This allows to avoid function based indexes and thus to shrink tables dynamically. This was actually backported to 2.1.3-17.
+    - Added support for white and blacklist in the request handler.
 
     DiskServer
     ----------
@@ -44,6 +45,7 @@
       + added automatic creation of partition tablespaces
       + support for large password lengths in connect string
       + Added new loggin severity LOG_STANDARD. This is masking a standard set of rules, logging everything but the DEBUG level locally and everything but DEBUG and USAGE level remotely
+      + Added dlf_isinitialized api call to determine whether the DLF api has been initialized or not
 
     Tape related
     ------------
@@ -59,36 +61,46 @@
 
     Only in 2.1.4 :
     - #15841 jobs that have 'no candidate' in LSF loop
-    - #23293 Impossible to only target one service class with stager_rm
-    - #27319 RFE Loadbalancing of VMGR pools with tapes in multiple libraries
-    - #27320 RFE Get rid of msgdaemon
-    - #28168 putDone may wait on puts when the puts are already over
-    - #28398 New variant of files being scheduled to wrong filesystem
-    - #28438 rfiod may get stuck waiting for data connection in ropen(64)_v3() 
-    - #28619 Two concurrent stagerGetRequests may result in two DiskCopies in status WAITTAPERECALL
-    - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in failing migrator
+    - #18777 rhserver has no man page
+    - #19413 diskpool with no filesystem should cause jobs for this diskpool to fail
+    - #22178 closing a castorinstance to the users
     - #22403 In the DLF gui, config.php has to be "world" readable
+    - #22969 rhserver doesn't reply if castorversion is the wrong one
+    - #23268 nsfind gives you paths with double slashes this makes stager_qry screw
+    - #23293 Impossible to only target one service class with stager_rm
     - #23303 Required improvements in CASTOR2 for proper handling of Disk1TapeX
-    - #26534 GC policies are not taking gcWeight attribute into account
-    - #28009 relocation of rtcopy work directory
-    - #28564 rfiod not resetting secondary group ID's
-    - #28411 rmAdminNode does not respect the deleted status of a diskserver when using the -f option
+    - #24746 ORA-01480 error in nameserver
     - #25159 need for constraints of filesystem table to avoid orphaned filesystems
-    - #28308 missing man-pages in castor-ns-client package
     - #25468 nsls with big directories fails in 64 bit architectures
     - #25997 Proper handling of castorVersion in DbCnvSvc
-    - #28097 migration not optimized if nb of diskservers < N * nb of migrators
     - #26134 no interface to fail a transfer request in a proper manner
+    - #26534 GC policies are not taking gcWeight attribute into account
+    - #26711 stager_qry provides responses while it shouldn't
     - #26842 cleaning daemon connection to db is not closed
     - #27311 please ensure MAXREPLICANB is respected
+    - #27319 RFE Loadbalancing of VMGR pools with tapes in multiple libraries
+    - #27320 RFE Get rid of msgdaemon
     - #27331 Command line option to specify location of config files
-    - #28679 Core dump when user or group are not in passwd or group file
-    - #23268 nsfind gives you paths with double slashes this makes stager_qry screw
     - #27660 File with two concurrent tape recalls that get stuck.
     - #27720 showqueues shows wrong queuing times on x86_64
-    - Fixed incorrectly logged checksum with DLF_MSG_PARAM_INT64 leading to segfault for old castorfiles without checksum
+    - #28009 relocation of rtcopy work directory
+    - #28097 migration not optimized if nb of diskservers < N * nb of migrators
+    - #28168 putDone may wait on puts when the puts are already over
+    - #28182 CASTOR files can still end up with wrong size
+    - #28308 missing man-pages in castor-ns-client package
+    - #28336 A D2D copy running while a file is being migrated can cause inconsistent status
+    - #28398 New variant of files being scheduled to wrong filesystem
+    - #28411 rmAdminNode does not respect the deleted status of a diskserver when using the -f option
+    - #28438 rfiod may get stuck waiting for data connection in ropen(64)_v3() 
+    - #28564 rfiod not resetting secondary group ID's
+    - #28619 Two concurrent stagerGetRequests may result in two DiskCopies in status WAITTAPERECALL
+    - #28679 Core dump when user or group are not in passwd or group file
+    - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in failing migrator
     - Fixed creation of the rtcopy work directory
+    - Fixed incorrectly logged checksum with DLF_MSG_PARAM_INT64 leading to segfault for old castorfiles without checksum
     Already in 2.1.3-24:
+    - #28372 A file created in an interrupted RFIO transfer for a stagerPutRequest is not properly committed to the stager
+    - #27871 rfcp timeout creates "Device or resource busy"
     - #27196 request waiting on D2D copy
     - #26789 streamsToDo returns streams with nothing to do
     - #27206 bad decision to STAGEIN if diskcopy in CANBEMIGR in disabled filesystem
