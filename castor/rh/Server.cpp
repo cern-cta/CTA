@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2007/08/21 15:56:20 $ $Author: itglp $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2007/08/23 06:45:11 $ $Author: waldron $
  *
  *
  *
@@ -54,6 +54,8 @@ const char *castor::rh::ACCESSLISTS_CONF = "USEACCESSLISTS";
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
+    castor::rh::Server server;
+
     // retrieve the port to be used
     int port = CSP_RHSERVER_PORT;
     char* sport;
@@ -65,7 +67,7 @@ int main(int argc, char *argv[]) {
     // See whether access lists should be used
     bool accessLists = false;
     char* saccessLists;
-    if ((saccessLists = getenv (castor::rh::ACCESSLISTS_ENV)) != 0 
+    if ((saccessLists = getenv(castor::rh::ACCESSLISTS_ENV)) != 0 
         || (saccessLists = getconfent((char *)castor::rh::CATEGORY_CONF,
                                       (char *)castor::rh::ACCESSLISTS_CONF,0)) != 0) {
       accessLists = (strcasecmp(saccessLists, "YES") == 0);
@@ -83,8 +85,8 @@ int main(int argc, char *argv[]) {
         throw ex;
       }
     }
-    // create the server
-    castor::rh::Server server;
+
+    // Start daemon
     server.addThreadPool
       (new castor::server::TCPListenerThreadPool
        ("RH", new castor::rh::RHThread(accessLists, rhSvc), port, false));
@@ -110,7 +112,8 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Server::Server() :
-  castor::server::BaseServer("RequestHandler") {
+  castor::server::BaseDaemon("RequestHandler") {
+
   // Initializes the DLF logging
   castor::dlf::Message messages[] =
     {{ 1, "New Request Arrival"},

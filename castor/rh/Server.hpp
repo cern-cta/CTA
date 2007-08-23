@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/20 10:27:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/23 06:45:11 $ $Author: waldron $
  *
  *
  *
@@ -27,7 +27,7 @@
 #ifndef RH_SERVER_HPP
 #define RH_SERVER_HPP 1
 
-#include "castor/server/BaseServer.hpp"
+#include "castor/server/BaseDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
 #define CSP_MSG_MAGIC 0xCA001
@@ -52,7 +52,7 @@ namespace castor {
      * arrive. The main task of this component is to store them
      * for future processing.
      */
-    class Server : public castor::server::BaseServer {
+    class Server : public castor::server::BaseDaemon {
 
     public:
 
@@ -62,7 +62,7 @@ namespace castor {
       Server();
 
       /**
-       * Overloaded method from BaseServer for individual command line parser
+       * Overloaded method from BaseDaemon for individual command line parser
        */
       virtual void parseCommandLine(int argc, char *argv[]);
 
