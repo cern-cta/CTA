@@ -652,7 +652,7 @@ casesPutDone=("basicPutDone","putDoneAndRfcp","putDoneManyFiles","putDoneR")
 casesGet=("basicGet","getAndRfcp","getManyFiles","getTag","getSvcClass","getR","getStageOut")
 casesRm=("basicRm","rmAndRfcp","rmManyFiles","rmSvcClass")
 casesQuery=("queryS","queryE")
-casesDiskOnly=("forceFileClass")
+casesDiskOnly=("forceFileClass",)
 casesExtraTest=("putDoneAndLongFile","srmSimulation","putSizeCheck")
 
 class StagerPreClientSuite(unittest.TestSuite):
