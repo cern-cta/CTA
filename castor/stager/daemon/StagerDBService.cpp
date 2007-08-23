@@ -31,11 +31,10 @@
 #include "Cns_api.h"
 #include "expert_api.h"
 #include "serrno.h"
-#include "dlf_api.h"
 
+#include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-
 
 #include "osdep.h"
 #include "Cnetdb.h"
@@ -189,10 +188,6 @@ namespace castor{
 	  /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
 	  stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
 
-	  /* get the stgCnsHelper->fileid needed for the logging in dlf */
-	  stgCnsHelper->getFileid();
-
-
 	  /* get the uuid request string version and check if it is valid */
 	  stgRequestHelper->setRequestUuid();
 
@@ -200,8 +195,7 @@ namespace castor{
 	  /* get the svcClass */
 	  stgRequestHelper->getSvcClass();
 	  
-	 
-
+	
 	  /* create and fill request->svcClass link on DB */
 	  stgRequestHelper->linkRequestToSvcClassOnDB();
 	  	
@@ -223,26 +217,27 @@ namespace castor{
 	  
 	  /* for the required file: check existence (and create if necessary), and permission */
 	  stgCnsHelper->setSubrequestFileName(stgRequestHelper->subrequest->fileName());
-	  bool fileExist = stgCnsHelper->createCnsFileIdAndStat_setFileExist();
-	  if(!fileExist){
-
-	    /* depending on fileExist and type, check if the file needed is to be created or throw exception */
-	    if(stgRequestHelper->isFileToCreateOrException()){
-
-	      mode_t mode = (mode_t) stgRequestHelper->subrequest->modeBits();
-	      /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-	      stgCnsHelper->createFileAndUpdateCns(mode, (stgRequestHelper->svcClass));
-	    }
-	    
-	  }
+	 
+	  /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
+	  /* create the file if it is needed/possible */
+	  bool fileExist = stgCnsHelper->checkAndSetFileOnNameServer(type, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
 
 	  /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
 	  stgRequestHelper->checkFilePermission();
 
-
+	  castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(StagerDBService) Detailed subrequest(fileName,{euid,egid},{userName,groupName},mode mask, cliendId, svcClassName,cnsFileid.fileid, cnsFileid.server"),
+					    castor::dlf::Param("Standard Message",stgCnsHelper->subrequestFileName),
+					    castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->euid),
+					    castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->egid),
+					    castor::dlf::Param("Standard Message",stgRequestHelper->username),
+					    castor::dlf::Param("Standard Message",stgRequestHelper->groupname),
+					    castor::dlf::Param("Standard Message",stgRequestHelper->fileRequest->mask()),
+					    castor::dlf::Param("Standard Message",stgRequestHelper->iClient->id()),
+					    castor::dlf::Param("Standard Message",stgRequestHelper->svcClassName),
+					    castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.fileid),
+					    castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.server)};
+	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 11, parameter);
                     
-	  castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","Starting specific subrequestHandler")};
-	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, parameter);
 	  
 
 	  /**************************************************/

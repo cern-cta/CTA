@@ -42,6 +42,10 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
 
+#include "dlf_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+
 #include "serrno.h"
 #include <errno.h>
 #include <vector>
@@ -61,6 +65,11 @@ namespace castor{
       /* contructor */
       StagerRequestHelper::StagerRequestHelper() throw(castor::exception::Exception){
 	
+
+	castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper constructor) Getting the stager and db services")};
+	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param);/*   */
+
+
 	castor::IService* svc =
 	  castor::BaseObject::services()->
 	  service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
@@ -205,7 +214,6 @@ namespace castor{
       /* get and (create or initialize) Cuuid_t subrequest and request                         */
       /* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
       /***************************************************************************************/
-
       /* get or create subrequest uuid */
       void StagerRequestHelper::setSubrequestUuid() throw(castor::exception::Exception)
       {
@@ -228,13 +236,22 @@ namespace castor{
 	    /* update it in DB*/
 	    try{
 	      dbService->updateRep(baseAddr, subrequest, true);	
+	      
+	      castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper setSubrequestUuid) SubrequestUuid:"),
+					   castor::dlf::Param("Standard Message",subrequest_uuid_as_string)};
+	      castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
+
  	    }catch(castor::exception::Exception ex){
 	      castor::exception::Exception e(SEINTERNAL);
 	      e.getMessage()<< "(StagerRequestHelper setSubrequestUuid) dbService->updateRep throws an exception"<<std::endl;
 	      throw e;
 	    } 
 	  }
+
 	}else{ /* translate to the Cuuid_t version and copy to our thread-safe variable */
+	  castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper setSubrequestUuid) SubrequestUuid:"),
+				       castor::dlf::Param("Standard Message",subrequest_uuid_as_string)};
+	      castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
 	  if( string2Cuuid(&(this->subrequestUuid), (char *) subrequest_uuid_as_string)!=0){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRequestHelper setSubrequestUuid) error  on string2Cuuid"<<std::endl;
@@ -244,6 +261,7 @@ namespace castor{
 	}
       }
       
+
       /* get request uuid (we cannon' t create it!) */ 
       void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
       {
@@ -254,11 +272,13 @@ namespace castor{
 	  ex.getMessage()<<"(StagerRequestHelper setRequestUuid) Request has no uuid"<<std::endl;
 	  throw ex;	  
 	}else{/*convert to the Cuuid_t version and copy in our thread safe variable */
-	   
-	  //char* uuid_as_string = fileRequest->reqId().c_str();
+	  castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper RequestUuid) RequestUuid:"),
+				       castor::dlf::Param("Standard Message",fileRequest->reqId())};
+	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
+	 
 	  if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
 	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRequestHelper setRequestUuid) error (but no exception) on string2Cuuid"<<std::endl;
+	    ex.getMessage()<<"(StagerRequestHelper setRequestUuid) error on string2Cuuid"<<std::endl;
 	    throw ex;
 	  }
 
@@ -284,29 +304,32 @@ namespace castor{
 
 	try{
 	  castorFile = stagerService->selectCastorFile(stgCnsHelper.cnsFileid.fileid, stgCnsHelper.cnsFileid.server,svcClassId, fileClassId, stgCnsHelper.cnsFilestat.filesize,subrequest->fileName());
-
 	}catch(castor::exception::Exception ex){/* stagerService throw exception */
 	  castor::exception::Exception e(SEINTERNAL);
-	  e.getMessage()<<"(StagerRequestHelper linkCastorFileToSvcClass) stagerService->selectCastorFile throws an exception"<<std::endl;
+	  e.getMessage()<<"(StagerRequestHelper getCastorFileFromSvcClass) stagerService->selectCastorFile throws an exception"<<std::endl;
 	  throw e;
 	}
 
 	if(this->castorFile == NULL){
 	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerRequestHelper linkCastorFileToServiceClass) Impossible to get the castorFile"<<std::endl;
+	  ex.getMessage()<<"(StagerRequestHelper getCastorFileFromSvcClass) Impossible to get the castorFile"<<std::endl;
 	  throw ex; 
 	}
-
+	
 	subrequest->setCastorFile(castorFile);
+	
 	try{
 	  /* create the subrequest-> castorFile on DB*/
 	  dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, true);//throw exception
 	  /* create the castorFile-> svcClass link on DB */
 	  dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, 0);//throw exception	
 
+	  castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper getCastorFileFromSvsClass) Got castorFile, id: "),
+				       castor::dlf::Param("Standard Message",castorFile->id())};
+	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */	  
 	}catch(castor::exception::Exception ex){/* stagerService throw exception */
 	  castor::exception::Exception e(SEINTERNAL);
-	  e.getMessage()<<"(StagerRequestHelper linkCastorFileToSvcClass) dbService->fill___  throws an exception"<<std::endl;
+	  e.getMessage()<<"(StagerRequestHelper getCastorFileFromSvcClass) dbService->fill___  throws an exception"<<std::endl;
 	  throw e;
 	}
 
@@ -314,22 +337,7 @@ namespace castor{
       }
 
 
-      /****************************************************************************************************/
-      /*  check if the castorFile is linked to the service Class: called in StagerRequest.jobOriented()*/
-      /**************************************************************************************************/
-      /*** inline void StagerRequestHelper::isCastorFileLinkedToSvcClass() throw(castor::exception::Exception) ***/
-      
-
-
-
-      
-      /****************************************************************************************************/
-      /*  initialize the partition mask with svcClass.name()  or get it:called in StagerRequest.jobOriented() */
-      /**************************************************************************************************/
-      /***  inline std::string StagerRequestHelper::getPartitionMask() throw(castor::exception::Exception)  ***/
-      
-
-
+     
 
       /****************************************************************************************************/
       /*  fill castorFile's FileClass: called in StagerRequest.jobOriented()                             */

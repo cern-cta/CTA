@@ -42,6 +42,10 @@
 #include "serrno.h"
 #include <errno.h>
 
+#include "dlf_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+
 #include <vector>
 #include <iostream>
 #include <string>
@@ -197,8 +201,6 @@ namespace castor{
 	    this->svcClassName="default";
 	    fileRequest->setSvcClassName(this->svcClassName);
 
-	    /* it isnt really necessary and it causes and segFault on SvcClass.hpp */
-	    /*  svcClass->setName(this->svcClassName);*/
 	  }
 
 	  try{
@@ -208,6 +210,9 @@ namespace castor{
 	      ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to get the svcClass"<<std::endl;
 	      throw ex; 
 	    }
+	    castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(StagerRequestHelper getSvcClass) Got svcClass, svcClassName:"),
+					      castor::dlf::Param("Standard Message", this->svcClassName)};
+	    castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, parameter);
 	  }catch(castor::exception::Exception ex){
 	    castor::exception::Exception ex(SESVCCLASSNFND);
 	    ex.getMessage()<<"(StagerRequestHelper getSvcClass) Impossible to get the svcClass"<<std::endl;
@@ -237,6 +242,8 @@ namespace castor{
 	  try{
 	    /* fill the svcClass object using the request as a key  */
 	    dbService->fillRep(baseAddr, fileRequest,castor::OBJ_SvcClass,true);
+	    castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(StagerRequestHelper linkRequestToSvcClassOnDB) Linked svcClass to fileRequest")};
+	    castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, parameter);
 	  }catch(castor::exception::Exception ex){
 	    castor::exception::Exception e(SEINTERNAL);
 	    e.getMessage()<< "(StagerRequestHelper linkRequestToSvcClassOnDB) dbService->fillRep throws an exception"<<std::endl;
@@ -246,18 +253,7 @@ namespace castor{
      
       
 
-	/*******************************************************************************/
-	/* get the castoFile associated to the subrequest                             */ 
-	/*****************************************************************************/
-	/* inline void getCastorFile() throw(castor::exception::Exception){
-	  this->castorFile=subrequest->castorFile();
-	  if(this->castorFile == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRequestHelper getCastorFile) Impossible to get the castorFile"<<std::endl;
-	    throw ex; 
-	  }
-	  } */
-      
+
       
       
 	/****************************************************************************************/
@@ -272,6 +268,9 @@ namespace castor{
 	    ex.getMessage()<<"(StagerRequestHelper getFileClass) Impossible to get the fileClass"<<std::endl;
 	    throw ex; 
 	  }
+	  castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(StagerRequestHelper getFileClass) Got fileClass, fileClassName:"),
+					    castor::dlf::Param("Standard Message", fileClassName)};
+	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, parameter);
 	}
       
       
@@ -294,13 +293,8 @@ namespace castor{
 	/*******************************************************************************************************************************************/
 	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
 	/*****************************************************************************************************************************************/
-       	void getCastorFileFromSvcClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception);
-     
-
-
-
-
-     
+       	void getCastorFileFromSvcClass(castor::stager::dbService::StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception);
+       
 
 
       
@@ -317,6 +311,9 @@ namespace castor{
 	  }else{
 	    castorFile->setFileClass(fileClass);
 	    dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, true);
+	    castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(StagerRequestHelper setFileClassOnCastorFile) Set ")};
+	    castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, parameter);
+	    
 	  }
 	  
 	}
@@ -359,35 +356,12 @@ namespace castor{
 	    strncpy(groupname,this_gr->gr_name,CA_MAXLINELEN);
 	    groupname[CA_MAXLINELEN]='\0';
 	  }
+	  
+	  castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(StagerRequestHelper setUserNameAndGroupName) Set ")};
+	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, parameter);
+	    
 	}
       
-
-
-     
-
-	
-	/****************************************************************************************************/
-	/* depending on fileExist and type, check the file needed is to be created or throw exception    */
-	/********************************************************************************************/
-	inline bool isFileToCreateOrException() throw(castor::exception::Exception){
-	  bool toCreate = false;
-	  int type = this->fileRequest->type();
-	  int subRequestFlags = this->subrequest->flags();
-	  
-	  
-	  if ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type)||((O_CREAT == (subRequestFlags & O_CREAT))&&((OBJ_StageUpdateRequest == type) ||(OBJ_StagePrepareToUpdateRequest == type)))) {
-	    /* here, we must check if serrno or its new equivalent is === ENOENT !!!!*/
-	    toCreate = true;
-	  }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRequestHelper isFileToCreateOrException) Asking for a file which doesn't exist"<<std::endl;
-	    throw ex;
-	  }
-	  
-	  return(toCreate);
-	  
-	}
-     
 
 
 	/*****************************************************************************************************/
@@ -412,8 +386,9 @@ namespace castor{
 	      castor::exception::Exception ex(SEINTERNAL);
 	      ex.getMessage()<<"(StagerRequestHelper checkFilePermission) Access denied: The user doesn't have the read permission"<<std::endl;
 	      throw ex;
-	    }
+	    }	   
 	    break;
+
 	  case OBJ_StagePrepareToPutRequest:
 	  case OBJ_StagePrepareToUpdateRequest:
 	  case OBJ_StagePutRequest:
@@ -424,10 +399,10 @@ namespace castor{
 	      filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
 	      castor::exception::Exception ex(SEINTERNAL);
 	      ex.getMessage()<<"(StagerRequestHelper checkFilePermission) Access denied: The user doesn't have the write permission"<<std::endl;
-	      throw ex;
-	      
+	      throw ex;	      
 	    }
 	    break;
+
 	  default:
 	    break;
 	  }
