@@ -156,79 +156,79 @@ td.banner {
 td.timestamp {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 95px;
+	min-width: 95px;
 }
 
 td.msgtext {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 160px;
+	min-width: 160px;
 }
 
 td.nshostname {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 90pt;
+	min-width: 90pt;
 }
 
 td.tid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 20pt;
+	min-width: 20pt;
 }
 
 td.pid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 30pt;
+	min-width: 30pt;
 }
 
 td.hostname {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 90pt;
+	min-width: 90pt;
 }
 
 td.facility {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 50pt;
+	min-width: 50pt;
 }
 
 td.nsfileid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 50pt;
+	min-width: 50pt;
 }
 
 td.reqid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60pt;
+	min-width: 60pt;
 }
 
 td.subreqid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60pt;
+	min-width: 60pt;
 }
 
 td.reqid_long {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 200pt;
+	min-width: 200pt;
 }
 
 td.subreqid_long {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 200pt;
+	min-width: 200pt;
 }
 
 td.tapevid {
 	border: 1px solid #999999;
 	text-align: center;
-	width: 40pt;
+	min-width: 40pt;
 }
 
 td.parameters {
@@ -240,77 +240,77 @@ td.sev_emergency {
 	background-color : #FF0000;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_alert {
 	background-color : #FF388B;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_error {
 	background-color : #FF724B;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_warning {
 	background-color : #FFEC5A;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_auth {
 	background-color : #94422C;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_security {
 	background-color : #EB981D;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_usage {
 	background-color : #11AA55;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_system {
 	background-color : #AB09EB;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_important {
 	background-color : #EB6227;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_monitoring {
 	background-color : #CCCCCC;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 td.sev_debug {
 	background-color : #1D73EB;
 	border: 1px solid #999999;
 	text-align: center;
-	width: 60px;
+	min-width: 60px;
 }
 
 tr.header {
