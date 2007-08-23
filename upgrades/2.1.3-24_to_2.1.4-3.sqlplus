@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/22 13:26:48 $ $Author: waldron $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sqlplus,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/23 13:57:52 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-1
  *
@@ -78,6 +78,14 @@ ALTER INDEX I_SubRequest_DiskCopy REBUILD;
 ALTER INDEX I_SubRequest_Request REBUILD;
 ALTER INDEX I_SubRequest_Parent REBUILD;
 ALTER INDEX I_SubRequest_SubReqId REBUILD;
+
+/* new indexes, useful for reqIdStageQuery */
+CREATE INDEX I_StagePTGRequest_ReqId on StagePrepareToGetRequest (reqId);
+CREATE INDEX I_StagePTPRequest_ReqId on StagePrepareToPutRequest (reqId);
+CREATE INDEX I_StagePTURequest_ReqId on StagePrepareToUpdateRequest (reqId);
+CREATE INDEX I_StageGetRequest_ReqId on StageGetRequest (reqId);
+CREATE INDEX I_StagePutRequest_ReqId on StagePutRequest (reqId);
+CREATE INDEX I_StageRepackRequest_ReqId on StageRepackRequest (reqId);
 
 /* Some constraints */
 ALTER TABLE FileSystem ADD CONSTRAINT diskserver_fk FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
