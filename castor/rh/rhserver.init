@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.9 $ $Release$ $Date: 2007/08/22 11:51:15 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/23 06:46:02 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -134,7 +134,7 @@ stop() {
         local pid
     
         RETVAL=0
-        echo -n $"Stopping $prog $1: "
+	echo -n $"Stopping $prog $1: "
 	if [ "$type" == "private" ]; then
 	        if [ "$port" == "" ]; then
 		        echo -n $"no private port defined"
@@ -146,7 +146,7 @@ stop() {
         else
                 pid=`pgrep -f "$prog $port\$" | xargs`	
         fi
-    
+
 	# Attempt to stop the process with a TERM first then a KILL
         if [ -n "$pid" ]; then
                 kill -TERM $pid >/dev/null 2>&1
@@ -158,9 +158,8 @@ stop() {
                 fi
                 if [ -n "$pid" ]; then
                         kill -KILL $pid >/dev/null 2>&1
-	        else
-                        success $"$prog $1 shutdown"
 	        fi
+                success $"$prog $1 shutdown"
         else
                 failure $"$base startup"
         fi
@@ -172,7 +171,15 @@ stop() {
 }
 
 restart() {
-        stop
+        echo -n $"Stopping $prog: "
+        echo
+        if [ "$type" == "public" -o ! -n "$type" ]; then
+                stop "public"
+        fi
+
+        if [ "$type" == "private" -o "$type" == "" -a "$port" != "" ]; then
+                stop "private"
+        fi
         start
 }
 
