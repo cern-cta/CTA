@@ -410,9 +410,9 @@ BEGIN
       
       IF v_exists = 0 THEN
         EXECUTE IMMEDIATE 'CREATE TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||'
-                           DATAFILE SIZE 50M
-                           AUTOEXTEND ON NEXT 100M 
-                           MAXSIZE 10G
+                           DATAFILE SIZE 100M
+                           AUTOEXTEND ON NEXT 200M 
+                           MAXSIZE 30G
                            EXTENT MANAGEMENT LOCAL 
                            SEGMENT SPACE MANAGEMENT AUTO';
       END IF;      
