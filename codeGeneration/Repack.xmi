@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2007-08-24T12:37:06" xmi.version="1.2" >
+<XMI xmlns:UML="http://schema.omg.org/spec/UML/1.3" verified="false" timestamp="2007-08-24T14:14:56" xmi.version="1.2" >
  <XMI.header>
   <XMI.documentation>
    <XMI.exporter>umbrello uml modeller http://uml.sf.net</XMI.exporter>
@@ -41,7 +41,6 @@
         <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="TB4XjRttDkni" isRoot="false" isAbstract="false" name="u_signed64" />
         <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="83fHljCxfwHJ" isRoot="false" isAbstract="false" name="char" />
         <UML:DataType stereotype="126756" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="yucIJALPtK8X" isRoot="false" isAbstract="false" name="void" />
-        <UML:DataType stereotype="datatype" isSpecification="false" isLeaf="false" visibility="public" namespace="Datatypes" xmi.id="3R6SQg22cgcP" isRoot="false" isAbstract="false" name="undef" />
        </UML:Namespace.ownedElement>
       </UML:Package>
       <UML:Package isSpecification="false" isLeaf="false" visibility="public" namespace="Logical View" xmi.id="126769" isRoot="false" isAbstract="false" name="castor" >
@@ -57,17 +56,17 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
           </UML:Operation>
           <UML:Operation comment="gets the id of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126777" isRoot="false" isAbstract="true" isQuery="false" name="id const" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="Yz1qXt133zAl" type="TB4XjRttDkni" />
+            <UML:Parameter kind="return" xmi.id="SYfc0qBumRZC" type="TB4XjRttDkni" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="Gets the type of the object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126778" isRoot="false" isAbstract="true" isQuery="false" name="type const" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="bxxGv6evhO4a" type="f58eLbH5Mhcg" />
+            <UML:Parameter kind="return" xmi.id="2tAH7sbWb8gX" type="f58eLbH5Mhcg" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
           <UML:Operation comment="virtual method to clone any object" isSpecification="false" isLeaf="false" visibility="public" xmi.id="126779" isRoot="false" isAbstract="true" isQuery="false" name="clone" >
            <UML:BehavioralFeature.parameter>
-            <UML:Parameter kind="return" xmi.id="nxw53eXZbYN6" type="3AgwxBBs6Y9J" />
+            <UML:Parameter kind="return" xmi.id="6ZYVRWit4LT2" type="3AgwxBBs6Y9J" />
            </UML:BehavioralFeature.parameter>
           </UML:Operation>
          </UML:Classifier.feature>
@@ -235,7 +234,7 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
      </UML:Namespace.ownedElement>
      <XMI.extension xmi.extender="umbrello" >
       <diagrams>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="985" snapy="10" showatts="1" xmi.id="126766" documentation="" type="1" showops="1" showpackage="0" name="Persistency" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="884" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="989" snapy="10" showatts="1" xmi.id="126766" documentation="" type="1" showops="1" showpackage="0" name="Persistency" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="884" >
         <widgets>
          <interfacewidget usesdiagramfillcolor="0" width="147" x="356" fillcolor="#ffffc0" y="203" drawascircle="0" showopsigs="600" linewidth="none" height="41" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="126767" showoperations="1" showpackage="1" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="1" width="280" showattsigs="601" x="213" fillcolor="none" y="555" showopsigs="601" linewidth="none" height="325" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="e6BXhiFelWMo" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,75,0,0,0,0,0" linecolor="none" />
@@ -249,20 +248,20 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="493" starty="717" />
            <endpoint endx="558" endy="494" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="382" fillcolor="none" y="683" linewidth="none" posttext="" role="701" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="HSnfux1HN3Ud" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="34" x="559" fillcolor="none" y="497" linewidth="none" posttext="" role="702" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="uoCwqe8n32iB" text="0..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="96" x="418" fillcolor="none" y="685" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="NS4CGrMb34RC" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="78" x="487" fillcolor="none" y="496" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="xPuxAXCcGy93" text="segment" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="382" fillcolor="none" y="683" linewidth="none" posttext="" role="701" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="kkSY94nR4Fy0" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="34" x="559" fillcolor="none" y="497" linewidth="none" posttext="" role="702" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="vvob310rVRj8" text="0..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="96" x="418" fillcolor="none" y="685" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="I0UYwfzpi8DR" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="78" x="487" fillcolor="none" y="496" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="nURufxkGmSHW" text="segment" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="1" totalcountb="2" indexb="1" linewidth="none" widgetbid="IL55CzB0hCCq" widgetaid="e6BXhiFelWMo" xmi.id="G2FZZ2HUFGr2" type="503" linecolor="none" >
           <linepath>
            <startpoint startx="306" starty="555" />
            <endpoint endx="125" endy="474" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="34" x="300" fillcolor="none" y="522" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="NoMOo4ZMxK8r" text="1..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="95" fillcolor="none" y="477" linewidth="none" posttext="" role="702" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="CxxVYlj4ZDzQ" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="96" x="225" fillcolor="none" y="523" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Zvlotup8KdoE" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="70" x="117" fillcolor="none" y="476" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="YnUvryYlkjha" text="request" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="34" x="300" fillcolor="none" y="522" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="zgfT5ObUpydi" text="1..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="95" fillcolor="none" y="477" linewidth="none" posttext="" role="702" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="dEKzJWTRUOdf" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="96" x="225" fillcolor="none" y="523" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="PTP9tedeO5CV" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="70" x="117" fillcolor="none" y="476" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="9xvCDrA6myfq" text="request" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="4" indexb="1" linewidth="none" widgetbid="126767" widgetaid="IL55CzB0hCCq" xmi.id="UHOUeMIuSIaA" type="511" linecolor="none" >
           <linepath>
@@ -284,7 +283,7 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
          </assocwidget>
         </associations>
        </diagram>
-       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="985" snapy="10" showatts="1" xmi.id="126772" documentation="" type="1" showops="1" showpackage="0" name="Inheritance" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="838" >
+       <diagram snapgrid="0" showattsig="1" fillcolor="#ffffc0" linewidth="0" zoom="100" showgrid="0" showopsig="1" usefillcolor="1" snapx="10" canvaswidth="969" snapy="10" showatts="1" xmi.id="126772" documentation="" type="1" showops="1" showpackage="0" name="Inheritance" localid="30000" showstereotype="0" showscope="1" snapcsgrid="0" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="#ff0000" canvasheight="838" >
         <widgets>
          <interfacewidget usesdiagramfillcolor="0" width="311" x="305" fillcolor="#ffffc0" y="43" drawascircle="0" showopsigs="601" linewidth="none" height="115" usefillcolor="1" showpubliconly="0" isinstance="0" xmi.id="126773" showoperations="1" showpackage="1" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,75,1,0,0,0,0" linecolor="#ff0000" />
          <classwidget usesdiagramfillcolor="0" width="235" showattsigs="601" x="143" fillcolor="#ffffc0" y="524" showopsigs="601" linewidth="none" height="241" usefillcolor="1" showpubliconly="0" showattributes="1" isinstance="0" xmi.id="IL55CzB0hCCq" showoperations="1" showpackage="0" showscope="1" usesdiagramusefillcolor="0" font="Bitstream Charter,12,-1,5,75,0,0,0,0,0" linecolor="#ff0000" />
@@ -299,20 +298,20 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="519" starty="703" />
            <endpoint endx="378" endy="644" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="34" x="505" fillcolor="none" y="677" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="OAQvLPLVtUM8" text="1..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="337" fillcolor="none" y="645" linewidth="none" posttext="" role="702" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="JoiuaeMT75Hu" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="96" x="430" fillcolor="none" y="676" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="9W9tFrSadoyR" text="subrequest" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="72" x="358" fillcolor="none" y="646" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="sVlqntfxpcSL" text="request" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="34" x="505" fillcolor="none" y="677" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="9kBb8oGLZxKL" text="1..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="337" fillcolor="none" y="645" linewidth="none" posttext="" role="702" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="L83QYBYNv8ye" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="96" x="430" fillcolor="none" y="676" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="Fnj1mOpj4SAA" text="subrequest" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="72" x="358" fillcolor="none" y="646" linewidth="none" posttext="" role="710" height="25" usefillcolor="1" pretext="+" isinstance="0" xmi.id="okcbiEKJSeHk" text="request" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" totalcountb="2" indexb="1" linewidth="none" widgetbid="jvMyuGsaQQ18" widgetaid="e6BXhiFelWMo" xmi.id="SqmQqS6kNEaN" type="503" linecolor="none" >
           <linepath>
            <startpoint startx="703" starty="572" />
            <endpoint endx="777" endy="431" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="34" x="624" fillcolor="none" y="538" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="G7TNCiI9c8v7" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="34" x="739" fillcolor="none" y="451" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="O3xrYjdRnuGM" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="96" x="656" fillcolor="none" y="540" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="zusmUI7sSXlo" text="subrequest" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="78" x="672" fillcolor="none" y="450" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="v6HoZdvsQdn0" text="segment" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="34" x="624" fillcolor="none" y="538" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="Z3hVAe7Wu0Hl" text="1" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="34" x="739" fillcolor="none" y="451" linewidth="none" posttext="" role="702" height="25" usefillcolor="1" pretext="" isinstance="0" xmi.id="Dol7UM8wBT0x" text="0..n" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="96" x="656" fillcolor="none" y="540" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="MGvntCX2wib2" text="subrequest" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="78" x="672" fillcolor="none" y="450" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="UpL3mgN7oOVM" text="segment" usesdiagramusefillcolor="1" font="Bitstream Charter,12,-1,5,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" totalcountb="5" indexb="2" linewidth="none" widgetbid="126773" widgetaid="IL55CzB0hCCq" xmi.id="hpDrk2TIKrcC" type="511" linecolor="none" >
           <linepath>
@@ -361,20 +360,20 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
            <startpoint startx="300" starty="573" />
            <endpoint endx="249" endy="431" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="32" x="307" fillcolor="none" y="537" linewidth="none" posttext="" role="701" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="OcJBUZY2ilxT" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="34" x="180" fillcolor="none" y="435" linewidth="none" posttext="" role="702" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="jtToHr3LVS1F" text="0..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="96" x="210" fillcolor="none" y="541" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="XBDxm0w25NOH" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="78" x="224" fillcolor="none" y="433" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="6ePgmKl8Lhzs" text="segment" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="307" fillcolor="none" y="537" linewidth="none" posttext="" role="701" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="LFlXjjSq2Xmj" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="34" x="180" fillcolor="none" y="435" linewidth="none" posttext="" role="702" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="420exjOXYe1N" text="0..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="96" x="210" fillcolor="none" y="541" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="9L5vjYGGaxjk" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="78" x="224" fillcolor="none" y="433" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="bqGUrYD2Kz7p" text="segment" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="2" indexa="1" totalcountb="3" indexb="2" linewidth="none" widgetbid="IL55CzB0hCCq" widgetaid="e6BXhiFelWMo" xmi.id="G2FZZ2HUFGr2" type="503" linecolor="none" >
           <linepath>
            <startpoint startx="487" starty="735" />
            <endpoint endx="650" endy="309" />
           </linepath>
-          <floatingtext usesdiagramfillcolor="1" width="34" x="444" fillcolor="none" y="865" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="InpnDr1ycN34" text="1..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="32" x="652" fillcolor="none" y="261" linewidth="none" posttext="" role="702" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="ixueDt51RVVf" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="96" x="482" fillcolor="none" y="865" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="lnO4SLwqwG1Q" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
-          <floatingtext usesdiagramfillcolor="1" width="70" x="587" fillcolor="none" y="261" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="nXSWGOzzFSlW" text="request" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="34" x="444" fillcolor="none" y="865" linewidth="none" posttext="" role="701" height="30" usefillcolor="1" pretext="" isinstance="0" xmi.id="A6aiiZ5rlUKx" text="1..n" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="32" x="652" fillcolor="none" y="261" linewidth="none" posttext="" role="702" height="32" usefillcolor="1" pretext="" isinstance="0" xmi.id="zaSjXUAEyTyy" text="1" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="96" x="482" fillcolor="none" y="865" linewidth="none" posttext="" role="709" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="ACPTBWGXmz2T" text="subrequest" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
+          <floatingtext usesdiagramfillcolor="1" width="70" x="587" fillcolor="none" y="261" linewidth="none" posttext="" role="710" height="30" usefillcolor="1" pretext="+" isinstance="0" xmi.id="jUJj05T45Ti3" text="request" usesdiagramusefillcolor="1" font="helvetica,12,-1,0,50,0,0,0,0,0" linecolor="none" />
          </assocwidget>
          <assocwidget totalcounta="3" indexa="2" totalcountb="5" indexb="2" linewidth="none" widgetbid="126781" widgetaid="e6BXhiFelWMo" xmi.id="AzK1UDWduH92" type="511" linecolor="none" >
           <linepath>
@@ -427,7 +426,7 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
   </UML:Model>
  </XMI.content>
  <XMI.extensions xmi.extender="umbrello" >
-  <docsettings viewid="126772" documentation="" uniqueid="nxw53eXZbYN6" />
+  <docsettings viewid="126772" documentation="" uniqueid="6ZYVRWit4LT2" />
   <listview>
    <listitem open="1" type="800" label="Views" >
     <listitem open="1" type="801" id="Logical View" >
@@ -486,13 +485,12 @@ Implements the id methods" isSpecification="false" isLeaf="false" visibility="pu
        </listitem>
       </listitem>
      </listitem>
-     <listitem open="0" type="830" id="Datatypes" >
+     <listitem open="1" type="830" id="Datatypes" >
       <listitem open="1" type="829" id="3AgwxBBs6Y9J" />
       <listitem open="1" type="829" id="83fHljCxfwHJ" />
       <listitem open="1" type="829" id="f58eLbH5Mhcg" />
       <listitem open="1" type="829" id="JbkCHdRXmj8c" />
       <listitem open="1" type="829" id="TB4XjRttDkni" />
-      <listitem open="0" type="829" id="3R6SQg22cgcP" />
       <listitem open="1" type="829" id="yucIJALPtK8X" />
      </listitem>
     </listitem>
