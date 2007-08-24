@@ -153,8 +153,8 @@ void CppCppClassWriter::writeConstructorMethods(QTextStream &stream) {
       0 != at;
       at = m_classInfo->getAttList()->next()) {
     if (!at->getStatic()) {
+      QString type = fixTypeName (at->getTypeName(),"","");
       if (isLastTypeArray()) {
-        QString type = fixTypeName (at->getTypeName(),"","");
         QString length = arrayLength();
         stream << getIndent() << "memset("
                << "m_" << at->getName()
