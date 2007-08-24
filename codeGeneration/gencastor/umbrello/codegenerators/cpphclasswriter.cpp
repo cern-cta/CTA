@@ -69,16 +69,14 @@ void CppHClassWriter::writeClass(UMLClassifier *c) {
 
     // PRIVATE attribs/methods
     if (m_classInfo->hasMethods[Uml::Visibility::Private] ||
-        m_classInfo->hasAttributes[Uml::Visibility::Private] ||
-        m_classInfo->hasAssociations) {
+        m_classInfo->hasAttributes[Uml::Visibility::Private]) {
       if (m_classInfo->hasMethods[Uml::Visibility::Private]) {
         // print visibility decl.
         *m_stream << getIndent(INDENT*ClassIndentLevel)
                   << scopeToCPPDecl(Uml::Visibility::Private) << ":" << endl << endl;
         writeOperations(c,true,Uml::Visibility::Private,*m_stream, alreadyGeneratedMethods);
       }
-      if (m_classInfo->hasAttributes[Uml::Visibility::Private] ||
-          m_classInfo->hasAssociations) {
+      if (m_classInfo->hasAttributes[Uml::Visibility::Private]) {
         *m_stream << getIndent(INDENT*ClassIndentLevel)
                   << scopeToCPPDecl(Uml::Visibility::Private) << ":" << endl << endl;
         writeHeaderFieldDecls(c, *m_stream);
