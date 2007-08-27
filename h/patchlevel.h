@@ -1,9 +1,9 @@
 /*
- * $Id: patchlevel.h,v 1.5 2000/03/26 06:27:48 baud Exp $
+ * $Id: patchlevel.h,v 1.6 2007/08/27 10:13:31 itglp Exp $
  */
 
 /*
- * @(#)$RCSfile: patchlevel.h,v $ $Revision: 1.5 $ $Date: 2000/03/26 06:27:48 $ CERN IT-PDP/CS F. Hemmer
+ * @(#)$RCSfile: patchlevel.h,v $ $Revision: 1.6 $ $Date: 2007/08/27 10:13:31 $ CERN IT-PDP/CS F. Hemmer
  */
 
 /*
@@ -17,6 +17,10 @@
 #define _PATCHLEVEL_H_INCLUDED_
 
 #define BASEVERSION     __BASEVERSION__
+#define MAJORVERSION    __MAJORVERSION__
+#define MINORVERSION    __MINORVERSION__
+#define MAJORRELEASE    __MAJORRELEASE__
+#define MINORRELEASE    __MINORRELEASE__
 #define PATCHLEVEL      __PATCHLEVEL__
 #define TIMESTAMP       __TIMESTAMP__
 
