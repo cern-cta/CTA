@@ -197,7 +197,7 @@
 #define TP022	"TP022 - path exists already\n"
 #define TP023	"TP023 - mount cancelled by operator: %s\n"
 #define TP024	"TP024 - file %s does not exist\n"
-#define TP025	"TP025 - bad label structure\n"
+#define TP025	"TP025 - bad label structure\n\tReason: %s\n\tLabel : %s\n"
 #define TP026	"TP026 - system error\n"
 #define TP027	"TP027 - you are not registered in account file\n"
 #define TP028	"TP028 - file not expired\n"

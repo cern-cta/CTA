@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.14 $ $Date: 2007/08/27 07:12:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: readlbl.c,v $ $Revision: 1.15 $ $Date: 2007/08/27 07:36:56 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	readlbl - read one possible label record */
@@ -112,6 +112,7 @@ char *lblbuf;
 		RETURN (2);	/* tapemark */
 	}
 	if (n != 80) {
+
                 /* n should be in (0..80) at this point */
                 lblbuf[n] = '\0';
                 RETURN (1); 

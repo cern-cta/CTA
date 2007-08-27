@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.17 $ $Date: 2007/08/27 07:12:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.18 $ $Date: 2007/08/27 07:36:56 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -358,7 +358,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 
 				c = ETLBL;
 				goto reply;
-			}
+			} 
 			sscanf (hdr1 + 31, "%4d", cfseq);
 			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
 			    uhl1, &tmr)) < 0)
@@ -685,6 +685,11 @@ reply:
 		break;
 	case ETLBL:
 		usrmsg (func, TP025, badLabelReason, badLabelContent);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 25, 4,
+                                    "func"   , TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "Bad label structure",
+                                    "Reason" , TL_MSG_PARAM_STR, badLabelReason,
+                                    "Label"  , TL_MSG_PARAM_STR, badLabelContent );
 		break;
 	default:
 		break;
