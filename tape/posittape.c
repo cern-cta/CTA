@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.16 $ $Date: 2007/03/13 16:22:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.17 $ $Date: 2007/08/27 07:12:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -17,6 +17,9 @@
 #include "Ctape_api.h"
 #include "serrno.h"
 #include "tplogger_api.h"
+
+static char badLabelReason[128];
+static char badLabelContent[LBLBUFSZ];
 
 int gethdr2uhl1(tapefd, path, lblcode, hdr1, hdr2, uhl1, tmr)
 int tapefd;
@@ -32,6 +35,11 @@ int *tmr;
 
 	if ((c = readlbl (tapefd, path, hdr2)) < 0) return (c);
 	if (c == 1) {
+                
+                sprintf( badLabelReason, "Could not read a whole hdr2 label, only %ld bytes", 
+                         strlen( hdr2 ) );
+                sprintf( badLabelContent, "%s", hdr2 );
+
 		serrno = ETLBL;
 		return (-1);
 	}
@@ -43,11 +51,21 @@ int *tmr;
 	}
 	if (lblcode == SL) ebc2asc (hdr2, 80);
 	if (strncmp (hdr2, (*hdr1 == 'H') ? "HDR2" : "EOF2", 4)) {
-		serrno = ETLBL;
+
+                sprintf( badLabelReason, "Unexpected hdr2 label content: exp %s",
+                         (*hdr1 == 'H') ? "HDR2" : "EOF2" );
+                sprintf( badLabelContent, "%s", hdr2 );
+		
+                serrno = ETLBL;
 		return (-1);
-	}
+        }
 	if ((c = readlbl (tapefd, path, uhl1)) < 0) return (c);
 	if (c == 1) {
+
+                sprintf( badLabelReason, "Could not read a whole uhl1 label, only %ld bytes", 
+                         strlen( uhl1 ) );
+                sprintf( badLabelContent, "%s", uhl1 );
+
 		serrno = ETLBL;
 		return (-1);
 	}
@@ -58,9 +76,14 @@ int *tmr;
 	}
 	if (lblcode == SL) ebc2asc (uhl1, 80);
 	if (strncmp (uhl1, (*hdr1 == 'H') ? "UHL1" : "UTL1", 4)) {
+
+                sprintf( badLabelReason, "Unexpected uhl1 label content: exp %s",
+                         (*hdr1 == 'H') ? "UHL1" : "UTL1" );
+                sprintf( badLabelContent, "%s", uhl1 );
+
 		serrno = ETLBL;
 		return (-1);
-	}
+        }
 	sscanf (uhl1+4, "%10d", &cfseq);
 	*tmr = 0;
 	return (cfseq);
@@ -104,6 +127,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 
 	ENTRY (posittape);
 	c = 0;
+
 	sprintf (sfseq, "%d", fseq);
 	pfseq = *cfseq;		/* save current file sequence number */
 	if (Qfirst && fseq > 0) fseq += Qfirst - 1;
@@ -261,11 +285,29 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 		if (flags & LOCATE_DONE) {
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 			if (c) {
+
+                                if (1 == c) {
+                                        
+                                        sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
+                                                 strlen( hdr1 ) );
+                                        sprintf( badLabelContent, "%s", hdr1 );
+                                        
+                                } else {
+                                        
+                                        sprintf( badLabelReason, "Unexpected event when reading hdr1: %s", 
+                                                 (2 == c) ? "EOF" : "Blank tape" );
+                                        sprintf( badLabelContent, "%s", hdr1 );
+                                } 
+
 				c = ETLBL;
 				goto reply;
-			}
+			} 
 			if (lblcode == SL) ebc2asc (hdr1, 80);
 			if (strncmp (hdr1, "HDR1", 4)) {
+
+                                sprintf( badLabelReason, "Unexpected hdr1 label content: exp HDR1" );
+                                sprintf( badLabelContent, "%s", hdr1 );
+                                
 				c = ETLBL;
 				goto reply;
 			}
@@ -276,6 +318,10 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 			if (c)
 				*cfseq = c;
 			if (*cfseq != fseq) {
+
+                                sprintf( badLabelReason, "Unexpected file sequence no: exp %d, got: %d", fseq, *cfseq );
+                                sprintf( badLabelContent, "%s", hdr1 );
+
 				c = ETLBL;
 				goto reply;
 			}
@@ -287,11 +333,29 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 			if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 			if (c) {
+                                
+                                if (1 == c) {
+                                        
+                                        sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
+                                                 strlen( hdr1 ) );
+                                        sprintf( badLabelContent, "%s", hdr1 );
+                                        
+                                } else {
+                                        
+                                        sprintf( badLabelReason, "Unexpected event when reading hdr1: %s", 
+                                                 (2 == c) ? "EOF" : "Blank tape" );
+                                        sprintf( badLabelContent, "%s", hdr1 );
+                                } 
+
 				c = ETLBL;
 				goto reply;
-			}
+			} 
 			if (lblcode == SL) ebc2asc (hdr1, 80);
 			if (strncmp (hdr1, "HDR1", 4)) {
+
+                                sprintf( badLabelReason, "Unexpected hdr1 label content: exp HDR1" );
+                                sprintf( badLabelContent, "%s", hdr1 );
+
 				c = ETLBL;
 				goto reply;
 			}
@@ -303,12 +367,22 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				*cfseq = c;
 			if (fsec > 1)	{ /* nth file section in multivolume set */
 				if (*cfseq != fseq && filstat != NEW_FILE) {
-					c = ETLBL;
+
+                                        sprintf( badLabelReason, "Unexpected file sequence no: exp %d, got %d and file status %d is not %d (NEW_FILE)",
+                                                 fseq, *cfseq, filstat, NEW_FILE );
+                                        sprintf( badLabelContent, "%s", hdr1 );
+
+                                        c = ETLBL;
 					goto reply;
 				} else
 					*cfseq = fseq;
 			} else if (*cfseq != 1) {
 				if (fseq != 1 || filstat != NEW_FILE) {
+
+                                        sprintf( badLabelReason, "Unexpected file sequence no: %d or file status %d is not %d (NEW_FILE)",
+                                                 fseq, filstat, NEW_FILE );
+                                        sprintf( badLabelContent, "%s", hdr1 );
+
 					c = ETLBL;
 					goto reply;
 				} else {
@@ -383,11 +457,29 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 					if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 				}
 				if (c) {
+                                        
+                                        if (1 == c) {
+                                        
+                                                sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
+                                                         strlen( hdr1 ) );
+                                                sprintf( badLabelContent, "%s", hdr1 );
+                                        
+                                        } else {
+                                        
+                                                sprintf( badLabelReason, "Unexpected event when reading hdr1: %s", 
+                                                         (2 == c) ? "EOF" : "Blank tape" );
+                                                sprintf( badLabelContent, "%s", hdr1 );
+                                        } 
+
 					c = ETLBL;
 					goto reply;
 				}
 				if (lblcode == SL) ebc2asc (hdr1, 80);
 				if (strncmp (hdr1, "EOF1", 4)) {
+
+                                        sprintf( badLabelReason, "Unexpected hdr1 label content: exp EOF1" );
+                                        sprintf( badLabelContent, "%s", hdr1 );
+
 					c = ETLBL;
 					goto reply;
 				}
@@ -427,6 +519,11 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				}
 			}
 			if (c == 1) {
+
+                                sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
+                                         strlen( hdr1 ) );
+                                sprintf( badLabelContent, "%s", hdr1 );
+
 				c = ETLBL;
 				goto reply;
 			}
@@ -456,6 +553,10 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 				goto reply;
 			}
 			if (strncmp (hdr1, "HDR1", 4)) {
+                               
+                                sprintf( badLabelReason, "Unexpected hdr1 label content: exp HDR1" );
+                                sprintf( badLabelContent, "%s", hdr1 );
+
 				c = ETLBL;
 				goto reply;
 			}
@@ -474,6 +575,11 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 			}
 			if (fseq == *cfseq) break;
 			if (fseq > 0 && fseq < *cfseq) {
+
+                                sprintf( badLabelReason, "Unexpected file sequence no: exp %d, got %d", 
+                                         fseq, *cfseq);
+                                sprintf( badLabelContent, "%s", hdr1 );
+
 				c = ETLBL;
 				goto reply;
 			}
@@ -563,9 +669,14 @@ finalpos:
 		if ((c = skiptpfb (tapefd, path, 1))) goto reply;
 	}
 reply:
-	if (c < 0 && serrno == ETLBL)
-		c = ETLBL;
-	switch (c) {
+        if (c < 0 && serrno == ETLBL) {
+		tplogit (func, "Setting ETLBL\n");
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                    "func"   , TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, "Setting ETLBL" );
+                c = ETLBL;
+	}
+        switch (c) {
 	case ETFSQ:
 		if (fseq == -2)		/* -q u */
 			usrmsg (func, TP024, fid);
@@ -573,7 +684,7 @@ reply:
 			usrmsg (func, TP024, sfseq);
 		break;
 	case ETLBL:
-		usrmsg (func, TP025);
+		usrmsg (func, TP025, badLabelReason, badLabelContent);
 		break;
 	default:
 		break;
