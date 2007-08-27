@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/23 13:57:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/27 12:37:05 $ $Author: waldron $
  *
  * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-1
  *
@@ -59,15 +59,13 @@ BEGIN
 END;
 
 /* Change SubRequest partitions to reflect new statuses for the jobManager */
-ALTER TABLE SubRequest MODIFY PARTITION P_STATUS_3 ADD VALUES (13, 14);
+ALTER TABLE SubRequest SPLIT PARTITION P_STATUS_OTHER VALUES (13, 14) INTO (PARTITION P_STATUS_TEMP, PARTITION P_STATUS_OTHER);
+ALTER TABLE SubRequest MERGE PARTITIONS P_STATUS_TEMP, P_STATUS_3 INTO PARTITION P_STATUS_3;
 ALTER TABLE SubRequest RENAME PARTITION P_STATUS_3 TO P_STATUS_3_13_14;
 
-/* We also merge the partitions for the failed ones. Note that we have to drop some,
-   but no SubRequest is left in status 7 or 10 when Castor is properly stopped */
-ALTER TABLE SubRequest DROP PARTITION P_STATUS_7;
-ALTER TABLE SubRequest DROP PARTITION P_STATUS_10;
-ALTER TABLE SubRequest MODIFY PARTITION P_STATUS_9 ADD VALUES (7, 10);
-ALTER TABLE SubRequest RENAME PARTITION P_STATUS_9 TO P_STATUS_7_9_10;
+/* We also merge the partitions for the failed ones. */
+ALTER TABLE SubRequest MERGE PARTITIONS P_STATUS_7, P_STATUS_10 INTO PARTITION P_STATUS_7;
+ALTER TABLE SubRequest MERGE PARTITIONS P_STATUS_7, P_STATUS_9 INTO PARTITION P_STATUS_7_9_10;
 
 /* Rebuild all indexes because they are left unusable after repartitioning */
 ALTER INDEX I_SubRequest_PK REBUILD;
