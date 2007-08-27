@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.51 2007/05/29 08:41:50 waldron Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.52 2007/08/27 10:30:53 sponcec3 Exp $
  */
 
 /*
@@ -36,6 +36,8 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/replier/RequestReplier.hpp"
+#include "castor/query/VersionQuery.hpp"
+#include "castor/query/VersionResponse.hpp"
 #include "castor/stager/StageFileQueryRequest.hpp"
 #include "castor/stager/StageFindRequestRequest.hpp"
 #include "castor/stager/StageRequestQueryRequest.hpp"
@@ -57,6 +59,15 @@
 #include "Cns_api.h"
 #include "u64subr.h"
 
+// All this to get the default version. The defines
+// are here to be able to compile in case the patchlevel
+// file was not properly filled with proper numbers
+// since this is done only by maketar
+#include "patchlevel.h"
+#define __MAJORVERSION__ -1
+#define __MINORVERSION__ -1
+#define __MAJORRELEASE__ -1
+#define __MINORRELEASE__ -1
 
 #undef logfunc
 
@@ -847,6 +858,29 @@ namespace castor {
         sendEndResponse(client, req->reqId());
       }
 
+      /**
+       * Handles a VersionQuery and replies to client.
+       * @param req the request to handle
+       * @param client the client where to send the response
+       */
+      void handle_versionQuery(castor::stager::Request* req,
+                               castor::IClient *client) {
+
+        try {
+          castor::query::VersionResponse result;
+          result.setMajorVersion(MAJORVERSION);
+          result.setMinorVersion(MINORVERSION);
+          result.setMajorRelease(MAJORRELEASE);
+          result.setMinorRelease(MINORRELEASE);
+          replyToClient(client, &result);
+	} catch (castor::exception::Exception e) {
+          serrno = e.code();
+          char* func = "castor::stager::queryService::handle_versionQuery";
+          STAGER_LOG_DB_ERROR(NULL, func, e.getMessage().str().c_str());
+        }
+
+      }
+
     } // End of namespace query service
 
   } // End of namespace stager
@@ -1018,6 +1052,11 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
   case castor::OBJ_DiskPoolQuery:
     castor::stager::queryService::handle_diskPoolQuery
       (req, client, svcs, qrySvc, ad);
+    break;
+
+  case castor::OBJ_VersionQuery:
+    castor::stager::queryService::handle_versionQuery
+      (req, client);
     break;
 
   default:
