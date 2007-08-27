@@ -1,45 +1,44 @@
 /*
- * $Id: castor.c,v 1.6 2005/07/11 11:44:11 jdurand Exp $
+ * $Id: castor.c,v 1.7 2007/08/27 14:57:45 sponcec3 Exp $
  */
-
-/*
- * Copyright (C) 1999 by CERN/IT/PDP/DM
- * All rights reserved
- */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: castor.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 11:44:11 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /*	castor - display current CASTOR version */
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <Cgetopt.h>
+#include <stager_api.h>
+#include <stager_client_commandline.h>
 #include "patchlevel.h"
 #define __BASEVERSION__ "?"
 #define __PATCHLEVEL__ 0
 
-main(argc, argv)
-int argc;
-char **argv;
-{
-	int c;
-#if defined(HPSSCLIENT)
-	char hpss_aware = 'H';
-#else
-	char hpss_aware = ' ';
-#endif
+int main(int argc, char ** argv) {
+  struct stage_options opts;
+  int c, Mv,mv,Mr,mr, ret;
 
-	while ((c = getopt (argc, argv, "hv")) != EOF) {
-		switch (c) {
-		case 'v':
-			printf ("%s.%d%c\n", BASEVERSION, PATCHLEVEL,
-			    hpss_aware);
-			break;
-		case 'h':
-		default:
-			printf ("Please see documentation at http://cern.ch/castor\n");
-			break;
-		}
-	}
-	exit (0);
+  opts.stage_host = NULL;
+  opts.service_class = NULL;
+  opts.stage_port=0;
+  opts.stage_version=2;
+  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+
+  while ((c = getopt (argc, argv, "hvs")) != EOF) {
+    switch (c) {
+    case 'v':
+      printf ("%s.%d\n", BASEVERSION, PATCHLEVEL);
+      break;
+    case 's':
+      ret = stage_version(&Mv, &mv, &Mr, &mr, &opts);
+      if (0 == ret) {
+	printf ("%d.%d.%d-%d\n", Mv, mv, Mr, mr);
+      }
+      break;
+    case 'h':
+    default:
+      printf ("usage : %s [-r] [-s] [-h]\n", argv[0]);
+      break;
+    }
+  }
+  exit (0);
 }
