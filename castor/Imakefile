@@ -188,6 +188,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamFileSystemDescriptionCnv.cpp \
               io/StreamDiskServerDescriptionCnv.cpp \
               io/StreamDiskPoolQueryCnv.cpp \
+              io/StreamVersionQueryCnv.cpp \
+              io/StreamVersionResponseCnv.cpp \
               replier/ClientConnection.cpp \
               replier/RequestReplier.cpp \
               replier/RequestReplierCInt.cpp \
@@ -390,6 +392,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               query/DiskServerDescription.cpp \
               query/DiskPoolQueryCInt.cpp \
               query/DiskPoolQuery.cpp \
+              query/VersionQuery.cpp \
+              query/VersionResponse.cpp \
               sharedMemory/BasicBlock.cpp \
               sharedMemory/LocalBlock.cpp \
               sharedMemory/BlockKey.cpp \

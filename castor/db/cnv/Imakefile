@@ -96,6 +96,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbTapePoolCnv.cpp \
      DbTapeRequestCnv.cpp \
      DbTapeServerCnv.cpp \
+     DbVersionQueryCnv.cpp \
      ../DbBaseObj.cpp \
      ../DbCnvSvc.cpp \
      ../DbParamsSvc.cpp \
