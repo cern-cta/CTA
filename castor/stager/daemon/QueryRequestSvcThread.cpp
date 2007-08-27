@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.53 2007/08/27 14:54:02 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.54 2007/08/27 16:00:00 sponcec3 Exp $
  */
 
 /*
@@ -291,6 +291,11 @@ namespace castor {
 
         /* Invoking the method                */
         /* ---------------------------------- */
+        // Processing File Query by fileName
+        Cuuid_t uuid;
+        string2Cuuid(&uuid, (char*)reqId.c_str());
+        dlf_write(uuid, DLF_LVL_SYSTEM, STAGER_MSG_FQUERY,
+                  0, 1, "FileName",DLF_MSG_PARAM_STR,fileName.c_str());
         STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4FileName");
         std::list<castor::stager::DiskCopyInfo*>* result =
           qrySvc->diskCopies4FileName(fileName, svcClassId);
@@ -381,6 +386,11 @@ namespace castor {
 
         /* Invoking the method                */
         /* ---------------------------------- */
+        // Processing File Query by fileId
+        Cuuid_t uuid;
+        string2Cuuid(&uuid, (char*)reqId.c_str());
+        dlf_write(uuid, DLF_LVL_SYSTEM, STAGER_MSG_IQUERY,
+                  0, 1, "FileId", DLF_MSG_PARAM_STR, fid.c_str());
         STAGER_LOG_DEBUG(NULL, "Invoking diskCopies4File");
         std::list<castor::stager::DiskCopyInfo*>* result =
           qrySvc->diskCopies4File(fid, nshost, svcClassId);
@@ -440,6 +450,11 @@ namespace castor {
                                              std::string reqId) {
 
         // Performing the query on the database
+        // Processing Request Query
+        Cuuid_t uuid;
+        string2Cuuid(&uuid, (char*)reqId.c_str());
+        dlf_write(uuid, DLF_LVL_SYSTEM, STAGER_MSG_IQUERY,
+                  0, 1, "ReqId", DLF_MSG_PARAM_STR, val.c_str());
         std::list<castor::stager::DiskCopyInfo*>* result;
         result = qrySvc->diskCopies4Request(reqType, val, svcClassId);
 

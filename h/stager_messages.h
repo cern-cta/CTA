@@ -1,5 +1,5 @@
 /*
- * $Id: stager_messages.h,v 1.5 2005/01/29 14:54:20 jdurand Exp $
+ * $Id: stager_messages.h,v 1.6 2007/08/27 16:00:24 sponcec3 Exp $
  */
 
 #ifndef __stager_messages_h
@@ -29,7 +29,10 @@ enum stagerMessagesNo {
   STAGER_MSG_IMPORTANT,
   STAGER_MSG_DEBUG    ,
   STAGER_MSG_EXIT     ,
-  STAGER_MSG_RESTART
+  STAGER_MSG_RESTART  ,
+  STAGER_MSG_FQUERY   ,
+  STAGER_MSG_RQUERY   ,
+  STAGER_MSG_IQUERY
 };
 struct stagerMessages {
   int msgNo;
