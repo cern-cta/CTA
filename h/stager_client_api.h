@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.35 $ $Release$ $Date: 2007/04/19 15:18:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.36 $ $Release$ $Date: 2007/08/27 13:42:19 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.35 $
- * @date $Date: 2007/04/19 15:18:19 $
+ * @version $Revision: 1.36 $
+ * @date $Date: 2007/08/27 13:42:19 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.35 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.36 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -169,6 +169,29 @@ struct stage_options {
   int stage_port;
 };
 
+
+/*****************************************************
+ *    stage_version                                  *
+ *****************************************************/
+
+/**
+ * stage_version
+ * returns the CASTOR version and release of the castor server
+ * \ingroup Functions
+ * @param majorVersion    the castor major version number
+ * @param minorVersion    the castor mijor version number
+ * @param majorRelease    the castor major release number
+ * @param minorRelease    the castor minor release number
+ * @param opts       CASTOR stager specific options 
+ *
+ * @returns 0 in case of success, -1 otherwise
+ * @note the full version is majorVersion.minorVersion.majorRelease-minorRelease
+ */
+EXTERN_C int DLL_DECL stage_version _PROTO((int *majorVersion,
+                                            int *minorVersion,
+                                            int *majorRelease,
+                                            int *minorRelease,
+                                            struct stage_options* opts));
 
 
 /**********************************************************
