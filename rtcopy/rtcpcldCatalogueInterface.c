@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.164 $ $Release$ $Date: 2007/08/10 11:14:17 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.165 $ $Release$ $Date: 2007/08/27 14:42:55 $ $Author: obarring $
  *
  * 
  *
@@ -2325,6 +2325,7 @@ int detachTapeCopyFromStream(
   } else {
     tapeCopyStatus = TAPECOPY_TOBEMIGRATED;
   }
+  Cstager_TapeCopy_setStatus(tapeCopy,tapeCopyStatus);
 
   Cstager_TapeCopy_removeStream(
                                 tapeCopy,
