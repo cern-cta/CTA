@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2007/04/26 09:58:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2007/08/27 14:53:48 $ $Author: sponcec3 $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -75,7 +75,7 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UserTagLastRecallsS
   "BEGIN userTagLastRecallsStageQuery(:1, :2, :3, :4); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
-  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (33, 34, 41, 103) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (33, 34, 41, 103, 131) AND ROWNUM < 2 RETURNING id INTO :1; END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolsStatementString =
   "BEGIN describeDiskPools(:1, :2); END;";
