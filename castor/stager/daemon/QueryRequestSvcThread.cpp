@@ -1,5 +1,5 @@
 /*
- * $Id: QueryRequestSvcThread.cpp,v 1.52 2007/08/27 10:30:53 sponcec3 Exp $
+ * $Id: QueryRequestSvcThread.cpp,v 1.53 2007/08/27 14:54:02 sponcec3 Exp $
  */
 
 /*
@@ -872,7 +872,9 @@ namespace castor {
           result.setMinorVersion(MINORVERSION);
           result.setMajorRelease(MAJORRELEASE);
           result.setMinorRelease(MINORRELEASE);
-          replyToClient(client, &result);
+          castor::replier::RequestReplier *rr =
+            castor::replier::RequestReplier::getInstance();
+          rr->sendResponse(client, &result, true);
 	} catch (castor::exception::Exception e) {
           serrno = e.code();
           char* func = "castor::stager::queryService::handle_versionQuery";
