@@ -227,6 +227,9 @@ DROP TABLE DeviceGroupName;
 /* SQL statements for type DiskPoolQuery */
 DROP TABLE DiskPoolQuery;
 
+/* SQL statements for type VersionQuery */
+DROP TABLE VersionQuery;
+
 DROP FUNCTION getTime;
 DROP FUNCTION FileSystemRate;
 DROP PROCEDURE makeSubRequestWait;
