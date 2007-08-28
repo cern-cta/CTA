@@ -178,6 +178,9 @@ CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), libraryName VARCHAR2(2048),
 /* SQL statements for type DiskPoolQuery */
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT I_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+/* SQL statements for type VersionQuery */
+CREATE TABLE VersionQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_VersionQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 ALTER TABLE SvcClass2TapePool
   ADD CONSTRAINT fk_SvcClass2TapePool_P FOREIGN KEY (Parent) REFERENCES SvcClass (id)
   ADD CONSTRAINT fk_SvcClass2TapePool_C FOREIGN KEY (Child) REFERENCES TapePool (id);
@@ -192,11 +195,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_4_1');
+INSERT INTO CastorVersion VALUES ('-', '2_1_4_2');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.487  Date: 2007/08/22 13:17:30  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.488  Date: 2007/08/23 14:05:31  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2699,7 +2702,7 @@ BEGIN
   -- don't touch recalls for the moment
   FOR sr IN (SELECT id, status FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
-    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
     END IF;
   END LOOP;
@@ -2830,7 +2833,7 @@ BEGIN
       -- See whether the castorfile has any pending SubRequest
       SELECT count(*) INTO nb FROM SubRequest
        WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- If any SubRequest, give up
       IF nb = 0 THEN
         DECLARE
@@ -3633,7 +3636,7 @@ BEGIN
            grouping(fs.mountPoint) as IsFSGrouped,
            dp.name,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
@@ -3645,7 +3648,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (dp.name, ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.spaceToBeFreed,
+             fs.free - fs.minAllowedFreeSpace * fs.totalSize,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (dp.name, ds.name, ds.status),
@@ -3670,7 +3673,7 @@ BEGIN
     SELECT grouping(ds.name) as IsDSGrouped,
            grouping(fs.mountPoint) as IsGrouped,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp
@@ -3679,7 +3682,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.spaceToBeFreed,
+             fs.free - fs.minAllowedFreeSpace * fs.totalSize,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (ds.name, ds.status),
