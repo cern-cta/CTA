@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.488 $ $Date: 2007/08/23 14:05:31 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.489 $ $Date: 2007/08/28 15:29:02 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_4_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_4_3';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
