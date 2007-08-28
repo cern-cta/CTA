@@ -9,7 +9,7 @@ CREATE TABLE RepackRequest (machine VARCHAR2(2048), userName VARCHAR2(2048), cre
 
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_4_2');
+INSERT INTO CastorVersion VALUES ('-', '2_1_4_3');
 
 /*******************************************************************
  *

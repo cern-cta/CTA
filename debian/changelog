@@ -1,3 +1,9 @@
+castor (2.1.4-3) unstable; urgency=low
+
+  * fixed the PL/SQL versionning (I forgot the C++ oen in previous release)
+
+-- Sebastien Ponce <sponce@cern.ch>  Wed, 28 August 2007 10:30:00 +0100	
+
 castor (2.1.4-2) unstable; urgency=low
 
   * CASTOR2/castor/Constants.cpp:
