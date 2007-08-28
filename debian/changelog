@@ -1,3 +1,76 @@
+castor (2.1.4-2) unstable; urgency=low
+
+  * CASTOR2/castor/Constants.cpp:
+  * CASTOR2/castor/Imakefile:
+  * CASTOR2/castor/db/cnv/Imakefile:
+    [2007-08-27,sponcec3] Compile all new objects for version querying
+  * CASTOR2/castor/db/ora/OraQuerySvc.cpp:
+    [r1.42,2007-08-27,sponcec3] Handle new version request
+  * CASTOR2/castor/db/oracleSchema.sql:
+    [r 1.6,2007-08-27,sponcec3] New table versionquery
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.488,2007-08-23,itglp] Fix for bug #28986, report free space without taking spaceToBeFreed into account, and taking the hard limit.
+    [r1.488,2007-08-23,itglp] Included new SubRequest states 13 and 14 in queries for 'running' subrequests.
+  * CASTOR2/castor/jobmanager/SubmissionProcess.cpp:
+    [r 1.4,2007-08-23,waldron] Stripped trailing ';' from external scheduler options. This fixes the nshost logging in dlf
+  * CASTOR2/castor/rh/Server.cpp:
+  * CASTOR2/castor/rh/Server.hpp:
+    [2007-08-23,waldron] Inherit from the BaseDaemon and not the BaseServer. This fixes the signal handling and dlf logging
+  * CASTOR2/castor/rh/rhserver.scripts:
+  * CASTOR2/debian/rhserver.init:
+    [2007-08-23,waldron] Fixed restart
+  * CASTOR2/commands/castor.c:
+    [r 1.7,2007-08-27,sponcec3] Added -s flag returning the stager version
+  * CASTOR2/disksrv/src/gridftp2/external/Makefile:
+  * CASTOR2/disksrv/src/gridftp2/internal/Makefile:
+    [2007-08-23,kotlyar] Removed link to globus header and inserted necessary variables directly to Makefile to simplify building. All you need now is to set GLOBUS_LOCATION only.
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+  * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+    [2007-08-24,waldron] Increased max tablespace size to 30G
+  * CASTOR2/dlf/web/site.css:
+    [r 1.7,2007-08-23,waldron] Use min-width as opposed to width to correct bad formatting when using customized columns
+  * CASTOR2/h/Ctape.h:
+    [r1.51,2007-08-27,wiebalck] Extension of the bad label message to provide a "reason" and the label
+    [r1.51,2007-08-27,wiebalck] data (Savannah Bug #28962).
+  * CASTOR2/h/patchlevel.h:
+    [r 1.6,2007-08-27,itglp] Add symbols to expose the four parts of a CASTOR version number
+  * CASTOR2/h/stager_client_api.h:
+    [r1.36,2007-08-27,sponcec3] stage_version api
+  * CASTOR2/h/stager_messages.h:
+    [r 1.6,2007-08-27,sponcec3] Added DLF messages for query requests
+  * CASTOR2/maketar.sh:
+    [r1.60,2007-08-27,itglp] Add symbols to expose the four parts of a CASTOR version number
+  * CASTOR2/rtcopy/rtcpcldCatalogueInterface.c:
+    [r1.165,2007-08-27,obarring] Add missing update of the tapecopy status when detached from streams because
+    [r1.165,2007-08-27,obarring] of dual copy on the same tape.
+  * CASTOR2/scheduler/LSF/Plugin.cpp:
+    [r 1.4,2007-08-23,waldron] Explicitly call dlf_create_threads to enable remote logging
+  * CASTOR2/stager/Imakefile:
+    [r1.60,2007-08-27,sponcec3] Compile all new objects for version querying
+  * CASTOR2/stager/stager_messages.c:
+    [r 1.5,2007-08-27,sponcec3] Added DLF messages for query requests
+  * CASTOR2/stager/stager_query_service.cpp:
+    [r1.54,2007-08-27,sponcec3] Added DLF messages for query requests
+    [r1.53,2007-08-27,sponcec3] Do send an end response
+    [r1.52,2007-08-27,sponcec3] Implemented VersionQuery service
+  * CASTOR2/tape/posittape.c:
+  * CASTOR2/tape/readlbl.c:
+    [2007-08-27,wiebalck] Extension of the bad label message to provide a "reason" and the label data (Savannah Bug #28962).
+  * CASTOR2/test/stager/ClientTest.py:
+    [r1.18,2007-08-23,gtaur] missing comma in tuple with single entry
+  * CASTOR2/tools/makeRelease.py:
+    [r 1.6,2007-08-28,sponcec3] Added creation of a fresh checkout of the code in the internal release space
+  * CASTOR2/upgrades/2.1.3-24_to_2.1.4-2.sql:
+    [r1.15,2007-08-28,sponcec3] Adapted to version 2.1.4-2
+    [r1.14,2007-08-27,sponcec3] Create table VersionQuery
+    [r1.13,2007-08-27,waldron] Fixed splitting of subrequest partitions
+    [r1.12,2007-08-23,sponcec3] Added missing indexes
+  * CASTOR2/upgrades/dlf_2.1.3-24_to_2.1.4-1.sql:
+  * CASTOR2/upgrades/dlf_2.1.3-24_to_2.1.4-1.sqlplus:
+    [2007-08-28,waldron] Included modifications to partition procedure to increase max size of a tablespace
+
+-- Sebastien Ponce <sponce@cern.ch>  Wed, 28 August 2007 10:30:00 +0100	
+
 castor (2.1.4-1) unstable; urgency=low
 
   * Second test release of the 2.1.4 series
