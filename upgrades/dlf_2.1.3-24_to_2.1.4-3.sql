@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/28 08:24:57 $ $Author: waldron $
+ * @(#)$RCSfile: dlf_2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/28 14:37:42 $ $Author: sponcec3 $
  *
  * This script upgrades a CASTOR v2.1.3-24 DLF database to 2.1.4-1
  *
@@ -39,7 +39,7 @@ BEGIN
 END;
 
 /* Upgrade dlf_version to new model */
-UPDATE dlf_version SET release = '2_1_4_1';
+UPDATE dlf_version SET release = '2_1_4_3';
 
 /* Update facilities */
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (21, 'JobManager');
