@@ -105,5 +105,11 @@ for o in outputs:
     if o[1].close() != None:
         print "Error during remote build on", o[0]
 
+# make a fresh checkout in the internal release space for easy debugging using AFS
+print "Creating a fresh checkout in the internal release space"
+os.chdir(intReleaseDir)
+runCommand('cvs -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
+           'Error while checking out release into internal release space')
+
 # cleanup
 shutil.rmtree(workDir)
