@@ -41,7 +41,7 @@ rpmDir = workDir + os.sep + 'RPMS' + os.sep + targetArch
 print 'Copying RPMs to internal release area ...'
 intReleaseDir = '/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/' + fullVersion
 rpmList = os.listdir(rpmDir)
-if len(rpmList) != 54:
+if len(rpmList) != 55:
     print 'Warning, not all RPMs were correctly generated'
 for p in rpmList:
     shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch + os.sep + p)
