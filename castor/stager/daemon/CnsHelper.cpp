@@ -19,6 +19,10 @@
 #include "u64subr.h"
 #include "osdep.h"
 
+#include "dlf_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+
 #include "castor/exception/Exception.hpp"
 
 #include "castor/Constants.hpp"
@@ -87,7 +91,6 @@ namespace castor{
       /**************************************************************************************************************/
       bool StagerCnsHelper::checkAndSetFileOnNameServer(int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
 
-	bool fileExist;
 	/* check if the required file exists */
 	memset(&(this->cnsFileid), '\0', sizeof(this->cnsFileid)); /* reset cnsFileid structure  */
 	this->fileExist = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
@@ -128,12 +131,17 @@ namespace castor{
 		}
 	      }/* end of "if(hasDiskOnly Behavior)" */
 	      
-	      
-	      if (Cns_statx(subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
+	      bool fileExist2 = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
+	       /* we get the Cuuid_t fileid (needed to logging in dl)  */
+	      castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerCnsHelper checkAndSetFileOnNameServer) do we create the file?:"),
+					   castor::dlf::Param("Standard Message", fileExist2)};
+	      castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
+	  
+	      /*  if (Cns_statx(subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
 		castor::exception::Exception ex(SEINTERNAL);
 		ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_statx"<<std::endl;
 		throw ex;
-	      }
+		}*/
 	      
 	      
 	    }

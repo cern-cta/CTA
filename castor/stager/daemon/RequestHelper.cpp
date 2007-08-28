@@ -321,6 +321,7 @@ namespace castor{
 	try{
 	  /* create the subrequest-> castorFile on DB*/
 	  dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, true);//throw exception
+
 	  /* create the castorFile-> svcClass link on DB */
 	  dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, 0);//throw exception	
 
