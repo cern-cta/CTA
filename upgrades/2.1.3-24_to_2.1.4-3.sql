@@ -1,5 +1,5 @@
 /******************************************************************************
- *              2.1.3-24_to_2.1.4-1.sql
+ *              2.1.3-24_to_2.1.4-2.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/27 15:11:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: 2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/28 08:35:49 $ $Author: sponcec3 $
  *
- * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-1
+ * This script upgrades a CASTOR v2.1.3-24 database into v2.1.4-2
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -37,7 +37,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts before this one.');
 END;
 
-UPDATE CastorVersion SET schemaVersion = '2_1_4_0', release = '2_1_4_1';
+UPDATE CastorVersion SET schemaVersion = '2_1_4_2', release = '2_1_4_2';
 COMMIT;
 
 /* Apply schema changes */
@@ -2034,6 +2034,7 @@ BEGIN
  COMMIT;
 END;
 
+
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   SubRequestId NUMBER;
@@ -2335,7 +2336,7 @@ BEGIN
   -- don't touch recalls for the moment
   FOR sr IN (SELECT id, status FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
-    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
     END IF;
   END LOOP;
@@ -2466,7 +2467,7 @@ BEGIN
       -- See whether the castorfile has any pending SubRequest
       SELECT count(*) INTO nb FROM SubRequest
        WHERE castorFile = cfId
-         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 13, 14);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- If any SubRequest, give up
       IF nb = 0 THEN
         DECLARE
@@ -3252,7 +3253,7 @@ BEGIN
            grouping(fs.mountPoint) as IsFSGrouped,
            dp.name,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp,
@@ -3264,7 +3265,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (dp.name, ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.spaceToBeFreed,
+             fs.free - fs.minAllowedFreeSpace * fs.totalSize,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (dp.name, ds.name, ds.status),
@@ -3289,7 +3290,7 @@ BEGIN
     SELECT grouping(ds.name) as IsDSGrouped,
            grouping(fs.mountPoint) as IsGrouped,
            ds.name, ds.status, fs.mountPoint,
-           sum(fs.free + fs.spaceToBeFreed) as freeSpace,
+           sum(fs.free - fs.minAllowedFreeSpace * fs.totalSize) as freeSpace,
            sum(fs.totalSize),
            fs.minFreeSpace, fs.maxFreeSpace, fs.status
       FROM FileSystem fs, DiskServer ds, DiskPool dp
@@ -3298,7 +3299,7 @@ BEGIN
        AND ds.id = fs.diskServer
        group by grouping sets(
            (ds.name, ds.status, fs.mountPoint,
-             fs.free + fs.spaceToBeFreed,
+             fs.free - fs.minAllowedFreeSpace * fs.totalSize,
              fs.totalSize,
              fs.minFreeSpace, fs.maxFreeSpace, fs.status),
            (ds.name, ds.status),
