@@ -295,7 +295,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_4_1');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_4_2');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -410,9 +410,9 @@ BEGIN
       
       IF v_exists = 0 THEN
         EXECUTE IMMEDIATE 'CREATE TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||'
-                           DATAFILE SIZE 100M
-                           AUTOEXTEND ON NEXT 200M 
-                           MAXSIZE 30G
+                           DATAFILE SIZE 50M
+                           AUTOEXTEND ON NEXT 100M 
+                           MAXSIZE 10G
                            EXTENT MANAGEMENT LOCAL 
                            SEGMENT SPACE MANAGEMENT AUTO';
       END IF;      
