@@ -72,7 +72,8 @@ globus_l_gfs_rfio_make_error(
 void fill_stat_array(globus_gfs_stat_t * filestat, struct stat64 statbuf, char *name)
 {
 	filestat->mode = statbuf.st_mode;;
-	filestat->nlink = statbuf.st_nlink;
+	if(statbuf.st_nlink == 0) filestat->nlink = 2; /* an ordinary file system do not have st_nlink=0 but castor has */
+	else filestat->nlink = statbuf.st_nlink;       /* for empty dirs. The common value for the empty dirs st_nlink=2 */ 
 	filestat->uid = statbuf.st_uid;
 	filestat->gid = statbuf.st_gid;
 	filestat->size = statbuf.st_size;
@@ -210,6 +211,13 @@ globus_l_gfs_CASTOR2ext_stat(
     pathname=strdup(stat_info->pathname);
     
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
+    
+    if(strstr(pathname,"/castor") == NULL ) { /* we don't have a castor path */
+	    result=GlobusGFSErrorGeneric("error: it is not a castor file");
+	    globus_gridftp_server_finished_stat(op,result,NULL, 0);
+	    free(pathname);
+	    return;
+    }
     
     status=rfio_stat64(pathname,&statbuf);
     if(status!=0) {
