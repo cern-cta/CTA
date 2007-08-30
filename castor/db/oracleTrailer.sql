@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.490 $ $Date: 2007/08/30 13:07:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.491 $ $Date: 2007/08/30 13:13:54 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2896,21 +2896,21 @@ CREATE OR REPLACE FUNCTION nopinGCPolicy
   result castorGC.GCItem_Cur;
 BEGIN
   OPEN result FOR
-    SELECT /*+ INDEX(CastorFile) INDEX(DiskCopy) */ DiskCopy.id, CastorFile.fileSize,
-           getTime() - CastorFile.LastAccessTime -- oldest first
-           + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
-           + CASE CastorFile.nbAccesses
+    SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
+           getTime() - CF.LastAccessTime -- oldest first
+           + GREATEST(0,86400*LN((CF.fileSize+1)/1024)) -- biggest first
+           + CASE CF.nbAccesses
                WHEN 0 THEN 86400 -- non accessed last
-               ELSE 20000 * CastorFile.nbAccesses -- most accessed last
+               ELSE 20000 * CF.nbAccesses -- most accessed last
              END
            - nvl(DC.gcWeight, 0)   -- optional weight used by SRM2 for advisory pinning
-      FROM DiskCopy, CastorFile
-     WHERE CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.fileSystem = fsId
-       AND DiskCopy.status = 0 -- STAGED
+      FROM DiskCopy DC, CastorFile CF
+     WHERE CF.id = DC.castorFile
+       AND DC.fileSystem = fsId
+       AND DC.status = 0 -- STAGED
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
-          WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
+          WHERE DC.status = 0 AND diskcopy = DC.id 
             AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      ORDER BY 3 DESC;
   RETURN result;
