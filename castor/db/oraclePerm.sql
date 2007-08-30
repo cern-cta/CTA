@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.489 $ $Date: 2007/08/28 15:29:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.490 $ $Date: 2007/08/30 13:07:45 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -500,7 +500,8 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   nb INTEGER;
   cfId NUMBER;
 BEGIN
-  UPDATE SubRequest SET status = 8 -- FINISHED
+  UPDATE SubRequest
+     SET status = 8, parent = 0 -- FINISHED
    WHERE id = srId
   RETURNING request, castorFile INTO rid, cfId;
 
@@ -1159,7 +1160,8 @@ BEGIN
      WHERE id = SubRequestId;
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
                           getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
-                          lastModificationTime = getTime()
+                          lastModificationTime = getTime(),
+                          parent = 0
      WHERE parent = SubRequestId;
   END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
@@ -2190,7 +2192,7 @@ BEGIN
  -- If put inside PrepareToPut/Update, restart any PutDone currently
  -- waiting on this put/update
  IF contextPIPP = 0 THEN
-   UPDATE SubRequest SET status = 1 -- RESTART
+   UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
     WHERE id IN
      (SELECT SubRequest.id FROM SubRequest, Id2Type
        WHERE SubRequest.request = Id2Type.id
@@ -2504,7 +2506,7 @@ BEGIN
   FOR sr IN (SELECT id, status FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
     IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
+      UPDATE SubRequest SET status = 7, parent = 0 WHERE id = sr.id;  -- FAILED
     END IF;
   END LOOP;
   -- Set selected DiskCopies to INVALID. In any case keep
@@ -2766,7 +2768,7 @@ BEGIN
        WHERE id = fsId;
     END LOOP;
     -- put SubRequests into FAILED (for non FINISHED ONES)
-    UPDATE SubRequest SET status = 7 WHERE castorfile = cfIds(i) AND status < 7;
+    UPDATE SubRequest SET status = 7, parent = 0 WHERE castorfile = cfIds(i) AND status < 7;
     -- TapeCopy part
     FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfIds(i)) LOOP
       FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
@@ -2838,7 +2840,7 @@ BEGIN
     -- the select worked out, so we have a prepareToPut
     -- In such a case, we do not cleanup DiskCopy and CastorFile
     -- but we have to wake up a potential waiting putDone
-    UPDATE SubRequest SET status = 1 -- RESTART
+    UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
      WHERE id IN
       (SELECT SubRequest.id
         FROM StagePutDoneRequest, SubRequest
