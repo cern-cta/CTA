@@ -1,5 +1,5 @@
 /******************************************************************************
- *              dlf_2.1.3-24_to_2.1.4-1.sql
+ *              dlf_2.1.3-24_to_2.1.4-3.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: dlf_2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/28 14:37:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: dlf_2.1.3-24_to_2.1.4-3.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/08/31 14:18:31 $ $Author: waldron $
  *
- * This script upgrades a CASTOR v2.1.3-24 DLF database to 2.1.4-1
+ * This script upgrades a CASTOR v2.1.3-24 DLF database to 2.1.4-3
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -119,6 +119,16 @@ BEGIN
                                 TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||', 
                                 PARTITION MAX_VALUE)
                          UPDATE INDEXES';
+
+      -- Move indexes to the correct tablespace
+      FOR c IN (SELECT index_name
+                  FROM user_indexes
+                 WHERE table_name = a.table_name)
+      LOOP
+        EXECUTE IMMEDIATE 'ALTER INDEX '||c.index_name||' 
+                           REBUILD PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||'
+                           TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD');
+      END LOOP;
     END LOOP;
   END LOOP;
   
