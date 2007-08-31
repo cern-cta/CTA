@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.57 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.58 $ $Date: 2007/08/31 13:19:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -300,7 +300,7 @@ char	**argv;
 	why = "";
 	why4a = 0;
 	msg_num = 0;
-reselect_loop:
+
 	/* send vid, vsn and flag "to be mounted" to the tape daemon */
 
 	if ((c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 1, lblcode, mode)))
@@ -327,6 +327,23 @@ reselect_loop:
 		lddisplay (-1, path, 0x18, msg1, "", 2);
 
 	while (1) {
+
+                sprintf (msg, TP020, vid, labels[lblcode], rings, drive, hostname, 	 
+                         name, jid, why);
+                
+                tplogit (func, "%s\n", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 20, 11,
+                                    "func"    , TL_MSG_PARAM_STR  , func,
+                                    "Message" , TL_MSG_PARAM_STR  , msg,
+                                    "VID"     , TL_MSG_PARAM_STR  , vid,
+                                    "Label"   , TL_MSG_PARAM_STR  , labels[lblcode],
+                                    "Rings"   , TL_MSG_PARAM_STR  , rings, 
+                                    "Drive"   , TL_MSG_PARAM_STR  , drive, 
+                                    "Hostname", TL_MSG_PARAM_STR  , hostname, 
+                                    "Name"    , TL_MSG_PARAM_STR  , name,
+                                    "Job ID"  , TL_MSG_PARAM_INT  , jid,
+                                    "Reason"  , TL_MSG_PARAM_STR  , why,
+                                    "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 
 #if defined(RS6000PCTA) || defined(ADSTAR) || defined(CDK)
 remount_loop:

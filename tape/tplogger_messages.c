@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.6 2007/08/01 13:59:14 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.7 2007/08/31 13:19:05 wiebalck Exp $
 */
 
 #include <string.h>
@@ -68,7 +68,7 @@ tplogger_message_t tplogger_messages_tpdaemon[] = {
         {  17, TL_LVL_ERROR,  "TP017 - cannot use blp in write mode"            },
         {  18, TL_LVL_ERROR,  "TP018 - duplicate option"                        },  /* option    */
         {  19, TL_LVL_ERROR,  "TP019 - "                                        }, 
-        {  20, TL_LVL_ERROR,  "TP020 - mount tape"                              },  /* vid       */
+        {  20, TL_LVL_MONITORING,  "TP020 - mount tape"                         },  /* vid       */
                                                                                     /* labels    */
                                                                                     /* rings     */
                                                                                     /* drive     */
