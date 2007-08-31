@@ -2,8 +2,103 @@
 --DROP TABLE CleanupLogTable;
 CREATE TABLE CleanupLogTable (fac NUMBER, message VARCHAR2(256), logDate NUMBER);
 
--- Cleanup of old subrequests (code from deleteOutOfDateRequests)
+-- Cleaning the TapeCopies with no DiskCopies, due to bad cleaning after migration/recall error in rtcpcld
+DECLARE
+  nothingLeft NUMBER;
+  totalCount NUMBER;
+  done NUMBER := 0;
+BEGIN
+  -- For logging
+  INSERT INTO CleanupLogTable VALUES (4, 'Cleaning tapeCopies with no DiskCopies', getTime());
+  COMMIT;
+  SELECT COUNT(*) INTO totalCount FROM
+               (SELECT t.castorfile AS c, t.id AS t, d.id AS d
+                  FROM tapecopy t, diskcopy d WHERE t.castorfile = d.castorfile(+)) WHERE d IS NULL;
+  LOOP
+    nothingLeft := 1;
+    -- do 10 castorfiles per commit in order to not slow down the normal requests
+    -- The point is that we may delete many subrequests for one castorFile (1000s)
+    FOR tc IN (SELECT c, t FROM
+               (SELECT t.castorfile AS c, t.id AS t, d.id AS d
+                  FROM tapecopy t, diskcopy d WHERE t.castorfile = d.castorfile(+))
+               WHERE d IS NULL AND ROWNUM <= 10)
+    LOOP
+      nothingLeft := 0;
+      DELETE FROM Stream2TapeCopy WHERE child = tc.t;
+      DELETE FROM Id2Type WHERE id = tc.c;
+      DELETE FROM Id2Type WHERE id = tc.t;
+      DELETE FROM Castorfile WHERE id = tc.c;
+      DELETE FROM TapeCopy WHERE id = tc.t;
+      -- delete corresponding segments
+      FOR s in (SELECT id FROM segment WHERE copy = tc.t) LOOP
+        DELETE FROM Id2Type WHERE id = s.id;
+        DELETE FROM Segment WHERE id = s.id;
+      END LOOP;
+      -- delete corresponding subrequests if castorfile is not 0
+      IF (tc.c != 0) THEN
+        FOR s in (SELECT id FROM subrequest WHERE castorfile = tc.c) LOOP
+          archiveSubReq(s.id);
+        END LOOP;
+      END IF;
+    END LOOP;
+    -- commit between each bunch of 10
+    done := done + 10;
+    UPDATE CleanupLogTable
+       SET message = 'Cleaning tapeCopies with no DiskCopies' ||
+           TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
+     WHERE fac = 4;
+    COMMIT;
+    DBMS_LOCK.sleep(seconds => .5);
+    IF nothingLeft = 1 THEN
+      UPDATE CleanupLogTable
+         SET message = 'TapeCopies with no DiskCopies were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
+       WHERE fac = 4;
+      COMMIT;
+      EXIT;
+    END IF;
+  END LOOP;
+END;
 
+-- Cleanup of old subrequests stuck in status WAITSUBREQ and
+-- which are waiting on nothing
+DECLARE
+  nothingLeft NUMBER;
+  totalCount NUMBER;
+  done NUMBER := 0;
+BEGIN
+ INSERT INTO CleanupLogTable VALUES (8, 'Cleaning SubRequests stuck in WAITSUBREQ 0% done', getTime());
+ COMMIT;
+ SELECT count(*) INTO totalCount FROM SubRequest
+  WHERE creationtime < getTime() - 43200
+    AND status = 5
+    AND parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL;
+ LOOP
+   nothingLeft := 1;
+   -- do it in one go here because the heaviest part is the SELECT itself with the NOT IN clause
+   FOR sr IN (SELECT id FROM SubRequest
+               WHERE creationtime < getTime() - 43200
+                 AND status = 5
+                 AND parent NOT IN (SELECT id FROM SubRequest) OR parent IS NULL) LOOP
+     archiveSubReq(sr.id);
+   END LOOP;
+   -- commit and wait 5 seconds between each bunch of 1000
+   -- done := done + 1000;
+   -- UPDATE CleanupLogTable
+   --   SET message = 'Cleaning SubRequests stuck in WAITSUBREQ' ||
+   --       TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
+   -- WHERE fac = 8;
+   COMMIT;
+   IF nothingLeft = 1 THEN
+     UPDATE CleanupLogTable
+        SET message = 'SubRequests stuck in WAITSUBREQ were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
+      WHERE fac = 8;
+     COMMIT;
+     EXIT;
+   END IF;
+ END LOOP;
+END;
+
+-- Cleanup of old subrequests (code from deleteOutOfDateRequests)
 CREATE TABLE REQCLEANING
     ( ID NUMBER NOT NULL ENABLE,
       TYPE NUMBER(*,0) NOT NULL ENABLE
@@ -114,10 +209,8 @@ END;
 
 DROP TABLE ReqCleaning;
 
-
--- cleaning up files stuck with multiple concurrent recalls
--- This can happen due to a race condition in castor < 2.1.4-0
-CREATE OR REPLACE PROCEDURE stageRmForConcurrentRecalls (cfid IN INTEGER) AS
+-- usefull method to cleanup bad recalls
+CREATE OR REPLACE PROCEDURE stageRmForRecalls (cfid IN INTEGER) AS
   segId INTEGER;
   unusedIds "numList";
 BEGIN
@@ -157,6 +250,9 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   UPDATE SubRequest SET status = 7   -- FAILED
    WHERE castorFile = cfId and status = 4;
 END;
+
+-- cleaning up files stuck with multiple concurrent recalls
+-- This can happen due to a race condition in castor < 2.1.4-0
 DECLARE
   totalCount NUMBER := 0;
 BEGIN
@@ -167,19 +263,48 @@ BEGIN
               (SELECT castorfile cfid, count(*) AS c FROM diskcopy
                 WHERE status = 2 GROUP BY castorfile), CastorFile
              WHERE c > 1 AND cfid = castorfile.id) LOOP
-    stageRmForConcurrentRecalls(cf.id);
+    stageRmForRecalls(cf.id);
     totalCount := totalCount + 1;
   END LOOP;
   UPDATE CleanupLogTable
-     SET message = 'Cleanup files stuck with multiple concurrent recalls were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
+     SET message = 'Files stuck with multiple concurrent recalls were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
    WHERE fac = 14;
   COMMIT;
 END;
+
+-- cleaning up files having both a STAGED copy and a tape recall going on
+-- This can happen when a file is requested while it's only staged copy
+-- is on disable hardware and that the disable hardware comes back
+DECLARE
+  totalCount NUMBER := 0;
+BEGIN
+  -- For logging
+  INSERT INTO CleanupLogTable VALUES (15, 'Cleanup files with both staged copies and recalls', getTime());
+  COMMIT;
+  FOR cf IN (SELECT UNIQUE d.castorFile
+              FROM DiskCopy d, Diskcopy e
+             WHERE d.castorfile = e.castorfile
+               AND d.status = 4
+               AND e.status = 0) LOOP
+    stageRmForRecalls(cf.castorFile);
+    totalCount := totalCount + 1;
+    IF (MOD(totalCount, 50) = 0) THEN
+      COMMIT;
+    END IF;
+  END LOOP;
+  COMMIT;
+  UPDATE CleanupLogTable
+     SET message = 'Files with both staged copies and recalls were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
+   WHERE fac = 15;
+  COMMIT;
+END;
+
+-- cleanup DB from unneeded methods
 DROP PROCEDURE stageRmForConcurrentRecalls;
 
 -- Optional steps follow
 
-INSERT INTO CleanupLogTable VALUES (15, 'Shrinking tables', getTime());
+INSERT INTO CleanupLogTable VALUES (16, 'Shrinking tables', getTime());
 COMMIT;
 
 -- Shrinking space in the tables that have just been cleaned up.
@@ -199,7 +324,7 @@ ALTER TABLE SubRequest SHRINK SPACE CASCADE;
 
 UPDATE CleanupLogTable
    SET message = 'All tables were shrunk', logDate = getTime()
- WHERE fac = 15;
+ WHERE fac = 16;
 COMMIT;
 
 -- To provide a summary of the performed cleanup
