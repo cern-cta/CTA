@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2007/08/23 06:45:11 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2007/08/31 14:16:10 $ $Author: waldron $
  *
  *
  *
@@ -129,6 +129,7 @@ castor::rh::Server::Server() :
      {11, "Unable to send Ack to client"},
      {12, "Request stored in DB"},
      {13, "Waked up all services at once"},
+     {14, "Permission Denied"},
      {-1, ""}};
   dlfInit(messages);
   

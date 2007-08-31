@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/21 14:16:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/31 14:16:11 $ $Author: waldron $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -121,7 +121,7 @@ void castor::db::ora::OraRHSvc::checkPermission
     // throw exception if access denied
     if (m_checkPermissionStatement->getInt(5) != 0) {
       castor::exception::PermissionDenied ex;
-      ex.getMessage() << "You don't have right to make a request of type "
+      ex.getMessage() << "Insufficient user privileges to make a request of type "
                       << castor::ObjectsIdStrings[type]
                       << " in service class '";
       if (0 == svcClassName.size()) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/20 10:27:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/08/31 14:16:10 $ $Author: waldron $
  *
  *
  *
@@ -33,6 +33,7 @@
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/PermissionDenied.hpp"
 #include "castor/BaseAddress.hpp"
 
 #include "castor/stager/Request.hpp"
@@ -144,6 +145,16 @@ void castor::rh::RHThread::run(void* param) {
       ack.setRequestId(uuid);
       ack.setStatus(true);
       
+    } catch (castor::exception::PermissionDenied e) {
+      // "Permission Denied"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Euid", fr->euid()),
+	 castor::dlf::Param("Egid", fr->egid()),
+	 castor::dlf::Param("Reason", e.getMessage().str())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_AUTH, 14, 3, params);
+      ack.setStatus(false);
+      ack.setErrorCode(e.code());
+      ack.setErrorMessage(e.getMessage().str());      
     } catch (castor::exception::Exception e) {
       // "Exception caught" message
       castor::dlf::Param params[] =
@@ -153,7 +164,7 @@ void castor::rh::RHThread::run(void* param) {
       ack.setStatus(false);
       ack.setErrorCode(e.code());
       ack.setErrorMessage(e.getMessage().str());
-    }
+    } 
   }
 
   // the process is over, don't include the time to send the ack
