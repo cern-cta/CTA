@@ -300,7 +300,7 @@ BEGIN
 END;
 
 -- cleanup DB from unneeded methods
-DROP PROCEDURE stageRmForConcurrentRecalls;
+DROP PROCEDURE stageRmForRecalls;
 
 -- Optional steps follow
 
