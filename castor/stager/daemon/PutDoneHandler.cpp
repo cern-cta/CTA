@@ -67,7 +67,7 @@ namespace castor{
 	  jobOriented();/* until it will be explored */
 	 
 	  /* ask about the state of the sources */
-	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
+	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
 	  
 	  if(sources.size()<=0){
 	    castor::exception::Exception ex(EPERM);
@@ -106,7 +106,7 @@ namespace castor{
 	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	    throw ex;
 	  }
-	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
 	  stgReplyHelper->endReplyToClient(stgRequestHelper);
 	  delete stgReplyHelper->ioResponse;
 	  delete stgReplyHelper;

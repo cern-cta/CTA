@@ -66,7 +66,7 @@ namespace castor{
 	/****************************************************************************/
 	/* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
 	/**************************************************************************/
-	void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
+	void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
 	
 
 	/*********************************************************************************************/
@@ -76,7 +76,7 @@ namespace castor{
 	  
 	  /* to update the subrequest on DB */
 	  bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
-	  if(requestLeft){
+	  if(requestLeft == false){
 	    this->requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
 	  }  
 	    

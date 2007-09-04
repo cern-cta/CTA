@@ -72,9 +72,9 @@ namespace castor{
       /****************************************************************************/
       /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
       /**************************************************************************/
-      void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid *fileID, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
+      void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
       {
-	ioResponse->setFileId((u_signed64)(fileID==0?0:fileID->fileid));
+	ioResponse->setFileId((u_signed64) cnsFileid.fileid);
 	
 	this->uuid_as_string = stgRequestHelper->fileRequest->reqId();
 	if((uuid_as_string.empty()) == false){

@@ -118,7 +118,7 @@ namespace castor{
 		ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 		throw(ex);
 	      }
-	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
+	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
 	      stgReplyHelper->endReplyToClient(stgRequestHelper);
 	      delete stgReplyHelper->ioResponse;
 	      delete stgReplyHelper; 
@@ -137,7 +137,7 @@ namespace castor{
 	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	      throw(ex);
 	    }
-	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0,"No Error");
+	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
 	    stgReplyHelper->endReplyToClient(stgRequestHelper);
 	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper; 

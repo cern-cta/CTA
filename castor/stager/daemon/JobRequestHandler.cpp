@@ -206,7 +206,7 @@ namespace castor{
 	    }
 	  }
 	
-	rfs.clear();/* coming from the latest stager_db_service.c */
+	/* rfs.clear(); coming from the latest stager_db_service.c */
 	if(sources.size() > 0){
 	  if(maxReplicaNb>0){
 	    if(maxReplicaNb <= sources.size()){
@@ -269,8 +269,6 @@ namespace castor{
 
 
 
-
-
       /************************************************************************************/
       /* process the replicas = build rfs string (and hostlist) */
       /* - rfs + = ("|") + diskServerName + ":" + mountPoint */
@@ -284,12 +282,12 @@ namespace castor{
 	std::string diskServerName;
 	
 	/* rfs and hostlist are attributes !*/ 
-	rfs.clear();
-	rfs.resize(CA_MAXRFSLINELEN);
+	/* rfs.clear(); */
+	/* rfs.resize(CA_MAXRFSLINELEN);*/
 
 	
 	std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
-	for(int iReplica=0;(iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
+	for(int iReplica=0;(iReplica<maxReplicaNb) && (iter != sources.end()) && (rfs.size() < CA_MAXRFSLINELEN); iReplica++, iter++){
 	  
 	  diskServerName=(*iter)->diskServer();
 	  fullMountPoint=diskServerName+":"+(*iter)->mountPoint();
@@ -299,16 +297,15 @@ namespace castor{
 	    castor::exception::Exception ex(SENAMETOOLONG);
 	    ex.getMessage()<<"(Stager_Handler) Not enough space for filesystem constraint"<<std::endl;
 	    throw ex;
-	  }else if((fullMountPoint.size() + 1) > CA_MAXRFSLINELEN){
+	  }else if(rfs.empty()== false){
+	    if((fullMountPoint.size() + 1) > CA_MAXRFSLINELEN) break; /* we dont add it! */
 	    /* +1 because of the "|"*/
-	    break; /* we dont add it to the rfs */
 	  }
-	  
 	  
 	  if(this->rfs.empty()==false){
-	    this->rfs+="|";
+	    this->rfs= (this->rfs) + "|";
 	  }
-	  this->rfs+=fullMountPoint;
+	  this->rfs = (this->rfs) + fullMountPoint;
 	  
 	}//end for(iReplica)    
 

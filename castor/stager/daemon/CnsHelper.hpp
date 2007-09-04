@@ -40,7 +40,6 @@ namespace castor{
 	
       public:
 	
-	struct Cns_fileid *fileid;
 	struct Cns_fileid cnsFileid;
 	struct Cns_filestat cnsFilestat;
 	struct Cns_fileclass cnsFileclass;

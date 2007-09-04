@@ -117,7 +117,7 @@ namespace castor{
 	      ex.getMessage()<<"(StagerPrepareToGetHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	      throw(ex);
 	    }
-	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,0, "No error");
+	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
 	    stgReplyHelper->endReplyToClient(stgRequestHelper);
 	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;

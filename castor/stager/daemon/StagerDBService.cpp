@@ -513,7 +513,7 @@ namespace castor{
 		ex.getMessage()<<"(StagerDBService catch exception) Impossible to get the stgReplyHelper"<<std::endl;
 		throw ex;
 	      }
-	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid,ex.code(),ex.getMessage().str());
+	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,ex.code(),ex.getMessage().str());
 	      stgReplyHelper->endReplyToClient(stgRequestHelper);
 	      delete stgReplyHelper->ioResponse;
 	      delete stgReplyHelper;
@@ -548,7 +548,7 @@ namespace castor{
 	    if(stgRequestHelper->iClient != NULL){
 	      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper(SUBREQUEST_FAILED_FINISHED);	  
 	      if(stgReplyHelper != NULL){
-		stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->fileid, SEINTERNAL, "General Exception");	      
+		stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid, SEINTERNAL, "General Exception");	      
 		stgReplyHelper->endReplyToClient(stgRequestHelper);
 		delete stgReplyHelper->ioResponse;
 		delete stgReplyHelper;
