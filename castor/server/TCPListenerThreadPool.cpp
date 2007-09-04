@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/09/04 12:32:10 $ $Author: waldron $
  *
  * Listener thread pool based on TCP
  *
@@ -30,6 +30,7 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/ServerSocket.hpp"
+#include <errno.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -45,7 +46,7 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
 // bind
 //------------------------------------------------------------------------------
 void castor::server::TCPListenerThreadPool::bind() throw (castor::exception::Exception) {
-  /* Create a socket for the server, bind, and listen */
+  // Create a socket for the server, bind, and listen 
   try {
     m_sock = new castor::io::ServerSocket(m_port, true);
   } catch (castor::exception::Exception e) {
@@ -61,12 +62,18 @@ void castor::server::TCPListenerThreadPool::bind() throw (castor::exception::Exc
 void castor::server::TCPListenerThreadPool::listenLoop() {
   for (;;) {
     try {
-      // accept connections
+      // Accept connections
       castor::io::ServerSocket* s = ((castor::io::ServerSocket*)m_sock)->accept();
-      // handle the command
+      // Handle the command
       threadAssign(s);
     }
     catch(castor::exception::Exception any) {
+      // Some errors are consider fatal, such as closure of the listening
+      // socket resulting in a bad file descriptor during the thread shutdown
+      // process. If we encounter this problem we exit the loop. 
+      if (any.code() == EBADF) {
+	break;
+      }
       clog() << ERROR << "Error while accepting connections to port " << m_port << ": "
              << any.getMessage().str() << std::endl;
     }
