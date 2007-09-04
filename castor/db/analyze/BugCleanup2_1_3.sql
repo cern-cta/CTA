@@ -284,7 +284,7 @@ BEGIN
   FOR cf IN (SELECT UNIQUE d.castorFile
               FROM DiskCopy d, Diskcopy e
              WHERE d.castorfile = e.castorfile
-               AND d.status = 4
+               AND d.status = 2
                AND e.status = 0) LOOP
     stageRmForRecalls(cf.castorFile);
     totalCount := totalCount + 1;
