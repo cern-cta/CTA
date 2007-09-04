@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.8 $ $Release$ $Date: 2007/01/09 16:40:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: biniostream.h,v $ $Revision: 1.9 $ $Release$ $Date: 2007/09/04 16:02:21 $ $Author: waldron $
  *
  *
  *
@@ -48,7 +48,6 @@
 #define htoins(x)     __bswap_16 (x)
 #endif
 #endif
-
 
 namespace castor {
 
@@ -141,8 +140,6 @@ namespace castor {
       }
 
       biniostream& operator<< (u_signed64 d) {
-        //write((char*)&d, sizeof(u_signed64));
-        
         unsigned long n = (unsigned long)d;   // Least significant part first
         write((char*)&n, LONGSIZE);
         n = htoinl((unsigned long)(d >> 32));
@@ -151,7 +148,6 @@ namespace castor {
       }
 
       biniostream& operator<< (signed64 d) {
-        //write((char*)&d, sizeof(signed64));
         unsigned long n = (unsigned long)d;   // Least significant part first
         write((char*)&n, LONGSIZE);
         n = htoinl((unsigned long)(d >> 32));
@@ -204,17 +200,20 @@ namespace castor {
       }
 
       biniostream& operator>> (long& l) {
+	l = 0;
         read((char*)&l, LONGSIZE);
         l = intohl((unsigned long)l);
+	if (((*((char*)(&l)+3)) & (1 << (7-(0)%8))) && (sizeof(long)-LONGSIZE > 0)) {
+	  (void) memset((char *)&l+4, 255, sizeof(long)-LONGSIZE);
+	}
         return *this;
       }
 
       biniostream& operator>> (unsigned long& l) {
+	l = 0;
         read((char*)&l, LONGSIZE);
         l = intohl(l);
-        if((*(char*)((char*)(l)) & (1 << (7%8))) && sizeof(int) > 4)
-            (void) memset((char *)&l, 255, sizeof(int)-4);
-        return *this;
+	return *this;
       }
 
       biniostream& operator>> (char* cp) {
