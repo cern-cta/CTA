@@ -29,85 +29,35 @@
 #ifndef GC_GCDAEMON_HPP
 #define GC_GCDAEMON_HPP 1
 
-// Include Files
-#include "castor/BaseObject.hpp"
+// Include files
+#include "castor/server/BaseDaemon.hpp"
 #include "castor/exception/Exception.hpp"
-#include "Cuuid.h"
 
 namespace castor {
 
   namespace gc {
 
     /**
-     * Castor garbage collection daemon.
+     * Garbage Collector daemon.
      */
-    class GcDaemon : public BaseObject {
+    class GcDaemon: public castor::server::BaseDaemon {
 
     public:
 
       /**
-       * constructor
+       * Default constructor
        */
       GcDaemon();
 
-      /*
-       * destructor
-       */
-      virtual ~GcDaemon() throw();
-
       /**
-       * Starts the server, as a daemon
+       * Default destructor
        */
-      virtual int start()
-        throw (castor::exception::Exception);
-
-      /**
-       * parses a command line to set the server oprions
-       */
-      void 	GCparseCommandLine(int argc, char *argv[]);
-
-    private:
-
-      /**
-       * get size (in bytes) of a file
-       * @param gcfilepath the path of the file
-       * @return the size (in bytes) of the file
-       * @exception when the internal stat64 failed
-       */
-      u_signed64 gcGetFileSize (std::string& gcfilepath)
-	throw (castor::exception::Exception);
-
-      /**
-       * actually remove the file from local filesystem.
-       * @param gcfilepath the path of the file to remove
-       * @return the size (in bytes) of the removed file
-       * @exception when the removing failed
-       */
-      u_signed64 gcRemoveFilePath (std::string gcfilepath)
-	throw (castor::exception::Exception);
-
-    private:
-      /**
-       * UUID of the server (for log purposes)
-       */
-      Cuuid_t m_uuid;
-
-      /**
-       * Flag indicating whether the server should 
-       * run in foreground or background mode.
-       */
-      bool m_foreground;
-      
-      /**
-       * Flag indicating whether the server should
-       * use an initial random delay at start up.
-       */
-      bool m_nodelay;
+      virtual ~GcDaemon() throw() {};
 
     };
 
-  } // end of namespace gc
+  } // End of namespace gc
 
-} // end of namespace castor
+} // End of namespace castor
 
 #endif // GC_GCDAEMON_HPP
