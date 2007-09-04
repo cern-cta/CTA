@@ -8,15 +8,19 @@ rhserver \- start the CASTOR Request Handler daemon
 .BI -f
 ]
 [
-.BI -R
-.BI <nb\ threads>
+.BI -h
+]
+[
+.BI -c
+.BI <config-file>
 ]
 [
 .BI -p
 .BI <port>
 ]
 [
-.BI -h
+.BI -R
+.BI <nb\ threads>
 ]
 .SH DESCRIPTION
 .LP
@@ -32,16 +36,20 @@ which is the user entry point into the CASTOR system.
 .BI \-f,\ \-\-foreground
 runs in foreground mode (no daemonization).
 .TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+.BI \-c,\ \-\-config\ <config-file>
+specified the location of the configuration file to use. The default value
+is /etc/castor/castor.conf.
+.TP
 .BI \-R,\ \-\-Rthreads\ <nb\ threads>
 specifies the number of threads to use to handle client requests. Default is 20.
 .TP
-.BI \-r,\ \-\-port\ <port>
+.BI \-p,\ \-\-port\ <port>
 specifies the port on which to listen for client request. Default is 9002.
 The port can also be overwritten using the RH_PORT enviroment variable or
 by having a RH/PORT entry in the /etc/castor/castor.conf file.
-.TP
-.BI \-h,\ \-\-help
-display command usage help
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

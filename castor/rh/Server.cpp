@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2007/08/31 14:16:10 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2007/09/04 14:56:27 $ $Author: waldron $
  *
  *
  *
@@ -166,10 +166,11 @@ void castor::rh::Server::help(std::string programName)
 	  "\n"
 	  "where options can be:\n"
 	  "\n"
-	  "\t--foreground      or -f            \tForeground\n"
-	  "\t--help            or -h            \tThis help\n"
-	  "\t--port            or -p {integer } \tPort to be used\n"
-	  "\t--Rthreads        or -R {integer } \tNumber of Request Handler threads\n"
+	  "\t--foreground            or -f           \tForeground\n"
+	  "\t--help                  or -h           \tThis help\n"
+	  "\t--config <config-file>  or -c           \tConfiguration file\n"
+	  "\t--port                  or -p {integer} \tPort to be used\n"
+	  "\t--Rthreads              or -R {integer} \tNumber of Request Handler threads\n"
 	  "\n"
 	  "Comments to: Castor.Support@cern.ch\n";
 }
@@ -183,16 +184,28 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[])
     {
       {"foreground", NO_ARGUMENT,       NULL, 'f'},
       {"help",       NO_ARGUMENT,       NULL, 'h'},
+      {"config",     REQUIRED_ARGUMENT, NULL, 'c'},
       {"Rthreads",   REQUIRED_ARGUMENT, NULL, 'R'},
       {"port",       REQUIRED_ARGUMENT, NULL, 'p'}
     };
   Coptind = 1;
   Copterr = 0;
   char c;
-  while ((c = Cgetopt_long(argc, argv, "fhR:p:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "fhR:p:c:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
+      break;
+    case 'c':
+      {
+        char* cfgFile = (char *)malloc(strlen("PATH_CONFIG=") + strlen(Coptarg) + 1);
+        if(cfgFile != NULL) {
+          sprintf(cfgFile,"PATH_CONFIG=%s", Coptarg);
+          printf("Using configuration file %s\n", Coptarg);
+          putenv(cfgFile);
+        }
+        free(cfgFile);
+      }
       break;
     case 'h':
       help(argv[0]);
