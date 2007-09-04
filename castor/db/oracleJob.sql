@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.492 $ $Date: 2007/09/04 13:40:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.493 $ $Date: 2007/09/04 15:51:39 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -277,6 +277,51 @@ CREATE INDEX I_FileSystem_Rate
 /*                                         */
 /*******************************************/
 
+/* Checks consistency of DiskCopies when a FileSystem comes
+ * back in production after a period spent in DRAINING or
+ * DISABLED status.
+ * Current checks/fixes include :
+ *   - canceling recalls for files that are STAGED/CANBEMIGR
+ *     on the fileSystem that comes back.
+ */
+CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
+  srId NUMBER;
+BEGIN
+  -- Look for recalls concerning files that are STAGED/CANBEMIGR
+  -- on the filesystem coming back to life
+  FOR cf IN (SELECT UNIQUE d.castorfile, e.id
+               FROM DiskCopy d, DiskCopy e 
+              WHERE d.castorfile = e.castorfile
+                AND d.fileSystem = fsId
+                AND d.status IN (0, 10)
+                AND e.status = 2) LOOP
+    -- cancel the recall
+    FOR t IN (SELECT id FROM TapeCopy
+               WHERE castorfile = cf.castorfile) LOOP
+      FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+        -- Delete the segment(s)
+        DELETE FROM Id2Type WHERE id = s.id;
+        DELETE FROM Segment WHERE id = s.id;
+      END LOOP;
+      -- Delete the TapeCopy
+      DELETE FROM Id2Type WHERE id = t.id;
+      DELETE FROM TapeCopy WHERE id = t.id;
+    END LOOP;
+    -- Delete the DiskCopy
+    UPDATE DiskCopy
+       SET status = 7  -- INVALID
+     WHERE id = cf.id;
+    -- Look for request associated to the recall and restart
+    -- it and all the waiting ones
+    UPDATE SubRequest SET status = 1 -- RESTART
+     WHERE diskCopy = cf.id RETURNING id INTO srId;
+    UPDATE SubRequest
+       SET status = 1, parent = 0 -- RESTART
+     WHERE status = 5 -- WAITSUBREQ
+       AND parent = srId
+       AND castorfile = cf.castorfile;
+  END LOOP;
+END;
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    FileSystem is created */
@@ -296,6 +341,23 @@ BEFORE DELETE ON FileSystem
 FOR EACH ROW
 BEGIN
   DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
+END;
+
+/* Used to check consistency of diskcopies when a filesytem
+   comes back to production after having been disabled for
+   some time */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Update
+BEFORE UPDATE of status ON FileSystem
+FOR EACH ROW
+WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
+      new.status = 0) -- PRODUCTION
+DECLARE
+  s NUMBER;
+BEGIN
+  SELECT status INTO s FROM DiskServer WHERE id = :old.diskServer;
+  IF (s = 0) THEN
+    checkFSBackInProd(:old.id);
+  END IF;
 END;
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
@@ -818,6 +880,21 @@ BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
 
+/* Used to check consistency of diskcopies when filesytems
+   comes back to production after having been disabled for
+   some time */
+CREATE OR REPLACE TRIGGER tr_DiskServer_Update
+BEFORE UPDATE of status ON DiskServer
+FOR EACH ROW
+WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
+      new.status = 0) -- PRODUCTION
+BEGIN
+  FOR fs IN (SELECT id, status FROM FileSystem WHERE diskServer = :old.id) LOOP
+    IF (fs.status = 0) THEN
+      checkFSBackInProd(fs.id);
+    END IF;
+  END LOOP;
+END;
 
 /* PL/SQL method implementing updateFileSystemForJob */
 CREATE OR REPLACE PROCEDURE updateFileSystemForJob
