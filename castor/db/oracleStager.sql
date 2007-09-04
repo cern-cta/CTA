@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.491 $ $Date: 2007/08/30 13:13:54 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.492 $ $Date: 2007/09/04 13:40:08 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2687,8 +2687,8 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
   fsize NUMBER;
   isFirst NUMBER;
 BEGIN
- isFirst := 1;
- IF dcIds.COUNT > 0 THEN
+  isFirst := 1;
+  IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     SELECT castorFile, fileSystem INTO cfId, fsId
@@ -2712,17 +2712,17 @@ BEGIN
     -- delete the DiskCopy
     DELETE FROM Id2Type WHERE id = dcIds(i);
     DELETE FROM DiskCopy WHERE id = dcIds(i);
-    -- agaist deadlock with prepareForMigration --
-    -- I need a lock on the diskserver if I need more than one filesystem on it --	
+    -- against deadlock
+    -- I need a lock on the diskserver if I need more than one filesystem on it
     IF isFirst = 1 THEN
-        DECLARE
-          dsId NUMBER;
-          unused NUMBER;
-        BEGIN
-          SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
-          SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
-          isFirst := 0;	
-        END;
+      DECLARE
+        dsId NUMBER;
+        unused NUMBER;
+      BEGIN
+        SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+        SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+        isFirst := 0;	
+      END;
     END IF; 
     -- update the FileSystem
     UPDATE FileSystem
@@ -2746,13 +2746,19 @@ END;
  * exact amount of free space. However, we decrease the
  * spaceToBeFreed counter so that a next GC knows the status
  * of the FileSystem
+ * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
+ * THAT ALL BELONG TO THE SAME DISKSERVER.
+ * Otherwise, deadlocks will be created. Between 2 calls
+ * for different diskservers, a commit should be done.
  * fsIds gives the list of files to delete.
  */
 CREATE OR REPLACE PROCEDURE filesClearedProc
 (cfIds IN castor."cnumList") AS
   fsize NUMBER;
   fsid NUMBER;
+  isFirst NUMBER;
 BEGIN
+  isFirst := 1;
   -- Loop over the deleted files
   FOR i in cfIds.FIRST .. cfIds.LAST LOOP
     -- Lock the Castor File and retrieve size
@@ -2762,6 +2768,18 @@ BEGIN
       DELETE FROM Id2Type WHERE id = d.id;
       DELETE FROM DiskCopy WHERE id = d.id
         RETURNING fileSystem INTO fsId;
+      -- against deadlock
+      -- I need a lock on the diskserver if I need more than one filesystem on it
+      IF isFirst = 1 THEN
+        DECLARE
+            dsId NUMBER;
+          unused NUMBER;
+        BEGIN
+          SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+          SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+          isFirst := 0;	
+        END;
+      END IF; 
       -- update the FileSystem
       UPDATE FileSystem
          SET spaceToBeFreed = spaceToBeFreed - fsize
@@ -2787,14 +2805,21 @@ BEGIN
   END LOOP;
 END;
 
-/* PL/SQL method implementing filesDeletionFailedProc */
+/* PL/SQL method implementing filesDeletionFailedProc
+ * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
+ * THAT ALL BELONG TO THE SAME DISKSERVER.
+ * Otherwise, deadlocks will be created. Between 2 calls
+ * for different diskservers, a commit should be done.
+ */
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 (dcIds IN castor."cnumList") AS
   cfId NUMBER;
   fsId NUMBER;
   fsize NUMBER;
+  isFirst NUMBER;
 BEGIN
- IF dcIds.COUNT > 0 THEN
+  isFirst := 1;
+  IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     -- set status of DiskCopy to FAILED
@@ -2803,6 +2828,18 @@ BEGIN
     RETURNING fileSystem, castorFile INTO fsId, cfId;
     -- Retrieve the file size
     SELECT fileSize INTO fsize FROM CastorFile where id = cfId;
+    -- against deadlock
+    -- I need a lock on the diskserver if I need more than one filesystem on it
+    IF isFirst = 1 THEN
+      DECLARE
+        dsId NUMBER;
+        unused NUMBER;
+      BEGIN
+        SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+        SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+        isFirst := 0;	
+      END;
+    END IF; 
     -- update the FileSystem
     UPDATE FileSystem
        SET spaceToBeFreed = spaceToBeFreed - fsize
