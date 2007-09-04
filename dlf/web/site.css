@@ -244,7 +244,7 @@ td.sev_emergency {
 }
 
 td.sev_alert {
-	background-color : #FF388B;
+	background-color : #990000;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
@@ -265,7 +265,7 @@ td.sev_warning {
 }
 
 td.sev_auth {
-	background-color : #94422C;
+	background-color : #EB981D;
 	border: 1px solid #999999;
 	text-align: center;
 	min-width: 60px;
