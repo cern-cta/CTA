@@ -42,7 +42,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift -ldl
 
-GCBIN_SRCS = GcDaemon.cpp
+GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp
 
 GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
 

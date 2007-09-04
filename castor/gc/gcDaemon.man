@@ -7,7 +7,7 @@
 .SH NAME
 gcDaemon \- start the CASTOR Garbage Collector daemon
 .SH SYNOPSIS
-.B gcDaemon [-f] [-n|--nodelay]
+.B gcDaemon [-f]
 .SH DESCRIPTION
 .LP
 The 
@@ -28,9 +28,7 @@ By default the
 picks a random interval between 1 and 15 minutes at start up to pause before the 
 first deletion of a file. If you want the
 .B gcDaemon
-to begin immediate deletion use the 
-.B --nodelay
-option. After this initial pause the stager will be polled for files to delete 
+to begin immediate deletion set the environment variable GC_IMMEDIATESTART to yes. After this initial pause the stager will be polled for files to delete 
 every GC_INTERVAL seconds.
 .
 .LP
@@ -82,7 +80,7 @@ containing line
 .RS
 .RS
 .HP
-GC      TARGET        localhost 
+GC      TARGET        localhost
 .RE
 .RE
 .LP
