@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2007/09/04 14:56:27 $ $Author: waldron $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2007/09/05 07:46:04 $ $Author: waldron $
  *
  *
  *
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
     // Start daemon
     server.addThreadPool
       (new castor::server::TCPListenerThreadPool
-       ("RH", new castor::rh::RHThread(accessLists, rhSvc), port, false));
+       ("RH", new castor::rh::RHThread(accessLists, rhSvc), port));
     // parse the command line (note that this may overwrite
     // the port we are listening to)
     server.parseCommandLine(argc, argv);
