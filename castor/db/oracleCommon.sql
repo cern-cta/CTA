@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.493 $ $Date: 2007/09/04 15:51:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.494 $ $Date: 2007/09/05 14:31:19 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3921,4 +3921,58 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Not found in White list -> no access
   res := -1;
+END;
+
+/* useful functions for debugging, returning diskcopies' useful
+ * information for any castorfile or diskcopy
+ */
+CREATE OR REPLACE PACKAGE castor_debug AS
+  TYPE DiskCopyDebug_typ IS RECORD (
+    id INTEGER,
+    diskPool VARCHAR2(2048),
+    location VARCHAR2(2048),
+    status NUMBER,
+    creationTime Date);
+  TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
+  TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
+END castor_debug;
+CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
+  t NUMBER;
+  cfId NUMBER;
+BEGIN
+  SELECT type INTO t FROM id2Type WHERE id = ref;
+  IF (t = 2) THEN -- CASTORFILE
+    RETURN ref;
+  ELSIF (t = 5) THEN -- DiskCopy
+    SELECT castorFile INTO cfId FROM DiskCopy WHERE id = ref;
+  ELSIF (t = 27) THEN -- SubRequest
+    SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
+  ELSIF (t = 30) THEN -- TapeCopy
+    SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
+  END IF;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
+  SELECT id INTO cfId FROM CastorFile WHERE fileId = ref;
+  RETURN cfId;
+END;
+CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
+BEGIN
+  FOR d IN (SELECT diskCopy.id,
+                   diskPool.name as diskpool,
+                   diskServer.name || ':' || fileSystem.mountPoint || diskCopy.path as location,
+                   diskCopy.status as status,
+                   to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime
+              FROM DiskCopy, FileSystem, DiskServer, DiskPool
+             WHERE DiskCopy.fileSystem = FileSystem.id
+               AND FileSystem.diskServer = diskServer.id
+               AND DiskPool.id = fileSystem.diskPool
+               AND DiskCopy.castorfile = getCF(ref)) LOOP
+     PIPE ROW(d);
+  END LOOP;
+END;
+CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castor_debug.SubRequestDebug PIPELINED AS
+BEGIN
+  FOR d IN (SELECT * FROM SubRequest WHERE castorfile = getCF(ref)) LOOP
+     PIPE ROW(d);
+  END LOOP;
 END;
