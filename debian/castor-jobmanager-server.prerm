@@ -1,4 +1,5 @@
 #! /bin/sh
+CASTOR_SERVICE=jobManager
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
 exit $?
