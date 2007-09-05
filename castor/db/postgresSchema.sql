@@ -148,6 +148,9 @@ CREATE TABLE SetFileGCWeight (flags INT8, userName VARCHAR(2048), euid INT4, egi
 /* SQL statements for type StageRepackRequest */
 CREATE TABLE StageRepackRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, repackVid VARCHAR(2048), id INT8 CONSTRAINT I_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
+/* SQL statements for type StageGetRequest */
+CREATE TABLE StageGetRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
 /* SQL statements for type TapeAccessSpecification */
 CREATE TABLE TapeAccessSpecification (accessMode INT4, density VARCHAR(2048), tapeModel VARCHAR(2048), id INT8 CONSTRAINT I_TapeAccessSpecification_Id PRIMARY KEY);
 

@@ -148,6 +148,9 @@ CREATE TABLE SetFileGCWeight (flags INTEGER, userName VARCHAR2(2048), euid NUMBE
 /* SQL statements for type StageRepackRequest */
 CREATE TABLE StageRepackRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, repackVid VARCHAR2(2048), id INTEGER CONSTRAINT I_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
+/* SQL statements for type StageGetRequest */
+CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+
 /* SQL statements for type TapeAccessSpecification */
 CREATE TABLE TapeAccessSpecification (accessMode NUMBER, density VARCHAR2(2048), tapeModel VARCHAR2(2048), id INTEGER CONSTRAINT I_TapeAccessSpecification_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -199,7 +202,7 @@ INSERT INTO CastorVersion VALUES ('-', '2_1_4_3');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.488  Date: 2007/08/23 14:05:31  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.493  Date: 2007/09/04 15:51:39  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -476,6 +479,51 @@ CREATE INDEX I_FileSystem_Rate
 /*                                         */
 /*******************************************/
 
+/* Checks consistency of DiskCopies when a FileSystem comes
+ * back in production after a period spent in DRAINING or
+ * DISABLED status.
+ * Current checks/fixes include :
+ *   - canceling recalls for files that are STAGED/CANBEMIGR
+ *     on the fileSystem that comes back.
+ */
+CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
+  srId NUMBER;
+BEGIN
+  -- Look for recalls concerning files that are STAGED/CANBEMIGR
+  -- on the filesystem coming back to life
+  FOR cf IN (SELECT UNIQUE d.castorfile, e.id
+               FROM DiskCopy d, DiskCopy e 
+              WHERE d.castorfile = e.castorfile
+                AND d.fileSystem = fsId
+                AND d.status IN (0, 10)
+                AND e.status = 2) LOOP
+    -- cancel the recall
+    FOR t IN (SELECT id FROM TapeCopy
+               WHERE castorfile = cf.castorfile) LOOP
+      FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+        -- Delete the segment(s)
+        DELETE FROM Id2Type WHERE id = s.id;
+        DELETE FROM Segment WHERE id = s.id;
+      END LOOP;
+      -- Delete the TapeCopy
+      DELETE FROM Id2Type WHERE id = t.id;
+      DELETE FROM TapeCopy WHERE id = t.id;
+    END LOOP;
+    -- Delete the DiskCopy
+    UPDATE DiskCopy
+       SET status = 7  -- INVALID
+     WHERE id = cf.id;
+    -- Look for request associated to the recall and restart
+    -- it and all the waiting ones
+    UPDATE SubRequest SET status = 1 -- RESTART
+     WHERE diskCopy = cf.id RETURNING id INTO srId;
+    UPDATE SubRequest
+       SET status = 1, parent = 0 -- RESTART
+     WHERE status = 5 -- WAITSUBREQ
+       AND parent = srId
+       AND castorfile = cf.castorfile;
+  END LOOP;
+END;
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
    FileSystem is created */
@@ -495,6 +543,23 @@ BEFORE DELETE ON FileSystem
 FOR EACH ROW
 BEGIN
   DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
+END;
+
+/* Used to check consistency of diskcopies when a filesytem
+   comes back to production after having been disabled for
+   some time */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Update
+BEFORE UPDATE of status ON FileSystem
+FOR EACH ROW
+WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
+      new.status = 0) -- PRODUCTION
+DECLARE
+  s NUMBER;
+BEGIN
+  SELECT status INTO s FROM DiskServer WHERE id = :old.diskServer;
+  IF (s = 0) THEN
+    checkFSBackInProd(:old.id);
+  END IF;
 END;
 
 /* Used to create a row INTO NbTapeCopiesInFS whenever a new
@@ -699,7 +764,8 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
   nb INTEGER;
   cfId NUMBER;
 BEGIN
-  UPDATE SubRequest SET status = 8 -- FINISHED
+  UPDATE SubRequest
+     SET status = 8, parent = 0 -- FINISHED
    WHERE id = srId
   RETURNING request, castorFile INTO rid, cfId;
 
@@ -1016,6 +1082,21 @@ BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
 
+/* Used to check consistency of diskcopies when filesytems
+   comes back to production after having been disabled for
+   some time */
+CREATE OR REPLACE TRIGGER tr_DiskServer_Update
+BEFORE UPDATE of status ON DiskServer
+FOR EACH ROW
+WHEN (old.status IN (1, 2) AND -- DRAINING, DISABLED
+      new.status = 0) -- PRODUCTION
+BEGIN
+  FOR fs IN (SELECT id, status FROM FileSystem WHERE diskServer = :old.id) LOOP
+    IF (fs.status = 0) THEN
+      checkFSBackInProd(fs.id);
+    END IF;
+  END LOOP;
+END;
 
 /* PL/SQL method implementing updateFileSystemForJob */
 CREATE OR REPLACE PROCEDURE updateFileSystemForJob
@@ -1358,7 +1439,8 @@ BEGIN
      WHERE id = SubRequestId;
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
                           getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
-                          lastModificationTime = getTime()
+                          lastModificationTime = getTime(),
+                          parent = 0
      WHERE parent = SubRequestId;
   END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
@@ -2389,7 +2471,7 @@ BEGIN
  -- If put inside PrepareToPut/Update, restart any PutDone currently
  -- waiting on this put/update
  IF contextPIPP = 0 THEN
-   UPDATE SubRequest SET status = 1 -- RESTART
+   UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
     WHERE id IN
      (SELECT SubRequest.id FROM SubRequest, Id2Type
        WHERE SubRequest.request = Id2Type.id
@@ -2703,7 +2785,7 @@ BEGIN
   FOR sr IN (SELECT id, status FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
     IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      UPDATE SubRequest SET status = 7 WHERE id = sr.id;  -- FAILED
+      UPDATE SubRequest SET status = 7, parent = 0 WHERE id = sr.id;  -- FAILED
     END IF;
   END LOOP;
   -- Set selected DiskCopies to INVALID. In any case keep
@@ -2884,8 +2966,8 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
   fsize NUMBER;
   isFirst NUMBER;
 BEGIN
- isFirst := 1;
- IF dcIds.COUNT > 0 THEN
+  isFirst := 1;
+  IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     SELECT castorFile, fileSystem INTO cfId, fsId
@@ -2909,17 +2991,17 @@ BEGIN
     -- delete the DiskCopy
     DELETE FROM Id2Type WHERE id = dcIds(i);
     DELETE FROM DiskCopy WHERE id = dcIds(i);
-    -- agaist deadlock with prepareForMigration --
-    -- I need a lock on the diskserver if I need more than one filesystem on it --	
+    -- against deadlock
+    -- I need a lock on the diskserver if I need more than one filesystem on it
     IF isFirst = 1 THEN
-        DECLARE
-          dsId NUMBER;
-          unused NUMBER;
-        BEGIN
-          SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
-          SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
-          isFirst := 0;	
-        END;
+      DECLARE
+        dsId NUMBER;
+        unused NUMBER;
+      BEGIN
+        SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+        SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+        isFirst := 0;	
+      END;
     END IF; 
     -- update the FileSystem
     UPDATE FileSystem
@@ -2943,13 +3025,19 @@ END;
  * exact amount of free space. However, we decrease the
  * spaceToBeFreed counter so that a next GC knows the status
  * of the FileSystem
+ * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
+ * THAT ALL BELONG TO THE SAME DISKSERVER.
+ * Otherwise, deadlocks will be created. Between 2 calls
+ * for different diskservers, a commit should be done.
  * fsIds gives the list of files to delete.
  */
 CREATE OR REPLACE PROCEDURE filesClearedProc
 (cfIds IN castor."cnumList") AS
   fsize NUMBER;
   fsid NUMBER;
+  isFirst NUMBER;
 BEGIN
+  isFirst := 1;
   -- Loop over the deleted files
   FOR i in cfIds.FIRST .. cfIds.LAST LOOP
     -- Lock the Castor File and retrieve size
@@ -2959,13 +3047,25 @@ BEGIN
       DELETE FROM Id2Type WHERE id = d.id;
       DELETE FROM DiskCopy WHERE id = d.id
         RETURNING fileSystem INTO fsId;
+      -- against deadlock
+      -- I need a lock on the diskserver if I need more than one filesystem on it
+      IF isFirst = 1 THEN
+        DECLARE
+            dsId NUMBER;
+          unused NUMBER;
+        BEGIN
+          SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+          SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+          isFirst := 0;	
+        END;
+      END IF; 
       -- update the FileSystem
       UPDATE FileSystem
          SET spaceToBeFreed = spaceToBeFreed - fsize
        WHERE id = fsId;
     END LOOP;
     -- put SubRequests into FAILED (for non FINISHED ONES)
-    UPDATE SubRequest SET status = 7 WHERE castorfile = cfIds(i) AND status < 7;
+    UPDATE SubRequest SET status = 7, parent = 0 WHERE castorfile = cfIds(i) AND status < 7;
     -- TapeCopy part
     FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfIds(i)) LOOP
       FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
@@ -2984,14 +3084,21 @@ BEGIN
   END LOOP;
 END;
 
-/* PL/SQL method implementing filesDeletionFailedProc */
+/* PL/SQL method implementing filesDeletionFailedProc
+ * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
+ * THAT ALL BELONG TO THE SAME DISKSERVER.
+ * Otherwise, deadlocks will be created. Between 2 calls
+ * for different diskservers, a commit should be done.
+ */
 CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
 (dcIds IN castor."cnumList") AS
   cfId NUMBER;
   fsId NUMBER;
   fsize NUMBER;
+  isFirst NUMBER;
 BEGIN
- IF dcIds.COUNT > 0 THEN
+  isFirst := 1;
+  IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
   FOR i in dcIds.FIRST .. dcIds.LAST LOOP
     -- set status of DiskCopy to FAILED
@@ -3000,6 +3107,18 @@ BEGIN
     RETURNING fileSystem, castorFile INTO fsId, cfId;
     -- Retrieve the file size
     SELECT fileSize INTO fsize FROM CastorFile where id = cfId;
+    -- against deadlock
+    -- I need a lock on the diskserver if I need more than one filesystem on it
+    IF isFirst = 1 THEN
+      DECLARE
+        dsId NUMBER;
+        unused NUMBER;
+      BEGIN
+        SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+        SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+        isFirst := 0;	
+      END;
+    END IF; 
     -- update the FileSystem
     UPDATE FileSystem
        SET spaceToBeFreed = spaceToBeFreed - fsize
@@ -3037,7 +3156,7 @@ BEGIN
     -- the select worked out, so we have a prepareToPut
     -- In such a case, we do not cleanup DiskCopy and CastorFile
     -- but we have to wake up a potential waiting putDone
-    UPDATE SubRequest SET status = 1 -- RESTART
+    UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
      WHERE id IN
       (SELECT SubRequest.id
         FROM StagePutDoneRequest, SubRequest
@@ -3093,21 +3212,21 @@ CREATE OR REPLACE FUNCTION nopinGCPolicy
   result castorGC.GCItem_Cur;
 BEGIN
   OPEN result FOR
-    SELECT /*+ INDEX(CastorFile) INDEX(DiskCopy) */ DiskCopy.id, CastorFile.fileSize,
-           getTime() - CastorFile.LastAccessTime -- oldest first
-           + GREATEST(0,86400*LN((CastorFile.fileSize+1)/1024)) -- biggest first
-           + CASE CastorFile.nbAccesses
+    SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
+           getTime() - CF.LastAccessTime -- oldest first
+           + GREATEST(0,86400*LN((CF.fileSize+1)/1024)) -- biggest first
+           + CASE CF.nbAccesses
                WHEN 0 THEN 86400 -- non accessed last
-               ELSE 20000 * CastorFile.nbAccesses -- most accessed last
+               ELSE 20000 * CF.nbAccesses -- most accessed last
              END
            - nvl(DC.gcWeight, 0)   -- optional weight used by SRM2 for advisory pinning
-      FROM DiskCopy, CastorFile
-     WHERE CastorFile.id = DiskCopy.castorFile
-       AND DiskCopy.fileSystem = fsId
-       AND DiskCopy.status = 0 -- STAGED
+      FROM DiskCopy DC, CastorFile CF
+     WHERE CF.id = DC.castorFile
+       AND DC.fileSystem = fsId
+       AND DC.status = 0 -- STAGED
        AND NOT EXISTS (
          SELECT 'x' FROM SubRequest 
-          WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
+          WHERE DC.status = 0 AND diskcopy = DC.id 
             AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
      ORDER BY 3 DESC;
   RETURN result;

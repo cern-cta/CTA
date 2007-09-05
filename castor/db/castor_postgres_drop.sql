@@ -197,6 +197,9 @@ DROP TABLE SetFileGCWeight;
 /* SQL statements for type StageRepackRequest */
 DROP TABLE StageRepackRequest;
 
+/* SQL statements for type StageGetRequest */
+DROP TABLE StageGetRequest;
+
 /* SQL statements for type TapeAccessSpecification */
 DROP TABLE TapeAccessSpecification;
 
