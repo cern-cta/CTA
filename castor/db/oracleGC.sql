@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.494 $ $Date: 2007/09/05 14:31:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.495 $ $Date: 2007/09/07 08:02:52 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -575,16 +575,18 @@ BEGIN
   -- Archive request if all subrequests have finished
   IF nb = 0 THEN
     UPDATE SubRequest SET status=11 WHERE request=rid and status=8;  -- ARCHIVED 
-    -- Check that we don't have too many requests for the file in the DB
-    SELECT count(request) INTO nb FROM SubRequest WHERE castorFile = cfId;
-    IF nb > 100  THEN
-      -- We are certain that there is only one too much, because we did the same
-      -- cleaning last time
-      SELECT request INTO rid FROM
-        (SELECT request FROM SubRequest WHERE castorFile = cfId ORDER BY creationTime ASC)
-      WHERE ROWNUM < 2;
+  END IF;
+
+  -- Check that we don't have too many requests for the file in the DB
+  SELECT count(request) INTO nb FROM SubRequest WHERE castorFile = cfId AND status IN (9, 11);
+  IF nb > 100  THEN
+    FOR sr IN (SELECT request INTO rid
+                 FROM (SELECT request FROM SubRequest
+                        WHERE castorFile = cfId AND status IN (9, 11)
+                        ORDER BY creationTime ASC)
+                WHERE ROWNUM < 2) LOOP
       deleteRequest(rid);
-    END IF;
+    END LOOP;
   END IF;
 END;
 
@@ -1084,6 +1086,9 @@ BEGIN
                             fileSize,
                             tapeCopyId,
 			    0);
+      -- Since we recursively called ourselves, we should not do
+      -- any update in the outer call
+      RETURN;
     END IF;
     -- Reset last filesystems used
     UPDATE Stream
@@ -1171,7 +1176,7 @@ BEGIN
                 AND Request.id = SubRequest.request
                 AND Request.svcclass = DiskPool2SvcClass.child
                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                AND FileSystem.free > CastorFile.fileSize
+                AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
                 AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                 AND DiskServer.id = FileSystem.diskServer
                 AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
@@ -1210,6 +1215,9 @@ BEGIN
     -- truly make sure nothing is found!
     IF optimized = 1 THEN
       bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dci, 0);
+      -- Since we recursively called ourselves, we should not do
+      -- any update in the outer call
+      RETURN;
     END IF;
 END;
 
