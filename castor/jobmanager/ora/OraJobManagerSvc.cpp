@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/09/07 06:40:23 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -335,8 +335,8 @@ void castor::jobmanager::ora::OraJobManagerSvc::fileSystemStates
       }
 
       // We store the status under a diskserver:filesystem combination
-      std::ostringstream key(rs->getString(1));
-      key << ":" << rs->getString(2);
+      std::ostringstream key;
+      key << rs->getString(1) << ":" << rs->getString(2);
       result[key.str()] = status;
     }
   } catch (oracle::occi::SQLException e) {

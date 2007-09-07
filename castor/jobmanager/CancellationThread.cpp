@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
+ * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/09/07 06:40:22 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a 
  * PENDING status for too long 
@@ -379,10 +379,10 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
     }
   }
 
-  // Check to see if at least on of the jobs requested filesystems is still
+  // Check to see if at least one of the jobs requested filesystems is still
   // available. If not we terminate the job to prevent it remaining in LSF 
   // waiting for a resource that may never return.
-  if (m_resReqKill) {
+  if ((m_resReqKill) && (rfs.size())) {
     for (std::vector<std::string>::const_iterator it = rfs.begin();
 	 it != rfs.end();
 	 it++) {
@@ -396,8 +396,24 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
 	if (iter->second != castor::stager::FILESYSTEM_DISABLED) {
 	  return;
 	}
-      }    
+      }
     }
+    // Kill the job in LSF
+    if (lsb_forcekilljob(job->jobId) < 0) {
+      if ((lsberrno == LSBE_NO_JOB) || (lsberrno == LSBE_JOB_FINISH)) {
+        // No Matching job found, most likely killed by another daemon
+        return;
+      }
+
+      // "Failed to terminate LSF job"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", "lsb_forcekilljob"),
+         castor::dlf::Param("Error", lsberrno ? lsb_sysmsg() : "no message"),
+         castor::dlf::Param("JobId", (int)job->jobId)};
+      castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 24, 3, params, &fileId);
+      return;
+    }
+
     // Terminate the job
     failSubRequest(requestId, subRequestId, fileId, ESTNOTAVAIL);
 
