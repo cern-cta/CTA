@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.61 2007/08/28 11:33:01 sponcec3 Exp $
+# $Id: maketar.sh,v 1.62 2007/09/07 13:25:08 kotlyar Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -151,6 +151,13 @@ function if_has_stk_ssi {
 ## Append all sub-packages to CASTOR.spec
 #
 for this in `grep Package: debian/control | awk '{print $NF}'`; do
+    if [ ${this} = "castor-gridftp-dsi-ext" -o ${this} = "castor-gridftp-dsi-int" ]; then
+        if [ "${GLOBUS_LOCATION}" = "" ]; then
+            echo "GLOBUS_LOCATION has not been set, skipping ${this}..."
+            continue
+        fi
+    fi
+
     #
     ## Do we have an %if dependency ?
     #
@@ -311,7 +318,11 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
 	    cat debian/$package.install.perm.tmp >> CASTOR.spec
 	else
 	    echo "%ifarch x86_64" >> CASTOR.spec
-	    cat debian/$package.install.perm.tmp | sed 's/\/lib\//\/lib64\//g' >> CASTOR.spec
+            if [ "$package" != "castor-gridftp-dsi-ext" -a "$package" != "castor-gridftp-dsi-int" ]; then
+                cat debian/$package.install.perm.tmp | sed 's/\/lib\//\/lib64\//g' >> CASTOR.spec
+            else
+                cat debian/$package.install.perm.tmp | sed 's/gcc32dbg/gcc64dbg/g' >> CASTOR.spec
+            fi
 	    echo "%else" >> CASTOR.spec
 	    cat debian/$package.install.perm.tmp >> CASTOR.spec
 	    echo "%endif" >> CASTOR.spec

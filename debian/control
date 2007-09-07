@@ -344,3 +344,16 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
 Description: castor (Cern Advanced STORage system)
  Shared libraries for monitoring framework
+
+Package: castor-gridftp-dsi-int
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, vdt_globus_data_server, vdt_globus_essentials
+Description: castor (Cern Advanced STORage system)
+ Internal CASTOR2 gridftp2 DSI module
+
+Package: castor-gridftp-dsi-ext
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, vdt_globus_data_server, vdt_globus_essentials
+Description: castor (Cern Advanced STORage system)
+ External CASTOR2 gridftp2 DSI module 
+

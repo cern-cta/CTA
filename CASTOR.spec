@@ -146,10 +146,22 @@ mkdir -p ${RPM_BUILD_ROOT}/var/lib/castor
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/db
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/images
+mkdir -p ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 # Install policies
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
+# Instal gridfp dsi
+if [ "${GLOBUS_LOCATION}" != "" ]; then
+   %ifarch x86_64
+   (cd disksrv/src/gridftp2/external; make;cp libglobus_gridftp_server_CASTOR2ext_gcc64dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
+   (cd disksrv/src/gridftp2/internal; make;cp libglobus_gridftp_server_CASTOR2int_gcc64dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
+   %else
+   (cd disksrv/src/gridftp2/internal; make;cp libglobus_gridftp_server_CASTOR2int_gcc32dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
+   (cd disksrv/src/gridftp2/external; make;cp libglobus_gridftp_server_CASTOR2ext_gcc32dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
+   %endif
+fi
+
 # Install example configuration files
 for i in debian/*CONFIG; do
     install -m 640 ${i} ${RPM_BUILD_ROOT}/etc/castor/`basename ${i}`.example
