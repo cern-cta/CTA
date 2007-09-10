@@ -198,11 +198,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_4_3');
+INSERT INTO CastorVersion VALUES ('-', '2_1_4_4');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.493  Date: 2007/09/04 15:51:39  Author: sponcec3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.496  Date: 2007/09/10 06:52:09  Author: waldron 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -777,16 +777,18 @@ BEGIN
   -- Archive request if all subrequests have finished
   IF nb = 0 THEN
     UPDATE SubRequest SET status=11 WHERE request=rid and status=8;  -- ARCHIVED 
-    -- Check that we don't have too many requests for the file in the DB
-    SELECT count(request) INTO nb FROM SubRequest WHERE castorFile = cfId;
-    IF nb > 100  THEN
-      -- We are certain that there is only one too much, because we did the same
-      -- cleaning last time
-      SELECT request INTO rid FROM
-        (SELECT request FROM SubRequest WHERE castorFile = cfId ORDER BY creationTime ASC)
-      WHERE ROWNUM < 2;
+  END IF;
+
+  -- Check that we don't have too many requests for the file in the DB
+  SELECT count(request) INTO nb FROM SubRequest WHERE castorFile = cfId AND status IN (9, 11);
+  IF nb > 100  THEN
+    FOR sr IN (SELECT request INTO rid
+                 FROM (SELECT request FROM SubRequest
+                        WHERE castorFile = cfId AND status IN (9, 11)
+                        ORDER BY creationTime ASC)
+                WHERE ROWNUM < 2) LOOP
       deleteRequest(rid);
-    END IF;
+    END LOOP;
   END IF;
 END;
 
@@ -1286,6 +1288,9 @@ BEGIN
                             fileSize,
                             tapeCopyId,
 			    0);
+      -- Since we recursively called ourselves, we should not do
+      -- any update in the outer call
+      RETURN;
     END IF;
     -- Reset last filesystems used
     UPDATE Stream
@@ -1373,7 +1378,7 @@ BEGIN
                 AND Request.id = SubRequest.request
                 AND Request.svcclass = DiskPool2SvcClass.child
                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                AND FileSystem.free > CastorFile.fileSize
+                AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
                 AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
                 AND DiskServer.id = FileSystem.diskServer
                 AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
@@ -1412,6 +1417,9 @@ BEGIN
     -- truly make sure nothing is found!
     IF optimized = 1 THEN
       bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dci, 0);
+      -- Since we recursively called ourselves, we should not do
+      -- any update in the outer call
+      RETURN;
     END IF;
 END;
 
@@ -1508,7 +1516,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
   TYPE IDRecord IS RECORD (id INTEGER);
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
-END castor;
+END;
+
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
 /* PL/SQL method checking whether a given service class
@@ -4123,4 +4132,61 @@ BEGIN
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Not found in White list -> no access
   res := -1;
+END;
+
+/* useful functions for debugging, returning diskcopies' useful
+ * information for any castorfile or diskcopy
+ */
+CREATE OR REPLACE PACKAGE castor_debug AS
+  TYPE DiskCopyDebug_typ IS RECORD (
+    id INTEGER,
+    diskPool VARCHAR2(2048),
+    location VARCHAR2(2048),
+    status NUMBER,
+    creationTime Date);
+  TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
+  TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
+END;
+
+CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
+  t NUMBER;
+  cfId NUMBER;
+BEGIN
+  SELECT type INTO t FROM id2Type WHERE id = ref;
+  IF (t = 2) THEN -- CASTORFILE
+    RETURN ref;
+  ELSIF (t = 5) THEN -- DiskCopy
+    SELECT castorFile INTO cfId FROM DiskCopy WHERE id = ref;
+  ELSIF (t = 27) THEN -- SubRequest
+    SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
+  ELSIF (t = 30) THEN -- TapeCopy
+    SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
+  END IF;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
+  SELECT id INTO cfId FROM CastorFile WHERE fileId = ref;
+  RETURN cfId;
+END;
+
+CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
+BEGIN
+  FOR d IN (SELECT diskCopy.id,
+                   diskPool.name as diskpool,
+                   diskServer.name || ':' || fileSystem.mountPoint || diskCopy.path as location,
+                   diskCopy.status as status,
+                   to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime
+              FROM DiskCopy, FileSystem, DiskServer, DiskPool
+             WHERE DiskCopy.fileSystem = FileSystem.id
+               AND FileSystem.diskServer = diskServer.id
+               AND DiskPool.id = fileSystem.diskPool
+               AND DiskCopy.castorfile = getCF(ref)) LOOP
+     PIPE ROW(d);
+  END LOOP;
+END;
+
+CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castor_debug.SubRequestDebug PIPELINED AS
+BEGIN
+  FOR d IN (SELECT * FROM SubRequest WHERE castorfile = getCF(ref)) LOOP
+     PIPE ROW(d);
+  END LOOP;
 END;
