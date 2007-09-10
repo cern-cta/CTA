@@ -1,6 +1,6 @@
-.\"   $Id: Cthread.man,v 1.12 2002/01/09 13:25:25 jdurand Exp $
+.\"   $Id: Cthread.man,v 1.13 2007/09/10 10:42:34 obarring Exp $
 .\"
-.TH CTHREAD "3" "$Date: 2002/01/09 13:25:25 $" "CASTOR" "Common Library Functions"
+.TH CTHREAD "3" "$Date: 2007/09/10 10:42:34 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS
@@ -41,6 +41,8 @@
 .BI "int Cthread_getspecific(int *" global_key ", void **" addr ");"
 .P
 .BI "int Cthread_setspecific(int *" global_key ", void * " addr ");"
+.P
+.BI "int Cthread_init(void);"
 
 .SH DESCRIPTION
 
@@ -182,6 +184,14 @@ Return value is 0 on success, or -1 on error.
 that he have previously allocated, with the
 .I global_key
 address. If he tries to do so without calling previously \fBCthread_getspecific\fP, then such a call will be done internally.
+.P
+Return value is 0 on success, or -1 on error.
+.P
+\fBCthread_init\fP initializes the Cthread library. Applications using other
+Cthread functions do not need to call \fBCthread_init\fP. However,
+multi-threaded applications not using Cthread but native thread libraries do
+need to call \fBCthread_init\fP in order for other CASTOR APIs, e.g. RFIO, to
+be thread-safe.
 .P
 Return value is 0 on success, or -1 on error.
 
