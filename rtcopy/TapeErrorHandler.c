@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.21 $ $Release$ $Date: 2007/02/23 09:30:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.22 $ $Release$ $Date: 2007/09/10 10:32:55 $ $Author: obarring $
  *
  * 
  *
@@ -1494,7 +1494,12 @@ int main(
       if ( mode == WRITE_ENABLE ) {
         deleteDiskCopy = 0;
         rc = checkMigrationRetry(tapeCopy,&deleteDiskCopy,&fileid);
-        if ( rc == 0 ) {
+        /*
+         * We can allow for immediate retry on EAGAIN because streamsToDo()
+         * does now also check that there is at least one migration candidate
+         * on an available diskserver/filesystem.
+         */
+        if ( (rc == 0) || ((rc == -1) && (serrno == EAGAIN)) ) {
           rc = doMigrationRetry(segm,tapeCopy);
           if ( rc == -1 ) {
             LOG_SYSCALL_ERR("doMigrationRetry()");
