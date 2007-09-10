@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.495 $ $Date: 2007/09/07 08:02:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.496 $ $Date: 2007/09/10 06:52:09 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1314,7 +1314,8 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
   TYPE IDRecord IS RECORD (id INTEGER);
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
-END castor;
+END;
+
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
 
 /* PL/SQL method checking whether a given service class
@@ -3943,7 +3944,8 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     creationTime Date);
   TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
   TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
-END castor_debug;
+END;
+
 CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
   t NUMBER;
   cfId NUMBER;
@@ -3963,6 +3965,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
   SELECT id INTO cfId FROM CastorFile WHERE fileId = ref;
   RETURN cfId;
 END;
+
 CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT diskCopy.id,
@@ -3978,6 +3981,7 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
+
 CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castor_debug.SubRequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT * FROM SubRequest WHERE castorfile = getCF(ref)) LOOP
