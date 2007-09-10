@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/08/22 09:05:24 $ $Author: gtaur $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2007/09/10 06:47:16 $ $Author: waldron $
  *
  * The conversion service to Oracle
  *
@@ -255,8 +255,8 @@ void castor::db::ora::OraCnvSvc::rollback()
 castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std::string& stmt)
   throw (castor::exception::Exception) {
   try {
-     oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
-     return new castor::db::ora::OraStatement(statement, this);     
+    oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
+    return new castor::db::ora::OraStatement(statement, this);     
   } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Error creating statement, Oracle code: " << e.getErrorCode()
@@ -273,9 +273,9 @@ castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std:
 oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const std::string& stmt)
   throw (castor::exception::Exception) {
   try {
-     // XXX this is exposing the OCCI API - should it disappear?
-     oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
-     return statement;     
+    // XXX this is exposing the OCCI API - should it disappear?
+    oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
+    return statement;     
   } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Error creating statement, Oracle code: " << e.getErrorCode()
@@ -291,11 +291,11 @@ oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const st
 void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
   throw (castor::exception::Exception) {
   try {
-      castor::db::ora::OraStatement* oraStmt = dynamic_cast<castor::db::ora::OraStatement*>(stmt);
-      if(oraStmt == 0) return;
-      m_connection->terminateStatement(oraStmt->getStatementImpl());
-      // the stmt object is still alive; this method is called only inside ~OraStatement
-      // so there's no need to delete it.
+    castor::db::ora::OraStatement* oraStmt = dynamic_cast<castor::db::ora::OraStatement*>(stmt);
+    if(oraStmt == 0) return;
+    m_connection->terminateStatement(oraStmt->getStatementImpl());
+    // the stmt object is still alive; this method is called only inside ~OraStatement
+    // so there's no need to delete it.
   } catch(oracle::occi::SQLException e) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Error closing statement, Oracle code: " << e.getErrorCode()
@@ -308,7 +308,7 @@ void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
 //  handleException
 // -------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
-	try {
+  try {
     // Always try to rollback
     rollback();
     
@@ -329,7 +329,7 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
   }
   catch (castor::exception::Exception e) {
     // rollback failed, let's drop the connection for security
-	  dropConnection(); // instead of reset .... 
+    dropConnection(); // instead of reset .... 
   }	
 }
 

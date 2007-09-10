@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/09 17:11:48 $ $Author: itglp $
+ * @(#)$RCSfile: Mutex.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/09/10 06:46:46 $ $Author: waldron $
  *
  * C++ interface to mutex handling with the Cthread API
  *
@@ -43,7 +43,7 @@ namespace castor {
 
   public:
     static const int TIMEOUT = 10;
-
+    
     /**
      * Mutex initialization.
      * @param var the shared variable.
@@ -51,76 +51,76 @@ namespace castor {
      */
     Mutex(int value, int timeout = TIMEOUT)
       throw (castor::exception::Exception);
-
+    
     ~Mutex();
-
+    
     /**
      * Gets the internal variable value.
      */
     int getValue() {
       return m_var;
     }
-
-  /**
-   * Sets the internal variable value.
-   * This method is thread-safe, meaning that
-   * it will wait for mutex on the var.
-   * @throws exception if the mutex can't be
-   * acquired or the mutex initialization failed.
-   */
-  void setValue(int newValue)
-    throw (castor::exception::Exception);
-
-  /**
-   * Sets the internal variable value.
-   * This method tries to be thread-safe, but won't
-   * throw an exception when the mutex can't be
-   * acquired: in that case it does thread-
-   * unsafely change the value.
-   */
-  void setValueNoEx(int newValue);
-
-  /**
-   * Sets the internal variable value.
-   * This method is NOT thread-safe, and
-   * it is provided for convenience only.
-   */
+    
+    /**
+     * Sets the internal variable value.
+     * This method is thread-safe, meaning that
+     * it will wait for mutex on the var.
+     * @throws exception if the mutex can't be
+     * acquired or the mutex initialization failed.
+     */
+    void setValue(int newValue)
+      throw (castor::exception::Exception);
+    
+    /**
+     * Sets the internal variable value.
+     * This method tries to be thread-safe, but won't
+     * throw an exception when the mutex can't be
+     * acquired: in that case it does thread-
+     * unsafely change the value.
+     */
+    void setValueNoEx(int newValue);
+    
+    /**
+     * Sets the internal variable value.
+     * This method is NOT thread-safe, and
+     * it is provided for convenience only.
+     */
     void setValueNoMutex(int newValue) {
       m_var = newValue;
     }
-
+    
     /**
      * waits for a signal on this mutex.
      */
     void wait();
-
+    
     /**
      * Tries to get a lock on this mutex.
      */
     void lock() throw (castor::exception::Exception);
-
+    
     /**
      * Tries to release the lock on this mutex.
      */
     void release() throw (castor::exception::Exception);
-
+    
     /**
      * Tries to signal the mutex by calling Cthread_cond_signal().
      */
     void signal() throw (castor::exception::Exception);
 
   private:
-
+    
     int m_var;
     int m_timeout;
     void* m_mutexCthread;
-
+    
     int createLock();
 
   };
-
+   
  } // end of namespace server
-
+  
 } // end of namespace castor
 
 
