@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_stat.man,v 1.12 2002/11/21 17:09:54 bcouturi Exp $
+.\" $Id: rfio_stat.man,v 1.13 2007/09/10 13:40:51 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.12 $ $Date: 2002/11/21 17:09:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_stat.man,v $ $Revision: 1.13 $ $Date: 2007/09/10 13:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_STAT 3 "$Date: 2002/11/21 17:09:54 $" CASTOR "Rfio Library Functions"
+.TH RFIO_STAT 3 "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_stat \- get information about a file or directory
 .SH SYNOPSIS
@@ -159,6 +159,10 @@ Service unknown.
 .TP
 .B SECOMERR
 Communication error.
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR rfio_chmod(3) ,

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_popen.man,v 1.3 2002/11/21 13:06:29 bcouturi Exp $
+.\" $Id: rfio_popen.man,v 1.4 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_popen.man,v $ $Revision: 1.3 $ $Date: 2002/11/21 13:06:29 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_popen.man,v $ $Revision: 1.4 $ $Date: 2007/09/10 13:40:52 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_POPEN 3 "$Date: 2002/11/21 13:06:29 $" CASTOR "Rfio Library Functions"
+.TH RFIO_POPEN 3 "$Date: 2007/09/10 13:40:52 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_popen, rfio_pclose \- start a process and open a pipe to it
 .SH SYNOPSIS
@@ -62,5 +62,11 @@ Command string too long.
 .TP
 .B SECOMERR
 Communication error.
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
+.SH SEE ALSO
+.BR Cthread(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

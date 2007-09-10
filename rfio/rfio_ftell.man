@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_ftell.man,v 1.3 2002/11/21 17:09:54 bcouturi Exp $
+.\" $Id: rfio_ftell.man,v 1.4 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_ftell.man,v $ $Revision: 1.3 $ $Date: 2002/11/21 17:09:54 $ CERN IT-DS-HSM Benjamin Couturier
+.\" @(#)$RCSfile: rfio_ftell.man,v $ $Revision: 1.4 $ $Date: 2007/09/10 13:40:52 $ CERN IT-DS-HSM Benjamin Couturier
 .\" Copyright (C) 2002 by CERN/IT-DS-HSM
 .\" All rights reserved
 .\"
-.TH RFIO_FTELL 3 "$Date: 2002/11/21 17:09:54 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FTELL 3 "$Date: 2007/09/10 13:40:52 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_ftell \- tells the position in a stream
 .SH SYNOPSIS
@@ -68,8 +68,12 @@ Connection closed by remote end.
 .TP
 .B SECOMERR
 Communication error.
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
 .SH SEE ALSO
-.BR rfio_fopen(3)
+.BR rfio_fopen(3) , Cthread(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
 

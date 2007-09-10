@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_unlink.man,v 1.8 2002/02/18 09:34:14 jdurand Exp $
+.\" $Id: rfio_unlink.man,v 1.9 2007/09/10 13:40:51 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_unlink.man,v $ $Revision: 1.8 $ $Date: 2002/02/18 09:34:14 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_unlink.man,v $ $Revision: 1.9 $ $Date: 2007/09/10 13:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_UNLINK 3 "$Date: 2002/02/18 09:34:14 $" CASTOR "Rfio Library Functions"
+.TH RFIO_UNLINK 3 "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_unlink \- remove a file entry
 .SH SYNOPSIS
@@ -118,6 +118,10 @@ Service unknown.
 .TP
 .B SECOMERR
 Communication error.
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR rfio_rmdir(3) ,

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fileno.man,v 1.1 2002/12/02 06:35:44 baud Exp $
+.\" $Id: rfio_fileno.man,v 1.2 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fileno.man,v $ $Revision: 1.1 $ $Date: 2002/12/02 06:35:44 $ CERN IT-DS/HSM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fileno.man,v $ $Revision: 1.2 $ $Date: 2007/09/10 13:40:52 $ CERN IT-DS/HSM Jean-Philippe Baud
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\"
-.TH RFIO_FILENO 3 "$Date: 2002/12/02 06:35:44 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FILENO 3 "$Date: 2007/09/10 13:40:52 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fileno \- maps stream pointer to file descriptor
 .SH SYNOPSIS
@@ -30,7 +30,11 @@ is set appropriately.
 .B EBADF
 .I fp
 is not a valid file descriptor.
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
 .SH SEE ALSO
-.BR rfio_fopen(3)
+.BR rfio_fopen(3) , Cthread(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_rewinddir.man,v 1.6 2001/09/26 09:13:53 jdurand Exp $
+.\" $Id: rfio_rewinddir.man,v 1.7 2007/09/10 13:40:51 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_rewinddir.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_rewinddir.man,v $ $Revision: 1.7 $ $Date: 2007/09/10 13:40:51 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_REWINDDIR 3 "$Date: 2001/09/26 09:13:53 $" CASTOR "Rfio Library Functions"
+.TH RFIO_REWINDDIR 3 "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_rewinddir \- reset position to the beginning of a directory opened by
 .B rfio_opendir
@@ -25,9 +25,14 @@ specifies the pointer value returned by
 .BR rfio_opendir .
 .SH NOTES
 For CASTOR directories, a multi-threaded application will need to initialize itself the Cthread (CASTOR Thread Interface) library ; this is done by including "shift/Cthread_api.h" and calling the function Cthread_init() at the beginning. Otherwise accessing CASTOR directories will not be thread-safe. See \fBCthread\fP(3).
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
 .SH SEE ALSO
 .BR rfio_closedir(3) ,
 .BR rfio_opendir(3) ,
-.BR rfio_readdir(3)
+.BR rfio_readdir(3) ,
+.BR Cthread(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

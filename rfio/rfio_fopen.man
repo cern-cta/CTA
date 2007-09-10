@@ -1,11 +1,11 @@
 .\"
-.\" $Id: rfio_fopen.man,v 1.7 2002/11/21 17:09:54 bcouturi Exp $
+.\" $Id: rfio_fopen.man,v 1.8 2007/09/10 13:40:52 obarring Exp $
 .\"
-.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.7 $ $Date: 2002/11/21 17:09:54 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: rfio_fopen.man,v $ $Revision: 1.8 $ $Date: 2007/09/10 13:40:52 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_FOPEN 3 "$Date: 2002/11/21 17:09:54 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FOPEN 3 "$Date: 2007/09/10 13:40:52 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_fopen \- opens a file
 .SH SYNOPSIS
@@ -104,10 +104,15 @@ Host did not return error number
 Host is not on local network and no mapping found
 .SH NOTES
 On Irix, Tru64 and IA64 the 64 bit mode is the default one, rfio_fopen and rfio_fopen64 are identical.
+.SH MULTI-THREAD APPLICATION USAGE
+When calling RFIO from a multi-threaded application, it is first necessary to
+initialize thread-specific storage and serialization objects by a call to
+\fBCthread_init()\fP.
 .SH SEE ALSO
 .BR fopen(3) ,
 .BR rfio_serror(3) ,
 .BR rfio_perror(3) ,
-.BR serrno(3)
+.BR serrno(3) ,
+.BR Cthread(3)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
