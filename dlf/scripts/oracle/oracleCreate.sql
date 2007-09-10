@@ -410,13 +410,13 @@ BEGIN
       
       IF v_exists = 0 THEN
         EXECUTE IMMEDIATE 'CREATE TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||'
-                           DATAFILE SIZE 50M
-                           AUTOEXTEND ON NEXT 100M 
-                           MAXSIZE 10G
+                           DATAFILE SIZE 100M
+                           AUTOEXTEND ON NEXT 200M 
+                           MAXSIZE 30G
                            EXTENT MANAGEMENT LOCAL 
                            SEGMENT SPACE MANAGEMENT AUTO';
       END IF;      
-    
+           
       v_high_value := TRUNC(b.value + 1);
       EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' 
                          SPLIT PARTITION MAX_VALUE 
@@ -425,6 +425,16 @@ BEGIN
                                 TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||', 
                                 PARTITION MAX_VALUE)
                          UPDATE INDEXES';
+                         
+      -- Move indexes to the correct tablespace
+      FOR c IN (SELECT index_name
+                  FROM user_indexes
+                 WHERE table_name = a.table_name)
+      LOOP
+        EXECUTE IMMEDIATE 'ALTER INDEX '||c.index_name||' 
+                           REBUILD PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||'
+                           TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD');
+      END LOOP;
     END LOOP;
   END LOOP;
   
