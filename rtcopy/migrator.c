@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.51 $ $Release$ $Date: 2007/08/10 11:11:55 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.52 $ $Release$ $Date: 2007/09/10 15:39:57 $ $Author: obarring $
  *
  * 
  *
@@ -235,8 +235,10 @@ int migratorCallbackFileCopied(
                             0,
                             &filesWritten
                             );
-    if ( (rc == -1) || (filesWritten == 0) ) {
+    if ( (rc == -1) || 
+         ((filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) && (filesWritten == 0)) ) {
       save_serrno = serrno;
+      if ( (filereq->cprc == 0) && (filereq->proc_status == RTCP_FINISHED) && (filesWritten == 0) ) save_serrno = SEINTERNAL;
       (void)dlf_write(
                       (inChild == 0 ? mainUuid : childUuid),
                       RTCPCLD_LOG_MSG(RTCPCLD_MSG_FAILEDVMGRUPD),
