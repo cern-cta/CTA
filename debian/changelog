@@ -1,7 +1,9 @@
 castor (2.1.4-4) unstable; urgency=low
 
   * CASTOR2/CASTOR.spec:
-    [r1.68,2007-09-07,kotlyar] to build gridftp rpms there should be GLOBUS_LOCATION variable defined, in other case it willprovide a standart set of rpms
+    [r1.68,2007-09-07,kotlyar] to build gridftp rpms there should be GLOBUS_LOCATION variable defined, in other case it will provide a standart set of rpms
+  * CASTOR2/ReleaseNotes:
+    [r1.67,2007-09-10,waldron] Updated for 2.1.4-4
   * CASTOR2/castor/db/DbBaseObj.cpp:
     [r 1.7,2007-09-10,waldron] Fixed indentation
   * CASTOR2/castor/db/DbBaseObj.hpp:
@@ -21,17 +23,21 @@ castor (2.1.4-4) unstable; urgency=low
     [r 1.3,2007-08-31,sponcec3] Cleanup of old subrequests stuck waiting on nothing
     [r 1.3,2007-08-31,sponcec3] cleanup of the files having both a STAGED copy and a tape recall going on
   * CASTOR2/castor/db/castor_oracle_create.sql:
+    [r1.108,2007-09-10,waldron] Regenerated for version 2.1.4-4
     [r1.107,2007-09-05,sponcec3] Regenarated scripts, including fix to reintroduce lost StageGetRequest Table
   * CASTOR2/castor/db/castor_oracle_create.sqlplus:
+    [r1.51,2007-09-10,waldron] Regenerated for version 2.1.4-4
     [r1.50,2007-09-05,sponcec3] Regenarated scripts, including fix to reintroduce lost StageGetRequest Table
   * CASTOR2/castor/db/castor_postgres_drop.sql:
     [r1.13,2007-09-05,sponcec3] Regenarated scripts, including fix to reintroduce lost StageGetRequest Table
   * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
     [r1.30,2007-09-10,waldron] Fixed indentation
   * CASTOR2/castor/db/ora/OraRHSvc.cpp:
+    [r 1.5,2007-09-11,waldron] Use multiple connections to the database as opposed to a mutex protecting critical code sections
     [r 1.4,2007-09-10,waldron] oracle::occi::Statement objects cannot be shared between threads. As a temporary solution to solve the request handlers segmentation fault when use white and black lists a mutex is used to protect the vulnerable section of code.
     [r 1.3,2007-08-31,waldron] Added dedicated 'Permission Denied' DLF message and changed severity to DLF_LVL_AUTH
   * CASTOR2/castor/db/ora/OraRHSvc.hpp:
+    [r 1.3,2007-09-11,waldron] Use multiple connections to the database as opposed to a mutex protecting critical code sections
     [r 1.2,2007-09-10,waldron] oracle::occi::Statement objects cannot be shared between threads. As a temporary solution to solve the request handlers segmentation fault when use white and black lists a mutex is used to protect the vulnerable section of code.
   * CASTOR2/castor/db/ora/OraTapeSvc.cpp:
     [r1.28,2007-09-05,waldron] Added missing optimized attribute when calling bestFileSystemForSegment
@@ -73,11 +79,19 @@ castor (2.1.4-4) unstable; urgency=low
     [r 1.5,2007-09-04,waldron] Replaced TYPE by DIRECTION in external scheduler options
   * CASTOR2/castor/jobmanager/ora/OraJobManagerSvc.cpp:
     [r 1.4,2007-09-07,waldron] Only do resource requirment checks for jobs which have requested filesystems e.g. GetRequests. Also added missing call to terminate a job in LSF.
+  * CASTOR2/castor/repack/repack_oracle_create.sql:
+    [r1.12,2007-09-10,waldron] Regenerated for version 2.1.4-4
+  * CASTOR2/castor/repack/repack_oracle_create.sqlplus:
+    [r 1.5,2007-09-10,waldron] Regenerated for version 2.1.4-4
   * CASTOR2/castor/repack/repack_oracle_drop.sql:
     [r 1.3,2007-09-10,waldron] Updated to be like the dlf and stager drop scripts
   * CASTOR2/castor/rh/RHThread.cpp:
+    [r1.13,2007-09-11,waldron] Use multiple connections to the database as opposed to a mutex protecting critical code sections
     [r1.12,2007-08-31,waldron] Added dedicated 'Permission Denied' DLF message and changed severity to DLF_LVL_AUTH
+  * CASTOR2/castor/rh/RHThread.hpp:
+    [r 1.7,2007-09-11,waldron] Use multiple connections to the database as opposed to a mutex protecting critical code sections
   * CASTOR2/castor/rh/Server.cpp:
+    [r1.57,2007-09-11,waldron] Use multiple connections to the database as opposed to a mutex protecting critical code sections
     [r1.56,2007-09-05,waldron] Allow the TCPListenerThreadPool to spawn a seperate thread for the listenLoop. If this doesn't happen the accept() call in the loop prevents returning control back to the main and the signals collected by the signal handler thread are never checked resulting in broken signal handling
     [r1.55,2007-09-04,waldron] Updated the command line options to match that offered by the BaseServer i.e. the config-file option has now been added
     [r1.54,2007-08-31,waldron] Added dedicated 'Permission Denied' DLF message and changed severity to DLF_LVL_AUTH
@@ -121,23 +135,105 @@ castor (2.1.4-4) unstable; urgency=low
     [r 1.4,2007-08-31,waldron] Added log rotation for cleaning daemon
   * CASTOR2/debian/castor.conf:
     [r1.65,2007-08-29,sponcec3] Marked DIRECTIO and XFSPREALLOC as experimental
+  * CASTOR2/debian/changelog:
+    [r1.168,2007-09-10,waldron] Updated for 2.1.4-4
   * CASTOR2/debian/control:
     [r1.47,2007-09-07,kotlyar] to build gridftp rpms there should be GLOBUS_LOCATION variable defined, in other case it will provide a standart set of rpms
   * CASTOR2/disksrv/src/gridftp2/external/globus_gridftp_server_CASTOR2ext.c:
     [r 1.4,2007-08-30,kotlyar] uberftp ls command doesn't understand castor's nlink=0 for empty directories, in common  unix file system  it should be  2  (one for '.' and one for '..') so now we return nlink=2 for the empty dirs and for the dirs with two files inside.
-    [r 1.4,2007-08-30,kotlyar]
+    [r 1.4,2007-08-30,kotlyar] 
     [r 1.4,2007-08-30,kotlyar] For a security reason we do not allow access for  a path without "/castor".
+  * CASTOR2/dlf/scripts/mysql/dlf_mysql_create.sql:
+    [r2.11,2007-09-10,waldron] Regenerated for version 2.1.4-4
   * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sql:
+    [r2.12,2007-09-10,waldron] Regenerated for version 2.1.4-4
     [r2.11,2007-08-31,waldron] Updated to also move partition indexes into the correct daily tablespace
   * CASTOR2/dlf/scripts/oracle/dlf_oracle_create.sqlplus:
+    [r2.12,2007-09-10,waldron] Regenerated for version 2.1.4-4
     [r2.11,2007-08-31,waldron] Updated to also move partition indexes into the correct daily tablespace
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sql:
+    [r2.10,2007-09-10,waldron] Regenerated for version 2.1.4-4
+  * CASTOR2/dlf/scripts/oracle/express/dlf_oracle_create.sqlplus:
+    [r 2.9,2007-09-10,waldron] Regenerated for version 2.1.4-4
+  * CASTOR2/dlf/scripts/oracle/oracleCreate.sql:
+    [r 2.4,2007-09-10,waldron] Updated to also move partition indexes into the correct daily tablespace
   * CASTOR2/dlf/web/site.css:
     [r 1.8,2007-09-04,waldron] Minor change to severity colours
   * CASTOR2/maketar.sh:
     [r1.62,2007-09-07,kotlyar] to build gridftp rpms there should be GLOBUS_LOCATION variable defined, in other case it will provide a standart set of rpms
+  * CASTOR2/rfio/rfio_access.man:
+    [r 1.3,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_chmod.man:
+    [r 1.7,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_chown.man:
+    [r 1.3,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_close.man:
+    [r 1.7,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_closedir.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_fclose.man:
+    [r 1.7,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_ferror.man:
+    [r 1.4,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_fflush.man:
+    [r 1.4,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_fileno.man:
+    [r 1.2,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_fopen.man:
+    [r 1.8,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_fread.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_fseek.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_ftell.man:
+    [r 1.4,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_fwrite.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_lockf.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_lseek.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_mkdir.man:
+    [r 1.7,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_open.man:
+    [r1.12,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_opendir.man:
+    [r 1.7,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_perror.man:
+    [r 1.5,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_popen.man:
+    [r 1.4,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_preseek.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_read.man:
+    [r 1.5,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_readdir.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_rename.man:
+    [r 1.3,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_rewinddir.man:
+    [r 1.7,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_rmdir.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_stat.man:
+    [r1.13,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_statfs.man:
+    [r 1.3,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_symlink.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_unlink.man:
+    [r 1.9,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfio_write.man:
+    [r 1.6,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfioreadopt.man:
+    [r 1.3,2007-09-10,obarring] Add multi-threading considerations
+  * CASTOR2/rfio/rfiosetopt.man:
+    [r 1.4,2007-09-10,obarring] Add multi-threading considerations
   * CASTOR2/rtcopy/TapeErrorHandler.c:
     [r1.22,2007-09-10,obarring] Allow for retry even when diskcopy is on disabled diskserver/filesystem. This
     [r1.22,2007-09-10,obarring] is ok now since streamsToDo() checks that at least one file is available.
+  * CASTOR2/rtcopy/migrator.c:
+    [r1.52,2007-09-10,obarring] Fix false error when rtcpcld_updateTape() returns filesWritten==0 at EOT.
   * CASTOR2/scheduler/LSF/Plugin.cpp:
     [r 1.5,2007-09-04,waldron] Removal of unused TYPE option from external scheduler options
   * CASTOR2/stager/stager_db_service.c:
@@ -170,8 +266,8 @@ castor (2.1.4-4) unstable; urgency=low
     [r 1.2,2007-09-10,waldron] Updated to follow the standard upgrade template
   * CASTOR2/upgrades/repack_2.1.2-*_to_2.1.3-17.sqlplus:
     [r 1.2,2007-09-10,waldron] Updated to follow the standard upgrade template
-
--- Dennis Waldron <waldron@cern.ch>  Mon, 10 September 2007 14:30:00 +0100	
+	
+-- Dennis Waldron <waldron@cern.ch>  Tue, 11 September 2007 12:00:00 +0100	
 
 castor (2.1.4-3) unstable; urgency=low
 
