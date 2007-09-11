@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/27 10:22:25 $ $Author: itglp $
+ * @(#)$RCSfile: DbCnvSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/09/11 18:15:39 $ $Author: itglp $
  *
  *
  *
@@ -146,7 +146,7 @@ castor::db::DbCnvSvc::getTypeFromId(const u_signed64 id)
     } catch (castor::exception::Exception ignored) {}
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Error in getting type from id."
-                    << std::endl << e.getMessage();
+                    << std::endl << e.getMessage().str();
     throw ex;
   }
   // never reached
