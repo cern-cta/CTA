@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.23 $ $Date: 2007/07/05 14:22:13 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.24 $ $Date: 2007/09/11 19:28:38 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -79,9 +79,10 @@ int main(int argc, char *argv[]) {
     extern int    optind ;
     int std = 0;
     int display_dedication = 1;
+    int drives_only = 0;
 
     *dgn = *server = '\0';
-    while ( (c = getopt(argc,argv,"jg:S:x")) != EOF ) {
+    while ( (c = getopt(argc,argv,"jg:S:xdD")) != EOF ) {
         switch(c) {
         case 'j':
             give_jid = 0;
@@ -97,6 +98,9 @@ int main(int argc, char *argv[]) {
             break;
         case 'd':
             display_dedication = 0;
+            break;
+        case 'D':
+            drives_only = 1;
             break;
         case '?':
             fprintf(stderr,"Usage: %s [-j] [-g <dgn>] [-S <server>] [-x]\n",argv[0]);
@@ -124,35 +128,36 @@ int main(int argc, char *argv[]) {
     } while (rc != -1);
     if ( tmp != NULL ) free(tmp);
 
-    nw = NULL;
-    /*
-     * Get volume queue
-     */
-    rc = 0;
-    tmp = NULL;
-    last_id = 0;
-    do {
-       if ( tmp == NULL )
-           tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
-       memset(tmp,'\0',sizeof(tmp));
-       strcpy(tmp->volreq.dgn,dgn);
-       rc = vdqm_NextVol(&nw,&tmp->volreq);
-       if ( rc != -1 && tmp->volreq.VolReqID > 0 && 
-            (tmp->volreq.VolReqID != last_id) ) {
-           last_id = tmp->volreq.VolReqID;
-           CLIST_ITERATE_BEGIN(reqlist,tmp1) {
-               if ( tmp->volreq.VolReqID == tmp1->drvreq.VolReqID ) {
-                   tmp1->volreq = tmp->volreq;
-                   break;
-               }
-           } CLIST_ITERATE_END(reqlist,tmp1); 
-           if ( tmp->volreq.VolReqID != tmp1->drvreq.VolReqID ) {
-               CLIST_INSERT(reqlist,tmp);
-               tmp = NULL;
-           }
-       }
-    } while (rc != -1);
-
+    if ( drives_only == 0 ) {
+      nw = NULL;
+      /*
+       * Get volume queue
+       */
+      rc = 0;
+      tmp = NULL;
+      last_id = 0;
+      do {
+         if ( tmp == NULL )
+             tmp = (struct vdqm_reqlist *)calloc(1,sizeof(struct vdqm_reqlist));
+         memset(tmp,'\0',sizeof(tmp));
+         strcpy(tmp->volreq.dgn,dgn);
+         rc = vdqm_NextVol(&nw,&tmp->volreq);
+         if ( rc != -1 && tmp->volreq.VolReqID > 0 && 
+              (tmp->volreq.VolReqID != last_id) ) {
+             last_id = tmp->volreq.VolReqID;
+             CLIST_ITERATE_BEGIN(reqlist,tmp1) {
+                 if ( tmp->volreq.VolReqID == tmp1->drvreq.VolReqID ) {
+                     tmp1->volreq = tmp->volreq;
+                     break;
+                 }
+             } CLIST_ITERATE_END(reqlist,tmp1); 
+             if ( tmp->volreq.VolReqID != tmp1->drvreq.VolReqID ) {
+                 CLIST_INSERT(reqlist,tmp);
+                 tmp = NULL;
+             }
+         }
+      } while (rc != -1);
+    } /* if ( drives_only == 0 ) .. */
 /* Uses standard display if required by the option -s */
     if(std) {
         shq_display_standard(reqlist, give_jid);
