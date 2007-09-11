@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/09/10 10:04:10 $ $Author: waldron $
+ * @(#)$RCSfile: OraRHSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/09/11 08:50:31 $ $Author: waldron $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -34,7 +34,6 @@
 #include "castor/db/ora/OraCommonSvc.hpp"
 #endif
 #include "castor/rh/IRHSvc.hpp"
-#include "castor/server/Mutex.hpp"
 #include "occi.h"
 
 namespace castor {
@@ -101,10 +100,7 @@ namespace castor {
 
         /// SQL statement object for function checkPermission
         oracle::occi::Statement *m_checkPermissionStatement;
-	
-	/// Mutex protecting access to the function checkPermission
-	castor::server::Mutex *m_checkPermissionMutex;
-	
+
       }; // end of class OraRHSvc
 
     } // end of namespace ora

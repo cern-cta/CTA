@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/09/10 10:04:10 $ $Author: waldron $
+ * @(#)$RCSfile: OraRHSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/11 08:50:31 $ $Author: waldron $
  *
  * Implementation of the IRHSvc for Oracle
  *
@@ -33,7 +33,7 @@
 #include "castor/exception/PermissionDenied.hpp"
 #include <string>
 #include "occi.h"
-#include "Cglobals.h"
+
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
@@ -55,7 +55,6 @@ const std::string castor::db::ora::OraRHSvc::s_checkPermissionStatementString =
 castor::db::ora::OraRHSvc::OraRHSvc(const std::string name) :
   OraCommonSvc(name),
   m_checkPermissionStatement(0) {
-  m_checkPermissionMutex = new castor::server::Mutex(0);
 }
 
 //------------------------------------------------------------------------------
@@ -63,7 +62,6 @@ castor::db::ora::OraRHSvc::OraRHSvc(const std::string name) :
 //------------------------------------------------------------------------------
 castor::db::ora::OraRHSvc::~OraRHSvc() throw() {
   reset();
-  delete m_checkPermissionMutex;
 }
 
 //------------------------------------------------------------------------------
@@ -101,12 +99,6 @@ void castor::db::ora::OraRHSvc::checkPermission
 (const std::string svcClassName, unsigned long euid,
  unsigned long egid, int type)
   throw (castor::exception::Exception) {
-  // XXX We hold a mutex here because the checkPermissionStatement variable
-  // is shared across multiple threads. Without it, a segmentation fault occurs
-  // when the request handler is operating under load. This should of course
-  // be a thread specific variable! To be fixed in a general way for all oracle
-  // interfaces in a later release.
-  m_checkPermissionMutex->lock();
   try {
     // Check whether the statements are ok
     if (0 == m_checkPermissionStatement) {
@@ -141,10 +133,8 @@ void castor::db::ora::OraRHSvc::checkPermission
       ex.getMessage() << "'\n";
       throw ex;
     }
-    m_checkPermissionMutex->release();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    m_checkPermissionMutex->release();    
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in checkPermission."

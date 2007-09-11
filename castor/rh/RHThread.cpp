@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/08/31 14:16:10 $ $Author: waldron $
- *
- *
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/09/11 08:50:31 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -198,6 +196,14 @@ void castor::rh::RHThread::handleRequest
   throw (castor::exception::Exception) {
   // Checks access rights
   if (m_useAccessLists) {
+    castor::rh::IRHSvc* m_rhSvc = 0;
+    castor::IService* svc = castor::BaseObject::services()->service("DbRhSvc", castor::SVC_DBRHSVC);
+    m_rhSvc = dynamic_cast<castor::rh::IRHSvc*>(svc);
+    if (0 == m_rhSvc) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Couldn't load the request handler service, check the castor.conf for DynamicLib entries" << std::endl;
+      throw ex;
+    }
     m_rhSvc->checkPermission(fr->svcClassName(), fr->euid(), fr->egid(), fr->type());
   }
   // Number of subrequests (when applicable)

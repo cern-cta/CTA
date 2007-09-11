@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2007/09/05 07:46:04 $ $Author: waldron $
- *
- *
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2007/09/11 08:50:31 $ $Author: waldron $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -72,26 +70,13 @@ int main(int argc, char *argv[]) {
                                       (char *)castor::rh::ACCESSLISTS_CONF,0)) != 0) {
       accessLists = (strcasecmp(saccessLists, "YES") == 0);
     }
-    // If yes, get an rhSvc instance
-    castor::rh::IRHSvc* rhSvc = 0;
-    if (accessLists) {
-      castor::IService* svc = castor::BaseObject::services()->service("DbRhSvc", castor::SVC_DBRHSVC);
-      rhSvc = dynamic_cast<castor::rh::IRHSvc*>(svc);
-      if (0 == rhSvc) {
-        // We are not able to get the request handler service.
-        // Since access lists were required, we give up.
-        castor::exception::Internal ex;
-        ex.getMessage() << "Couldn't load the request handler service, check the castor.conf for DynamicLib entries" << std::endl;
-        throw ex;
-      }
-    }
 
     // Start daemon
     server.addThreadPool
       (new castor::server::TCPListenerThreadPool
-       ("RH", new castor::rh::RHThread(accessLists, rhSvc), port));
-    // parse the command line (note that this may overwrite
-    // the port we are listening to)
+       ("RH", new castor::rh::RHThread(accessLists), port));
+
+    // parse the command line (note that this may overwrite the port we are listening to)
     server.parseCommandLine(argc, argv);
     // start the server
     server.start();
