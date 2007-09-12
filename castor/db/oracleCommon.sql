@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.496 $ $Date: 2007/09/10 06:52:09 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.497 $ $Date: 2007/09/12 08:55:23 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -101,7 +101,7 @@ CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,st
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
-CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,status,null));
+CREATE INDEX I_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,status,null));
 
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);

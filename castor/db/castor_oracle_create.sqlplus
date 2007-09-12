@@ -303,7 +303,7 @@ CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,st
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
-CREATE INDEX T_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,status,null));
+CREATE INDEX I_TapeCopy_CF_Status_2 on TapeCopy (castorFile,decode(status,2,status,null));
 
 CREATE INDEX I_FileSystem_DiskPool on FileSystem (diskPool);
 CREATE INDEX I_FileSystem_DiskServer on FileSystem (diskServer);
