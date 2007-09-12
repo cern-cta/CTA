@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.24 $ $Date: 2007/09/11 19:28:38 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.25 $ $Date: 2007/09/12 15:45:54 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -19,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.24 $ $Date: 
 #endif /* _WIN32 */
 #include <time.h>
 #include <Castor_limits.h>
+#include <Cgetopt.h>
 #include <serrno.h>
 #include <net.h>
 #include <osdep.h>
@@ -61,6 +62,7 @@ void shq_build_id_str(uid_t uid, gid_t gid, char *buf, int buf_size);
 void shq_parse_dedication(char *dedication, char *reduced_dedication, int buf_size);
 
 
+int drives_only = 0;
 char server[CA_MAXHOSTNAMELEN+1];
 
 int main(int argc, char *argv[]) {
@@ -71,27 +73,28 @@ int main(int argc, char *argv[]) {
     char    timestr[64] ;   /* Time in its ASCII format             */
 
     struct vdqm_reqlist *reqlist = NULL;
-    struct vdqm_reqlist *tmp, *tmp1;
+    struct vdqm_reqlist *tmp = NULL, *tmp1 = NULL;
     char drv_status[10];
     vdqmnw_t *nw = NULL;
-    char dgn[CA_MAXDGNLEN+1];
-    extern char * optarg ; 
-    extern int    optind ;
-    int std = 0;
+    char dgn[CA_MAXDGNLEN+1], userstr[64];
+    extern char * Coptarg ; 
+    extern int    Coptind ;
+    int std = 0, mode=0;
     int display_dedication = 1;
-    int drives_only = 0;
 
     *dgn = *server = '\0';
-    while ( (c = getopt(argc,argv,"jg:S:xdD")) != EOF ) {
+    Coptind = 1;
+    Copterr = 1;
+    while ( (c = Cgetopt(argc,argv,"jg:S:xdD")) != EOF ) {
         switch(c) {
         case 'j':
             give_jid = 0;
             break;
         case 'g' :
-            strcpy(dgn,optarg);
+            strcpy(dgn,Coptarg);
             break;
         case 'S' :
-            strcpy(server,optarg);
+            strcpy(server,Coptarg);
             break;
         case 'x':
             std = 1;
@@ -175,48 +178,55 @@ int main(int argc, char *argv[]) {
         if ( tmp1->drvreq.VolReqID > 0 ) {
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
+            if ( drives_only == 0 ) {
+              mode = tmp1->volreq.mode;
+              sprintf(userstr,"user (%d,%d)",tmp1->volreq.clientUID,tmp1->volreq.clientGID);
+            } else {
+              mode = tmp1->drvreq.mode;
+              *userstr= '\0';
+            }
             if ( tmp1->drvreq.status == 
                  (VDQM_UNIT_UP|VDQM_UNIT_ASSIGN|VDQM_UNIT_BUSY) ) {
-                fprintf(stdout,"%s@%s (%d MB) jid %d %s(%s) user (%d,%d) %ld secs.\n",
+                fprintf(stdout,"%s@%s (%d MB) jid %d %s(%s) %s %ld secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,
                     (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
-                    tmp1->volreq.volid,
-                    (tmp1->volreq.mode == 0 ? "read" : "write"),
-                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    (drives_only == 0 ? tmp1->volreq.volid : tmp1->drvreq.volid),
+                    (mode == 0 ? "read" : "write"),
+                    userstr,
                     (long) (now - tmp1->drvreq.recvtime));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY)) { 
-                 fprintf(stdout,"%s@%s (%d MB) START ReqID %d %s(%s) user (%d,%d) %ld secs.\n",
+                 fprintf(stdout,"%s@%s (%d MB) START ReqID %d %s(%s) %s %ld secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,
                     tmp1->drvreq.VolReqID,
                     tmp1->volreq.volid,
-                    (tmp1->volreq.mode == 0 ? "read" : "write"),
-                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    (mode == 0 ? "read" : "write"),
+                    userstr,
                     (long) (now - tmp1->drvreq.recvtime));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else if ( tmp1->drvreq.status == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN) ) {
-                 fprintf(stdout,"%s@%s (%d MB) RELEASE jid %d %s(%s) user (%d,%d) %ld secs.\n",
+                 fprintf(stdout,"%s@%s (%d MB) RELEASE jid %d %s(%s) %s %ld secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,
                     (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
                     tmp1->volreq.volid,
-                    (tmp1->volreq.mode == 0 ? "read" : "write"),
-                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    (mode == 0 ? "read" : "write"),
+                    userstr,
                     (long) (now - tmp1->drvreq.recvtime));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
             } else {
-                fprintf(stdout,"%s@%s (%d MB) UNKNOWN jid %d %s(%s) user (%d,%d) %ld secs.\n",
+                fprintf(stdout,"%s@%s (%d MB) UNKNOWN jid %d %s(%s) %s %ld secs.\n",
                     tmp1->drvreq.drive,tmp1->drvreq.server,
                     (int)tmp1->drvreq.TotalMB,
                     (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
                     tmp1->volreq.volid,
-                    (tmp1->volreq.mode == 0 ? "read" : "write"),
-                    tmp1->volreq.clientUID,tmp1->volreq.clientGID,
+                    (mode == 0 ? "read" : "write"),
+                    userstr,
                     (long) (now - tmp1->drvreq.recvtime));
                 if ( *tmp1->drvreq.dedicate != 0 )
                     fprintf(stdout,"Dedicated: %s\n",tmp1->drvreq.dedicate);
@@ -267,7 +277,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
     time_t now;
     struct tm *tp;
     char timestr[64] ;   /* Time in its ASCII format */
-    char drv_status[10];
+    int mode = 0;
 
     (void)time(&now);
 
@@ -277,6 +287,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
             char buf_id[BUF_ID_SIZE];
             char buf_ded[BUF_ID_SIZE];
             char buf_volid[BUF_SIZE];
+            char buf_user[BUF_SIZE];
             
             tp = localtime((time_t *)&tmp1->volreq.recvtime);
             (void)strftime(timestr,64,strftime_format,tp);
@@ -294,8 +305,14 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
             } else {
                 strncpy(buf_volid, NONE_VOLUME, BUF_SIZE-1);
             }
-            
-            fprintf(stdout,"DA %s %s@%s %s %ld (%s) %s %s %s %d (%s)@%s\n",
+            if ( drives_only == 0 ) {
+                mode = tmp1->volreq.mode;
+                sprintf(buf_user,"(%s)@%s",buf_id,tmp1->volreq.client_host);
+            } else {
+                mode = tmp1->drvreq.mode;
+                *buf_user = '\0';
+            }           
+            fprintf(stdout,"DA %s %s@%s %s %ld (%s) %s %s %s %d %s\n",
                     tmp1->drvreq.dgn,
                     tmp1->drvreq.drive,
                     tmp1->drvreq.server,
@@ -303,13 +320,10 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
                     (long) (now - tmp1->drvreq.recvtime),
                     (*tmp1->drvreq.dedicate != 0)?buf_ded:NO_DEDICATION,
                     buf_volid,
-                    tmp1->volreq.volid,
-                    (tmp1->volreq.mode == 0 ? "R" : "W"),
+                    (drives_only == 0 ? tmp1->volreq.volid : ""),
+                    (mode == 0 ? "R" : "W"),
                     (give_jid==1 ? tmp1->drvreq.jobID : tmp1->drvreq.VolReqID),
-                    buf_id,
-                    tmp1->volreq.client_host);
-
-
+                    buf_user);
         } else if ( *tmp1->drvreq.drive != '\0' ) {
 
             char buf[BUF_SIZE];
@@ -360,7 +374,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
             fprintf(stdout,"Q %s %s %s %d (%s)@%s %ld\n", 
                     tmp1->volreq.dgn,
                     tmp1->volreq.volid,
-                    (tmp1->volreq.mode == 0 ? "R" : "W"),
+                    (mode == 0 ? "R" : "W"),
                     tmp1->volreq.VolReqID,
                     buf_id,
                     tmp1->volreq.client_host,
@@ -474,7 +488,7 @@ void shq_build_id_str(uid_t uid, gid_t gid, char *buf, int buf_size) {
  */
 void shq_parse_dedication(char *dedication, char *reduced_dedication, int buf_size) {
 
-    int len, remaining_length;
+    int len;
     int cont = 1; 
     char *ret, *pos, *reduced_pos;
     
