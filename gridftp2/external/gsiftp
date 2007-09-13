@@ -1,0 +1,21 @@
+#
+# /etc/xinetd.d/gsiftp
+#
+# description: globus gridftp server with CASTOR dsi
+#              
+service gsiftp
+{
+        instances	= 100
+	socket_type	= stream
+	wait		= no
+	user		= root
+	env		+=GLOBUS_LOCATION=/opt/globus
+        env		+=LD_LIBRARY_PATH=/opt/globus/lib
+	env		+=RFIO_USE_CASTOR_V2=YES
+	env		+=STAGE_SVCCLASS=default
+	server		=/opt/globus/sbin/globus-gridftp-server
+	server_args	=-i -Z /var/spool/gridftp/netlog  -l /var/spool/gridftp/log -d INFO -dsi CASTOR2ext -allowed-modules CASTOR2ext -control-idle-timeout 3600
+        log_on_success	+=DURATION
+	nice		= 10
+	disable		= no 
+}
