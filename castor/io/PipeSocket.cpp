@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/27 11:55:06 $ $Author: waldron $
+ * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/13 11:51:21 $ $Author: sponcec3 $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -157,9 +157,9 @@ void castor::io::PipeSocket::readBuffer(const unsigned int magic,
   }
   if (header[0] != magic) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Bad magic number : " << std::ios::hex
-                    << header[0] << " instead of "
-                    << std::ios::hex << magic;
+    ex.getMessage() << "Bad magic number : 0x" << std::hex
+                    << header[0] << " instead of 0x"
+                    << std::hex << magic;
     throw ex;
   }
   // Now read the data

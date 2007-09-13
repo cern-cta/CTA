@@ -164,9 +164,9 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
   unsigned int *recvMagic = (unsigned int*)internalBuf;
   if (*recvMagic != magic) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Bad magic number : " << std::ios::hex
-                    << *recvMagic << " instead of "
-                    << std::ios::hex << magic;
+    ex.getMessage() << "Bad magic number : 0x" << std::hex
+                    << *recvMagic << " instead of 0x"
+                    << std::hex << magic;
     delete [] internalBuf;
     throw ex;
   }

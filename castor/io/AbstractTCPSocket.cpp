@@ -155,9 +155,9 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
   }
   if (header[0] != magic) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Bad magic number : " << std::ios::hex
-                    << header[0] << " instead of "
-                    << std::ios::hex << magic;
+    ex.getMessage() << "Bad magic number : 0x" << std::hex
+                    << header[0] << " instead of 0x"
+                    << std::hex << magic;
     throw ex;
   }
   // Now read the data
