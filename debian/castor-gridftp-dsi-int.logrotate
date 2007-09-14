@@ -1,0 +1,6 @@
+/var/spool/gridftp/netlog /var/spool/gridftp/log {
+    compress
+    daily
+    missingok
+    rotate 60
+}

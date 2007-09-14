@@ -1,0 +1,12 @@
+#! /bin/sh
+
+mv /etc/cron.d/edg-mkgridmap /tmp/edg-mkgridmap.old
+cat /tmp/edg-mkgridmap.old | sed -e "/stage/ d" > /etc/cron.d/edg-mkgridmap
+rm -f /tmp/edg-mkgridmap.old
+
+
+echo "35 1,7,13,19 * * * root cat /etc/grid-security/grid-mapfile | awk '{split(\$0,str,\"\\\"\"); printf \"\\\"\\%s\\\" stage\\n\",str[2];}' >/etc/grid-security/grid-mapfile-stage" >>/etc/cron.d/edg-mkgridmap
+cat /etc/grid-security/grid-mapfile | awk '{split($0,str,"\""); printf "\"%s\" stage\n",str[2];}' >/etc/grid-security/grid-mapfile-stage
+
+chown stage:st /etc/grid-security/hostcert.pem
+chown stage:st /etc/grid-security/hostkey.pem
