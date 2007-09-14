@@ -17,16 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile $ $Revision: 1.5 $ $Release$ $Date: 2007/04/03 09:45:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile $ $Revision: 1.6 $ $Release$ $Date: 2007/09/14 15:05:17 $ $Author: waldron $
  *
  * 
  *
  * @author Olof Barring
  *****************************************************************************/
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: deleteSvcClass.c,v $ $Revision: 1.5 $ $Release$ $Date: 2007/04/03 09:45:26 $ Olof Barring";
-#endif /* not lint */
 
 #include <stdlib.h>
 #include <time.h>
