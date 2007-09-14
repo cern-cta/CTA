@@ -16,6 +16,8 @@ MTLDLIBS =
 MTLDFLAGS = -pthread
 SHLIBLDFLAGS = -shared
 SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so` -ldl
+PYLIBS = `python ${CASTOR_HOME}/config/pycompile.py --cflags --libs`
+PYINCLUDES = `python $(CASTOR_HOME}/config/pycompile.py --cflags`
 #if UseAdns
 ADNSLIB = -ladns
 #endif
