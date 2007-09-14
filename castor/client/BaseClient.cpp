@@ -168,10 +168,6 @@ std::string castor::client::BaseClient::sendRequest
   return requestId();
 }
 
-
-
-
-
 //------------------------------------------------------------------------------
 // createClient
 //------------------------------------------------------------------------------
@@ -329,11 +325,13 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
 //------------------------------------------------------------------------------
 // setRhPort
 //------------------------------------------------------------------------------
+void castor::client::BaseClient::setRhPort()
+  throw (castor::exception::Exception) {
+  setRhPort(0);
+}
 
-void castor::client::BaseClient::setRhPort()throw (castor::exception::Exception){setRhPort(0);}
 void castor::client::BaseClient::setRhPort(int optPort)
   throw (castor::exception::Exception) {
-
 
   if(optPort > 65535 ){
       castor::exception::Exception e(errno);
@@ -347,9 +345,9 @@ void castor::client::BaseClient::setRhPort(int optPort)
 	 return;
    }
    char* port;
-  // RH server port. Can be given through the environment
-  // variable RH_PORT or in the castor.conf file as a
-  // RH/PORT entry. If none is given, default is used
+   // RH server port. Can be given through the environment
+   // variable RH_PORT or in the castor.conf file as a
+   // RH/PORT entry. If none is given, default is used
    if ((port = getenv (castor::client::PORT_ENV)) != 0 
       || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
       || (port = getconfent((char *)castor::client::CATEGORY_CONF,
@@ -366,15 +364,19 @@ void castor::client::BaseClient::setRhPort(int optPort)
 //------------------------------------------------------------------------------
 // setRhHost
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhHost()throw (castor::exception::Exception){setRhHost("");}
+void castor::client::BaseClient::setRhHost()
+  throw (castor::exception::Exception) {
+  setRhHost("");
+}
+
 void castor::client::BaseClient::setRhHost(std::string optHost)
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
   if (optHost.compare("")){
-	m_rhHost = optHost;
-	return;
+    m_rhHost = optHost;
+    return;
   }
 
   char* host;
@@ -385,29 +387,27 @@ void castor::client::BaseClient::setRhHost(std::string optHost)
     m_rhHost = host;
   } else {
     m_rhHost = RH_HOST;
-//     castor::exception::Exception e(ETPRM);
-//     e.getMessage()
-//       << "Unable to deduce the name of the RH server.\n"
-//       << "No -h option was given, RH_HOST is not set and "
-//       << "your castor.conf file does not contain a RH/HOST entry."
-//       << std::endl;
-//     throw e;
   }
 
   stage_trace(3, "Looking up RH Host - Using %s", m_rhHost.c_str());
 }
+
 //------------------------------------------------------------------------------
 // setRhSvcClass
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setRhSvcClass()throw (castor::exception::Exception){setRhSvcClass("");}
+void castor::client::BaseClient::setRhSvcClass()
+  throw (castor::exception::Exception) {
+  setRhSvcClass("");
+}
+
 void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
   throw (castor::exception::Exception) {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
   if (optSvcClass.compare("")){
-	m_rhSvcClass = optSvcClass;
-	return;
+    m_rhSvcClass = optSvcClass;
+    return;
   }
 
   char* svc;
@@ -420,27 +420,22 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
   }
 }
 
-
 //------------------------------------------------------------------------------
 // setOption
 //------------------------------------------------------------------------------
+void castor::client::BaseClient::setOption(struct stage_options* opts)
+  throw (castor::exception::Exception){
 
-void castor::client::BaseClient::setOption(struct stage_options* opts)throw (castor::exception::Exception){
-	
- 	if(opts != 0){
-
-		setRhHost(opts->stage_host);
-        	setRhPort(opts->stage_port);
-        	setRhSvcClass(opts->service_class);
-	}
-	else{
-       	 	setRhHost("");
-        	setRhPort(0);
-        	setRhSvcClass("");
-	
-	}
-}        
-
+  if(opts != 0){
+    setRhHost(opts->stage_host);
+    setRhPort(opts->stage_port);
+    setRhSvcClass(opts->service_class);
+  } else{
+    setRhHost("");
+    setRhPort(0);
+    setRhSvcClass("");
+  }
+}       
 
 //------------------------------------------------------------------------------
 // setRequestId
@@ -459,8 +454,8 @@ std::string castor::client::BaseClient::requestId() {
 //------------------------------------------------------------------------------
 // setAutorizationId
 //----------------------------------------------------------------------------
-
-void castor::client::BaseClient::setAuthorizationId( ) throw(castor::exception::Exception) {
+void castor::client::BaseClient::setAuthorizationId() 
+  throw(castor::exception::Exception) {
   if (stage_getid(&m_authUid, &m_authGid) < 0) {
     castor::exception::Exception e(serrno);
     e.getMessage()
@@ -471,7 +466,6 @@ void castor::client::BaseClient::setAuthorizationId( ) throw(castor::exception::
     m_hasAuthorizationId = true;
 }
 
-
 //------------------------------------------------------------------------------
 // setAutorizationId
 //------------------------------------------------------------------------------
@@ -481,14 +475,12 @@ void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw(
   m_hasAuthorizationId = true;
 }
 
-
 //------------------------------------------------------------------------------
 // createClientAndSend
 //------------------------------------------------------------------------------
-std::string castor::client::BaseClient::createClientAndSend(
-                                                   castor::stager::Request *req)
-                                            throw (castor::exception::Exception)
-{
+std::string castor::client::BaseClient::createClientAndSend
+(castor::stager::Request *req)
+  throw (castor::exception::Exception) {
   // builds the Client (uuid,guid,hostname,etc)
   buildClient(req);
 
@@ -498,13 +490,11 @@ std::string castor::client::BaseClient::createClientAndSend(
   return requestId;
 }
 
-
-
 //------------------------------------------------------------------------------
 // buildClient
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::buildClient(castor::stager::Request* req)
-                                            throw (castor::exception::Exception)
+  throw (castor::exception::Exception)
 { 
   // Uid
   uid_t euid;
@@ -593,23 +583,19 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   req->setClient(cl);
 }
 
-
-
-
 //------------------------------------------------------------------------------
 // pollAnswersFromStager
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::pollAnswersFromStager(
-                                           castor::stager::Request* req,
-                                           castor::client::IResponseHandler* rh)
-                                            throw (castor::exception::Exception)
+void castor::client::BaseClient::pollAnswersFromStager
+(castor::stager::Request* req, castor::client::IResponseHandler* rh)
+  throw (castor::exception::Exception)
 {
   if ( req == NULL || req->client() == NULL ){
     castor::exception::Internal ex;
     ex.getMessage() << "Passed Request is NULL" << std::endl;
     throw ex;
   }
-
+  
   bool stop = false;
   struct pollfd pollit;
   pollit.events = POLLIN | POLLHUP;
@@ -618,18 +604,12 @@ void castor::client::BaseClient::pollAnswersFromStager(
     castor::io::ServerSocket* socket = waitForCallBack();
     try {
       pollit.fd = socket->socket();
-      //std::cerr << "Socket created" << std::endl;
       // Then loop on the responses sent over a given connection
       while (!stop) {  
-        /* Will return > 0 if the descriptor is readable
-           No timeout is used, we wait forever */
-        pollit.revents = 0;
-        //std::cerr << "starting poll" << std::endl;
-        
-        int rc = poll(&pollit,1,-1);
-        //std::cerr << "rc=" << rc << " errno=" << errno 
-        //          << " error:" << strerror(errno) << std::endl;
-        
+        // Will return > 0 if the descriptor is readable
+        // No timeout is used, we wait forever
+        pollit.revents = 0;        
+        int rc = poll(&pollit,1,-1);        
         if (0 == rc) {
           castor::exception::Communication e(requestId(), SEINTERNAL);
           e.getMessage() << "Poll with no timeout did timeout !";
@@ -637,7 +617,6 @@ void castor::client::BaseClient::pollAnswersFromStager(
           throw e;
         } else if (rc < 0) {
           if (errno == EINTR) {
-            //std::cerr <<  "EINTR caught" << std::endl;
             continue;
           }
           castor::exception::Communication e(requestId(), SEINTERNAL);
@@ -649,33 +628,30 @@ void castor::client::BaseClient::pollAnswersFromStager(
         IObject* obj = socket->readObject();
         try {
           if (OBJ_EndResponse == obj->type() ) {
-         
-                 // cast response into Response*
-
-                castor::rh::Response* endRes = dynamic_cast<castor::rh::Response*>(obj);
-              if (0 == endRes) {
-                  castor::exception::Communication e(requestId(), SEINTERNAL);
-                  e.getMessage() << "Receive bad response type :"
+	    
+	    // cast response into Response*
+	    castor::rh::Response* endRes = dynamic_cast<castor::rh::Response*>(obj);
+	    if (0 == endRes) {
+	      castor::exception::Communication e(requestId(), SEINTERNAL);
+	      e.getMessage() << "Receive bad response type :"
                              << obj->type();
-                  delete obj;
-                  delete socket;
-                  throw e;
-              }
-
-                if (0 != endRes->reqAssociated().length() && endRes->reqAssociated() != requestId()){
-                  // it was not the Response of this  Request and it is a new converter
-
-      delete obj;
-      continue;
-      
-                }
-     
-                // flush messages
-               clog() << std::flush;
-               // terminate response handler
-               rh->terminate();
-               stop = true;
-
+	      delete obj;
+	      delete socket;
+	      throw e;
+	    }
+	    
+	    if (0 != endRes->reqAssociated().length() && endRes->reqAssociated() != requestId()){
+	      // it was not the Response of this  Request and it is a new converter
+	      delete obj;
+	      continue;
+	    }
+	    
+	    // flush messages
+	    clog() << std::flush;
+	    // terminate response handler
+	    rh->terminate();
+	    stop = true;
+	    
           } else {
             // cast response into Response*
             castor::rh::Response* res =
@@ -688,17 +664,16 @@ void castor::client::BaseClient::pollAnswersFromStager(
               delete socket;
               throw e;
             }
-      
+	    
             if (0 != res->reqAssociated().length() && res->reqAssociated() != requestId()){ 
-                  // I'm using a new convertr and it was not the Response of this  Request
-      delete obj;
-      continue;
-      
-             }  
+	      // I'm using a new convertr and it was not the Response of this Request
+	      delete obj;
+	      continue;
+	    }  
             // Print the request
             rh->handleResponse(*res);
           }
-
+	  
           delete obj;
         } catch (castor::exception::Exception e) {
           if (0 != obj) delete obj;

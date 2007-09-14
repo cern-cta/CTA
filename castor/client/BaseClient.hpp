@@ -107,19 +107,14 @@ namespace castor {
         throw(castor::exception::Exception);
       
       /**
-      * Get the userid and groupid and set the authorization values.
-      */
-
+       * Get the userid and groupid and set the authorization values.
+       */
       void setAuthorizationId() throw(castor::exception::Exception);
-
-
 	
       /**
        * Sets the authorization ID under which the request should be sent.
        */
       void setAuthorizationId(uid_t uid, gid_t gid) throw();
-
-    //protected:
 
       /**
        * gets the request handler port to use and put it
@@ -130,7 +125,8 @@ namespace castor {
        * modified.
        */
       virtual void setRhPort(int optPort) throw (castor::exception::Exception);
-      virtual void setRhPort()throw (castor::exception::Exception);
+      virtual void setRhPort() throw (castor::exception::Exception);
+
       /**
        * gets the request handler host to use and put it
        * into m_rhHost. First try environment (RH_HOST)
@@ -145,13 +141,11 @@ namespace castor {
       virtual void setRhSvcClass()throw (castor::exception::Exception);
       virtual void setOption(struct stage_options* opts)throw (castor::exception::Exception);
 
-
       /**
        * Sets the request ID in the base client
        */
       void setRequestId(std::string requestId);
       
-
       /**
        * Returns the request id 
        */
@@ -163,9 +157,9 @@ namespace castor {
        * @param req The StagerRequest the Client is to be added to
        * @exception in case of an error 
        */
-      void pollAnswersFromStager( castor::stager::Request* req,
-                                  castor::client::IResponseHandler* rh)
-                                           throw (castor::exception::Exception);
+      void pollAnswersFromStager(castor::stager::Request* req,
+				 castor::client::IResponseHandler* rh)
+	throw (castor::exception::Exception);
       
       /**
        * calls buildClient and internalSendRequest to create and send the
@@ -174,8 +168,7 @@ namespace castor {
        * @exception in case of an error 
        */
       std::string createClientAndSend(castor::stager::Request *req)
-                                            throw (castor::exception::Exception);
-
+	throw (castor::exception::Exception);
 
     private:
       
@@ -209,7 +202,7 @@ namespace castor {
        * @exception in case of an error 
        */
       void buildClient(castor::stager::Request* req)
-                                           throw (castor::exception::Exception);
+	throw (castor::exception::Exception);
     public: // protected:
       
       /// The request handler host
