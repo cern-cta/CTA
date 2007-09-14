@@ -146,13 +146,18 @@ mkdir -p ${RPM_BUILD_ROOT}/var/lib/castor
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/db
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/images
-mkdir -p ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib
+if [ "${GLOBUS_LOCATION}" != "" ]; then
+  mkdir -p ${RPM_BUILD_ROOT}/etc/xinetd.d
+  mkdir -p ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib
+  mkdir -p ${RPM_BUILD_ROOT}/var/spool/gridftp
+fi
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 # Install policies
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
-# Instal gridfp dsi
+# Install gridftp dsi
 if [ "${GLOBUS_LOCATION}" != "" ]; then
+   (cp disksrv/src/gridftp2/external/gsiftp ${RPM_BUILD_ROOT}/etc/xinetd.d/)
    %ifarch x86_64
    (cd disksrv/src/gridftp2/external; make;cp libglobus_gridftp_server_CASTOR2ext_gcc64dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
    (cd disksrv/src/gridftp2/internal; make;cp libglobus_gridftp_server_CASTOR2int_gcc64dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
