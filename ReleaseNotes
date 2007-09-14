@@ -201,6 +201,10 @@
        - take care that the RmMaster/SharedLSFResource target changed to JobManager/SharedLSFResource
     - restart all daemons
        - don't forget that rmmaster is replaced by jobManager
+    - for the dlf web interface move the login configuration to its new location
+       - mv /var/www/html/dlf/login.php.rpmsave /var/www/conf/dlf/login.conf
+       - chown root:apache /var/www/conf/dlf/login.conf
+       - chmod 640 /var/www/conf/dlf/login.conf
 
 ------------
 - 2.1.3-23 -
