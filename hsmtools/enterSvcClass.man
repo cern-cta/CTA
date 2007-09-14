@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.2 $ $Date: 2006/04/24 16:13:40 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: enterSvcClass.man,v $ $Revision: 1.3 $ $Date: 2007/09/14 15:06:43 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH ENTERSVCCLASS 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS 1 "$Date: 2007/09/14 15:06:43 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 enterSvcClass \- define a new service class in the stager catalogue
 .SH SYNOPSIS
@@ -23,6 +23,15 @@ enterSvcClass \- define a new service class in the stager catalogue
 ]
 [
 .BI --GcPolicy " gcPolicy"
+]
+[
+.BI --StreamPolicy " streamPolicy"
+]
+[
+.BI --ForcedFileClass " forcedFileClass"
+]
+[
+.BI --DiskOnlyBehavior " [yes|no]"
 ]
 [
 .BI --MigratorPolicy " migratorPolicy"
@@ -77,6 +86,21 @@ class. The policy should either be a database procedure or an executable externa
 script known to the CASTOR expert system (see the
 .BI expertd(1castor)
 man-page).
+.TP
+.BI \-\-StreamPolicy " streamPolicy"
+Specifies the name of the stream policy to be used for this service class. The policy
+will be used to determine the number of streams that should be running based on the
+number of files and volume of data that should be written too tape. If an empty string ("") 
+is provided the existing policy setting (id any) will be revoked
+.TP
+.BI \-\-ForcedFileClass " forcedFileClass"
+Specifies the name of the file class to force on files written to this service class. The
+forced file class overrides the file class that the user specifies.
+. If an empty string ("") the file class that the file was written too will be used.
+.TP
+.BI \-\-DiskOnlyBehavior " [yes|no]"
+Defines whether or not this file class has disk only behavior. The supported values
+are yes or no, 1 or 0 and are case-insensitive.
 .TP
 .BI \-\-MigratorPolicy " migratorPolicy"
 Specifies the name of the migrator policy to be used for this service

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.8 $ $Release$ $Date: 2007/05/16 13:49:07 $ $Author: waldron $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.9 $ $Release$ $Date: 2007/09/14 15:06:43 $ $Author: waldron $
  *
  * 
  *
@@ -62,7 +62,10 @@ enum SvcClassAttributes {
   MigratorPolicy,
   RecallerPolicy,
   TapePools,
-  DiskPools
+  DiskPools,
+  DiskOnlyBehavior,
+  ForcedFileClass,
+  StreamPolicy
 } svcClassAttributes;
 
 static struct Coptions longopts[] = {
@@ -77,6 +80,9 @@ static struct Coptions longopts[] = {
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"TapePools",REQUIRED_ARGUMENT,0,TapePools},
   {"DiskPools",REQUIRED_ARGUMENT,0,DiskPools},
+  {"DiskOnlyBehavior",REQUIRED_ARGUMENT,0,DiskOnlyBehavior},
+  {"ForcedFileClass",REQUIRED_ARGUMENT,0,ForcedFileClass},
+  {"StreamPolicy",REQUIRED_ARGUMENT,0,StreamPolicy},
   {NULL, 0, NULL, 0}
 };
 
@@ -232,6 +238,25 @@ int main(int argc, char *argv[])
       break;
     case DiskPools:
       diskPoolsStr = strdup(Coptarg);
+      break;
+    case DiskOnlyBehavior:
+      if (!strcasecmp(Coptarg, "yes") ||
+	  !strcasecmp(Coptarg, "1")) {
+	Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
+      } else if (!strcasecmp(Coptarg, "no") ||
+		 !strcasecmp(Coptarg, "0")) {
+	Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
+      } else {
+	fprintf(stdout,
+		"Invalid option for DiskOnlyBehavior, value must be 'yes' or 'no'\n");
+	return(1);
+      }
+      break;
+    case ForcedFileClass:
+      Cstager_SvcClass_setForcedFileClass(svcClass,Coptarg);
+      break;
+    case StreamPolicy:
+      Cstager_SvcClass_setStreamPolicy(svcClass,Coptarg);
       break;
     default:
       usage(cmd);
