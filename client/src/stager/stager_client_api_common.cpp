@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.30 2007/07/09 17:21:17 itglp Exp $
+ * $Id: stager_client_api_common.cpp,v 1.31 2007/09/14 15:09:17 waldron Exp $
  */
 
 /*
@@ -333,8 +333,8 @@ EXTERN_C int DLL_DECL stage_getid(uid_t *uid, gid_t *gid) {
     if (uid != NULL) *uid = thip->uid;
     if (gid != NULL) *gid = thip->gid;
   } else {
-    if (uid != NULL) *uid = getuid();
-    if (gid != NULL) *gid = getgid();
+    if (uid != NULL) *uid = geteuid();
+    if (gid != NULL) *gid = getegid();
   }
   return 0;
 }
