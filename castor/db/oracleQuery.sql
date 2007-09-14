@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.497 $ $Date: 2007/09/12 08:55:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.498 $ $Date: 2007/09/14 14:57:43 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -199,6 +199,8 @@ BEGIN
   FOR sc IN (SELECT name FROM SvcClass) LOOP
     INSERT INTO WhiteList VALUES (sc.name, NULL, NULL, NULL);
   END LOOP;
+  -- extra one specific to queries on all service classes
+  INSERT INTO WhiteList VALUES ('*', NULL, NULL, NULL);  
   COMMIT;
 END;
 
