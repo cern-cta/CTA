@@ -1,3 +1,79 @@
+castor (2.1.4-5) unstable; urgency=low
+
+  * CASTOR2/CASTOR.spec:
+    [r1.69,2007-09-14,kotlyar] added installation as service for gridftp ext dsi
+  * CASTOR2/ReleaseNotes:
+    [r1.69,2007-09-17,waldron] Updated for new release
+    [r1.68,2007-09-14,waldron] Adding missing upgrade instructions for the dlf web interface
+  * CASTOR2/castor/client/BaseClient.cpp:
+    [r1.64,2007-09-14,waldron] Fixed indentation
+  * CASTOR2/castor/client/BaseClient.hpp:
+    [r1.24,2007-09-14,waldron] Fixed indentation
+  * CASTOR2/castor/db/DbCnvSvc.cpp:
+    [r 1.6,2007-09-11,itglp] Fixed error reporting: don't print the stream but its content in case of db exception
+  * CASTOR2/castor/db/castor_oracle_create.sql:
+    [r1.109,2007-09-12,waldron] Corrected the index name for TapeCopy_CF_Status_2
+  * CASTOR2/castor/db/castor_oracle_create.sqlplus:
+    [r1.52,2007-09-12,waldron] Corrected the index name for TapeCopy_CF_Status_2
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.500,2007-09-17,sponcec3] Fixed deletion of failed Tapecopies when dropping castorfiles + moved deleteTapeCopies
+    [r1.499,2007-09-17,sponcec3] extracted code for deleting tapecopies of a given castorfile
+    [r1.498,2007-09-14,waldron] Added missing whitelist insertion to allow queries on all service classes
+    [r1.497,2007-09-12,waldron] Corrected the index name for TapeCopy_CF_Status_2
+  * CASTOR2/castor/io/AbstractTCPSocket.cpp:
+    [r 1.2,2007-09-13,sponcec3] Fixed Bad magic number error message printout : was not hexa and an extra '8' was added in fromt of the numbers
+  * CASTOR2/castor/io/PipeSocket.cpp:
+    [r 1.5,2007-09-13,sponcec3] Fixed Bad magic number error message printout : was not hexa and an extra '8' was added in fromt of the numbers
+  * CASTOR2/castor/io/UDPSocket.cpp:
+    [r 1.7,2007-09-17,waldron] Use errno not serrno when the recvfrom() call fails
+    [r 1.6,2007-09-13,sponcec3] Fixed Bad magic number error message printout : was not hexa and an extra '8' was added in fromt of the numbers
+  * CASTOR2/castor/server/UDPListenerThreadPool.cpp:
+    [r 1.5,2007-09-17,waldron] Break out of the accept() loop when the file descriptor is bad. This occurs when the process is being shutdown and the listening socket has been closed to prevent further incoming connections. Prior to this, shutdowns resulted in several thousand errors being written to the log file
+  * CASTOR2/config/linux.cf:
+    [r1.10,2007-09-14,waldron] Added compiliation variables for python related code
+  * CASTOR2/config/site.Win32.def:
+    [r 1.6,2007-09-14,waldron] Fixed bad JobManagerSpool definition
+  * CASTOR2/debian/castor-gridftp-dsi-ext.install.perm:
+    [r 1.2,2007-09-14,kotlyar] added xinetd default config
+  * CASTOR2/debian/control:
+    [r1.48,2007-09-14,kotlyar] added logratating and proper instalation
+  * CASTOR2/hsmtools/deleteSvcClass.c:
+    [r 1.6,2007-09-14,waldron] Removed compiler warning
+  * CASTOR2/hsmtools/enterSvcClass.c:
+    [r 1.9,2007-09-14,waldron] Added --DiskOnlyBehavior, --ForcedFileClass and --StreamPolicy arguments. Previously these could only be done by modifySvcClass
+  * CASTOR2/hsmtools/enterSvcClass.man:
+    [r 1.3,2007-09-14,waldron] Added --DiskOnlyBehavior, --ForcedFileClass and --StreamPolicy arguments. Previously these could only be done by modifySvcClass
+  * CASTOR2/scheduler/LSF/Imakefile:
+    [r1.22,2007-09-14,waldron] Updated
+  * CASTOR2/scheduler/LSF/compile.py:
+    [r 1.2,2007-09-14,waldron] Replace by ../../config/pycompile.py
+  * CASTOR2/stager/stager_client_api_common.cpp:
+    [r1.31,2007-09-14,waldron] Retrieve the effective uid and gid in stage_getid. Prior to this requests from gridftp were being submitted under the root account and subsequently failed when trying to enter LSF
+  * CASTOR2/stager/stager_qry.man:
+    [r1.17,2007-09-17,sponcec3] More details on the -S flag and its default behavior
+  * CASTOR2/upgrades/2.1.3-24_to_2.1.4-5.sql:
+    [r 1.4,2007-09-17,sponcec3] adapted scripts to 2.1.4-5
+    [r 1.3,2007-09-12,waldron] Renamed the T_TapeCopy_CF_Status_2 to I_TapeCopy_CF_Status_2
+  * CASTOR2/upgrades/2.1.3-24_to_2.1.4-5.sqlplus:
+    [r 1.4,2007-09-17,sponcec3] adapted scripts to 2.1.4-5
+    [r 1.3,2007-09-12,waldron] Renamed the T_TapeCopy_CF_Status_2 to I_TapeCopy_CF_Status_2
+  * CASTOR2/upgrades/dlf_2.1.3-24_to_2.1.4-5.sql:
+    [r 1.2,2007-09-17,waldron] Updated for new release
+  * CASTOR2/upgrades/dlf_2.1.3-24_to_2.1.4-5.sqlplus:
+    [r 1.2,2007-09-17,waldron] Updated for new release
+  * CASTOR2/upgrades/repack_2.1.3-24_to_2.1.4-5.sql:
+    [r 1.2,2007-09-17,waldron] Updated for new release
+  * CASTOR2/upgrades/repack_2.1.3-24_to_2.1.4-5.sqlplus:
+    [r 1.2,2007-09-17,waldron] Updated for new release
+  * CASTOR2/vdqm/showqueues.c:
+    [r1.25,2007-09-12,obarring] Remove unfilled user information when called with -D option
+    [r1.24,2007-09-11,obarring] bug #29499] add support for showing only the drives. Unfortunately the client
+    [r1.24,2007-09-11,obarring] host information is lost since it's part of the volume request.
+  * CASTOR2/vdqm/showqueues.man:
+    [r 1.6,2007-09-11,obarring] bug #29499] add support for showing only the drives
+	
+-- Dennis Waldron <waldron@cern.ch>  Mon, 17 September 2007 15:00:00 +0100
+	
 castor (2.1.4-4) unstable; urgency=low
 
   * CASTOR2/CASTOR.spec:
