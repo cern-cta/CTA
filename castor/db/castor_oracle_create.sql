@@ -198,11 +198,11 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_4_4');
+INSERT INTO CastorVersion VALUES ('-', '2_1_4_5');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.496  Date: 2007/09/10 06:52:09  Author: waldron 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.500  Date: 2007/09/17 11:52:46  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -401,6 +401,8 @@ BEGIN
   FOR sc IN (SELECT name FROM SvcClass) LOOP
     INSERT INTO WhiteList VALUES (sc.name, NULL, NULL, NULL);
   END LOOP;
+  -- extra one specific to queries on all service classes
+  INSERT INTO WhiteList VALUES ('*', NULL, NULL, NULL);  
   COMMIT;
 END;
 
@@ -479,6 +481,24 @@ CREATE INDEX I_FileSystem_Rate
 /*                                         */
 /*******************************************/
 
+/* PL/SQL method deleting tapecopies (and segments) of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
+BEGIN
+  -- loop over the tapecopies
+  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
+    FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+    -- Delete the segment(s)
+      DELETE FROM Id2Type WHERE id = s.id;
+      DELETE FROM Segment WHERE id = s.id;
+    END LOOP;
+    -- Delete from Stream2TapeCopy
+    DELETE FROM Stream2TapeCopy WHERE child = t.id;
+    -- Delete the TapeCopy
+    DELETE FROM Id2Type WHERE id = t.id;
+    DELETE FROM TapeCopy WHERE id = t.id;
+  END LOOP;
+END;
+
 /* Checks consistency of DiskCopies when a FileSystem comes
  * back in production after a period spent in DRAINING or
  * DISABLED status.
@@ -498,17 +518,7 @@ BEGIN
                 AND d.status IN (0, 10)
                 AND e.status = 2) LOOP
     -- cancel the recall
-    FOR t IN (SELECT id FROM TapeCopy
-               WHERE castorfile = cf.castorfile) LOOP
-      FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
-        -- Delete the segment(s)
-        DELETE FROM Id2Type WHERE id = s.id;
-        DELETE FROM Segment WHERE id = s.id;
-      END LOOP;
-      -- Delete the TapeCopy
-      DELETE FROM Id2Type WHERE id = t.id;
-      DELETE FROM TapeCopy WHERE id = t.id;
-    END LOOP;
+    deleteTapeCopies(cfId);
     -- Delete the DiskCopy
     UPDATE DiskCopy
        SET status = 7  -- INVALID
@@ -1846,11 +1856,7 @@ BEGIN
   UPDATE DiskCopy SET status = 6 -- STAGEOUT
    WHERE id = dcid;
   -- Suppress all Tapecopies (avoid migration of previous version of the file)
-  DELETE from Stream2TapeCopy WHERE child IN
-    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
-  DELETE FROM Id2Type WHERE id IN 
-    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
-  DELETE from TapeCopy WHERE castorFile = cfId;
+  deleteTapeCopies(cfId);
 END;
 
 /* PL/SQL method implementing getUpdateStart */
@@ -2264,11 +2270,7 @@ BEGIN
     RETURN;
   END IF;
   -- delete all tapeCopies
-  DELETE from Stream2TapeCopy WHERE child IN
-    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
-  DELETE FROM Id2Type WHERE id IN 
-    (SELECT id FROM TapeCopy WHERE castorFile = cfId);
-  DELETE from TapeCopy WHERE castorFile = cfId;
+  deleteTapeCopies(cfId);
   -- set DiskCopies to INVALID
   UPDATE DiskCopy SET status = 7 -- INVALID
    WHERE castorFile = cfId AND status IN (0, 10); -- STAGED, CANBEMIGR
@@ -2830,16 +2832,7 @@ BEGIN
       -- Something is running, so give up
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Nothing running
-      FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
-        FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
-          -- Delete the segment(s)
-          DELETE FROM Id2Type WHERE id = s.id;
-          DELETE FROM Segment WHERE id = s.id;
-        END LOOP;
-        -- Delete the TapeCopy
-        DELETE FROM Id2Type WHERE id = t.id;
-        DELETE FROM TapeCopy WHERE id = t.id;
-      END LOOP;
+      deleteTapeCopies(cfId);
       -- Delete the DiskCopies
       UPDATE DiskCopy
          SET status = 7  -- INVALID
@@ -2918,7 +2911,7 @@ BEGIN
   IF nb = 0 THEN
     -- See whether the castorfile has any TapeCopy
     SELECT count(*) INTO nb FROM TapeCopy
-     WHERE castorFile = cfId;
+     WHERE castorFile = cfId AND status != 6; -- FAILED
     -- If any TapeCopy, give up
     IF nb = 0 THEN
       -- See whether the castorfile has any pending SubRequest
@@ -2932,6 +2925,8 @@ BEGIN
           fc NUMBER;
           nsh VARCHAR2(2048);
         BEGIN
+          -- Delete the failed TapeCopies
+          deleteTapeCopies(cfId);
           -- Delete the CastorFile
           DELETE FROM id2Type WHERE id = cfId;
           DELETE FROM CastorFile WHERE id = cfId
@@ -3076,18 +3071,8 @@ BEGIN
     -- put SubRequests into FAILED (for non FINISHED ONES)
     UPDATE SubRequest SET status = 7, parent = 0 WHERE castorfile = cfIds(i) AND status < 7;
     -- TapeCopy part
-    FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfIds(i)) LOOP
-      FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
-        -- Delete the segment(s)
-        DELETE FROM Id2Type WHERE id = s.id;
-        DELETE FROM Segment WHERE id = s.id;
-      END LOOP;
-      -- Delete from Stream2TapeCopy
-      DELETE FROM Stream2TapeCopy WHERE child = t.id;
-      -- Delete the TapeCopy
-      DELETE FROM Id2Type WHERE id = t.id;
-      DELETE FROM TapeCopy WHERE id = t.id;
-    END LOOP;
+    deleteTapeCopies(cfIds(i));
+    -- Castorfile
     DELETE FROM Id2Type WHERE id = cfIds(i);
     DELETE FROM CastorFile WHERE id = cfIds(i);
   END LOOP;
