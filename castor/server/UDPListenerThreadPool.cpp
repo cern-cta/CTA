@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
+ * @(#)$RCSfile: UDPListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/17 06:59:20 $ $Author: waldron $
  *
  * A listener thread pool listening on an UDP port
  *
@@ -30,6 +30,7 @@
 #include "castor/server/UDPListenerThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/UDPSocket.hpp"
+#include <errno.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -45,7 +46,7 @@ castor::server::UDPListenerThreadPool::UDPListenerThreadPool
 // bind
 //------------------------------------------------------------------------------
 void castor::server::UDPListenerThreadPool::bind() throw (castor::exception::Exception) {
-  /* Create a socket for the server, bind, and listen */
+  // Create a socket for the server, bind, and listen
   try {
     m_sock = new castor::io::UDPSocket(m_port, true, true);
   } catch (castor::exception::Exception e) {
@@ -65,9 +66,15 @@ void castor::server::UDPListenerThreadPool::listenLoop() {
       castor::IObject* obj = ((castor::io::UDPSocket*)m_sock)->readObject();
       // handle the command
       threadAssign(obj);
-    } catch (castor::exception::Exception e) {
+    } catch (castor::exception::Exception any) {
+      // Some errors are consider fatal, such as closure of the listening
+      // socket resulting in a bad file descriptor during the thread shutdown
+      // process. If we encounter this problem we exit the loop.
+      if (any.code() == EBADF) {
+	break;
+      }
       clog() << ERROR << "Error while reading datagrams from port " << m_port << ": "
-             << e.getMessage().str() << std::endl;
+             << any.getMessage().str() << std::endl;
     }
   }
 }
