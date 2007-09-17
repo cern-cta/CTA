@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.499 $ $Date: 2007/09/17 11:50:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.500 $ $Date: 2007/09/17 11:52:46 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -278,6 +278,24 @@ CREATE INDEX I_FileSystem_Rate
 /*   Triggers and Procedures definitions   */
 /*                                         */
 /*******************************************/
+
+/* PL/SQL method deleting tapecopies (and segments) of a castorfile */
+CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
+BEGIN
+  -- loop over the tapecopies
+  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
+    FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
+    -- Delete the segment(s)
+      DELETE FROM Id2Type WHERE id = s.id;
+      DELETE FROM Segment WHERE id = s.id;
+    END LOOP;
+    -- Delete from Stream2TapeCopy
+    DELETE FROM Stream2TapeCopy WHERE child = t.id;
+    -- Delete the TapeCopy
+    DELETE FROM Id2Type WHERE id = t.id;
+    DELETE FROM TapeCopy WHERE id = t.id;
+  END LOOP;
+END;
 
 /* Checks consistency of DiskCopies when a FileSystem comes
  * back in production after a period spent in DRAINING or
@@ -2507,24 +2525,6 @@ BEGIN
  ret := 0;
 END;
 
-/* PL/SQL method deleting tapecopies (and segments) of a castorfile */
-CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
-BEGIN
-  -- loop over the tapecopies
-  FOR t IN (SELECT id FROM TapeCopy WHERE castorfile = cfId) LOOP
-    FOR s IN (SELECT id FROM Segment WHERE copy = t.id) LOOP
-    -- Delete the segment(s)
-      DELETE FROM Id2Type WHERE id = s.id;
-      DELETE FROM Segment WHERE id = s.id;
-    END LOOP;
-    -- Delete from Stream2TapeCopy
-    DELETE FROM Stream2TapeCopy WHERE child = t.id;
-    -- Delete the TapeCopy
-    DELETE FROM Id2Type WHERE id = t.id;
-    DELETE FROM TapeCopy WHERE id = t.id;
-  END LOOP;
-END;
-
 /* PL/SQL method implementing stageRm */
 CREATE OR REPLACE PROCEDURE stageRm (fid IN INTEGER,
                                      nh IN VARCHAR2,
@@ -2709,7 +2709,7 @@ BEGIN
   IF nb = 0 THEN
     -- See whether the castorfile has any TapeCopy
     SELECT count(*) INTO nb FROM TapeCopy
-     WHERE castorFile = cfId;
+     WHERE castorFile = cfId AND status != 6; -- FAILED
     -- If any TapeCopy, give up
     IF nb = 0 THEN
       -- See whether the castorfile has any pending SubRequest
@@ -2723,6 +2723,8 @@ BEGIN
           fc NUMBER;
           nsh VARCHAR2(2048);
         BEGIN
+          -- Delete the failed TapeCopies
+          deleteTapeCopies(cfId);
           -- Delete the CastorFile
           DELETE FROM id2Type WHERE id = cfId;
           DELETE FROM CastorFile WHERE id = cfId
