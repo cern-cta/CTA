@@ -149,7 +149,7 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
   int ret = recvfrom(m_socket, internalBuf, MAX_UDP_DATAGRAM_LENGTH, 0,
                      (struct sockaddr *)(&m_saddr), &fromLen);
   if (-1 == ret) {
-    castor::exception::Exception ex(serrno);
+    castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to read datagram data";
     delete [] internalBuf;
     throw ex;
