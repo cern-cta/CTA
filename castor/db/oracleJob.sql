@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.500 $ $Date: 2007/09/17 11:52:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.501 $ $Date: 2007/09/17 14:32:40 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -316,11 +316,11 @@ BEGIN
                 AND d.status IN (0, 10)
                 AND e.status = 2) LOOP
     -- cancel the recall
-    deleteTapeCopies(cfId);
+    deleteTapeCopies(cf.castorfile);
     -- Delete the DiskCopy
     UPDATE DiskCopy
        SET status = 7  -- INVALID
-     WHERE id = cf.id;
+     WHERE id = cf.castorfile;
     -- Look for request associated to the recall and restart
     -- it and all the waiting ones
     UPDATE SubRequest SET status = 1 -- RESTART
