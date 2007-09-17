@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.16 $ $Date: 2007/01/18 17:05:40 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.17 $ $Date: 2007/09/17 12:40:49 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2007/01/18 17:05:40 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2007/09/17 12:40:49 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -124,7 +124,7 @@ command with the
 switch.
 .TP
 .BI \-S,\ \-\-svcClass " svcClass"
-specifies the service class to be used for the query
+specifies the service class to be used for the query. If \-S is not specified, the query will be ran accross all service classes. Note that in such a case, the STAGE_SVCCLASS environment variable and the stagemap file will be taken into account, possibly restricting the query to a given service class. In order to force querying accross all service classes, the special value '*' can be used.
 .TP
 .BI \-U,\ \-\-usertag " usertag"
 allows for querying the status of a request identified by usertag. An usertag is a user defined string specified with the
