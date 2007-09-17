@@ -1,5 +1,5 @@
 -----------
-- 2.1.4-4 -
+- 2.1.4-5 -
 -----------
 
   New Features and Changes
@@ -124,6 +124,8 @@
     - #28678 # of castor threads can go -ve
     - #28962 reporting of bad label structure from tapes
     - #28986 stager_qry -s output not always in synch with reality.
+    - #29482 Missing cleanup of tapecopy+segment when GC'ing an INVALID diskcopy
+    - #29499 showqueues drive status display filter
     - Fixed creation of the rtcopy work directory
     - Fixed incorrectly logged checksum with DLF_MSG_PARAM_INT64 leading to segfault for old 
       castorfiles without checksum
