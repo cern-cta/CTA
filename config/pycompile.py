@@ -1,5 +1,29 @@
 #!/usr/bin/python
 
+#******************************************************************************
+#                      config/pycompile.py
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: pycompile.py,v $ $Revision: 1.2 $ $Release$ $Date: 2007/09/17 06:46:01 $ $Author: waldron $
+#
+# @author Castor Dev team, castor-dev@cern.ch
+#******************************************************************************
+
 # modules
 import sys
 import os
@@ -10,9 +34,11 @@ import distutils.sysconfig
 # usage
 #
 def usage():
+    print 'Usage: %s [options]\n' % (os.path.basename(sys.argv[0]))
     print '-h, --help      Display this help and exit'
     print '    --cflags    Display pre-processor and compile flags'
-    print '    --libs      Display the link flag'
+    print '    --libs      Display the link flag\n'
+    print 'Report bugs to <castor-support@cern.ch>'
 
 #
 # main
@@ -37,9 +63,9 @@ def main(argv):
 	    if opt in ('-h', '--help'):
 		usage()
 		sys.exit()
-	    elif opt in ('c', '--cflags'):
+	    elif opt in ('-c', '--cflags'):
 		cflags = 1;
-	    elif opt in ('l', '--libs'):
+	    elif opt in ('-l', '--libs'):
 		libs = 1;
     except ValueError:
 	sys.exit(1)
