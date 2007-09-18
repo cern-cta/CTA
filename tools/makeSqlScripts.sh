@@ -28,7 +28,7 @@ sed 's/\$//g' $1_oracle_create.sql > ora.sql
 mv ora.sql $1_oracle_create.sql
 
 # generate sqlplus version
-sed 's/^END;/END;\n\//' $1_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*\)$/\1\n\//' > $1_oracle_create.sqlplus
+sed 's/^END;/END;\n\//' $1_oracle_create.sql | sed 's/^\(END castor[a-zA-Z]*;\)/\1\n\//' | sed 's/\(CREATE OR REPLACE TYPE .*;\)$/\1\n\//'  | sed 's/^);$/);\n\//' > $1_oracle_create.sqlplus
 
 echo Creation scripts for $1 generated with tag $3
 
