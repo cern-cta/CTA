@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: castor_oracle_drop.sqlplus,v $ $Revision: 1.12 $ $Date: 2007/08/07 15:36:35 $ $Author: waldron $
+ * @(#)$RCSfile: castor_oracle_drop.sqlplus,v $ $Revision: 1.13 $ $Date: 2007/09/18 06:47:32 $ $Author: waldron $
  *
  * This file drops all defined entities from a (stager) database.
  * For the time being, it does NOT drop the monitoring-related ones. 
@@ -30,7 +30,7 @@ BEGIN
     ELSIF rec.object_type = 'SEQUENCE' THEN
       EXECUTE IMMEDIATE 'DROP SEQUENCE '||rec.object_name;
     ELSIF rec.object_type = 'TYPE' THEN
-      EXECUTE IMMEDIATE 'DROP TYPE "'||rec.object_name||'"';
+      EXECUTE IMMEDIATE 'DROP TYPE "'||rec.object_name||'" FORCE';
     ELSIF rec.object_type = 'JOB' THEN
       DBMS_SCHEDULER.DROP_JOB(JOB_NAME => rec.object_name, FORCE => TRUE);
     END IF;

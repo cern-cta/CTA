@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: repack_oracle_drop.sql,v $ $Revision: 1.3 $ $Date: 2007/09/10 06:50:24 $ $Author: waldron $
+ * @(#)$RCSfile: repack_oracle_drop.sql,v $ $Revision: 1.4 $ $Date: 2007/09/18 06:47:32 $ $Author: waldron $
  *
  * This file drops all defined entities from a (repack) database.
  *
@@ -27,7 +27,7 @@ BEGIN
     ELSIF rec.object_type = 'SEQUENCE' THEN
       EXECUTE IMMEDIATE 'DROP SEQUENCE '||rec.object_name;
     ELSIF rec.object_type = 'TYPE' THEN
-      EXECUTE IMMEDIATE 'DROP TYPE "'||rec.object_name||'"';
+      EXECUTE IMMEDIATE 'DROP TYPE "'||rec.object_name||'" FORCE';
     ELSIF rec.object_type = 'JOB' THEN
       DBMS_SCHEDULER.DROP_JOB(JOB_NAME => rec.object_name, FORCE => TRUE);
     END IF;

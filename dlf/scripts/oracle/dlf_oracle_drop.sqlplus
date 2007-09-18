@@ -25,7 +25,7 @@ BEGIN
     ELSIF rec.object_type = 'SEQUENCE' THEN
       EXECUTE IMMEDIATE 'DROP SEQUENCE '||rec.object_name;
     ELSIF rec.object_type = 'TYPE' THEN
-      EXECUTE IMMEDIATE 'DROP TYPE "'||rec.object_name||'"';
+      EXECUTE IMMEDIATE 'DROP TYPE "'||rec.object_name||'" FORCE';
     ELSIF rec.object_type = 'JOB' THEN
       DBMS_SCHEDULER.DROP_JOB(JOB_NAME => rec.object_name, FORCE => TRUE);
     END IF;
