@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.502 $ $Date: 2007/09/18 06:51:22 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.503 $ $Date: 2007/09/19 13:19:49 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3985,65 +3985,29 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   res := -1;
 END;
 
+/**********************************/
+/* Useful functions for debugging */
+/**********************************/
 
-/* Useful functions for debugging, returning diskcopies' useful
- * information for any castorfile or diskcopy
- */
-
-/* Drop the objects and collection types first as an
- * ORA-02303: cannot drop or replace a type with type or table dependents
- * will be raised if you try and upgrade them
- */
-BEGIN
-  -- Drop all objects (ignore monitoring ones!)
-  FOR rec IN (SELECT object_name, object_type FROM user_objects
-              WHERE  object_name LIKE '%_%_DEBUG'
-              AND    object_type = 'TYPE')
-  LOOP
-    EXECUTE IMMEDIATE 'DROP TYPE "'||rec.object_name||'" FORCE';
-  END LOOP;
+CREATE OR REPLACE PACKAGE castor_debug AS
+  TYPE DiskCopyDebug_typ IS RECORD (
+    id INTEGER,
+    diskPool VARCHAR2(2048),
+    location VARCHAR2(2048),
+    status NUMBER,
+    creationtime DATE);
+  TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
+  TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
+  TYPE RequestDebug_typ IS RECORD (
+    creationtime DATE,
+    SubReqId NUMBER,
+    Status NUMBER,
+    username VARCHAR2(2048),
+    machine VARCHAR2(2048),
+    svcClassName VARCHAR2(2048),
+    ReqId NUMBER);
+  TYPE RequestDebug IS TABLE OF RequestDebug_typ;
 END;
-
-
-/* First the objects and collection types */
-CREATE OR REPLACE TYPE O_DiskCopy_Debug AS OBJECT(
-  id INTEGER,
-  diskPool VARCHAR2(2048),
-  location VARCHAR2(2048),
-  status NUMBER,
-  creationtime DATE
-);
-
-CREATE OR REPLACE TYPE T_DiskCopy_Debug AS TABLE OF O_DiskCopy_Debug;
-
-
-/* It would be nice if we could use SubRequest%RowType here!! */
-CREATE OR REPLACE TYPE O_SubRequest_Debug AS OBJECT (
-  retryCounter NUMBER, 
-  fileName VARCHAR2(2048), 
-  protocol VARCHAR2(2048),
-  xsize INTEGER, 
-  priority NUMBER, 
-  subreqId VARCHAR2(2048), 
-  flags NUMBER,
-  modeBits NUMBER, 
-  creationTime INTEGER, 
-  lastModificationTime INTEGER,
-  answered NUMBER,  
-  errorCode NUMBER, 
-  errorMessage VARCHAR2(2048), 
-  id NUMBER,
-  diskcopy INTEGER, 
-  castorFile INTEGER, 
-  parent INTEGER, 
-  status INTEGER,
-  request INTEGER, 
-  getNextStatus INTEGER, 
-  requestedFileSystems VARCHAR2(2048)
-);
-
-CREATE OR REPLACE TYPE T_SubRequest_Debug AS TABLE OF O_SubRequest_Debug;
-
 
 /* Return the castor file id associated with the reference number */
 CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
@@ -4068,7 +4032,7 @@ END;
 
 
 /* Get the diskcopys associated with the reference number */
-CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN T_DiskCopy_Debug PIPELINED AS
+CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castor_debug.DiskCopyDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT diskCopy.id,
                    diskPool.name as diskpool,
@@ -4080,27 +4044,41 @@ BEGIN
                AND FileSystem.diskServer = diskServer.id
                AND DiskPool.id = fileSystem.diskPool
                AND DiskCopy.castorfile = getCF(ref)) LOOP
-     PIPE ROW(O_DiskCopy_Debug(d.id, d.diskPool, d.location, d.status, d.creationtime));
+     PIPE ROW(d);
   END LOOP;
 END;
 
 
-/* Get the subrequest associated with the reference number. (By castorfile/diskcopy/
+/* Get the subrequests associated with the reference number. (By castorfile/diskcopy/
  * subrequest/tapecopy or fileid
  */
-CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN T_SubRequest_Debug PIPELINED AS
+CREATE OR REPLACE FUNCTION getSRs(ref number) RETURN castor_debug.SubRequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT * FROM SubRequest WHERE castorfile = getCF(ref)) LOOP
-     PIPE ROW(O_SubRequest_Debug(d.retryCounter,   d.fileName, 
-                                 d.protocol,       d.xsize, 
-                                 d.priority,       d.subreqId, 
-                                 d.flags,          d.modeBits, 
-                                 d.creationTime,   d.lastModificationTime,
-                                 d.answered,       d.errorCode, 
-                                 d.errorMessage,   d.id,
-                                 d.diskcopy,       d.castorFile, 
-                                 d.parent,         d.status,
-                                 d.request,        d.getNextStatus, 
-                                 d.requestedFileSystems));
+     PIPE ROW(d);
+  END LOOP;
+END;
+
+/* Get the requests associated with the reference number. (By castorfile/diskcopy/
+ * subrequest/tapecopy or fileid
+ */
+CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castor_debug.RequestDebug PIPELINED AS
+BEGIN
+  FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime,
+                   SubRequest.id as SubReqId, SubRequest.Status,
+                   username, machine, svcClassName, Request.id as ReqId
+              FROM SubRequest,
+                    (SELECT id, username, machine, svcClassName from StageGetRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StagePrepareToGetRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StagePutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StagePrepareToPutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StageUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StagePrepareToUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StageRepackRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StageGetNextRequest UNION ALL
+                     SELECT id, username, machine, svcClassName from StageUpdateNextRequest) Request
+             WHERE castorfile = getCF(ref)
+               AND Request.id = SubRequest.request) LOOP
+     PIPE ROW(d);
   END LOOP;
 END;
