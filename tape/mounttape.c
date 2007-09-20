@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.58 $ $Date: 2007/08/31 13:19:05 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.59 $ $Date: 2007/09/20 10:49:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -745,6 +745,29 @@ remount_loop:
                                             cleanup();
                                             sendrep (rpfd, TAPERC, ETBADMIR);
                                             exit(0);                 
+
+                                    } else {
+
+                                            /* check the result of the repair */
+                                            if (is_mir_invalid_load(tapefd, path, devtype) == 1) {
+                                                    
+                                                    /* MIR still invalid */
+                                                    tplogit(func, "Bad MIR recheck=invalid vid=%s\n", vid);
+                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 4,
+                                                                        "func"   , TL_MSG_PARAM_STR  , func,
+                                                                        "Message", TL_MSG_PARAM_STR  , "Bad MIR recheck=invalid",
+                                                                        "VID"    , TL_MSG_PARAM_STR  , vid, 
+                                                                        "TPVID"  , TL_MSG_PARAM_TPVID, vid);                                    
+                                            } else {
+
+                                                    /* MIR now valid */
+                                                    tplogit(func, "Bad MIR recheck=valid vid=%s\n", vid);
+                                                    tl_tpdaemon.tl_log( &tl_tpdaemon, 85, 4,
+                                                                        "func"   , TL_MSG_PARAM_STR  , func,
+                                                                        "Message", TL_MSG_PARAM_STR  , "Bad MIR recheck=valid",
+                                                                        "VID"    , TL_MSG_PARAM_STR  , vid, 
+                                                                        "TPVID"  , TL_MSG_PARAM_TPVID, vid);                                    
+                                            }
                                     }
 
                             } else if (0 == strcasecmp( p, "IGNORE" )) {
