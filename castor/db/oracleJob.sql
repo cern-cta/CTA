@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.503 $ $Date: 2007/09/19 13:19:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.504 $ $Date: 2007/09/20 11:37:04 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -504,17 +504,17 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                            srSubReqId OUT VARCHAR2) AS
- firstRow VARCHAR2(18);
- CURSOR c IS
-  SELECT rowidtochar(rowid) FROM SubRequest                                                                                  
-   WHERE status in (0,1,2)    -- START, RESTART, RETRY                                                                       
-     AND EXISTS                                                                                                              
-       (SELECT /*+ index(a I_Id2Type_id) */ 'x'                                                                                
-         FROM Id2Type a 
-        WHERE a.type in (35,36,37,38,39,40,42,44,95,119)                                                                       
-          AND a.id = SubRequest.request);
-        --AND Id2Type.type = Type2Obj.type
-        --AND Type2Obj.svcHandler = service;
+  firstRow VARCHAR2(18);
+  CURSOR c IS
+    SELECT /*+ USE_NL */ rowidtochar(rowid) FROM SubRequest
+     WHERE status in (0,1,2)    -- START, RESTART, RETRY
+       AND EXISTS
+         (SELECT /*+ index(a I_Id2Type_id) */ 'x'
+            FROM Id2Type a
+           WHERE a.type in (35,36,37,38,39,40,42,44,95,119)
+             AND a.id = SubRequest.request);
+           --AND Id2Type.type = Type2Obj.type
+           --AND Type2Obj.svcHandler = service;
 BEGIN
   OPEN c;
   FETCH c INTO firstRow;
@@ -3985,6 +3985,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   res := -1;
 END;
 
+
 /**********************************/
 /* Useful functions for debugging */
 /**********************************/
@@ -4008,6 +4009,7 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     ReqId NUMBER);
   TYPE RequestDebug IS TABLE OF RequestDebug_typ;
 END;
+
 
 /* Return the castor file id associated with the reference number */
 CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
@@ -4058,6 +4060,7 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
+
 
 /* Get the requests associated with the reference number. (By castorfile/diskcopy/
  * subrequest/tapecopy or fileid
