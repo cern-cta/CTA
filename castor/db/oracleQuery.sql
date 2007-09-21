@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.504 $ $Date: 2007/09/20 11:37:04 $ $Author: waldron $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.505 $ $Date: 2007/09/21 16:22:09 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3869,7 +3869,24 @@ END;
 
 /* PL/SQL method implementing failSchedulerJob */
 CREATE OR REPLACE PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, srErrorMessage IN VARCHAR2, res OUT INTEGER) AS
+  reqType NUMBER;
 BEGIN
+  -- Get the request type associated with the subrequest
+  SELECT type INTO reqType 
+    FROM Id2Type 
+   WHERE id =
+    (SELECT request FROM SubRequest WHERE subreqid = srSubReqId);
+
+  -- If the request type is a PrepareToGetRequest or PrepareToUpdateRequest 
+  -- put the subrequest into SUBREQUEST_FAILED_FINISHED not SUBREQUEST_FAILED
+  -- as SUBREQUEST_FAILED will trigger a reply to the client which is no 
+  -- longer there.
+  IF reqType = 36 OR reqType = 38 THEN
+    UPDATE SubRequest SET status = 8
+     WHERE subreqid = srSubReqId;
+    RETURN;
+  END IF;
+
   -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
   -- status. We only concern ourselves in the termnination of a job waiting to
   -- start i.e. in a SUBREQUEST_STAGEOUT status. Requests in other statuses are
@@ -3911,41 +3928,45 @@ PROCEDURE jobToSchedule (srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol O
 			 reqEgid OUT INTEGER, reqUsername OUT VARCHAR2, direction OUT VARCHAR2,
 			 cIp OUT INTEGER, cPort OUT INTEGER, cVersion OUT INTEGER, cType OUT INTEGER) AS
 BEGIN
-    -- Get the next subrequest to be scheduled.
-    UPDATE SubRequest 
-       SET status = 14, lastModificationTime = getTime() -- SUBREQUEST_BEINGSCHED
-     WHERE status = 13 -- SUBREQUEST_READYFORSCHED
-       AND rownum < 2
+  -- Get the next subrequest to be scheduled.
+  UPDATE SubRequest 
+     SET status = 14, lastModificationTime = getTime() -- SUBREQUEST_BEINGSCHED
+   WHERE status = 13 -- SUBREQUEST_READYFORSCHED
+     AND rownum < 2
  RETURNING id, subReqId, protocol, xsize, requestedFileSystems
-      INTO srId, srSubReqId, srProtocol, srXsize, srRequestedFileSystems;
+    INTO srId, srSubReqId, srProtocol, srXsize, srRequestedFileSystems;
 
-    -- Extract the rest of the information required to submit a job into
-    -- the scheduler through the job manager.
-    SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
-           Request.reqId, Request.euid, Request.egid, Request.username, Request.direction,
-	   Client.ipAddress, Client.port, Client.version,
-	   (SELECT type 
-              FROM Id2type 
-             WHERE id = Client.id) clientType
-      INTO cfFileId, cfNsHost, sSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
-           direction, cIp, cPort, cVersion, cType
-      FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
-           (SELECT id, username, euid, egid, reqid, client, 'w' direction 
-	      FROM StagePutRequest 
-             UNION ALL
-            SELECT id, username, euid, egid, reqid, client, 'r' direction 
-              FROM StageGetRequest 
-             UNION ALL
-            SELECT id, username, euid, egid, reqid, client, 'o' direction 
-              FROM StageUpdateRequest) Request
-     WHERE SubRequest.id = srId
-       AND SubRequest.castorFile = CastorFile.id
-       AND CastorFile.svcClass = SvcClass.id
-       AND Id2type.id = SubRequest.request
-       AND Request.id = SubRequest.request
-       AND Request.client = Client.id;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL;
+  -- Extract the rest of the information required to submit a job into
+  -- the scheduler through the job manager.
+  SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
+         Request.reqId, Request.euid, Request.egid, Request.username, Request.direction,
+	 Client.ipAddress, Client.port, Client.version,
+	 (SELECT type 
+            FROM Id2type 
+           WHERE id = Client.id) clientType
+    INTO cfFileId, cfNsHost, sSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
+         direction, cIp, cPort, cVersion, cType
+    FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
+         (SELECT id, username, euid, egid, reqid, client, 'w' direction 
+	    FROM StagePutRequest 
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, 'r' direction 
+            FROM StageGetRequest 
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, 'o' direction 
+            FROM StagePrepareToGetRequest
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, 'o' direction 
+            FROM StageUpdateRequest
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, 'o' direction 
+            FROM StagePrepareToUpdateRequest) Request
+   WHERE SubRequest.id = srId
+     AND SubRequest.castorFile = CastorFile.id
+     AND CastorFile.svcClass = SvcClass.id
+     AND Id2type.id = SubRequest.request
+     AND Request.id = SubRequest.request
+     AND Request.client = Client.id;
 END;
 
 
