@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/09/07 06:40:23 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/21 16:03:17 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -264,6 +264,12 @@ castor::jobmanager::JobSubmissionRequest
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
+    /* Ignore ORA-01403: no data found, this is expected when there is nothing
+     * to be schedules.
+     */
+    if (e.getErrorCode() != 01403) {
+      return NULL; 
+    }
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in jobToSchedule."
