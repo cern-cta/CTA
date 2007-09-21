@@ -361,6 +361,13 @@
 #endif
 #endif
 
+#if BuildTapeDaemon
+#if !BuildDlfLibrary
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
+#endif
+
 #if BuildTpusage
 #if BuildRfioLibrary != YES
 #undef BuildRfioLibrary
