@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/06/21 13:10:03 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
  *
  *
  *
@@ -143,28 +143,28 @@ void RepackWorker::run(void* param)
                           break;
 
   case REPACK:            handleRepack(rreq);
-                          ack.addRequest(rreq);
+                          ack.addRepackrequest(rreq);
                           break;
 
   case GET_STATUS: /** the old RepackRequest is removed */
                           getStatus(rreq);
                           //rreq->setCommand(GET_STATUS);
-                          ack.addRequest(rreq);
+                          ack.addRepackrequest(rreq);
                           break;
 
   case GET_STATUS_ALL:    getStatusAll(rreq);
-                          ack.addRequest(rreq);
+                          ack.addRepackrequest(rreq);
                           break;
 
   case GET_STATUS_ARCHIVED:
                           //getAllArchived(rreq);
-                          ack.addRequest(rreq);
+                          ack.addRepackrequest(rreq);
                           break;
   case ARCHIVE:           archiveSubRequests(rreq);
-                          ack.addRequest(rreq);
+                          ack.addRepackrequest(rreq);
                           break;
   case ARCHIVE_ALL:       archiveAllSubRequests(rreq);
-                          ack.addRequest(rreq);
+                          ack.addRepackrequest(rreq);
                           break;
 
 	  default:break;	/** Do nothing by default */
@@ -225,7 +225,7 @@ void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Exc
     * repack client 
     */
 
-  if ( rreq== NULL || rreq->subRequest().size()==0 ) {
+  if ( rreq== NULL || rreq->repacksubrequest().size()==0 ) {
     castor::exception::Internal ex;
     ex.getMessage() << "RepackWorker::getStatus(..) : Invalid Request" << std::endl;
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 0, NULL);
@@ -236,12 +236,12 @@ void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Exc
 
   // we give all the segments to gather information from the name server.
 
-  RepackSubRequest* tmp= m_databasehelper->getSubRequestByVid(rreq->subRequest().at(0)->vid(), true );
+  RepackSubRequest* tmp= m_databasehelper->getSubRequestByVid(rreq->repacksubrequest().at(0)->vid(), true );
   if ( tmp != NULL ) {
       //  we don't need the request from the client, we replace it with the one from DB 
 
-      rreq->subRequest().clear();
-      rreq->addSubRequest(tmp);
+      rreq->repacksubrequest().clear();
+      rreq->addRepacksubrequest(tmp);
       //tmp->setRequest(rreq);
   }
 }
@@ -258,7 +258,7 @@ void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::E
 	std::vector<RepackSubRequest*>::iterator tape = result->begin();
 	
 	while ( tape != result->end() ){
-		rreq->subRequest().push_back((*tape));
+		rreq->repacksubrequest().push_back((*tape));
 		tape++;
 	}
 	
@@ -275,17 +275,17 @@ void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::except
   std::vector<castor::repack::RepackSubRequest*>* result=NULL;
   std::vector<RepackSubRequest*>::iterator tapeToBeArchived;
 
-  if ( rreq== NULL || rreq->subRequest().size()==0 ) {
+  if ( rreq== NULL || rreq->repacksubrequest().size()==0 ) {
     castor::exception::Internal ex;
     ex.getMessage() << "RepackWorker::archiveSubRequests(..) : Invalid Request" << std::endl;
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6, 0, NULL);
     throw ex;
   }
 
-  std::vector<RepackSubRequest*>::iterator tape= rreq->subRequest().begin();
+  std::vector<RepackSubRequest*>::iterator tape= rreq->repacksubrequest().begin();
 
   // Get the All SubRequest  
-  while(tape != rreq->subRequest().end()){ 
+  while(tape != rreq->repacksubrequest().end()){ 
      result=m_databasehelper->getAllSubRequestsVid((*tape)->vid());
      tapeToBeArchived = result->begin();
      while ( tapeToBeArchived != result->end() ){
@@ -326,7 +326,7 @@ void RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exc
   while ( tape != result->end() ){
     m_databasehelper->archive((*tape)->vid());
     (*tape)->setStatus(SUBREQUEST_ARCHIVED);
-    rreq->subRequest().push_back((*tape));
+    rreq->repacksubrequest().push_back((*tape));
     tape++;
   }
   delete result;
@@ -341,9 +341,9 @@ void RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exc
 void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Exception)
 {   
     /** more than one tape can be restarted at once */
-    std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
+    std::vector<RepackSubRequest*>::iterator tape = rreq->repacksubrequest().begin();
     
-    while ( tape != rreq->subRequest().end() ){
+    while ( tape != rreq->repacksubrequest().end() ){
       if ( (*tape) == NULL )
         continue;
       /// this DB method returns only running processes (no archived ones)
@@ -368,6 +368,7 @@ void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Except
           throw ex;
         }
         tmp->setStatus(SUBREQUEST_RESTART);
+        tmp->setRetryNb(rreq->retryMax());
         m_databasehelper->updateSubRequest(tmp,false,cuuid);
         freeRepackObj(tmp);
       }
@@ -383,8 +384,8 @@ void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Except
 void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::Exception)
 {
 	
-  std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
-  while ( tape != rreq->subRequest().end() ){
+  std::vector<RepackSubRequest*>::iterator tape = rreq->repacksubrequest().begin();
+  while ( tape != rreq->repacksubrequest().end() ){
   /** if the vid is not in the repack system, a exception in thrown and
    * send to the client
    */
@@ -419,8 +420,8 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::E
   }
  
   /// set the default serviceclass if none is given
-  if ( rreq->serviceclass().length() == 0 ){
-    rreq->setServiceclass(ptr_server->getServiceClass());
+  if ( rreq->svcclass().length() == 0 ){
+    rreq->setSvcclass(ptr_server->getServiceClass());
   }
 
   /// set the default stager if none is given 
@@ -428,9 +429,9 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::E
     rreq->setStager(ptr_server->getStagerName());
   }
   
-  for ( tapecnt = 0; tapecnt < rreq->subRequest().size() ; tapecnt++ ) 
+  for ( tapecnt = 0; tapecnt < rreq->repacksubrequest().size() ; tapecnt++ ) 
   {
-    RepackSubRequest* subRequest = rreq->subRequest().at(tapecnt);
+    RepackSubRequest* subRequest = rreq->repacksubrequest().at(tapecnt);
     // set the status
     subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
     // and for each subrequest a own cuuid, for DLF logging
@@ -440,6 +441,7 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::E
     Cuuid2string(buf, CUUID_STRING_LEN+1, &cuuid);
     std::string tmp (buf,CUUID_STRING_LEN);
     subRequest->setCuuid(tmp);
+    subRequest->setRetryNb(rreq->retryMax());
   }
 
   /* Go to DB, but only if tapes were found !*/
@@ -494,8 +496,8 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 				if ( checkTapeForRepack(lp->vid) ){
 					RepackSubRequest* tmp = new RepackSubRequest();
 					tmp->setVid(lp->vid);
-					tmp->setRequestID(rreq);
-					rreq->addSubRequest(tmp);
+					tmp->setRepackrequest(rreq);
+					rreq->addRepacksubrequest(tmp);
 					nbvol++;
 				}
 				/** if the tape is unvalid for repacking, a message is already
@@ -511,8 +513,8 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 
 		/** No tape pool given, so check the given tapes */ 
 		else {
-      tape = rreq->subRequest().begin();
-      while ( tape != rreq->subRequest().end() ){
+      tape = rreq->repacksubrequest().begin();
+      while ( tape != rreq->repacksubrequest().end() ){
       /** throws exception if tape is already in queue or has invalid status, as
           well as in any other error cases 
         */

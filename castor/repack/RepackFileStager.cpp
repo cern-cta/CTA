@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/07/03 06:20:20 $ $Author: waldron $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
  *
  *
  *
@@ -103,9 +103,9 @@ void RepackFileStager::run(void *param) throw() {
        {castor::dlf::Param("Message","Exception caught in RepackFileStager::run"),
         castor::dlf::Param("Precise message",ex.getMessage().str())};
        castor::dlf::dlf_writep( cuuid, DLF_LVL_WARNING, 5, 2, params);
-       freeRepackObj(sreq->requestID());
+       freeRepackObj(sreq->repackrequest());
       }
-      freeRepackObj(sreq->requestID()); /// always delete from the top
+      freeRepackObj(sreq->repackrequest()); /// always delete from the top
       sreq = NULL;
     }
     //m_dbhelper->unlock();
@@ -134,7 +134,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   std::vector<castor::stager::SubRequest*>::iterator stager_subreq;
   
   /** check if the passed RepackSubRequest has segment members */
-  if ( !sreq->segment().size() ){
+  if ( !sreq->repacksegment().size() ){
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 36, 0, NULL);
     sreq->setStatus(SUBREQUEST_DONE);
     m_dbhelper->updateSubRequest(sreq,false,cuuid);   // doesn't throw
@@ -190,7 +190,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   }
 
   /// we want to know how many files were successfully submitted
-  sreq->setFilesFailed(failed);
+  sreq->setFilesFailedSubmit(failed);
 
 
   /// Setting the SubRequest's Cuuid to the stager one for monitoring
@@ -234,7 +234,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
     faked->setVid(sreq->vid());
     faked->setStatus(sreq->status());
     /** we need the service class info in the original RepackRequest for staging */
-    faked->setRequestID(sreq->requestID()); 
+    faked->setRepackrequest(sreq->repackrequest()); 
     
     
     /** we only want to restart a repack for the files, which made problems 
@@ -269,7 +269,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
       {
         RepackSegment* seg = new RepackSegment();
         seg->setFileid((*response)->fileId());
-        faked->addSegment(seg);
+        faked->addRepacksegment(seg);
       }
       response++;
     }
@@ -279,7 +279,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
 
     /** next check: if there are no files in failed, staging or migrating, get the
         remaining files on tape, they have to be submitted again */
-    if (   !faked->segment().size()    
+    if (   !faked->repacksegment().size()    
         && !faked->filesMigrating()
         && !faked->filesStaging() ) 
     {
@@ -294,7 +294,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
     }
     
     /** Both checks obove returned no candidates-> fine, we're done */
-    if ( !faked->segment().size() )
+    if ( !faked->repacksegment().size() )
       sreq->setStatus(SUBREQUEST_DONE);
     else {
       sreq->setFilesMigrating(0);
@@ -312,7 +312,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
       castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 25, 0, NULL); 
    }
 
-    faked->setRequestID(NULL);  /** set to NULL;just to be sure, it pointed to a foreign one */ 
+    faked->setRepackrequest(NULL);  /** set to NULL;just to be sure, it pointed to a foreign one */ 
 
     freeRepackObj(faked);  /** we know that there is no RepackRequest for 
                              * the faked one, so we can delete it directly
@@ -366,7 +366,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   reqh.setOptions(opts);
   client.setOption(opts);
 
-  client.setAuthorizationId(rsreq->requestID()->userid(), rsreq->requestID()->groupid());
+  client.setAuthorizationId(rsreq->repackrequest()->uid(), rsreq->repackrequest()->gid());
   
   /** 1. Send the Request */
   std::vector<castor::rh::Response*>respvec;

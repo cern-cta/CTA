@@ -103,7 +103,6 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_vid
-       * The Tape Volumes for one Request.
        * @return the value of m_vid
        */
       std::string vid() const {
@@ -112,7 +111,6 @@ namespace castor {
 
       /**
        * Set the value of m_vid
-       * The Tape Volumes for one Request.
        * @param new_var the new value of m_vid
        */
       void setVid(std::string new_var) {
@@ -121,7 +119,6 @@ namespace castor {
 
       /**
        * Get the value of m_xsize
-       * The full size of the request in Bytes.
        * @return the value of m_xsize
        */
       u_signed64 xsize() const {
@@ -130,7 +127,6 @@ namespace castor {
 
       /**
        * Set the value of m_xsize
-       * The full size of the request in Bytes.
        * @param new_var the new value of m_xsize
        */
       void setXsize(u_signed64 new_var) {
@@ -154,6 +150,70 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_filesMigrating
+       * @return the value of m_filesMigrating
+       */
+      int filesMigrating() const {
+        return m_filesMigrating;
+      }
+
+      /**
+       * Set the value of m_filesMigrating
+       * @param new_var the new value of m_filesMigrating
+       */
+      void setFilesMigrating(int new_var) {
+        m_filesMigrating = new_var;
+      }
+
+      /**
+       * Get the value of m_filesStaging
+       * @return the value of m_filesStaging
+       */
+      int filesStaging() const {
+        return m_filesStaging;
+      }
+
+      /**
+       * Set the value of m_filesStaging
+       * @param new_var the new value of m_filesStaging
+       */
+      void setFilesStaging(int new_var) {
+        m_filesStaging = new_var;
+      }
+
+      /**
+       * Get the value of m_files
+       * @return the value of m_files
+       */
+      int files() const {
+        return m_files;
+      }
+
+      /**
+       * Set the value of m_files
+       * @param new_var the new value of m_files
+       */
+      void setFiles(int new_var) {
+        m_files = new_var;
+      }
+
+      /**
+       * Get the value of m_filesFailed
+       * @return the value of m_filesFailed
+       */
+      int filesFailed() const {
+        return m_filesFailed;
+      }
+
+      /**
+       * Set the value of m_filesFailed
+       * @param new_var the new value of m_filesFailed
+       */
+      void setFilesFailed(int new_var) {
+        m_filesFailed = new_var;
+      }
+
+      /**
        * Get the value of m_cuuid
        * @return the value of m_cuuid
        */
@@ -170,76 +230,7 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_filesMigrating
-       * The amount files which are still being migrated to tape.
-       * @return the value of m_filesMigrating
-       */
-      unsigned int filesMigrating() const {
-        return m_filesMigrating;
-      }
-
-      /**
-       * Set the value of m_filesMigrating
-       * The amount files which are still being migrated to tape.
-       * @param new_var the new value of m_filesMigrating
-       */
-      void setFilesMigrating(unsigned int new_var) {
-        m_filesMigrating = new_var;
-      }
-
-      /**
-       * Get the value of m_filesStaging
-       * The amount of file to be staged.
-       * @return the value of m_filesStaging
-       */
-      unsigned int filesStaging() const {
-        return m_filesStaging;
-      }
-
-      /**
-       * Set the value of m_filesStaging
-       * The amount of file to be staged.
-       * @param new_var the new value of m_filesStaging
-       */
-      void setFilesStaging(unsigned int new_var) {
-        m_filesStaging = new_var;
-      }
-
-      /**
-       * Get the value of m_files
-       * @return the value of m_files
-       */
-      unsigned int files() const {
-        return m_files;
-      }
-
-      /**
-       * Set the value of m_files
-       * @param new_var the new value of m_files
-       */
-      void setFiles(unsigned int new_var) {
-        m_files = new_var;
-      }
-
-      /**
-       * Get the value of m_filesFailed
-       * @return the value of m_filesFailed
-       */
-      unsigned int filesFailed() const {
-        return m_filesFailed;
-      }
-
-      /**
-       * Set the value of m_filesFailed
-       * @param new_var the new value of m_filesFailed
-       */
-      void setFilesFailed(unsigned int new_var) {
-        m_filesFailed = new_var;
-      }
-
-      /**
        * Get the value of m_submitTime
-       * Time of submission of files to the stager
        * @return the value of m_submitTime
        */
       u_signed64 submitTime() const {
@@ -248,7 +239,6 @@ namespace castor {
 
       /**
        * Set the value of m_submitTime
-       * Time of submission of files to the stager
        * @param new_var the new value of m_submitTime
        */
       void setSubmitTime(u_signed64 new_var) {
@@ -259,7 +249,7 @@ namespace castor {
        * Get the value of m_filesStaged
        * @return the value of m_filesStaged
        */
-      u_signed64 filesStaged() const {
+      int filesStaged() const {
         return m_filesStaged;
       }
 
@@ -267,8 +257,40 @@ namespace castor {
        * Set the value of m_filesStaged
        * @param new_var the new value of m_filesStaged
        */
-      void setFilesStaged(u_signed64 new_var) {
+      void setFilesStaged(int new_var) {
         m_filesStaged = new_var;
+      }
+
+      /**
+       * Get the value of m_filesFailedSubmit
+       * @return the value of m_filesFailedSubmit
+       */
+      int filesFailedSubmit() const {
+        return m_filesFailedSubmit;
+      }
+
+      /**
+       * Set the value of m_filesFailedSubmit
+       * @param new_var the new value of m_filesFailedSubmit
+       */
+      void setFilesFailedSubmit(int new_var) {
+        m_filesFailedSubmit = new_var;
+      }
+
+      /**
+       * Get the value of m_retryNb
+       * @return the value of m_retryNb
+       */
+      int retryNb() const {
+        return m_retryNb;
+      }
+
+      /**
+       * Set the value of m_retryNb
+       * @param new_var the new value of m_retryNb
+       */
+      void setRetryNb(int new_var) {
+        m_retryNb = new_var;
       }
 
       /**
@@ -290,83 +312,82 @@ namespace castor {
       }
 
       /**
-       * Add a RepackSegment* object to the m_segmentVector list
+       * Get the value of m_repackrequest
+       * @return the value of m_repackrequest
        */
-      void addSegment(RepackSegment* add_object) {
-        m_segmentVector.push_back(add_object);
+      RepackRequest* repackrequest() const {
+        return m_repackrequest;
       }
 
       /**
-       * Remove a RepackSegment* object from m_segmentVector
+       * Set the value of m_repackrequest
+       * @param new_var the new value of m_repackrequest
        */
-      void removeSegment(RepackSegment* remove_object) {
-        for (unsigned int i = 0; i < m_segmentVector.size(); i++) {
-          RepackSegment* item = m_segmentVector[i];
+      void setRepackrequest(RepackRequest* new_var) {
+        m_repackrequest = new_var;
+      }
+
+      /**
+       * Add a RepackSegment* object to the m_repacksegmentVector list
+       */
+      void addRepacksegment(RepackSegment* add_object) {
+        m_repacksegmentVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a RepackSegment* object from m_repacksegmentVector
+       */
+      void removeRepacksegment(RepackSegment* remove_object) {
+        for (unsigned int i = 0; i < m_repacksegmentVector.size(); i++) {
+          RepackSegment* item = m_repacksegmentVector[i];
           if (item == remove_object) {
-            std::vector<RepackSegment*>::iterator it = m_segmentVector.begin() + i;
-            m_segmentVector.erase(it);
+            std::vector<RepackSegment*>::iterator it = m_repacksegmentVector.begin() + i;
+            m_repacksegmentVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of RepackSegment* objects held by m_segmentVector
-       * @return list of RepackSegment* objects held by m_segmentVector
+       * Get the list of RepackSegment* objects held by m_repacksegmentVector
+       * @return list of RepackSegment* objects held by m_repacksegmentVector
        */
-      std::vector<RepackSegment*>& segment() {
-        return m_segmentVector;
-      }
-
-      /**
-       * Get the value of m_requestID
-       * @return the value of m_requestID
-       */
-      RepackRequest* requestID() const {
-        return m_requestID;
-      }
-
-      /**
-       * Set the value of m_requestID
-       * @param new_var the new value of m_requestID
-       */
-      void setRequestID(RepackRequest* new_var) {
-        m_requestID = new_var;
+      std::vector<RepackSegment*>& repacksegment() {
+        return m_repacksegmentVector;
       }
 
     private:
 
-      /// The Tape Volumes for one Request.
       std::string m_vid;
 
-      /// The full size of the request in Bytes.
       u_signed64 m_xsize;
 
       int m_status;
 
+      int m_filesMigrating;
+
+      int m_filesStaging;
+
+      int m_files;
+
+      int m_filesFailed;
+
       std::string m_cuuid;
 
-      /// The amount files which are still being migrated to tape.
-      unsigned int m_filesMigrating;
-
-      /// The amount of file to be staged.
-      unsigned int m_filesStaging;
-
-      unsigned int m_files;
-
-      unsigned int m_filesFailed;
-
-      /// Time of submission of files to the stager
       u_signed64 m_submitTime;
 
-      u_signed64 m_filesStaged;
+      int m_filesStaged;
+
+      int m_filesFailedSubmit;
+
+      int m_retryNb;
 
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<RepackSegment*> m_segmentVector;
+      RepackRequest* m_repackrequest;
 
-      RepackRequest* m_requestID;
+      std::vector<RepackSegment*> m_repacksegmentVector;
 
     }; /* end of class RepackSubRequest */
 

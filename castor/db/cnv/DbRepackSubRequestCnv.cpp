@@ -56,7 +56,7 @@ static castor::CnvFactory<castor::db::cnv::DbRepackSubRequestCnv>* s_factoryDbRe
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_insertStatementString =
-"INSERT INTO RepackSubRequest (vid, xsize, status, cuuid, filesMigrating, filesStaging, files, filesFailed, submitTime, filesStaged, id, requestID) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11) RETURNING id INTO :12";
+"INSERT INTO RepackSubRequest (vid, xsize, status, filesMigrating, filesStaging, files, filesFailed, cuuid, submitTime, filesStaged, filesFailedSubmit, retryNb, id, repackrequest) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,ids_seq.nextval,:13) RETURNING id INTO :14";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteStatementString =
@@ -64,11 +64,11 @@ const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteStatementStrin
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_selectStatementString =
-"SELECT vid, xsize, status, cuuid, filesMigrating, filesStaging, files, filesFailed, submitTime, filesStaged, id, requestID FROM RepackSubRequest WHERE id = :1";
+"SELECT vid, xsize, status, filesMigrating, filesStaging, files, filesFailed, cuuid, submitTime, filesStaged, filesFailedSubmit, retryNb, id, repackrequest FROM RepackSubRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_updateStatementString =
-"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3, cuuid = :4, filesMigrating = :5, filesStaging = :6, files = :7, filesFailed = :8, submitTime = :9, filesStaged = :10 WHERE id = :11";
+"UPDATE RepackSubRequest SET vid = :1, xsize = :2, status = :3, filesMigrating = :4, filesStaging = :5, files = :6, filesFailed = :7, cuuid = :8, submitTime = :9, filesStaged = :10, filesFailedSubmit = :11, retryNb = :12 WHERE id = :13";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_storeTypeStatementString =
@@ -78,25 +78,25 @@ const std::string castor::db::cnv::DbRepackSubRequestCnv::s_storeTypeStatementSt
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
 
-/// SQL select statement for member segment
-const std::string castor::db::cnv::DbRepackSubRequestCnv::s_selectRepackSegmentStatementString =
-"SELECT id FROM RepackSegment WHERE vid = :1 FOR UPDATE";
-
-/// SQL delete statement for member segment
-const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteRepackSegmentStatementString =
-"UPDATE RepackSegment SET vid = 0 WHERE id = :1";
-
-/// SQL remote update statement for member segment
-const std::string castor::db::cnv::DbRepackSubRequestCnv::s_remoteUpdateRepackSegmentStatementString =
-"UPDATE RepackSegment SET vid = :1 WHERE id = :2";
-
-/// SQL existence statement for member requestID
+/// SQL existence statement for member repackrequest
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_checkRepackRequestExistStatementString =
 "SELECT id FROM RepackRequest WHERE id = :1";
 
-/// SQL update statement for member requestID
+/// SQL update statement for member repackrequest
 const std::string castor::db::cnv::DbRepackSubRequestCnv::s_updateRepackRequestStatementString =
-"UPDATE RepackSubRequest SET requestID = :1 WHERE id = :2";
+"UPDATE RepackSubRequest SET repackrequest = :1 WHERE id = :2";
+
+/// SQL select statement for member repacksegment
+const std::string castor::db::cnv::DbRepackSubRequestCnv::s_selectRepackSegmentStatementString =
+"SELECT id FROM RepackSegment WHERE repacksubrequest = :1 FOR UPDATE";
+
+/// SQL delete statement for member repacksegment
+const std::string castor::db::cnv::DbRepackSubRequestCnv::s_deleteRepackSegmentStatementString =
+"UPDATE RepackSegment SET repacksubrequest = 0 WHERE id = :1";
+
+/// SQL remote update statement for member repacksegment
+const std::string castor::db::cnv::DbRepackSubRequestCnv::s_remoteUpdateRepackSegmentStatementString =
+"UPDATE RepackSegment SET repacksubrequest = :1 WHERE id = :2";
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -109,11 +109,11 @@ castor::db::cnv::DbRepackSubRequestCnv::DbRepackSubRequestCnv(castor::ICnvSvc* c
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
+  m_checkRepackRequestExistStatement(0),
+  m_updateRepackRequestStatement(0),
   m_selectRepackSegmentStatement(0),
   m_deleteRepackSegmentStatement(0),
-  m_remoteUpdateRepackSegmentStatement(0),
-  m_checkRepackRequestExistStatement(0),
-  m_updateRepackRequestStatement(0) {}
+  m_remoteUpdateRepackSegmentStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -135,11 +135,11 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
+    if(m_checkRepackRequestExistStatement) delete m_checkRepackRequestExistStatement;
+    if(m_updateRepackRequestStatement) delete m_updateRepackRequestStatement;
     if(m_deleteRepackSegmentStatement) delete m_deleteRepackSegmentStatement;
     if(m_selectRepackSegmentStatement) delete m_selectRepackSegmentStatement;
     if(m_remoteUpdateRepackSegmentStatement) delete m_remoteUpdateRepackSegmentStatement;
-    if(m_checkRepackRequestExistStatement) delete m_checkRepackRequestExistStatement;
-    if(m_updateRepackRequestStatement) delete m_updateRepackRequestStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -148,11 +148,11 @@ void castor::db::cnv::DbRepackSubRequestCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
+  m_checkRepackRequestExistStatement = 0;
+  m_updateRepackRequestStatement = 0;
   m_selectRepackSegmentStatement = 0;
   m_deleteRepackSegmentStatement = 0;
   m_remoteUpdateRepackSegmentStatement = 0;
-  m_checkRepackRequestExistStatement = 0;
-  m_updateRepackRequestStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -181,11 +181,11 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::repack::RepackSubRequest*>(object);
   try {
     switch (type) {
-    case castor::OBJ_RepackSegment :
-      fillRepRepackSegment(obj);
-      break;
     case castor::OBJ_RepackRequest :
       fillRepRepackRequest(obj);
+      break;
+    case castor::OBJ_RepackSegment :
+      fillRepRepackSegment(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -206,6 +206,38 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
+// fillRepRepackRequest
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackRequest(castor::repack::RepackSubRequest* obj)
+  throw (castor::exception::Exception) {
+  if (0 != obj->repackrequest()) {
+    // Check checkRepackRequestExist statement
+    if (0 == m_checkRepackRequestExistStatement) {
+      m_checkRepackRequestExistStatement = createStatement(s_checkRepackRequestExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkRepackRequestExistStatement->setUInt64(1, obj->repackrequest()->id());
+    castor::db::IDbResultSet *rset = m_checkRepackRequestExistStatement->executeQuery();
+    if (!rset->next()) {
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
+      cnvSvc()->createRep(&ad, obj->repackrequest(), false);
+    }
+    // Close resultset
+    delete rset;
+  }
+  // Check update statement
+  if (0 == m_updateRepackRequestStatement) {
+    m_updateRepackRequestStatement = createStatement(s_updateRepackRequestStatementString);
+  }
+  // Update local object
+  m_updateRepackRequestStatement->setUInt64(1, 0 == obj->repackrequest() ? 0 : obj->repackrequest()->id());
+  m_updateRepackRequestStatement->setUInt64(2, obj->id());
+  m_updateRepackRequestStatement->execute();
+}
+
+//------------------------------------------------------------------------------
 // fillRepRepackSegment
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackSegment(castor::repack::RepackSubRequest* obj)
@@ -215,16 +247,16 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackSegment(castor::repack
     m_selectRepackSegmentStatement = createStatement(s_selectRepackSegmentStatementString);
   }
   // Get current database data
-  std::set<int> segmentList;
+  std::set<int> repacksegmentList;
   m_selectRepackSegmentStatement->setUInt64(1, obj->id());
   castor::db::IDbResultSet *rset = m_selectRepackSegmentStatement->executeQuery();
   while (rset->next()) {
-    segmentList.insert(rset->getInt(1));
+    repacksegmentList.insert(rset->getInt(1));
   }
   delete rset;
-  // update segment and create new ones
-  for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->segment().begin();
-       it != obj->segment().end();
+  // update repacksegment and create new ones
+  for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->repacksegment().begin();
+       it != obj->repacksegment().end();
        it++) {
     if (0 == (*it)->id()) {
       cnvSvc()->createRep(0, *it, false, OBJ_RepackSubRequest);
@@ -238,14 +270,14 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackSegment(castor::repack
       m_remoteUpdateRepackSegmentStatement->setUInt64(2, (*it)->id());
       m_remoteUpdateRepackSegmentStatement->execute();
       std::set<int>::iterator item;
-      if ((item = segmentList.find((*it)->id())) != segmentList.end()) {
-        segmentList.erase(item);
+      if ((item = repacksegmentList.find((*it)->id())) != repacksegmentList.end()) {
+        repacksegmentList.erase(item);
       }
     }
   }
   // Delete old links
-  for (std::set<int>::iterator it = segmentList.begin();
-       it != segmentList.end();
+  for (std::set<int>::iterator it = repacksegmentList.begin();
+       it != repacksegmentList.end();
        it++) {
     if (0 == m_deleteRepackSegmentStatement) {
       m_deleteRepackSegmentStatement = createStatement(s_deleteRepackSegmentStatementString);
@@ -253,38 +285,6 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackSegment(castor::repack
     m_deleteRepackSegmentStatement->setUInt64(1, *it);
     m_deleteRepackSegmentStatement->execute();
   }
-}
-
-//------------------------------------------------------------------------------
-// fillRepRepackRequest
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSubRequestCnv::fillRepRepackRequest(castor::repack::RepackSubRequest* obj)
-  throw (castor::exception::Exception) {
-  if (0 != obj->requestID()) {
-    // Check checkRepackRequestExist statement
-    if (0 == m_checkRepackRequestExistStatement) {
-      m_checkRepackRequestExistStatement = createStatement(s_checkRepackRequestExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkRepackRequestExistStatement->setUInt64(1, obj->requestID()->id());
-    castor::db::IDbResultSet *rset = m_checkRepackRequestExistStatement->executeQuery();
-    if (!rset->next()) {
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      cnvSvc()->createRep(&ad, obj->requestID(), false);
-    }
-    // Close resultset
-    delete rset;
-  }
-  // Check update statement
-  if (0 == m_updateRepackRequestStatement) {
-    m_updateRepackRequestStatement = createStatement(s_updateRepackRequestStatementString);
-  }
-  // Update local object
-  m_updateRepackRequestStatement->setUInt64(1, 0 == obj->requestID() ? 0 : obj->requestID()->id());
-  m_updateRepackRequestStatement->setUInt64(2, obj->id());
-  m_updateRepackRequestStatement->execute();
 }
 
 //------------------------------------------------------------------------------
@@ -298,11 +298,11 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObj(castor::IAddress* address,
   castor::repack::RepackSubRequest* obj = 
     dynamic_cast<castor::repack::RepackSubRequest*>(object);
   switch (type) {
-  case castor::OBJ_RepackSegment :
-    fillObjRepackSegment(obj);
-    break;
   case castor::OBJ_RepackRequest :
     fillObjRepackRequest(obj);
+    break;
+  case castor::OBJ_RepackSegment :
+    fillObjRepackSegment(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -315,56 +315,6 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObj(castor::IAddress* address,
     cnvSvc()->commit();
   }
 }
-//------------------------------------------------------------------------------
-// fillObjRepackSegment
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack::RepackSubRequest* obj)
-  throw (castor::exception::Exception) {
-  // Check select statement
-  if (0 == m_selectRepackSegmentStatement) {
-    m_selectRepackSegmentStatement = createStatement(s_selectRepackSegmentStatementString);
-  }
-  // retrieve the object from the database
-  std::set<int> segmentList;
-  m_selectRepackSegmentStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectRepackSegmentStatement->executeQuery();
-  while (rset->next()) {
-    segmentList.insert(rset->getInt(1));
-  }
-  // Close ResultSet
-  delete rset;
-  // Update objects and mark old ones for deletion
-  std::vector<castor::repack::RepackSegment*> toBeDeleted;
-  for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->segment().begin();
-       it != obj->segment().end();
-       it++) {
-    std::set<int>::iterator item;
-    if ((item = segmentList.find((*it)->id())) == segmentList.end()) {
-      toBeDeleted.push_back(*it);
-    } else {
-      segmentList.erase(item);
-      cnvSvc()->updateObj((*it));
-    }
-  }
-  // Delete old objects
-  for (std::vector<castor::repack::RepackSegment*>::iterator it = toBeDeleted.begin();
-       it != toBeDeleted.end();
-       it++) {
-    obj->removeSegment(*it);
-    (*it)->setVid(0);
-  }
-  // Create new objects
-  for (std::set<int>::iterator it = segmentList.begin();
-       it != segmentList.end();
-       it++) {
-    castor::IObject* item = cnvSvc()->getObjFromId(*it);
-    castor::repack::RepackSegment* remoteObj = 
-      dynamic_cast<castor::repack::RepackSegment*>(item);
-    obj->addSegment(remoteObj);
-    remoteObj->setVid(obj);
-  }
-}
-
 //------------------------------------------------------------------------------
 // fillObjRepackRequest
 //------------------------------------------------------------------------------
@@ -382,26 +332,76 @@ void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackRequest(castor::repack
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestIDId = rset->getInt64(12);
+  u_signed64 repackrequestId = rset->getInt64(14);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
-  if (0 != obj->requestID() &&
-      (0 == requestIDId ||
-       obj->requestID()->id() != requestIDId)) {
-    obj->requestID()->removeSubRequest(obj);
-    obj->setRequestID(0);
+  if (0 != obj->repackrequest() &&
+      (0 == repackrequestId ||
+       obj->repackrequest()->id() != repackrequestId)) {
+    obj->repackrequest()->removeRepacksubrequest(obj);
+    obj->setRepackrequest(0);
   }
   // Update object or create new one
-  if (0 != requestIDId) {
-    if (0 == obj->requestID()) {
-      obj->setRequestID
+  if (0 != repackrequestId) {
+    if (0 == obj->repackrequest()) {
+      obj->setRepackrequest
         (dynamic_cast<castor::repack::RepackRequest*>
-         (cnvSvc()->getObjFromId(requestIDId)));
+         (cnvSvc()->getObjFromId(repackrequestId)));
     } else {
-      cnvSvc()->updateObj(obj->requestID());
+      cnvSvc()->updateObj(obj->repackrequest());
     }
-    obj->requestID()->addSubRequest(obj);
+    obj->repackrequest()->addRepacksubrequest(obj);
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillObjRepackSegment
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbRepackSubRequestCnv::fillObjRepackSegment(castor::repack::RepackSubRequest* obj)
+  throw (castor::exception::Exception) {
+  // Check select statement
+  if (0 == m_selectRepackSegmentStatement) {
+    m_selectRepackSegmentStatement = createStatement(s_selectRepackSegmentStatementString);
+  }
+  // retrieve the object from the database
+  std::set<int> repacksegmentList;
+  m_selectRepackSegmentStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectRepackSegmentStatement->executeQuery();
+  while (rset->next()) {
+    repacksegmentList.insert(rset->getInt(1));
+  }
+  // Close ResultSet
+  delete rset;
+  // Update objects and mark old ones for deletion
+  std::vector<castor::repack::RepackSegment*> toBeDeleted;
+  for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->repacksegment().begin();
+       it != obj->repacksegment().end();
+       it++) {
+    std::set<int>::iterator item;
+    if ((item = repacksegmentList.find((*it)->id())) == repacksegmentList.end()) {
+      toBeDeleted.push_back(*it);
+    } else {
+      repacksegmentList.erase(item);
+      cnvSvc()->updateObj((*it));
+    }
+  }
+  // Delete old objects
+  for (std::vector<castor::repack::RepackSegment*>::iterator it = toBeDeleted.begin();
+       it != toBeDeleted.end();
+       it++) {
+    obj->removeRepacksegment(*it);
+    (*it)->setRepacksubrequest(0);
+  }
+  // Create new objects
+  for (std::set<int>::iterator it = repacksegmentList.begin();
+       it != repacksegmentList.end();
+       it++) {
+    castor::IObject* item = cnvSvc()->getObjFromId(*it);
+    castor::repack::RepackSegment* remoteObj = 
+      dynamic_cast<castor::repack::RepackSegment*>(item);
+    obj->addRepacksegment(remoteObj);
+    remoteObj->setRepacksubrequest(obj);
   }
 }
 
@@ -422,7 +422,7 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(12, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(14, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -431,16 +431,18 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
     m_insertStatement->setString(1, obj->vid());
     m_insertStatement->setUInt64(2, obj->xsize());
     m_insertStatement->setInt(3, obj->status());
-    m_insertStatement->setString(4, obj->cuuid());
-    m_insertStatement->setInt(5, obj->filesMigrating());
-    m_insertStatement->setInt(6, obj->filesStaging());
-    m_insertStatement->setInt(7, obj->files());
-    m_insertStatement->setInt(8, obj->filesFailed());
+    m_insertStatement->setInt(4, obj->filesMigrating());
+    m_insertStatement->setInt(5, obj->filesStaging());
+    m_insertStatement->setInt(6, obj->files());
+    m_insertStatement->setInt(7, obj->filesFailed());
+    m_insertStatement->setString(8, obj->cuuid());
     m_insertStatement->setUInt64(9, obj->submitTime());
-    m_insertStatement->setUInt64(10, obj->filesStaged());
-    m_insertStatement->setUInt64(11, (type == OBJ_RepackRequest && obj->requestID() != 0) ? obj->requestID()->id() : 0);
+    m_insertStatement->setInt(10, obj->filesStaged());
+    m_insertStatement->setInt(11, obj->filesFailedSubmit());
+    m_insertStatement->setInt(12, obj->retryNb());
+    m_insertStatement->setUInt64(13, (type == OBJ_RepackRequest && obj->repackrequest() != 0) ? obj->repackrequest()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(12));
+    obj->setId(m_insertStatement->getUInt64(14));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -460,15 +462,17 @@ void castor::db::cnv::DbRepackSubRequestCnv::createRep(castor::IAddress* address
                     << "  vid : " << obj->vid() << std::endl
                     << "  xsize : " << obj->xsize() << std::endl
                     << "  status : " << obj->status() << std::endl
-                    << "  cuuid : " << obj->cuuid() << std::endl
                     << "  filesMigrating : " << obj->filesMigrating() << std::endl
                     << "  filesStaging : " << obj->filesStaging() << std::endl
                     << "  files : " << obj->files() << std::endl
                     << "  filesFailed : " << obj->filesFailed() << std::endl
+                    << "  cuuid : " << obj->cuuid() << std::endl
                     << "  submitTime : " << obj->submitTime() << std::endl
                     << "  filesStaged : " << obj->filesStaged() << std::endl
+                    << "  filesFailedSubmit : " << obj->filesFailedSubmit() << std::endl
+                    << "  retryNb : " << obj->retryNb() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  requestID : " << obj->requestID() << std::endl;
+                    << "  repackrequest : " << obj->repackrequest() << std::endl;
     throw ex;
   }
 }
@@ -493,14 +497,16 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateRep(castor::IAddress* address
     m_updateStatement->setString(1, obj->vid());
     m_updateStatement->setUInt64(2, obj->xsize());
     m_updateStatement->setInt(3, obj->status());
-    m_updateStatement->setString(4, obj->cuuid());
-    m_updateStatement->setInt(5, obj->filesMigrating());
-    m_updateStatement->setInt(6, obj->filesStaging());
-    m_updateStatement->setInt(7, obj->files());
-    m_updateStatement->setInt(8, obj->filesFailed());
+    m_updateStatement->setInt(4, obj->filesMigrating());
+    m_updateStatement->setInt(5, obj->filesStaging());
+    m_updateStatement->setInt(6, obj->files());
+    m_updateStatement->setInt(7, obj->filesFailed());
+    m_updateStatement->setString(8, obj->cuuid());
     m_updateStatement->setUInt64(9, obj->submitTime());
-    m_updateStatement->setUInt64(10, obj->filesStaged());
-    m_updateStatement->setUInt64(11, obj->id());
+    m_updateStatement->setInt(10, obj->filesStaged());
+    m_updateStatement->setInt(11, obj->filesFailedSubmit());
+    m_updateStatement->setInt(12, obj->retryNb());
+    m_updateStatement->setUInt64(13, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -586,14 +592,16 @@ castor::IObject* castor::db::cnv::DbRepackSubRequestCnv::createObj(castor::IAddr
     object->setVid(rset->getString(1));
     object->setXsize(rset->getUInt64(2));
     object->setStatus(rset->getInt(3));
-    object->setCuuid(rset->getString(4));
-    object->setFilesMigrating(rset->getInt(5));
-    object->setFilesStaging(rset->getInt(6));
-    object->setFiles(rset->getInt(7));
-    object->setFilesFailed(rset->getInt(8));
+    object->setFilesMigrating(rset->getInt(4));
+    object->setFilesStaging(rset->getInt(5));
+    object->setFiles(rset->getInt(6));
+    object->setFilesFailed(rset->getInt(7));
+    object->setCuuid(rset->getString(8));
     object->setSubmitTime(rset->getUInt64(9));
-    object->setFilesStaged(rset->getUInt64(10));
-    object->setId(rset->getUInt64(11));
+    object->setFilesStaged(rset->getInt(10));
+    object->setFilesFailedSubmit(rset->getInt(11));
+    object->setRetryNb(rset->getInt(12));
+    object->setId(rset->getUInt64(13));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -634,14 +642,16 @@ void castor::db::cnv::DbRepackSubRequestCnv::updateObj(castor::IObject* obj)
     object->setVid(rset->getString(1));
     object->setXsize(rset->getUInt64(2));
     object->setStatus(rset->getInt(3));
-    object->setCuuid(rset->getString(4));
-    object->setFilesMigrating(rset->getInt(5));
-    object->setFilesStaging(rset->getInt(6));
-    object->setFiles(rset->getInt(7));
-    object->setFilesFailed(rset->getInt(8));
+    object->setFilesMigrating(rset->getInt(4));
+    object->setFilesStaging(rset->getInt(5));
+    object->setFiles(rset->getInt(6));
+    object->setFilesFailed(rset->getInt(7));
+    object->setCuuid(rset->getString(8));
     object->setSubmitTime(rset->getUInt64(9));
-    object->setFilesStaged(rset->getUInt64(10));
-    object->setId(rset->getUInt64(11));
+    object->setFilesStaged(rset->getInt(10));
+    object->setFilesFailedSubmit(rset->getInt(11));
+    object->setRetryNb(rset->getInt(12));
+    object->setId(rset->getUInt64(13));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

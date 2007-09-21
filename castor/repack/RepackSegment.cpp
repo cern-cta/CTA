@@ -41,22 +41,22 @@
 //------------------------------------------------------------------------------
 castor::repack::RepackSegment::RepackSegment() throw() :
   m_fileid(0),
-  m_compression(0),
   m_segsize(0),
+  m_compression(0),
   m_filesec(0),
   m_copyno(0),
   m_blockid(0),
   m_fileseq(0),
   m_id(0),
-  m_vid(0) {
+  m_repacksubrequest(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackSegment::~RepackSegment() throw() {
-  if (0 != m_vid) {
-    m_vid->removeSegment(this);
+  if (0 != m_repacksubrequest) {
+    m_repacksubrequest->removeRepacksegment(this);
   }
 }
 
@@ -74,17 +74,17 @@ void castor::repack::RepackSegment::print(std::ostream& stream,
   }
   // Output of all members
   stream << indent << "fileid : " << m_fileid << std::endl;
-  stream << indent << "compression : " << m_compression << std::endl;
   stream << indent << "segsize : " << m_segsize << std::endl;
+  stream << indent << "compression : " << m_compression << std::endl;
   stream << indent << "filesec : " << m_filesec << std::endl;
   stream << indent << "copyno : " << m_copyno << std::endl;
   stream << indent << "blockid : " << m_blockid << std::endl;
   stream << indent << "fileseq : " << m_fileseq << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Vid : " << std::endl;
-  if (0 != m_vid) {
-    m_vid->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "Repacksubrequest : " << std::endl;
+  if (0 != m_repacksubrequest) {
+    m_repacksubrequest->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

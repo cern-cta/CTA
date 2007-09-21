@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.28 $ $Release$ 
- * $Date: 2007/08/07 15:09:05 $ $Author: waldron $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.29 $ $Release$ 
+ * $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
  *
  *
  *
@@ -100,7 +100,7 @@ std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRe
   std::vector<RepackSegment*>::iterator iterseg;
   /** pointer to vector of all Segments */
   std::vector<u_signed64>* parentlist = new std::vector<u_signed64>();
-  vecsize = subreq->segment().size();
+  vecsize = subreq->repacksegment().size();
   
   /** get the cuuid from RepackSubRequest for DLF logging */
   Cuuid_t cuuid;
@@ -108,8 +108,8 @@ std::vector<u_signed64>* FileListHelper::getFileList(castor::repack::RepackSubRe
 
   if ( vecsize > 0 ) {
     /** make up a new list with all parent_fileids */
-    iterseg=subreq->segment().begin();
-    while ( iterseg!=subreq->segment().end() ) {
+    iterseg=subreq->repacksegment().begin();
+    while ( iterseg!=subreq->repacksegment().end() ) {
       parentlist->push_back( (*iterseg)->fileid() );
       iterseg++;
     }
@@ -172,7 +172,7 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       if (dtp->s_status == 'D') continue;
       
       RepackSegment* rseg= new RepackSegment();
-      rseg->setVid(subreq);
+      rseg->setRepacksubrequest(subreq);
       rseg->setFileid(dtp->fileid);
       rseg->setFilesec(dtp->fsec);
       rseg->setCompression(dtp->compression);
@@ -186,7 +186,7 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       total_blockid = total_blockid | (dtp->blockid[1] * 0x100);
       total_blockid = total_blockid | (dtp->blockid[0] * 0x1);
       rseg->setBlockid(total_blockid);
-      subreq->addSegment(rseg);
+      subreq->addRepacksegment(rseg);
       
       segs_size += dtp->segsize;
       flags = CNS_LIST_CONTINUE;
@@ -197,7 +197,7 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
          
       castor::dlf::Param params[] =
       {castor::dlf::Param("Vid", subreq->vid()),
-       castor::dlf::Param("Segments", subreq->segment().size()),
+       castor::dlf::Param("Segments", subreq->repacksegment().size()),
        castor::dlf::Param("DiskSpace", subreq->xsize())};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 3, params);
       

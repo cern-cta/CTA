@@ -70,7 +70,7 @@ void RepackCleaner::run(void* param) {
       }
       //m_dbhelper->unlock();
       cuuid = nullCuuid;
-      freeRepackObj(tape->requestID()); 
+      freeRepackObj(tape->repackrequest()); 
       tape = NULL;
     }
     
@@ -170,7 +170,7 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
   std::vector<castor::rh::Response *>respvec;
   castor::client::VectorResponseHandler rh(&respvec);
   reqh.setOptions(&opts);
-  client.setAuthorizationId(sreq->requestID()->userid(), sreq->requestID()->groupid());
+  client.setAuthorizationId(sreq->repackrequest()->uid(), sreq->repackrequest()->gid());
   client.sendRequest(&req,&rh); 
 
   /** we ignore the results from the stager */

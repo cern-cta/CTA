@@ -50,7 +50,7 @@ castor::repack::RepackAck::RepackAck() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackAck::~RepackAck() throw() {
-  m_requestVector.clear();
+  m_repackrequestVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -71,11 +71,11 @@ void castor::repack::RepackAck::print(std::ostream& stream,
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
-    stream << indent << "Request : " << std::endl;
+    stream << indent << "Repackrequest : " << std::endl;
     int i;
     std::vector<RepackRequest*>::const_iterator it;
-    for (it = m_requestVector.begin(), i = 0;
-         it != m_requestVector.end();
+    for (it = m_repackrequestVector.begin(), i = 0;
+         it != m_repackrequestVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

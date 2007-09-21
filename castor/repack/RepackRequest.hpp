@@ -102,7 +102,6 @@ namespace castor {
       /*********************************/
       /**
        * Get the value of m_machine
-       * The machine name from which the request is send.
        * @return the value of m_machine
        */
       std::string machine() const {
@@ -111,7 +110,6 @@ namespace castor {
 
       /**
        * Set the value of m_machine
-       * The machine name from which the request is send.
        * @param new_var the new value of m_machine
        */
       void setMachine(std::string new_var) {
@@ -120,7 +118,6 @@ namespace castor {
 
       /**
        * Get the value of m_userName
-       * The username of the user, who submits the request.
        * @return the value of m_userName
        */
       std::string userName() const {
@@ -129,7 +126,6 @@ namespace castor {
 
       /**
        * Set the value of m_userName
-       * The username of the user, who submits the request.
        * @param new_var the new value of m_userName
        */
       void setUserName(std::string new_var) {
@@ -138,7 +134,6 @@ namespace castor {
 
       /**
        * Get the value of m_creationTime
-       * The creation time of the request
        * @return the value of m_creationTime
        */
       u_signed64 creationTime() const {
@@ -147,67 +142,10 @@ namespace castor {
 
       /**
        * Set the value of m_creationTime
-       * The creation time of the request
        * @param new_var the new value of m_creationTime
        */
       void setCreationTime(u_signed64 new_var) {
         m_creationTime = new_var;
-      }
-
-      /**
-       * Get the value of m_serviceclass
-       * The service class to where the file have to be written. It is not possible to
-       * specify directly the target tapes or tapepools. By default, the files are
-       * written to the tapepool belonging to the repack service class specified in the
-       * castor config file.
-       * @return the value of m_serviceclass
-       */
-      std::string serviceclass() const {
-        return m_serviceclass;
-      }
-
-      /**
-       * Set the value of m_serviceclass
-       * The service class to where the file have to be written. It is not possible to
-       * specify directly the target tapes or tapepools. By default, the files are
-       * written to the tapepool belonging to the repack service class specified in the
-       * castor config file.
-       * @param new_var the new value of m_serviceclass
-       */
-      void setServiceclass(std::string new_var) {
-        m_serviceclass = new_var;
-      }
-
-      /**
-       * Get the value of m_pid
-       * @return the value of m_pid
-       */
-      u_signed64 pid() const {
-        return m_pid;
-      }
-
-      /**
-       * Set the value of m_pid
-       * @param new_var the new value of m_pid
-       */
-      void setPid(u_signed64 new_var) {
-        m_pid = new_var;
-      }
-
-      /**
-       * Get the value of m_command
-       * @return the value of m_command
-       */
-      int command() const {
-        return m_command;
-      }
-
-      /**
-       * Set the value of m_command
-       * @param new_var the new value of m_command
-       */
-      void setCommand(int new_var) {
-        m_command = new_var;
       }
 
       /**
@@ -227,6 +165,54 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_pid
+       * @return the value of m_pid
+       */
+      u_signed64 pid() const {
+        return m_pid;
+      }
+
+      /**
+       * Set the value of m_pid
+       * @param new_var the new value of m_pid
+       */
+      void setPid(u_signed64 new_var) {
+        m_pid = new_var;
+      }
+
+      /**
+       * Get the value of m_svcclass
+       * @return the value of m_svcclass
+       */
+      std::string svcclass() const {
+        return m_svcclass;
+      }
+
+      /**
+       * Set the value of m_svcclass
+       * @param new_var the new value of m_svcclass
+       */
+      void setSvcclass(std::string new_var) {
+        m_svcclass = new_var;
+      }
+
+      /**
+       * Get the value of m_command
+       * @return the value of m_command
+       */
+      int command() const {
+        return m_command;
+      }
+
+      /**
+       * Set the value of m_command
+       * @param new_var the new value of m_command
+       */
+      void setCommand(int new_var) {
+        m_command = new_var;
+      }
+
+      /**
        * Get the value of m_stager
        * @return the value of m_stager
        */
@@ -243,35 +229,51 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_userid
-       * @return the value of m_userid
+       * Get the value of m_uid
+       * @return the value of m_uid
        */
-      u_signed64 userid() const {
-        return m_userid;
+      int uid() const {
+        return m_uid;
       }
 
       /**
-       * Set the value of m_userid
-       * @param new_var the new value of m_userid
+       * Set the value of m_uid
+       * @param new_var the new value of m_uid
        */
-      void setUserid(u_signed64 new_var) {
-        m_userid = new_var;
+      void setUid(int new_var) {
+        m_uid = new_var;
       }
 
       /**
-       * Get the value of m_groupid
-       * @return the value of m_groupid
+       * Get the value of m_gid
+       * @return the value of m_gid
        */
-      u_signed64 groupid() const {
-        return m_groupid;
+      int gid() const {
+        return m_gid;
       }
 
       /**
-       * Set the value of m_groupid
-       * @param new_var the new value of m_groupid
+       * Set the value of m_gid
+       * @param new_var the new value of m_gid
        */
-      void setGroupid(u_signed64 new_var) {
-        m_groupid = new_var;
+      void setGid(int new_var) {
+        m_gid = new_var;
+      }
+
+      /**
+       * Get the value of m_retryMax
+       * @return the value of m_retryMax
+       */
+      int retryMax() const {
+        return m_retryMax;
+      }
+
+      /**
+       * Set the value of m_retryMax
+       * @param new_var the new value of m_retryMax
+       */
+      void setRetryMax(int new_var) {
+        m_retryMax = new_var;
       }
 
       /**
@@ -293,64 +295,62 @@ namespace castor {
       }
 
       /**
-       * Add a RepackSubRequest* object to the m_subRequestVector list
+       * Add a RepackSubRequest* object to the m_repacksubrequestVector list
        */
-      void addSubRequest(RepackSubRequest* add_object) {
-        m_subRequestVector.push_back(add_object);
+      void addRepacksubrequest(RepackSubRequest* add_object) {
+        m_repacksubrequestVector.push_back(add_object);
       }
 
       /**
-       * Remove a RepackSubRequest* object from m_subRequestVector
+       * Remove a RepackSubRequest* object from m_repacksubrequestVector
        */
-      void removeSubRequest(RepackSubRequest* remove_object) {
-        for (unsigned int i = 0; i < m_subRequestVector.size(); i++) {
-          RepackSubRequest* item = m_subRequestVector[i];
+      void removeRepacksubrequest(RepackSubRequest* remove_object) {
+        for (unsigned int i = 0; i < m_repacksubrequestVector.size(); i++) {
+          RepackSubRequest* item = m_repacksubrequestVector[i];
           if (item == remove_object) {
-            std::vector<RepackSubRequest*>::iterator it = m_subRequestVector.begin() + i;
-            m_subRequestVector.erase(it);
+            std::vector<RepackSubRequest*>::iterator it = m_repacksubrequestVector.begin() + i;
+            m_repacksubrequestVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of RepackSubRequest* objects held by m_subRequestVector
-       * @return list of RepackSubRequest* objects held by m_subRequestVector
+       * Get the list of RepackSubRequest* objects held by m_repacksubrequestVector
+       * @return list of RepackSubRequest* objects held by m_repacksubrequestVector
        */
-      std::vector<RepackSubRequest*>& subRequest() {
-        return m_subRequestVector;
+      std::vector<RepackSubRequest*>& repacksubrequest() {
+        return m_repacksubrequestVector;
       }
 
     private:
 
-      /// The machine name from which the request is send.
       std::string m_machine;
 
-      /// The username of the user, who submits the request.
       std::string m_userName;
 
-      /// The creation time of the request
       u_signed64 m_creationTime;
-
-      /// The service class to where the file have to be written. It is not possible to specify directly the target tapes or tapepools. By default, the files are written to the tapepool belonging to the repack service class specified in the castor config file.
-      std::string m_serviceclass;
-
-      u_signed64 m_pid;
-
-      int m_command;
 
       std::string m_pool;
 
+      u_signed64 m_pid;
+
+      std::string m_svcclass;
+
+      int m_command;
+
       std::string m_stager;
 
-      u_signed64 m_userid;
+      int m_uid;
 
-      u_signed64 m_groupid;
+      int m_gid;
+
+      int m_retryMax;
 
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<RepackSubRequest*> m_subRequestVector;
+      std::vector<RepackSubRequest*> m_repacksubrequestVector;
 
     }; /* end of class RepackRequest */
 

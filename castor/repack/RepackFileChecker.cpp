@@ -82,7 +82,7 @@ void RepackFileChecker::run(void* param) throw(){
       /** get the Segs for this tape  */
       m_filehelper.getFileListSegs(sreq);
       /** check, if we got something back */
-      if ( sreq->segment().size() == 0 ){
+      if ( sreq->repacksegment().size() == 0 ){
         castor::dlf::Param params[] =
         {castor::dlf::Param("VID", sreq->vid())};
         castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 39, 1, params);
@@ -97,7 +97,7 @@ void RepackFileChecker::run(void* param) throw(){
           return, because a message was written to DLF. */
       if ( checkMultiRepack(sreq) == -1 ) return; 
       
-      sreq->setFiles(sreq->segment().size());
+      sreq->setFiles(sreq->repacksegment().size());
       sreq->setStatus(SUBREQUEST_TOBESTAGED);
       m_dbhelper->updateSubRequest(sreq,true, cuuid);
       stage_trace(3,"Found %d files, RepackSubRequest for Tape %s ready for Staging ",sreq->files(),(char*)sreq->vid().c_str());
@@ -119,7 +119,7 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
                                              throw (castor::exception::Exception)
 {
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  std::vector<RepackSegment*>::iterator segment = sreq->segment().begin();
+  std::vector<RepackSegment*>::iterator segment = sreq->repacksegment().begin();
   RepackSegment* retSeg = NULL;
 
   /** for stager request */
@@ -137,7 +137,7 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
 
   memset(&fileid, '\0', sizeof(Cns_fileid));
   try {
-    while ( segment != sreq->segment().end() ) {
+    while ( segment != sreq->repacksegment().end() ) {
       retSeg = m_dbhelper->getTapeCopy( (*segment) );
 
       /**  we only check, if we got an answer from the DB */
@@ -147,7 +147,7 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
             same TapeCopy on 2 Tapes */
         if ( retSeg->copyno() == (*segment)->copyno() ){
           castor::dlf::Param params[] =
-          {castor::dlf::Param("Existing", retSeg->vid()->vid() ),
+          {castor::dlf::Param("Existing", retSeg->repacksubrequest()->vid() ),
           castor::dlf::Param("To be added", sreq->vid() )};
           castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 37, 2, params);
           /// TODO: IF this error occurs, the subreques MUST be set to an invalid status
@@ -188,11 +188,11 @@ int RepackFileChecker::checkMultiRepack(RepackSubRequest* sreq)
             /** Give a message that the existing file has to be removed first */
             castor::dlf::Param params[] =
             {castor::dlf::Param("CopyNo", retSeg->copyno() ),
-            castor::dlf::Param("Existing Tape", retSeg->vid()->vid()),
+            castor::dlf::Param("Existing Tape", retSeg->repacksubrequest()->vid()),
             castor::dlf::Param("To be added Tape", sreq->vid())};
             castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 45, 3, params, &fileid);
             /** the file is remove from list, if invalid */
-            sreq->removeSegment((*segment));
+            sreq->removeRepacksegment((*segment));
             segment--; /// removeSegment sets the pointer already to the next one.
           }
           free_filequery_resp(responses,nbresps );

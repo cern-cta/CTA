@@ -47,10 +47,10 @@ namespace castor {
       if ( obj->type() == OBJ_RepackRequest)
       {
         RepackRequest* tmp = dynamic_cast<RepackRequest*>(obj);
-        for (unsigned int i=0;i<tmp->subRequest().size(); i++){
-          freeRepackSubRequest( tmp->subRequest().at(i) );
+        for (unsigned int i=0;i<tmp->repacksubrequest().size(); i++){
+          freeRepackSubRequest( tmp->repacksubrequest().at(i) );
         }
-        tmp->subRequest().clear();
+        tmp->repacksubrequest().clear();
         delete tmp;
       }
       else if ( obj->type() == OBJ_RepackSubRequest) {
@@ -68,10 +68,10 @@ namespace castor {
   void freeRepackSubRequest(castor::repack::RepackSubRequest* obj)
   {
     if ( obj != NULL ) {
-      for (unsigned int i=0;i<obj->segment().size(); i++){
-        delete obj->segment().at(i);
+      for (unsigned int i=0;i<obj->repacksegment().size(); i++){
+        delete obj->repacksegment().at(i);
       }
-      obj->segment().clear();
+      obj->repacksegment().clear();
       delete obj;
       obj = NULL;
     }
@@ -91,9 +91,9 @@ namespace castor {
     }
     
     /// retrieve the information from RepackSubRequest
-    if ( sreq->requestID() != NULL ) {
-      opts->service_class = (char*)sreq->requestID()->serviceclass().c_str();
-      opts->stage_host = (char*)sreq->requestID()->stager().c_str();
+    if ( sreq->repackrequest() != NULL ) {
+      opts->service_class = (char*)sreq->repackrequest()->svcclass().c_str();
+      opts->stage_host = (char*)sreq->repackrequest()->stager().c_str();
       opts->stage_port = opts->stage_port = DEFAULT_STAGER_PORT;
       opts->stage_version = 0;
     }

@@ -151,32 +151,32 @@ namespace castor {
       }
 
       /**
-       * Add a RepackRequest* object to the m_requestVector list
+       * Add a RepackRequest* object to the m_repackrequestVector list
        */
-      void addRequest(RepackRequest* add_object) {
-        m_requestVector.push_back(add_object);
+      void addRepackrequest(RepackRequest* add_object) {
+        m_repackrequestVector.push_back(add_object);
       }
 
       /**
-       * Remove a RepackRequest* object from m_requestVector
+       * Remove a RepackRequest* object from m_repackrequestVector
        */
-      void removeRequest(RepackRequest* remove_object) {
-        for (unsigned int i = 0; i < m_requestVector.size(); i++) {
-          RepackRequest* item = m_requestVector[i];
+      void removeRepackrequest(RepackRequest* remove_object) {
+        for (unsigned int i = 0; i < m_repackrequestVector.size(); i++) {
+          RepackRequest* item = m_repackrequestVector[i];
           if (item == remove_object) {
-            std::vector<RepackRequest*>::iterator it = m_requestVector.begin() + i;
-            m_requestVector.erase(it);
+            std::vector<RepackRequest*>::iterator it = m_repackrequestVector.begin() + i;
+            m_repackrequestVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of RepackRequest* objects held by m_requestVector
-       * @return list of RepackRequest* objects held by m_requestVector
+       * Get the list of RepackRequest* objects held by m_repackrequestVector
+       * @return list of RepackRequest* objects held by m_repackrequestVector
        */
-      std::vector<RepackRequest*>& request() {
-        return m_requestVector;
+      std::vector<RepackRequest*>& repackrequest() {
+        return m_repackrequestVector;
       }
 
     private:
@@ -188,7 +188,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<RepackRequest*> m_requestVector;
+      std::vector<RepackRequest*> m_repackrequestVector;
 
     }; /* end of class RepackAck */
 

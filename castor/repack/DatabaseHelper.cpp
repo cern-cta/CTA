@@ -170,8 +170,8 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
       svcs()->fillRep(&ad, rreq, OBJ_RepackSubRequest, false);	//and fill it
 
       // we must not forget the segments
-      for (unsigned int  i = 0; i < rreq->subRequest().size(); i++){
-	svcs()->fillRep(&ad, rreq->subRequest().at(i), OBJ_RepackSegment, false);
+      for (unsigned int  i = 0; i < rreq->repacksubrequest().size(); i++){
+	svcs()->fillRep(&ad, rreq->repacksubrequest().at(i), OBJ_RepackSegment, false);
       }
       svcs()->commit(&ad);
     
@@ -329,8 +329,8 @@ void castor::repack::DatabaseHelper::updateSubRequest(
         svcs()->fillRep(&ad, obj, OBJ_RepackSegment, false);
     }
     else {
-        for (unsigned int  i = 0; i < obj->segment().size(); i++)
-          svcs()->updateRep(&ad, obj->segment().at(i), false);
+        for (unsigned int  i = 0; i < obj->repacksegment().size(); i++)
+          svcs()->updateRep(&ad, obj->repacksegment().at(i), false);
     }
     svcs()->commit(&ad);
   /// Exception handling
@@ -503,7 +503,7 @@ castor::repack::RepackSubRequest*
     /// if it is an excpetion in getsubRequest, we don't care (done by the method)
     /// fillObj for RepackRequest - ok, nothing to do.because the obj was not filled
     /// fillObj for RepackSegment - free from the top of the hierachy (RepackRequest)
-    if ( result && result->requestID()) freeRepackObj(result->requestID());
+    if ( result && result->repackrequest()) freeRepackObj(result->repackrequest());
     if ( rset ) delete rset;
 
     //if ( m_selectCheckSubRequestStatement) delete m_selectCheckSubRequestStatement;
@@ -750,7 +750,7 @@ castor::repack::RepackSegment*
       result->setCopyno(rset->getInt(6));
       /* get the SubRequest and Request */
       cnvSvc()->fillObj(&ad,result,OBJ_RepackSubRequest,true);
-      cnvSvc()->fillObj(&ad, result->vid(), OBJ_RepackRequest, true);
+      cnvSvc()->fillObj(&ad, result->repacksubrequest(), OBJ_RepackRequest, true);
     }
     delete rset;
   }catch (castor::exception::SQLError e) {
@@ -806,5 +806,5 @@ castor::repack::RepackRequest*
 		<< std::endl << e.getMessage().str();
 		throw ex;
   }
-  return  (result==NULL)? NULL:(result->requestID());
+  return  (result==NULL)? NULL:(result->repackrequest());
 }

@@ -17,20 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackServer.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/08/21 15:57:47 $ $Author: itglp $
  *
  *
- *
- * @author Felix Ehm 
+ * @author CastorDev 
  *****************************************************************************/
 
 // Include Files
 #include "castor/repack/RepackServer.hpp"
-#include "castor/db/DbParamsSvc.hpp"
-#include "castor/Constants.hpp"
 
-// hardcoded schema version of the Repack database
-const std::string REPACKSCHEMAVERSION = "2_1_4_0";
+
+
 
 
 //------------------------------------------------------------------------------
@@ -42,7 +38,7 @@ int main(int argc, char *argv[]) {
 
     castor::repack::RepackServer server;
 	
-    // The Repack Worker Instance
+    /// The Repack Worker Instance
     server.addThreadPool(
       new castor::server::TCPListenerThreadPool("Worker", 
                                               new castor::repack::RepackWorker(&server),
@@ -50,21 +46,21 @@ int main(int argc, char *argv[]) {
                                             ));
 	  server.getThreadPool('W')->setNbThreads(1);
 	
-    // The Repack File Checker
+    /// The Repack File Checker
     server.addThreadPool(
       new castor::server::SignalThreadPool("checker",
                                             new castor::repack::RepackFileChecker(&server)
                                              ));
     server.getThreadPool('c')->setNbThreads(1);
 
-    // The Repack File Stager Instance
+    /// The Repack File Stager Instance
     server.addThreadPool(
       new castor::server::SignalThreadPool("Stager", 
                                             new castor::repack::RepackFileStager(&server)
                                           ));
 	  server.getThreadPool('S')->setNbThreads(1);
 
-    // The Repack Monitor Instance (only 1 !)
+    /// The Repack Monitor Instance (only 1 !)
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Monitor", 
                                             new castor::repack::RepackMonitor(&server),
@@ -73,7 +69,7 @@ int main(int argc, char *argv[]) {
                                           ));
 	  server.getThreadPool('M')->setNbThreads(1);
     
-    // The Repack Cleaner
+    /// The Repack Cleaner
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Cleaner",
                                             new castor::repack::RepackCleaner(&server),
@@ -82,35 +78,25 @@ int main(int argc, char *argv[]) {
                                           ));
 	  server.getThreadPool('C')->setNbThreads(1);
 
-    // Read the command line parameters
+    /// Read the command line parameters
     server.parseCommandLine(argc, argv);
-    
-    // Create a db parameters service and fill with appropriate defaults
-    castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
-    castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
-    if(params == 0) {
-      castor::exception::Internal e;
-      e.getMessage() << "Could not instantiate the parameters service";
-      throw e;
-    }
-    params->setSchemaVersion(REPACKSCHEMAVERSION);
-    params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
 
-    // Start the Repack Server
+    /// Start the Repack Server
     server.start();
 
+
     }
-    catch (castor::exception::Exception e) {
+     catch (castor::exception::Exception e) {
       		std::cerr << "Caught castor exception : "
        		<< sstrerror(e.code()) << std::endl
        		<< e.getMessage().str() << std::endl;
-    }
-    catch (...) {
+     }
+     catch (...) {
        	std::cerr << "Caught general exception!" << std::endl;
        	return 1;
-    }
+     }
 
-    return 0;
+     return 0;
 }
 
 //------------------------------------------------------------------------------

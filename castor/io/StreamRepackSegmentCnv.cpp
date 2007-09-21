@@ -89,8 +89,8 @@ void castor::io::StreamRepackSegmentCnv::createRep(castor::IAddress* address,
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
   ad->stream() << obj->fileid();
-  ad->stream() << obj->compression();
   ad->stream() << obj->segsize();
+  ad->stream() << obj->compression();
   ad->stream() << obj->filesec();
   ad->stream() << obj->copyno();
   ad->stream() << obj->blockid();
@@ -111,13 +111,13 @@ castor::IObject* castor::io::StreamRepackSegmentCnv::createObj(castor::IAddress*
   u_signed64 fileid;
   ad->stream() >> fileid;
   object->setFileid(fileid);
-  int compression;
-  ad->stream() >> compression;
-  object->setCompression(compression);
   u_signed64 segsize;
   ad->stream() >> segsize;
   object->setSegsize(segsize);
-  u_signed64 filesec;
+  int compression;
+  ad->stream() >> compression;
+  object->setCompression(compression);
+  int filesec;
   ad->stream() >> filesec;
   object->setFilesec(filesec);
   int copyno;
@@ -152,7 +152,7 @@ void castor::io::StreamRepackSegmentCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->vid(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->repacksubrequest(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -173,8 +173,8 @@ castor::IObject* castor::io::StreamRepackSegmentCnv::unmarshalObject(castor::io:
   castor::repack::RepackSegment* obj = 
     dynamic_cast<castor::repack::RepackSegment*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objVid = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setVid(dynamic_cast<castor::repack::RepackSubRequest*>(objVid));
+  castor::IObject* objRepacksubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRepacksubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objRepacksubrequest));
   return object;
 }
 

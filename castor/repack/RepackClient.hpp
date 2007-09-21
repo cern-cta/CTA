@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
  *
  * The Repack Client. This is the client part of the repack project, which just
  * sends and Request to the server. One Request can have serveral tapes 
@@ -55,6 +55,7 @@ namespace castor {
       char* vid;
       char* pool;
       int command;
+      int retryMax;
       char* serviceclass;
       char* stager;
     };

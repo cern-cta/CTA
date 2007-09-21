@@ -238,22 +238,22 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
-        /// SQL select statement for member subRequest
+        /// SQL select statement for member repacksubrequest
         static const std::string s_selectRepackSubRequestStatementString;
 
-        /// SQL select statement object for member subRequest
+        /// SQL select statement object for member repacksubrequest
         castor::db::IDbStatement *m_selectRepackSubRequestStatement;
 
-        /// SQL delete statement for member subRequest
+        /// SQL delete statement for member repacksubrequest
         static const std::string s_deleteRepackSubRequestStatementString;
 
-        /// SQL delete statement object for member subRequest
+        /// SQL delete statement object for member repacksubrequest
         castor::db::IDbStatement *m_deleteRepackSubRequestStatement;
 
-        /// SQL remote update statement for member subRequest
+        /// SQL remote update statement for member repacksubrequest
         static const std::string s_remoteUpdateRepackSubRequestStatementString;
 
-        /// SQL remote update statement object for member subRequest
+        /// SQL remote update statement object for member repacksubrequest
         castor::db::IDbStatement *m_remoteUpdateRepackSubRequestStatement;
 
       }; // end of class DbRepackRequestCnv

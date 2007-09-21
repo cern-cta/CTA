@@ -238,16 +238,16 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
-        /// SQL checkExist statement for member vid
+        /// SQL checkExist statement for member repacksubrequest
         static const std::string s_checkRepackSubRequestExistStatementString;
 
-        /// SQL checkExist statement object for member vid
+        /// SQL checkExist statement object for member repacksubrequest
         castor::db::IDbStatement *m_checkRepackSubRequestExistStatement;
 
-        /// SQL update statement for member vid
+        /// SQL update statement for member repacksubrequest
         static const std::string s_updateRepackSubRequestStatementString;
 
-        /// SQL update statement object for member vid
+        /// SQL update statement object for member repacksubrequest
         castor::db::IDbStatement *m_updateRepackSubRequestStatement;
 
       }; // end of class DbRepackSegmentCnv

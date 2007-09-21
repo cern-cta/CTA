@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/03/20 08:11:23 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -97,6 +97,7 @@ RepackClient::RepackClient()
   cp.pool = NULL;
   cp.serviceclass = NULL;
   cp.stager = NULL ;
+  cp.retryMax = -1;
 
   svc = svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
   if (0 == svc) {
@@ -123,7 +124,7 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "o:a:AS:sR:V:P:r:hx:";
+  const char* cmdParams = "o:a:AS:sR:V:P:r:hx:m:";
   if (argc == 1){
     return false;
   }
@@ -144,6 +145,7 @@ bool RepackClient::parseInput(int argc, char** argv)
     {"archiveAll", NO_ARGUMENT, NULL, 'A'},
     {"details", REQUIRED_ARGUMENT, 0, 'x'},
     {"help", NO_ARGUMENT,NULL, 'h' },
+    {"retryMax", REQUIRED_ARGUMENT, 0, 'm'},
     {NULL, 0, NULL, 0}
   };
 
@@ -196,6 +198,10 @@ bool RepackClient::parseInput(int argc, char** argv)
       cp.command = ARCHIVE_ALL;
       return true;
       break;
+   case 'm':
+      cp.retryMax=atoi(Coptarg);
+      return true;
+      break;
     }
   }
   if ( (cp.command == GET_STATUS || cp.command == ARCHIVE) && cp.vid == NULL ) return false; 
@@ -224,8 +230,9 @@ void RepackClient::usage()
 		  << " repack -A " 
                   << "   (to archive all  tapes finished)" << std::endl
 		  << " repack -h " 
-		  << "   (to have more information about the client)" << std::endl<< std::endl;
-
+		  << "   (to have more information about the client)" << std::endl<< std::endl
+	          << " repack -m num " 
+		  << "   (to set the number of retry in case of failure of the request (default is one))" << std::endl<< std::endl;
 }
 
 
@@ -265,8 +272,8 @@ int RepackClient::addTapes(RepackRequest *rreq)
 	  for (vid = strtok (cp.vid, ":"); vid;  vid = strtok (NULL, ":")) {
 	  	RepackSubRequest *sreq = new RepackSubRequest();
 	  	sreq->setVid(vid);
-	  	sreq->setRequestID(rreq);
-	  	rreq->addSubRequest(sreq);
+	  	sreq->setRepackrequest(rreq);
+	  	rreq->addRepacksubrequest(sreq);
 	  }
 	  return 0;
 	}	
@@ -316,7 +323,7 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   
   /* or, we want to repack a pool */
   if ( cp.pool != NULL ) {
-  	if ( !rreq->subRequest().size() )
+  	if ( !rreq->repacksubrequest().size() )
        rreq->setPool(cp.pool);
     else
     {
@@ -330,13 +337,13 @@ castor::repack::RepackRequest* RepackClient::buildRequest() throw ()
   
   rreq->setPid(getpid());
   rreq->setUserName(pw->pw_name);
-  rreq->setUserid((u_signed64)pw->pw_uid);
-  rreq->setGroupid((u_signed64)pw->pw_gid);
+  rreq->setUid((u_signed64)pw->pw_uid);
+  rreq->setGid((u_signed64)pw->pw_gid);
   rreq->setCreationTime(time(NULL));
   rreq->setMachine(cName);
-
+  rreq->setRetryMax(cp.retryMax != -1 ? cp.retryMax : 1);
   
-  if ( cp.serviceclass != NULL ) rreq->setServiceclass(cp.serviceclass);
+  if ( cp.serviceclass != NULL ) rreq->setSvcclass(cp.serviceclass);
   return rreq;
   
 }
@@ -398,8 +405,8 @@ void RepackClient::handleResponse(RepackAck* ack) {
     return;
   }
 
-  if ( ack->request().size() > 0 ){
-    RepackRequest* rreq = ack->request().at(0);
+  if ( ack->repackrequest().size() > 0 ){
+    RepackRequest* rreq = ack->repackrequest().at(0);
     std::cout << "===============================================================================================================" 
               << std::endl;
 
@@ -419,9 +426,9 @@ void RepackClient::handleResponse(RepackAck* ack) {
     switch ( rreq->command() ){
       case GET_STATUS :
        creation_time = (long)rreq->creationTime();
-       submit_time = (long)rreq->subRequest().at(0)->submitTime();
+       submit_time = (long)rreq->repacksubrequest().at(0)->submitTime();
        struct passwd *pw;
-       pw = Cgetpwuid((uid_t)rreq->userid());
+       pw = Cgetpwuid((uid_t)rreq->uid());
        std::cout << 
         "Details for Request created on " << ctime (&creation_time) <<  std::endl ;
 
@@ -437,12 +444,12 @@ void RepackClient::handleResponse(RepackAck* ack) {
 	<< std::endl <<
         std::setw(30) << std::left << rreq->machine() <<
         std::setw(10) << std::left <<  pw->pw_name << 
-        std::setw(20) << std::left << rreq->serviceclass()
+        std::setw(20) << std::left << rreq->svcclass()
         << std::left << rreq->stager()
         << std::endl << std::endl;
-        sreq = rreq->subRequest().begin();
+        sreq = rreq->repacksubrequest().begin();
 
-        while ( sreq != rreq->subRequest().end() ){
+        while ( sreq != rreq->repacksubrequest().end() ){
           std::cout << "===============================================================================================================" << std::endl;
           printTapeDetail((*sreq));
           std::cout << "===============================================================================================================" << std::endl;
@@ -450,10 +457,10 @@ void RepackClient::handleResponse(RepackAck* ack) {
 
 	  // Query the name server to retrieve more information related with the situation of segment 
 
-	  std::vector<RepackSegment*>::iterator segs = (*sreq)->segment().begin();
-          if (segs == (*sreq)->segment().end())
+	  std::vector<RepackSegment*>::iterator segs = (*sreq)->repacksegment().begin();
+          if (segs == (*sreq)->repacksegment().end())
 	     std::cout << "          No File found. \n" << std::endl;
-	  while ( segs != (*sreq)->segment().end() ) {
+	  while ( segs != (*sreq)->repacksegment().end() ) {
 	    m_filehelper.printFileInfo((*segs)->fileid(),(*segs)->copyno());
 	      std::cout << "===============================================================================================================" << std::endl;
 	    segs++;
@@ -470,8 +477,8 @@ void RepackClient::handleResponse(RepackAck* ack) {
         std::cout << "vid\tcuuid\t\t\t\t\ttotal  size     staging  migration  failed  staged   status" <<std::endl;
         std::cout << "--------------------------------------------------------------------------------------------------------------"
                   << std::endl;
-        std::vector<RepackSubRequest*>::iterator tape = rreq->subRequest().begin();
-        while ( tape != rreq->subRequest().end() ){
+        std::vector<RepackSubRequest*>::iterator tape = rreq->repacksubrequest().begin();
+        while ( tape != rreq->repacksubrequest().end() ){
           printTapeDetail((*tape));
           tape++;
         }

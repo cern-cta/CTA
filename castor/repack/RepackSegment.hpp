@@ -116,22 +116,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_compression
-       * @return the value of m_compression
-       */
-      int compression() const {
-        return m_compression;
-      }
-
-      /**
-       * Set the value of m_compression
-       * @param new_var the new value of m_compression
-       */
-      void setCompression(int new_var) {
-        m_compression = new_var;
-      }
-
-      /**
        * Get the value of m_segsize
        * @return the value of m_segsize
        */
@@ -148,10 +132,26 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_compression
+       * @return the value of m_compression
+       */
+      int compression() const {
+        return m_compression;
+      }
+
+      /**
+       * Set the value of m_compression
+       * @param new_var the new value of m_compression
+       */
+      void setCompression(int new_var) {
+        m_compression = new_var;
+      }
+
+      /**
        * Get the value of m_filesec
        * @return the value of m_filesec
        */
-      u_signed64 filesec() const {
+      int filesec() const {
         return m_filesec;
       }
 
@@ -159,7 +159,7 @@ namespace castor {
        * Set the value of m_filesec
        * @param new_var the new value of m_filesec
        */
-      void setFilesec(u_signed64 new_var) {
+      void setFilesec(int new_var) {
         m_filesec = new_var;
       }
 
@@ -230,30 +230,30 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_vid
-       * @return the value of m_vid
+       * Get the value of m_repacksubrequest
+       * @return the value of m_repacksubrequest
        */
-      RepackSubRequest* vid() const {
-        return m_vid;
+      RepackSubRequest* repacksubrequest() const {
+        return m_repacksubrequest;
       }
 
       /**
-       * Set the value of m_vid
-       * @param new_var the new value of m_vid
+       * Set the value of m_repacksubrequest
+       * @param new_var the new value of m_repacksubrequest
        */
-      void setVid(RepackSubRequest* new_var) {
-        m_vid = new_var;
+      void setRepacksubrequest(RepackSubRequest* new_var) {
+        m_repacksubrequest = new_var;
       }
 
     private:
 
       u_signed64 m_fileid;
 
-      int m_compression;
-
       u_signed64 m_segsize;
 
-      u_signed64 m_filesec;
+      int m_compression;
+
+      int m_filesec;
 
       int m_copyno;
 
@@ -264,7 +264,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      RepackSubRequest* m_vid;
+      RepackSubRequest* m_repacksubrequest;
 
     }; /* end of class RepackSegment */
 

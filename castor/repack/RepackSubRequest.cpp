@@ -45,28 +45,30 @@ castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_vid(""),
   m_xsize(0),
   m_status(0),
-  m_cuuid(""),
   m_filesMigrating(0),
   m_filesStaging(0),
   m_files(0),
   m_filesFailed(0),
+  m_cuuid(""),
   m_submitTime(0),
   m_filesStaged(0),
+  m_filesFailedSubmit(0),
+  m_retryNb(0),
   m_id(0),
-  m_requestID(0) {
+  m_repackrequest(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackSubRequest::~RepackSubRequest() throw() {
-  for (unsigned int i = 0; i < m_segmentVector.size(); i++) {
-    m_segmentVector[i]->setVid(0);
+  if (0 != m_repackrequest) {
+    m_repackrequest->removeRepacksubrequest(this);
   }
-  m_segmentVector.clear();
-  if (0 != m_requestID) {
-    m_requestID->removeSubRequest(this);
+  for (unsigned int i = 0; i < m_repacksegmentVector.size(); i++) {
+    m_repacksegmentVector[i]->setRepacksubrequest(0);
   }
+  m_repacksegmentVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -85,31 +87,33 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   stream << indent << "vid : " << m_vid << std::endl;
   stream << indent << "xsize : " << m_xsize << std::endl;
   stream << indent << "status : " << m_status << std::endl;
-  stream << indent << "cuuid : " << m_cuuid << std::endl;
   stream << indent << "filesMigrating : " << m_filesMigrating << std::endl;
   stream << indent << "filesStaging : " << m_filesStaging << std::endl;
   stream << indent << "files : " << m_files << std::endl;
   stream << indent << "filesFailed : " << m_filesFailed << std::endl;
+  stream << indent << "cuuid : " << m_cuuid << std::endl;
   stream << indent << "submitTime : " << m_submitTime << std::endl;
   stream << indent << "filesStaged : " << m_filesStaged << std::endl;
+  stream << indent << "filesFailedSubmit : " << m_filesFailedSubmit << std::endl;
+  stream << indent << "retryNb : " << m_retryNb << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
+  stream << indent << "Repackrequest : " << std::endl;
+  if (0 != m_repackrequest) {
+    m_repackrequest->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
+  }
   {
-    stream << indent << "Segment : " << std::endl;
+    stream << indent << "Repacksegment : " << std::endl;
     int i;
     std::vector<RepackSegment*>::const_iterator it;
-    for (it = m_segmentVector.begin(), i = 0;
-         it != m_segmentVector.end();
+    for (it = m_repacksegmentVector.begin(), i = 0;
+         it != m_repacksegmentVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
-  }
-  stream << indent << "RequestID : " << std::endl;
-  if (0 != m_requestID) {
-    m_requestID->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
   }
 }
 
