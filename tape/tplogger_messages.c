@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.7 2007/08/31 13:19:05 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.8 2007/09/21 12:36:57 wiebalck Exp $
 */
 
 #include <string.h>
@@ -135,7 +135,7 @@ tplogger_message_t tplogger_messages_tpdaemon[] = {
                                                                                     /* uid       */
                                                                                     /* gid       */
                                                                                     /* clienthost*/
-        {  57, TL_LVL_ERROR,  "TP057 - drive %s is not free"                    },  /* drive     */
+        {  57, TL_LVL_ERROR,  "TP057 - drive is not free"                       },  /* drive     */
 
 
         {  58, TL_LVL_ERROR,  "TP058 - no free drive"                           },
