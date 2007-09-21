@@ -187,7 +187,7 @@ $stager_sql_tables = array(
 			"castorfile" => array("castorfile:yes")
 		),	
 		"status"	=> array(
-			"start", "restart", "retry", "wait sched", "wait tape recall", "wait subreq", "ready", "failed", "finished", "failed finished", "failed answering", "archived", "repack"
+			"start", "restart", "retry", "wait sched", "wait tape recall", "wait subreq", "ready", "failed", "finished", "failed finished", "failed answering", "archived", "repack", "readyforsched", "beingsched"
 		),
 	),	
 	
