@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/09/04 12:11:52 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/09/21 07:52:34 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
       } else if (!strcasecmp(value, "yes")) {
 	castor::exception::Exception e(EINVAL);
 	e.getMessage() << "Invalid option for ReverseUidLookups: " << value
-		       << "- must be 'yes' or 'no'" << std::endl;
+		       << " - must be 'yes' or 'no'" << std::endl;
 	throw e;
       }
     }
@@ -113,6 +113,16 @@ int main(int argc, char *argv[]) {
       e.getMessage() << "Missing configuration option " 
 		     << "JobManager/SharedLSFResource" << std::endl;
       throw e;
+    }
+
+    // Check the SharedLSFResource option to make sure it starts with file://
+    // or http://.
+    if (strncmp(value, "http://", 7) && strncmp(value, "file://", 7)) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Invalid syntax for JobManager/SharedLSFResource: "
+		     << value << " - must start with file:// or http://"
+		     << std::endl;
+      throw e;      
     }
 
     // Forked Process Pool
