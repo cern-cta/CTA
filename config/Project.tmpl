@@ -336,6 +336,10 @@
 #undef BuildRmcLibrary
 #define BuildRmcLibrary	YES
 #endif
+#if !BuildDlfLibrary
+#undef BuildDlfLibrary
+#define BuildDlfLibrary YES
+#endif
 #if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
@@ -358,13 +362,6 @@
 #undef BuildVolumeMgrLibrary
 #define BuildVolumeMgrLibrary YES
 #endif
-#endif
-#endif
-
-#if BuildTapeDaemon
-#if !BuildDlfLibrary
-#undef BuildDlfLibrary
-#define BuildDlfLibrary YES
 #endif
 #endif
 
