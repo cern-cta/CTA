@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.24 2007/08/17 09:58:48 waldron Exp $
+ * $Id: dlf_lib.c,v 1.25 2007/09/24 06:16:20 waldron Exp $
  */
 
 /* headers */
@@ -1572,13 +1572,18 @@ int DLL_DECL dlf_shutdown(int wait) {
 	 * still be using them
 	 */
 
-	/* destroy global hashes */
-	hash_destroy(hashtexts, (void *(*)(void *))free);
-
-	/* clear msg texts */
-	free_msgtexts(texts);
+	/* destroy global structures */
+	Cthread_mutex_lock(&global_mutex);
+	if (hashtexts != NULL) {
+		hash_destroy(hashtexts, (void *(*)(void *))free);
+		hashtexts = NULL;
+	}
+	if (texts[0] != NULL) {
+		free_msgtexts(texts);
+	}
 	api_targetcount = 0;
-       
+	Cthread_mutex_unlock(&global_mutex);
+
 	return 0;
 }
 

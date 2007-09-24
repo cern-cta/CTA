@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: common.c,v 1.6 2007/05/29 08:47:05 waldron Exp $
+ * $Id: common.c,v 1.7 2007/09/24 06:16:20 waldron Exp $
  */
 
 /* headers */
@@ -82,6 +82,11 @@ void DLL_DECL free_msgtexts(msgtext_t *texts[]) {
 			free(texts[i]->msg_text);
 			free(texts[i]);
 		}
+	}
+
+	/* reset values */
+	for (i = 0; i < DLF_MAX_MSGTEXTS; i++) {
+		texts[i] = NULL;
 	}
 }
 
