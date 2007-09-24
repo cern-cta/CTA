@@ -474,7 +474,7 @@ END;
 
 
 /*
- * archive/backup procedure 
+ * archive procedure 
  */
 CREATE OR REPLACE PROCEDURE dlf_archive
 AS
@@ -491,18 +491,33 @@ BEGIN
   SELECT value INTO v_value FROM dlf_settings WHERE name = 'ARCHIVE_EXPIRY';
   v_expire := TO_NUMBER(v_value);
 
-  -- Drop partition
-  IF v_expire > 0 THEN
-    FOR a IN (SELECT table_name, partition_name
-                FROM user_tab_partitions
-               WHERE partition_name = CONCAT('P_', TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD'))
-                 AND table_name IN ('DLF_MESSAGES', 'DLF_NUM_PARAM_VALUES', 'DLF_STR_PARAM_VALUES')
-               ORDER BY partition_name)
-    LOOP
-      EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||'
-                         DROP PARTITION '||a.partition_name;
-    END LOOP;
+  -- An expiry value of 0 means keep indefinately!
+  IF v_expire = 0 THEN
+    RETURN;
   END IF;
+  
+  -- Drop partitions across all tables
+  FOR a IN (SELECT table_name, partition_name
+              FROM user_tab_partitions
+             WHERE partition_name < CONCAT('P_', TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD'))
+               AND partition_name <> 'MAX_VALUE'
+               AND table_name LIKE 'DLF_%')
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||'
+                       DROP PARTITION '||a.partition_name;
+  END LOOP;
+  
+  -- Drop tablespaces
+  FOR a IN (SELECT tablespace_name
+              FROM user_tablespaces
+             WHERE tablespace_name < CONCAT('DLF_', TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD'))
+               AND tablespace_name LIKE 'DLF_%'
+               AND status <> 'OFFLINE')
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' OFFLINE';
+    EXECUTE IMMEDIATE 'DROP TABLESPACE '||a.tablespace_name||' 
+                       INCLUDING CONTENTS AND DATAFILES';
+  END LOOP;
 END;
 
 
