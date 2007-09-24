@@ -406,9 +406,10 @@ std::string castor::replier::ClientConnection::toString() throw() {
 
 
 std::string castor::replier::ClientConnection::buildClientStr(castor::rh::Client client) {
-  struct in_addr cad;
-  cad.s_addr = client.ipAddress();
   std::ostringstream sst;
-  sst << inet_ntoa(cad) << ":" << client.port();
-  return  sst.str();
+  sst << ((client.ipAddress() & 0xFF000000) >> 24) << "."
+      << ((client.ipAddress() & 0x00FF0000) >> 16) << "."
+      << ((client.ipAddress() & 0x0000FF00) >> 8)  << "."
+      << ((client.ipAddress() & 0x000000FF)) << ":" << client.port();
+  return sst.str();
 }
