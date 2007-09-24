@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.507 $ $Date: 2007/09/24 12:03:57 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.508 $ $Date: 2007/09/24 13:58:15 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3959,23 +3959,23 @@ BEGIN
     INTO cfFileId, cfNsHost, sSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          direction, cIp, cPort, cVersion, cType
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
-         (SELECT id, username, euid, egid, reqid, client, 'w' direction 
+         (SELECT id, username, euid, egid, reqid, client, 'w' direction, svcClass
 	    FROM StagePutRequest 
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 'r' direction 
+          SELECT id, username, euid, egid, reqid, client, 'r' direction, svcClass
             FROM StageGetRequest 
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 'o' direction 
+          SELECT id, username, euid, egid, reqid, client, 'o' direction, svcClass
             FROM StagePrepareToGetRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 'o' direction 
+          SELECT id, username, euid, egid, reqid, client, 'o' direction, svcClass
             FROM StageUpdateRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 'o' direction 
+          SELECT id, username, euid, egid, reqid, client, 'o' direction, svcClass
             FROM StagePrepareToUpdateRequest) Request
    WHERE SubRequest.id = srId
      AND SubRequest.castorFile = CastorFile.id
-     AND CastorFile.svcClass = SvcClass.id
+     AND Request.svcClass = SvcClass.id
      AND Id2type.id = SubRequest.request
      AND Request.id = SubRequest.request
      AND Request.client = Client.id;
