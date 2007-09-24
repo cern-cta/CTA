@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.506 $ $Date: 2007/09/24 06:12:32 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.507 $ $Date: 2007/09/24 12:03:57 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1115,6 +1115,7 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
                                                      dci OUT INTEGER, optimized IN INTEGER) AS
   fileSystemId NUMBER := 0;
   fsDiskServer NUMBER;
+  fileSize NUMBER;
   dcid NUMBER;
   cfid NUMBER;
   nb NUMBER := 0;
@@ -1148,7 +1149,9 @@ BEGIN
       raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
     END;
   ELSE
-    -- The DiskCopy had no FileSystem assoicated with it which indicates that
+    fileSystemId := 0;
+    fsDiskServer := 0;
+    -- The DiskCopy had no FileSystem associated with it which indicates that
     -- This is a new recall. We try and select a good FileSystem for it!
     FOR a IN (SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
                      FileSystem.diskserver, CastorFile.fileSize
@@ -1177,8 +1180,12 @@ BEGIN
                     WHERE nbRecallerStreams != 0
                       AND optimized = 1
                  )
-            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
+            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) ASC, dbms_random.value)
     LOOP
+      -- Set some variables
+      fileSystemId := a.id;
+      fsDiskServer := a.diskserver;
+      fileSize     := a.fileSize;
       -- Check that we don't already have a copy of this file on this filesystem.
       -- This will never happen in normal operations but may be the case if a filesystem
       -- was disabled and did come back while the tape recall was waiting.
@@ -1192,13 +1199,18 @@ BEGIN
       IF nb = 0 THEN
         raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
       END IF;
-    END LOOP;  
+    END LOOP;
+
+    -- Filesystem found?
+    IF fileSystemId > 0 THEN
+      -- Set the diskcopy's filesystem
+      UPDATE DiskCopy 
+         SET fileSystem = fileSystemId
+       WHERE id = dcid;
+      updateFsRecallerOpened(fsDiskserver, fileSystemId, fileSize);   
+    END IF;
   END IF;
-  -- Set the diskcopy's filesystem
-  UPDATE DiskCopy 
-     SET fileSystem = fileSystemId
-   WHERE id = dcid;
-      
+
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Just like in bestTapeCopyForStream if we were called with optimization enabled
     -- and nothing was found, rerun the procedure again with optimization disabled to
