@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.505 $ $Date: 2007/09/21 16:22:09 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.506 $ $Date: 2007/09/24 06:12:32 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1148,51 +1148,51 @@ BEGIN
       raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
     END;
   ELSE
-   -- The DiskCopy had no FileSystem assoicated with it which indicates that
-   -- This is a new recall. We try and select a good FileSystem for it!
-   FOR a IN (SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
-                    FileSystem.diskserver, CastorFile.fileSize
-               FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                    (SELECT id, svcClass from StageGetRequest UNION ALL
-                     SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
-                     SELECT id, svcClass from StageRepackRequest UNION ALL
-                     SELECT id, svcClass from StageGetNextRequest UNION ALL
-                     SELECT id, svcClass from StageUpdateRequest UNION ALL
-                     SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
-                     SELECT id, svcClass from StageUpdateNextRequest) Request,
-                     SubRequest, CastorFile
-              WHERE CastorFile.id = cfid
-                AND SubRequest.castorfile = cfid
-                AND Request.id = SubRequest.request
-                AND Request.svcclass = DiskPool2SvcClass.child
-                AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
-                AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-                AND DiskServer.id = FileSystem.diskServer
-                AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-                -- Ignore diskservers where a recaller already exists
-                AND DiskServer.id NOT IN (
-                  SELECT DISTINCT(FileSystem.diskServer)
-                    FROM FileSystem
-                   WHERE nbRecallerStreams != 0
-                     AND optimized = 1
-                )
-           ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
-   LOOP
-     -- Check that we don't already have a copy of this file on this filesystem.
-     -- This will never happen in normal operations but may be the case if a filesystem
-     -- was disabled and did come back while the tape recall was waiting.
-     -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
-     -- fileSystem comes backs, the ones running at the time of the come back will have
-     SELECT count(*) INTO nb
-       FROM DiskCopy
-      WHERE fileSystem = fileSystemId
-        AND castorfile = cfid
-        AND status = 0; -- STAGED
-     IF nb = 0 THEN
-       raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
-     END IF;
-   END LOOP;  
+    -- The DiskCopy had no FileSystem assoicated with it which indicates that
+    -- This is a new recall. We try and select a good FileSystem for it!
+    FOR a IN (SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
+                     FileSystem.diskserver, CastorFile.fileSize
+                FROM DiskServer, FileSystem, DiskPool2SvcClass,
+                     (SELECT id, svcClass from StageGetRequest UNION ALL
+                      SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
+                      SELECT id, svcClass from StageRepackRequest UNION ALL
+                      SELECT id, svcClass from StageGetNextRequest UNION ALL
+                      SELECT id, svcClass from StageUpdateRequest UNION ALL
+                      SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
+                      SELECT id, svcClass from StageUpdateNextRequest) Request,
+                      SubRequest, CastorFile
+               WHERE CastorFile.id = cfid
+                 AND SubRequest.castorfile = cfid
+                 AND Request.id = SubRequest.request
+                 AND Request.svcclass = DiskPool2SvcClass.child
+                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                 AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
+                 AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+                 AND DiskServer.id = FileSystem.diskServer
+                 AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
+                 -- Ignore diskservers where a recaller already exists
+                 AND DiskServer.id NOT IN (
+                   SELECT DISTINCT(FileSystem.diskServer)
+                     FROM FileSystem
+                    WHERE nbRecallerStreams != 0
+                      AND optimized = 1
+                 )
+            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
+    LOOP
+      -- Check that we don't already have a copy of this file on this filesystem.
+      -- This will never happen in normal operations but may be the case if a filesystem
+      -- was disabled and did come back while the tape recall was waiting.
+      -- Even if we could optimize by cancelling remaining unneeded tape recalls when a
+      -- fileSystem comes backs, the ones running at the time of the come back will have
+      SELECT count(*) INTO nb
+        FROM DiskCopy
+       WHERE fileSystem = fileSystemId
+         AND castorfile = cfid
+         AND status = 0; -- STAGED
+      IF nb = 0 THEN
+        raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+      END IF;
+    END LOOP;  
   END IF;
   -- Set the diskcopy's filesystem
   UPDATE DiskCopy 
