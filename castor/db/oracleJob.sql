@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.508 $ $Date: 2007/09/24 13:58:15 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.509 $ $Date: 2007/09/25 11:32:16 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1115,7 +1115,6 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForSegment(segmentId IN INTEGER, diskS
                                                      dci OUT INTEGER, optimized IN INTEGER) AS
   fileSystemId NUMBER := 0;
   fsDiskServer NUMBER;
-  fileSize NUMBER;
   dcid NUMBER;
   cfid NUMBER;
   nb NUMBER := 0;
@@ -1180,12 +1179,8 @@ BEGIN
                     WHERE nbRecallerStreams != 0
                       AND optimized = 1
                  )
-            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) ASC, dbms_random.value)
+            ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC, dbms_random.value)
     LOOP
-      -- Set some variables
-      fileSystemId := a.id;
-      fsDiskServer := a.diskserver;
-      fileSize     := a.fileSize;
       -- Check that we don't already have a copy of this file on this filesystem.
       -- This will never happen in normal operations but may be the case if a filesystem
       -- was disabled and did come back while the tape recall was waiting.
@@ -1193,22 +1188,20 @@ BEGIN
       -- fileSystem comes backs, the ones running at the time of the come back will have
       SELECT count(*) INTO nb
         FROM DiskCopy
-       WHERE fileSystem = fileSystemId
+       WHERE fileSystem = a.id
          AND castorfile = cfid
          AND status = 0; -- STAGED
-      IF nb = 0 THEN
+      IF nb != 0 THEN
         raise_application_error(-20103, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+      ELSE
+        -- Set the diskcopy's filesystem
+        UPDATE DiskCopy 
+           SET fileSystem = a.id
+         WHERE id = dcid;
+        updateFsRecallerOpened(a.diskserver, a.id, a.fileSize);
+        RETURN; 
       END IF;
     END LOOP;
-
-    -- Filesystem found?
-    IF fileSystemId > 0 THEN
-      -- Set the diskcopy's filesystem
-      UPDATE DiskCopy 
-         SET fileSystem = fileSystemId
-       WHERE id = dcid;
-      updateFsRecallerOpened(fsDiskserver, fileSystemId, fileSize);   
-    END IF;
   END IF;
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3965,7 +3958,7 @@ BEGIN
           SELECT id, username, euid, egid, reqid, client, 'r' direction, svcClass
             FROM StageGetRequest 
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 'o' direction, svcClass
+          SELECT id, username, euid, egid, reqid, client, 'r' direction, svcClass
             FROM StagePrepareToGetRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, 'o' direction, svcClass
