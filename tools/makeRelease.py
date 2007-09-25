@@ -111,5 +111,13 @@ os.chdir(intReleaseDir)
 runCommand('cvs -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
            'Error while checking out release into internal release space')
 
+# and builf the doxygen documentation in it
+print "Building doxygen documentation"
+os.chdir(intReleaseDir + os.sep + 'CASTOR2')
+runCommand('make -f Makefile.ini Makefiles',
+           'Error while creating Makefiles')
+runCommand('make doxygen',
+           'Error while creating doxygen documentation')
+
 # cleanup
 shutil.rmtree(workDir)
