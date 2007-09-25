@@ -18,18 +18,19 @@
 
 #include "Ctape_constants.h"
 #include "osdep.h"
-#define CHECKI     10	/* max interval to check for work to be done */
-#define CLNREQI   180	/* interval to check for jobs that have died */
-#define LBLBUFSZ  128   /* size of buffers to read labels */
-#define OPRMSGSZ  257	/* maximum operator message/reply length */
-#define	RBTFASTRI  60	/* fast retry interval for robotic operations */
+#define CHECKI     10	     /* max interval to check for work to be done */
+#define CLNREQI   180	     /* interval to check for jobs that have died */
+#define LBLBUFSZ  128        /* size of buffers to read labels */
+#define OPRMSGSZ  257	     /* maximum operator message/reply length */
+#define	RBTFASTRI  60	     /* fast retry interval for robotic operations */
 #define PRTBUFSZ  180
-#define REPBUFSZ 2800	/* must be >= max tape daemon reply size */
-#define REQBUFSZ 1104	/* must be >= max tape daemon request size */
-#define SMSGI      30	/* retry interval when sending operator messages */
+#define REPBUFSZ 2800	     /* must be >= max tape daemon reply size */
+#define REQBUFSZ 1104	     /* must be >= max tape daemon request size */
+#define SMSGI      30	     /* retry interval when sending operator messages */
 #define TPMAGIC 0x141001
-#define TPTIMEOUT   5	/* netread timeout while receiving a request */
-#define UCHECKI    10	/* max interval to check for drive ready or oper cancel */
+#define TPTIMEOUT   5	     /* netread timeout while receiving a request */
+#define UCHECKI    10	     /* max interval to check for drive ready or oper cancel */
+#define VDQMCHKINTVLDFT 900  /* default check interval to confirm to VDQM that drives are free */
 
 			/* label types */
 
@@ -314,6 +315,7 @@ struct tptab {		/* tape drive table */
 
 	int	asn;		/* assign flag: assigned = 1 */
 	time_t	asn_time;	/* timestamp of drive assignment */
+	time_t	unasn_time;	/* timestamp of drive unassignment */
 	struct tpdev *cdevp;	/* pointer to tape device description in use */
 	struct tpfil *filp;	/* pointer to tape file description */
 	uid_t	uid;

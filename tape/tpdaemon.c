@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.10 2007/07/04 13:14:21 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.11 2007/09/25 08:53:56 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.10 $ $Date: 2007/07/04 13:14:21 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.11 $ $Date: 2007/09/25 08:53:56 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -51,6 +51,9 @@
 #endif 
 #include "tplogger_api.h"
 #include <unistd.h>
+#include "vdqm_api.h"
+#include "vdqm_constants.h"
+#include <time.h>
 
 struct confq *confqp;	/* pointer to config queue */
 extern char *den2aden();
@@ -112,6 +115,11 @@ void procrsltreq( char*, char* );
 void procrsvreq( char*, char* );
 void procrstatreq( char*, char* );
 
+#if VDQM
+static int tpdrvidle( struct tptab* );
+static int vdqmdrvstate( struct tptab* );
+#endif
+
 int tpd_main(main_args)
 struct main_args *main_args;
 {
@@ -136,6 +144,10 @@ struct main_args *main_args;
 	struct servent *sp;
 	struct timeval timeval;
 	time_t lasttime, tm, lasttime_monitor_msg_sent;
+#if VDQM
+        time_t lasttime_vdqm_update;
+        int vdqmchkintvl = VDQMCHKINTVLDFT;
+#endif
 #ifdef CSEC
 	Csec_context_t sec_ctx;
 #endif
@@ -174,6 +186,9 @@ struct main_args *main_args;
 
 	lasttime = time(0);
 	lasttime_monitor_msg_sent = lasttime;
+#if VDQM
+        lasttime_vdqm_update = 0;
+#endif
 	FD_ZERO (&readmask);
 	FD_ZERO (&readfd);
 #if ! defined(_WIN32)
@@ -347,11 +362,107 @@ struct main_args *main_args;
                                 }
 			}
 		}
+
+                /* look for jobs that died */
 		if (((tm = time (0)) - lasttime) >= CLNREQI) {
-			clean4jobdied();  /* look for jobs that died */
+			clean4jobdied();  
 			lasttime = tm;
 		}
+#if VDQM                
+                /* 
+                ** Confirm to VDQM if drives are free 
+                */
+                if ((((tm = time (0)) - lasttime_vdqm_update) >= vdqmchkintvl)) {               
 
+                        int i;
+                        struct tptab *tunp = tptabp;  
+                        
+                        /* 
+                           Placing the config check into the outer IF avoids to
+                           open the config file every CHECKI (i.e. 10) seconds, but 
+                           preserves the capability to do config changes w/o tpdaemon 
+                           restart. However, changes to the config file to take effect 
+                           can take as long as (old) vdqmchkintvl seconds. 
+                        */
+                        p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE", 0 );
+                        if ((NULL != p) && (0 == strcasecmp( p, "YES" ))) {
+                                                                                
+                                p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE_INTVL", 0 );
+                                if (NULL != p) {
+                                        vdqmchkintvl = atoi(p);
+                                        if (vdqmchkintvl < 0) {
+                                                vdqmchkintvl = VDQMCHKINTVLDFT;   
+                                        }
+                                } else {
+                                        vdqmchkintvl = VDQMCHKINTVLDFT;  
+                                }
+
+                                for (i = 0; i < nbtpdrives; i++) {
+
+                                        /* 
+                                           If the drive has been unassigned since the last check and 
+                                           tpdaemon thinks the drive is idle ... 
+                                        */
+                                        int drvidle = tpdrvidle(tunp);
+                                        if (drvidle && (tunp->unasn_time > lasttime_vdqm_update)) {
+                                        
+                                                /*  
+                                                    ... but VDQM does not ... 
+                                                */
+                                                int vdqmstate;
+                                                vdqmstate = vdqmdrvstate(tunp);
+                                                if ( (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_ASSIGN)) ||                      /* RUNNING */
+                                                     (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN)) ) {  /* RELEASE */
+
+                                                        /* 
+                                                           ... update VDQM. We explicitely do not check (vdqmstate == UP|FREE) here, since
+                                                          VDQM changes the state to UP|BUSY before contacting tpdaemon. The latter should 
+                                                          not reset the state to UP|FREE in that case. 
+                                                        */
+                                                        int vdqm_rc;
+                                                        int vdqm_status = VDQM_UNIT_UP;
+                                                        tplogit (func, "calling vdqm_UnitStatus to confirm drive (%s) FREE\n", tunp->drive);
+                                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
+                                                                            "func"   , TL_MSG_PARAM_STR, func,
+                                                                            "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus to confirm drive FREE",
+                                                                            "Drive"  , TL_MSG_PARAM_STR, tunp->drive );
+
+                                                        vdqm_rc = vdqm_UnitStatus (NULL, NULL, tunp->dgn, NULL, tunp->drive,
+                                                                                   &vdqm_status, NULL, 0);
+
+                                                        tplogit (func, "vdqm_UnitStatus returned %s\n",
+                                                                 vdqm_rc ? sstrerror(serrno) : "ok");
+                                                        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc?104:110, 3,
+                                                                            "func",    TL_MSG_PARAM_STR, func, 
+                                                                            "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
+                                                                            "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok");
+                                                } else {
+                                                
+                                                        tplogit (func, "no VDQM update required: states not inconsistent (drive %s, vdqmstate 0x%x)\n",
+                                                                 tunp->drive, vdqmstate );
+                                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
+                                                                            "func"     , TL_MSG_PARAM_STR, func,
+                                                                            "Message"  , TL_MSG_PARAM_STR, "no VDQM update required, states consistent",
+                                                                            "vdqmstate", TL_MSG_PARAM_INT, vdqmstate,
+                                                                            "Drive"    , TL_MSG_PARAM_STR, tunp->drive );
+                                                }
+                                        
+                                        } else {
+                                        
+                                                tplogit (func, "no VDQM update required: drive %s %s\n", 
+                                                         tunp->drive, drvidle ? "recently checked/set" : "not FREE" );
+                                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
+                                                                    "func"             , TL_MSG_PARAM_STR, func,
+                                                                    "Message"          , TL_MSG_PARAM_STR, "no VDQM update required",
+                                                                    "Reason"           , TL_MSG_PARAM_STR, drvidle ? "recently checked/set" : "drive not FREE",
+                                                                    "Drive"            , TL_MSG_PARAM_STR, tunp->drive );
+                                        }
+                                        tunp++;                                
+                                }
+                                lasttime_vdqm_update = tm;
+                        }
+                }
+#endif
 #ifdef MONITOR
 		/* Sending the Monitoring packet */
 		if ( (tm - lasttime_monitor_msg_sent) > CMONIT_TAPE_SENDMSG_PERIOD ) {
@@ -1073,6 +1184,7 @@ char *clienthost;
 	rrtp->unldcnt--;		/* decrement number of unloads in progress */
 	tunp->asn = 0;		/* unassign drive */
 	tunp->asn_time = 0;
+        tunp->unasn_time = time(0);
 	free (tunp->filp);	/* release tape file description */
 	tunp->filp = 0;
 	if ((rlsflags & TPRLS_NOUNLOAD) == 0) {
@@ -1409,9 +1521,11 @@ char *clienthost;
 		if (tunp->asn != 0 || tunp->up != 1 ||
 		    (*tunp->vid && (strcmp (tunp->vid, vid) || strcmp (tunp->vsn, vsn)))) {
 			usrmsg (func, TP057, drive);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 57, 2,
-                                            "func",  TL_MSG_PARAM_STR, func,
-                                            "Drive", TL_MSG_PARAM_STR, drive );                                        
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 57, 4,
+                                            "func"     , TL_MSG_PARAM_STR, func,
+                                            "Drive"    , TL_MSG_PARAM_STR, drive,
+                                            "Assigned" , TL_MSG_PARAM_INT, tunp->asn,
+                                            "Up"       , TL_MSG_PARAM_INT, tunp->up );
 			c = EBUSY;
 			goto reply;
 		}
@@ -1471,6 +1585,7 @@ char *clienthost;
 	tpdrrt.dg[j].used++;	/* increment usage count in global reservation table */
 	tunp->asn = 1;
 	tunp->asn_time = time (0);
+        tunp->unasn_time = 0;
 	tunp->cdevp = cdevp;
 	tunp->uid = uid;
 	tunp->gid = gid;
@@ -2105,6 +2220,7 @@ char *clienthost;
 
 	tunp->asn = 1;		/* assign new drive */
 	tunp->asn_time = time (0);
+        tunp->unasn_time = 0;
 	tunp->cdevp = cdevp;
 	tunp->filp = oldtunp->filp;
 	tunp->uid = oldtunp->uid;
@@ -2115,6 +2231,7 @@ char *clienthost;
 
 	oldtunp->asn = 0;          /* unassign previous drive */
 	oldtunp->asn_time = 0;
+        oldtunp->unasn_time = time(0);
 	oldtunp->filp = 0;
 	oldtunp->vid[0] = '\0';
 	oldtunp->vsn[0] = '\0';
@@ -2653,3 +2770,42 @@ void check_child_exit()
 	}
 }
 #endif
+
+/* 
+** Check if the drive is available for use. Since tpdaemon
+** is the only one changing the assignment status of drives,
+** there should be no race with the child changing the drive's
+** state in VDQM. 
+*/
+static int tpdrvidle( struct tptab *tunp ) {
+
+        int free = 0;
+
+        /* drive is not assigned, but up */
+        if ((0 == tunp->asn) && (1 == tunp->up)) {
+                
+                free = 1;
+        }
+
+        return free;
+}
+
+/*
+** Get a drive's state in VDQM 
+*/
+static int vdqmdrvstate( struct tptab *tunp ) {
+        
+        int status = VDQM_UNIT_QUERY;
+        int rc = -1, value;
+        
+        rc = vdqm_UnitStatus(NULL, NULL, tunp->dgn, NULL, tunp->drive,
+                             &status, &value, 0);
+        if (rc < 0) {
+
+                tplogit( func, "vdqm_UnitStatus failed to query status: %d\n", rc);
+                return rc;
+        }
+
+        return status;
+}
+
