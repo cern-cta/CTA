@@ -340,6 +340,14 @@
 #undef BuildDlfLibrary
 #define BuildDlfLibrary YES
 #endif
+#if !BuildVdqmLibrary
+#undef BuildVdqmLibrary
+#define BuildVdqmLibrary YES
+#endif
+#if !Accounting
+#undef Accounting
+#define Accounting YES
+#endif
 #if UseVmgr
 #if !BuildVolumeMgrLibrary
 #undef BuildVolumeMgrLibrary
