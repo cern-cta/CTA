@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2007/01/18 09:08:19 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2007/09/25 15:56:49 $ CERN IT-PDP/DM Jean-Philippe Baud
  
 COMM 	Make tape daemon programs. 
 
@@ -79,7 +79,7 @@ DMSCINC = -I$(DMSC)/include
 DMSCLIB = $(DMSC)/lib/libfbs.a
 LIBDMSC = -L$(DMSC)/lib -lfbs
 #endif
-#if HasCDK
+#if !CASTOR_NOSTK && HasCDK
 CDK = CDKDir
 CDKFLG = -DCDK -DLINUX
 CDKINC = -I$(CDK)/include/CDK
