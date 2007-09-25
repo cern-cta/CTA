@@ -22,6 +22,7 @@
 %else
 %{expand:%define has_oracle %(if [ ! -r $ORACLE_HOME/lib/libclntsh.so ]; then echo 0; else echo 1; fi)}
 %endif
+%{expand:%define compiling_nostk %(if [ -z $CASTOR_NOSTK ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_lsf %(if [ -e /usr/%{LIB}/liblsf.so -a -d /usr/include/lsf ]; then echo 1; else echo 0; fi)}
 
@@ -83,12 +84,18 @@ for this in BuildSchedPlugin BuildJob BuildRmMasterCpp BuildJobManagerCpp; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %endif
-%if ! %has_stk_ssi
+%if ! %has_stk_ssi && ! %compiling_nostk
 echo "### Warning, no STK environment"
 echo "The following packages will NOT be built:"
 echo "castor-tape-server"
 for this in BuildTapeDaemon; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
+done
+%endif
+%if %compiling_nostk
+echo "### Warning, compiling only castor-tape-server-nostk"
+for this in BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildMonitorClient BuildMonitorLibrary BuildMonitorServer BuildMsgClient BuildMsgLibrary BuildMsgServer BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemon BuildStageLibrary BuildTapeClient BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack HasCDK; do
+    perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %endif
 find . -type f -exec touch {} \;
@@ -204,6 +211,7 @@ for i in `find . -name "*.sysconfig"`; do
     install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename ${i} | sed 's/\.sysconfig//g'`.example
 done
 
+%if ! %compiling_nostk
 #
 ## Hardcoded package name CASTOR-client for RPM transition from castor1 to castor2
 %package -n CASTOR-client

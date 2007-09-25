@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.62 2007/09/07 13:25:08 kotlyar Exp $
+# $Id: maketar.sh,v 1.63 2007/09/25 15:57:57 sponcec3 Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -150,7 +150,7 @@ function if_has_stk_ssi {
 #
 ## Append all sub-packages to CASTOR.spec
 #
-for this in `grep Package: debian/control | awk '{print $NF}'`; do
+for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-server-nostk; do
     if [ ${this} = "castor-gridftp-dsi-ext" -o ${this} = "castor-gridftp-dsi-int" ]; then
         if [ "${GLOBUS_LOCATION}" = "" ]; then
             echo "GLOBUS_LOCATION has not been set, skipping ${this}..."
@@ -158,9 +158,16 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         fi
     fi
 
+    package=$this
+    actualPackage=$package
+
     #
     ## Do we have an %if dependency ?
     #
+    if [ "$package" = "castor-tape-server-nostk" ]; then
+	echo "%else" >> CASTOR.spec # compiling_notstk if
+        package="castor-tape-server"
+    fi
     if_has_oracle $this
     if [ $? -eq 1 ]; then
 	echo "%if %has_oracle" >> CASTOR.spec
@@ -173,8 +180,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     if [ $? -eq 1 ]; then
 	echo "%if %has_stk_ssi" >> CASTOR.spec
     fi
-    package=$this
-    echo "%package -n $package" >> CASTOR.spec
+    echo "%package -n $actualPackage" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
     echo "Group: Application/Castor" >> CASTOR.spec
     #
@@ -241,7 +247,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     #
     ## Get description
     #
-    echo "%description -n $package" >> CASTOR.spec
+    echo "%description -n $actualPackage" >> CASTOR.spec
     cat debian/control | perl -e '
       $package=shift;
       $what=shift;
@@ -256,7 +262,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     #
     ## Get file list
     #
-    echo "%files -n $package" >> CASTOR.spec
+    echo "%files -n $actualPackage" >> CASTOR.spec
     echo "%defattr(-,root,root)" >> CASTOR.spec
     if [ -s "debian/$package.init" ]; then
 	echo "%attr(0755,root,bin) /etc/init.d/$package" >> CASTOR.spec
@@ -334,7 +340,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         ## Get %post section
         #
 	if [ -s "debian/$package.postinst" ]; then
-	    echo "%post -n $package" >> CASTOR.spec
+	    echo "%post -n $actualPackage" >> CASTOR.spec
 	    echo "if [ \$1 -ge 1 ]; then" >> CASTOR.spec
 	    cat debian/$package.postinst | sed 's/\${1+\"$@"}/configure/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
 	    echo "/bin/true" >> CASTOR.spec
@@ -353,7 +359,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         ## Get %preun section
         #
 	if [ -s "debian/$package.prerm" ]; then
-	    echo "%preun -n $package" >> CASTOR.spec
+	    echo "%preun -n $actualPackage" >> CASTOR.spec
 	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
 	    cat debian/$package.prerm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
 	    echo "/bin/true" >> CASTOR.spec
@@ -363,7 +369,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         ## Get %postun section
         #
 	if [ -s "debian/$package.postrm" ]; then
-	    echo "%postun -n $package" >> CASTOR.spec
+	    echo "%postun -n $actualPackage" >> CASTOR.spec
 	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
 	    cat debian/$package.postrm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
 	    echo "/bin/true" >> CASTOR.spec
@@ -393,6 +399,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     fi
     echo >> CASTOR.spec
 done
+echo "%endif" >> CASTOR.spec # end of compiling_notstk if
 
 cd ..
 
