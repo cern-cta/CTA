@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.38 2007/07/27 10:08:59 itglp Exp $
+## $Id: PACKAGING.howto,v 1.39 2007/09/25 13:15:56 sponcec3 Exp $
 #
 
 #
@@ -82,9 +82,19 @@ source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm ut
 
 # 3. update the web pages
 vim /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/index.htm
-# and change last version statement
+# change last version statement
 vim /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/news.htm
-# and add a news
+# add a news
+# edit the known bug area in the forum and add a new entry
+# In this entry, you should at list put a snapshot of savannah at the time of the release.
+# To build it, just go to https://savannah.cern.ch/bugs/?group=castor&func=browse&set=custom&msort=1&resolution_id[]=0&release_id[]=0&custom_sb1[]=0&status_id[]=1&advsrch=1&msort=1&chunksz=500&spamscore=5&report_id=228&sumORdet=&morder=severity%3C,priority%3E&order=priority#results
+# Then save the content of the web page in a file called knownBugs_<version>.html.
+# Edit the file and add the line :
+#     <base href="http://savannah.cern.ch/bugs" />
+# in the head tag
+# Then attach it to the twiki page and use
+# [[%ATTACHURL%/knownBugs_<version>.html][<your text]] to refer to it.
+
 
 # 4. Cleanup savannah by closing all fixed bugs
 
