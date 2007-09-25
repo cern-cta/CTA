@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveDedication.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

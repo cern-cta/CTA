@@ -33,6 +33,7 @@
 #include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/monitoring/admin/DiskServerAdminReport.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

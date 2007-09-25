@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/monitoring/StreamDirection.hpp"
 #include "castor/monitoring/StreamReport.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

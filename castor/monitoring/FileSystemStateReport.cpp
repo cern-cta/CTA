@@ -34,6 +34,7 @@
 #include "castor/monitoring/DiskServerStateReport.hpp"
 #include "castor/monitoring/FileSystemStateReport.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

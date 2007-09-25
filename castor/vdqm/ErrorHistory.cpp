@@ -33,6 +33,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

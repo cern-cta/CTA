@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/Request.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

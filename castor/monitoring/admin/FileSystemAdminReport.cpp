@@ -33,6 +33,7 @@
 #include "castor/monitoring/AdminStatusCodes.hpp"
 #include "castor/monitoring/admin/FileSystemAdminReport.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

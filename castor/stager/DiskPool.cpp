@@ -33,6 +33,7 @@
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/SvcClass.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

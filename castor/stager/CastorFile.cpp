@@ -35,6 +35,7 @@
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

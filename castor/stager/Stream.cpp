@@ -35,6 +35,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
 #include "castor/stager/TapePool.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

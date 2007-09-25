@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/stager/Request.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

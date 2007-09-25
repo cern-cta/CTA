@@ -34,6 +34,7 @@
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystem.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

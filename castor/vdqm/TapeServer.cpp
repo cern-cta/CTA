@@ -33,6 +33,7 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeServerStatusCodes.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 #include <vector>

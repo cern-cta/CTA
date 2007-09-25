@@ -32,6 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StageAbortRequest.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

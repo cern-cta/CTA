@@ -34,6 +34,7 @@
 #include "castor/stager/SegmentStatusCodes.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/TapeCopy.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 

@@ -32,6 +32,7 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/Client.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
