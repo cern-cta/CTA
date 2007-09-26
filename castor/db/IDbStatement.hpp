@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/02/08 18:02:59 $ $Author: itglp $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/09/26 15:25:16 $ $Author: sponcec3 $
  *
  * 
  *
@@ -57,6 +57,7 @@ class IDbStatement {
     virtual void setInt64(int pos, signed64 value) = 0;
     virtual void setUInt64(int pos, u_signed64 value) = 0;
     virtual void setString(int pos, std::string value) = 0;
+    virtual void setClob(int pos, std::string value) = 0;
     virtual void setFloat(int pos, float value) = 0;
     virtual void setDouble(int pos, double value) = 0;
     
@@ -67,6 +68,7 @@ class IDbStatement {
     virtual signed64 getInt64(int pos) = 0;
     virtual u_signed64 getUInt64(int pos) = 0;
     virtual std::string getString(int pos) = 0;
+    virtual std::string getClob(int pos) = 0;
     virtual float getFloat(int pos) = 0;
     virtual double getDouble(int pos) = 0;
 
@@ -90,6 +92,7 @@ const int DBTYPE_UINT64 = 3;
 const int DBTYPE_FLOAT = 4;
 const int DBTYPE_DOUBLE = 5;
 const int DBTYPE_STRING = 6;
+const int DBTYPE_CLOB = 7;
 
 }
 
