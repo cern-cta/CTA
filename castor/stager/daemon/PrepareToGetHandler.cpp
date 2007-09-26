@@ -59,55 +59,8 @@ namespace castor{
 	  /* scheduling Part */
 	  /* first use the stager service to get the possible sources for the required file */
 	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
-	  
-	  switch(caseToSchedule){
-
-	  case 0:
-	    /* we update the subrequestStatus*/
-	    this->newSubrequestStatus = SUBREQUEST_READY;
-	    if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
-	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
-	      /* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
-	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
-	      
-	      /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
-	    }
-
-	    /* we archive the subrequest*/
-	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-
-	    /* we will replyToClient*/
-	    break;
-
-
-	  case 2: //normal tape recall
-	    try{
-	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
-	      
-	      /* we dont change subrequestStatus or archive the subrequest: but we need to set the newSubrequestStatus to replyToClient */
-	      this->newSubrequestStatus = SUBREQUEST_READY;
-
-	    }catch(castor::exception::Exception ex){
-	      /* internally of the createRecallCandidate: we reply to the client and we setSubrequestStatus to FAILED */
-	      return;
-	    }
-	    break;
-	    
-	    
-	  case 4:
-	    /* we dont archiveSubrequest, changeSubrequestStatus or ReplyToClient */
-	    break;
-
-	    /* case 1: NEVER for a PrepareToGet (coming from the latest stager_db_service.c) */
-	    
-	    
-	  default:
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerPrepareToGetHandler handle) stagerService->isSubRequestToSchedule returns an invalid value"<<std::endl;
-	    throw (ex);
-	    break;
-	    
-	  }
+	  switchScheduling(caseToSchedule);
+	 
 	  
 	  
 	  if(caseToSchedule != 4){

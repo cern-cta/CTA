@@ -51,7 +51,15 @@ namespace castor{
 	    throw ex;
 	  }
 
-	  this->newSubrequestStatus = newSubreqStatus;
+	  if(newSubreqStatus == SUBREQUEST_FAILED_FINISHED){
+	    this->newSubrequestStatus = SUBREQUEST_FAILED;
+	  }else if(newSubreqStatus == SUBREQUEST_READYFORSCHED){
+	    this->newSubrequestStatus = SUBREQUEST_READY;
+	  }else{
+	    this->newSubrequestStatus = newSubreqStatus;
+	  }
+	 
+	  
 
 	}catch(castor::exception::Exception ex){
 	  if( ioResponse != NULL){
@@ -87,7 +95,7 @@ namespace castor{
 	
 	this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
 
-	this->ioResponse->setStatus((newSubrequestStatus == SUBREQUEST_FAILED_FINISHED)? SUBREQUEST_FAILED : newSubrequestStatus);
+	this->ioResponse->setStatus(this->newSubrequestStatus);
 	
 	this->ioResponse->setId(stgRequestHelper->subrequest->id());
 	

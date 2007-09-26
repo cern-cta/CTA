@@ -128,7 +128,7 @@ namespace castor{
 	    
 	  case 1:/* just for get and the special update */
 	    int type = stgRequestHelper->fileRequest->type();
-	    if((type == OBJ_StageGetRequest)||(type == OBJ_StageUpdateRequest)){
+	    if((type == OBJ_StageGetRequest)||(type == OBJ_StageUpdateRequest)||(type == OBJ_StagePrepareToGetRequest)){
 	      /* just for Get and Update(special) */
 	      /* in this case we dont archiveSubrequest, but we do changeSubrequestStatus, and we dont replyToClient */
 	      bool isToReplicate=replicaSwitch();
@@ -154,7 +154,7 @@ namespace castor{
 	      this->notifyJobManager();
 	    }else{
 	      castor::exception::Exception e(SEOPNOTSUP);
-	      e.getMessage()<<"(Stager__Handler switchScheduling) stagerService->createRecallCandidate"<<std::endl;
+	      e.getMessage()<<"(Stager__Handler switchScheduling) "<<std::endl;
 	      throw(e);
 
 	    }
@@ -165,9 +165,21 @@ namespace castor{
 	    break;
  
 	  case 0:
-	    /* this function is reimplemented on PrepareToGet because of this case */
-	    /* and we dont updateRep on DB */
-	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
+	    /* two differents behaviours depending on the subrequest type */
+	    if(type == OBJ_StagePrepareToGetRequest){
+	      this->newSubrequestStatus = SUBREQUEST_READY;
+	      if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
+		stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+		/* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
+		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+		
+		/* we are gonna replyToClient so we dont  updateRep on DB explicitly */
+	      } 
+	      /* we archive the subrequest*/
+	      stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	    }else{
+	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
+	    }
 	    break;
 	  
 	  default:
@@ -327,7 +339,7 @@ namespace castor{
 	  throw ex;
 	}
 	
-	if((type==OBJ_StageGetRequest)&& (rfs.empty() == false)){
+	if(((type==OBJ_StageGetRequest) || (type==OBJ_StagePrepareToGetRequest))&& (rfs.empty() == false)){
 	  /* if the file exists we don't have any size requirements */
 	  this->xsize = 0;
 	}

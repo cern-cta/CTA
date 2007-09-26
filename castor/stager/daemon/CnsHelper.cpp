@@ -105,30 +105,37 @@ namespace castor{
 	      memset(&(this->cnsFileid),0, sizeof(cnsFileid));
 	      
 	      if (Cns_creatx(this->subrequestFileName.c_str(), mode, &(this->cnsFileid)) != 0) {
-		castor::exception::Exception ex(SEINTERNAL);
+		castor::exception::Exception ex(serrno);
 		ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_creatx"<<std::endl;
 		throw ex;
 	      }
 	      
 	      /* in case of Disk1 pool, we want to force the fileClass of the file */
-	      if(svcClass->hasDiskOnlyBehavior() == true){
+	      if(svcClass->hasDiskOnlyBehavior()){
 		std::string forcedFileClassName = svcClass->forcedFileClass();
 		
-		if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
-		  castor::exception::Exception ex(SEINTERNAL);
-		  ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_unsetid"<<std::endl;
+		if(!forcedFileClassName.empty()){
+
+		  if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
+		    castor::exception::Exception ex(serrno);
+		    ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_unsetid"<<std::endl;
+		    throw ex;
+		  }
+		  if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
+		    int tempserrno = serrno;
+		    Cns_delete(this->subrequestFileName.c_str());
+		    serrno = tempserrno;
+		    castor::exception::Exception ex(serrno);
+		    ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_chclass"<<std::endl;
+		    throw ex;
+		  }
+		  if(Cns_setid(euid, egid) != 0){
+		    castor::exception::Exception ex(serrno);
+		    ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_setid"<<std::endl;
 		  throw ex;
-		}
-		if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
-		  castor::exception::Exception ex(SEINTERNAL);
-		  ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_chclass"<<std::endl;
-		  throw ex;
-		}
-		if(Cns_setid(euid, egid) != 0){
-		  castor::exception::Exception ex(SEINTERNAL);
-		  ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_setid"<<std::endl;
-		  throw ex;
-		}
+		  }
+		}/* "only force the fileClass if one is given" */
+
 	      }/* end of "if(hasDiskOnly Behavior)" */
 	      
 	      bool fileExist2 = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
@@ -137,12 +144,7 @@ namespace castor{
 					   castor::dlf::Param("Standard Message", fileExist2)};
 	      castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
 	  
-	      /*  if (Cns_statx(subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)) != 0) {
-		castor::exception::Exception ex(SEINTERNAL);
-		ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_statx"<<std::endl;
-		throw ex;
-		}*/
-	      
+
 	      
 	    }
 	  }
