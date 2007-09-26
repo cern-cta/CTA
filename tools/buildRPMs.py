@@ -26,7 +26,8 @@ if targetOs == 'SLC3':
     oraPath = '/afs/cern.ch/project/oracle/@sys/10201'
 else:
     oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
-cmd = "ORACLE_HOME=" + oraPath + " LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep + "' -ta " + tarball
+basecmd = "ORACLE_HOME=" + oraPath + " LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep
+cmd = basecmd + "' -ta " + tarball
 rpmOutput = os.popen4(cmd)[1].read()
 if rpmOutput.find('Wrote:') == -1:
     # keep the output for debugging
@@ -35,13 +36,23 @@ if rpmOutput.find('Wrote:') == -1:
     rpmLog.close()
     print 'The RPM build failed, output in ' + workDir + '/castorBuildOutput. Exiting'
     sys.exit(2)
+# No build the nostk version of the castor-tape-server RPM
+cmd2 = "CASTOR_NOSTK=YES " + basecmd + "' -tb " + tarball
+rpmOutput2 = os.popen4(cmd2)[1].read()
+if rpmOutput2.find('Wrote:') == -1:
+    # keep the output for debugging
+    rpmLog = open(workDir + '/castorBuildOutput.nostk', 'w')
+    rpmLog.write(rpmOutput2)
+    rpmLog.close()
+    print 'The RPM build for nostk tapeserver failed, output in ' + workDir + '/castorBuildOutput.nostk. Exiting'
+    sys.exit(2)
 
 rpmDir = workDir + os.sep + 'RPMS' + os.sep + targetArch
 # copy RPMs to internal releases space
 print 'Copying RPMs to internal release area ...'
 intReleaseDir = '/afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/DIST/intReleases/' + fullVersion
 rpmList = os.listdir(rpmDir)
-if len(rpmList) != 55:
+if len(rpmList) != 56:
     print 'Warning, not all RPMs were correctly generated'
 for p in rpmList:
     shutil.copyfile(rpmDir + os.sep + p, intReleaseDir + os.sep + targetOs + os.sep + targetArch + os.sep + p)
