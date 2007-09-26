@@ -455,10 +455,11 @@ class CppBaseWriter : public CppCastorWriter {
   bool m_allowForward;
 
 	/**
-	 * Map of types in the std:: namespace with the associated
-   * include files
+	 * Map of types in the std:: namespace
+   * Each UML type is associated to the std type and
+   * its include files
 	 */
-  std::map<QString, QString> m_stdMembers;
+  std::map<QString, std::pair<QString, QString> > m_stdMembers;
 
 	/**
 	 * List of includes

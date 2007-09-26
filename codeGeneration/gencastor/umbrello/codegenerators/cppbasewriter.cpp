@@ -26,14 +26,24 @@ CppBaseWriter::CppBaseWriter(UMLDoc *parent,
   CppCastorWriter(parent, name), m_firstInclude (true),
   m_indent(0), m_allowForward(false) {
   // All used standard library classes
-  m_stdMembers[QString("istringstream")] = QString("<sstream>");
-  m_stdMembers[QString("ostringstream")] = QString("<sstream>");
-  m_stdMembers[QString("istream")] = QString("<istream>");
-  m_stdMembers[QString("ostream")] = QString("<iostream>");
-  m_stdMembers[QString("string")] = QString("<string>");
-  m_stdMembers[QString("list")] = QString("<list>");
-  m_stdMembers[QString("vector")] = QString("<vector>");
-  m_stdMembers[QString("set")] = QString("<set>");
+  m_stdMembers[QString("istringstream")] =
+    std::pair<QString, QString>(QString("std::istringstream"), QString("<sstream>"));
+  m_stdMembers[QString("ostringstream")] =
+    std::pair<QString, QString>(QString("std::ostringstream"), QString("<sstream>"));
+  m_stdMembers[QString("istream")] =
+    std::pair<QString, QString>(QString("std::istream"), QString("<istream>"));
+  m_stdMembers[QString("ostream")] =
+    std::pair<QString, QString>(QString("std::ostream"), QString("<iostream>"));
+  m_stdMembers[QString("longstring")] =
+    std::pair<QString, QString>(QString("std::string"), QString("<string>"));
+  m_stdMembers[QString("string")] =
+    std::pair<QString, QString>(QString("std::string"), QString("<string>"));
+  m_stdMembers[QString("list")] =
+    std::pair<QString, QString>(QString("std::list"), QString("<list>"));
+  m_stdMembers[QString("vector")] =
+    std::pair<QString, QString>(QString("std::vector"), QString("<vector>"));
+  m_stdMembers[QString("set")] =
+    std::pair<QString, QString>(QString("std::set"), QString("<set>"));
   // All virtual methods that should be reimplemented in all
   // non abtract classes
   m_virtualOpReImpl.insert(QString("clone"));
@@ -357,8 +367,9 @@ QString CppBaseWriter::fixTypeName(QString string,
   int tempPos = 0;
   while (tempPos < (int)string.length()) {
     tempPos = std::numeric_limits<int>::max();
-    std::map<QString, QString>::const_iterator winner;
-    for (std::map<QString, QString>::const_iterator it = m_stdMembers.begin();
+    std::map<QString, std::pair<QString, QString> >::const_iterator winner;
+    for (std::map<QString, std::pair<QString, QString> >::const_iterator
+           it = m_stdMembers.begin();
          it != m_stdMembers.end();
          it++) {
       int pos = string.find(it->first, curPos);
@@ -369,9 +380,9 @@ QString CppBaseWriter::fixTypeName(QString string,
     }
     if (tempPos < (int)string.length()) {
       curPos = tempPos;
-      string.insert(tempPos, "std::");
-      m_includes.insert(winner->second);
-      curPos = curPos + winner->first.length() + 5;
+      string.replace(tempPos, winner->first.length(), winner->second.first);
+      m_includes.insert(winner->second.second);
+      curPos = curPos + winner->second.first.length();
     }
   }
   // Deal with castor predefined types

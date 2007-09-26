@@ -2851,6 +2851,8 @@ QString CppCppDbCnvWriter::getDbType(QString& type) {
     dbType = "UInt64";
   } else if (dbType == "signed64") {
     dbType = "Int64";
+  } else if (dbType == "longstring") {
+    dbType = "Clob";
   }
   if (dbType.startsWith("char")) {
     if (type.startsWith("unsigned")) {
@@ -2877,6 +2879,8 @@ QString CppCppDbCnvWriter::getOraSQLType(QString& type) {
     SQLType = "INTEGER";
   } else if (SQLType == "string") {
     SQLType = "VARCHAR2(2048)";
+  } else if (SQLType == "longstring") {
+    SQLType = "CLOB";
   } else if (SQLType.left(5) == "char["){
     QString res = "CHAR(";
     res.append(SQLType.mid(5, SQLType.find("]")-5));
@@ -2903,6 +2907,8 @@ QString CppCppDbCnvWriter::getPgSQLType(QString& type) {
   } else if ((type == "u_signed64") || (type == "signed64")) {
     SQLType = "INT8";
   } else if (SQLType == "string") {
+    SQLType = "VARCHAR(2048)";
+  } else if (SQLType == "longstring") {
     SQLType = "VARCHAR(2048)";
   } else if (SQLType.left(5) == "char["){
     QString res = "CHAR(";

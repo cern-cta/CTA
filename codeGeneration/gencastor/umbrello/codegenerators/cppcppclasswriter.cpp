@@ -213,7 +213,7 @@ void CppCppClassWriter::writeInitInConstructor(QString name,
     // Nothing for arrays
   } else if (type == "bool") {
     content = "false";
-  } else if (type == "string") {
+  } else if ((type == "string") || (type == "longstring")) {
     content = "\"\"";
   } else if (m_castorTypes.find(type) != m_castorTypes.end()) {
     if ((0 == type.compare("u_signed64")) || (0 == type.compare("signed64"))) {
