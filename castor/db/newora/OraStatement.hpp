@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/09/26 15:24:28 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
@@ -33,67 +33,69 @@
 #include "occi.h"
 
 namespace castor {
-	namespace db {
-		namespace ora { 
+  namespace db {
+    namespace ora {
 
-/**
- * Oracle implementation for IDbStatement
- * 
- */
-class OraStatement : public virtual castor::db::IDbStatement {
+      /**
+       * Oracle implementation for IDbStatement
+       *
+       */
+      class OraStatement : public virtual castor::db::IDbStatement {
 
-  public:
+      public:
 
-    OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc);
+        OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc);
 
-    /**
-     * 
-     */
-    virtual ~OraStatement() throw (castor::exception::Exception);
+        /**
+         *
+         */
+        virtual ~OraStatement() throw (castor::exception::Exception);
 
-    virtual void autoCommit();
-    /**
-     * 
-     * @param pos 
-     * @param value 
-     */
-    virtual void setInt(int pos, int value);
-    virtual void setInt64(int pos, signed64 value);
-    virtual void setUInt64(int pos, u_signed64 value);
-    virtual void setString(int pos, std::string value);
-    virtual void setFloat(int pos, float value);
-    virtual void setDouble(int pos, double value);
-    
-    virtual void registerOutParam(int pos, int dbType)
-      throw (castor::exception::SQLError);
+        virtual void autoCommit();
+        /**
+         *
+         * @param pos
+         * @param value
+         */
+        virtual void setInt(int pos, int value);
+        virtual void setInt64(int pos, signed64 value);
+        virtual void setUInt64(int pos, u_signed64 value);
+        virtual void setString(int pos, std::string value);
+        virtual void setClob(int pos, std::string value);
+        virtual void setFloat(int pos, float value);
+        virtual void setDouble(int pos, double value);
 
-    virtual int getInt(int pos);
-    virtual signed64 getInt64(int pos);
-    virtual u_signed64 getUInt64(int pos);
-    virtual std::string getString(int pos);
-    virtual float getFloat(int pos);
-    virtual double getDouble(int pos);
+        virtual void registerOutParam(int pos, int dbType)
+          throw (castor::exception::SQLError);
 
-    /**
-     * 
-     */
-    virtual IDbResultSet* executeQuery()
-	  throw (castor::exception::SQLError);
-      
-    virtual int execute()
-	  throw (castor::exception::SQLError);
+        virtual int getInt(int pos);
+        virtual signed64 getInt64(int pos);
+        virtual u_signed64 getUInt64(int pos);
+        virtual std::string getString(int pos);
+        virtual std::string getClob(int pos);
+        virtual float getFloat(int pos);
+        virtual double getDouble(int pos);
 
-    inline oracle::occi::Statement* getStatementImpl() {
-      return m_statement;
+        /**
+         *
+         */
+        virtual IDbResultSet* executeQuery()
+          throw (castor::exception::SQLError);
+
+        virtual int execute()
+          throw (castor::exception::SQLError);
+
+        inline oracle::occi::Statement* getStatementImpl() {
+          return m_statement;
+        }
+
+      private:
+        oracle::occi::Statement *m_statement;
+        castor::db::ora::OraCnvSvc* m_cnvSvc;
+      };
+
     }
-	
-  private:
-    oracle::occi::Statement *m_statement;
-    castor::db::ora::OraCnvSvc* m_cnvSvc;
-};
-
-}
-}
+  }
 }
 #endif // CASTOR_ORASTATEMENT_HPP
 

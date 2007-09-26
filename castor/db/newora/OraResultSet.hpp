@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraResultSet.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/11 10:03:45 $ $Author: itglp $
+ * @(#)$RCSfile: OraResultSet.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/09/26 15:24:28 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
@@ -34,50 +34,51 @@
 
 
 namespace castor {
-	namespace db {
-		namespace ora {
+  namespace db {
+    namespace ora {
 
-/**
- * Oracle implementation of IDbResultSet
- * 
- */
-class OraResultSet : public virtual castor::db::IDbResultSet {
+      /**
+       * Oracle implementation of IDbResultSet
+       *
+       */
+      class OraResultSet : public virtual castor::db::IDbResultSet {
 
-	public:
+      public:
 
-    /**
-     * Default constructor
-     */
-    OraResultSet(oracle::occi::ResultSet* rset, oracle::occi::Statement* statement);
+        /**
+         * Default constructor
+         */
+        OraResultSet(oracle::occi::ResultSet* rset, oracle::occi::Statement* statement);
 
-    /**
-     * Default destructor
-     */
-    virtual ~OraResultSet();
+        /**
+         * Default destructor
+         */
+        virtual ~OraResultSet();
 
-    /**
-     * 
-     */
-    virtual bool next();
-    
-    /**
-     * 
-     * @param i 
-     */
-    virtual int getInt(int i);
-    virtual signed64 getInt64(int i);
-    virtual u_signed64 getUInt64(int i);
-    virtual std::string getString(int i);
-    virtual float getFloat(int i);
-    virtual double getDouble(int i);
-	
-	private:
-    oracle::occi::ResultSet *m_rset;	
-    oracle::occi::Statement *m_statement;	
-};
+        /**
+         *
+         */
+        virtual bool next();
 
-}
-}
+        /**
+         *
+         * @param i
+         */
+        virtual int getInt(int i);
+        virtual signed64 getInt64(int i);
+        virtual u_signed64 getUInt64(int i);
+        virtual std::string getString(int i);
+        virtual std::string getClob(int i);
+        virtual float getFloat(int i);
+        virtual double getDouble(int i);
+
+      private:
+        oracle::occi::ResultSet *m_rset;
+        oracle::occi::Statement *m_statement;
+      };
+
+    }
+  }
 }
 #endif // CASTOR_ORARESULTSET_HPP
 

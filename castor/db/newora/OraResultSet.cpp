@@ -17,14 +17,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/05/18 09:29:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraResultSet.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/26 15:24:28 $ $Author: sponcec3 $
  *
- * 
+ *
  *
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
 
-#include "OraResultSet.hpp" 
+#include "OraResultSet.hpp"
 
 castor::db::ora::OraResultSet::OraResultSet(oracle::occi::ResultSet* rset, oracle::occi::Statement* statement) :
   m_rset(rset),
@@ -35,43 +35,55 @@ castor::db::ora::OraResultSet::OraResultSet(oracle::occi::ResultSet* rset, oracl
 castor::db::ora::OraResultSet::~OraResultSet()
 {
   try {
-	  m_statement->closeResultSet(m_rset);
+    m_statement->closeResultSet(m_rset);
   } catch(oracle::occi::SQLException ignored) {}
 }
 
 bool castor::db::ora::OraResultSet::next()
 {
-	return (m_rset->next() != oracle::occi::ResultSet::END_OF_FETCH);
+  return (m_rset->next() != oracle::occi::ResultSet::END_OF_FETCH);
 }
 
 int castor::db::ora::OraResultSet::getInt(int i)
 {
-	return m_rset->getInt(i);
+  return m_rset->getInt(i);
 }
 
 signed64 castor::db::ora::OraResultSet::getInt64(int i)
 {
-	return (signed64)m_rset->getDouble(i);
+  return (signed64)m_rset->getDouble(i);
 }
 
 u_signed64 castor::db::ora::OraResultSet::getUInt64(int i)
 {
-	return (u_signed64)m_rset->getDouble(i);
+  return (u_signed64)m_rset->getDouble(i);
 }
 
 float castor::db::ora::OraResultSet::getFloat(int i)
 {
-	return m_rset->getFloat(i);
+  return m_rset->getFloat(i);
 }
 
 double castor::db::ora::OraResultSet::getDouble(int i)
 {
-	return m_rset->getDouble(i);
+  return m_rset->getDouble(i);
 }
- 
+
 std::string castor::db::ora::OraResultSet::getString(int i)
 {
-	return m_rset->getString(i);
+  return m_rset->getString(i);
 }
 
-
+std::string castor::db::ora::OraResultSet::getClob(int i)
+{
+  oracle::occi::Clob clob = m_rset->getClob(i);
+  clob.open(oracle::occi::OCCI_LOB_READONLY);
+  int len = clob.length();
+  char* buf = (char*) malloc(len+1);
+  buf[len] = 0;
+  clob.read(len, (unsigned char*)buf, len+1);
+  clob.close();
+  std::string res(buf);
+  free(buf);
+  return std::string(res);
+}
