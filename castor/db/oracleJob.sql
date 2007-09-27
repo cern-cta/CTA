@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.513 $ $Date: 2007/09/27 13:48:57 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.514 $ $Date: 2007/09/27 13:54:07 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4039,7 +4039,8 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     username VARCHAR2(2048),
     machine VARCHAR2(2048),
     svcClassName VARCHAR2(2048),
-    ReqId NUMBER);
+    ReqId NUMBER,
+    ReqType VARCHAR2(20));
   TYPE RequestDebug IS TABLE OF RequestDebug_typ;
 END;
 
@@ -4077,7 +4078,7 @@ BEGIN
               FROM DiskCopy, FileSystem, DiskServer, DiskPool
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
-               AND DiskPool.id = fileSystem.diskPool(+)
+               AND DiskPool.id(+) = fileSystem.diskPool
                AND DiskCopy.castorfile = getCF(ref)) LOOP
      PIPE ROW(d);
   END LOOP;
@@ -4102,17 +4103,17 @@ CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castor_debug.RequestDebug PI
 BEGIN
   FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime,
                    SubRequest.id as SubReqId, SubRequest.Status,
-                   username, machine, svcClassName, Request.id as ReqId
+                   username, machine, svcClassName, Request.id as ReqId, Request.type as ReqType
               FROM SubRequest,
-                    (SELECT id, username, machine, svcClassName from StageGetRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StagePrepareToGetRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StagePutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StagePrepareToPutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StageUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StagePrepareToUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StageRepackRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StageGetNextRequest UNION ALL
-                     SELECT id, username, machine, svcClassName from StageUpdateNextRequest) Request
+                    (SELECT id, username, machine, svcClassName, 'Get' as type from StageGetRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PGet' as type from StagePrepareToGetRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Put' as type  from StagePutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PGet' as type  from StagePrepareToPutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Upd' as type  from StageUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PUpd' as type  from StagePrepareToUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Repack' as type  from StageRepackRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'GetNext' as type  from StageGetNextRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'UpdNext' as type  from StageUpdateNextRequest) Request
              WHERE castorfile = getCF(ref)
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);
