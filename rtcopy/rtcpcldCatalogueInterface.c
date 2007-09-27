@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.165 $ $Release$ $Date: 2007/08/27 14:42:55 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.166 $ $Release$ $Date: 2007/09/27 13:32:41 $ $Author: obarring $
  *
  * 
  *
@@ -3060,6 +3060,8 @@ int rtcpcld_updcFileRecalled(
                         );
         if ( segmentArray != NULL ) free(segmentArray);
         strcpy(filereq->err.errmsgtxt,sstrerror(ERTWRONGSIZE));
+        filereq->err.errorcode = ERTWRONGSIZE;
+        filereq->err.severity = RTCP_FAILED;
         serrno = ERTWRONGSIZE;
         return(-1);
       }
