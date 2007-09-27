@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.3 2006/05/11 12:38:38 felixehm Exp $
+ * $Id: Cns.h,v 1.4 2007/09/27 14:40:54 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.3 $ $Date: 2006/05/11 12:38:38 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.4 $ $Date: 2007/09/27 14:40:54 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -123,6 +123,7 @@
 #define CNS_ENTGRPMAP	73
 #define CNS_ENTUSRMAP	74
 #define CNS_REPLACETAPECOPY 75
+#define CNS_LASTFSEQ    76
 
 			/* name server reply types */
 
