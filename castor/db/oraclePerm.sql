@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.511 $ $Date: 2007/09/27 09:28:53 $ $Author: waldron $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.512 $ $Date: 2007/09/27 13:31:17 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1240,7 +1240,7 @@ BEGIN
      AND DiskCopy.castorFile = TapeCopy.castorFile
      AND SubRequest.diskcopy(+) = DiskCopy.id
      AND DiskCopy.status = 2; -- DISKCOPY_WAITTAPERECALL
-  UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem into fsid; -- DISKCOPY_FAILED
+  UPDATE DiskCopy SET status = 4 WHERE id = dci RETURNING fileSystem INTO fsid; -- DISKCOPY_FAILED
   IF SubRequestId IS NOT NULL THEN
     UPDATE SubRequest SET status = 7, -- SUBREQUEST_FAILED
                           getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED (not strictly correct but the request is over anyway)
@@ -1252,7 +1252,6 @@ BEGIN
                           parent = 0
      WHERE parent = SubRequestId;
   END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN NULL;
 END;
 
 
