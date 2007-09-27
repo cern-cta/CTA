@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.510 $ $Date: 2007/09/26 13:27:41 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.511 $ $Date: 2007/09/27 09:28:53 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1148,6 +1148,7 @@ BEGIN
       raise_application_error(-20101, 'In a multi-segment file, FileSystem or Machine was disabled before all segments were recalled');
     END;
   ELSE
+    fileSystemId := 0;
     -- The DiskCopy had no FileSystem associated with it which indicates that
     -- This is a new recall. We try and select a good FileSystem for it!
     FOR a IN (SELECT DiskServer.name, FileSystem.mountPoint, FileSystem.id,
@@ -1202,6 +1203,13 @@ BEGIN
       updateFsRecallerOpened(a.diskServer, a.id, a.fileSize);
       RETURN;
     END LOOP;  
+
+    -- If we didn't find a filesystem rerun with optimization disabled
+    IF fileSystemId = 0 THEN
+      IF optimized = 1 THEN
+        bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
+      END IF;
+    END IF;
   END IF;
 
   EXCEPTION WHEN NO_DATA_FOUND THEN
