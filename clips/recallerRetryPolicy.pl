@@ -103,6 +103,24 @@ my $ETWVSN          = $ETBASEOFF+32;    # wrong vsn
 my $ETBADMIR        = $ETBASEOFF+33;    # Tape has a bad MIR 
 my $ETMAXERR        = $ETBASEOFF+33;
 
+# RTCOPY errors
+my $ERTBASEOFF       = 1600;
+my $ERTTMSERR        = $ERTBASEOFF+1;    # TMS call failed 
+my $ERTBLKSKPD       = $ERTBASEOFF+2;    # Blocks were skipped in file  
+my $ERTTPE_LSZ       = $ERTBASEOFF+3;    # Blocks skipped and file truncated 
+my $ERTMNYPARY       = $ERTBASEOFF+4;    # Too many skipped blocks      
+my $ERTLIMBYSZ       = $ERTBASEOFF+5;    # File limited by size         
+my $ERTUSINTR        = $ERTBASEOFF+6;    # Request interrupted by user 
+my $ERTOPINTR        = $ERTBASEOFF+7;    # Request interrupted by operator 
+my $ERTNOTCLIST      = $ERTBASEOFF+8;    # Request list is not circular 
+my $ERTBADREQ        = $ERTBASEOFF+9;    # Bad request structure 
+my $ERTMORETODO      = $ERTBASEOFF+10;   # request partially processed 
+my $ERTDBERR         = $ERTBASEOFF+11;   # catalogue DB error 
+my $ERTZEROSIZE      = $ERTBASEOFF+12;   # zero sized file
+my $ERTWRONGSIZE     = $ERTBASEOFF+13;   # Recalled file size incorrect
+my $ERTMAXERR        = $ERTBASEOFF+13;
+
+
 #
 # some system error codes
 #
@@ -174,7 +192,8 @@ for ( my $i=0; $i<$#ARGV; $i+=3 ) {
     printf TMP " %d, error=%d, severity=0x%x\n",$i,$ARGV[$i],$ARGV[$i+1];
     if ( (($ARGV[$i+1] & $RTCP_RESELECT_SERV) == 0) &&
          (($ARGV[$i+1] & $RTCP_FAILED) != 0) ) {
-        if ( ($ARGV[$i] != $ENOSPC) &&
+        if ( ($ARGV[$i] != 0) &&
+             ($ARGV[$i] != $ENOSPC) &&
              ($ARGV[$i] != $EBUSY) &&
              ($ARGV[$i] != $EROFS) &&
              ($ARGV[$i] != $EIO) &&
@@ -192,6 +211,7 @@ for ( my $i=0; $i<$#ARGV; $i+=3 ) {
              ($ARGV[$i] != $ETBADMIR) &&
              ($ARGV[$i] != $SETIMEDOUT) &&
              ($ARGV[$i] != $SESYSERR) &&
+             ($ARGV[$i] != $ERTWRONGSIZE) &&
              ($ARGV[$i] != $SECOMERR) ) {
             $doRetry = 0;
         }
