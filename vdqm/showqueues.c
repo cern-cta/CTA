@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.25 $ $Date: 2007/09/12 15:45:54 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.26 $ $Date: 2007/09/27 14:01:42 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -374,7 +374,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
             fprintf(stdout,"Q %s %s %s %d (%s)@%s %ld\n", 
                     tmp1->volreq.dgn,
                     tmp1->volreq.volid,
-                    (mode == 0 ? "R" : "W"),
+                    (tmp1->volreq.mode == 0 ? "R" : "W"),
                     tmp1->volreq.VolReqID,
                     buf_id,
                     tmp1->volreq.client_host,
