@@ -30,7 +30,6 @@ Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
 	char  func[16];
 	char  sendbuf[REQBUFSZ];
 	char  repbuf[REPBUFSZ];
-	char  server[CA_MAXHOSTNAMELEN + 1];
 	char  *q;
 	char  *sbp;
 	char  *rbp;
@@ -97,9 +96,10 @@ Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
 		unmarshall_OPAQUE(rbp, segattrs->blockid, 4);
 		unmarshall_STRINGN(rbp, segattrs->checksum_name, CA_MAXCKSUMNAMELEN);
 		unmarshall_LONG(rbp, segattrs->checksum);
+		return(0);
 	}
 	if (c && serrno == SENAMETOOLONG) {
 		serrno = ENAMETOOLONG;
 	}
-	return (0);
+	return (c);
 }
