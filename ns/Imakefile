@@ -3,7 +3,7 @@ COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
 COMM       @(#)Imakefile,v 1.51 2004/06/09 16:10:35 CERN IT-PDP/DM Jean-Philippe Baud
- 
+
 COMM    Make name server programs.
 
 #include <Project.tmpl>
@@ -71,20 +71,20 @@ SECURITYFLAG=-DCSEC
 LIBS+= -ldl
 #endif 
 COMM######################### FLAGS ##############################
- 
+
 DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
          -DCNSHOSTPFX=\"$(CNSHOSTPFX)\" \
          -DLCGDM_MAPFILE=\"$(LCGDM_MAPFILE)\" \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DNSCONFIG=\"$(NSCONFIG)\" \
          $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(MYSFLG)
- 
+
 CFLAGS =        -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(MYSINC) $(SECURITYFLAG)
- 
+
 COMM######################### DEPENDENCY LIBRARIES ###############
- 
+
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
- 
+
 COMM######################### RULES ##############################
 
 
@@ -109,6 +109,7 @@ MANPAGES = $(LIBMANDIR)/Cns_aborttrans.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_getcomment.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_getcwd.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_getsegattrs.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_lastfseq.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_lchown.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_listclass.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_listtape.$(LIBMANSUFFIX) \
@@ -196,6 +197,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_getcomment.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_getcwd.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_getsegattrs.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_lastfseq.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_listclass.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_listtape.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_listlinks.$(LIBMANSUFFIX) \
@@ -369,6 +371,7 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_getpath.Osuf \
                         Cns_getreplica.Osuf \
                         Cns_getsegattrs.Osuf \
+                        Cns_lastfseq.Osuf \
                         Cns_listclass.Osuf \
                         Cns_listtape.Osuf \
                         Cns_listlinks.Osuf \
@@ -531,7 +534,7 @@ IEXPORT(nstouch,$(EXPORTBIN),755);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
- 
+
 #if Accounting
 MakeDir($(SACCTDIR),root,bin,0777)
 #endif
@@ -564,6 +567,7 @@ IMANPAGE(Cns_getacl,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_getcomment,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_getcwd,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_getsegattrs,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_lastfseq,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_lchown,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_listclass,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_listtape,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -650,6 +654,7 @@ EMANPAGE(Cns_getacl,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_getcomment,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_getcwd,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_getsegattrs,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_lastfseq,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_listclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_listtape,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_listlinks,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -718,13 +723,13 @@ exportman: $(EXPORTMANPAGES)
 exportshr:
 
 COMM###################### CLEANING RULES ########################
- 
+
 clean:
 	-@RemoveFiles(FilesToClean)
- 
+
 clobber:        clean
 	-@RemoveFiles($(NSLIBTARGET) $(CLIENT) $(PROGS_D) Cns_oracle_ifce.c Cns_oracle_ifce.lis tp*)
- 
+
 #if _WIN32
 depend:
 	@echo Not supported on this platform
@@ -734,7 +739,7 @@ depend:
 #endif
 
 Makefiles:
- 
+
 FORCE:
 
 COMM###################### DEPENDENCIES ##########################

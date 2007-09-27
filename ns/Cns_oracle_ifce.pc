@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.4 $ $Date: 2007/08/20 16:27:51 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.5 $ $Date: 2007/09/27 13:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -1167,6 +1167,61 @@ DBLISTPTR *dblistptr;
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
 		return (-1);
 	}
+}
+
+Cns_get_last_smd_by_vid(dbfd, vid, side, smd_entry)
+struct Cns_dbfd *dbfd;
+char *vid;
+int side;
+struct Cns_seg_metadata *smd_entry;
+{
+	char fileid_str[21];
+	char func[19];
+	char segsize_str[21];
+	struct sqlca sqlca;
+	short checksum_name_ind;
+
+	EXEC SQL VAR smd_entry->blockid IS RAW(4);
+	EXEC SQL DECLARE last_smd_vid_cursor CURSOR FOR
+		SELECT
+		 TO_CHAR(S_FILEID), COPYNO, FSEC,
+		 TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+		 VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+		FROM Cns_seg_metadata
+		WHERE vid = :vid
+		AND side = :side
+		AND fseq = (
+		 SELECT MAX(FSEQ) FROM Cns_seg_metadata
+		 WHERE vid = :vid
+		 AND side = :side
+		);
+
+	strcpy (func, "Cns_get_last_smd_by_vid");
+	EXEC SQL OPEN last_smd_vid_cursor;
+	if (sqlca.sqlcode) {
+		Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+		return(-1);
+	}	
+	EXEC SQL FETCH last_smd_vid_cursor INTO
+		 :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+		 :segsize_str, :smd_entry->compression, :smd_entry->s_status,
+		 :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+		 :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+		 :smd_entry->checksum;
+
+	switch (sqlca.sqlcode) {
+	case 0:
+		smd_entry->s_fileid = strtou64 (fileid_str);
+		smd_entry->segsize  = strtou64 (segsize_str);
+		return(0);
+	case 1403:
+		serrno = ENOENT;
+		return(-1);
+	default:
+		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
+		return(-1);
+	}
+	return(0);
 }
 
 Cns_get_smd_by_vid(dbfd, bov, vid, smd_entry, endlist, dblistptr)

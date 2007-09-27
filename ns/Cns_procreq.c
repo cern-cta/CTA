@@ -4,7 +4,7 @@
  */
  
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.12 $ $Date: 2007/07/10 07:36:48 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.13 $ $Date: 2007/09/27 13:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
  
 #include <errno.h>
@@ -2685,6 +2685,71 @@ reply:
 	p = outbuf;
 	marshall_WORD (p, nbentries);		/* update nbentries in reply */
 	sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
+	RETURN (0);
+}
+
+Cns_srv_lastfseq(magic, req_data, clienthost, thip)
+int magic;
+char *req_data;
+char *clienthost;
+struct Cns_srv_thread_info *thip;
+{
+	struct Cns_seg_metadata smd_entry;
+	char  func[19];
+	char  vid[CA_MAXVIDLEN + 1];
+	char  logbuf[CA_MAXVIDLEN + 12];
+	char  repbuf[REPBUFSZ];
+	char  *rbp;
+	char  *sbp;
+	char  *user;
+	int   side;
+	int   c;
+	gid_t gid;
+	uid_t uid;
+	
+	strcpy(func, "Cns_srv_lastfseq");
+	
+	/* Extract and log common request attributes */
+	rbp = req_data;
+	unmarshall_LONG(rbp, uid);
+	unmarshall_LONG(rbp, gid);
+	get_client_actual_id(thip, &uid, &gid, &user);
+	nslogit(func, NS092, "lastfseq", user, uid, gid, clienthost);
+	
+	/* Extract volume id */
+	if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
+		RETURN (EINVAL);
+	}
+	unmarshall_LONG(rbp, side);
+	sprintf(logbuf, "lastfseq %s %d", vid, side);
+	Cns_logreq(func, logbuf);
+	
+	/* Find the last file sequence number for the volume */
+	c = Cns_get_last_smd_by_vid(&thip->dbfd, vid, side, &smd_entry);
+	if (c < 0) {
+		RETURN (serrno);
+	}
+
+	/* Marshall to segattrs structure */
+	sbp = repbuf;
+	marshall_WORD(sbp, smd_entry.copyno);
+	marshall_WORD(sbp, smd_entry.fsec);
+	marshall_HYPER(sbp, smd_entry.segsize);
+	marshall_LONG(sbp, smd_entry.compression);
+	marshall_BYTE(sbp, smd_entry.s_status);
+	marshall_STRING(sbp, smd_entry.vid);
+	if (magic >= CNS_MAGIC2) {
+		marshall_WORD(sbp, smd_entry.side);
+	}
+	marshall_LONG(sbp, smd_entry.fseq);
+	marshall_OPAQUE(sbp, smd_entry.blockid, 4);
+	if (magic >= CNS_MAGIC4) {
+		marshall_STRING(sbp, smd_entry.checksum_name);
+	}
+	marshall_LONG(sbp, smd_entry.checksum);
+
+	/* Send response */
+	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
 	RETURN (0);
 }
 

@@ -1,11 +1,10 @@
-
 /*
  * Copyright (C) 1999-2005 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_main.c,v $ $Revision: 1.14 $ $Date: 2006/05/11 12:38:37 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: Cns_main.c,v $ $Revision: 1.15 $ $Date: 2007/09/27 13:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 #include <errno.h>
@@ -778,6 +777,9 @@ struct Cns_srv_thread_info *thip;
 		break;
 	case CNS_LISTREPLICAX:
 		c = procdirreq (magic, req_type, req_data, clienthost, thip);
+		break;
+	case CNS_LASTFSEQ:
+	        c = Cns_srv_lastfseq (magic, req_data, clienthost, thip);
 		break;
 	case CNS_STARTSESS:
 		c = procsessreq (magic, req_data, clienthost, thip);
