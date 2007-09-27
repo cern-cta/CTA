@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.512 $ $Date: 2007/09/27 13:31:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.513 $ $Date: 2007/09/27 13:48:57 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4075,9 +4075,9 @@ BEGIN
                    diskCopy.status as status,
                    to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime
               FROM DiskCopy, FileSystem, DiskServer, DiskPool
-             WHERE DiskCopy.fileSystem = FileSystem.id
-               AND FileSystem.diskServer = diskServer.id
-               AND DiskPool.id = fileSystem.diskPool
+             WHERE DiskCopy.fileSystem = FileSystem.id(+)
+               AND FileSystem.diskServer = diskServer.id(+)
+               AND DiskPool.id = fileSystem.diskPool(+)
                AND DiskCopy.castorfile = getCF(ref)) LOOP
      PIPE ROW(d);
   END LOOP;
