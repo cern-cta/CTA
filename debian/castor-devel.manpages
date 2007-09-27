@@ -16,6 +16,7 @@ debian/castor/usr/share/man/man3/Cns_enterclass.3castor
 debian/castor/usr/share/man/man3/Cns_getcomment.3castor
 debian/castor/usr/share/man/man3/Cns_getcwd.3castor
 debian/castor/usr/share/man/man3/Cns_getsegattrs.3castor
+debian/castor/usr/share/man/man3/Cns_lastfseq.3castor
 debian/castor/usr/share/man/man3/Cns_listclass.3castor
 debian/castor/usr/share/man/man3/Cns_listtape.3castor
 debian/castor/usr/share/man/man3/Cns_mkdir.3castor
