@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/04/02 15:26:00 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DbCommonSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/09/27 14:00:15 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for CDBC
  *
@@ -208,7 +208,7 @@ castor::db::DbCommonSvc::selectTape(const std::string vid,
             ex.getMessage()
               << "Unable to select tape while inserting "
               << "violated unique constraint :"
-              << std::endl << e.getMessage();
+              << std::endl << e.getMessage().str();
             throw ex;
           }
         }
@@ -217,7 +217,7 @@ castor::db::DbCommonSvc::selectTape(const std::string vid,
         castor::exception::Internal ex;
         ex.getMessage()
           << "Exception while inserting new tape in the DB :"
-          << std::endl << e.getMessage();
+          << std::endl << e.getMessage().str();
         throw ex;
       }
     }
@@ -229,7 +229,7 @@ castor::db::DbCommonSvc::selectTape(const std::string vid,
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape by vid, side and tpmode :"
-      << std::endl << e.getMessage();
+      << std::endl << e.getMessage().str();
     throw ex;
   }
   // Now get the tape from its id
@@ -253,7 +253,7 @@ castor::db::DbCommonSvc::selectTape(const std::string vid,
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape for id " << id  << " :"
-      << std::endl << e.getMessage();
+      << std::endl << e.getMessage().str();
     throw ex;
   }
   // We should never reach this point
@@ -299,7 +299,7 @@ castor::db::DbCommonSvc::selectSvcClass
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select SvcClass by name :"
-      << std::endl << e.getMessage();
+      << std::endl << e.getMessage().str();
     throw ex;
   }
 }
@@ -340,7 +340,7 @@ castor::db::DbCommonSvc::selectFileClass
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select FileClass by name :"
-      << std::endl << e.getMessage();
+      << std::endl << e.getMessage().str();
     throw ex;
   }
 }
@@ -409,7 +409,7 @@ castor::db::DbCommonSvc::selectFileSystem
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select FileSystem by name :"
-      << std::endl << e.getMessage();
+      << std::endl << e.getMessage().str();
     throw ex;
   }
 }
