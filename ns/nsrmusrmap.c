@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsrmusrmap.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:23 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      nsrmusrmap - suppress user entry corresponding to a given uid/name */
 #include <errno.h>
 #include <stdio.h>
@@ -16,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: nsrmusrmap.c,v $ $Revision: 1.2 $ $Date: 2
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "serrno.h"
+
 main(argc, argv)
 int argc;
 char **argv;

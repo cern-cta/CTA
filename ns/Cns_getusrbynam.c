@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_getusrbynam.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      Cns_getusrbynam - get user name associated with a given uid */
 
 #include <errno.h>

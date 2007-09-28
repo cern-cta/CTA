@@ -106,9 +106,9 @@ Cns_readdirxt(Cns_DIR *dirp)
 			unmarshall_LONG (rbp, dp->compression);
 			unmarshall_BYTE (rbp, dp->s_status);
 			unmarshall_STRING (rbp, dp->vid);
-            unmarshall_STRINGN (rbp, dp->checksum_name,
+			unmarshall_STRINGN (rbp, dp->checksum_name,
                                 CA_MAXCKSUMNAMELEN);
-            unmarshall_LONG (rbp, dp->checksum);
+			unmarshall_LONG (rbp, dp->checksum);
 			unmarshall_WORD (rbp, dp->side);
 			unmarshall_LONG (rbp, dp->fseq);
 			unmarshall_OPAQUE (rbp, dp->blockid, 4);

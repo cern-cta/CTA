@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_mysql_ifce.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>

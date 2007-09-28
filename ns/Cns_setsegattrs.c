@@ -97,8 +97,8 @@ Cns_setsegattrs(const char *path, struct Cns_fileid *file_uniqueid, int nbseg, s
 		marshall_WORD (sbp, (segattrs+i)->side);
 		marshall_LONG (sbp, (segattrs+i)->fseq);
 		marshall_OPAQUE (sbp, (segattrs+i)->blockid, 4);
-        marshall_STRING (sbp, (segattrs+i)->checksum_name);
-        marshall_LONG (sbp, (segattrs+i)->checksum);
+		marshall_STRING (sbp, (segattrs+i)->checksum_name);
+		marshall_LONG (sbp, (segattrs+i)->checksum);
 	}
  
 	msglen = sbp - sendbuf;

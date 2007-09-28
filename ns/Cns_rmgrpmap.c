@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_rmgrpmap.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      Cns_rmgrpmap - suppress group entry corresponding to a given gid/name */
 
 #include <errno.h>

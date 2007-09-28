@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nsmodifygrpmap.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      nsmodifygrpmap - modify group entry corresponding to a given gid */
 #include <errno.h>
 #include <stdio.h>
@@ -16,6 +12,7 @@ static char sccsid[] = "@(#)$RCSfile: nsmodifygrpmap.c,v $ $Revision: 1.2 $ $Dat
 #include "Cgetopt.h"
 #include "Cns_api.h"
 #include "serrno.h"
+
 main(argc, argv)
 int argc;
 char **argv;

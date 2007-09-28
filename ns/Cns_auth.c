@@ -83,16 +83,16 @@ Cns_setid(uid, gid)
  uid_t uid;
  gid_t gid;
 {
-  char func[16];
-  struct Cns_api_thread_info *thip;
-  
-  strcpy (func, "Cns_setid");
-  if (Cns_apiinit (&thip))
-    return (-1);
-  thip->uid = uid;
-  thip->gid = gid;
-  thip->use_authorization_id = 1;
-  return(0);
+	char func[16];
+	struct Cns_api_thread_info *thip;
+	
+	strcpy (func, "Cns_setid");
+	if (Cns_apiinit (&thip))
+		return (-1);
+	thip->uid = uid;
+	thip->gid = gid;
+	thip->use_authorization_id = 1;
+	return(0);
 }
 
 /** Cns_unsetid
@@ -103,17 +103,16 @@ Cns_setid(uid, gid)
 int DLL_DECL
 Cns_unsetid()
 {
- 
-  char func[16];
-  struct Cns_api_thread_info *thip;
-   
-  strcpy (func, "Cns_unsetid");
-  if (Cns_apiinit (&thip))
-    return (-1);
-  thip->uid = 0;
-  thip->gid = 0;
-  thip->use_authorization_id = 0;
-  return(0);
+	char func[16];
+	struct Cns_api_thread_info *thip;
+	
+	strcpy (func, "Cns_unsetid");
+	if (Cns_apiinit (&thip))
+		return (-1);
+	thip->uid = 0;
+	thip->gid = 0;
+	thip->use_authorization_id = 0;
+	return(0);
 }
 
 
@@ -135,37 +134,37 @@ Cns_getid_ext(uid, gid, mode)
  gid_t *gid;
  int mode;
 {
-  char func[16];
-  struct Cns_api_thread_info *thip;
-  
-  strcpy (func, "Cns_getid");
-  if (Cns_apiinit (&thip))
-    return (-1);
-  
-  if (uid != NULL) {
-    if(thip->use_authorization_id) {
-      *uid = thip->uid;
-    } else {
-      if (mode == MODE_REAL_ID) {
-	*uid = getuid();
-      } else {
-	*uid = geteuid();
-      }
-    }
-  }
-
-  if (gid != NULL) {
-    if(thip->use_authorization_id) {
-      *gid = thip->gid;
-    } else {
-      if (mode == MODE_REAL_ID) {
-	*gid = getgid();
-      } else {
-	*gid = getegid();
-      }
-    }
-  }
-  return(0);
+	char func[16];
+	struct Cns_api_thread_info *thip;
+	
+	strcpy (func, "Cns_getid");
+	if (Cns_apiinit (&thip))
+		return (-1);
+	
+	if (uid != NULL) {
+		if(thip->use_authorization_id) {
+			*uid = thip->uid;
+		} else {
+			if (mode == MODE_REAL_ID) {
+				*uid = getuid();
+			} else {
+				*uid = geteuid();
+			}
+		}
+	}
+	
+	if (gid != NULL) {
+		if(thip->use_authorization_id) {
+			*gid = thip->gid;
+		} else {
+			if (mode == MODE_REAL_ID) {
+				*gid = getgid();
+			} else {
+				*gid = getegid();
+			}
+		}
+	}
+	return(0);
 }
 
 
@@ -184,7 +183,7 @@ Cns_getid(uid, gid)
  uid_t *uid;
  gid_t *gid;
 {
-  return Cns_getid_ext(uid, gid, MODE_EFFECTIVE_ID);
+	return Cns_getid_ext(uid, gid, MODE_EFFECTIVE_ID);
 }
 
 /** Cns_getrealid
@@ -202,5 +201,5 @@ Cns_getrealid(uid, gid)
  uid_t *uid;
  gid_t *gid;
 {
-  return Cns_getid_ext(uid, gid, MODE_REAL_ID);
+	return Cns_getid_ext(uid, gid, MODE_REAL_ID);
 }

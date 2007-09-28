@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_modifyusrmap.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      Cns_modifyusrmap - modify user entry corresponding to a given uid */
 
 #include <errno.h>

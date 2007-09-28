@@ -18,7 +18,7 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
 
 /*	Cns_chkbackperm - check permissions backward */
 
-Cns_chkbackperm(dbfd, fileid, mode, uid, gid, clienthost)
+int Cns_chkbackperm(dbfd, fileid, mode, uid, gid, clienthost)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 int mode;
@@ -46,7 +46,7 @@ char *clienthost;
 
 /*	Cns_parsepath - parse a path, resolving symbolic links if any */
 
-Cns_parsepath(dbfd, cwd, path, uid, gid, clienthost, parent_dir, rec_addrp, base_entry, rec_addr, flags)
+int Cns_parsepath(dbfd, cwd, path, uid, gid, clienthost, parent_dir, rec_addrp, base_entry, rec_addr, flags)
 struct Cns_dbfd *dbfd;
 u_signed64 cwd;
 char *path;
@@ -222,7 +222,7 @@ next:
 
 /*	Cns_chkentryperm - check permissions in a given directory component */
 
-Cns_chkentryperm(fmd_entry, mode, uid, gid, clienthost)
+int Cns_chkentryperm(fmd_entry, mode, uid, gid, clienthost)
 struct Cns_file_metadata *fmd_entry;
 int mode;
 uid_t uid;

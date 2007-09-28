@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_main.c,v $ $Revision: 1.15 $ $Date: 2007/09/27 13:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -31,9 +27,16 @@ static char sccsid[] = "@(#)$RCSfile: Cns_main.c,v $ $Revision: 1.15 $ $Date: 20
 #include "Csec_api.h"
 #endif
 #include "Cupv_api.h"
+#include "Cdomainname.h"
 #include "marshall.h"
 #include "net.h"
 #include "serrno.h"
+
+int procsessreq(int  magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
+int procsessreq(int  magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
+int proctransreq(int magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
+int procdirreq(int magic, int req_type, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
+int Cns_init_dbpkg();
 
 int being_shutdown;
 char *cmd;
@@ -51,7 +54,7 @@ int maxfds;
 int rdonly;
 struct Cns_srv_thread_info *Cns_srv_thread_info;
 
-Cns_main(main_args)
+int Cns_main(main_args)
 struct main_args *main_args;
 {
 	int c;
@@ -152,7 +155,7 @@ struct main_args *main_args;
 		p_p = strtok (NULL, "@\n");
 		p_s = strtok (NULL, "/\n");
 		p_n = strtok (NULL, "\n");
-		db_user[0]= db_pwd[0] = db_srvr[0] = '\0';
+		db_user[0] = db_pwd[0] = db_srvr[0] = '\0';
 		if (p_u != NULL) strcpy (db_user, p_u);
 		if (p_p != NULL) strcpy (db_pwd, p_p);
 		if (p_s != NULL) strcpy (db_srvr, p_s);
@@ -229,9 +232,9 @@ struct main_args *main_args;
 	}
 	memset ((char *)&sin, 0, sizeof(struct sockaddr_in)) ;
 	sin.sin_family = AF_INET ;
-	if ((p = getenv (CNS_PORT_ENV)) || (p = getconfent (CNS_SCE, "PORT", 0))) {
+	if ((p = getenv (CNS_PORT_ENV)) || ((p = getconfent (CNS_SCE, "PORT", 0)))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if (sp = getservbyname (CNS_SVC, "tcp")) {
+	} else if ((sp = getservbyname (CNS_SVC, "tcp"))) {
 		sin.sin_port = sp->s_port;
 	} else {
 		sin.sin_port = htons ((unsigned short)CNS_PORT);
@@ -303,7 +306,7 @@ struct main_args *main_args;
 	}
 }
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char **argv;
 {
@@ -321,81 +324,7 @@ char **argv;
 #endif
 }
 
-void *
-doit(arg)
-void *arg;
-{
-	int c;
-	char *clienthost;
-	int magic;
-	char req_data[REQBUFSZ-3*LONGSIZE];
-	int req_type = 0;
-	struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
-
-#ifdef CSEC
-	Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
-	if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
-		nslogit (func, "Could not establish security context: %s !\n",
-		    Csec_getErrorMessage());
-		sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
-		thip->s = -1;
-		return NULL;
-	}
-	Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, &thip->Csec_auth_id);
-	if (strcmp (thip->Csec_mech, "ID") == 0 ||
-	    Csec_isIdAService (thip->Csec_mech, thip->Csec_auth_id) >= 0) {
-		if (isTrustedHost (thip->s, localhost, localdomain, CNS_SCE, "TRUST")) {
-			if (Csec_server_getAuthorizationId (&thip->sec_ctx,
-			    &thip->Csec_mech, &thip->Csec_auth_id) < 0) {
-				thip->Csec_uid = 0;
-				thip->Csec_gid = 0;
-#ifndef VIRTUAL_ID
-			} else if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
-			    NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
-				nslogit (func, "Could not map to local user: %s !\n",
-				    sstrerror (serrno));
-				sendrep (thip->s, CNS_RC, serrno);
-				thip->s = -1;
-				return NULL;
-#else
-			} else {	/* mapping will be done later */
-				thip->Csec_uid = (uid_t) -1;
-				thip->Csec_gid = (gid_t) -1;
-#endif
-			}
-		} else {
-			nslogit (func, "Host is not trusted\n");
-			sendrep (thip->s, CNS_RC, EACCES);
-			thip->s = -1;
-			return NULL;
-		}
-#ifndef VIRTUAL_ID
-	} else if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
-	    NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
-		nslogit (func, "Could not map to local user: %s !\n",
-		    sstrerror (serrno));
-		sendrep (thip->s, CNS_RC, serrno);
-		thip->s = -1;
-		return NULL;
-#else
-	} else {	/* mapping will be done later */
-		thip->Csec_uid = (uid_t) -1;
-		thip->Csec_gid = (gid_t) -1;
-#endif
-	}
-#endif
-	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0) {
-		c = procreq (magic, req_type, req_data, clienthost, thip);
-		sendrep (thip->s, CNS_RC, c);
-	} else if (c > 0)
-		sendrep (thip->s, CNS_RC, c);
-	else
-		netclose (thip->s);
-	thip->s = -1;
-	return (NULL);
-}
-
-getreq(s, magic, req_type, req_data, clienthost)
+int getreq(s, magic, req_type, req_data, clienthost)
 int s;
 int *magic;
 int *req_type;
@@ -449,7 +378,7 @@ char **clienthost;
 	}
 }
 
-procdirreq(magic, req_type, req_data, clienthost, thip)
+int procdirreq(magic, req_type, req_data, clienthost, thip)
 int magic;
 int req_type;
 char *req_data;
@@ -474,31 +403,31 @@ struct Cns_srv_thread_info *thip;
 	memset (&dblistptr, 0, sizeof(DBLISTPTR));
 	if (req_type == CNS_OPENDIR) {
 		memset (&smdlistptr, 0, sizeof(DBLISTPTR));
-		if (c = Cns_srv_opendir (magic, req_data, clienthost, thip))
+		if ((c = Cns_srv_opendir (magic, req_data, clienthost, thip)))
 			return (c);
 	} else if (req_type == CNS_LISTCLASS) {
-		if (c = Cns_srv_listclass (magic, req_data, clienthost, thip,
-		    &class_entry, endlist, &dblistptr))
+		if ((c = Cns_srv_listclass (magic, req_data, clienthost, thip,
+					    &class_entry, endlist, &dblistptr)))
 			return (c);
 	} else if (req_type == CNS_LISTLINKS) {
-		if (c = Cns_srv_listlinks (magic, req_data, clienthost, thip,
-		    &lnk_entry, endlist, &dblistptr))
+		if ((c = Cns_srv_listlinks (magic, req_data, clienthost, thip,
+					    &lnk_entry, endlist, &dblistptr)))
 			return (c);
 	} else if (req_type == CNS_LISTREP4GC) {
-		if (c = Cns_srv_listrep4gc (magic, req_data, clienthost, thip,
-		    &rep_entry, endlist, &dblistptr))
+		if ((c = Cns_srv_listrep4gc (magic, req_data, clienthost, thip,
+					     &rep_entry, endlist, &dblistptr)))
 			return (c);
 	} else if (req_type == CNS_LISTREPLICA) {
-		if (c = Cns_srv_listreplica (magic, req_data, clienthost, thip,
-		    &fmd_entry, &rep_entry, endlist, &dblistptr))
+		if ((c = Cns_srv_listreplica (magic, req_data, clienthost, thip,
+					      &fmd_entry, &rep_entry, endlist, &dblistptr)))
 			return (c);
 	} else if (req_type == CNS_LISTREPLICAX) {
-		if (c = Cns_srv_listreplicax (magic, req_data, clienthost, thip,
-		    &rep_entry, endlist, &dblistptr))
+		if ((c = Cns_srv_listreplicax (magic, req_data, clienthost, thip,
+					       &rep_entry, endlist, &dblistptr)))
 			return (c);
 	} else {
-		if (c = Cns_srv_listtape (magic, req_data, clienthost, thip,
-		    &fmd_entry, &smd_entry, endlist, &dblistptr))
+		if ((c = Cns_srv_listtape (magic, req_data, clienthost, thip,
+					   &fmd_entry, &smd_entry, endlist, &dblistptr)))
 			return (c);
 	}
 	sendrep (thip->s, CNS_IRC, 0);
@@ -513,50 +442,50 @@ struct Cns_srv_thread_info *thip;
 		timeval.tv_usec = 0;
 		if (select (thip->s+1, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0)
 			endlist = 1;
-		if (rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost))
+		if ((rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost)))
 			endlist = 1;
 		if (req_type == CNS_OPENDIR) {
 			if (new_req_type != CNS_READDIR)
 				endlist = 1;
-			if (c = Cns_srv_readdir (magic, req_data, clienthost, thip,
-			    &fmd_entry, &smd_entry, &umd_entry,
-			    endlist, &dblistptr, &smdlistptr))
+			if ((c = Cns_srv_readdir (magic, req_data, clienthost, thip,
+						  &fmd_entry, &smd_entry, &umd_entry,
+						  endlist, &dblistptr, &smdlistptr)))
 				return (c);
 		} else if (req_type == CNS_LISTCLASS) {
 			if (new_req_type != CNS_LISTCLASS)
 				endlist = 1;
-			if (c = Cns_srv_listclass (magic, req_data, clienthost, thip,
-			    &class_entry, endlist, &dblistptr))
+			if ((c = Cns_srv_listclass (magic, req_data, clienthost, thip,
+						    &class_entry, endlist, &dblistptr)))
 				return (c);
 		} else if (req_type == CNS_LISTLINKS) {
 			if (new_req_type != CNS_LISTLINKS)
 				endlist = 1;
-			if (c = Cns_srv_listlinks (magic, req_data, clienthost, thip,
-			    &lnk_entry, endlist, &dblistptr))
+			if ((c = Cns_srv_listlinks (magic, req_data, clienthost, thip,
+						    &lnk_entry, endlist, &dblistptr)))
 				return (c);
 		} else if (req_type == CNS_LISTREP4GC) {
 			if (new_req_type != CNS_LISTREP4GC)
 				endlist = 1;
-			if (c = Cns_srv_listrep4gc (magic, req_data, clienthost, thip,
-			    &rep_entry, endlist, &dblistptr))
+			if ((c = Cns_srv_listrep4gc (magic, req_data, clienthost, thip,
+						     &rep_entry, endlist, &dblistptr)))
 				return (c);
 		} else if (req_type == CNS_LISTREPLICA) {
 			if (new_req_type != CNS_LISTREPLICA)
 				endlist = 1;
-			if (c = Cns_srv_listreplica (magic, req_data, clienthost, thip,
-			    &fmd_entry, &rep_entry, endlist, &dblistptr))
+			if ((c = Cns_srv_listreplica (magic, req_data, clienthost, thip,
+						      &fmd_entry, &rep_entry, endlist, &dblistptr)))
 				return (c);
 		} else if (req_type == CNS_LISTREPLICAX) {
 			if (new_req_type != CNS_LISTREPLICAX)
 				endlist = 1;
-			if (c = Cns_srv_listreplicax (magic, req_data, clienthost, thip,
-			    &rep_entry, endlist, &dblistptr))
+			if ((c = Cns_srv_listreplicax (magic, req_data, clienthost, thip,
+						       &rep_entry, endlist, &dblistptr)))
 				return (c);
 		} else {
 			if (new_req_type != CNS_LISTTAPE)
 				endlist = 1;
-			if (c = Cns_srv_listtape (magic, req_data, clienthost, thip,
-			    &fmd_entry, &smd_entry, endlist, &dblistptr))
+			if ((c = Cns_srv_listtape (magic, req_data, clienthost, thip,
+						   &fmd_entry, &smd_entry, endlist, &dblistptr)))
 				return (c);
 		}
 		if (endlist) break;
@@ -565,7 +494,7 @@ struct Cns_srv_thread_info *thip;
 	return (rc);
 }
 
-procreq(magic, req_type, req_data, clienthost, thip)
+int procreq(magic, req_type, req_data, clienthost, thip)
 int magic;
 int req_type;
 char *req_data;
@@ -573,8 +502,10 @@ char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int c;
+#ifdef USE_VOMS
 	char **fqan = NULL;
 	int nbfqans = 0;
+#endif
 
 	/* connect to the database if not done yet */
 
@@ -836,13 +767,86 @@ struct Cns_srv_thread_info *thip;
 	return (c);
 }
 
-procsessreq(magic, req_data, clienthost, thip)
+void *
+doit(arg)
+void *arg;
+{
+	int c;
+	char *clienthost;
+	int magic;
+	char req_data[REQBUFSZ-3*LONGSIZE];
+	int req_type = 0;
+	struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
+
+#ifdef CSEC
+	Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
+	if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
+		nslogit (func, "Could not establish security context: %s !\n",
+		    Csec_getErrorMessage());
+		sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
+		thip->s = -1;
+		return NULL;
+	}
+	Csec_server_getClientId (&thip->sec_ctx, &thip->Csec_mech, &thip->Csec_auth_id);
+	if (strcmp (thip->Csec_mech, "ID") == 0 ||
+	    Csec_isIdAService (thip->Csec_mech, thip->Csec_auth_id) >= 0) {
+		if (isTrustedHost (thip->s, localhost, localdomain, CNS_SCE, "TRUST")) {
+			if (Csec_server_getAuthorizationId (&thip->sec_ctx,
+			    &thip->Csec_mech, &thip->Csec_auth_id) < 0) {
+				thip->Csec_uid = 0;
+				thip->Csec_gid = 0;
+#ifndef VIRTUAL_ID
+			} else if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
+			    NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
+				nslogit (func, "Could not map to local user: %s !\n",
+				    sstrerror (serrno));
+				sendrep (thip->s, CNS_RC, serrno);
+				thip->s = -1;
+				return NULL;
+#else
+			} else {	/* mapping will be done later */
+				thip->Csec_uid = (uid_t) -1;
+				thip->Csec_gid = (gid_t) -1;
+#endif
+			}
+		} else {
+			nslogit (func, "Host is not trusted\n");
+			sendrep (thip->s, CNS_RC, EACCES);
+			thip->s = -1;
+			return NULL;
+		}
+#ifndef VIRTUAL_ID
+	} else if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
+	    NULL, 0, &thip->Csec_uid, &thip->Csec_gid) < 0) {
+		nslogit (func, "Could not map to local user: %s !\n",
+		    sstrerror (serrno));
+		sendrep (thip->s, CNS_RC, serrno);
+		thip->s = -1;
+		return NULL;
+#else
+	} else {	/* mapping will be done later */
+		thip->Csec_uid = (uid_t) -1;
+		thip->Csec_gid = (gid_t) -1;
+#endif
+	}
+#endif
+	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0) {
+		c = procreq (magic, req_type, req_data, clienthost, thip);
+		sendrep (thip->s, CNS_RC, c);
+	} else if (c > 0)
+		sendrep (thip->s, CNS_RC, c);
+	else
+		netclose (thip->s);
+	thip->s = -1;
+	return (NULL);
+}
+
+int procsessreq(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
-	int c;
 	int req_type = -1;
 	int rc = 0;
 	fd_set readfd, readmask;
@@ -862,7 +866,7 @@ struct Cns_srv_thread_info *thip;
 		if (select (thip->s+1, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
 			return (SEINTERNAL);
 		}
-		if (rc = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) {
+		if ((rc = getreq (thip->s, &magic, &req_type, req_data, &clienthost))) {
 			return (rc);
 		}
 		rc = procreq (magic, req_type, req_data, clienthost, thip);
@@ -872,13 +876,12 @@ struct Cns_srv_thread_info *thip;
 	return (rc);
 }
 
-proctransreq(magic, req_data, clienthost, thip)
+int proctransreq(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
-	int c;
 	int req_type = -1;
 	int rc = 0;
 	fd_set readfd, readmask;
@@ -899,7 +902,7 @@ struct Cns_srv_thread_info *thip;
 			(void) Cns_srv_aborttrans (magic, req_data, clienthost, thip);
 			return (SEINTERNAL);
 		}
-		if (rc = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) {
+		if ((rc = getreq (thip->s, &magic, &req_type, req_data, &clienthost))) {
 			(void) Cns_srv_aborttrans (magic, req_data, clienthost, thip);
 			return (rc);
 		}

@@ -3,22 +3,19 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_acl.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:16 $ CERN IT-ADC/CA Jean-Philippe Baud";
-#endif /* not lint */
- 
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "Cns.h"
 #include "Cns_server.h"
 #include "serrno.h"
 
 /*	Cns_acl_chmod - propagate new mode to access ACL */
 
-Cns_acl_chmod (struct Cns_file_metadata *fmd_entry)
+int Cns_acl_chmod (struct Cns_file_metadata *fmd_entry)
 {
 	int entry_len;
 	char *iacl;
@@ -63,7 +60,7 @@ Cns_acl_chmod (struct Cns_file_metadata *fmd_entry)
 
 /*	Cns_acl_chown - propagate new ownership to access ACL */
 
-Cns_acl_chown (struct Cns_file_metadata *fmd_entry)
+int Cns_acl_chown (struct Cns_file_metadata *fmd_entry)
 {
 	int entry_len;
 	char *iacl;
@@ -104,7 +101,7 @@ Cns_acl_chown (struct Cns_file_metadata *fmd_entry)
 
 /*	Cns_acl_compare - routine used by qsort to order ACL entries */
 
-Cns_acl_compare (const void *acl1, const void *acl2)
+int Cns_acl_compare (const void *acl1, const void *acl2)
 {
 	if (((struct Cns_acl *)acl1)->a_type < ((struct Cns_acl *)acl2)->a_type)
 		return (-1);
@@ -119,7 +116,7 @@ Cns_acl_compare (const void *acl1, const void *acl2)
 
 /*      Cns_acl_inherit - inherit ACLs from parent default ACL entries */
 
-Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metadata *fmd_entry, mode_t mode)
+int Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metadata *fmd_entry, mode_t mode)
 {
 	char acl_mask = 0x7F;
 	int entry_len;
@@ -135,7 +132,7 @@ Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metadata 
 
 	/* Get CNS_ACL_MASK if any */
 
-	if (iacl = strchr (pacl, CNS_ACL_DEFAULT|CNS_ACL_MASK|'@'))
+	if ((iacl = strchr (pacl, CNS_ACL_DEFAULT|CNS_ACL_MASK|'@')))
 		acl_mask = *(iacl + 1) - '0';
 
 	/* Build access ACL */
@@ -148,15 +145,15 @@ Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metadata 
 			p = strchr (iacl, ',');
 			switch (*iacl - '@') {
 			case CNS_ACL_DEFAULT | CNS_ACL_USER_OBJ:
-				fmd_entry->filemode = fmd_entry->filemode & 0177077 |
+				fmd_entry->filemode = (fmd_entry->filemode & 0177077) |
 					(mode & (*(iacl+1) - '0') << 6);
 				break;
 			case CNS_ACL_DEFAULT | CNS_ACL_GROUP_OBJ:
-				fmd_entry->filemode = fmd_entry->filemode & 0177707 |
+				fmd_entry->filemode = (fmd_entry->filemode & 0177707) |
 					(mode & (*(iacl+1) - '0') << 3);
 				break;
 			case CNS_ACL_DEFAULT | CNS_ACL_OTHER:
-				fmd_entry->filemode = fmd_entry->filemode & 0177770 |
+				fmd_entry->filemode = (fmd_entry->filemode & 0177770) |
 					(mode & (*(iacl+1) - '0'));
 				break;
 			}
@@ -172,25 +169,25 @@ Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metadata 
 			switch (*iacl - '@') {
 			case CNS_ACL_DEFAULT | CNS_ACL_USER_OBJ:
 				*nacl++ = (*(iacl+1) & (mode >> 6 & 7)) + '0';
-				fmd_entry->filemode = fmd_entry->filemode & 0177077 |
+				fmd_entry->filemode = (fmd_entry->filemode & 0177077) |
 					(mode & (*(iacl+1) - '0') << 6);
 				nacl += sprintf (nacl, "%d", fmd_entry->uid);
 				break;
 			case CNS_ACL_DEFAULT | CNS_ACL_GROUP_OBJ:
 				*nacl++ = (*(iacl+1) & (mode >> 3 & 7)) + '0';
-				fmd_entry->filemode = fmd_entry->filemode & 0177707 |
+				fmd_entry->filemode = (fmd_entry->filemode & 0177707) |
 					(mode & (*(iacl+1) - '0') << 3);
 				nacl += sprintf (nacl, "%d", fmd_entry->gid);
 				break;
 			case CNS_ACL_DEFAULT | CNS_ACL_MASK:
 				*nacl++ = (*(iacl+1) & (mode >> 3 & 7)) + '0';
-				fmd_entry->filemode = fmd_entry->filemode & 0177707 |
+				fmd_entry->filemode = (fmd_entry->filemode & 0177707) |
 					(mode & (*(iacl+1) - '0') << 3);
 				*nacl++ = '0';
 				break;
 			case CNS_ACL_DEFAULT | CNS_ACL_OTHER:
 				*nacl++ = (*(iacl+1) & (mode & 7)) + '0';
-				fmd_entry->filemode = fmd_entry->filemode & 0177770 |
+				fmd_entry->filemode = (fmd_entry->filemode & 0177770) |
 					(mode & (*(iacl+1) - '0'));
 				*nacl++ = '0';
 				break;
@@ -220,7 +217,7 @@ Cns_acl_inherit (struct Cns_file_metadata *parent_dir, struct Cns_file_metadata 
 
 /*      Cns_acl_validate - validate set of ACL entries */
 
-Cns_acl_validate (struct Cns_acl *acl, int nentries)
+int Cns_acl_validate (struct Cns_acl *acl, int nentries)
 {
 	struct Cns_acl *aclp;
 	int i;
@@ -313,7 +310,7 @@ Cns_acl_validate (struct Cns_acl *acl, int nentries)
 
 /*	Cns_chkaclperm - check access permissions */
 
-Cns_chkaclperm (struct Cns_file_metadata *fmd_entry, int mode, uid_t uid, gid_t gid)
+int Cns_chkaclperm (struct Cns_file_metadata *fmd_entry, int mode, uid_t uid, gid_t gid)
 {
 	char acl_mask = 0x7F;
 	int acl_id;
@@ -327,7 +324,7 @@ Cns_chkaclperm (struct Cns_file_metadata *fmd_entry, int mode, uid_t uid, gid_t 
 
 	/* Get CNS_ACL_MASK if any */
 
-	if (iacl = strchr (fmd_entry->acl, CNS_ACL_MASK|'@'))
+	if ((iacl = strchr (fmd_entry->acl, CNS_ACL_MASK|'@')))
 		acl_mask = *(iacl + 1) - '0';
 	mode >>= 6;
 

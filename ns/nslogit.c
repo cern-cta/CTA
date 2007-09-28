@@ -3,22 +3,21 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: nslogit.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include "Cglobals.h"
 #include "Cns.h"
+#include "Csnprintf.h"
+
 extern int jid;
 extern char logfile[];
 
-nslogit(char *func, char *msg, ...)
+int nslogit(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[LOGBUFSZ];

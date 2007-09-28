@@ -66,7 +66,7 @@ char **argv;
 	char fullpath[CA_MAXPATHLEN+1];
 	int i;
 	static struct Coptions longopts[] = {
-        {"checksum", NO_ARGUMENT, &checksumflag, 1},
+		{"checksum", NO_ARGUMENT, &checksumflag, 1},
 		{"class", NO_ARGUMENT, &clflag, 1},
 		{"comment", NO_ARGUMENT, &cmflag, 1},
 		{"deleted", NO_ARGUMENT, &delflag, 1},
@@ -479,31 +479,17 @@ char *path;
 		return (c);
 	for (i = 0; i < nbseg; i++) {
 		listtpentry (path, (segattrs+i)->copyno, (segattrs+i)->fsec,
-		    (segattrs+i)->segsize, (segattrs+i)->compression,
-		    (segattrs+i)->vid, (segattrs+i)->side, (segattrs+i)->fseq,
-		    (segattrs+i)->blockid, (segattrs+i)->s_status,
-            (segattrs+i)->checksum_name, (segattrs+i)->checksum);
+			     (segattrs+i)->segsize, (segattrs+i)->compression,
+			     (segattrs+i)->vid, (segattrs+i)->side, (segattrs+i)->fseq,
+			     (segattrs+i)->blockid, (segattrs+i)->s_status,
+			     (segattrs+i)->checksum_name, (segattrs+i)->checksum);
 	}
 	if (segattrs)
 		free (segattrs);
 	return (0);
 }
 
-int listtpentry(char *path, int copyno, int fsec, u_signed64 segsize, int compression,char *vid,int side, int fseq, unsigned char blockid[4],char status,
-           char *checksum_name,unsigned long checksum)
-/*int listtpentry(path, copyno, fsec, segsize, compression,vid,side, fseq, blockid, status, checksum_name, checksum)
-char *path;
-int copyno;
-int fsec;
-u_signed64 segsize;
-int compression;
-char *vid;
-int side;
-int fseq;
-unsigned char blockid[4];
-char status;
-char *checksum_name;
-unsigned long checksum;*/
+int listtpentry(char *path, int copyno, int fsec, u_signed64 segsize, int compression,char *vid,int side, int fseq, unsigned char blockid[4],char status, char *checksum_name,unsigned long checksum)
 {
 	char tmpbuf[21];
 
@@ -520,12 +506,12 @@ unsigned long checksum;*/
 		    blockid[0], blockid[1], blockid[2], blockid[3],
 		    u64tostr (segsize, tmpbuf, 20), compression);
 
-    if (checksumflag) {
-        if (checksum_name != NULL && checksum_name[0] != '\0') {
-            printf ("%*s %08lx ", CA_MAXCKSUMNAMELEN, checksum_name, checksum);
-        } else {
-            printf ("%*s %08x ", CA_MAXCKSUMNAMELEN, "-", 0);
-        }
+	if (checksumflag) {
+		if (checksum_name != NULL && checksum_name[0] != '\0') {
+			printf ("%*s %08lx ", CA_MAXCKSUMNAMELEN, checksum_name, checksum);
+		} else {
+			printf ("%*s %08x ", CA_MAXCKSUMNAMELEN, "-", 0);
+		}
 	}
 	printf ("%s\n", path);
 	return (0);

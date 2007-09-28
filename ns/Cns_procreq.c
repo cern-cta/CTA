@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.13 $ $Date: 2007/09/27 13:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
- 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,12 +34,19 @@ static char sccsid[] = "@(#)$RCSfile: Cns_procreq.c,v $ $Revision: 1.13 $ $Date:
 #include "rfcntl.h"
 #include "serrno.h"
 #include "u64subr.h"
+
+/* forware declarations */
+int sendrep(int rpfd, int rep_type, ...);
+int nslogit(char *func, char *msg, ...);
+int Cns_update_unique_gid(struct Cns_dbfd *dbfd, unsigned int unique_id);
+int Cns_update_unique_uid(struct Cns_dbfd *dbfd, unsigned int unique_id);
+
 extern int being_shutdown;
 extern char *cmd;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 extern int rdonly;
  
-get_client_actual_id (thip, uid, gid, user)
+int get_client_actual_id (thip, uid, gid, user)
 struct Cns_srv_thread_info *thip;
 uid_t *uid;
 gid_t *gid;
@@ -64,7 +67,7 @@ char **user;
 	return (0);
 }
 
-getpath (thip, cur_fileid, path)
+int getpath (thip, cur_fileid, path)
 struct Cns_srv_thread_info *thip;
 u_signed64 cur_fileid;
 char **path;
@@ -96,8 +99,7 @@ char **path;
  *	A backslash is appended to a line to be continued
  *	A continuation line is prefixed by '+ '
  */
-void
-Cns_logreq(func, logbuf)
+void Cns_logreq(func, logbuf)
 char *func;
 char *logbuf;
 {
@@ -135,7 +137,7 @@ char *logbuf;
 	}
 }
 
-marshall_DIRR (sbpp, magic, rep_entry)
+int marshall_DIRR (sbpp, magic, rep_entry)
 char **sbpp;
 int magic;
 struct Cns_file_replica *rep_entry;
@@ -158,7 +160,7 @@ struct Cns_file_replica *rep_entry;
 	return (0);
 }
 
-marshall_DIRX (sbpp, magic, fmd_entry)
+int marshall_DIRX (sbpp, magic, fmd_entry)
 char **sbpp;
 int magic;
 struct Cns_file_metadata *fmd_entry;
@@ -187,7 +189,7 @@ struct Cns_file_metadata *fmd_entry;
 	return (0);
 }
 
-marshall_DIRXR (sbpp, magic, fmd_entry)
+int marshall_DIRXR (sbpp, magic, fmd_entry)
 char **sbpp;
 int magic;
 struct Cns_file_metadata *fmd_entry;
@@ -203,7 +205,7 @@ struct Cns_file_metadata *fmd_entry;
 	return (0);
 }
 
-marshall_DIRXT (sbpp, magic, fmd_entry, smd_entry)
+int marshall_DIRXT (sbpp, magic, fmd_entry, smd_entry)
 char **sbpp;
 int magic;
 struct Cns_file_metadata *fmd_entry;
@@ -214,28 +216,28 @@ struct Cns_seg_metadata *smd_entry;
         marshall_HYPER (sbp, fmd_entry->parent_fileid);
 	if (magic >= CNS_MAGIC3)
 		marshall_HYPER (sbp, smd_entry->s_fileid);
-		marshall_WORD (sbp, smd_entry->copyno);
-		marshall_WORD (sbp, smd_entry->fsec);
-		marshall_HYPER (sbp, smd_entry->segsize);
-		marshall_LONG (sbp, smd_entry->compression);
-		marshall_BYTE (sbp, smd_entry->s_status);
-		marshall_STRING (sbp, smd_entry->vid);
-		if (magic >= CNS_MAGIC4) {
-			marshall_STRING (sbp, smd_entry->checksum_name);
-			marshall_LONG (sbp, smd_entry->checksum);
-		}
+	marshall_WORD (sbp, smd_entry->copyno);
+	marshall_WORD (sbp, smd_entry->fsec);
+	marshall_HYPER (sbp, smd_entry->segsize);
+	marshall_LONG (sbp, smd_entry->compression);
+	marshall_BYTE (sbp, smd_entry->s_status);
+	marshall_STRING (sbp, smd_entry->vid);
+	if (magic >= CNS_MAGIC4) {
+		marshall_STRING (sbp, smd_entry->checksum_name);
+		marshall_LONG (sbp, smd_entry->checksum);
+	}
 	if (magic >= CNS_MAGIC2)
 		marshall_WORD (sbp, smd_entry->side);
-        marshall_LONG (sbp, smd_entry->fseq);
-        marshall_OPAQUE (sbp, smd_entry->blockid, 4);
-        marshall_STRING (sbp, fmd_entry->name);
-        *sbpp = sbp;
+	marshall_LONG (sbp, smd_entry->fseq);
+	marshall_OPAQUE (sbp, smd_entry->blockid, 4);
+	marshall_STRING (sbp, fmd_entry->name);
+	*sbpp = sbp;
 	return (0);
 }
 
 /*	Cns_srv_aborttrans - abort transaction */
 
-Cns_srv_aborttrans(magic, req_data, clienthost, thip)
+int Cns_srv_aborttrans(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -260,7 +262,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_access - check accessibility of a file/directory */
 
-Cns_srv_access(magic, req_data, clienthost, thip)
+int Cns_srv_access(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -313,7 +315,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_accessr - check accessibility of a file replica */
 
-Cns_srv_accessr(magic, req_data, clienthost, thip)
+int Cns_srv_accessr(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -376,7 +378,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_addreplica - add a replica for a given file */
 
-Cns_srv_addreplica(magic, req_data, clienthost, thip)
+int Cns_srv_addreplica(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -501,7 +503,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_chclass - change class on directory */
 
-Cns_srv_chclass(magic, req_data, clienthost, thip)
+int Cns_srv_chclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -554,22 +556,26 @@ struct Cns_srv_thread_info *thip;
 
 	if (classid > 0) {
 		if (Cns_get_class_by_id (&thip->dbfd, classid, &new_class_entry,
-		    1, &new_rec_addrc))
+					 1, &new_rec_addrc)) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR, "No such class\n");
 				RETURN (EINVAL);
-			} else
+			} else {
 				RETURN (serrno);
+			}
+		}
 		if (*class_name && strcmp (class_name, new_class_entry.name))
 			RETURN (EINVAL);
 	} else {
 		if (Cns_get_class_by_name (&thip->dbfd, class_name, &new_class_entry,
-		    1, &new_rec_addrc))
+					   1, &new_rec_addrc)) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR, "No such class\n");
 				RETURN (EINVAL);
-			} else
+			} else {
 				RETURN (serrno);
+			}
+		}
 	}
 
 	/* check if the user is authorized to chclass this entry */
@@ -608,7 +614,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_chdir - change current working directory */
 
-Cns_srv_chdir(magic, req_data, clienthost, thip)
+int Cns_srv_chdir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -660,7 +666,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_chmod - change file/directory permissions */
 
-Cns_srv_chmod(magic, req_data, clienthost, thip)
+int Cns_srv_chmod(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -727,7 +733,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_chown - change owner and group of a file or a directory */
 
-Cns_srv_chown(magic, req_data, clienthost, thip)
+int Cns_srv_chown(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -780,7 +786,6 @@ struct Cns_srv_thread_info *thip;
 		RETURN (serrno);
 
 	/* check if the user is authorized to change ownership this entry */
-
 	if (fmd_entry.uid != new_uid && new_uid != -1) {
 		if (gid != fmd_entry.gid)
 			need_p_admin = 1;
@@ -803,14 +808,13 @@ struct Cns_srv_thread_info *thip;
 				found = 1;
 			} else {
 				found = 0;
-				if (membername = gr->gr_mem) {
-					while (*membername) {
-						if (strcmp (pw->pw_name, *membername) == 0) {
-							found = 1;
-							break;
-						}
-						membername++;
+				membername = gr->gr_mem;
+				while (*membername) {
+					if (strcmp (pw->pw_name, *membername) == 0) {
+						found = 1;
+						break;
 					}
+					membername++;
 				}
 			}
 			if (!found)
@@ -842,7 +846,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_creat - create a file entry */
  
-Cns_srv_creat(magic, req_data, clienthost, thip)
+int Cns_srv_creat(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1009,7 +1013,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_delcomment - delete a comment associated with a file/directory */
 
-Cns_srv_delcomment(magic, req_data, clienthost, thip)
+int Cns_srv_delcomment(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1070,7 +1074,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_delete - logically remove a file entry */
  
-Cns_srv_delete(magic, req_data, clienthost, thip)
+int Cns_srv_delete(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1183,7 +1187,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_deleteclass - delete a file class definition */
 
-Cns_srv_deleteclass(magic, req_data, clienthost, thip)
+int Cns_srv_deleteclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1251,7 +1255,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_delreplica - delete a replica for a given file */
 
-Cns_srv_delreplica(magic, req_data, clienthost, thip)
+int Cns_srv_delreplica(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1335,7 +1339,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_du - summarize file space usage */
 
-compute_du4dir (thip, direntry, Lflag, uid, gid, clienthost, nbbytes, nbentries)
+int compute_du4dir (thip, direntry, Lflag, uid, gid, clienthost, nbbytes, nbentries)
 struct Cns_srv_thread_info *thip;
 struct Cns_file_metadata *direntry;
 int Lflag;
@@ -1395,7 +1399,7 @@ u_signed64 *nbentries;
 	return (c < 0 ? serrno : 0);
 }
 
-Cns_srv_du(magic, req_data, clienthost, thip)
+int Cns_srv_du(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1459,7 +1463,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_endsess - end session */
 
-Cns_srv_endsess(magic, req_data, clienthost, thip)
+int Cns_srv_endsess(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1482,7 +1486,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_endtrans - end transaction mode */
 
-Cns_srv_endtrans(magic, req_data, clienthost, thip)
+int Cns_srv_endtrans(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1507,7 +1511,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_enterclass - define a new file class */
 
-Cns_srv_enterclass(magic, req_data, clienthost, thip)
+int Cns_srv_enterclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1578,7 +1582,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_getacl - get the Access Control List for a file/directory */
 
-Cns_srv_getacl(magic, req_data, clienthost, thip)
+int Cns_srv_getacl(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1635,7 +1639,7 @@ struct Cns_srv_thread_info *thip;
 		nentries++;
 	} else {
 		for (iacl = fmd_entry.acl; iacl; iacl = p) {
-			if (p = strchr (iacl, ','))
+			if ((p = strchr (iacl, ',')))
 				p++;
 			marshall_BYTE (sbp, *iacl - '@');
 			marshall_LONG (sbp, atoi (iacl + 2));
@@ -1651,7 +1655,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getcomment - get the comment associated with a file/directory */
 
-Cns_srv_getcomment(magic, req_data, clienthost, thip)
+int Cns_srv_getcomment(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1709,7 +1713,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getlinks - get the link entries associated with a given file */
 
-Cns_srv_getlinks(magic, req_data, clienthost, thip)
+int Cns_srv_getlinks(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1807,7 +1811,7 @@ struct Cns_srv_thread_info *thip;
 	RETURNQ (0);
 }
 
-Cns_srv_getpath(magic, req_data, clienthost, thip)
+int Cns_srv_getpath(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1848,7 +1852,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getreplica - get replica entries for a given file */
 
-Cns_srv_getreplica(magic, req_data, clienthost, thip)
+int Cns_srv_getreplica(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -1952,7 +1956,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getsegattrs - get file segments attributes */
 
-Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
+int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2036,8 +2040,8 @@ struct Cns_srv_thread_info *thip;
 		marshall_OPAQUE (sbp, smd_entry.blockid, 4);
 		if (magic >= CNS_MAGIC4) {
  			marshall_STRING (sbp, smd_entry.checksum_name);
-            marshall_LONG (sbp, smd_entry.checksum);
-        } 
+			marshall_LONG (sbp, smd_entry.checksum);
+		}
 		nbseg++;
 		bof = 0;
 	}
@@ -2054,7 +2058,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_lchown - change owner and group of a file or a directory */
 
-Cns_srv_lchown(magic, req_data, clienthost, thip)
+int Cns_srv_lchown(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2130,14 +2134,13 @@ struct Cns_srv_thread_info *thip;
 				found = 1;
 			} else {
 				found = 0;
-				if (membername = gr->gr_mem) {
-					while (*membername) {
-						if (strcmp (pw->pw_name, *membername) == 0) {
-							found = 1;
-							break;
-						}
-						membername++;
+				membername = gr->gr_mem;
+				while (*membername) {
+					if (strcmp (pw->pw_name, *membername) == 0) {
+						found = 1;
+						break;
 					}
+					membername++;
 				}
 			}
 			if (!found)
@@ -2167,7 +2170,7 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
-Cns_srv_listclass(magic, req_data, clienthost, thip, class_entry, endlist, dblistptr)
+int Cns_srv_listclass(magic, req_data, clienthost, thip, class_entry, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2275,7 +2278,7 @@ reply:
 	RETURN (0);
 }
 
-Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dblistptr)
+int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2299,7 +2302,6 @@ DBLISTPTR *dblistptr;
 	char outbuf[LISTBUFSZ+4];
 	char *p;
 	char path[CA_MAXPATHLEN+1];
-	char *q;
 	char *rbp;
 	char *sbp;
 	char tmp_path[CA_MAXPATHLEN+1];
@@ -2393,7 +2395,7 @@ DBLISTPTR *dblistptr;
 		RETURN (serrno);
 	if (c == 1)
 		eol = 1;
-reply:
+
 	marshall_WORD (sbp, eol);
 	p = outbuf;
 	marshall_WORD (p, nbentries);		/* update nbentries in reply */
@@ -2401,7 +2403,7 @@ reply:
 	RETURN (0);
 }
 
-Cns_srv_listrep4gc(magic, req_data, clienthost, thip, rep_entry, endlist, dblistptr)
+int Cns_srv_listrep4gc(magic, req_data, clienthost, thip, rep_entry, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2475,7 +2477,7 @@ DBLISTPTR *dblistptr;
 		RETURN (serrno);
 	if (c == 1)
 		eol = 1;
-reply:
+
 	marshall_WORD (sbp, eol);
 	p = outbuf;
 	marshall_WORD (p, nbentries);		/* update nbentries in reply */
@@ -2483,7 +2485,7 @@ reply:
 	RETURN (0);
 }
 
-Cns_srv_listreplica(magic, req_data, clienthost, thip, fmd_entry, rep_entry, endlist, dblistptr)
+int Cns_srv_listreplica(magic, req_data, clienthost, thip, fmd_entry, rep_entry, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2592,7 +2594,7 @@ DBLISTPTR *dblistptr;
 		RETURN (serrno);
 	if (c == 1)
 		eol = 1;
-reply:
+
 	marshall_WORD (sbp, eol);
 	p = outbuf;
 	marshall_WORD (p, nbentries);		/* update nbentries in reply */
@@ -2600,7 +2602,7 @@ reply:
 	RETURN (0);
 }
 
-Cns_srv_listreplicax(magic, req_data, clienthost, thip, rep_entry, endlist, dblistptr)
+int Cns_srv_listreplicax(magic, req_data, clienthost, thip, rep_entry, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2680,7 +2682,7 @@ DBLISTPTR *dblistptr;
 		RETURN (serrno);
 	if (c == 1)
 		eol = 1;
-reply:
+
 	marshall_WORD (sbp, eol);
 	p = outbuf;
 	marshall_WORD (p, nbentries);		/* update nbentries in reply */
@@ -2688,7 +2690,7 @@ reply:
 	RETURN (0);
 }
 
-Cns_srv_lastfseq(magic, req_data, clienthost, thip)
+int Cns_srv_lastfseq(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2753,7 +2755,7 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
-Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, endlist, dblistptr)
+int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, endlist, dblistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2829,7 +2831,7 @@ DBLISTPTR *dblistptr;
 
 /*	Cns_srv_lstat - get information about a symbolic link */
 
-Cns_srv_lstat(magic, req_data, clienthost, thip)
+int Cns_srv_lstat(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -2900,7 +2902,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_mkdir - create a directory entry */
  
-Cns_srv_mkdir(magic, req_data, clienthost, thip)
+int Cns_srv_mkdir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3017,7 +3019,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_modifyclass - modify an existing fileclass definition */
 
-Cns_srv_modifyclass(magic, req_data, clienthost, thip)
+int Cns_srv_modifyclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3186,7 +3188,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_open - open a file */
  
-Cns_srv_open(magic, req_data, clienthost, thip)
+int Cns_srv_open(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3335,7 +3337,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_opendir - open a directory entry */
 
-Cns_srv_opendir(magic, req_data, clienthost, thip)
+int Cns_srv_opendir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3408,7 +3410,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_queryclass - query about a file class */
 
-Cns_srv_queryclass(magic, req_data, clienthost, thip)
+int Cns_srv_queryclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3494,7 +3496,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_readdir - read directory entries */
 
-Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd_entry, endlist, dblistptr, smdlistptr)
+int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd_entry, endlist, dblistptr, smdlistptr)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3576,9 +3578,9 @@ DBLISTPTR *smdlistptr;
 				marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
 				nbentries++;
 				maxsize -= ((direntsz + fnl + 8) / 8) * 8;
-				if (c = Cns_get_smd_by_pfid (&thip->dbfd, bof, 
+				if ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, 
 				    fmd_entry->fileid, smd_entry, 0, NULL,
-				    0, smdlistptr)) break;
+				    0, smdlistptr))) break;
 				if (fnl >= maxsize)
 					goto reply;
 			}
@@ -3601,9 +3603,9 @@ DBLISTPTR *smdlistptr;
 		} else {			/* readdirxr */
 			bof = 1;
 			while (1) {	/* loop on replicas */
-				if (c = Cns_list_rep_entry (&thip->dbfd, bof,
+				if ((c = Cns_list_rep_entry (&thip->dbfd, bof,
 				    fmd_entry->fileid, &rep_entry, 0, NULL,
-				    0, &replistptr)) break;
+				    0, &replistptr))) break;
 				bof = 0;
 				if (*se && strcmp (rep_entry.host, se))
 					continue;
@@ -3639,9 +3641,9 @@ DBLISTPTR *smdlistptr;
 		} else if (getattr == 2) {	/* readdirxt */
 			bof = 1;
 			while (1) {	/* loop on segments */
-				if (c = Cns_get_smd_by_pfid (&thip->dbfd, bof,
+				if ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof,
 				    fmd_entry->fileid, smd_entry, 0, NULL,
-				    0, smdlistptr)) break;
+				    0, smdlistptr))) break;
 				if (fnl >= maxsize)
 					goto reply;
 				marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
@@ -3686,9 +3688,9 @@ DBLISTPTR *smdlistptr;
 			if (fnl >= maxsize) break;
 			bof = 1;
 			while (1) {	/* loop on replicas */
-				if (c = Cns_list_rep_entry (&thip->dbfd, bof,
+				if ((c = Cns_list_rep_entry (&thip->dbfd, bof,
 				    fmd_entry->fileid, &rep_entry, 0, NULL,
-				    0, &replistptr)) break;
+				    0, &replistptr))) break;
 				bof = 0;
 				if (*se && strcmp (rep_entry.host, se))
 					continue;
@@ -3740,7 +3742,7 @@ reply:
 
 /*	Cns_srv_readlink - read value of symbolic link */
 
-Cns_srv_readlink(magic, req_data, clienthost, thip)
+int Cns_srv_readlink(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3801,7 +3803,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_rename - rename a file or a directory */
  
-Cns_srv_rename(magic, req_data, clienthost, thip)
+int Cns_srv_rename(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -3815,7 +3817,6 @@ struct Cns_srv_thread_info *thip;
 	char func[16];
 	gid_t gid;
 	char logbuf[2*CA_MAXPATHLEN+9];
-	int n;
 	int new_exists = 0;
 	struct Cns_file_metadata new_fmd_entry;
 	struct Cns_file_metadata new_parent_dir;
@@ -4019,7 +4020,7 @@ struct Cns_srv_thread_info *thip;
 /*	Cns_srv_updateseg_checksum - Updates file segment checksum
     when previous value is NULL*/
 
-Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
+int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -4034,11 +4035,9 @@ struct Cns_srv_thread_info *thip;
 	gid_t gid;
 	char logbuf[CA_MAXPATHLEN+34];
 	struct Cns_seg_metadata old_smd_entry;
-	struct Cns_file_metadata parent_dir;
 	char *rbp;
 	Cns_dbrec_addr rec_addr;
 	Cns_dbrec_addr rec_addrs;
-	u_signed64 segsize;
 	int side;
 	struct Cns_seg_metadata smd_entry;
 	char tmpbuf[21];
@@ -4046,7 +4045,7 @@ struct Cns_srv_thread_info *thip;
 	uid_t uid;
 	char *user;
 	char vid[CA_MAXVIDLEN+1];
-    int checksum_ok;
+	int checksum_ok;
     
 	strcpy (func, "Cns_srv_updateseg_checksum");
 	rbp = req_data;
@@ -4087,24 +4086,24 @@ struct Cns_srv_thread_info *thip;
 	    old_smd_entry.fseq != fseq)
 		RETURN (SEENTRYNFND);
 
-	sprintf (logbuf, "old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %x",
-             u64tostr (old_smd_entry.s_fileid, tmpbuf, 0), old_smd_entry.copyno,
-             old_smd_entry.fsec, u64tostr (old_smd_entry.segsize, tmpbuf2, 0),
-             old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
-             old_smd_entry.side, old_smd_entry.fseq, old_smd_entry.blockid[0],
-             old_smd_entry.blockid[1], old_smd_entry.blockid[2], old_smd_entry.blockid[3],
-             old_smd_entry.checksum_name, old_smd_entry.checksum);
+	sprintf (logbuf, "old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+		 u64tostr (old_smd_entry.s_fileid, tmpbuf, 0), old_smd_entry.copyno,
+		 old_smd_entry.fsec, u64tostr (old_smd_entry.segsize, tmpbuf2, 0),
+		 old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
+		 old_smd_entry.side, old_smd_entry.fseq, old_smd_entry.blockid[0],
+		 old_smd_entry.blockid[1], old_smd_entry.blockid[2], old_smd_entry.blockid[3],
+		 old_smd_entry.checksum_name, old_smd_entry.checksum);
 	Cns_logreq (func, logbuf);
 
-    /* Checking that the segment has not checksum */
-    if (!(old_smd_entry.checksum_name == NULL
-          || old_smd_entry.checksum_name[0] == '\0')) {
-        sprintf (logbuf, "old checksum \"%s\" %d non NULL, Cannot overwrite",
-                 old_smd_entry.checksum_name,
-                 old_smd_entry.checksum);
-        Cns_logreq (func, logbuf);
-        RETURN(EPERM);
-    }
+	/* Checking that the segment has not checksum */
+	if (!(old_smd_entry.checksum_name == NULL
+	      || old_smd_entry.checksum_name[0] == '\0')) {
+		sprintf (logbuf, "old checksum \"%s\" %lx non NULL, Cannot overwrite",
+			 old_smd_entry.checksum_name,
+			 old_smd_entry.checksum);
+		Cns_logreq (func, logbuf);
+		RETURN(EPERM);
+	}
         
 	memset ((char *) &smd_entry, 0, sizeof(smd_entry));
 	smd_entry.s_fileid = fileid;
@@ -4122,7 +4121,7 @@ struct Cns_srv_thread_info *thip;
 	unmarshall_LONG (rbp, smd_entry.checksum);    
 
 	if (smd_entry.checksum_name == NULL
-	|| strlen(smd_entry.checksum_name) == 0) {
+	    || strlen(smd_entry.checksum_name) == 0) {
 		checksum_ok = 0;
 	} else {
 		checksum_ok = 1;
@@ -4139,16 +4138,14 @@ struct Cns_srv_thread_info *thip;
 		} 
 	}
 
-	sprintf (logbuf, "new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %x",
-	    u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
-	    smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
-	    smd_entry.compression, smd_entry.s_status, smd_entry.vid,
-	    smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
-	    smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
-	    smd_entry.checksum_name, smd_entry.checksum);
+	sprintf (logbuf, "new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+		 u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
+		 smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
+		 smd_entry.compression, smd_entry.s_status, smd_entry.vid,
+		 smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
+		 smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
+		 smd_entry.checksum_name, smd_entry.checksum);
 	Cns_logreq (func, logbuf);
-
-
         
 	/* update file segment entry */
 
@@ -4158,12 +4155,9 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
-
-
-
 /*	Cns_srv_replaceseg - replace file segment */
 
-Cns_srv_replaceseg(magic, req_data, clienthost, thip)
+int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -4237,7 +4231,7 @@ struct Cns_srv_thread_info *thip;
 	    old_smd_entry.fseq != fseq)
 		RETURN (SEENTRYNFND);
 
-	sprintf (logbuf, "old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %x",
+	sprintf (logbuf, "old segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
 	    u64tostr (old_smd_entry.s_fileid, tmpbuf, 0), old_smd_entry.copyno,
 	    old_smd_entry.fsec, u64tostr (old_smd_entry.segsize, tmpbuf2, 0),
 	    old_smd_entry.compression, old_smd_entry.s_status, old_smd_entry.vid,
@@ -4258,41 +4252,41 @@ struct Cns_srv_thread_info *thip;
 	unmarshall_WORD (rbp, smd_entry.side);
 	unmarshall_LONG (rbp, smd_entry.fseq);
 	unmarshall_OPAQUE (rbp, smd_entry.blockid, 4);
-    if (magic >= CNS_MAGIC3) {
-        unmarshall_STRINGN (rbp, smd_entry.checksum_name, CA_MAXCKSUMNAMELEN);
-        smd_entry.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
-        unmarshall_LONG (rbp, smd_entry.checksum);    
-    } else {
-        smd_entry.checksum_name[0] = '\0';
-        smd_entry.checksum = 0;
-    }
-
-    if (smd_entry.checksum_name == NULL
-        || strlen(smd_entry.checksum_name) == 0) {
-        checksum_ok = 0;
-    } else {
-        checksum_ok = 1;
-    }
-
-   if (magic >= CNS_MAGIC4) {
-        
-        /* Checking that we can't have a NULL checksum name when a
-           checksum is specified */
-        if (!checksum_ok
-            && smd_entry.checksum != 0) {
-            sprintf (logbuf, "setsegattrs: NULL checksum name with non zero value, overriding");
-            Cns_logreq (func, logbuf);
-            smd_entry.checksum = 0;
-        } 
-    }
-    
-	sprintf (logbuf, "new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %x",
-	    u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
-	    smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
-	    smd_entry.compression, smd_entry.s_status, smd_entry.vid,
-	    smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
-	    smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
-        smd_entry.checksum_name, smd_entry.checksum);
+	if (magic >= CNS_MAGIC3) {
+		unmarshall_STRINGN (rbp, smd_entry.checksum_name, CA_MAXCKSUMNAMELEN);
+		smd_entry.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+		unmarshall_LONG (rbp, smd_entry.checksum);    
+	} else {
+		smd_entry.checksum_name[0] = '\0';
+		smd_entry.checksum = 0;
+	}
+	
+	if (smd_entry.checksum_name == NULL
+	    || strlen(smd_entry.checksum_name) == 0) {
+		checksum_ok = 0;
+	} else {
+		checksum_ok = 1;
+	}
+	
+	if (magic >= CNS_MAGIC4) {
+		
+		/* Checking that we can't have a NULL checksum name when a
+		   checksum is specified */
+		if (!checksum_ok
+		    && smd_entry.checksum != 0) {
+			sprintf (logbuf, "setsegattrs: NULL checksum name with non zero value, overriding");
+			Cns_logreq (func, logbuf);
+			smd_entry.checksum = 0;
+		} 
+	}
+	
+	sprintf (logbuf, "new segment: %s %d %d %s %d %c %s %d %d %02x%02x%02x%02x \"%s\" %lx",
+		 u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
+		 smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
+		 smd_entry.compression, smd_entry.s_status, smd_entry.vid,
+		 smd_entry.side, smd_entry.fseq, smd_entry.blockid[0],
+		 smd_entry.blockid[1], smd_entry.blockid[2], smd_entry.blockid[3],
+		 smd_entry.checksum_name, smd_entry.checksum);
 	Cns_logreq (func, logbuf);
 
 	/* update file segment entry */
@@ -4303,8 +4297,6 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
-
-
 /*	Cns_srv_replacetapecopy - replace a tapecopy 
  *	
  * This function replaces a tapecopy by another one.
@@ -4312,9 +4304,8 @@ struct Cns_srv_thread_info *thip;
  * >1 segs for replacement, although the new stager policy 
  * is not to segment file anymore.
  * ! It deletes the old entries in the DB (no!! update to status 'D') !
- * FE, 05/2006
 */
-Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
+int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -4322,31 +4313,27 @@ struct Cns_srv_thread_info *thip;
 {
 	u_signed64 fileid = 0;
 	int rc,checksum_ok, nboldsegs, nbseg ,copyno, bof, i;
-	DBLISTPTR dblistptr;	//in fact an int
+	DBLISTPTR dblistptr;	// in fact an int
 	int CA_MAXSEGS = 20;	// maximum number of segments of a file
-	
 	gid_t gid;
 	uid_t uid;
 	char *user;
 
-	struct Cns_seg_metadata new_smd_entry[CA_MAXSEGS]; // the new entries
-	struct Cns_seg_metadata old_smd_entry[CA_MAXSEGS]; // the old entries
+	struct Cns_seg_metadata new_smd_entry[CA_MAXSEGS];
+	struct Cns_seg_metadata old_smd_entry[CA_MAXSEGS];
 	struct Cns_file_metadata filentry;
 	
-
 	Cns_dbrec_addr backup_rec_addr[CA_MAXSEGS];	// db keys of old segs
 	Cns_dbrec_addr rec_addr;			// db key for file
 	
-	
-	char *rbp;		// Pointer to recieve buffer
-	
-	char func[23];		// Name of the function
+	char *rbp;
+	char func[23];
 	char logbuf[CA_MAXPATHLEN+34];
 	char newvid[CA_MAXVIDLEN+1];
 	char oldvid[CA_MAXVIDLEN+1];	
 	
 	
-	/* --------------the header stuff ------------------ */
+	/* the header stuff */
 
 	strcpy (func, "Cns_srv_replacetapecopy");
 	rbp = req_data;
@@ -4380,8 +4367,7 @@ struct Cns_srv_thread_info *thip;
 	if (filentry.filemode & S_IFDIR)
 		RETURN (EISDIR);
 
-
-	/* -------------- get the old segs for a file ------------------ */
+	/* get the old segs for a file */
 	copyno = -1;		
 	bof = 1;	/* first time: open cursor */
 	nboldsegs = 0;
@@ -4392,8 +4378,7 @@ struct Cns_srv_thread_info *thip;
 					  0, 
 					  &backup_rec_addr[nboldsegs],
 					  0, 
-					  &dblistptr)) == 0 )
-	{
+					  &dblistptr)) == 0) {
 		// we want only segments, which are on the oldvid
 		if ( strcmp( old_smd_entry[nboldsegs].vid,oldvid )==0 ){
 			/* Store the copyno for first right segment.
@@ -4425,15 +4410,14 @@ struct Cns_srv_thread_info *thip;
 					  1, 
 					  &backup_rec_addr[nboldsegs],
 					  0,
-					  &dblistptr )) == 0 )
-	{
+					  &dblistptr )) == 0) {
 		nboldsegs++;
 		bof = 0;
 		
 		/* SHOULD NEVER HAPPEN !*/
 		if (nboldsegs > CA_MAXSEGS ){ 
 			sprintf (logbuf,"Too many segments for file %lld.",
-			  	fileid);
+				 fileid);
 			Cns_logreq (func, logbuf);
 			RETURN (EINVAL);
 		}
@@ -4454,9 +4438,7 @@ struct Cns_srv_thread_info *thip;
 		nboldsegs, nbseg, copyno);
 	Cns_logreq (func, logbuf);
 	
-
-
-	/* -------------- get the new segs from stream ------------------ */
+	/* get the new segs from stream */
 	for (i = 0; i < nbseg; i++) {
 		memset ((char *) &new_smd_entry[i], 0, sizeof(struct Cns_seg_metadata));
 		/* same fileid for all segs */
@@ -4482,8 +4464,7 @@ struct Cns_srv_thread_info *thip;
 			unmarshall_STRINGN (rbp, new_smd_entry[i].checksum_name, CA_MAXCKSUMNAMELEN);
 			new_smd_entry[i].checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
 			unmarshall_LONG (rbp, new_smd_entry[i].checksum);
-       		}
-		else {
+       		} else {
 			new_smd_entry[i].checksum_name[0] = '\0';
 			new_smd_entry[i].checksum = 0;
 		}
@@ -4491,51 +4472,40 @@ struct Cns_srv_thread_info *thip;
 		if (new_smd_entry[i].checksum_name == NULL || 
 			 strlen(new_smd_entry[i].checksum_name) == 0) {
 			checksum_ok = 0;
-		}
-		else {
+		} else {
 			checksum_ok = 1;
 	    	}
 		
 		if (magic >= CNS_MAGIC4) {
-				/* Checking that we can't have a NULL checksum name when a
-					checksum is specified */
-				if (!checksum_ok && new_smd_entry[i].checksum != 0) {
-					sprintf (logbuf, "%s: NULL checksum name with non zero value, overriding", func);
-					Cns_logreq (func, logbuf);
-					new_smd_entry[i].checksum = 0;
-				} 
+			/* Checking that we can't have a NULL checksum name when a
+			   checksum is specified */
+			if (!checksum_ok && new_smd_entry[i].checksum != 0) {
+				sprintf (logbuf, "%s: NULL checksum name with non zero value, overriding", func);
+				Cns_logreq (func, logbuf);
+				new_smd_entry[i].checksum = 0;
+			} 
 		}
 		
-		sprintf (logbuf, "replacetapecpy %lld %d %d %lld %d %c %s %d %02x%02x%02x%02x %s:%x",
-		    new_smd_entry[i].s_fileid, new_smd_entry[i].copyno,
-		    new_smd_entry[i].fsec, new_smd_entry[i].segsize,
-		    new_smd_entry[i].compression, new_smd_entry[i].s_status, new_smd_entry[i].vid,
-		    new_smd_entry[i].fseq, new_smd_entry[i].blockid[0], new_smd_entry[i].blockid[1],
-                    new_smd_entry[i].blockid[2], new_smd_entry[i].blockid[3],
-                    new_smd_entry[i].checksum_name, new_smd_entry[i].checksum);
+		sprintf (logbuf, "replacetapecpy %lld %d %d %lld %d %c %s %d %02x%02x%02x%02x %s:%lx",
+			 new_smd_entry[i].s_fileid, new_smd_entry[i].copyno,
+			 new_smd_entry[i].fsec, new_smd_entry[i].segsize,
+			 new_smd_entry[i].compression, new_smd_entry[i].s_status, new_smd_entry[i].vid,
+			 new_smd_entry[i].fseq, new_smd_entry[i].blockid[0], new_smd_entry[i].blockid[1],
+			 new_smd_entry[i].blockid[2], new_smd_entry[i].blockid[3],
+			 new_smd_entry[i].checksum_name, new_smd_entry[i].checksum);
 		Cns_logreq (func, logbuf);
+	}
 		
-		
-	}	// end for(..)
-	
-	
-
-	
-	
-	/* -------------- remove old segs ------------------ */
+	/* remove old segs */
 	for (i=0; i< nboldsegs; i++){
-		
-		if (Cns_delete_smd_entry (&thip->dbfd,
-				      &backup_rec_addr[i]
-				      )  )
-		{
+		if (Cns_delete_smd_entry (&thip->dbfd, &backup_rec_addr[i])) {
 			sprintf (logbuf,"%s",sstrerror(serrno));
 			Cns_logreq (func, logbuf);
 			RETURN (serrno);
 		}
 	}
 	
-	/* -------------- insert new segs ------------------ */
+	/* insert new segs */
 	for (i=0; i< nbseg; i++){
 		/* insert new file segment entry */
 		if (Cns_insert_smd_entry (&thip->dbfd,&new_smd_entry[i])){
@@ -4548,14 +4518,9 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
-
-
-
-
-
 /*      Cns_srv_rmdir - remove a directory entry */
  
-Cns_srv_rmdir(magic, req_data, clienthost, thip)
+int Cns_srv_rmdir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -4659,7 +4624,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_setacl - set the Access Control List for a file/directory */
 
-Cns_srv_setacl(magic, req_data, clienthost, thip)
+int Cns_srv_setacl(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -4742,15 +4707,15 @@ struct Cns_srv_thread_info *thip;
 		for (i = 0, aclp = acl; i < nentries; i++, aclp++) {
 			switch (aclp->a_type) {
 			case CNS_ACL_USER_OBJ:
-				fmd_entry.filemode = fmd_entry.filemode & 0177077 |
+				fmd_entry.filemode = (fmd_entry.filemode & 0177077) |
 					(aclp->a_perm << 6);
 				break;
 			case CNS_ACL_GROUP_OBJ:
-				fmd_entry.filemode = fmd_entry.filemode & 0177707 |
+				fmd_entry.filemode = (fmd_entry.filemode & 0177707) |
 					(aclp->a_perm << 3);
 				break;
 			case CNS_ACL_OTHER:
-				fmd_entry.filemode = fmd_entry.filemode & 0177770 |
+				fmd_entry.filemode = (fmd_entry.filemode & 0177770) |
 					(aclp->a_perm);
 				break;
 			}
@@ -4764,11 +4729,11 @@ struct Cns_srv_thread_info *thip;
 			iacl += sprintf (iacl, "%d", aclp->a_id);
 			switch (aclp->a_type) {
 			case CNS_ACL_USER_OBJ:
-				fmd_entry.filemode = fmd_entry.filemode & 0177077 |
+				fmd_entry.filemode = (fmd_entry.filemode & 0177077) |
 					(aclp->a_perm << 6);
 				break;
 			case CNS_ACL_GROUP_OBJ:
-				fmd_entry.filemode = fmd_entry.filemode & 0177707 |
+				fmd_entry.filemode = (fmd_entry.filemode & 0177707) |
 					(aclp->a_perm << 3);
 				break;
 			case CNS_ACL_MASK:
@@ -4776,7 +4741,7 @@ struct Cns_srv_thread_info *thip;
 				    (fmd_entry.filemode & (aclp->a_perm << 3));
 				break;
 			case CNS_ACL_OTHER:
-				fmd_entry.filemode = fmd_entry.filemode & 0177770 |
+				fmd_entry.filemode = (fmd_entry.filemode & 0177770) |
 					(aclp->a_perm);
 				break;
 			}
@@ -4790,7 +4755,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setatime - set last access time */
 
-Cns_srv_setatime(magic, req_data, clienthost, thip)
+int Cns_srv_setatime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -4869,7 +4834,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setcomment - add/replace a comment associated with a file/directory */
 
-Cns_srv_setcomment(magic, req_data, clienthost, thip)
+int Cns_srv_setcomment(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -4939,7 +4904,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setfsize - set file size and last modification time */
 
-Cns_srv_setfsize(magic, req_data, clienthost, thip)
+int Cns_srv_setfsize(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5024,7 +4989,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setfsizeg - set file size and last modification time */
 
-Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
+int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5104,7 +5069,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setptime - set replica pin time */
 
-Cns_srv_setptime(magic, req_data, clienthost, thip)
+int Cns_srv_setptime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5131,7 +5096,7 @@ struct Cns_srv_thread_info *thip;
 	if (unmarshall_STRINGN (rbp, sfn, CA_MAXSFNLEN+1))
 		RETURN (SENAMETOOLONG);
 	unmarshall_TIME_T (rbp, ptime);
-	sprintf (logbuf, "setptime %s %d", sfn, ptime);
+	sprintf (logbuf, "setptime %s %ld", sfn, (long)ptime);
 	Cns_logreq (func, logbuf);
 
 	/* start transaction */
@@ -5170,7 +5135,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setratime - set replica last access time */
 
-Cns_srv_setratime(magic, req_data, clienthost, thip)
+int Cns_srv_setratime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5237,7 +5202,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setrstatus - set replica status */
 
-Cns_srv_setrstatus(magic, req_data, clienthost, thip)
+int Cns_srv_setrstatus(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5303,7 +5268,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_setsegattrs - set file segment attributes */
 
-Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
+int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5391,69 +5356,69 @@ struct Cns_srv_thread_info *thip;
 		unmarshall_OPAQUE (rbp, smd_entry.blockid, 4);
 		if (magic >= CNS_MAGIC4) {
 			unmarshall_STRINGN (rbp, smd_entry.checksum_name, CA_MAXCKSUMNAMELEN);
-            smd_entry.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
-            unmarshall_LONG (rbp, smd_entry.checksum);
-        } else {
-            smd_entry.checksum_name[0] = '\0';
-            smd_entry.checksum = 0;
-        }
-        
+			smd_entry.checksum_name[CA_MAXCKSUMNAMELEN] = '\0';
+			unmarshall_LONG (rbp, smd_entry.checksum);
+		} else {
+			smd_entry.checksum_name[0] = '\0';
+			smd_entry.checksum = 0;
+		}
+		
 		/* Automatically set the copy number if not provided */
-
+		
 		if (smd_entry.copyno == 0) {
 			if (copyno == 0) {
 				if (Cns_get_max_copyno (&thip->dbfd,
-				    smd_entry.s_fileid, &copyno) &&
+							smd_entry.s_fileid, &copyno) &&
 				    serrno != ENOENT)
 					RETURN (serrno);
 				copyno++;
 			}
 			smd_entry.copyno = copyno;
 		}
-		sprintf (logbuf, "setsegattrs %s %d %d %s %d %c %s %d %02x%02x%02x%02x %s:%x",
-		    u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
-		    smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
-		    smd_entry.compression, smd_entry.s_status, smd_entry.vid,
-		    smd_entry.fseq, smd_entry.blockid[0], smd_entry.blockid[1],
-            smd_entry.blockid[2], smd_entry.blockid[3],
-            smd_entry.checksum_name, smd_entry.checksum);
+		sprintf (logbuf, "setsegattrs %s %d %d %s %d %c %s %d %02x%02x%02x%02x %s:%lx",
+			 u64tostr (smd_entry.s_fileid, tmpbuf, 0), smd_entry.copyno,
+			 smd_entry.fsec, u64tostr (smd_entry.segsize, tmpbuf2, 0),
+			 smd_entry.compression, smd_entry.s_status, smd_entry.vid,
+			 smd_entry.fseq, smd_entry.blockid[0], smd_entry.blockid[1],
+			 smd_entry.blockid[2], smd_entry.blockid[3],
+			 smd_entry.checksum_name, smd_entry.checksum);
 		Cns_logreq (func, logbuf);
-
-        if (magic >= CNS_MAGIC4) {
-
-            /* Checking that we can't have a NULL checksum name when a
-               checksum is specified */
-            if ((smd_entry.checksum_name == NULL
-                 || strlen(smd_entry.checksum_name) == 0)
-                && smd_entry.checksum != 0) {
-                sprintf (logbuf, "setsegattrs: invalid checksum name with non zero value");
-                RETURN(EINVAL);
-            } 
-        }
-        
+		
+		if (magic >= CNS_MAGIC4) {
+			
+			/* Checking that we can't have a NULL checksum name when a
+			   checksum is specified */
+			if ((smd_entry.checksum_name == NULL
+			     || strlen(smd_entry.checksum_name) == 0)
+			    && smd_entry.checksum != 0) {
+				sprintf (logbuf, "setsegattrs: invalid checksum name with non zero value");
+				RETURN(EINVAL);
+			} 
+		}
+		
 		/* insert/update file segment entry */
 
 		if (Cns_insert_smd_entry (&thip->dbfd, &smd_entry)) {
 			if (serrno != EEXIST ||
 			    Cns_get_smd_by_fullid (&thip->dbfd,
-				smd_entry.s_fileid, smd_entry.copyno,
-				smd_entry.fsec, &old_smd_entry, 1, &rec_addrs) ||
+						   smd_entry.s_fileid, smd_entry.copyno,
+						   smd_entry.fsec, &old_smd_entry, 1, &rec_addrs) ||
 			    Cns_update_smd_entry (&thip->dbfd, &rec_addrs,
-				&smd_entry))
+						  &smd_entry))
 				RETURN (serrno);
 		}
 	}
-
+	
 	/* delete old segments if they were more numerous */
-
+	
 	fsec = nbseg + 1;
 	while (Cns_get_smd_by_fullid (&thip->dbfd, smd_entry.s_fileid, copyno,
-	    fsec, &old_smd_entry, 1, &rec_addrs) == 0) {
+				      fsec, &old_smd_entry, 1, &rec_addrs) == 0) {
 		if (Cns_delete_smd_entry (&thip->dbfd, &rec_addrs))
 			RETURN (serrno);
 		fsec++;
 	}
-
+	
 	if (filentry.status != 'm') {
 		filentry.status = 'm';
 		if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
@@ -5464,7 +5429,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_shutdown - shutdown the name server */
 
-Cns_srv_shutdown(magic, req_data, clienthost, thip)
+int Cns_srv_shutdown(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5494,7 +5459,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_startsess - start session */
 
-Cns_srv_startsess(magic, req_data, clienthost, thip)
+int Cns_srv_startsess(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5523,7 +5488,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_starttrans - start transaction mode */
 
-Cns_srv_starttrans(magic, req_data, clienthost, thip)
+int Cns_srv_starttrans(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5557,7 +5522,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_stat - get information about a file or a directory */
 
-Cns_srv_stat(magic, req_data, clienthost, thip)
+int Cns_srv_stat(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5628,14 +5593,13 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_statg - get information about a file or a directory */
 
-Cns_srv_statg(magic, req_data, clienthost, thip)
+int Cns_srv_statg(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
-	u_signed64 fileid;
 	struct Cns_file_metadata fmd_entry;
 	char func[16];
 	gid_t gid;
@@ -5704,7 +5668,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_statr - get information about a replica */
 
-Cns_srv_statr(magic, req_data, clienthost, thip)
+int Cns_srv_statr(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5763,7 +5727,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_symlink - make a symbolic link to a file or a directory */
  
-Cns_srv_symlink(magic, req_data, clienthost, thip)
+int Cns_srv_symlink(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5856,7 +5820,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_undelete - logically restore a file entry */
  
-Cns_srv_undelete(magic, req_data, clienthost, thip)
+int Cns_srv_undelete(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -5971,7 +5935,7 @@ struct Cns_srv_thread_info *thip;
 
 /*      Cns_srv_unlink - remove a file entry */
  
-Cns_srv_unlink(magic, req_data, clienthost, thip)
+int Cns_srv_unlink(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -6102,7 +6066,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_utime - set last access and modification times */
 
-Cns_srv_utime(magic, req_data, clienthost, thip)
+int Cns_srv_utime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost;
@@ -6185,7 +6149,7 @@ struct Cns_srv_thread_info *thip;
 
 extern char lcgdmmapfile[];
 
-Cns_vo_from_dn(const char *dn, char *vo)
+int Cns_vo_from_dn(const char *dn, char *vo)
 {
 	char buf[1024];
 	char func[16];
@@ -6237,7 +6201,7 @@ Cns_vo_from_dn(const char *dn, char *vo)
 
 /*	Cns_srv_entergrpmap - define a new group entry in Virtual Id table */
 
-Cns_srv_entergrpmap(magic, req_data, clienthost, thip)
+int Cns_srv_entergrpmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6248,7 +6212,6 @@ struct Cns_srv_thread_info *thip;
 	struct Cns_groupinfo group_entry;
 	char logbuf[278];
 	char *rbp;
-	Cns_dbrec_addr rec_addr;
 	gid_t reqgid;
 	uid_t uid;
 	char *user;
@@ -6288,7 +6251,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_enterusrmap - define a new user entry in Virtual Id table */
 
-Cns_srv_enterusrmap(magic, req_data, clienthost, thip)
+int Cns_srv_enterusrmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6338,7 +6301,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getidmap - get uid/gids associated with a given dn/roles */
 
-getonegid(dbfd, groupname, gid)
+int getonegid(dbfd, groupname, gid)
 struct Cns_dbfd *dbfd;
 char *groupname;
 gid_t *gid;
@@ -6364,7 +6327,7 @@ gid_t *gid;
 	return (0);
 }
 
-getidmap(dbfd, username, nbgroups, groupnames, userid, gids)
+int getidmap(dbfd, username, nbgroups, groupnames, userid, gids)
 struct Cns_dbfd *dbfd;
 char *username;
 int nbgroups;
@@ -6417,7 +6380,7 @@ gid_t *gids;
 	return (0);
 }
 
-Cns_srv_getidmap(magic, req_data, clienthost, thip)
+int Cns_srv_getidmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6470,8 +6433,9 @@ struct Cns_srv_thread_info *thip;
 			}
 			p += 256;
 		}
-	} else
+	} else {
 		nbgroups = 1;
+	}
 	if ((gids = malloc (nbgroups * sizeof(gid_t))) == NULL) {
 		free (q);
 		free (groupnames);
@@ -6494,7 +6458,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getgrpbygid - get group name associated with a given gid */
 
-Cns_srv_getgrpbygid(magic, req_data, clienthost, thip)
+int Cns_srv_getgrpbygid(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6519,12 +6483,14 @@ struct Cns_srv_thread_info *thip;
 	sprintf (logbuf, "getgrpbygid %d", reqgid);
 	Cns_logreq (func, logbuf);
 
-	if (Cns_get_grpinfo_by_gid (&thip->dbfd, reqgid, &group_entry, 0, NULL) < 0)
+	if (Cns_get_grpinfo_by_gid (&thip->dbfd, reqgid, &group_entry, 0, NULL) < 0) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such gid\n");
 			RETURNQ (EINVAL);
-		} else
+		} else {
 			RETURNQ (serrno);
+		}
+	}
 	sbp = repbuf;
 	marshall_STRING (sbp, group_entry.groupname);
 	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
@@ -6533,7 +6499,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getgrpbynam - get gid associated with a given group name */
 
-Cns_srv_getgrpbynam(magic, req_data, clienthost, thip)
+int Cns_srv_getgrpbynam(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6559,13 +6525,14 @@ struct Cns_srv_thread_info *thip;
 	sprintf (logbuf, "getgrpbynam %s", groupname);
 	Cns_logreq (func, logbuf);
 
-	if (Cns_get_grpinfo_by_name (&thip->dbfd, groupname, &group_entry, 0,
-	    NULL) < 0)
+	if (Cns_get_grpinfo_by_name (&thip->dbfd, groupname, &group_entry, 0, NULL) < 0) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such group\n");
 			RETURNQ (EINVAL);
-		} else
+		} else {
 			RETURNQ (serrno);
+		}
+	}
 	sbp = repbuf;
 	marshall_LONG (sbp, group_entry.gid);
 	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
@@ -6574,7 +6541,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getusrbynam - get uid associated with a given user name */
 
-Cns_srv_getusrbynam(magic, req_data, clienthost, thip)
+int Cns_srv_getusrbynam(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6600,13 +6567,14 @@ struct Cns_srv_thread_info *thip;
 	sprintf (logbuf, "getusrbynam %s", username);
 	Cns_logreq (func, logbuf);
 
-	if (Cns_get_usrinfo_by_name (&thip->dbfd, username, &user_entry, 0,
-	    NULL) < 0)
+	if (Cns_get_usrinfo_by_name (&thip->dbfd, username, &user_entry, 0, NULL) < 0) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such user\n");
 			RETURNQ (EINVAL);
-		} else
+		} else {
 			RETURNQ (serrno);
+		}
+	}
 	sbp = repbuf;
 	marshall_LONG (sbp, user_entry.userid);
 	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
@@ -6615,7 +6583,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_getusrbyuid - get user name associated with a given uid */
 
-Cns_srv_getusrbyuid(magic, req_data, clienthost, thip)
+int Cns_srv_getusrbyuid(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6640,12 +6608,14 @@ struct Cns_srv_thread_info *thip;
 	sprintf (logbuf, "getusrbyuid %d", requid);
 	Cns_logreq (func, logbuf);
 
-	if (Cns_get_usrinfo_by_uid (&thip->dbfd, requid, &user_entry, 0, NULL) < 0)
+	if (Cns_get_usrinfo_by_uid (&thip->dbfd, requid, &user_entry, 0, NULL) < 0) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such uid\n");
 			RETURNQ (EINVAL);
-		} else
+		} else {
 			RETURNQ (serrno);
+		}
+	}
 	sbp = repbuf;
 	marshall_STRING (sbp, user_entry.username);
 	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
@@ -6654,7 +6624,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_modgrpmap - modify group name associated with a given gid */
 
-Cns_srv_modgrpmap(magic, req_data, clienthost, thip)
+int Cns_srv_modgrpmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6689,12 +6659,14 @@ struct Cns_srv_thread_info *thip;
 
 	(void) Cns_start_tr (thip->s, &thip->dbfd);
 
-	if (Cns_get_grpinfo_by_gid (&thip->dbfd, reqgid, &group_entry, 1, &rec_addr) < 0)
+	if (Cns_get_grpinfo_by_gid (&thip->dbfd, reqgid, &group_entry, 1, &rec_addr) < 0) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such gid\n");
 			RETURN (EINVAL);
-		} else
+		} else {
 			RETURN (serrno);
+		}
+	}
 	strcpy (group_entry.groupname, groupname);
 	if (Cns_update_group_entry (&thip->dbfd, &rec_addr, &group_entry))
 		RETURN (serrno);
@@ -6703,7 +6675,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_modusrmap - modify user name associated with a given uid */
 
-Cns_srv_modusrmap(magic, req_data, clienthost, thip)
+int Cns_srv_modusrmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6738,12 +6710,14 @@ struct Cns_srv_thread_info *thip;
 
 	(void) Cns_start_tr (thip->s, &thip->dbfd);
 
-	if (Cns_get_usrinfo_by_uid (&thip->dbfd, requid, &user_entry, 1, &rec_addr) < 0)
+	if (Cns_get_usrinfo_by_uid (&thip->dbfd, requid, &user_entry, 1, &rec_addr) < 0) {
 		if (serrno == ENOENT) {
 			sendrep (thip->s, MSG_ERR, "No such uid\n");
 			RETURN (EINVAL);
-		} else
+		} else {
 			RETURN (serrno);
+		}
+	}
 	strcpy (user_entry.username, username);
 	if (Cns_update_user_entry (&thip->dbfd, &rec_addr, &user_entry))
 		RETURN (serrno);
@@ -6752,7 +6726,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_rmgrpmap - suppress group entry corresponding to a given gid/name */
 
-Cns_srv_rmgrpmap(magic, req_data, clienthost, thip)
+int Cns_srv_rmgrpmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6788,22 +6762,26 @@ struct Cns_srv_thread_info *thip;
 
 	if (reqgid > 0) {
 		if (Cns_get_grpinfo_by_gid (&thip->dbfd, reqgid, &group_entry,
-		    1, &rec_addr) < 0)
+					    1, &rec_addr) < 0) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR, "No such gid\n");
 				RETURN (EINVAL);
-			} else
+			} else {
 				RETURN (serrno);
+			}
+		}
 		if (*groupname && strcmp (groupname, group_entry.groupname))
 			RETURN (EINVAL);
 	} else {
 		if (Cns_get_grpinfo_by_name (&thip->dbfd, groupname, &group_entry,
-		    1, &rec_addr) < 0)
+					     1, &rec_addr) < 0) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR, "No such group\n");
 				RETURN (EINVAL);
-			} else
+			} else {
 				RETURN (serrno);
+			}
+		}
 	}
 	if (Cns_delete_group_entry (&thip->dbfd, &rec_addr))
 		RETURN (serrno);
@@ -6812,7 +6790,7 @@ struct Cns_srv_thread_info *thip;
 
 /*	Cns_srv_rmusrmap - suppress user entry corresponding to a given uid/name */
 
-Cns_srv_rmusrmap(magic, req_data, clienthost, thip)
+int Cns_srv_rmusrmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
 char *clienthost; 
@@ -6848,22 +6826,26 @@ struct Cns_srv_thread_info *thip;
 
 	if (requid > 0) {
 		if (Cns_get_usrinfo_by_uid (&thip->dbfd, requid, &user_entry,
-		    1, &rec_addr) < 0)
+					    1, &rec_addr) < 0) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR, "No such uid\n");
 				RETURN (EINVAL);
-			} else
+			} else {
 				RETURN (serrno);
-		if (*username && strcmp (username, user_entry.username))
+			} 
+		}
+		if (*username && strcmp (username, user_entry.username)) 
 			RETURN (EINVAL);
 	} else {
 		if (Cns_get_usrinfo_by_name (&thip->dbfd, username, &user_entry,
-		    1, &rec_addr) < 0)
+					     1, &rec_addr) < 0) {
 			if (serrno == ENOENT) {
 				sendrep (thip->s, MSG_ERR, "No such user\n");
 				RETURN (EINVAL);
-			} else
+			} else {
 				RETURN (serrno);
+			}
+		}
 	}
 	if (Cns_delete_user_entry (&thip->dbfd, &rec_addr))
 		RETURN (serrno);

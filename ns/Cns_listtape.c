@@ -130,8 +130,8 @@ Cns_listtape(char *server, char *vid, int flags, Cns_list *listp)
 			unmarshall_LONG (rbp, dp->compression);
 			unmarshall_BYTE (rbp, dp->s_status);
 			unmarshall_STRING (rbp, dp->vid);
-            unmarshall_STRINGN (rbp, dp->checksum_name,
-                                CA_MAXCKSUMNAMELEN);
+			unmarshall_STRINGN (rbp, dp->checksum_name,
+					    CA_MAXCKSUMNAMELEN);
 			unmarshall_LONG (rbp, dp->checksum);
 			unmarshall_WORD (rbp, dp->side);
 			unmarshall_LONG (rbp, dp->fseq);

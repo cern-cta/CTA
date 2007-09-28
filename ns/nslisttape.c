@@ -27,7 +27,7 @@ int main(int argc,char **argv)
 	Cns_list list;
 	static struct Coptions longopts[] = {
 		{"display_side", NO_ARGUMENT, &dsflag, 1},
-        {"checksum", NO_ARGUMENT, &checksumflag, 1},
+		{"checksum", NO_ARGUMENT, &checksumflag, 1},
 		{"ds", NO_ARGUMENT, &dsflag, 1},
 		{0, 0, 0, 0}
 	};
@@ -96,15 +96,15 @@ int main(int argc,char **argv)
 			    dtp->blockid[2], dtp->blockid[3],
 			    u64tostr (dtp->segsize, tmpbuf, 20), dtp->compression);
 
-        if (checksumflag) {
-            if (dtp->checksum_name != NULL &&  strlen(dtp->checksum_name)>0) {
-                printf (" %*s %08lx", CA_MAXCKSUMNAMELEN, dtp->checksum_name, dtp->checksum);
-            } else {
-		    printf (" %*s %08x", CA_MAXCKSUMNAMELEN, "-", 0);
-            }
-        }
+		if (checksumflag) {
+			if (dtp->checksum_name != NULL &&  strlen(dtp->checksum_name)>0) {
+				printf (" %*s %08lx", CA_MAXCKSUMNAMELEN, dtp->checksum_name, dtp->checksum);
+			} else {
+				printf (" %*s %08x", CA_MAXCKSUMNAMELEN, "-", 0);
+			}
+		}
 
-        printf (" %s/%s\n",path, dtp->d_name);
+		printf (" %s/%s\n",path, dtp->d_name);
 		flags = CNS_LIST_CONTINUE;
 	}
 	(void) Cns_listtape (server, vid, CNS_LIST_END, &list);

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_getgrpbynam.c,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/SC Jean-Philippe Baud";
-#endif /* not lint */
-
 /*      Cns_getgrpbynam - get gid associated with a given group name */
 
 #include <errno.h>

@@ -152,7 +152,7 @@ char **argv;
 				errflg++;
 				continue;
 			}
-			if (Cns_chmod (Cnsdir, (mode | statbuf.filemode & S_ISGID)) < 0) {
+			if (Cns_chmod (Cnsdir, (mode | (statbuf.filemode & S_ISGID))) < 0) {
 				fprintf (stderr, "cannot chmod %s: %s\n",
 				    dir, sstrerror(serrno));
 				errflg++;

@@ -86,8 +86,8 @@ Cns_replaceseg(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs
 	marshall_LONG (sbp, newsegattrs->fseq);
 	marshall_OPAQUE (sbp, newsegattrs->blockid, 4);
 
-    marshall_STRING (sbp, newsegattrs->checksum_name);
-    marshall_LONG (sbp, newsegattrs->checksum);
+	marshall_STRING (sbp, newsegattrs->checksum_name);
+	marshall_LONG (sbp, newsegattrs->checksum);
     
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
