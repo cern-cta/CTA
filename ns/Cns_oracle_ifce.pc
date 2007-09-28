@@ -3,13 +3,10 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.5 $ $Date: 2007/09/27 13:37:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <stdio.h>
 #include <sqlca.h>
 #ifndef USE_ORACLE
 #define USE_ORACLE
@@ -22,7 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: Cns_oracle_ifce.pc,v $ $Revision: 1.5 $ $D
 
 static sql_context ctx[CNS_MAXNBTHREADS];
 
-Cns_init_dbpkg()
+int Cns_init_dbpkg()
 {
 	EXEC SQL ENABLE THREADS;
 	return (0);
@@ -53,7 +50,7 @@ struct sqlca *sqlca;
 
 EXEC SQL CONTEXT USE :ctx[dbfd->idx];
 
-Cns_abort_tr(dbfd)
+int Cns_abort_tr(dbfd)
 struct Cns_dbfd *dbfd;
 {
 	EXEC SQL ROLLBACK WORK;
@@ -62,14 +59,14 @@ struct Cns_dbfd *dbfd;
 	return (0);
 }
 
-Cns_closedb(dbfd)
+int Cns_closedb(dbfd)
 struct Cns_dbfd *dbfd;
 {
 	EXEC SQL CONTEXT FREE :ctx[dbfd->idx];
 	return (0);
 }
 
-Cns_delete_class_entry(dbfd, rec_addr)
+int Cns_delete_class_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -87,7 +84,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_fmd_entry(dbfd, rec_addr)
+int Cns_delete_fmd_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -105,7 +102,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_lnk_entry(dbfd, rec_addr)
+int Cns_delete_lnk_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -123,7 +120,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_rep_entry(dbfd, rec_addr)
+int Cns_delete_rep_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -141,7 +138,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_smd_entry(dbfd, rec_addr)
+int Cns_delete_smd_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -159,7 +156,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_tppool_entry(dbfd, rec_addr)
+int Cns_delete_tppool_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -177,7 +174,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_umd_entry(dbfd, rec_addr)
+int Cns_delete_umd_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -195,7 +192,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_end_tr(dbfd)
+int Cns_end_tr(dbfd)
 struct Cns_dbfd *dbfd;
 {
 	EXEC SQL COMMIT WORK;
@@ -204,7 +201,7 @@ struct Cns_dbfd *dbfd;
 	return (0);
 }
 
-Cns_get_class_by_id(dbfd, classid, class_entry, lock, rec_addr)
+int Cns_get_class_by_id(dbfd, classid, class_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 int classid;
 struct Cns_class_metadata *class_entry;
@@ -282,7 +279,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_class_by_name(dbfd, class_name, class_entry, lock, rec_addr)
+int Cns_get_class_by_name(dbfd, class_name, class_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *class_name;
 struct Cns_class_metadata *class_entry;
@@ -360,7 +357,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_fmd_by_fileid(dbfd, fileid, fmd_entry, lock, rec_addr)
+int Cns_get_fmd_by_fileid(dbfd, fileid, fmd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 struct Cns_file_metadata *fmd_entry;
@@ -457,7 +454,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_fmd_by_fullid(dbfd, parent_fileid, name, fmd_entry, lock, rec_addr)
+int Cns_get_fmd_by_fullid(dbfd, parent_fileid, name, fmd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 parent_fileid;
 char *name;
@@ -557,7 +554,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_fmd_by_guid(dbfd, guid, fmd_entry, lock, rec_addr)
+int Cns_get_fmd_by_guid(dbfd, guid, fmd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *guid;
 struct Cns_file_metadata *fmd_entry;
@@ -653,7 +650,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_fmd_by_pfid(dbfd, bod, parent_fileid, fmd_entry, getattr, endlist, dblistptr)
+int Cns_get_fmd_by_pfid(dbfd, bod, parent_fileid, fmd_entry, getattr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bod;
 u_signed64 parent_fileid;
@@ -740,7 +737,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_get_lnk_by_fileid(dbfd, fileid, lnk_entry, lock, rec_addr)
+int Cns_get_lnk_by_fileid(dbfd, fileid, lnk_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 struct Cns_symlinks *lnk_entry;
@@ -797,7 +794,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_max_copyno (dbfd, fileid, copyno)
+int Cns_get_max_copyno (dbfd, fileid, copyno)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 int *copyno;
@@ -840,7 +837,7 @@ int *copyno;
 	return (-1);
 }
 
-Cns_get_rep_by_sfn(dbfd, sfn, rep_entry, lock, rec_addr)
+int Cns_get_rep_by_sfn(dbfd, sfn, rep_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *sfn;
 struct Cns_file_replica *rep_entry;
@@ -915,13 +912,9 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-
-
-
-/**
- * Get segments for a specified tapecopy 
- */
-Cns_get_smd_by_copyno(dbfd, bof, fileid, copyno, smd_entry, lock, rec_addr, endlist,dblistptr)
+/* Get segments for a specified tapecopy */
+ 
+int Cns_get_smd_by_copyno(dbfd, bof, fileid, copyno, smd_entry, lock, rec_addr, endlist,dblistptr)
 struct Cns_dbfd *dbfd;
 int bof;
 u_signed64 fileid;
@@ -1009,10 +1002,7 @@ DBLISTPTR *dblistptr;
 	
 }
 
-
-
-
-Cns_get_smd_by_fullid(dbfd, fileid, copyno, fsec, smd_entry, lock, rec_addr)
+int Cns_get_smd_by_fullid(dbfd, fileid, copyno, fsec, smd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 int copyno;
@@ -1085,12 +1075,11 @@ Cns_dbrec_addr *rec_addr;
 		break;
 	default:
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
-		return (-1);
 	}
-	
+	return (-1);
 }
 
-Cns_get_smd_by_pfid(dbfd, bof, fileid, smd_entry, lock, rec_addr, endlist, dblistptr)
+int Cns_get_smd_by_pfid(dbfd, bof, fileid, smd_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bof;
 u_signed64 fileid;
@@ -1169,7 +1158,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_get_last_smd_by_vid(dbfd, vid, side, smd_entry)
+int Cns_get_last_smd_by_vid(dbfd, vid, side, smd_entry)
 struct Cns_dbfd *dbfd;
 char *vid;
 int side;
@@ -1224,7 +1213,7 @@ struct Cns_seg_metadata *smd_entry;
 	return(0);
 }
 
-Cns_get_smd_by_vid(dbfd, bov, vid, smd_entry, endlist, dblistptr)
+int Cns_get_smd_by_vid(dbfd, bov, vid, smd_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bov;
 char *vid;
@@ -1276,7 +1265,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_get_tppool_by_cid(dbfd, bol, classid, tppool_entry, lock, rec_addr, endlist, dblistptr)
+int Cns_get_tppool_by_cid(dbfd, bol, classid, tppool_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 int classid;
@@ -1338,7 +1327,7 @@ DBLISTPTR *dblistptr;
 	return (-1);
 }
 
-Cns_get_umd_by_fileid(dbfd, fileid, umd_entry, lock, rec_addr)
+int Cns_get_umd_by_fileid(dbfd, fileid, umd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 struct Cns_user_metadata *umd_entry;
@@ -1395,7 +1384,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_insert_class_entry(dbfd, class_entry)
+int Cns_insert_class_entry(dbfd, class_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_class_metadata *class_entry;
 {
@@ -1436,7 +1425,7 @@ struct Cns_class_metadata *class_entry;
 	return (-1);
 }
 
-Cns_insert_fmd_entry(dbfd, fmd_entry)
+int Cns_insert_fmd_entry(dbfd, fmd_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_file_metadata *fmd_entry;
 {
@@ -1482,7 +1471,7 @@ struct Cns_file_metadata *fmd_entry;
 	return (-1);
 }
 
-Cns_insert_lnk_entry(dbfd, lnk_entry)
+int Cns_insert_lnk_entry(dbfd, lnk_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_symlinks *lnk_entry;
 {
@@ -1513,7 +1502,7 @@ struct Cns_symlinks *lnk_entry;
 	return (-1);
 }
 
-Cns_insert_rep_entry(dbfd, rep_entry)
+int Cns_insert_rep_entry(dbfd, rep_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_file_replica *rep_entry;
 {
@@ -1550,7 +1539,7 @@ struct Cns_file_replica *rep_entry;
 	return (-1);
 }
 
-Cns_insert_smd_entry(dbfd, smd_entry)
+int Cns_insert_smd_entry(dbfd, smd_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_seg_metadata *smd_entry;
 {
@@ -1575,36 +1564,37 @@ struct Cns_seg_metadata *smd_entry;
 	switch (sqlca.sqlcode) {
 	case 0:
 		return (0);
-	case -1:
-    {
-      unsigned int fileId;
-      EXEC SQL DECLARE check_segment CURSOR FOR
-        SELECT S_FILEID FROM Cns_seg_metadata
-        WHERE S_FILEID=TO_NUMBER(:fileid_str)
-        AND COPYNO=:smd_entry->copyno
-        AND FSEC=:smd_entry->fsec;
-      EXEC SQL OPEN check_segment;
-      if (sqlca.sqlcode) {
-        Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
-        return (-1);
-      }
-      EXEC SQL FETCH check_segment INTO :fileId;
-      switch (sqlca.sqlcode) {
-      case 1403:
-        // Here the constraint violated is not the one expected (pk_s_fileid).
-        // It must then be tapeseg. This means that another file exists on
-        // the tape where we want to write the new one !
-        // We thus return EINTERNAL
-        serrno = SEINTERNAL;
-	break;
-      default:
-        // So the constraint pk_s_fileid was violated meaning that
-        // the segment we try to insert is already existing for that
-        // file. Fine, we thus return EEXIST
-        serrno = EEXIST;
-      }
-      return (-1);
-    }
+	case -1: {
+		unsigned int fileId;
+		EXEC SQL DECLARE check_segment CURSOR FOR
+			SELECT S_FILEID FROM Cns_seg_metadata
+			WHERE S_FILEID=TO_NUMBER(:fileid_str)
+			AND COPYNO=:smd_entry->copyno
+			AND FSEC=:smd_entry->fsec;
+		EXEC SQL OPEN check_segment;
+		if (sqlca.sqlcode) {
+			Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
+			return (-1);
+		}
+		EXEC SQL FETCH check_segment INTO :fileId;
+		switch (sqlca.sqlcode) {
+		case 1403:
+			/* Here the constraint violated is not the one expected (pk_s_fileid).
+			 * It must then be tapeseg. This means that another file exists on
+			 * the tape where we want to write the new one !
+			 * We thus return EINTERNAL
+			 */
+			serrno = SEINTERNAL;
+			break;
+		default:
+			/* So the constraint pk_s_fileid was violated meaning that
+			 * the segment we try to insert is already existing for that
+			 * file. Fine, we thus return EEXIST
+			 */
+			serrno = EEXIST;
+		}
+		return (-1);
+	        }
 		break;
 	case -1631:
 	case -1632:
@@ -1617,7 +1607,7 @@ struct Cns_seg_metadata *smd_entry;
 	return (-1);
 }
 
-Cns_insert_tppool_entry(dbfd, tppool_entry)
+int Cns_insert_tppool_entry(dbfd, tppool_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_tp_pool *tppool_entry;
 {
@@ -1646,7 +1636,7 @@ struct Cns_tp_pool *tppool_entry;
 	return (-1);
 }
 
-Cns_insert_umd_entry(dbfd, umd_entry)
+int Cns_insert_umd_entry(dbfd, umd_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_user_metadata *umd_entry;
 {
@@ -1677,7 +1667,7 @@ struct Cns_user_metadata *umd_entry;
 	return (-1);
 }
 
-Cns_list_class_entry(dbfd, bol, class_entry, endlist, dblistptr)
+int Cns_list_class_entry(dbfd, bol, class_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 struct Cns_class_metadata *class_entry;
@@ -1727,7 +1717,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_list_lnk_entry(dbfd, bol, linkname, lnk_entry, endlist, dblistptr)
+int Cns_list_lnk_entry(dbfd, bol, linkname, lnk_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 char *linkname;
@@ -1768,7 +1758,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_list_rep4admin(dbfd, bol, poolname, server, fs, rep_entry, endlist, dblistptr)
+int Cns_list_rep4admin(dbfd, bol, poolname, server, fs, rep_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 char *poolname;
@@ -1778,7 +1768,6 @@ struct Cns_file_replica *rep_entry;
 int endlist;
 DBLISTPTR *dblistptr;
 {
-	time_t curtime;
 	char fileid_str[21];
 	short fs_ind;	/* indicator variable for fs column */
 	short ft_ind;	/* indicator variable for f_type column */
@@ -1857,7 +1846,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_list_rep4gc(dbfd, bol, poolname, rep_entry, endlist, dblistptr)
+int Cns_list_rep4gc(dbfd, bol, poolname, rep_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 char *poolname;
@@ -1916,7 +1905,7 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_list_rep_entry(dbfd, bol, fileid, rep_entry, lock, rec_addr, endlist, dblistptr)
+int Cns_list_rep_entry(dbfd, bol, fileid, rep_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 u_signed64 fileid;
@@ -1996,14 +1985,13 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-Cns_opendb(db_srvr, db_user, db_pwd, db_name, dbfd)
+int Cns_opendb(db_srvr, db_user, db_pwd, db_name, dbfd)
 char *db_srvr;
 char *db_user;
 char *db_pwd;
 char *db_name;
 struct Cns_dbfd *dbfd;
 {
-	int c;
 	char func[16];
 	int ntries;
 	struct sqlca sqlca;
@@ -2028,7 +2016,7 @@ struct Cns_dbfd *dbfd;
 	return (-1);
 }
 
-Cns_start_tr(s, dbfd)
+int Cns_start_tr(s, dbfd)
 int s;
 struct Cns_dbfd *dbfd;
 {
@@ -2036,7 +2024,7 @@ struct Cns_dbfd *dbfd;
 	return (0);
 }
 
-Cns_unique_id(dbfd, unique_id)
+int Cns_unique_id(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 u_signed64 *unique_id;
 {
@@ -2054,7 +2042,7 @@ u_signed64 *unique_id;
 	return (0);
 }
 
-Cns_update_class_entry(dbfd, rec_addr, class_entry)
+int Cns_update_class_entry(dbfd, rec_addr, class_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_class_metadata *class_entry;
@@ -2087,7 +2075,7 @@ struct Cns_class_metadata *class_entry;
 	return (0);
 }
 
-Cns_update_fmd_entry(dbfd, rec_addr, fmd_entry)
+int Cns_update_fmd_entry(dbfd, rec_addr, fmd_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_file_metadata *fmd_entry;
@@ -2127,7 +2115,7 @@ struct Cns_file_metadata *fmd_entry;
 	return (0);
 }
 
-Cns_update_rep_entry(dbfd, rec_addr, rep_entry)
+int Cns_update_rep_entry(dbfd, rec_addr, rep_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_file_replica *rep_entry;
@@ -2158,7 +2146,7 @@ struct Cns_file_replica *rep_entry;
 	return (0);
 }
 
-Cns_update_smd_entry(dbfd, rec_addr, smd_entry)
+int Cns_update_smd_entry(dbfd, rec_addr, smd_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_seg_metadata *smd_entry;
@@ -2190,7 +2178,7 @@ struct Cns_seg_metadata *smd_entry;
 	return (0);
 }
 
-Cns_update_umd_entry(dbfd, rec_addr, umd_entry)
+int Cns_update_umd_entry(dbfd, rec_addr, umd_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_user_metadata *umd_entry;
@@ -2213,7 +2201,7 @@ struct Cns_user_metadata *umd_entry;
 
 	/* Routines for identity mapping */
 
-Cns_delete_group_entry(dbfd, rec_addr)
+int Cns_delete_group_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -2231,7 +2219,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_user_entry(dbfd, rec_addr)
+int Cns_delete_user_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -2249,7 +2237,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_grpinfo_by_gid(dbfd, gid, group_entry, lock, rec_addr)
+int Cns_get_grpinfo_by_gid(dbfd, gid, group_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 gid_t gid;
 struct Cns_groupinfo *group_entry;
@@ -2299,7 +2287,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_grpinfo_by_name(dbfd, name, group_entry, lock, rec_addr)
+int Cns_get_grpinfo_by_name(dbfd, name, group_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *name;
 struct Cns_groupinfo *group_entry;
@@ -2349,7 +2337,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_usrinfo_by_name(dbfd, name, user_entry, lock, rec_addr)
+int Cns_get_usrinfo_by_name(dbfd, name, user_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *name;
 struct Cns_userinfo *user_entry;
@@ -2399,7 +2387,7 @@ Cns_dbrec_addr *rec_addr;
 	return (-1);
 }
 
-Cns_get_usrinfo_by_uid(dbfd, uid, user_entry, lock, rec_addr)
+int Cns_get_usrinfo_by_uid(dbfd, uid, user_entry, lock, rec_addr)
 	struct Cns_dbfd *dbfd;
 	uid_t uid;
 	struct Cns_userinfo *user_entry;
@@ -2449,7 +2437,7 @@ Cns_get_usrinfo_by_uid(dbfd, uid, user_entry, lock, rec_addr)
 	return (-1);
 }
 
-Cns_insert_group_entry(dbfd, group_entry)
+int Cns_insert_group_entry(dbfd, group_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_groupinfo *group_entry;
 {
@@ -2476,7 +2464,7 @@ struct Cns_groupinfo *group_entry;
 	return (-1);
 }
 
-Cns_insert_user_entry(dbfd, user_entry)
+int Cns_insert_user_entry(dbfd, user_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_userinfo *user_entry;
 {
@@ -2504,7 +2492,7 @@ struct Cns_userinfo *user_entry;
 }
 
 int oneuniquegid;
-Cns_unique_gid(dbfd, unique_id)
+int Cns_unique_gid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int *unique_id;
 {
@@ -2545,7 +2533,7 @@ unsigned int *unique_id;
 }
 
 int oneuniqueuid;
-Cns_unique_uid(dbfd, unique_id)
+int Cns_unique_uid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int *unique_id;
 {
@@ -2585,7 +2573,7 @@ unsigned int *unique_id;
 	return (0);
 }
 
-Cns_update_group_entry(dbfd, rec_addr, group_entry)
+int Cns_update_group_entry(dbfd, rec_addr, group_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_groupinfo *group_entry;
@@ -2606,7 +2594,7 @@ struct Cns_groupinfo *group_entry;
 	return (0);
 }
 
-Cns_update_unique_gid(dbfd, unique_id)
+int Cns_update_unique_gid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int unique_id;
 {
@@ -2645,7 +2633,7 @@ unsigned int unique_id;
 	return (0);
 }
 
-Cns_update_unique_uid(dbfd, unique_id)
+int Cns_update_unique_uid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int unique_id;
 {
@@ -2684,7 +2672,7 @@ unsigned int unique_id;
 	return (0);
 }
 
-Cns_update_user_entry(dbfd, rec_addr, user_entry)
+int Cns_update_user_entry(dbfd, rec_addr, user_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_userinfo *user_entry;
