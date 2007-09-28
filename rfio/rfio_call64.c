@@ -2387,17 +2387,18 @@ struct rfiostat *infop;
    log(LOG_INFO,"rclose64_v3(%d, %d): %s bytes read and %s bytes written\n",
       s, fd, u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0)) ;
 
+   /* sync the file to be sure that filesize in correct in following stats.
+      this is needed by some ext3 bug/feature
+      Still ignore the output of fsync */
+   fsync(fd);
+
    /* Stat the file to be able to provide that information
       to the close handler */
    memset(&filestat,0,sizeof(struct stat));
    rc = fstat(fd, &filestat);
 
    /* Close the local file                                    */
-#if defined(HPSS)
-   status = rhpss_close(fd,s,0,0);
-#else    /* HPSS */
    status = close(fd) ;
-#endif   /* else HPSS */
    rcode = ( status < 0 ) ? errno : 0 ;
 
    ret=rfio_handle_close(handler_context, &filestat, rcode);

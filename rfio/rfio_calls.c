@@ -2360,25 +2360,24 @@ struct rfiostat * infop ;
       infop->seekop, infop->presop) ;
    log(LOG_INFO,"rclose(%d,%d): %s bytes read and %s bytes written\n",
       s, fd, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0)) ;
+
+   /* sync the file to be sure that filesize in correct in following stats.
+      this is needed by some ext3 bug/feature
+      Still ignore the output of fsync */
+   fsync(fd);
    
    /* Stat the file to be able to provide that information
       to the close handler */
    memset(&filestat,0,sizeof(struct stat));
    rc = fstat(fd, &filestat);
    
-#if defined(HPSS)
-   status = rhpss_close(fd,s,0,0);
-#else /* HPSS */
    status = close(fd);
-#endif /* HPSS */
    rcode = ( status < 0 ) ? errno : 0 ;
-#if !defined(HPSS)
    if (iobufsiz > 0)       {
       log(LOG_DEBUG,"rclose(): freeing %x\n",iobuffer);
       (void) free(iobuffer);
    }
    iobufsiz= 0 ;
-#endif /* HPSS */
     ret=rfio_handle_close(handler_context, &filestat, rcode);
     if (ret<0){
       log(LOG_ERR, "srclose: rfio_handle_close failed\n");
@@ -4292,17 +4291,17 @@ struct rfiostat *infop;
       u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0)) ;
    log(LOG_INFO, "rclose_v3(%d, %d)\n",s, fd) ;
 
+   /* sync the file to be sure that filesize in correct in following stats.
+      this is needed by some ext3 bug/feature
+      Still ignore the output of fsync */
+   fsync(fd);
+
    /* Stat the file to be able to provide that information
       to the close handler */
    memset(&filestat,0,sizeof(struct stat));
    rc = fstat(fd, &filestat);
 
-
-#if defined(HPSS)
-   status = rhpss_close(fd,s,0,0);
-#else /* HPSS */
    status = close(fd) ;
-#endif /* HPSS */
    rcode = ( status < 0 ) ? errno : 0 ;
 
    ret=rfio_handle_close(handler_context, &filestat, rcode);
@@ -4311,7 +4310,6 @@ struct rfiostat *infop;
       return -1 ;
       }
 
-#if !defined(HPSS)
    /* Close data socket */
 #if defined(_WIN32)
    if( closesocket(data_sock) == SOCKET_ERROR )
@@ -4324,7 +4322,6 @@ struct rfiostat *infop;
 #endif   /* WIN32 */   
    else
       log(LOG_DEBUG, "rclose_v3 : closing data socket fildesc=%d\n", data_sock) ;
-#endif /* HPSS */
 
 
    p= rqstbuf; 
