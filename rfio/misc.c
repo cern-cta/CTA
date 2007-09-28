@@ -1,15 +1,11 @@
 /*
- * $Id: misc.c,v 1.4 2000/05/29 16:42:02 obarring Exp $
+ * $Id: misc.c,v 1.5 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: misc.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:02 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
 
 /* misc.c       Remote File I/O - Miscellaneous utility functions       */
 

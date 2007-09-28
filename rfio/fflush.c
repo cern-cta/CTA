@@ -1,15 +1,11 @@
 /*
- * $Id: fflush.c,v 1.7 2000/11/20 15:01:17 jdurand Exp $
+ * $Id: fflush.c,v 1.8 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.7 $ $Date: 2000/11/20 15:01:17 $ CERN/IT/PDP/DM Antoine Trannoy";
-#endif /* not lint */
 
 /* fflush.c     Remote File I/O - flush a binary file                   */
 
@@ -19,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: fflush.c,v $ $Revision: 1.7 $ $Date: 2000/
 #define RFIO_KERNEL     1   
 #include "rfio.h"          
 #include "rfio_rfilefdt.h"
+#include <stdlib.h>
 
 /*
  * Remote file flush

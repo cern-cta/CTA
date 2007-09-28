@@ -1,15 +1,11 @@
 /*
- * $Id: rmdir.c,v 1.12 2006/08/14 10:46:50 gtaur Exp $
+ * $Id: rmdir.c,v 1.13 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1998-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rmdir.c,v $ $Revision: 1.12 $ $Date: 2006/08/14 10:46:50 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 /* rmdir.c       Remote File I/O - make a directory file                */
 

@@ -1,15 +1,11 @@
 /*
- * $Id: fio.c,v 1.4 2001/05/11 07:50:50 baud Exp $
+ * $Id: fio.c,v 1.5 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fio.c,v $ $Revision: 1.4 $ $Date: 2001/05/11 07:50:50 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /*      fortran.c    C callable Fortran I/O                     */
 

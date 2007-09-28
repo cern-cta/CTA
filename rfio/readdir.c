@@ -1,15 +1,11 @@
 /*
- * $Id: readdir.c,v 1.14 2003/08/01 15:04:13 baud Exp $
+ * $Id: readdir.c,v 1.15 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readdir.c,v $ $Revision: 1.14 $ $Date: 2003/08/01 15:04:13 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 /* readdir.c       Remote File I/O - read  a directory entry            */
 

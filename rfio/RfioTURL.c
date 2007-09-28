@@ -3,16 +3,13 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.22 $ $Release$ $Date: 2006/12/14 14:55:19 $ $Author: itglp $
+ * @(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.23 $ $Release$ $Date: 2007/09/28 15:04:32 $ $Author: sponcec3 $
  *
  *
  *
  * @author Olof Barring
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: RfioTURL.c,v $ $Revision: 1.22 $ $Release$ $Date: 2006/12/14 14:55:19 $ Olof Barring";
-#endif /* not lint */
 /** RfioTURL.c - RFIO TURL handling
  *
  * Auxiliary routines for handling the RFIO TURL convention:
@@ -119,7 +116,6 @@ int rfioTURLFromString(
   RfioTURL_t _tURL;
   int ret;
   char *path1, *path2, *mySvcClass, *myCastorVersion;
-  char* buff;
   int versionNum=0;
   //void ** auxPointer=0;
   char endMark;
@@ -130,7 +126,7 @@ int rfioTURLFromString(
   globalHost=globalSvc=0;
   globalVersion=globalPort=0;
 
-  path1=path2=myCastorVersion=mySvcClass=myCastorVersion=NULL;
+  path1=path2=mySvcClass=myCastorVersion=NULL;
   if ( tURLStr == NULL || tURL == NULL ) {
     serrno = EINVAL;
     return(-1);

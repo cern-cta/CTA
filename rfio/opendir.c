@@ -1,15 +1,11 @@
 /*
- * $Id: opendir.c,v 1.19 2005/07/11 10:43:19 jdurand Exp $
+ * $Id: opendir.c,v 1.20 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: opendir.c,v $ $Revision: 1.19 $ $Date: 2005/07/11 10:43:19 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 /* opendir.c       Remote File I/O - open a directory                   */
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */

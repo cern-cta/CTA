@@ -1,15 +1,11 @@
 /*
- * $Id: chmod.c,v 1.10 2004/03/03 11:15:57 obarring Exp $
+ * $Id: chmod.c,v 1.11 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chmod.c,v $ $Revision: 1.10 $ $Date: 2004/03/03 11:15:57 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 /* chmod.c       Remote File I/O - change file mode                     */
 

@@ -1,15 +1,11 @@
 /*
- * $Id: getc.c,v 1.3 2002/09/20 06:59:35 baud Exp $
+ * $Id: getc.c,v 1.4 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getc.c,v $ $Revision: 1.3 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /* get.c        Remote File I/O - input of one character                */
 
@@ -19,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: getc.c,v $ $Revision: 1.3 $ $Date: 2002/09
 #define RFIO_KERNEL     1 
 #include "rfio.h"    
 #include "rfio_rfilefdt.h"
+#include <stdlib.h>
 
 /*
  * Remote file read

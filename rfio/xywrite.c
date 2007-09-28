@@ -1,15 +1,11 @@
 /*
- * $Id: xywrite.c,v 1.4 2000/05/29 16:42:08 obarring Exp $
+ * $Id: xywrite.c,v 1.5 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xywrite.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:08 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
 
 /* xywrite.c    Remote File I/O - Write a Fortran Logical Unit          */
 

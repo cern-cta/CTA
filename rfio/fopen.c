@@ -1,15 +1,11 @@
 /*
- * $Id: fopen.c,v 1.6 2002/02/12 08:29:05 baud Exp $
+ * $Id: fopen.c,v 1.7 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fopen.c,v $ $Revision: 1.6 $ $Date: 2002/02/12 08:29:05 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
-#endif /* not lint */
 
 /* fopen.c      Remote File I/O - open a binary file                    */
 

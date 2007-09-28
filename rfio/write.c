@@ -1,15 +1,11 @@
 /*
- * $Id: write.c,v 1.14 2002/11/19 12:55:34 baud Exp $
+ * $Id: write.c,v 1.15 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write.c,v $ $Revision: 1.14 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
-#endif /* not lint */
 
 /* write.c      Remote File I/O - write a file                          */
 

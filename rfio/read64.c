@@ -1,5 +1,5 @@
 /*
- * $Id: read64.c,v 1.2 2003/09/14 06:38:57 jdurand Exp $
+ * $Id: read64.c,v 1.3 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
@@ -7,16 +7,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read64.c,v $ $Revision: 1.2 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
-#endif /* not lint */
-
 /* read64.c       Remote File I/O - read  a file                          */
 
 
 #include <syslog.h>             /* system logger 			*/
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 /*
  * System remote file I/O definitions

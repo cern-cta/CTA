@@ -1,15 +1,11 @@
 /*
- * $Id: rewinddir.c,v 1.13 2000/11/20 16:18:24 obarring Exp $
+ * $Id: rewinddir.c,v 1.14 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rewinddir.c,v $ $Revision: 1.13 $ $Date: 2000/11/20 16:18:24 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 /* rewinddir.c      Remote File I/O - rewind a directory                     */
 

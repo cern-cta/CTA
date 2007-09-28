@@ -1,5 +1,5 @@
 /*
- * $Id: unlink.c,v 1.5 2004/03/03 11:16:00 obarring Exp $
+ * $Id: unlink.c,v 1.6 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 
@@ -7,10 +7,6 @@
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: unlink.c,v $ $Revision: 1.5 $ $Date: 2004/03/03 11:16:00 $ CERN/IT/PDP/DM Jean-Damien Durand";
-#endif /* not lint */
 
 #define RFIO_KERNEL     1
 #include "rfio.h"

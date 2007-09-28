@@ -1,5 +1,5 @@
 /*
- * $Id: symlink.c,v 1.13 2004/03/03 11:16:00 obarring Exp $
+ * $Id: symlink.c,v 1.14 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 
@@ -7,10 +7,6 @@
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: symlink.c,v $ $Revision: 1.13 $ $Date: 2004/03/03 11:16:00 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 #define RFIO_KERNEL     1
 #include "rfio.h"

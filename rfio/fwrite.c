@@ -1,15 +1,11 @@
 /*
- * $Id: fwrite.c,v 1.10 2002/09/20 06:59:35 baud Exp $
+ * $Id: fwrite.c,v 1.11 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
-#endif /* not lint */
 
 /* fwrite.c     Remote File I/O - write a binary file                   */
 
@@ -19,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: fwrite.c,v $ $Revision: 1.10 $ $Date: 2002
 #define RFIO_KERNEL     1    
 #include "rfio.h" 
 #include "rfio_rfilefdt.h"
+#include <stdlib.h>
 
 /*
  * Remote file buffered write

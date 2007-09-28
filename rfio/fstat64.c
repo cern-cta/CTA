@@ -1,15 +1,11 @@
 /*
- * $Id: fstat64.c,v 1.4 2003/04/22 11:09:48 baud Exp $
+ * $Id: fstat64.c,v 1.5 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fstat64.c,v $ $Revision: 1.4 $ $Date: 2003/04/22 11:09:48 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, P. Gaillardon";
-#endif /* not lint */
 
 /* fstat64.c      Remote File I/O - get file status                       */
 

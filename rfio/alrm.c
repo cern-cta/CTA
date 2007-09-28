@@ -1,5 +1,5 @@
 /*
- * $Id: alrm.c,v 1.3 1999/12/09 13:46:36 jdurand Exp $
+ * $Id: alrm.c,v 1.4 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
@@ -7,17 +7,14 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: alrm.c,v $ $Revision: 1.3 $ $Date: 1999/12/09 13:46:36 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
-
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include "log.h"
+#include <stdlib.h>
+#include <unistd.h>
 
 #ifndef RFIO_ALRM 
 #define RFIO_ALRM "/usr/spool/rfio/rfio_alrm"

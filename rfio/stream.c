@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)stream.c,v 1.36 2004/01/23 10:27:46 CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
-#endif /* not lint */
-
 /* stream.c       Remote File I/O - Version 3 streaming routines        */
 
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */
@@ -78,7 +74,7 @@ int	passwd;
    char * cp ; 			/* Character pointer		*/
    int v ;
 
-   if ( cp= getenv("RFIO_READOPT") ) {
+   if ( (cp= getenv("RFIO_READOPT")) ) {
       v = atoi(cp) ;
       rfiosetopt(RFIO_READOPT, &v , 4) ; 
    }
@@ -643,12 +639,13 @@ int     ctrl_sock, size;
 
       TRACE(2,"rfio", "rfio_read_v3: reading %d bytes",RQSTSIZE) ;
       if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	 if (n == 0)
-	    TRACE(2, "rfio","read ctrl socket: read(): %s\n", sstrerror(serrno));
-	 else
-	    TRACE(2, "rfio","read ctrl socket: read(): %s\n", strerror(errno));
-	 END_TRACE();
-	 return -1 ;
+        if (n == 0) {
+          TRACE(2, "rfio","read ctrl socket: read(): %s\n", sstrerror(serrno));
+        } else {
+          TRACE(2, "rfio","read ctrl socket: read(): %s\n", strerror(errno));
+        }
+        END_TRACE();
+        return -1 ;
       }
       p = rqstbuf;
       unmarshall_WORD(p,req) ;			
@@ -683,12 +680,13 @@ int     ctrl_sock, size;
 	       /* Receiving data using data socket */
 	       TRACE(2,"rfio","datarfio_read_v3: reading %d bytes from datasocket filedesc=%d",size-byte_in_buffer,rfilefdt[ctrl_sock_index]->lseekhow) ;
 	       if ((n = netread_timeout(rfilefdt[ctrl_sock_index]->lseekhow, iobuffer, size-byte_in_buffer,RFIO_DATA_TIMEOUT)) != size-byte_in_buffer) {
-		  if (n == 0)
-		     TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (serrno=%d)",serrno) ;
-		  else
-		     TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (errno=%d)",errno) ;
-		  END_TRACE() ;
-		  return -1 ;
+           if (n == 0) {
+             TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (serrno=%d)",serrno) ;
+           } else {
+             TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (errno=%d)",errno) ;
+           }
+           END_TRACE() ;
+           return -1 ;
 	       }
 	       rfilefdt[ctrl_sock_index]->byte_read_from_network += (size - byte_in_buffer);
 	       byte_in_buffer = size;
@@ -702,12 +700,13 @@ int     ctrl_sock, size;
 		  /* Receiving data using data socket */
 		  TRACE(2,"rfio","datarfio_read_v3: reading %d bytes from datasocket (to_be_read)",to_be_read,rfilefdt[ctrl_sock_index]->lseekhow) ;
 		  if ((n = netread_timeout(rfilefdt[ctrl_sock_index]->lseekhow, iobuffer, to_be_read, RFIO_DATA_TIMEOUT)) != to_be_read) {
-		     if (n == 0)
-			TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (serrno=%d)",serrno) ;
-		     else
-			TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (errno=%d)",errno) ;
-		     END_TRACE() ;
-		     return -1 ;
+        if (n == 0) {
+          TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (serrno=%d)",serrno) ;
+        } else {
+          TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (errno=%d)",errno) ;
+        }
+        END_TRACE() ;
+        return -1 ;
 		  }
 		  rfilefdt[ctrl_sock_index]->byte_read_from_network += to_be_read;
 		  byte_in_buffer += to_be_read;
@@ -743,12 +742,13 @@ int     ctrl_sock, size;
 	    /* Something received on the control socket */
 	    TRACE(2,"rfio", "ctrl socket: reading %d bytes",RQSTSIZE) ;
 	    if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	       if (n == 0)
-		  TRACE(2, "rfio","read ctrl socket: read(): %s", sstrerror(serrno));
-	       else
-		  TRACE(2, "rfio","read ctrl socket: read(): %s", strerror(errno));
-	       END_TRACE();
-	       return -1 ;
+        if (n == 0) {
+          TRACE(2, "rfio","read ctrl socket: read(): %s", sstrerror(serrno));
+        } else {
+          TRACE(2, "rfio","read ctrl socket: read(): %s", strerror(errno));
+        }
+        END_TRACE();
+        return -1 ;
 	    }
 	    p = rqstbuf;
 	    unmarshall_WORD(p,cause) ;			
@@ -783,12 +783,13 @@ int     ctrl_sock, size;
 	    /* Receiving data using data socket */
 	    /* Do not use read here because NT doesn't support that with socket fds */
 	    if ((n = s_nrecv(rfilefdt[ctrl_sock_index]->lseekhow, iobuffer, size-byte_in_buffer)) <= 0) {
-	       if (n == 0)
-		  TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (serrno=%d)",serrno) ;
-	       else
-		  TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (errno=%d)",errno) ;
-	       END_TRACE() ;
-	       return -1 ;
+        if (n == 0) {
+          TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (serrno=%d)",serrno) ;
+        } else {
+          TRACE(2,"rfio","datarfio_read_v3: read(): ERROR occured (errno=%d)",errno) ;
+        }
+        END_TRACE() ;
+        return -1 ;
 	    }
 	    byte_in_buffer += n;
 	    rfilefdt[ctrl_sock_index]->byte_read_from_network += n;
@@ -932,21 +933,23 @@ int     ctrl_sock, size;
       /* Something received on the control socket */
       TRACE(2,"rfio", "ctrl socket: reading %d bytes",RQSTSIZE) ;
       if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	 if (n == 0)
-	    TRACE(2, "rfio","read ctrl socket: read(): %s\n", sstrerror(serrno));
-	 else
-	    TRACE(2, "rfio","read ctrl socket: read(): %s\n", strerror(errno));
-	 END_TRACE();
-	 return -1 ;
+        if (n == 0) {
+          TRACE(2, "rfio","read ctrl socket: read(): %s\n", sstrerror(serrno));
+        } else {
+          TRACE(2, "rfio","read ctrl socket: read(): %s\n", strerror(errno));
+        }
+        END_TRACE();
+        return -1 ;
       }
       p = rqstbuf;
       unmarshall_WORD(p,cause) ;			
       unmarshall_LONG(p,status) ;
       unmarshall_LONG(p,rcode) ;
-      if (cause == REP_ERROR)
-	 TRACE(2,"rfio", "write_v3: reply error status %d, rcode %d", status, rcode) ;
-      else
-	 TRACE(2,"rfio", "write_v3: unknown error status %d, rcode %d", status, rcode) ;
+      if (cause == REP_ERROR) {
+        TRACE(2,"rfio", "write_v3: reply error status %d, rcode %d", status, rcode) ;
+      } else {
+        TRACE(2,"rfio", "write_v3: unknown error status %d, rcode %d", status, rcode) ;
+      }
       rfio_errno = rcode;
 
       TRACE(2,"rfio","rfio_write: sending ack for error") ;
@@ -983,12 +986,6 @@ int     s;
 {
    int req;
    char   * p  ; 
-   struct {
-     unsigned int    rcount; /* read() count                 */
-     unsigned int    wcount; /* write() count                */
-     unsigned int    rbcount;/* byte(s) read                 */
-     unsigned int    wbcount;/* byte(s) written              */
-   } iostatbuf ;
    int rcode,status,status1,HsmType;
    struct timeval t;
    fd_set fdvar;
@@ -1105,13 +1102,14 @@ int     s;
 	  
 	 TRACE(2, "rfio", "rfio_close: reading %d bytes",RQSTSIZE) ; 
 	 if ((n = netread_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	    if (n == 0)
-	       TRACE(2, "rfio", "rfio_close_v3: read(): ERROR occured (serrno=%d)", serrno);
-	    else
-	       TRACE(2, "rfio", "rfio_close_v3: read(): ERROR occured (errno=%d)", errno);
-	    (void)rfio_cleanup_v3(s) ; 
-	    END_TRACE() ;
-	    return -1 ; 
+     if (n == 0) {
+       TRACE(2, "rfio", "rfio_close_v3: read(): ERROR occured (serrno=%d)", serrno);
+     } else {
+       TRACE(2, "rfio", "rfio_close_v3: read(): ERROR occured (errno=%d)", errno);
+     }
+     (void)rfio_cleanup_v3(s) ; 
+     END_TRACE() ;
+     return -1 ; 
 	 }
 	  
 	 /* Closing data socket after the server has read all the data */
@@ -1335,9 +1333,6 @@ int     flags;
    int i;
    char *lasthost = NULL;
    int   lasthost_len = 256;
-#if !defined(_WIN32)
-   int optlen,maxseg;
-#endif
 /*	int max_rcvlow; */
    char tmphost[CA_MAXHOSTNAMELEN+1];
 

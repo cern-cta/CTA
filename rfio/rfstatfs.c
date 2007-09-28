@@ -1,15 +1,11 @@
 /*
- * $Id: rfstatfs.c,v 1.5 2001/06/24 05:36:09 baud Exp $
+ * $Id: rfstatfs.c,v 1.6 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2001 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstatfs.c,v $ $Revision: 1.5 $ $Date: 2001/06/24 05:36:09 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 #define RFIO_KERNEL 1
 #if !defined(_WIN32)

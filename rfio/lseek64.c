@@ -1,15 +1,11 @@
 /*
- * $Id: lseek64.c,v 1.1 2002/11/19 10:51:23 baud Exp $
+ * $Id: lseek64.c,v 1.2 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lseek64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:23 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, P. Gaillardon";
-#endif /* not lint */
 
 /* lseek64.c      Remote File I/O - move read/write file mark.	*/
 
@@ -39,7 +35,6 @@ int      how ;
 {
    int      status ;
    off64_t  offsetout;
-   char     rfio_buf[BUFSIZ];
    int      s_index = -1;
    char     tmpbuf[21];
 

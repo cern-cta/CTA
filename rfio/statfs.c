@@ -1,15 +1,11 @@
 /*
- * $Id: statfs.c,v 1.9 2004/05/25 08:47:13 jdurand Exp $
+ * $Id: statfs.c,v 1.10 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: statfs.c,v $ $Revision: 1.9 $ $Date: 2004/05/25 08:47:13 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /* statfs.c       Remote File I/O - get file system status     */
 

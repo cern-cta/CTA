@@ -1,15 +1,11 @@
 /*
- * $Id: fclose.c,v 1.14 2004/03/03 11:15:58 obarring Exp $
+ * $Id: fclose.c,v 1.15 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.14 $ $Date: 2004/03/03 11:15:58 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
-#endif /* not lint */
 
 /* fclose.c     Remote File I/O - close a binary file                   */
 
@@ -20,7 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: fclose.c,v $ $Revision: 1.14 $ $Date: 2004
 #include "Castor_limits.h"    
 #include "rfio.h"    
 #include "rfio_rfilefdt.h"
-
+#include <stdlib.h>
 
 int DLL_DECL rfio_fclose(fp)             /* Remote file close           */
 RFILE *fp;                      /* Remote file pointer                  */

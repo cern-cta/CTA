@@ -1,5 +1,5 @@
 /*
- * $Id: setopt.c,v 1.5 2002/04/28 05:27:42 baud Exp $
+ * $Id: setopt.c,v 1.6 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
@@ -7,9 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: setopt.c,v $ $Revision: 1.5 $ $Date: 2002/04/28 05:27:42 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 #define RFIO_KERNEL 1
 #include "rfio.h"               /* remote file I/O definitions          */
 

@@ -1,15 +1,11 @@
 /*
- * $Id: pread.c,v 1.10 2002/09/20 06:59:35 baud Exp $
+ * $Id: pread.c,v 1.11 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pread.c,v $ $Revision: 1.10 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /* pread.c      Remote command I/O - read from a popened command	*/
 

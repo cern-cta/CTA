@@ -1,15 +1,11 @@
 /*
- * $Id: connect.c,v 1.14 2005/12/12 10:25:52 lopic3 Exp $
+ * $Id: connect.c,v 1.15 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)connect.c,v 1.2 2003/10/30 11:00:34 CERN/IT/ADC/CA F. Hemmer, A. Trannoy, F. Hassine, J.-P. Baud, O. Barring, J.-D. Durand";
-#endif /* not lint */
 
 /* connect.c    Remote File I/O - connect to remote server              */
 
@@ -28,6 +24,7 @@ static char sccsid[] = "@(#)connect.c,v 1.2 2003/10/30 11:00:34 CERN/IT/ADC/CA F
 #include "Csec_api.h"
 #endif
 #include "Castor_limits.h"
+#include <stdlib.h>
 
 #ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)

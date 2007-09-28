@@ -1,15 +1,11 @@
 /*
- * $Id: xyopen.c,v 1.11 2004/01/23 10:27:46 jdurand Exp $
+ * $Id: xyopen.c,v 1.12 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyopen.c,v $ $Revision: 1.11 $ $Date: 2004/01/23 10:27:46 $ CERN/IT/PDP/DM Frederic Hemmer, F. Hassine";
-#endif /* not lint */
 
 /* xyopen.c     Remote File I/O - Open a Fortran Logical Unit           */
 

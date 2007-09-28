@@ -1,15 +1,11 @@
 /*
- * $Id: open64.c,v 1.8 2005/07/11 10:48:39 jdurand Exp $
+ * $Id: open64.c,v 1.9 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open64.c,v $ $Revision: 1.8 $ $Date: 2005/07/11 10:48:39 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
-#endif /* not lint */
 
 /* open64.c       Remote File I/O - open file a file                      */
 
@@ -41,9 +37,8 @@ int	passwd;
    extern char * getenv() ; 	/* External declaration		*/
    char     *cp ;               /* Character pointer		*/
    int      v ;
-   char     rfio_buf[BUFSIZ] ;
 
-   if ( cp= getenv("RFIO_READOPT") ) {
+   if ( (cp= getenv("RFIO_READOPT")) ) {
       v = atoi(cp) ;
       rfiosetopt(RFIO_READOPT, &v , 4) ; 
    }
@@ -106,10 +101,7 @@ char    *filepath ;
 int     flags,mode ;
 {
    int n;
-   int n_index;
    int old;
-   int fd;
-   int fd_index;
 
    old = rfioreadopt(RFIO_READOPT);
 
@@ -171,7 +163,6 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    extern char * getconfent() ;
    extern  char * getifnam() ;
    int     old,n,parserc;
-   int     n_index;
    off64_t offset;      /* Open offset length           */
    char    rfio_buf[BUFSIZ];
 

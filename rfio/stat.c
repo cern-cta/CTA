@@ -1,15 +1,11 @@
 /*
- * $Id: stat.c,v 1.11 2005/02/22 13:28:52 jdurand Exp $
+ * $Id: stat.c,v 1.12 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stat.c,v $ $Revision: 1.11 $ $Date: 2005/02/22 13:28:52 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
 
 /* stat.c       Remote File I/O - get file status                       */
 

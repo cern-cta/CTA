@@ -1,15 +1,11 @@
 /*
- * $Id: closedir.c,v 1.12 2002/09/20 06:59:34 baud Exp $
+ * $Id: closedir.c,v 1.13 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: closedir.c,v $ $Revision: 1.12 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 /* closedir.c      Remote File I/O - close a directory                     */
 

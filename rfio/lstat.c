@@ -1,15 +1,11 @@
 /*
- * $Id: lstat.c,v 1.16 2005/02/22 13:28:35 jdurand Exp $
+ * $Id: lstat.c,v 1.17 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lstat.c,v $ $Revision: 1.16 $ $Date: 2005/02/22 13:28:35 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /* lstat.c       Remote File I/O - get file status   */
 

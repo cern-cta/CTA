@@ -1,15 +1,11 @@
 /*
- * $Id: error.c,v 1.10 2004/03/03 11:15:58 obarring Exp $
+ * $Id: error.c,v 1.11 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2004 by CERN-IT
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: error.c,v $ $Revision: 1.10 $ $Date: 2004/03/03 11:15:58 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
 
 /* error.c      Remote File I/O - error numbers and message handling    */
 
@@ -153,11 +149,9 @@ size_t buflen;
 
 int DLL_DECL rfio_serrno()   /* get error number - return -1 if cannot get it */
 {
-   int          s;
    int		last_rferr ; 	/* to preserve rfio_errno 		*/
    int		last_err ; 	/* to preserve errno 			*/
    int          last_serrno ;   /* to preserve serrno                   */
-   int 		rt ;		/* Request is from other network?  	*/
 
    INIT_TRACE("RFIO_TRACE");
    last_err = errno ;

@@ -1,5 +1,5 @@
 /*
- * $Id: mstat.c,v 1.36 2005/02/22 13:28:41 jdurand Exp $
+ * $Id: mstat.c,v 1.37 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 
@@ -7,11 +7,6 @@
  * Copyright (C) 1995-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: mstat.c,v $ $Revision: 1.36 $ $Date: 2005/02/22 13:28:41 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
-
 
 #include "Cmutex.h"
 #include "Castor_limits.h"
@@ -657,14 +652,12 @@ int    reqst ;
    int         len;
    int         replen;
    int         rc;
-   int         save_errno, save_serrno;
    char        *p=buf;
    int         uid;
    int         gid;
    int         sec;
    int         m64;
    int         *old_uid = NULL;
-   long        i32 ;
    struct      passwd *pw_tmp;
    struct      passwd *pw = NULL;
 

@@ -1,15 +1,11 @@
 /*
- * $Id: open.c,v 1.28 2005/07/11 10:41:58 jdurand Exp $
+ * $Id: open.c,v 1.29 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: open.c,v $ $Revision: 1.28 $ $Date: 2005/07/11 10:41:58 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
-#endif /* not lint */
 
 /* open.c       Remote File I/O - open file a file                      */
 
@@ -41,9 +37,8 @@ int	passwd;
    extern char * getenv() ; 	/* External declaration		*/
    char * cp ; 			/* Character pointer		*/
    int v ;
-   char     rfio_buf[BUFSIZ] ;
 
-   if ( cp= getenv("RFIO_READOPT") ) {
+   if ( (cp= getenv("RFIO_READOPT")) ) {
       v = atoi(cp) ;
       rfiosetopt(RFIO_READOPT, &v , 4) ; 
    }

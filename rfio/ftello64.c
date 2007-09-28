@@ -1,15 +1,11 @@
 /*
- * $Id: ftello64.c,v 1.1 2002/11/19 10:51:23 baud Exp $
+ * $Id: ftello64.c,v 1.2 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: ftello64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:23 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, P. Gaillardon";
-#endif /* not lint */
 
 /* ftello64.c      Remote File I/O - get current file position.	*/
 
@@ -20,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: ftello64.c,v $ $Revision: 1.1 $ $Date: 200
 #include "rfio.h"     
 #include "rfio_rfilefdt.h"
 #include "u64subr.h"
+#include <stdlib.h>
 
 /*
  * Remote file ftello

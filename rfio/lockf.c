@@ -1,15 +1,11 @@
 /*
- * $Id: lockf.c,v 1.8 2002/11/19 12:55:33 baud Exp $
+ * $Id: lockf.c,v 1.9 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lockf.c,v $ $Revision: 1.8 $ $Date: 2002/11/19 12:55:33 $ CERN/IT/PDP/DM Antony Simmins";
-#endif /* not lint */
 
 /* lockf.c       Remote File I/O - record locking on files		*/
 
@@ -28,7 +24,6 @@ long		siz;		/* locked region			*/
    int             status;         /* remote lockf() status        */
    int     	len;
    char    	*p=buf;
-   int 		rt ;
    int 		rcode ;
    int          s_index;
 

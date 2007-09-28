@@ -1,15 +1,11 @@
 /*
- * $Id: stream64.c,v 1.6 2005/07/11 10:49:56 jdurand Exp $
+ * $Id: stream64.c,v 1.7 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: stream64.c,v $ $Revision: 1.6 $ $Date: 2005/07/11 10:49:56 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, P. Gaillardon";
-#endif /* not lint */
 
 /* stream64.c       Remote File I/O - Version 3 streaming routines        */
 
@@ -73,7 +69,7 @@ int	passwd;
    char * cp ; 			/* Character pointer		*/
    int v ;
 
-   if ( cp= getenv("RFIO_READOPT") ) {
+   if ( (cp= getenv("RFIO_READOPT")) ) {
       v = atoi(cp) ;
       rfiosetopt(RFIO_READOPT, &v , 4) ; 
    }
@@ -625,12 +621,13 @@ int     ctrl_sock, size;
 
       TRACE(2,"rfio", "rfio_read64_v3: reading %d bytes",RQSTSIZE) ;
       if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	 if (n == 0)
-	    TRACE(2, "rfio","read64_v3 ctrl socket: read(): %s\n", sstrerror(serrno));
-	 else
-	    TRACE(2, "rfio","read64_v3 ctrl socket: read(): %s\n", strerror(errno));
-	 END_TRACE();
-	 return -1 ;
+        if (n == 0) {
+          TRACE(2, "rfio","read64_v3 ctrl socket: read(): %s\n", sstrerror(serrno));
+        } else {
+          TRACE(2, "rfio","read64_v3 ctrl socket: read(): %s\n", strerror(errno));
+        }
+        END_TRACE();
+        return -1 ;
       }
       p = rqstbuf;
       unmarshall_WORD(p,req) ;			
@@ -902,21 +899,23 @@ int     ctrl_sock, size;
       /* Something received on the control socket */
       TRACE(2,"rfio", "write64_v3: ctrl socket: reading %d bytes",RQSTSIZE) ;
       if ((n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	 if (n == 0)
-	    TRACE(2, "rfio","write64_v3: read ctrl socket: read(): %s\n", sstrerror(serrno));
-	 else
-	    TRACE(2, "rfio","write64_v3: read ctrl socket: read(): %s\n", strerror(errno));
-	 END_TRACE();
-	 return -1 ;
+        if (n == 0) {
+          TRACE(2, "rfio","write64_v3: read ctrl socket: read(): %s\n", sstrerror(serrno));
+        } else {
+          TRACE(2, "rfio","write64_v3: read ctrl socket: read(): %s\n", strerror(errno));
+        }
+        END_TRACE();
+        return -1 ;
       }
       p = rqstbuf;
       unmarshall_WORD(p,cause) ;			
       unmarshall_LONG(p,status) ;
       unmarshall_LONG(p,rcode) ;
-      if (cause == REP_ERROR)
-	 TRACE(2,"rfio", "write64_v3: reply error status %d, rcode %d", status, rcode) ;
-      else
-	 TRACE(2,"rfio", "write64_v3: unknown error status %d, rcode %d", status, rcode) ;
+      if (cause == REP_ERROR) {
+        TRACE(2,"rfio", "write64_v3: reply error status %d, rcode %d", status, rcode) ;
+      } else {
+        TRACE(2,"rfio", "write64_v3: unknown error status %d, rcode %d", status, rcode) ;
+      }
       rfio_errno = rcode;
 
       TRACE(2,"rfio","write64_v3: sending ack for error") ;
@@ -954,12 +953,6 @@ int     s;
 {
    int      req;
    char     *p  ; 
-   struct {
-     unsigned int    rcount;    /* read() count                 */
-     unsigned int    wcount;    /* write() count                */
-     off64_t         rbcount;   /* byte(s) read                 */
-     off64_t         wbcount;   /* byte(s) written              */
-   } iostatbuf ;
    int      rcode,status,status1,HsmType;
    struct   timeval t;
    fd_set   fdvar;
@@ -1079,13 +1072,14 @@ int     s;
 	  
 	 TRACE(2, "rfio", "rfio_close64_v3: reading %d bytes",RQSTSIZE) ; 
 	 if ((n = netread_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT)) != RQSTSIZE) {
-	    if (n == 0)
-	       TRACE(2, "rfio", "rfio_close64_v3: read(): ERROR occured (serrno=%d)", serrno);
-	    else
-	       TRACE(2, "rfio", "rfio_close64_v3: read(): ERROR occured (errno=%d)", errno);
-	    (void)rfio_cleanup_v3(s) ; 
-	    END_TRACE() ;
-	    return -1 ; 
+     if (n == 0) {
+       TRACE(2, "rfio", "rfio_close64_v3: read(): ERROR occured (serrno=%d)", serrno);
+     } else {
+       TRACE(2, "rfio", "rfio_close64_v3: read(): ERROR occured (errno=%d)", errno);
+     }
+     (void)rfio_cleanup_v3(s) ; 
+     END_TRACE() ;
+     return -1 ; 
 	 }
 	  
 	 /* Closing data socket after the server has read all the data */
@@ -1182,7 +1176,7 @@ off64_t rfio_lseek64_v3(s, offset, how)
    off64_t   offset64_out; 
    char rfio_buf[BUFSIZ];
    int rep;
-   int status,rcode;
+   int rcode;
    int s_index;
    char  tmpbuf[21];
 

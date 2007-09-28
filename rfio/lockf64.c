@@ -1,15 +1,11 @@
 /*
- * $Id: lockf64.c,v 1.1 2002/11/19 10:51:22 baud Exp $
+ * $Id: lockf64.c,v 1.2 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lockf64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:22 $ CERN/IT/PDP/DM Antony Simmins, P. Gaillardon";
-#endif /* not lint */
 
 /* lockf64.c       Remote File I/O - record locking on files      */
 
@@ -30,7 +26,6 @@ off64_t  siz;                             /* locked region            */
    int      len;
    int      replen;
    char     *p=buf;
-   int      rt ;
    int      rcode ;
    int      s_index;
    char     tmpbuf[21];

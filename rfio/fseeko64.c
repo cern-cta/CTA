@@ -1,15 +1,11 @@
 /*
- * $Id: fseeko64.c,v 1.1 2002/11/19 10:51:23 baud Exp $
+ * $Id: fseeko64.c,v 1.2 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fseeko64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:23 $ CERN/IT/PDP/DM Fabien Collin, Philippe Gaillardon";
-#endif /* not lint */
 
 /* fseeko64.c      Remote File I/O - fseek library call */
 
@@ -20,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: fseeko64.c,v $ $Revision: 1.1 $ $Date: 200
 #include "rfio.h"    
 #include "rfio_rfilefdt.h"
 #include "u64subr.h"
+#include <stdlib.h>
 
 /*
  * Remote file fseek

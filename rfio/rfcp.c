@@ -685,6 +685,12 @@ int main(argc, argv)
 		} else {
 			fprintf(stdout,"\n");
 		}
+    {
+      struct stat64 st;
+      int rc = rfio_stat64(filename,&st);
+      if (rc < 0) fprintf(stdout, "Error\n");
+      fprintf(stdout,"%s bytes in remote file\n", u64tostr(st.st_size, tmpbuf, 0));
+    }
 		if (have_maxsize < 0) {
 			rc2 = (inpfile_size == size ? OK : ((strcmp(inpfile,"-") == 0) ? OK : SYERR));
 			if (rc2 == SYERR) {

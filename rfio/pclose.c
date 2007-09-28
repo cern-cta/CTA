@@ -1,15 +1,11 @@
 /*
- * $Id: pclose.c,v 1.12 2003/09/14 06:38:57 jdurand Exp $
+ * $Id: pclose.c,v 1.13 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1993-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.12 $ $Date: 2003/09/14 06:38:57 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /* pclose.c      Remote command I/O - close a popened command 		*/
 
@@ -23,6 +19,7 @@ static char sccsid[] = "@(#)$RCSfile: pclose.c,v $ $Revision: 1.12 $ $Date: 2003
 #define RFIO_KERNEL     1 
 #include "rfio.h"        
 #include "rfio_rfilefdt.h"
+#include <stdlib.h>
 
 /*
  * remote pclose

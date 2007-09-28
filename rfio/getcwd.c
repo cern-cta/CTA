@@ -1,15 +1,11 @@
 /*
- * $Id: getcwd.c,v 1.3 2002/09/20 06:59:35 baud Exp $
+ * $Id: getcwd.c,v 1.4 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getcwd.c,v $ $Revision: 1.3 $ $Date: 2002/09/20 06:59:35 $ CERN/IT/PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 #if defined(_WIN32)
 #include <direct.h>

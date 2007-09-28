@@ -1,15 +1,11 @@
 /*
- * $Id: ftell.c,v 1.2 2002/09/20 06:59:35 baud Exp $
+ * $Id: ftell.c,v 1.3 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by IN2P3 CC Philippe Gaillardon
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: ftell.c,v $ $Revision: 1.2 $ $Date: 2002/09/20 06:59:35 $ IN2P3 CC Philippe Gaillardon";
-#endif /* not lint */
 
 /* ftell.c      Remote File I/O - get current file position.	*/
 
@@ -19,6 +15,7 @@ static char sccsid[] = "@(#)$RCSfile: ftell.c,v $ $Revision: 1.2 $ $Date: 2002/0
 #define RFIO_KERNEL     1  
 #include "rfio.h"     
 #include "rfio_rfilefdt.h"
+#include <stdlib.h>
 
 long rfio_ftell(fp)   
 	RFILE    *fp;

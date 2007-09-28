@@ -8,10 +8,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)parse.c,v 1.17 2004/03/02 09:17:40 CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
-
 /* parse.c      Remote File I/O - parse file path                       */
 
 #define RFIO_KERNEL     1       /* system part of Remote File I/O       */

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)rfio_HsmIf.c,v 1.58 2004/02/10 15:05:17 CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
-
 /* rfio_HsmIf.c       Remote File I/O - generic HSM client interface         */
 
 #define RFIO_USE_CASTOR_V2 "RFIO_USE_CASTOR_V2"

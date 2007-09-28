@@ -1,15 +1,11 @@
 /*
- * $Id: lun2fn.c,v 1.6 2000/05/29 16:42:02 obarring Exp $
+ * $Id: lun2fn.c,v 1.7 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: lun2fn.c,v $ $Revision: 1.6 $ $Date: 2000/05/29 16:42:02 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
 
 /* lun2fn.c     Remote File I/O - translate FORTRAN LUN to file name    */
 
@@ -29,6 +25,7 @@ static char sccsid[] = "@(#)$RCSfile: lun2fn.c,v $ $Revision: 1.6 $ $Date: 2000/
 #include "rfio.h"               /* remote file I/O definitions          */
 #include <pwd.h>                /* password entry structure             */
 #include <Cpwd.h>
+#include <stdlib.h>
 
 extern char     *getenv();
 

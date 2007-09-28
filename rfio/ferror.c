@@ -1,5 +1,5 @@
 /*
- * $Id: ferror.c,v 1.4 2001/06/20 09:40:02 baud Exp $
+ * $Id: ferror.c,v 1.5 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
@@ -7,16 +7,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: ferror.c,v $ $Revision: 1.4 $ $Date: 2001/06/20 09:40:02 $ CERN/IT/PDP/DM Antoine Trannoy";
-#endif /* not lint */
-
 /* ferror.c      Remote File I/O - tell if an error happened            */
 
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
 #include "rfio_rfilefdt.h"
+#include <stdlib.h>
 
 int rfio_ferror(fp)
 	RFILE * fp ; 

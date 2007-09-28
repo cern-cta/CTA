@@ -1,15 +1,11 @@
 /*
- * $Id: popen.c,v 1.11 2003/09/25 16:28:17 jdurand Exp $
+ * $Id: popen.c,v 1.12 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: popen.c,v $ $Revision: 1.11 $ $Date: 2003/09/25 16:28:17 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /* popen.c       Remote pipe I/O - open file a file                      */
 

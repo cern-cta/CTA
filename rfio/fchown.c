@@ -1,15 +1,11 @@
 /*
- * $Id: fchown.c,v 1.3 2002/09/20 06:59:34 baud Exp $
+ * $Id: fchown.c,v 1.4 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2002 by CERN/IT/DS/HSM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: fchown.c,v $ $Revision: 1.3 $ $Date: 2002/09/20 06:59:34 $ CERN/IT/DS/HSM Jean-Philippe Baud";
-#endif /* not lint */
 
 /* fchown.c      Remote File I/O - change ownership of a file            */
 

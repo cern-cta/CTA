@@ -1,15 +1,11 @@
 /*
- * $Id: chown.c,v 1.10 2004/03/03 11:15:57 obarring Exp $
+ * $Id: chown.c,v 1.11 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1994-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chown.c,v $ $Revision: 1.10 $ $Date: 2004/03/03 11:15:57 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /* chown.c       Remote File I/O - Change a file owner */
 

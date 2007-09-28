@@ -1,15 +1,11 @@
 /*
- * $Id: close.c,v 1.3 2005/04/12 19:17:42 jdurand Exp $
+ * $Id: close.c,v 1.4 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2004 by CERN/IT/FIO
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: close.c,v $ $Revision: 1.3 $ $Date: 2005/04/12 19:17:42 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
-#endif /* not lint */
 
 /* close.c      Remote File I/O - close a file                          */
 
@@ -30,7 +26,6 @@ static char sccsid[] = "@(#)$RCSfile: close.c,v $ $Revision: 1.3 $ $Date: 2005/0
 int DLL_DECL rfio_close(s)
 int     s;
 {
-  char     rfio_buf[BUFSIZ];
   int      s_index;
   int rc;
 #if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
@@ -70,12 +65,6 @@ int     s;
    char     rfio_buf[BUFSIZ] ;
    char   * p  ; 
    int HsmType, status, status1;
-   struct {
-     unsigned int    rcount; /* read() count                 */
-     unsigned int    wcount; /* write() count                */
-     unsigned int    rbcount;/* byte(s) read                 */
-     unsigned int    wbcount;/* byte(s) written              */
-   } iostatbuf ;
    char  * trp ; 	/* Pointer to a temporary buffer		*/
    int temp= 0 ; 	/* A temporary buffer has been allocated	*/
    int s_index;

@@ -1,5 +1,5 @@
 /*
- * $Id: switch_req.c,v 1.4 2000/05/29 16:42:06 obarring Exp $
+ * $Id: switch_req.c,v 1.5 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
@@ -13,10 +13,6 @@
 
 #define DEBUG           0               /* Debugging flag               */
 #define RFIO_KERNEL     1               /* KERNEL part of the programs  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: switch_req.c,v $ $Revision: 1.4 $ $Date: 2000/05/29 16:42:06 $ CERN/IT/PDP/DM Felix Hassine";
-#endif
 
 #include "rfio.h"                       /* Remote file I/O              */
 #include "osdep.h"

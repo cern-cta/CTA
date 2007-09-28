@@ -1,15 +1,11 @@
 /*
- * $Id: preseek.c,v 1.10 2002/11/19 12:55:34 baud Exp $
+ * $Id: preseek.c,v 1.11 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: preseek.c,v $ $Revision: 1.10 $ $Date: 2002/11/19 12:55:34 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy";
-#endif /* not lint */
 
 /* preseek.c      Remote File I/O - preseeking.		*/
 

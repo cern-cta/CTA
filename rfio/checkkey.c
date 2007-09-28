@@ -1,15 +1,11 @@
 /*
- * $Id: checkkey.c,v 1.5 2003/09/14 06:38:56 jdurand Exp $
+ * $Id: checkkey.c,v 1.6 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.5 $ $Date: 2003/09/14 06:38:56 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 #include <stdio.h>
 #include <osdep.h>
@@ -32,6 +28,8 @@ static char sccsid[] = "@(#)$RCSfile: checkkey.c,v $ $Revision: 1.5 $ $Date: 200
 #endif /* HPSS */
 #include <socket_timeout.h>
 #include <Cnetdb.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #define RFIO2TPREAD_MAGIC 0X0110
 #define OK 1

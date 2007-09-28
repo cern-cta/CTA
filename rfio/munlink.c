@@ -1,5 +1,5 @@
 /*
- * $Id: munlink.c,v 1.13 2004/03/03 11:15:59 obarring Exp $
+ * $Id: munlink.c,v 1.14 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 
@@ -7,11 +7,6 @@
  * Copyright (C) 1995-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: munlink.c,v $ $Revision: 1.13 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Jean-Damien Durand";
-#endif /* not lint */
-
 
 #include <stdlib.h>
 #include "Cmutex.h"

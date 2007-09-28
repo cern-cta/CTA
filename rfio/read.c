@@ -1,5 +1,5 @@
 /*
- * $Id: read.c,v 1.22 2004/10/27 09:52:51 sponcec3 Exp $
+ * $Id: read.c,v 1.23 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
@@ -7,16 +7,13 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: read.c,v $ $Revision: 1.22 $ $Date: 2004/10/27 09:52:51 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine";
-#endif /* not lint */
-
 /* read.c       Remote File I/O - read  a file                          */
 
 
 #include <syslog.h>             /* system logger 			*/
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 /*
  * System remote file I/O definitions

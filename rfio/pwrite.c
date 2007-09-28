@@ -1,5 +1,5 @@
 /*
- * $Id: pwrite.c,v 1.8 2004/03/03 11:15:59 obarring Exp $
+ * $Id: pwrite.c,v 1.9 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
@@ -7,15 +7,12 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: pwrite.c,v $ $Revision: 1.8 $ $Date: 2004/03/03 11:15:59 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
-
 /* pwrite.c     Remote command I/O - write input to a popened command   */
 
 #define RFIO_KERNEL     1       /* KERNEL part of the routines          */
 
 #include "rfio.h"               /* Remote File I/O general definitions  */
+#include <stdlib.h>
 
 int DLL_DECL rfio_pwrite(ptr, size, items, fp)   /* Remote file write   */
 char    *ptr;                           /* buffer pointer               */

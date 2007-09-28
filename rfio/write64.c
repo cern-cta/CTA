@@ -1,15 +1,11 @@
 /*
- * $Id: write64.c,v 1.1 2002/11/19 10:51:23 baud Exp $
+ * $Id: write64.c,v 1.2 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: write64.c,v $ $Revision: 1.1 $ $Date: 2002/11/19 10:51:23 $ CERN/IT/PDP/DM F. Hemmer, A. Trannoy, F. Hassine, Philippe Gaillardon";
-#endif /* not lint */
 
 /* write64.c      Remote File I/O - write a file                          */
 

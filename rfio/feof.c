@@ -1,15 +1,11 @@
 /*
- * $Id: feof.c,v 1.6 2000/11/20 15:01:16 jdurand Exp $
+ * $Id: feof.c,v 1.7 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.6 $ $Date: 2000/11/20 15:01:16 $ CERN/IT/PDP/DM Antoine Trannoy";
-#endif /* not lint */
 
 /* feof.c      Remote File I/O - tell if the eof has been reached       */
 
@@ -20,6 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: feof.c,v $ $Revision: 1.6 $ $Date: 2000/11
 #define RFIO_KERNEL     1  
 #include "rfio.h"         
 #include "rfio_rfilefdt.h"
+#include <stdlib.h>
 
 int rfio_feof(fp)
 	RFILE * fp ; 

@@ -1,15 +1,11 @@
 /*
- * $Id: xyclose.c,v 1.5 2004/11/29 22:26:45 jdurand Exp $
+ * $Id: xyclose.c,v 1.6 2007/09/28 15:04:33 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-1999 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: xyclose.c,v $ $Revision: 1.5 $ $Date: 2004/11/29 22:26:45 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
 
 /* xyclose.c    Remote File I/O - Close a Fortran Logical Unit          */
 

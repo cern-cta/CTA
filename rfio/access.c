@@ -1,15 +1,11 @@
 /*
- * $Id: access.c,v 1.11 2006/12/14 15:20:05 itglp Exp $
+ * $Id: access.c,v 1.12 2007/09/28 15:04:32 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1990-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: access.c,v $ $Revision: 1.11 $ $Date: 2006/12/14 15:20:05 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
 
 /* access.c       Remote File I/O - get access status 			*/
 #define RFIO_KERNEL	1
@@ -33,7 +29,7 @@ int           mode;                   /* Access mode 				*/
 	INIT_TRACE("RFIO_TRACE");
 	TRACE(1, "rfio", "rfio_access(%s, %d)", filepath, mode);
 
-	if (!(parserc = rfio_parseln(filepath,&host,&filename,NORDLINKS))) {
+	if (!(parserc = rfio_parseln((char*)filepath,&host,&filename,NORDLINKS))) {
 		/* if not a remote file, must be local or HSM  */
 		if ( host != NULL ) {
 			/*
