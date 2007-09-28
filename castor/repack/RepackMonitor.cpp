@@ -296,8 +296,8 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 	if (numRetry > 0){
 	  numRetry--;
 	  sreq->setRetryNb(numRetry);
-	 sreq->setStatus(SUBREQUEST_RESTART);
-	 castor::dlf::Param params[] =
+	  sreq->setStatus(SUBREQUEST_RESTART);
+	  castor::dlf::Param params[] =
 	   {castor::dlf::Param("VID", sreq->vid()),
 	    castor::dlf::Param("STATUS", sreq->status())};
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);

@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.29 $ $Release$ 
- * $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.30 $ $Release$ 
+ * $Date: 2007/09/28 16:00:23 $ $Author: gtaur $
  *
  *
  *
@@ -225,6 +225,7 @@ void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
     int nbseg=0;
     int ret=0;
     int i=0;
+    u_signed64 total_blockid = 0;
 
     memset(&file_uniqueid,'\0',sizeof(file_uniqueid));
     sprintf(file_uniqueid.server,"%s",(char*)m_ns.c_str());  
@@ -243,18 +244,13 @@ void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
     for(i=0; i<nbseg; i++) {
       if (copyno == segattrs[i].copyno){ 
 	ret=0;
-        std::cout << "Fileid: " << file_uniqueid.fileid  << std::endl;
-        std::cout << "Copyno: " << segattrs[i].copyno << std::endl;
-        std::cout << "Fsec: " << segattrs[i].fsec << std::endl;
-        std::cout << "Segsize: " << segattrs[i].segsize << std::endl;
-        std::cout << "Compression: " << segattrs[i].compression << std::endl;
-        std::cout << "Status: " << segattrs[i].s_status << std::endl ;
-        std::cout << "Vid: " << segattrs[i].vid << std::endl;
-        std::cout << "Side: " << segattrs[i].side << std::endl;
-        std::cout << "Fseq: " << segattrs[i].fseq << std::endl;
-        std::cout << "Blockid: " << segattrs[i].blockid << std::endl;
-        std::cout << "ChecksumName: " << segattrs[i].checksum_name << std::endl;
-        std::cout << "Checksum: " << segattrs[i].checksum << std::endl; 
+	total_blockid = 0;
+        total_blockid = (unsigned char)  segattrs[i].blockid[3] * (unsigned int)0x1000000;
+	total_blockid = total_blockid | (segattrs[i].blockid[2] * 0x10000);
+	total_blockid = total_blockid | (segattrs[i].blockid[1] * 0x100);
+	total_blockid = total_blockid | (segattrs[i].blockid[0] * 0x1);
+        std::cout << file_uniqueid.fileid <<"       " << segattrs[i].copyno <<"        " <<segattrs[i].fsec <<"   " <<segattrs[i].segsize <<"          "<<segattrs[i].compression<<"        " <<segattrs[i].s_status<<"        " << segattrs[i].vid<<"   " << segattrs[i].side <<"       " <<segattrs[i].fseq<<"     " <<total_blockid <<  "      " << segattrs[i].checksum_name<<"     "<<std::hex<<segattrs[i].checksum<< std::endl;
+     
       }
     }
     if (ret<0){

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/09/28 16:00:23 $ $Author: gtaur $
  *
  *
  *
@@ -198,7 +198,8 @@ void RepackWorker::run(void* param)
   }
 
 
-  /** Clean everything. */  
+  /** Clean everything. */ 
+ 
   if(rreq !=NULL) freeRepackObj(rreq);
   rreq = NULL;
   delete sock;  // originally created from RepackServer
@@ -368,7 +369,11 @@ void RepackWorker::restart(RepackRequest* rreq) throw (castor::exception::Except
           throw ex;
         }
         tmp->setStatus(SUBREQUEST_RESTART);
-        tmp->setRetryNb(rreq->retryMax());
+ 
+	tmp->setFilesStaging(0);
+	tmp->setFilesMigrating(0);
+	tmp->setFilesFailed(0);
+	tmp->setFilesFailedSubmit(0);
         m_databasehelper->updateSubRequest(tmp,false,cuuid);
         freeRepackObj(tmp);
       }

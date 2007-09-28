@@ -230,19 +230,19 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_repacksubrequest
-       * @return the value of m_repacksubrequest
+       * Get the value of m_subrequest
+       * @return the value of m_subrequest
        */
-      RepackSubRequest* repacksubrequest() const {
-        return m_repacksubrequest;
+      RepackSubRequest* subrequest() const {
+        return m_subrequest;
       }
 
       /**
-       * Set the value of m_repacksubrequest
-       * @param new_var the new value of m_repacksubrequest
+       * Set the value of m_subrequest
+       * @param new_var the new value of m_subrequest
        */
-      void setRepacksubrequest(RepackSubRequest* new_var) {
-        m_repacksubrequest = new_var;
+      void setSubrequest(RepackSubRequest* new_var) {
+        m_subrequest = new_var;
       }
 
     private:
@@ -264,7 +264,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      RepackSubRequest* m_repacksubrequest;
+      RepackSubRequest* m_subrequest;
 
     }; /* end of class RepackSegment */
 

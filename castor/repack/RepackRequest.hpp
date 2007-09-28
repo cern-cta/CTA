@@ -229,35 +229,35 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_uid
-       * @return the value of m_uid
+       * Get the value of m_userId
+       * @return the value of m_userId
        */
-      int uid() const {
-        return m_uid;
+      int userId() const {
+        return m_userId;
       }
 
       /**
-       * Set the value of m_uid
-       * @param new_var the new value of m_uid
+       * Set the value of m_userId
+       * @param new_var the new value of m_userId
        */
-      void setUid(int new_var) {
-        m_uid = new_var;
+      void setUserId(int new_var) {
+        m_userId = new_var;
       }
 
       /**
-       * Get the value of m_gid
-       * @return the value of m_gid
+       * Get the value of m_groupId
+       * @return the value of m_groupId
        */
-      int gid() const {
-        return m_gid;
+      int groupId() const {
+        return m_groupId;
       }
 
       /**
-       * Set the value of m_gid
-       * @param new_var the new value of m_gid
+       * Set the value of m_groupId
+       * @param new_var the new value of m_groupId
        */
-      void setGid(int new_var) {
-        m_gid = new_var;
+      void setGroupId(int new_var) {
+        m_groupId = new_var;
       }
 
       /**
@@ -295,32 +295,32 @@ namespace castor {
       }
 
       /**
-       * Add a RepackSubRequest* object to the m_repacksubrequestVector list
+       * Add a RepackSubRequest* object to the m_subrequestVector list
        */
-      void addRepacksubrequest(RepackSubRequest* add_object) {
-        m_repacksubrequestVector.push_back(add_object);
+      void addSubrequest(RepackSubRequest* add_object) {
+        m_subrequestVector.push_back(add_object);
       }
 
       /**
-       * Remove a RepackSubRequest* object from m_repacksubrequestVector
+       * Remove a RepackSubRequest* object from m_subrequestVector
        */
-      void removeRepacksubrequest(RepackSubRequest* remove_object) {
-        for (unsigned int i = 0; i < m_repacksubrequestVector.size(); i++) {
-          RepackSubRequest* item = m_repacksubrequestVector[i];
+      void removeSubrequest(RepackSubRequest* remove_object) {
+        for (unsigned int i = 0; i < m_subrequestVector.size(); i++) {
+          RepackSubRequest* item = m_subrequestVector[i];
           if (item == remove_object) {
-            std::vector<RepackSubRequest*>::iterator it = m_repacksubrequestVector.begin() + i;
-            m_repacksubrequestVector.erase(it);
+            std::vector<RepackSubRequest*>::iterator it = m_subrequestVector.begin() + i;
+            m_subrequestVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of RepackSubRequest* objects held by m_repacksubrequestVector
-       * @return list of RepackSubRequest* objects held by m_repacksubrequestVector
+       * Get the list of RepackSubRequest* objects held by m_subrequestVector
+       * @return list of RepackSubRequest* objects held by m_subrequestVector
        */
-      std::vector<RepackSubRequest*>& repacksubrequest() {
-        return m_repacksubrequestVector;
+      std::vector<RepackSubRequest*>& subrequest() {
+        return m_subrequestVector;
       }
 
     private:
@@ -341,16 +341,16 @@ namespace castor {
 
       std::string m_stager;
 
-      int m_uid;
+      int m_userId;
 
-      int m_gid;
+      int m_groupId;
 
       int m_retryMax;
 
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<RepackSubRequest*> m_repacksubrequestVector;
+      std::vector<RepackSubRequest*> m_subrequestVector;
 
     }; /* end of class RepackRequest */
 

@@ -55,20 +55,20 @@ castor::repack::RepackSubRequest::RepackSubRequest() throw() :
   m_filesFailedSubmit(0),
   m_retryNb(0),
   m_id(0),
-  m_repackrequest(0) {
+  m_request(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackSubRequest::~RepackSubRequest() throw() {
-  if (0 != m_repackrequest) {
-    m_repackrequest->removeRepacksubrequest(this);
+  if (0 != m_request) {
+    m_request->removeSubrequest(this);
   }
-  for (unsigned int i = 0; i < m_repacksegmentVector.size(); i++) {
-    m_repacksegmentVector[i]->setRepacksubrequest(0);
+  for (unsigned int i = 0; i < m_segmentVector.size(); i++) {
+    m_segmentVector[i]->setSubrequest(0);
   }
-  m_repacksegmentVector.clear();
+  m_segmentVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -98,18 +98,18 @@ void castor::repack::RepackSubRequest::print(std::ostream& stream,
   stream << indent << "retryNb : " << m_retryNb << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Repackrequest : " << std::endl;
-  if (0 != m_repackrequest) {
-    m_repackrequest->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "Request : " << std::endl;
+  if (0 != m_request) {
+    m_request->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }
   {
-    stream << indent << "Repacksegment : " << std::endl;
+    stream << indent << "Segment : " << std::endl;
     int i;
     std::vector<RepackSegment*>::const_iterator it;
-    for (it = m_repacksegmentVector.begin(), i = 0;
-         it != m_repacksegmentVector.end();
+    for (it = m_segmentVector.begin(), i = 0;
+         it != m_segmentVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

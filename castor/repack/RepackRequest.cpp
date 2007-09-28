@@ -49,8 +49,8 @@ castor::repack::RepackRequest::RepackRequest() throw() :
   m_svcclass(""),
   m_command(0),
   m_stager(""),
-  m_uid(0),
-  m_gid(0),
+  m_userId(0),
+  m_groupId(0),
   m_retryMax(0),
   m_id(0) {
 }
@@ -59,10 +59,10 @@ castor::repack::RepackRequest::RepackRequest() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest::~RepackRequest() throw() {
-  for (unsigned int i = 0; i < m_repacksubrequestVector.size(); i++) {
-    m_repacksubrequestVector[i]->setRepackrequest(0);
+  for (unsigned int i = 0; i < m_subrequestVector.size(); i++) {
+    m_subrequestVector[i]->setRequest(0);
   }
-  m_repacksubrequestVector.clear();
+  m_subrequestVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -86,17 +86,17 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
   stream << indent << "svcclass : " << m_svcclass << std::endl;
   stream << indent << "command : " << m_command << std::endl;
   stream << indent << "stager : " << m_stager << std::endl;
-  stream << indent << "uid : " << m_uid << std::endl;
-  stream << indent << "gid : " << m_gid << std::endl;
+  stream << indent << "userId : " << m_userId << std::endl;
+  stream << indent << "groupId : " << m_groupId << std::endl;
   stream << indent << "retryMax : " << m_retryMax << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
-    stream << indent << "Repacksubrequest : " << std::endl;
+    stream << indent << "Subrequest : " << std::endl;
     int i;
     std::vector<RepackSubRequest*>::const_iterator it;
-    for (it = m_repacksubrequestVector.begin(), i = 0;
-         it != m_repacksubrequestVector.end();
+    for (it = m_subrequestVector.begin(), i = 0;
+         it != m_subrequestVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

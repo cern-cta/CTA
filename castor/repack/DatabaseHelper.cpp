@@ -45,7 +45,7 @@ const std::string castor::repack::DatabaseHelper::s_selectCheckSubRequestStateme
 
 /// SQL for existing segment check
 const std::string castor::repack::DatabaseHelper::s_selectExistingSegmentsStatementString =
-  "SELECT fileid,compression,segsize,filesec, RepackSegment.id,copyno, RepackSubRequest.status FROM RepackSegment,RepackSubRequest WHERE RepackSegment.fileid = :1 AND RepackSubRequest.id = RepackSegment.vid AND RepackSubRequest.status != 6";
+  "SELECT fileid,compression,segsize,filesec, RepackSegment.id,copyno, RepackSubRequest.status FROM RepackSegment,RepackSubRequest WHERE RepackSegment.fileid = :1 AND RepackSubRequest.id = RepackSegment.repacksubrequest AND RepackSubRequest.status != 6";
 
 /// SQL for archiving RepackSubRequests
 const std::string castor::repack::DatabaseHelper::s_archiveStatementString =
