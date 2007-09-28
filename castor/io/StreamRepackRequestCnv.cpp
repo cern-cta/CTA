@@ -98,8 +98,8 @@ void castor::io::StreamRepackRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->svcclass();
   ad->stream() << obj->command();
   ad->stream() << obj->stager();
-  ad->stream() << obj->uid();
-  ad->stream() << obj->gid();
+  ad->stream() << obj->userId();
+  ad->stream() << obj->groupId();
   ad->stream() << obj->retryMax();
   ad->stream() << obj->id();
 }
@@ -138,12 +138,12 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   std::string stager;
   ad->stream() >> stager;
   object->setStager(stager);
-  int uid;
-  ad->stream() >> uid;
-  object->setUid(uid);
-  int gid;
-  ad->stream() >> gid;
-  object->setGid(gid);
+  int userId;
+  ad->stream() >> userId;
+  object->setUserId(userId);
+  int groupId;
+  ad->stream() >> groupId;
+  object->setGroupId(groupId);
   int retryMax;
   ad->stream() >> retryMax;
   object->setRetryMax(retryMax);
@@ -170,9 +170,9 @@ void castor::io::StreamRepackRequestCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->repacksubrequest().size();
-    for (std::vector<castor::repack::RepackSubRequest*>::iterator it = obj->repacksubrequest().begin();
-         it != obj->repacksubrequest().end();
+    address->stream() << obj->subrequest().size();
+    for (std::vector<castor::repack::RepackSubRequest*>::iterator it = obj->subrequest().begin();
+         it != obj->subrequest().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
@@ -195,12 +195,12 @@ castor::IObject* castor::io::StreamRepackRequestCnv::unmarshalObject(castor::io:
   // Fill object with associations
   castor::repack::RepackRequest* obj = 
     dynamic_cast<castor::repack::RepackRequest*>(object);
-  unsigned int repacksubrequestNb;
-  ad.stream() >> repacksubrequestNb;
-  for (unsigned int i = 0; i < repacksubrequestNb; i++) {
+  unsigned int subrequestNb;
+  ad.stream() >> subrequestNb;
+  for (unsigned int i = 0; i < subrequestNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objRepacksubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addRepacksubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objRepacksubrequest));
+    castor::IObject* objSubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addSubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objSubrequest));
   }
   return object;
 }

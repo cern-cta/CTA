@@ -255,34 +255,34 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
-        /// SQL checkExist statement for member repackrequest
+        /// SQL checkExist statement for member request
         static const std::string s_checkRepackRequestExistStatementString;
 
-        /// SQL checkExist statement object for member repackrequest
+        /// SQL checkExist statement object for member request
         castor::db::IDbStatement *m_checkRepackRequestExistStatement;
 
-        /// SQL update statement for member repackrequest
+        /// SQL update statement for member request
         static const std::string s_updateRepackRequestStatementString;
 
-        /// SQL update statement object for member repackrequest
+        /// SQL update statement object for member request
         castor::db::IDbStatement *m_updateRepackRequestStatement;
 
-        /// SQL select statement for member repacksegment
+        /// SQL select statement for member segment
         static const std::string s_selectRepackSegmentStatementString;
 
-        /// SQL select statement object for member repacksegment
+        /// SQL select statement object for member segment
         castor::db::IDbStatement *m_selectRepackSegmentStatement;
 
-        /// SQL delete statement for member repacksegment
+        /// SQL delete statement for member segment
         static const std::string s_deleteRepackSegmentStatementString;
 
-        /// SQL delete statement object for member repacksegment
+        /// SQL delete statement object for member segment
         castor::db::IDbStatement *m_deleteRepackSegmentStatement;
 
-        /// SQL remote update statement for member repacksegment
+        /// SQL remote update statement for member segment
         static const std::string s_remoteUpdateRepackSegmentStatementString;
 
-        /// SQL remote update statement object for member repacksegment
+        /// SQL remote update statement object for member segment
         castor::db::IDbStatement *m_remoteUpdateRepackSegmentStatement;
 
       }; // end of class DbRepackSubRequestCnv
