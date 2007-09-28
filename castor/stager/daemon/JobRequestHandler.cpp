@@ -112,6 +112,7 @@ namespace castor{
 	
 	try{
 
+	  int type = stgRequestHelper->fileRequest->type();
 	  switch(caseToSchedule){
 	    
 	  case 2: //normal tape recall
@@ -127,8 +128,7 @@ namespace castor{
 	    break;
 	    
 	  case 1:/* just for get and the special update */
-	    int type = stgRequestHelper->fileRequest->type();
-	    if((type == OBJ_StageGetRequest)||(type == OBJ_StageUpdateRequest)||(type == OBJ_StagePrepareToGetRequest)){
+	    if((type == OBJ_StageGetRequest)||(type == OBJ_StageUpdateRequest)||(type == OBJ_StagePrepareToGetRequest)|| (type == OBJ_StageRepackRequest)){
 	      /* just for Get and Update(special) */
 	      /* in this case we dont archiveSubrequest, but we do changeSubrequestStatus, and we dont replyToClient */
 	      bool isToReplicate=replicaSwitch();
@@ -339,7 +339,7 @@ namespace castor{
 	  throw ex;
 	}
 	
-	if(((type==OBJ_StageGetRequest) || (type==OBJ_StagePrepareToGetRequest))&& (rfs.empty() == false)){
+	if(((type==OBJ_StageGetRequest) || (type==OBJ_StagePrepareToGetRequest)|| (type == OBJ_StageRepackRequest))&& (rfs.empty() == false)){
 	  /* if the file exists we don't have any size requirements */
 	  this->xsize = 0;
 	}
