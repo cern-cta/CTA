@@ -249,7 +249,8 @@
 #define ERTDBERR        ERTBASEOFF+11   /* Catalogue DB error */
 #define ERTZEROSIZE     ERTBASEOFF+12   /* Zero sized file */
 #define ERTWRONGSIZE    ERTBASEOFF+13   /* Recalled file size incorrect */
-#define ERTMAXERR       ERTBASEOFF+13
+#define ERTWRONGFSEQ    ERTBASEOFF+14   /* Inconsistent FSEQ in VMGR and Cns */
+#define ERTMAXERR       ERTBASEOFF+14
 
 /*
  *------------------------------------------------------------------------
