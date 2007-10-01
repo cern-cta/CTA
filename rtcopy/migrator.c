@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.52 $ $Release$ $Date: 2007/09/10 15:39:57 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.53 $ $Release$ $Date: 2007/10/01 16:39:57 $ $Author: obarring $
  *
  * 
  *
@@ -51,6 +51,7 @@ WSADATA wsadata;
 #include <trace.h>
 #include <serrno.h>
 #include <common.h>
+#include <Cns_api.h>
 #include <Cgetopt.h>
 #include <Cinit.h>
 #include <Cuuid.h>
@@ -747,6 +748,8 @@ int main(
      char **argv;
 {
   char *migratorFacility = MIGRATOR_FACILITY_NAME, cmdline[CA_MAXLINELEN+1];
+  char *p;
+  struct Cns_segattrs startSegment;
   int rc, c, i, save_serrno = 0, runTime;
   time_t startTime, endTime;
 
@@ -831,10 +834,66 @@ int main(
         rc = -1;
         serrno = SEINTERNAL;
       } else {
-        rc = rtcpcld_setTapeFseq(tape->file->filereq.tape_fseq);
+        rc = 0;
+        if ( (((p = getconfent("migrator","CHECKFSEQ",0)) != NULL) ||
+              ((p = getenv("migrator_CHECKFSEQ")) != NULL)) &&
+             (strcmp(p,"YES") == 0) ) {
+          rc = Cns_lastfseq(tape->tapereq.vid,tape->tapereq.side,&startSegment);
+          if ( (rc == 0) || ((rc == -1) && (serrno == ENOENT)) ) {
+            if ( tape->file->filereq.tape_fseq > startSegment.fseq ) {
+              (void)dlf_write(
+                              (inChild == 0 ? mainUuid : childUuid),
+                              RTCPCLD_LOG_MSG(RTCPCLD_MSG_CHECKSTARTFSEQ),
+                              (struct Cns_fileid *)NULL,
+                              4,
+                              "",
+                              DLF_MSG_PARAM_TPVID,
+                              tape->tapereq.vid,
+                              "SIDE",
+                              DLF_MSG_PARAM_INT,
+                              tape->tapereq.side,
+                              "VMGRFSEQ",
+                              DLF_MSG_PARAM_INT,
+                              tape->file->filereq.tape_fseq,
+                              "CNSFSEQ",
+                              DLF_MSG_PARAM_INT,
+                              startSegment.fseq
+                              );
+            } else {
+              rc = -1;
+              serrno = ERTWRONGFSEQ;
+            }
+          }
+          if ( (rc == -1) && (serrno != ENOENT) ) {
+            save_serrno = serrno;
+            (void)dlf_write(
+                            (inChild == 0 ? mainUuid : childUuid),
+                            RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGSTARTFSEQ),
+                            (struct Cns_fileid *)NULL,
+                            RTCPCLD_NB_PARAMS+4,
+                            "",
+                            DLF_MSG_PARAM_TPVID,
+                            tape->tapereq.vid,
+                            "SIDE",
+                            DLF_MSG_PARAM_INT,
+                            tape->tapereq.side,
+                            "VMGRFSEQ",
+                            DLF_MSG_PARAM_INT,
+                            tape->file->filereq.tape_fseq,
+                            "CNSFSEQ",
+                            DLF_MSG_PARAM_INT,
+                            startSegment.fseq,
+                            RTCPCLD_LOG_WHERE
+                            );
+            serrno = save_serrno;
+          }
+        }
+        if ( rc == 0 ) {
+          rc = rtcpcld_setTapeFseq(tape->file->filereq.tape_fseq);
+        }
       }
       if ( rc == -1 ) {
-        LOG_SYSCALL_ERR("rtcpcld_setTapeFseq()");
+        LOG_SYSCALL_ERR("rtcpcld_setTapeFseq() or wrong start FSEQ");
       } else {
         (void)rtcpcld_getTapePoolName(tape,&tapePoolName);
         rc = rtcpcld_runWorker(
