@@ -310,9 +310,10 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 	}	
       }
     
+    }
     /** update the RepackSubRequest with the latest stats */
       m_dbhelper->updateSubRequest(sreq,false,cuuid);
-      }
+      
    }
 
   /* Cleanup : delete the responses */
