@@ -3,7 +3,7 @@
  * Copyright (C) 2004 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.41 $ $Release$ $Date: 2007/08/10 11:11:54 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpclientd.c,v $ $Revision: 1.42 $ $Release$ $Date: 2007/10/01 13:21:06 $ $Author: obarring $
  *
  *
  *
@@ -1113,8 +1113,10 @@ int rtcpcld_main(
 {
   int rc, pid, maxfd, cnt, i, len, save_errno;
   int timeout_secs = RTCPCLD_CATPOLL_TIMEOUT;
+  int tapeErrorHandler_checkInterval = RTCPCLD_TPERRCHECK_INTERVAL;
   fd_set rd_set, wr_set, ex_set, rd_setcp, wr_setcp, ex_setcp;
-  struct sockaddr_in sin ; /* Internet address */ 
+  struct sockaddr_in sin ; /* Internet address */
+  time_t now = 0, tapeErrorHandler_lastCheck = 0;
   struct timeval timeout, timeout_cp;
   SOCKET *rtcpdSocket = NULL;
   SOCKET *notificationSocket = NULL;
@@ -1521,6 +1523,17 @@ int rtcpcld_main(
     }
     if ( tapeArray != NULL ) free(tapeArray);
     (void)checkVdqmReqs();
+    now = time(NULL);
+    if ( (now - tapeErrorHandler_lastCheck) > 
+         tapeErrorHandler_checkInterval ) {
+      /*
+       * The TapeErrorHandler is forked when a recaller or migrator exits with errors.
+       * However, sometimes the recaller/migrator may exit with success despite failed
+       * segments so we do an extra check every now and then...
+       */
+      tapeErrorHandler_lastCheck = now;
+      startTapeErrorHandler();
+    }
   }
   (void)rtcp_CleanUp(&rtcpdSocket,rc);
   return(0);
