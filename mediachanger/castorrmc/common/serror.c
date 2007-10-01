@@ -239,6 +239,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
    "Catalogue DB error",
    "Zero sized file",
    "Recalled file size incorrect",
+   "Inconsistent FSEQ in VMGR and Cns",
    "BAD ERROR NUMBER"
   };
 
