@@ -105,6 +105,8 @@ enum RtcpcldMessageNo {
     RTCPCLD_MSG_UDPERR,
     RTCPCLD_MSG_NOCASTORFILE,
     RTCPCLD_MSG_FALSE_ENOENT,
+    RTCPCLD_MSG_CHECKSTARTFSEQ,
+    RTCPCLD_MSG_WRONGSTARTFSEQ,
     RTCPCLD_MSG_RESERVED0,
     RTCPCLD_MSG_RESERVED1
 };
@@ -199,6 +201,8 @@ struct RtcpcldMessages rtcpcldMessages[] = {
     { RTCPCLD_MSG_UDPERR, DLF_LVL_ERROR,"Could not send UDP Stream report"},
     { RTCPCLD_MSG_NOCASTORFILE, DLF_LVL_ERROR,"Tape copy not linked with a CastorFile"},
     { RTCPCLD_MSG_FALSE_ENOENT, DLF_LVL_ALERT,"Inconsistent name server answer" },
+    { RTCPCLD_MSG_CHECKSTARTFSEQ, DLF_LVL_SYSTEM, "Checking VMGR start FSEQ with Cns"},
+    { RTCPCLD_MSG_WRONGSTARTFSEQ, DLF_LVL_ALERT, "VMGR start FSEQ check failed"},
     { RTCPCLD_MSG_RESERVED0, DLF_LVL_DEBUG,""},
     { RTCPCLD_MSG_RESERVED1, DLF_LVL_DEBUG,""}
 };
