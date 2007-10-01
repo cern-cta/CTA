@@ -312,48 +312,48 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_request
-       * @return the value of m_request
+       * Get the value of m_repackrequest
+       * @return the value of m_repackrequest
        */
-      RepackRequest* request() const {
-        return m_request;
+      RepackRequest* repackrequest() const {
+        return m_repackrequest;
       }
 
       /**
-       * Set the value of m_request
-       * @param new_var the new value of m_request
+       * Set the value of m_repackrequest
+       * @param new_var the new value of m_repackrequest
        */
-      void setRequest(RepackRequest* new_var) {
-        m_request = new_var;
+      void setRepackrequest(RepackRequest* new_var) {
+        m_repackrequest = new_var;
       }
 
       /**
-       * Add a RepackSegment* object to the m_segmentVector list
+       * Add a RepackSegment* object to the m_repacksegmentVector list
        */
-      void addSegment(RepackSegment* add_object) {
-        m_segmentVector.push_back(add_object);
+      void addRepacksegment(RepackSegment* add_object) {
+        m_repacksegmentVector.push_back(add_object);
       }
 
       /**
-       * Remove a RepackSegment* object from m_segmentVector
+       * Remove a RepackSegment* object from m_repacksegmentVector
        */
-      void removeSegment(RepackSegment* remove_object) {
-        for (unsigned int i = 0; i < m_segmentVector.size(); i++) {
-          RepackSegment* item = m_segmentVector[i];
+      void removeRepacksegment(RepackSegment* remove_object) {
+        for (unsigned int i = 0; i < m_repacksegmentVector.size(); i++) {
+          RepackSegment* item = m_repacksegmentVector[i];
           if (item == remove_object) {
-            std::vector<RepackSegment*>::iterator it = m_segmentVector.begin() + i;
-            m_segmentVector.erase(it);
+            std::vector<RepackSegment*>::iterator it = m_repacksegmentVector.begin() + i;
+            m_repacksegmentVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of RepackSegment* objects held by m_segmentVector
-       * @return list of RepackSegment* objects held by m_segmentVector
+       * Get the list of RepackSegment* objects held by m_repacksegmentVector
+       * @return list of RepackSegment* objects held by m_repacksegmentVector
        */
-      std::vector<RepackSegment*>& segment() {
-        return m_segmentVector;
+      std::vector<RepackSegment*>& repacksegment() {
+        return m_repacksegmentVector;
       }
 
     private:
@@ -385,9 +385,9 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      RepackRequest* m_request;
+      RepackRequest* m_repackrequest;
 
-      std::vector<RepackSegment*> m_segmentVector;
+      std::vector<RepackSegment*> m_repacksegmentVector;
 
     }; /* end of class RepackSubRequest */
 

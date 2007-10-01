@@ -30,6 +30,7 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
+#include "castor/repack/RepackAck.hpp"
 #include "castor/repack/RepackRequest.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
@@ -52,17 +53,21 @@ castor::repack::RepackRequest::RepackRequest() throw() :
   m_userId(0),
   m_groupId(0),
   m_retryMax(0),
-  m_id(0) {
+  m_id(0),
+  m_repackack(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackRequest::~RepackRequest() throw() {
-  for (unsigned int i = 0; i < m_subrequestVector.size(); i++) {
-    m_subrequestVector[i]->setRequest(0);
+  for (unsigned int i = 0; i < m_repacksubrequestVector.size(); i++) {
+    m_repacksubrequestVector[i]->setRepackrequest(0);
   }
-  m_subrequestVector.clear();
+  m_repacksubrequestVector.clear();
+  if (0 != m_repackack) {
+    m_repackack->removeRepackrequest(this);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -92,15 +97,21 @@ void castor::repack::RepackRequest::print(std::ostream& stream,
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
-    stream << indent << "Subrequest : " << std::endl;
+    stream << indent << "Repacksubrequest : " << std::endl;
     int i;
     std::vector<RepackSubRequest*>::const_iterator it;
-    for (it = m_subrequestVector.begin(), i = 0;
-         it != m_subrequestVector.end();
+    for (it = m_repacksubrequestVector.begin(), i = 0;
+         it != m_repacksubrequestVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
+  }
+  stream << indent << "Repackack : " << std::endl;
+  if (0 != m_repackack) {
+    m_repackack->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
 }
 

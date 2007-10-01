@@ -152,7 +152,7 @@ void castor::io::StreamRepackSegmentCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->subrequest(), address, alreadyDone);
+    cnvSvc()->marshalObject(obj->repacksubrequest(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -173,8 +173,8 @@ castor::IObject* castor::io::StreamRepackSegmentCnv::unmarshalObject(castor::io:
   castor::repack::RepackSegment* obj = 
     dynamic_cast<castor::repack::RepackSegment*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objSubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setSubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objSubrequest));
+  castor::IObject* objRepacksubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRepacksubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objRepacksubrequest));
   return object;
 }
 

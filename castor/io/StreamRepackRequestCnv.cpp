@@ -39,6 +39,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
+#include "castor/repack/RepackAck.hpp"
 #include "castor/repack/RepackRequest.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
@@ -170,12 +171,13 @@ void castor::io::StreamRepackRequestCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->subrequest().size();
-    for (std::vector<castor::repack::RepackSubRequest*>::iterator it = obj->subrequest().begin();
-         it != obj->subrequest().end();
+    address->stream() << obj->repacksubrequest().size();
+    for (std::vector<castor::repack::RepackSubRequest*>::iterator it = obj->repacksubrequest().begin();
+         it != obj->repacksubrequest().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
+    cnvSvc()->marshalObject(obj->repackack(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -195,13 +197,16 @@ castor::IObject* castor::io::StreamRepackRequestCnv::unmarshalObject(castor::io:
   // Fill object with associations
   castor::repack::RepackRequest* obj = 
     dynamic_cast<castor::repack::RepackRequest*>(object);
-  unsigned int subrequestNb;
-  ad.stream() >> subrequestNb;
-  for (unsigned int i = 0; i < subrequestNb; i++) {
+  unsigned int repacksubrequestNb;
+  ad.stream() >> repacksubrequestNb;
+  for (unsigned int i = 0; i < repacksubrequestNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objSubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addSubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objSubrequest));
+    castor::IObject* objRepacksubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addRepacksubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objRepacksubrequest));
   }
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objRepackack = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRepackack(dynamic_cast<castor::repack::RepackAck*>(objRepackack));
   return object;
 }
 

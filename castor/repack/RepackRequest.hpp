@@ -45,6 +45,7 @@ namespace castor {
 
     // Forward declarations
     class RepackSubRequest;
+    class RepackAck;
 
     /**
      * class RepackRequest
@@ -295,32 +296,48 @@ namespace castor {
       }
 
       /**
-       * Add a RepackSubRequest* object to the m_subrequestVector list
+       * Add a RepackSubRequest* object to the m_repacksubrequestVector list
        */
-      void addSubrequest(RepackSubRequest* add_object) {
-        m_subrequestVector.push_back(add_object);
+      void addRepacksubrequest(RepackSubRequest* add_object) {
+        m_repacksubrequestVector.push_back(add_object);
       }
 
       /**
-       * Remove a RepackSubRequest* object from m_subrequestVector
+       * Remove a RepackSubRequest* object from m_repacksubrequestVector
        */
-      void removeSubrequest(RepackSubRequest* remove_object) {
-        for (unsigned int i = 0; i < m_subrequestVector.size(); i++) {
-          RepackSubRequest* item = m_subrequestVector[i];
+      void removeRepacksubrequest(RepackSubRequest* remove_object) {
+        for (unsigned int i = 0; i < m_repacksubrequestVector.size(); i++) {
+          RepackSubRequest* item = m_repacksubrequestVector[i];
           if (item == remove_object) {
-            std::vector<RepackSubRequest*>::iterator it = m_subrequestVector.begin() + i;
-            m_subrequestVector.erase(it);
+            std::vector<RepackSubRequest*>::iterator it = m_repacksubrequestVector.begin() + i;
+            m_repacksubrequestVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of RepackSubRequest* objects held by m_subrequestVector
-       * @return list of RepackSubRequest* objects held by m_subrequestVector
+       * Get the list of RepackSubRequest* objects held by m_repacksubrequestVector
+       * @return list of RepackSubRequest* objects held by m_repacksubrequestVector
        */
-      std::vector<RepackSubRequest*>& subrequest() {
-        return m_subrequestVector;
+      std::vector<RepackSubRequest*>& repacksubrequest() {
+        return m_repacksubrequestVector;
+      }
+
+      /**
+       * Get the value of m_repackack
+       * @return the value of m_repackack
+       */
+      RepackAck* repackack() const {
+        return m_repackack;
+      }
+
+      /**
+       * Set the value of m_repackack
+       * @param new_var the new value of m_repackack
+       */
+      void setRepackack(RepackAck* new_var) {
+        m_repackack = new_var;
       }
 
     private:
@@ -350,7 +367,9 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<RepackSubRequest*> m_subrequestVector;
+      std::vector<RepackSubRequest*> m_repacksubrequestVector;
+
+      RepackAck* m_repackack;
 
     }; /* end of class RepackRequest */
 

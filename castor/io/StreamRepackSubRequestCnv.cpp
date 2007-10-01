@@ -175,10 +175,10 @@ void castor::io::StreamRepackSubRequestCnv::marshalObject(castor::IObject* objec
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    cnvSvc()->marshalObject(obj->request(), address, alreadyDone);
-    address->stream() << obj->segment().size();
-    for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->segment().begin();
-         it != obj->segment().end();
+    cnvSvc()->marshalObject(obj->repackrequest(), address, alreadyDone);
+    address->stream() << obj->repacksegment().size();
+    for (std::vector<castor::repack::RepackSegment*>::iterator it = obj->repacksegment().begin();
+         it != obj->repacksegment().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
@@ -202,14 +202,14 @@ castor::IObject* castor::io::StreamRepackSubRequestCnv::unmarshalObject(castor::
   castor::repack::RepackSubRequest* obj = 
     dynamic_cast<castor::repack::RepackSubRequest*>(object);
   ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objRequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setRequest(dynamic_cast<castor::repack::RepackRequest*>(objRequest));
-  unsigned int segmentNb;
-  ad.stream() >> segmentNb;
-  for (unsigned int i = 0; i < segmentNb; i++) {
+  castor::IObject* objRepackrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setRepackrequest(dynamic_cast<castor::repack::RepackRequest*>(objRepackrequest));
+  unsigned int repacksegmentNb;
+  ad.stream() >> repacksegmentNb;
+  for (unsigned int i = 0; i < repacksegmentNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objSegment = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addSegment(dynamic_cast<castor::repack::RepackSegment*>(objSegment));
+    castor::IObject* objRepacksegment = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addRepacksegment(dynamic_cast<castor::repack::RepackSegment*>(objRepacksegment));
   }
   return object;
 }

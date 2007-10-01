@@ -34,6 +34,7 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
+#include <vector>
 
 namespace castor {
 
@@ -41,6 +42,9 @@ namespace castor {
   class ObjectSet;
 
   namespace repack {
+
+    // Forward declarations
+    class RepackRequest;
 
     /**
      * class RepackAck
@@ -146,6 +150,35 @@ namespace castor {
         m_id = new_var;
       }
 
+      /**
+       * Add a RepackRequest* object to the m_repackrequestVector list
+       */
+      void addRepackrequest(RepackRequest* add_object) {
+        m_repackrequestVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a RepackRequest* object from m_repackrequestVector
+       */
+      void removeRepackrequest(RepackRequest* remove_object) {
+        for (unsigned int i = 0; i < m_repackrequestVector.size(); i++) {
+          RepackRequest* item = m_repackrequestVector[i];
+          if (item == remove_object) {
+            std::vector<RepackRequest*>::iterator it = m_repackrequestVector.begin() + i;
+            m_repackrequestVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of RepackRequest* objects held by m_repackrequestVector
+       * @return list of RepackRequest* objects held by m_repackrequestVector
+       */
+      std::vector<RepackRequest*>& repackrequest() {
+        return m_repackrequestVector;
+      }
+
     private:
 
       int m_errorCode;
@@ -154,6 +187,8 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
+
+      std::vector<RepackRequest*> m_repackrequestVector;
 
     }; /* end of class RepackAck */
 

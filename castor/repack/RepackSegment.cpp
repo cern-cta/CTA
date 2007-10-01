@@ -48,15 +48,15 @@ castor::repack::RepackSegment::RepackSegment() throw() :
   m_blockid(0),
   m_fileseq(0),
   m_id(0),
-  m_subrequest(0) {
+  m_repacksubrequest(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackSegment::~RepackSegment() throw() {
-  if (0 != m_subrequest) {
-    m_subrequest->removeSegment(this);
+  if (0 != m_repacksubrequest) {
+    m_repacksubrequest->removeRepacksegment(this);
   }
 }
 
@@ -82,9 +82,9 @@ void castor::repack::RepackSegment::print(std::ostream& stream,
   stream << indent << "fileseq : " << m_fileseq << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Subrequest : " << std::endl;
-  if (0 != m_subrequest) {
-    m_subrequest->print(stream, indent + "  ", alreadyPrinted);
+  stream << indent << "Repacksubrequest : " << std::endl;
+  if (0 != m_repacksubrequest) {
+    m_repacksubrequest->print(stream, indent + "  ", alreadyPrinted);
   } else {
     stream << indent << "  null" << std::endl;
   }

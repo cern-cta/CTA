@@ -180,6 +180,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type RepackAck refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepRepackAck(castor::repack::RepackRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -198,6 +206,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjRepackSubRequest(castor::repack::RepackRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type RepackAck refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjRepackAck(castor::repack::RepackRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -238,23 +254,35 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
-        /// SQL select statement for member subrequest
+        /// SQL select statement for member repacksubrequest
         static const std::string s_selectRepackSubRequestStatementString;
 
-        /// SQL select statement object for member subrequest
+        /// SQL select statement object for member repacksubrequest
         castor::db::IDbStatement *m_selectRepackSubRequestStatement;
 
-        /// SQL delete statement for member subrequest
+        /// SQL delete statement for member repacksubrequest
         static const std::string s_deleteRepackSubRequestStatementString;
 
-        /// SQL delete statement object for member subrequest
+        /// SQL delete statement object for member repacksubrequest
         castor::db::IDbStatement *m_deleteRepackSubRequestStatement;
 
-        /// SQL remote update statement for member subrequest
+        /// SQL remote update statement for member repacksubrequest
         static const std::string s_remoteUpdateRepackSubRequestStatementString;
 
-        /// SQL remote update statement object for member subrequest
+        /// SQL remote update statement object for member repacksubrequest
         castor::db::IDbStatement *m_remoteUpdateRepackSubRequestStatement;
+
+        /// SQL checkExist statement for member repackack
+        static const std::string s_checkRepackAckExistStatementString;
+
+        /// SQL checkExist statement object for member repackack
+        castor::db::IDbStatement *m_checkRepackAckExistStatement;
+
+        /// SQL update statement for member repackack
+        static const std::string s_updateRepackAckStatementString;
+
+        /// SQL update statement object for member repackack
+        castor::db::IDbStatement *m_updateRepackAckStatement;
 
       }; // end of class DbRepackRequestCnv
 
