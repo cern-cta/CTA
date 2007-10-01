@@ -16,6 +16,7 @@
 #define RTCPCLD_CONSTANTS_H
 
 #define RTCPCLD_CATPOLL_TIMEOUT (30)   /* Timeout between two polls on the catalogue */
+#define RTCPCLD_TPERRCHECK_INTERVAL (600) /* Timeout between two checks for failed segments */
 #define RTCPCLD_VDQMPOLL_TIMEOUT (600) /* Timeout between two polls on a VDQM request */
 #define RTCPCLD_RECALLER_CMD "recaller"
 #define RTCPCLD_MIGRATOR_CMD "migrator"
