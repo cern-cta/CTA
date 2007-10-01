@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.514 $ $Date: 2007/09/27 13:54:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.515 $ $Date: 2007/10/01 08:54:05 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1208,6 +1208,8 @@ BEGIN
     IF fileSystemId = 0 THEN
       IF optimized = 1 THEN
         bestFileSystemForSegment(segmentId, diskServerName, rmountPoint, rpath, dcid, 0);
+      ELSE
+        RAISE NO_DATA_FOUND; -- we did not find any suitable FS, even without optimization
       END IF;
     END IF;
   END IF;
@@ -1221,6 +1223,8 @@ BEGIN
       -- Since we recursively called ourselves, we should not do
       -- any update in the outer call
       RETURN;
+    ELSE
+      RAISE;
     END IF;
 END;
 
@@ -1825,7 +1829,7 @@ BEGIN
      AND SubRequest.id = srId;
   -- Check that we did not cancel the SubRequest in the mean time
   IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
-    raise_application_error(-20104, 'SubRequest cancelled while queuing in scheduler. Giving up.');
+    raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
   IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
     -- this could happen if LSF schedules the same job twice!
