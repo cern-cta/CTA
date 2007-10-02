@@ -44,6 +44,7 @@ namespace castor{
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
+	this->typeRequest = OBJ_StagePrepareToUpdateRequest;
 	
 		
 	/* depending on this flag, we ll execute the huge flow or the small one*/

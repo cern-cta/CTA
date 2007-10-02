@@ -42,14 +42,10 @@ namespace castor{
 
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	
+	this->typeRequest = OBJ_StageGetRequest;
 
-	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
-	
+	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
-
-
-
 	
 	/* get the request's size required on disk */
 	/* depending if the file exist, we ll need to update this variable */
@@ -60,8 +56,7 @@ namespace castor{
 	    /* warning, user is requesting less bytes than the real size */
 	    /* just print a message. we don't update xsize!!! */
 	  }
-	  
-	  
+	  	  
 	}else{
 	  this->xsize = stgCnsHelper->cnsFilestat.filesize;
 	}

@@ -53,7 +53,8 @@ namespace castor{
       StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {     	
 	this->stgRequestHelper = stgRequestHelper;
-	this->stgCnsHelper = stgCnsHelper;	
+	this->stgCnsHelper = stgCnsHelper;
+	this->typeRequest = OBJ_StagePutDoneRequest;
 
 	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
@@ -67,8 +68,7 @@ namespace castor{
 	  jobOriented();/* until it will be explored */
 	 
 	  /* ask about the state of the sources */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
-	  
+	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
 	  if(sources.size()<=0){
 	    castor::exception::Exception ex(EPERM);
 	    ex.getMessage()<<"(StagerPutDoneHandler handle) PutDone without a Put (sources.size <0)"<<std::endl;

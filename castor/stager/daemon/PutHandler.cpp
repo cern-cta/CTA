@@ -45,7 +45,7 @@ namespace castor{
 
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-
+	this->typeRequest = OBJ_StagePutRequest;
 
 	/* we don't care about: maxReplicaNb, replicationPolicy, hostlist */
 	

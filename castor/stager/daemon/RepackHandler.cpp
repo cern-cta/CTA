@@ -42,7 +42,7 @@ namespace castor{
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	
+	this->typeRequest = OBJ_StageRepackRequest;
 	
 	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();

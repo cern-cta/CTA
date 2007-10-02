@@ -50,6 +50,7 @@ namespace castor{
 	StagerRequestHelper *stgRequestHelper;
 	StagerCnsHelper *stgCnsHelper;
 
+	int typeRequest;
 	SubRequestStatusCodes currentSubrequestStatus;
 	SubRequestStatusCodes newSubrequestStatus;
 

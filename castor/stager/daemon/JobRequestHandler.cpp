@@ -111,8 +111,6 @@ namespace castor{
       {
 	
 	try{
-
-	  int type = stgRequestHelper->fileRequest->type();
 	  switch(caseToSchedule){
 	    
 	  case 2: //normal tape recall
@@ -128,7 +126,7 @@ namespace castor{
 	    break;
 	    
 	  case 1:/* just for get and the special update */
-	    if((type == OBJ_StageGetRequest)||(type == OBJ_StageUpdateRequest)||(type == OBJ_StagePrepareToGetRequest)|| (type == OBJ_StageRepackRequest)){
+	    if((typeRequest == OBJ_StageGetRequest)||(typeRequest == OBJ_StageUpdateRequest)||(typeRequest == OBJ_StagePrepareToGetRequest)|| (typeRequest == OBJ_StageRepackRequest)){
 	      /* just for Get and Update(special) */
 	      /* in this case we dont archiveSubrequest, but we do changeSubrequestStatus, and we dont replyToClient */
 	      bool isToReplicate=replicaSwitch();
@@ -165,8 +163,8 @@ namespace castor{
 	    break;
  
 	  case 0:
-	    /* two differents behaviours depending on the subrequest type */
-	    if(type == OBJ_StagePrepareToGetRequest){
+	    /* two differents behaviours depending on the subrequest typeRequest */
+	    if(typeRequest == OBJ_StagePrepareToGetRequest){
 	      this->newSubrequestStatus = SUBREQUEST_READY;
 	      if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
 		stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
@@ -329,17 +327,15 @@ namespace castor{
       /* and submit the job  */
       /****************************************************************************************/
       void StagerJobRequestHandler::jobManagerPart() throw(castor::exception::Exception){
-
-	int type = stgRequestHelper->fileRequest->type();
 	
 	/* just Get, Update and Put are allowed to call the JOB Manager (coming from the latest stager_db_service.c) */
-	if((type != OBJ_StageGetRequest) && (type != OBJ_StageUpdateRequest) && (type != OBJ_StagePutRequest)){
+	if((typeRequest != OBJ_StageGetRequest) && (typeRequest != OBJ_StageUpdateRequest) && (typeRequest != OBJ_StagePutRequest)){
 	  castor::exception::Exception ex(SEOPNOTSUP);
-	  ex.getMessage()<<"(Stager__Handler) Invalid type to call the JOB Manager"<<std::endl;
+	  ex.getMessage()<<"(Stager__Handler) Invalid typeRequest to call the JOB Manager"<<std::endl;
 	  throw ex;
 	}
 	
-	if(((type==OBJ_StageGetRequest) || (type==OBJ_StagePrepareToGetRequest)|| (type == OBJ_StageRepackRequest))&& (rfs.empty() == false)){
+	if(((typeRequest==OBJ_StageGetRequest) || (typeRequest==OBJ_StagePrepareToGetRequest)|| (typeRequest == OBJ_StageRepackRequest))&& (rfs.empty() == false)){
 	  /* if the file exists we don't have any size requirements */
 	  this->xsize = 0;
 	}

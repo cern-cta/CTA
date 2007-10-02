@@ -43,6 +43,7 @@ namespace castor{
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
+	this->typeRequest = OBJ_StagePrepareToPutRequest;
 	
 	/* since we don't call the rm: we don't care about maxReplicaNb, ...xsize, ...  */	
 	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();

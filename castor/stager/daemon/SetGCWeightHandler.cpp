@@ -10,7 +10,7 @@
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-
+#include "stager_constants.h"
 #include "castor/stager/SetFileGCWeight.hpp"
 
 #include "castor/IObject.hpp"
@@ -39,7 +39,7 @@ namespace castor{
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-
+	this->typeRequest = OBJ_SetFileGCWeight;
 
 	/* main object needed to perform the SetFileGCRequest processing */
 	this->setFileGCWeight = new castor::stager::SetFileGCWeight(*(dynamic_cast<castor::stager::SetFileGCWeight*> (stgRequestHelper->fileRequest)));
