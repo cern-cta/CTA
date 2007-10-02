@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.53 $ $Release$ $Date: 2007/10/01 16:39:57 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.54 $ $Release$ $Date: 2007/10/02 08:45:55 $ $Author: obarring $
  *
  * 
  *
@@ -838,7 +838,11 @@ int main(
         if ( (((p = getconfent("migrator","CHECKFSEQ",0)) != NULL) ||
               ((p = getenv("migrator_CHECKFSEQ")) != NULL)) &&
              (strcmp(p,"YES") == 0) ) {
+          memset(&startSegment,'\0',sizeof(startSegment));
           rc = Cns_lastfseq(tape->tapereq.vid,tape->tapereq.side,&startSegment);
+          if ( rc == -1 ) {
+              LOG_SYSCALL_ERR("Cns_lastfseq()");
+          }
           if ( (rc == 0) || ((rc == -1) && (serrno == ENOENT)) ) {
             if ( tape->file->filereq.tape_fseq > startSegment.fseq ) {
               (void)dlf_write(
