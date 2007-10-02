@@ -148,6 +148,7 @@ XFSLIBS = -lxfs
 #endif
 #endif
 
+CKSUMLIB = -lz
 LIBS = $(OPTLIBS)
 
 #if BuildRfioLibrary
@@ -364,10 +365,10 @@ NormalLibraryTarget(rfio,$(RFIOLIB_OBJS))
 #if BuildHpssServer
 NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift) \
  DepLibraryTargetName(hpss,rfio_hpss), \
- $(LDLIBS) $(HPSSLIBS) $(XFSLIBS))
+ $(LDLIBS) $(HPSSLIBS) $(XFSLIBS) $(CKSUMLIB))
 #else
 NormalProgramTarget(rfiod,$(SRVOBJS),DepSharedLibraryTargetName(shlib,shift), \
- $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LDLIBS) $(XFSLIBS))
+ $(MTLDFLAGS) $(RTFLAGS) $(RTLIBS) $(LDLIBS) $(XFSLIBS) $(CKSUMLIB))
 #endif
 
 #if ((defined(__osf__) && defined(__alpha) && (OSMajorVersion == 4)) || defined(linux))

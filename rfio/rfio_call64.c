@@ -30,6 +30,8 @@ static char sccsid[] = "@(#)rfio_call64.c,v 1.3 2004/03/22 12:34:03 CERN/IT/PDP/
 #include <pwd.h>
 #include <grp.h>
 #include "common.h"
+#include <zlib.h>
+#include <attr/xattr.h>
 #if defined(_WIN32)
 #include "syslog.h"
 #include "ws_errmsg.h"
@@ -2470,6 +2472,33 @@ static void *produce64_thread(int *ptr)
    int      error = 0;
    off64_t  total_produced = 0;
    char     tmpbuf[21];
+   unsigned int ckSum;
+   char     ckSumbuf[33]; /* max check sum 256bit 32x8+'\0'*/
+   char     ckSumbufdisk[33];
+   char     useCksum;
+   char     *conf_ent;
+   char     *ckSumalg="ADLER32";
+   int      xattr_len;
+   
+   useCksum=0;
+   if((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL) 
+     if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) useCksum=1;
+	
+   if(useCksum) {
+     /* first we try to read a file xattr for checksum */
+     if((xattr_len=fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk, 32))==-1) {
+	log(LOG_ERR,"produce64_thread: fgetxattr failed, error=%d\n",errno);
+	log(LOG_ERR,"produce64_thread: skipping checksums check\n");
+	useCksum=0; /* we don't have the file checksum, and will not calculate it on the fly */
+     }
+     else {
+       ckSumbufdisk[xattr_len]='\0';
+       ckSum = adler32(0L,Z_NULL,0);
+       log(LOG_DEBUG,"produce64_thread: checksum init for %s\n",ckSumalg);
+       log(LOG_DEBUG,"produce64_thread: disk file checksum=0x%s\n",ckSumbufdisk);
+     }
+   }
+
 
    while ((! error) && (byte_read != 0)) {
       if (Cthread_mutex_lock(&stop_read)) {
@@ -2493,6 +2522,10 @@ static void *produce64_thread(int *ptr)
          /* printf("Has read in buf %d (len %d)\n",produced64 % daemonv3_rdmt_nbuf,byte_read);  */
 		 log(LOG_DEBUG, "Has read in buf %d (len %d)\n",produced64 % daemonv3_rdmt_nbuf,byte_read);
          array[produced64 % daemonv3_rdmt_nbuf].len = byte_read;
+	 if(useCksum) {
+	   ckSum = adler32(ckSum,array[produced64 % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
+	   log(LOG_DEBUG,"produce64_thread: current checksum=0x%lx\n",ckSum);
+	 }
       }
       else {
          if (byte_read == 0)  {
@@ -2500,6 +2533,18 @@ static void *produce64_thread(int *ptr)
                u64tostr(total_produced,tmpbuf,0),produced64); 
             /* array[produced64 % daemonv3_rdmt_nbuf].p = NULL; */
             array[produced64 % daemonv3_rdmt_nbuf].len = 0;
+	    if(useCksum) {
+	      sprintf(ckSumbuf,"%lx", ckSum);
+	      log(LOG_DEBUG,"produce64_thread: file checksum=0x%s\n",ckSumbuf);
+	      if(strncmp(ckSumbufdisk,ckSumbuf,32)==0) {
+		log(LOG_DEBUG,"produce64_thread: checksums OK!\n");
+	      }
+	      else {
+		log(LOG_ERR,"produce64_thread: checksums doesn't match %s != %s\n",ckSumbufdisk,ckSumbuf);
+		array[produced64 % daemonv3_rdmt_nbuf].len = -(EREMOTEIO); /* setting errno=Remote I/O error */ 
+                error = -1;
+	      }
+	    }
          }
          else {
             array[produced64 % daemonv3_rdmt_nbuf].len = -errno; 
@@ -2523,6 +2568,26 @@ static void *consume64_thread(int *ptr)
    int      len_to_write;
    int      saved_errno;
    char     tmpbuf[21];
+   unsigned int ckSum;
+   char     ckSumbuf[33]; /* max check sum 256bit 32x8+'\0'*/
+   char     useCksum;
+   char     *conf_ent;
+   char     *ckSumalg="ADLER32";
+   
+   useCksum=0;
+   if((conf_ent=getconfent("RFIOD","USE_CKSUM",0)) != NULL) 
+     if((strncmp(conf_ent,"YES",3)==0) || (strncmp(conf_ent,"yes",3)==0)) useCksum=1;
+	
+   if(useCksum) {
+     if(fsetxattr(fd,"user.castor.checksum.value","0", 1,0)) { 
+       log(LOG_ERR,"consume64_thread: fsetxattr failed, error=%d\n",errno);
+       log(LOG_ERR,"consume64_thread: skipping ckecksums check\n");
+       useCksum=0;
+     } else {
+         ckSum = adler32(0L,Z_NULL,0);
+         log(LOG_DEBUG,"consume64_thread: checksum init for %s\n",ckSumalg);
+       }
+   }
 
    while ((! error) && (! end)) {
 	  log(LOG_DEBUG, "consume64_thread: calling Csemaphore_down(&full64)\n");
@@ -2569,12 +2634,24 @@ static void *consume64_thread(int *ptr)
             total_consumed += byte_written; 
             log(LOG_DEBUG,"consume64_thread: Has written buf %d to disk (len %d)\n",
                consumed64 % daemonv3_wrmt_nbuf, byte_written); 
+	    if(useCksum) {
+	      ckSum = adler32(ckSum,buffer_to_write,(unsigned int)byte_written);
+	      log(LOG_DEBUG,"consume64_thread: current checksum=0x%lx\n",ckSum);
+	    }
          }
       }  /* if  (len_to_write > 0) */
       else {
          if (len_to_write == 0) {
             log(LOG_DEBUG,"consume64_thread: End of writing : total consumed = %s, buffers=%d\n",
-               u64tostr(total_consumed,tmpbuf,0), consumed64);  
+               u64tostr(total_consumed,tmpbuf,0), consumed64);
+	    if(useCksum) { /* sets the file extended attribute */
+	      sprintf(ckSumbuf,"%lx", ckSum);
+	      log(LOG_DEBUG,"consume64_thread: file checksum=0x%s\n",ckSumbuf);   
+	      if(fsetxattr(fd,"user.castor.checksum.value",ckSumbuf, strlen(ckSumbuf),0)) 
+	        log(LOG_ERR,"consume64_thread: fsetxattr failed, error=%d\n",errno);
+	      else if(fsetxattr(fd,"user.castor.checksum.type",ckSumalg, strlen(ckSumalg),0)) 
+	             log(LOG_ERR,"consume64_thread: fsetxattr failed, error=%d\n",errno);
+	    }  
             end = 1;
          }
          else {
