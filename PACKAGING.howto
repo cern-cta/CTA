@@ -1,5 +1,5 @@
 #
-## $Id: PACKAGING.howto,v 1.39 2007/09/25 13:15:56 sponcec3 Exp $
+## $Id: PACKAGING.howto,v 1.40 2007/10/02 13:20:07 sponcec3 Exp $
 #
 
 #
@@ -50,11 +50,7 @@ tools/makeRelease.py vx_y_z_r
 
 # To put RPMs in swrep
 ssh lxadm
-# CASTOR2/tools/export2swrep.py vx_y_z_r
-swrep-soap-client put i386_slc3 /cern/cc *.i386.rpm
-swrep-soap-client put x86_64_slc4 /cern/cc castor-lib-2*.i386.rpm  # this package is needed by x86_64 as well because of GridFTPv1
-swrep-soap-client put i386_slc4 /cern/cc *.i386.rpm
-swrep-soap-client put x86_64_slc4 /cern/cc *.x86_64.rpm
+/afs/cern.ch/project/castor/CASTOR2/tools/export2swrep.py vx_y_z_r
 
 # To trigger castortest nodes' upgrade
 wassh -l root -c c2test spma_wrapper.sh
@@ -80,7 +76,9 @@ mv intReleases/x.y.z-r CERN/savannah/CASTOR.pkg/
 ./tools/installOnAFS.py x.y.z-r > /tmp/afsInstallScript
 source /tmp/afsInstallScript   # run it from lxplus or make sure you have rpm utilities (rpm2cpio)
 
-# 3. update the web pages
+# 3. Cleanup savannah by closing all fixed bugs
+
+# 4. update the web pages
 vim /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/index.htm
 # change last version statement
 vim /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/news.htm
@@ -95,6 +93,4 @@ vim /afs/cern.ch/project/cndoc/wwwds/HSM/CASTOR/news.htm
 # Then attach it to the twiki page and use
 # [[%ATTACHURL%/knownBugs_<version>.html][<your text]] to refer to it.
 
-
-# 4. Cleanup savannah by closing all fixed bugs
 
