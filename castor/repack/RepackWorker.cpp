@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2007/10/02 09:53:16 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2007/10/02 11:42:15 $ $Author: gtaur $
  *
  *
  *
@@ -147,6 +147,12 @@ void RepackWorker::run(void* param)
                           break;
 
   case GET_STATUS:
+                          getStatus(rreq);
+			  queryForErrors(rreq); 
+                          //rreq->setCommand(GET_STATUS);
+                          ack.setRepackrequest(rreq);
+                          break;
+      
   case GET_STATUS_NS:             
              /** the old RepackRequest is removed */
                           getStatus(rreq);

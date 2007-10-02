@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/10/02 09:53:16 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/10/02 11:42:15 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -520,10 +520,10 @@ void RepackClient::handleResponse(RepackAck* ack) {
         break;
       }
     case GET_STATUS:
-      
 
-
-
+      	std::cout <<"\ncurrent time: ";
+	printTime(&current_time);
+	std::cout<<std::endl;        
 	std::cout << "\n==============================================================================================================================================" 
               << std::endl;
 	std::cout << " creation                 submission             vid      total     size     toBeRecalled    toBeMigrated    failed     migrated     status" <<std::endl;
