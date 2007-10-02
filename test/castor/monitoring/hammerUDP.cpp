@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: hammerUDP.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/02 09:00:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: hammerUDP.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/02 15:40:21 $ $Author: sponcec3 $
  *
  * test program hammering the monitoring with UDP messages of
  * psuedo migrators and/or recallers in order to test
@@ -26,39 +26,70 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#include <castor/stager/ITapeSvc.hpp>
-#include <castor/Services.hpp>
-#include <castor/BaseObject.hpp>
+#include <castor/exception/Exception.hpp>
+#include <castor/exception/NoEntry.hpp>
+#include "castor/monitoring/StreamDirection.hpp"
+#include "castor/io/UDPSocket.hpp"
+#include "castor/monitoring/StreamReport.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <stdlib.h>
+#include "getconfent.h"
 
 int main(int argc, char** argv) {
 
-  // get the tape service
-  castor::stager::ITapeSvc* tapeSvc = 0;
-  castor::IService* svc =
-    castor::BaseObject::services()->service
-    ("DbTapeSvc", castor::SVC_DBTAPESVC);
-  tapeSvc = dynamic_cast<castor::stager::ITapeSvc*>(svc);
-  if (0 == tapeSvc) {
-    std::cerr << "Couldn't load the tape service, check the castor.conf for DynamicLib entries" << std::endl;
-    exit(-1);
-  }
+  try {
+    
+    char* rmMasterHost = getconfent("RM","HOST", 0);
+    if (0 == rmMasterHost) {
+      // Raise an exception
+      castor::exception::NoEntry e;
+      e.getMessage() << "Found null entry RM/HOST in config file";
+      throw e;
+    }
+    int rmMasterPort = 15003;
+    char* rmMasterPortStr = getconfent("RM","PORT", 0);
+    if (rmMasterPortStr){
+      rmMasterPort = std::strtol(rmMasterPortStr,0,10);
+      if (0 == rmMasterPort) {
+	// Go back to default
+	rmMasterPort = 15003;
+	// "Bad rmmaster port value in configuration file"
+	castor::dlf::Param initParams[] =
+	  {castor::dlf::Param("Message", "Bad rmmaster port value in configuration file, default used"),
+	   castor::dlf::Param("Given value", rmMasterPortStr)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 0, 2, initParams);
+      }
+    }
 
-  // get host name
-  char* hostname = (char*) calloc(200, 1);
-  if (gethostname(hostname, 200) < 0) {
-    std::cerr << "Couldn't get hostname" << std::endl;
-    exit(-1);
-  }
+    // get host name
+    char* hostname = (char*) calloc(200, 1);
+    if (gethostname(hostname, 200) < 0) {
+      std::cerr << "Couldn't get hostname" << std::endl;
+      exit(-1);
+    }
+    
+    // endless loop flooding the server with UDP messages
+    while(1) {
+      try {
+	castor::io::UDPSocket s(rmMasterPort, rmMasterHost);
+	castor::monitoring::StreamReport sr;
+	sr.setDiskServerName(hostname);
+	sr.setMountPoint("/srv/castor/01/");
+	sr.setDirection(castor::monitoring::STREAMDIRECTION_READ);
+	sr.setCreated(true);
+	s.sendObject(sr);
+      } catch (castor::exception::Exception ex) {
+	castor::dlf::Param initParams[] =
+	  {castor::dlf::Param("Message", "Failed to send StreamReport to rmMasterDaemon via UDP. Exception Caught."),
+	   castor::dlf::Param("Original Error", ex.getMessage().str())};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 0, 2, initParams);
+      }
+    }
 
-  // endless loop flooding the server with UDP messages
-  while(1) {
-    tapeSvc->sendStreamReport(hostname,
-                              "/srv/castor/01/",
-                              castor::monitoring::STREAMDIRECTION_READ,
-                              true);
+  } catch (castor::exception::Exception e) {
+    std::cerr << "Caught exception\n" << e.getMessage().str()
+	      << "\nExiting" << std::endl;
   }
 
 }
