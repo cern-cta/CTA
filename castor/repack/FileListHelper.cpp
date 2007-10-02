@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.30 $ $Release$ 
- * $Date: 2007/09/28 16:00:23 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.31 $ $Release$ 
+ * $Date: 2007/10/02 09:53:15 $ $Author: gtaur $
  *
  *
  *
@@ -211,8 +211,6 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
 
 }
 
-
-
 //------------------------------------------------------------------------------
 // printFileInfo
 //------------------------------------------------------------------------------
@@ -249,7 +247,18 @@ void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
 	total_blockid = total_blockid | (segattrs[i].blockid[2] * 0x10000);
 	total_blockid = total_blockid | (segattrs[i].blockid[1] * 0x100);
 	total_blockid = total_blockid | (segattrs[i].blockid[0] * 0x1);
-        std::cout << file_uniqueid.fileid <<"       " << segattrs[i].copyno <<"        " <<segattrs[i].fsec <<"   " <<segattrs[i].segsize <<"          "<<segattrs[i].compression<<"        " <<segattrs[i].s_status<<"        " << segattrs[i].vid<<"   " << segattrs[i].side <<"       " <<segattrs[i].fseq<<"     " <<total_blockid <<  "      " << segattrs[i].checksum_name<<"     "<<std::hex<<segattrs[i].checksum<< std::endl;
+        std::cout <<std::setw(15)<<std::left<< file_uniqueid.fileid <<
+          std::setw(10)<<std::left<< segattrs[i].copyno <<
+          std::setw(10)<<std::left<< segattrs[i].fsec << 
+	  std::setw(18)<<std::left<< segattrs[i].segsize <<
+          std::setw(11)<<std::left<<segattrs[i].compression <<        
+	  //    std::setw(10)<<std::left<<segattrs[i].s_status <<
+	  std::setw(10)<<std::left<< segattrs[i].vid <<
+          //    std::setw(10)<<std::left<<segattrs[i].side <<
+          std::setw(10)<<std::left<<segattrs[i].fseq<<
+	  std::setw(17)<<std::left<<total_blockid <<  
+	  //    std::setw(12)<<std::left<<segattrs[i].checksum_name<<
+	  std::setw(10)<<std::left<<std::hex<<segattrs[i].checksum<<std::dec<< std::endl;
      
       }
     }
@@ -263,3 +272,4 @@ void FileListHelper::printFileInfo(u_signed64 fileid, int copyno)
 
 	} // End namespace repack
 }	//End namespace castor
+

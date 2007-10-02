@@ -170,7 +170,7 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
   std::vector<castor::rh::Response *>respvec;
   castor::client::VectorResponseHandler rh(&respvec);
   reqh.setOptions(&opts);
-  client.setAuthorizationId(sreq->repackrequest()->uid(), sreq->repackrequest()->gid());
+  client.setAuthorizationId(sreq->repackrequest()->userId(), sreq->repackrequest()->groupId());
   client.sendRequest(&req,&rh); 
 
   /** we ignore the results from the stager */

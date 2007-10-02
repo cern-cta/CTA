@@ -281,7 +281,7 @@ namespace castor {
        * Get the value of m_retryNb
        * @return the value of m_retryNb
        */
-      int retryNb() const {
+      u_signed64 retryNb() const {
         return m_retryNb;
       }
 
@@ -289,7 +289,7 @@ namespace castor {
        * Set the value of m_retryNb
        * @param new_var the new value of m_retryNb
        */
-      void setRetryNb(int new_var) {
+      void setRetryNb(u_signed64 new_var) {
         m_retryNb = new_var;
       }
 
@@ -309,22 +309,6 @@ namespace castor {
        */
       void setId(u_signed64 new_var) {
         m_id = new_var;
-      }
-
-      /**
-       * Get the value of m_repackrequest
-       * @return the value of m_repackrequest
-       */
-      RepackRequest* repackrequest() const {
-        return m_repackrequest;
-      }
-
-      /**
-       * Set the value of m_repackrequest
-       * @param new_var the new value of m_repackrequest
-       */
-      void setRepackrequest(RepackRequest* new_var) {
-        m_repackrequest = new_var;
       }
 
       /**
@@ -356,6 +340,22 @@ namespace castor {
         return m_repacksegmentVector;
       }
 
+      /**
+       * Get the value of m_repackrequest
+       * @return the value of m_repackrequest
+       */
+      RepackRequest* repackrequest() const {
+        return m_repackrequest;
+      }
+
+      /**
+       * Set the value of m_repackrequest
+       * @param new_var the new value of m_repackrequest
+       */
+      void setRepackrequest(RepackRequest* new_var) {
+        m_repackrequest = new_var;
+      }
+
     private:
 
       std::string m_vid;
@@ -380,14 +380,14 @@ namespace castor {
 
       int m_filesFailedSubmit;
 
-      int m_retryNb;
+      u_signed64 m_retryNb;
 
       /// The id of this object
       u_signed64 m_id;
 
-      RepackRequest* m_repackrequest;
-
       std::vector<RepackSegment*> m_repacksegmentVector;
+
+      RepackRequest* m_repackrequest;
 
     }; /* end of class RepackSubRequest */
 

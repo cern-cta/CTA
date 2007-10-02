@@ -35,7 +35,6 @@
 #include "osdep.h"
 #include <iostream>
 #include <string>
-#include <vector>
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -43,17 +42,14 @@
 castor::repack::RepackAck::RepackAck() throw() :
   m_errorCode(0),
   m_errorMessage(""),
-  m_id(0) {
+  m_id(0),
+  m_repackrequest(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::repack::RepackAck::~RepackAck() throw() {
-  for (unsigned int i = 0; i < m_repackrequestVector.size(); i++) {
-    m_repackrequestVector[i]->setRepackack(0);
-  }
-  m_repackrequestVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -73,16 +69,11 @@ void castor::repack::RepackAck::print(std::ostream& stream,
   stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  {
-    stream << indent << "Repackrequest : " << std::endl;
-    int i;
-    std::vector<RepackRequest*>::const_iterator it;
-    for (it = m_repackrequestVector.begin(), i = 0;
-         it != m_repackrequestVector.end();
-         it++, i++) {
-      stream << indent << "  " << i << " :" << std::endl;
-      (*it)->print(stream, indent + "    ", alreadyPrinted);
-    }
+  stream << indent << "Repackrequest : " << std::endl;
+  if (0 != m_repackrequest) {
+    m_repackrequest->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
 }
 

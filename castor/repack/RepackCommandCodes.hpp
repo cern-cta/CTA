@@ -37,12 +37,12 @@ namespace castor{
         RESTART             = 3,
         REMOVE_TAPE         = 4,
         GET_STATUS          = 6,
-        GET_STATUS_ALL      = 8,
-        GET_STATUS_ARCHIVED = 10,   // TODO
-        RESTART_REPACK      = 12,   // TODO
+        GET_STATUS_ALL      = 8,   
+        RESTART_REPACK      = 12,  
         ARCHIVE             = 14,
         ARCHIVE_ALL         = 15,
-        GET_STATUS_RUNNING  = 16   // TODO?
+	GET_STATUS_NS       = 16,
+	GET_ERRORS          =17
         };
   }
 }

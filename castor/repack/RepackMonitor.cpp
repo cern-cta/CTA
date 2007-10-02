@@ -34,6 +34,7 @@ namespace castor {
   namespace repack {
 
 
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -175,7 +176,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
                           throw (castor::exception::Exception)
 { 
   /** status counters */
-  unsigned int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;
+  int canbemig_status,stagein_status,waitingmig_status, stageout_status, staged_status, invalid_status;
   canbemig_status = stagein_status = waitingmig_status = stageout_status = staged_status = invalid_status = 0;
 
   Cuuid_t cuuid;  

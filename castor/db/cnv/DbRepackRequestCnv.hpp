@@ -171,20 +171,21 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type RepackResponse refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepRepackResponse(castor::repack::RepackRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Fill the database with objects of type RepackSubRequest refered by a given
          * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepRepackSubRequest(castor::repack::RepackRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Fill the database with objects of type RepackAck refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepRepackAck(castor::repack::RepackRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -200,20 +201,21 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Retrieve from the database objects of type RepackResponse refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjRepackResponse(castor::repack::RepackRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database objects of type RepackSubRequest refered by a given
          * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjRepackSubRequest(castor::repack::RepackRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type RepackAck refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjRepackAck(castor::repack::RepackRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -254,6 +256,42 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
+        /// SQL select statement for member 
+        static const std::string s_selectRepackAckStatementString;
+
+        /// SQL select statement object for member 
+        castor::db::IDbStatement *m_selectRepackAckStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteRepackAckStatementString;
+
+        /// SQL delete statement object for member 
+        castor::db::IDbStatement *m_deleteRepackAckStatement;
+
+        /// SQL remote update statement for member 
+        static const std::string s_remoteUpdateRepackAckStatementString;
+
+        /// SQL remote update statement object for member 
+        castor::db::IDbStatement *m_remoteUpdateRepackAckStatement;
+
+        /// SQL select statement for member repackresponse
+        static const std::string s_selectRepackResponseStatementString;
+
+        /// SQL select statement object for member repackresponse
+        castor::db::IDbStatement *m_selectRepackResponseStatement;
+
+        /// SQL delete statement for member repackresponse
+        static const std::string s_deleteRepackResponseStatementString;
+
+        /// SQL delete statement object for member repackresponse
+        castor::db::IDbStatement *m_deleteRepackResponseStatement;
+
+        /// SQL remote update statement for member repackresponse
+        static const std::string s_remoteUpdateRepackResponseStatementString;
+
+        /// SQL remote update statement object for member repackresponse
+        castor::db::IDbStatement *m_remoteUpdateRepackResponseStatement;
+
         /// SQL select statement for member repacksubrequest
         static const std::string s_selectRepackSubRequestStatementString;
 
@@ -271,18 +309,6 @@ namespace castor {
 
         /// SQL remote update statement object for member repacksubrequest
         castor::db::IDbStatement *m_remoteUpdateRepackSubRequestStatement;
-
-        /// SQL checkExist statement for member repackack
-        static const std::string s_checkRepackAckExistStatementString;
-
-        /// SQL checkExist statement object for member repackack
-        castor::db::IDbStatement *m_checkRepackAckExistStatement;
-
-        /// SQL update statement for member repackack
-        static const std::string s_updateRepackAckStatementString;
-
-        /// SQL update statement object for member repackack
-        castor::db::IDbStatement *m_updateRepackAckStatement;
 
       }; // end of class DbRepackRequestCnv
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/07/09 17:03:09 $ $Author: itglp $
+ * @(#)$RCSfile: RepackWorker.hpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/10/02 09:53:16 $ $Author: gtaur $
  *
  *
  *
@@ -169,6 +169,8 @@ namespace castor {
        * @throws castor::exception::Exception if the tape was not found
        */
       void getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception);
+
+      void RepackWorker::queryForErrors(RepackRequest* rreq) throw (castor::exception::Exception);
 
       /**
        * the DatabaseHelper, which helps to store the Request in the DB.

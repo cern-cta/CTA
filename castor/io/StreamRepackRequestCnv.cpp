@@ -39,8 +39,8 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/repack/RepackAck.hpp"
 #include "castor/repack/RepackRequest.hpp"
+#include "castor/repack/RepackResponse.hpp"
 #include "castor/repack/RepackSubRequest.hpp"
 #include "osdep.h"
 #include <string>
@@ -145,7 +145,7 @@ castor::IObject* castor::io::StreamRepackRequestCnv::createObj(castor::IAddress*
   int groupId;
   ad->stream() >> groupId;
   object->setGroupId(groupId);
-  int retryMax;
+  u_signed64 retryMax;
   ad->stream() >> retryMax;
   object->setRetryMax(retryMax);
   u_signed64 id;
@@ -171,13 +171,18 @@ void castor::io::StreamRepackRequestCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    address->stream() << obj->repackresponse().size();
+    for (std::vector<castor::repack::RepackResponse*>::iterator it = obj->repackresponse().begin();
+         it != obj->repackresponse().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     address->stream() << obj->repacksubrequest().size();
     for (std::vector<castor::repack::RepackSubRequest*>::iterator it = obj->repacksubrequest().begin();
          it != obj->repacksubrequest().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
-    cnvSvc()->marshalObject(obj->repackack(), address, alreadyDone);
   } else {
     // case of a pointer to an already streamed object
     address->stream() << castor::OBJ_Ptr << alreadyDone[obj];
@@ -197,6 +202,13 @@ castor::IObject* castor::io::StreamRepackRequestCnv::unmarshalObject(castor::io:
   // Fill object with associations
   castor::repack::RepackRequest* obj = 
     dynamic_cast<castor::repack::RepackRequest*>(object);
+  unsigned int repackresponseNb;
+  ad.stream() >> repackresponseNb;
+  for (unsigned int i = 0; i < repackresponseNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    castor::IObject* objRepackresponse = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addRepackresponse(dynamic_cast<castor::repack::RepackResponse*>(objRepackresponse));
+  }
   unsigned int repacksubrequestNb;
   ad.stream() >> repacksubrequestNb;
   for (unsigned int i = 0; i < repacksubrequestNb; i++) {
@@ -204,9 +216,6 @@ castor::IObject* castor::io::StreamRepackRequestCnv::unmarshalObject(castor::io:
     castor::IObject* objRepacksubrequest = cnvSvc()->unmarshalObject(ad, newlyCreated);
     obj->addRepacksubrequest(dynamic_cast<castor::repack::RepackSubRequest*>(objRepacksubrequest));
   }
-  ad.setObjType(castor::OBJ_INVALID);
-  castor::IObject* objRepackack = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setRepackack(dynamic_cast<castor::repack::RepackAck*>(objRepackack));
   return object;
 }
 

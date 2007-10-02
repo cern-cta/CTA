@@ -45,7 +45,7 @@ namespace castor {
 
     // Forward declarations
     class RepackSubRequest;
-    class RepackAck;
+    class RepackResponse;
 
     /**
      * class RepackRequest
@@ -265,7 +265,7 @@ namespace castor {
        * Get the value of m_retryMax
        * @return the value of m_retryMax
        */
-      int retryMax() const {
+      u_signed64 retryMax() const {
         return m_retryMax;
       }
 
@@ -273,7 +273,7 @@ namespace castor {
        * Set the value of m_retryMax
        * @param new_var the new value of m_retryMax
        */
-      void setRetryMax(int new_var) {
+      void setRetryMax(u_signed64 new_var) {
         m_retryMax = new_var;
       }
 
@@ -293,6 +293,35 @@ namespace castor {
        */
       void setId(u_signed64 new_var) {
         m_id = new_var;
+      }
+
+      /**
+       * Add a RepackResponse* object to the m_repackresponseVector list
+       */
+      void addRepackresponse(RepackResponse* add_object) {
+        m_repackresponseVector.push_back(add_object);
+      }
+
+      /**
+       * Remove a RepackResponse* object from m_repackresponseVector
+       */
+      void removeRepackresponse(RepackResponse* remove_object) {
+        for (unsigned int i = 0; i < m_repackresponseVector.size(); i++) {
+          RepackResponse* item = m_repackresponseVector[i];
+          if (item == remove_object) {
+            std::vector<RepackResponse*>::iterator it = m_repackresponseVector.begin() + i;
+            m_repackresponseVector.erase(it);
+            return;
+          }
+        }
+      }
+
+      /**
+       * Get the list of RepackResponse* objects held by m_repackresponseVector
+       * @return list of RepackResponse* objects held by m_repackresponseVector
+       */
+      std::vector<RepackResponse*>& repackresponse() {
+        return m_repackresponseVector;
       }
 
       /**
@@ -324,22 +353,6 @@ namespace castor {
         return m_repacksubrequestVector;
       }
 
-      /**
-       * Get the value of m_repackack
-       * @return the value of m_repackack
-       */
-      RepackAck* repackack() const {
-        return m_repackack;
-      }
-
-      /**
-       * Set the value of m_repackack
-       * @param new_var the new value of m_repackack
-       */
-      void setRepackack(RepackAck* new_var) {
-        m_repackack = new_var;
-      }
-
     private:
 
       std::string m_machine;
@@ -362,14 +375,14 @@ namespace castor {
 
       int m_groupId;
 
-      int m_retryMax;
+      u_signed64 m_retryMax;
 
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<RepackSubRequest*> m_repacksubrequestVector;
+      std::vector<RepackResponse*> m_repackresponseVector;
 
-      RepackAck* m_repackack;
+      std::vector<RepackSubRequest*> m_repacksubrequestVector;
 
     }; /* end of class RepackRequest */
 

@@ -172,19 +172,19 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type RepackRequest refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepRepackRequest(castor::repack::RepackSubRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type RepackSegment refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepRepackSegment(castor::repack::RepackSubRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Fill the database with objects of type RepackRequest refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepRepackRequest(castor::repack::RepackSubRequest* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -200,21 +200,21 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type RepackRequest refered by a given
-         * object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjRepackRequest(castor::repack::RepackSubRequest* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Retrieve from the database objects of type RepackSegment refered by a given
          * object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjRepackSegment(castor::repack::RepackSubRequest* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type RepackRequest refered by a given
+         * object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjRepackRequest(castor::repack::RepackSubRequest* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -255,18 +255,6 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
-        /// SQL checkExist statement for member repackrequest
-        static const std::string s_checkRepackRequestExistStatementString;
-
-        /// SQL checkExist statement object for member repackrequest
-        castor::db::IDbStatement *m_checkRepackRequestExistStatement;
-
-        /// SQL update statement for member repackrequest
-        static const std::string s_updateRepackRequestStatementString;
-
-        /// SQL update statement object for member repackrequest
-        castor::db::IDbStatement *m_updateRepackRequestStatement;
-
         /// SQL select statement for member repacksegment
         static const std::string s_selectRepackSegmentStatementString;
 
@@ -284,6 +272,18 @@ namespace castor {
 
         /// SQL remote update statement object for member repacksegment
         castor::db::IDbStatement *m_remoteUpdateRepackSegmentStatement;
+
+        /// SQL checkExist statement for member repackrequest
+        static const std::string s_checkRepackRequestExistStatementString;
+
+        /// SQL checkExist statement object for member repackrequest
+        castor::db::IDbStatement *m_checkRepackRequestExistStatement;
+
+        /// SQL update statement for member repackrequest
+        static const std::string s_updateRepackRequestStatementString;
+
+        /// SQL update statement object for member repackrequest
+        castor::db::IDbStatement *m_updateRepackRequestStatement;
 
       }; // end of class DbRepackSubRequestCnv
 

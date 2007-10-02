@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.20 $ $Release$ $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.21 $ $Release$ $Date: 2007/10/02 09:53:15 $ $Author: gtaur $
 #
 # Make Castor Repack System
 #
@@ -45,10 +45,14 @@ REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 		../io/StreamRepackSubRequestCnv.cpp \
 		../io/StreamRepackAckCnv.cpp \
 		../io/StreamRepackSegmentCnv.cpp \
+		../io/StreamRepackResponseCnv.cpp \
+		../io/StreamRepackFileQryCnv.cpp \
 		RepackRequest.cpp \
 		RepackSubRequest.cpp \
 		RepackSegment.cpp \
 		RepackAck.cpp \
+		RepackResponse.cpp \
+		RepackFileQry.cpp \
                 FileListHelper.cpp \
                 Tools.cpp \
 

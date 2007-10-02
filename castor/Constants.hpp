@@ -158,7 +158,10 @@ namespace castor {
 
     OBJ_JobSubmissionRequest = 130,
     OBJ_VersionQuery = 131,
-    OBJ_VersionResponse = 132
+    OBJ_VersionResponse = 132,
+
+    OBJ_RepackResponse = 133,
+    OBJ_RepackFileQry =134
 
   };
 

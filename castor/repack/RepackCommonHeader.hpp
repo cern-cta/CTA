@@ -38,6 +38,8 @@
 #include "castor/Constants.hpp"
 #include "RepackRequest.hpp"
 #include "RepackSubRequest.hpp"
+#include "RepackResponse.hpp"
+#include "RepackFileQry.hpp"
 #include "RepackSegment.hpp"
 #include "RepackServer.hpp"
 #include "Tools.hpp"

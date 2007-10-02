@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/09/28 16:00:23 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2007/10/02 09:53:16 $ $Author: gtaur $
  *
  *
  *
@@ -143,31 +143,31 @@ void RepackWorker::run(void* param)
                           break;
 
   case REPACK:            handleRepack(rreq);
-                          ack.addRepackrequest(rreq);
+                          ack.setRepackrequest(rreq);
                           break;
 
-  case GET_STATUS: /** the old RepackRequest is removed */
+  case GET_STATUS:
+  case GET_STATUS_NS:             
+             /** the old RepackRequest is removed */
                           getStatus(rreq);
                           //rreq->setCommand(GET_STATUS);
-                          ack.addRepackrequest(rreq);
+                          ack.setRepackrequest(rreq);
                           break;
 
   case GET_STATUS_ALL:    getStatusAll(rreq);
-                          ack.addRepackrequest(rreq);
-                          break;
-
-  case GET_STATUS_ARCHIVED:
-                          //getAllArchived(rreq);
-                          ack.addRepackrequest(rreq);
+                          ack.setRepackrequest(rreq);
                           break;
   case ARCHIVE:           archiveSubRequests(rreq);
-                          ack.addRepackrequest(rreq);
+                          ack.setRepackrequest(rreq);
                           break;
   case ARCHIVE_ALL:       archiveAllSubRequests(rreq);
-                          ack.addRepackrequest(rreq);
+                          ack.setRepackrequest(rreq);
+                          break;
+  case GET_ERRORS:        queryForErrors(rreq); 
+                          ack.setRepackrequest(rreq);
                           break;
 
-	  default:break;	/** Do nothing by default */
+	  default: break;	/** Do nothing by default */
 	}
 
   }catch (castor::exception::Internal e) {
@@ -233,7 +233,7 @@ void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Exc
     throw ex;
   }
 
-  /** Get the SubRequest. We query by VID and recieve a full subrequest */
+  /** Get the SubRequest. We query by VID and receive a full subrequest */
 
   // we give all the segments to gather information from the name server.
 
@@ -591,8 +591,59 @@ int RepackWorker::getTapeStatus(std::string tapename) throw (castor::exception::
 }
 
 
+//------------------------------------------------------------------------------
+// Query for Errors 
+//------------------------------------------------------------------------------
 
+  void RepackWorker::queryForErrors(RepackRequest* rreq) throw (castor::exception::Exception){
+    std::vector<castor::repack::RepackSubRequest*> sreqs=rreq->repacksubrequest();
+    std::vector<castor::repack::RepackSubRequest*>::iterator sreq=sreqs.begin();
+    castor::repack::RepackMonitor monitor(ptr_server);
+    
+    while (sreq != sreqs.end()){ 
+      RepackResponse* resp=new RepackResponse();
+      resp->setVid((*sreq)->vid());
+      castor::repack::RepackFileQry* fileQry;
 
-   }  // END Namespace Repack
+      std::vector<castor::rh::FileQryResponse*> fr;
+      std::vector<castor::rh::FileQryResponse*>::iterator stagerResponse;
+      try {
+
+    /** get the stats by quering the stager */
+    
+       monitor.getStats((*sreq), &fr);
+
+      }catch (castor::exception::InvalidArgument inval){
+      }catch (castor::exception::Exception ex){
+        fileQry= new castor::repack::RepackFileQry();
+	fileQry->setErrorCode(ex.code());
+	fileQry->setErrorMessage( ex.getMessage().str());
+	resp->addRepackfileqry(fileQry);
+	continue;
+      }
+    
+      /** get the information for repack **/
+      
+       /// see, in which status the files are 
+  
+      stagerResponse = fr.begin();
+      while ( stagerResponse != fr.end() ) {
+	fileQry= new castor::repack::RepackFileQry();
+	if ((*stagerResponse)->errorCode() >0) {
+	  fileQry->setErrorCode((*stagerResponse)->errorCode());
+	  fileQry->setErrorMessage((*stagerResponse)->errorMessage());
+	  fileQry->setFileid((*stagerResponse)->fileId());
+	  fileQry->setFilename((*stagerResponse)->fileName());
+	  fileQry->setStatus((*stagerResponse)->status());
+	  resp->addRepackfileqry(fileQry);
+	}
+	stagerResponse++;
+      }
+      rreq->addRepackresponse(resp);
+      sreq++;
+    }
+ }
+
+ }  // END Namespace Repack
 }  // END Namespace Castor
 

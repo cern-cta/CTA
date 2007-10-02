@@ -36,6 +36,7 @@
 namespace castor {
   namespace repack {
 
+
     /** forward declaration */
     class RepackServer;
 
@@ -74,8 +75,7 @@ namespace castor {
        * @throws castor::exception::Exception in case of an error.
        */
       void updateTape(RepackSubRequest*)   throw (castor::exception::Exception);
-
-
+  
       /** Retrieves the stats from a request (by the given cuuid in the
        *  RepackSubRequest). Beware that the returned objects in the vector
        *  have to be deleted by the caller.
@@ -83,9 +83,11 @@ namespace castor {
        *  @param fr A vector with the allocated FileResponses.
        *  @throws castor::exception::Exception in case of an error.
        */
+
       void getStats(RepackSubRequest* sreq,
                     std::vector<castor::rh::FileQryResponse*>* fr)
         throw (castor::exception::Exception);
+
 
     private:
       DatabaseHelper* m_dbhelper;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/09/21 13:37:47 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/10/02 09:53:16 $ $Author: gtaur $
  *
  *
  *
@@ -366,7 +366,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   reqh.setOptions(opts);
   client.setOption(opts);
 
-  client.setAuthorizationId(rsreq->repackrequest()->uid(), rsreq->repackrequest()->gid());
+  client.setAuthorizationId(rsreq->repackrequest()->userId(), rsreq->repackrequest()->groupId());
   
   /** 1. Send the Request */
   std::vector<castor::rh::Response*>respvec;
