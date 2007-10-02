@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: hammerUDP.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/10/02 08:34:10 $ $Author: sponcec3 $
+ * @(#)$RCSfile: hammerUDP.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/02 09:00:05 $ $Author: sponcec3 $
  *
  * test program hammering the monitoring with UDP messages of
  * psuedo migrators and/or recallers in order to test
@@ -30,6 +30,7 @@
 #include <castor/Services.hpp>
 #include <castor/BaseObject.hpp>
 #include <iostream>
+#include <unistd.h>
 #include <stdlib.h>
 
 int main(int argc, char** argv) {
