@@ -1,6 +1,6 @@
 # This Makefile is taken and adapted from the Globus toolkit
 #
-# * @(#)$RCSfile: Makefile,v $ $Revision: 1.4 $ $Release$ $Date: 2007/08/23 08:26:41 $ $Author: kotlyar $
+# * @(#)$RCSfile: Makefile,v $ $Revision: 1.5 $ $Release$ $Date: 2007/10/02 17:15:06 $ $Author: kotlyar $
 #
 
 # include makefile_header
@@ -46,7 +46,9 @@ globus_gridftp_server_CASTOR2ext.o:
 		$(DSI_LDFLAGS) $(DSI_LIBS)
 
 install:
-	cp -f libglobus_gridftp_server_CASTOR2ext_$(FLAVOR).so $(GLOBUS_LOCATION)/lib
-
+	cp -f gsiftp $(DESTDIR)/etc/xinetd.d/
+	cp -f libglobus_gridftp_server_CASTOR2ext_$(FLAVOR).so $(DESTDIR)$(GLOBUS_LOCATION)/lib
+	echo installing to
+	echo $(DESTDIR)$(GLOBUS_LOCATION)
 clean:
 	rm -f *.so

@@ -164,14 +164,8 @@ make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/m
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
 # Install gridftp dsi
 if [ "${GLOBUS_LOCATION}" != "" ]; then
-   (cp disksrv/src/gridftp2/external/gsiftp ${RPM_BUILD_ROOT}/etc/xinetd.d/)
-   %ifarch x86_64
-   (cd disksrv/src/gridftp2/external; make;cp libglobus_gridftp_server_CASTOR2ext_gcc64dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
-   (cd disksrv/src/gridftp2/internal; make;cp libglobus_gridftp_server_CASTOR2int_gcc64dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
-   %else
-   (cd disksrv/src/gridftp2/internal; make;cp libglobus_gridftp_server_CASTOR2int_gcc32dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
-   (cd disksrv/src/gridftp2/external; make;cp libglobus_gridftp_server_CASTOR2ext_gcc32dbg.so ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib/)
-   %endif
+  (cd disksrv/src/gridftp2/external; make;make install DESTDIR=${RPM_BUILD_ROOT}) 
+  (cd disksrv/src/gridftp2/internal; make;make install DESTDIR=${RPM_BUILD_ROOT})
 fi
 
 # Install example configuration files
