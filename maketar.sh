@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.63 2007/09/25 15:57:57 sponcec3 Exp $
+# $Id: maketar.sh,v 1.64 2007/10/03 16:17:14 sponcec3 Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -66,7 +66,7 @@ echo "### INFO ### Customizing build directory"
 #
 ## Force build rules to YES for a lot of things
 #
-for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildMonitorClient BuildMonitorLibrary BuildMonitorServer BuildMsgClient BuildMsgLibrary BuildMsgServer BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemon BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB4 UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc; do
+for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildMonitorClient BuildMonitorLibrary BuildMonitorServer BuildMsgClient BuildMsgLibrary BuildMsgServer BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemon BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildGridFTP HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB4 UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc; do
     perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
 done
 
@@ -147,17 +147,17 @@ function if_has_stk_ssi {
     fi
     return 0
 }
+function if_has_globus {
+    egrep -q "^$1\$" debian/if.has_globus
+    if [ $? -eq 0 ]; then
+	return 1
+    fi
+    return 0
+}
 #
 ## Append all sub-packages to CASTOR.spec
 #
 for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-server-nostk; do
-    if [ ${this} = "castor-gridftp-dsi-ext" -o ${this} = "castor-gridftp-dsi-int" ]; then
-        if [ "${GLOBUS_LOCATION}" = "" ]; then
-            echo "GLOBUS_LOCATION has not been set, skipping ${this}..."
-            continue
-        fi
-    fi
-
     package=$this
     actualPackage=$package
 
@@ -179,6 +179,10 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     if_has_stk_ssi $this
     if [ $? -eq 1 ]; then
 	echo "%if %has_stk_ssi" >> CASTOR.spec
+    fi
+    if_has_globus $this
+    if [ $? -eq 1 ]; then
+	echo "%if %has_globus" >> CASTOR.spec
     fi
     echo "%package -n $actualPackage" >> CASTOR.spec
     echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
@@ -394,6 +398,10 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
 	echo "%endif" >> CASTOR.spec
     fi
     if_has_stk_ssi $this
+    if [ $? -eq 1 ]; then
+	echo "%endif" >> CASTOR.spec
+    fi
+    if_has_globus_ssi $this
     if [ $? -eq 1 ]; then
 	echo "%endif" >> CASTOR.spec
     fi

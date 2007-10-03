@@ -1,0 +1,5 @@
+#
+## List of packages to do only if STK is available
+#
+castor-gridftp-dsi-int
+castor-gridftp-dsi-ext

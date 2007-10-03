@@ -25,6 +25,7 @@
 %{expand:%define compiling_nostk %(if [ -z $CASTOR_NOSTK ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_lsf %(if [ -e /usr/%{LIB}/liblsf.so -a -d /usr/include/lsf ]; then echo 1; else echo 0; fi)}
+%{expand:%define has_globus %(if [ -z $GLOBUS_LOCATION ]; then echo 0; else echo 1; fi)}
 
 #
 ## General settings
@@ -98,6 +99,14 @@ for this in BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon 
     perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %endif
+%if ! %has_globus
+echo "### Warning, no GLOBUS environment"
+echo "The following packages will NOT be built:"
+echo "castor-gridftp-dsi-int, castor-gridftp-dsi-ext"
+for this in BuildGridFTP; do
+	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
+done
+%endif
 find . -type f -exec touch {} \;
 make -f Makefile.ini Makefiles
 which makedepend >& /dev/null
@@ -153,20 +162,15 @@ mkdir -p ${RPM_BUILD_ROOT}/var/lib/castor
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/db
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/images
-if [ "${GLOBUS_LOCATION}" != "" ]; then
+%if %has_globus
   mkdir -p ${RPM_BUILD_ROOT}/etc/xinetd.d
   mkdir -p ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib
   mkdir -p ${RPM_BUILD_ROOT}/var/spool/gridftp
-fi
+%endif
 make install DESTDIR=${RPM_BUILD_ROOT}
 make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 # Install policies
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
-# Install gridftp dsi
-if [ "${GLOBUS_LOCATION}" != "" ]; then
-  (cd gridftp2/external; make; make install DESTDIR=${RPM_BUILD_ROOT}) 
-  (cd gridftp2/internal; make; make install DESTDIR=${RPM_BUILD_ROOT})
-fi
 
 # Install example configuration files
 for i in debian/*CONFIG; do
