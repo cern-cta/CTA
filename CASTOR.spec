@@ -164,8 +164,8 @@ make exportman DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/m
 (cd clips; ../imake/imake -I../config DESTDIR=${RPM_BUILD_ROOT}; make install DESTDIR=${RPM_BUILD_ROOT})
 # Install gridftp dsi
 if [ "${GLOBUS_LOCATION}" != "" ]; then
-  (cd disksrv/src/gridftp2/external; make;make install DESTDIR=${RPM_BUILD_ROOT}) 
-  (cd disksrv/src/gridftp2/internal; make;make install DESTDIR=${RPM_BUILD_ROOT})
+  (cd gridftp2/external; make; make install DESTDIR=${RPM_BUILD_ROOT}) 
+  (cd gridftp2/internal; make; make install DESTDIR=${RPM_BUILD_ROOT})
 fi
 
 # Install example configuration files
