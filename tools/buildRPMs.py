@@ -26,7 +26,7 @@ if targetOs == 'SLC3':
     oraPath = '/afs/cern.ch/project/oracle/@sys/10201'
 else:
     oraPath = '/afs/cern.ch/project/oracle/@sys/10203'
-basecmd = "ORACLE_HOME=" + oraPath + " LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep
+basecmd = "ORACLE_HOME=" + oraPath + " GLOBUS_LOCATION=/opt/globus LD_LIBRARY_PATH=" + oraPath + "/lib PATH=" + oraPath + "/bin:/usr/X11R6/bin:$PATH rpmbuild --define '_topdir " + workDir + "' --define '_specdir " + workDir + os.sep + "SPECS" + os.sep + "' --define '_sourcedir " + workDir + os.sep + "SOURCES" + os.sep + "' --define '_srcrpmdir " + workDir + os.sep + "SRPMS" + os.sep + "' --define '_rpmdir " + workDir + os.sep + "RPMS" + os.sep + "' --define '_buildroot " + workDir + os.sep + "BUILD" + os.sep + "' --define '_tmppath " + workDir + os.sep + "BUILD" + os.sep
 cmd = basecmd + "' -ta " + tarball
 rpmOutput = os.popen4(cmd)[1].read()
 if rpmOutput.find('Wrote:') == -1:
