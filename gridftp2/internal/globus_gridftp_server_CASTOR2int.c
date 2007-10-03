@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 #if defined(linux)
-#define _LARGEFILE64_SOURCE
 #define _LARGE_FILES
 #endif
 

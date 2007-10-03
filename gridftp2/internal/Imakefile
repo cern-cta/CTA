@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2007/10/03 14:06:34 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/03 16:11:14 $ $Author: sponcec3 $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -44,7 +44,7 @@ DSI_OBJS = $(DSI_SRCS:.c=.Osuf)
 DSI_LIBNAME = globus_gridftp_server_CASTOR2int_$(FLAVOR)
 DSI_LIB = SharedLibraryTargetName($(DSI_LIBNAME))
 DSI_LDLIBS = -lglobus_ftp_control_$(FLAVOR)
-DSI_DEPLIB = DepSharedLibraryTargetName(FileName(FileName(..,..),shlib),shift)
+DSI_DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 
 all: $(DSI_LIB)
 
@@ -64,3 +64,6 @@ clobber:	clean
 	-@RemoveFiles($(DSI_LIB))
 
 InstallSharedLibrary($(DSI_LIB),$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+
+FORCE:
+

@@ -24,10 +24,6 @@
  * @author Victor Kotlyar, Victor.Kotlyar@cern.ch
  *****************************************************************************/
 
-#if defined(linux)
-#define _LARGEFILE64_SOURCE
-#endif
-
 #include <sys/types.h>
 #include <dirent.h>
 
