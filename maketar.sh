@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.64 2007/10/03 16:17:14 sponcec3 Exp $
+# $Id: maketar.sh,v 1.65 2007/10/03 16:46:56 sponcec3 Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -401,7 +401,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
     if [ $? -eq 1 ]; then
 	echo "%endif" >> CASTOR.spec
     fi
-    if_has_globus_ssi $this
+    if_has_globus $this
     if [ $? -eq 1 ]; then
 	echo "%endif" >> CASTOR.spec
     fi
