@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.5 $ $Date: 2007/08/09 12:57:36 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: modifySvcClass.man,v $ $Revision: 1.6 $ $Date: 2007/10/04 06:41:24 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH MODIFYSCVCLASS 1 "$Date: 2007/08/09 12:57:36 $" CASTOR "stager catalogue administrative commands"
+.TH MODIFYSCVCLASS 1 "$Date: 2007/10/04 06:41:24 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifySvcClass \- modify an existing service class in the stager catalogue
 .SH SYNOPSIS
@@ -106,7 +106,7 @@ forced file class overrides the file class that the user specifies.
 . If an empty string ("") the file class that the file was written too will be used.
 .TP
 .BI \-\-DiskOnlyBehavior " [yes|no]"
-Defines whether or not this file class has disk only behavior. The supported values
+Defines whether or not this service class has disk only behavior. The supported values
 are yes or no, 1 or 0 and are case-insensitive.
 .TP
 .BI \-\-MigratorPolicy " migratorPolicy"
