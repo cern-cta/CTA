@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/09/07 06:40:22 $ $Author: waldron $
+ * @(#)$RCSfile: CancellationThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/10/04 07:44:42 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a 
  * PENDING status for too long 
@@ -41,7 +41,8 @@
 //-----------------------------------------------------------------------------
 castor::jobmanager::CancellationThread::CancellationThread(int timeout)
   throw(castor::exception::Exception) :
-  m_cleanPeriod(3600), 
+  m_cleanPeriod(3600),
+  m_defaultQueue("default"), 
   m_timeout(timeout), 
   m_initialized(false), 
   m_resReqKill(false) {
@@ -93,12 +94,14 @@ void castor::jobmanager::CancellationThread::run(void *param) {
     parameterInfo *paramInfo = lsb_parameterinfo(NULL, NULL, 0);
     if (paramInfo == NULL) {
       
-      // "Failed to extract CLEAN_PERIOD value from lsb.params, using default"
+      // "Failed to extract CLEAN_PERIOD and default queue values from 
+      // lsb.params, using defaults"
       castor::dlf::Param params[] = 
 	{castor::dlf::Param("Default", m_cleanPeriod)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23, 1, params);
     } else {
-      m_cleanPeriod = paramInfo->cleanPeriod + (m_timeout * 2);
+      m_cleanPeriod  = paramInfo->cleanPeriod + (m_timeout * 2);
+      m_defaultQueue = paramInfo->defaultQueues;
     }
     
     // If the frequency of the thread, its 'interval' is greater then the
@@ -148,6 +151,11 @@ void castor::jobmanager::CancellationThread::run(void *param) {
       //     <svcclass>:<timeout> [svcclass:timeout2[...]]
       std::getline(buf, svcclass, ':');
       buf >> timeout;
+
+      // If the svcclass is 'default' map it to the default queue in LSF
+      if (!strcasecmp(svcclass.c_str(), "default")) {
+	svcclass = m_defaultQueue;
+      }
 
       if (buf.fail()) {
 	// "Invalid JobManager/PendingTimeouts option, ignoring entry"
@@ -326,7 +334,7 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
 	// "Job terminated by service administrator"
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("JobId", (int)job->jobId),
-	   castor::dlf::Param("User", job->user),
+	   castor::dlf::Param("Username", job->user),
 	   castor::dlf::Param("Type", castor::ObjectsIdStrings[type]),
 	   castor::dlf::Param(subRequestId)};
 	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 26, 4, params, &fileId); 
@@ -343,6 +351,13 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
   // exceeded its maximum amount of time in the queue in a PENDING state
   std::map<std::string, u_signed64>::const_iterator it =
     m_pendingTimeouts.find(job->submit.queue);
+
+  // If no svcclass entry can be found in the PendingTimeout option check for a
+  // default signified by an "all" svcclass name.
+  if (it == m_pendingTimeouts.end()) {
+    it = m_pendingTimeouts.find("all");
+  }
+
   if (it != m_pendingTimeouts.end()) {
     if ((u_signed64)(time(NULL) - job->submitTime) > (*it).second) {
 
@@ -369,7 +384,7 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
 	// "Job terminated, timeout occurred"
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("JobId", (int)job->jobId),
-	   castor::dlf::Param("User", job->user),
+	   castor::dlf::Param("Username", job->user),
 	   castor::dlf::Param("Type", castor::ObjectsIdStrings[type]),
 	   castor::dlf::Param("Timeout", (*it).second),
 	   castor::dlf::Param(subRequestId)};
@@ -420,7 +435,7 @@ void castor::jobmanager::CancellationThread::processJob(jobInfoEnt *job) {
     // "Job terminated, all requested filesystems are DISABLED"
     castor::dlf::Param params[] =
       {castor::dlf::Param("JobId", (int)job->jobId),
-       castor::dlf::Param("User", job->user),
+       castor::dlf::Param("Username", job->user),
        castor::dlf::Param("Type", castor::ObjectsIdStrings[type]),
        castor::dlf::Param(subRequestId)};
     castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 32, 4, params, &fileId);

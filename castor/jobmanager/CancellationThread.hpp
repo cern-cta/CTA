@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: CancellationThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/21 06:24:13 $ $Author: waldron $
+ * @(#)$RCSfile: CancellationThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/04 07:44:42 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -108,6 +108,9 @@ namespace castor {
 
       /// The LSF CleanPeriod value obtained from lsb.params
       int m_cleanPeriod;
+
+      /// The default queue in LSF
+      std::string m_defaultQueue;
 
       /// The threads timeout interval
       int m_timeout;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/09/21 07:52:34 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/10/04 07:44:42 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -246,6 +246,7 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 48, "Failed to submit job into LSF, fatal error encountered" },
      { 49, "Exception caught trying to submit a job into LSF" },
      { 50, "Failed to execute lsfSubmit in SubmissionProcess::run" },
+     { 51, "Failed to submit job into LSF, svcclass/queue name is a reserved word" },
      
      // Dispatch
      { 60, "Job received" },

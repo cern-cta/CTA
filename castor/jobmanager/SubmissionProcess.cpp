@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/09/07 06:33:50 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/10/04 07:44:42 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -163,13 +163,25 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
     // "Reverse UID lookup failure. User credentials are invalid, job will not
     // be scheduled"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("User", request->username()),
+      {castor::dlf::Param("Username", request->username()),
        castor::dlf::Param("Euid", request->euid()),
        castor::dlf::Param("Egid", request->egid()),
        castor::dlf::Param("ID", request->id()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 42, 5, params, &m_fileId);
     failSubRequest(request, errorCode, "");
+    return;
+  }
+
+  // Fail jobs that try to submit themselves to a svcclass called "all". This is
+  // a reserved keyword in the JobManager to define default configuration options
+  // for all queues/svcclasses.
+  if (!strcasecmp(request->svcClass().c_str(), "all")) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Username", request->username()), 
+       castor::dlf::Param("SvcClass", request->svcClass())};
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 51, 2, params, &m_fileId);
+    failSubRequest(request, SEINTERNAL, "");
     return;
   }
 
@@ -403,7 +415,7 @@ void castor::jobmanager::SubmissionProcess::lsfSubmit
       castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 48, 3, params, &m_fileId);
 
       // Try and give a meaningful message
-      failSubRequest(request, ESTSCHEDERR, lsberrno ? lsb_sysmsg() : "no message");	
+      failSubRequest(request, ESTSCHEDERR, lsberrno ? lsb_sysmsg() : "no message");
       return;
     } else if (i + 1 == m_submitRetryAttempts) {
 
