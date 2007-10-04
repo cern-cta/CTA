@@ -147,7 +147,7 @@ castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
 // destructor
 //------------------------------------------------------------------------------
 castor::client::BaseClient::~BaseClient() throw() {
-  delete m_callbackSocket;
+  if (0 != m_callbackSocket) delete m_callbackSocket;
 }
 
 //------------------------------------------------------------------------------
@@ -555,7 +555,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   // create a socket for the callback with no port
   stage_trace(3, "Creating socket for stager callback");
 
-  //not to let the client to reuse the port 
+  // not to let the client to reuse the port 
   m_callbackSocket = new castor::io::ServerSocket(false); 
   // get the port range to be used
   int lowPort = LOW_CLIENT_PORT_RANGE;
@@ -684,10 +684,11 @@ void castor::client::BaseClient::pollAnswersFromStager
       delete socket;
     } catch (castor::exception::Exception e) {      
       if (0 != socket) delete socket;
+      if (0 != m_callbackSocket) delete m_callbackSocket;
+      m_callbackSocket = 0;
       throw e;
     }
   }
+  if (0 != m_callbackSocket) delete m_callbackSocket;
+  m_callbackSocket = 0;
 }
-
-
-
