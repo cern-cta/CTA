@@ -1,15 +1,11 @@
 /*
- * $Id: chdir.c,v 1.3 2004/01/23 10:27:45 jdurand Exp $
+ * $Id: chdir.c,v 1.4 2007/10/05 09:05:29 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: chdir.c,v $ $Revision: 1.3 $ $Date: 2004/01/23 10:27:45 $ CERN/IT/PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
 
 /* chdir.c       Remote File I/O - change working directory             */
 
