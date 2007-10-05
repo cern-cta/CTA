@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/10/04 09:14:57 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/10/05 11:35:14 $ $Author: sponcec3 $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -205,7 +205,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape by vid, side and tpmode :"
-      << std::endl << e.getMessage().str();
+      << std::endl << e.getMessage();
     throw ex;
   }
   // Now get the tape from its id
@@ -229,7 +229,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select tape for id " << id  << " :"
-      << std::endl << e.getMessage().str();
+      << std::endl << e.getMessage();
     throw ex;
   }
   // We should never reach this point
@@ -277,7 +277,7 @@ castor::db::ora::OraCommonSvc::selectSvcClass
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select SvcClass by name :"
-      << std::endl << e.getMessage().str();
+      << std::endl << e.getMessage();
     throw ex;
   }
 }
@@ -317,7 +317,7 @@ castor::db::ora::OraCommonSvc::selectFileClass
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select FileClass by name :"
-      << std::endl << e.getMessage().str();
+      << std::endl << e.getMessage();
     throw ex;
   }
 }
@@ -391,7 +391,7 @@ castor::db::ora::OraCommonSvc::selectFileSystem
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to select FileSystem by name :"
-      << std::endl << e.getMessage().str();
+      << std::endl << e.getMessage();
     throw ex;
   }
 }
