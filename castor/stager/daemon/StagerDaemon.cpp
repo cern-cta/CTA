@@ -23,7 +23,10 @@
 
 #include "castor/server/SelectProcessThread.hpp"
 #include "castor/server/SignalThreadPool.hpp"
-#include "castor/stager/dbService/StagerDBService.hpp"
+#include "castor/stager/dbService/JobRequestSvc.hpp"
+#include "castor/stager/dbService/PreRequestSvc.hpp"
+#include "castor/stager/dbService/StgRequestSvc.hpp"
+
 
 #include <iostream>
 #include <string>
@@ -55,19 +58,28 @@ int main(int argc, char* argv[]){
 
    
     
-    /***************/
-    castor::stager::dbService::StagerDBService* stgDBService = new castor::stager::dbService::StagerDBService();
-    /***************/
-    stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("StagerDBService", stgDBService));
+    /*****************************************/
+    /* thread pools for the StagerDBService */
+    /***************************************/
+    castor::stager::dbService::JobRequestSvc* stgJob = new castor::stager::dbService::JobRequestSvc();
+    castor::stager::dbService::PreRequestSvc* stgPre = new castor::stager::dbService::PreRequestSvc();
+    castor::stager::dbService::StgRequestSvc* stgStg = new castor::stager::dbService::StgRequestSvc();
+    
+    stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("JobRequestSvc", stgJob));
+    stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("PreRequestSvc", stgPre));
+    stgMainDaemon.addThreadPool(new castor::server::SignalThreadPool("StgRequestSvc", stgStg));
 
     /* we need to call this function before setting the number of threads */
     stgMainDaemon.parseCommandLine(argc, argv);
 
-    stgMainDaemon.getThreadPool('S')->setNbThreads(stgMainDaemon.stagerDbNbthread);
+    stgMainDaemon.getThreadPool('J')->setNbThreads(10);
+    stgMainDaemon.getThreadPool('P')->setNbThreads(5);
+    stgMainDaemon.getThreadPool('S')->setNbThreads(3);
+    
     
     /******/
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message","added thread pool")};
+      {castor::dlf::Param("Standard Message","added thread pools: JobDBSvc, ")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, STAGER_MSG_ERROR, 1, params);
     /******/ 
 
@@ -104,7 +116,6 @@ namespace castor{
       StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception) : castor::server::BaseDaemon("Stager"){
 	
 	this->stagerHelp = false;
-	this->stagerDbNbthread = 1;
 	
 	castor::dlf::Message stagerMainMessages[]={
 	  { STAGER_MSG_ERROR, "error"},
