@@ -1,0 +1,5 @@
+#! /bin/sh
+CASTOR_SERVICE=repackserver
+export CASTOR_SERVICE
+[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
+exit $?
