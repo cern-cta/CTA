@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/03 16:11:14 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/05 09:07:17 $ $Author: sponcec3 $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -34,6 +34,10 @@ ifeq ($(shell uname -m), x86_64)
   MOPTION=-m64
 endif
 
+ifeq ("${GLOBUS_LOCATION}x","x")
+  GLOBUS_LOCATION=/opt/globus
+endif
+
 INCLUDES = -I$(GLOBUS_LOCATION)/include/$(FLAVOR)
 CFLAGS = $(DEBUG) $(INCLUDES) $(MOPTION) -fPIC
 LDFLAGS  = -L$(GLOBUS_LOCATION)/lib $(MOPTION) -shared
@@ -45,6 +49,7 @@ DSI_LIBNAME = globus_gridftp_server_CASTOR2int_$(FLAVOR)
 DSI_LIB = SharedLibraryTargetName($(DSI_LIBNAME))
 DSI_LDLIBS = -lglobus_ftp_control_$(FLAVOR)
 DSI_DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
+DSI_LIBDIR = $(GLOBUS_LOCATION)/lib
 
 all: $(DSI_LIB)
 
@@ -55,6 +60,15 @@ Makefiles:
 depend:
 	makedepend $(INCLUDES) $(DSI_SRCS) 2> /dev/null
 
+install:FileName($(DSI_LIBDIR),$(DSI_LIB))
+
+MakeDir($(DSI_LIBDIR),root,bin,0755)
+InstallTarget($(DSI_LIB),root,bin,0755,$(DSI_LIBDIR))
+
+install.man:
+
+exportman:
+
 clean:
 	@echo cleaning in CurDir
 	-@RemoveFiles($(DSI_OBJS))
@@ -62,8 +76,6 @@ clean:
 clobber:	clean
 	@echo clobbering in CurDir
 	-@RemoveFiles($(DSI_LIB))
-
-InstallSharedLibrary($(DSI_LIB),$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 
 FORCE:
 

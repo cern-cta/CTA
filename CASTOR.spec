@@ -10,8 +10,10 @@
 #  ------------------------------
 %ifarch x86_64
 %define LIB lib64
+%define FLAVOR gcc64dbg
 %else
 %define LIB lib
+%define FLAVOR gcc32dbg
 %endif
 %{expand:%define has_oracle_home %(if [ -z $ORACLE_HOME ]; then echo 0; else echo 1; fi)}
 %if ! %has_oracle_home
@@ -25,7 +27,13 @@
 %{expand:%define compiling_nostk %(if [ -z $CASTOR_NOSTK ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_stk_ssi %(rpm -q stk-ssi-devel >&/dev/null && rpm -q stk-ssi >&/dev/null; if [ $? -ne 0 ]; then echo 0; else echo 1; fi)}
 %{expand:%define has_lsf %(if [ -e /usr/%{LIB}/liblsf.so -a -d /usr/include/lsf ]; then echo 1; else echo 0; fi)}
-%{expand:%define has_globus %(if [ -z $GLOBUS_LOCATION ]; then echo 0; else echo 1; fi)}
+%{expand:%define has_globus_location %(if [ -z $GLOBUS_LOCATION ]; then echo 0; else echo 1; fi)}
+%if ! %has_globus_location
+# try some default
+%{expand:%define has_globus %(if [ ! -r /opt/globus/lib/libglobus_ftp_control_%{FLAVOR}.so ]; then echo 0; else echo 1; fi)}
+%else
+%{expand:%define has_globus %(if [ ! -r $GLOBUS_LOCATION/lib/libglobus_ftp_control_%{FLAVOR}.so ]; then echo 0; else echo 1; fi)}
+%endif
 
 #
 ## General settings
@@ -111,7 +119,7 @@ find . -type f -exec touch {} \;
 make -f Makefile.ini Makefiles
 which makedepend >& /dev/null
 [ $? -eq 0 ] && make depend
-make
+make -j $((`grep processor /proc/cpuinfo | wc -l`*2))
 %install
 # define castor version (modified by maketar.sh to put the exact version)
 MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
@@ -164,7 +172,11 @@ mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/images
 %if %has_globus
   mkdir -p ${RPM_BUILD_ROOT}/etc/xinetd.d
+%if ! %has_globus_location
+  mkdir -p ${RPM_BUILD_ROOT}/opt/globus/lib
+%else
   mkdir -p ${RPM_BUILD_ROOT}/${GLOBUS_LOCATION}/lib
+%endif
   mkdir -p ${RPM_BUILD_ROOT}/var/spool/gridftp
 %endif
 make install DESTDIR=${RPM_BUILD_ROOT}
