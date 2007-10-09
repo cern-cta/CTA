@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.515 $ $Date: 2007/10/01 08:54:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.516 $ $Date: 2007/10/09 13:56:40 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3976,7 +3976,10 @@ BEGIN
             FROM StageUpdateRequest
            UNION ALL
           SELECT id, username, euid, egid, reqid, client, 'o' direction, svcClass
-            FROM StagePrepareToUpdateRequest) Request
+            FROM StagePrepareToUpdateRequest
+           UNION ALL
+          SELECT id, username, euid, egid, reqid, client, 'o' direction, svcClass
+            FROM StageRepackRequest) Request
    WHERE SubRequest.id = srId
      AND SubRequest.castorFile = CastorFile.id
      AND Request.svcClass = SvcClass.id
