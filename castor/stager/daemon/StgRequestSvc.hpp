@@ -7,8 +7,6 @@
 #define STG_REQUEST_SVC_HPP 1
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/RequestSvc.hpp"
 #include "castor/Constants.hpp"
 
@@ -25,9 +23,7 @@ namespace castor {
   namespace stager{
     namespace dbService {
       
-      class StagerRequestHelper;
-      class StagerCnsHelper;
-    
+     
       class StgRequestSvc : public virtual castor::stager::dbService::RequestSvc{
 	
       public: 

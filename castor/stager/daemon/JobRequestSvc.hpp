@@ -7,9 +7,8 @@
 #define JOB_REQUEST_SVC_HPP 1
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/RequestSvc.hpp"
+#include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 
 #include "serrno.h"
@@ -24,9 +23,8 @@
 namespace castor {
   namespace stager{
     namespace dbService {
+    
       
-      class StagerRequestHelper;
-      class StagerCnsHelper;
     
       class JobRequestSvc : public virtual castor::stager::dbService::RequestSvc{
 

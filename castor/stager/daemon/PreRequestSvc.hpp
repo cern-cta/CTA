@@ -6,9 +6,6 @@
 #ifndef PRE_REQUEST_SVC_HPP
 #define PRE_REQUEST_SVC_HPP 1
 
-
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/RequestSvc.hpp"
 #include "castor/Constants.hpp"
 
@@ -25,8 +22,7 @@ namespace castor {
   namespace stager{
     namespace dbService {
       
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+     
     
       class PreRequestSvc : public virtual castor::stager::dbService::RequestSvc{
 	
