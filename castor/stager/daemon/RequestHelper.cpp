@@ -63,7 +63,7 @@ namespace castor{
     namespace dbService{
       
       /* contructor */
-      StagerRequestHelper::StagerRequestHelper() throw(castor::exception::Exception){
+      StagerRequestHelper::StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess) throw(castor::exception::Exception){
 	
 
 	castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper constructor) Getting the stager and db services")};
@@ -84,8 +84,7 @@ namespace castor{
 	  ex.getMessage()<<"(StagerRequestHelper constructor) Got a bad stagerService"<<std::endl;
 	  throw ex;
 	}
-	
-	
+		
 	castor::IService* svcDB =
 	  castor::BaseObject::services()->
 	  service("DbCnvSvc", castor::SVC_DBCNV);
@@ -109,6 +108,13 @@ namespace castor{
 	  throw ex;
 	}
 	
+
+	this->subrequest=subRequestToProcess;
+	if(this->subrequest == NULL){
+	  castor::exception::Exception ex(SEENTRYNFND);
+	  ex.getMessage()<<"(StagerRequestHelper setSubrequest) Got a NULL subrequest"<<std::endl;
+	  throw ex;
+	}
 
 	this->types.resize(STAGER_OPTIONS);
 	ObjectsIds auxTypes[] = {OBJ_StageGetRequest,

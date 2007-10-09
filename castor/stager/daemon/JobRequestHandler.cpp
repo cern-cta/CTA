@@ -328,13 +328,6 @@ namespace castor{
       /****************************************************************************************/
       void StagerJobRequestHandler::jobManagerPart() throw(castor::exception::Exception){
 	
-	/* just Get, Update and Put are allowed to call the JOB Manager (coming from the latest stager_db_service.c) */
-	if((typeRequest != OBJ_StageGetRequest) && (typeRequest != OBJ_StageUpdateRequest) && (typeRequest != OBJ_StagePutRequest)){
-	  castor::exception::Exception ex(SEOPNOTSUP);
-	  ex.getMessage()<<"(Stager__Handler) Invalid typeRequest to call the JOB Manager"<<std::endl;
-	  throw ex;
-	}
-	
 	if(((typeRequest==OBJ_StageGetRequest) || (typeRequest==OBJ_StagePrepareToGetRequest)|| (typeRequest == OBJ_StageRepackRequest))&& (rfs.empty() == false)){
 	  /* if the file exists we don't have any size requirements */
 	  this->xsize = 0;

@@ -152,7 +152,7 @@ namespace castor{
 	    throw ex;
 	  }
 	  
-	  stgRequestHelper = new StagerRequestHelper();
+	  stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess));
 	  if(stgRequestHelper == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<< "(StagerDBService) Impossible to create the StagerRequestHelper"<<std::endl;
@@ -164,11 +164,6 @@ namespace castor{
 	  castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","Helpers successfully created")};
 	  castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param);/*   */
 	  
-	 
-
-	  /* set the subrequest on the helper(obtained on the select() thread method) */
-	  stgRequestHelper->setSubrequest(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess));
-	 
 
 	  /* settings BaseAddress */
 	  stgRequestHelper->settingBaseAddress();

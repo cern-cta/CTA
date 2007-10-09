@@ -71,7 +71,7 @@ namespace castor{
 	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
 	  if(sources.size()<=0){
 	    castor::exception::Exception ex(EPERM);
-	    ex.getMessage()<<"(StagerPutDoneHandler handle) PutDone without a Put (sources.size <0)"<<std::endl;
+	    ex.getMessage()<<"(StagerPutDoneHandler handle) putDone without a put (sources.size <0)"<<std::endl;
 	    throw ex;
 	  }
 	  

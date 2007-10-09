@@ -117,10 +117,8 @@ namespace castor{
 	/****************/
 	/* constructor */
 	/* destructor */
-	StagerRequestHelper() throw(castor::exception::Exception);
+	StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess) throw(castor::exception::Exception);
 	~StagerRequestHelper() throw();
-	
-
 
 	
 	/**********************/
@@ -131,19 +129,9 @@ namespace castor{
 	  baseAddr->setCnvSvcType(SVC_DBCNV);
 	}
 
-	/**************************************************************************************/
-	/* get/create subrequest->  fileRequest, and many subrequest's attributes            */
-	/************************************************************************************/
-	
-	/* get subrequest using stagerService (and also types) */
-	inline void setSubrequest(castor::stager::SubRequest* subRequestToProcess) throw(castor::exception::Exception){
-	  this->subrequest=subRequestToProcess;
-	  if(this->subrequest == NULL){
-	    castor::exception::Exception ex(SEENTRYNFND);
-	    ex.getMessage()<<"(StagerRequestHelper setSubrequest) Got a NULL subrequest"<<std::endl;
-	    throw ex;
-	  }
-	}
+	/**************************************************************************/
+	/* get/create   fileRequest, and many subrequest's attributes            */
+	/************************************************************************/
        
 	/* get the link (fillObject~SELECT) between the subrequest and its associated fileRequest  */ 
 	/* using dbService, and get the fileRequest */ 
