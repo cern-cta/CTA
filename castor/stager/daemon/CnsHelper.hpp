@@ -126,7 +126,7 @@ namespace castor{
 	    toCreate = true;
 	  }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
 	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper isFileToCreateOrException) Asking for a file which doesn't exist"<<std::endl;
+	    ex.getMessage()<<"(StagerCnsHelper isFileToCreateOrException) No such file "<<std::endl;
 	    throw ex;
 	  }
 	  
