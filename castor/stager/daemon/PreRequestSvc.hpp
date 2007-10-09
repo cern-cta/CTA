@@ -1,7 +1,7 @@
 
-/*********************************************************************************************************/
-/* cpp version of the "stager_db_service.c" represented by a thread calling the right request's handler */
-/*******************************************************************************************************/
+/***************************************************************************************************/
+/* service to perform the PrepareTo Request (PrepareToPut, PrepareToGet, PrepareToUpdate, Repack) */
+/*************************************************************************************************/
 
 #ifndef PRE_REQUEST_SVC_HPP
 #define PRE_REQUEST_SVC_HPP 1
@@ -9,7 +9,7 @@
 
 #include "castor/stager/dbService/StagerRequestHelper.hpp"
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/server/SelectProcessThread.hpp"
+#include "castor/stager/dbService/RequestSvc.hpp"
 #include "castor/Constants.hpp"
 
 #include "serrno.h"
@@ -28,13 +28,7 @@ namespace castor {
       class StagerRequestHelper;
       class StagerCnsHelper;
     
-      class PreRequestSvc : public virtual castor::server::SelectProcessThread{
-	
-      private:
-	StagerRequestHelper* stgRequestHelper;
-	StagerCnsHelper* stgCnsHelper;
-	
-	
+      class PreRequestSvc : public virtual castor::stager::dbService::RequestSvc{
 	
       public: 
 	/* constructor */
@@ -47,11 +41,6 @@ namespace castor {
 	virtual castor::IObject* select() throw(castor::exception::Exception);
 	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
 
-
-	
-	std::vector<ObjectsIds> types;
-	
-	
       };// end class PreRequestSvc
       
     }// end dbService

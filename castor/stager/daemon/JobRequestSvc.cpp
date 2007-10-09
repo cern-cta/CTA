@@ -207,7 +207,7 @@ namespace castor{
 
 	  castor::dlf::Param params[] = {castor::dlf::Param("Standard Message",sstrerror(ex.code())),castor::dlf::Param("Precise Message",ex.getMessage().str())};
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
-	  handleException(ex.code(), ex.getMessage.str());
+	  handleException(ex.code(), ex.getMessage().str());
  	}catch (...){
 	  
 	  castor::dlf::Param params[] = {castor::dlf::Param("Standard Message","Caught general exception in JobRequestSvc")};
@@ -219,6 +219,13 @@ namespace castor{
       }/* end JobRequestSvc::process */
 
 
+
+      /*********************/
+      /* empty destructor */
+      /*******************/
+      JobRequestSvc::~JobRequestSvc() throw(){
+
+      }
 
    
     }//end namespace dbService

@@ -1,7 +1,7 @@
 
-/*********************************************************************************************************/
-/* cpp version of the "stager_db_service.c" represented by a thread calling the right request's handler */
-/*******************************************************************************************************/
+/******************************************************************************/
+/* Service to perform the pure Stager Request (SetFileGCWeight, Rm, PutDone) */
+/****************************************************************************/
 
 #ifndef STG_REQUEST_SVC_HPP
 #define STG_REQUEST_SVC_HPP 1
@@ -9,7 +9,7 @@
 
 #include "castor/stager/dbService/StagerRequestHelper.hpp"
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/server/SelectProcessThread.hpp"
+#include "castor/stager/dbService/RequestSvc.hpp"
 #include "castor/Constants.hpp"
 
 #include "serrno.h"
@@ -28,13 +28,7 @@ namespace castor {
       class StagerRequestHelper;
       class StagerCnsHelper;
     
-      class StgRequestSvc : public virtual castor::server::SelectProcessThread{
-	
-      private:
-	StagerRequestHelper* stgRequestHelper;
-	StagerCnsHelper* stgCnsHelper;
-	
-	
+      class StgRequestSvc : public virtual castor::stager::dbService::RequestSvc{
 	
       public: 
 	/* constructor */
@@ -48,10 +42,6 @@ namespace castor {
 	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
 
 
-	
-	std::vector<ObjectsIds> types;
-	
-	
       };// end class StgRequestSvc
       
     }// end dbService
