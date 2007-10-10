@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.518 $ $Date: 2007/10/10 14:52:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.519 $ $Date: 2007/10/10 16:01:54 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3938,9 +3938,12 @@ BEGIN
   END IF;
 
   -- In both cases, restart requests waiting on the failed one
-  UPDATE SubRequest
-     SET status = 1      -- SUBREQUEST_RESTART
-   WHERE parent = res;
+  IF res IS NOT NULL THEN
+    UPDATE SubRequest
+       SET status = 1,      -- SUBREQUEST_RESTART
+           parent = 0
+     WHERE parent = res AND status = 5;
+  END IF;
 END;
 
 
