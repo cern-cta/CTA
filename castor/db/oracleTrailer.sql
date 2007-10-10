@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.516 $ $Date: 2007/10/09 13:56:40 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.517 $ $Date: 2007/10/10 13:00:51 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -304,6 +304,8 @@ END;
  * Current checks/fixes include :
  *   - canceling recalls for files that are STAGED/CANBEMIGR
  *     on the fileSystem that comes back.
+ *   - dealing with file that are STAGEOUT on the fileSystem
+ *     coming back but STAGED/WAITFORRECALL on another one
  */
 CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
   srId NUMBER;
@@ -2492,6 +2494,8 @@ CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 BEGIN
   UPDATE SubRequest SET status = 7 -- FAILED
    WHERE id = srId;
+  UPDATE SubRequest SET status = 1 -- RESTART
+   WHERE parent = srId;
 END;
 
 
@@ -3899,19 +3903,18 @@ BEGIN
   -- longer there.
   IF reqType = 36 OR reqType = 38 THEN
     UPDATE SubRequest SET status = 8
-     WHERE subreqid = srSubReqId;
-    RETURN;
-  END IF;
-
-  -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
-  -- status. We only concern ourselves in the termnination of a job waiting to
-  -- start i.e. in a SUBREQUEST_STAGEOUT status. Requests in other statuses are
-  -- left unaltered!
-  res := 0;
-  UPDATE SubRequest
-     SET status = 7,      -- SUBREQUEST_FAILED
-         errorCode = srErrorCode,
-         errorMessage = case srErrorCode
+     WHERE subreqid = srSubReqId
+    RETURNING id INTO res;
+  ELSE
+    -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
+    -- status. We only concern ourselves in the termnination of a job waiting to
+    -- start i.e. in a SUBREQUEST_STAGEOUT status. Requests in other statuses are
+    -- left unaltered!
+    res := 0;
+    UPDATE SubRequest
+       SET status = 7,      -- SUBREQUEST_FAILED
+           errorCode = srErrorCode,
+           errorMessage = case srErrorCode
            when 1718 then -- ESTNOTAVAIL
              'All copies of this file are unavailable for now. Please retry later'
            when 1719 then -- ESTJOBKILLED
@@ -3927,11 +3930,17 @@ BEGIN
            when 1015 then -- SEINTERNAL
              'Internal error'
            else srErrorMessage
-         end,
-         lastModificationTime = getTime()
-   WHERE subreqid = srSubReqId
-     AND status IN (6, 14) -- SUBREQUEST_STAGEOUT, SUBREQUEST_BEINGSCHED
-  RETURNING id INTO res;
+          end,
+          lastModificationTime = getTime()
+    WHERE subreqid = srSubReqId
+      AND status IN (6, 14) -- SUBREQUEST_STAGEOUT, SUBREQUEST_BEINGSCHED
+    RETURNING id INTO res;
+  END IF;
+
+  -- In both cases, restart requests waiting on the failed one
+  UPDATE SubRequest
+     SET status = 1      -- SUBREQUEST_RESTART
+   WHERE parent = res;
 END;
 
 
@@ -4120,7 +4129,8 @@ BEGIN
                      SELECT id, username, machine, svcClassName, 'PUpd' as type  from StagePrepareToUpdateRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'Repack' as type  from StageRepackRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'GetNext' as type  from StageGetNextRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'UpdNext' as type  from StageUpdateNextRequest) Request
+                     SELECT id, username, machine, svcClassName, 'UpdNext' as type  from StageUpdateNextRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PutDone' as type  from StagePutDoneRequest) Request
              WHERE castorfile = getCF(ref)
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);
