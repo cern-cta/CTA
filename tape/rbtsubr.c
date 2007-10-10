@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.34 $ $Date: 2007/09/18 13:03:18 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.35 $ $Date: 2007/10/10 08:45:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -1540,7 +1540,8 @@ int vsnretry;
                         */
 
                         int mounted, RETRIES = 3, retryCtr = 0;
-
+                        int save_serrno = serrno; 
+ 
                         p = strrchr (rmc_errbuf, ':');
 			sprintf (msg, TP041, "mount", vid, cur_unm,
                                  p ? p + 2 : rmc_errbuf);
@@ -1578,9 +1579,13 @@ int vsnretry;
                                         tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
                                                             "func"   , TL_MSG_PARAM_STR, func,
                                                             "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Error in istapemounted. Retry to retrieve info." );
+                                        sleep( 60 );
                                 }                                
                                 retryCtr++;
                         }
+
+                        /* no info available, return the original problem */
+                        c = (save_serrno == SECOMERR) ? RBT_FAST_RETRY : save_serrno - ERMCRBTERR;
 
                 } else if ((-1 == c) && ((serrno - ERMCRBTERR) == 7)) {
                         
@@ -1639,11 +1644,16 @@ int vsnretry;
                                         tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
                                                             "func"   , TL_MSG_PARAM_STR, func,
                                                             "Message", TL_MSG_PARAM_STR, "Encountered EBUSY. Error in istapemounted. Retry to retrieve info." );
+                                        sleep( 60 );
                                 }                                
                                 retryCtr++;
                         }
 
+                        /* no info available, return the original problem */
+                        c = (save_serrno == SECOMERR) ? RBT_FAST_RETRY : save_serrno - ERMCRBTERR;
+
                 } else if (c) {
+
                         /* log information about the error condition         */
                         if (serrno != SECOMERR) {
                                 tplogit (func, "Error in smcmount: c=%d, serrno=%d, (serrno-ERMCRBTERR)=%d\n", 
@@ -1685,7 +1695,7 @@ int vsnretry;
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         }
                         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
-		}
+                }
                 RETURN (c);
 	}
 	if ((c = smc_find_cartridge (smc_fd, smc_ldr, vid, 0, 0, 1, &element_info)) < 0) {
@@ -1851,8 +1861,8 @@ int smcdismount(vid, loader, force, vsnretry)
                                                     "cur_unm", TL_MSG_PARAM_STR, cur_unm,
                                                     "Message", TL_MSG_PARAM_STR, p ? p + 2 : rmc_errbuf );
                         }
-			c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
-		}
+                        c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
+                }
 		RETURN (c);
 	}
 	if ((c = smc_read_elem_status (smc_fd, smc_ldr, 4,
