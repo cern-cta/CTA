@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/10/02 11:42:15 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/10/10 06:21:38 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -143,7 +143,7 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "o:a:ASs:R:V:P:r:hx:m:e:";
+  const char* cmdParams = "o:a:AS:sR:V:P:r:hx:m:e:";
   if (argc == 1){
     return false;
   }
@@ -154,14 +154,14 @@ bool RepackClient::parseInput(int argc, char** argv)
   }
   struct Coptions longopts[] = {
     {"output_svcclass", REQUIRED_ARGUMENT, 0, 'o'},
-    {"status", REQUIRED_ARGUMENT, 0, 's' },
-    {"statusAll", NO_ARGUMENT,NULL, 'S' },
+    {"status", REQUIRED_ARGUMENT, 0, 'S' },
+    {"statusAll", NO_ARGUMENT,NULL, 's' },
     {"delete", REQUIRED_ARGUMENT,NULL, 'R' },
     {"volumeid", REQUIRED_ARGUMENT, NULL, 'V'},
     {"restart", REQUIRED_ARGUMENT, NULL, 'r'},
     {"pool", REQUIRED_ARGUMENT, NULL, 'P'},
-    {"archive", REQUIRED_ARGUMENT, NULL, 'a'},
-    {"archiveAll", NO_ARGUMENT, NULL, 'A'},
+    {"archive", REQUIRED_ARGUMENT, NULL, 'A'},
+    {"archiveAll", NO_ARGUMENT, NULL, 'a'},
     {"details", REQUIRED_ARGUMENT, 0, 'x'},
     {"help", NO_ARGUMENT,NULL, 'h' },
     {"retryMax", REQUIRED_ARGUMENT, 0, 'm'},
@@ -197,10 +197,10 @@ bool RepackClient::parseInput(int argc, char** argv)
       cp.command = GET_STATUS_NS;
       if (cp.vid == NULL) return false;
       else return true;
-    case 'S':
+    case 's':
       cp.command = GET_STATUS_ALL;
       return true;
-    case 's':
+    case 'S':
       cp.command = GET_STATUS;
       cp.vid = Coptarg;
       if (cp.vid == NULL) return false;
@@ -213,12 +213,12 @@ bool RepackClient::parseInput(int argc, char** argv)
     case 'o':
       cp.serviceclass = Coptarg;
       break;
-    case 'a':
+    case 'A':
       cp.command = ARCHIVE;
       cp.vid = Coptarg;
       if (cp.vid == NULL) return false;
       else return true;
-   case 'A':
+   case 'a':
       cp.command = ARCHIVE_ALL;
       return true;
    case 'm':
@@ -245,9 +245,9 @@ bool RepackClient::parseInput(int argc, char** argv)
 void RepackClient::usage() 
 {
 	std::cout << " Usage:  \n ------  \n repack -V VID1[:VID2:..] | -P PoolID  [-o serviceclass] [-m num]" << " to start a repack request (-m to set the number of retry in case of failure of the request. Default is one)"<< std::endl
-                  << " repack -S " 
+                  << " repack -s " 
                   << "   (to have the global status of the all repack sequests not archived)" << std::endl
-                  << " repack -s VID[:VID2:..] " 
+                  << " repack -S VID[:VID2:..] " 
                   << "   (to have the status of the repack requests not archivedfor that vid)" << std::endl 
                   << " repack -x VID[:VID2:..] " 
                   << "   (to have the name server information for the files which were in that tape before starting the repack process)" << std::endl   	
@@ -255,9 +255,9 @@ void RepackClient::usage()
                   << "   (to abort a repack request)" << std::endl
 		  << " repack -r VID1[:VID2:..] " 
 		  << "   (to restart a failed or finished repack subrequest)" << std::endl
-		  << " repack -a VID1[:VID2:..] " 
+		  << " repack -A VID1[:VID2:..] " 
                   << "   (to archive the finished  tape specified by VID)" << std::endl
-		  << " repack -A " 
+		  << " repack -a " 
                   << "   (to archive all the finished tapes)" << std::endl
 		  << " repack -e VID1[:VID2:..] " 
                   << "  (to know the status and extra information of the failed files which where in  the  specified tape)" << std::endl
@@ -425,7 +425,6 @@ void RepackClient::run(int argc, char** argv)
 //------------------------------------------------------------------------------
 void RepackClient::handleResponse(RepackAck* ack) {
 	
-  time_t creation_time = 0;
   time_t submit_time = 0;
 
   time_t current_time =time(NULL); 
@@ -453,13 +452,10 @@ void RepackClient::handleResponse(RepackAck* ack) {
 
     FileListHelper m_filehelper(nameServer);
 
-    creation_time = (long)rreq->creationTime();
     std::vector<RepackSubRequest*>::iterator tape; 
     std::vector<RepackResponse*>::iterator resp;
     RepackResponse* resItem;
     RepackFileQry* fileItem;
-
-    creation_time = (long)rreq->creationTime();
 
     switch ( rreq->command() ){
       case GET_STATUS_NS :
@@ -502,21 +498,20 @@ void RepackClient::handleResponse(RepackAck* ack) {
 	printTime(&current_time);
 	std::cout<<std::endl;
 
-	std::cout << "\n==============================================================================================================================================" 
+	std::cout << "\n========================================================================================================================" 
               << std::endl;
-	std::cout << " creation                 submission             vid     total     size     toBeRecalled    toBeMigrated    failed     migrated      status" <<std::endl;
-        std::cout << "----------------------------------------------------------------------------------------------------------------------------------------------"
+	std::cout << " submission             vid     total     size     toBeRecalled    toBeMigrated    failed     migrated      status" <<std::endl;
+        std::cout << "------------------------------------------------------------------------------------------------------------------------"
                   << std::endl;
 
 
         std::vector<RepackSubRequest*>::iterator tape = rreq->repacksubrequest().begin();
-	time_t creation_time = 0;
-	creation_time =(long) rreq->creationTime();
+       
         while ( tape != rreq->repacksubrequest().end() ){
-          printTapeDetail((*tape),&creation_time);
+          printTapeDetail((*tape));
           tape++;
         }
-	std::cout << "===============================================================================================================================================" << std::endl;
+	std::cout << "========================================================================================================================" << std::endl;
         break;
       }
     case GET_STATUS:
@@ -524,19 +519,18 @@ void RepackClient::handleResponse(RepackAck* ack) {
       	std::cout <<"\ncurrent time: ";
 	printTime(&current_time);
 	std::cout<<std::endl;        
-	std::cout << "\n==============================================================================================================================================" 
+	std::cout << "\n=======================================================================================================================" 
               << std::endl;
-	std::cout << " creation                 submission             vid      total     size     toBeRecalled    toBeMigrated    failed     migrated     status" <<std::endl;
-        std::cout << "----------------------------------------------------------------------------------------------------------------------------------------------"
+	std::cout << " submission             vid      total     size     toBeRecalled    toBeMigrated    failed     migrated     status" <<std::endl;
+        std::cout << "-----------------------------------------------------------------------------------------------------------------------"
                   << std::endl;
 
         tape = rreq->repacksubrequest().begin();
-	creation_time =(long) rreq->creationTime();
         while ( tape != rreq->repacksubrequest().end() ){
-          printTapeDetail((*tape),&creation_time);
+          printTapeDetail((*tape));
           tape++;
         }
-	std::cout << "===============================================================================================================================================" << std::endl; 
+	std::cout << "=======================================================================================================================" << std::endl; 
     case GET_ERRORS:
       resp = ack->repackrequest()->repackresponse().begin();
       while ( resp != ack->repackrequest()->repackresponse().end()){
@@ -577,7 +571,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
 //------------------------------------------------------------------------------
 // printTapeDetail()
 //------------------------------------------------------------------------------
-void RepackClient::printTapeDetail(RepackSubRequest *tape, time_t* reqTime){
+void RepackClient::printTapeDetail(RepackSubRequest *tape){
   char buf[21];
   time_t submit_time = 0;
   submit_time = (long)tape->submitTime();
@@ -593,9 +587,6 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape, time_t* reqTime){
   statuslist[SUBREQUEST_FAILED] = "FAILED";
 
   u64tostru(tape->xsize(), buf, 0);
-
-  printTime(reqTime);
-  std::cout<<"\t";
   printTime(&submit_time);
   std::cout <<"\t"<<
         tape->vid() <<	"    "<<

@@ -25,8 +25,12 @@
 // Include Files
 #include "castor/repack/RepackServer.hpp"
 
+#include "castor/db/DbParamsSvc.hpp"
+#include "castor/Constants.hpp"
 
+// hardcoded schema version of the Repack database
 
+const std::string REPACKSCHEMAVERSION = "2_1_5_0";
 
 
 //------------------------------------------------------------------------------
@@ -80,6 +84,18 @@ int main(int argc, char *argv[]) {
 
     /// Read the command line parameters
     server.parseCommandLine(argc, argv);
+
+    // Create a db parameters service and fill with appropriate defaults
+    castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", castor::SVC_DBPARAMSSVC);
+    castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+     if(params == 0) {
+        castor::exception::Internal e;
+        e.getMessage() << "Could not instantiate the parameters service";
+        throw e;
+     }
+     params->setSchemaVersion(REPACKSCHEMAVERSION);
+     params->setDbAccessConfFile(ORAREPACKCONFIGFILE);
+
 
     /// Start the Repack Server
     server.start();
