@@ -23,6 +23,7 @@
 #define LBLBUFSZ  128        /* size of buffers to read labels */
 #define OPRMSGSZ  257	     /* maximum operator message/reply length */
 #define	RBTFASTRI  60	     /* fast retry interval for robotic operations */
+#define	RBTUNLDDMNTI  60     /* retry interval for unload/demount */
 #define PRTBUFSZ  180
 #define REPBUFSZ 2800	     /* must be >= max tape daemon reply size */
 #define REQBUFSZ 1104	     /* must be >= max tape daemon request size */

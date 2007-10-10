@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.38 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.39 $ $Date: 2007/10/10 08:05:59 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -510,7 +510,25 @@ unsigned int *demountforce;
 		*c = EIO;
 		return (-1);
 	case RBT_UNLD_DMNT:
-		return (2);	/* should unload and retry */
+                /* add a delay of  RBTUNLDDMNTI */
+                tplogit (func, "RBT_UNLD_DMNT %s", msg);
+                tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                    "func",    TL_MSG_PARAM_STR, func,
+                                    "Message", TL_MSG_PARAM_STR, msg );        
+
+		rbttimeval.tv_sec = RBTUNLDDMNTI;
+		rbttimeval.tv_usec = 0;
+		memcpy (&readfds, &readmask, sizeof(readmask));
+                if (select (maxfds, &readfds, (fd_set *)0,
+                            (fd_set *)0, &rbttimeval) > 0) {
+                        tplogit (func, "select returned >0\n");
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
+                                            "func",    TL_MSG_PARAM_STR, func,
+                                            "Message", TL_MSG_PARAM_STR, "select returned >0" );
+                        return (2);
+                }
+                /* unload and retry after timeout */
+		return (2);	
 	default:
 		configdown (drive);
 		return (-1);	/* unrecoverable error */
