@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.28 $ $Release$ $Date: 2007/08/10 11:11:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldVmgrInterface.c,v $ $Revision: 1.29 $ $Release$ $Date: 2007/10/10 12:07:28 $ $Author: obarring $
  *
  * 
  *
@@ -606,7 +606,7 @@ int rtcpcld_updateTape(
 {
   rtcpTapeRequest_t *tapereq;
   rtcpFileRequest_t *filereq = NULL;
-  int rc, save_serrno, maxFseq;
+  int rc, save_serrno, maxFseq, maxFseqExceeded = 0;
   u_signed64 bytesWritten = 0, freeSpace = 0;
   int compressionFactor = 0, filesWritten = 0, flags = 0;
   char *vmgrErrMsg = NULL, *statusStr = NULL;
@@ -692,6 +692,7 @@ int rtcpcld_updateTape(
     maxFseq = maxTapeFseq(tapereq->label);
     if ( (maxFseq > 0) && (filereq->tape_fseq >= maxFseq) ) {
       flags = TAPE_RDONLY;
+      maxFseqExceeded = 1;
     } else {
       /*
        * Update the VMGR for this file if we are sure we're going to
@@ -821,6 +822,10 @@ int rtcpcld_updateTape(
   }
   
   if ( fileId != NULL ) free(fileId);
+  if ( maxFseqExceeded == 1 ) {
+    serrno = ETFSQ;
+    return(-1);
+  }
   return(0);
 }
 
