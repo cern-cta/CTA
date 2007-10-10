@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.517 $ $Date: 2007/10/10 13:00:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.518 $ $Date: 2007/10/10 14:52:52 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4058,6 +4058,18 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     ReqId NUMBER,
     ReqType VARCHAR2(20));
   TYPE RequestDebug IS TABLE OF RequestDebug_typ;
+  TYPE TapeCopyDebug_typ IS RECORD (
+    TCId NUMBER,
+    TCStatus NUMBER,
+    SegId NUMBER,
+    SegStatus NUMBER,
+    SegErrCode NUMBER,
+    VID VARCHAR2(2048),
+    tpMode NUMBER,
+    TapeStatus NUMBER,
+    nbStreams NUMBER,
+    SegErr VARCHAR2(2048));
+  TYPE TapeCopyDebug IS TABLE OF TapeCopyDebug_typ;
 END;
 
 
@@ -4100,6 +4112,23 @@ BEGIN
   END LOOP;
 END;
 
+/* Get the tapecopys, segments and streams associated with the reference number */
+CREATE OR REPLACE FUNCTION getTCs(ref number) RETURN castor_debug.TapeCopyDebug PIPELINED AS
+BEGIN
+  FOR t IN (SELECT TapeCopy.id as TCId, TapeCopy.status as TCStatus,
+                   Segment.Id, Segment.status as SegStatus, Segment.errorCode as SegErrCode,
+                   Tape.vid as VID, Tape.tpMode as tpMode, Tape.Status as TapeStatus,
+                   count(*) as nbStreams, Segment.errMsgTxt as SegErr
+              FROM TapeCopy, Segment, Tape, Stream2TapeCopy
+             WHERE TapeCopy.id = Segment.copy(+)
+               AND Segment.tape = Tape.id(+)
+               AND TapeCopy.castorfile = getCF(ref)
+               AND Stream2TapeCopy.child = TapeCopy.id
+              GROUP BY TapeCopy.id, TapeCopy.status, Segment.id, Segment.status, Segment.errorCode,
+                       Tape.vid, Tape.tpMode, Tape.Status, Segment.errMsgTxt) LOOP
+     PIPE ROW(t);
+  END LOOP;
+END;
 
 /* Get the subrequests associated with the reference number. (By castorfile/diskcopy/
  * subrequest/tapecopy or fileid
