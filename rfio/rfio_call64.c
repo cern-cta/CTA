@@ -3777,8 +3777,8 @@ struct rfiostat   *infop;
       /*
        * Writing data on disk.
        */
-      if (byte_in_diskbuffer && byte_in_diskbuffer == DISKBUFSIZE_WRITE ||
-         (eof_received && byte_written_by_client == byte_read_from_network) )  {
+      if (byte_in_diskbuffer && (byte_in_diskbuffer == DISKBUFSIZE_WRITE ||
+         (eof_received && byte_written_by_client == byte_read_from_network)) )  {
          log(LOG_DEBUG, "rwrite64_v3: writing %d bytes on disk\n", byte_in_diskbuffer);
 #if defined(HPSS)
          status = rhpss_write(fd, iobuffer, byte_in_diskbuffer, s, 0,0);
