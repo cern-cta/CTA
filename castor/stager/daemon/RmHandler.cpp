@@ -47,7 +47,7 @@ namespace castor{
 	this->typeRequest = OBJ_StageRmRequest;
 
 	/* get the right svcClassId needed to call stagerService->stageRm  */
-	if(!strcmp(stgRequestHelper->svcClassName.c_str(),"*")){
+	if((stgRequestHelper->svcClassName) =="*"){
 	  this->svcClassId = 0;
 	}
 	
