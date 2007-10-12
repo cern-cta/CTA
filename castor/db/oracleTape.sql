@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.520 $ $Date: 2007/10/12 08:59:04 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.521 $ $Date: 2007/10/12 09:30:24 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2607,13 +2607,15 @@ BEGIN
       RETURN;
     END IF;
   END IF;
-  -- mark all get/put requests for those diskcopies as failed
+  -- mark all get/put requests for those diskcopies
+  -- and the ones waiting on them as failed
   -- so that clients eventually get an answer;
   -- don't touch recalls for the moment
   FOR sr IN (SELECT id, status FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
     IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       UPDATE SubRequest SET status = 7, parent = 0 WHERE id = sr.id;  -- FAILED
+      UPDATE SubRequest SET status = 7, parent = 0 WHERE parent = sr.id;  -- FAILED
     END IF;
   END LOOP;
   -- Set selected DiskCopies to INVALID. In any case keep
