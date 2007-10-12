@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.521 $ $Date: 2007/10/12 09:30:24 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.522 $ $Date: 2007/10/12 15:33:54 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2012,14 +2012,32 @@ BEGIN
          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- if we got here, we are a Put inside a PrepareToPut
       contextPIPP := 1;
-    EXCEPTION WHEN TOO_MANY_ROWS THEN
-      -- this means we are a PrepareToPut and another PrepareToPut
-      -- is already running. This is forbidden
-      archiveSubReq(srId);
-      RAISE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- if we got here, we are a standalone Put
+      contextPIPP := 0;
     END;   
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    contextPIPP := 0;
+    BEGIN
+      -- we are a prepareToPut. Fine, but are we the only one ?
+      SELECT SubRequest.diskCopy INTO dcId
+        FROM StagePrepareToPutRequest, SubRequest
+       WHERE SubRequest.CastorFile = cfId
+         AND StagePrepareToPutRequest.id = SubRequest.request
+         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+      -- Yes, everything is ok then
+      contextPIPP := 0;
+    EXCEPTION WHEN TOO_MANY_ROWS THEN
+      -- No, this means we are a PrepareToPut and another PrepareToPut
+      -- is already running. This is forbidden
+      dcId := 0;
+      UPDATE SubRequest
+         SET status = 7, -- FAILED
+             errorCode = 16, -- EBUSY
+             errorMessage = 'Another prepareToPut is ongoing for this file'
+       WHERE id = srId;
+      COMMIT;
+      RETURN;
+    END;
   END;
   IF contextPIPP = 0 THEN
     -- check if there is space in the diskpool in case of
