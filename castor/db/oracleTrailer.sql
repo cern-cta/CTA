@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.519 $ $Date: 2007/10/10 16:01:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.520 $ $Date: 2007/10/12 08:59:04 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4156,7 +4156,7 @@ BEGIN
                     (SELECT id, username, machine, svcClassName, 'Get' as type from StageGetRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'PGet' as type from StagePrepareToGetRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'Put' as type  from StagePutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PGet' as type  from StagePrepareToPutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PPut' as type  from StagePrepareToPutRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'Upd' as type  from StageUpdateRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'PUpd' as type  from StagePrepareToUpdateRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'Repack' as type  from StageRepackRequest UNION ALL
