@@ -23,7 +23,17 @@ sql = '''SELECT unique s.fileName, r.svcClassName, c.filesize, c.id
  WHERE d.castorfile = s.castorfile AND s.request = r.id
    AND c.id = d.castorfile
    AND d.creationtime < getTime() - 172800 AND d.status = 6'''; # 2days, STAGEOUT
-dropFile = '''UPDATE DiskCopy SET status = 7 WHERE status = 6 AND castorfile = :1''';
+dropFile = '''
+DECLARE
+  dcId NUMBER;
+BEGIN
+  UPDATE DiskCopy SET status = 7
+   WHERE status = 6 AND castorfile = :1
+  RETURNING id INTO dcId;
+  UPDATE SubRequest SET status = 7
+   WHERE diskCopy = dcId AND status = 6;
+END;
+''';
 dbcursor.execute(sql)
 files = dbcursor.fetchall()
 for f in files:
