@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.522 $ $Date: 2007/10/12 15:33:54 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.523 $ $Date: 2007/10/15 12:30:26 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -323,7 +323,7 @@ BEGIN
     -- Delete the DiskCopy
     UPDATE DiskCopy
        SET status = 7  -- INVALID
-     WHERE id = cf.castorfile;
+     WHERE id = cf.id;
     -- Look for request associated to the recall and restart
     -- it and all the waiting ones
     UPDATE SubRequest SET status = 1 -- RESTART
