@@ -29,6 +29,48 @@ BEGIN
 END;
 /
 
+-- Cleanup of subrequests stuck in status WAITSUBREQ and
+-- which are waiting on nothing (null parent). This is due
+-- to bug #30392
+DECLARE
+  nothingLeft NUMBER;
+  totalCount NUMBER;
+  done NUMBER := 0;
+BEGIN
+ INSERT INTO CleanupLogTable VALUES (9, 'Cleaning SubRequests stuck in WAITSUBREQ (#30392) 0% done', getTime());
+ COMMIT;
+ SELECT count(UNIQUE CastorFile) INTO totalCount FROM SubRequest
+  WHERE status = 5 AND parent IS NULL;
+ LOOP
+   nothingLeft := 1;
+   -- do it 50 by 50
+   FOR cf IN (SELECT UNIQUE CastorFile FROM SubRequest
+               WHERE status = 5 AND parent IS NULL AND ROWNUM < 50) LOOP
+     -- drop bad diskcopy
+     UPDATE diskcopy SET status = 7 WHERE status = 2 AND castorfile = cf.CastorFile;
+     -- restart SubRequests waiting
+     UPDATE SubRequest SET status = 1 WHERE status = 5 AND parent is NULL AND castorfile = cf.CastorFile;
+     nothingLeft := 0;
+   END LOOP;
+   -- commit between each bunch of 50 and update monitoring
+   done := done + 50;
+   UPDATE CleanupLogTable
+      SET message = 'Cleaning SubRequests stuck in WAITSUBREQ' ||
+          TO_CHAR(100*done/(totalCount+1), '999.99') || '% done', logDate = getTime()
+    WHERE fac = 9;
+   COMMIT;
+   IF nothingLeft = 1 THEN
+     UPDATE CleanupLogTable
+        SET message = 'SubRequests stuck in WAITSUBREQ were cleaned - ' || TO_CHAR(totalCount) || ' entries', logDate = getTime()
+      WHERE fac = 9;
+     COMMIT;
+     EXIT;
+   END IF;
+ END LOOP;
+END;
+/
+
+
 -- Optional steps follow
 INSERT INTO CleanupLogTable VALUES (16, 'Shrinking tables', getTime());
 COMMIT;
