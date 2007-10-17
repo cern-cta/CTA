@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.523 $ $Date: 2007/10/15 12:30:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.524 $ $Date: 2007/10/17 12:11:07 $ $Author: kotlyar $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2417,13 +2417,13 @@ BEGIN
     -- update lastAccess time
     UPDATE CastorFile SET LastAccessTime = getTime(),
                           nbAccesses = nbAccesses + 1,
-                          lastKnownFileName = fn
+                          lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/')
       WHERE id = rid;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- insert new row
     INSERT INTO CastorFile (id, fileId, nsHost, svcClass, fileClass, fileSize,
                             creationTime, lastAccessTime, nbAccesses, lastKnownFileName)
-      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, fn)
+      VALUES (ids_seq.nextval, fId, nh, sc, fc, fs, getTime(), getTime(), 1, REGEXP_REPLACE(fn,'(/){2,}','/'))
       RETURNING id, fileSize INTO rid, rfs;
     INSERT INTO Id2Type (id, type) VALUES (rid, 2); -- OBJ_CastorFile
   END;
@@ -3453,7 +3453,7 @@ BEGIN
   ELSE                                  -- exact match
     SELECT /*+ INDEX(CastorFile I_CastorFile_LastKnownFileName) */ id BULK COLLECT INTO cfs
       FROM CastorFile 
-     WHERE lastKnownFileName = fn;
+     WHERE lastKnownFileName = REGEXP_REPLACE(fn,'(/){2,}','/');
   END IF;
   IF cfs.COUNT > maxNbResponses THEN
     -- We have too many rows, we just give up
