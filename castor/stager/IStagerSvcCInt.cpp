@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2007/08/07 15:14:49 $ $Author: waldron $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2007/10/17 18:16:36 $ $Author: itglp $
  *
  *
  *
@@ -78,16 +78,10 @@ extern "C" {
   // Cstager_IStagerSvc_subRequestToDo
   //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
-                                        enum castor::ObjectsIds* types,
-                                        unsigned int nbTypes,
                                         castor::stager::SubRequest** subreq) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      std::vector<enum castor::ObjectsIds> cppTypes;
-      for (unsigned int i = 0; i < nbTypes; i++) {
-        cppTypes.push_back(types[i]);
-      }
-      *subreq = stgSvc->stgSvc->subRequestToDo(cppTypes);
+      *subreq = stgSvc->stgSvc->subRequestToDo("");
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
@@ -272,12 +266,15 @@ extern "C" {
   //-------------------------------------------------------------------------
   int Cstager_IStagerSvc_stageRm
   (struct Cstager_IStagerSvc_t* stgSvc,
+   const u_signed64 subReqId,
    const u_signed64 fileId,
    const char* nsHost,
-   const u_signed64 svcClassId) {
+   const u_signed64 svcClassId,
+   const int force,
+   int* result) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      stgSvc->stgSvc->stageRm(fileId, nsHost, svcClassId);
+      *result = stgSvc->stgSvc->stageRm(subReqId, fileId, nsHost, svcClassId, force);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

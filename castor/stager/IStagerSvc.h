@@ -70,9 +70,6 @@ int Cstager_IStagerSvc_delete(struct Cstager_IStagerSvc_t* svcs);
  * The selection is restricted to SubRequest associated to
  * requests of a given set of types.
  * @param stgSvc the IStagerSvc used
- * @param types the list of accepted types for the request
- * associated to the returned subrequest
- * @param nbTypes the number of types in the list
  * @param subreq the SubRequest to process
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
@@ -81,8 +78,6 @@ int Cstager_IStagerSvc_delete(struct Cstager_IStagerSvc_t* svcs);
  */
 int Cstager_IStagerSvc_subRequestToDo
 (struct Cstager_IStagerSvc_t* stgSvc,
- enum C_ObjectsIds* types,
- unsigned int nbTypes,
  struct Cstager_SubRequest_t** subreq);
 
 /**
@@ -345,10 +340,13 @@ int Cstager_IStagerSvc_stageRelease
  * Cstager_IStagerSvc_errorMsg
  */
 int Cstager_IStagerSvc_stageRm
-(struct Cstager_IStagerSvc_t* stgSvc,
- const u_signed64 fileId,
- const char* nsHost,
- const u_signed64 svcClassId);
+  (struct Cstager_IStagerSvc_t* stgSvc,
+   const u_signed64 subReqId,
+   const u_signed64 fileId,
+   const char* nsHost,
+   const u_signed64 svcClassId,
+   const int force,
+   int* result);
 
 /*
  * Updates the gcWeight of all copies a a given file.

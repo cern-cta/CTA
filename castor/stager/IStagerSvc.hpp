@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.74 $ $Release$ $Date: 2007/06/29 09:00:21 $ $Author: gtaur $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.75 $ $Release$ $Date: 2007/10/17 18:16:36 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -79,14 +79,13 @@ namespace castor {
        * and move its status to SUBREQUEST_WAITSCHED to avoid
        * double processing.
        * The selection is restricted to SubRequest associated to
-       * requests of a given set of types.
-       * @param types the list of accepted types for the request
-       * associated to the returned subrequest
+       * requests of a given set of types, identified by service.
+       * @param service identifies the group of requests to be queried
        * @return the SubRequest to process
        * @exception Exception in case of error
        */
       virtual castor::stager::SubRequest* subRequestToDo
-      (std::vector<ObjectsIds> &types)
+      (const std::string service)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -129,6 +128,46 @@ namespace castor {
       virtual int isSubRequestToSchedule
       (castor::stager::SubRequest* subreq,
        std::list<castor::stager::DiskCopyForRecall*>& sources)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Retrieves a list of diskcopies for a job to be scheduled.
+       * Looks at all diskCopies for the file a SubRequest
+       * deals with and depending on them, decides whether
+       * to schedule the SubRequest. In case it can be scheduled,
+       * also returns a list of diskcopies available to the
+       * subrequest.
+       * The return value is a valid DiskCopy status and
+       * the scheduling decision is taken this way :
+       * -1: no scheduling because of user error.
+       * DISKCOPY_STAGED (0): schedule + list of avail sources,
+         a DiskCopy was found and the SubRequest can be scheduled.
+       * DISKCOPY_WAITDISK2DISKCOPY (1): no sources, a disk to disk
+       * copy is necessary.
+       * DISKCOPY_WAITTAPERECALL (2): no schedule, no DiskCopy 
+         found anywhere, we need a tape recall.
+       * @param subreq the SubRequest to consider
+       * @param sources this is a list of DiskCopies that
+       * can be used by the subrequest.
+       * Note that the DiskCopies returned in sources must be
+       * deallocated by the caller.
+       * @return -1,0,1,2
+       * @exception Exception in case of system error
+       */
+      virtual int getDiskCopiesForJob
+      (castor::stager::SubRequest* subreq,
+       std::list<castor::stager::DiskCopyForRecall*>& sources)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Processes a putDone subrequest.
+       * @param subreq the SubRequest to consider
+       * @return 0: user error, the putDone cannot be performed.
+       *         1: success.
+       * @exception Exception in case of system error
+       */
+      virtual int processPutDone
+      (castor::stager::SubRequest* subreq)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -256,19 +295,25 @@ namespace castor {
 
       /**
        * Implements a single file stageRm.
-       * It throws a Busy exception in case the file is
-       * not yet migrated. Otherwise, it deletes all
-       * running requests for the file and marks all
-       * the copies of the file as candidate for the
-       * garbage collection.
+       * It does nothing in case the file is not yet
+       * migrated, or a recall or replica are ongoing.
+       * Otherwise, it deletes all running requests
+       * for the file and marks all the copies of the file
+       * as candidates for the garbage collection.
+       * @param srId the subRequest id
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
        * @param svcClassId the svcClass where to perform
        * the rm operation; 0 for all svcClasses.
-       * @exception in case of error or if the file is busy
+       * @param force option: if 1, the removal is done
+       * even if the file is not yet migrated.
+       * @return 0: user error
+       *         1: success.
+       * @exception in case of system error
        */
-      virtual void stageRm
-      (const u_signed64 fileId, const std::string nsHost, const u_signed64 svcClassId)
+      virtual int stageRm
+      (const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
+       const u_signed64 svcClassId, const int force)
         throw (castor::exception::Exception) = 0;
 
       /**

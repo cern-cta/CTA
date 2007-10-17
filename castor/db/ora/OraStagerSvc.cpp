@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.207 $ $Release$ $Date: 2007/08/20 11:29:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.208 $ $Release$ $Date: 2007/10/17 18:16:36 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -96,6 +96,10 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
   "BEGIN subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
 
+/// SQL statement for oldSubRequestToDo
+const std::string castor::db::ora::OraStagerSvc::s_oldSubRequestToDoStatementString =
+  "BEGIN oldSubrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
+
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
   "BEGIN subrequestFailedToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
@@ -103,6 +107,14 @@ const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatement
 /// SQL statement for isSubRequestToSchedule
 const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
   "BEGIN isSubRequestToSchedule(:1, :2, :3); END;";
+
+/// SQL statement for getDiskCopiesForJob
+const std::string castor::db::ora::OraStagerSvc::s_getDiskCopiesForJobStatementString =
+  "BEGIN getDiskCopiesForJob(:1, :2, :3); END;";
+
+/// SQL statement for processPutDone
+const std::string castor::db::ora::OraStagerSvc::s_processPutDoneStatementString =
+  "BEGIN processPutDone(:1, :2); END;";
 
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
@@ -130,7 +142,7 @@ const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
 
 /// SQL statement for stageRm
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
-  "BEGIN stageRm(:1, :2, :3, :4); END;";
+  "BEGIN stageRm(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
@@ -154,8 +166,11 @@ const std::string castor::db::ora::OraStagerSvc::s_lockCastorFileStatementString
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   OraCommonSvc(name),
   m_subRequestToDoStatement(0),
+  m_oldSubRequestToDoStatement(0),
   m_subRequestFailedToDoStatement(0),
   m_isSubRequestToScheduleStatement(0),
+  m_getDiskCopiesForJobStatement(0),
+  m_processPutDoneStatement(0),
   m_selectCastorFileStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0),
@@ -199,8 +214,11 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   OraCommonSvc::reset();
   try {
     if (m_subRequestToDoStatement) deleteStatement(m_subRequestToDoStatement);
+    if (m_oldSubRequestToDoStatement) deleteStatement(m_oldSubRequestToDoStatement);
     if (m_subRequestFailedToDoStatement) deleteStatement(m_subRequestFailedToDoStatement);
     if (m_isSubRequestToScheduleStatement) deleteStatement(m_isSubRequestToScheduleStatement);
+    if (m_getDiskCopiesForJobStatement) deleteStatement(m_getDiskCopiesForJobStatement);
+    if (m_processPutDoneStatement) deleteStatement(m_processPutDoneStatement);
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
     if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
@@ -215,8 +233,11 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
+  m_oldSubRequestToDoStatement = 0;
   m_subRequestFailedToDoStatement = 0;
   m_isSubRequestToScheduleStatement = 0;
+  m_getDiskCopiesForJobStatement = 0;
+  m_processPutDoneStatement = 0;
   m_selectCastorFileStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
@@ -236,7 +257,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
 // -----------------------------------------------------------------------
 castor::stager::SubRequest*
 castor::db::ora::OraStagerSvc::subRequestToDo
-(std::vector<ObjectsIds> &types)
+(const std::string service)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -265,10 +286,41 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (11, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
-    // set the service - not used for the time being
-    m_subRequestToDoStatement->setString(1, "");
+    // to be dropped with the old stager
+    if (0 == m_oldSubRequestToDoStatement) {
+      m_oldSubRequestToDoStatement =
+        createStatement(s_subRequestToDoStatementString);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (3, oracle::occi::OCCIINT);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (5, oracle::occi::OCCISTRING, 2048);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (6, oracle::occi::OCCIDOUBLE);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (7, oracle::occi::OCCIINT);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (8, oracle::occi::OCCIINT);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (9, oracle::occi::OCCIINT);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (10, oracle::occi::OCCIINT);
+      m_oldSubRequestToDoStatement->registerOutParam
+        (11, oracle::occi::OCCISTRING, 2048);
+      m_oldSubRequestToDoStatement->setAutoCommit(true);
+    }
+    
+    // decide which statement to use - to be dropped with the old stager
+    oracle::occi::Statement *stmt = (service == "" ?
+      m_oldSubRequestToDoStatement : m_subRequestToDoStatement);
+    if(service != "")
+      m_subRequestToDoStatement->setString(1, service);
+
     // execute the statement and see whether we found something
-    unsigned int rc = m_subRequestToDoStatement->executeUpdate();
+    unsigned int rc = stmt->executeUpdate();
     if (0 == rc) {
       castor::exception::Internal ex;
       ex.getMessage()
@@ -276,7 +328,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         << "unable to get next SubRequest to process.";
       throw ex;
     }
-    u_signed64 srId = (u_signed64)m_subRequestToDoStatement->getDouble(2);
+    u_signed64 srId = (u_signed64)stmt->getDouble(2);
     if (0 == srId) {
       // Found no SubRequest to handle
       return 0;
@@ -285,17 +337,17 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     castor::stager::SubRequest* result =
       new castor::stager::SubRequest();
     result->setId(srId);
-    result->setRetryCounter(m_subRequestToDoStatement->getInt(3));
-    result->setFileName(m_subRequestToDoStatement->getString(4));
-    result->setProtocol(m_subRequestToDoStatement->getString(5));
-    result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(6));
-    result->setPriority(m_subRequestToDoStatement->getInt(7));
+    result->setRetryCounter(stmt->getInt(3));
+    result->setFileName(stmt->getString(4));
+    result->setProtocol(stmt->getString(5));
+    result->setXsize((u_signed64)stmt->getDouble(6));
+    result->setPriority(stmt->getInt(7));
     result->setStatus
       ((enum castor::stager::SubRequestStatusCodes)
-       m_subRequestToDoStatement->getInt(8));
-    result->setModeBits(m_subRequestToDoStatement->getInt(9));
-    result->setFlags(m_subRequestToDoStatement->getInt(10));
-    result->setSubreqId(m_subRequestToDoStatement->getString(11));
+       stmt->getInt(8));
+    result->setModeBits(stmt->getInt(9));
+    result->setFlags(stmt->getInt(10));
+    result->setSubreqId(stmt->getString(11));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -468,6 +520,117 @@ int castor::db::ora::OraStagerSvc::isSubRequestToSchedule
     throw ex;
   }
 }
+
+// -----------------------------------------------------------------------
+// getDiskCopiesForJob
+// -----------------------------------------------------------------------
+int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
+(castor::stager::SubRequest* subreq,
+ std::list<castor::stager::DiskCopyForRecall*>& sources)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_getDiskCopiesForJobStatement) {
+      m_getDiskCopiesForJobStatement =
+        createStatement(s_getDiskCopiesForJobStatementString);
+      m_getDiskCopiesForJobStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
+      m_getDiskCopiesForJobStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
+    }
+    // execute the statement and see whether we found something
+    m_getDiskCopiesForJobStatement->setDouble(1, subreq->id());
+    unsigned int nb =
+      m_getDiskCopiesForJobStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "getDiskCopiesForJob : "
+        << "unable to know whether SubRequest should be scheduled.";
+      throw ex;
+    }
+    // Get result and return
+    unsigned int status =
+      m_getDiskCopiesForJobStatement->getInt(2);
+
+    if (castor::stager::DISKCOPY_STAGED == status) {  // diskcopies are available, list them
+      try {
+        oracle::occi::ResultSet *rs =
+          m_getDiskCopiesForJobStatement->getCursor(3);
+        // Run through the cursor
+        oracle::occi::ResultSet::Status status = rs->next();
+        while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
+          castor::stager::DiskCopyForRecall* item =
+            new castor::stager::DiskCopyForRecall();
+          item->setId((u_signed64) rs->getDouble(1));
+          item->setPath(rs->getString(2));
+          item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
+          item->setFsWeight(rs->getFloat(4));
+          item->setMountPoint(rs->getString(5));
+          item->setDiskServer(rs->getString(6));
+          sources.push_back(item);
+          status = rs->next();
+        }
+      } catch (oracle::occi::SQLException e) {
+        handleException(e);
+        if (e.getErrorCode() != 24338) {
+          // if not "statement handle not executed"
+          // it's really wrong, else, it's normal
+          throw e;
+        }
+      }
+    }
+    return status; /* -1, no schedule, user error
+                    *  0 = DISKCOPY_STAGED, disk copies available
+                    *  1 = DISKCOPY_WAITDISK2DISKCOPY, a disk-to-disk copy is needed
+                    *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */ 
+
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in getDiskCopiesForJob."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// processPutDone
+// -----------------------------------------------------------------------
+int castor::db::ora::OraStagerSvc::processPutDone
+(castor::stager::SubRequest* subreq)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_processPutDoneStatement) {
+      m_processPutDoneStatement =
+        createStatement(s_processPutDoneStatementString);
+      m_processPutDoneStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
+    }
+    // execute the statement and see whether we found something
+    m_processPutDoneStatement->setDouble(1, subreq->id());
+    unsigned int nb =
+      m_processPutDoneStatement->executeUpdate();
+    if (0 == nb) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "processPutDone : unable to perform the processing.";
+      throw ex;
+    }
+    // return status
+    return m_processPutDoneStatement->getInt(2);
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in processPutDone."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
 
 // -----------------------------------------------------------------------
 // createRecallCandidate
@@ -816,8 +979,9 @@ void castor::db::ora::OraStagerSvc::stageRelease
 // -----------------------------------------------------------------------
 // stageRm
 // -----------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::stageRm
-(const u_signed64 fileId, const std::string nsHost, const u_signed64 svcClassId)
+int castor::db::ora::OraStagerSvc::stageRm
+(const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
+ const u_signed64 svcClassId, const int force)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -825,13 +989,15 @@ void castor::db::ora::OraStagerSvc::stageRm
       m_stageRmStatement =
         createStatement(s_stageRmStatementString);
       m_stageRmStatement->registerOutParam
-        (4, oracle::occi::OCCIINT);
+        (6, oracle::occi::OCCIINT);
       m_stageRmStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
-    m_stageRmStatement->setDouble(1, fileId);
-    m_stageRmStatement->setString(2, nsHost);
-    m_stageRmStatement->setDouble(3, svcClassId);
+    m_stageRmStatement->setDouble(1, subReqId);
+    m_stageRmStatement->setDouble(2, fileId);
+    m_stageRmStatement->setString(3, nsHost);
+    m_stageRmStatement->setDouble(4, svcClassId);
+    m_stageRmStatement->setDouble(5, force);
     unsigned int nb = m_stageRmStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
@@ -839,19 +1005,8 @@ void castor::db::ora::OraStagerSvc::stageRm
         << "stageRm : No return code after PL/SQL call.";
       throw ex;
     }
-    // In case of EBUSY, throw exception
-    int returnCode = m_stageRmStatement->getInt(4);
-    if (returnCode != 0) {
-      castor::exception::Busy e;
-      if (returnCode == 1) {
-        e.getMessage() << "The file is not yet migrated.";
-      } else if (returnCode == 2) {
-        e.getMessage() << "The file is being replicated.";
-      } else {
-        e.getMessage() << "The file is being recalled from tape.";
-      }
-      throw e;
-    }
+    // Return the return code given by the procedure
+    return m_stageRmStatement->getInt(6);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
