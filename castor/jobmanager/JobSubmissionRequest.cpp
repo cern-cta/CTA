@@ -31,6 +31,7 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/jobmanager/JobSubmissionRequest.hpp"
+#include "osdep.h"
 #include <iostream>
 #include <string>
 
