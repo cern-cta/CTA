@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.525 $ $Date: 2007/10/17 18:13:39 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.526 $ $Date: 2007/10/17 18:33:06 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2880,7 +2880,7 @@ BEGIN
              errorCode = 16,  -- EBUSY
              errorMessage = 'The file is not yet migrated'
        WHERE id = srId;
-      ret := 1;
+      ret := 0;
       RETURN;
     END IF;
     -- check if removal is possible for Disk2DiskCopy
@@ -2894,7 +2894,7 @@ BEGIN
              errorCode = 16,  -- EBUSY
              errorMessage = 'The file is being replicated'
        WHERE id = srId;
-      ret := 1;
+      ret := 0;
       RETURN;
     END IF;
   END IF;
@@ -2915,7 +2915,7 @@ BEGIN
   -- so they will only be taken by the cleaning daemon for the failed DCs.
   UPDATE DiskCopy SET status = 7 -- INVALID
    WHERE id IN (SELECT * FROM TABLE(dcsToRm));
-  ret := 0;
+  ret := 1;  -- ok
   IF scId = 0 THEN
     -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
     -- This is not entirely clean: a proper operation here should be to
