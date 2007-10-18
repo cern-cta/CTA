@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.526 $ $Date: 2007/10/17 18:33:06 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.527 $ $Date: 2007/10/18 12:59:14 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -627,16 +627,18 @@ BEGIN
     UPDATE SubRequest SET status=11 WHERE request=rid and status=8;  -- ARCHIVED 
   END IF;
 
-  -- Check that we don't have too many requests for the file in the DB
+  -- Check that we don't have too many requests for this file in the DB
   SELECT count(request) INTO nb FROM SubRequest WHERE castorFile = cfId AND status IN (9, 11);
   IF nb > 100 THEN
-    SELECT request INTO rid
-      FROM (SELECT /*+INDEX(a I_SubRequest_CastorFile) */ 
-                   a.request FROM SubRequest a
-             WHERE a.castorFile = cfId AND a.status IN (9, 11)
-             ORDER BY a.creationTime ASC)
-     WHERE ROWNUM < 2;
-    deleteRequest(rid);
+    -- keep the most recents and drop the rest
+    FOR sr IN
+      (SELECT request FROM
+         (SELECT /*+INDEX(a I_SubRequest_CastorFile) */ a.request FROM SubRequest a
+           WHERE a.castorFile = cfId AND a.status IN (9, 11)
+           ORDER BY a.creationTime ASC)
+       WHERE ROWNUM < nb-100) LOOP
+      deleteRequest(sr.request);
+    END LOOP;
   END IF;
 END;
 
