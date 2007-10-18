@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.527 $ $Date: 2007/10/18 12:59:14 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.528 $ $Date: 2007/10/18 16:42:22 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -306,10 +306,11 @@ END;
  *   - canceling recalls for files that are STAGED/CANBEMIGR
  *     on the fileSystem that comes back.
  *   - dealing with file that are STAGEOUT on the fileSystem
- *     coming back but STAGED/WAITFORRECALL on another one
+ *     coming back but already exist on another one
  */
 CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
   srId NUMBER;
+  srIds "numList";
 BEGIN
   -- Look for recalls concerning files that are STAGED/CANBEMIGR
   -- on the filesystem coming back to life
@@ -333,6 +334,31 @@ BEGIN
        SET status = 1, parent = 0 -- RESTART
      WHERE status = 5 -- WAITSUBREQ
        AND parent = srId
+       AND castorfile = cf.castorfile;
+  END LOOP;
+  -- Look for files that are STAGEOUT on the filesystem
+  -- coming back to life but already STAGED/CANBEMIGR/
+  -- WAITTAPERECALL/WAITFS/STAGEOUT/WAITFS_SCHEDULING
+  -- somewhere else
+  FOR cf IN (SELECT UNIQUE d.castorfile, d.id
+               FROM DiskCopy d, DiskCopy e 
+              WHERE d.castorfile = e.castorfile
+                AND d.fileSystem = fsId
+                AND e.fileSystem != fsId
+                AND d.status = 6 -- STAGEOUT
+                AND e.status IN (0,10,2,5,6,11)) LOOP -- STAGED/CANBEMIGR/WAITTAPERECALL/WAITFS/STAGEOUT/WAITFS_SCHEDULING
+    -- Delete the DiskCopy
+    UPDATE DiskCopy
+       SET status = 7  -- INVALID
+     WHERE id = cf.id;
+    -- Look for request associated to the diskCopy and restart
+    -- it and all the waiting ones
+    UPDATE SubRequest SET status = 7 -- FAILED
+     WHERE diskCopy = cf.id RETURNING id BULK COLLECT INTO srIds;
+    UPDATE SubRequest
+       SET status = 7, parent = 0 -- FAILED
+     WHERE status = 5 -- WAITSUBREQ
+       AND parent MEMBER OF srIds
        AND castorfile = cf.castorfile;
   END LOOP;
 END;
