@@ -25,13 +25,13 @@ sql = '''SELECT unique s.fileName, r.svcClassName, c.filesize, c.id
    AND d.creationtime < getTime() - 172800 AND d.status = 6'''; # 2days, STAGEOUT
 dropFile = '''
 DECLARE
-  dcId NUMBER;
+  dcIds "numList";
 BEGIN
   UPDATE DiskCopy SET status = 7
-   WHERE status = 6 AND castorfile = :1
-  RETURNING id INTO dcId;
+   WHERE status = 6 AND castorfile = 333
+  RETURNING id BULK COLLECT INTO dcIds;
   UPDATE SubRequest SET status = 7
-   WHERE diskCopy = dcId AND status = 6;
+   WHERE diskCopy MEMBER OF dcIds AND status = 6;
 END;
 ''';
 dbcursor.execute(sql)
