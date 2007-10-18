@@ -1,6 +1,29 @@
-/**************************************************/
-/* Main function to test the new StagerDBService */
-/************************************************/
+/******************************************************************************
+ *                castor/stager/daemon/StagerMainDaemon.hpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: StagerDaemon.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/10/18 16:48:52 $ $Author: itglp $
+ *
+ * Main stager daemon
+ *
+ * @author castor dev team
+ *****************************************************************************/
+
 #ifndef STAGER_MAIN_DAEMON_HPP
 #define STAGER_MAIN_DAEMON_HPP 1
 
@@ -16,56 +39,27 @@
 #include <string>
 
 namespace castor{
+  
   namespace stager{
+    
     namespace dbService{
 
-
-      class StagerMainDaemon : public castor::server::BaseDaemon{
+      class StagerMainDaemon : public castor::server::BaseDaemon {
 
       public:
-	/*** constructor ***/
-	StagerMainDaemon() throw(castor::exception::Exception);
-	/*** destructor ***/
-	virtual ~StagerMainDaemon() throw() {};
-
-
-	/*****************************************************************/
-	/* BaseServer::help print the valid options for the commandLine */
-	/***************************************************************/
-	inline void help(std::string programName){
-	  std::cout << "Usage: " << programName << " [options]\n"
-	    "\n"
-	    "where options can be:\n"
-	    "\n"
-	    "\t--Dbthreads    or -D {integer >= 0}  \tNumber of threads to the database\n"
-	    "\t--log          or -l {string}       \tForced logging outside of DLF (filename, or stderr, or stdout)\n"
-	    "\n"
-#ifndef CSEC
-	    "WARNING: Option -P will be refused\n"
-	    "Please re-compile stager with security support (-DCSEC)\n"
-	    "\n"
-#endif
-	    "\n"
-	    "Please note that option -d implies option -t\n"
-	    "\n"
-	    "Comments to: Castor.Support@cern.ch\n";
-	}
-
-	
-
-     
-	/* option for the configuration(from the command line) */
-
-	int stagerDbNbthread;                /* Stager number of db threads in the db pool */
-	std::string stagerLog;
-	bool stagerHelp;
+        /*** constructor ***/
+        StagerMainDaemon() throw (castor::exception::Exception);
+        /*** destructor ***/
+        virtual ~StagerMainDaemon() throw() {};
+      
+        void help(std::string programName);
 
       }; /* end class StagerMainDaemon */
+
     }//end namespace dbService
+
   }//end namespace stager
+
 }//end namespace castor
-
-
-
 
 #endif
