@@ -51,14 +51,27 @@ namespace castor{
 	/* flag to schedule or to recreateCastorFile depending if the file exists... */
 	bool toRecreateCastorFile;
 
+	
+	/*******************************************/	
+	/*     switch(getDiskCopyForJob):         */  
+	/*        case 0: (staged) nothing to be done */                                   
+	/*        case 1: (staged) waitD2DCopy  */
+	/*        case 2: (waitRecall) createTapeCopyForRecall */
+	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception);
+	
 
 
       public:
 	/* constructor */
-	StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception);
-
+	StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
 	~StagerPrepareToUpdateHandler() throw();
+
+	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
+	/* to be called before the stgPrepareToUpdate->handle() */
+	/* set the internal attribute "toRecreateCastorFile depending on fileExist" */
+	/* which determines the real flow of the handler */
+	virtual void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception);
 
 	/* PrepareToUpdate request handler */
 	void handle() throw(castor::exception::Exception);

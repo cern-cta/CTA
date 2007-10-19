@@ -54,8 +54,17 @@ namespace castor{
 	/* destructor */
 	~StagerRepackHandler() throw();
 
-	/* repack subrequest' s handler*/
+	/*******************************************/	
+	/*     switch(getDiskCopyForJob):         */  
+	/*        case 0: (staged) call startRepackMigration (once implemented) */                                   
+	/*        case 1: (staged) waitD2DCopy  */
+	/*        case 2: (waitRecall) createTapeCopyForRecall */
+	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception);
+	
+	/* repack subrequest' s handler */
 	void handle() throw(castor::exception::Exception);
+
+	
 
 
 

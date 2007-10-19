@@ -60,6 +60,15 @@ namespace castor{
 	/* destructor */
 	~StagerPrepareToGetHandler() throw();
 
+	/*******************************************/	
+	/*     switch(getDiskCopyForJob):         */  
+	/*        case 0: (staged) archiveSubrequest */                                   
+	/*        case 1: (staged) waitD2DCopy  */
+	/*        case 2: (waitRecall) createTapeCopyForRecall */
+	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception);
+	
+
+
 
 	/* PrepareToGet request handler */
         void handle() throw(castor::exception::Exception);

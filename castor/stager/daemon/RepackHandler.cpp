@@ -70,6 +70,53 @@ namespace castor{
       }
 
 
+      /*******************************************/	
+      /*     switch(getDiskCopyForJob):         */  
+      /*        case 0: (staged) call startRepackMigration (once implemented) */                                   
+      /*        case 1: (staged) waitD2DCopy  */
+      /*        case 2: (waitRecall) createRecallCandidate */
+      void switchDiskCopiesForJob() throw (castor::exception::Exception)
+      {
+	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
+	case 0:
+	  {
+	    /* to be done */
+	    /* stgRequestHelper->stagerService->startRepackMigration */
+	  }break;
+	case 1:
+	  {
+	     bool isToReplicate= replicaSwitch();
+	    if(isToReplicate){
+	      processReplica();
+	    }
+	    
+	    /* build the rmjob struct and submit the job */
+	    jobManagerPart();
+	    
+	    this->newSubrequestStatus = SUBREQUEST_READYFORSCHED;
+	    if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
+	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
+	      stagerRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
+	    }
+
+	    /* and we have to notify the jobManager */
+	    this->notifyJobManager();
+	    
+	  }break;
+	case 2:
+	  {
+	    stgRequestHelper->stagerService->createTapeCopySegmentsForRecall(stgRequestHelper->castorFile,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	    /* though we wont update the subrequestStatus, we need to flag it for the stgReplyHelper */
+	    this->newSubrequestStatus= SUBREQUEST_READY;
+	  }break;
+
+	}//end switch
+
+      }
+      
+
 
       void StagerRepackHandler::handle() throw(castor::exception::Exception)
       {
@@ -77,31 +124,31 @@ namespace castor{
 	StagerReplyHelper* stgReplyHelper= NULL;
 	try{
 
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+
+
 	  /* job oriented part */
 	  jobOriented();
 	  
-	  /* scheduling Part */
-	  /* first use the stager service to get the possible sources for the required file */
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
-	  switchScheduling(caseToSchedule);
-	  /* we update the subrequestStatus internally */
-	
-	  /* we replyToClient on the cases: 2,0 */
-	  /* case 1 isnt for Repack, and on case 4 we dont replyToClient */
-	  if(caseToSchedule != 4){
-
-	    stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
-	    if(stgReplyHelper == NULL){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	      throw(ex);
-	    }
-	    
-	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
-	    stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete stgReplyHelper->ioResponse;
-	    delete stgReplyHelper;
+	  /* depending on the value returned by getDiskCopiesForJob */
+	  /* if needed, we update the subrequestStatus internally */
+	  switchDiskCopiesForJob();
+	 
+	  stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	  if(stgReplyHelper == NULL){
+	    castor::exception::Exception ex(SEINTERNAL);
+	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	    throw(ex);
 	  }
+	  
+	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+	  stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  delete stgReplyHelper->ioResponse;
+	  delete stgReplyHelper;
+	  
 
 	}catch(castor::exception::Exception e){
 	 
