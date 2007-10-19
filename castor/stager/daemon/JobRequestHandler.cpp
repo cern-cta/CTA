@@ -98,104 +98,49 @@ namespace castor{
       }
       
       
-      
-      /***********************************************************************************************/
-      /* after asking the stagerService is it is toBeScheduled                                      */
-      /* - do a normal tape recall                                                                 */
-      /* - check if it is to replicate:                                                           */
-      /*         +processReplica if it is needed:                                                */
-      /*                    +make the hostlist if it is needed                                  */
-      /* it is gonna be overwriten on the stagerPrepareToGetHandler because of the case 0 !!!! */
-      /****************************************************************************************/
-      void StagerJobRequestHandler::switchScheduling(int caseToSchedule) throw(castor::exception::Exception)
+      /********************************************/	
+      /* for Get, Update                         */
+      /*     switch(getDiskCopyForJob):         */                                     
+      /*        case 0,1: (staged) jobManager  */
+      /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
+      virtual void switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
-	
-	try{
-	  switch(caseToSchedule){
+	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
+	case 0: /* process the replicas and call the jobManager   */
+	case 1:
+	  {
+	    bool isToRecplicate= replicaSwitch();
+	    if(isToReplicate){
+	      processReplica();
+	    }
 	    
-	  case 2: //normal tape recall
-	    /* in this case we dont archiveSubrequest, we dont changeSubrequestStatus  */
-	    try{
-	      stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);//throw exception
-	      /* we dont change subrequestStatus or archive the subrequest: but we need to set the newSubrequestStatus to replyToClient */
-	      this->newSubrequestStatus = SUBREQUEST_READY;
-	    }catch(castor::exception::Exception ex){
-	      /* internally of the createRecallCandidate: we reply to the client and we setSubrequestStatus to FAILED */
-	      return;
-	    }
-	    break;
+	    /* build the rmjob struct and submit the job */
+	    jobManagerPart();
 	    
-	  case 1:/* just for get and the special update */
-	    if((typeRequest == OBJ_StageGetRequest)||(typeRequest == OBJ_StageUpdateRequest)||(typeRequest == OBJ_StagePrepareToGetRequest)|| (typeRequest == OBJ_StageRepackRequest)){
-	      /* just for Get and Update(special) */
-	      /* in this case we dont archiveSubrequest, but we do changeSubrequestStatus, and we dont replyToClient */
-	      bool isToReplicate=replicaSwitch();
-	      
-	      if(isToReplicate){  
-		processReplica();
-	      }
-	      
-	      /**********************************************/
-	      /* build the rmjob struct and submit the job */
-	      jobManagerPart(); 
-	      
-	      this->newSubrequestStatus = SUBREQUEST_READYFORSCHED;
-	      if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
-		stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
-		stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-		/* we have to setGetNextStatus */
-		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);		
-	      }
-
-	      /* and we have to notify the jobManager */
-	      /* do the same for the special Update and for the put on the handle() method */
-	      this->notifyJobManager();
-	    }else{
-	      castor::exception::Exception e(SEOPNOTSUP);
-	      e.getMessage()<<"(Stager__Handler switchScheduling) "<<std::endl;
-	      throw(e);
-
+	    this->newSubrequestStatus = SUBREQUEST_READYFORSCHED;
+	    if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
+	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
+	      stagerRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
 	    }
-	    break;
 
-	  case 4:
-	    /* in this case we wont: changeSubrequestStatus, archiveSubrequest or replyToClient */
-	    break;
- 
-	  case 0:
-	    /* two differents behaviours depending on the subrequest typeRequest */
-	    if(typeRequest == OBJ_StagePrepareToGetRequest){
-	      this->newSubrequestStatus = SUBREQUEST_READY;
-	      if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
-		stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
-		/* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
-		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
-		
-		/* we are gonna replyToClient so we dont  updateRep on DB explicitly */
-	      } 
-	      /* we archive the subrequest*/
-	      stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-	    }else{
-	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
-	    }
-	    break;
-	  
-	  default:
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerJobRequestHandler switchScheduling) stagerservice->isSubRequestToSchedule returns an invalid value"<<std::endl;
-	    throw ex;
-	    break;
-	  }
-	}catch (castor::exception::Exception e){
-	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
-	  /* we don t execute: dbService->updateRep ..*/
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(Stager__Handler) Error"<<e.getMessage().str()<<std::endl;
-	  throw ex;
-	}
-	
-      }//end switchScheduling
+	    /* and we have to notify the jobManager */
+	    this->notifyJobManager();
+	  }break;
+
+	case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
+	  {
+	    
+	  }break;
+
+
+
+	}//end switch
+
+      }
       
+
 
       /************************************************************************************/
       /* return if it is to replicate considering: */

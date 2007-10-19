@@ -40,6 +40,9 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
+
+
+      /* constructor */
       StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
 	this->stgRequestHelper = stgRequestHelper;
@@ -54,10 +57,25 @@ namespace castor{
 	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
       }
 
+
+      /* only handler which overwrite the preprocess part due to the specific behavior related with the svcClass */
+      void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception);
+
+
+
+      /******************************/
+      /* handle for the rm request */
+      /****************************/
       void StagerRmHandler::handle() throw(castor::exception::Exception)
       {
 	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
+
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+	  
 	  /* execute the main function for the rm request                 */
 	  /* basically, a call to the corresponding stagerService method */
 	  std::string server(stgCnsHelper->cnsFileid.server);

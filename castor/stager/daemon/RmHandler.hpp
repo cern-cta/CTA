@@ -36,6 +36,7 @@ namespace castor{
 
       class StagerRequestHelper;
       class StagerCnsHelper;
+      class castor::stager::SubRequest;
 
       class StagerRmHandler : public virtual StagerRequestHandler{
 	
@@ -44,6 +45,10 @@ namespace castor{
 	StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
 	~StagerRmHandler() throw();
+
+	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
+	/* to be called before the stgRmHandler->handle() */
+	virtual void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception);
 
 	/* rm subrequest handler */
 	void handle() throw(castor::exception::Exception);
