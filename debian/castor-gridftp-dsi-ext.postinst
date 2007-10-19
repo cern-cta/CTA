@@ -2,4 +2,4 @@
 if [ "`grep gsiftp /etc/services`" = "" ]; then 
   echo "gsiftp          2811/tcp # gridftp server port" >>/etc/services
 fi
-/etc/init.d/xinetd reload
+/etc/init.d/xinetd restart

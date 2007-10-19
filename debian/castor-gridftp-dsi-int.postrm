@@ -3,5 +3,3 @@ mv /etc/cron.d/edg-mkgridmap /tmp/edg-mkgridmap.old
 cat /tmp/edg-mkgridmap.old | sed -e "/stage/ d" > /etc/cron.d/edg-mkgridmap
 rm -f /tmp/edg-mkgridmap.old
 
-chown root:root /etc/grid-security/hostcert.pem
-chown root:root /etc/grid-security/hostkey.pem 
