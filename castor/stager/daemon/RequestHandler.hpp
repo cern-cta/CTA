@@ -9,7 +9,9 @@
 #include "castor/stager/dbService/StagerRequestHelper.hpp"
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
+
 
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
@@ -39,9 +41,17 @@ namespace castor{
 	/* empty destructor */
 	virtual ~StagerRequestHandler() throw() {};
 	
+	
+	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
+	/* to be called before the stg____Handler->handle() */
+	virtual void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception);
+
+
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;
 	
+	
+
 	inline SubRequestStatusCodes getNewSubrequestStatus(){
 	  return (this->newSubrequestStatus);
 	}
