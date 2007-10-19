@@ -77,11 +77,22 @@ namespace castor{
       void StagerGetHandler::handle() throw(castor::exception::Exception)
       {
 	try{
+	  
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+
 	  jobOriented();
 	  
-	  int caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest, this->sources);
-	  switchScheduling(caseToSchedule);/* we call internally the rmjob */
-	  /* the update of the subrequestStatus is done internally */
+	  /* for Get, Update                         */
+	  /*     switch(getDiskCopyForJob):         */                                     
+	  /*        case 0,1: (staged) jobManager  */
+	  /*        case 2: (waitRecall) createTapeCopyForRecall */
+	  /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
+	  switchDiskCopiesForJob(); 
+
+	 
 
 	}catch(castor::exception::Exception e){
 

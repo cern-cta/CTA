@@ -42,15 +42,13 @@ namespace castor{
     namespace dbService{
       
       /* constructor */
-      StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, bool toRecreateCastorFile) throw(castor::exception::Exception)
+      StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
 	this->typeRequest = OBJ_StageUpdateRequest;
 
-	/* depending on this flag, we ll execute the huge flow or the small one*/
-	this->toRecreateCastorFile = toRecreateCastorFile;
-
+	
 	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
 
@@ -74,12 +72,73 @@ namespace castor{
       }
       
 
+
+      /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
+      void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception)
+      {
+
+	/* get the uuid subrequest string version and check if it is valid */
+	/* we can create one !*/
+	stgRequestHelper->setSubrequestUuid();
+	
+	/* get the associated client and set the iClientAsString variable */
+	stgRequestHelper->getIClient();
+	
+	
+	/* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
+	stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
+	
+	/* get the uuid request string version and check if it is valid */
+	stgRequestHelper->setRequestUuid();
+	
+	
+	/* get the svcClass */
+	stgRequestHelper->getSvcClass();
+	
+	
+	/* create and fill request->svcClass link on DB */
+	stgRequestHelper->linkRequestToSvcClassOnDB();
+		
+	/* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
+	/* create the file if it is needed/possible */
+	this->fileExist = stgCnsHelper->checkAndSetFileOnNameServer(this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
+	
+	/* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
+	stgRequestHelper->checkFilePermission();
+
+	this->toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0));
+	
+	castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(RequestSvc) Detailed subrequest(fileName,{euid,egid},{userName,groupName},mode mask, cliendId, svcClassName,cnsFileid.fileid, cnsFileid.server"),
+					  castor::dlf::Param("Standard Message",stgCnsHelper->subrequestFileName),
+					  castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->euid),
+					  castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->egid),
+					  castor::dlf::Param("Standard Message",stgRequestHelper->username),
+					  castor::dlf::Param("Standard Message",stgRequestHelper->groupname),
+					  castor::dlf::Param("Standard Message",stgRequestHelper->fileRequest->mask()),
+					  castor::dlf::Param("Standard Message",stgRequestHelper->iClient->id()),
+					  castor::dlf::Param("Standard Message",stgRequestHelper->svcClassName),
+					  castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.fileid),
+					  castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.server)};
+	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 11, parameter);
+
+
+
+
+      }
+
+
       /************************************/
       /* handler for the update request  */
       /**********************************/
       void StagerUpdateHandler::handle() throw(castor::exception::Exception)
       {
 	try{
+
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+	  
 	  jobOriented();
 	  int caseToSchedule = -1;
 	  
@@ -134,10 +193,12 @@ namespace castor{
 
 	  }else{/*if notToRecreateCastorFile */
 	   
-	    /* since the file exist, we need the read flag */
-	    caseToSchedule = stgRequestHelper->stagerService->isSubRequestToSchedule(stgRequestHelper->subrequest,this->sources);
-	    switchScheduling(caseToSchedule);/* we call internally the rmjob */
-	    /* we update internally the subrequestStatus, getNextStatus and we notify the jobManager */
+	    /* for Get, Update                         */
+	    /*     switch(getDiskCopyForJob):         */                                     
+	    /*        case 0,1: (staged) jobManager  */
+	    /*        case 2: (waitRecall) createTapeCopyForRecall */
+	    /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
+	    switchDiskCopiesForJob(); 
 	  }
 	  
 	 
