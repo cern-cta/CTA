@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2007/08/27 10:30:17 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2007/10/19 11:57:16 $ $Author: waldron $
  *
  *
  *
@@ -170,7 +170,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
 
   "JobSubmissionRequest",
   "VersionQuery",
-  "VersionResponse"
+  "VersionResponse",
+
+  "StageDiskCopyReplicaRequest"
 };
 
 //=============================================================================

@@ -161,8 +161,9 @@ namespace castor {
     OBJ_VersionResponse = 132,
 
     OBJ_RepackResponse = 133,
-    OBJ_RepackFileQry =134
+    OBJ_RepackFileQry = 134,
 
+    OBJ_StageDiskCopyReplicaRequest = 135
   };
 
   /**
@@ -234,7 +235,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 133;
+  static const unsigned int ObjectsIdsNb = 136;
 
   /**
    * Nb of ServicesIds currently existing
@@ -250,7 +251,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[133];
+  extern const char* ObjectsIdStrings[136];
 
   /**
    * Names of the differents Services, used to display
