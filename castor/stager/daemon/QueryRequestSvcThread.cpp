@@ -1,15 +1,29 @@
-/*
- * $Id: QueryRequestSvcThread.cpp,v 1.54 2007/08/27 16:00:00 sponcec3 Exp $
- */
+/******************************************************************************
+ *                castor/stager/daemon/QueryRequestSvcThread.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2007/10/19 12:58:28 $ $Author: itglp $
+ *
+ * Service thread for StageQueryRequest requests
+ *
+ * @author castor dev team
+ *****************************************************************************/
 
-/*
- * Copyright (C) 2004 by CERN/IT/PDP/DM
- * All rights reserved
- */
-
-/* ================================================================= */
-/* Local headers for threads : to be included before ANYTHING else   */
-/* ================================================================= */
 #include "Cthread_api.h"
 #include "Cmutex.h"
 
@@ -54,8 +68,7 @@
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileQryResponse.hpp"
 #include "castor/query/IQuerySvc.hpp"
-
-#include "stager_client_api.h"
+#include "castor/stager/dbService/QueryRequestSvcThread.hpp"
 #include "Cns_api.h"
 #include "u64subr.h"
 
@@ -69,30 +82,16 @@
 #define __MAJORRELEASE__ -1
 #define __MINORRELEASE__ -1
 
-#undef logfunc
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::stager::dbService::QueryRequestSvcThread::QueryRequestSvcThread() {
+}
 
-#include "stager_query_service.h"
-#include "stager_macros.h"
-#include "serrno.h"
-
-#undef NULL
-#define NULL 0
-
-/* ------------------------------------- */
-/* stager_query_select()                 */
-/*                                       */
-/* Purpose: Query 'select' part of service */
-/*                                       */
-/* Input:  n/a                           */
-/*                                       */
-/* Output:  (void **) output   Selected  */
-/*                                       */
-/* Return: 0 [OK] or -1 [ERROR, serrno]  */
-/* ------------------------------------- */
-
-
-
-EXTERN_C int DLL_DECL stager_query_select(void **output) {
+//-----------------------------------------------------------------------------
+// select
+//-----------------------------------------------------------------------------
+castor::IObject* castor::stager::dbService::QueryRequestSvcThread::select() {
   char *func =  "stager_query_select";
   int rc;
 
@@ -156,24 +155,10 @@ EXTERN_C int DLL_DECL stager_query_select(void **output) {
 }
 
 
-namespace castor {
-
-  namespace stager {
-
-    namespace queryService {
-
-
-      /** Dummy status code for non existing files */
-      int naStatusCode = 10000;
-
-
-      /**
-       * Sends a Response to a client
-       * In case of error, on writes a message to the log
-       * @param client the client where to send the response
-       * @param res the response to send
-       */
-      void replyToClient(castor::IClient* client,
+//-----------------------------------------------------------------------------
+// replyToClient
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::replyToClient(castor::IClient* client,
                          castor::rh::Response* res) {
         char *func =  "castor::stager::replyToClient";
         try {
@@ -188,8 +173,10 @@ namespace castor {
         }
       }
 
-
-      void sendEndResponse(castor::IClient* client,
+//-----------------------------------------------------------------------------
+// sendEndResponse
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::sendEndResponse(castor::IClient* client,
                            std::string reqId) {
         char *func =  "castor::stager::sendEndResponse";
         try {
@@ -204,8 +191,10 @@ namespace castor {
         }
       }
 
-
-      void setFileResponseStatus(castor::rh::FileQryResponse* fr,
+//-----------------------------------------------------------------------------
+// setFileResponseStatus
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::setFileResponseStatus(castor::rh::FileQryResponse* fr,
                                  castor::stager::DiskCopyInfo* dc,
                                  bool& foundDiskCopy) {
         char *func = "setFileResponseStatus";
@@ -278,10 +267,10 @@ namespace castor {
       }
 
 
-      /**
-       * Handles a filequery by fileId and replies to client.
-       */
-      void handle_fileQueryRequest_byFileName(castor::query::IQuerySvc* qrySvc,
+//-----------------------------------------------------------------------------
+// handleFileQueryRequestByFileName
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByFileName(castor::query::IQuerySvc* qrySvc,
                                               castor::IClient *client,
                                               std::string& fileName,
                                               u_signed64 svcClassId,
@@ -372,10 +361,10 @@ namespace castor {
       }
 
 
-      /**
-       * Handles a filequery by fileId and replies to client.
-       */
-      void handle_fileQueryRequest_byFileId(castor::query::IQuerySvc* qrySvc,
+//-----------------------------------------------------------------------------
+// handleFileQueryRequestByFileId
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByFileId(castor::query::IQuerySvc* qrySvc,
                                             castor::IClient *client,
                                             std::string &fid,
                                             std::string &nshost,
@@ -438,11 +427,10 @@ namespace castor {
         delete result;
       }
 
-
-      /**
-       * Handles a filequery by reqId/userTag or getLastRecalls version and replies to client.
-       */
-      void handle_fileQueryRequest_byRequest(castor::query::IQuerySvc* qrySvc,
+//-----------------------------------------------------------------------------
+// handleFileQueryRequestByRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByRequest(castor::query::IQuerySvc* qrySvc,
                                              castor::IClient *client,
                                              castor::stager::RequestQueryType reqType,
                                              std::string &val,
@@ -538,15 +526,10 @@ namespace castor {
       }
 
 
-      /**
-       * Handles a fileQueryRequest and replies to client.
-       * @param req the request to handle
-       * @param client the client where to send the response
-       * @param svcs the Services object to use
-       * @param qrySvc the stager service to use
-       * @param ad the address where to load/store objects in the DB
-       */
-      void handle_fileQueryRequest(castor::stager::Request* req,
+//-----------------------------------------------------------------------------
+// handleFileQueryRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest(castor::stager::Request* req,
                                    castor::IClient *client,
                                    castor::Services* svcs,
                                    castor::query::IQuerySvc* qrySvc,
@@ -655,14 +638,14 @@ namespace castor {
 
               // call the proper handling request
               if(ptype == REQUESTQUERYTYPE_FILENAME) {
-                handle_fileQueryRequest_byFileName(qrySvc,
+                handleFileQueryRequestByFileName(qrySvc,
                                                    client,
                                                    pval,
                                                    svcClassId,
                                                    req->reqId());
               } else if (ptype == REQUESTQUERYTYPE_FILEID) {
                 STAGER_LOG_DEBUG(NULL, "Calling handle_fileQueryRequest_byFileId");
-                handle_fileQueryRequest_byFileId(qrySvc,
+                handleFileQueryRequestByFileId(qrySvc,
                                                  client,
                                                  fid,
                                                  nshost,
@@ -670,7 +653,7 @@ namespace castor {
                                                  req->reqId());
               } else {
                 STAGER_LOG_DEBUG(NULL, "Calling handle_fileQueryRequest_byRequest");
-                handle_fileQueryRequest_byRequest(qrySvc,
+                handleFileQueryRequestByRequest(qrySvc,
                                                   client,
                                                   ptype,
                                                   pval,
@@ -735,49 +718,10 @@ namespace castor {
 
 
 
-      /**
-       * Handles a findRequestRequest and replies to client.
-       * @param req the request to handle
-       * @param client the client where to send the response
-       * @param svcs the Services object to use
-       * @param qrySvc the stager service to use
-       * @param ad the address where to load/store objects in the DB
-       */
-      void handle_findRequestRequest(castor::stager::Request* req,
-                                     castor::IClient *client,
-                                     castor::Services* svcs,
-                                     castor::query::IQuerySvc* qrySvc,
-                                     castor::BaseAddress &ad) {
-        STAGER_LOG_VERBOSE(NULL,"Handling findRequestRequest");
-      }
-
-
-
-      /**
-       * Handles a requestQueryRequest and replies to client.
-       * @param req the request to handle
-       * @param client the client where to send the response
-       * @param svcs the Services object to use
-       * @param qrySvc the stager service to use
-       * @param ad the address where to load/store objects in the DB
-       */
-      void handle_requestQueryRequest(castor::stager::Request* req,
-                                      castor::IClient *client,
-                                      castor::Services* svcs,
-                                      castor::query::IQuerySvc* qrySvc,
-                                      castor::BaseAddress &ad) {
-        STAGER_LOG_VERBOSE(NULL,"Handling requestQueryRequest");
-      }
-
-      /**
-       * Handles a DiskPoolQuery and replies to client.
-       * @param req the request to handle
-       * @param client the client where to send the response
-       * @param svcs the Services object to use
-       * @param qrySvc the stager service to use
-       * @param ad the address where to load/store objects in the DB
-       */
-      void handle_diskPoolQuery(castor::stager::Request* req,
+//-----------------------------------------------------------------------------
+// handleDiskPoolQuery
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::handle_diskPoolQuery(castor::stager::Request* req,
 				castor::IClient *client,
 				castor::Services* svcs,
 				castor::query::IQuerySvc* qrySvc,
@@ -873,15 +817,13 @@ namespace castor {
         sendEndResponse(client, req->reqId());
       }
 
-      /**
-       * Handles a VersionQuery and replies to client.
-       * @param req the request to handle
-       * @param client the client where to send the response
-       */
-      void handle_versionQuery(castor::stager::Request* req,
-                               castor::IClient *client) {
-
-        try {
+     
+//-----------------------------------------------------------------------------
+// handleVersionQuery
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::handleVersionQuery(
+  castor::stager::Request* req, castor::IClient *client) {
+  try {
           castor::query::VersionResponse result;
           result.setMajorVersion(MAJORVERSION);
           result.setMinorVersion(MINORVERSION);
@@ -894,29 +836,14 @@ namespace castor {
           serrno = e.code();
           char* func = "castor::stager::queryService::handle_versionQuery";
           STAGER_LOG_DB_ERROR(NULL, func, e.getMessage().str().c_str());
-        }
-
-      }
-
-    } // End of namespace query service
-
-  } // End of namespace stager
-
-} // End of namespace castor
+  }
+}
 
 
-  /* --------------------------------------- */
-  /* stager_query_process()                  */
-  /*                                         */
-  /* Purpose:Query 'process' part of service */
-  /*                                         */
-  /* Input:  (void *) output    Selection    */
-  /*                                         */
-  /* Output: n/a                             */
-  /*                                         */
-  /* Return: 0 [OK] or -1 [ERROR, serrno]    */
-  /* --------------------------------------- */
-EXTERN_C int DLL_DECL stager_query_process(void *output) {
+//-----------------------------------------------------------------------------
+// process
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::QueryRequestSvcThread::process(castor::IObject *param) {
 
   char *func =  "stager_query_process";
   STAGER_LOG_ENTER();
@@ -1052,27 +979,27 @@ EXTERN_C int DLL_DECL stager_query_process(void *output) {
   switch (req->type()) {
 
   case castor::OBJ_StageFileQueryRequest:
-    castor::stager::queryService::handle_fileQueryRequest
+    castor::stager::queryService::handleFileQueryRequest
       (req, client, svcs, qrySvc, ad);
     break;
 
   case castor::OBJ_StageFindRequestRequest:
-    castor::stager::queryService::handle_findRequestRequest
-      (req, client, svcs, qrySvc, ad);
+    //castor::stager::queryService::handle_findRequestRequest
+    //  (req, client, svcs, qrySvc, ad);
     break;
 
   case castor::OBJ_StageRequestQueryRequest:
-    castor::stager::queryService::handle_requestQueryRequest
-      (req, client, svcs, qrySvc, ad);
+    //castor::stager::queryService::handle_requestQueryRequest
+    //  (req, client, svcs, qrySvc, ad);
     break;
 
   case castor::OBJ_DiskPoolQuery:
-    castor::stager::queryService::handle_diskPoolQuery
+    castor::stager::queryService::handleDiskPoolQuery
       (req, client, svcs, qrySvc, ad);
     break;
 
   case castor::OBJ_VersionQuery:
-    castor::stager::queryService::handle_versionQuery
+    castor::stager::queryService::handleVersionQuery
       (req, client);
     break;
 
