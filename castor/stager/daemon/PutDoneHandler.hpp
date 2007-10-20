@@ -51,12 +51,6 @@ namespace castor{
       class StagerCnsHelper;
 
       class StagerPutDoneHandler : public virtual StagerJobRequestHandler{
-
-
-      private:
-	castor::stager::IJobSvc* jobService;
-	
-	
 	
       public:
 	/* constructor */

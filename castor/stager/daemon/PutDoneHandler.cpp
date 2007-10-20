@@ -64,53 +64,35 @@ namespace castor{
 	StagerReplyHelper* stgReplyHelper= NULL;
 	try{
 
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
 	 
 	  jobOriented();/* until it will be explored */
 	 
-	  /* ask about the state of the sources */
-	  stgRequestHelper->stagerService->isSubRequestToSchedule((stgRequestHelper->subrequest), this->sources);
-	  if(sources.size()<=0){
-	    castor::exception::Exception ex(EPERM);
-	    ex.getMessage()<<"(StagerPutDoneHandler handle) putDone without a put (sources.size <0)"<<std::endl;
-	    throw ex;
-	  }
 	  
-
-
-	  castor::IService* svc = castor::BaseObject::services()->service("JobSvc", castor::SVC_DBJOBSVC);
-	  if (0 == svc) {
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerPutDonHandler handle) Impossible to get the jobService"<<std::endl;
-	    throw ex;
-	  }
-	  this->jobService = dynamic_cast<castor::stager::IJobSvc*>(svc);
-	  if (0 == this->jobService) {
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerPutDoneHandler handle) Got a bad jobService"<<std::endl;
-	    throw ex;
-	  }
-	  
-	  jobService->prepareForMigration(stgRequestHelper->subrequest,0,0);
-	  
+	  if(stgRequestHelper->stagerService->processPutDone(stgRequestHelper->subrequest)){
 	 
-	  /* for the PutDone, if everything is ok, we archive the subrequest */
-	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-	 
-	  /* we never change the subrequestStatus, but we need the newSubrequestStatus for the replyToClient */	  
-	  this->newSubrequestStatus = SUBREQUEST_READY;
-	  
-	  /* replyToClient Part: */
-	  stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
-	  if(stgReplyHelper == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	    throw ex;
+	    /* for the PutDone, if everything is ok, we archive the subrequest */
+	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	    
+	    /* we never change the subrequestStatus, but we need the newSubrequestStatus for the replyToClient */	  
+	    this->newSubrequestStatus = SUBREQUEST_READY;
+	    
+	    /* replyToClient Part: */
+	    stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	    if(stgReplyHelper == NULL){
+	      castor::exception::Exception ex(SEINTERNAL);
+	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	      throw ex;
+	    }
+	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+	    stgReplyHelper->endReplyToClient(stgRequestHelper);
+	    delete stgReplyHelper->ioResponse;
+	    delete stgReplyHelper;
 	  }
-	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
-	  stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  delete stgReplyHelper->ioResponse;
-	  delete stgReplyHelper;
-	   
+
 	}catch(castor::exception::Exception e){
 	  if(stgReplyHelper != NULL){
 	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
