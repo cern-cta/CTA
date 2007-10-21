@@ -48,7 +48,7 @@ namespace castor{
 
 	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
 	/* to be called before the stgRmHandler->handle() */
-	virtual void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception);
+	virtual void preHandle() throw(castor::exception::Exception);
 
 	/* rm subrequest handler */
 	void handle() throw(castor::exception::Exception);
@@ -57,6 +57,7 @@ namespace castor{
 
       private: 
 	u_signed64 svcClassId;
+	void rmGetSvcClass() throw(castor::exception::Exception);
 	
       }; // end StagerRmHandler class
 
