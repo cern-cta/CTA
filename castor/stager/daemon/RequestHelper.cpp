@@ -55,16 +55,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define STAGER_OPTIONS 10
+
 
 
 namespace castor{
   namespace stager{
     namespace dbService{
       
-      /* contructor */
-      StagerRequestHelper::StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess) throw(castor::exception::Exception){
-	
+     
+      /* constructor-> return the request type, called on the different thread (job, pre, stg) */
+      StagerRequestHelper::StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception){	
 
 	castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper constructor) Getting the stager and db services")};
 	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 1, param);/*   */
@@ -108,32 +108,34 @@ namespace castor{
 	  throw ex;
 	}
 	
-
+	baseAddr->setCnvSvcName("DbCnvSvc");
+	baseAddr->setCnvSvcType(SVC_DBCNV);
+	
 	this->subrequest=subRequestToProcess;
 	if(this->subrequest == NULL){
 	  castor::exception::Exception ex(SEENTRYNFND);
-	  ex.getMessage()<<"(StagerRequestHelper setSubrequest) Got a NULL subrequest"<<std::endl;
+	  ex.getMessage()<<"(StagerRequestHelper constructor) Got a NULL subrequest"<<std::endl;
 	  throw ex;
 	}
 
-	this->types.resize(STAGER_OPTIONS);
-	ObjectsIds auxTypes[] = {OBJ_StageGetRequest,
-		       OBJ_StagePrepareToGetRequest,
-		       OBJ_StageRepackRequest,
-		       OBJ_StagePutRequest,
-		       OBJ_StagePrepareToPutRequest,
-		       OBJ_StageUpdateRequest,
-		       OBJ_StagePrepareToUpdateRequest,
-		       OBJ_StageRmRequest,
-		       OBJ_SetFileGCWeight,
-		       OBJ_StagePutDoneRequest};
 	
-	for(int i=0; i< STAGER_OPTIONS; i++){
-	  this->types.at(i) = auxTypes[i]; 
-	}
-
+	
 	this->default_protocol = "rfio";
-      
+	try{
+	  dbService->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false); 
+	}catch(castor::exception::Exception e){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerRequestHelper constructor) Exception throwed by the dbService->fillObj"<<std::endl;
+	  throw ex;
+	}
+	this->fileRequest=subrequest->request();
+	if(this->fileRequest == NULL){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the fileRequest"<<std::endl;
+	  throw ex;
+	}
+	
+	typeRequest = fileRequest->type();
       }
 
 
@@ -147,12 +149,7 @@ namespace castor{
 
 
 
-      /**********************/
-      /* baseAddr settings */ 
-      /********************/
-      /*** inline void StagerRequestHelper::settingBaseAddress() ***/
-      
-     
+   
 
 
       /**************************************************************************************/

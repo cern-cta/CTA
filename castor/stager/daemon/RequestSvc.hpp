@@ -6,11 +6,10 @@
 #ifndef REQUEST_SVC_HPP
 #define REQUEST_SVC_HPP 1
 
-
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/server/SelectProcessThread.hpp"
 #include "castor/Constants.hpp"
+
+#include "castor/stager/dbService/StagerRequestHelper.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -24,20 +23,18 @@
 namespace castor {
   namespace stager{
     namespace dbService {
-      
+
       class StagerRequestHelper;
       class StagerCnsHelper;
-    
+      
       class RequestSvc : public virtual castor::server::SelectProcessThread{
 	
       protected:
-	StagerRequestHelper* stgRequestHelper;
-	StagerCnsHelper* stgCnsHelper;
+	std::string nameRequestSvc;
+	
 	/* vector containing the types of subrequest that the specific RequestSvc(Job,Pre,Stg) can process*/
 	std::vector<ObjectsIds> types;
 	int typeRequest;
-	bool fileExist;
-	
 	
       public: 
 	/* empty destructor */
@@ -49,10 +46,8 @@ namespace castor {
 	virtual castor::IObject* select() throw(castor::exception::Exception) = 0;
 	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception) = 0;
 
-	/* function to perform the common flow for all RequestSvc (Job, Pre, Stg) */
-	void preprocess(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception);
 
-	void handleException(int errorCode, std::string errorMessage);
+	void handleException(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage);
 
 	
 	

@@ -74,7 +74,7 @@ namespace castor{
 
 
       /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
-      void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception)
+      void StagerUpdateHandler::preHandle() throw(castor::exception::Exception)
       {
 
 	/* get the uuid subrequest string version and check if it is valid */
@@ -140,7 +140,7 @@ namespace castor{
 	  /**********/
 	  
 	  jobOriented();
-	  int caseToSchedule = -1;
+	  
 	  
 	  /* huge or small flow?? */
 	  if(toRecreateCastorFile){/* we skip the processReplica part :) */    

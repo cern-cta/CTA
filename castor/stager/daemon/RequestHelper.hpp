@@ -111,48 +111,18 @@ namespace castor{
 	/* Cuuid_t thread safe variables */ 
 	Cuuid_t subrequestUuid;
 	Cuuid_t requestUuid;
-	std::vector<ObjectsIds> types;
-
-	std::string default_protocol;
-	/****************/
-	/* constructor */
-	/* destructor */
-	StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess) throw(castor::exception::Exception);
-	~StagerRequestHelper() throw();
-
 	
-	/**********************/
-	/* baseAddr settings */ 
-	/********************/
-	inline void settingBaseAddress(){
-	  baseAddr->setCnvSvcName("DbCnvSvc");
-	  baseAddr->setCnvSvcType(SVC_DBCNV);
-	}
+	std::string default_protocol;
 
-	/**************************************************************************/
-	/* get/create   fileRequest, and many subrequest's attributes            */
-	/************************************************************************/
-       
-	/* get the link (fillObject~SELECT) between the subrequest and its associated fileRequest  */ 
-	/* using dbService, and get the fileRequest */ 
-	inline void getFileRequest() throw(castor::exception::Exception){
-	  try{
-	    dbService->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false); /* 155 */ 
-	  }catch(castor::exception::Exception e){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRequestHelper getFileRequest) Exception throwed by the dbService->fillObj"<<std::endl;
-	    throw ex;
-	  }
-	  this->fileRequest=subrequest->request();
-	  if(this->fileRequest == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRequestHelper getFileRequest) Impossible to get the fileRequest"<<std::endl;
-	    throw ex;
-	  }
-	}
-      
-    
 
+
+
+	/****************************************************/
+	/*  called on the different thread (job, pre, stg) */
+	StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception);
+
+	/* destructor */
+	~StagerRequestHelper() throw();
 
 	/***********************************************************************************/
 	/* get the link (fillObject~SELECT) between fileRequest and its associated client */

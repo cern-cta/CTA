@@ -57,17 +57,16 @@ namespace castor{
 	void jobOriented() throw(castor::exception::Exception);
 
 
-	/****************************************************************************************/
-	/* after asking the stagerService is it is toBeScheduled */
-	/* - do a normal tape recall*/
-	/* - check if it is to replicate:*/
-	/*         +processReplica if it is needed: */
-	/*                    +make the hostlist if it is needed */
-	/****************************************************************************************/
-	void switchScheduling(int caseToSchedule) throw(castor::exception::Exception);
-	
-	
-	/************************************************************************************/
+	/********************************************/	
+	/* for Get, Update                         */
+	/*     switch(getDiskCopyForJob):         */                                     
+	/*        case 0,1: (staged) jobManager  */
+	/*        case 2: (waitRecall) createTapeCopyForRecall */
+	/* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
+	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception); 
+
+
+	/**********************************************/
 	/* return if it is to replicate considering: */
 	/* - sources.size() */
 	/* - maxReplicaNb */

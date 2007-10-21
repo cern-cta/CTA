@@ -78,7 +78,7 @@ namespace castor{
       /*        case 0: (staged) nothing to be done */                                   
       /*        case 1: (staged) waitD2DCopy  */
       /*        case 2: (waitRecall) createTapeCopyForRecall */
-      void switchDiskCopiesForJob() throw (castor::exception::Exception)
+      void StagerPrepareToUpdateHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
 	
 	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
@@ -101,7 +101,7 @@ namespace castor{
 	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
 	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-	      stagerRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
 	    }
 	    
 	    /* and we have to notify the jobManager */
@@ -110,7 +110,7 @@ namespace castor{
 	  }break;
 	case 2:
 	  {
-	    stgRequestHelper->stagerService->createTapeCopySegmentsForRecall(stgRequestHelper->castorFile,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
 	    /* though we wont update the subrequestStatus, we need to flag it for the stgReplyHelper */
 	    this->newSubrequestStatus= SUBREQUEST_READY;
 	  }break;
@@ -122,7 +122,7 @@ namespace castor{
 
       
       /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
-      void StagerPrepareToUpdateHandler::preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception)
+      void StagerPrepareToUpdateHandler::preHandle() throw(castor::exception::Exception)
       {
 	/* get the uuid subrequest string version and check if it is valid */
 	/* we can create one !*/
@@ -189,7 +189,7 @@ namespace castor{
 	  jobOriented();
 
 	  
-	  int caseToSchedule=-1;
+	 
 	  /*************************/
 	  /* huge or small flow?? */
 	  /***********************/

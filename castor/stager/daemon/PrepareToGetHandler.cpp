@@ -55,16 +55,16 @@ namespace castor{
       /*        case 0: (staged) archiveSubrequest */                                   
       /*        case 1: (staged) waitD2DCopy  */
       /*        case 2: (waitRecall) createRecallCandidate */
-      void switchDiskCopiesForJob() throw (castor::exception::Exception)
+      void StagerPrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
 	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
 	case 0:
 	  {
 	    this->newSubrequestStatus=SUBREQUEST_READY;
 	    if((this->newSubrequestStatus) != (this->currentSubrequestStatus)){
-	      stgRequestHelper->subrequest->setStatus();
+	      stgRequestHelper->subrequest->setStatus(newSubrequestStatus);
 	      /* since newSubrequestStatus == SUBREQUEST_READY, we haveto setGetNextStatus */
-	      stgRequesHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
 	      
 	      /* we are gona replyToClient so we dont updateRep on DB explicitly */
 	    }
@@ -87,7 +87,7 @@ namespace castor{
 	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
 	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-	      stagerRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
 	    }
 
 	    /* and we have to notify the jobManager */
@@ -96,7 +96,7 @@ namespace castor{
 	  }break;
 	case 2:
 	  {
-	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->castorFile,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
 	    /* though we wont update the subrequestStatus, we need to flag it for the stgReplyHelper */
 	    this->newSubrequestStatus= SUBREQUEST_READY;
 	  }break;

@@ -55,6 +55,12 @@ namespace castor{
       {
 	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
+
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+	  
 	  /* execute the main function for the setFileGCWeight request   */
 	  /* basically a call to the corresponding stagerService method */
 	  /* passing the SetFileGCWeight object                        */

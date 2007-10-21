@@ -103,13 +103,14 @@ namespace castor{
       /*     switch(getDiskCopyForJob):         */                                     
       /*        case 0,1: (staged) jobManager  */
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-      virtual void switchDiskCopiesForJob() throw(castor::exception::Exception)
+      void StagerJobRequestHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
+
 	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
 	case 0: /* process the replicas and call the jobManager   */
 	case 1:
 	  {
-	    bool isToRecplicate= replicaSwitch();
+	    bool isToReplicate= replicaSwitch();
 	    if(isToReplicate){
 	      processReplica();
 	    }
@@ -122,8 +123,9 @@ namespace castor{
 	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
 	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-	      stagerRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */
 	    }
+
 
 	    /* and we have to notify the jobManager */
 	    this->notifyJobManager();
@@ -131,10 +133,9 @@ namespace castor{
 
 	case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
 	  {
+	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
 	    
 	  }break;
-
-
 
 	}//end switch
 

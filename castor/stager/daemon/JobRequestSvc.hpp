@@ -27,7 +27,6 @@ namespace castor {
       
     
       class JobRequestSvc : public virtual castor::stager::dbService::RequestSvc{
-
 	
       public: 
 	/* constructor */

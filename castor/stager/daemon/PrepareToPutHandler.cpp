@@ -59,6 +59,11 @@ namespace castor{
 	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
 	  
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+	  
 	  jobOriented();
 	  
 	  /* use the stagerService to recreate castor file */

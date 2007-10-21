@@ -48,6 +48,7 @@ namespace castor{
       class StagerPrepareToUpdateHandler : public virtual StagerJobRequestHandler{
 
       private:
+	bool fileExist;
 	/* flag to schedule or to recreateCastorFile depending if the file exists... */
 	bool toRecreateCastorFile;
 
@@ -71,7 +72,7 @@ namespace castor{
 	/* to be called before the stgPrepareToUpdate->handle() */
 	/* set the internal attribute "toRecreateCastorFile depending on fileExist" */
 	/* which determines the real flow of the handler */
-	virtual void preHandle(castor::stager::SubRequest* subrequest) throw(castor::exception::Exception);
+	virtual void preHandle() throw(castor::exception::Exception);
 
 	/* PrepareToUpdate request handler */
 	void handle() throw(castor::exception::Exception);
