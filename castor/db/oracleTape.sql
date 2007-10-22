@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.529 $ $Date: 2007/10/22 13:39:19 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.530 $ $Date: 2007/10/22 13:43:17 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2101,8 +2101,8 @@ BEGIN
         rstatus := 1; -- status WAITDISK2DISKCOPY
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- No disk copy found on any FileSystem. This can happen only if a diskcopy was available
-        -- and got disabled before this job got scheduled. Bad luck, we have to go for a recall
-        -- XXX
+        -- and got disabled before this job got scheduled. Bad luck, we restart from scratch
+        UPDATE SubRequest SET status = 1 WHERE id = srId; 
     END;
   END;
 END;
