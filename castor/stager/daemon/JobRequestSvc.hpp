@@ -30,7 +30,7 @@ namespace castor {
 	
       public: 
 	/* constructor */
-	JobRequestSvc() throw();
+	JobRequestSvc(std::string jobManagerHost, int jobManagerPort) throw();
 	~JobRequestSvc() throw();
 
 	/***************************************************************************/
@@ -39,6 +39,9 @@ namespace castor {
 	virtual castor::IObject* select() throw(castor::exception::Exception);
 	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
 
+        /// jobManager host and port
+        std::string m_jobManagerHost;
+        int m_jobManagerPort;
 
 
       };// end class JobRequestSvc

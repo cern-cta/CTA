@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/10/18 16:48:52 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/10/22 15:19:42 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -74,18 +74,36 @@ int main(int argc, char* argv[]){
   try{
 
     castor::stager::dbService::StagerMainDaemon stagerDaemon;
+    
+    // read the jobManager notification port
+	  int jobManagerPort = 0;
+	  char *value = getconfent("JOBMANAGER", "NOTIFYPORT", 0);
+	  if(value) {
+	    jobManagerPort = std::strtol(value, 0, 10);
+    }
+	  if ((jobManagerPort <= 0) || (jobManagerPort > 65535)) {
+	    castor::exception::Exception e(EINVAL);
+	    e.getMessage() << "Invalid JOBMANAGER NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
+	    throw e;
+	  }
+	  std::string jobManagerHost = getconfent("JOBMANAGER", "HOST", 0);
+    if(jobManagerHost == "") {
+	    castor::exception::Exception e(EINVAL);
+	    e.getMessage() << "No JOBMANAGER HOST value configured" << std::endl;
+	    throw e;
+	  }
 
     /*******************************/
     /* thread pools for the stager */
     /*******************************/
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("JobRequestSvcThread", 
-        new castor::stager::dbService::JobRequestSvc(), 
+        new castor::stager::dbService::JobRequestSvc(jobManagerHost, jobManagerPort), 
           getConfigPort("JOBREQNOTIFYPORT", STAGER_JOBREQNOTIFYPORT)));
     
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("PrepRequestSvcThread", 
-        new castor::stager::dbService::PreRequestSvc(),
+        new castor::stager::dbService::PreRequestSvc(jobManagerHost, jobManagerPort),
           getConfigPort("PREPREQNOTIFYPORT", STAGER_PREPREQNOTIFYPORT)));
 
 

@@ -28,7 +28,7 @@ namespace castor {
 	
       public: 
 	/* constructor */
-	PreRequestSvc() throw();
+	PreRequestSvc(std::string jobManagerHost, int jobManagerPort) throw();
 	~PreRequestSvc() throw();
 
 	/***************************************************************************/
@@ -36,6 +36,12 @@ namespace castor {
 	/*************************************************************************/
 	virtual castor::IObject* select() throw(castor::exception::Exception);
 	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
+  
+      private:
+        
+        /// jobManager host and port
+        std::string m_jobManagerHost;
+        int m_jobManagerPort;
 
       };// end class PreRequestSvc
       

@@ -91,7 +91,7 @@ namespace castor{
 	    }
 
 	    /* and we have to notify the jobManager */
-	    this->notifyJobManager();
+	    m_notifyJobManager = true;
 	    
 	  }break;
 	case 2:

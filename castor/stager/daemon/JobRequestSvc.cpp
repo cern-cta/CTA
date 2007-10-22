@@ -41,6 +41,7 @@
 #include "castor/Services.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/BaseObject.hpp"
+#include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/Constants.hpp"
 
@@ -48,13 +49,11 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
+
 #include "serrno.h"
 #include <errno.h>
 #include <iostream>
 #include <string>
-
-#define JOBREQ_HANDLERS 3
-
 
 
 namespace castor{
@@ -65,19 +64,10 @@ namespace castor{
       /****************/
       /* constructor */
       /**************/
-      JobRequestSvc::JobRequestSvc() throw()
+      JobRequestSvc::JobRequestSvc(std::string jobManagerHost, int jobManagerPort) throw() :
+        m_jobManagerHost(jobManagerHost), m_jobManagerPort(jobManagerPort)
       {
-	this->nameRequestSvc = "JobRequestSvc";
-	
-	this->types.resize(JOBREQ_HANDLERS);
-	ObjectsIds auxTypes[] = {OBJ_StageGetRequest,
-				 OBJ_StagePutRequest,
-				 OBJ_StageUpdateRequest};
-	
-	for(int i= 0; i< JOBREQ_HANDLERS; i++){
-	  this->types.at(i) = auxTypes[i];
-	}
-	this->nameRequestSvc = "JobRequestSvc";
+	this->nameRequestSvc = "JobReqSvc";
       }
 
      
@@ -114,7 +104,7 @@ namespace castor{
       void JobRequestSvc::process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception){
 	StagerCnsHelper* stgCnsHelper= NULL;
 	StagerRequestHelper* stgRequestHelper= NULL;
-	StagerRequestHandler* stgRequestHandler = NULL;
+	StagerJobRequestHandler* stgRequestHandler = NULL;
 
 	try {
 
@@ -185,6 +175,10 @@ namespace castor{
 	  /* inside the handle(), call to preHandle() */
 
 	  stgRequestHandler->handle();
+
+    if (stgRequestHandler->notifyJobManager()) {
+   	  castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 1);
+    }
 
 	  /******************************************/
 	

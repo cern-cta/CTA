@@ -94,36 +94,12 @@ namespace castor{
 	/* and submit the job  */
 	/****************************************************************************************/
 	void jobManagerPart() throw(castor::exception::Exception);
+  
+  
+  bool notifyJobManager() {
+    return m_notifyJobManager;
+  }
 
-
-	/********************************************************************/
-	/* for Get, Update, put to sent the notification to the jobManager */
-	/******************************************************************/
-	void StagerJobRequestHandler::notifyJobManager() throw(castor::exception::Exception);
-	
-
-	/* coming from the latest stager_db_service.c */
-	/* --------------------------------------------------- */
-	/* sendNotification()                                  */
-	/*                                                     */
-	/* Send a notification message to another CASTOR2      */
-	/* daemon using the NotificationThread model. This     */
-	/* will wake up the process and trigger it to perform  */
-	/* a dedicated action.                                 */
-	/*                                                     */
-	/* This function is copied from BaseServer.cpp. We     */
-	/* could have wrapped the C++ call to be callable in   */
-	/* C. However, as the stager is being re-written in    */
-	/* C++ anyway we take this shortcut.                   */
-	/*                                                     */
-	/* Input:  (const char *) host - host to notify        */
-	/*         (const int) port - notification por         */
-	/*         (const int) nbThreads - number of threads   */
-	/*                      to wake up on the server       */
-	/*                                                     */
-	/* Return: nothing (void). All errors ignored          */
-	/* --------------------------------------------------- */
-	void sendNotification(const char *host, const int port, const int nbThreads);
       protected:
 	
 	int maxReplicaNb;
@@ -136,6 +112,8 @@ namespace castor{
 	std::list<castor::stager::DiskCopyForRecall *> sources;
 
 	int xsize;	
+  
+  bool m_notifyJobManager;
 
       }; //end class StagerJobRequestHandler
 

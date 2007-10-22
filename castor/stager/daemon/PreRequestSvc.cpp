@@ -52,6 +52,7 @@
 #include "castor/Services.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/BaseObject.hpp"
+#include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/Constants.hpp"
 
@@ -76,19 +77,11 @@ namespace castor{
       /****************/
       /* constructor */
       /**************/
-      PreRequestSvc::PreRequestSvc() throw()
+      PreRequestSvc::PreRequestSvc(std::string jobManagerHost, int jobManagerPort) throw() :
+        m_jobManagerHost(jobManagerHost), m_jobManagerPort(jobManagerPort)
       {
 	
-	this->nameRequestSvc = "PreRequestSvc";
-	this->types.resize(PREREQ_HANDLERS);
-	ObjectsIds auxTypes[] = {OBJ_StagePrepareToGetRequest,
-				 OBJ_StageRepackRequest,
-				 OBJ_StagePrepareToPutRequest,
-				 OBJ_StagePrepareToUpdateRequest};
-	
-	for(int i= 0; i< PREREQ_HANDLERS; i++){
-	  this->types.at(i) = auxTypes[i];
-	}
+	this->nameRequestSvc = "PrepReqSvc";
 	
 	
 	/* Initializes the DLF logging */
@@ -132,7 +125,7 @@ namespace castor{
       void PreRequestSvc::process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception){
 	StagerCnsHelper* stgCnsHelper= NULL;
 	StagerRequestHelper* stgRequestHelper= NULL;
-	StagerRequestHandler* stgRequestHandler = NULL;
+	StagerJobRequestHandler* stgRequestHandler = NULL;
 
 	try {
 
@@ -216,6 +209,11 @@ namespace castor{
 	  /* inside the handle(), call to preHandle() */
 
 	  stgRequestHandler->handle();
+    
+    if (stgRequestHandler->notifyJobManager()) {
+   	  castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 1);
+    }
+
 
 	  /********************************************/
 	 

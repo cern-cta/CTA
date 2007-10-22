@@ -187,7 +187,7 @@ namespace castor{
 		stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
 	      }
 	      /* and we have to notify the jobManager */
-	      this->notifyJobManager();
+	      m_notifyJobManager = true;
 	      
 	    }/* notSchedule && diskCopyForRecall != NULL  */
 

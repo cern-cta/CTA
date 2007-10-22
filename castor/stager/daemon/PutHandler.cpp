@@ -129,7 +129,7 @@ namespace castor{
 	      }
 	      /* and we have to notify the jobManager */
 	      /* do the same for the special Update and for the put on the handle() method */
-	      this->notifyJobManager();
+	      m_notifyJobManager = true;
 	      
 	  }/* diskCopyForRecall != NULL */
 	  
