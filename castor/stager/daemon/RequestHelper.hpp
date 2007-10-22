@@ -62,7 +62,7 @@ namespace castor{
       class castor::BaseAddress;
       class castor::stager::SubRequest;
       class castor::stager::FileRequest;
-      class castor::stager::IClient;
+      class castor::IClient;
       class castor::stager::SvcClass;
       class castor::stager::CastorFile;
       class castor::stager::FileClass;
