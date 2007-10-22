@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.528 $ $Date: 2007/10/18 16:42:22 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.529 $ $Date: 2007/10/22 13:39:19 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -205,6 +205,14 @@ BEGIN
   COMMIT;
 END;
 
+/* define the service handlers for the appropriate sets of stage request objects */
+UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type in (35, 40, 44);
+UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type in (36, 37, 38, 119);
+UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type in (39, 42, 95);
+UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type in (33, 34, 41, 103, 131);
+UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type in (60, 64, 65, 67, 78, 79, 80, 93);
+UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type in (73, 74, 83);
+COMMIT;
 
 /****************************************************************/
 /* NbTapeCopiesInFS to work around ORACLE missing optimizations */
@@ -2092,10 +2100,9 @@ BEGIN
         INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
         rstatus := 1; -- status WAITDISK2DISKCOPY
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- No disk copy found on any FileSystem. This is an error because
-        -- in case of tape recall the job should not have started.
-        -- Raise error to the Job service
-        raise_application_error(-20105, 'No valid DiskCopy found on any filesystem for this job');
+        -- No disk copy found on any FileSystem. This can happen only if a diskcopy was available
+        -- and got disabled before this job got scheduled. Bad luck, we have to go for a recall
+        -- XXX
     END;
   END;
 END;
