@@ -54,9 +54,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-/* (from the latest stager_db_service.cpp) copied from the JobManagerDaemon.cpp */
-#define DEFAULT_NOTIFICATION_PORT 15011
-
 
 namespace castor{
   namespace stager{
@@ -220,11 +217,6 @@ namespace castor{
       }
       
       
-      
-      
-      
-      
-      
       /************************************************************************************/
       /* process the replicas = build rfs string (and hostlist) */
       /* - rfs + = ("|") + diskServerName + ":" + mountPoint */
@@ -234,37 +226,12 @@ namespace castor{
       {	//it will represent the case1:
         //build "rfs" (and "hostlist" if it is defined)
         
-        std::string fullMountPoint;
-        std::string diskServerName;
-        
-        /* rfs and hostlist are attributes !*/ 
-        /* rfs.clear(); */
-        /* rfs.resize(CA_MAXRFSLINELEN);*/
-        
-        
         std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
-        for(int iReplica=0;(iReplica<maxReplicaNb) && (iter != sources.end()) && (rfs.size() < CA_MAXRFSLINELEN); iReplica++, iter++){
-          
-          diskServerName=(*iter)->diskServer();
-          fullMountPoint=diskServerName+":"+(*iter)->mountPoint();
-          
-          /* coming from the latest stager_db_service.c */
-          if((rfs.empty() == true) && (fullMountPoint.size() > CA_MAXRFSLINELEN)){
-            castor::exception::Exception ex(SENAMETOOLONG);
-            ex.getMessage()<<"(Stager_Handler) Not enough space for filesystem constraint"<<std::endl;
-            throw ex;
-          }else if(rfs.empty()== false){
-            if((fullMountPoint.size() + 1) > CA_MAXRFSLINELEN) break; /* we dont add it! */
-            /* +1 because of the "|"*/
-          }
-          
-          if(this->rfs.empty()==false){
-            this->rfs= (this->rfs) + "|";
-          }
-          this->rfs = (this->rfs) + fullMountPoint;
-          
-        }//end for(iReplica)    
-        
+        for(int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end())); iReplica++, iter++){
+          if(!rfs.empty())
+            rfs = "|";
+          rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
+        }        
       }
       
       
