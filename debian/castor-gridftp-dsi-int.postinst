@@ -9,7 +9,3 @@ echo "35 1,7,13,19 * * * root cat /etc/grid-security/grid-mapfile | awk '{split(
 cat /etc/grid-security/grid-mapfile | awk '{split($0,str,"\""); printf "\"%s\" stage\n",str[2];}' >/etc/grid-security/grid-mapfile-stage
 
 chown stage:st /var/spool/gridftp
-cp -f /etc/grid-security/hostcert.pem /etc/grid-security/hostcert-stage.pem
-chown stage:st /etc/grid-security/hostcert-stage.pem
-cp -f /etc/grid-security/hostkey.pem /etc/grid-security/hostkey-stage.pem
-chown stage:st /etc/grid-security/hostkey-stage.pem
