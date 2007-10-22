@@ -42,7 +42,7 @@ namespace castor{
         ARCHIVE             = 14,
         ARCHIVE_ALL         = 15,
 	GET_STATUS_NS       = 16,
-	GET_ERRORS          =17
+	GET_ERRORS          = 17
         };
   }
 }
