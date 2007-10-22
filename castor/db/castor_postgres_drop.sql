@@ -200,9 +200,6 @@ DROP TABLE StageRepackRequest;
 /* SQL statements for type StageDiskCopyReplicaRequest */
 DROP TABLE StageDiskCopyReplicaRequest;
 
-/* SQL statements for type StageDiskCopyReplicaRequest */
-DROP TABLE StageDiskCopyReplicaRequest;
-
 /* SQL statements for type TapeAccessSpecification */
 DROP TABLE TapeAccessSpecification;
 
