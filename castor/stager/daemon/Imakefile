@@ -37,7 +37,6 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 LIBS = -lshift -lcastorCnvs 
 DBSERVICEDAEMONBIN_SRCS = \
 	StagerCnsHelper.cpp \
-	StagerDBService.cpp \
 	StagerGetHandler.cpp \
 	StagerJobRequestHandler.cpp \
 	StagerMainDaemon.cpp \
@@ -52,6 +51,12 @@ DBSERVICEDAEMONBIN_SRCS = \
 	StagerRmHandler.cpp \
 	StagerSetGCHandler.cpp \
 	StagerUpdateHandler.cpp \
+	RequestSvc.cpp\
+	PreRequestSvc.cpp\
+	StgRequestSvc.cpp\
+	JobRequestSvc.cpp\
+	StagerRequestHandler.cpp\
+
 
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
@@ -63,15 +68,15 @@ LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
 LD = g++
 GLOBLIB = -lshift -lcastorCnvs
 
-PROGS_STAGER = ProgramTargetName(stagerMainDaemon)
-IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerMainDaemon))
+PROGS_STAGER = ProgramTargetName(stagerMainDaemonNew)
+IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerMainDaemonNew))
 
 all:$(DBSERVICEDAEMONBIN_OBJS) $(PROGS_STAGER)
 
 MakeDepSharedLibrary(../../shlib,castorCnvs)
 MakeDepSharedLibrary(../../shlib,shift)
 
-NormalProgramTarget(stagerMainDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(GLOBLIB))
+NormalProgramTarget(stagerMainDaemonNew,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(GLOBLIB))
 
 Makefiles:
 
@@ -85,7 +90,7 @@ depend:
 
 install: $(BIN) $(IPROGS_STAGER)
 
-InstallProgram(stagerMainDaemon,$(BIN),root,bin,0750)
+InstallProgram(stagerMainDaemonNew,$(BIN),root,bin,0750)
 MakeDir($(BIN),root,bin,0755)
 
 install.man: $(MANDIR) $(MANPAGES)
