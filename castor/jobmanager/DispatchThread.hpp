@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: DispatchThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/22 17:57:19 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -66,14 +66,14 @@ namespace castor {
        * method is called periodically and also woken up by external 
        * notification from the stager.
        */
-      virtual castor::IObject* select();
+      virtual castor::IObject* select() throw();
 
       /**
        * Dispatch a job to the forked process pool assigning the task to a
        * child process for execution.
        * @param param The IObject returned by select
        */
-      virtual void process(castor::IObject *param);
+      virtual void process(castor::IObject *param) throw();
 
     private:
 

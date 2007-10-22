@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/08/16 12:40:27 $ $Author: waldron $
+ * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/22 17:57:18 $ $Author: itglp $
  *
  * A thread used to dispatch subrequest's in a SUBREQUEST_READYFORSCHED into 
  * the scheduler using the forked process pool
@@ -64,7 +64,7 @@ castor::jobmanager::DispatchThread::DispatchThread
 //-----------------------------------------------------------------------------
 // select
 //-----------------------------------------------------------------------------
-castor::IObject *castor::jobmanager::DispatchThread::select() {
+castor::IObject *castor::jobmanager::DispatchThread::select() throw() {
   try {
     castor::jobmanager::JobSubmissionRequest *result = 
       m_jobManagerService->jobToSchedule();
@@ -90,7 +90,7 @@ castor::IObject *castor::jobmanager::DispatchThread::select() {
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::jobmanager::DispatchThread::process(castor::IObject *param) {
+void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw() {
 
   // The only time dispatch fails is when the select() call of the process
   // pool fails or the process pool is in the process of being shut down.
