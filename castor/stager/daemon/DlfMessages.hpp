@@ -11,172 +11,177 @@ namespace castor{
   namespace stager{
     namespace dbService{
 
-      /* Constants related with the Stager (Main) Daemon */
-      /* to be added: related with the keyboard interruption, timeout and so on ?!?!?! */
+      
+   
 
-#define STAGER_DAEMON_START 1
-#define STAGER_DAEMON_FLOW 2
-#define STAGER_DAEMON_ERROR_CONFIG 3
-#define STAGER_DAEMON_EXCEPTION 4
-#define STAGER_DAEMON_EXCEPTION_GENERAL 5
-#define STAGER_DAEMON_FINISHED 6
+   enum StgDlfMessages{
 
-
-#define STAGER_DAEMON_POOLCREATION 7
-
-    
-
-      /*******************************************************************************************************/
-      /* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
-      /*****************************************************************************************************/
-
-      /************************/
-      /* JobRequestSvcThread */
-
-      /* JobRequestSvc flow */
-#define STAGER_JOBREQSVC_CREATION 8
-#define STAGER_JOBREQSVC_SELECT 9
-#define STAGER_JOBREQSVC_PROCESS 10
-#define STAGER_JOBREQSVC_EXCEPTION 11
-#define STAGER_JOBREQSVC_EXCEPTION_GENERAL 12
-
-
-
-      /* StagerGetHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper} */
-#define STAGER_GET 13
-#define STAGER_GET_EXCEPTION 14
-#define STAGER_GET_EXCEPTION_GENERAL 15
-
-      /* StagerUpdateHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper} */
-#define STAGER_UPDATE 16
-#define STAGER_UPDATE_EXCEPTION 17
-#define STAGER_UPDATE_EXCEPTION_GENERAL 18
-
-      /* StagerPutHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper} */
-#define STAGER_PUT 19
-#define STAGER_PUT_EXCEPTION 20
-#define STAGER_PUT_EXCEPTION_GENERAL 21
+     /* Constants related with the Stager (Main) Daemon */
+     /* to be added: related with the keyboard interruption, timeout and so on ?!?!?! */
+     STAGER_DAEMON_START =1,
+     STAGER_DAEMON_FLOW =2,
+     STAGER_DAEMON_ERROR_CONFIG =3,
+     STAGER_DAEMON_EXCEPTION = 4,
+     STAGER_DAEMON_EXCEPTION_GENERAL =5,
+     STAGER_DAEMON_FINISHED = 6,
+     
+     
+     STAGER_DAEMON_POOLCREATION = 7,
+     
+     
+     
+     /*******************************************************************************************************/
+     /* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
+     /*****************************************************************************************************/
+     
+     /************************/
+     /* JobRequestSvcThread */
+     
+     /* JobRequestSvc flow */
+     STAGER_JOBREQSVC_CREATION = 11,
+     STAGER_JOBREQSVC_SELECT = 12,
+     STAGER_JOBREQSVC_PROCESS = 13,
+     STAGER_JOBREQSVC_EXCEPTION = 14,
+     STAGER_JOBREQSVC_EXCEPTION_GENERAL = 15,
+     
 
 
-      /************************/
-      /* PreRequestSvcThread */
+     /* StagerGetHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper} */
+     STAGER_GET = 21,
+     STAGER_GET_EXCEPTION = 22,
+     STAGER_GET_EXCEPTION_GENERAL = 23,
+     
+     /* StagerUpdateHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper} */
+     STAGER_UPDATE = 26,
+     STAGER_UPDATE_EXCEPTION = 27,
+     STAGER_UPDATE_EXCEPTION_GENERAL = 28,
+     
+     /* StagerPutHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper} */
+     STAGER_PUT = 31,
+     STAGER_PUT_EXCEPTION = 32,
+     STAGER_PUT_EXCEPTION_GENERAL = 33,
+     
 
-      /* PreRequestSvc flow */
-#define STAGER_PREREQSVC_CREATION 22
-#define STAGER_PREREQSVC_SELECT 23
-#define STAGER_PREREQSVC_PROCESS 24
-#define STAGER_PREREQSVC_EXCEPTION 25
-#define STAGER_PREREQSVC_EXCEPTION_GENERAL 26
+     /************************/
+     /* PreRequestSvcThread */
+     
+     /* PreRequestSvc flow */
+     STAGER_PREREQSVC_CREATION = 41,
+     STAGER_PREREQSVC_SELECT = 42,
+     STAGER_PREREQSVC_PROCESS = 43,
+     STAGER_PREREQSVC_EXCEPTION = 44,
+     STAGER_PREREQSVC_EXCEPTION_GENERAL = 45, 
+     
 
+     /* StagerRepackHandler */
+     STAGER_REPACK = 51,
+     STAGER_REPACK_EXCEPTION = 52,
+     STAGER_REPACK_EXCEPTION_GENERAL = 53,
+     
+     /* StagerPrepareToGetHandler */
+     STAGER_PREPARETOGET = 56, 
+     STAGER_PREPARETOGET_EXCEPTION = 57,
+     STAGER_PREPARETOGET_EXCEPTION_GENERAL = 58,
+     
+     /* StagerPrepareToUpdateHandler */
+     STAGER_PREPARETOUPDATE = 61,
+     STAGER_PREPARETOUPDATE_EXCEPTION = 62,
+     STAGER_PREPARETOUPDATE_EXCEPTION_GENERAL = 63,
+     
+     /* StagerPrepareToPutHandler */
+     STAGER_PREPARETOPUT = 66,
+     STAGER_PREPARETOPUT_EXCEPTION = 67,
+     STAGER_PREPARETOPUT_EXCEPTION_GENERAL = 68,
+     
 
-      /* StagerRepackHandler */
-#define STAGER_REPACK 27
-#define STAGER_REPACK_EXCEPTION 28
-#define STAGER_REPACK_EXCEPTION_GENERAL 29
-
-      /* StagerPrepareToGetHandler */
-#define STAGER_PREPARETOGET 30
-#define STAGER_PREPARETOGET_EXCEPTION 31
-#define STAGER_PREPARETOGET_EXCEPTION_GENERAL 32
-
-      /* StagerPrepareToUpdateHandler */
-#define STAGER_PREPARETOUPDATE 33
-#define STAGER_PREPARETOUPDATE_EXCEPTION 34
-#define STAGER_PREPARETOUPDATE_EXCEPTION_GENERAL 35
-
-      /* StagerPrepareToPutHandler */
-#define STAGER_PREPARETOPUT 36
-#define STAGER_PREPARETOPUT_EXCEPTION 37
-#define STAGER_PREPARETOPUT_EXCEPTION_GENERAL 38
-
-
-      /*************************/
-      /* StgRequestSvcThread  */
-
-      /* StgRequestSvc flow */
-#define STAGER_STGREQSVC_CREATION 39
-#define STAGER_STGREQSVC_SELECT 40 
-#define STAGER_STGREQSVC_PROCESS 41
-#define STAGER_STGREQSVC_EXCEPTION 42
-#define STAGER_STGREQSVC_EXCEPTION_GENERAL 43
-
-
-      /* StagerSetGCHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper, stgReplyHelper} */
-#define STAGER_SETGC 44
-#define STAGER_SETGC_EXCEPTION 45
-#define STAGER_SETGC_EXCEPTION_GENERAL 46
-
-
-      /* StagerRmHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper, stgReplyHelper} */
-#define STAGER_RM 47
-#define STAGER_RM_EXCEPTION 48
-#define STAGER_RM_EXCEPTION_GENERAL 49
-
-
-
-
-      /* StagerPutDoneHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper, stgReplyHelper} */
-#define STAGER_PUTDONE 50
-#define STAGER_PUTDONE_EXCEPTION 51
-#define STAGER_PUTDONE_EXCEPTION_GENERAL 52
-
-
-      /*************************/
-      /* StagerRequestHandler */
-#define STAGER_REQHANDLER_METHOD 53
-#define STAGER_REQHANDLER_EXCEPTION 54
-#define STAGER_REQHANDLER_EXCEPTION_GENERAL 55
-
-      /****************************/
-      /* StagerJobRequestHandler */
-#define STAGER_JOBREQHANDLER_METHOD 56
-#define STAGER_JOBREQHANDLER_EXCEPTION 57
-#define STAGER_JOBREQHANDLER_EXCEPTION_GENERAL 58
-
-
-      /************************/
-      /* StagerRequestHelper */
-#define STAGER_REQHELPER_CONSTRUCTOR 59
-#define STAGER_REQHELPER_METHOD 60
-#define STAGER_REQHELPER_EXCEPTION 61
-#define STAGER_REQHELPER_EXCEPTION_GENERAL 62
-
-
-      /********************/
-      /* StagerCnsHelper */
-#define STAGER_CNSHELPER_CONSTRUCTOR 63
-#define STAGER_CNSHELPER_METHOD 64
-#define STAGER_CNSHELPER_EXCEPTION 65
-#define STAGER_CNSHELPER_EXCEPTION_GENERAL 66
-
-
-
-      /*********************/
-      /* StagerReplyHelper*/
-#define STAGER_REPLYHELPER_CONSTRUCTOR 67
-#define STAGER_REPLYHELPER_METHOD 68
-#define STAGER_REPLYHELPER_EXCEPTION 69
-#define STAGER_REPLYHELPER_EXCEPTION_GENERAL 70
+     /*************************/
+     /* StgRequestSvcThread  */
+     
+     /* StgRequestSvc flow */
+     STAGER_STGREQSVC_CREATION = 71,
+     STAGER_STGREQSVC_SELECT = 72,
+     STAGER_STGREQSVC_PROCESS = 73,
+     STAGER_STGREQSVC_EXCEPTION = 74,
+     STAGER_STGREQSVC_EXCEPTION_GENERAL = 75,
+     
+     
+     /* StagerSetGCHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper, stgReplyHelper} */
+     STAGER_SETGC = 81,
+     STAGER_SETGC_EXCEPTION = 82,
+     STAGER_SETGC_EXCEPTION_GENERAL = 83,
+     
+     
+     /* StagerRmHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper, stgReplyHelper} */
+     STAGER_RM = 86,
+     STAGER_RM_EXCEPTION = 87,
+     STAGER_RM_EXCEPTION_GENERAL = 88,
 
 
 
 
+     /* StagerPutDoneHandler: {stgGetHandler flow, stgRequestHelper, stgCnsHelper, stgReplyHelper} */
+     STAGER_PUTDONE = 91,
+     STAGER_PUTDONE_EXCEPTION = 92,
+     STAGER_PUTDONE_EXCEPTION_GENERAL = 93,
+     
+     
+     /*************************/
+     /* StagerRequestHandler */
+     STAGER_REQHANDLER_METHOD = 101,
+     STAGER_REQHANDLER_EXCEPTION = 102,
+     STAGER_REQHANDLER_EXCEPTION_GENERAL = 103,
+     
+     /****************************/
+     /* StagerJobRequestHandler */
+     STAGER_JOBREQHANDLER_METHOD = 106,
+     STAGER_JOBREQHANDLER_EXCEPTION = 107,
+     STAGER_JOBREQHANDLER_EXCEPTION_GENERAL = 108,
+     
+     
+     /************************/
+     /* StagerRequestHelper */
+     STAGER_REQHELPER_CONSTRUCTOR = 111,
+     STAGER_REQHELPER_METHOD = 112,
+     STAGER_REQHELPER_EXCEPTION = 113,
+     STAGER_REQHELPER_EXCEPTION_GENERAL = 114,
+     
+     
+     /********************/
+     /* StagerCnsHelper */
+     STAGER_CNSHELPER_CONSTRUCTOR = 116,
+     STAGER_CNSHELPER_METHOD = 117,
+     STAGER_CNSHELPER_EXCEPTION = 118,
+     STAGER_CNSHELPER_EXCEPTION_GENERAL = 119,
+
+     
+     
+     /*********************/
+     /* StagerReplyHelper*/
+     STAGER_REPLYHELPER_CONSTRUCTOR = 121,
+     STAGER_REPLYHELPER_METHOD = 122,
+     STAGER_REPLYHELPER_EXCEPTION = 123,
+     STAGER_REPLYHELPER_EXCEPTION_GENERAL = 124
+     
 
 
-      /*************************************************************************************************/
 
+     
 
-      /* Constants related with the QueryRequestSvcThread */
-
-
-      /* Constants related with the ErrorSvcThread */
+     /*************************************************************************************************/
+     
+     
+     /* Constants related with the QueryRequestSvcThread */
+     
+     
+     /* Constants related with the ErrorSvcThread */
 
 
       /* Constants related with the JobSvcThread */
 
 
       /* Constants related with the GCSvcThread */
-
+      
+      };
       
 
     }// end namespace dbService
