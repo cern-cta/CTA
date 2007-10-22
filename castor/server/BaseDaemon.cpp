@@ -255,7 +255,7 @@ void* castor::server::_signalThread_run(void* arg)
           break;
 	 
         case SIGPIPE:
-	  break;
+          break;
 
         default:
           // all other signals
