@@ -31,6 +31,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "osdep.h"
@@ -229,6 +230,22 @@ extern "C" {
   //----------------------------------------------------------------------------
   int Cstager_Tape_setId(castor::stager::Tape* instance, u_signed64 new_var) {
     instance->setId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_tapepool
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_tapepool(castor::stager::Tape* instance, castor::stager::TapePool** var) {
+    *var = instance->tapepool();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Tape_setTapepool
+  //----------------------------------------------------------------------------
+  int Cstager_Tape_setTapepool(castor::stager::Tape* instance, castor::stager::TapePool* new_var) {
+    instance->setTapepool(new_var);
     return 0;
   }
 

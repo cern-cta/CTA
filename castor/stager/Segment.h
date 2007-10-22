@@ -250,6 +250,16 @@ int Cstager_Segment_blockId3(struct Cstager_Segment_t* instance, unsigned char* 
 int Cstager_Segment_setBlockId3(struct Cstager_Segment_t* instance, unsigned char new_var);
 
 /**
+ * Get the value of creationTime
+ */
+int Cstager_Segment_creationTime(struct Cstager_Segment_t* instance, u_signed64* var);
+
+/**
+ * Set the value of creationTime
+ */
+int Cstager_Segment_setCreationTime(struct Cstager_Segment_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

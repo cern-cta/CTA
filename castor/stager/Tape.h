@@ -35,6 +35,7 @@
 struct C_IObject_t;
 struct Cstager_Segment_t;
 struct Cstager_Stream_t;
+struct Cstager_TapePool_t;
 struct Cstager_Tape_t;
 struct Cvdqm_ErrorHistory_t;
 
@@ -184,6 +185,16 @@ int Cstager_Tape_id(struct Cstager_Tape_t* instance, u_signed64* var);
  * The id of this object
  */
 int Cstager_Tape_setId(struct Cstager_Tape_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of tapepool
+ */
+int Cstager_Tape_tapepool(struct Cstager_Tape_t* instance, struct Cstager_TapePool_t** var);
+
+/**
+ * Set the value of tapepool
+ */
+int Cstager_Tape_setTapepool(struct Cstager_Tape_t* instance, struct Cstager_TapePool_t* new_var);
 
 /**
  * Get the value of stream

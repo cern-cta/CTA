@@ -56,6 +56,7 @@ castor::stager::Segment::Segment() throw() :
   m_blockId1(0),
   m_blockId2(0),
   m_blockId3(0),
+  m_creationTime(0),
   m_id(0),
   m_tape(0),
   m_copy(0),
@@ -101,6 +102,7 @@ void castor::stager::Segment::print(std::ostream& stream,
   stream << indent << "blockId1 : " << m_blockId1 << std::endl;
   stream << indent << "blockId2 : " << m_blockId2 << std::endl;
   stream << indent << "blockId3 : " << m_blockId3 << std::endl;
+  stream << indent << "creationTime : " << m_creationTime << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;

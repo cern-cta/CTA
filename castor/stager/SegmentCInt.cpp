@@ -326,6 +326,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Segment_creationTime
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_creationTime(castor::stager::Segment* instance, u_signed64* var) {
+    *var = instance->creationTime();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Segment_setCreationTime
+  //----------------------------------------------------------------------------
+  int Cstager_Segment_setCreationTime(castor::stager::Segment* instance, u_signed64 new_var) {
+    instance->setCreationTime(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Segment_id
   //----------------------------------------------------------------------------
   int Cstager_Segment_id(castor::stager::Segment* instance, u_signed64* var) {
