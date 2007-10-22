@@ -100,7 +100,7 @@ namespace castor {
       /**
        * Get the value of m_diskCopySource
        * The machine and full path of the source file to be transferred in a disk2disk
-       * copy operation.
+       * copy operation
        * @return the value of m_diskCopySource
        */
       std::string diskCopySource() const {
@@ -110,7 +110,7 @@ namespace castor {
       /**
        * Set the value of m_diskCopySource
        * The machine and full path of the source file to be transferred in a disk2disk
-       * copy operation.
+       * copy operation
        * @param new_var the new value of m_diskCopySource
        */
       void setDiskCopySource(std::string new_var) {
@@ -137,7 +137,7 @@ namespace castor {
 
     private:
 
-      /// The machine and full path of the source file to be transferred in a disk2disk copy operation.
+      /// The machine and full path of the source file to be transferred in a disk2disk copy operation
       std::string m_diskCopySource;
 
       /// The id of this object

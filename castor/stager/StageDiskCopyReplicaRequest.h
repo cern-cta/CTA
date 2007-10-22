@@ -299,14 +299,14 @@ int Cstager_StageDiskCopyReplicaRequest_clone(struct Cstager_StageDiskCopyReplic
 /**
  * Get the value of diskCopySource
  * The machine and full path of the source file to be transferred in a disk2disk
- * copy operation.
+ * copy operation
  */
 int Cstager_StageDiskCopyReplicaRequest_diskCopySource(struct Cstager_StageDiskCopyReplicaRequest_t* instance, const char** var);
 
 /**
  * Set the value of diskCopySource
  * The machine and full path of the source file to be transferred in a disk2disk
- * copy operation.
+ * copy operation
  */
 int Cstager_StageDiskCopyReplicaRequest_setDiskCopySource(struct Cstager_StageDiskCopyReplicaRequest_t* instance, const char* new_var);
 

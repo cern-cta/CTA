@@ -41,9 +41,11 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/stager/StageDiskCopyReplicaRequest.hpp"
+#include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "osdep.h"
 #include <string>
+#include <vector>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -178,6 +180,12 @@ void castor::io::StreamStageDiskCopyReplicaRequestCnv::marshalObject(castor::IOb
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    address->stream() << obj->subRequests().size();
+    for (std::vector<castor::stager::SubRequest*>::iterator it = obj->subRequests().begin();
+         it != obj->subRequests().end();
+         it++) {
+      cnvSvc()->marshalObject(*it, address, alreadyDone);
+    }
     cnvSvc()->marshalObject(obj->svcClass(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->client(), address, alreadyDone);
   } else {
@@ -199,6 +207,13 @@ castor::IObject* castor::io::StreamStageDiskCopyReplicaRequestCnv::unmarshalObje
   // Fill object with associations
   castor::stager::StageDiskCopyReplicaRequest* obj = 
     dynamic_cast<castor::stager::StageDiskCopyReplicaRequest*>(object);
+  unsigned int subRequestsNb;
+  ad.stream() >> subRequestsNb;
+  for (unsigned int i = 0; i < subRequestsNb; i++) {
+    ad.setObjType(castor::OBJ_INVALID);
+    castor::IObject* objSubRequests = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addSubRequests(dynamic_cast<castor::stager::SubRequest*>(objSubRequests));
+  }
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objSvcClass = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setSvcClass(dynamic_cast<castor::stager::SvcClass*>(objSvcClass));
