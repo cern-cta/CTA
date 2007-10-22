@@ -98,10 +98,10 @@ CREATE TABLE StagePutNextRequest (parentUuid VARCHAR(2048), flags INT8, userName
 CREATE TABLE StageUpdateNextRequest (parentUuid VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageUpdateNextRequest_Id PRIMARY KEY, parent INTEGER, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type Tape */
-CREATE TABLE Tape (vid VARCHAR(2048), side INT4, tpmode INT4, errMsgTxt VARCHAR(2048), errorCode INT4, severity INT4, vwAddress VARCHAR(2048), id INT8 CONSTRAINT I_Tape_Id PRIMARY KEY, stream INTEGER, status INTEGER);
+CREATE TABLE Tape (vid VARCHAR(2048), side INT4, tpmode INT4, errMsgTxt VARCHAR(2048), errorCode INT4, severity INT4, vwAddress VARCHAR(2048), id INT8 CONSTRAINT I_Tape_Id PRIMARY KEY, tapepool INTEGER, stream INTEGER, status INTEGER);
 
 /* SQL statements for type Segment */
-CREATE TABLE Segment (fseq INT4, offset INT8, bytes_in INT8, bytes_out INT8, host_bytes INT8, segmCksumAlgorithm VARCHAR(2048), segmCksum INT4, errMsgTxt VARCHAR(2048), errorCode INT4, severity INT4, blockId0 INT4, blockId1 INT4, blockId2 INT4, blockId3 INT4, id INT8 CONSTRAINT I_Segment_Id PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER);
+CREATE TABLE Segment (fseq INT4, offset INT8, bytes_in INT8, bytes_out INT8, host_bytes INT8, segmCksumAlgorithm VARCHAR(2048), segmCksum INT4, errMsgTxt VARCHAR(2048), errorCode INT4, severity INT4, blockId0 INT4, blockId1 INT4, blockId2 INT4, blockId3 INT4, creationTime INT8, id INT8 CONSTRAINT I_Segment_Id PRIMARY KEY, tape INTEGER, copy INTEGER, status INTEGER);
 
 /* SQL statements for type TapePool */
 CREATE TABLE TapePool (name VARCHAR(2048), id INT8 CONSTRAINT I_TapePool_Id PRIMARY KEY);
@@ -148,8 +148,8 @@ CREATE TABLE SetFileGCWeight (flags INT8, userName VARCHAR(2048), euid INT4, egi
 /* SQL statements for type StageRepackRequest */
 CREATE TABLE StageRepackRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, repackVid VARCHAR(2048), id INT8 CONSTRAINT I_StageRepackRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type StageGetRequest */
-CREATE TABLE StageGetRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+/* SQL statements for type StageDiskCopyReplicaRequest */
+CREATE TABLE StageDiskCopyReplicaRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopySource VARCHAR(2048), id INT8 CONSTRAINT I_StageDiskCopyReplicaReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageDiskCopyReplicaRequest */
 CREATE TABLE StageDiskCopyReplicaRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopySource VARCHAR(2048), id INT8 CONSTRAINT I_StageDiskCopyReplicaReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);

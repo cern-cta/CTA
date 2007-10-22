@@ -42,6 +42,7 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "osdep.h"
@@ -161,6 +162,7 @@ void castor::io::StreamTapeCnv::marshalObject(castor::IObject* object,
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
+    cnvSvc()->marshalObject(obj->tapepool(), address, alreadyDone);
     cnvSvc()->marshalObject(obj->stream(), address, alreadyDone);
     address->stream() << obj->errorHistory().size();
     for (std::vector<castor::vdqm::ErrorHistory*>::iterator it = obj->errorHistory().begin();
@@ -193,6 +195,9 @@ castor::IObject* castor::io::StreamTapeCnv::unmarshalObject(castor::io::biniostr
   // Fill object with associations
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);
+  ad.setObjType(castor::OBJ_INVALID);
+  castor::IObject* objTapepool = cnvSvc()->unmarshalObject(ad, newlyCreated);
+  obj->setTapepool(dynamic_cast<castor::stager::TapePool*>(objTapepool));
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objStream = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setStream(dynamic_cast<castor::stager::Stream*>(objStream));

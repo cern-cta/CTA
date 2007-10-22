@@ -105,6 +105,7 @@ void castor::io::StreamSegmentCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->blockId1();
   ad->stream() << obj->blockId2();
   ad->stream() << obj->blockId3();
+  ad->stream() << obj->creationTime();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -161,6 +162,9 @@ castor::IObject* castor::io::StreamSegmentCnv::createObj(castor::IAddress* addre
   unsigned char blockId3;
   ad->stream() >> blockId3;
   object->setBlockId3(blockId3);
+  u_signed64 creationTime;
+  ad->stream() >> creationTime;
+  object->setCreationTime(creationTime);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
