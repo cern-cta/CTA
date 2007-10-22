@@ -151,9 +151,6 @@ CREATE TABLE StageRepackRequest (flags INT8, userName VARCHAR(2048), euid INT4, 
 /* SQL statements for type StageDiskCopyReplicaRequest */
 CREATE TABLE StageDiskCopyReplicaRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopySource VARCHAR(2048), id INT8 CONSTRAINT I_StageDiskCopyReplicaReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type StageDiskCopyReplicaRequest */
-CREATE TABLE StageDiskCopyReplicaRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopySource VARCHAR(2048), id INT8 CONSTRAINT I_StageDiskCopyReplicaReque_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
-
 /* SQL statements for type TapeAccessSpecification */
 CREATE TABLE TapeAccessSpecification (accessMode INT4, density VARCHAR(2048), tapeModel VARCHAR(2048), id INT8 CONSTRAINT I_TapeAccessSpecification_Id PRIMARY KEY);
 
