@@ -13,7 +13,8 @@ echo "\n     REPRESENTATIONS\n" >> MagicNumbers
 grep REP_ ../castor/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' >> MagicNumbers
 echo >> MagicNumbers
 
-foreach f ( `find ../castor/stager ../castor/vdqm ../castor/repack -name '*.hpp'` )
+foreach f ( `find ../castor/stager ../castor/monitoring ../castor/vdqm ../castor/repack -name '*.hpp' | grep -v dbService` )
+  echo $f --
   set output=`grep -H '_' $f | grep '=' | grep -v 'm_' | grep -v "if" | grep -v 'static' | sed 's/\/\/.*$//' | sed 's/^.*\/\([a-zA-Z]*\).hpp:/\1/'`
   if !("$output" == "") then
     echo $output | sed 's/^ *\([^ ]*\).*$/    \1\n/' | sed 's/StatusCodes*//' | awk '{print "    ", toupper($1);}' >> MagicNumbers
@@ -43,7 +44,7 @@ echo Creating SQL script for Type2Obj metatable...
 rm -f fillType2Obj.sql
 echo 'DROP TABLE Type2Obj;' > fillType2Obj.sql
 echo 'CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY, object VARCHAR2(100), svcHandler VARCHAR2(100));' >> fillType2Obj.sql
-grep OBJ_ MagicNumbers | awk '{print "INSERT INTO Type2Obj VALUES(" $1 ", '\''" $2 "'\'');" }' | sed 's/OBJ_//g' >> fillType2Obj.sql
+grep OBJ_ MagicNumbers | sed 's/OBJ_//g' | awk '{print "INSERT INTO Type2Obj (type, object) VALUES (" $1 ", '\''" $2 "'\'');" }' >> fillType2Obj.sql
 
 a2ps --toc= --columns=4 -f 7.5 -c -o MagicNumbers.ps MagicNumbers
 
