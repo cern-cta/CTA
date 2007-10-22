@@ -77,17 +77,7 @@ namespace castor{
       /**************/
       StgRequestSvc::StgRequestSvc() throw()
       {
-	this->nameRequestSvc= "StgRequestSvc";
-	
-	this->types.resize(STGREQ_HANDLERS);
-	ObjectsIds auxTypes[] = { OBJ_StageRmRequest,
-				  OBJ_SetFileGCWeight,
-				  OBJ_StagePutDoneRequest};
-	
-	for(int i= 0; i< STGREQ_HANDLERS; i++){
-	  this->types.at(i) = auxTypes[i];
-	}
-	
+	      nameRequestSvc = "StageReqSvc";
 	
 	/* Initializes the DLF logging */
 	/*	castor::dlf::Messages messages[]={{1, "Starting StgRequestSvc Thread"},{2, "StagerRequestHelper"},{3, "StagerCnsHelper"},{4, "StagerReplyHelper"},{5, "StagerRequestHelper failed"},{6, "StagerCnsHelper failed"},{7, "StagerReplyHelper failed"},{8, "StagerHandler"}, {9, "StagerHandler successfully finished"},{10,"StagerHandler failed finished"},{11, "StgRequestSvc Thread successfully finished"},{12, "StgRequestSvc Thread failed finished"}};
@@ -96,38 +86,10 @@ namespace castor{
 
      
 
-
-      /*************************************************************/
-      /* Method to get a subrequest to do using the StagerService */
-      /***********************************************************/
-      castor::IObject* StgRequestSvc::select() throw(castor::exception::Exception){
-	castor::stager::IStagerSvc* stgService;
-
-	castor::IService* svc =
-	  castor::BaseObject::services()->
-	  service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
-	if (0 == svc) {
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StgRequestSvc) Impossible to get the stgService"<<std::endl;
-	  throw ex;
-	}
-	stgService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-	if (0 == stgService) {
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StgRequestSvc) Got a bad stgService"<<std::endl;
-	  throw ex;
-	}
-	
-	castor::stager::SubRequest* subrequestToProcess = stgService->subRequestToDo(this->nameRequestSvc);
-	
-	return(subrequestToProcess);
-      }
-
-
       /*********************************************************/
       /* Thread calling the specific request's handler        */
       /***************************************************** */
-      void StgRequestSvc::process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception){
+      void StgRequestSvc::process(castor::IObject* subRequestToProcess) throw() {
 	StagerCnsHelper* stgCnsHelper= NULL;
 	StagerRequestHelper* stgRequestHelper= NULL;
 	StagerRequestHandler* stgRequestHandler = NULL;

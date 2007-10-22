@@ -40,9 +40,9 @@ namespace castor{
     
       class StagerJobRequestHandler : public virtual StagerRequestHandler{
 	
-      public: 
-	/* empty destructor */
-	virtual ~StagerJobRequestHandler() throw() {};
+      public:
+        StagerJobRequestHandler() throw() : m_notifyJobManager(false) {};
+        virtual ~StagerJobRequestHandler() throw() {};
 
 
     	/* main function which must be implemented on each handler */

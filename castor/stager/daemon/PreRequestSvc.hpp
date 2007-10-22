@@ -22,27 +22,26 @@ namespace castor {
   namespace stager{
     namespace dbService {
       
-     
-    
+      
+      
       class PreRequestSvc : public virtual castor::stager::dbService::RequestSvc{
-	
+        
       public: 
-	/* constructor */
-	PreRequestSvc(std::string jobManagerHost, int jobManagerPort) throw();
-	~PreRequestSvc() throw();
-
-	/***************************************************************************/
-	/* abstract functions inherited from the SelectProcessThread to implement */
-	/*************************************************************************/
-	virtual castor::IObject* select() throw(castor::exception::Exception);
-	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
-  
+        /* constructor */
+        PreRequestSvc(std::string jobManagerHost, int jobManagerPort) throw();
+        ~PreRequestSvc() throw();
+        
+        /***************************************************************************/
+        /* abstract functions inherited from the SelectProcessThread to implement */
+        /*************************************************************************/
+        virtual void process(castor::IObject* subRequestToProcess) throw();
+        
       private:
         
         /// jobManager host and port
         std::string m_jobManagerHost;
         int m_jobManagerPort;
-
+        
       };// end class PreRequestSvc
       
     }// end dbService

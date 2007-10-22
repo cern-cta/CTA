@@ -227,7 +227,7 @@ namespace castor{
         //build "rfs" (and "hostlist" if it is defined)
         
         std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
-        for(int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end())); iReplica++, iter++){
+        for(int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
           if(!rfs.empty())
             rfs = "|";
           rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();

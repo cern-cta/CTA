@@ -34,8 +34,7 @@ namespace castor {
 	/***************************************************************************/
 	/* abstract functions inherited from the SelectProcessThread to implement */
 	/*************************************************************************/
-	virtual castor::IObject* select() throw(castor::exception::Exception);
-	virtual void process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception);
+	virtual void process(castor::IObject* subRequestToProcess) throw();
 
 
       };// end class StgRequestSvc

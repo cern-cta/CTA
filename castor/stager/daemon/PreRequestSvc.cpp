@@ -89,40 +89,11 @@ namespace castor{
 		castor::dlf::dlf_init("PreRequestSvc", messages);*/
       }
 
-     
-
-
-      /*************************************************************/
-      /* Method to get a subrequest to do using the StagerService */
-      /***********************************************************/
-      castor::IObject* PreRequestSvc::select() throw(castor::exception::Exception){
-	castor::stager::IStagerSvc* stgService;
-
-	castor::IService* svc =
-	  castor::BaseObject::services()->
-	  service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
-	if (0 == svc) {
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(PreRequestSvc) Impossible to get the stgService"<<std::endl;
-	  throw ex;
-	}
-	stgService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-	if (0 == stgService) {
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(PreRequestSvc) Got a bad stgService"<<std::endl;
-	  throw ex;
-	}
-	
-	castor::stager::SubRequest* subrequestToProcess = stgService->subRequestToDo(this->nameRequestSvc);
-	
-	return(subrequestToProcess);
-      }
-
 
       /*********************************************************/
       /* Thread calling the specific request's handler        */
       /***************************************************** */
-      void PreRequestSvc::process(castor::IObject* subRequestToProcess) throw(castor::exception::Exception){
+      void PreRequestSvc::process(castor::IObject* subRequestToProcess) throw() {
 	StagerCnsHelper* stgCnsHelper= NULL;
 	StagerRequestHelper* stgRequestHelper= NULL;
 	StagerJobRequestHandler* stgRequestHandler = NULL;

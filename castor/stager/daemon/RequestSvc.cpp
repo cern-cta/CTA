@@ -62,7 +62,22 @@ namespace castor{
     namespace dbService{
 
 
-
+      /*************************************************************/
+      /* Method to get a subrequest to do using the StagerService */
+      /***********************************************************/
+      castor::IObject* RequestSvc::select() throw() {
+        castor::IService* svc =
+          castor::BaseObject::services()->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+        castor::stager::IStagerSvc* stgService =
+          dynamic_cast<castor::stager::IStagerSvc*>(svc);
+        if (0 == stgService) {
+          // "Failed to initialize the DbStagerSvc, giving up"
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 0, NULL);
+          // XXX to be improved: we should abort in the main for this kind of errors
+          exit(1);
+        }
+        return stgService->subRequestToDo(nameRequestSvc);
+      }
      
      
 
