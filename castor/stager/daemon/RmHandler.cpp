@@ -101,19 +101,37 @@ namespace castor{
 
       /*************************************************************************/
       /* TO BE CONFIRMED */
+      /* we just need to GET THE svcClassId by getting the right svcClass */
       void StagerRmHandler::rmGetSvcClass() throw (castor::exception::Exception)
       {
 	
 	 stgRequestHelper->svcClassName=stgRequestHelper->fileRequest->svcClassName(); 
 	  
-	  if(stgRequestHelper->svcClassName.empty()){  /* we set the default svcClassName */
-	    stgRequestHelper->svcClassName="default";
-	    stgRequestHelper->fileRequest->setSvcClassName(stgRequestHelper->svcClassName);
+	 if(stgRequestHelper->svcClassName.empty()){  /* we set the default svcClassName */
+	   stgRequestHelper->svcClassName="default";
 
-	  }else if(stgRequestHelper->svcClassName == "*"){
-	    this->svcClassId = 0;
-	  }/* and we dont select the svcClass using the stagerService */
-	  /* and we dont set it on the fileRequest object, update its repres on DB...-> we skip "linkRequestToSvcClassOnDB "*/
+	   /* the goal is to get svcClassId, so the following step might be useless (commented!) */
+	   /* stgRequestHelper->fileRequest->setSvcClassName(stgRequestHelper->svcClassName);*/
+	   stgRequestHelper->svcClass=stgRequestHelper->stagerService->selectSvcClass(stgRequestHelper->svcClassName);
+	   if(stgRequestHelper->svcClass == NULL){
+	     castor::exception::Exception ex(SEINTERNAL);
+	     ex.getMessage()<<"(StagerRmHandler handle) Impossible to get the svcClass"<<std::endl;
+	     throw(ex);
+	   }
+	   this->svcClassId = stgRequestHelper->svcClass->id();	   
+	   
+	 }else if(stgRequestHelper->svcClassName == "*"){
+	   this->svcClassId = 0;
+	
+	 }else{
+	   stgRequestHelper->svcClass=stgRequestHelper->stagerService->selectSvcClass(stgRequestHelper->svcClassName);
+	   if(stgRequestHelper->svcClass == NULL){
+	     castor::exception::Exception ex(SEINTERNAL);
+	     ex.getMessage()<<"(StagerRmHandler handle) Impossible to get the svcClass"<<std::endl;
+	     throw(ex);
+	   }
+	   this->svcClassId = stgRequestHelper->svcClass->id();	  
+	 }
 
       }
 
@@ -147,7 +165,7 @@ namespace castor{
 	  stgReplyHelper = new StagerReplyHelper(newSubrequestStatus);	  
 	  if(stgReplyHelper == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
+	    ex.getMessage()<<"(StagerRmHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
 	    throw(ex);
 	  }
 	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
