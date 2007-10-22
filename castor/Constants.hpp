@@ -159,11 +159,15 @@ namespace castor {
     OBJ_JobSubmissionRequest = 130,
     OBJ_VersionQuery = 131,
     OBJ_VersionResponse = 132,
-
-    OBJ_RepackResponse = 133,
-    OBJ_RepackFileQry = 134,
-
-    OBJ_StageDiskCopyReplicaRequest = 135
+    OBJ_StageDiskCopyReplicaRequest = 133,
+    OBJ_RepackResponse = 134,
+    OBJ_RepackFileQry =135,
+    OBJ_CnsInfoMigrationPolicy= 136,
+    OBJ_DbInfoMigrationPolicy=137,
+    OBJ_CnsInfoRecallPolicy=138,
+    OBJ_DbInfoRecallPolicy=139,
+    OBJ_DbInfoStreamPolicy=140,
+    OBJ_PolicyObj=141
   };
 
   /**
@@ -207,7 +211,8 @@ namespace castor {
     SVC_ORAJOBMANAGERSVC = 40,
 
     SVC_DBRHSVC = 41,
-    SVC_ORARHSVC = 42
+    SVC_ORARHSVC = 42,
+    SVC_ORAPOLICYSVC =43
   };
 
   /**
@@ -235,12 +240,13 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 136;
+
+  static const unsigned int ObjectsIdsNb = 142;
 
   /**
    * Nb of ServicesIds currently existing
    */
-  static const unsigned int ServicesIdsNb = 43;
+  static const unsigned int ServicesIdsNb = 44;
 
   /**
    * Nb of RepresentationsIds currently existing
@@ -251,13 +257,15 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[136];
+
+  extern const char* ObjectsIdStrings[142];
+
 
   /**
    * Names of the differents Services, used to display
    * correctly the ServicesIds enum
    */
-  extern const char* ServicesIdStrings[43];
+  extern const char* ServicesIdStrings[44];
 
   /**
    * Names of the differents representations, used to display
