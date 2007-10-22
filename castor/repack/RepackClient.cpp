@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/10/10 06:21:38 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/10/22 12:58:47 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -48,7 +48,7 @@
 
 void printTime(time_t* rawtime){
   if (!rawtime || *rawtime==0){
-    std::cout<<"    No time         ";
+    std::cout<<"    No_Time         ";
     return;
   }
   tm * timeptr = localtime(rawtime);
