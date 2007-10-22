@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/05/03 14:05:02 $ $Author: waldron $
+ * @(#)$RCSfile: Param.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/10/22 13:52:55 $ $Author: sponcec3 $
  *
  * A parameter for the DLF (Distributed Logging System)
  *
- * @author Sebastien Ponce
+ * @author castor dev team
  *****************************************************************************/
 
 #ifndef DLF_PARAM_HPP
@@ -48,9 +48,9 @@ namespace castor {
       /**
        * Constructor for strings
        */
-      Param(char* name, std::string value) :
+      Param(const char* name, std::string value) :
         m_deallocate(true) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_STR;
         m_cParam.par.par_string = strdup(value.c_str());
       };
@@ -58,19 +58,19 @@ namespace castor {
       /**
        * Constructor for C strings
        */
-      Param(char* name, char* value) :
+      Param(const char* name, const char* value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_STR;
-        m_cParam.par.par_string = value;
+        m_cParam.par.par_string = (char*)value;
       };
 
       /**
        * Constructor for uuids
        */
-      Param(char* name, Cuuid_t value) :
+      Param(const char* name, Cuuid_t value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_UUID;
         m_cParam.par.par_uuid = value;
       };
@@ -88,9 +88,9 @@ namespace castor {
       /**
        * Constructor for int
        */
-      Param(char* name, const long int value) :
+      Param(const char* name, const long int value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
         m_cParam.par.par_int = value;
       };
@@ -98,9 +98,9 @@ namespace castor {
       /**
        * Constructor for int
        */
-      Param(char* name, const long unsigned int value) :
+      Param(const char* name, const long unsigned int value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
         m_cParam.par.par_int = value;
       };
@@ -108,9 +108,9 @@ namespace castor {
       /**
        * Constructor for int
        */
-      Param(char* name, const int value) :
+      Param(const char* name, const int value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
         m_cParam.par.par_int = value;
       };
@@ -118,9 +118,9 @@ namespace castor {
       /**
        * Constructor for int
        */
-      Param(char* name, const unsigned int value) :
+      Param(const char* name, const unsigned int value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT;
         m_cParam.par.par_int = value;
       };
@@ -128,9 +128,9 @@ namespace castor {
       /**
        * Constructor for u_signed64
        */
-      Param(char* name, u_signed64 value) :
+      Param(const char* name, u_signed64 value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_INT64;
         m_cParam.par.par_u64 = value;
       };
@@ -138,9 +138,9 @@ namespace castor {
       /**
        * Constructor for floats
        */
-      Param(char* name, float value) :
+      Param(const char* name, float value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_FLOAT;
         m_cParam.par.par_double = value;
       };
@@ -148,9 +148,9 @@ namespace castor {
       /**
        * Constructor for doubles
        */
-      Param(char* name, double value) :
+      Param(const char* name, double value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_DOUBLE;
         m_cParam.par.par_double = value;
       };
@@ -158,9 +158,9 @@ namespace castor {
       /**
        * Constructor for Tape VIDS
        */
-      Param(char* name, castor::stager::TapeVid value) :
+      Param(const char* name, castor::stager::TapeVid value) :
         m_deallocate(false) {
-        m_cParam.name = name;
+        m_cParam.name = (char*) name;
         m_cParam.type = DLF_MSG_PARAM_TPVID;
         m_cParam.par.par_string = value.vid();
       };
@@ -168,17 +168,17 @@ namespace castor {
       /**
        * Constructor for IPAddress
        */
-      Param(char* name, castor::dlf::IPAddress value);
+      Param(const char* name, castor::dlf::IPAddress value);
 
       /**
        * Constructor for TimeStamp
        */
-      Param(char* name, castor::dlf::TimeStamp value);
+      Param(const char* name, castor::dlf::TimeStamp value);
 
       /**
        * Constructor for objects
        */
-      Param(char* name, castor::IObject* value);
+      Param(const char* name, castor::IObject* value);
 
       /**
        *

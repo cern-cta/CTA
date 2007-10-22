@@ -19,9 +19,9 @@
  *
  * @(#)Param.cpp,v 1.2 $Release$ 2005/04/05 13:36:36 sponcec3
  *
- * 
+ * A parameter for the DLF (Distributed Logging System)
  *
- * @author Sebastien Ponce
+ * @author castor dev team
  *****************************************************************************/
 
 // Include Files
@@ -35,10 +35,10 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::dlf::Param::Param(char* name,
+castor::dlf::Param::Param(const char* name,
                           castor::IObject* value) :
   m_deallocate(true) {
-  m_cParam.name = name;
+  m_cParam.name = (char*) name;
   m_cParam.type = DLF_MSG_PARAM_STR;
   std::ostringstream s;
   castor::ObjectSet set;
@@ -49,10 +49,10 @@ castor::dlf::Param::Param(char* name,
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::dlf::Param::Param(char* name,
+castor::dlf::Param::Param(const char* name,
                           castor::dlf::IPAddress value) :
   m_deallocate(true) {
-  m_cParam.name = name;
+  m_cParam.name = (char*) name;
   m_cParam.type = DLF_MSG_PARAM_STR;
   std::ostringstream s;
   s << ((value.ip() & 0xFF000000) >> 24) << "."
@@ -65,10 +65,10 @@ castor::dlf::Param::Param(char* name,
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::dlf::Param::Param(char* name,
+castor::dlf::Param::Param(const char* name,
                           castor::dlf::TimeStamp value) :
   m_deallocate(true) {
-  m_cParam.name = name;
+  m_cParam.name = (char*) name;
   m_cParam.type = DLF_MSG_PARAM_STR;
   time_t time = value.time();
   // There is NO localtime_r() on Windows,
