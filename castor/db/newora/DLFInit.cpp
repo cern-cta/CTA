@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/17 09:09:59 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/22 13:55:42 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the ORACLE part
  *
@@ -39,7 +39,21 @@ castor::db::ora::DLFInit DLFInitInstance;
 //------------------------------------------------------------------------------
 castor::db::ora::DLFInit::DLFInit() {
   castor::dlf::Message messages[] =
-    {{ 0, "File was deleted while it was written to. Giving up with migration."},
+    {{ 0,  "File was deleted while it was written to. Giving up with migration."},
+     { 1,  "Cleaning of out of date requests done"},
+     { 2,  "Cleaning of failed diskCopies done"},
+     { 3,  "Cleaning of archived requests done"},
+     { 4,  "Cleaning of out of date requests failed"},
+     { 5,  "Cleaning of failed diskCopies failed"},
+     { 6,  "Cleaning of archived requests failed"},
+     { 7,  "Cleaning Service not available"},
+     { 8,  "Cleaning of out of date STAGEOUT diskCopies done"},
+     { 9,  "Cleaning of out of date recalls done"},
+     { 10, "Cleaning of out of date STAGEOUT diskCopies failed"},
+     { 11, "Cleaning of out of date recalls failed"},
+     { 12, "File was dropped by Cleaning Daemon"},
+     { 13, "PutDone enforced by Cleaning Daemon"},
+     { 14, "Recall canceled by Cleaning Daemon"},
      { -1, ""} };
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);
@@ -47,6 +61,6 @@ castor::db::ora::DLFInit::DLFInit() {
     // We failed to insert our messages into DLF
     // So we cannot really log to DLF.
     // On the other hand, we cannot be sure that that standard out is usable.
-    // So we have to ignore the error. Note really nice
+    // So we have to ignore the error. Not really nice
   }
 }

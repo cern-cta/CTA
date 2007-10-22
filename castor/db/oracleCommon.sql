@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.530 $ $Date: 2007/10/22 13:43:17 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.531 $ $Date: 2007/10/22 13:56:14 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -182,6 +182,22 @@ CREATE GLOBAL TEMPORARY TABLE OutOfDateRequestCleaning
   (id NUMBER NOT NULL ENABLE, type NUMBER NOT NULL ENABLE)
   ON COMMIT PRESERVE ROWS;
 
+/* Global temporary table for dropped out of date StageOut diskCopies */
+CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutDropped
+  (fileId NUMBER, nsHost VARCHAR2(2048))
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary table for out of date StageOut diskCopies
+   where putdone was issued */
+CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutPutDone
+  (fileId NUMBER, nsHost VARCHAR2(2048))
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary table for dropped out of date Recalls */
+CREATE GLOBAL TEMPORARY TABLE OutOfDateRecallDropped
+  (fileId NUMBER, nsHost VARCHAR2(2048))
+  ON COMMIT DELETE ROWS;
+
 /**
   * Black and while list mechanism
   * In order to be able to enter a request for a given service class, you need :
@@ -306,6 +322,25 @@ BEGIN
   END LOOP;
 END;
 
+/* PL/SQL method canceling a given recall */
+CREATE OR REPLACE PROCEDURE cancelRecall
+(cfId NUMBER, dcId NUMBER, newSubReqStatus NUMBER) AS
+  srId NUMBER;
+BEGIN
+  -- cancel the recall
+  deleteTapeCopies(cfId);
+  -- Delete the DiskCopy
+  UPDATE DiskCopy SET status = 7 WHERE id = dcId; -- INVALID
+  -- Look for request associated to the recall and fail
+  -- it and all the waiting ones
+  UPDATE SubRequest SET status = newSubReqStatus
+   WHERE diskCopy = dcId RETURNING id INTO srId;
+  UPDATE SubRequest
+     SET status = newSubReqStatus, parent = 0 -- FAILED
+   WHERE status = 5 -- WAITSUBREQ
+     AND parent = srId
+     AND castorfile = cfId;
+END;
 
 /* Checks consistency of DiskCopies when a FileSystem comes
  * back in production after a period spent in DRAINING or
@@ -328,21 +363,8 @@ BEGIN
                 AND d.fileSystem = fsId
                 AND d.status IN (0, 10)
                 AND e.status = 2) LOOP
-    -- cancel the recall
-    deleteTapeCopies(cf.castorfile);
-    -- Delete the DiskCopy
-    UPDATE DiskCopy
-       SET status = 7  -- INVALID
-     WHERE id = cf.id;
-    -- Look for request associated to the recall and restart
-    -- it and all the waiting ones
-    UPDATE SubRequest SET status = 1 -- RESTART
-     WHERE diskCopy = cf.id RETURNING id INTO srId;
-    UPDATE SubRequest
-       SET status = 1, parent = 0 -- RESTART
-     WHERE status = 5 -- WAITSUBREQ
-       AND parent = srId
-       AND castorfile = cf.castorfile;
+    -- cancel recall and restart subrequests
+    cancelRecall(cf.castorfile, cf.id, 1); -- RESTART
   END LOOP;
   -- Look for files that are STAGEOUT on the filesystem
   -- coming back to life but already STAGED/CANBEMIGR/
@@ -1383,6 +1405,10 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskPoolsQueryLine_Cur IS REF CURSOR RETURN DiskPoolsQueryLine;
   TYPE IDRecord IS RECORD (id INTEGER);
   TYPE IDRecord_Cur IS REF CURSOR RETURN IDRecord;
+  TYPE FileEntry IS RECORD (
+        fileid INTEGER,
+        nshost VARCHAR2(2048));
+  TYPE FileEntry_Cur IS REF CURSOR RETURN FileEntry;  
 END castor;
 
 
@@ -3099,13 +3125,11 @@ BEGIN
   END IF;
 END;
 
-
 /* Search and delete old diskCopies in bad states */
-CREATE OR REPLACE PROCEDURE deleteOutOfDateDiskCopies(timeOut IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE deleteFailedDiskCopies(timeOut IN NUMBER) AS
   dcIds "numList";
   cfIds "numList";
   ct INTEGER;
-  c INTEGER;
 BEGIN
   -- select INVALID diskcopies without filesystem (they can exist after a
   -- stageRm that came before the diskcopy had been created on disk) and ALL FAILED
@@ -3141,6 +3165,54 @@ BEGIN
   END IF;
 END;
 
+/* Deal with old diskCopies in STAGEOUT */
+CREATE OR REPLACE PROCEDURE deleteOutOfDateStageOutDcs
+(timeOut IN NUMBER,
+ dropped OUT castor.FileEntry_Cur,
+ putDones OUT castor.FileEntry_Cur) AS
+BEGIN
+  -- Deal with old DiskCopies in STAGEOUT/WAITFS that have a
+  -- prepareToPut. The rule is to drop the ones with 0 fileSize
+  -- and issue a putDone for the others
+  FOR cf IN (SELECT c.filesize, c.id, c.fileId, c.nsHost, d.fileSystem, d.id AS dcid
+               FROM DiskCopy d, SubRequest s, StagePrepareToPutRequest r, Castorfile c
+              WHERE d.castorfile = s.castorfile
+                AND s.request = r.id
+                AND c.id = d.castorfile
+                AND d.creationtime < getTime() - timeOut
+                AND d.status IN (5, 6, 11)) LOOP -- WAITFS, STAGEOUT, WAITFSCHEDULING
+    IF 0 = cf.fileSize THEN
+      -- here we invalidate the diskcopy and let the GC run
+      UPDATE DiskCopy SET status = 7 WHERE id = cf.dcid;
+      INSERT INTO OutOfDateStageOutDropped VALUES (cf.fileId, cf.nsHost);
+    ELSE
+      -- here we issue a putDone
+      putDoneFunc(cf.id, cf.fileSystem, 2); -- context 2 : real putDone
+      INSERT INTO OutOfDateStageOutPutDone VALUES (cf.fileId, cf.nsHost);
+    END IF;
+  END LOOP;
+  OPEN dropped FOR SELECT * FROM OutOfDateStageOutDropped;
+  OPEN putDones FOR SELECT * FROM OutOfDateStageOutPutDone;
+END;
+
+/* Deal with old diskCopies in WAITTAPERECALL */
+CREATE OR REPLACE PROCEDURE deleteOutOfDateRecallDcs
+(timeOut IN NUMBER,
+ dropped OUT castor.FileEntry_Cur) AS
+BEGIN
+  FOR cf IN (SELECT c.filesize, c.id, c.fileId, c.nsHost, d.fileSystem, d.id AS dcid
+               FROM DiskCopy d, SubRequest s, StagePrepareToPutRequest r, Castorfile c
+              WHERE d.castorfile = s.castorfile
+                AND s.request = r.id
+                AND c.id = d.castorfile
+                AND d.creationtime < getTime() - timeOut
+                AND d.status IN (5, 6, 11)) LOOP -- WAITFS, STAGEOUT, WAITFSCHEDULING
+    -- cancel recall and fail subrequests
+    cancelRecall(cf.id, cf.dcId, 7); -- FAILED
+    INSERT INTO OutOfDateRecallDropped VALUES (cf.fileId, cf.nsHost);
+  END LOOP;
+  OPEN dropped FOR SELECT * FROM OutOfDateRecallDropped;
+END;
 
 /*
  * PL/SQL method implementing filesDeleted
