@@ -29,7 +29,7 @@ namespace castor {
       public: 
 	/* constructor */
 	StgRequestSvc() throw();
-	~StgRequestSvc() throw();
+	~StgRequestSvc() throw() {};
 
 	/***************************************************************************/
 	/* abstract functions inherited from the SelectProcessThread to implement */

@@ -23,32 +23,30 @@
 namespace castor {
   namespace stager{
     namespace dbService {
-
+      
       class StagerRequestHelper;
       class StagerCnsHelper;
       
-      class RequestSvc : public virtual castor::server::SelectProcessThread{
-	
-      protected:
-	std::string nameRequestSvc;
-	
-	/* vector containing the types of subrequest that the specific RequestSvc(Job,Pre,Stg) can process*/
-	std::vector<ObjectsIds> types;
-	int typeRequest;
-	
+      class RequestSvc : public castor::server::SelectProcessThread{
+        
       public: 
-	/* empty destructor */
-	virtual ~RequestSvc() throw() {};
 
-	/***************************************************************************/
-	/* abstract functions inherited from the SelectProcessThread to implement */
-	/*************************************************************************/
-	virtual castor::IObject* select() throw();
+        RequestSvc(std::string name) throw() : SelectProcessThread(), m_name(name) {};
+        virtual ~RequestSvc() throw() {};
+        
+        /***************************************************************************/
+        /* abstract functions inherited from the SelectProcessThread to implement */
+        /*************************************************************************/
+        virtual castor::IObject* select() throw();
+        
+        void handleException(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage);
+        
+      protected:
 
-	void handleException(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage);
+        std::string m_name;
+        
+        int typeRequest;
 
-	
-	
       };// end class RequestSvc
       
     }// end dbService

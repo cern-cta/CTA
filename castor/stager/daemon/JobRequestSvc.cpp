@@ -65,83 +65,34 @@ namespace castor{
       /* constructor */
       /**************/
       JobRequestSvc::JobRequestSvc(std::string jobManagerHost, int jobManagerPort) throw() :
-      m_jobManagerHost(jobManagerHost), m_jobManagerPort(jobManagerPort)
+      RequestSvc("JobReqSvc"), m_jobManagerHost(jobManagerHost), m_jobManagerPort(jobManagerPort)
       {
-        this->nameRequestSvc = "JobReqSvc";
       }
       
-      
-          
-      /*********************************************************/
-      /* Thread calling the specific request's handler        */
-      /***************************************************** */
+
       void JobRequestSvc::process(castor::IObject* subRequestToProcess) throw () {
         StagerCnsHelper* stgCnsHelper= NULL;
         StagerRequestHelper* stgRequestHelper= NULL;
         StagerJobRequestHandler* stgRequestHandler = NULL;
         
         try {
-          
-          
-          /*******************************************/
-          /* We create the helpers at the beginning */
-          /*****************************************/
-          
           stgCnsHelper = new StagerCnsHelper();
-          if(stgCnsHelper == NULL){
-            castor::exception::Exception ex(SEINTERNAL);
-            ex.getMessage()<<"(JobRequestSvc process) Impossible to create the StagerCnsHelper"<<std::endl;
-            throw ex;
-          }
-          
-          
           int typeRequest=0;
           stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
-          if(stgRequestHelper == NULL){
-            castor::exception::Exception ex(SEINTERNAL);
-            ex.getMessage()<< "(JobRequestSvc process) Impossible to create the StagerRequestHelper"<<std::endl;
-            throw ex;
-          }
-          
-          
-          
-          stgRequestHandler;
-          
+
           switch(typeRequest){
             
             case OBJ_StageGetRequest:
-            {
               stgRequestHandler = new StagerGetHandler(stgRequestHelper, stgCnsHelper);
-              if(stgRequestHandler == NULL){
-                castor::exception::Exception ex(SEINTERNAL);
-                ex.getMessage()<<"(JobRequestSvc) Impossible to execute the StagerGetHandler"<<std::endl;
-                throw ex;
-              }	      	     
-            }
-            break;
+              break;
             
             case OBJ_StagePutRequest:
-            {
               stgRequestHandler = new StagerPutHandler(stgRequestHelper, stgCnsHelper);
-              if(stgRequestHandler == NULL){
-                castor::exception::Exception ex(SEINTERNAL);
-                ex.getMessage()<<"(JobRequestSvc) Impossible to execute the StagerPutHandler"<<std::endl;
-                throw ex;
-              }
-            }
-            break;
+              break;
             
             case OBJ_StageUpdateRequest:
-            {
-              /* bool toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0)); */
               stgRequestHandler = new StagerUpdateHandler(stgRequestHelper, stgCnsHelper);
-              if(stgRequestHandler == NULL){
-                castor::exception::Exception ex(SEINTERNAL);
-                ex.getMessage()<<"(JobRequestSvc) Impossible to execute the StagerUpdateHandler"<<std::endl;
-                throw ex;
-              }
-            }
-            break;
+              break;
             
           }// end switch(typeRequest)
           
@@ -153,8 +104,6 @@ namespace castor{
           if (stgRequestHandler->notifyJobManager()) {
             castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 1);
           }
-          
-          /******************************************/
           
           delete stgRequestHandler;
           
@@ -170,11 +119,7 @@ namespace castor{
           
           castor::dlf::Param params[] = {castor::dlf::Param("Standard Message",sstrerror(ex.code())),castor::dlf::Param("Precise Message",ex.getMessage().str())};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
-          if((stgRequestHelper != NULL)&&(stgCnsHelper != NULL)){
-            handleException(stgRequestHelper,stgCnsHelper, ex.code(), ex.getMessage().str());
-          }else{
-            std::cerr<<"(JobRequestSvc handleException)"<<ex.code()<<ex.getMessage().str()<<std::endl;
-          }
+          handleException(stgRequestHelper,stgCnsHelper, ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
           if(stgRequestHandler) delete stgRequestHandler;	  
@@ -183,38 +128,9 @@ namespace castor{
             delete stgRequestHelper;
           }	  
           if(stgCnsHelper) delete stgCnsHelper;
-          
-        }catch (...){
-          
-          castor::dlf::Param params[] = {castor::dlf::Param("Standard Message","Caught general exception in JobRequestSvc")};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);	  
-          if((stgRequestHelper != NULL)&&(stgCnsHelper != NULL)){
-            handleException(stgRequestHelper,stgCnsHelper, SEINTERNAL, "General Exception");
-          }else{
-            std::cerr<<"(JobRequestSvc handleException) Caught general Exception"<<std::endl;
-          }
-          
-          /* we delete our objects */
-          if(stgRequestHandler) delete stgRequestHandler;	  
-          if(stgRequestHelper != NULL){
-            if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
-            delete stgRequestHelper;
-          }	  
-          if(stgCnsHelper) delete stgCnsHelper;
-          
         }
         
-        
       }/* end JobRequestSvc::process */
-      
-      
-      
-      /*********************/
-      /* empty destructor */
-      /*******************/
-      JobRequestSvc::~JobRequestSvc() throw(){
-        
-      }
       
       
     }//end namespace dbService

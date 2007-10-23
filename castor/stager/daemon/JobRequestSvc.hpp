@@ -26,12 +26,12 @@ namespace castor {
       
       
       
-      class JobRequestSvc : public virtual castor::stager::dbService::RequestSvc{
+      class JobRequestSvc : public castor::stager::dbService::RequestSvc{
         
         public: 
         /* constructor */
         JobRequestSvc(std::string jobManagerHost, int jobManagerPort) throw();
-        ~JobRequestSvc() throw();
+        ~JobRequestSvc() throw() {};
         
         /***************************************************************************/
         /* abstract functions inherited from the SelectProcessThread to implement */

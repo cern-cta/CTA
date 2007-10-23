@@ -76,7 +76,7 @@ namespace castor{
           // XXX to be improved: we should abort in the main for this kind of errors
           exit(1);
         }
-        return stgService->subRequestToDo(nameRequestSvc);
+        return stgService->subRequestToDo(m_name);
       }
      
      

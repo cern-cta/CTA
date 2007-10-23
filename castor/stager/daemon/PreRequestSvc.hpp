@@ -19,17 +19,17 @@
 #include <iostream>
 
 namespace castor {
+
   namespace stager{
+
     namespace dbService {
-      
-      
-      
-      class PreRequestSvc : public virtual castor::stager::dbService::RequestSvc{
+     
+      class PreRequestSvc : public castor::stager::dbService::RequestSvc{
         
       public: 
         /* constructor */
         PreRequestSvc(std::string jobManagerHost, int jobManagerPort) throw();
-        ~PreRequestSvc() throw();
+        ~PreRequestSvc() throw() {};
         
         /***************************************************************************/
         /* abstract functions inherited from the SelectProcessThread to implement */
@@ -45,7 +45,9 @@ namespace castor {
       };// end class PreRequestSvc
       
     }// end dbService
+
   } // end namespace stager
+
 }//end namespace castor
 
 
