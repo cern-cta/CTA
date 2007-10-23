@@ -103,36 +103,30 @@ namespace castor{
       void StagerJobRequestHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
         
-        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
+        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)) {
           case 0: /* process the replicas and call the jobManager   */
           case 1:
           {
-            bool isToReplicate= replicaSwitch();
+            bool isToReplicate = replicaSwitch();
             if(isToReplicate){
               processReplica();
             }
             
-            /* build the rmjob struct and submit the job */
             jobManagerPart();
             
-            this->newSubrequestStatus = SUBREQUEST_READYFORSCHED;
-            if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
-              stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
-              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-              /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */
-            }
-            
+            stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+            stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+            stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
             
             /* and we have to notify the jobManager */
             m_notifyJobManager = true;
-          }break;
-          
+            break;
+          }
           case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
-          {
-            stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
-            
-          }break;
+            stgRequestHelper->stagerService->createRecallCandidate(
+              stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), 
+              stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+            break;
           
         }//end switch
         
@@ -229,7 +223,7 @@ namespace castor{
         std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
         for(int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
           if(!rfs.empty())
-            rfs = "|";
+            rfs += "|";
           rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
         }        
       }

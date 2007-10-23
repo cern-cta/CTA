@@ -47,11 +47,6 @@ namespace castor{
 	/* SetFileGCWeight handle implementation */
 	void handle() throw(castor::exception::Exception);
 
-
-
-
-      private:
-	castor::stager::SetFileGCWeight* setFileGCWeight;
      
       }; //end StagerSetGCHandler class
 

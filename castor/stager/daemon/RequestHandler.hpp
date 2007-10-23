@@ -34,12 +34,13 @@ namespace castor{
       class StagerCnsHelper;
       class StagerReplyHelper;
 
-      class StagerRequestHandler : public virtual castor::BaseObject{
+      class StagerRequestHandler : public castor::BaseObject{
 
 
       public:
-	/* empty destructor */
-	virtual ~StagerRequestHandler() throw() {};
+
+        StagerRequestHandler() : BaseObject() {};
+	      virtual ~StagerRequestHandler() throw() {};
 	
 	
 	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
@@ -50,20 +51,11 @@ namespace castor{
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;
 	
-	
-
-	inline SubRequestStatusCodes getNewSubrequestStatus(){
-	  return (this->newSubrequestStatus);
-	}
-
       protected:
 	StagerRequestHelper *stgRequestHelper;
 	StagerCnsHelper *stgCnsHelper;
 
 	int typeRequest;
-	SubRequestStatusCodes currentSubrequestStatus;
-	SubRequestStatusCodes newSubrequestStatus;
-
 
       };/* end StagerRequestHandler class */
 

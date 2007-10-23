@@ -64,7 +64,7 @@ namespace castor{
 
 	this->default_protocol = "rfio";
 	
-	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
+	
 
       }
       

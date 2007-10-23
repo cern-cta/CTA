@@ -46,7 +46,7 @@ namespace castor{
 	this->typeRequest = OBJ_StagePrepareToPutRequest;
 	
 	/* since we don't call the rm: we don't care about maxReplicaNb, ...xsize, ...  */	
-	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
+	
       }
 
 
@@ -71,30 +71,18 @@ namespace castor{
 	  
 	  
 	  if(diskCopyForRecall == NULL){
-	    /* WE DONT DO ANYTHING  */
+	    // log USER_ERROR level message "PrepareToPut not possible at this stage"
 	  }else{
-	    
-	    /* we update the subrequestSatus*/
-	    this->newSubrequestStatus = SUBREQUEST_READY;
-	    if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
-	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
+	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READY);
 	      /* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
 	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
 	      
 	      /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
-	    }
-	    
-	    /*  replyToClient  */
-	    stgReplyHelper = new StagerReplyHelper(newSubrequestStatus);
-	    if(stgReplyHelper == NULL){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	      throw(ex);
-	    }
-	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
-	    stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete stgReplyHelper->ioResponse;
-	    delete stgReplyHelper; 
+        stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+        stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
+        stgReplyHelper->endReplyToClient(stgRequestHelper);
+        delete stgReplyHelper->ioResponse;
+        delete stgReplyHelper; 
 	  }
 
 	}catch(castor::exception::Exception e){

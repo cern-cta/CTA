@@ -66,7 +66,7 @@ namespace castor{
 	/* constructor */
 	StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
-	~StagerPrepareToUpdateHandler() throw();
+	~StagerPrepareToUpdateHandler() throw() {};
 
 	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
 	/* to be called before the stgPrepareToUpdate->handle() */

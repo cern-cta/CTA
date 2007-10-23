@@ -37,73 +37,55 @@ namespace castor{
       
       StagerSetGCHandler::StagerSetGCHandler(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
-	this->stgRequestHelper = stgRequestHelper;
-	this->stgCnsHelper = stgCnsHelper;
-	this->typeRequest = OBJ_SetFileGCWeight;
-
-	/* main object needed to perform the SetFileGCRequest processing */
-	this->setFileGCWeight = new castor::stager::SetFileGCWeight(*(dynamic_cast<castor::stager::SetFileGCWeight*> (stgRequestHelper->fileRequest)));
-	if(this->setFileGCWeight == NULL){
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerSetFileGCWeightHandler constructor) Impossible to get setFileGCWeight"<<std::endl;
-	  throw ex;
-	}
-	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
+        this->stgRequestHelper = stgRequestHelper;
+        this->stgCnsHelper = stgCnsHelper;
+        this->typeRequest = OBJ_SetFileGCWeight;
       }
-
+      
       void StagerSetGCHandler::handle() throw(castor::exception::Exception)
       {
-	StagerReplyHelper* stgReplyHelper=NULL;
-	try{
-
-	  /**************************************************************************/
-	  /* common part for all the handlers: get objects, link, check/create file*/
-	  preHandle();
-	  /**********/
-	  
-	  /* execute the main function for the setFileGCWeight request   */
-	  /* basically a call to the corresponding stagerService method */
-	  /* passing the SetFileGCWeight object                        */
-	  stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,setFileGCWeight->weight());
-	  delete setFileGCWeight;
-
-	  /**************************************************/
-	  /* we don t need to update the subrequestStatus  */
-	  /* but we have to archive the subrequest        */
-	  /* the same as for StagerRmHandler             */
-	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
-	  
-	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
-	  this->newSubrequestStatus = SUBREQUEST_READY;
-	  stgReplyHelper = new StagerReplyHelper(newSubrequestStatus);
-	  if(stgReplyHelper == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	    throw(ex);
-	  }
-	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No error");
-	  stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  delete stgReplyHelper->ioResponse;
-	  delete stgReplyHelper;
-
-	}catch(castor::exception::Exception e){
-	  if(setFileGCWeight != NULL){
-	    delete setFileGCWeight;
-	  }
-	  if(stgReplyHelper != NULL){
-	    if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
-	    delete stgReplyHelper;
-	  }
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerSetGCHandler) Error"<<e.getMessage().str()<<std::endl;
-	  throw ex;
-       
-	}
-	
+        StagerReplyHelper* stgReplyHelper=NULL;
+        try{
+          
+          /**************************************************************************/
+          /* common part for all the handlers: get objects, link, check/create file*/
+          preHandle();
+          /**********/
+          
+          /* execute the main function for the setFileGCWeight request   */
+          /* basically a call to the corresponding stagerService method */
+          /* passing the SetFileGCWeight object                        */
+          castor::stager::SetFileGCWeight* setGCWeightReq = dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
+          stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,setGCWeightReq->weight());
+          
+          /**************************************************/
+          /* we don t need to update the subrequestStatus  */
+          /* but we have to archive the subrequest        */
+          /* the same as for StagerRmHandler             */
+          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
+          
+          /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
+          stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+          stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No error");
+          stgReplyHelper->endReplyToClient(stgRequestHelper);
+          delete stgReplyHelper->ioResponse;
+          delete stgReplyHelper;
+          
+        }catch(castor::exception::Exception e){
+          if(stgReplyHelper != NULL){
+            if(stgReplyHelper->ioResponse) delete stgReplyHelper->ioResponse;
+            delete stgReplyHelper;
+          }
+          castor::exception::Exception ex(e.code());
+          ex.getMessage()<<"(StagerSetGCHandler) Error"<<e.getMessage().str()<<std::endl;
+          throw ex;
+          
+        }
+        
       }
-
-
-
+      
+      
+      
       StagerSetGCHandler::~StagerSetGCHandler() throw()
       {
       }

@@ -56,7 +56,7 @@ namespace castor{
 	this->stgCnsHelper = stgCnsHelper;
 	this->typeRequest = OBJ_StagePutDoneRequest;
 
-	this->currentSubrequestStatus = stgRequestHelper->subrequest->status();
+	
       }
 
       void StagerPutDoneHandler::handle() throw(castor::exception::Exception)
@@ -77,11 +77,8 @@ namespace castor{
 	    /* for the PutDone, if everything is ok, we archive the subrequest */
 	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
 	    
-	    /* we never change the subrequestStatus, but we need the newSubrequestStatus for the replyToClient */	  
-	    this->newSubrequestStatus = SUBREQUEST_READY;
-	    
 	    /* replyToClient Part: */
-	    stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	    stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
 	    if(stgReplyHelper == NULL){
 	      castor::exception::Exception ex(SEINTERNAL);
 	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
@@ -105,9 +102,6 @@ namespace castor{
       }
 
 
-      StagerPutDoneHandler::~StagerPutDoneHandler() throw()
-      {
-      }
 
 
 

@@ -52,7 +52,7 @@ namespace castor{
 	/* constructor */
 	StagerPutHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
-	~StagerPutHandler() throw();
+	~StagerPutHandler() throw() {};
 	
 	/* Put request handler */
 	void handle() throw(castor::exception::Exception);

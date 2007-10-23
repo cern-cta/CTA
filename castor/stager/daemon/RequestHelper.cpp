@@ -101,25 +101,11 @@ namespace castor{
 	}
 	
 	this->baseAddr =  new castor::BaseAddress; /* the settings ll be done afterwards */
-	if(this->baseAddr == NULL){
-	  delete dbService;
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerRequestHelper constructor) Impossible to get the baseAddress"<<std::endl;
-	  throw ex;
-	}
 	
 	baseAddr->setCnvSvcName("DbCnvSvc");
 	baseAddr->setCnvSvcType(SVC_DBCNV);
 	
 	this->subrequest=subRequestToProcess;
-	if(this->subrequest == NULL){
-	  castor::exception::Exception ex(SEENTRYNFND);
-	  ex.getMessage()<<"(StagerRequestHelper constructor) Got a NULL subrequest"<<std::endl;
-	  throw ex;
-	}
-
-	
-	
 	this->default_protocol = "rfio";
 	try{
 	  dbService->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false); 

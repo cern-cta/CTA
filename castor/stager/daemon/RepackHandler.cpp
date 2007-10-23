@@ -66,7 +66,7 @@ namespace castor{
 
 	this->default_protocol = "rfio";
 	
-	this->currentSubrequestStatus = stgRequestHelper->subrequest->status(); 
+	 
       }
 
 
@@ -79,38 +79,31 @@ namespace castor{
       {
 	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
 	case 0:
-	  {
+	  
 	    /* to be done */
 	    /* stgRequestHelper->stagerService->startRepackMigration */
-	  }break;
+	    break;
+    
 	case 1:
-	  {
-	     bool isToReplicate= replicaSwitch();
-	    if(isToReplicate){
+	    if(replicaSwitch()) {    // XXX to be checked: a Repack request should be granted anyway
 	      processReplica();
 	    }
 	    
 	    /* build the rmjob struct and submit the job */
 	    jobManagerPart();
 	    
-	    this->newSubrequestStatus = SUBREQUEST_READYFORSCHED;
-	    if((this->currentSubrequestStatus) != (this->newSubrequestStatus)){
-	      stgRequestHelper->subrequest->setStatus(this->newSubrequestStatus);
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
-	    }
+      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
+      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 
 	    /* and we have to notify the jobManager */
 	    m_notifyJobManager = true;
-	    
-	  }break;
+      break;
 	case 2:
-	  {
-	    stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
-	    /* though we wont update the subrequestStatus, we need to flag it for the stgReplyHelper */
-	    this->newSubrequestStatus= SUBREQUEST_READY;
-	  }break;
+	  
+	    stgRequestHelper->stagerService->createRecallCandidate(
+        stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	    break;
 
 	}//end switch
 
@@ -137,7 +130,7 @@ namespace castor{
 	  /* if needed, we update the subrequestStatus internally */
 	  switchDiskCopiesForJob();
 	 
-	  stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	  stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
 	  if(stgReplyHelper == NULL){
 	    castor::exception::Exception ex(SEINTERNAL);
 	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
