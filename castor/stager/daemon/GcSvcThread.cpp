@@ -1,27 +1,34 @@
-/*
- * $Id: GcSvcThread.cpp,v 1.14 2007/05/29 08:41:49 waldron Exp $
- */
+/******************************************************************************
+ *                castor/stager/daemon/GcRequestSvcThread.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/10/23 15:39:08 $ $Author: sponcec3 $
+ *
+ * Service thread for garbage collection related requests
+ *
+ * @author castor dev team
+ *****************************************************************************/
 
-/*
- * Copyright (C) 2004 by CERN/IT/PDP/DM
- * All rights reserved
- */
-
-/* ================================================================= */
-/* Local headers for threads : to be included before ANYTHING else   */
-/* ================================================================= */
 #include "Cthread_api.h"
 #include "Cmutex.h"
-#include "stager_uuid.h"                /* Thread-specific uuids */
 
-/* ============== */
-/* System headers */
-/* ============== */
 #include <vector>
 
-/* ============= */
-/* Local headers */
-/* ============= */
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/BaseAddress.hpp"
@@ -38,365 +45,263 @@
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/BasicResponse.hpp"
-#undef logfunc
+#include "castor/replier/RequestReplier.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/dbService/GcSvcThread.hpp"
 
-#include "stager_service_helper.hpp"
-#include "stager_gc_service.h"
-#include "stager_macros.h"
-#include "serrno.h"
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::stager::dbService::GcSvcThread::GcSvcThread() throw () {}
 
-#undef NULL
-#define NULL 0
-
-/* ------------------------------------- */
-/* stager_gc_select()                    */
-/*                                       */
-/* Purpose: GC 'select' part of service  */
-/*                                       */
-/* Input:  n/a                           */
-/*                                       */
-/* Output:  (void **) output   Selected  */
-/*                                       */
-/* Return: 0 [OK] or -1 [ERROR, serrno]  */
-/* ------------------------------------- */
-
-
-
-EXTERN_C int DLL_DECL stager_gc_select(void **output) {
-  char *func =  "stager_gc_select";
-  int rc;
-
-  STAGER_LOG_ENTER();
-
-  if (output == NULL) {
-    serrno = EFAULT;
-    return -1;
-  }
-
-  castor::stager::Request* req = 0;
-  castor::Services *svcs;
-  castor::stager::IGCSvc *gcSvc;
-
+//-----------------------------------------------------------------------------
+// select
+//-----------------------------------------------------------------------------
+castor::IObject* castor::stager::dbService::GcSvcThread::select()
+  throw() {
   try {
-
-    /* Loading services */
-    /* ---------------- */
-    STAGER_LOG_VERBOSE(NULL,"Loading services");
-    svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
-    gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
-
-     if(!gcSvc) {
-      STAGER_LOG_DB_ERROR(NULL,"stager_gc_service","Impossible create/locate castor::SVC_DBGCSVC");
-      return -1;
+    // get the GcSvc. Note that we cannot cache it since we
+    // would not be thread safe
+    castor::Services *svcs = castor::BaseObject::services();
+    castor::IService *svc = svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
+    castor::stager::IGCSvc *gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
+    if (0 == gcSvc) {
+      // "Could not get GCSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "GcSvcThread::select")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_GETSVC, 1, params);
+      return 0;
     }
-
-
-    /* Get any new request to do    */
-    /* ---------------------------- */
-    STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
+    // actual work
     castor::stager::Request* req = gcSvc->requestToDo();
-
-    if (0 == req) {
-      /* Nothing to do */
-      STAGER_LOG_VERBOSE(NULL,"Nothing to do");
-      serrno = ENOENT;
-      rc = -1;
-    } else {
-      /* Set uuid for the log */
-      /* -------------------- */
-      Cuuid_t request_uuid;
-      if (string2Cuuid(&request_uuid,(char *) req->reqId().c_str()) == 0) {
-        stager_request_uuid = request_uuid;
-      }
-      std::stringstream msg;
-      msg << "Found request " << req->id();
-      STAGER_LOG_USAGE(NULL,msg.str().c_str());
-      *output = req;
-      rc = 0;
-
-    }
-
+    gcSvc->release();
+    return req;
   } catch (castor::exception::Exception e) {
-    serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL,"stager_gc_select",
-                        e.getMessage().str().c_str());
-    rc = -1;
-    if (req) delete req;
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::select"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 1, params);
+    return 0;
   }
-
-  // Cleanup
-  gcSvc->release();
-
-  // Return
-  STAGER_LOG_RETURN(rc);
 }
 
-
-namespace castor {
-
-  namespace stager {
-
-    /**
-     * Handles FilesDeleted and FilesDeletionFailed requests
-     * and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param gcSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_filesDeletedOrFailed
-    (castor::stager::Request* req,
-     castor::IClient *client,
-     castor::Services* svcs,
-     castor::stager::IGCSvc* gcSvc,
-     castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::filesDeletedOrFailed";
-      std::string error;
-
-      try {
-
-        /* get the GCFileList */
-        /* ---------------- */
-        // cannot return 0 since we check the type before calling this method
-        castor::stager::GCFileList *uReq =
-          dynamic_cast<castor::stager::GCFileList*> (req);
-
-        // Fills it with files to be deleted
-        svcs->fillObj(&ad, req, castor::OBJ_GCFile);
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        std::vector<u_signed64*> arg;
-        u_signed64* argArray = new u_signed64[uReq->files().size()];
-        int i = 0;
-        for (std::vector<castor::stager::GCFile*>::iterator it =
-               uReq->files().begin();
-             it != uReq->files().end();
-             it++) {
-          argArray[i] = (*it)->diskCopyId();
-          arg.push_back(&(argArray[i]));
-          i++;
-        }
-        if (castor::OBJ_FilesDeleted == req->type()) {
-          STAGER_LOG_USAGE(NULL, "Invoking filesDeleted");
-          gcSvc->filesDeleted(arg);
-        } else {
-          STAGER_LOG_USAGE(NULL, "Invoking filesDeletionFailed");
-          gcSvc->filesDeletionFailed(arg);
-        }
-        delete[] argArray;
-
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::BasicResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
+//-----------------------------------------------------------------------------
+// handleFilesDeletedOrFailed
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::GcSvcThread::handleFilesDeletedOrFailed
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IGCSvc* gcSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  castor::rh::BasicResponse res;
+  try {
+    // cannot return 0 since we check the type before calling this method
+    castor::stager::GCFileList *uReq =
+      dynamic_cast<castor::stager::GCFileList*> (req);
+    // Fills it with files to be deleted
+    svcs->fillObj(&ad, req, castor::OBJ_GCFile);
+    /* Invoking the method                */
+    /* ---------------------------------- */
+    std::vector<u_signed64*> arg;
+    u_signed64* argArray = new u_signed64[uReq->files().size()];
+    int i = 0;
+    for (std::vector<castor::stager::GCFile*>::iterator it =
+           uReq->files().begin();
+         it != uReq->files().end();
+         it++) {
+      argArray[i] = (*it)->diskCopyId();
+      arg.push_back(&(argArray[i]));
+      i++;
     }
-
-    /**
-     * Handles a Files2Delete request and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param gcSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_files2Delete(castor::stager::Request* req,
-                             castor::IClient *client,
-                             castor::Services* svcs,
-                             castor::stager::IGCSvc* gcSvc,
-                             castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::Files2Delete";
-      std::string error;
-      castor::stager::Files2Delete *uReq;
-      std::vector<castor::stager::GCLocalFile*>* result = 0;
-
-      try {
-
-        /* get the Files2Delete */
-        /* -------------------- */
-        // cannot return 0 since we check the type before calling this method
-        uReq = dynamic_cast<castor::stager::Files2Delete*> (req);
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking selectFiles2Delete");
-        result = gcSvc->selectFiles2Delete(uReq->diskServer());
-
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::GCFilesResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      } else {
-        for(std::vector<castor::stager::GCLocalFile *>::iterator it =
-              result->begin();
-            it != result->end();
-            it++) {
-          // Here we transfer the ownership of the GCLocalFiles
-          // to res. Result can thus be deleted with no risk
-          // of memory leak
-          res.addFiles(*it);
-        }
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
-      /* Cleanup                        */
-      /* ------------------------------ */
-      if (result) delete result;
+    if (castor::OBJ_FilesDeleted == req->type()) {
+      // "Invoking filesDeleted"
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_FDELOK);
+      gcSvc->filesDeleted(arg);
+    } else {
+      // "Invoking filesDeletionFailed"
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_FDELFAIL);
+      gcSvc->filesDeletionFailed(arg);
     }
-
-  } // End of namespace stager
-
-} // End of namespace castor
-
-
-/* -------------------------------------- */
-/* stager_gc_process()                    */
-/*                                        */
-/* Purpose: Gc 'process' part of service  */
-/*                                        */
-/* Input:  (void *) output    Selection   */
-/*                                        */
-/* Output: n/a                            */
-/*                                        */
-/* Return: 0 [OK] or -1 [ERROR, serrno]   */
-/* -------------------------------------- */
-EXTERN_C int DLL_DECL stager_gc_process(void *output) {
-
-  char *func =  "stager_gc_process";
-  STAGER_LOG_ENTER();
-
-  serrno = 0;
-  if (output == NULL) {
-    serrno = EFAULT;
-    return -1;
+    delete[] argArray;
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::handleFilesDeletedOrFailed"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
   }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::handleFilesDeletedOrFailed.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+  }
+}
 
-  /* ===========================================================
-   *
-   * 1) PREPARATION PHASE
-   * Retrieving request from the database
-   */
+//-----------------------------------------------------------------------------
+// handleFiles2Delete
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::GcSvcThread::handleFiles2Delete
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IGCSvc* gcSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Usefull Variables
+  castor::stager::Files2Delete *uReq;
+  std::vector<castor::stager::GCLocalFile*>* result = 0;
+  castor::rh::GCFilesResponse res;
+  try {
+    // get the Files2Delete
+    // cannot return 0 since we check the type before calling this method
+    uReq = dynamic_cast<castor::stager::Files2Delete*> (req);
+    // Invoking the method
+    result = gcSvc->selectFiles2Delete(uReq->diskServer());
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::handleFiles2Delete"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  if (0 != result) {
+    for(std::vector<castor::stager::GCLocalFile *>::iterator it =
+          result->begin();
+        it != result->end();
+        it++) {
+      // Here we transfer the ownership of the GCLocalFiles
+      // to res. Result can thus be deleted with no risk
+      // of memory leak
+      res.addFiles(*it);
+    }
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::handleFiles2Delete.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+  }
+  // Cleanup
+  if (result) delete result;
+}
 
+//-----------------------------------------------------------------------------
+// process
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::GcSvcThread::process
+(castor::IObject *param) throw() {
+  // Usefull variables
   castor::stager::Request* req = 0;
   castor::Services *svcs = 0;
   castor::stager::IGCSvc *gcSvc = 0;
+  Cuuid_t uuid = nullCuuid;
   castor::IClient *client = 0;
-
-  /* Setting the address to access db */
-  /* -------------------------------- */
+  // address to access db
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
-
   try {
-
-    /* Loading services */
-    /* ---------------- */
-    STAGER_LOG_VERBOSE(NULL,"Loading services");
+    // get the GCSvc. Note that we cannot cache it since we
+    // would not be thread safe
     svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
+    castor::IService* svc = svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
     gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
-
-    /* Casting the request */
-    /* ------------------- */
-    STAGER_LOG_VERBOSE(NULL, "Casting Request");
-    req = (castor::stager::Request*)output;
-    if (0 == req) {
-      castor::exception::Internal e;
-      e.getMessage() << "Request cast error";
-      throw e;
+    if (0 == gcSvc) {
+      // "Could not get GCSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "GcSvcThread::process")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_GETSVC, 1, params);
+      return;
     }
-
-    /* Getting the client  */
-    /* ------------------- */
+    // Retrieving request and client from the database
+    // Note that casting the request will never give 0
+    // since select does return a request for sure
+    req = dynamic_cast<castor::stager::Request*>(param);
+    string2Cuuid(&uuid, (char*)req->reqId().c_str());
+    // Getting the client
     svcs->fillObj(&ad, req, castor::OBJ_IClient);
     client = req->client();
     if (0 == client) {
-      castor::exception::Internal e;
-      e.getMessage() << "No client associated with request ! Cannot answer !";
-      throw e;
+      // "No client associated with request ! Cannot answer !"
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_NOCLI);
+      delete req;
+      gcSvc->release();
+      return;
     }
-
   } catch (castor::exception::Exception e) {
-    // If we fail here, we do NOT have enough information to
-    // reply to the client !
-    serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL,"stager_gc_process",
-                        e.getMessage().str().c_str());
+    // If we fail here, we do NOT have enough information
+    // to reply to the client ! So we only log something.
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::process.1"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     if (req) delete req;
     if (gcSvc) gcSvc->release();
-    return -1;
+    return;
   }
 
-  /* ===========================================================
-   *
-   * 2) CALLING PHASE
-   * At this point we can send a reply to the client
-   * We get prepared to call the method
-   */
-
+  // At this point we are able to reply to the client
   switch (req->type()) {
-
   case castor::OBJ_FilesDeleted:
   case castor::OBJ_FilesDeletionFailed:
-    castor::stager::handle_filesDeletedOrFailed
-      (req, client, svcs, gcSvc, ad);
+    castor::stager::dbService::GcSvcThread::handleFilesDeletedOrFailed
+      (req, client, svcs, gcSvc, ad, uuid);
     break;
-
   case castor::OBJ_Files2Delete:
-    castor::stager::handle_files2Delete
-      (req, client, svcs, gcSvc, ad);
+    castor::stager::dbService::GcSvcThread::handleFiles2Delete
+      (req, client, svcs, gcSvc, ad, uuid);
     break;
-
   default:
-    castor::exception::Internal e;
-    e.getMessage() << "Unknown Request type : "
-                   << castor::ObjectsIdStrings[req->type()];
+    // "Unknown Request type"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("type", req->type())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_UNKREQ, 1, params);
     if (req) {delete req; req=0;}
     if (gcSvc) gcSvc->release();
-    throw e;
+    return;
   }
-
-  // Delete Request From the database
-  svcs->deleteRep(&ad, req, true);
-
-  // Cleanup
+  try {
+    // Delete Request From the database
+    svcs->deleteRep(&ad, req, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::process.2"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+  }
+  // Final cleanup
   if (req) { delete req; req=0;}
   if (gcSvc) gcSvc->release();
-  STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
+  return;
 }

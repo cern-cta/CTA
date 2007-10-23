@@ -1,27 +1,34 @@
-/*
- * $Id: ErrorSvcThread.cpp,v 1.13 2007/06/27 11:59:00 sponcec3 Exp $
- */
+/******************************************************************************
+ *                castor/stager/daemon/ErrorRequestSvcThread.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/10/23 15:38:30 $ $Author: sponcec3 $
+ *
+ * Service thread for dealing with requests that failed
+ *
+ * @author castor dev team
+ *****************************************************************************/
 
-/*
- * Copyright (C) 2005 by CERN/IT/FIO/DS
- * All rights reserved
- */
-
-/* ================================================================= */
-/* Local headers for threads : to be included before ANYTHING else   */
-/* ================================================================= */
 #include "Cthread_api.h"
 #include "Cmutex.h"
-#include "stager_uuid.h"                /* Thread-specific uuids */
 
-/* ============== */
-/* System headers */
-/* ============== */
 #include <sstream>
 
-/* ============= */
-/* Local headers */
-/* ============= */
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/BaseAddress.hpp"
@@ -38,190 +45,113 @@
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
-#undef logfunc
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/dbService/ErrorSvcThread.hpp"
 
-#include "stager_service_helper.hpp"
-#include "stager_error_service.h"
-#include "stager_macros.h"
-#include "serrno.h"
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::stager::dbService::ErrorSvcThread::ErrorSvcThread() throw () {}
 
-#undef NULL
-#define NULL 0
-
-/* ---------------------------------------- */
-/* stager_error_select()                    */
-/*                                          */
-/* Purpose: ERROR 'select' part of service  */
-/*                                          */
-/* Input:  n/a                              */
-/*                                          */
-/* Output:  (void **) output   Selected     */
-/*                                          */
-/* Return: 0 [OK] or -1 [ERROR, serrno]     */
-/* ---------------------------------------- */
-
-EXTERN_C int DLL_DECL stager_error_select(void **output) {
-  char *func =  "stager_error_select";
-  int rc;
-
-  STAGER_LOG_ENTER();
-
-  if (output == NULL) {
-    serrno = EFAULT;
-    return -1;
-  }
-
-  castor::stager::SubRequest* subReq = 0;
-  castor::Services *svcs;
-  castor::stager::IStagerSvc *stgSvc;
-
+//-----------------------------------------------------------------------------
+// select
+//-----------------------------------------------------------------------------
+castor::IObject* castor::stager::dbService::ErrorSvcThread::select()
+  throw() {
   try {
-
-    /* Loading services */
-    /* ---------------- */
-    STAGER_LOG_VERBOSE(NULL,"Loading services");
-    svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
-    stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-
-
-    /* Get any new request to do    */
-    /* ---------------------------- */
-    STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
-    subReq = stgSvc->subRequestFailedToDo();
-
-    if (0 == subReq) {
-      /* Nothing to do */
-      STAGER_LOG_VERBOSE(NULL,"Nothing to do");
-      serrno = ENOENT;
-      rc = -1;
-    } else {
-      /* Set uuid for the log */
-      /* -------------------- */
-      Cuuid_t request_uuid;
-      if (string2Cuuid(&request_uuid,(char *) subReq->subreqId().c_str()) == 0) {
-        stager_request_uuid = request_uuid;
-      }
-      std::stringstream msg;
-      msg << "Found subRequest " << subReq->id();
-      STAGER_LOG_DEBUG(NULL,msg.str().c_str());
-      *output = subReq;
-      rc = 0;
-
+    // get the StagerSvc. Note that we cannot cache it since we
+    // would not be thread safe
+    castor::Services *svcs = castor::BaseObject::services();
+    castor::IService *svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+    castor::stager::IStagerSvc *stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
+    if (0 == stgSvc) {
+      // "Could not get StagerSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "ErrorSvcThread::select")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_GETSVC, 1, params);
+      return 0;
     }
-
+    // actual work
+    castor::stager::SubRequest* subReq = stgSvc->subRequestFailedToDo();
+    stgSvc->release();
+    return subReq;
   } catch (castor::exception::Exception e) {
-    serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL,"stager_error_select",
-                        e.getMessage().str().c_str());
-    rc = -1;
-    if (subReq) delete subReq;
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "ErrorSvcThread::select"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 1, params);
+    return 0;
   }
-
-  // Cleanup
-  stgSvc->release();
-
-  // Return
-  STAGER_LOG_RETURN(rc);
 }
 
-
-/* ----------------------------------------- */
-/* stager_error_process()                    */
-/*                                           */
-/* Purpose: Error 'process' part of service  */
-/*                                           */
-/* Input:  (void *) output    Selection      */
-/*                                           */
-/* Output: n/a                               */
-/*                                           */
-/* Return: 0 [OK] or -1 [ERROR, serrno]      */
-/* ----------------------------------------- */
-EXTERN_C int DLL_DECL stager_error_process(void *output) {
-
-  char *func =  "stager_error_process";
-  STAGER_LOG_ENTER();
-
-  serrno = 0;
-  if (output == NULL) {
-    serrno = EFAULT;
-    return -1;
-  }
-
-  /* ===========================================================
-   *
-   * 1) PREPARATION PHASE
-   * Retrieving request from the database
-   */
-
+//-----------------------------------------------------------------------------
+// process
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::ErrorSvcThread::process
+(castor::IObject *param) throw() {
+  // Usefull variables
   castor::stager::Request* req = 0;
   castor::stager::SubRequest* subReq = 0;
   castor::Services *svcs = 0;
   castor::stager::IStagerSvc *stgSvc = 0;
+  Cuuid_t suuid = nullCuuid;
+  Cuuid_t uuid = nullCuuid;
   castor::IClient *client = 0;
-
-  /* Setting the address to access db */
-  /* -------------------------------- */
+  // address to access db
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
-
   try {
-
-    /* Loading services */
-    /* ---------------- */
-    STAGER_LOG_VERBOSE(NULL,"Loading services");
+    // get the StagerSvc. Note that we cannot cache it since we
+    // would not be thread safe
     svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+    castor::IService* svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
     stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-
-    /* Casting the subRequest */
-    /* ---------------------- */
-    STAGER_LOG_VERBOSE(NULL, "Casting SubRequest");
-    subReq = (castor::stager::SubRequest*)output;
-    if (0 == subReq) {
-      castor::exception::Internal e;
-      e.getMessage() << "Request cast error";
-      throw e;
+    if (0 == stgSvc) {
+      // "Could not get StagerSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "ErrorSvcThread::process")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_GETSVC, 1, params);
+      return;
     }
-
-    /* Getting the request */
-    /* ------------------- */
+    // Retrieving subrequest, request and client from the
+    // database. Note that casting the subrequest will
+    // never be null since select returns one for sure
+    subReq = dynamic_cast<castor::stager::SubRequest*>(param);
+    string2Cuuid(&suuid, (char*)subReq->subreqId().c_str());
+    // Getting the request
     svcs->fillObj(&ad, subReq, castor::OBJ_FileRequest);
     req = subReq->request();
     if (0 == req) {
-      castor::exception::Internal e;
-      e.getMessage() << "No request associated with subRequest ! Cannot answer !";
-      throw e;
+      // "No request associated with subrequest ! Cannot answer !"
+      castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOREQ, 1, params);
+    } else {
+      string2Cuuid(&uuid, (char*)req->reqId().c_str());
+      // Getting the client
+      svcs->fillObj(&ad, req, castor::OBJ_IClient);
+      client = req->client();
+      if (0 == client) {
+        // "No client associated with request ! Cannot answer !"
+        castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOCLI, 1, params);
+      }
     }
-
-    /* Getting the client  */
-    /* ------------------- */
-    svcs->fillObj(&ad, req, castor::OBJ_IClient);
-    client = req->client();
-    if (0 == client) {
-      castor::exception::Internal e;
-      e.getMessage() << "No client associated with request ! Cannot answer !";
-      throw e;
-    }
-
   } catch (castor::exception::Exception e) {
-    // If we fail here, we do NOT have enough information to
-    // reply to the client !
-    serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL,"stager_error_process",
-                        e.getMessage().str().c_str());
-    client = 0;
+    // If we fail here, we do NOT have enough information
+    // to reply to the client ! So we only log something.
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "ErrorSvcThread::process.1"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code()),
+       castor::dlf::Param(suuid)};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
   }
 
-  /* ===========================================================
-   *
-   * 2) CALLING PHASE
-   * At this point we can send a reply to the client
-   */
-
+  // At this point we are able to reply to the client
   // Set the SubRequest in FINISH_FAILED status
   subReq->setStatus(castor::stager::SUBREQUEST_FAILED_FINISHED);
 
@@ -245,18 +175,20 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
     res.setCastorFileName(subReq->fileName());
     res.setSubreqId(subReq->subreqId());
     res.setReqAssociated(req->reqId());
-  
     // Reply to client
     try {
-      STAGER_LOG_DEBUG(NULL, "Sending Response");
       castor::replier::RequestReplier *rr = 0;
       try {
         rr = castor::replier::RequestReplier::getInstance();
         rr->sendResponse(client, &res);
       } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
+        // "Unexpected exception caught"
+        castor::dlf::Param params[] =
+          {castor::dlf::Param("function", "ErrorSvcThread::process.2"),
+           castor::dlf::Param("message", e.getMessage().str()),
+           castor::dlf::Param("code", e.code()),
+           castor::dlf::Param(suuid)};
+        castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
         rr = 0;
       }
       // We both update the DB and check whether this was
@@ -267,25 +199,32 @@ EXTERN_C int DLL_DECL stager_error_process(void *output) {
         }
       }
     } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      STAGER_LOG_DB_ERROR(NULL, func,
-                          e.getMessage().str().c_str());
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "ErrorSvcThread::process.3"),
+         castor::dlf::Param("message", e.getMessage().str()),
+         castor::dlf::Param("code", e.code()),
+         castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
     }
   } else {
     // still update the DB to put the subrequest in FAILED_FINISHED
     try {      
       svcs->updateRep(&ad, subReq, true);
     } catch (castor::exception::Exception e) {
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "ErrorSvcThread::process.4"),
+         castor::dlf::Param("message", e.getMessage().str()),
+         castor::dlf::Param("code", e.code()),
+         castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
       serrno = e.code();
-      STAGER_LOG_DB_ERROR(NULL, func,
-                          e.getMessage().str().c_str());
     }
   }
-
   // Cleanup
   if (subReq) delete subReq;
   if (req) delete req;
   if (stgSvc) stgSvc->release();
-  STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
-
+  return;
 }
