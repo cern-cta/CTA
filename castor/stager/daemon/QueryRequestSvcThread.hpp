@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/10/19 12:58:28 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/23 14:01:36 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -37,20 +37,20 @@
 
 
 namespace castor {
-  
+
   namespace stager {
-    
+
     namespace dbService {
-      
+
       class QueryRequestSvcThread : public virtual castor::server::SelectProcessThread {
-	
+
       public:
-      
+
         /**
          * Default costructor
          */
-        QueryRequestSvcThread();
-       
+        QueryRequestSvcThread() throw();
+
         /**
          * Default destructor
          */
@@ -59,32 +59,22 @@ namespace castor {
         /**
          * Select a new queryRequest to be processed
          */
-        virtual castor::IObject* select() throw (castor::exception::Exception);
+        virtual castor::IObject* select() throw();
 
         /**
          * Performs the selected query
          * @param param The IObject returned by select
          */
-        virtual void process(castor::IObject* param) throw (castor::exception::Exception);
+        virtual void process(castor::IObject* param) throw();
 
       private:
 
         /**
-         * Sends a Response to a client
-         * In case of error, on writes a message to the log
-         * XXX use StageReplyHelper class in the future
-         * @param client the client where to send the response
-         * @param res the response to send
+         * defines the status of a fileResponse
          */
-        void replyToClient(castor::IClient* client,
-                           castor::rh::Response* res);
-                         
-        void sendEndresponse(castor::IClient* client,
-                             std::string reqId);                        
-                         
         void setFileResponseStatus(castor::rh::FileQryResponse* fr,
-                                 castor::stager::DiskCopyInfo* dc,
-                                 bool& foundDiskCopy);
+                                   castor::stager::DiskCopyInfo* dc,
+                                   bool& foundDiskCopy) throw();
 
         /**
          * Handles a filequery by fileId and replies to client.
@@ -93,27 +83,33 @@ namespace castor {
                                               castor::IClient *client,
                                               std::string& fileName,
                                               u_signed64 svcClassId,
-                                              std::string reqId);
+                                              std::string reqId,
+                                              Cuuid_t uuid)
+          throw (castor::exception::Exception);
         /**
          * Handles a filequery by fileId and replies to client.
          */
         void handleFileQueryRequestByFileId(castor::query::IQuerySvc* qrySvc,
-                                              castor::IClient *client,
-                                              std::string &fid,
-                                              std::string &nshost,
-                                              u_signed64 svcClassId,
-                                              std::string reqId);
+                                            castor::IClient *client,
+                                            std::string &fid,
+                                            std::string &nshost,
+                                            u_signed64 svcClassId,
+                                            std::string reqId,
+                                            Cuuid_t uuid)
+          throw (castor::exception::Exception);
 
         /**
          * Handles a filequery by reqId/userTag or getLastRecalls version and replies to client.
          */
-        void handle_fileQueryRequestByRequest(castor::query::IQuerySvc* qrySvc,
-                                               castor::IClient *client,
-                                               castor::stager::RequestQueryType reqType,
-                                               std::string &val,
-                                               u_signed64 svcClassId,
-                                               std::string reqId);
-                                              
+        void handleFileQueryRequestByRequest(castor::query::IQuerySvc* qrySvc,
+                                             castor::IClient *client,
+                                             castor::stager::RequestQueryType reqType,
+                                             std::string &val,
+                                             u_signed64 svcClassId,
+                                             std::string reqId,
+                                             Cuuid_t uuid)
+          throw (castor::exception::Exception);
+
         /**
          * Handles a fileQueryRequest and replies to client.
          * @param req the request to handle
@@ -123,11 +119,13 @@ namespace castor {
          * @param ad the address where to load/store objects in the DB
          */
         void handleFileQueryRequest(castor::stager::Request* req,
-                                     castor::IClient *client,
-                                     castor::Services* svcs,
-                                     castor::query::IQuerySvc* qrySvc,
-                                     castor::BaseAddress &ad);
-                                   
+                                    castor::IClient *client,
+                                    castor::Services* svcs,
+                                    castor::query::IQuerySvc* qrySvc,
+                                    castor::BaseAddress &ad,
+                                    Cuuid_t uuid)
+          throw (castor::exception::Exception);
+
         /**
          * Handles a DiskPoolQuery and replies to client.
          * @param req the request to handle
@@ -137,28 +135,37 @@ namespace castor {
          * @param ad the address where to load/store objects in the DB
          */
         void handleDiskPoolQuery(castor::stager::Request* req,
-                              castor::IClient *client,
-                              castor::Services* svcs,
-                              castor::query::IQuerySvc* qrySvc,
-                              castor::BaseAddress &ad);
+                                 castor::IClient *client,
+                                 castor::Services* svcs,
+                                 castor::query::IQuerySvc* qrySvc,
+                                 castor::BaseAddress &ad,
+                                 Cuuid_t uuid)
+          throw (castor::exception::Exception);
+
         /**
          * Handles a VersionQuery and replies to client.
          * @param req the request to handle
          * @param client the client where to send the response
          */
         void handleVersionQuery(castor::stager::Request* req,
-                                 castor::IClient *client);
+                                castor::IClient *client)
+          throw (castor::exception::Exception);
 
+        /**
+         * helper method for cleaning up a request and releasing
+         * a service if not null
+         * @param req the request to clean
+         * @param svc the service to release
+         */
+        void cleanup (castor::stager::Request* req,
+                      castor::IService *svc) throw();
 
-        /** Dummy status code for non existing files */
-        const int naStatusCode = 10000;
-      
       };
-      
+
     } // end namespace dbService
-    
+
   } // end namespace stager
-  
+
 } //end namespace castor
 
 #endif
