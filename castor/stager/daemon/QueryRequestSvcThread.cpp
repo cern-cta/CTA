@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2007/10/23 14:01:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2007/10/23 15:39:26 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -687,14 +687,16 @@ void castor::stager::dbService::QueryRequestSvcThread::cleanup
 //-----------------------------------------------------------------------------
 void castor::stager::dbService::QueryRequestSvcThread::process
 (castor::IObject *param) throw() {
+  // Usefull variables
   castor::stager::Request* req = 0;
   castor::query::IQuerySvc *qrySvc = 0;
   castor::Services *svcs = 0;
   Cuuid_t uuid = nullCuuid;
+  castor::IClient *client = 0;
+  // address to access db
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
-  castor::IClient *client = 0;
   try {
     // get the QuerySvc. Note that we cannot cache it since we
     // would not be thread safe
@@ -705,7 +707,7 @@ void castor::stager::dbService::QueryRequestSvcThread::process
       // "Could not get QuerySvc"
       castor::dlf::Param params[] =
         {castor::dlf::Param("function", "QueryRequestSvcThread::process")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_GETSVC, 1, params);
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_GETSVC, 1, params);
       return;
     }
     // Retrieving request and client from the database
@@ -725,6 +727,7 @@ void castor::stager::dbService::QueryRequestSvcThread::process
   } catch (castor::exception::Exception e) {
     // If we fail here, we do NOT have enough information
     // to reply to the client ! So we only log something.
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("function", "QueryRequestSvcThread::process.1"),
        castor::dlf::Param("message", e.getMessage().str()),
@@ -811,7 +814,7 @@ void castor::stager::dbService::QueryRequestSvcThread::process
     // "Unknown Request type"
     castor::dlf::Param params[] =
       {castor::dlf::Param("type", req->type())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 1, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 1, params);
     cleanup(req, qrySvc);
     return;
   }
