@@ -14,7 +14,6 @@ grep REP_ ../castor/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*
 echo >> MagicNumbers
 
 foreach f ( `find ../castor/stager ../castor/monitoring ../castor/vdqm ../castor/repack -name '*.hpp' | grep -v dbService` )
-  echo $f --
   set output=`grep -H '_' $f | grep '=' | grep -v 'm_' | grep -v "if" | grep -v 'static' | sed 's/\/\/.*$//' | sed 's/^.*\/\([a-zA-Z]*\).hpp:/\1/'`
   if !("$output" == "") then
     echo $output | sed 's/^ *\([^ ]*\).*$/    \1\n/' | sed 's/StatusCodes*//' | awk '{print "    ", toupper($1);}' >> MagicNumbers
