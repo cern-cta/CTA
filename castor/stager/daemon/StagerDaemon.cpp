@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/10/22 15:19:42 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/10/23 09:02:27 $ $Author: mmartins $
  *
  * Main stager daemon
  *
@@ -42,6 +42,8 @@
 #include "castor/stager/dbService/JobRequestSvc.hpp"
 #include "castor/stager/dbService/PreRequestSvc.hpp"
 #include "castor/stager/dbService/StgRequestSvc.hpp"
+
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
 
 // default values
 #define STAGER_JOBREQNOTIFYPORT    10001
@@ -70,29 +72,31 @@ int getConfigPort(const char* configLabel, int defaultValue) {
   return notifyPort;
 }
 
+
+
 int main(int argc, char* argv[]){
   try{
 
     castor::stager::dbService::StagerMainDaemon stagerDaemon;
     
     // read the jobManager notification port
-	  int jobManagerPort = 0;
-	  char *value = getconfent("JOBMANAGER", "NOTIFYPORT", 0);
-	  if(value) {
-	    jobManagerPort = std::strtol(value, 0, 10);
+    int jobManagerPort = 0;
+    char *value = getconfent("JOBMANAGER", "NOTIFYPORT", 0);
+    if(value) {
+      jobManagerPort = std::strtol(value, 0, 10);
     }
-	  if ((jobManagerPort <= 0) || (jobManagerPort > 65535)) {
-	    castor::exception::Exception e(EINVAL);
-	    e.getMessage() << "Invalid JOBMANAGER NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
-	    throw e;
-	  }
-	  std::string jobManagerHost = getconfent("JOBMANAGER", "HOST", 0);
+    if ((jobManagerPort <= 0) || (jobManagerPort > 65535)) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Invalid JOBMANAGER NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
+      throw e;
+    }
+    std::string jobManagerHost = getconfent("JOBMANAGER", "HOST", 0);
     if(jobManagerHost == "") {
-	    castor::exception::Exception e(EINVAL);
-	    e.getMessage() << "No JOBMANAGER HOST value configured" << std::endl;
-	    throw e;
-	  }
-
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "No JOBMANAGER HOST value configured" << std::endl;
+      throw e;
+    }
+    
     /*******************************/
     /* thread pools for the stager */
     /*******************************/
@@ -169,12 +173,155 @@ int main(int argc, char* argv[]){
 castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception)
   : castor::server::BaseDaemon("Stager") {
 	
-	castor::dlf::Message stagerMainMessages[]={
-	  { 1, "Exception caught when starting Stager"},
-	  {-1, ""}
+	castor::dlf::Message stagerDlfMessages[]={
+
+	  { STAGER_DAEMON_START, "Stager Daemon started"},
+	  { STAGER_DAEMON_EXECUTION, "Stager Daemon execution"},
+	  { STAGER_DAEMON_ERROR_CONFIG, "Stager Daemon configuration error"},
+	  { STAGER_DAEMON_EXCEPTION, "Stager Daemon Exception"},
+	  { STAGER_DAEMON_EXCEPTION_GENERAL, "Stager Daemon General Exception"},
+	  { STAGER_DAEMON_FINISHED, "Stager Daemon successfully finished"},
+	  
+	  
+	  { STAGER_DAEMON_POOLCREATION, "Stager Daemon Pool creation"},
+	  
+	  
+	  
+	  /*******************************************************************************************************/
+	  /* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
+	  /*****************************************************************************************************/
+	  
+	  /************************/
+	  /* JobRequestSvcThread */
+	  
+	  /* JobRequestSvc flow */
+	  { STAGER_JOBREQSVC_CREATION, "Created new JobRequestSvc Thread"},
+	  { STAGER_JOBREQSVC_SELECT , "JobRequestSvc thread Select method"},
+	  { STAGER_JOBREQSVC_PROCESS, "JobRequestSvc thread Process method"},
+	  { STAGER_JOBREQSVC_EXCEPTION, "JobRequestSvc thread Exception"},
+	  { STAGER_JOBREQSVC_EXCEPTION_GENERAL, "JobRequestSvc thread General Exception"},
+	  
+	  
+	  
+	  /* StagerGetHandler:  */
+	  { STAGER_GET, "Get Handler execution"},
+	  { STAGER_GET_EXCEPTION, "Get Handler Exception"},
+	  { STAGER_GET_EXCEPTION_GENERAL,"Get Handler General Exception"},
+	  
+	  /* StagerUpdateHandler:  */
+	  { STAGER_UPDATE, "Update Handler execution"},
+	  { STAGER_UPDATE_EXCEPTION,"Update Handler Exception"},
+	  { STAGER_UPDATE_EXCEPTION_GENERAL,"Update Handler General Exception"},
+	  
+	  /* StagerPutHandler:  */
+	  { STAGER_PUT,"Put Handler execution"},
+	  { STAGER_PUT_EXCEPTION,"Put Handler Exception"},
+	  { STAGER_PUT_EXCEPTION_GENERAL,"Put Handler General Exception"},
+	  
+	  
+	  /************************/
+	  /* PreRequestSvcThread */
+	  
+	  /* PreRequestSvc flow */
+	  { STAGER_PREREQSVC_CREATION,"Created new PreRequestSvc Thread"},
+	  { STAGER_PREREQSVC_SELECT,"PreRequestSvc thread Select method"},
+	  { STAGER_PREREQSVC_PROCESS,"PreRequestSvc thread Process method"},
+	  { STAGER_PREREQSVC_EXCEPTION,"PreRequestSvc thread Exception"},
+	  { STAGER_PREREQSVC_EXCEPTION_GENERAL,"PreRequestSvc thread General Exception"},
+	  
+	  
+	  /* StagerRepackHandler */
+	  { STAGER_REPACK,"Repack Handler execution"},
+	  { STAGER_REPACK_EXCEPTION,"Repack Handler Exception"},
+	  { STAGER_REPACK_EXCEPTION_GENERAL,"Repack Handler General Exception"},
+	  
+	  /* StagerPrepareToGetHandler */
+	  { STAGER_PREPARETOGET,"PrepareToGet Handler execution"},
+	  { STAGER_PREPARETOGET_EXCEPTION, "PrepareToGet Handler Exception"},
+	  { STAGER_PREPARETOGET_EXCEPTION_GENERAL,"PrepareToGet Handler General Exception"},
+	  
+	  /* StagerPrepareToUpdateHandler */
+	  { STAGER_PREPARETOUPDATE,"PrepareToUpdate Handler execution"},
+	  { STAGER_PREPARETOUPDATE_EXCEPTION, "PrepareToUpdate Handler Exception"},
+	  { STAGER_PREPARETOUPDATE_EXCEPTION_GENERAL,"PrepareToUpdate Handler General Exception"},
+	  
+	  /* StagerPrepareToPutHandler */
+	  { STAGER_PREPARETOPUT,"PrepareToPut Handler execution"},
+	  { STAGER_PREPARETOPUT_EXCEPTION,"PrepareToPut Handler Exception"},
+	  { STAGER_PREPARETOPUT_EXCEPTION_GENERAL,"PrepareToPut Handler General Exception"},
+	  
+	  
+	  /*************************/
+	  /* StgRequestSvcThread  */
+	  
+	  /* StgRequestSvc flow */
+	  { STAGER_STGREQSVC_CREATION,"Created new StgRequestSvc Thread"},
+	  { STAGER_STGREQSVC_SELECT,"StgRequestSvc thread Select method"},
+	  { STAGER_STGREQSVC_PROCESS,"StgRequestSvc thread Process method"},
+	  { STAGER_STGREQSVC_EXCEPTION,"StgRequestSvc thread Exception"},
+	  { STAGER_STGREQSVC_EXCEPTION_GENERAL,"StgRequestSvc thread General Exception"},
+	  
+	  
+	  /* StagerSetGCHandler: */
+	  { STAGER_SETGC,"SetGC Handler execution"},
+	  { STAGER_SETGC_EXCEPTION,"SetGC Handler Exception"},
+	  { STAGER_SETGC_EXCEPTION_GENERAL,"SetGC Handler General Exception"},
+	  
+	  
+	  /* StagerRmHandler:  */
+	  { STAGER_RM, "Rm Handler execution"},
+	  { STAGER_RM_EXCEPTION, "Rm Handler Exception "},
+	  { STAGER_RM_EXCEPTION_GENERAL,"Rm Handler General Exception"},
+	  
+	  
+	  
+	  
+	  /* StagerPutDoneHandler:  */
+	  { STAGER_PUTDONE,"PutDone Handler execution"},
+	  { STAGER_PUTDONE_EXCEPTION,"PutDone Handler Exception"},
+	  { STAGER_PUTDONE_EXCEPTION_GENERAL,"PutDone Handler General Exception"},
+	  
+	  
+	  /*************************/
+	  /* StagerRequestHandler */
+	  { STAGER_REQHANDLER_METHOD,"RequestHandler method"},
+	  { STAGER_REQHANDLER_EXCEPTION,"RequestHandler Exception"},
+	  { STAGER_REQHANDLER_EXCEPTION_GENERAL,"RequestHandler General Exception"},
+	  
+	  /****************************/
+	  /* StagerJobRequestHandler */
+	  { STAGER_JOBREQHANDLER_METHOD,"JobRequestHandler method"},
+	  { STAGER_JOBREQHANDLER_EXCEPTION,"JobRequestHandler Exception"},
+	  { STAGER_JOBREQHANDLER_EXCEPTION_GENERAL,"JobRequestHandler General Exception"},
+	  
+	  
+	  /************************/
+	  /* StagerRequestHelper */
+	  { STAGER_REQHELPER_CONSTRUCTOR,"Request Helper constructor"},
+	  { STAGER_REQHELPER_METHOD,"Request Helper method"},
+	  { STAGER_REQHELPER_EXCEPTION,"Request Helper Exception"},
+	  { STAGER_REQHELPER_EXCEPTION_GENERAL,"Request Helper General Exception"},
+	  
+	  
+	  /********************/
+	  /* StagerCnsHelper */
+	  { STAGER_CNSHELPER_CONSTRUCTOR,"Cns Helper constructor"},
+	  { STAGER_CNSHELPER_METHOD,"Cns Helper method"},
+	  { STAGER_CNSHELPER_EXCEPTION,"Cns Helper Exception"},
+	  { STAGER_CNSHELPER_EXCEPTION_GENERAL,"Cns Helper General Exception"},
+	  
+     
+	  
+	  /*********************/
+	  /* StagerReplyHelper*/
+	  { STAGER_REPLYHELPER_CONSTRUCTOR,"Reply Helper constructor"},
+	  { STAGER_REPLYHELPER_METHOD,"Reply Helper method"},
+	  { STAGER_REPLYHELPER_EXCEPTION,"Reply Helper Exception"},
+	  { STAGER_REPLYHELPER_EXCEPTION_GENERAL,"Reply Helper General Exception"} 
+	  
 	};
 	
-  dlfInit(stagerMainMessages);
+  dlfInit(stagerDlfMessages);
 }
 
 /*************************************************************/

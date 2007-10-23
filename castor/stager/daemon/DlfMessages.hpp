@@ -19,7 +19,7 @@ namespace castor{
      /* Constants related with the Stager (Main) Daemon */
      /* to be added: related with the keyboard interruption, timeout and so on ?!?!?! */
      STAGER_DAEMON_START =1,
-     STAGER_DAEMON_FLOW =2,
+     STAGER_DAEMON_EXECUTION =2,
      STAGER_DAEMON_ERROR_CONFIG =3,
      STAGER_DAEMON_EXCEPTION = 4,
      STAGER_DAEMON_EXCEPTION_GENERAL =5,
