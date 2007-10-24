@@ -102,7 +102,7 @@ namespace castor{
 
       protected:
 	
-	int maxReplicaNb;
+	unsigned int maxReplicaNb;
 	std::string replicationPolicy;
 	std::string default_protocol;
 
@@ -111,7 +111,7 @@ namespace castor{
 
 	std::list<castor::stager::DiskCopyForRecall *> sources;
 
-	int xsize;	
+	unsigned int xsize;	
   
   bool m_notifyJobManager;
 
