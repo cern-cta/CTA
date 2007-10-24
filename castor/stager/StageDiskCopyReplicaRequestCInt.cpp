@@ -389,19 +389,18 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageDiskCopyReplicaRequest_diskCopySource
+  // Cstager_StageDiskCopyReplicaRequest_sourceDiskCopyId
   //----------------------------------------------------------------------------
-  int Cstager_StageDiskCopyReplicaRequest_diskCopySource(castor::stager::StageDiskCopyReplicaRequest* instance, const char** var) {
-    *var = instance->diskCopySource().c_str();
+  int Cstager_StageDiskCopyReplicaRequest_sourceDiskCopyId(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64* var) {
+    *var = instance->sourceDiskCopyId();
     return 0;
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_StageDiskCopyReplicaRequest_setDiskCopySource
+  // Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopyId
   //----------------------------------------------------------------------------
-  int Cstager_StageDiskCopyReplicaRequest_setDiskCopySource(castor::stager::StageDiskCopyReplicaRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setDiskCopySource(snew_var);
+  int Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopyId(castor::stager::StageDiskCopyReplicaRequest* instance, u_signed64 new_var) {
+    instance->setSourceDiskCopyId(new_var);
     return 0;
   }
 

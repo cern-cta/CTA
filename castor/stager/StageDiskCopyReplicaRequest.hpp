@@ -98,23 +98,21 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_diskCopySource
-       * The machine and full path of the source file to be transferred in a disk2disk
-       * copy operation
-       * @return the value of m_diskCopySource
+       * Get the value of m_sourceDiskCopyId
+       * The id of the source diskcopy
+       * @return the value of m_sourceDiskCopyId
        */
-      std::string diskCopySource() const {
-        return m_diskCopySource;
+      u_signed64 sourceDiskCopyId() const {
+        return m_sourceDiskCopyId;
       }
 
       /**
-       * Set the value of m_diskCopySource
-       * The machine and full path of the source file to be transferred in a disk2disk
-       * copy operation
-       * @param new_var the new value of m_diskCopySource
+       * Set the value of m_sourceDiskCopyId
+       * The id of the source diskcopy
+       * @param new_var the new value of m_sourceDiskCopyId
        */
-      void setDiskCopySource(std::string new_var) {
-        m_diskCopySource = new_var;
+      void setSourceDiskCopyId(u_signed64 new_var) {
+        m_sourceDiskCopyId = new_var;
       }
 
       /**
@@ -137,8 +135,8 @@ namespace castor {
 
     private:
 
-      /// The machine and full path of the source file to be transferred in a disk2disk copy operation
-      std::string m_diskCopySource;
+      /// The id of the source diskcopy
+      u_signed64 m_sourceDiskCopyId;
 
       /// The id of this object
       u_signed64 m_id;

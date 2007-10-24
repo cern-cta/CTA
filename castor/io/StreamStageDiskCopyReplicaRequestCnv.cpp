@@ -104,7 +104,7 @@ void castor::io::StreamStageDiskCopyReplicaRequestCnv::createRep(castor::IAddres
   ad->stream() << obj->reqId();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
-  ad->stream() << obj->diskCopySource();
+  ad->stream() << obj->sourceDiskCopyId();
   ad->stream() << obj->id();
 }
 
@@ -154,9 +154,9 @@ castor::IObject* castor::io::StreamStageDiskCopyReplicaRequestCnv::createObj(cas
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
-  std::string diskCopySource;
-  ad->stream() >> diskCopySource;
-  object->setDiskCopySource(diskCopySource);
+  u_signed64 sourceDiskCopyId;
+  ad->stream() >> sourceDiskCopyId;
+  object->setSourceDiskCopyId(sourceDiskCopyId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

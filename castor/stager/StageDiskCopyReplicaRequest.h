@@ -297,18 +297,16 @@ int Cstager_StageDiskCopyReplicaRequest_clone(struct Cstager_StageDiskCopyReplic
                                               struct C_IObject_t* ret);
 
 /**
- * Get the value of diskCopySource
- * The machine and full path of the source file to be transferred in a disk2disk
- * copy operation
+ * Get the value of sourceDiskCopyId
+ * The id of the source diskcopy
  */
-int Cstager_StageDiskCopyReplicaRequest_diskCopySource(struct Cstager_StageDiskCopyReplicaRequest_t* instance, const char** var);
+int Cstager_StageDiskCopyReplicaRequest_sourceDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64* var);
 
 /**
- * Set the value of diskCopySource
- * The machine and full path of the source file to be transferred in a disk2disk
- * copy operation
+ * Set the value of sourceDiskCopyId
+ * The id of the source diskcopy
  */
-int Cstager_StageDiskCopyReplicaRequest_setDiskCopySource(struct Cstager_StageDiskCopyReplicaRequest_t* instance, const char* new_var);
+int Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of id
