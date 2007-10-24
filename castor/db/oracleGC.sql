@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.531 $ $Date: 2007/10/22 13:56:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.532 $ $Date: 2007/10/24 10:00:46 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4139,14 +4139,18 @@ BEGIN
      AND TapeCopy.castorfile = SubRequest.castorfile
      AND TapeCopy.status IN (0, 1)  -- CREATED / TOBEMIGRATED
      FOR UPDATE;
-  -- if we didn't find anything, we look 
+  -- if we didn't find anything, we look
   -- the usual svcclass from castorfile table.
   IF tcIds.count = 0 THEN
-    SELECT TapeCopy.id BULK COLLECT INTO tcIds 
-      FROM TapeCopy, CastorFile 
-     WHERE TapeCopy.castorFile = CastorFile.id 
-       AND CastorFile.svcClass = svcclassId
-       AND TapeCopy.status IN (0, 1) -- CREATED / TOBEMIGRATED
+    SELECT /*+ USE_NL(A B)
+             INDEX(A I_TAPECOPY_STATUS)
+             INDEX(B I_CASTORFILE_ID)
+          */
+           A.id BULK COLLECT INTO tcIds
+      FROM TapeCopy A, CastorFile B
+     WHERE A.castorFile = B.id
+       AND B.svcClass = svcclassId
+       AND A.status IN (0, 1) -- CREATED / TOBEMIGRATED
        FOR UPDATE;
   END IF;
   -- atomically update the status to WAITINSTREAMS (we got a lock
