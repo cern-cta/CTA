@@ -47,8 +47,9 @@ is the severity level of the message and must be one of the following values:
 .B DLF_LVL_IMPORTANT
 .TP
 .B DLF_LVL_DEBUG
+.TP
+.B DLF_LVL_USER_ERROR
 .RE
-
 
 .I msg_no
 Is the unique number which corresponds to a particular message text. The message number and its associated text message must have been previously registered with the api using a call to

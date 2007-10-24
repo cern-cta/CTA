@@ -66,6 +66,8 @@ is the name of the severity and must be one of the following values:
 .B DLF_LVL_IMPORTANT
 .TP
 .B DLF_LVL_DEBUG
+.TP
+.B DLF_LVL_USER_ERROR
 .RE
 
 The

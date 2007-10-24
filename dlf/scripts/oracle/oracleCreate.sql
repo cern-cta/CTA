@@ -309,6 +309,7 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8', 'System');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('9', 'Important');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Monitoring');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'UserError');
 
 /* initialise facilities */
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0, 'rtcpcld');
