@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.208 $ $Release$ $Date: 2007/10/17 18:16:36 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.209 $ $Release$ $Date: 2007/10/24 13:35:08 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1149,7 +1149,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   fileid.fileid = castorFile->fileId();
   strncpy(fileid.server,
           castorFile->nsHost().c_str(),
-          CA_MAXHOSTNAMELEN);
+          CA_MAXHOSTNAMELEN+1);
   struct Cns_segattrs *nsSegmentAttrs = 0;
   int nbNsSegments=0;
 
