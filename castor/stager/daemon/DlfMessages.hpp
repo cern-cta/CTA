@@ -105,7 +105,9 @@ namespace castor{
      STAGER_GCSVC_NOCLI= 113, /* "No client associated with request ! Cannot answer !" */
      STAGER_GCSVC_UNKREQ= 114, /* "Unknown Request type" */
      STAGER_GCSVC_FDELOK= 115, /* "Invoking filesDeleted" */
-     STAGER_GCSVC_FDELFAIL= 116, /*"Invoking filesDeletionFailed" */
+     STAGER_GCSVC_FDELFAIL= 116, /* "Invoking filesDeletionFailed" */
+     STAGER_GCSVC_SELF2DEL= 117, /* "Invoking selectFiles2Delete" */
+     STAGER_GCSVC_FSEL4DEL= 118, /* "File selected for deletion" */
      
      /************/
      /* ErrorSvc */

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/10/24 09:17:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/10/24 13:37:55 $ $Author: sponcec3 $
  *
  * Service thread for garbage collection related requests
  *
@@ -171,7 +171,10 @@ void castor::stager::dbService::GcSvcThread::handleFiles2Delete
     // get the Files2Delete
     // cannot return 0 since we check the type before calling this method
     uReq = dynamic_cast<castor::stager::Files2Delete*> (req);
-    // Invoking the method
+    // "Invoking selectFiles2Delete"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("DiskServer", uReq->diskServer())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_SELF2DEL, 1, params);
     result = gcSvc->selectFiles2Delete(uReq->diskServer());
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
@@ -192,6 +195,14 @@ void castor::stager::dbService::GcSvcThread::handleFiles2Delete
       // to res. Result can thus be deleted with no risk
       // of memory leak
       res.addFiles(*it);
+      // "File selected for deletion"
+      Cns_fileid fileId;
+      strncpy(fileId.server, (*it)->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
+      fileId.fileid = (*it)->fileId();
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("DiskServer", uReq->diskServer()),
+         castor::dlf::Param("FileName", (*it)->fileName())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FSEL4DEL, 1, params, &fileId);
     }
   }
   // Reply To Client

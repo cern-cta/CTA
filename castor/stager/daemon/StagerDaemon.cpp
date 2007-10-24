@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/10/24 12:00:10 $ $Author: mmartins $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/10/24 13:37:55 $ $Author: sponcec3 $
  *
  * Main stager daemon
  *
@@ -262,6 +262,8 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
           { STAGER_GCSVC_UNKREQ,  "Unknown Request type"},
           { STAGER_GCSVC_FDELOK,  "Invoking filesDeleted"},
           { STAGER_GCSVC_FDELFAIL,"Invoking filesDeletionFailed"},
+          { STAGER_GCSVC_SELF2DEL,"Invoking selectFiles2Delete"},
+          { STAGER_GCSVC_FSEL4DEL,"File selected for deletion"},
 
 	  /************/
 	  /* ErrorSvc */
