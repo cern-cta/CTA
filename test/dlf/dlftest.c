@@ -134,7 +134,7 @@ void worker(void *arg) {
 		Cuuid_create(&req_id);
 		Cuuid_create(&subreq_id);
 
-		severity = 1 + (int) (11.0  * rand()/(RAND_MAX + 1.0));
+		severity = 1 + (int) (12.0  * rand()/(RAND_MAX + 1.0));
 		msg_no   = 1 + (int) (255.0 * rand()/(RAND_MAX + 1.0));
 		
 		tpnum    = 1 + (int) (9999.0 * rand()/(RAND_MAX + 1.0));
