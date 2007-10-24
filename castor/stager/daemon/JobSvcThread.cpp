@@ -1,29 +1,36 @@
-/*
- * $Id: JobSvcThread.cpp,v 1.43 2007/08/17 16:05:12 sponcec3 Exp $
- */
+/******************************************************************************
+ *                castor/stager/daemon/JobSvcThread.hpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2007/10/24 09:16:47 $ $Author: sponcec3 $
+ *
+ * Service thread for job related requests
+ *
+ * @author castor dev team
+ *****************************************************************************/
 
-/*
- * Copyright (C) 2004 by CERN/IT/PDP/DM
- * All rights reserved
- */
-
-/* ================================================================= */
-/* Local headers for threads : to be included before ANYTHING else   */
-/* ================================================================= */
 #include "Cthread_api.h"
 #include "Cmutex.h"
-#include "stager_uuid.h"                /* Thread-specific uuids */
 
-/* ============== */
-/* System headers */
-/* ============== */
 #include <list>
 #include <vector>
 #include <sstream>
 
-/* ============= */
-/* Local headers */
-/* ============= */
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/BaseAddress.hpp"
@@ -50,702 +57,593 @@
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
-#undef logfunc
+#include "castor/replier/RequestReplier.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/dbService/JobSvcThread.hpp"
 
-#include "stager_service_helper.hpp"
-#include "stager_job_service.h"
-#include "stager_macros.h"
-#include "serrno.h"
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::stager::dbService::JobSvcThread::JobSvcThread() throw () {}
 
-#undef NULL
-#define NULL 0
-
-/* ------------------------------------- */
-/* stager_job_select()                   */
-/*                                       */
-/* Purpose: Job 'select' part of service */
-/*                                       */
-/* Input:  n/a                           */
-/*                                       */
-/* Output:  (void **) output   Selected  */
-/*                                       */
-/* Return: 0 [OK] or -1 [ERROR, serrno]  */
-/* ------------------------------------- */
-
-
-
-EXTERN_C int DLL_DECL stager_job_select(void **output) {
-  char *func =  "stager_job_select";
-  int rc;
-
-  STAGER_LOG_ENTER();
-
-  if (output == NULL) {
-    serrno = EFAULT;
-    return -1;
-  }
-
-  castor::stager::Request* req = 0;
-  castor::Services *svcs;
-  castor::stager::IJobSvc *jobSvc;
-
+//-----------------------------------------------------------------------------
+// select
+//-----------------------------------------------------------------------------
+castor::IObject* castor::stager::dbService::JobSvcThread::select()
+  throw() {
   try {
-
-    /* Loading services */
-    /* ---------------- */
-    STAGER_LOG_VERBOSE(NULL,"Loading services");
-    svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
-    jobSvc = dynamic_cast<castor::stager::IJobSvc*>(svc);
-
-    if(!jobSvc) {
-      STAGER_LOG_DB_ERROR(NULL,"stager_job_service","Impossible create/locate castor::SVC_DBJOBSVC");
-      return -1;
+    // get the JobSvc. Note that we cannot cache it since we
+    // would not be thread safe
+    castor::Services *svcs = castor::BaseObject::services();
+    castor::IService *svc = svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
+    castor::stager::IJobSvc *jobSvc = dynamic_cast<castor::stager::IJobSvc*>(svc);
+    if (0 == jobSvc) {
+      // "Could not get JobSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "JobSvcThread::select")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_GETSVC, 1, params);
+      return 0;
     }
-    
-    /* Get any new request to do    */
-    /* ---------------------------- */
-    STAGER_LOG_VERBOSE(NULL,"Getting any request to do");
+    // actual work
     castor::stager::Request* req = jobSvc->requestToDo();
-
-    if (0 == req) {
-      /* Nothing to do */
-      STAGER_LOG_VERBOSE(NULL,"Nothing to do");
-      serrno = ENOENT;
-      rc = -1;
-    } else {
-      /* Set uuid for the log */
-      /* -------------------- */
-      Cuuid_t request_uuid;
-      if (string2Cuuid(&request_uuid,(char *) req->reqId().c_str()) == 0) {
-        stager_request_uuid = request_uuid;
-      }
-      std::stringstream msg;
-      msg << "Found request " << req->id();
-      STAGER_LOG_DEBUG(NULL,msg.str().c_str());
-      *output = req;
-      rc = 0;
-
-    }
-
+    jobSvc->release();
+    return req;
   } catch (castor::exception::Exception e) {
-    serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
-                        e.getMessage().str().c_str());
-    rc = -1;
-    if (req) delete req;
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::select"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 1, params);
+    return 0;
   }
-
-  // Cleanup
-  jobSvc->release();
-
-  // Return
-  STAGER_LOG_RETURN(rc);
 }
 
-
-namespace castor {
-
-  namespace stager {
-
-    /**
-     * Handles a StartRequest and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param jobSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_startRequest(castor::stager::Request* req,
-                             castor::IClient *client,
-                             castor::Services* svcs,
-                             castor::stager::IJobSvc* jobSvc,
-                             castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::startRequest";
-      castor::stager::FileSystem *fs = 0;
-      castor::stager::SubRequest *subreq = 0;
-      castor::stager::DiskCopy *dc = 0;
-      std::string error;
-      std::list<castor::stager::DiskCopyForRecall*> sources;
-      castor::stager::StartRequest *sReq;
-      bool emptyFile;
-
-      try {
-
-        /* get the StartRequest */
-        /* -------------------- */
-        // cannot return 0 since we check the type before calling this method
-        sReq = dynamic_cast<castor::stager::StartRequest*> (req);
-
-        /* Loading the subrequest from db */
-        /* ------------------------------ */
-        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from db");
-        ad.setTarget(sReq->subreqId());
-        castor::IObject *obj = svcs->createObj(&ad);
-        if (0 == obj) {
-          castor::exception::Internal e;
-          e.getMessage() << "Found no object for ID:" << sReq->subreqId();
-          throw e;
-        }
-        subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
-        if (0 == subreq) {
-          castor::exception::Internal e;
-          e.getMessage() << "Expected SubRequest found type "
-                         << castor::ObjectsIdStrings[obj->type()]
-                         << " for ID:" << sReq->subreqId();
-          delete obj;
-          throw e;
-        }
-
-        /* Set uuid for the log */
-        /* -------------------- */
-        Cuuid_t subrequest_uuid;
-        if (string2Cuuid(&subrequest_uuid,
-                         (char *) subreq->subreqId().c_str()) == 0) {
-          stager_subrequest_uuid = subrequest_uuid;
-        }
-
-        /* Getting the FileSystem Object      */
-        /* ---------------------------------- */
-        STAGER_LOG_VERBOSE(NULL, "Getting the FileSystem Object");
-        fs = jobSvc->selectFileSystem(sReq->fileSystem(),
-                                      sReq->diskServer());
-        if (0==fs) {
-          castor::exception::Internal e;
-          e.getMessage() << "Could not find suitable filesystem for "
-                         << sReq->diskServer() << ":"
-                         << sReq->fileSystem();
-          throw e;
-        }
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
-          STAGER_LOG_DEBUG(NULL, "Invoking getUpdateStart");
-          dc = jobSvc->getUpdateStart(subreq, fs, sources, &emptyFile);
-        } else {
-          STAGER_LOG_DEBUG(NULL, "Invoking PutStart");
-          dc = jobSvc->putStart(subreq, fs);
-        }
-
-        /* Fill DiskCopy with SubRequest           */
-        /* --------------------------------------- */
-        STAGER_LOG_VERBOSE(NULL,"Filling DiskCopy with SubRequest");
-        if (0 != dc) {
-          svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
-        }
-
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::GetUpdateStartResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      } else {
-        res.setDiskCopy(dc);
-        if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
-          for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
-                 sources.begin();
-               it != sources.end();
-               it++) {
-            res.addSources(*it);
-          }
-        }
-        res.setEmptyFile(emptyFile);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
-      /* Cleanup                        */
-      /* ------------------------------ */
-      if (0 != fs) {
-        castor::stager::DiskServer *ds = fs->diskserver();
-        if (0 != ds) {
-          delete ds;
-        }
-        delete fs;
-      }
-      if (subreq) delete subreq;
-      if (dc) {
-        std::vector<castor::stager::SubRequest*> srs = dc->subRequests();
-        for (std::vector<castor::stager::SubRequest*>::iterator it =
-               srs.begin();
-             it != srs.end();
-             it++) {
-          delete *it;
-        }
-        delete dc;
-      }
-      if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
-        for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
-               sources.begin();
-             it != sources.end();
-             it++) {
-          delete *it;
-        }
-      }
+//-----------------------------------------------------------------------------
+// handleStartRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handleStartRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::FileSystem *fs = 0;
+  castor::stager::SubRequest *subreq = 0;
+  castor::stager::DiskCopy *dc = 0;
+  std::list<castor::stager::DiskCopyForRecall*> sources;
+  castor::stager::StartRequest *sReq;
+  bool emptyFile;
+  Cuuid_t suuid = nullCuuid;
+  castor::rh::GetUpdateStartResponse res;
+  bool failed = false;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    sReq = dynamic_cast<castor::stager::StartRequest*> (req);
+    // Loading the subrequest from db
+    ad.setTarget(sReq->subreqId());
+    castor::IObject *obj = svcs->createObj(&ad);
+    if (0 == obj) {
+      // "Could not find subrequest associated to Request"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("SubRequest DbId", sReq->subreqId()),
+         castor::dlf::Param("Request Type", "StartRequest")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ, 2, params);
+      delete sReq;
+      return;
     }
-
-
-    /**
-     * Handles a Disk2DiskCopyDoneRequest and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param jobSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_disk2DiskCopyDoneRequest(castor::stager::Request* req,
-                                         castor::IClient *client,
-                                         castor::Services* svcs,
-                                         castor::stager::IJobSvc* jobSvc,
-                                         castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::disk2DiskCopyDoneRequest";
-      std::string error;
-      castor::stager::Disk2DiskCopyDoneRequest *uReq;
-
-      try {
-
-        /* get the Disk2DiskCopyDoneRequest */
-        /* -------------------------------- */
-        // cannot return 0 since we check the type before calling this method
-        uReq = dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*> (req);
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        u_signed64 srcDcId = uReq->sourceDiskCopyId();
-        if (0 == srcDcId) {
-          STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyFailed");
-          jobSvc->disk2DiskCopyFailed(uReq->diskCopyId());
-        } else {
-          STAGER_LOG_DEBUG(NULL, "Invoking disk2DiskCopyDone");
-          jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId);
-        }
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::BasicResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
+    subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
+    if (0 == subreq) {
+      // "Expected SubRequest in Request but found another type"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Type", obj->type()),
+         castor::dlf::Param("Request Type", "StartRequest")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT, 2, params);
+      delete sReq;
+      delete obj;
+      return;
     }
-
-    /**
-     * Handles a MoverCloseRequest and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param jobSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_moverCloseRequest(castor::stager::Request* req,
-                                  castor::IClient *client,
-                                  castor::Services* svcs,
-                                  castor::stager::IJobSvc* jobSvc,
-                                  castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::moverCloseRequest";
-      castor::stager::SubRequest *subreq = 0;
-      std::string error;
-      castor::stager::MoverCloseRequest *mcReq;
-      castor::IObject *obj = 0;
-
-      try {
-
-        /* get the MoverCloseRequest */
-        /* -------------------- */
-        // cannot return 0 since we check the type before calling this method
-        mcReq = dynamic_cast<castor::stager::MoverCloseRequest*> (req);
-
-        /* Loading the subrequest from db */
-        /* -------------------------------*/
-        STAGER_LOG_VERBOSE(NULL, "Loading the subrequest from db");
-        ad.setTarget(mcReq->subReqId());
-        obj = svcs->createObj(&ad);
-        if (0 == obj) {
-          castor::exception::Internal e;
-          e.getMessage() << "Found no object for ID:" << mcReq->subReqId();
-          throw e;
-        }
-        subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
-        if (0 == subreq) {
-          castor::exception::Internal e;
-          e.getMessage() << "Expected SubRequest found type "
-                         << castor::ObjectsIdStrings[obj->type()]
-                         << " for ID:" << mcReq->subReqId();
-          delete obj;
-          throw e;
-        }
-
-        /* Set uuid for the log */
-        /* -------------------- */
-        Cuuid_t subrequest_uuid;
-        if (string2Cuuid(&subrequest_uuid,
-                         (char *) subreq->subreqId().c_str()) == 0) {
-          stager_subrequest_uuid = subrequest_uuid;
-        }
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking prepareForMigration");
-        jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp());
-
-        // Cleaning
-        delete obj;
-
-      } catch (castor::exception::Exception e) {
-	// free memory
-	if (obj !=0) delete obj;
-        serrno = e.code();
-        error = e.getMessage().str().c_str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::BasicResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
+    string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
+    // Getting the FileSystem Object
+    fs = jobSvc->selectFileSystem(sReq->fileSystem(),
+                                  sReq->diskServer());
+    if (0 == fs) {
+      // "Could not find suitable filesystem"},
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("DiskServer", sReq->diskServer()),
+         castor::dlf::Param("FileSystem", sReq->fileSystem()),
+         castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOFSOK, 3, params);
+      delete sReq;
+      delete obj;
+      return;
     }
-
-    /**
-     * Handles a GetUpdateDone request and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param jobSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_getUpdateDoneRequest(castor::stager::Request* req,
-                                     castor::IClient *client,
-                                     castor::Services* svcs,
-                                     castor::stager::IJobSvc* jobSvc,
-                                     castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::getUpdateDone";
-      std::string error;
-      castor::stager::GetUpdateDone *uReq;
-
-      try {
-
-        /* get the GetUpdateDoneRequest */
-        /* ---------------------------- */
-        // cannot return 0 since we check the type before calling this method
-        uReq = dynamic_cast<castor::stager::GetUpdateDone*> (req);
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking getUpdateDone");
-        jobSvc->getUpdateDone(uReq->subReqId());
-
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::BasicResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
+    // Invoking the method
+    if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
+      // "Invoking getUpdateStart"
+      castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS, 1, params);
+      dc = jobSvc->getUpdateStart(subreq, fs, sources, &emptyFile);
+    } else {
+      // "Invoking PutStart"
+      castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS, 1, params);
+      dc = jobSvc->putStart(subreq, fs);
     }
-
-    /**
-     * Handles a GetUpdateFailed request and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param jobSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_getUpdateFailedRequest(castor::stager::Request* req,
-                                       castor::IClient *client,
-                                       castor::Services* svcs,
-                                       castor::stager::IJobSvc* jobSvc,
-                                       castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::getUpdateFailed";
-      std::string error;
-      castor::stager::GetUpdateFailed *uReq;
-
-      try {
-
-        /* get the GetUpdateFailedRequest */
-        /* ------------------------------ */
-        // cannot return 0 since we check the type before calling this method
-        uReq = dynamic_cast<castor::stager::GetUpdateFailed*> (req);
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking getUpdateFailed");
-        jobSvc->getUpdateFailed(uReq->subReqId());
-
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::BasicResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
+    // Fill DiskCopy with SubRequest
+    if (0 != dc) {
+      svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
     }
-
-    /**
-     * Handles a PutFailed request and replies to client.
-     * @param req the request to handle
-     * @param client the client where to send the response
-     * @param svcs the Services object to use
-     * @param jobSvc the stager service to use
-     * @param ad the address where to load/store objects in the DB
-     */
-    void handle_putFailedRequest(castor::stager::Request* req,
-                                 castor::IClient *client,
-                                 castor::Services* svcs,
-                                 castor::stager::IJobSvc* jobSvc,
-                                 castor::BaseAddress &ad) {
-      // Usefull Variables
-      char *func =  "castor::stager::PutFailed";
-      std::string error;
-      castor::stager::PutFailed *uReq;
-
-      try {
-
-        /* get the GetUpdateDoneRequest */
-        /* ---------------------------- */
-        // cannot return 0 since we check the type before calling this method
-        uReq = dynamic_cast<castor::stager::PutFailed*> (req);
-
-        /* Invoking the method                */
-        /* ---------------------------------- */
-        STAGER_LOG_DEBUG(NULL, "Invoking putFailed");
-        jobSvc->putFailed(uReq->subReqId());
-
-      } catch (castor::exception::Exception e) {
-        serrno = e.code();
-        error = e.getMessage().str();
-        STAGER_LOG_DB_ERROR(NULL, func,
-                            e.getMessage().str().c_str());
-      }
-
-      /* Build the response             */
-      /* ------------------------------ */
-      STAGER_LOG_DEBUG(NULL, "Building Response");
-      castor::rh::BasicResponse res;
-      if (0 != serrno) {
-        res.setErrorCode(serrno);
-        res.setErrorMessage(error);
-      }
-
-      /* Reply To Client                */
-      /* ------------------------------ */
-      replyToClient(client, &res, req->reqId());
-
-    }
-
-  } // End of namespace stager
-
-} // End of namespace castor
-
-
-/* -------------------------------------- */
-/* stager_job_process()                   */
-/*                                        */
-/* Purpose: Job 'process' part of service */
-/*                                        */
-/* Input:  (void *) output    Selection   */
-/*                                        */
-/* Output: n/a                            */
-/*                                        */
-/* Return: 0 [OK] or -1 [ERROR, serrno]   */
-/* -------------------------------------- */
-EXTERN_C int DLL_DECL stager_job_process(void *output) {
-
-  char *func =  "stager_job_process";
-  STAGER_LOG_ENTER();
-
-  serrno = 0;
-  if (output == NULL) {
-    serrno = EFAULT;
-    return -1;
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleStartRequest"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code()),
+       castor::dlf::Param(suuid)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+    failed = true;
   }
+  // Build the response
+  if (!failed) {
+    res.setDiskCopy(dc);
+    if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
+      for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
+             sources.begin();
+           it != sources.end();
+           it++) {
+        res.addSources(*it);
+      }
+    }
+    res.setEmptyFile(emptyFile);
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleStartRequest.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code()),
+       castor::dlf::Param(suuid)};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+  }
+  // Cleanup
+  if (0 != fs) {
+    castor::stager::DiskServer *ds = fs->diskserver();
+    if (0 != ds) { delete ds; }
+    delete fs;
+  }
+  if (subreq) delete subreq;
+  if (dc) {
+    std::vector<castor::stager::SubRequest*> srs = dc->subRequests();
+    for (std::vector<castor::stager::SubRequest*>::iterator it =
+           srs.begin();
+         it != srs.end();
+         it++) {
+      delete *it;
+    }
+    delete dc;
+  }
+  if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
+    for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
+           sources.begin();
+         it != sources.end();
+         it++) {
+      delete *it;
+    }
+  }
+}
 
-  /* ===========================================================
-   *
-   * 1) PREPARATION PHASE
-   * Retrieving request from the database
-   */
+//-----------------------------------------------------------------------------
+// handleDisk2DiskCopyDoneRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::Disk2DiskCopyDoneRequest *uReq;
+  castor::rh::BasicResponse res;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    uReq = dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*> (req);
+    // Invoking the method
+    u_signed64 srcDcId = uReq->sourceDiskCopyId();
+    if (0 == srcDcId) {
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD, 1, params);
+      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId());
+    } else {
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
+         castor::dlf::Param("SourceDcId", srcDcId)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCOK, 2, params);
+      jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId);
+    }
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleDisk2DiskCopyDoneRequest"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleDisk2DiskCopyDoneRequest.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+  }
+}
 
+//-----------------------------------------------------------------------------
+// handleMoverCloseRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw()  {
+  // Useful Variables
+  castor::stager::SubRequest *subreq = 0;
+  castor::stager::MoverCloseRequest *mcReq;
+  castor::IObject *obj = 0;
+  Cuuid_t suuid = nullCuuid;
+  castor::rh::BasicResponse res;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    mcReq = dynamic_cast<castor::stager::MoverCloseRequest*> (req);
+    ad.setTarget(mcReq->subReqId());
+    obj = svcs->createObj(&ad);
+    if (0 == obj) {
+      // "Could not find subrequest associated to Request"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("SubRequest DbId", mcReq->subReqId()),
+         castor::dlf::Param("Request Type", "MoverCloseRequest")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ, 2, params);
+      delete mcReq;
+      return;
+    }
+    subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
+    if (0 == subreq) {
+      // "Expected SubRequest in Request but found another type"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Type", obj->type()),
+         castor::dlf::Param("Request Type", "MoverCloseRequest")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT, 2, params);
+      delete mcReq;
+      delete obj;
+      return;
+    }
+    string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
+    // "Invoking prepareForMigration"
+    castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PFMIG, 1, params);
+    jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp());
+    // Cleaning
+    delete obj;
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleMoverCloseRequest"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code()),
+       castor::dlf::Param(suuid)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+    if (obj !=0) delete obj;
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleMoverCloseRequest.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code()),
+       castor::dlf::Param(suuid)};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// handleGetUpdateDoneRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::GetUpdateDone *uReq;
+  castor::rh::BasicResponse res;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    uReq = dynamic_cast<castor::stager::GetUpdateDone*> (req);
+    // Invoking the method
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("SubReqId", uReq->subReqId())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDO, 1, params);
+    jobSvc->getUpdateDone(uReq->subReqId());
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateDoneRequest"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateDoneRequest.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// handleGetUpdateFailedRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::GetUpdateFailed *uReq;
+  castor::rh::BasicResponse res;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    uReq = dynamic_cast<castor::stager::GetUpdateFailed*> (req);
+    // Invoking the method
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("SubReqId", uReq->subReqId())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPFA, 1, params);
+    jobSvc->getUpdateFailed(uReq->subReqId());
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateFailedRequest"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateFailedRequest.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// handlePutFailedRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::PutFailed *uReq;
+  castor::rh::BasicResponse res;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    uReq = dynamic_cast<castor::stager::PutFailed*> (req);
+    // Invoking the method
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("SubReqId", uReq->subReqId())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTFAIL, 1, params);
+    jobSvc->putFailed(uReq->subReqId());
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handlePutFailedRequest"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handlePutFailedRequest.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// process
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::process
+(castor::IObject *param) throw() {
+  // Useful variables
   castor::stager::Request* req = 0;
   castor::Services *svcs = 0;
   castor::stager::IJobSvc *jobSvc = 0;
   castor::IClient *client = 0;
-
-  /* Setting the address to access db */
-  /* -------------------------------- */
+  Cuuid_t uuid = nullCuuid;
+  // address to access db
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
-
   try {
-
-    /* Loading services */
-    /* ---------------- */
-    STAGER_LOG_VERBOSE(NULL,"Loading services");
+    // get the JobSvc. Note that we cannot cache it since we
+    // would not be thread safe
     svcs = castor::BaseObject::services();
-    castor::IService* svc =
-      svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
+    castor::IService* svc = svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
     jobSvc = dynamic_cast<castor::stager::IJobSvc*>(svc);
-
-    /* Casting the request */
-    /* ------------------- */
-    STAGER_LOG_VERBOSE(NULL, "Casting Request");
-    req = (castor::stager::Request*)output;
-    if (0 == req) {
-      castor::exception::Internal e;
-      e.getMessage() << "Request cast error";
-      throw e;
+    if (0 == jobSvc) {
+      // "Could not get JobSvc"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "JobSvcThread::process")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_GETSVC, 1, params);
+      return;
     }
-
-    /* Getting the client  */
-    /* ------------------- */
+    // Retrieving request and client from the database
+    // Note that casting the request will never give 0
+    // since select does return a request for sure
+    req = dynamic_cast<castor::stager::Request*>(param);
+    string2Cuuid(&uuid, (char*)req->reqId().c_str());
+    // Getting the client
     svcs->fillObj(&ad, req, castor::OBJ_IClient);
     client = req->client();
     if (0 == client) {
-      castor::exception::Internal e;
-      e.getMessage() << "No client associated with request ! Cannot answer !";
-      throw e;
+      // "No client associated with request ! Cannot answer !"
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOCLI);
+      delete req;
+      jobSvc->release();
+      return;
     }
-
   } catch (castor::exception::Exception e) {
-    // If we fail here, we do NOT have enough information to
-    // reply to the client !
-    serrno = e.code();
-    STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
-                        e.getMessage().str().c_str());
+    // If we fail here, we do NOT have enough information
+    // to reply to the client ! So we only log something.
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::process.1"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     if (req) delete req;
     if (jobSvc) jobSvc->release();
-    return -1;
+    return;
   }
 
-  /* ===========================================================
-   *
-   * 2) CALLING PHASE
-   * At this point we can send a reply to the client
-   * We get prepared to call the method
-   */
-
+  // At this point we are able to reply to the client
   switch (req->type()) {
-
   case castor::OBJ_GetUpdateStartRequest:
   case castor::OBJ_PutStartRequest:
-    castor::stager::handle_startRequest
-      (req, client, svcs, jobSvc, ad);
+    castor::stager::dbService::JobSvcThread::handleStartRequest
+      (req, client, svcs, jobSvc, ad, uuid);
     break;
-
   case castor::OBJ_Disk2DiskCopyDoneRequest:
-    castor::stager::handle_disk2DiskCopyDoneRequest
-      (req, client, svcs, jobSvc, ad);
+    castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
+      (req, client, svcs, jobSvc, ad, uuid);
     break;
-
   case castor::OBJ_MoverCloseRequest:
-    castor::stager::handle_moverCloseRequest
-      (req, client, svcs, jobSvc, ad);
+    castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
+      (req, client, svcs, jobSvc, ad, uuid);
     break;
-
   case castor::OBJ_GetUpdateDone:
-    castor::stager::handle_getUpdateDoneRequest
-      (req, client, svcs, jobSvc, ad);
+    castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
+      (req, client, svcs, jobSvc, ad, uuid);
     break;
-
   case castor::OBJ_GetUpdateFailed:
-    castor::stager::handle_getUpdateFailedRequest
-      (req, client, svcs, jobSvc, ad);
+    castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
+      (req, client, svcs, jobSvc, ad, uuid);
     break;
-
   case castor::OBJ_PutFailed:
-    castor::stager::handle_putFailedRequest
-      (req, client, svcs, jobSvc, ad);
+    castor::stager::dbService::JobSvcThread::handlePutFailedRequest
+      (req, client, svcs, jobSvc, ad, uuid);
     break;
-
   default:
-    // Issue error message
-    serrno = EINVAL;
-    std::ostringstream oss;
-    oss << "Unknown Request type : "
-        << castor::ObjectsIdStrings[req->type()];
-    STAGER_LOG_DB_ERROR(NULL,"stager_job_select",
-                        oss.str().c_str());
+    // "Unknown Request type"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("type", req->type())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_UNKREQ, 1, params);
     // Inform client
-    STAGER_LOG_DEBUG(NULL, "Building Response");
     castor::rh::BasicResponse res;
-    res.setErrorCode(serrno);
-    res.setErrorMessage(oss.str().c_str());
-    castor::stager::replyToClient(client, &res, req->reqId());
-
+    res.setErrorCode(EINVAL);
+    res.setErrorMessage("Unknown Request type");
+    // Reply To Client
+    try {
+      castor::replier::RequestReplier *rr =
+        castor::replier::RequestReplier::getInstance();
+      res.setReqAssociated(req->reqId());
+      rr->sendResponse(client, &res, true);
+    } catch (castor::exception::Exception e) {
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("function", "JobSvcThread::process.reply"),
+         castor::dlf::Param("message", e.getMessage().str()),
+         castor::dlf::Param("code", e.code())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+    }
   }
-
-  // Delete Request From the database
-  svcs->deleteRep(&ad, req, true);
-
-  // Cleanup
+  try {
+    // Delete Request From the database
+    svcs->deleteRep(&ad, req, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::process.2"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+  }
+  // Final cleanup
   if (req) delete req;
   if (jobSvc) jobSvc->release();
-  STAGER_LOG_RETURN(serrno == 0 ? 0 : -1);
+  return;
 }
