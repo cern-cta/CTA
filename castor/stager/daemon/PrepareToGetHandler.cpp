@@ -26,6 +26,11 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Message.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+
+
 #include "serrno.h"
 #include <errno.h>
 
@@ -55,78 +60,137 @@ namespace castor{
       /*        case 2: (waitRecall) createRecallCandidate */
       void StagerPrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
-        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
-          case 0:   // DiskCopy STAGED
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
-          stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
-          /* we are gona replyToClient so we dont updateRep on DB explicitly */
-          /* we archive the subrequest */
-          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-          break;
+
+        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
+	case -1:
+	  {
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    
+	  }break;
+	case 0:   // DiskCopy STAGED
+	  {
+	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
+	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+	    /* we are gona replyToClient so we dont updateRep on DB explicitly */
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    
+
+	    /* we archive the subrequest */
+	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	  } break;
           
-          case 1:    // DISK2DISKCOPY
-          if(replicaSwitch()) {
-            processReplica();
-          }
+	case 1:    // DISK2DISKCOPY
+	  {
+	    if(replicaSwitch()) {
+	      processReplica();
+	    }
+	    
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISK2DISK_COPY, 6 ,params, &(stgCnsHelper->cnsFileid));
+
+	    /* build the rmjob struct and submit the job */
+	    jobManagerPart();
           
-          /* build the rmjob struct and submit the job */
-          jobManagerPart();
+	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
+	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	    /* and we have to notify the jobManager */
+	    m_notifyJobManager = true;
+          }break;
           
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-          stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
-          stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-          /* and we have to notify the jobManager */
-          m_notifyJobManager = true;
-          break;
-          
-          case 2:
-          stgRequestHelper->stagerService->createRecallCandidate(
-          stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
-          break;
+	case 2:
+	  {
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    
+	    stgRequestHelper->stagerService->createRecallCandidate(
+								   stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+          }break;
           
         }//end switch
         
-      }
+
+      }//END switchDiskCopyForJob
       
       
       
       void StagerPrepareToGetHandler::handle() throw(castor::exception::Exception)
       {
-        StagerReplyHelper* stgReplyHelper=NULL;
-        try{
-          
-          /**************************************************************************/
-          /* common part for all the handlers: get objects, link, check/create file*/
-          preHandle();
-          /**********/
-          
-          jobOriented();	  
-          
-          /* depending on the value returned by getDiskCopiesForJob */
-          /* if needed, we update the subrequestStatus internally  */
-          switchDiskCopiesForJob();
-          
-          
-          stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
-          stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
-          stgReplyHelper->endReplyToClient(stgRequestHelper);
-          delete stgReplyHelper->ioResponse;
-          delete stgReplyHelper;
-          
-          
-        }catch(castor::exception::Exception e){
-          
-          /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
-          /* we don t execute: dbService->updateRep ..*/
-          if(stgReplyHelper != NULL){
-            if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
-            delete stgReplyHelper;
-          }
-          castor::exception::Exception ex(e.code());
-          ex.getMessage()<<"(StagerPrepareToGetHandler) Error"<<e.getMessage().str()<<std::endl;
-          throw ex;
-        }  
-        
+
+	StagerReplyHelper* stgReplyHelper=NULL;
+	try{
+
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
+				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+				       castor::dlf::Param("UserName",stgRequestHelper->username),
+				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
+	  }; 
+	 
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_PREPARETOGET, 5 ,params, &(stgCnsHelper->cnsFileid));
+	  
+
+	  jobOriented();	  
+
+	  /* depending on the value returned by getDiskCopiesForJob */
+	  /* if needed, we update the subrequestStatus internally  */
+	  switchDiskCopiesForJob();
+	  
+	 
+	  stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
+	  if(stgReplyHelper == NULL)
+	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+	  stgReplyHelper->endReplyToClient(stgRequestHelper);
+       
+	  delete stgReplyHelper;
+	  
+
+	}catch(castor::exception::Exception e){
+
+	  /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
+	  /* we don t execute: dbService->updateRep ..*/
+	  if(stgReplyHelper != NULL) delete stgReplyHelper;
+	  
+	  castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+				       castor::dlf::Param("Error Message",e.getMessage().str())
+	  };
+	  
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOGET, 2 ,params, &(stgCnsHelper->cnsFileid));
+	  
+	  throw(e);
+	}  
+
+
       }
       
       

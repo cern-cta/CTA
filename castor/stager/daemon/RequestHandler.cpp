@@ -25,11 +25,6 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/FileClass.hpp"
 
-#include "dlf_api.h"
-#include "castor/dlf/Dlf.hpp"
-#include "castor/dlf/Param.hpp"
-
-
 #include "serrno.h"
 #include <serrno.h>
 
@@ -82,18 +77,7 @@ namespace castor{
 	/* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
 	stgRequestHelper->checkFilePermission();
 	
-	castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(RequestSvc) Detailed subrequest(fileName,{euid,egid},{userName,groupName},mode mask, cliendId, svcClassName,cnsFileid.fileid, cnsFileid.server"),
-					  castor::dlf::Param("Standard Message",stgCnsHelper->subrequestFileName),
-					  castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->euid),
-					  castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->egid),
-					  castor::dlf::Param("Standard Message",stgRequestHelper->username),
-					  castor::dlf::Param("Standard Message",stgRequestHelper->groupname),
-					  castor::dlf::Param("Standard Message",stgRequestHelper->fileRequest->mask()),
-					  castor::dlf::Param("Standard Message",stgRequestHelper->iClient->id()),
-					  castor::dlf::Param("Standard Message",stgRequestHelper->svcClassName),
-					  castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.fileid),
-					  castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.server)};
-	castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 11, parameter);
+
        
       }
       

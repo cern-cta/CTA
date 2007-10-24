@@ -30,6 +30,10 @@
 
 #include "castor/exception/Exception.hpp"
 
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Message.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+
 #include "serrno.h"
 #include <errno.h>
 
@@ -108,100 +112,202 @@ namespace castor{
         
         this->toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0));
         
-        castor::dlf::Param parameter[] = {castor::dlf::Param("Standard Message","(RequestSvc) Detailed subrequest(fileName,{euid,egid},{userName,groupName},mode mask, cliendId, svcClassName,cnsFileid.fileid, cnsFileid.server"),
-          castor::dlf::Param("Standard Message",stgCnsHelper->subrequestFileName),
-          castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->euid),
-          castor::dlf::Param("Standard Message",(unsigned long) stgCnsHelper->egid),
-          castor::dlf::Param("Standard Message",stgRequestHelper->username),
-          castor::dlf::Param("Standard Message",stgRequestHelper->groupname),
-          castor::dlf::Param("Standard Message",stgRequestHelper->fileRequest->mask()),
-          castor::dlf::Param("Standard Message",stgRequestHelper->iClient->id()),
-          castor::dlf::Param("Standard Message",stgRequestHelper->svcClassName),
-          castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.fileid),
-        castor::dlf::Param("Standard Message",stgCnsHelper->cnsFileid.server)};
-        castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 11, parameter);
         
         
         
         
       }
-      
-      
+
+      /********************************************/	
+      /* for Get, Update                         */
+      /*     switch(getDiskCopyForJob):         */                                     
+      /*        case 0,1: (staged) jobManager  */
+      /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
+      void StagerUpdateHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
+      {
+        
+        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
+	case -1:
+	  {
+	    
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAIT_SUBREQ, 6, params, &(stgCnsHelper->cnsFileid));
+	  }break;
+	  
+	case 0: /* process the replicas and call the jobManager   */
+	case 1:
+	    {
+	      bool isToReplicate= replicaSwitch();
+	      if(isToReplicate){
+		processReplica();
+	      }
+	      
+	       castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("UserName",stgRequestHelper->username),
+					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, 6 ,params, &(stgCnsHelper->cnsFileid));
+	      
+	     
+	      /* build the rmjob struct and submit the job */
+	      jobManagerPart();
+	      
+	      
+	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      
+	      /* and we have to notify the jobManager */
+	      m_notifyJobManager = true;
+	    }break;
+          
+	case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
+          {
+            stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	     castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					 castor::dlf::Param{stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 6 ,params, &(stgCnsHelper->cnsFileid));
+            
+          }break;
+          
+        }//end switch
+        
+      }
+
+
+
+
       /************************************/
       /* handler for the update request  */
       /**********************************/
       void StagerUpdateHandler::handle() throw(castor::exception::Exception)
       {
-        try{
-          
-          /**************************************************************************/
-          /* common part for all the handlers: get objects, link, check/create file*/
-          preHandle();
-          /**********/
-          
-          jobOriented();
-          
-          
-          /* huge or small flow?? */
-          if(toRecreateCastorFile){/* we skip the processReplica part :) */    
-            /* use the stagerService to recreate castor file */
-            castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+	try{
+
+	  /**************************************************************************/
+	  /* common part for all the handlers: get objects, link, check/create file*/
+	  preHandle();
+	  /**********/
+	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
+				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+				       castor::dlf::Param("UserName",stgRequestHelper->username),
+				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
+	  };
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_UPDATE, 5 ,params, &(stgCnsHelper->cnsFileid));
+	  
+	
+	  jobOriented();
+	  
+	  
+	  /* huge or small flow?? */
+	  if(toRecreateCastorFile){/* we skip the processReplica part :) */    
+	    /* use the stagerService to recreate castor file */
+	    castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+	    
+	    if(diskCopyForRecall == NULL){
+	      /* in this case we have to archiveSubrequest */
+	      /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
+	      this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
+
+	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("UserName",stgRequest->username),
+					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_RECREATION_IMPOSSIBLE, 6 ,params, &(stgCnsHelper->cnsFileid));
+	      
+	      castor::exception::Exception ex(EBUSY);
+	      ex.getMessage()<<"(StagerUpdateHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
+	      throw ex;
+
+	    }else{ /* coming from the latest stager_db_service.c */
+	      /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
+	      std::string diskServerName(diskCopyForRecall->diskServer());
+	      std::string mountPoint(diskCopyForRecall->mountPoint());
+	      
+	      if((diskServerName.empty() == false) && (mountPoint.empty() == false)){
+		rfs.resize(CA_MAXRFSLINELEN);
+		rfs.clear();
+		this->rfs = diskServerName + ":" + mountPoint;
+		
+		if(rfs.size() >CA_MAXRFSLINELEN ){
+		  castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					       castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					       castor::dlf::Param("UserName",stgRequest->username),
+					       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
+		  };
+		  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_INVALID_FILESYSTEM, 6 ,params, &(stgCnsHelper->cnsFileid));
+		  castor::exception::Exception ex(SENAMETOOLONG);
+		  ex.getMessage()<<"Not enough space for filesystem constraint"<<std::endl;
+		  throw ex;
+		}else{
+		  /* update the subrequest table (coming from the latest stager_db_service.c) */
+		  stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
+		  stgRequestHelper->subrequest->setXsize(this->xsize);
+		  
+		} 
+	      }
+
+	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					 castor::dlf::Param{stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, 6 ,params, &(stgCnsHelper->cnsFileid));
             
-            if(diskCopyForRecall == NULL){
-              /* in this case we have to archiveSubrequest */
-              /* updateStatus to FAILED_FINISHED and replyToClient (both to be dones on StagerDBService, catch exception) */
-              this->stgRequestHelper->stagerService->archiveSubReq(this->stgRequestHelper->subrequest->id());
-              castor::exception::Exception ex(EBUSY);
-              ex.getMessage()<<"(StagerUpdateHandler handle) Recreation is not possible (null DiskCopyForRecall)"<<std::endl;
-              throw ex;
-              
-            }else{ /* coming from the latest stager_db_service.c */
-              /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
-              std::string diskServerName(diskCopyForRecall->diskServer());
-              std::string mountPoint(diskCopyForRecall->mountPoint());
-              
-              if((diskServerName.empty() == false) && (mountPoint.empty() == false)){
-                rfs.resize(CA_MAXRFSLINELEN);
-                rfs.clear();
-                this->rfs = diskServerName + ":" + mountPoint;
-                
-                if(rfs.size() >CA_MAXRFSLINELEN ){
-                  castor::exception::Exception ex(SENAMETOOLONG);
-                  ex.getMessage()<<"(Stager_Handler) Not enough space for filesystem constraint"<<std::endl;
-                  throw ex;
-                }else{
-                  /* update the subrequest table (coming from the latest stager_db_service.c) */
-                  stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
-                  stgRequestHelper->subrequest->setXsize(this->xsize);
-                } 
-              }
-              
-              /* updateSubrequestStatus Part: */
-              stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
-              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-              /* and we have to notify the jobManager */
-              m_notifyJobManager = true;
-              
-            }/* notSchedule && diskCopyForRecall != NULL  */
-            
-          }else{/*if notToRecreateCastorFile */
-            
-            /* for Get, Update                         */
-            /*     switch(getDiskCopyForJob):         */                                     
-            /*        case 0,1: (staged) jobManager  */
-            /*        case 2: (waitRecall) createTapeCopyForRecall */
-            /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-            switchDiskCopiesForJob(); 
-          }
-          
-          
-        }catch(castor::exception::Exception e){
-          
-          castor::exception::Exception ex(e.code());
-          ex.getMessage()<<"(StagerUpdateHandler) Error"<<e.getMessage().str()<<std::endl;
-          throw ex;
-        }
+	      /* updateSubrequestStatus Part: */
+	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      
+	      /* and we have to notify the jobManager */
+	      m_notifyJobManager = true;
+	      
+	    }/* notSchedule && diskCopyForRecall != NULL  */
+
+	  }else{/*if notToRecreateCastorFile */
+	   
+	    /* for Get, Update                         */
+	    /*     switch(getDiskCopyForJob):         */                                     
+	    /*        case 0,1: (staged) jobManager  */
+	    /*        case 2: (waitRecall) createTapeCopyForRecall */
+	    /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
+	    switchDiskCopiesForJob(); 
+	  }
+	  
+	 
+	}catch(castor::exception::Exception e){
+	 
+	  castor::dlf::Param params[]={castor::dlf::Param{"Error Code",sstrerror(e.code())},
+					castor::dlf::Param{"Error Message",e.getMessage().str()}
+	  };
+	  
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
+	  throw(e);
+	 
+	}
+
       }
       
       

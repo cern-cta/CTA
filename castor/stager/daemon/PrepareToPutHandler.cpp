@@ -26,6 +26,10 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 
 #include "castor/exception/Exception.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Message.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+
 
 #include "serrno.h"
 #include <errno.h>
@@ -64,6 +68,15 @@ namespace castor{
 	  preHandle();
 	  /**********/
 	  
+	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
+				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+				       castor::dlf::Param("UserName",stgRequestHelper->username),
+				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
+	  }; 
+	 
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_PREPARETOPUT, 5 ,params, &(stgCnsHelper->cnsFileid));
+	  
 	  jobOriented();
 	  
 	  /* use the stagerService to recreate castor file */
@@ -72,28 +85,31 @@ namespace castor{
 	  
 	  if(diskCopyForRecall == NULL){
 	    // log USER_ERROR level message "PrepareToPut not possible at this stage"
+	    
 	  }else{
 	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READY);
 	      /* since newSubrequestStatus == SUBREQUEST_READY, we have to setGetNextStatus */
 	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
 	      
 	      /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
-        stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
-        stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
-        stgReplyHelper->endReplyToClient(stgRequestHelper);
-        delete stgReplyHelper->ioResponse;
-        delete stgReplyHelper; 
+	      stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
+	      stgReplyHelper->endReplyToClient(stgRequestHelper);
+	      
+	      delete stgReplyHelper; 
 	  }
 
 	}catch(castor::exception::Exception e){
-	  if(stgReplyHelper != NULL){
-	    if(stgReplyHelper->ioResponse) delete (stgReplyHelper->ioResponse);
-	    delete stgReplyHelper;
-	  }
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerPrepareToPutHandler) Error"<<e.getMessage().str()<<std::endl;
-	  throw ex;
-	  throw(ex);
+
+	  if(stgReplyHelper != NULL) delete stgReplyHelper;
+	  
+	  castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+				       castor::dlf::Param("Error Message",e.getMessage().str())
+	  };
+	  
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOPUT, 2 ,params, &(stgCnsHelper->cnsFileid));
+	  
+	  throw(e);
 	}
 	
       }

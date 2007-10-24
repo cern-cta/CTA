@@ -27,6 +27,9 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 
 #include "castor/exception/Exception.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Message.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -79,7 +82,15 @@ namespace castor{
           /* common part for all the handlers: get objects, link, check/create file*/
           preHandle();
           /**********/
-          
+	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
+				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+				       castor::dlf::Param("UserName",stgRequestHelper->username),
+				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
+	  };
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_PUT, 5 ,params, &(stgCnsHelper->cnsFileid));
+	  
+	
           jobOriented();
           
           /* use the stagerService to recreate castor file */
@@ -93,6 +104,15 @@ namespace castor{
             }
             stgRequestHelper->subrequest->setXsize(this->xsize);
             
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Put"),
+					 castor::dlf::Param{stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, 6 ,params, &(stgCnsHelper->cnsFileid));
+            
             /* updateSubrequestStatus Part: */
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
             stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
@@ -100,15 +120,27 @@ namespace castor{
             
             /* and we have to notify the jobManager */
             m_notifyJobManager = true;
-          } /* diskCopyForRecall != NULL */
+          } else{/* diskCopyForRecall != NULL */
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Put"),
+					 castor::dlf::Param{stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, 6 ,params, &(stgCnsHelper->cnsFileid));
+            
+
+	  }
           
         }catch(castor::exception::Exception e){
-          /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
-          /* we don t execute: dbService->updateRep ..*/
-          
-          castor::exception::Exception ex(e.code());
-          ex.getMessage()<<"(StagerPutHandler) Error"<<e.getMessage().str()<<std::endl;
-          throw ex;
+          castor::dlf::Param params[]={castor::dlf::Param{"Error Code",sstrerror(e.code())},
+					castor::dlf::Param{"Error Message",e.getMessage().str()}
+	  };
+	  
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUT, 2 ,params, &(stgCnsHelper->cnsFileid));
+	  throw(e);
+	 
         }
         
       }/* end StagerPutHandler::handle()*/

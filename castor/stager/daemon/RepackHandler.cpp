@@ -25,6 +25,9 @@
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
 #include "castor/exception/Exception.hpp"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Message.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -77,33 +80,61 @@ namespace castor{
       /*        case 2: (waitRecall) createRecallCandidate */
       void StagerRepackHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
-	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
+	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
 	case 0:
+	  {
 	  
 	    /* to be done */
 	    /* stgRequestHelper->stagerService->startRepackMigration */
-	    break;
-    
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Repack"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_REPACK_MIGRATION, 6 ,params, &(stgCnsHelper->cnsFileid));
+	  }break;
+
 	case 1:
+	  {
 	    if(replicaSwitch()) {    // XXX to be checked: a Repack request should be granted anyway
 	      processReplica();
 	    }
 	    
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Repack"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISK2DISKCOPY, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    
 	    /* build the rmjob struct and submit the job */
 	    jobManagerPart();
 	    
-      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
-      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-
+	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
+	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	    
 	    /* and we have to notify the jobManager */
 	    m_notifyJobManager = true;
-      break;
+	  }break;
 	case 2:
-	  
+	  {
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Repack"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 6 ,params, &(stgCnsHelper->cnsFileid));
 	    stgRequestHelper->stagerService->createRecallCandidate(
-        stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
-	    break;
+								   stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	    }break;
 
 	}//end switch
 
@@ -121,7 +152,14 @@ namespace castor{
 	  /* common part for all the handlers: get objects, link, check/create file*/
 	  preHandle();
 	  /**********/
-
+	  castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					castor::dlf::Param("UserName",stgRequestHelper->username),
+					castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	  };
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_REPACK, 5 ,params, &(stgCnsHelper->cnsFileid));
+	      
 
 	  /* job oriented part */
 	  jobOriented();
@@ -131,28 +169,22 @@ namespace castor{
 	  switchDiskCopiesForJob();
 	 
 	  stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
-	  if(stgReplyHelper == NULL){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	    throw(ex);
-	  }
-	  
 	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
 	  stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  delete stgReplyHelper->ioResponse;
+	 
 	  delete stgReplyHelper;
 	  
 
 	}catch(castor::exception::Exception e){
 	 
-	  if(stgReplyHelper != NULL){
-	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
-	    delete stgReplyHelper;
-	  }
+	  if(stgReplyHelper) delete stgReplyHelper;
+	 
+	  castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+				       castor::dlf::Param("Error Message",e.getMessage().str())
+	  };
 	  
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerRepackHandler) Error"<<e.getMessage().str()<<std::endl;
-	  throw ex;
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_REPACK, 2 ,params, &(stgCnsHelper->cnsFileid));
+	  throw e;
 	}
       }
 

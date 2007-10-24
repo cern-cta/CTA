@@ -33,6 +33,11 @@
 
 #include "castor/exception/Exception.hpp"
 
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Message.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+
+
 #include "serrno.h"
 #include <errno.h>
 
@@ -69,6 +74,17 @@ namespace castor{
 	  preHandle();
 	  /**********/
 	 
+	  castor::dlf::Param params[]={castor::dlf::Param{stgRequestHelper->subrequestUuid},
+				       castor::dlf::Param{"Subrequest fileName",stgCnsHelper->subrequestFileName},
+				       castor::dlf::Param{"UserName",stgRequest->username},
+				       castor::dlf::Param{"GroupName", stgRequestHelper->groupname},
+				       castor::dlf::Param{"SvcClassName",stgRequestHelper->svcClassName}				     
+	  };
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_PUTDONE, 5 ,params, &(stgCnsHelper->cnsFileid));
+	  
+
+
+
 	  jobOriented();/* until it will be explored */
 	 
 	  
@@ -79,25 +95,21 @@ namespace castor{
 	    
 	    /* replyToClient Part: */
 	    stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
-	    if(stgReplyHelper == NULL){
-	      castor::exception::Exception ex(SEINTERNAL);
-	      ex.getMessage()<<"(StagerRepackHandler handle) Impossible to get the StagerReplyHelper"<<std::endl;
-	      throw ex;
-	    }
 	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
 	    stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete stgReplyHelper->ioResponse;
+	    
 	    delete stgReplyHelper;
 	  }
 
 	}catch(castor::exception::Exception e){
-	  if(stgReplyHelper != NULL){
-	    if(stgReplyHelper->ioResponse != NULL) delete stgReplyHelper->ioResponse;
-	    delete stgReplyHelper;
-	  }
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerPutDoneHandler) Error"<<e.getMessage().str()<<std::endl;
-	  throw ex;
+	  if(stgReplyHelper != NULL) delete stgReplyHelper;
+	  
+	  castor::dlf::Param params[]={castor::dlf::Param{"Error Code",sstrerror(e.Code())},
+				       castor::dlf::Param{"Error Message",e.getMessage().str()}
+	  };
+	  
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUTDONE, 2 ,params, &(stgCnsHelper->cnsFileid));
+	  throw(e);
 	}
       }
 
