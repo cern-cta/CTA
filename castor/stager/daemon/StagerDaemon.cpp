@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/10/23 09:02:27 $ $Author: mmartins $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/10/24 09:25:08 $ $Author: sponcec3 $
  *
  * Main stager daemon
  *
@@ -56,10 +56,10 @@
 
 
 int getConfigPort(const char* configLabel, int defaultValue) {
-  char* value;
+  const char* value;
   int notifyPort = 0;
 
-  if ((value = getconfent("STAGER", (char*)configLabel, 0))) {
+  if ((value = getconfent((char*)"STAGER", (char*)configLabel, 0))) {
     notifyPort = std::strtol(value, 0, 10);
     if (notifyPort == 0) {
       notifyPort = defaultValue;
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]){
     
     // read the jobManager notification port
     int jobManagerPort = 0;
-    char *value = getconfent("JOBMANAGER", "NOTIFYPORT", 0);
+    char *value = getconfent((char*)"JOBMANAGER", (char*)"NOTIFYPORT", 0);
     if(value) {
       jobManagerPort = std::strtol(value, 0, 10);
     }
@@ -90,7 +90,7 @@ int main(int argc, char* argv[]){
       e.getMessage() << "Invalid JOBMANAGER NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
       throw e;
     }
-    std::string jobManagerHost = getconfent("JOBMANAGER", "HOST", 0);
+    std::string jobManagerHost = getconfent((char*)"JOBMANAGER", (char*)"HOST", 0);
     if(jobManagerHost == "") {
       castor::exception::Exception e(EINVAL);
       e.getMessage() << "No JOBMANAGER HOST value configured" << std::endl;
@@ -317,8 +317,55 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	  { STAGER_REPLYHELPER_CONSTRUCTOR,"Reply Helper constructor"},
 	  { STAGER_REPLYHELPER_METHOD,"Reply Helper method"},
 	  { STAGER_REPLYHELPER_EXCEPTION,"Reply Helper Exception"},
-	  { STAGER_REPLYHELPER_EXCEPTION_GENERAL,"Reply Helper General Exception"} 
-	  
+	  { STAGER_REPLYHELPER_EXCEPTION_GENERAL,"Reply Helper General Exception"},
+
+
+	  /*******************/
+	  /* QueryRequestSvc */
+	  { STAGER_QRYSVC_GETSVC, "Could not get QuerySvc"},
+	  { STAGER_QRYSVC_EXCEPT, "Unexpected exception caught"},
+          { STAGER_QRYSVC_NOCLI,  "No client associated with request ! Cannot answer !"},
+          { STAGER_QRYSVC_INVSC,  "Invalid ServiceClass name"},
+          { STAGER_QRYSVC_UNKREQ, "Unknown Request type"},
+          { STAGER_QRYSVC_FQNOPAR,"StageFileQueryRequest has no parameters"},
+          { STAGER_QRYSVC_FQUERY ,"Processing File Query by fileName"},
+          { STAGER_QRYSVC_IQUERY ,"Processing File Query by fileId"},
+          { STAGER_QRYSVC_RQUERY ,"Processing File Query by Request"},
+
+	  /*********/
+	  /* GcSvc */
+	  { STAGER_GCSVC_GETSVC,  "Could not get GCSvc"},
+	  { STAGER_GCSVC_EXCEPT,  "Unexpected exception caught"},
+          { STAGER_GCSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
+          { STAGER_GCSVC_UNKREQ,  "Unknown Request type"},
+          { STAGER_GCSVC_FDELOK,  "Invoking filesDeleted"},
+          { STAGER_GCSVC_FDELFAIL,"Invoking filesDeletionFailed"},
+
+	  /************/
+	  /* ErrorSvc */
+	  { STAGER_ERRSVC_GETSVC,  "Could not get StagerSvc"},
+	  { STAGER_ERRSVC_EXCEPT,  "Unexpected exception caught"},
+          { STAGER_ERRSVC_NOREQ,   "No request associated with subrequest ! Cannot answer !"},
+          { STAGER_ERRSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
+
+	  /**********/
+	  /* JobSvc */
+	  { STAGER_JOBSVC_GETSVC,  "Could not get JobSvc"},
+	  { STAGER_JOBSVC_EXCEPT,  "Unexpected exception caught"},
+          { STAGER_JOBSVC_NOSREQ,  "Could not find subrequest associated to Request"},
+          { STAGER_JOBSVC_BADSRT,  "Expected SubRequest in Request but found another type"},
+          { STAGER_JOBSVC_NOFSOK,  "Could not find suitable filesystem"},
+          { STAGER_JOBSVC_GETUPDS, "Invoking getUpdateStart"},
+          { STAGER_JOBSVC_PUTS,    "Invoking PutStart"},
+          { STAGER_JOBSVC_D2DCBAD, "Invoking disk2DiskCopyFailed"},
+          { STAGER_JOBSVC_D2DCOK,  "Invoking disk2DiskCopyDone"},
+          { STAGER_JOBSVC_PFMIG,   "Invoking PrepareForMigration"},
+          { STAGER_JOBSVC_GETUPDO, "Invoking getUpdateDone"},
+          { STAGER_JOBSVC_GETUPFA, "Invoking getUpdateFailed"},
+          { STAGER_JOBSVC_PUTFAIL, "Invoking putFailed"},
+          { STAGER_JOBSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
+          { STAGER_JOBSVC_UNKREQ,  "Unknown Request type"}
+
 	};
 	
   dlfInit(stagerDlfMessages);
