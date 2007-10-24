@@ -56,8 +56,10 @@ DBSERVICEDAEMONBIN_SRCS = \
 	StgRequestSvc.cpp\
 	JobRequestSvc.cpp\
 	StagerRequestHandler.cpp\
-
-
+	QueryRequestSvcThread.cpp\
+	GcSvcThread.cpp\
+	ErrorSvcThread.cpp\
+        JobSvcThread.cpp
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 
