@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.209 $ $Release$ $Date: 2007/10/24 13:35:08 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.210 $ $Release$ $Date: 2007/10/24 18:05:09 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -112,6 +112,10 @@ const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStateme
 const std::string castor::db::ora::OraStagerSvc::s_getDiskCopiesForJobStatementString =
   "BEGIN getDiskCopiesForJob(:1, :2, :3); END;";
 
+/// SQL statement for getDiskCopiesForPrepReq
+const std::string castor::db::ora::OraStagerSvc::s_getDiskCopiesForPrepReqStatementString =
+  "BEGIN getDiskCopiesForPrepReq(:1, :2); END;";
+
 /// SQL statement for processPutDone
 const std::string castor::db::ora::OraStagerSvc::s_processPutDoneStatementString =
   "BEGIN processPutDone(:1, :2); END;";
@@ -170,6 +174,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_subRequestFailedToDoStatement(0),
   m_isSubRequestToScheduleStatement(0),
   m_getDiskCopiesForJobStatement(0),
+  m_getDiskCopiesForPrepReqStatement(0),
   m_processPutDoneStatement(0),
   m_selectCastorFileStatement(0),
   m_updateAndCheckSubRequestStatement(0),
@@ -218,6 +223,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_subRequestFailedToDoStatement) deleteStatement(m_subRequestFailedToDoStatement);
     if (m_isSubRequestToScheduleStatement) deleteStatement(m_isSubRequestToScheduleStatement);
     if (m_getDiskCopiesForJobStatement) deleteStatement(m_getDiskCopiesForJobStatement);
+    if (m_getDiskCopiesForPrepReqStatement) deleteStatement(m_getDiskCopiesForPrepReqStatement);
     if (m_processPutDoneStatement) deleteStatement(m_processPutDoneStatement);
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
@@ -237,6 +243,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_subRequestFailedToDoStatement = 0;
   m_isSubRequestToScheduleStatement = 0;
   m_getDiskCopiesForJobStatement = 0;
+  m_getDiskCopiesForPrepReqStatement = 0;
   m_processPutDoneStatement = 0;
   m_selectCastorFileStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
@@ -525,7 +532,7 @@ int castor::db::ora::OraStagerSvc::isSubRequestToSchedule
 // getDiskCopiesForJob
 // -----------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
-(castor::stager::SubRequest* subreq,
+(castor::stager::SubRequest* subreq, int reqType,
  std::list<castor::stager::DiskCopyForRecall*>& sources)
   throw (castor::exception::Exception) {
   try {
@@ -537,26 +544,34 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
         (2, oracle::occi::OCCIINT);
       m_getDiskCopiesForJobStatement->registerOutParam
         (3, oracle::occi::OCCICURSOR);
+      m_getDiskCopiesForPrepReqStatement =
+        createStatement(s_getDiskCopiesForPrepReqStatementString);
+      m_getDiskCopiesForPrepReqStatement->registerOutParam
+        (2, oracle::occi::OCCIINT);
     }
+    oracle::occi::Statement* stmt = 0;
+    if(reqType == OBJ_StageGetRequest || reqType == OBJ_StageUpdateRequest)
+      stmt = m_getDiskCopiesForJobStatement;
+    else
+      stmt = m_getDiskCopiesForPrepReqStatement;
     // execute the statement and see whether we found something
-    m_getDiskCopiesForJobStatement->setDouble(1, subreq->id());
-    unsigned int nb =
-      m_getDiskCopiesForJobStatement->executeUpdate();
+    stmt->setDouble(1, subreq->id());
+    unsigned int nb = stmt->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;
       ex.getMessage()
         << "getDiskCopiesForJob : "
-        << "unable to know whether SubRequest should be scheduled.";
+        << "unable to know whether the SubRequest should be scheduled.";
       throw ex;
     }
     // Get result and return
-    unsigned int status =
-      m_getDiskCopiesForJobStatement->getInt(2);
+    unsigned int status = stmt->getInt(2);
 
-    if (castor::stager::DISKCOPY_STAGED == status) {  // diskcopies are available, list them
+    if (castor::stager::DISKCOPY_STAGED == status &&
+        (reqType == OBJ_StageGetRequest || reqType == OBJ_StageUpdateRequest)) {  
+      // diskcopies are available, list them
       try {
-        oracle::occi::ResultSet *rs =
-          m_getDiskCopiesForJobStatement->getCursor(3);
+        oracle::occi::ResultSet *rs = stmt->getCursor(3);
         // Run through the cursor
         oracle::occi::ResultSet::Status status = rs->next();
         while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.75 $ $Release$ $Date: 2007/10/17 18:16:36 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.76 $ $Release$ $Date: 2007/10/24 18:05:09 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -147,6 +147,7 @@ namespace castor {
        * DISKCOPY_WAITTAPERECALL (2): no schedule, no DiskCopy 
          found anywhere, we need a tape recall.
        * @param subreq the SubRequest to consider
+       * @param reqType the Request type this SubRequest belongs to
        * @param sources this is a list of DiskCopies that
        * can be used by the subrequest.
        * Note that the DiskCopies returned in sources must be
@@ -155,7 +156,7 @@ namespace castor {
        * @exception Exception in case of system error
        */
       virtual int getDiskCopiesForJob
-      (castor::stager::SubRequest* subreq,
+      (castor::stager::SubRequest* subreq, int reqType,
        std::list<castor::stager::DiskCopyForRecall*>& sources)
         throw (castor::exception::Exception) = 0;
 

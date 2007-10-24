@@ -153,6 +153,7 @@ namespace castor {
          * DISKCOPY_WAITTAPERECALL (2): no schedule, no DiskCopy 
            found anywhere, we need a tape recall.
          * @param subreq the SubRequest to consider
+         * @param reqType the Request type this SubRequest belongs to
          * @param sources this is a list of DiskCopies that
          * can be used by the subrequest.
          * Note that the DiskCopies returned in sources must be
@@ -161,7 +162,7 @@ namespace castor {
          * @exception Exception in case of system error
          */
         virtual int getDiskCopiesForJob
-        (castor::stager::SubRequest* subreq,
+        (castor::stager::SubRequest* subreq, int reqType,
          std::list<castor::stager::DiskCopyForRecall*>& sources)
           throw (castor::exception::Exception);
 
@@ -419,6 +420,12 @@ namespace castor {
 
         /// SQL statement object for function getDiskCopiesForJob
         oracle::occi::Statement *m_getDiskCopiesForJobStatement;
+
+        /// SQL statement for function getDiskCopiesForPrepReq
+        static const std::string s_getDiskCopiesForPrepReqStatementString;
+
+        /// SQL statement object for function getDiskCopiesForPrepReq
+        oracle::occi::Statement *m_getDiskCopiesForPrepReqStatement;
 
         /// SQL statement for function processPutDone
         static const std::string s_processPutDoneStatementString;
