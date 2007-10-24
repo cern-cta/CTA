@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/10/24 13:37:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/10/24 17:57:41 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -239,8 +239,8 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	  {STAGER_USER_PERMISSION, "User doenst have the right permission"},
 	  {STAGER_USER_NONFILE, "User asking for a Non Existing File"},
 	  {STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
-	  {STAGER_PUTDONE_WITHOUT_PUT, "PutDone without a Put"},
-
+	  {STAGER_UNABLETOPERFORM, "Unable to perform request, notifying user"},
+	  {STAGER_EXPERT_EXCEPTION, "Error while asking the Expert System"},
 
 	  /*******************/
 	  /* QueryRequestSvc */

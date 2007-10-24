@@ -83,8 +83,8 @@ namespace castor{
      STAGER_USER_PERMISSION= 74, /*User doenst have the right permission" */
      STAGER_USER_NONFILE= 75, /*User asking for a Non Existing File" */
      STAGER_INVALID_FILESYSTEM= 76, /*Invalid fileSystem" */
-     STAGER_PUTDONE_WITHOUT_PUT= 77, /*PutDone without a Put" */
-     
+     STAGER_UNABLETOPERFORM= 77, /* Unable to perform request, notifying user */
+     STAGER_EXPERT_EXCEPTION=78, /* "Error while asking the expert system" */
      
      /*******************/
      /* QueryRequestSvc */
