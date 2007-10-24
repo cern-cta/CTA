@@ -34,12 +34,12 @@ namespace castor{
       class StagerCnsHelper;
       class StagerReplyHelper;
 
-      class StagerRequestHandler : public castor::BaseObject{
+      class StagerRequestHandler : public virtual castor::BaseObject{
 
 
       public:
 
-        StagerRequestHandler() : BaseObject() {};
+        StagerRequestHandler() throw() : BaseObject() {};
 	      virtual ~StagerRequestHandler() throw() {};
 	
 	

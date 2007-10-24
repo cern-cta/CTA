@@ -43,7 +43,8 @@ namespace castor{
       
       
       /* constructor */
-      StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
+      StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw() :
+        StagerRequestHandler()
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
