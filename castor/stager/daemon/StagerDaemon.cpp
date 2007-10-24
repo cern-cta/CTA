@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/10/24 09:42:23 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/10/24 12:00:10 $ $Author: mmartins $
  *
  * Main stager daemon
  *
@@ -179,149 +179,67 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	
 	castor::dlf::Message stagerDlfMessages[]={
 
+	  /***************************************/
+	  /* StagerMainDaemon: To DLF_LVL_DEBUG */
+	  /*************************************/
+
 	  { STAGER_DAEMON_START, "Stager Daemon started"},
 	  { STAGER_DAEMON_EXECUTION, "Stager Daemon execution"},
 	  { STAGER_DAEMON_ERROR_CONFIG, "Stager Daemon configuration error"},
 	  { STAGER_DAEMON_EXCEPTION, "Stager Daemon Exception"},
 	  { STAGER_DAEMON_EXCEPTION_GENERAL, "Stager Daemon General Exception"},
-	  { STAGER_DAEMON_FINISHED, "Stager Daemon successfully finished"},
-	  
-	  
-	  { STAGER_DAEMON_POOLCREATION, "Stager Daemon Pool creation"},
-	  
-	  
-	  
+	  { STAGER_DAEMON_FINISHED, "Stager Daemon successfully finished"},  	  
+	  { STAGER_DAEMON_POOLCREATION, "Stager Daemon Pool creation"},	  	  
+	  { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
+	  { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
+
 	  /*******************************************************************************************************/
 	  /* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
 	  /*****************************************************************************************************/
-	  
-	  /************************/
 	  /* JobRequestSvcThread */
-	  
-	  /* JobRequestSvc flow */
 	  { STAGER_JOBREQSVC_CREATION, "Created new JobRequestSvc Thread"},
-	  { STAGER_JOBREQSVC_SELECT , "JobRequestSvc thread Select method"},
-	  { STAGER_JOBREQSVC_PROCESS, "JobRequestSvc thread Process method"},
-	  { STAGER_JOBREQSVC_EXCEPTION, "JobRequestSvc thread Exception"},
-	  { STAGER_JOBREQSVC_EXCEPTION_GENERAL, "JobRequestSvc thread General Exception"},
-	  
-	  
-	  
-	  /* StagerGetHandler:  */
-	  { STAGER_GET, "Get Handler execution"},
-	  { STAGER_GET_EXCEPTION, "Get Handler Exception"},
-	  { STAGER_GET_EXCEPTION_GENERAL,"Get Handler General Exception"},
-	  
-	  /* StagerUpdateHandler:  */
-	  { STAGER_UPDATE, "Update Handler execution"},
-	  { STAGER_UPDATE_EXCEPTION,"Update Handler Exception"},
-	  { STAGER_UPDATE_EXCEPTION_GENERAL,"Update Handler General Exception"},
-	  
-	  /* StagerPutHandler:  */
-	  { STAGER_PUT,"Put Handler execution"},
-	  { STAGER_PUT_EXCEPTION,"Put Handler Exception"},
-	  { STAGER_PUT_EXCEPTION_GENERAL,"Put Handler General Exception"},
+	  { STAGER_GET, "Get Request"},
+	  { STAGER_UPDATE, "Update Request"},
+	  { STAGER_PUT,"Put Request"},
 	  
 	  
 	  /************************/
 	  /* PreRequestSvcThread */
-	  
-	  /* PreRequestSvc flow */
 	  { STAGER_PREREQSVC_CREATION,"Created new PreRequestSvc Thread"},
-	  { STAGER_PREREQSVC_SELECT,"PreRequestSvc thread Select method"},
-	  { STAGER_PREREQSVC_PROCESS,"PreRequestSvc thread Process method"},
-	  { STAGER_PREREQSVC_EXCEPTION,"PreRequestSvc thread Exception"},
-	  { STAGER_PREREQSVC_EXCEPTION_GENERAL,"PreRequestSvc thread General Exception"},
-	  
-	  
-	  /* StagerRepackHandler */
-	  { STAGER_REPACK,"Repack Handler execution"},
-	  { STAGER_REPACK_EXCEPTION,"Repack Handler Exception"},
-	  { STAGER_REPACK_EXCEPTION_GENERAL,"Repack Handler General Exception"},
-	  
-	  /* StagerPrepareToGetHandler */
-	  { STAGER_PREPARETOGET,"PrepareToGet Handler execution"},
-	  { STAGER_PREPARETOGET_EXCEPTION, "PrepareToGet Handler Exception"},
-	  { STAGER_PREPARETOGET_EXCEPTION_GENERAL,"PrepareToGet Handler General Exception"},
-	  
-	  /* StagerPrepareToUpdateHandler */
-	  { STAGER_PREPARETOUPDATE,"PrepareToUpdate Handler execution"},
-	  { STAGER_PREPARETOUPDATE_EXCEPTION, "PrepareToUpdate Handler Exception"},
-	  { STAGER_PREPARETOUPDATE_EXCEPTION_GENERAL,"PrepareToUpdate Handler General Exception"},
-	  
-	  /* StagerPrepareToPutHandler */
-	  { STAGER_PREPARETOPUT,"PrepareToPut Handler execution"},
-	  { STAGER_PREPARETOPUT_EXCEPTION,"PrepareToPut Handler Exception"},
-	  { STAGER_PREPARETOPUT_EXCEPTION_GENERAL,"PrepareToPut Handler General Exception"},
+	  { STAGER_REPACK,"Repack Request"},
+	  { STAGER_PREPARETOGET,"PrepareToGet Request"},
+	  { STAGER_PREPARETOUPDATE,"PrepareToUpdate Request"},
+	  { STAGER_PREPARETOPUT,"PrepareToPut Request"},
 	  
 	  
 	  /*************************/
 	  /* StgRequestSvcThread  */
-	  
-	  /* StgRequestSvc flow */
 	  { STAGER_STGREQSVC_CREATION,"Created new StgRequestSvc Thread"},
-	  { STAGER_STGREQSVC_SELECT,"StgRequestSvc thread Select method"},
-	  { STAGER_STGREQSVC_PROCESS,"StgRequestSvc thread Process method"},
-	  { STAGER_STGREQSVC_EXCEPTION,"StgRequestSvc thread Exception"},
-	  { STAGER_STGREQSVC_EXCEPTION_GENERAL,"StgRequestSvc thread General Exception"},
+	  { STAGER_SETGC,"SetGC Request"},
+	  { STAGER_SETGC_DETAILS, "SetGC details"},/* SYSTEM LEVEL ALSO */
+	  { STAGER_RM, "Rm Request"},
+	  { STAGER_RM_DETAILS, "Rm details"},/* SYSTEM LEVEL ALSO */
+	  { STAGER_PUTDONE,"PutDone Request"},
 	  
-	  
-	  /* StagerSetGCHandler: */
-	  { STAGER_SETGC,"SetGC Handler execution"},
-	  { STAGER_SETGC_EXCEPTION,"SetGC Handler Exception"},
-	  { STAGER_SETGC_EXCEPTION_GENERAL,"SetGC Handler General Exception"},
-	  
-	  
-	  /* StagerRmHandler:  */
-	  { STAGER_RM, "Rm Handler execution"},
-	  { STAGER_RM_EXCEPTION, "Rm Handler Exception "},
-	  { STAGER_RM_EXCEPTION_GENERAL,"Rm Handler General Exception"},
-	  
-	  
-	  
-	  
-	  /* StagerPutDoneHandler:  */
-	  { STAGER_PUTDONE,"PutDone Handler execution"},
-	  { STAGER_PUTDONE_EXCEPTION,"PutDone Handler Exception"},
-	  { STAGER_PUTDONE_EXCEPTION_GENERAL,"PutDone Handler General Exception"},
-	  
-	  
-	  /*************************/
-	  /* StagerRequestHandler */
-	  { STAGER_REQHANDLER_METHOD,"RequestHandler method"},
-	  { STAGER_REQHANDLER_EXCEPTION,"RequestHandler Exception"},
-	  { STAGER_REQHANDLER_EXCEPTION_GENERAL,"RequestHandler General Exception"},
-	  
-	  /****************************/
-	  /* StagerJobRequestHandler */
-	  { STAGER_JOBREQHANDLER_METHOD,"JobRequestHandler method"},
-	  { STAGER_JOBREQHANDLER_EXCEPTION,"JobRequestHandler Exception"},
-	  { STAGER_JOBREQHANDLER_EXCEPTION_GENERAL,"JobRequestHandler General Exception"},
-	  
-	  
-	  /************************/
-	  /* StagerRequestHelper */
-	  { STAGER_REQHELPER_CONSTRUCTOR,"Request Helper constructor"},
-	  { STAGER_REQHELPER_METHOD,"Request Helper method"},
-	  { STAGER_REQHELPER_EXCEPTION,"Request Helper Exception"},
-	  { STAGER_REQHELPER_EXCEPTION_GENERAL,"Request Helper General Exception"},
-	  
-	  
-	  /********************/
-	  /* StagerCnsHelper */
-	  { STAGER_CNSHELPER_CONSTRUCTOR,"Cns Helper constructor"},
-	  { STAGER_CNSHELPER_METHOD,"Cns Helper method"},
-	  { STAGER_CNSHELPER_EXCEPTION,"Cns Helper Exception"},
-	  { STAGER_CNSHELPER_EXCEPTION_GENERAL,"Cns Helper General Exception"},
-	  
-     
-	  
-	  /*********************/
-	  /* StagerReplyHelper*/
-	  { STAGER_REPLYHELPER_CONSTRUCTOR,"Reply Helper constructor"},
-	  { STAGER_REPLYHELPER_METHOD,"Reply Helper method"},
-	  { STAGER_REPLYHELPER_EXCEPTION,"Reply Helper Exception"},
-	  { STAGER_REPLYHELPER_EXCEPTION_GENERAL,"Reply Helper General Exception"},
+	  /*  SYSTEM LEVEL */
+	  /* after calling the corresponding stagerService function, to show the decision taken */
+	  {STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
+	  {STAGER_NOTHING_TOBEDONE, "Nothing to be done (STAGED)"},
+	  {STAGER_WAIT_SUBREQ, "Request moved to Wait"},
+	  {STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
+	  {STAGER_DISKTODISK_COPY, "Triggering Disk2Disk Copy"},
+	  {STAGER_TAPE_RECALL, "Triggering Tape Recall"},
+	  {STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
+
+	 
+	  /* DLF_LVL_ERROR */
+	  {STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
+	  {STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
+	  {STAGER_USER_INVALID, "Invalid user"},
+	  {STAGER_USER_PERMISSION, "User doenst have the right permission"},
+	  {STAGER_USER_NONFILE, "User asking for a Non Existing File"},
+	  {STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
+	  {STAGER_PUTDONE_WITHOUT_PUT, "PutDone without a Put"},
 
 
 	  /*******************/
@@ -369,6 +287,7 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
           { STAGER_JOBSVC_PUTFAIL, "Invoking putFailed"},
           { STAGER_JOBSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
           { STAGER_JOBSVC_UNKREQ,  "Unknown Request type"}
+
 
 	};
 	
