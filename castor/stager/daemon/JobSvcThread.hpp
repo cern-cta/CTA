@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/10/24 09:16:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: JobSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/24 09:41:59 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -33,6 +33,7 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/SelectProcessThread.hpp"
+#include "castor/stager/IJobSvc.hpp"
 
 namespace castor {
   

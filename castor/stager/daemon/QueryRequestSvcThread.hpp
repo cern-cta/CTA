@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/23 14:01:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/24 09:41:59 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -33,6 +33,7 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/query/IQuerySvc.hpp"
+#include "castor/rh/FileQryResponse.hpp"
 #include "castor/server/SelectProcessThread.hpp"
 
 
