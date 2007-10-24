@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/10/23 15:38:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ErrorSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/24 09:17:12 $ $Author: sponcec3 $
  *
  * Service thread for dealing with requests that failed
  *
@@ -55,7 +55,7 @@ namespace castor {
         ~ErrorSvcThread() throw() {};
 
         /**
-         * Select a new gc request to be processed
+         * Select a new error request to be processed
          */
         virtual castor::IObject* select() throw();
 

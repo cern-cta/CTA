@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.57 $ $Release$ $Date: 2007/10/23 15:39:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2007/10/24 09:17:13 $ $Author: sponcec3 $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -412,7 +412,7 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest
  castor::BaseAddress &ad,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
-  // Usefull Variables
+  // Useful Variables
   castor::stager::StageFileQueryRequest *uReq;
   try {
     // get the StageFileQueryRequest
@@ -687,7 +687,7 @@ void castor::stager::dbService::QueryRequestSvcThread::cleanup
 //-----------------------------------------------------------------------------
 void castor::stager::dbService::QueryRequestSvcThread::process
 (castor::IObject *param) throw() {
-  // Usefull variables
+  // Useful variables
   castor::stager::Request* req = 0;
   castor::query::IQuerySvc *qrySvc = 0;
   castor::Services *svcs = 0;

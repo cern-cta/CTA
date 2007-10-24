@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/10/23 15:38:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/10/24 09:17:12 $ $Author: sponcec3 $
  *
  * Service thread for dealing with requests that failed
  *
@@ -91,7 +91,7 @@ castor::IObject* castor::stager::dbService::ErrorSvcThread::select()
 //-----------------------------------------------------------------------------
 void castor::stager::dbService::ErrorSvcThread::process
 (castor::IObject *param) throw() {
-  // Usefull variables
+  // Useful variables
   castor::stager::Request* req = 0;
   castor::stager::SubRequest* subReq = 0;
   castor::Services *svcs = 0;
