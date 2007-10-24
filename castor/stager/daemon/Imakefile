@@ -70,15 +70,15 @@ LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
 LD = g++
 GLOBLIB = -lshift -lcastorCnvs
 
-PROGS_STAGER = ProgramTargetName(stagerMainDaemonNew)
-IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerMainDaemonNew))
+PROGS_STAGER = ProgramTargetName(stagerDaemon)
+IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerDaemon))
 
 all:$(DBSERVICEDAEMONBIN_OBJS) $(PROGS_STAGER)
 
 MakeDepSharedLibrary(../../shlib,castorCnvs)
 MakeDepSharedLibrary(../../shlib,shift)
 
-NormalProgramTarget(stagerMainDaemonNew,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(GLOBLIB))
+NormalProgramTarget(stagerDaemon,$(DBSERVICEDAEMONBIN_OBJS),$(DEPLIB),$(GLOBLIB))
 
 Makefiles:
 
@@ -92,7 +92,7 @@ depend:
 
 install: $(BIN) $(IPROGS_STAGER)
 
-InstallProgram(stagerMainDaemonNew,$(BIN),root,bin,0750)
+InstallProgram(stagerDaemon,$(BIN),root,bin,0750)
 MakeDir($(BIN),root,bin,0755)
 
 install.man: $(MANDIR) $(MANPAGES)
