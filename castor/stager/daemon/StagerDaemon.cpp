@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/10/25 14:48:32 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/10/25 16:23:30 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -179,121 +179,122 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	
 	castor::dlf::Message stagerDlfMessages[]={
 
-	  /***************************************/
-	  /* StagerMainDaemon: To DLF_LVL_DEBUG */
-	  /*************************************/
-
-	  { STAGER_DAEMON_START, "Stager Daemon started"},
-	  { STAGER_DAEMON_EXECUTION, "Stager Daemon execution"},
-	  { STAGER_DAEMON_ERROR_CONFIG, "Stager Daemon configuration error"},
-	  { STAGER_DAEMON_EXCEPTION, "Stager Daemon Exception"},
-	  { STAGER_DAEMON_EXCEPTION_GENERAL, "Stager Daemon General Exception"},
-	  { STAGER_DAEMON_FINISHED, "Stager Daemon successfully finished"},  	  
-	  { STAGER_DAEMON_POOLCREATION, "Stager Daemon Pool creation"},	  	  
-	  { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
-	  { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
-
-	  /*******************************************************************************************************/
-	  /* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
-	  /*****************************************************************************************************/
-	  /* JobRequestSvcThread */
-	  { STAGER_JOBREQSVC_CREATION, "Created new JobRequestSvc Thread"},
-	  { STAGER_GET, "Get Request"},
-	  { STAGER_UPDATE, "Update Request"},
-	  { STAGER_PUT,"Put Request"},
-	  
-	  
-	  /************************/
-	  /* PreRequestSvcThread */
-	  { STAGER_PREREQSVC_CREATION,"Created new PreRequestSvc Thread"},
-	  { STAGER_REPACK,"Repack Request"},
-	  { STAGER_PREPARETOGET,"PrepareToGet Request"},
-	  { STAGER_PREPARETOUPDATE,"PrepareToUpdate Request"},
-	  { STAGER_PREPARETOPUT,"PrepareToPut Request"},
-	  
-	  
-	  /*************************/
-	  /* StgRequestSvcThread  */
-	  { STAGER_STGREQSVC_CREATION,"Created new StgRequestSvc Thread"},
-	  { STAGER_SETGC,"SetGC Request"},
-	  { STAGER_SETGC_DETAILS, "SetGC details"},/* SYSTEM LEVEL ALSO */
-	  { STAGER_RM, "Rm Request"},
-	  { STAGER_RM_DETAILS, "Rm details"},/* SYSTEM LEVEL ALSO */
-	  { STAGER_PUTDONE,"PutDone Request"},
-	  
-	  /*  SYSTEM LEVEL */
-	  /* after calling the corresponding stagerService function, to show the decision taken */
-	  {STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
-	  {STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
-	  {STAGER_WAITSUBREQ, "Request moved to Wait"},
-	  {STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
-	  {STAGER_DISKTODISK_COPY, "Triggering Disk2Disk Copy"},
-	  {STAGER_TAPE_RECALL, "Triggering Tape Recall"},
-	  {STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
-	  {STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
-	  {STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
-	 
-	  /* DLF_LVL_ERROR */
-	  {STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
-	  {STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
-	  {STAGER_USER_INVALID, "Invalid user"},
-	  {STAGER_USER_PERMISSION, "User doenst have the right permission"},
-	  {STAGER_USER_NONFILE, "User asking for a Non Existing File"},
-	  {STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
-	  {STAGER_UNABLETOPERFORM, "Unable to perform request, notifying user"},
-	  {STAGER_EXPERT_EXCEPTION, "Error while asking the Expert System"},
-	  {STAGER_CNS_EXCEPTION, "Error on the Name Server"},
-	  {STAGER_SUBREQUESTUUID_EXCEPTION, "Impossible to get the subrequest Uuid"},
-	  {STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},
-
-	  /*******************/
-	  /* QueryRequestSvc */
-	  { STAGER_QRYSVC_GETSVC, "Could not get QuerySvc"},
-	  { STAGER_QRYSVC_EXCEPT, "Unexpected exception caught"},
-          { STAGER_QRYSVC_NOCLI,  "No client associated with request ! Cannot answer !"},
-          { STAGER_QRYSVC_INVSC,  "Invalid ServiceClass name"},
-          { STAGER_QRYSVC_UNKREQ, "Unknown Request type"},
-          { STAGER_QRYSVC_FQNOPAR,"StageFileQueryRequest has no parameters"},
-          { STAGER_QRYSVC_FQUERY ,"Processing File Query by fileName"},
-          { STAGER_QRYSVC_IQUERY ,"Processing File Query by fileId"},
-          { STAGER_QRYSVC_RQUERY ,"Processing File Query by Request"},
-
-	  /*********/
-	  /* GcSvc */
-	  { STAGER_GCSVC_GETSVC,  "Could not get GCSvc"},
-	  { STAGER_GCSVC_EXCEPT,  "Unexpected exception caught"},
-          { STAGER_GCSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
-          { STAGER_GCSVC_UNKREQ,  "Unknown Request type"},
-          { STAGER_GCSVC_FDELOK,  "Invoking filesDeleted"},
-          { STAGER_GCSVC_FDELFAIL,"Invoking filesDeletionFailed"},
-          { STAGER_GCSVC_SELF2DEL,"Invoking selectFiles2Delete"},
-          { STAGER_GCSVC_FSEL4DEL,"File selected for deletion"},
-
-	  /************/
-	  /* ErrorSvc */
-	  { STAGER_ERRSVC_GETSVC,  "Could not get StagerSvc"},
-	  { STAGER_ERRSVC_EXCEPT,  "Unexpected exception caught"},
-          { STAGER_ERRSVC_NOREQ,   "No request associated with subrequest ! Cannot answer !"},
-          { STAGER_ERRSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
-
-	  /**********/
-	  /* JobSvc */
-	  { STAGER_JOBSVC_GETSVC,  "Could not get JobSvc"},
-	  { STAGER_JOBSVC_EXCEPT,  "Unexpected exception caught"},
-          { STAGER_JOBSVC_NOSREQ,  "Could not find subrequest associated to Request"},
-          { STAGER_JOBSVC_BADSRT,  "Expected SubRequest in Request but found another type"},
-          { STAGER_JOBSVC_NOFSOK,  "Could not find suitable filesystem"},
-          { STAGER_JOBSVC_GETUPDS, "Invoking getUpdateStart"},
-          { STAGER_JOBSVC_PUTS,    "Invoking PutStart"},
-          { STAGER_JOBSVC_D2DCBAD, "Invoking disk2DiskCopyFailed"},
-          { STAGER_JOBSVC_D2DCOK,  "Invoking disk2DiskCopyDone"},
-          { STAGER_JOBSVC_PFMIG,   "Invoking PrepareForMigration"},
-          { STAGER_JOBSVC_GETUPDO, "Invoking getUpdateDone"},
-          { STAGER_JOBSVC_GETUPFA, "Invoking getUpdateFailed"},
-          { STAGER_JOBSVC_PUTFAIL, "Invoking putFailed"},
-          { STAGER_JOBSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
-          { STAGER_JOBSVC_UNKREQ,  "Unknown Request type"}
-
+    /***************************************/
+    /* StagerMainDaemon: To DLF_LVL_DEBUG */
+    /*************************************/
+    
+    { STAGER_DAEMON_START, "Stager Daemon started"},
+    { STAGER_DAEMON_EXECUTION, "Stager Daemon execution"},
+    { STAGER_DAEMON_ERROR_CONFIG, "Stager Daemon configuration error"},
+    { STAGER_DAEMON_EXCEPTION, "Stager Daemon Exception"},
+    { STAGER_DAEMON_EXCEPTION_GENERAL, "Stager Daemon General Exception"},
+    { STAGER_DAEMON_FINISHED, "Stager Daemon successfully finished"},  	  
+    { STAGER_DAEMON_POOLCREATION, "Stager Daemon Pool creation"},	  	  
+    { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
+    { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
+    
+    /*******************************************************************************************************/
+    /* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
+    /*****************************************************************************************************/
+    /* JobRequestSvcThread */
+    { STAGER_JOBREQSVC_CREATION, "Created new JobRequestSvc Thread"},
+    { STAGER_GET, "Get Request"},
+    { STAGER_UPDATE, "Update Request"},
+    { STAGER_PUT,"Put Request"},
+    
+    
+    /************************/
+    /* PreRequestSvcThread */
+    { STAGER_PREREQSVC_CREATION,"Created new PreRequestSvc Thread"},
+    { STAGER_REPACK,"Repack Request"},
+    { STAGER_PREPARETOGET,"PrepareToGet Request"},
+    { STAGER_PREPARETOUPDATE,"PrepareToUpdate Request"},
+    { STAGER_PREPARETOPUT,"PrepareToPut Request"},
+    
+    
+    /*************************/
+    /* StgRequestSvcThread  */
+    { STAGER_STGREQSVC_CREATION,"Created new StgRequestSvc Thread"},
+    { STAGER_SETGC,"SetGC Request"},
+    { STAGER_SETGC_DETAILS, "SetGC details"},/* SYSTEM LEVEL ALSO */
+    { STAGER_RM, "Rm Request"},
+    { STAGER_RM_DETAILS, "Rm details"},/* SYSTEM LEVEL ALSO */
+    { STAGER_PUTDONE,"PutDone Request"},
+    
+    /*  SYSTEM LEVEL */
+    /* after calling the corresponding stagerService function, to show the decision taken */
+    {STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
+    {STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
+    {STAGER_WAITSUBREQ, "Request moved to Wait"},
+    {STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
+    {STAGER_DISKTODISK_COPY, "Triggering Disk2Disk Copy"},
+    {STAGER_TAPE_RECALL, "Triggering Tape Recall"},
+    {STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
+    {STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
+    {STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
+    
+    /* DLF_LVL_ERROR */
+    {STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
+    {STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
+    {STAGER_USER_INVALID, "Invalid user"},
+    {STAGER_USER_PERMISSION, "User doenst have the right permission"},
+    {STAGER_USER_NONFILE, "User asking for a Non Existing File"},
+    {STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
+    {STAGER_UNABLETOPERFORM, "Unable to perform request, notifying user"},
+    {STAGER_EXPERT_EXCEPTION, "Error while asking the Expert System"},
+    {STAGER_CNS_EXCEPTION, "Error on the Name Server"},
+    {STAGER_SUBREQUESTUUID_EXCEPTION, "Impossible to get the subrequest Uuid"},
+    {STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},
+    
+    /*******************/
+    /* QueryRequestSvc */
+    { STAGER_QRYSVC_GETSVC, "Could not get QuerySvc"},
+    { STAGER_QRYSVC_EXCEPT, "Unexpected exception caught"},
+    { STAGER_QRYSVC_NOCLI,  "No client associated with request ! Cannot answer !"},
+    { STAGER_QRYSVC_INVSC,  "Invalid ServiceClass name"},
+    { STAGER_QRYSVC_UNKREQ, "Unknown Request type"},
+    { STAGER_QRYSVC_FQNOPAR,"StageFileQueryRequest has no parameters"},
+    { STAGER_QRYSVC_FQUERY ,"Processing File Query by fileName"},
+    { STAGER_QRYSVC_IQUERY ,"Processing File Query by fileId"},
+    { STAGER_QRYSVC_RQUERY ,"Processing File Query by Request"},
+    
+    /*********/
+    /* GcSvc */
+    { STAGER_GCSVC_GETSVC,  "Could not get GCSvc"},
+    { STAGER_GCSVC_EXCEPT,  "Unexpected exception caught"},
+    { STAGER_GCSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
+    { STAGER_GCSVC_UNKREQ,  "Unknown Request type"},
+    { STAGER_GCSVC_FDELOK,  "Invoking filesDeleted"},
+    { STAGER_GCSVC_FDELFAIL,"Invoking filesDeletionFailed"},
+    { STAGER_GCSVC_SELF2DEL,"Invoking selectFiles2Delete"},
+    { STAGER_GCSVC_FSEL4DEL,"File selected for deletion"},
+    
+    /************/
+    /* ErrorSvc */
+    { STAGER_ERRSVC_GETSVC,  "Could not get StagerSvc"},
+    { STAGER_ERRSVC_EXCEPT,  "Unexpected exception caught"},
+    { STAGER_ERRSVC_NOREQ,   "No request associated with subrequest ! Cannot answer !"},
+    { STAGER_ERRSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
+    
+    /**********/
+    /* JobSvc */
+    { STAGER_JOBSVC_GETSVC,  "Could not get JobSvc"},
+    { STAGER_JOBSVC_EXCEPT,  "Unexpected exception caught"},
+    { STAGER_JOBSVC_NOSREQ,  "Could not find subrequest associated to Request"},
+    { STAGER_JOBSVC_BADSRT,  "Expected SubRequest in Request but found another type"},
+    { STAGER_JOBSVC_NOFSOK,  "Could not find suitable filesystem"},
+    { STAGER_JOBSVC_GETUPDS, "Invoking getUpdateStart"},
+    { STAGER_JOBSVC_PUTS,    "Invoking PutStart"},
+    { STAGER_JOBSVC_D2DCBAD, "Invoking disk2DiskCopyFailed"},
+    { STAGER_JOBSVC_D2DCOK,  "Invoking disk2DiskCopyDone"},
+    { STAGER_JOBSVC_PFMIG,   "Invoking PrepareForMigration"},
+    { STAGER_JOBSVC_GETUPDO, "Invoking getUpdateDone"},
+    { STAGER_JOBSVC_GETUPFA, "Invoking getUpdateFailed"},
+    { STAGER_JOBSVC_PUTFAIL, "Invoking putFailed"},
+    { STAGER_JOBSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
+    { STAGER_JOBSVC_UNKREQ,  "Unknown Request type"},
+    
+    { -1, "" }
 
 	};
 	
