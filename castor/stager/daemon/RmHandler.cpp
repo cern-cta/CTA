@@ -113,7 +113,7 @@ namespace castor{
 	     castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Rm"),
 					  castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					  castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
-					  castor::dlf::Param("UserName",stgRequest->username),
+					  castor::dlf::Param("UserName",stgRequestHelper->username),
 					  castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					  castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
 	     };
@@ -134,7 +134,7 @@ namespace castor{
 	     castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Rm"),
 					  castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					  castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
-					  castor::dlf::Param("UserName",stgRequest->username),
+					  castor::dlf::Param("UserName",stgRequestHelper->username),
 					  castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					  castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
 	     };
@@ -212,8 +212,8 @@ namespace castor{
             
 	}catch(castor::exception::Exception e){
 	  if(stgReplyHelper != NULL) delete stgReplyHelper;	 
-	  castor::dlf::Param params[]={castor::dlf::Param{"Error Code",sstrerror(e.code())},
-				       castor::dlf::Param{"Error Message",e.getMessage().str()}
+	  castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+				       castor::dlf::Param("Error Message",e.getMessage().str())
 	  };
 	  
 	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
@@ -222,10 +222,7 @@ namespace castor{
       }
 
 
-      StagerRmHandler::~StagerRmHandler() throw()
-      {
-
-      }
+     
       
     }//end dbService
   }//end stager

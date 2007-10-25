@@ -134,7 +134,7 @@ namespace castor{
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISK2DISKCOPY, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, 6 ,params, &(stgCnsHelper->cnsFileid));
 	    
 	    /* build the rmjob struct and submit the job */
 	    jobManagerPart();

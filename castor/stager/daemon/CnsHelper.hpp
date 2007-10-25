@@ -23,6 +23,12 @@
 
 #include "castor/ObjectSet.hpp"
 
+
+#include "dlf_api.h"
+#include "castor/dlf/Dlf.hpp"
+#include "castor/dlf/Param.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
+
 #include "serrno.h"
 #include <errno.h>
 #include <iostream>
@@ -125,23 +131,19 @@ namespace castor{
 	    
 	    toCreate = true;
 	  }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
+
+	    castor::dlf::Param params[]={ castor::dlf::Param("Function: isFileToCreateOrException", "Handler level")};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1 ,params);	   
 	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper isFileToCreateOrException) No such file "<<std::endl;
+	    ex.getMessage()<<"(StagerCnsHelper isFileToCreateOrException) "<<std::endl;
 	    throw ex;
 	  }
-	  
 	  return(toCreate);
-
 	}
 	
 
 
       }; // end StagerCnsHelper class
-      
-
-
-
-
     }//end namespace dbService
   }// end namespace stager
 }// end namespace castor

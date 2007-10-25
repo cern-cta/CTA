@@ -73,7 +73,7 @@ namespace castor{
 
       StagerReplyHelper::~StagerReplyHelper() throw()
       {
-	
+	if(ioResponse) delete ioResponse;
       }
 
       

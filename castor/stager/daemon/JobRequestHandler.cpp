@@ -148,12 +148,13 @@ namespace castor{
       /**************************************************************************************************************************/
       int StagerJobRequestHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
       {
-        //ask the expert system...
-	  char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
+	 const std::string filename = stgRequestHelper->subrequest->fileName();
+	 std::string expQuestion=replicationPolicy + " " + filename;
+	 char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
+	 int fd;
+        
 	try{ 
-	  const std::string filename = stgRequestHelper->subrequest->fileName();
-	  std::string expQuestion=replicationPolicy + " " + filename;
-	  int fd;
+
 	  
 	  if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
 	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),

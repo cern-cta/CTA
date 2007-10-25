@@ -74,14 +74,14 @@ namespace castor{
           stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,setGCWeightReq->weight());
 
 	   /* FOR THE SYSTEM PART:*/
-	  castor::dlf::Param params[]={castor::dlf::Param{stgRequestHelper->subrequestUuid),
+	  castor::dlf::Param param[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),
 				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param{"DiskCopy Weight setted:",setGCWeightReq->weight()},
+				       castor::dlf::Param("DiskCopy Weight setted:",setGCWeightReq->weight()),
 				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_SETGC_DETAILS, 6,params, &(stgCnsHelper->cnsFileid));
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_SETGC_DETAILS, 6,param, &(stgCnsHelper->cnsFileid));
 
 	  /**************************************************/
 	  /* we don t need to update the subrequestStatus  */
@@ -92,16 +92,16 @@ namespace castor{
 	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
 	
 	  stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
-    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No error");
-    stgReplyHelper->endReplyToClient(stgRequestHelper);
-    delete stgReplyHelper->ioResponse;
-    delete stgReplyHelper;
+	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No error");
+	  stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  
+	  delete stgReplyHelper;
 
 	}catch(castor::exception::Exception e){
-	  if(setFileGCWeight != NULL) delete setFileGCWeight;
+	 
 	  if(stgReplyHelper != NULL) delete stgReplyHelper;
-	   castor::dlf::Param params[]={castor::dlf::Param{"Error Code",sstrerror(e.code())},
-				       castor::dlf::Param{"Error Message",e.getMessage().str()}
+	   castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+					castor::dlf::Param("Error Message",e.getMessage().str())
 	  };
 	  
 	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));

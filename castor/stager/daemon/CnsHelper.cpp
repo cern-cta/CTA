@@ -22,6 +22,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
 
 #include "castor/exception/Exception.hpp"
 
@@ -91,65 +92,63 @@ namespace castor{
       /**************************************************************************************************************/
       bool StagerCnsHelper::checkAndSetFileOnNameServer(int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
 
-	/* check if the required file exists */
-	memset(&(this->cnsFileid), '\0', sizeof(this->cnsFileid)); /* reset cnsFileid structure  */
-	this->fileExist = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
-	
-	if(serrno == ENOENT){
-	  if(!fileExist){
-	    if(this->isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
-	      
-	      mode_t mode = (mode_t) modeBits;
-	      
-	      /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-	      memset(&(this->cnsFileid),0, sizeof(cnsFileid));
-	      
-	      if (Cns_creatx(this->subrequestFileName.c_str(), mode, &(this->cnsFileid)) != 0) {
-		castor::exception::Exception ex(serrno);
-		ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_creatx"<<std::endl;
-		throw ex;
-	      }
-	      
-	      /* in case of Disk1 pool, we want to force the fileClass of the file */
-	      if(svcClass->hasDiskOnlyBehavior()){
-		std::string forcedFileClassName = svcClass->forcedFileClass();
-		
-		if(!forcedFileClassName.empty()){
-
-		  if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
-		    castor::exception::Exception ex(serrno);
-		    ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_unsetid"<<std::endl;
-		    throw ex;
-		  }
-		  if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
-		    int tempserrno = serrno;
-		    Cns_delete(this->subrequestFileName.c_str());
-		    serrno = tempserrno;
-		    castor::exception::Exception ex(serrno);
-		    ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_chclass"<<std::endl;
-		    throw ex;
-		  }
-		  if(Cns_setid(euid, egid) != 0){
-		    castor::exception::Exception ex(serrno);
-		    ex.getMessage()<<"(StagerCnsHelper checkAndSetFileOnNameServer) Error on Cns_setid"<<std::endl;
-		  throw ex;
-		  }
-		}/* "only force the fileClass if one is given" */
-
-	      }/* end of "if(hasDiskOnly Behavior)" */
-	      
-	      bool fileExist2 = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
-	       /* we get the Cuuid_t fileid (needed to logging in dl)  */
-	      castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerCnsHelper checkAndSetFileOnNameServer) do we create the file?:"),
-					   castor::dlf::Param("Standard Message", fileExist2)};
-	      castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
+	try{
+	  /* check if the required file exists */
+	  memset(&(this->cnsFileid), '\0', sizeof(this->cnsFileid)); /* reset cnsFileid structure  */
+	  this->fileExist = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
 	  
-
-	      
+	  if(serrno == ENOENT){
+	    if(!fileExist){
+	      if(this->isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
+		
+		mode_t mode = (mode_t) modeBits;
+		
+		/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
+		memset(&(this->cnsFileid),0, sizeof(cnsFileid));
+		
+		if (Cns_creatx(this->subrequestFileName.c_str(), mode, &(this->cnsFileid)) != 0) {
+		  castor::exception::Exception ex(serrno);
+		  throw ex;
+		}
+		
+		/* in case of Disk1 pool, we want to force the fileClass of the file */
+		if(svcClass->hasDiskOnlyBehavior()){
+		  std::string forcedFileClassName = svcClass->forcedFileClass();
+		  
+		  if(!forcedFileClassName.empty()){
+		    
+		    if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
+		      //throw(castor::exception::Exception ex(serrno));
+		    }
+		    if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
+		      int tempserrno = serrno;
+		      Cns_delete(this->subrequestFileName.c_str());
+		      serrno = tempserrno;
+		      castor::exception::Exception ex(serrno);
+		      throw ex;
+		    }
+		    if(Cns_setid(euid, egid) != 0){
+		      castor::exception::Exception ex(serrno);
+		      throw ex;
+		    }		  
+		  }/* "only force the fileClass if one is given" */
+		  
+		}/* end of "if(hasDiskOnly Behavior)" */
+		
+		bool fileExist2 = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
+		/* we get the Cuuid_t fileid (needed to logging in dlf)  */
+	      }
 	    }
 	  }
+	  return(fileExist);
+	}catch(castor::exception::Exception e){
+	  castor::dlf::Param params[]={ castor::dlf::Param("Error while checking the file on the nameServer", "Handler level")};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	    
+	  e.getMessage()<< "(StagerCnsHelper checkAndSetFileOnNameServer)"<<std::endl;
+	  throw e;    
+
 	}
-	return(fileExist);
+
       }
       
 

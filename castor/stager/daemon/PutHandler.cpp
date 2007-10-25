@@ -105,7 +105,7 @@ namespace castor{
             stgRequestHelper->subrequest->setXsize(this->xsize);
             
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Put"),
-					 castor::dlf::Param{stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
@@ -122,7 +122,7 @@ namespace castor{
             m_notifyJobManager = true;
           } else{/* diskCopyForRecall != NULL */
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Put"),
-					 castor::dlf::Param{stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
@@ -134,8 +134,8 @@ namespace castor{
 	  }
           
         }catch(castor::exception::Exception e){
-          castor::dlf::Param params[]={castor::dlf::Param{"Error Code",sstrerror(e.code())},
-					castor::dlf::Param{"Error Message",e.getMessage().str()}
+          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+				       castor::dlf::Param("Error Message",e.getMessage().str())
 	  };
 	  
 	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUT, 2 ,params, &(stgCnsHelper->cnsFileid));

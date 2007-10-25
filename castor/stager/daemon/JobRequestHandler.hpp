@@ -63,7 +63,7 @@ namespace castor{
 	/*        case 0,1: (staged) jobManager  */
 	/*        case 2: (waitRecall) createTapeCopyForRecall */
 	/* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception) = 0; 
+	inline void switchDiskCopiesForJob() throw (castor::exception::Exception) { }; 
 
 
 	/**********************************************/
