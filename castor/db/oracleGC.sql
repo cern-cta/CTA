@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.533 $ $Date: 2007/10/24 18:09:29 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.534 $ $Date: 2007/10/25 09:43:04 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1785,7 +1785,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 
 /* PL/SQL method implementing getDiskCopiesForJob */
-/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL, or -1 for failure */
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
+   -1 for user failure, -2 for subrequest put in WAITSUBREQ */
 CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
         (srId IN INTEGER, result OUT INTEGER,
          sources OUT castor.DiskCopy_Cur) AS
@@ -1819,7 +1820,7 @@ BEGIN
   IF dci.COUNT > 0 THEN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(srId, dci(1));
-    result := -1;
+    result := -2;
     RETURN;
   END IF;
      
@@ -1858,13 +1859,13 @@ BEGIN
     --IF result = 1 THEN
        -- create DiskCopyReplicaRequest for our svcclass
        -- make this subrequest wait on it
-       -- result := -1;
+       -- result := -2;
     --END IF;
   END IF;
 END;
 
 /* PL/SQL method implementing getDiskCopiesForPrepReq */
-/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL, or -1 for failure */
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL, or -1 for user failure */
 CREATE OR REPLACE PROCEDURE getDiskCopiesForPrepReq
         (srId IN INTEGER, result OUT INTEGER) AS
   nbDCs INTEGER;
