@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/10/24 17:57:41 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/10/25 13:55:01 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -224,13 +224,13 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	  /*  SYSTEM LEVEL */
 	  /* after calling the corresponding stagerService function, to show the decision taken */
 	  {STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
-	  {STAGER_NOTHING_TOBEDONE, "Nothing to be done (STAGED)"},
+	  {STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
 	  {STAGER_WAIT_SUBREQ, "Request moved to Wait"},
 	  {STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
 	  {STAGER_DISKTODISK_COPY, "Triggering Disk2Disk Copy"},
 	  {STAGER_TAPE_RECALL, "Triggering Tape Recall"},
 	  {STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
-
+    {STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
 	 
 	  /* DLF_LVL_ERROR */
 	  {STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},

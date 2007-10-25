@@ -69,12 +69,13 @@ namespace castor{
      /****************/
      /* after calling the corresponding stagerService function, to show the decision taken */
      STAGER_ARCHIVE_SUBREQ= 51, /* Archiving subrequest" */
-     STAGER_NOTHING_TOBEDONE= 52, /* Nothing to be done (STAGED)" */
+     STAGER_NOTHING_TOBEDONE= 52, /* Diskcopy available, nothing to be done */
      STAGER_WAIT_SUBREQ= 53, /* Request moved to Wait" */
      STAGER_REPACK_MIGRATION= 54, /* Starting Repack Migration" */
      STAGER_DISKTODISK_COPY= 55, /* Triggering Disk2Disk Copy" */
      STAGER_TAPE_RECALL= 56, /* Triggering Tape Recall" */
      STAGER_CASTORFILE_RECREATION= 57, /*Recreating CastorFile" */
+     STAGER_SCHEDULINGJOB= 58, /* Diskcopy available, scheduling job */
    
      /* DLF_LVL_ERROR */
      STAGER_SERVICES_EXCEPTION= 71, /*Impossible to get the Service" */
