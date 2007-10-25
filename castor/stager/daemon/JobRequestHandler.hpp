@@ -63,7 +63,7 @@ namespace castor{
 	/*        case 0,1: (staged) jobManager  */
 	/*        case 2: (waitRecall) createTapeCopyForRecall */
 	/* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception); 
+	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception) = 0; 
 
 
 	/**********************************************/
@@ -96,10 +96,10 @@ namespace castor{
 	void jobManagerPart() throw(castor::exception::Exception);
   
   
-  bool notifyJobManager() {
-    return m_notifyJobManager;
-  }
-
+	bool notifyJobManager() {
+	  return m_notifyJobManager;
+	}
+	
       protected:
 	
 	unsigned int maxReplicaNb;
@@ -113,7 +113,7 @@ namespace castor{
 
 	unsigned int xsize;	
   
-  bool m_notifyJobManager;
+	bool m_notifyJobManager;
 
       }; //end class StagerJobRequestHandler
 
