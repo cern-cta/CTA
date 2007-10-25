@@ -170,8 +170,9 @@ namespace castor {
         /**
          * Processes a putDone subrequest.
          * @param subreq the SubRequest to consider
-         * @return 0: user error, the putDone cannot be performed.
-         *         1: success.
+         * @return -1: putDone put in wait on a running put.
+         *          0: user error, putDone cannot be performed.
+         *          1: success.
          * @exception Exception in case of system error
          */
         virtual int processPutDone
