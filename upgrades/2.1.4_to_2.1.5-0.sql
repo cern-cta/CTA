@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.4_to_2.1.5-0.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/10/25 15:09:17 $ $Author: itglp $
+ * @(#)$RCSfile: 2.1.4_to_2.1.5-0.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/10/25 15:30:47 $ $Author: itglp $
  *
  * This script upgrades a CASTOR v2.1.4 database into v2.1.5-0
  *
@@ -162,7 +162,7 @@ CREATE OR REPLACE PROCEDURE new_subRequestToDo(service IN VARCHAR2,
      WHERE status in (0,1,2)    -- START, RESTART, RETRY
        AND EXISTS
          (SELECT /*+ index(a I_Id2Type_id) */ 'x'
-            FROM Id2Type a
+            FROM Id2Type a, Type2Obj
            WHERE a.id = SubRequest.request
              AND a.type = Type2Obj.type
              AND Type2Obj.svcHandler = service);

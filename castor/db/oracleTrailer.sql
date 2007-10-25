@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.535 $ $Date: 2007/10/25 15:07:25 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.536 $ $Date: 2007/10/25 15:30:47 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -593,7 +593,7 @@ CREATE OR REPLACE PROCEDURE new_subRequestToDo(service IN VARCHAR2,
      WHERE status in (0,1,2)    -- START, RESTART, RETRY
        AND EXISTS
          (SELECT /*+ index(a I_Id2Type_id) */ 'x'
-            FROM Id2Type a
+            FROM Id2Type a, Type2Obj
            WHERE a.id = SubRequest.request
              AND a.type = Type2Obj.type
              AND Type2Obj.svcHandler = service);
