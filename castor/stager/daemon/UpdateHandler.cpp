@@ -127,7 +127,7 @@ namespace castor{
       {
         
         switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
-	case -1:
+	case -2:
 	  {
 	    
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
@@ -137,11 +137,51 @@ namespace castor{
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAIT_SUBREQ, 6, params, &(stgCnsHelper->cnsFileid));
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, 6, params, &(stgCnsHelper->cnsFileid));
 	  }break;
 	  
-	case 0: /* process the replicas and call the jobManager   */
-	case 1:
+	  case -1:
+	    {
+	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("UserName",stgRequestHelper->username),
+					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6, params, &(stgCnsHelper->cnsFileid));
+	    }break;
+
+          case 0: // DISKCOPY_STAGED, schedule job
+	    {
+	      bool isToReplicate= replicaSwitch();
+	      if(isToReplicate){
+		processReplica();
+	      }
+	      
+	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
+					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("UserName",stgRequestHelper->username),
+					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, 6 ,params, &(stgCnsHelper->cnsFileid));
+	      
+	      /* build the rmjob struct and submit the job */
+	      jobManagerPart();
+	      
+	     
+	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
+	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */	      
+	      
+	      /* and we have to notify the jobManager */
+	      m_notifyJobManager = true;
+	    }break;
+      
+	case 1:   // DISK2DISKCOPY - will disappear soon
 	    {
 	      bool isToReplicate= replicaSwitch();
 	      if(isToReplicate){

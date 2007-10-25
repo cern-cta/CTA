@@ -81,7 +81,31 @@ namespace castor{
       void StagerRepackHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
 	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
-	case 0:
+	case -2:
+	  {
+	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Repack"),
+					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
+					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	    };
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    
+	  }break;
+
+   case -1:
+	    {
+	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Repack"),
+					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("UserName",stgRequestHelper->username),
+					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6, params, &(stgCnsHelper->cnsFileid));
+	    }break;
+      	case 0:
 	  {
 	  
 	    /* to be done */

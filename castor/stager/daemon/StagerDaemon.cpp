@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/10/25 14:24:05 $ $Author: mmartins $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/10/25 14:48:32 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -225,7 +225,7 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	  /* after calling the corresponding stagerService function, to show the decision taken */
 	  {STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
 	  {STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
-	  {STAGER_WAIT_SUBREQ, "Request moved to Wait"},
+	  {STAGER_WAITSUBREQ, "Request moved to Wait"},
 	  {STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
 	  {STAGER_DISKTODISK_COPY, "Triggering Disk2Disk Copy"},
 	  {STAGER_TAPE_RECALL, "Triggering Tape Recall"},

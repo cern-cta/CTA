@@ -70,7 +70,7 @@ namespace castor{
      /* after calling the corresponding stagerService function, to show the decision taken */
      STAGER_ARCHIVE_SUBREQ= 51, /* Archiving subrequest" */
      STAGER_NOTHING_TOBEDONE= 52, /* Diskcopy available, nothing to be done */
-     STAGER_WAIT_SUBREQ= 53, /* Request moved to Wait" */
+     STAGER_WAITSUBREQ= 53, /* Request moved to Wait" */
      STAGER_REPACK_MIGRATION= 54, /* Starting Repack Migration" */
      STAGER_DISKTODISK_COPY= 55, /* Triggering Disk2Disk Copy" */
      STAGER_TAPE_RECALL= 56, /* Triggering Tape Recall" */

@@ -62,7 +62,7 @@ namespace castor{
       {
 
         switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
-	case -1:
+	case -2:
 	  {
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
 					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
@@ -71,10 +71,24 @@ namespace castor{
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, 6 ,params, &(stgCnsHelper->cnsFileid));
 	    
 	  }break;
-	case 0:   // DiskCopy STAGED
+
+   case -1:
+	    {
+	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
+					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("UserName",stgRequestHelper->username),
+					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6, params, &(stgCnsHelper->cnsFileid));
+	    }break;
+      
+      
+    case 0:   // DiskCopy STAGED
 	  {
 	    stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
 	    stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
@@ -93,20 +107,20 @@ namespace castor{
 	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
 	  } break;
           
-	case 1:    // DISK2DISKCOPY
+	case 1:    // DISK2DISKCOPY - will disappear soon
 	  {
-	    if(replicaSwitch()) {
+	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
+					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
+					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("UserName",stgRequestHelper->username),
+					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+	      };
+	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, 6 ,params, &(stgCnsHelper->cnsFileid));
+	      
+      if(replicaSwitch()) {
 	      processReplica();
 	    }
-	    
-	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
-					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISK2DISK_COPY, 6 ,params, &(stgCnsHelper->cnsFileid));
 
 	    /* build the rmjob struct and submit the job */
 	    jobManagerPart();
@@ -167,12 +181,12 @@ namespace castor{
 	  switchDiskCopiesForJob();
 	  
 	 
-	  stgReplyHelper = new StagerReplyHelper(this->newSubrequestStatus);
-	  if(stgReplyHelper == NULL)
+	  stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
 	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
 	  stgReplyHelper->endReplyToClient(stgRequestHelper);
        
 	  delete stgReplyHelper;
+    stgReplyHelper = 0;
 	  
 
 	}catch(castor::exception::Exception e){

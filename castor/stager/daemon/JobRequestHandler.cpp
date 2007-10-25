@@ -5,7 +5,7 @@
 #include "castor/stager/dbService/StagerRequestHelper.hpp"
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/StagerReplyHelper.hpp"
-
+#include "castor/stager/dbService/StagerDlfMessages.hpp"
 #include "castor/stager/dbService/StagerRequestHandler.hpp"
 #include "castor/stager/dbService/StagerJobRequestHandler.hpp"
 
@@ -149,16 +149,16 @@ namespace castor{
       int StagerJobRequestHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
       {
         //ask the expert system...
+	  char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
 	try{ 
 	  const std::string filename = stgRequestHelper->subrequest->fileName();
 	  std::string expQuestion=replicationPolicy + " " + filename;
-	  char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
 	  int fd;
 	  
 	  if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
 	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
-					 castor::dlf::Param("UserName",stgRequest->username),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
 	    };
@@ -171,7 +171,7 @@ namespace castor{
 	  if((expert_send_data(fd,expQuestion.c_str(),expQuestion.size())) != (expQuestion.size())){//sending question
 	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
-					 castor::dlf::Param("UserName",stgRequest->username),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
 	    };
@@ -186,7 +186,7 @@ namespace castor{
 	  if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
 	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
-					 castor::dlf::Param("UserName",stgRequest->username),
+					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
 	    };
