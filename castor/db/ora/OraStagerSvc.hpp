@@ -145,6 +145,7 @@ namespace castor {
          * subrequest.
          * The return value is a valid DiskCopy status and
          * the scheduling decision is taken this way :
+         * -2: no scheduling, subrequest put on WAITSUBREQ status.
          * -1: no scheduling because of user error.
          * DISKCOPY_STAGED (0): schedule + list of avail sources,
            a DiskCopy was found and the SubRequest can be scheduled.
@@ -345,7 +346,7 @@ namespace castor {
         (castor::stager::SubRequest* subreq,
          unsigned long euid,
          unsigned long egid,
-	 castor::stager::SvcClass* svcClass)
+         castor::stager::SvcClass* svcClass)
            throw (castor::exception::Exception);
           
         /**

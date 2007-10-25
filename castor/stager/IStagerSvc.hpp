@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.76 $ $Release$ $Date: 2007/10/24 18:05:09 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.77 $ $Release$ $Date: 2007/10/25 09:43:41 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -139,6 +139,7 @@ namespace castor {
        * subrequest.
        * The return value is a valid DiskCopy status and
        * the scheduling decision is taken this way :
+       * -2: no scheduling, subrequest put on WAITSUBREQ status.
        * -1: no scheduling because of user error.
        * DISKCOPY_STAGED (0): schedule + list of avail sources,
          a DiskCopy was found and the SubRequest can be scheduled.
