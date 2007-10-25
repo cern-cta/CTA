@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.4_to_2.1.5-0.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/10/24 17:04:51 $ $Author: itglp $
+ * @(#)$RCSfile: 2.1.4_to_2.1.5-0.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/10/25 15:09:17 $ $Author: itglp $
  *
  * This script upgrades a CASTOR v2.1.4 database into v2.1.5-0
  *
@@ -151,7 +151,7 @@ UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type in (73, 74, 83);
 COMMIT;
 
 /* PL/SQL method to get the next SubRequest to do according to the given service */
-CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
+CREATE OR REPLACE PROCEDURE new_subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
@@ -174,6 +174,7 @@ BEGIN
     INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
   CLOSE c;
 END;
+
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall */
 /* Internally used by getDiskCopiesForJob and getDiskCopiesForPrepReq */
@@ -260,7 +261,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 
 /* PL/SQL method implementing getDiskCopiesForJob */
-/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL, or -1 for failure */
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
+   -1 for user failure, -2 for subrequest put in WAITSUBREQ */
 CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
         (srId IN INTEGER, result OUT INTEGER,
          sources OUT castor.DiskCopy_Cur) AS
@@ -294,7 +296,7 @@ BEGIN
   IF dci.COUNT > 0 THEN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(srId, dci(1));
-    result := -1;
+    result := -2;
     RETURN;
   END IF;
      
@@ -333,13 +335,13 @@ BEGIN
     --IF result = 1 THEN
        -- create DiskCopyReplicaRequest for our svcclass
        -- make this subrequest wait on it
-       -- result := -1;
+       -- result := -2;
     --END IF;
   END IF;
 END;
 
 /* PL/SQL method implementing getDiskCopiesForPrepReq */
-/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL, or -1 for failure */
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL, or -1 for user failure */
 CREATE OR REPLACE PROCEDURE getDiskCopiesForPrepReq
         (srId IN INTEGER, result OUT INTEGER) AS
   nbDCs INTEGER;
@@ -450,7 +452,7 @@ BEGIN
              status = 5, -- WAITSUBREQ
              lastModificationTime = getTime()
        WHERE id = rsubreqId;
-      result := 0;  -- no go
+      result := -1;  -- no go, request in wait
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- no put waiting, we can continue
       result := 1;
@@ -495,6 +497,149 @@ BEGIN
     AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
+END;
+
+
+/* PL/SQL method implementing stageRm */
+CREATE OR REPLACE PROCEDURE new_stageRm (srId IN INTEGER,
+                                     fid IN INTEGER,
+                                     nh IN VARCHAR2,
+                                     svcClassId IN INTEGER,
+                                     force IN INTEGER,
+                                     ret OUT INTEGER) AS
+  cfId INTEGER;
+  scId INTEGER;
+  nbRes INTEGER;
+  dcsToRm "numList";
+BEGIN
+  -- Lock the access to the CastorFile
+  -- This, together with triggers will avoid new TapeCopies
+  -- or DiskCopies to be added
+  SELECT id INTO cfId FROM CastorFile
+   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+  -- First select involved diskCopies
+  scId := svcClassId;
+  IF scId > 0 THEN
+    SELECT DC.id BULK COLLECT INTO dcsToRm
+      FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
+     WHERE DC.castorFile = cfId
+       AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND DC.fileSystem = FileSystem.id
+       AND FileSystem.diskPool = DP2SC.parent
+       AND DP2SC.child = scId;
+    -- Check whether something else is left: if not, do as
+    -- we are performing a stageRm everywhere
+    SELECT count(*) INTO nbRes FROM DiskCopy
+     WHERE castorFile = cfId
+       AND status in (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+       AND id not in (SELECT * FROM TABLE(dcsToRm));
+    IF nbRes = 0 THEN
+      scId := 0;
+    END IF;
+  END IF;
+  IF scId = 0 THEN
+    SELECT id BULK COLLECT INTO dcsToRm
+      FROM DiskCopy
+     WHERE castorFile = cfId
+       AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+  END IF;
+  
+  -- Now perform the stageRm. scId is used hereafter as flag
+  -- to determine whether to perform full cleanup or not
+  IF scId = 0 THEN
+    -- check if removal is possible for migration
+    SELECT count(*) INTO nbRes FROM TapeCopy
+     WHERE status IN (0, 1, 2, 3) -- CREATED, TOBEMIGRATED, WAITINSTREAMS, SELECTED
+       AND castorFile = cfId;
+    IF nbRes > 0 THEN
+      -- We found something, thus we cannot remove
+      UPDATE SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 16,  -- EBUSY
+             errorMessage = 'The file is not yet migrated'
+       WHERE id = srId;
+      ret := 0;
+      RETURN;
+    END IF;
+    -- check if removal is possible for Disk2DiskCopy
+    SELECT count(*) INTO nbRes FROM DiskCopy
+    WHERE status = 1 -- DISKCOPY_WAITDISK2DISKCOPY
+      AND castorFile = cfId;
+    IF nbRes > 0 THEN
+      -- We found something, thus we cannot remove
+      UPDATE SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 16,  -- EBUSY
+             errorMessage = 'The file is being replicated'
+       WHERE id = srId;
+      ret := 0;
+      RETURN;
+    END IF;
+  END IF;
+  -- mark all get/put requests for those diskcopies
+  -- and the ones waiting on them as failed
+  -- so that clients eventually get an answer;
+  -- don't touch recalls for the moment
+  FOR sr IN (SELECT id, status FROM SubRequest
+              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
+    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+      UPDATE SubRequest SET status = 7, parent = 0 WHERE id = sr.id;  -- FAILED
+      UPDATE SubRequest SET status = 7, parent = 0 WHERE parent = sr.id;  -- FAILED
+    END IF;
+  END LOOP;
+  -- Set selected DiskCopies to INVALID. In any case keep
+  -- WAITTAPERECALL diskcopies so that recalls can continue.
+  -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
+  -- so they will only be taken by the cleaning daemon for the failed DCs.
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE id IN (SELECT * FROM TABLE(dcsToRm));
+  ret := 1;  -- ok
+  IF scId = 0 THEN
+    -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
+    -- This is not entirely clean: a proper operation here should be to
+    -- drop the SubRequest waiting for recall but keep the recall if somebody
+    -- else is doing it, and taking care of other WAITSUBREQ requests as well...
+    -- but it's fair enough, provided that the last stageRm will cleanup everything.
+    DECLARE
+      segId INTEGER;
+      unusedIds "numList";
+    BEGIN
+      -- First lock all segments for the file
+      SELECT segment.id BULK COLLECT INTO unusedIds
+        FROM Segment, TapeCopy
+       WHERE TapeCopy.castorfile = cfId
+         AND TapeCopy.id = Segment.copy
+      FOR UPDATE;
+      -- Check whether we have any segment in SELECTED
+      SELECT segment.id INTO segId
+        FROM Segment, TapeCopy
+       WHERE TapeCopy.castorfile = cfId
+         AND TapeCopy.id = Segment.copy
+         AND Segment.status = 7 -- SELECTED
+         AND ROWNUM < 2;
+      -- Something is running, so give up
+      UPDATE SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 16,  -- EBUSY
+             errorMessage = 'The file is being recalled from tape'
+       WHERE id = srId;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- Nothing running
+      deleteTapeCopies(cfId);
+      -- Delete the DiskCopies
+      UPDATE DiskCopy
+         SET status = 7  -- INVALID
+       WHERE status = 2  -- WAITTAPERECALL
+         AND castorFile = cfId;
+      -- Mark the 'recall' SubRequests as failed
+      -- so that clients eventually get an answer
+      UPDATE SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 16,  -- EBUSY
+             errorMessage = 'Recall canceled by another user request'
+       WHERE castorFile = cfId and status IN (4, 5);   -- WAITTAPERECALL, WAITSUBREQ
+    END;
+  END IF;
 END;
 
 
