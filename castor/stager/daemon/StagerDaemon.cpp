@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2007/10/25 13:55:01 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2007/10/25 14:24:05 $ $Author: mmartins $
  *
  * Main stager daemon
  *
@@ -230,7 +230,8 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	  {STAGER_DISKTODISK_COPY, "Triggering Disk2Disk Copy"},
 	  {STAGER_TAPE_RECALL, "Triggering Tape Recall"},
 	  {STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
-    {STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
+	  {STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
+	  {STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
 	 
 	  /* DLF_LVL_ERROR */
 	  {STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
@@ -241,6 +242,9 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	  {STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
 	  {STAGER_UNABLETOPERFORM, "Unable to perform request, notifying user"},
 	  {STAGER_EXPERT_EXCEPTION, "Error while asking the Expert System"},
+	  {STAGER_CNS_EXCEPTION, "Error on the Name Server"},
+	  {STAGER_SUBREQUESTUUID_EXCEPTION, "Impossible to get the subrequest Uuid"},
+	  {STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},
 
 	  /*******************/
 	  /* QueryRequestSvc */

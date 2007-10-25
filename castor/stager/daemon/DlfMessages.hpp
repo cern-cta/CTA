@@ -75,7 +75,8 @@ namespace castor{
      STAGER_DISKTODISK_COPY= 55, /* Triggering Disk2Disk Copy" */
      STAGER_TAPE_RECALL= 56, /* Triggering Tape Recall" */
      STAGER_CASTORFILE_RECREATION= 57, /*Recreating CastorFile" */
-     STAGER_SCHEDULINGJOB= 58, /* Diskcopy available, scheduling job */
+     STAGER_RECREATION_IMPOSSIBLE= 58, /* "Impossible to recreate CastorFile" "*/
+     STAGER_SCHEDULINGJOB= 59, /* Diskcopy available, scheduling job */
    
      /* DLF_LVL_ERROR */
      STAGER_SERVICES_EXCEPTION= 71, /*Impossible to get the Service" */
@@ -86,6 +87,9 @@ namespace castor{
      STAGER_INVALID_FILESYSTEM= 76, /*Invalid fileSystem" */
      STAGER_UNABLETOPERFORM= 77, /* Unable to perform request, notifying user */
      STAGER_EXPERT_EXCEPTION=78, /* "Error while asking the expert system" */
+     STAGER_CNS_EXCEPTION = 79, /* Error on the name server */
+     STAGER_SUBREQUESTUUID_EXCEPTION = 80, /* Impossible to get the subrequest Uuid */
+     STAGER_REQUESTUUID_EXCEPTION = 81, /* Impossible to get the request Uuid */
      
      /*******************/
      /* QueryRequestSvc */
