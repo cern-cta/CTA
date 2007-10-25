@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.210 $ $Release$ $Date: 2007/10/24 18:05:09 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.211 $ $Release$ $Date: 2007/10/25 15:07:26 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -94,11 +94,11 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
-  "BEGIN subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
+  "BEGIN new_subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
 
 /// SQL statement for oldSubRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_oldSubRequestToDoStatementString =
-  "BEGIN oldSubrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
+  "BEGIN subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
@@ -146,7 +146,7 @@ const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
 
 /// SQL statement for stageRm
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
-  "BEGIN stageRm(:1, :2, :3, :4, :5, :6); END;";
+  "BEGIN new_stageRm(:1, :2, :3, :4, :5, :6); END;";
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
@@ -323,8 +323,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     // decide which statement to use - to be dropped with the old stager
     oracle::occi::Statement *stmt = (service == "" ?
       m_oldSubRequestToDoStatement : m_subRequestToDoStatement);
-    if(service != "")
-      m_subRequestToDoStatement->setString(1, service);
+    m_subRequestToDoStatement->setString(1, service);
 
     // execute the statement and see whether we found something
     unsigned int rc = stmt->executeUpdate();

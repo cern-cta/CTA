@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.534 $ $Date: 2007/10/25 09:43:04 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.535 $ $Date: 2007/10/25 15:07:25 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -557,9 +557,8 @@ END;
 
 
 /* PL/SQL method to get the next SubRequest to do - old stager version */
-/* the dummy parameter is there to have a similar signature as the new subRequestToDo */
 /* this procedure is to be dropped with the old stager */
-CREATE OR REPLACE PROCEDURE oldSubRequestToDo(dummy IN INTEGER,
+CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
@@ -583,7 +582,7 @@ BEGIN
 END;
 
 /* PL/SQL method to get the next SubRequest to do according to the given service */
-CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
+CREATE OR REPLACE PROCEDURE new_subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
@@ -1976,7 +1975,7 @@ BEGIN
              status = 5, -- WAITSUBREQ
              lastModificationTime = getTime()
        WHERE id = rsubreqId;
-      result := 0;  -- no go
+      result := -1;  -- no go, request in wait
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- no put waiting, we can continue
       result := 1;
@@ -2946,7 +2945,7 @@ END;
 
 
 /* PL/SQL method implementing stageRm */
-CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
+CREATE OR REPLACE PROCEDURE new_stageRm (srId IN INTEGER,
                                      fid IN INTEGER,
                                      nh IN VARCHAR2,
                                      svcClassId IN INTEGER,
@@ -3077,8 +3076,11 @@ BEGIN
        WHERE status = 2  -- WAITTAPERECALL
          AND castorFile = cfId;
       -- Mark the 'recall' SubRequests as failed
-      -- so that clients get an answer
-      UPDATE SubRequest SET status = 7  -- FAILED
+      -- so that clients eventually get an answer
+      UPDATE SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 16,  -- EBUSY
+             errorMessage = 'Recall canceled by another user request'
        WHERE castorFile = cfId and status IN (4, 5);   -- WAITTAPERECALL, WAITSUBREQ
     END;
   END IF;
