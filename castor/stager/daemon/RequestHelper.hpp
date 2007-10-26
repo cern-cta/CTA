@@ -291,10 +291,11 @@ namespace castor{
       
 
 
-	/*****************************************************************************************************/
-	/* check if the user (euid,egid) has the ritght permission for the request's type                   */
-	/* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */
-	/**************************************************************************************************/
+	/**
+	 * check if the user (euid,egid) has the right permission for the request's type
+	 * note that we were not checking the permissions for SetFileGCWeight and PutDone request (true),
+   * now you need write permissions
+	 */
 	inline bool checkFilePermission() throw(castor::exception::Exception){
 	  bool filePermission = true;
 	  try{
@@ -323,6 +324,8 @@ namespace castor{
 	    case OBJ_StagePutRequest:
 	    case OBJ_StageRmRequest:
 	    case OBJ_StageUpdateRequest:
+      case OBJ_StagePutDoneRequest:
+      case OBJ_SetFileGCWeight:
 	      filePermission=W_OK;
 	      if ( Cns_accessUser(filename.c_str(),W_OK,euid,egid) == -1 ) {
 		filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag

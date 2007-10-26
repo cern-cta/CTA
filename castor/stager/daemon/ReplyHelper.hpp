@@ -34,59 +34,50 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
-
+      
+      
       /* forward declaration */
       class castor::rh::IOResponse;       
       class castor::replier::RequestReplier;
       class StagerRequestHelper;
-
-
-
+      
+      
+      
       class StagerReplyHelper : public virtual castor::BaseObject{
-
-      private:
-
-	castor::stager::SubRequestStatusCodes newSubrequestStatus;
-
-
-      public:
-
-	castor::rh::IOResponse *ioResponse;
-	castor::replier::RequestReplier *requestReplier;
-	std::string uuid_as_string;
-
-	/* constructor  */
-	StagerReplyHelper(castor::stager::SubRequestStatusCodes newSubreqStatus) throw(castor::exception::Exception);
-	/* destructor */
-	~StagerReplyHelper() throw();
-
-
-
-	/****************************************************************************/
-	/* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
-	/**************************************************************************/
-	void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
-	
-
-	/*********************************************************************************************/
-	/* check if there is any subrequest left and send the endResponse to client if it is needed */
-	/*******************************************************************************************/
-	inline void endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
-	  
-	  /* to update the subrequest on DB */
-	  bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
-	  if(requestLeft == false){
-	    this->requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
-	  }  
-	    
-	}
-
-
-	
+        
+        private:
+        
+        castor::stager::SubRequestStatusCodes newSubrequestStatus;
+        
+        
+        public:
+        
+        castor::rh::IOResponse *ioResponse;
+        castor::replier::RequestReplier *requestReplier;
+        std::string uuid_as_string;
+        
+        /* constructor  */
+        StagerReplyHelper(castor::stager::SubRequestStatusCodes newSubreqStatus) throw(castor::exception::Exception);
+        /* destructor */
+        ~StagerReplyHelper() throw();
+        
+        
+        
+        /****************************************************************************/
+        /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
+        /**************************************************************************/
+        void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
+        
+        
+        /*********************************************************************************************/
+        /* check if there is any subrequest left and send the endResponse to client if it is needed */
+        /*******************************************************************************************/
+        void endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        
+        
       }; // end StagerReplyHelper  
-
-
+      
+      
     }//end namespace dbService
   }//end namespace stager
 }//end namespace castor
