@@ -198,6 +198,7 @@ globus_l_gfs_CASTOR2ext_stat(
     int                                 nbsub;
     struct dirent64 *                   dirp;
     char *                              pathname;
+    char *                              freepathname;
     char                                filename[CA_MAXNAMELEN+1];
     
     GlobusGFSName(globus_l_gfs_CASTOR2ext_stat);
@@ -215,11 +216,16 @@ globus_l_gfs_CASTOR2ext_stat(
 	    return;
     }
     
+    freepathname=pathname;
+    /* remove first slashes */
+    while (*pathname=='/') pathname++;
+    pathname--;
+    
     status=rfio_stat64(pathname,&statbuf);
     if(status!=0) {
 	    result=globus_l_gfs_rfio_make_error("rfio_stat64");
 	    globus_gridftp_server_finished_stat(op,result,NULL, 0);
-	    free(pathname);
+	    free(freepathname);
 	    return;
     }
 	
@@ -229,7 +235,7 @@ globus_l_gfs_CASTOR2ext_stat(
 	    if(stat_array==NULL) {
 		    result=GlobusGFSErrorGeneric("error: memory allocation failed");
 		    globus_gridftp_server_finished_stat(op,result,NULL, 0);
-		    free(pathname);
+		    free(freepathname);
 		    return;
 	    }
 	    stat_count=1;
@@ -237,7 +243,7 @@ globus_l_gfs_CASTOR2ext_stat(
 	    globus_gridftp_server_finished_stat(op, GLOBUS_SUCCESS, stat_array, stat_count);
 	    free_stat_array(stat_array, stat_count);
 	    globus_free(stat_array);
-	    free(pathname);
+	    free(freepathname);
 	    return;
     }
 	
@@ -249,7 +255,7 @@ globus_l_gfs_CASTOR2ext_stat(
 		if (dp==NULL) {
 			result=globus_l_gfs_rfio_make_error("rfio_opendir");
 	                globus_gridftp_server_finished_stat(op,result,NULL, 0);
-	                free(pathname);
+	                free(freepathname);
 	                return;	
 		}   
 		while ((dirp = rfio_readdir64(dp)) != NULL) {
@@ -262,7 +268,7 @@ globus_l_gfs_CASTOR2ext_stat(
 	                if(stat_array==NULL) {
 				result=GlobusGFSErrorGeneric("error: memory allocation failed");
 				globus_gridftp_server_finished_stat(op,result,NULL, 0);
-				free(pathname);
+				free(freepathname);
 				return;
 			}
 			stat_count=1;
@@ -270,7 +276,7 @@ globus_l_gfs_CASTOR2ext_stat(
 			globus_gridftp_server_finished_stat(op, GLOBUS_SUCCESS, stat_array, stat_count);
 			free_stat_array(stat_array, stat_count);
 			globus_free(stat_array);
-			free(pathname);
+			free(freepathname);
 			return;
 		}
 		/* we have files or subdirs */
@@ -291,7 +297,7 @@ globus_l_gfs_CASTOR2ext_stat(
 				rfio_closedir(dp);
 				free_stat_array(stat_array, stat_count);
 				globus_free(stat_array);
-				free(pathname);
+				free(freepathname);
 				return;
 			}
 		}
@@ -299,7 +305,7 @@ globus_l_gfs_CASTOR2ext_stat(
 		globus_gridftp_server_finished_stat(op, GLOBUS_SUCCESS, stat_array, nbsub);
 		free_stat_array(stat_array, stat_count);
 		globus_free(stat_array);
-		free(pathname);
+		free(freepathname);
 		return;
     }
     /* it is not a file or directory? */
@@ -307,7 +313,7 @@ globus_l_gfs_CASTOR2ext_stat(
     if(stat_array==NULL) {
 	result=GlobusGFSErrorGeneric("error: memory allocation failed");
 	globus_gridftp_server_finished_stat(op,result,NULL, 0);
-	free(pathname);
+	free(freepathname);
 	return;
     }
     stat_count=1;
@@ -315,7 +321,7 @@ globus_l_gfs_CASTOR2ext_stat(
     globus_gridftp_server_finished_stat(op, GLOBUS_SUCCESS, stat_array, stat_count);
     free_stat_array(stat_array, stat_count);
     globus_free(stat_array);
-    free(pathname);
+    free(freepathname);
     return;
 }
 
@@ -350,6 +356,7 @@ globus_l_gfs_CASTOR2ext_command(
     
     char *                              func="globus_l_gfs_CASTOR2ext_command";
     char *				pathname;
+    char *                              freepathname;
     char *				frm_pathname;
     int					status;
     char *                              ops;
@@ -378,6 +385,12 @@ globus_l_gfs_CASTOR2ext_command(
 		globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);
 		return;
 	}
+	
+    freepathname=pathname;	
+    /* remove first slashes */
+    while (*pathname=='/') pathname++;
+    pathname--;
+	
     /* TODO rfio setAuth here ? */  
     status=0; ops="";
     switch(cmd_info->command)
@@ -411,7 +424,7 @@ globus_l_gfs_CASTOR2ext_command(
 	       if (*frm_pathname != '/'){
 		       free(frm_pathname);
 		       result = GlobusGFSErrorGeneric("error: bad pathname name");
-		       free(pathname);
+		       free(freepathname);
 		       globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);
 		       return;
 	       }
@@ -442,12 +455,12 @@ globus_l_gfs_CASTOR2ext_command(
 	if(status!=0) {
 		result=globus_l_gfs_rfio_make_error(ops);
 		globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);
-		free(pathname);
+		free(freepathname);
 		return;
 	}
 		
     globus_gridftp_server_finished_command(op, GLOBUS_SUCCESS, GLOBUS_NULL);
-    free(pathname);
+    free(freepathname);
     return;
 }
 
@@ -473,30 +486,22 @@ int CASTOR2ext_handle_open(char *path, int flags, int mode, globus_l_gfs_CASTOR2
    char *	host;
    int   	rc;
    char *	func="CASTOR2ext_handle_open";
-   char *       uuid_path;
+   char *       p;
    
    host=NULL;
-   if ((rc = rfio_parse (path, &host, &filename)) < 0) return (-1);
+   
+   p=path; /* remove first slashes */
+     while (*p=='/') p++;
+   p--;
+   
+   if ((rc = rfio_parse (p, &host, &filename)) < 0) return (-1);
    globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: path has been parsed: %s:%s (%u) \n",func,host,filename,rc);
    
    if(rc==0 && host!=NULL) { /* remote file  */
-	   rc =rfio_open64 (path,flags,mode);
+	   rc =rfio_open64 (p,flags,mode);
 	   return (rc);
    }
    if(rc==0 && host==NULL) { /* local file  */
-	   if(CASTOR2ext_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
-              uuid_path=path;
-	      if( *uuid_path=='/') uuid_path++; /* path like  "/uuid" */
-	      if(strcmp(uuid_path,CASTOR2ext_handle->uuid)==0){
-		      /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
-		      globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: open file in uuid mode \"%s\"\n",func,CASTOR2ext_handle->fullDestPath);
-		      rc = rfio_open64 (CASTOR2ext_handle->fullDestPath,flags,mode);
-		      return (rc);
-	      }
-	      globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: client and server uuids do not match in uuid mode \"%s\" != \"%s\"\n",
-		      func, uuid_path,CASTOR2ext_handle->uuid);
-	      return (-1);
-	   }
 	   rc =rfio_open64 (path,flags,mode);
 	   return (rc);
    }
