@@ -47,6 +47,14 @@ namespace castor{
         this->typeRequest = OBJ_SetFileGCWeight;
       }
       
+        /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerSetGCHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
+	/* no setting */
+      }
+ 
       void StagerSetGCHandler::handle() throw(castor::exception::Exception)
       {
 
@@ -57,6 +65,7 @@ namespace castor{
 	  /* common part for all the handlers: get objects, link, check/create file*/
 	  preHandle();
 	  /**********/
+
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),

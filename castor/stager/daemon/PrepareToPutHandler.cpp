@@ -49,9 +49,17 @@ namespace castor{
 	this->stgCnsHelper = stgCnsHelper;
 	this->typeRequest = OBJ_StagePrepareToPutRequest;
 	
-	/* since we don't call the rm: we don't care about maxReplicaNb, ...xsize, ...  */	
-	
+
       }
+
+       /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerPrepareToPutHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
+	/* for the moment, there isnt needed to set it */
+      }
+
 
 
       

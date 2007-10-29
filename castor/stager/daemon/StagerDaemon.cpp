@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/10/25 16:23:30 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/10/29 16:30:31 $ $Author: mmartins $
  *
  * Main stager daemon
  *
@@ -140,12 +140,12 @@ int main(int argc, char* argv[]){
         new castor::stager::dbService::GcSvcThread(),
           getConfigPort("GCNOTIFYPORT", STAGER_GCNOTIFYPORT)));
 
-    stagerDaemon.getThreadPool('J')->setNbThreads(10);
-    stagerDaemon.getThreadPool('P')->setNbThreads(5);
-    stagerDaemon.getThreadPool('S')->setNbThreads(5);
-    stagerDaemon.getThreadPool('Q')->setNbThreads(10);
-    stagerDaemon.getThreadPool('E')->setNbThreads(8);
-    stagerDaemon.getThreadPool('j')->setNbThreads(20);
+    stagerDaemon.getThreadPool('J')->setNbThreads(1);
+    stagerDaemon.getThreadPool('P')->setNbThreads(1);
+    stagerDaemon.getThreadPool('S')->setNbThreads(1);
+    stagerDaemon.getThreadPool('Q')->setNbThreads(2);
+    stagerDaemon.getThreadPool('E')->setNbThreads(1);
+    stagerDaemon.getThreadPool('j')->setNbThreads(10);
     stagerDaemon.getThreadPool('G')->setNbThreads(5);
     
     /* we need to call this function before setting the number of threads */

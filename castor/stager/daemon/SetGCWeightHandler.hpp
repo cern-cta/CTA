@@ -44,6 +44,8 @@ namespace castor{
 	/* destructor */
 	~StagerSetGCHandler() throw();
 
+	void handlerSettings() throw(castor::exception::Exception);
+
 	/* SetFileGCWeight handle implementation */
 	void handle() throw(castor::exception::Exception);
 

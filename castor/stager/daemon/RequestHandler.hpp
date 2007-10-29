@@ -47,6 +47,7 @@ namespace castor{
 	/* to be called before the stg____Handler->handle() */
 	virtual void preHandle() throw(castor::exception::Exception);
 
+	virtual void handlerSettings() throw(castor::exception::Exception) = 0;
 
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;

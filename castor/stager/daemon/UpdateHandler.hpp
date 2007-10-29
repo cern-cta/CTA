@@ -63,6 +63,8 @@ namespace castor{
 	/* which determines the real flow of the handler */
 	virtual void preHandle() throw(castor::exception::Exception);
 
+	void handlerSettings() throw(castor::exception::Exception);
+
 	void switchDiskCopiesForJob() throw (castor::exception::Exception);
 
 

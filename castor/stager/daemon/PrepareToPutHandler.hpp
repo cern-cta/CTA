@@ -59,6 +59,8 @@ namespace castor{
 	/* destructor */
 	~StagerPrepareToPutHandler() throw();
 
+	void handlerSettings() throw(castor::exception::Exception);
+
 	/* PrepareToPut request handler */
 	void handle() throw(castor::exception::Exception);
 

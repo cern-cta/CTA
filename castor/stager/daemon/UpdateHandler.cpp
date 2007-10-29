@@ -50,10 +50,17 @@ namespace castor{
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
-        this->typeRequest = OBJ_StageUpdateRequest;
-        
-        
-        this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
+        this->typeRequest = OBJ_StageUpdateRequest;     
+          
+      }
+      
+      
+      /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerUpdateHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
+	 this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
         this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
         
         
@@ -72,10 +79,9 @@ namespace castor{
             xsize = DEFAULTFILESIZE;
           }
         }
-        
       }
-      
-      
+
+
       
       /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
       void StagerUpdateHandler::preHandle() throw(castor::exception::Exception)
@@ -242,6 +248,9 @@ namespace castor{
 	  /* common part for all the handlers: get objects, link, check/create file*/
 	  preHandle();
 	  /**********/
+
+	  handlerSettings();
+
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),

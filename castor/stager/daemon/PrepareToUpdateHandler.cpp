@@ -50,9 +50,14 @@ namespace castor{
         this->stgCnsHelper = stgCnsHelper;
         this->typeRequest = OBJ_StagePrepareToUpdateRequest;
         
-        
-        
-        this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
+      }
+
+      /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerPrepareToUpdateHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
+	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
         this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
         
         
@@ -68,14 +73,12 @@ namespace castor{
           xsize = stgRequestHelper->svcClass->defaultFileSize();
           if( xsize <= 0){
             xsize = DEFAULTFILESIZE;
-          }
+	  }
         }
-        
-        
+       
         this->default_protocol = "rfio";
-        
-        
       }
+
       
       /*******************************************/	
       /*     switch(getDiskCopyForJob):         */  
@@ -222,6 +225,8 @@ namespace castor{
 	  preHandle();
 	  /**********/
 	  
+	  handlerSettings();
+
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),

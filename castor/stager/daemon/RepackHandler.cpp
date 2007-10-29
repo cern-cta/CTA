@@ -45,8 +45,15 @@ namespace castor{
       {
 	this->stgRequestHelper = stgRequestHelper;
 	this->stgCnsHelper = stgCnsHelper;
-	this->typeRequest = OBJ_StageRepackRequest;
-	
+	this->typeRequest = OBJ_StageRepackRequest;	
+	 
+      }
+
+      /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerRepackHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
 	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();
 	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
 
@@ -69,8 +76,9 @@ namespace castor{
 
 	this->default_protocol = "rfio";
 	
-	 
       }
+
+
 
 
       /*******************************************/	
@@ -176,6 +184,9 @@ namespace castor{
 	  /* common part for all the handlers: get objects, link, check/create file*/
 	  preHandle();
 	  /**********/
+	  
+	  handlerSettings();
+
 	  castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
 					castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 					castor::dlf::Param("UserName",stgRequestHelper->username),

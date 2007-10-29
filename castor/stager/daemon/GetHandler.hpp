@@ -59,8 +59,9 @@ namespace castor{
 	/* destructor */
 	~StagerGetHandler() throw();
 	
+	void handlerSettings() throw(castor::exception::Exception);
 
-  void switchDiskCopiesForJob() throw (castor::exception::Exception);
+	void switchDiskCopiesForJob() throw (castor::exception::Exception);
   
 
 	/* Get request handler */

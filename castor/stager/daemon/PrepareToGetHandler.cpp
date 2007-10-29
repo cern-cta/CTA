@@ -48,10 +48,21 @@ namespace castor{
         this->stgCnsHelper = stgCnsHelper;
         this->typeRequest = OBJ_StagePrepareToGetRequest;
         
-        this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
-        this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
+       
       }
-      
+
+      /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerPrepareToGetHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
+	this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
+	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
+      }
+ 
+
+
+
       
       /*******************************************/	
       /*     switch(getDiskCopyForJob):         */  
@@ -164,6 +175,9 @@ namespace castor{
 	  /* common part for all the handlers: get objects, link, check/create file*/
 	  preHandle();
 	  /**********/
+
+	  handlerSettings();
+
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),

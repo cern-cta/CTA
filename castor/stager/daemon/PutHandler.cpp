@@ -46,9 +46,16 @@ namespace castor{
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
-        this->typeRequest = OBJ_StagePutRequest;
-        
-        /* we don't care about: maxReplicaNb, replicationPolicy, hostlist */
+        this->typeRequest = OBJ_StagePutRequest;        
+      	
+      }
+      
+       /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerPutHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
+	  /* we don't care about: maxReplicaNb, replicationPolicy, hostlist */
         
         /* get the request's size required on disk */
         this->xsize = this->stgRequestHelper->subrequest->xsize();
@@ -66,10 +73,8 @@ namespace castor{
           }
         }
         
-        this->default_protocol = "rfio";	
+        this->default_protocol = "rfio";
       }
-      
-      
       
       /*********************************/
       /* handler for the Put request  */
@@ -82,6 +87,9 @@ namespace castor{
           /* common part for all the handlers: get objects, link, check/create file*/
           preHandle();
           /**********/
+	  
+	  handlerSettings();
+	  
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),

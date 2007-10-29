@@ -60,6 +60,8 @@ namespace castor{
 	/* destructor */
 	~StagerPrepareToGetHandler() throw();
 
+	void handlerSettings() throw(castor::exception::Exception);
+
 	/*******************************************/	
 	/*     switch(getDiskCopyForJob):         */  
 	/*        case 0: (staged) archiveSubrequest */                                   

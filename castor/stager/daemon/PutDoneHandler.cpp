@@ -64,6 +64,14 @@ namespace castor{
 	
       }
 
+       /*******************************************************************/
+      /* function to set the handler's attributes according to its type */
+      /*****************************************************************/
+      void StagerPutDoneHandler::handlerSettings() throw(castor::exception::Exception)
+      {	
+	/* no settings */
+      }
+
       void StagerPutDoneHandler::handle() throw(castor::exception::Exception)
       {
 	StagerReplyHelper* stgReplyHelper= NULL;

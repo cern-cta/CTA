@@ -53,6 +53,8 @@ namespace castor{
 	StagerRepackHandler(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
 	/* destructor */
 	~StagerRepackHandler() throw();
+	
+	void handlerSettings() throw(castor::exception::Exception);
 
 	/*******************************************/	
 	/*     switch(getDiskCopyForJob):         */  
