@@ -329,8 +329,62 @@ namespace castor{
       /* check if the user (euid,egid) has the ritght permission for the request's type                   */
       /* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */
       /**************************************************************************************************/
-      /***  inline bool StagerRequestHelper::checkFilePermission() throw(castor::exception::Exception);  ***/
+      bool StagerRequestHelper::checkFilePermission() throw(castor::exception::Exception)
+      {
      
+	  bool filePermission = true;
+	  try{
+	  
+	    int type =  this->fileRequest->type();
+	    std::string filename = this->subrequest->fileName();
+	    uid_t euid = this->fileRequest->euid();
+	    uid_t egid = this->fileRequest->egid();
+	  
+	
+	    switch(type) {
+	    case OBJ_StageGetRequest:
+	    case OBJ_StagePrepareToGetRequest:
+	    case OBJ_StageRepackRequest:
+	      filePermission=R_OK;
+	      if ( Cns_accessUser(filename.c_str(),R_OK,euid,egid) == -1 ) {
+		filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
+		castor::exception::Exception ex(SEINTERNAL);
+		throw ex;
+	
+	      }	   
+	      break;
+	      
+	    case OBJ_StagePrepareToPutRequest:
+	    case OBJ_StagePrepareToUpdateRequest:
+	    case OBJ_StagePutRequest:
+	    case OBJ_StageRmRequest:
+	    case OBJ_StageUpdateRequest:
+      case OBJ_StagePutDoneRequest:
+      case OBJ_SetFileGCWeight:
+	      filePermission=W_OK;
+	      if ( Cns_accessUser(filename.c_str(),W_OK,euid,egid) == -1 ) {
+		filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
+		castor::exception::Exception ex(SEINTERNAL);
+		throw ex;
+			      
+	      }
+	      break;
+	      
+	    default:
+	      break;
+	    }
+	  }catch(castor::exception::Exception e){
+	     castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
+					  castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					  castor::dlf::Param("SvcClassName",svcClassName)				     
+	    };
+	    castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, 3 ,params);	    
+	    
+	    e.getMessage()<< "(StagerRequestHelper checkFilePermission)"<<std::endl;
+	    throw e;  
+	  }
+	  return(filePermission);
+	}
 
 
 
