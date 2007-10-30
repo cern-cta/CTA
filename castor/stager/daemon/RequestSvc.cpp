@@ -98,17 +98,11 @@ namespace castor{
 	/* reply to the client in case of error*/
 	if(stgRequestHelper->iClient != NULL){
 	  StagerReplyHelper *stgReplyHelper = new StagerReplyHelper(SUBREQUEST_FAILED_FINISHED);
-	  if(stgReplyHelper == NULL){
-	    std::cerr<<"(RequestSvc handleException)"<<strerror(errorCode)<<errorMessage<<std::endl;
-	  }else{
 	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,errorCode,errorMessageC);
 	    stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete stgReplyHelper->ioResponse;
 	    delete stgReplyHelper;
-	  }
 	}else{
 	  if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest)) stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	  std::cerr<<"(RequestSvc handleException)"<<strerror(errorCode)<<errorMessage<<std::endl;
 	}
 	
 	
