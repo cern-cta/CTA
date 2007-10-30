@@ -348,7 +348,7 @@ namespace castor{
 	      filePermission=R_OK;
 	      if ( Cns_accessUser(filename.c_str(),R_OK,euid,egid) == -1 ) {
 		filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
-		castor::exception::Exception ex(SEINTERNAL);
+                castor::exception::Exception ex(SEINTERNAL);
 		throw ex;
 	
 	      }	   
@@ -380,7 +380,7 @@ namespace castor{
 	    };
 	    castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, 3 ,params);	    
 	    
-	    e.getMessage()<< "(StagerRequestHelper checkFilePermission)"<<std::endl;
+	    e.getMessage()<< "Access denied"<<std::endl;
 	    throw e;  
 	  }
 	  return(filePermission);
