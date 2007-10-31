@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/10/29 16:30:31 $ $Author: mmartins $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/10/31 09:30:34 $ $Author: mmartins $
  *
  * Main stager daemon
  *
@@ -136,7 +136,7 @@ int main(int argc, char* argv[]){
           getConfigPort("JOBNOTIFYPORT", STAGER_JOBNOTIFYPORT)));
 
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("GcsSvcThread", 
+      new castor::server::SignalThreadPool("GcSvcThread", 
         new castor::stager::dbService::GcSvcThread(),
           getConfigPort("GCNOTIFYPORT", STAGER_GCNOTIFYPORT)));
 

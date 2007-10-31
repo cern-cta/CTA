@@ -71,46 +71,24 @@ namespace castor{
 
 	/****************************************************************************/
 	/* set the subrequestFileName from stgRequestHelper->subrequest->fileName()*/
-	inline void setSubrequestFileName(std::string subReqFileName){
-	  this->subrequestFileName = subReqFileName;
-	}
+	void setSubrequestFileName(std::string subReqFileName);
 	
 	
-
+	/****************************************************************************************/
 	/* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
-	inline void getCnsFileclass() throw(castor::exception::Exception){
-	  memset(&(this->cnsFileclass),0, sizeof(cnsFileclass));
-	  if( Cns_queryclass((this->cnsFileid.server),(this->cnsFilestat.fileclass), NULL, &(this->cnsFileclass)) != 0 ){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper getFileclass) Error on Cns_setid"<<std::endl;
-	    throw ex;
-	  }
-	}
+	void getCnsFileclass() throw(castor::exception::Exception);
       
 	/***************************************************************/
 	/* set the user and group id needed to call the Cns functions */
 	/*************************************************************/
-	inline void cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest){
-	  this->euid = fileRequest->euid();
-	  this->egid = fileRequest->egid();
-	}
+	void cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest);
+
+
 
 	/************************************************************************************/
 	/* get the parameters neededs and call to the Cns_setid and Cns_umask c functions  */
 	/**********************************************************************************/
-	inline void cnsSettings(mode_t mask) throw(castor::exception::Exception){
-	  if (Cns_setid(euid,egid) != 0){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_setid"<<std::endl;
-	    throw ex;
-	  }
-	  
-	  if (Cns_umask(mask) < 0){
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_umask"<<std::endl;
-	    throw ex;
-	  }
-	}
+	void cnsSettings(mode_t mask) throw(castor::exception::Exception);
 
 	
 	/****************************************************************************************************************/
@@ -123,23 +101,7 @@ namespace castor{
 	/******************************************************************************/
 	/* return toCreate= true when type = put/prepareToPut/update/prepareToUpdate */
 	/****************************************************************************/
-	inline bool isFileToCreateOrException(int type, int subRequestFlags) throw(castor::exception::Exception){
-	  bool toCreate = false;
-	  
-	  
-	  if ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type)||((O_CREAT == (subRequestFlags & O_CREAT))&&((OBJ_StageUpdateRequest == type) ||(OBJ_StagePrepareToUpdateRequest == type)))) {
-	    
-	    toCreate = true;
-	  }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
-
-	    castor::dlf::Param params[]={ castor::dlf::Param("Function: isFileToCreateOrException", "Handler level")};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1 ,params);	   
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"(StagerCnsHelper isFileToCreateOrException) "<<std::endl;
-	    throw ex;
-	  }
-	  return(toCreate);
-	}
+	bool isFileToCreateOrException(int type, int subRequestFlags) throw(castor::exception::Exception);
 	
 
 

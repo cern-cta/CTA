@@ -59,32 +59,51 @@ namespace castor{
       /* Cns structures */
       /*****************/ 
 
-      /* get the fileid pointer to logging on dlf */
-      /*** inline void StagerCnsHelper::getFileid() ***/
-      
-
+      /****************************************************************************/
+      /* set the subrequestFileName from stgRequestHelper->subrequest->fileName()*/
+      void StagerCnsHelper::setSubrequestFileName(std::string subReqFileName){
+	  subrequestFileName = subReqFileName;
+      }
      
-
-      /* create cnsFileid, cnsFilestat and update fileExist using the "Cns_statx()" C function */
-      /* for a subrequest.filename */
-      /*** inline  int StagerCnsHelper::createCnsFileIdAndStat_setFileExist(const char* subrequestFileName) ***/
-      
-
-
+      /****************************************************************************************/
       /* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
-      /*** inline void StagerCnsHelper::getCnsFileclass() throw(castor::exception::Internal) ***/
+      void StagerCnsHelper::getCnsFileclass() throw(castor::exception::Exception){
+	memset(&(cnsFileclass),0, sizeof(cnsFileclass));
+	if( Cns_queryclass((cnsFileid.server),(cnsFilestat.fileclass), NULL, &(cnsFileclass)) != 0 ){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerCnsHelper getFileclass) Error on Cns_setid"<<std::endl;
+	  throw ex;
+	  }
+	}
       
-     
+      /***************************************************************/
+      /* set the user and group id needed to call the Cns functions */
+      /*************************************************************/
+      void StagerCnsHelper::cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest){
+	euid = fileRequest->euid();
+	egid = fileRequest->egid();
+      }
 
-
-      
       
       /************************************************************************************/
       /* get the parameters neededs and call to the Cns_setid and Cns_umask c functions  */
       /**********************************************************************************/
-      /*** inline  void StagerCnsHelper::cnsSettings(uid_t euid, uid_t egid, mode_t mask) throw(castor::exception::Internal) ***/
-     
+      void StagerCnsHelper::cnsSettings(mode_t mask) throw(castor::exception::Exception){
+	if (Cns_setid(euid,egid) != 0){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_setid"<<std::endl;
+	  throw ex;
+	}
+	
+	if (Cns_umask(mask) < 0){
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_umask"<<std::endl;
+	  throw ex;
+	}
+      }
 
+     
+     
 
       /****************************************************************************************************************/
       /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
@@ -94,19 +113,19 @@ namespace castor{
 
 	try{
 	  /* check if the required file exists */
-	  memset(&(this->cnsFileid), '\0', sizeof(this->cnsFileid)); /* reset cnsFileid structure  */
-	  this->fileExist = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
+	  memset(&(cnsFileid), '\0', sizeof(cnsFileid)); /* reset cnsFileid structure  */
+	  fileExist = (0 == Cns_statx(subrequestFileName.c_str(),&(cnsFileid),&(cnsFilestat)));
 	  
 	  if(serrno == ENOENT){
 	    if(!fileExist){
-	      if(this->isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
+	      if(isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
 		
 		mode_t mode = (mode_t) modeBits;
 		
 		/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-		memset(&(this->cnsFileid),0, sizeof(cnsFileid));
+		memset(&(cnsFileid),0, sizeof(cnsFileid));
 		
-		if (Cns_creatx(this->subrequestFileName.c_str(), mode, &(this->cnsFileid)) != 0) {
+		if (Cns_creatx(subrequestFileName.c_str(), mode, &(cnsFileid)) != 0) {
 		  castor::exception::Exception ex(serrno);
 		  throw ex;
 		}
@@ -120,9 +139,9 @@ namespace castor{
 		    if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
 		      //throw(castor::exception::Exception ex(serrno));
 		    }
-		    if(Cns_chclass(this->subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
+		    if(Cns_chclass(subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
 		      int tempserrno = serrno;
-		      Cns_delete(this->subrequestFileName.c_str());
+		      Cns_delete(subrequestFileName.c_str());
 		      serrno = tempserrno;
 		      castor::exception::Exception ex(serrno);
 		      throw ex;
@@ -135,7 +154,7 @@ namespace castor{
 		  
 		}/* end of "if(hasDiskOnly Behavior)" */
 		
-		bool fileExist2 = (0 == Cns_statx(this->subrequestFileName.c_str(),&(this->cnsFileid),&(this->cnsFilestat)));
+		bool fileExist2 = (0 == Cns_statx(subrequestFileName.c_str(),&(cnsFileid),&(cnsFilestat)));
 		/* we get the Cuuid_t fileid (needed to logging in dlf)  */
 	      }
 	    }
@@ -152,11 +171,26 @@ namespace castor{
       }
       
 
-      /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-      /*** inline void StagerCnsHelper::createFileAndUpdateCns(const char* filename, mode_t mode) throw(castor::exception::Internal) ***/
-     
-
-
+      /******************************************************************************/
+      /* return toCreate= true when type = put/prepareToPut/update/prepareToUpdate */
+      /****************************************************************************/
+      bool StagerCnsHelper::isFileToCreateOrException(int type, int subRequestFlags) throw(castor::exception::Exception){
+	bool toCreate = false;
+	
+	
+	if ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type)||((O_CREAT == (subRequestFlags & O_CREAT))&&((OBJ_StageUpdateRequest == type) ||(OBJ_StagePrepareToUpdateRequest == type)))) {
+	    
+	  toCreate = true;
+	}else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
+	  
+	  castor::dlf::Param params[]={ castor::dlf::Param("Function: isFileToCreateOrException", "Handler level")};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1 ,params);	   
+	  castor::exception::Exception ex(SEINTERNAL);
+	  ex.getMessage()<<"(StagerCnsHelper isFileToCreateOrException) "<<std::endl;
+	  throw ex;
+	}
+	return(toCreate);
+      }
       
     }//end namespace dbService
   }//end namespace stager

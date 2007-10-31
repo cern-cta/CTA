@@ -127,70 +127,73 @@ namespace castor{
 
 
 
-
-   
-
-
-      /**************************************************************************************/
-      /* get/create subrequest->  fileRequest, and many subrequest's attributes            */
-      /************************************************************************************/
-      
-      /* get subrequest using stagerService (and also types) */
-      /***  inline void StagerRequestHelper::getSubrequest() throw(castor::exception::Exception)  ***/
-     
-      
-
-      /* get the link (fillObject~SELECT) between the subrequest and its associated fileRequest  */ 
-      /* using dbService, and get the fileRequest */ 
-      /***  inline void StagerRequestHelper::getFileRequest() throw(castor::exception::Exception) ***/
-     
-
-
       /***********************************************************************************/
       /* get the link (fillObject~SELECT) between fileRequest and its associated client */
       /* using dbService, and get the client                                           */
       /********************************************************************************/
-      /*** inline void StagerRequestHelper::getIClient() throw(castor::exception::Exception)  ***/
-      
-      
+      void StagerRequestHelper::getIClient() throw(castor::exception::Exception){
 	
-
-
-      
-      
+	dbService->fillObj(baseAddr, fileRequest,castor::OBJ_IClient, false);//196
+	this->iClient=fileRequest->client();
+	this->iClientAsString = IClientFactory::client2String(*(this->iClient));/* IClientFactory singleton */
+	
+      }
+   
       /****************************************************************************************/
       /* get svClass by selecting with stagerService                                         */
       /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
       /*************************************************************************************/
-      /*** inline void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception) ***/
-      
-      
+      void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception){
+	this->svcClassName=fileRequest->svcClassName(); 
+	
+	if(this->svcClassName.empty()){  /* we set the default svcClassName */
+	  this->svcClassName="default";
+	  fileRequest->setSvcClassName(this->svcClassName);
+	  
+	}
+	
+	
+	svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
+	if(this->svcClass == NULL){
+	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
+					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("UserName",username),
+					castor::dlf::Param("GroupName", groupname),
+					castor::dlf::Param("SvcClassName",svcClassName)				     
+	  };
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 5 ,params);
+	  
+	  castor::exception::Exception ex(SESVCCLASSNFND);
+	  ex.getMessage()<<"(StagerRequestHelper getSvcClass)"<<std::endl;
+	  
+	  }	
+      } 
       
       
       /*******************************************************************************/
       /* update request in DB, create and fill request->svcClass link on DB         */ 
       /*****************************************************************************/
-      /*** inline void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception) ***/
-     
+      void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
+	
+	/* update request on DB */
+	dbService->updateRep(baseAddr, fileRequest, true);//EXCEPTION!    
+	fileRequest->setSvcClass(svcClass);
+	
+	/* fill the svcClass object using the request as a key  */
+	dbService->fillRep(baseAddr, fileRequest,castor::OBJ_SvcClass,true);
+	
+      }
 
-     
-      /*******************************************************************************/
-      /* get the castoFile associated to the subrequest                             */ 
-      /*****************************************************************************/
-      /*** inline void StagerRequestHelper::getCastorFile() throw(castor::exception::Exception) ***/
-           
-
-      
-      
       /****************************************************************************************/
       /* get fileClass by selecting with stagerService                                       */
       /* using the CnsfileClass.name as key      (in StagerRequest.JobOriented)             */
       /*************************************************************************************/
-      /***  inline void StagerRequestHelper::getFileClass(char* nameClass) throw(castor::exception::Exception) ***/
-     
-
-
-
+      void StagerRequestHelper::getFileClass(char* nameClass) throw(castor::exception::Exception){
+	std::string fileClassName(nameClass);
+	fileClass=stagerService->selectFileClass(fileClassName);//throw exception if it is null
+	
+      }
+      
       
       /******************************************************************************************/
       /* get and (create or initialize) Cuuid_t subrequest and request                         */
@@ -303,28 +306,66 @@ namespace castor{
       }
 
 
-     
-
       /****************************************************************************************************/
       /*  fill castorFile's FileClass: called in StagerRequest.jobOriented()                             */
       /**************************************************************************************************/
-      /***  void StagerRequestHelper::setFileClassOnCastorFile() throw(castor::exception::Exception)  ***/
+      void StagerRequestHelper::setFileClassOnCastorFile() throw(castor::exception::Exception){
+	
+	castorFile->setFileClass(fileClass);
+	dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, true);
+	  
+      }
+     
       
-
-
-
       /************************************************************************************/
       /* set the username and groupname string versions using id2name c function  */
       /**********************************************************************************/
-      /***  inline void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception)  ***/
+      void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception){
+	struct passwd *this_passwd;
+	struct group *this_gr;
+	try{
+	  uid_t euid = fileRequest->euid();
+	  uid_t egid = fileRequest->egid();
+	  
+	  if((this_passwd = Cgetpwuid(euid)) == NULL){
+	    castor::exception::Exception ex(SEUSERUNKN);
+	    throw ex;
+	  }
+	  
+	  if(egid != this_passwd->pw_gid){
+	    castor::exception::Exception ex(SEINTERNAL);     
+	    throw ex;
+	  }
+	  
+	  if((this_gr=Cgetgrgid(egid))==NULL){
+	    castor::exception::Exception ex(SEUSERUNKN);
+	    throw ex;
+	    
+	  }
+	  
+	  if((this->username) != NULL){
+	    strncpy(username,this_passwd->pw_name,CA_MAXLINELEN);
+	    username[CA_MAXLINELEN]='\0';
+	  }
+	  if((this->groupname) != NULL){
+	    strncpy(groupname,this_gr->gr_name,CA_MAXLINELEN);
+	    groupname[CA_MAXLINELEN]='\0';
+	  }
+	}catch(castor::exception::Exception e){
+	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
+					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("SvcClassName",svcClassName)				     
+	  };
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 3 ,params);	    
+	  
+	  e.getMessage()<< "(StagerRequestHelper setUsernameAndGroupname)"<<std::endl;
+	  throw e;    
+	}
+	
+      }
       
 
-      /****************************************************************************************************/
-      /* depending on fileExist and type, check the file needed is to be created or throw exception    */
-      /********************************************************************************************/
-      /*** inline bool StagerRequestHelper::isFileToCreateOrException(bool fileExist) throw(castor::exception::Exception)  ***/
       
-
       /*****************************************************************************************************/
       /* check if the user (euid,egid) has the ritght permission for the request's type                   */
       /* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */

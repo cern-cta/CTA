@@ -171,12 +171,12 @@ namespace castor{
 	StagerReplyHelper* stgReplyHelper=NULL;
 	try{
 
-	  /**************************************************************************/
-	  /* common part for all the handlers: get objects, link, check/create file*/
-	  preHandle();
-	  /**********/
+	  
 
-	  handlerSettings();
+	  preHandle();
+	 
+
+	  /* handlerSettings();*/
 
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
