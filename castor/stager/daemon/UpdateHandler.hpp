@@ -65,7 +65,7 @@ namespace castor{
 
 	void handlerSettings() throw(castor::exception::Exception);
 
-	void switchDiskCopiesForJob() throw (castor::exception::Exception);
+	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception);
 
 
 	/* handler for the Update request  */
