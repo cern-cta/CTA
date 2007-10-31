@@ -279,7 +279,7 @@ namespace castor{
       /*******************************************************************************************************************************************/
       /*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
       /*****************************************************************************************************************************************/      
-      void StagerRequestHelper::getCastorFileFromSvcClass(StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception)
+      void StagerRequestHelper::getCastorFileFromSvcClass(StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
 	u_signed64 fileClassId = fileClass->id();
 	u_signed64 svcClassId = svcClass->id();
@@ -288,12 +288,13 @@ namespace castor{
 	/* we use the stagerService.selectCastorFile to get it from DB */
 
 	try{
-	  castorFile = stagerService->selectCastorFile(stgCnsHelper.cnsFileid.fileid, stgCnsHelper.cnsFileid.server,svcClassId, fileClassId, stgCnsHelper.cnsFilestat.filesize,subrequest->fileName());
+	  castorFile = stagerService->selectCastorFile(stgCnsHelper->cnsFileid.fileid,
+	  stgCnsHelper->cnsFileid.server,svcClassId, fileClassId, stgCnsHelper->cnsFilestat.filesize,subrequest->fileName());
 
 	  subrequest->setCastorFile(castorFile);
 	  
 	  /* create the subrequest-> castorFile on DB*/
-	  dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, true);//throw exception
+	  dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);//throw exception
 	  
 	  /* create the castorFile-> svcClass link on DB */
 	  dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, 0);//throw exception	
@@ -312,7 +313,7 @@ namespace castor{
       void StagerRequestHelper::setFileClassOnCastorFile() throw(castor::exception::Exception){
 	
 	castorFile->setFileClass(fileClass);
-	dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, true);
+	dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
 	  
       }
      

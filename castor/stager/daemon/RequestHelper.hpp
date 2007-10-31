@@ -135,7 +135,7 @@ namespace castor{
 	/* get svClass by selecting with stagerService                                         */
 	/* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
 	/*************************************************************************************/
-	void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception);
+	void getSvcClass() throw(castor::exception::Exception);
 	
    
 	/*******************************************************************************/
@@ -171,7 +171,7 @@ namespace castor{
 	/*******************************************************************************************************************************************/
 	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
 	/*****************************************************************************************************************************************/
-       	void getCastorFileFromSvcClass(castor::stager::dbService::StagerCnsHelper stgCnsHelper) throw(castor::exception::Exception);
+       	void getCastorFileFromSvcClass(castor::stager::dbService::StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
        
 
 	/****************************************************************************************************/

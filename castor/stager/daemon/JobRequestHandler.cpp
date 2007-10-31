@@ -79,7 +79,7 @@ namespace castor{
           stgRequestHelper->getFileClass(stgCnsHelper->cnsFileclass.name);/* first we need to get the FileClass */
           
           /* the exception is throwing internally in the helper method */
-          stgRequestHelper->getCastorFileFromSvcClass(*stgCnsHelper);
+          stgRequestHelper->getCastorFileFromSvcClass(stgCnsHelper);
           
           
           /*  fill castorFile's FileClass: called in StagerRequest.jobOriented() */
