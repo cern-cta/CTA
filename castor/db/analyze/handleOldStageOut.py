@@ -28,7 +28,7 @@ DECLARE
   dcIds "numList";
 BEGIN
   UPDATE DiskCopy SET status = 7
-   WHERE status = 6 AND castorfile = 333
+   WHERE status = 6 AND castorfile = :1
   RETURNING id BULK COLLECT INTO dcIds;
   UPDATE SubRequest SET status = 7
    WHERE diskCopy MEMBER OF dcIds AND status = 6;
