@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.536 $ $Date: 2007/10/25 15:30:47 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.537 $ $Date: 2007/10/31 09:34:58 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2276,8 +2276,27 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   fsId INTEGER;
   maxRepl INTEGER;
   repl INTEGER;
+  srcStatus INTEGER;
 BEGIN
-  -- update DiskCopy
+  -- try to get the source status
+  SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
+  -- In case the status is null, it means that the source has been GCed
+  -- while the disk to disk copy was processed. We will invalidate the
+  -- brand new copy as we don't know in which status is should be
+  IF srcStatus IS NULL THEN
+    UPDATE DiskCopy SET status = 7 WHERE id = dcId -- INVALID
+    RETURNING CastorFile, FileSystem INTO cfId, fsId;
+    -- restart the SubRequests waiting for the copy
+    UPDATE SubRequest set status = 1, -- SUBREQUEST_RESTART
+                          lastModificationTime = getTime()
+     WHERE diskCopy = dcId RETURNING id INTO srId;
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+     WHERE parent = srId; -- SUBREQUEST_RESTART
+    -- update filesystem status
+    updateFsFileClosed(fsId);
+    RETURN;
+  END IF;
+  -- otherwise, we can validate the new diskcopy
   UPDATE DiskCopy
      SET status = (SELECT status FROM DiskCopy WHERE id = srcDcId)
    WHERE id = dcId
