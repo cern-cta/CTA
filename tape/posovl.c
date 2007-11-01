@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.30 $ $Date: 2007/08/06 07:26:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.31 $ $Date: 2007/11/01 14:34:53 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -466,9 +466,6 @@ void cleanup()
 	marshall_LONG (q, msglen);	/* update length field */
 
 	(void) send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
-        
-        /* called before each exit() */
-        tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
 }
 
 void configdown(drive)
@@ -487,5 +484,9 @@ char *drive;
 void positkilled()
 {
 	cleanup();
+        
+        /* called before each exit() */
+        tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );
+
 	exit (2);
 }
