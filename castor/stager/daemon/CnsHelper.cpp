@@ -116,10 +116,11 @@ namespace castor{
 	  memset(&(cnsFileid), '\0', sizeof(cnsFileid)); /* reset cnsFileid structure  */
 	  fileExist = (0 == Cns_statx(subrequestFileName.c_str(),&(cnsFileid),&(cnsFilestat)));
 	  
-	  if(serrno == ENOENT){
-	    if(!fileExist){
-	      if(isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
-		
+	 
+	  if(!fileExist){
+	    if(isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
+	      if(serrno == ENOENT){
+	     
 		mode_t mode = (mode_t) modeBits;
 		
 		/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
