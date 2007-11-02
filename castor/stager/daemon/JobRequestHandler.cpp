@@ -158,7 +158,7 @@ namespace castor{
 	  
 	  if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
 	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
@@ -171,7 +171,7 @@ namespace castor{
 	  }
 	  if((expert_send_data(fd,expQuestion.c_str(),expQuestion.size())) != (expQuestion.size())){//sending question
 	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
@@ -186,7 +186,7 @@ namespace castor{
 	  memset(expAnswer, '\0',sizeof(expAnswer));
 	  if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
 	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     

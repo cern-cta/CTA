@@ -50,7 +50,6 @@ namespace castor{
 	struct Cns_filestat cnsFilestat;
 	struct Cns_fileclass cnsFileclass;
 	
-	std::string subrequestFileName;
 	uid_t euid;/* stgRequestHelper->fileRequest->euid() */ 
 	uid_t egid;/* stgRequestHelper->fileRequest->egid() */
 	int fileExist;	
@@ -95,7 +94,7 @@ namespace castor{
 	/* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
 	/* create the file if it is needed/possible */
 	/**************************************************************************************************************/
-	bool checkAndSetFileOnNameServer(int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception);
+	bool checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception);
 
 
 	/******************************************************************************/

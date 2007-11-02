@@ -59,12 +59,6 @@ namespace castor{
       /* Cns structures */
       /*****************/ 
 
-      /****************************************************************************/
-      /* set the subrequestFileName from stgRequestHelper->subrequest->fileName()*/
-      void StagerCnsHelper::setSubrequestFileName(std::string subReqFileName){
-	  subrequestFileName = subReqFileName;
-      }
-     
       /****************************************************************************************/
       /* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
       void StagerCnsHelper::getCnsFileclass() throw(castor::exception::Exception){
@@ -109,12 +103,12 @@ namespace castor{
       /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
       /* create the file if it is needed/possible */
       /**************************************************************************************************************/
-      bool StagerCnsHelper::checkAndSetFileOnNameServer(int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
+      bool StagerCnsHelper::checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
 
 	try{
 	  /* check if the required file exists */
 	  memset(&(cnsFileid), '\0', sizeof(cnsFileid)); /* reset cnsFileid structure  */
-	  fileExist = (0 == Cns_statx(subrequestFileName.c_str(),&(cnsFileid),&(cnsFilestat)));
+	  fileExist = (0 == Cns_statx(fileName.c_str(),&(cnsFileid),&(cnsFilestat)));
 	  
 	 
 	  if(!fileExist){
@@ -126,7 +120,7 @@ namespace castor{
 		/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
 		memset(&(cnsFileid),0, sizeof(cnsFileid));
 		
-		if (Cns_creatx(subrequestFileName.c_str(), mode, &(cnsFileid)) != 0) {
+		if (Cns_creatx(fileName.c_str(), mode, &(cnsFileid)) != 0) {
 		  castor::exception::Exception ex(serrno);
 		  throw ex;
 		}
@@ -140,9 +134,9 @@ namespace castor{
 		    if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
 		      //throw(castor::exception::Exception ex(serrno));
 		    }
-		    if(Cns_chclass(subrequestFileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
+		    if(Cns_chclass(fileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
 		      int tempserrno = serrno;
-		      Cns_delete(subrequestFileName.c_str());
+		      Cns_delete(fileName.c_str());
 		      serrno = tempserrno;
 		      castor::exception::Exception ex(serrno);
 		      throw ex;
@@ -155,7 +149,7 @@ namespace castor{
 		  
 		}/* end of "if(hasDiskOnly Behavior)" */
 		
-		bool fileExist2 = (0 == Cns_statx(subrequestFileName.c_str(),&(cnsFileid),&(cnsFilestat)));
+		Cns_statx(fileName.c_str(),&(cnsFileid),&(cnsFilestat));
 		/* we get the Cuuid_t fileid (needed to logging in dlf)  */
 	      }
 	    }

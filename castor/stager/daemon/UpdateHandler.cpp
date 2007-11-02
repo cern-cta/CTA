@@ -111,7 +111,7 @@ namespace castor{
         
         /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
         /* create the file if it is needed/possible */
-        this->fileExist = stgCnsHelper->checkAndSetFileOnNameServer(this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
+        this->fileExist = stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
         
         /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
         stgRequestHelper->checkFilePermission();
@@ -138,7 +138,7 @@ namespace castor{
 	    
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -150,7 +150,7 @@ namespace castor{
 	    {
 	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					   castor::dlf::Param("UserName",stgRequestHelper->username),
 					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -167,7 +167,7 @@ namespace castor{
 	      
 	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					   castor::dlf::Param("UserName",stgRequestHelper->username),
 					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -196,7 +196,7 @@ namespace castor{
 	      
 	       castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					   castor::dlf::Param("UserName",stgRequestHelper->username),
 					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -221,7 +221,7 @@ namespace castor{
             stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
 	     castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -252,7 +252,7 @@ namespace castor{
 	  handlerSettings();
 
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+				       castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),
 				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
@@ -275,7 +275,7 @@ namespace castor{
 
 	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					   castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					   castor::dlf::Param("UserName",stgRequestHelper->username),
 					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
@@ -299,7 +299,7 @@ namespace castor{
 		if(rfs.size() >CA_MAXRFSLINELEN ){
 		  castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					       castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					       castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					       castor::dlf::Param("UserName",stgRequestHelper->username),
 					       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
@@ -318,7 +318,7 @@ namespace castor{
 
 	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Update"),
 					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
+					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
