@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.212 $ $Release$ $Date: 2007/10/26 15:21:22 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.213 $ $Release$ $Date: 2007/11/02 18:21:45 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -323,7 +323,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     // decide which statement to use - to be dropped with the old stager
     oracle::occi::Statement *stmt = (service.empty() ?
       m_oldSubRequestToDoStatement : m_subRequestToDoStatement);
-    m_subRequestToDoStatement->setString(1, service);
+    stmt->setString(1, service);
 
     // execute the statement and see whether we found something
     unsigned int rc = stmt->executeUpdate();
