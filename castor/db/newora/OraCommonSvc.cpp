@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/10/05 11:35:14 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/11/02 17:06:18 $ $Author: gtaur $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -36,6 +36,7 @@
 #include "castor/stager/FileClass.hpp"
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/DiskServer.hpp"
+#include "castor/stager/TapePool.hpp"
 #include "castor/db/newora/OraCommonSvc.hpp"
 #include "castor/db/newora/OraCnvSvc.hpp"
 #include "castor/db/newora/OraStatement.hpp"
@@ -83,6 +84,12 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
   "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
 
+/// SQL for selectTapePool 
+
+const std::string castor::db::ora::OraCommonSvc::s_selectTapePoolIdStatementString =
+  "SELECT id FROM TapePool WHERE name = :1 AND ROWNUM<2";
+
+
   
 // -----------------------------------------------------------------------
 // OraCommonSvc
@@ -92,7 +99,8 @@ castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
-  m_selectFileSystemStatement(0) {
+  m_selectFileSystemStatement(0),
+  m_selectTapePoolIdStatement(0){
 }
 
 // -----------------------------------------------------------------------
@@ -126,14 +134,15 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
     if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
     if (m_selectSvcClassStatement) deleteStatement(m_selectSvcClassStatement);
     if (m_selectFileClassStatement) deleteStatement(m_selectFileClassStatement);
-    if (m_selectFileSystemStatement)
-      deleteStatement(m_selectFileSystemStatement);
+    if (m_selectFileSystemStatement) deleteStatement(m_selectFileSystemStatement);
+    if (m_selectTapePoolIdStatement) deleteStatement(m_selectTapePoolIdStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectTapeStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
+  m_selectTapePoolIdStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -148,6 +157,11 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
   if (0 == m_selectTapeStatement) {
     m_selectTapeStatement = createStatement(s_selectTapeStatementString);
   }
+  
+  if (0 == m_selectTapePoolIdStatement){
+    m_selectTapePoolIdStatement = createStatement(s_selectTapePoolIdStatementString);
+  }
+
   // Execute statement and get result
   unsigned long id;
   try {
@@ -158,10 +172,35 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
       m_selectTapeStatement->closeResultSet(rset);
       // we found nothing, so let's create the tape
+
       castor::stager::Tape* tape = new castor::stager::Tape();
       tape->setVid(vid);
       tape->setSide(side);
       tape->setTpmode(tpmode);
+
+      // I insert a new tape and I need to retrieve from Vmgr the 
+      // tape pool of that tape
+      std::string tapePoolName;
+      u_signed64 tapePoolId=0;
+      
+      struct vmgr_tape_info vmgrTapeInfo;
+      int rc = vmgr_querytape(vid.c_str(),side,&vmgrTapeInfo,0);
+
+      if (rc != -1){ 
+	tapePoolName= (char*) vmgrTapeInfo.poolname;
+	
+	// retrieved the id 
+	 m_selectTapePoolIdStatement->setString(1, vid);
+	 rset = m_selectTapePoolIdStatement->executeQuery();
+	 if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) tapePoolId = rset->getInt(1);
+	 m_selectTapePoolIdStatement->closeResultSet(rset);
+      }  
+      
+      castor::IObject* item = cnvSvc()->getObjFromId(tapePoolId);
+      castor::stager::TapePool* remoteObj = 
+        dynamic_cast<castor::stager::TapePool*>(item);
+
+      tape->setTapepool(remoteObj);
       tape->setStatus(castor::stager::TAPE_UNUSED);
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
@@ -176,6 +215,9 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
           // So let's select what was inserted
+       
+          // set again the parameters
+
           rset = m_selectTapeStatement->executeQuery();
           if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
             // Still nothing ! Here it's a real error
@@ -187,14 +229,15 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
               << std::endl << e.getMessage().str();
             throw ex;
           }
-        }
-        m_selectTapeStatement->closeResultSet(rset);
-        // Else, "standard" error, throw exception
-        castor::exception::Internal ex;
-        ex.getMessage()
-          << "Exception while inserting new tape in the DB :"
-          << std::endl << e.getMessage().str();
-        throw ex;
+        } else {
+	  m_selectTapeStatement->closeResultSet(rset);
+	  // Else, "standard" error, throw exception
+	  castor::exception::Internal ex;
+	  ex.getMessage()
+	    << "Exception while inserting new tape in the DB :"
+	    << std::endl << e.getMessage().str();
+	  throw ex;
+	}
       }
     }
     // If we reach this point, then we selected successfully
