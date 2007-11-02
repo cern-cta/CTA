@@ -176,7 +176,7 @@ namespace castor{
 	  preHandle();
 	 
 
-	  /* handlerSettings();*/
+	   handlerSettings();
 
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
 				       castor::dlf::Param("Subrequest fileName",stgCnsHelper->subrequestFileName),
