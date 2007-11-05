@@ -126,6 +126,7 @@ namespace castor{
 	    };
 
 	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_REPACK_MIGRATION, 6 ,params, &(stgCnsHelper->cnsFileid));
+      return true;
 	  }break;
 
 	case 1:
