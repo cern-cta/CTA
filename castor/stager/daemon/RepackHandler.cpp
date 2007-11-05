@@ -41,10 +41,9 @@ namespace castor{
   namespace stager{
     namespace dbService{
      
-      StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw (castor::exception::Exception)
+      StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper) throw (castor::exception::Exception)
       {
 	this->stgRequestHelper = stgRequestHelper;
-	this->stgCnsHelper = stgCnsHelper;
 	this->typeRequest = OBJ_StageRepackRequest;	
 	 
       }

@@ -55,10 +55,9 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
-      StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
+      StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {     	
 	this->stgRequestHelper = stgRequestHelper;
-	this->stgCnsHelper = stgCnsHelper;
 	this->typeRequest = OBJ_StagePutDoneRequest;
 
 	

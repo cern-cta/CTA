@@ -40,7 +40,7 @@ namespace castor{
      
       public:
 	/* constructor */
-	StagerSetGCHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+	StagerSetGCHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
 	/* destructor */
 	~StagerSetGCHandler() throw();
 

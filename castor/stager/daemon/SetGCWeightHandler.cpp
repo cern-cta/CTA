@@ -40,14 +40,13 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
-      StagerSetGCHandler::StagerSetGCHandler(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
+      StagerSetGCHandler::StagerSetGCHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
-        this->stgCnsHelper = stgCnsHelper;
-        this->typeRequest = OBJ_SetFileGCWeight;
+	this->typeRequest = OBJ_SetFileGCWeight;
       }
       
-        /*******************************************************************/
+      /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
       void StagerSetGCHandler::handlerSettings() throw(castor::exception::Exception)
