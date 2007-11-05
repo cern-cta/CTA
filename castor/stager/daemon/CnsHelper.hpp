@@ -44,6 +44,9 @@ namespace castor{
 
       class StagerCnsHelper : public virtual castor::BaseObject{
 	
+      private: 
+	Cuuid_t requestUuid;
+
       public:
 	
 	struct Cns_fileid cnsFileid;
@@ -57,7 +60,7 @@ namespace castor{
 
 	
 	
-	StagerCnsHelper() throw(castor::exception::Exception);
+	StagerCnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception);
 	~StagerCnsHelper() throw();
 
 	

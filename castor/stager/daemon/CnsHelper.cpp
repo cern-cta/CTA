@@ -47,7 +47,8 @@ namespace castor{
     namespace dbService{
 
 
-      StagerCnsHelper::StagerCnsHelper() throw(castor::exception::Exception){
+      StagerCnsHelper::StagerCnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception){
+	this->requestUuid = requestUuid;
       }
 
       StagerCnsHelper::~StagerCnsHelper() throw(){
@@ -64,8 +65,12 @@ namespace castor{
       void StagerCnsHelper::getCnsFileclass() throw(castor::exception::Exception){
 	memset(&(cnsFileclass),0, sizeof(cnsFileclass));
 	if( Cns_queryclass((cnsFileid.server),(cnsFilestat.fileclass), NULL, &(cnsFileclass)) != 0 ){
+
+	  castor::dlf::Param params[]={	castor::dlf::Param("Function:","StagerCnsHelper->getCnsFileclass")};
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+	  
 	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerCnsHelper getFileclass) Error on Cns_setid"<<std::endl;
+	  ex.getMessage()<<"Error on the Name Server"<<std::endl;
 	  throw ex;
 	  }
 	}
@@ -77,14 +82,20 @@ namespace castor{
         euid = fileRequest->euid();
         egid = fileRequest->egid();
         if (Cns_setid(euid,egid) != 0) {
+	  castor::dlf::Param params[]={	castor::dlf::Param("Function:","StagerCnsHelper->cnsSetEuidAndEgid")};
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+	  
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_setid"<<std::endl;
+          ex.getMessage()<<"Impossible to set the user on the Name Server"<<std::endl;
           throw ex;
         }
         
         if (Cns_umask(fileRequest->mask()) < 0) {
+	  castor::dlf::Param params[]={	castor::dlf::Param("Function:","StagerCnsHelper->cnsSetEuidAndEgid")};
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+	 
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_umask"<<std::endl;
+          ex.getMessage()<<"Impossible to set the user on the Name Server"<<std::endl;
           throw ex;
         }
       }
@@ -109,7 +120,11 @@ namespace castor{
 		memset(&(cnsFileid),0, sizeof(cnsFileid));
 		
 		if (Cns_creatx(fileName.c_str(), modeBits, &(cnsFileid)) != 0) {
+		  castor::dlf::Param params[]={castor::dlf::Param("Function:","StagerCnsHelper->checkAndSetFileOnNameServer")};
+		  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+	 
 		  castor::exception::Exception ex(serrno);
+		  ex.getMessage()<<"Impossible to create the file"<<std::endl;
 		  throw ex;
 		}
 		
@@ -123,7 +138,12 @@ namespace castor{
 		      int tempserrno = serrno;
 		      Cns_delete(fileName.c_str());
 		      serrno = tempserrno;
+		
+		      castor::dlf::Param params[]={castor::dlf::Param("Function:","StagerCnsHelper->checkAndSetFileOnNameServer")};
+		      castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+	 
 		      castor::exception::Exception ex(serrno);
+		      ex.getMessage()<<"Impossible to create the file"<<std::endl;
 		      throw ex;
 		    }
 		    Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
@@ -132,15 +152,13 @@ namespace castor{
 		}/* end of "if(hasDiskOnly Behavior)" */
 		
 		Cns_statx(fileName.c_str(),&(cnsFileid),&(cnsFilestat));
-		/* we get the Cuuid_t fileid (needed to logging in dlf)  */
+		
 	      }
 	    }
 	  }
 	  return(fileExist);
 	}catch(castor::exception::Exception e){
-	  castor::dlf::Param params[]={ castor::dlf::Param("Error while checking the file on the nameServer", "Handler level")};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	    
-	  e.getMessage()<< "(StagerCnsHelper checkAndSetFileOnNameServer)"<<std::endl;
+	 
 	  throw e;    
 
 	}
@@ -160,10 +178,11 @@ namespace castor{
 	  toCreate = true;
 	}else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
 	  
-	  castor::dlf::Param params[]={ castor::dlf::Param("Function: isFileToCreateOrException", "Handler level")};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1 ,params);	   
+	  castor::dlf::Param params[]={ castor::dlf::Param("Function:", "StagerCnsHelper->isFileToCreateOrException")};
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1 ,params);
+	   
 	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerCnsHelper isFileToCreateOrException) "<<std::endl;
+	  ex.getMessage()<<"User asking for a non existing file"<<std::endl;
 	  throw ex;
 	}
 	return(toCreate);
