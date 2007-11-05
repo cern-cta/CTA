@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/11/05 10:44:14 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/11/05 11:16:02 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]){
     }
     if ((jobManagerPort <= 0) || (jobManagerPort > 65535)) {
       castor::exception::Exception e(EINVAL);
-      e.getMessage() << "Invalid JOBMANAGER NOTIFYPORT value configured: " << jobManagerPort<< "- must be < 65535" << std::endl;
+      e.getMessage() << "Invalid JOBMANAGER NOTIFYPORT value configured: " << jobManagerPort<< " - must be < 65535" << std::endl;
       throw e;
     }
     std::string jobManagerHost = getconfent((char*)"JOBMANAGER", (char*)"HOST", 0);
@@ -305,6 +305,8 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 	};
 	
   dlfInit(stagerDlfMessages);
+  
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STAGER_DAEMON_START, 0, NULL);
 }
 
 /*************************************************************/
