@@ -85,28 +85,26 @@ namespace castor{
       /* Thread calling the specific request's handler        */
       /***************************************************** */
       void StgRequestSvc::process(castor::IObject* subRequestToProcess) throw() {
-        StagerCnsHelper* stgCnsHelper= NULL;
+       
         StagerRequestHelper* stgRequestHelper= NULL;
         StagerRequestHandler* stgRequestHandler = NULL;
         
-        try {
-          
-          stgCnsHelper = new StagerCnsHelper();
+        try {         
           int typeRequest=0;
           stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
           
           switch(typeRequest){
             
             case OBJ_StagePutDoneRequest:
-            stgRequestHandler = new StagerPutDoneHandler(stgRequestHelper, stgCnsHelper);
+            stgRequestHandler = new StagerPutDoneHandler(stgRequestHelper);
             break;
             
             case OBJ_StageRmRequest:
-            stgRequestHandler = new StagerRmHandler(stgRequestHelper, stgCnsHelper);
+            stgRequestHandler = new StagerRmHandler(stgRequestHelper);
             break;
             
             case OBJ_SetFileGCWeight:
-            stgRequestHandler = new StagerSetGCHandler(stgRequestHelper, stgCnsHelper);
+            stgRequestHandler = new StagerSetGCHandler(stgRequestHelper);
             break;
             
           }//end switch(typeRequest)
@@ -118,26 +116,16 @@ namespace castor{
           stgRequestHandler->handle();
           
           delete stgRequestHandler;
-          
-          if(stgRequestHelper != NULL){
-            if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
-            delete stgRequestHelper;
-          }
-          
-          if(stgCnsHelper) delete stgCnsHelper;
-          
+          delete stgRequestHelper;
+         
           /* we have to process the exception and reply to the client in case of error  */
         }catch(castor::exception::Exception ex){
           
-          handleException(stgRequestHelper,stgCnsHelper, ex.code(), ex.getMessage().str());
+          handleException(stgRequestHelper,stgRequestHandler->getStgCnsHelper(), ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
           if(stgRequestHandler) delete stgRequestHandler;	  
-          if(stgRequestHelper != NULL){
-            if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
-            delete stgRequestHelper;
-          }	  
-          if(stgCnsHelper) delete stgCnsHelper;
+          if(stgRequestHelper) delete stgRequestHelper;
           
         }
         

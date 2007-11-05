@@ -87,35 +87,29 @@ namespace castor{
       /* Thread calling the specific request's handler        */
       /***************************************************** */
       void PreRequestSvc::process(castor::IObject* subRequestToProcess) throw() {
-        StagerCnsHelper* stgCnsHelper= NULL;
+        
         StagerRequestHelper* stgRequestHelper= NULL;
         StagerJobRequestHandler* stgRequestHandler = NULL;
         
         try {
-          
-          /*******************************************/
-          /* We create the helpers at the beginning */
-          /*****************************************/
-          
-          stgCnsHelper = new StagerCnsHelper();
-          int typeRequest=0;
+	  int typeRequest=0;
           stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
           
           switch(typeRequest){
             case OBJ_StagePrepareToGetRequest:
-              stgRequestHandler = new StagerPrepareToGetHandler(stgRequestHelper, stgCnsHelper);
+              stgRequestHandler = new StagerPrepareToGetHandler(stgRequestHelper);
               break;
             
             case OBJ_StageRepackRequest:
-              stgRequestHandler = new StagerRepackHandler(stgRequestHelper, stgCnsHelper);
+              stgRequestHandler = new StagerRepackHandler(stgRequestHelper);
               break;
             
             case OBJ_StagePrepareToPutRequest:
-              stgRequestHandler = new StagerPrepareToPutHandler(stgRequestHelper, stgCnsHelper);
+              stgRequestHandler = new StagerPrepareToPutHandler(stgRequestHelper);
               break;
             
             case OBJ_StagePrepareToUpdateRequest:
-              stgRequestHandler = new StagerPrepareToUpdateHandler(stgRequestHelper, stgCnsHelper);
+              stgRequestHandler = new StagerPrepareToUpdateHandler(stgRequestHelper);
               break;
             
           }
@@ -128,27 +122,18 @@ namespace castor{
             castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 1);
           }
           
-          delete stgRequestHandler;
-          
-          if(stgRequestHelper != NULL){
-            if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
-            delete stgRequestHelper;
-          }
-          
-          if(stgCnsHelper) delete stgCnsHelper;
-          
+          delete stgRequestHandler;          
+          delete stgRequestHelper;         
+               
           /* we have to process the exception and reply to the client in case of error  */
         }catch(castor::exception::Exception ex){
           
-          handleException(stgRequestHelper, stgCnsHelper, ex.code(), ex.getMessage().str());
+          handleException(stgRequestHelper, stgRequestHandler->getStgCnsHelper(), ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
           if(stgRequestHandler) delete stgRequestHandler;	  
-          if(stgRequestHelper != NULL){
-            if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
-            delete stgRequestHelper;
-          }	  
-          if(stgCnsHelper) delete stgCnsHelper;
+          if(stgRequestHelper) delete stgRequestHelper;
+          
         }
         
         

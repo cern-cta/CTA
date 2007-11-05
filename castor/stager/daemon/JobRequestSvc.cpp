@@ -71,27 +71,27 @@ namespace castor{
       
 
       void JobRequestSvc::process(castor::IObject* subRequestToProcess) throw () {
-        StagerCnsHelper* stgCnsHelper= NULL;
+       
         StagerRequestHelper* stgRequestHelper= NULL;
         StagerJobRequestHandler* stgRequestHandler = NULL;
         
         try {
-          stgCnsHelper = new StagerCnsHelper();
+         
           int typeRequest=0;
           stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
 
           switch(typeRequest){
             
             case OBJ_StageGetRequest:
-              stgRequestHandler = new StagerGetHandler(stgRequestHelper, stgCnsHelper);
+              stgRequestHandler = new StagerGetHandler(stgRequestHelper);
               break;
             
             case OBJ_StagePutRequest:
-              stgRequestHandler = new StagerPutHandler(stgRequestHelper, stgCnsHelper);
+              stgRequestHandler = new StagerPutHandler(stgRequestHelper);
               break;
             
             case OBJ_StageUpdateRequest:
-              stgRequestHandler = new StagerUpdateHandler(stgRequestHelper, stgCnsHelper);
+              stgRequestHandler = new StagerUpdateHandler(stgRequestHelper);
               break;
             
           }// end switch(typeRequest)
@@ -106,26 +106,18 @@ namespace castor{
           }
           
           delete stgRequestHandler;
+	  delete stgRequestHelper;
           
-          if(stgRequestHelper != NULL){
-            if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
-            delete stgRequestHelper;
-          }
-          
-          if(stgCnsHelper) delete stgCnsHelper;
-          
+         
           
         }catch(castor::exception::Exception ex){ /* process the exception an replyToClient */
           
-          handleException(stgRequestHelper,stgCnsHelper, ex.code(), ex.getMessage().str());
+          handleException(stgRequestHelper,stgRequestHandler->getStgCnsHelper(), ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
           if(stgRequestHandler) delete stgRequestHandler;	  
-          if(stgRequestHelper != NULL){
-            if(stgRequestHelper->baseAddr) delete stgRequestHelper->baseAddr;
-            delete stgRequestHelper;
-          }	  
-          if(stgCnsHelper) delete stgCnsHelper;
+          if(stgRequestHelper) delete stgRequestHelper;
+         
         }
         
       }/* end JobRequestSvc::process */
