@@ -48,11 +48,10 @@ namespace castor{
       
       
       /* constructor */
-      StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw() :
+      StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper) throw() :
         StagerRequestHandler()
       {
         this->stgRequestHelper = stgRequestHelper;
-        this->stgCnsHelper = stgCnsHelper;
         this->typeRequest = OBJ_StageRmRequest;
         
       }
@@ -70,6 +69,13 @@ namespace castor{
       /* only handler which overwrite the preprocess part due to the specific behavior related with the svcClass */
       void StagerRmHandler::preHandle() throw(castor::exception::Exception)
       {
+	
+	/* get the uuid request string version and check if it is valid */
+	stgRequestHelper->setRequestUuid();
+
+	/* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
+	this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+
 
 	/* set the username and groupname needed to print them on the log */
 	stgRequestHelper->setUsernameAndGroupname();
@@ -85,8 +91,7 @@ namespace castor{
 	/* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
 	stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
 	
-	/* get the uuid request string version and check if it is valid */
-	stgRequestHelper->setRequestUuid();
+
 	
 	/*********************************************************************************************************************************/
 	/* JUST FOR StagerRmHandler TO IMPLEMENT CONSIDERING THAT * CAN BE VALID : get the svcClass and set it on the  stgRequestHelper */

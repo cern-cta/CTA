@@ -51,9 +51,13 @@ namespace castor{
 
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;
+
+	castor::stager::dbService::StagerCnsHelper* getStgCnsHelper(){
+	  return(this->stgCnsHelper);
+	    }
 	
       protected:
-	StagerRequestHelper *stgRequestHelper;
+	StagerRequestHelper *stgRequestHelper;	
 	StagerCnsHelper *stgCnsHelper;
 
 	int typeRequest;

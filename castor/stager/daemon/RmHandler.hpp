@@ -42,7 +42,7 @@ namespace castor{
 	
       public:
 	/* constructor */
-	StagerRmHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw ();
+	StagerRmHandler(StagerRequestHelper* stgRequestHelper) throw ();
 	/* destructor */
 	~StagerRmHandler() throw() {};
 

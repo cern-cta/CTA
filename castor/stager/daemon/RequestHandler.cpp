@@ -46,7 +46,13 @@ namespace castor{
       /************************************/
       void StagerRequestHandler::preHandle() throw(castor::exception::Exception)
       {
-		
+	
+	/* get the uuid request string version and check if it is valid */
+	stgRequestHelper->setRequestUuid();
+
+	/* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
+	this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+
 	/* set the username and groupname needed to print them on the log */
 	stgRequestHelper->setUsernameAndGroupname();
 
@@ -60,10 +66,7 @@ namespace castor{
 	
 	/* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
 	stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
-	
-	/* get the uuid request string version and check if it is valid */
-	stgRequestHelper->setRequestUuid();
-	
+		
 	
 	/* get the svcClass */
 	stgRequestHelper->getSvcClass();
