@@ -107,10 +107,10 @@ namespace castor{
 	  
 	  typeRequest = fileRequest->type();
 	}catch(castor::exception::Exception e){
-	  castor::dlf::Param params[]={	castor::dlf::Param("Error while getting the services","Handler level")};
+	  castor::dlf::Param params[]={	castor::dlf::Param("Function:","StagerRequestHelper constructor")};
 
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_SERVICES_EXCEPTION, 1 ,params);	    	  
-	  e.getMessage()<< "(StagerRequestHelper constructor)"<<std::endl;
+	  e.getMessage()<< "Error on the Database"<<std::endl;
 	  throw e;  
 
 
@@ -122,80 +122,93 @@ namespace castor{
       /* destructor */
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
+	delete baseAddr;
       }
 
 
-
-
-      /***********************************************************************************/
-      /* get the link (fillObject~SELECT) between fileRequest and its associated client */
-      /* using dbService, and get the client                                           */
-      /********************************************************************************/
-      void StagerRequestHelper::getIClient() throw(castor::exception::Exception){
-	
-	dbService->fillObj(baseAddr, fileRequest,castor::OBJ_IClient, false);//196
-	this->iClient=fileRequest->client();
-	this->iClientAsString = IClientFactory::client2String(*(this->iClient));/* IClientFactory singleton */
-	
-      }
-   
-      /****************************************************************************************/
-      /* get svClass by selecting with stagerService                                         */
-      /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
-      /*************************************************************************************/
-      void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception){
-	this->svcClassName=fileRequest->svcClassName(); 
-	
-	if(this->svcClassName.empty()){  /* we set the default svcClassName */
-	  this->svcClassName="default";
-	  fileRequest->setSvcClassName(this->svcClassName);
+      /***********************************************/
+      /* get request uuid (we cannon' t create it!) */
+      /* needed to log on dlf */ 
+      /*********************************************/
+      void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
+      {
+	try{
 	  
+	  if(fileRequest->reqId().empty()){/* we cannon' t generate one!*/
+	    castor::exception::Exception ex(SEINTERNAL); 
+	    throw ex;
+	  }else{/*convert to the Cuuid_t version and copy in our thread safe variable */
+	    castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper RequestUuid) RequestUuid:"),
+					 castor::dlf::Param("Standard Message",fileRequest->reqId())};
+	    castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
+	    
+	    if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
+	      castor::exception::Exception ex(SEINTERNAL);	      
+	      throw ex;
+	    }
+	  }
+	}catch(castor::exception::Exception e){
+	  
+	  castor::dlf::Param params[]={ castor::dlf::Param("Subrequest fileName:", subrequest->fileName()),
+					castor::dlf::Param("Function:","StagerRequestHelper->setRequestUuid")
+	  };
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_REQUESTUUID_EXCEPTION, 2 ,params);	    
+	  
+	  e.getMessage()<< "Impossible to perform the request"<<std::endl;
+	  throw e; 
+	}
+
+      }
+
+      /* since we already got the requestUuid; from now on, we dont need to use the nullCuuid for dlf */
+
+      /************************************************************************************/
+      /* set the username and groupname string versions using id2name c function  */
+      /**********************************************************************************/
+      void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception){
+	struct passwd *this_passwd;
+	struct group *this_gr;
+	try{
+	  uid_t euid = fileRequest->euid();
+	  uid_t egid = fileRequest->egid();
+	  
+	  if((this_passwd = Cgetpwuid(euid)) == NULL){
+	    castor::exception::Exception ex(SEUSERUNKN);
+	    throw ex;
+	  }
+	  
+	  if(egid != this_passwd->pw_gid){
+	    castor::exception::Exception ex(SEINTERNAL);     
+	    throw ex;
+	  }
+	  
+	  if((this_gr=Cgetgrgid(egid))==NULL){
+	    castor::exception::Exception ex(SEUSERUNKN);
+	    throw ex;
+	    
+	  }
+	  
+	  if((this->username) != NULL){
+	    strncpy(username,this_passwd->pw_name,CA_MAXLINELEN);
+	    username[CA_MAXLINELEN]='\0';
+	  }
+	  if((this->groupname) != NULL){
+	    strncpy(groupname,this_gr->gr_name,CA_MAXLINELEN);
+	    groupname[CA_MAXLINELEN]='\0';
+	  }
+	}catch(castor::exception::Exception e){
+	  castor::dlf::Param params[]={ castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("Function:", "StagerRequestHelper->setUsernameAndGroupname")
+	  };
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 2 ,params);	    
+	  
+	  e.getMessage()<< "Invalid user"<<std::endl;
+	  throw e;    
 	}
 	
-	
-	svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
-	if(this->svcClass == NULL){
-	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
-					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
-					castor::dlf::Param("UserName",username),
-					castor::dlf::Param("GroupName", groupname),
-					castor::dlf::Param("SvcClassName",svcClassName)				     
-	  };
-	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 5 ,params);
-	  
-	  castor::exception::Exception ex(SESVCCLASSNFND);
-	  ex.getMessage()<<"(StagerRequestHelper getSvcClass)"<<std::endl;
-	  
-	  }	
-      } 
-      
-      
-      /*******************************************************************************/
-      /* update request in DB, create and fill request->svcClass link on DB         */ 
-      /*****************************************************************************/
-      void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
-	
-	/* update request on DB */
-	dbService->updateRep(baseAddr, fileRequest, true);//EXCEPTION!    
-	fileRequest->setSvcClass(svcClass);
-	
-	/* fill the svcClass object using the request as a key  */
-	dbService->fillRep(baseAddr, fileRequest,castor::OBJ_SvcClass,true);
-	
       }
 
-      /****************************************************************************************/
-      /* get fileClass by selecting with stagerService                                       */
-      /* using the CnsfileClass.name as key      (in StagerRequest.JobOriented)             */
-      /*************************************************************************************/
-      void StagerRequestHelper::getFileClass(char* nameClass) throw(castor::exception::Exception){
-	std::string fileClassName(nameClass);
-	fileClass=stagerService->selectFileClass(fileClassName);//throw exception if it is null
-	
-      }
-      
-      
-      /******************************************************************************************/
+       /******************************************************************************************/
       /* get and (create or initialize) Cuuid_t subrequest and request                         */
       /* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
       /***************************************************************************************/
@@ -233,44 +246,92 @@ namespace castor{
 
 	  }
 	}catch(castor::exception::Exception e){
-	  castor::dlf::Param params[]={ castor::dlf::Param("Impossible to get the subrequestUuid"," ")};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_SUBREQUESTUUID_EXCEPTION, 1 ,params);	    
-	    
-	  e.getMessage()<< "(StagerRequestHelper setSubrequestUuid)"<<std::endl;
+	  castor::dlf::Param params[]={	castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("UserName",username),
+					castor::dlf::Param("GroupName", groupname),
+					castor::dlf::Param("Function","StagerRequestHelper->setSubrequestUuid")
+	  };
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_SUBREQUESTUUID_EXCEPTION, 4 ,params);	   
+
+	  e.getMessage()<< "Impossible to perform the request"<<std::endl;
 	  throw e;  
 
 	}
       }
-      
 
-      /* get request uuid (we cannon' t create it!) */ 
-      void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
-      {
-	try{
-	  
-	  if(fileRequest->reqId().empty()){/* we cannon' t generate one!*/
-	    castor::exception::Exception ex(SEINTERNAL); 
-	    throw ex;
-	  }else{/*convert to the Cuuid_t version and copy in our thread safe variable */
-	    if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
-	      castor::exception::Exception ex(SEINTERNAL);	      
-	      throw ex;
-	    }
-	  }
-	}catch(castor::exception::Exception e){
-	  
-	  castor::dlf::Param params[]={ castor::dlf::Param("Impossible to get the RequestUuid"," ")};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_REQUESTUUID_EXCEPTION, 1 ,params);	    
-	  
-	  e.getMessage()<< "(StagerRequestHelper setRequestUuid)"<<std::endl;
-	  throw e; 
-	}
 
+      /***********************************************************************************/
+      /* get the link (fillObject~SELECT) between fileRequest and its associated client */
+      /* using dbService, and get the client                                           */
+      /********************************************************************************/
+      void StagerRequestHelper::getIClient() throw(castor::exception::Exception){
+	
+	dbService->fillObj(baseAddr, fileRequest,castor::OBJ_IClient, false);//196
+	this->iClient=fileRequest->client();
+	this->iClientAsString = IClientFactory::client2String(*(this->iClient));/* IClientFactory singleton */
+	
       }
 
 
+     
 
+      /****************************************************************************************/
+      /* get svClass by selecting with stagerService                                         */
+      /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
+      /*************************************************************************************/
+      void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception){
+	this->svcClassName=fileRequest->svcClassName(); 
+	
+	if(this->svcClassName.empty()){  /* we set the default svcClassName */
+	  this->svcClassName="default";
+	  fileRequest->setSvcClassName(this->svcClassName);
+	  
+	}
+	
+	
+	svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
+	if(this->svcClass == NULL){
+	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
+					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("UserName",username),
+					castor::dlf::Param("GroupName", groupname),
+					castor::dlf::Param("SvcClassName",svcClassName),
+					castor::dlf::Param("Function:", "StagerRequestHelper->getSvcClass")
+	  };
+	
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 6 ,params);
+	  
+	  castor::exception::Exception ex(SESVCCLASSNFND);
+	  ex.getMessage()<<"Service Class not found"<<std::endl;
+	  throw ex;
+	  }	
+      } 
+      
+      
+      /*******************************************************************************/
+      /* update request in DB, create and fill request->svcClass link on DB         */ 
+      /*****************************************************************************/
+      void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
+	
+	/* update request on DB */
+	dbService->updateRep(baseAddr, fileRequest, true);//EXCEPTION!    
+	fileRequest->setSvcClass(svcClass);
+	
+	/* fill the svcClass object using the request as a key  */
+	dbService->fillRep(baseAddr, fileRequest,castor::OBJ_SvcClass,true);
+	
+      }
 
+      /****************************************************************************************/
+      /* get fileClass by selecting with stagerService                                       */
+      /* using the CnsfileClass.name as key      (in StagerRequest.JobOriented)             */
+      /*************************************************************************************/
+      void StagerRequestHelper::getFileClass(char* nameClass) throw(castor::exception::Exception){
+	std::string fileClassName(nameClass);
+	fileClass=stagerService->selectFileClass(fileClassName);//throw exception if it is null
+	
+      }
+      
 
       /*******************************************************************************************************************************************/
       /*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
@@ -289,15 +350,28 @@ namespace castor{
 
 	  subrequest->setCastorFile(castorFile);
 	  
-	  /* create the subrequest-> castorFile on DB*/
+	  /* link subrequest to castorFile on DB */
 	  dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);//throw exception
 	  
-	  /* create the castorFile-> svcClass link on DB */
-	  dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, 0);//throw exception	
+	  /* create the castorFile -> svcClass link in memory */
+	  dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, false);//throw exception	
 
 	}catch(castor::exception::Exception e){
-	  e.getMessage()<<"(StagerRequestHelper getCastorFileFromSvcClass)"<<std::endl;
-	  throw(e);
+
+	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
+					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("UserName",username),
+					castor::dlf::Param("GroupName", groupname),
+					castor::dlf::Param("SvcClassName",svcClassName),
+					castor::dlf::Param("Function:", "StagerRequestHelper->getCastorFileFromSvcClass")
+	  };
+	  /* at this point we still dont have the requestUuid, so we log on the nullCuuid */
+	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CASTORFILE_EXCEPTION, 6 ,params);
+	  
+
+	  castor::exception::Exception ex(e.code());
+	  ex.getMessage()<<"Impossible to perform the request"<<std::endl;
+	  throw(ex);
 	}
 
       }
@@ -314,52 +388,7 @@ namespace castor{
       }
      
       
-      /************************************************************************************/
-      /* set the username and groupname string versions using id2name c function  */
-      /**********************************************************************************/
-      void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception){
-	struct passwd *this_passwd;
-	struct group *this_gr;
-	try{
-	  uid_t euid = fileRequest->euid();
-	  uid_t egid = fileRequest->egid();
-	  
-	  if((this_passwd = Cgetpwuid(euid)) == NULL){
-	    castor::exception::Exception ex(SEUSERUNKN);
-	    throw ex;
-	  }
-	  
-	  if(egid != this_passwd->pw_gid){
-	    castor::exception::Exception ex(SEINTERNAL);     
-	    throw ex;
-	  }
-	  
-	  if((this_gr=Cgetgrgid(egid))==NULL){
-	    castor::exception::Exception ex(SEUSERUNKN);
-	    throw ex;
-	    
-	  }
-	  
-	  if((this->username) != NULL){
-	    strncpy(username,this_passwd->pw_name,CA_MAXLINELEN);
-	    username[CA_MAXLINELEN]='\0';
-	  }
-	  if((this->groupname) != NULL){
-	    strncpy(groupname,this_gr->gr_name,CA_MAXLINELEN);
-	    groupname[CA_MAXLINELEN]='\0';
-	  }
-	}catch(castor::exception::Exception e){
-	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
-					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
-					castor::dlf::Param("SvcClassName",svcClassName)				     
-	  };
-	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 3 ,params);	    
-	  
-	  e.getMessage()<< "(StagerRequestHelper setUsernameAndGroupname)"<<std::endl;
-	  throw e;    
-	}
-	
-      }
+     
       
 
       
@@ -413,10 +442,13 @@ namespace castor{
 	    }
 	  }catch(castor::exception::Exception e){
 	     castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
-					  castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
-					  castor::dlf::Param("SvcClassName",svcClassName)				     
+					   castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					   castor::dlf::Param("UserName",username),
+					   castor::dlf::Param("GroupName", groupname),
+					   castor::dlf::Param("SvcClassName",svcClassName),
+					   castor::dlf::Param("Function:", "StagerRequestHelper->checkFilePermission")
 	    };
-	    castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, 3 ,params);	    
+	    castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION, 6 ,params);	    
 	    
 	    e.getMessage()<< "Access denied"<<std::endl;
 	    throw e;  
