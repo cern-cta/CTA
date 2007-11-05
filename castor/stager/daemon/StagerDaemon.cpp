@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/10/31 09:30:34 $ $Author: mmartins $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/11/05 10:44:14 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -101,6 +101,15 @@ int main(int argc, char* argv[]){
       throw e;
     }
     
+    castor::stager::IStagerSvc* stgService =
+      dynamic_cast<castor::stager::IStagerSvc*>(
+        castor::BaseObject::services()->service("DbStagerSvc", castor::SVC_DBSTAGERSVC));
+    if(stgService == 0) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Failed to load DbStagerSvc, check for shared libraries configuration" << std::endl;
+      throw e;
+    }
+
     /*******************************/
     /* thread pools for the stager */
     /*******************************/
@@ -140,13 +149,13 @@ int main(int argc, char* argv[]){
         new castor::stager::dbService::GcSvcThread(),
           getConfigPort("GCNOTIFYPORT", STAGER_GCNOTIFYPORT)));
 
-    stagerDaemon.getThreadPool('J')->setNbThreads(1);
-    stagerDaemon.getThreadPool('P')->setNbThreads(1);
-    stagerDaemon.getThreadPool('S')->setNbThreads(1);
-    stagerDaemon.getThreadPool('Q')->setNbThreads(2);
-    stagerDaemon.getThreadPool('E')->setNbThreads(1);
+    stagerDaemon.getThreadPool('J')->setNbThreads(10);
+    stagerDaemon.getThreadPool('P')->setNbThreads(6);
+    stagerDaemon.getThreadPool('S')->setNbThreads(3);
+    stagerDaemon.getThreadPool('Q')->setNbThreads(10);
+    stagerDaemon.getThreadPool('E')->setNbThreads(6);
     stagerDaemon.getThreadPool('j')->setNbThreads(10);
-    stagerDaemon.getThreadPool('G')->setNbThreads(5);
+    stagerDaemon.getThreadPool('G')->setNbThreads(6);
     
     /* we need to call this function before setting the number of threads */
     stagerDaemon.parseCommandLine(argc, argv);
@@ -162,7 +171,7 @@ int main(int argc, char* argv[]){
     castor::dlf::Param params[] =
       {castor::dlf::Param("Code", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 1, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::dbService::STAGER_DAEMON_EXCEPTION, 2, params);
   } catch (...) {
     std::cerr << "Caught general exception!" << std::endl;
   }
@@ -186,10 +195,7 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
     { STAGER_DAEMON_START, "Stager Daemon started"},
     { STAGER_DAEMON_EXECUTION, "Stager Daemon execution"},
     { STAGER_DAEMON_ERROR_CONFIG, "Stager Daemon configuration error"},
-    { STAGER_DAEMON_EXCEPTION, "Stager Daemon Exception"},
-    { STAGER_DAEMON_EXCEPTION_GENERAL, "Stager Daemon General Exception"},
-    { STAGER_DAEMON_FINISHED, "Stager Daemon successfully finished"},  	  
-    { STAGER_DAEMON_POOLCREATION, "Stager Daemon Pool creation"},	  	  
+    { STAGER_DAEMON_EXCEPTION, "Exception caught when starting Stager"},
     { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
     { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
     
