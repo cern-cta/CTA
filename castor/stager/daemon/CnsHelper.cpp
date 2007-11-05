@@ -73,37 +73,27 @@ namespace castor{
       /***************************************************************/
       /* set the user and group id needed to call the Cns functions */
       /*************************************************************/
-      void StagerCnsHelper::cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest){
-	euid = fileRequest->euid();
-	egid = fileRequest->egid();
+      void StagerCnsHelper::cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest) throw(castor::exception::Exception) {
+        euid = fileRequest->euid();
+        egid = fileRequest->egid();
+        if (Cns_setid(euid,egid) != 0) {
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_setid"<<std::endl;
+          throw ex;
+        }
+        
+        if (Cns_umask(fileRequest->mask()) < 0) {
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_umask"<<std::endl;
+          throw ex;
+        }
       }
-
-      
-      /************************************************************************************/
-      /* get the parameters neededs and call to the Cns_setid and Cns_umask c functions  */
-      /**********************************************************************************/
-      void StagerCnsHelper::cnsSettings(mode_t mask) throw(castor::exception::Exception){
-	if (Cns_setid(euid,egid) != 0){
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_setid"<<std::endl;
-	  throw ex;
-	}
-	
-	if (Cns_umask(mask) < 0){
-	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"(StagerCnsHelper cnsSettings) Error on Cns_umask"<<std::endl;
-	  throw ex;
-	}
-      }
-
-     
-     
 
       /****************************************************************************************************************/
       /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
       /* create the file if it is needed/possible */
       /**************************************************************************************************************/
-      bool StagerCnsHelper::checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
+      bool StagerCnsHelper::checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, mode_t modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
 
 	try{
 	  /* check if the required file exists */
@@ -115,12 +105,10 @@ namespace castor{
 	    if(isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
 	      if(serrno == ENOENT){
 	     
-		mode_t mode = (mode_t) modeBits;
-		
 		/* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
 		memset(&(cnsFileid),0, sizeof(cnsFileid));
 		
-		if (Cns_creatx(fileName.c_str(), mode, &(cnsFileid)) != 0) {
+		if (Cns_creatx(fileName.c_str(), modeBits, &(cnsFileid)) != 0) {
 		  castor::exception::Exception ex(serrno);
 		  throw ex;
 		}
@@ -130,10 +118,7 @@ namespace castor{
 		  std::string forcedFileClassName = svcClass->forcedFileClass();
 		  
 		  if(!forcedFileClassName.empty()){
-		    
-		    if(Cns_unsetid() != 0){ /* coming from the latest stager_db_service.c */
-		      //throw(castor::exception::Exception ex(serrno));
-		    }
+		    Cns_unsetid();
 		    if(Cns_chclass(fileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
 		      int tempserrno = serrno;
 		      Cns_delete(fileName.c_str());
@@ -141,10 +126,7 @@ namespace castor{
 		      castor::exception::Exception ex(serrno);
 		      throw ex;
 		    }
-		    if(Cns_setid(euid, egid) != 0){
-		      castor::exception::Exception ex(serrno);
-		      throw ex;
-		    }		  
+		    Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
 		  }/* "only force the fileClass if one is given" */
 		  
 		}/* end of "if(hasDiskOnly Behavior)" */

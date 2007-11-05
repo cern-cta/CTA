@@ -80,21 +80,14 @@ namespace castor{
 	/***************************************************************/
 	/* set the user and group id needed to call the Cns functions */
 	/*************************************************************/
-	void cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest);
+	void cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest) throw(castor::exception::Exception);
+      
 
-
-
-	/************************************************************************************/
-	/* get the parameters neededs and call to the Cns_setid and Cns_umask c functions  */
-	/**********************************************************************************/
-	void cnsSettings(mode_t mask) throw(castor::exception::Exception);
-
-	
 	/****************************************************************************************************************/
 	/* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
 	/* create the file if it is needed/possible */
 	/**************************************************************************************************************/
-	bool checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, int modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception);
+	bool checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, mode_t modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception);
 
 
 	/******************************************************************************/
