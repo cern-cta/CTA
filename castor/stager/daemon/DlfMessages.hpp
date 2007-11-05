@@ -88,7 +88,8 @@ namespace castor{
      STAGER_CNS_EXCEPTION = 79, /* Error on the name server */
      STAGER_SUBREQUESTUUID_EXCEPTION = 80, /* Impossible to get the subrequest Uuid */
      STAGER_REQUESTUUID_EXCEPTION = 81, /* Impossible to get the request Uuid */
-     
+     STAGER_CASTORFILE_EXCEPTION = 82, /* Impossible to get the CastorFile */
+
      /*******************/
      /* QueryRequestSvc */
      STAGER_QRYSVC_GETSVC= 91, /* Could not get QuerySvc" */
