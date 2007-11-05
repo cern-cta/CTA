@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.537 $ $Date: 2007/10/31 09:34:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.538 $ $Date: 2007/11/05 16:56:13 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1915,6 +1915,7 @@ BEGIN
     --    IF different
     --       create DiskCopyReplicaRequest for this svcclass
     --       make it wait on the existing WAITTAPERECALL subrequest
+    --    Repack has to wait on the disk2diskcopy...
     --    result := 0;
     -- ELSE let the stager trigger the recall (leave result = 2)
   --END IF;
@@ -2268,6 +2269,47 @@ EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
 END;
 
 
+/* PL/SQL procedure implementing startRepackMigration */
+CREATE OR REPLACE PROCEDURE startRepackMigration(srId IN INTEGER, cfId IN INTEGER, dcId IN INTEGER) AS
+  nbTC NUMBER(2);
+  nbTCInFC NUMBER(2);
+  fsId NUMBER;
+BEGIN
+  UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT 
+   WHERE id = dcId RETURNING fileSystem INTO fsId;
+  -- how many do we have to create ?
+  SELECT count(StageRepackRequest.repackvid) INTO nbTC
+    FROM SubRequest, StageRepackRequest 
+   WHERE subrequest.castorfile = cfId
+     AND SubRequest.request = StageRepackRequest.id
+     AND SubRequest.status in (4,5,6);   -- WAITTAPERECALL, WAITSUBREQ, READY
+  SELECT nbCopies INTO nbTCInFC
+    FROM FileClass, CastorFile
+   WHERE CastorFile.id = cfId
+     AND FileClass.id = Castorfile.fileclass;
+  -- we are not allowed to create more TapeCopies than in the FileClass specified
+  IF nbTCInFC < nbTC THEN
+    nbTC := nbTCInFC;
+  END IF;
+  
+  -- we need to update other subrequests with the diskcopy
+  -- we also update status so that we don't reschedule them
+  UPDATE SubRequest 
+     SET diskCopy = dcId, status = 12  -- SUBREQUEST_REPACK
+   WHERE SubRequest.castorFile = cfId
+     AND SubRequest.status in (4,5,6)  -- SUBREQUEST_WAITTAPERECALL, WAITSUBREQ, READY
+     AND SubRequest.request in
+       (SELECT id FROM StageRepackRequest); 
+  
+  -- create the required number of tapecopies for the files
+  internalPutDoneFunc(cfId, fsId, 0, nbTC);
+  -- update remaining STAGED diskcopies to CANBEMIGR too
+  -- we may have them as result of disk2disk copies, and so far
+  -- we only dealt with dcId
+  UPDATE DiskCopy SET status = 10  -- DISKCOPY_CANBEMIGR
+   WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
+END;
+
 /* PL/SQL method implementing disk2DiskCopyDone */
 CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
 (dcId IN INTEGER, srcDcId IN INTEGER) AS
@@ -2277,6 +2319,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   maxRepl INTEGER;
   repl INTEGER;
   srcStatus INTEGER;
+  reqType INTEGER;
 BEGIN
   -- try to get the source status
   SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
@@ -2298,7 +2341,7 @@ BEGIN
   END IF;
   -- otherwise, we can validate the new diskcopy
   UPDATE DiskCopy
-     SET status = (SELECT status FROM DiskCopy WHERE id = srcDcId)
+     SET status = srcStatus
    WHERE id = dcId
   RETURNING CastorFile, FileSystem INTO cfId, fsId;
   -- update SubRequest
@@ -2321,12 +2364,12 @@ BEGIN
        AND Request.svcClass = SvcClass.id;
     SELECT count(*) into repl FROM DiskCopy
      WHERE castorFile = cfId
-       AND status in (0, 10);
+       AND status in (0, 10);  -- STAGED, CANBEMIGR
     IF repl > maxRepl THEN
       -- We did replicate only because of a DRAINING filesystem.
       -- Invalidate one of the original diskcopies, not all of them for fault resiliency purposes
       UPDATE DiskCopy set status = 7
-       WHERE status in (0, 10)
+       WHERE status in (0, 10)  -- STAGED, CANBEMIGR
          AND castorFile = cfId
          AND fileSystem in (SELECT id FROM FileSystem WHERE status = 1)  -- DRAINING
          AND ROWNUM < 2;
@@ -2343,9 +2386,18 @@ BEGIN
   -- Note that we do the same in GetUpdateStart for the case with no
   -- replication due to the update request.
   fixUpdateRequestProblem(dcId, cfId, srId);
-  -- Wake up waiting subrequests
-  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
-   WHERE parent = srId; -- SUBREQUEST_RESTART
+
+  SELECT type INTO reqType FROM Id2Type WHERE id =
+    (SELECT request FROM SubRequest WHERE id = srId);
+  -- Repack handling:
+  -- create the tapecopies for waiting subrequests and update diskcopies
+  IF reqType = 119 THEN      -- OBJ_StageRepackRequest
+    startRepackMigration(srId, cfId, dcId);
+  ELSE
+    -- Wake up waiting subrequests
+    UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0
+     WHERE parent = srId; -- SUBREQUEST_RESTART
+  END IF;
   -- update filesystem status
   updateFsFileClosed(fsId);
 END;
@@ -2568,10 +2620,10 @@ BEGIN
       INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
     END LOOP;
     -- Restart any waiting Disk2DiskCopies
-      UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
-         SET status = 1, lastModificationTime = getTime(), parent = 0
-       WHERE status = 5 -- WAIT_SUBREQ
-         AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status IN (3, 6));
+    UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
+       SET status = 1, lastModificationTime = getTime(), parent = 0
+     WHERE status = 5 -- WAIT_SUBREQ
+       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status IN (3, 6));
   END IF;
   -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
   -- then we have to archive the original prepareToPut/Update subRequest
@@ -2721,59 +2773,24 @@ BEGIN
 END;
 
 
-/* PL/SQL procedure implementing startRepackMigration */
-CREATE OR REPLACE PROCEDURE startRepackMigration(srId IN INTEGER, cfId IN INTEGER, dcId IN INTEGER,
-                                                 fsId IN INTEGER, fcnbCopies IN NUMBER) AS
-  nbTC NUMBER(2);
-BEGIN
-  -- how many do we have to create ?
-  SELECT count(StageRepackRequest.repackvid) INTO nbTC 
-    FROM SubRequest, StageRepackRequest 
-   WHERE subrequest.castorfile = cfId
-     AND SubRequest.request = StageRepackRequest.id
-     AND subrequest.status in (4,5,6);
-  -- we are not allowed to create more Tapecopies than in the fileclass specified
-  IF fcnbCopies < nbTC THEN 
-    nbTC := fcnbCopies;
-  END IF;
-  
-  -- we need to update other subrequests with the diskcopy
-  -- and to update status (so we don't reschedule it)
-  UPDATE SubRequest 
-     SET diskCopy = dcId, status = 12  -- SUBREQUEST_REPACK
-   WHERE SubRequest.castorFile = cfId
-     AND SubRequest.status in (4,5,6)  -- SUBREQUEST_WAITTAPERECALL, WAITSUBREQ, READY
-     AND SubRequest.request in 
-       (SELECT id FROM StageRepackRequest); 
-  
-  -- create the required number of tapecopies for the files
-  internalPutDoneFunc(cfId, fsId, 0, nbTC);
-END;
-
 /* PL/SQL method implementing fileRecalled */
 CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   subRequestId NUMBER;
   dci NUMBER;
-  fsId NUMBER;
   reqType NUMBER;
-  cfid NUMBER;
-  fcnbcopies NUMBER; --number of tapecopies in fileclass
+  cfId NUMBER;
+  fsId NUMBER;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.id, FileClass.nbcopies
-    INTO subRequestId, dci, cfid, fcnbcopies
-    FROM TapeCopy, SubRequest, DiskCopy, CastorFile, FileClass
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem
+    INTO subRequestId, dci, cfid, fsId
+    FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
      AND DiskCopy.castorFile = TapeCopy.castorFile
-     AND FileClass.id = Castorfile.fileclass
      AND SubRequest.diskcopy(+) = DiskCopy.id
-     AND DiskCopy.status = 2;
+     AND DiskCopy.status = 2;  -- DISKCOPY_WAITTAPERECALL
    
-  SELECT type INTO reqType FROM Id2Type WHERE id =
-    (SELECT request FROM SubRequest WHERE id = subRequestId);
-
-  UPDATE DiskCopy SET status = decode(reqType, 119,6, 0)  -- DISKCOPY_STAGEOUT if OBJ_StageRepackRequest, else DISKCOPY_STAGED 
-   WHERE id = dci RETURNING fileSystem INTO fsId;
+  -- cleanup:
   -- delete any previous failed diskcopy for this castorfile (due to failed recall attempts for instance)
   DELETE FROM Id2Type WHERE id IN (SELECT id FROM DiskCopy WHERE castorFile = cfId AND status = 4);
   DELETE FROM DiskCopy WHERE castorFile = cfId AND status = 4;   -- FAILED
@@ -2783,17 +2800,19 @@ BEGIN
      AND castorFile = cfId
      AND status = 0;  -- STAGED
   
+  SELECT type INTO reqType FROM Id2Type WHERE id =
+    (SELECT request FROM SubRequest WHERE id = subRequestId);
   -- Repack handling:
-  -- create the number of tapecopies for waiting subrequests and update their diskcopy.
+  -- create the tapecopies for waiting subrequests and update diskcopies
   IF reqType = 119 THEN      -- OBJ_StageRepackRequest
-    startRepackMigration(subRequestId, cfId, dci, fsId, fcnbCopies);
-  ELSE 
-    IF subRequestId IS NOT NULL THEN
-      UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-       WHERE id = subRequestId; 
-      UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
-       WHERE parent = subRequestId;
-    END IF;
+    startRepackMigration(subRequestId, cfId, dci);
+  ELSE
+    UPDATE DiskCopy
+       SET status = 0  -- DISKCOPY_STAGED
+     WHERE id = dci;
+    UPDATE SubRequest
+       SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
+     WHERE (id = subRequestId) OR (parent = subRequestId);
   END IF;
   updateFsFileClosed(fsId);
 END;
