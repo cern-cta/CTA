@@ -47,7 +47,9 @@ namespace castor{
       void StagerRequestHandler::preHandle() throw(castor::exception::Exception)
       {
 		
-	
+	/* set the username and groupname needed to print them on the log */
+	stgRequestHelper->setUsernameAndGroupname();
+
 	/* get the uuid subrequest string version and check if it is valid */
 	/* we can create one !*/
 	stgRequestHelper->setSubrequestUuid();
@@ -70,6 +72,7 @@ namespace castor{
 	/* create and fill request->svcClass link on DB */
 	stgRequestHelper->linkRequestToSvcClassOnDB();
 		
+	
 	/* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
 	/* create the file if it is needed/possible */
 	stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);

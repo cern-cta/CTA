@@ -71,6 +71,9 @@ namespace castor{
       void StagerRmHandler::preHandle() throw(castor::exception::Exception)
       {
 
+	/* set the username and groupname needed to print them on the log */
+	stgRequestHelper->setUsernameAndGroupname();
+
 	/* get the uuid subrequest string version and check if it is valid */
 	/* we can create one !*/
 	stgRequestHelper->setSubrequestUuid();
