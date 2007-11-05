@@ -166,8 +166,8 @@ namespace castor{
       /* set the username and groupname string versions using id2name c function  */
       /**********************************************************************************/
       void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception){
-	struct passwd *this_passwd;
-	struct group *this_gr;
+	struct passwd *this_passwd = 0;
+	struct group *this_gr = 0;
 	try{
 	  uid_t euid = fileRequest->euid();
 	  uid_t egid = fileRequest->egid();
@@ -187,22 +187,20 @@ namespace castor{
 	    throw ex;
 	    
 	  }
-	  
-	  if((this->username) != NULL){
-	    strncpy(username,this_passwd->pw_name,CA_MAXLINELEN);
-	    username[CA_MAXLINELEN]='\0';
-	  }
-	  if((this->groupname) != NULL){
-	    strncpy(groupname,this_gr->gr_name,CA_MAXLINELEN);
-	    groupname[CA_MAXLINELEN]='\0';
-	  }
+
+    username = this_passwd->pw_name;
+    groupname = this_gr->gr_name;
+    delete this_gr;
+    delete this_passwd;
 	}catch(castor::exception::Exception e){
 	  castor::dlf::Param params[]={ castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
 					castor::dlf::Param("Function:", "StagerRequestHelper->setUsernameAndGroupname")
 	  };
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 2 ,params);	    
 	  
-	  e.getMessage()<< "Invalid user"<<std::endl;
+	  e.getMessage()<< "Invalid user";
+    if(this_gr) delete this_gr;
+    if(this_passwd) delete this_passwd;
 	  throw e;    
 	}
 	
@@ -302,7 +300,7 @@ namespace castor{
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 6 ,params);
 	  
 	  castor::exception::Exception ex(SESVCCLASSNFND);
-	  ex.getMessage()<<"Service Class not found"<<std::endl;
+	  ex.getMessage()<<"Service Class not found";
 	  throw ex;
 	  }	
       } 

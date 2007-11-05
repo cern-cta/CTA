@@ -84,7 +84,7 @@ namespace castor{
       /*     switch(getDiskCopyForJob):         */                                     
       /*        case 0,1: (staged) jobManager  */
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-      void StagerGetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
+      bool StagerGetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
 	  
 	  switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
@@ -188,7 +188,7 @@ namespace castor{
           
         }//end switch
 
-        
+      return false;        
       }
 
 

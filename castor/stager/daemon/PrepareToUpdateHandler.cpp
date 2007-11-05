@@ -84,7 +84,7 @@ namespace castor{
       /*        case 0: (staged) nothing to be done */                                   
       /*        case 1: (staged) waitD2DCopy  */
       /*        case 2: (waitRecall) createTapeCopyForRecall */
-      void StagerPrepareToUpdateHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
+      bool StagerPrepareToUpdateHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
         
         switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
@@ -167,7 +167,7 @@ namespace castor{
 								   stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
 	  }break;
         }
-        
+       return false;   // XXX this is not correct, however PrepareToUpdate must reuse the PrepareToGet handler here 
       }
   
   

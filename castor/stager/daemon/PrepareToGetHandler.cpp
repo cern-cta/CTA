@@ -45,9 +45,8 @@ namespace castor{
       StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
-	this->typeRequest = OBJ_StagePrepareToGetRequest;
-        
-       
+        this->stgCnsHelper = stgCnsHelper;
+        this->typeRequest = OBJ_StagePrepareToGetRequest;
       }
 
       /*******************************************************************/
@@ -68,7 +67,7 @@ namespace castor{
       /*        case 0: (staged) archiveSubrequest */                                   
       /*        case 1: (staged) waitD2DCopy  */
       /*        case 2: (waitRecall) createRecallCandidate */
-      void StagerPrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
+      bool StagerPrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
 
         switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
@@ -82,7 +81,7 @@ namespace castor{
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	    };
 	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, 6 ,params, &(stgCnsHelper->cnsFileid));
-	    
+	    return false;
 	  }break;
 
    case -1:
@@ -95,6 +94,7 @@ namespace castor{
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	      };
 	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6, params, &(stgCnsHelper->cnsFileid));
+	    return false;
 	    }break;
       
       
@@ -115,6 +115,7 @@ namespace castor{
 
 	    /* we archive the subrequest */
 	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+	    return true;
 	  } break;
           
 	case 1:    // DISK2DISKCOPY - will disappear soon
@@ -140,6 +141,7 @@ namespace castor{
 	    stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
 	    /* and we have to notify the jobManager */
 	    m_notifyJobManager = true;
+	    return true;
           }break;
           
 	case 2:
@@ -155,6 +157,7 @@ namespace castor{
 	    
 	    stgRequestHelper->stagerService->createRecallCandidate(
 								   stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	    return true;
           }break;
           
         }//end switch
@@ -191,16 +194,14 @@ namespace castor{
 
 	  /* depending on the value returned by getDiskCopiesForJob */
 	  /* if needed, we update the subrequestStatus internally  */
-	  switchDiskCopiesForJob();
-	  
-	 
-	  stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
-	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
-	  stgReplyHelper->endReplyToClient(stgRequestHelper);
+	  if(switchDiskCopiesForJob()) {
+      stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+      stgReplyHelper->endReplyToClient(stgRequestHelper);
        
-	  delete stgReplyHelper;
-    stgReplyHelper = 0;
-	  
+      delete stgReplyHelper;
+      stgReplyHelper = 0;
+    }	  
 
 	}catch(castor::exception::Exception e){
 

@@ -106,8 +106,8 @@ namespace castor{
 	/* get from the stagerService using as key Cnsfileclass.name (JOB ORIENTED)*/
 	castor::stager::FileClass* fileClass;
        
-	char username[CA_MAXLINELEN+1];
-	char groupname[CA_MAXLINELEN+1];
+	std::string username;
+	std::string groupname;
 
 	/* Cuuid_t thread safe variables */ 
 	Cuuid_t subrequestUuid;

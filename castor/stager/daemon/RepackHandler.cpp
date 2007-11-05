@@ -43,9 +43,8 @@ namespace castor{
      
       StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper) throw (castor::exception::Exception)
       {
-	this->stgRequestHelper = stgRequestHelper;
-	this->typeRequest = OBJ_StageRepackRequest;	
-	 
+        this->stgRequestHelper = stgRequestHelper;
+        this->typeRequest = OBJ_StageRepackRequest;	
       }
 
       /*******************************************************************/
@@ -85,7 +84,7 @@ namespace castor{
       /*        case 0: (staged) call startRepackMigration (once implemented) */                                   
       /*        case 1: (staged) waitD2DCopy  */
       /*        case 2: (waitRecall) createRecallCandidate */
-      void StagerRepackHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
+      bool StagerRepackHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
 	switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
 	case -2:
@@ -98,7 +97,7 @@ namespace castor{
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	    };
 	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, 6 ,params, &(stgCnsHelper->cnsFileid));
-	    
+	    return false;
 	  }break;
 
    case -1:
@@ -111,6 +110,7 @@ namespace castor{
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
 	      };
 	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6, params, &(stgCnsHelper->cnsFileid));
+	    return false;
 	    }break;
       	case 0:
 	  {
@@ -152,6 +152,7 @@ namespace castor{
 	    
 	    /* and we have to notify the jobManager */
 	    m_notifyJobManager = true;
+	    return true;
 	  }break;
 	case 2:
 	  {
@@ -165,6 +166,7 @@ namespace castor{
 	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 6 ,params, &(stgCnsHelper->cnsFileid));
 	    stgRequestHelper->stagerService->createRecallCandidate(
 								   stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+	    return true;
 	    }break;
 
 	}//end switch
@@ -200,14 +202,14 @@ namespace castor{
 	  
 	  /* depending on the value returned by getDiskCopiesForJob */
 	  /* if needed, we update the subrequestStatus internally */
-	  switchDiskCopiesForJob();
+	  if(switchDiskCopiesForJob()) {
 	 
-	  stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
-	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
-	  stgReplyHelper->endReplyToClient(stgRequestHelper);
-	 
-	  delete stgReplyHelper;
-	  
+      stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+      stgReplyHelper->endReplyToClient(stgRequestHelper);
+     
+      delete stgReplyHelper;
+	  }
 
 	}catch(castor::exception::Exception e){
 	 

@@ -67,7 +67,7 @@ namespace castor{
 	/*        case 0: (staged) archiveSubrequest */                                   
 	/*        case 1: (staged) waitD2DCopy  */
 	/*        case 2: (waitRecall) createTapeCopyForRecall */
-	virtual void switchDiskCopiesForJob() throw (castor::exception::Exception);
+	virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception);
 	
 
 
