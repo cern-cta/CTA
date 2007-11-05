@@ -25,8 +25,6 @@ namespace castor{
      STAGER_DAEMON_EXECUTION= 2, /* "Stager Daemon execution" */
      STAGER_DAEMON_ERROR_CONFIG= 3, /* "Stager Daemon configuration error" */
      STAGER_DAEMON_EXCEPTION= 4, /* "Stager Daemon Exception" */
-     STAGER_DAEMON_EXCEPTION_GENERAL= 5, /* "Stager Daemon General Exception" */
-     STAGER_DAEMON_FINISHED= 6, /* "Stager Daemon successfully finished" */  	  
      STAGER_DAEMON_POOLCREATION= 7, /* "Stager Daemon Pool creation" */
      
      

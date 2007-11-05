@@ -117,8 +117,6 @@ namespace castor{
           
         }catch(castor::exception::Exception ex){ /* process the exception an replyToClient */
           
-          castor::dlf::Param params[] = {castor::dlf::Param("Standard Message",sstrerror(ex.code())),castor::dlf::Param("Precise Message",ex.getMessage().str())};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2, 1, params);
           handleException(stgRequestHelper,stgCnsHelper, ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
