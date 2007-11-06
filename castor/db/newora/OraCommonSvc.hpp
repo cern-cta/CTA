@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2006/08/03 12:40:26 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/06 09:29:11 $ $Author: gtaur $
  *
  * Implementation of the ICommonSvc for Oracle/CDBC
  *
@@ -188,6 +188,12 @@ namespace castor {
 
         /// SQL statement object for function selectFileSystem
         oracle::occi::Statement *m_selectFileSystemStatement;
+
+	/// SQL statement for function selectFileSystem
+        static const std::string s_selectTapePoolIdStatementString;
+
+        /// SQL statement object for function selectFileSystem
+        oracle::occi::Statement *m_selectTapePoolIdStatement;
 
       }; // end of class OraCommonSvc
 
