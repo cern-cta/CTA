@@ -1,0 +1,52 @@
+.lf 1 cleaningDaemon.man
+.\" @(#)cleaningDaemon.man,v 1.1 2006/02/28 12:00:00 CERN IT-FIO giulia taurelli
+.\" Copyright (C) 2006 by CERN/IT/FIO
+.\" All rights reserved
+.\"
+.TH RECHANDLERDAEMON 1 "2006/02/28 12:00:00 CERN IT-FIO" CASTOR "recHandler daemon"
+.SH NAME
+recHandlerDaemon \- start the CASTOR Garbage Collector daemon
+.SH SYNOPSIS
+.B recHandlerDaemon [-f] [-t time] [svcclass1 [svcclass2] ... [svcclassN]]
+.SH DESCRIPTION
+.LP
+The 
+.B recHandler daemon 
+command starts the rechandler daemon
+which trigger the recall from tape periodically.
+The tapes involed in the process are the ones in the tapepools associated to the input service classes ([svcclass1 [svcclass2] ... [svcclassN]).
+If no svcclass is given as input no tape is analysed.
+
+.LP
+A parameter in the 
+.B /etc/castor/castor.conf 
+specify the location of the file where all the policy function are declared. 
+
+e.g.:
+.B Policy RECALL /etc/castor/recallPolicies.py
+
+Then for each svcclass we specify in the database the function that we want to execute between the ones declared in the file.
+If no function is specified we set the tape as pending and we start to recall from it as soon as possible.
+The same we do if anything goes wrong in calling the policy for a tape.
+  
+.LP
+The recallHandler daemon execute its actions every 48 seconds by default but this option can be changed using -t comand line option.
+e.g. 
+.B recHandlerDaemon -t 120
+
+.LP
+All 
+.B recHandlerDaemon
+activity is logged using the Distributed Logging Facility (DLF).
+.LP 
+.B recHandlerDaemon -f
+starts the daemon 
+in foreground mode. Should not be used normally.  
+.LP
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
+
+
+
+

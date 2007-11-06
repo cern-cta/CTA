@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.31 $ $Date: 2007/08/07 15:35:59 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.32 $ $Date: 2007/11/06 13:37:16 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 #include <Project.tmpl>
@@ -82,4 +82,7 @@ VDQMORALIB = DepLibraryTargetName(castor/db/$(ORACPPDIR),castorVdqmOra)
 #endif
 #if BuildRmMasterCpp || BuildRmNodeCpp
 MONITORCPPLIB = DepLibraryTargetName(castor/monitoring,castorMonitor)
+#endif
+#if BuildMigHunterDaemon || BuildRecHandlerDaemon || BuildInfoPolicyLibrary
+INFOPOLICYLIB = DepLibraryTargetName(castor/infoPolicy,castorInfoPolicy)
 #endif

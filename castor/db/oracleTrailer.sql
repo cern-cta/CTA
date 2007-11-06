@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.538 $ $Date: 2007/11/05 16:56:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.539 $ $Date: 2007/11/06 13:37:17 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1407,7 +1407,37 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE FileEntry IS RECORD (
         fileid INTEGER,
         nshost VARCHAR2(2048));
-  TYPE FileEntry_Cur IS REF CURSOR RETURN FileEntry;  
+  TYPE FileEntry_Cur IS REF CURSOR RETURN FileEntry; 
+  TYPE DbMigrationInfo IS RECORD ( id NUMBER ( 38 ),
+				     copyNb NUMBER,
+				     fileName VARCHAR2 ( 2048 ),
+				     nsHost VARCHAR2 ( 2048 ),
+				     fileId NUMBER ( 38 ),
+				     fileSize NUMBER ( 38 ) );
+  TYPE DbMigrationInfo_Cur IS
+     REF CURSOR RETURN DbMigrationInfo;
+  TYPE DbStreamInfo IS RECORD ( id NUMBER ( 38 ),
+				  status INTEGER,
+				  numFile NUMBER,
+				  byteVolume NUMBER );
+  TYPE DbStreamInfo_Cur IS
+     REF CURSOR RETURN DbStreamInfo;
+  TYPE DbRecallInfo IS RECORD ( vid VARCHAR2 ( 2048 ),
+				  tapeId NUMBER ( 38 ),
+				  dataVolume NUMBER,
+				  numbFiles NUMBER,
+				  expireTime NUMBER );
+  TYPE DbRecallInfo_Cur IS
+     REF CURSOR RETURN DbRecallInfo;
+  
+  TYPE StreamPolicyInfo IS RECORD ( id INTEGER,
+				      status NUMBER,
+				      numFile NUMBER,
+				      byteVolume NUMBER );
+  TYPE StreamPolicyInfo_Cur IS
+     REF CURSOR RETURN StreamPolicyInfo;
+
+ 
 END castor;
 
 
@@ -4388,7 +4418,21 @@ BEGIN
   END LOOP;
 END;
 
+<<<<<<< oracleTrailer.sql
+/* PL/SQL method to retrieve the sum of all the filesize of all the tapecopies attached to a stream */
+  	 
+  	 CREATE OR REPLACE PROCEDURE getBytesByStream (streamId IN NUMBER, valByte OUT NUMBER) AS
+  	 BEGIN
+  	   SELECT stream.byteVolume INTO valByte FROM stream 
+  	         WHERE stream.id=streamId;
+  	   EXCEPTION WHEN NO_DATA_FOUND THEN
+  	     valByte:=0;
+  	 END;
 
+
+=======
+
+>>>>>>> 1.515
 /* PL/SQL method to know the number of tapecopies attached to a specific stream */
 CREATE OR REPLACE PROCEDURE getNumFilesByStream (streamId IN NUMBER, numFiles OUT NUMBER) AS
 BEGIN
@@ -4678,4 +4722,283 @@ BEGIN
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);
   END LOOP;
+END;
+
+/** Procedure for the migHunter stream policy using expertd **/
+
+CREATE OR REPLACE PROCEDURE basicInputForStreamPolicy
+( 
+ svcId IN NUMBER,
+ dbInfo OUT castor.StreamPolicyInfo_Cur,
+ runningStreams OUT NUMBER
+)
+AS
+ tpId NUMBER; -- used in the loop
+ tcId NUMBER; -- used in the loop
+ streamId NUMBER; -- stream attached to the tapepool
+BEGIN
+        SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool 
+		WHERE  Stream.status=3 
+		 AND Stream.tapepool=SvcClass2TapePool.child 
+		 AND SvcClass2TapePool.parent= svcId; 
+
+        OPEN dbInfo FOR
+                SELECT Stream.id, Stream.status,count(distinct stream2tapecopy.child),sum(castorfile.filesize)
+		  FROM Stream2TapeCopy,TapeCopy,castorFile,stream 
+		WHERE  Stream2TapeCopy.child=TapeCopy.id  
+			AND TapeCopy.castorfile=CastorFile.id AND Stream.id(+)=Stream2TapeCopy.parent
+			group by Stream2TapeCopy.parent, Stream.status;
+END;
+
+/** Function for the MigHunterDaemon **/
+
+/** get input for python migration policy**/
+
+CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
+(svcclassName IN VARCHAR2,
+ policyName OUT VARCHAR2,
+ svcId OUT NUMBER,
+ dbInfo OUT castor.DbMigrationInfo_Cur) AS
+ tcIds "numList";
+BEGIN
+-- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
+  -- we look first for repack condidates for this svcclass
+  SELECT TapeCopy.id BULK COLLECT INTO tcIds
+    FROM TapeCopy, SubRequest, StageRepackRequest, svcclass
+   WHERE StageRepackRequest.svcclass = svcclass.id
+     AND svcclass.name= svcclassName 
+     AND SubRequest.request = StageRepackRequest.id
+     AND SubRequest.status = 12  --SUBREQUEST_REPACK
+     AND TapeCopy.castorfile = SubRequest.castorfile
+     AND TapeCopy.status IN (0, 1)  -- CREATED / TOBEMIGRATED
+     FOR UPDATE;
+  -- if we didn't find anything, we look 
+  -- the usual svcclass from castorfile table.
+  IF tcIds.count = 0 THEN
+    SELECT TapeCopy.id BULK COLLECT INTO tcIds 
+      FROM TapeCopy, CastorFile, svcclass 
+     WHERE TapeCopy.castorFile = CastorFile.id 
+       AND CastorFile.svcClass = SvcClass.id
+       AND SvcClass.name=svcclassName 
+       AND TapeCopy.status IN (0, 1) -- CREATED / TOBEMIGRATED
+       FOR UPDATE;
+  END IF;
+  -- atomically update the status to WAITINSTREAMS (we got a lock
+  -- above with the FOR UPDATE clause)
+  UPDATE TapeCopy
+     SET status = 2   -- WAITINSTREAMS
+   WHERE id MEMBER OF tcIds;
+  -- release the lock
+  COMMIT;
+  -- return for Policy
+  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId FROM SvcClass WHERE SvcClass.name=svcClassName;
+  -- SELECT TapePool.name BULK COLLECT INTO tapePoolNames FROM TapePool,SvcClass2TapePool WHERE TapePool.id= SvcClass2TapePool.child
+  --	AND SvcClass2TapePool.parent=svcId;
+  -- return the full resultset
+  OPEN dbInfo FOR
+    SELECT TapeCopy.id,TapeCopy.copyNb,CastorFile.lastknownfilename,CastorFile.nsHost,CastorFile.fileid,CastorFile.filesize 
+      FROM Tapecopy,CastorFile
+       WHERE CastorFile.id=TapeCopy.castorfile AND TapeCopy.id MEMBER OF tcIds;
+END;
+
+/** Get input for python Stream Policy **/
+
+CREATE OR REPLACE PROCEDURE main_dev10.inputForStreamPolicy
+(svcClassName IN VARCHAR2,
+ policyName OUT VARCHAR2,
+ runningStreams OUT INTEGER,
+ maxStream OUT INTEGER,
+ dbInfo OUT castor.DbStreamInfo_Cur)
+AS
+ tpId NUMBER; -- used in the loop
+ tcId NUMBER; -- used in the loop
+ streamId NUMBER; -- stream attached to the tapepool
+BEGIN	
+	-- info for policy
+	SELECT streamPolicy, nbDrives into policyName, maxStream 
+	 FROM SvcClass WHERE SvcClass.name=svcClassName;
+   	SELECT count(*) INTO runningStreams FROM Stream WHERE Stream.status=3; 
+	--- return for policy
+        OPEN dbInfo FOR
+        	SELECT Stream.id, Stream.status,count(distinct stream2tapecopy.child),sum(castorfile.filesize)
+		  FROM Stream2TapeCopy,TapeCopy,castorFile,stream 
+		WHERE  Stream2TapeCopy.child=TapeCopy.id(+)  
+			AND TapeCopy.castorfile=CastorFile.id(+) AND Stream.id=Stream2TapeCopy.parent(+)
+			group by Stream.id, Stream.status;
+END;
+
+/** createOrUpdateStreams **/
+
+CREATE OR REPLACE PROCEDURE createOrUpdateStream
+(svcClassName IN VARCHAR2,
+ initialSizeToTransfer IN NUMBER, -- total initialSizeToTransfer for the svcClass
+ volumeThreashold IN NUMBER, -- parameter given by -V
+ initialSizeCeiling IN NUMBER, -- to calculate the initialSizeToTransfer per stream
+ doClone IN INTEGER,
+ nbMigrationCandidate IN INTEGER,
+ retCode OUT INTEGER) -- all candidate before applying the policy
+ AS
+ nbOldStream NUMBER; -- stream for the specific svcclass
+ nbDrives NUMBER; -- drives associated to the svcclass
+ initSize NUMBER; --  the initialSizeToTransfer per stream
+ tpId NUMBER; -- tape pool id
+ strId NUMBER; -- stream id
+ streamToClone NUMBER; -- stream id to clone
+ svcId NUMBER; --svcclass id
+ tcId NUMBER; -- tape copy id
+BEGIN
+  retCode:=0;
+ -- get streamFromSvcClass
+  BEGIN
+  	SELECT id INTO svcId FROM SvcClass WHERE name=svcClassName AND ROWNUM <2;
+  	SELECT count(Stream.id) into nbOldStream FROM Stream, SvcClass2TapePool
+	 WHERE SvcClass2TapePool.child=Stream.tapepool AND SvcClass2TapePool.parent=svcId;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+    -- RTCPCLD_MSG_NOTPPOOLS
+    -- restore candidate 
+    retCode:=1;
+    RETURN;
+  END; 
+    
+  IF nbOldStream <= 0  AND   initialSizeToTransfer < volumeThreashold THEN
+        -- restore WAITINSTREAM to TOBEMIGRATED, not enough data
+         retCode:=2; -- RTCPCLD_MSG_DATALIMIT
+	 RETURN;
+  END IF;
+    
+  IF nbOldStream >=0 AND (doClone = 1 OR nbMigrationCandidate > 0) THEN
+ -- stream creator
+	SELECT SvcClass.nbDrives into nbDrives FROM SvcClass WHERE id=svcId;
+      -- get the initialSizeToTransfer to associate to the stream
+
+        IF initialSizeToTransfer/nbDrives > initialSizeCeiling THEN
+		initSize:=initialSizeCeiling;
+	ELSE 
+		initSize:=initialSizeToTransfer/nbDrives;
+	END IF;
+
+	-- loop until the max number of stream
+	IF nbOldStream < nbDrives THEN
+        	LOOP   
+        	   -- get the tape pool with less stream
+        	   BEGIN        	   
+        	   	SELECT id into tpId FROM TapePool WHERE id NOT IN (SELECT tapepool FROM Stream);
+        	   EXCEPTION
+    			WHEN NO_DATA_FOUND THEN
+    			-- at least one stream foreach tapepool
+    				SELECT tapepool into tpId 
+	           			FROM (SELECT tapepool, count(*) as c FROM Stream GROUP BY tapepool ORDER BY c ASC)
+	           			WHERE ROWNUM<2;  	         
+	           END;
+	           
+	           -- STREAM_CREATED
+    		   INSERT INTO Stream (id, initialsizetotransfer, lastFileSystemChange, tape, lastFileSystemUsed, lastButOneFileSystemUsed, tapepool, status) VALUES ( ids_seq.nextval, initSize, 0, 0, 0, 0, tpId, 5) RETURN id INTO strId;
+    		   IF doClone=1 THEN
+			-- clone the new stream with one from the same tapepool
+			SELECT id INTO streamToClone 
+				FROM stream WHERE tapepool=tpId AND ROWNUM < 2; 
+		        FOR tcId IN (SELECT child FROM stream2tapecopy WHERE  stream2tapecopy.parent=streamToClone) LOOP
+				-- a take the first one, they are supposed to be all the same
+				INSERT INTO stream2tapecopy (parent,child) VALUES (strId,tpId); 
+			END LOOP;
+		   END IF;
+                   nbOldStream:=nbOldStream+1;
+                   EXIT WHEN  nbOldStream >= nbDrives;
+  	        END LOOP;
+        END IF;
+    END IF;
+END;
+
+/** attach tapecopy to stream **/
+
+CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
+(
+ tapeCopyIds IN castor."cnumList",
+ tapePoolIds IN castor."cnumList")
+AS
+ tpId NUMBER; -- used in the loop
+ tcId NUMBER; -- used in the loop
+ streamId NUMBER; -- stream attached to the tapepool
+BEGIN
+       -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
+	FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
+	      FOR streamId IN (SELECT id FROM Stream WHERE  Stream.tapepool=tapePoolIds(i))
+	      LOOP
+	 -- I attach the tape copy to all the stream which are relate to the tapepool specified 
+	           INSERT INTO stream2tapecopy (parent,child) VALUES (streamId.id,tapeCopyIds(i));
+	      END LOOP;
+	END LOOP;
+--EXCEPTION
+  --  WHEN NO_DATA_FOUND THEN
+    -- restore candidate 
+  --  FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
+  --  	UPDATE TapeCopy SET TapeCopy.status=1 WHERE TapeCopy.status=2 AND TapeCopy.id=tapeCopyIds(i); 
+  --  END LOOP;
+END;
+
+/** start choosen stream **/
+
+CREATE OR REPLACE PROCEDURE startChosenStreams
+        (streamIds IN castor."cnumList",
+	initSize IN NUMBER) AS
+BEGIN	
+	IF initSize >0 THEN 
+		FOR i in streamIds.FIRST .. streamIds.LAST LOOP
+            		UPDATE Stream SET Stream.status=0 , Stream.initialSizeToTransfer = initSize -- PENDING
+				WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
+		 			AND Stream.initialSizeToTransfer = 0 AND id=streamIds(i);
+		END LOOP;	
+        END IF;
+	UPDATE Stream SET Stream.Status=6 WHERE Stream.Status IN (4,5,6);  -- CREATED WAITSPACE STOPPED (the one not changed as pending)
+END;
+
+/** resurrect Candidates **/
+
+CREATE OR REPLACE PROCEDURE resurrectCandidates
+(migrationCandidates IN castor."cnumList") -- all candidate before applying the policy
+AS
+BEGIN
+    FOR i in migrationCandidates.FIRST .. migrationCandidates.LAST LOOP
+    	UPDATE TapeCopy SET status=1 WHERE status=2 AND id=migrationCandidates(i);
+    END LOOP;
+    COMMIT;
+END;
+
+/** Function for the RecHandlerDaemon **/
+
+/** Get input for python recall policy**/
+
+CREATE OR REPLACE PROCEDURE inputForRecallPolicy(svcClassName IN VARCHAR2,
+ policyName OUT VARCHAR2,
+ dbInfo OUT castor.DbRecallInfo_Cur) AS
+ svcId NUMBER;
+BEGIN
+  BEGIN
+  	SELECT id,recallerPolicy INTO svcId , policyName FROM svcclass WHERE svcclass.name=svcClassName AND ROWNUM < 2;   
+  EXCEPTION 
+      WHEN NO_DATA_FOUND THEN
+       policyName:=Null;
+       dbInfo:=Null;
+       RETURN;
+  END;   
+  OPEN dbInfo FOR 
+  	SELECT tape.id,tape.vid, sum(castorfile.filesize),count(distinct segment.id), min(segment.creationtime) 
+     	FROM tapecopy,castorfile,segment,tape
+        WHERE  tape.id=segment.tape(+) 
+          AND tapecopy.id(+)=segment.copy
+          AND castorfile.id(+)=tapecopy.castorfile 
+           GROUP BY tape.id, tape.vid;
+END;
+
+/** resurrect tapes **/
+
+CREATE OR REPLACE PROCEDURE resurrectTapes 
+(tapeIds IN castor."cnumList") -- all candidate before applying the policy
+AS
+BEGIN
+    FOR i in tapeIds.FIRST .. tapeIds.LAST LOOP
+    	UPDATE Tape SET status=1 WHERE status=8 AND id=tapeIds(i);
+    END LOOP;
+    COMMIT;
 END;

@@ -41,6 +41,9 @@ SHLIBREQLIBS5 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs
 LIBRARIES6 = $(VDQMORALIB)
 SHLIBREQLIBS6 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift -lcastorCommonOra
 
+LIBRARIES7 = $(INFOPOLICYLIB)
+CASTOR_HOME=../
+SHLIBREQLIBS7 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs $(PYTHONLIB) -L$(ORACLE_HOME)/lib -locci
 
 ALL0=SharedLibraryTargetName(shift)
 
@@ -65,6 +68,10 @@ ALL5=SharedLibraryTargetName(castorCnvs) SharedLibraryTargetName(castorCommonPgs
 
 #if BuildVDQMCpp
 ALL6=SharedLibraryTargetName(castorVdqmOra)
+#endif
+
+#if BuildInfoPolicyLibrary 
+ALL7=SharedLibraryTargetName(castorInfoPolicy)
 #endif
 
 #if BuildSecurity
@@ -93,7 +100,7 @@ EXPORTSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_KRB4))
 
 #endif
 
-all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALLSEC)  
+all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALL7) $(ALLSEC)  
 
 INSTALL0=FileName($(LIBDIR),SharedLibraryTargetName(shift))
 #if BuildOraCpp
@@ -114,8 +121,9 @@ INSTALL5=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonPgsql)) FileName
 #if BuildVDQMCpp
 INSTALL6=FileName($(LIBDIR),SharedLibraryTargetName(castorVdqmOra))
 #endif
-
-
+#if BuildInfoPolicyLibrary
+INSTALL7=FileName($(LIBDIR),SharedLibraryTargetName(castorInfoPolicy))
+#endif
 
 install: $(LIBDIR) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $(INSTALL6) $(INSTALLSEC)
 
@@ -138,8 +146,10 @@ EXPORT5=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonPgsql) $(EXPORTLIB)/Sha
 #if BuildVDQMCpp
 EXPORT6=$(EXPORTLIB)/SharedLibraryTargetName(castorVdqmOra)
 #endif
-
-export: $(EXPORT0) $(EXPORT1) $(EXPORT2) $(EXPORT4) $(EXPORT5) $(EXPORT6) $(EXPORTSEC)
+#if BuildInfoPolicyLibrary
+EXPORT7=$(EXPORTLIB)/SharedLibraryTargetName(castorInfoPolicy)
+#endif
+export: $(EXPORT0) $(EXPORT1) $(EXPORT2) $(EXPORT4) $(EXPORT5) $(EXPORT6) $(EXPORT7) $(EXPORTSEC)
 
 exportman: 
 
@@ -201,6 +211,13 @@ libcastorMonitor.so: $(LIBRARIES2)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorMonitor.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
 
+libcastorInfoPolicy.so: $(LIBRARIES7)
+	@echo " making $@ in `pwd`"
+	@-rm -rf tmp
+	@mkdir tmp
+	@for i in $(LIBRARIES7) ;\
+	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	./makeshlib.sh '$(CXX)' libcastorInfoPolicy.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS7)
 
 shift.dll:	$(LIBRARIES0)
 	@echo  making $@ in CurDir
@@ -230,6 +247,9 @@ libcastorVdqmOra.dll:	$(LIBRARIES6)
 	@echo  making $@ in CurDir
 	link /dll /noentry /nologo /out:$@ $**
 
+libcastorInfoPolicy.dll:	$(LIBRARIES7)
+	@echo  making $@ in CurDir
+	link /dll /noentry /nologo /out:$@ $**
 
 MakeDir($(LIBDIR),root,bin,0755)
 
@@ -240,6 +260,7 @@ InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VE
 InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 InstallSharedLibrary(castorMonitor,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(castorInfoPolicy,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
 
 InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
@@ -248,6 +269,7 @@ InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VE
 InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 InstallSharedLibrary(castorMonitor,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(castorInfoPolicy,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
 
 install.man:
 
@@ -291,6 +313,7 @@ MakeDepLibrary(dlf,dlf)
 
 MakeDepLibrary(tape,tape)
 
+
 #if UseOraCDBC || UseMySql || UsePgSql
 MakeDepLibrary(castor/db/cnv,castorCnvs)
 #endif
@@ -310,6 +333,8 @@ MakeDepLibrary(db,db)
 MakeDepLibrary(monitor,monitor)
 
 MakeDepLibrary(castor/monitoring,CastorMonitor)
+
+MakeDepLibrary(castor/infoPolicy,CastorInfoPolicy)
 
 MakeDepLibrary(rmc,rmc)
 

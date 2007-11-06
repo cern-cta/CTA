@@ -287,6 +287,11 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define BuildCppTest	        NO
 #define BuildRepack		NO
 #define BuildCleaning		NO
+
+#define BuildMigHunterDaemon    NO
+#define BuildRecHandlerDaemon   NO
+#define BuildInfoPolicyLibrary  NO
+
 #define BuildGridFTP		NO
 
 #define Accounting		YES

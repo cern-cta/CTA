@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.213 $ $Release$ $Date: 2007/11/02 18:21:45 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.214 $ $Release$ $Date: 2007/11/06 13:37:17 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1278,19 +1278,21 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     
     std::string recallerPolicyStr = svcClass->recallerPolicy();
 
-    if (recallerPolicyStr.empty()){
-         switch (tape->status()) {
+    switch (tape->status()) {
              case castor::stager::TAPE_UNUSED:
              case castor::stager::TAPE_FINISHED:
              case castor::stager::TAPE_FAILED:
              case castor::stager::TAPE_UNKNOWN:
-                tape->setStatus(castor::stager::TAPE_PENDING);
+	        if (recallerPolicyStr.empty())
+		  tape->setStatus(castor::stager::TAPE_PENDING);
+		else
+		  tape->setStatus(castor::stager::TAPE_WAITPOLICY);
                 break;
              default:
                 break;
-         }
-         cnvSvc()->updateRep(&ad, tape, false);
-     }
+    }
+    cnvSvc()->updateRep(&ad, tape, false);
+     
 
      // In any case with or without recaller policy the following operation are executed
 
