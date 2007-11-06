@@ -190,8 +190,6 @@ namespace castor{
 
     username = this_passwd->pw_name;
     groupname = this_gr->gr_name;
-    delete this_gr;
-    delete this_passwd;
 	}catch(castor::exception::Exception e){
 	  castor::dlf::Param params[]={ castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
 					castor::dlf::Param("Function:", "StagerRequestHelper->setUsernameAndGroupname")
@@ -199,8 +197,6 @@ namespace castor{
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 2 ,params);	    
 	  
 	  e.getMessage()<< "Invalid user";
-    if(this_gr) delete this_gr;
-    if(this_passwd) delete this_passwd;
 	  throw e;    
 	}
 	
