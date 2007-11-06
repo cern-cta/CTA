@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.539 $ $Date: 2007/11/06 13:37:17 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.540 $ $Date: 2007/11/06 13:55:05 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4724,31 +4724,33 @@ BEGIN
   END LOOP;
 END;
 
-/** Procedure for the migHunter stream policy using expertd **/
+/* PL/SQL method to get all the information needed from the db to call the stream policy */
 
-CREATE OR REPLACE PROCEDURE basicInputForStreamPolicy
-( 
- svcId IN NUMBER,
- dbInfo OUT castor.StreamPolicyInfo_Cur,
- runningStreams OUT NUMBER
-)
-AS
- tpId NUMBER; -- used in the loop
- tcId NUMBER; -- used in the loop
- streamId NUMBER; -- stream attached to the tapepool
-BEGIN
-        SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool 
-		WHERE  Stream.status=3 
-		 AND Stream.tapepool=SvcClass2TapePool.child 
-		 AND SvcClass2TapePool.parent= svcId; 
+CREATE OR REPLACE PROCEDURE basicInputForStreamPolicy (svcId IN NUMBER, 
+                                                       dbInfo OUT castor.StreamPolicyInfo_Cur, 
+                                                       runningStreams OUT NUMBER) 
+AS 
+  tpId NUMBER; -- used in the loop 
+  tcId NUMBER; -- used in the loop 
+  streamId NUMBER; -- stream attached to the tapepool 
+BEGIN 
+  SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool 
+   WHERE Stream.status = 3 -- RUNNING
+     AND Stream.tapepool =SvcClass2TapePool.child 
+     AND SvcClass2TapePool.parent = svcId; 
+  
+  OPEN dbInfo FOR 
+    SELECT Stream.id, Stream.status, count(distinct stream2tapecopy.child), sum(castorfile.filesize) 
+      FROM Stream2TapeCopy,TapeCopy,castorFile,Stream 
+     WHERE Stream.id(+)=Stream2TapeCopy.parent 
+       AND Stream2TapeCopy.child = TapeCopy.id 
+       AND TapeCopy.castorfile = CastorFile.id 
+       AND Stream.status in (3,4,5,6) 
+       AND castorfile.svcclass = svcId -- RUNNING, STOPPED 
+     GROUP BY Stream.id, Stream.status; 
+END; 
 
-        OPEN dbInfo FOR
-                SELECT Stream.id, Stream.status,count(distinct stream2tapecopy.child),sum(castorfile.filesize)
-		  FROM Stream2TapeCopy,TapeCopy,castorFile,stream 
-		WHERE  Stream2TapeCopy.child=TapeCopy.id  
-			AND TapeCopy.castorfile=CastorFile.id AND Stream.id(+)=Stream2TapeCopy.parent
-			group by Stream2TapeCopy.parent, Stream.status;
-END;
+
 
 /** Function for the MigHunterDaemon **/
 
