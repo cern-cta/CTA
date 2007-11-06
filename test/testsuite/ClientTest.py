@@ -540,7 +540,7 @@ class StagerRmCase(unittest.TestCase):
         fi=open(localDir+"ClientRmDualSvc2","r")
         buffOut=fi.read()
         fi.close()        
-        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_get does not with svc class option -S"
+        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_get doesn't work with svc class option -S"
         
         fi=open(localDir+"ClientRmDualSvc3","r")
         buffOut=fi.read()
