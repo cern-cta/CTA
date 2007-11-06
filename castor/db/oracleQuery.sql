@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.540 $ $Date: 2007/11/06 13:55:05 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.541 $ $Date: 2007/11/06 15:32:54 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4418,21 +4418,7 @@ BEGIN
   END LOOP;
 END;
 
-<<<<<<< oracleTrailer.sql
-/* PL/SQL method to retrieve the sum of all the filesize of all the tapecopies attached to a stream */
-  	 
-  	 CREATE OR REPLACE PROCEDURE getBytesByStream (streamId IN NUMBER, valByte OUT NUMBER) AS
-  	 BEGIN
-  	   SELECT stream.byteVolume INTO valByte FROM stream 
-  	         WHERE stream.id=streamId;
-  	   EXCEPTION WHEN NO_DATA_FOUND THEN
-  	     valByte:=0;
-  	 END;
 
-
-=======
-
->>>>>>> 1.515
 /* PL/SQL method to know the number of tapecopies attached to a specific stream */
 CREATE OR REPLACE PROCEDURE getNumFilesByStream (streamId IN NUMBER, numFiles OUT NUMBER) AS
 BEGIN
