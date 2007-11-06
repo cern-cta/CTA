@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.42 $ $Release$ $Date: 2007/08/11 20:07:53 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldNsInterface.c,v $ $Revision: 1.43 $ $Release$ $Date: 2007/11/06 14:43:51 $ $Author: gtaur $
  *
  * 
  *
@@ -204,6 +204,9 @@ int rtcpcld_updateNsSegmentAttributes(
   struct Cns_filestat statbuf;
   char *blkid = NULL, *nsErrMsg = NULL;
   char castorFileName[CA_MAXPATHLEN+1];
+ 
+  struct  Cns_segattrs * oldSegattrs = NULL;
+  int oldNbSegms=0;
 
   if ( (tape == NULL) || (file == NULL) ) {
     serrno = EINVAL;
@@ -403,7 +406,10 @@ int rtcpcld_updateNsSegmentAttributes(
    */
   for ( retryNsUpdate = 0; retryNsUpdate<maxRetryNsUpdate; retryNsUpdate++ ) {
     if ( repackvid != NULL ) {
-
+       blkid = rtcp_voidToString(
+                            (void *)nsSegAttrs->blockid,
+                            sizeof(nsSegAttrs->blockid)
+                            );
        (void)dlf_write(
                        (inChild == 0 ? mainUuid : childUuid),
                        RTCPCLD_LOG_MSG(RTCPCLD_MSG_REPACK),
@@ -417,25 +423,80 @@ int rtcpcld_updateNsSegmentAttributes(
       /* we found a repackfile initiate different NS behavior*/
       /* replace the old tapecopy. Note that the old segments are deleted!
          and the old tapecopyno is assigned to the new tapecopy.*/
-      rc = Cns_replacetapecopy(
+
+       rc = Cns_getsegattrs(
+                       NULL,
+                       (struct Cns_fileid *)&castorFileId,
+                       &oldNbSegms,
+                       &oldSegattrs
+                       );
+
+       if ( (rc == -1) ||
+	    (oldNbSegms <= 0) ||
+	    (oldSegattrs == NULL) ) {
+	 LOG_SYSCALL_ERR("Cns_getsegattrs()");  
+	 return(-1);
+       }
+             
+       if ( use_checksum && oldNbSegms == 1 && oldSegattrs->checksum != nsSegAttrs->checksum){
+	 /* log error checksum problems for repack */
+	 /* checksum error I don't replace the segment */
+
+           (void)dlf_write(
+                          (inChild == 0 ? mainUuid : childUuid),
+                          RTCPCLD_LOG_MSG(RTCPCLD_MSG_WRONGCKSUM),
+                          (struct Cns_fileid *)&castorFileId,
+                          RTCPCLD_NB_PARAMS+7,
+                          "",
+                          DLF_MSG_PARAM_TPVID,
+                          nsSegAttrs->vid,
+                          "SIDE",
+                          DLF_MSG_PARAM_INT,
+                          nsSegAttrs->side,
+                          "FSEQ",
+                          DLF_MSG_PARAM_INT,
+                          nsSegAttrs->fseq,
+			  "BLOCKID",
+			  DLF_MSG_PARAM_STR,
+			  blkid,
+                          "OLDCKSUM",
+                          DLF_MSG_PARAM_INT,
+                          (int)oldSegattrs->checksum,
+                          "NEWCKSUM",
+                          DLF_MSG_PARAM_INT,
+                          (int)nsSegAttrs->checksum,
+                          RTCPCLD_LOG_WHERE
+                          );
+
+          save_serrno = SECHECKSUM;
+          if (oldSegattrs) free(oldSegattrs);
+          rc=-1;
+	  break;
+       }
+       else {
+	 /*used only to check the old value */
+         if (oldSegattrs) free(oldSegattrs); 
+
+	 rc = Cns_replacetapecopy(
                                &castorFileId,
                                repackvid,
                                nsSegAttrs->vid,
                                nbSegms,
                                nsSegAttrs
                                );
-      free(repackvid);
-      repackvid = NULL;
-    } else {
+	 free(repackvid);
+	 repackvid = NULL;
+       }
+
+    } else { 
       /* the normal Case */
-      rc = Cns_setsegattrs(
+            rc = Cns_setsegattrs(
                           (char *)NULL, // CASTOR file name 
                           &castorFileId,
                           nbSegms,
                           nsSegAttrs
                           );
     }
-  
     if ( rc == 0 ) {
       break;
     } else {
