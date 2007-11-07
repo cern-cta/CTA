@@ -372,7 +372,7 @@ class StagerGetCase(unittest.TestCase):
         
         
     def getSvcClass(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientGetSvc"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvc"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvc"+ticket+" -S"+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvc"+ticket+" -S"+stagerExtraSvcClass,"stager_put -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvcBis"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass]
+        cmd=["stager_put -M "+dirCastor+"fileClientGetSvc"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvc"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvc"+ticket+" -S"+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_put -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvcBis"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass]
 
         UtilityForCastorTest.saveOnFile(localDir+"ClientGetSvc",cmd,myScen)
         
@@ -385,22 +385,16 @@ class StagerGetCase(unittest.TestCase):
         fi=open(localDir+"ClientGetSvc3","r")
         buffOut=fi.read()
         fi.close()        
-        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_get doesn't work with svc class option -S"
+        assert buffOut.rfind("File is being written to in another SvcClass") != -1, "stager_get doesn't work with svc class option -S"
         assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
 
-        fi=open(localDir+"ClientGetSvc4","r")
-        buffOut=fi.read()
-        fi.close()
-        assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work after put"
-        assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
-    
-        fi=open(localDir+"ClientGetSvc8","r")
+        fi=open(localDir+"ClientGetSvc7","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work with svc class option -S"
         assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
         
-        fi=open(localDir+"ClientGetSvc9","r")
+        fi=open(localDir+"ClientGetSvc8","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("No such file") != -1, "stager_get doesn't work with svc class option -S"
