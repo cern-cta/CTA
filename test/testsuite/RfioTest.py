@@ -104,7 +104,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
 		   f.close()
 		   gid=UtilityForCastorTest.logGroup()
 		   uid=UtilityForCastorTest.logUser()
-		   if (buff.find("USTGMAP "+uid)!= -1 or buff.find("GSTGMAP "+gid) != -1):
+		   if (buff.find(uid)!= -1 or buff.find(gid) != -1):
 			   if castorEnv == "no":
 				   assert stageMap == "yes", "You might use values in /etc/castor/stagemap.conf even if you don't want." 
 		   else:
