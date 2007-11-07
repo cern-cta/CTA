@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.18 $ $Date: 2007/08/27 07:36:56 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.19 $ $Date: 2007/11/07 14:51:34 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -610,6 +610,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 		}
 prthdrs:
 		c = 0;
+                tplogit (func, "pos  = ....v....1....v....2....v....3....v....4....v....5....v....6....v....7....8\n");  
 		tplogit (func, "hdr1 = %s\n", hdr1);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                                     "func", TL_MSG_PARAM_STR, func,

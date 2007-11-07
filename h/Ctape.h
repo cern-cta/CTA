@@ -24,7 +24,7 @@
 #define OPRMSGSZ  257	     /* maximum operator message/reply length */
 #define	RBTFASTRI  60	     /* fast retry interval for robotic operations */
 #define	RBTUNLDDMNTI  60     /* retry interval for unload/demount */
-#define PRTBUFSZ  180
+#define PRTBUFSZ  1024
 #define REPBUFSZ 2800	     /* must be >= max tape daemon reply size */
 #define REQBUFSZ 1104	     /* must be >= max tape daemon request size */
 #define SMSGI      30	     /* retry interval when sending operator messages */
@@ -199,7 +199,7 @@
 #define TP022	"TP022 - path exists already\n"
 #define TP023	"TP023 - mount cancelled by operator: %s\n"
 #define TP024	"TP024 - file %s does not exist\n"
-#define TP025	"TP025 - bad label structure\n\tReason: %s\n\tLabel : %s\n"
+#define TP025	"TP025 - bad label structure\n\tReason  : %s\n\tPosition: ....v....1....v....2....v....3....v....4....v....5....v....6....v....7....8\n\tLabel   : %s\n"
 #define TP026	"TP026 - system error\n"
 #define TP027	"TP027 - you are not registered in account file\n"
 #define TP028	"TP028 - file not expired\n"
