@@ -300,27 +300,27 @@ class StagerGetCase(unittest.TestCase):
 
         UtilityForCastorTest.saveOnFile(localDir+"ClientGetAndRfcp",cmd,myScen)
     
-        fi=open(localDir+"ClientGetAndRfcp2","r")
+        fi=open(localDir+"ClientGetAndRfcp1","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("SUBREQUEST_FAILED") != -1, "stager_get doesn't work after prepare to put"
 
-        fi=open(localDir+"ClientGetAndRfcp4","r")
+        fi=open(localDir+"ClientGetAndRfcp3","r")
         buffOut=fi.read()
         fi.close()        
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_get doesn't work after stager_put and rfcp"
     
-        fi=open(localDir+"ClientGetAndRfcp5","r")
+        fi=open(localDir+"ClientGetAndRfcp4","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("error=0") != -1, "stager_putdone doesn't work after put, rfcp and get"
         
     
-        fi=open(localDir+"ClientGetAndRfcp6","r")
+        fi=open(localDir+"ClientGetAndRfcp5","r")
         assert fi.read().find("SUBREQUEST_READY") != -1, "stager_get doesn't work after a put, rfcp and putDone"
         fi.close()
         
-        fi=open(localDir+"ClientGetAndRfcp7","r")
+        fi=open(localDir+"ClientGetAndRfcp6","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after a put, rfcp and putDone"
@@ -516,34 +516,34 @@ class StagerRmCase(unittest.TestCase):
 
     def rmDualSvcClass(self):
         
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientRmDualSvc"+ticket,"stager_get -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
+        cmd=["STAGE_SVCCLASS="+ stagerDiskOnlySvcClass+" rfcp "+inputFile+" "+dirCastor+"fileClientRmDualSvc"+ticket,"stager_get -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
         
         UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvc",cmd,myScen)
         
-        fi=open(localDir+"ClientRmDualSvc2","r")
+        fi=open(localDir+"ClientRmDualSvc1","r")
         buffOut=fi.read()
         fi.close()        
         assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_get doesn't work with svc class option -S"
         
-        fi=open(localDir+"ClientRmDualSvc3","r")
+        fi=open(localDir+"ClientRmDualSvc2","r")
         buffOut=fi.read()
         fi.close()        
         assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
+
+        fi=open(localDir+"ClientRmDualSvc3","r")
+        buffOut=fi.read()
+        fi.close()        
+        assert buffOut.find("STAGED") != -1, "stager_qry doesn't work after stager_rm with svc class option -S"
 
         fi=open(localDir+"ClientRmDualSvc4","r")
         buffOut=fi.read()
         fi.close()        
-        assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after stager_rm with svc class option -S"
+        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
 
         fi=open(localDir+"ClientRmDualSvc5","r")
         buffOut=fi.read()
         fi.close()        
-        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
-
-        fi=open(localDir+"ClientRmDualSvc6","r")
-        buffOut=fi.read()
-        fi.close()        
-        assert buffOut.rfind("not in stager") != -1, "stager_qry doesn't work after stager_rm with svc class option -S"
+        assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work after stager_rm with svc class option -S"
 
         
 class StagerSpecialQueryCase(unittest.TestCase):
