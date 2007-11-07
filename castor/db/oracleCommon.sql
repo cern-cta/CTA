@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.541 $ $Date: 2007/11/06 15:32:54 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.542 $ $Date: 2007/11/07 17:00:44 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2471,6 +2471,8 @@ CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
   fid INTEGER;
   nh VARCHAR2(2048);
   unused INTEGER;
+  putSC INTEGER;
+  pputSC INTEGER;
   contextPIPP INTEGER;
 BEGIN
   -- Lock the access to the CastorFile
@@ -2480,18 +2482,33 @@ BEGIN
   -- Determine the context (Put inside PrepareToPut ?)
   BEGIN
     -- check that we are a Put
-    SELECT StagePutRequest.id INTO unused
+    SELECT StagePutRequest.svcClass INTO putSC
       FROM StagePutRequest, SubRequest
      WHERE SubRequest.id = srId
        AND StagePutRequest.id = SubRequest.request;
     BEGIN
       -- check that there is a PrepareToPut going on
-      SELECT SubRequest.diskCopy INTO dcId
+      SELECT SubRequest.diskCopy, StagePrepareToPutRequest.svcClass INTO dcId, pputSC
         FROM StagePrepareToPutRequest, SubRequest
        WHERE SubRequest.CastorFile = cfId
          AND StagePrepareToPutRequest.id = SubRequest.request
          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- if we got here, we are a Put inside a PrepareToPut
+      -- however, are we in the same service class ?
+      IF putSC != pputSC THEN
+        -- No, this means we are a put and another PrepareToPut
+        -- is already running in a different service class. This is forbidden
+        dcId := 0;
+        UPDATE SubRequest
+           SET status = 7, -- FAILED
+               errorCode = 16, -- EBUSY
+               errorMessage = 'A prepareToPut is running in another service class for this file'
+         WHERE id = srId;
+        COMMIT;
+        RETURN;
+      END IF;
+      -- if we got here, we are a Put inside a PrepareToPut
+      -- both running in the same service class
       contextPIPP := 1;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- if we got here, we are a standalone Put
