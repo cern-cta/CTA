@@ -138,9 +138,6 @@ namespace castor{
 	    castor::exception::Exception ex(SEINTERNAL); 
 	    throw ex;
 	  }else{/*convert to the Cuuid_t version and copy in our thread safe variable */
-	    castor::dlf::Param param[]= {castor::dlf::Param("Standard Message","(StagerRequestHelper RequestUuid) RequestUuid:"),
-					 castor::dlf::Param("Standard Message",fileRequest->reqId())};
-	    castor::dlf::dlf_writep( nullCuuid, DLF_LVL_USAGE, 1, 2, param);/*   */
 	    
 	    if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
 	      castor::exception::Exception ex(SEINTERNAL);	      

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2007/10/24 09:17:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2007/11/07 17:08:16 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -529,7 +529,7 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest
            castor::dlf::Param("message", e.getMessage().str())};
         castor::dlf::dlf_writep(uuid,
                                 e.code() == ENOENT ? DLF_LVL_SYSTEM : DLF_LVL_ERROR,
-                                STAGER_QRYSVC_UNKREQ, 3, params);
+                                e.code() == ENOENT ? STAGER_USER_NONFILE : STAGER_QRYSVC_UNKREQ, 3, params);
         // Send the exception to the client
         castor::rh::FileQryResponse res;
         res.setReqAssociated(req->reqId());
