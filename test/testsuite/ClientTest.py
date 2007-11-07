@@ -388,10 +388,15 @@ class StagerGetCase(unittest.TestCase):
         assert buffOut.rfind("File is being written to in another SvcClass") != -1, "stager_get doesn't work with svc class option -S"
         assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
 
+        fi=open(localDir+"ClientGetSvc5","r")
+        buffOut=fi.read()
+        fi.close()
+        assert buffOut.find("Device or resource busy") != -1, "stager_get doesn't work with svc class option -S"
+        
         fi=open(localDir+"ClientGetSvc7","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.find("STAGEOUT") != -1, "stager_get doesn't work with svc class option -S"
+        assert buffOut.find("File is being (re)created right now") != -1, "stager_get doesn't work with svc class option -S"
         assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
         
         fi=open(localDir+"ClientGetSvc8","r")
