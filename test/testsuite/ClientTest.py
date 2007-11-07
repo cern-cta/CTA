@@ -500,7 +500,7 @@ class StagerRmCase(unittest.TestCase):
         
     def rmSvcClass(self):
         
-        cmd=["stager_put -M "+dirCastor+"fileClientRmSvc"+ticket+" -S"+stagerSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientRmSvc"+ticket,"stager_put -M "+dirCastor+"fileClientRmSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass]
+        cmd=["stager_put -M "+dirCastor+"fileClientRmSvc"+ticket+" -S"+stagerSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientRmSvc"+ticket]
         
         UtilityForCastorTest.saveOnFile(localDir+"ClientRmSvc",cmd,myScen)
         
@@ -512,24 +512,7 @@ class StagerRmCase(unittest.TestCase):
         fi=open(localDir+"ClientRmSvc2","r")
         buffOut=fi.read()
         fi.close()        
-        assert buffOut.rfind("STAGEOUT") != -1, "stager_rm doesn't work with svc class option -S"
-
-        fi=open(localDir+"ClientRmSvc3","r")
-        buffOut=fi.read()
-        fi.close()
-        assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
-        assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
-        
-        fi=open(localDir+"ClientRmSvc4","r")
-        buffOut=fi.read()
-        fi.close()
-        assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put"
-        assert buffOut.rfind("Opt SVCCLASS="+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
-    
-        fi=open(localDir+"ClientRmSvc5","r")
-        buffOut=fi.read()
-        fi.close()
-        assert buffOut.find("No such file") != -1, "stager_rm doesn't work with svc class option -S"
+        assert buffOut.rfind("INVALID") != -1, "stager_rm doesn't work with svc class option -S"
 
     def rmDualSvcClass(self):
         
