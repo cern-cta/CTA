@@ -40,7 +40,7 @@ namespace castor{
       public:
 
         StagerRequestHandler() throw() : BaseObject() {};
-	      virtual ~StagerRequestHandler() throw() {};
+	      virtual ~StagerRequestHandler() throw();
 	
 	
 	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */

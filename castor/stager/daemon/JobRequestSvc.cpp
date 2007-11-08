@@ -106,8 +106,7 @@ namespace castor{
           }
           
           delete stgRequestHandler;
-	  delete stgRequestHelper;
-          
+	  delete stgRequestHelper;         
          
           
         }catch(castor::exception::Exception ex){ /* process the exception an replyToClient */
@@ -115,8 +114,9 @@ namespace castor{
           handleException(stgRequestHelper,stgRequestHandler->getStgCnsHelper(), ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
-          if(stgRequestHandler) delete stgRequestHandler;	  
-          if(stgRequestHelper) delete stgRequestHelper;
+          if(stgRequestHandler) delete stgRequestHandler;
+	  if(stgRequestHelper) delete stgRequestHelper;
+          
          
         }
         

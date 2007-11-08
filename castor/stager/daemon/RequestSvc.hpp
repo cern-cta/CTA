@@ -32,7 +32,7 @@ namespace castor {
       public: 
 
         RequestSvc(std::string name) throw() : SelectProcessThread(), m_name(name) {};
-        virtual ~RequestSvc() throw() {};
+        virtual ~RequestSvc() throw() { };
         
         /***************************************************************************/
         /* abstract functions inherited from the SelectProcessThread to implement */
@@ -42,7 +42,6 @@ namespace castor {
         void handleException(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage);
         
       protected:
-
         std::string m_name;
         
         int typeRequest;

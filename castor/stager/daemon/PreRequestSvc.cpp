@@ -123,7 +123,7 @@ namespace castor{
           }
           
           delete stgRequestHandler;          
-          delete stgRequestHelper;         
+	  delete stgRequestHelper;
                
           /* we have to process the exception and reply to the client in case of error  */
         }catch(castor::exception::Exception ex){
@@ -133,7 +133,6 @@ namespace castor{
           /* we delete our objects */
           if(stgRequestHandler) delete stgRequestHandler;	  
           if(stgRequestHelper) delete stgRequestHelper;
-          
         }
         
         

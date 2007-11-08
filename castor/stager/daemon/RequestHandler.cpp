@@ -82,9 +82,15 @@ namespace castor{
 	
 	/* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
 	stgRequestHelper->checkFilePermission();
-	
+	       
+      }
 
-       
+
+      /*******************************************************/
+      /* since the StagerCnsHelper is created in this class */
+      /* it will be deleted in its destructor */
+      StagerRequestHandler:: ~StagerRequestHandler() throw(){
+	delete stgCnsHelper;
       }
       
    }//end namespace dbService

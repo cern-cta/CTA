@@ -86,7 +86,7 @@ namespace castor{
       /***************************************************** */
       void StgRequestSvc::process(castor::IObject* subRequestToProcess) throw() {
        
-        StagerRequestHelper* stgRequestHelper= NULL;
+	StagerRequestHelper* stgRequestHelper= NULL;
         StagerRequestHandler* stgRequestHandler = NULL;
         
         try {         
@@ -116,7 +116,7 @@ namespace castor{
           stgRequestHandler->handle();
           
           delete stgRequestHandler;
-          delete stgRequestHelper;
+	  delete stgRequestHelper;
          
           /* we have to process the exception and reply to the client in case of error  */
         }catch(castor::exception::Exception ex){
@@ -126,7 +126,6 @@ namespace castor{
           /* we delete our objects */
           if(stgRequestHandler) delete stgRequestHandler;	  
           if(stgRequestHelper) delete stgRequestHelper;
-          
         }
         
         
