@@ -1,4 +1,15 @@
 -----------
+- 2.1.5-0 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This CASTOR version is an internal one dedicated to the testing of the new stager.
+  Full release notes will be provided with the 2.1.6 version.
+  Note that this version is suppose to be compatible with 2.1.4 in order to run the
+  new stager on top of a standard 2.1.4 install.
+
+-----------
 - 2.1.4-5 -
 -----------
 
