@@ -221,7 +221,13 @@ namespace castor{
           if(!rfs.empty())
             rfs += "|";
           rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
-        }        
+        }
+
+        // cleanup sources list
+        for(iter = sources.begin(); iter != sources.end(); iter++) {
+          delete (*iter);
+        }
+        sources.clear();
       }
       
       

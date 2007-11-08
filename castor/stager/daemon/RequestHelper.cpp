@@ -95,6 +95,7 @@ namespace castor{
 	  }
 	  
 	  this->baseAddr =  new castor::BaseAddress; /* the settings ll be done afterwards */
+    svcClass = 0;
 	  
 	  baseAddr->setCnvSvcName("DbCnvSvc");
 	  baseAddr->setCnvSvcType(SVC_DBCNV);
@@ -123,6 +124,7 @@ namespace castor{
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
 	delete baseAddr;
+  if(svcClass) delete svcClass;
       }
 
 
