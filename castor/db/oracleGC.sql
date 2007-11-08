@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.542 $ $Date: 2007/11/07 17:00:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.543 $ $Date: 2007/11/08 10:20:12 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4304,15 +4304,15 @@ BEGIN
   END IF;
   -- atomically update the status to WAITINSTREAMS (we got a lock
   -- above with the FOR UPDATE clause)
-  UPDATE TapeCopy
-     SET status = 2   -- WAITINSTREAMS
-   WHERE id MEMBER OF tcIds;
+  -- using a FORALL to bulk update... forcing the use of unique index path via PK
+  FORALL i in tcIds.FIRST..tcIDs.LAST
+    UPDATE TAPECOPY SET STATUS = 2 WHERE id = tcIds(i);
   -- release the lock
   COMMIT;
   -- return the full resultset
   OPEN result FOR
-    SELECT * FROM TapeCopy
-    WHERE id MEMBER OF tcIds;
+    SELECT /*+ INDEX(b I_TAPECOPY_ID) */ * FROM TapeCopy b
+    WHERE b.id in (SELECT /*+ CARDINALITY(a 5) */ *  FROM TABLE(tcIds) a);
 END;
 
 
