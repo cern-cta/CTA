@@ -334,6 +334,7 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'RmMaster');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (20, 'RmNode');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (21, 'JobManager');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (22, 'Stager');
 
 /* initialise sequences */
 INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);
