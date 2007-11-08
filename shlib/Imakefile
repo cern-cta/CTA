@@ -43,7 +43,7 @@ SHLIBREQLIBS6 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshif
 
 LIBRARIES7 = $(INFOPOLICYLIB)
 CASTOR_HOME=../
-SHLIBREQLIBS7 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs $(PYTHONLIB) -L$(ORACLE_HOME)/lib -locci
+SHLIBREQLIBS7 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs $(PYTHONLIBS) -L$(ORACLE_HOME)/lib -locci
 
 ALL0=SharedLibraryTargetName(shift)
 
