@@ -126,14 +126,17 @@ namespace castor{
         delete baseAddr;
         if(svcClass) delete svcClass;
         if(subrequest) {
-          if(subrequest->request()->client()) {
-            delete subrequest->request()->client();
+          if(subrequest->request()) {
+            if(subrequest->request()->client()) {
+              delete subrequest->request()->client();
+            }
+            delete subrequest->request();
           }
-          delete subrequest->request();
           if(subrequest->castorFile()) {
             delete subrequest->castorFile()->fileClass();
             delete subrequest->castorFile();
           }
+          delete subrequest;
         }
       }
 
