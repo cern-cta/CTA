@@ -291,7 +291,7 @@ BEGIN
   FOR cf IN (SELECT UNIQUE d.castorFile
               FROM DiskCopy d, Diskcopy e
              WHERE d.castorfile = e.castorfile
-               AND d.status = 4
+               AND d.status = 2
                AND e.status = 0) LOOP
     stageRmForRecalls(cf.castorFile);
     totalCount := totalCount + 1;
@@ -327,7 +327,6 @@ ALTER TABLE StagePutDoneRequest SHRINK SPACE CASCADE;
 ALTER TABLE StageRmRequest SHRINK SPACE CASCADE;
 ALTER TABLE StageGetRequest SHRINK SPACE CASCADE;
 ALTER TABLE StagePutRequest SHRINK SPACE CASCADE;
-ALTER TABLE DiskCopy SHRINK SPACE CASCADE;
 ALTER TABLE SubRequest SHRINK SPACE CASCADE;
 
 UPDATE CleanupLogTable
