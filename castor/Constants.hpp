@@ -167,7 +167,10 @@ namespace castor {
     OBJ_CnsInfoRecallPolicy=138,
     OBJ_DbInfoRecallPolicy=139,
     OBJ_DbInfoStreamPolicy=140,
-    OBJ_PolicyObj=141
+    OBJ_PolicyObj=141,
+
+    OBJ_NsFilesDeleted=142,
+    OBJ_NsFilesDeletedResponse=143
   };
 
   /**
@@ -241,7 +244,7 @@ namespace castor {
    * Nb of objectIds currently existing
    */
 
-  static const unsigned int ObjectsIdsNb = 142;
+  static const unsigned int ObjectsIdsNb = 144;
 
   /**
    * Nb of ServicesIds currently existing
@@ -258,7 +261,7 @@ namespace castor {
    * correctly the ObjectsIds enum
    */
 
-  extern const char* ObjectsIdStrings[142];
+  extern const char* ObjectsIdStrings[144];
 
 
   /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2007/10/22 15:13:02 $ $Author: gtaur $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2007/11/09 08:09:29 $ $Author: sponcec3 $
  *
  *
  *
@@ -179,7 +179,11 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "CnsInfoRecallPolicy",
   "DbInfoRecallPolicy",
   "DbInfoStreamPolicy",
-  "PolicyObj"
+  "PolicyObj",
+
+  "NsFilesDeleted",
+  "NsFilesDeletedResponse"
+
   };
 
 
