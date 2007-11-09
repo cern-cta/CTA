@@ -161,7 +161,7 @@ namespace castor{
 	  }
 	}catch(castor::exception::Exception e){
 	  
-	  castor::dlf::Param params[]={ castor::dlf::Param("Subrequest fileName:", subrequest->fileName()),
+	  castor::dlf::Param params[]={ castor::dlf::Param("fileName:", subrequest->fileName()),
 					castor::dlf::Param("Function:","StagerRequestHelper->setRequestUuid")
 	  };
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_REQUESTUUID_EXCEPTION, 2 ,params);	    
@@ -203,7 +203,7 @@ namespace castor{
     username = this_passwd->pw_name;
     groupname = this_gr->gr_name;
 	}catch(castor::exception::Exception e){
-	  castor::dlf::Param params[]={ castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+	  castor::dlf::Param params[]={ castor::dlf::Param("fileName",subrequest->fileName()),
 					castor::dlf::Param("Function:", "StagerRequestHelper->setUsernameAndGroupname")
 	  };
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 2 ,params);	    
@@ -252,7 +252,7 @@ namespace castor{
 
 	  }
 	}catch(castor::exception::Exception e){
-	  castor::dlf::Param params[]={	castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+	  castor::dlf::Param params[]={	castor::dlf::Param("fileName",subrequest->fileName()),
 					castor::dlf::Param("UserName",username),
 					castor::dlf::Param("GroupName", groupname),
 					castor::dlf::Param("Function","StagerRequestHelper->setSubrequestUuid")
@@ -298,7 +298,7 @@ namespace castor{
 	svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
 	if(this->svcClass == NULL){
 	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
-					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("fileName",subrequest->fileName()),
 					castor::dlf::Param("UserName",username),
 					castor::dlf::Param("GroupName", groupname),
 					castor::dlf::Param("SvcClassName",svcClassName),
@@ -365,7 +365,7 @@ namespace castor{
 	}catch(castor::exception::Exception e){
 
 	  castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
-					castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					castor::dlf::Param("fileName",subrequest->fileName()),
 					castor::dlf::Param("UserName",username),
 					castor::dlf::Param("GroupName", groupname),
 					castor::dlf::Param("SvcClassName",svcClassName),
@@ -448,7 +448,7 @@ namespace castor{
 	    }
 	  }catch(castor::exception::Exception e){
 	     castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
-					   castor::dlf::Param("Subrequest fileName",subrequest->fileName()),
+					   castor::dlf::Param("fileName",subrequest->fileName()),
 					   castor::dlf::Param("UserName",username),
 					   castor::dlf::Param("GroupName", groupname),
 					   castor::dlf::Param("SvcClassName",svcClassName),

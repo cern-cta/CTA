@@ -75,7 +75,7 @@ namespace castor{
 	  {
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
 					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
+					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -88,7 +88,7 @@ namespace castor{
 	    {
 	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
 					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
+					   castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
 					   castor::dlf::Param("UserName",stgRequestHelper->username),
 					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -105,7 +105,7 @@ namespace castor{
 	    /* we are gona replyToClient so we dont updateRep on DB explicitly */
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
 					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
+					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -122,7 +122,7 @@ namespace castor{
 	  {
 	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
 					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
+					   castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
 					   castor::dlf::Param("UserName",stgRequestHelper->username),
 					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -148,7 +148,7 @@ namespace castor{
 	  {
 	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PrepareToGet"),
 					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
+					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
 					 castor::dlf::Param("UserName",stgRequestHelper->username),
 					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
@@ -181,7 +181,7 @@ namespace castor{
 	   handlerSettings();
 
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("Subrequest fileName",stgRequestHelper->subrequest->fileName()),
+				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
 				       castor::dlf::Param("UserName",stgRequestHelper->username),
 				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
 				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
