@@ -88,26 +88,53 @@ namespace castor{
 				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
 	  };
 	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_PUTDONE, 5 ,params, &(stgCnsHelper->cnsFileid));
-	  
-
-
 
 	  jobOriented();/* until it will be explored */
 	 
 	  
-	  if(stgRequestHelper->stagerService->processPutDone(stgRequestHelper->subrequest)){
-	 
-	    /* for the PutDone, if everything is ok, we archive the subrequest */
-	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-	    
-	    /* replyToClient Part: */
-	    stgReplyHelper = new StagerReplyHelper();
-	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
-	    stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    
-	    delete stgReplyHelper;
-	  }
-
+	  switch(stgRequestHelper->stagerService->processPutDone(stgRequestHelper->subrequest)) {
+      
+      case -1:  // request put in wait
+        {
+          castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PutDone"),
+               castor::dlf::Param(stgRequestHelper->subrequestUuid),
+               castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
+               castor::dlf::Param("UserName",stgRequestHelper->username),
+               castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+               castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+          };
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, 6, params, &(stgCnsHelper->cnsFileid));
+        }
+        break;
+      
+      case 0:   // error
+        {
+          castor::dlf::Param params[]={castor::dlf::Param("Request type:", "PutDone"),
+               castor::dlf::Param(stgRequestHelper->subrequestUuid),
+               castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
+               castor::dlf::Param("UserName",stgRequestHelper->username),
+               castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+               castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
+          };
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6, params, &(stgCnsHelper->cnsFileid));
+        }
+        break;
+      
+      case 1:   // ok
+        {
+          /* we archive the subrequest */
+          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+          
+          /* replyToClient Part: */
+          stgReplyHelper = new StagerReplyHelper();
+          stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+          stgReplyHelper->endReplyToClient(stgRequestHelper);
+          
+          delete stgReplyHelper;
+        }
+        break;
+    }
+      
 	}catch(castor::exception::Exception e){
 	  if(stgReplyHelper != NULL) delete stgReplyHelper;
 	  
