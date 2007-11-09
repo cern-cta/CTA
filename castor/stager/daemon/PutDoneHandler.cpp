@@ -101,7 +101,7 @@ namespace castor{
 	    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
 	    
 	    /* replyToClient Part: */
-	    stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+	    stgReplyHelper = new StagerReplyHelper();
 	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
 	    stgReplyHelper->endReplyToClient(stgRequestHelper);
 	    

@@ -92,7 +92,7 @@ namespace castor{
 	/***/
 	/* reply to the client in case of error*/
 	if(stgRequestHelper->iClient != NULL){
-	  StagerReplyHelper *stgReplyHelper = new StagerReplyHelper(SUBREQUEST_FAILED_FINISHED);
+	  StagerReplyHelper *stgReplyHelper = new StagerReplyHelper();
 	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,errorCode,errorMessageC);
 	    stgReplyHelper->endReplyToClient(stgRequestHelper);
 	    delete stgReplyHelper;

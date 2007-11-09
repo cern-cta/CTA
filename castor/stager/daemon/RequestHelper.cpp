@@ -123,8 +123,18 @@ namespace castor{
       /* destructor */
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
-	delete baseAddr;
-  if(svcClass) delete svcClass;
+        delete baseAddr;
+        if(svcClass) delete svcClass;
+        if(subrequest) {
+          if(subrequest->request()->client()) {
+            delete subrequest->request()->client();
+          }
+          delete subrequest->request();
+          if(subrequest->castorFile()) {
+            delete subrequest->castorFile()->fileClass();
+            delete subrequest->castorFile();
+          }
+        }
       }
 
 

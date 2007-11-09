@@ -205,7 +205,7 @@ namespace castor{
 	  /* if needed, we update the subrequestStatus internally */
 	  if(switchDiskCopiesForJob()) {
 	 
-      stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+      stgReplyHelper = new StagerReplyHelper();
       stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
       stgReplyHelper->endReplyToClient(stgRequestHelper);
      

@@ -99,7 +99,7 @@ namespace castor{
 	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
 	      
 	      /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
-	      stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+	      stgReplyHelper = new StagerReplyHelper();
 	      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
 	      stgReplyHelper->endReplyToClient(stgRequestHelper);
 	      

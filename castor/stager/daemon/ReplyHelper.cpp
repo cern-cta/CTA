@@ -34,21 +34,11 @@ namespace castor{
     namespace dbService{
       
       
-      StagerReplyHelper::StagerReplyHelper(castor::stager::SubRequestStatusCodes newSubreqStatus) throw(castor::exception::Exception)
+      StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception)
       {
         try{
           this->ioResponse = new castor::rh::IOResponse;
           this->requestReplier = castor::replier::RequestReplier::getInstance();
-          
-          if(newSubreqStatus == SUBREQUEST_FAILED_FINISHED){
-            this->newSubrequestStatus = SUBREQUEST_FAILED;
-          }else if(newSubreqStatus == SUBREQUEST_READYFORSCHED){
-            this->newSubrequestStatus = SUBREQUEST_READY;
-          }else{
-            this->newSubrequestStatus = newSubreqStatus;
-          }
-          
-          
           
         }catch(castor::exception::Exception ex){
           if( ioResponse != NULL){
@@ -83,9 +73,9 @@ namespace castor{
           throw ex;
         }
         
-        this->ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
-        this->ioResponse->setStatus(this->newSubrequestStatus);
-        this->ioResponse->setId(stgRequestHelper->subrequest->id());
+        ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
+        ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
+        ioResponse->setId(stgRequestHelper->subrequest->id());
         
         /* errorCode = exception.code() */
         if(errorCode != 0){

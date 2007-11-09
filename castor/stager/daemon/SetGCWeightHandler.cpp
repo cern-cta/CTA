@@ -99,7 +99,7 @@ namespace castor{
 	  
 	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
 	
-	  stgReplyHelper = new StagerReplyHelper(SUBREQUEST_READY);
+	  stgReplyHelper = new StagerReplyHelper();
 	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No error");
 	  stgReplyHelper->endReplyToClient(stgRequestHelper);
 	  

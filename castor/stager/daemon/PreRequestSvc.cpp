@@ -113,9 +113,8 @@ namespace castor{
               break;
             
           }
-          /**********************************************/
-          /* inside the handle(), call to preHandle() */
           
+          stgRequestHandler->preHandle();
           stgRequestHandler->handle();
           
           if (stgRequestHandler->notifyJobManager()) {
@@ -123,7 +122,7 @@ namespace castor{
           }
           
           delete stgRequestHandler;          
-	  delete stgRequestHelper;
+          delete stgRequestHelper;
                
           /* we have to process the exception and reply to the client in case of error  */
         }catch(castor::exception::Exception ex){

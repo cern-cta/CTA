@@ -96,9 +96,7 @@ namespace castor{
             
           }// end switch(typeRequest)
           
-          /**********************************************/
-          /* inside the handle(), call to preHandle() */
-          
+          stgRequestHandler->preHandle();
           stgRequestHandler->handle();
           
           if (stgRequestHandler->notifyJobManager()) {
@@ -106,7 +104,7 @@ namespace castor{
           }
           
           delete stgRequestHandler;
-	  delete stgRequestHelper;         
+          delete stgRequestHelper;         
          
           
         }catch(castor::exception::Exception ex){ /* process the exception an replyToClient */
