@@ -93,8 +93,7 @@ namespace castor{
             case OBJ_StageUpdateRequest:
               stgRequestHandler = new StagerUpdateHandler(stgRequestHelper);
               break;
-            
-          }// end switch(typeRequest)
+          }
           
           stgRequestHandler->preHandle();
           stgRequestHandler->handle();
@@ -112,10 +111,8 @@ namespace castor{
           handleException(stgRequestHelper,stgRequestHandler->getStgCnsHelper(), ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
-          if(stgRequestHandler) delete stgRequestHandler;
-	  if(stgRequestHelper) delete stgRequestHelper;
-          
-         
+          delete stgRequestHandler;
+          delete stgRequestHelper;
         }
         
       }/* end JobRequestSvc::process */

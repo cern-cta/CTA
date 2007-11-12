@@ -44,11 +44,6 @@ namespace castor{
         StagerJobRequestHandler() throw() : m_notifyJobManager(false) {};
         virtual ~StagerJobRequestHandler() throw() {};
 
-	/*******************************************************************/
-	/* function to set the handler's attributes according to its type */
-	/*****************************************************************/
-	virtual void handlerSettings() throw(castor::exception::Exception) = 0;
-
     	/* main function which must be implemented on each handler */
 	virtual void handle() throw(castor::exception::Exception) = 0;
 

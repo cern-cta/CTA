@@ -66,32 +66,14 @@ namespace castor{
       /**************************************************************************************/
       void StagerJobRequestHandler::jobOriented() throw(castor::exception::Exception)
       {
+        memset(&(stgCnsHelper->cnsFileclass), 0, sizeof(stgCnsHelper->cnsFileclass));
+        Cns_queryclass(stgCnsHelper->cnsFileid.server,stgCnsHelper->cnsFilestat.fileclass, NULL, &(stgCnsHelper->cnsFileclass));
+        /* free the tppols*/
+        free(stgCnsHelper->cnsFileclass.tppools);
         
-        try{
-          
-          memset(&(stgCnsHelper->cnsFileclass), 0, sizeof(stgCnsHelper->cnsFileclass));
-          Cns_queryclass(stgCnsHelper->cnsFileid.server,stgCnsHelper->cnsFilestat.fileclass, NULL, &(stgCnsHelper->cnsFileclass));
-          /* free the tppols*/
-          free(stgCnsHelper->cnsFileclass.tppools);
-          
-          /* link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name ) */
-          /* the exception is throwing internally in the helper method */
-          stgRequestHelper->getFileClass(stgCnsHelper->cnsFileclass.name);/* first we need to get the FileClass */
-          
-          /* the exception is throwing internally in the helper method */
-          stgRequestHelper->getCastorFileFromSvcClass(stgCnsHelper);
-          
-          
-          /*  fill castorFile's FileClass: called in StagerRequest.jobOriented() */
-          stgRequestHelper->setFileClassOnCastorFile();
-          
-          /*in c code this part also includes to print the protocol(=subrequest.protocol()) or the default protocol */
-        }catch (castor::exception::Exception e){
-          /* maybe Cns_query throws an exception */
-          castor::exception::Exception ex(e.code());
-          ex.getMessage()<<"(StagerJobRequestHandler jobOriented)"<<e.getMessage().str()<<std::endl;
-          throw ex;
-        }
+        // forward any db exception to the upper level
+        /* link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name ) */
+        stgRequestHelper->getCastorFileFromSvcClass(stgCnsHelper);
       }
       
 
@@ -148,61 +130,34 @@ namespace castor{
       /**************************************************************************************************************************/
       int StagerJobRequestHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
       {
-	 const std::string filename = stgRequestHelper->subrequest->fileName();
-	 std::string expQuestion=replicationPolicy + " " + filename;
-	 char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
-	 int fd;
+        const std::string filename = stgRequestHelper->subrequest->fileName();
+        std::string expQuestion=replicationPolicy + " " + filename;
+        char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
+        int fd;
         
-	try{ 
-
 	  
-	  if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
-	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_EXPERT_EXCEPTION, 5 ,params, &(stgCnsHelper->cnsFileid));
-	      
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"Error on expert_send_request"<<std::endl;
-	    throw ex;
-	  }
-	  if((expert_send_data(fd,expQuestion.c_str(),expQuestion.size())) != (expQuestion.size())){//sending question
-	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_EXPERT_EXCEPTION, 5 ,params, &(stgCnsHelper->cnsFileid));
-	    
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"Error on expert_send_data"<<std::endl;
-	    throw ex;
-	  }
-	  
-	  memset(expAnswer, '\0',sizeof(expAnswer));
-	  if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
-	    castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_EXPERT_EXCEPTION, 5 ,params, &(stgCnsHelper->cnsFileid));
-	    
-	    castor::exception::Exception ex(SEINTERNAL);
-	    ex.getMessage()<<"Error on expert_receive_data"<<std::endl;
-	    throw ex;
-	  }
-	}catch(castor::exception::Exception e){ /* maybe Cns_query throws an exception */
-	  castor::exception::Exception ex(e.code());
-	  ex.getMessage()<<"(StagerJobRequestHandler checkReplicationPolicy)"<<e.getMessage().str()<<std::endl;
+        if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
+            
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"Error on expert_send_request";
           throw ex;
-	}
-	return(atoi(expAnswer));
+        }
+        if((expert_send_data(fd,expQuestion.c_str(),expQuestion.size())) != (expQuestion.size())){//sending question
+          
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"Error on expert_send_data";
+          throw ex;
+        }
+        
+        memset(expAnswer, '\0',sizeof(expAnswer));
+        if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
+          
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"Error on expert_receive_data";
+          throw ex;
+        }
+        
+        return(atoi(expAnswer));
       }
       
       

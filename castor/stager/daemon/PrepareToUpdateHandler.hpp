@@ -53,15 +53,6 @@ namespace castor{
 	bool toRecreateCastorFile;
 
 	
-	/*******************************************/	
-	/*     switch(getDiskCopyForJob):         */  
-	/*        case 0: (staged) nothing to be done */                                   
-	/*        case 1: (staged) waitD2DCopy  */
-	/*        case 2: (waitRecall) createTapeCopyForRecall */
-	virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception);
-	
-
-
       public:
 	/* constructor */
 	StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
@@ -73,8 +64,6 @@ namespace castor{
 	/* set the internal attribute "toRecreateCastorFile depending on fileExist" */
 	/* which determines the real flow of the handler */
 	virtual void preHandle() throw(castor::exception::Exception);
-
-	void handlerSettings() throw(castor::exception::Exception);
 
 	/* PrepareToUpdate request handler */
 	void handle() throw(castor::exception::Exception);

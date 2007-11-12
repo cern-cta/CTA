@@ -144,16 +144,7 @@ namespace castor{
 	void linkRequestToSvcClassOnDB() throw(castor::exception::Exception);
       
 
-
-      
-      
-	/****************************************************************************************/
-	/* get fileClass by selecting with stagerService                                       */
-	/* using the CnsfileClass.name as key      (in StagerRequest.JobOriented)             */
-	/*************************************************************************************/
-	void getFileClass(char* nameClass) throw(castor::exception::Exception);
-      
-      
+     
 	/******************************************************************************************/
 	/* get and (create or initialize) Cuuid_t subrequest and request                         */
 	/* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
@@ -171,15 +162,8 @@ namespace castor{
 	/*******************************************************************************************************************************************/
 	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
 	/*****************************************************************************************************************************************/
-       	void getCastorFileFromSvcClass(castor::stager::dbService::StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+  void getCastorFileFromSvcClass(castor::stager::dbService::StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
        
-
-	/****************************************************************************************************/
-	/*  fill castorFile's FileClass: called in StagerRequest.jobOriented()                             */
-	/**************************************************************************************************/
-	void setFileClassOnCastorFile() throw(castor::exception::Exception);
-     
-
 
 	/************************************************************************************/
 	/* set the username and groupname string versions using id2name c function  */
@@ -193,6 +177,13 @@ namespace castor{
 	*/
 	bool checkFilePermission() throw(castor::exception::Exception);
      
+  /**
+   * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)
+   * @param level the DLF logging level
+   * @param messageNb the message number as defined in StagerDlfMessages.hpp
+   * @param fid the fileId structure if needed
+   */
+  void logToDlf(int level, int messageNb, Cns_fileid* fid = 0) throw();
 	
 
       }; //end StagerRequestHelper class

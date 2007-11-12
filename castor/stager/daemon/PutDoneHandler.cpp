@@ -78,7 +78,7 @@ namespace castor{
 
 	  /**************************************************************************/
 	  /* common part for all the handlers: get objects, link, check/create file*/
-	  preHandle();
+	  
 	  /**********/
 	 
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),

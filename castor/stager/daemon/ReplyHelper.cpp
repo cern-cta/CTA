@@ -68,9 +68,14 @@ namespace castor{
         if((uuid_as_string.empty()) == false){
           this->ioResponse->setReqAssociated(uuid_as_string);
         }else{
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"(StagerReplyHelper setAndSendIoResponse) The fileRequest has not uuid"<<std::endl;
-          throw ex;
+          // no UUID?? at this stage just log it and try to go on
+          castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
+            castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
+            castor::dlf::Param("UserName",stgRequestHelper->username),
+            castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+            castor::dlf::Param("Function:", "StagerReplyHelper.setAndSendIoResponse")
+          };
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
         }
         
         ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());

@@ -72,17 +72,10 @@ namespace castor{
 	  
 	  /**************************************************************************/
 	  /* common part for all the handlers: get objects, link, check/create file*/
-	  preHandle();
+	  
 	  /**********/
 	  
-	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	  }; 
-	 
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_PREPARETOPUT, 5 ,params, &(stgCnsHelper->cnsFileid));
+	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOPUT, &(stgCnsHelper->cnsFileid));
 	  
 	  jobOriented();
 	  

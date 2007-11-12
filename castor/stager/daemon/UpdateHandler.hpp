@@ -63,8 +63,6 @@ namespace castor{
 	/* which determines the real flow of the handler */
 	virtual void preHandle() throw(castor::exception::Exception);
 
-	void handlerSettings() throw(castor::exception::Exception);
-
 	/* handler for the Update request  */
 	void handle() throw(castor::exception::Exception);
 

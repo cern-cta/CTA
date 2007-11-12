@@ -70,7 +70,7 @@ namespace castor{
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
 	  
 	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"Error on the Name Server"<<std::endl;
+	  ex.getMessage()<<"Error on the Name Server";
 	  throw ex;
 	  }
 	}
@@ -86,7 +86,7 @@ namespace castor{
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
 	  
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Impossible to set the user on the Name Server"<<std::endl;
+          ex.getMessage()<<"Impossible to set the user on the Name Server";
           throw ex;
         }
         
@@ -95,7 +95,7 @@ namespace castor{
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
 	 
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Impossible to set the user on the Name Server"<<std::endl;
+          ex.getMessage()<<"Impossible to set the user on the Name Server";
           throw ex;
         }
       }
@@ -124,7 +124,7 @@ namespace castor{
 		  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
 	 
 		  castor::exception::Exception ex(serrno);
-		  ex.getMessage()<<"Impossible to create the file"<<std::endl;
+		  ex.getMessage()<<"Impossible to create the file";
 		  throw ex;
 		}
 		
@@ -143,7 +143,7 @@ namespace castor{
 		      castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
 	 
 		      castor::exception::Exception ex(serrno);
-		      ex.getMessage()<<"Impossible to create the file"<<std::endl;
+		      ex.getMessage()<<"Impossible to create the file";
 		      throw ex;
 		    }
 		    Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
@@ -182,7 +182,7 @@ namespace castor{
 	  castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1 ,params);
 	   
 	  castor::exception::Exception ex(SEINTERNAL);
-	  ex.getMessage()<<"User asking for a non existing file"<<std::endl;
+	  ex.getMessage()<<"User asking for a non existing file";
 	  throw ex;
 	}
 	return(toCreate);

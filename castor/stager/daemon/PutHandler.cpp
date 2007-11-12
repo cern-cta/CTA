@@ -84,19 +84,12 @@ namespace castor{
           
           /**************************************************************************/
           /* common part for all the handlers: get objects, link, check/create file*/
-          preHandle();
+          
           /**********/
 	  
 	  handlerSettings();
 	  
-	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_PUT, 5 ,params, &(stgCnsHelper->cnsFileid));
-	  
+	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PUT, &(stgCnsHelper->cnsFileid));
 	
           jobOriented();
           
@@ -111,14 +104,7 @@ namespace castor{
             }
             stgRequestHelper->subrequest->setXsize(this->xsize);
             
-	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Put"),
-					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	      };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
             
             /* updateSubrequestStatus Part: */
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
@@ -128,14 +114,7 @@ namespace castor{
             /* and we have to notify the jobManager */
             m_notifyJobManager = true;
           } else{/* diskCopyForRecall != NULL */
-	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Put"),
-					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, 6 ,params, &(stgCnsHelper->cnsFileid));
+	    stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(stgCnsHelper->cnsFileid));
             
 
 	  }

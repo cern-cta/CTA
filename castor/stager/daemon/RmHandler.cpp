@@ -137,7 +137,7 @@ namespace castor{
 	     castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 6 ,params, &(stgCnsHelper->cnsFileid));
 	     
 	     castor::exception::Exception ex(SEINTERNAL);
-	     ex.getMessage()<<"Impossible to get the svcClass"<<std::endl;
+	     ex.getMessage()<<"Impossible to get the svcClass";
 	     throw(ex);
 	   }
 	   this->svcClassId = stgRequestHelper->svcClass->id();	   
@@ -158,7 +158,7 @@ namespace castor{
 	     castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 6 ,params, &(stgCnsHelper->cnsFileid));
 	 
 	     castor::exception::Exception ex(SEINTERNAL);
-	     ex.getMessage()<<"Impossible to get the svcClass"<<std::endl;
+	     ex.getMessage()<<"Impossible to get the svcClass";
 	     throw(ex);
 	   }
 	   this->svcClassId = stgRequestHelper->svcClass->id();	  
@@ -179,7 +179,7 @@ namespace castor{
 
 	  /**************************************************************************/
 	  /* common part for all the handlers: get objects, link, check/create file*/
-	  preHandle();
+	  
 	  /**********/
 
 	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),

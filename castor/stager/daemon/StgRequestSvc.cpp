@@ -74,9 +74,6 @@ namespace castor{
       /**************/
       StgRequestSvc::StgRequestSvc() throw() : RequestSvc("StageReqSvc")
       {
-        /* Initializes the DLF logging */
-        /*	castor::dlf::Messages messages[]={{1, "Starting StgRequestSvc Thread"},{2, "StagerRequestHelper"},{3, "StagerCnsHelper"},{4, "StagerReplyHelper"},{5, "StagerRequestHelper failed"},{6, "StagerCnsHelper failed"},{7, "StagerReplyHelper failed"},{8, "StagerHandler"}, {9, "StagerHandler successfully finished"},{10,"StagerHandler failed finished"},{11, "StgRequestSvc Thread successfully finished"},{12, "StgRequestSvc Thread failed finished"}};
-        castor::dlf::dlf_init("StgRequestSvc", messages);*/
       }
       
       
@@ -86,7 +83,7 @@ namespace castor{
       /***************************************************** */
       void StgRequestSvc::process(castor::IObject* subRequestToProcess) throw() {
        
-	StagerRequestHelper* stgRequestHelper= NULL;
+        StagerRequestHelper* stgRequestHelper= NULL;
         StagerRequestHandler* stgRequestHandler = NULL;
         
         try {         
@@ -110,13 +107,11 @@ namespace castor{
           }//end switch(typeRequest)
           
           
-          /**********************************************/
-          /* inside the handle(), call to preHandle() */
-          
+          stgRequestHandler->preHandle();
           stgRequestHandler->handle();
           
           delete stgRequestHandler;
-	  delete stgRequestHelper;
+          delete stgRequestHelper;
          
           /* we have to process the exception and reply to the client in case of error  */
         }catch(castor::exception::Exception ex){

@@ -54,26 +54,26 @@ namespace castor{
       /*****************************************************************/
       void StagerGetHandler::handlerSettings() throw(castor::exception::Exception)
       {	
-	this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
-	this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
-	
-	/* get the request's size required on disk */
-	/* depending if the file exist, we ll need to update this variable */
-	this->xsize = this->stgRequestHelper->subrequest->xsize();
-	
-	if( xsize > 0 ){
-	  if(xsize < (stgCnsHelper->cnsFilestat.filesize)){
-	    /* warning, user is requesting less bytes than the real size */
-	    /* just print a message. we don't update xsize!!! */
-	  }
-	  	  
-	}else{
-	  this->xsize = stgCnsHelper->cnsFilestat.filesize;
-	}
-
-
-	this->default_protocol = "rfio";
-
+        this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
+        this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
+        
+        /* get the request's size required on disk */
+        /* depending if the file exist, we ll need to update this variable */
+        this->xsize = this->stgRequestHelper->subrequest->xsize();
+        
+        if( xsize > 0 ){
+          if(xsize < (stgCnsHelper->cnsFilestat.filesize)){
+            /* warning, user is requesting less bytes than the real size */
+            /* just print a message. we don't update xsize!!! */
+          }
+          
+        }else{
+          this->xsize = stgCnsHelper->cnsFilestat.filesize;
+        }
+        
+        
+        this->default_protocol = "rfio";
+        
       }
 
 
@@ -91,26 +91,12 @@ namespace castor{
 	case -2:
 	  {
 	    
-	    castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Get"),
-					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, 6, params, &(stgCnsHelper->cnsFileid));
+	    stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
 	  }break;
 	  
    case -1:
 	    {
-	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Get"),
-					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					   castor::dlf::Param("UserName",stgRequestHelper->username),
-					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	      };
-	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6, params, &(stgCnsHelper->cnsFileid));
+	      stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
 	    }break;
 	    
           case 0: // DISKCOPY_STAGED, schedule job
@@ -120,18 +106,9 @@ namespace castor{
 		processReplica();
 	      }
 	      
-	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Get"),
-					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					   castor::dlf::Param("UserName",stgRequestHelper->username),
-					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	      };
-	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, 6 ,params, &(stgCnsHelper->cnsFileid));
+	     stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
 	      
-	      /* build the rmjob struct and submit the job */
 	      jobManagerPart();
-	      
 	     
 	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
 	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
@@ -149,15 +126,7 @@ namespace castor{
 		processReplica();
 	      }
 	      
-	      castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Get"),
-					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					   castor::dlf::Param("UserName",stgRequestHelper->username),
-					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	      };
-	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, 6 ,params, &(stgCnsHelper->cnsFileid));
-	      
+	      stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, &(stgCnsHelper->cnsFileid));
 	      /* build the rmjob struct and submit the job */
 	      jobManagerPart();
 	      
@@ -173,14 +142,7 @@ namespace castor{
           
 	case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
           {
-	     castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Get"),
-					   castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					   castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					   castor::dlf::Param("UserName",stgRequestHelper->username),
-					   castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					   castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	      };
-	      castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, 6 ,params, &(stgCnsHelper->cnsFileid));
+	     stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
 	      
             stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
 	    
@@ -203,18 +165,12 @@ namespace castor{
 	  
 	  /**************************************************************************/
 	  /* common part for all the handlers: get objects, link, check/create file*/
-	  preHandle();
+	  
 	  /**********/
 
 	  handlerSettings();
 
-	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_GET, 5 ,params, &(stgCnsHelper->cnsFileid));
+	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_GET, &(stgCnsHelper->cnsFileid));
 	  
 
 	  jobOriented();

@@ -55,34 +55,7 @@ namespace castor{
           
       }
       
-      
-      /*******************************************************************/
-      /* function to set the handler's attributes according to its type */
-      /*****************************************************************/
-      void StagerUpdateHandler::handlerSettings() throw(castor::exception::Exception)
-      {	
-	 this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
-        this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
-        
-        
-        
-        /* get the subrequest's size required on disk */
-        this->xsize = this->stgRequestHelper->subrequest->xsize();
-        if(this->xsize > 0){
-          
-          if( this->xsize < (this->stgCnsHelper->cnsFilestat.filesize) ){
-            /* print warning! */
-          }
-        }else{
-          /* we get the defaultFileSize */
-          xsize = stgRequestHelper->svcClass->defaultFileSize();
-          if( xsize <= 0){
-            xsize = DEFAULTFILESIZE;
-          }
-        }
-      }
-
-
+ 
       
       /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
       void StagerUpdateHandler::preHandle() throw(castor::exception::Exception)
@@ -134,33 +107,20 @@ namespace castor{
       {
 	try{
 
-	  /**************************************************************************/
-	  /* common part for all the handlers: get objects, link, check/create file*/
-	  preHandle();
-	  /**********/
-
-	  handlerSettings();
-
-	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_UPDATE, 5 ,params, &(stgCnsHelper->cnsFileid));
-	  
+	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_UPDATE, &(stgCnsHelper->cnsFileid));
 	
 	  jobOriented();
 	  
+    StagerRequestHandler* h = 0;
 	  if(toRecreateCastorFile) {
       // delegate to Put
-      StagerPutHandler* h = new StagerPutHandler(stgRequestHelper);
-      h->handle();
+      h = new StagerPutHandler(stgRequestHelper);
     } else {
       // delegate to Get
-      StagerGetHandler* h = new StagerGetHandler(stgRequestHelper);
-      h->handle();
+      h = new StagerGetHandler(stgRequestHelper);
     }      
+    h->handle();
+    delete h;
 	       
 	}catch(castor::exception::Exception e){
 	 
