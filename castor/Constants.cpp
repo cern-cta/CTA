@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2007/11/09 08:09:29 $ $Author: sponcec3 $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2007/11/13 13:23:40 $ $Author: waldron $
  *
  *
  *
@@ -182,9 +182,10 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "PolicyObj",
 
   "NsFilesDeleted",
-  "NsFilesDeletedResponse"
+  "NsFilesDeletedResponse",
 
-  };
+  "Disk2DiskCopyStartRequest"
+};
 
 
 //=============================================================================

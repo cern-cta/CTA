@@ -161,16 +161,18 @@ namespace castor {
     OBJ_VersionResponse = 132,
     OBJ_StageDiskCopyReplicaRequest = 133,
     OBJ_RepackResponse = 134,
-    OBJ_RepackFileQry =135,
-    OBJ_CnsInfoMigrationPolicy= 136,
-    OBJ_DbInfoMigrationPolicy=137,
-    OBJ_CnsInfoRecallPolicy=138,
-    OBJ_DbInfoRecallPolicy=139,
-    OBJ_DbInfoStreamPolicy=140,
-    OBJ_PolicyObj=141,
+    OBJ_RepackFileQry = 135,
+    OBJ_CnsInfoMigrationPolicy = 136,
+    OBJ_DbInfoMigrationPolicy = 137,
+    OBJ_CnsInfoRecallPolicy = 138,
+    OBJ_DbInfoRecallPolicy = 139,
+    OBJ_DbInfoStreamPolicy = 140,
+    OBJ_PolicyObj = 141,
 
-    OBJ_NsFilesDeleted=142,
-    OBJ_NsFilesDeletedResponse=143
+    OBJ_NsFilesDeleted = 142,
+    OBJ_NsFilesDeletedResponse = 143,
+
+    OBJ_Disk2DiskCopyStartRequest = 144
   };
 
   /**
@@ -244,7 +246,7 @@ namespace castor {
    * Nb of objectIds currently existing
    */
 
-  static const unsigned int ObjectsIdsNb = 144;
+  static const unsigned int ObjectsIdsNb = 145;
 
   /**
    * Nb of ServicesIds currently existing
@@ -261,8 +263,7 @@ namespace castor {
    * correctly the ObjectsIds enum
    */
 
-  extern const char* ObjectsIdStrings[144];
-
+  extern const char* ObjectsIdStrings[145];
 
   /**
    * Names of the differents Services, used to display
