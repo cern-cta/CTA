@@ -151,6 +151,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamPutStartRequestCnv.cpp \
               io/StreamQueryParameterCnv.cpp \
               io/StreamDisk2DiskCopyDoneRequestCnv.cpp \
+              io/StreamDisk2DiskCopyStartRequestCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
               io/StreamPutDoneStartCnv.cpp \
               io/StreamSegmentCnv.cpp \
@@ -252,6 +253,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/DiskServerStatusCode.cpp \
               stager/Disk2DiskCopyDoneRequest.cpp \
               stager/Disk2DiskCopyDoneRequestCInt.cpp \
+              stager/Disk2DiskCopyStartRequest.cpp \
               stager/FileClass.cpp \
               stager/FileClassCInt.cpp \
               stager/FileRequest.cpp \
