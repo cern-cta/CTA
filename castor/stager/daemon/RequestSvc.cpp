@@ -82,25 +82,19 @@ namespace castor{
       /********************************************************************************/
       void RequestSvc::handleException(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage){
 	
-	const char* errorMessageC = errorMessage.c_str();
-
-	/* we have to set the subrequest status to SUBREQUEST_FAILED_FINISHED */
-	/* but not setGetNextSubrequestStatus!!  */
-	if(stgRequestHelper->subrequest != NULL) stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
-	
-	
-	/***/
-	/* reply to the client in case of error*/
-	if(stgRequestHelper->iClient != NULL){
-	  StagerReplyHelper *stgReplyHelper = new StagerReplyHelper();
-	    stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,errorCode,errorMessageC);
-	    stgReplyHelper->endReplyToClient(stgRequestHelper);
-	    delete stgReplyHelper;
-	}else{
-	  if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest)) stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	}
-	
-	
+        if(stgRequestHelper->subrequest != NULL)
+          stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
+      
+        /* reply to the client in case of error*/
+        if(stgRequestHelper->iClient != NULL){
+          StagerReplyHelper *stgReplyHelper = new StagerReplyHelper();
+            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,errorCode,errorMessage);
+            stgReplyHelper->endReplyToClient(stgRequestHelper);
+            delete stgReplyHelper;
+        }else{
+          if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest))
+            stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+        }
       }
     
          
