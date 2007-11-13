@@ -45,6 +45,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbClientIdentificationCnv.cpp \
      DbDeviceGroupNameCnv.cpp \
      DbDisk2DiskCopyDoneRequestCnv.cpp \
+     DbDisk2DiskCopyStartRequestCnv.cpp \
      DbDiskCopyCnv.cpp \
      DbDiskPoolCnv.cpp \
      DbDiskPoolQueryCnv.cpp \
