@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.544 $ $Date: 2007/11/13 14:41:38 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.545 $ $Date: 2007/11/13 16:32:45 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1733,7 +1733,7 @@ END;
 /* dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error */
 /* Internally used by getDiskCopiesForJob and getDiskCopiesForPrepReq */
 CREATE OR REPLACE PROCEDURE checkForD2DCopyOrRecall
-                            (cfId IN NUMBER, srId IN NUMBER, svcClassId IN NUMBER
+                            (cfId IN NUMBER, srId IN NUMBER, svcClassId IN NUMBER,
                              dcId OUT NUMBER) AS
 BEGIN
   -- First check whether we are a disk only pool that is already full.
@@ -1748,7 +1748,7 @@ BEGIN
     RETURN;
   END IF;
   -- Check whether there are any diskcopies available for a disk2disk copy
-  SELECT DiskCopy.id INTO dcId 
+  SELECT id INTO dcId 
     FROM (
       SELECT DiskCopy.id
         FROM DiskCopy, FileSystem, DiskServer
@@ -1762,7 +1762,7 @@ BEGIN
                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
                                  FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
          )
-     AND ROWNUM < 2;
+     WHERE ROWNUM < 2;
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1837,14 +1837,14 @@ BEGIN
   ELSE
     SELECT castorFile INTO cfId FROM DiskCopy WHERE id = srcDcId;
     SELECT ids_seq.nextval INTO srId FROM Dual;
-  END;
+  END IF;
   SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
   
   -- create Client, Request and SubRequest
   INSERT INTO Client (id) VALUES (ids_seq.nextval)   -- client is fake, so IPAddress = 0
     RETURNING id INTO clientId;
   INSERT INTO Id2Type (id, type) VALUES (clientId, 129);  -- OBJ_Client
-  INSERT INTO StageDiskCopyReplicaRequest (id, client, srcDiskCopyId, destDiskCopyId, svcClass, euid, egid)
+  INSERT INTO StageDiskCopyReplicaRequest (id, client, sourceDiskCopyId, destDiskCopyId, svcClass, euid, egid)
     VALUES (ids_seq.nextval, clientId, srcDcId, ids_seq.nextval, dstScId, 0, 0)
     RETURNING id, destDiskCopyId INTO reqId, dstDcId;
   INSERT INTO Id2Type (id, type) VALUES (reqId, 133);  -- OBJ_StageDiskCopyReplicaRequest
@@ -1853,10 +1853,10 @@ BEGIN
   INSERT INTO Id2Type (id, type) VALUES (srId, 27);  -- OBJ_SubRequest
 
   -- create DiskCopy, without fileSystem at this stage
-  buildPathFromFileId(fid, nh, dcId, rpath);
+  buildPathFromFileId(fid, nh, dstDcId, rpath);
   INSERT INTO DiskCopy (path, id, fileSystem, castorFile, status, creationTime)
     VALUES (rpath, dstDcId, 0, cfId, 1, getTime());  -- status WAITDISK2DISKCOPY
-  INSERT INTO Id2Type (id, type) VALUES (dcId, 5);  -- OBJ_DiskCopy
+  INSERT INTO Id2Type (id, type) VALUES (dstDcId, 5);  -- OBJ_DiskCopy
 END;
 
 /* PL/SQL method implementing getDiskCopiesForJob */
@@ -1918,7 +1918,7 @@ BEGIN
       FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
                  FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
-                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate
+                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate,
                  FileSystem.mountPoint, DiskServer.name
             FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE SubRequest.id = srId
@@ -1939,7 +1939,7 @@ BEGIN
       -- create DiskCopyReplica request and make this subRequest wait on it
       createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
       result := -2;
-    ELSE IF srcDcId = 0 THEN
+    ELSIF srcDcId = 0 THEN
       -- no diskcopy found at all, go for recall
       result := 2;  -- DISKCOPY_WAITTAPERECALL
     ELSE
