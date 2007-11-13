@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2007/11/13 11:38:39 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -97,7 +97,7 @@ castor::IObject* castor::stager::dbService::QueryRequestSvcThread::select()
     if (0 == qrySvc) {
       // "Could not get QuerySvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "QueryRequestSvcThread::select")};
+        {castor::dlf::Param("Function", "QueryRequestSvcThread::select")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_GETSVC, 1, params);
       return 0;
     }
@@ -108,10 +108,10 @@ castor::IObject* castor::stager::dbService::QueryRequestSvcThread::select()
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "QueryRequestSvcThread::select"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 1, params);
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::select"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
     return 0;
   }
 }
@@ -524,9 +524,9 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest
         // In case the file did not exist, we don't consider
         // it as an error from the server point of view
         castor::dlf::Param params[] =
-          {castor::dlf::Param("function", "QueryRequestSvcThread::handleFileQueryRequest"),
-           castor::dlf::Param("code", e.code()),
-           castor::dlf::Param("message", e.getMessage().str())};
+          {castor::dlf::Param("Function", "QueryRequestSvcThread::handleFileQueryRequest"),
+           castor::dlf::Param("Code", e.code()),
+           castor::dlf::Param("Message", e.getMessage().str())};
         castor::dlf::dlf_writep(uuid,
                                 e.code() == ENOENT ? DLF_LVL_SYSTEM : DLF_LVL_ERROR,
                                 e.code() == ENOENT ? STAGER_USER_NONFILE : STAGER_QRYSVC_UNKREQ, 3, params);
@@ -544,9 +544,9 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest
     } // End loop on all diskcopies
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "QueryRequestSvcThread::handleFileQueryRequest"),
-       castor::dlf::Param("code", e.code()),
-       castor::dlf::Param("message", e.getMessage().str())};
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleFileQueryRequest"),
+       castor::dlf::Param("Code", e.code()),
+       castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 3, params);
     // try/catch this as well ?
     // Send the exception to the client
@@ -626,9 +626,9 @@ void castor::stager::dbService::QueryRequestSvcThread::handleDiskPoolQuery
     }
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "QueryRequestSvcThread::handleDiskPoolQuery"),
-       castor::dlf::Param("code", e.code()),
-       castor::dlf::Param("message", e.getMessage().str())};
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleDiskPoolQuery"),
+       castor::dlf::Param("Code", e.code()),
+       castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 3, params);
     // try/catch this as well ?
     // Send the exception to the client
@@ -661,9 +661,9 @@ void castor::stager::dbService::QueryRequestSvcThread::handleVersionQuery
     rr->sendResponse(client, &result, true);
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "QueryRequestSvcThread::handleVersionQuery"),
-       castor::dlf::Param("code", e.code()),
-       castor::dlf::Param("message", e.getMessage().str())};
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleVersionQuery"),
+       castor::dlf::Param("Code", e.code()),
+       castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 3, params);
   }
 }
@@ -707,7 +707,7 @@ void castor::stager::dbService::QueryRequestSvcThread::process
     if (0 == qrySvc) {
       // "Could not get QuerySvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "QueryRequestSvcThread::process")};
+        {castor::dlf::Param("Function", "QueryRequestSvcThread::process")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_GETSVC, 1, params);
       return;
     }
@@ -730,9 +730,9 @@ void castor::stager::dbService::QueryRequestSvcThread::process
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "QueryRequestSvcThread::process.1"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::process.1"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
     cleanup(req, qrySvc);
     return;
@@ -768,9 +768,9 @@ void castor::stager::dbService::QueryRequestSvcThread::process
     if (!failed) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "QueryRequestSvcThread::process.2"),
-         castor::dlf::Param("message", e.getMessage().str()),
-         castor::dlf::Param("code", e.code())};
+        {castor::dlf::Param("Function", "QueryRequestSvcThread::process.2"),
+         castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("Code", e.code())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
     }
     // In case of failure, we answer first to the client,
@@ -826,9 +826,9 @@ void castor::stager::dbService::QueryRequestSvcThread::process
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "QueryRequestSvcThread::process.3"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "QueryRequestSvcThread::process.3"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
   }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/10/24 09:17:12 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
  *
  * Service thread for dealing with requests that failed
  *
@@ -67,7 +67,7 @@ castor::IObject* castor::stager::dbService::ErrorSvcThread::select()
     if (0 == stgSvc) {
       // "Could not get StagerSvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "ErrorSvcThread::select")};
+        {castor::dlf::Param("Function", "ErrorSvcThread::select")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_GETSVC, 1, params);
       return 0;
     }
@@ -78,10 +78,10 @@ castor::IObject* castor::stager::dbService::ErrorSvcThread::select()
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "ErrorSvcThread::select"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 1, params);
+      {castor::dlf::Param("Function", "ErrorSvcThread::select"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 3, params);
     return 0;
   }
 }
@@ -112,7 +112,7 @@ void castor::stager::dbService::ErrorSvcThread::process
     if (0 == stgSvc) {
       // "Could not get StagerSvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "ErrorSvcThread::process")};
+        {castor::dlf::Param("Function", "ErrorSvcThread::process")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_GETSVC, 1, params);
       return;
     }
@@ -144,9 +144,9 @@ void castor::stager::dbService::ErrorSvcThread::process
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "ErrorSvcThread::process.1"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code()),
+      {castor::dlf::Param("Function", "ErrorSvcThread::process.1"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
   }
@@ -184,9 +184,9 @@ void castor::stager::dbService::ErrorSvcThread::process
       } catch (castor::exception::Exception e) {
         // "Unexpected exception caught"
         castor::dlf::Param params[] =
-          {castor::dlf::Param("function", "ErrorSvcThread::process.2"),
-           castor::dlf::Param("message", e.getMessage().str()),
-           castor::dlf::Param("code", e.code()),
+          {castor::dlf::Param("Function", "ErrorSvcThread::process.2"),
+           castor::dlf::Param("Message", e.getMessage().str()),
+           castor::dlf::Param("Code", e.code()),
            castor::dlf::Param(suuid)};
         castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
         rr = 0;
@@ -201,9 +201,9 @@ void castor::stager::dbService::ErrorSvcThread::process
     } catch (castor::exception::Exception e) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "ErrorSvcThread::process.3"),
-         castor::dlf::Param("message", e.getMessage().str()),
-         castor::dlf::Param("code", e.code()),
+        {castor::dlf::Param("Function", "ErrorSvcThread::process.3"),
+         castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("Code", e.code()),
          castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
     }
@@ -214,9 +214,9 @@ void castor::stager::dbService::ErrorSvcThread::process
     } catch (castor::exception::Exception e) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "ErrorSvcThread::process.4"),
-         castor::dlf::Param("message", e.getMessage().str()),
-         castor::dlf::Param("code", e.code()),
+        {castor::dlf::Param("Function", "ErrorSvcThread::process.4"),
+         castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("Code", e.code()),
          castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_EXCEPT, 4, params);
       serrno = e.code();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2007/10/24 09:16:47 $ $Author: sponcec3 $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
  *
  * Service thread for job related requests
  *
@@ -80,7 +80,7 @@ castor::IObject* castor::stager::dbService::JobSvcThread::select()
     if (0 == jobSvc) {
       // "Could not get JobSvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "JobSvcThread::select")};
+        {castor::dlf::Param("Function", "JobSvcThread::select")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_GETSVC, 1, params);
       return 0;
     }
@@ -91,10 +91,10 @@ castor::IObject* castor::stager::dbService::JobSvcThread::select()
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::select"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 1, params);
+      {castor::dlf::Param("Function", "JobSvcThread::select"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     return 0;
   }
 }
@@ -180,9 +180,9 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
     }
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleStartRequest"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code()),
+      {castor::dlf::Param("Function", "JobSvcThread::handleStartRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
     res.setErrorCode(e.code());
@@ -211,9 +211,9 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleStartRequest.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code()),
+      {castor::dlf::Param("Function", "JobSvcThread::handleStartRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
   }
@@ -278,9 +278,9 @@ void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
     }
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleDisk2DiskCopyDoneRequest"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
@@ -294,9 +294,9 @@ void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleDisk2DiskCopyDoneRequest.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
   }
 }
@@ -353,9 +353,9 @@ void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
     delete obj;
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleMoverCloseRequest"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code()),
+      {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
     res.setErrorCode(e.code());
@@ -371,9 +371,9 @@ void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleMoverCloseRequest.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code()),
+      {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
   }
@@ -404,9 +404,9 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
     jobSvc->getUpdateDone(uReq->subReqId());
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateDoneRequest"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateDoneRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
@@ -420,9 +420,9 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateDoneRequest.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateDoneRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
   }
 }
@@ -452,9 +452,9 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
     jobSvc->getUpdateFailed(uReq->subReqId());
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateFailedRequest"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateFailedRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
@@ -468,9 +468,9 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleGetUpdateFailedRequest.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateFailedRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
   }
 }
@@ -500,9 +500,9 @@ void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
     jobSvc->putFailed(uReq->subReqId());
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handlePutFailedRequest"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
@@ -516,9 +516,9 @@ void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handlePutFailedRequest.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
   }
 }
@@ -547,7 +547,7 @@ void castor::stager::dbService::JobSvcThread::process
     if (0 == jobSvc) {
       // "Could not get JobSvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "JobSvcThread::process")};
+        {castor::dlf::Param("Function", "JobSvcThread::process")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_GETSVC, 1, params);
       return;
     }
@@ -571,9 +571,9 @@ void castor::stager::dbService::JobSvcThread::process
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::process.1"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "JobSvcThread::process.1"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     if (req) delete req;
     if (jobSvc) jobSvc->release();
@@ -625,9 +625,9 @@ void castor::stager::dbService::JobSvcThread::process
     } catch (castor::exception::Exception e) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "JobSvcThread::process.reply"),
-         castor::dlf::Param("message", e.getMessage().str()),
-         castor::dlf::Param("code", e.code())};
+        {castor::dlf::Param("Function", "JobSvcThread::process.reply"),
+         castor::dlf::Param("Message", e.getMessage().str()),
+         castor::dlf::Param("Code", e.code())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     }
   }
@@ -637,9 +637,9 @@ void castor::stager::dbService::JobSvcThread::process
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::process.2"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::process.2"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
   }
   // Final cleanup

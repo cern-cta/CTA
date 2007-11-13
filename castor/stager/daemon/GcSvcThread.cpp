@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/10/24 13:37:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -68,7 +68,7 @@ castor::IObject* castor::stager::dbService::GcSvcThread::select()
     if (0 == gcSvc) {
       // "Could not get GCSvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "GcSvcThread::select")};
+        {castor::dlf::Param("Function", "GcSvcThread::select")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_GETSVC, 1, params);
       return 0;
     }
@@ -79,10 +79,10 @@ castor::IObject* castor::stager::dbService::GcSvcThread::select()
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::select"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 1, params);
+      {castor::dlf::Param("Function", "GcSvcThread::select"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     return 0;
   }
 }
@@ -130,9 +130,9 @@ void castor::stager::dbService::GcSvcThread::handleFilesDeletedOrFailed
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::handleFilesDeletedOrFailed"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::handleFilesDeletedOrFailed"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
@@ -146,9 +146,9 @@ void castor::stager::dbService::GcSvcThread::handleFilesDeletedOrFailed
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::handleFilesDeletedOrFailed.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::handleFilesDeletedOrFailed.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
   }
 }
@@ -179,9 +179,9 @@ void castor::stager::dbService::GcSvcThread::handleFiles2Delete
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::handleFiles2Delete"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::handleFiles2Delete"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
@@ -214,9 +214,9 @@ void castor::stager::dbService::GcSvcThread::handleFiles2Delete
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::handleFiles2Delete.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::handleFiles2Delete.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
   }
   // Cleanup
@@ -247,7 +247,7 @@ void castor::stager::dbService::GcSvcThread::process
     if (0 == gcSvc) {
       // "Could not get GCSvc"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("function", "GcSvcThread::process")};
+        {castor::dlf::Param("Function", "GcSvcThread::process")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_GETSVC, 1, params);
       return;
     }
@@ -271,9 +271,9 @@ void castor::stager::dbService::GcSvcThread::process
     // to reply to the client ! So we only log something.
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::process.1"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::process.1"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     if (req) delete req;
     if (gcSvc) gcSvc->release();
@@ -306,9 +306,9 @@ void castor::stager::dbService::GcSvcThread::process
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::process.2"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::process.2"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
   }
   // Final cleanup
