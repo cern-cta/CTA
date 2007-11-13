@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2007/10/17 18:16:36 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2007/11/13 14:43:26 $ $Author: itglp $
  *
  *
  *
@@ -270,11 +270,10 @@ extern "C" {
    const u_signed64 fileId,
    const char* nsHost,
    const u_signed64 svcClassId,
-   const int force,
    int* result) {
     if (!checkIStagerSvc(stgSvc)) return -1;
     try {
-      *result = stgSvc->stgSvc->stageRm(subReqId, fileId, nsHost, svcClassId, force);
+      *result = stgSvc->stgSvc->stageRm(subReqId, fileId, nsHost, svcClassId, "");
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();

@@ -312,15 +312,17 @@ namespace castor {
          * @param nsHost the name server to use
          * @param svcClassId the svcClass where to perform
          * the rm operation; 0 for all svcClasses.
-         * @param force option: if 1, the removal is done
-         * even if the file is not yet migrated.
+         * @param fileName the HSM fileName in case the
+         * fileId was not found. In such a case, a fileClear
+         * is performed in the stager if anything is found
+         * for this file.
          * @return 0: user error
          *         1: success.
          * @exception in case of system error
          */
         virtual int stageRm
         (const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
-         const u_signed64 svcClassId, const int force)
+         const u_signed64 svcClassId, const std::string fileName)
           throw (castor::exception::Exception);
 
         /**
@@ -476,6 +478,12 @@ namespace castor {
 
         /// SQL statement object for function stageRm
         oracle::occi::Statement *m_stageRmStatement;
+
+        /// SQL statement for function stageRm
+        static const std::string s_getCFByNameStatementString;
+
+        /// SQL statement object for function stageRm
+        oracle::occi::Statement *m_getCFByNameStatement;
 
         /// SQL statement for function setFileGCWeight
         static const std::string s_setFileGCWeightStatementString;

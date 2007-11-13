@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.214 $ $Release$ $Date: 2007/11/06 13:37:17 $ $Author: gtaur $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.215 $ $Release$ $Date: 2007/11/13 14:43:26 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -146,7 +146,11 @@ const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
 
 /// SQL statement for stageRm
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
-  "BEGIN new_stageRm(:1, :2, :3, :4, :5, :6); END;";
+  "BEGIN new_stageRm(:1, :2, :3, :4, :5); END;";
+
+/// SQL statement for getCFByName
+const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
+  "SELECT id FROM CastorFile WHERE lastKnownFileName = :1";
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
@@ -183,6 +187,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_archiveSubReqStatement(0),
   m_stageReleaseStatement(0),
   m_stageRmStatement(0),
+  m_getCFByNameStatement(0),
   m_setFileGCWeightStatement(0),
   m_selectDiskPoolStatement(0),
   m_selectTapePoolStatement(0),
@@ -232,6 +237,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
     if (m_stageReleaseStatement) deleteStatement(m_stageReleaseStatement);
     if (m_stageRmStatement) deleteStatement(m_stageRmStatement);
+    if (m_getCFByNameStatement) deleteStatement(m_getCFByNameStatement);
     if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
     if (m_selectDiskPoolStatement) deleteStatement(m_selectDiskPoolStatement);
     if (m_selectTapePoolStatement) deleteStatement(m_selectTapePoolStatement);
@@ -252,6 +258,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_archiveSubReqStatement = 0;
   m_stageReleaseStatement = 0;
   m_stageRmStatement = 0;
+  m_getCFByNameStatement = 0;
   m_setFileGCWeightStatement = 0;
   m_selectDiskPoolStatement = 0;
   m_selectTapePoolStatement = 0;
@@ -594,7 +601,8 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
         }
       }
     }
-    return status; /* -1, no schedule, user error
+    return status; /* -2 = SubRequest put in WAITSUBREQ
+                    * -1 = no schedule, user error
                     *  0 = DISKCOPY_STAGED, disk copies available
                     *  1 = DISKCOPY_WAITDISK2DISKCOPY, a disk-to-disk copy is needed
                     *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */ 
@@ -995,7 +1003,7 @@ void castor::db::ora::OraStagerSvc::stageRelease
 // -----------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::stageRm
 (const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
- const u_signed64 svcClassId, const int force)
+ const u_signed64 svcClassId, const std::string fileName)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -1003,15 +1011,16 @@ int castor::db::ora::OraStagerSvc::stageRm
       m_stageRmStatement =
         createStatement(s_stageRmStatementString);
       m_stageRmStatement->registerOutParam
-        (6, oracle::occi::OCCIINT);
+        (5, oracle::occi::OCCIINT);
       m_stageRmStatement->setAutoCommit(true);
+      m_getCFByNameStatement =
+        createStatement(s_getCFByNameStatementString);
     }
     // execute the statement and see whether we found something
     m_stageRmStatement->setDouble(1, subReqId);
     m_stageRmStatement->setDouble(2, fileId);
     m_stageRmStatement->setString(3, nsHost);
     m_stageRmStatement->setDouble(4, svcClassId);
-    m_stageRmStatement->setDouble(5, force);
     unsigned int nb = m_stageRmStatement->executeUpdate();
     if (0 == nb) {
       castor::exception::Internal ex;

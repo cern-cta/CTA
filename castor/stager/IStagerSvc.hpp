@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.78 $ $Release$ $Date: 2007/10/25 15:08:14 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.79 $ $Release$ $Date: 2007/11/13 14:43:26 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -307,16 +307,18 @@ namespace castor {
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
        * @param svcClassId the svcClass where to perform
-       * the rm operation; 0 for all svcClasses.
-       * @param force option: if 1, the removal is done
-       * even if the file is not yet migrated.
+       * the rm operation; 0 for all svcClasses
+       * @param fileName the HSM fileName in case the
+       * fileId was not found. In such a case, a fileClear
+       * is performed in the stager if anything is found
+       * for this file.
        * @return 0: user error
        *         1: success.
        * @exception in case of system error
        */
       virtual int stageRm
       (const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
-       const u_signed64 svcClassId, const int force)
+       const u_signed64 svcClassId, const std::string fileName)
         throw (castor::exception::Exception) = 0;
 
       /**

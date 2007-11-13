@@ -345,7 +345,6 @@ int Cstager_IStagerSvc_stageRm
    const u_signed64 fileId,
    const char* nsHost,
    const u_signed64 svcClassId,
-   const int force,
    int* result);
 
 /*
