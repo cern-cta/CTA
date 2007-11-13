@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.543 $ $Date: 2007/11/08 10:20:12 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.544 $ $Date: 2007/11/13 14:41:38 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1730,16 +1730,16 @@ END;
 
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall */
+/* dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error */
 /* Internally used by getDiskCopiesForJob and getDiskCopiesForPrepReq */
 CREATE OR REPLACE PROCEDURE checkForD2DCopyOrRecall
-                            (cfId IN NUMBER, srId IN NUMBER,
-                             svcClassId IN NUMBER, result OUT NUMBER) AS
-  unused NUMBER;
+                            (cfId IN NUMBER, srId IN NUMBER, svcClassId IN NUMBER
+                             dcId OUT NUMBER) AS
 BEGIN
   -- First check whether we are a disk only pool that is already full.
   -- In such a case, we should fail the request with an ENOSPACE error
   IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
-    result := -1;
+    dcId := -1;
     UPDATE SubRequest
        SET status = 7, -- FAILED
            errorCode = 28, -- ENOSPC
@@ -1748,18 +1748,23 @@ BEGIN
     RETURN;
   END IF;
   -- Check whether there are any diskcopies available for a disk2disk copy
-  SELECT DiskCopy.id INTO unused 
-    FROM DiskCopy, FileSystem, DiskServer
-   WHERE DiskCopy.castorfile = cfId
-     AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-     AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-     AND DiskServer.id = FileSystem.diskserver
-     AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+  SELECT DiskCopy.id INTO dcId 
+    FROM (
+      SELECT DiskCopy.id
+        FROM DiskCopy, FileSystem, DiskServer
+       WHERE DiskCopy.castorfile = cfId
+         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+         AND FileSystem.id = DiskCopy.fileSystem
+         AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskServer.id = FileSystem.diskserver
+         AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                 FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
+                                 FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
+         )
      AND ROWNUM < 2;
   -- We found at least one, therefore we schedule a disk2disk
   -- copy from the existing diskcopy not available to this svcclass
-  result := 1;   -- DISKCOPY_WAITDISK2DISKCOPY
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- We found no diskcopies at all. We should not schedule
   -- and make a tape recall... except ... in 2 cases :
@@ -1790,7 +1795,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
        AND DiskServer.id(+) = FileSystem.diskserver
        AND ROWNUM < 2;
     -- We are in one of the special cases. Don't schedule, don't recall
-    result := -1;
+    dcId := -1;
     UPDATE SubRequest
        SET status = 7, -- FAILED
            errorCode = CASE
@@ -1809,8 +1814,49 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
      WHERE id = srId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- We did not find the very special case, go for recall
-    result := 2;  -- DISKCOPY_WAITTAPERECALL
+    dcId := 0;
   END;
+END;
+
+/* PL/SQL method implementing createDiskCopyReplicaRequest */
+CREATE OR REPLACE PROCEDURE createDiskCopyReplicaRequest(srcSrId IN INTEGER, srcDcId IN INTEGER, dstScId IN INTEGER) AS
+  cfId NUMBER;
+  srId NUMBER;
+  dstDcId NUMBER;
+  reqId NUMBER;
+  clientId NUMBER;
+  fid NUMBER;
+  nh VARCHAR2(2048);
+  rpath VARCHAR2(2048);
+BEGIN
+  -- retrieve info
+  IF srcSrId > 0 THEN
+    UPDATE SubRequest set status = 5, parent = ids_seq.nextval  -- WAITSUBREQ
+     WHERE id = srcSrId
+    RETURNING castorFile, parent INTO cfId, srId;
+  ELSE
+    SELECT castorFile INTO cfId FROM DiskCopy WHERE id = srcDcId;
+    SELECT ids_seq.nextval INTO srId FROM Dual;
+  END;
+  SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
+  
+  -- create Client, Request and SubRequest
+  INSERT INTO Client (id) VALUES (ids_seq.nextval)   -- client is fake, so IPAddress = 0
+    RETURNING id INTO clientId;
+  INSERT INTO Id2Type (id, type) VALUES (clientId, 129);  -- OBJ_Client
+  INSERT INTO StageDiskCopyReplicaRequest (id, client, srcDiskCopyId, destDiskCopyId, svcClass, euid, egid)
+    VALUES (ids_seq.nextval, clientId, srcDcId, ids_seq.nextval, dstScId, 0, 0)
+    RETURNING id, destDiskCopyId INTO reqId, dstDcId;
+  INSERT INTO Id2Type (id, type) VALUES (reqId, 133);  -- OBJ_StageDiskCopyReplicaRequest
+  INSERT INTO SubRequest (id, request, castorFile, diskCopy, status, lastModificationTime)
+    VALUES (srId, reqId, cfId, dstDcId, 13, getTime());  -- status READYFORSCHED, diskcopy = destination
+  INSERT INTO Id2Type (id, type) VALUES (srId, 27);  -- OBJ_SubRequest
+
+  -- create DiskCopy, without fileSystem at this stage
+  buildPathFromFileId(fid, nh, dcId, rpath);
+  INSERT INTO DiskCopy (path, id, fileSystem, castorFile, status, creationTime)
+    VALUES (rpath, dstDcId, 0, cfId, 1, getTime());  -- status WAITDISK2DISKCOPY
+  INSERT INTO Id2Type (id, type) VALUES (dcId, 5);  -- OBJ_DiskCopy
 END;
 
 /* PL/SQL method implementing getDiskCopiesForJob */
@@ -1824,6 +1870,7 @@ CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
   svcClassId NUMBER;
   reqId NUMBER;
   cfId NUMBER;
+  srcDcId NUMBER;
 BEGIN
   -- retrieve the castorFile, the svcClass and the reqId for this subrequest
   SELECT SubRequest.castorFile, Request.svcClass, Request.id
@@ -1837,10 +1884,9 @@ BEGIN
   SELECT id into cfId FROM CastorFile where id = cfId FOR UPDATE;
   
   -- First see whether we should wait on an ongoing request
-  -- XXX to be improved: look for StageDiskCopyReplicaRequests instead of WAITDISK2DISKCOPY diskCopies
   SELECT DiskCopy.id BULK COLLECT INTO dci
     FROM DiskCopy, FileSystem, DiskServer
-   WHERE cfId = DiskCopy.castorfile
+   WHERE cfId = DiskCopy.castorFile
      AND FileSystem.id(+) = DiskCopy.fileSystem
      AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
      AND DiskServer.id(+) = FileSystem.diskServer
@@ -1869,7 +1915,10 @@ BEGIN
     result := 0;   -- DISKCOPY_STAGED
     -- List available diskcopies for job scheduling
     OPEN sources
-      FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, 0,   -- fs rate does not apply here
+      FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
+                 FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
+                                FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
+                                FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) fsRate
                  FileSystem.mountPoint, DiskServer.name
             FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
            WHERE SubRequest.id = srId
@@ -1878,18 +1927,25 @@ BEGIN
              AND DiskPool2SvcClass.child = svcClassId
              AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
              AND FileSystem.id = DiskCopy.fileSystem
-             AND FileSystem.status = 0 -- PRODUCTION
+             AND FileSystem.status = 0  -- PRODUCTION
              AND DiskServer.id = FileSystem.diskServer
-             AND DiskServer.status = 0; -- PRODUCTION
+             AND DiskServer.status = 0  -- PRODUCTION
+           ORDER BY fsRate DESC;
   ELSE
-    -- No diskcopies available for this service class;
+    -- No diskcopies available for this service class:
     -- we may have to schedule a disk to disk copy or trigger a recall
-    checkForD2DCopyOrRecall(cfId, srId, svcClassId, result);
-    --IF result = 1 THEN
-       -- create DiskCopyReplicaRequest for our svcclass
-       -- make this subrequest wait on it
-       -- result := -2;
-    --END IF;
+    checkForD2DCopyOrRecall(cfId, srId, svcClassId, srcDcId);
+    IF srcDcId > 0 THEN
+      -- create DiskCopyReplica request and make this subRequest wait on it
+      createDiskCopyReplicaRequest(srId, srcDcId, svcClassId);
+      result := -2;
+    ELSE IF srcDcId = 0 THEN
+      -- no diskcopy found at all, go for recall
+      result := 2;  -- DISKCOPY_WAITTAPERECALL
+    ELSE
+      -- user error 
+      result := -1;
+    END IF;
   END IF;
 END;
 
@@ -1901,6 +1957,7 @@ CREATE OR REPLACE PROCEDURE getDiskCopiesForPrepReq
   svcClassId NUMBER;
   reqId NUMBER;
   cfId NUMBER;
+  srcDcId NUMBER;
 BEGIN
   -- retrieve the castorfile, the svcclass and the reqId for this subrequest
   SELECT SubRequest.castorFile, Request.svcClass, Request.id
@@ -1914,7 +1971,7 @@ BEGIN
   -- lock the castor file to be safe in case of two concurrent subrequest
   SELECT id into cfId FROM CastorFile where id = cfId FOR UPDATE;
 
-  -- Look for available diskcopies
+  -- Look for available diskcopies. Note that we never wait on other requests
   SELECT COUNT(DiskCopy.id) INTO nbDCs
     FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
    WHERE DiskCopy.castorfile = cfId
@@ -1928,27 +1985,38 @@ BEGIN
   IF nbDCs > 0 THEN
     -- Yes, we have some
     result := 0;   -- DISKCOPY_STAGED
-  ELSE
-    -- No diskcopies available for this service class;
-    -- we may have to schedule a disk to disk copy or trigger a recall
-    checkForD2DCopyOrRecall(cfId, srId, svcClassId, result);
+    RETURN;
   END IF;
-  --IF result = 1 THEN  -- DISKCOPY_DISK2DISKCOPY
+
+  -- No diskcopies available for this service class:
+  -- we may have to schedule a disk to disk copy or trigger a recall
+  checkForD2DCopyOrRecall(cfId, srId, svcClassId, srcDcId);
+  IF srcDcId > 0 THEN  -- disk to disk copy
+    BEGIN
     -- check whether there's already a disk2disk copy being performed in our svc class
-    -- if not
-    --   create DiskCopyReplicaRequest for this svcclass
-    -- result := 0;
-  --END IF;
-  --IF result = 2 THEN  -- DISKCOPY_WAITTAPERECALL
+    
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- IF Repack
+    --   createDiskCopyReplicaRequest(srId, cfId, scId);
+    --   result := -2;
+    -- ELSE
+    --   createDiskCopyReplicaRequest(0, cfId, scId);
+    --   result := 0;
+    -- END IF;
+    END;
+  ELSE IF srcDcId = 0 THEN  -- recall
+    BEGIN
     -- check whether there's already a recall, and get svcclass for it
-    -- IF so, check svcclass
-    --    IF different
-    --       create DiskCopyReplicaRequest for this svcclass
-    --       make it wait on the existing WAITTAPERECALL subrequest
-    --    Repack has to wait on the disk2diskcopy...
-    --    result := 0;
-    -- ELSE let the stager trigger the recall (leave result = 2)
-  --END IF;
+    -- IF svcClass different OR request is Repack
+    --    make this request wait on the existing WAITTAPERECALL subrequest
+    --    result := -2;
+    -- ELSE
+    --   result := 0;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- let the stager trigger the recall
+      result := 2;  -- DISKCOPY_WAITTAPERECALL
+    END;
+  END IF;
 END;
 
 
@@ -2220,7 +2288,7 @@ BEGIN
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- No disk copy found on any FileSystem. This can happen only if a diskcopy was available
         -- and got disabled before this job got scheduled. Bad luck, we restart from scratch
-        UPDATE SubRequest SET status = 1 WHERE id = srId; 
+        UPDATE SubRequest SET status = 1 WHERE id = srId;
     END;
   END;
 END;
@@ -2284,7 +2352,7 @@ BEGIN
  UPDATE SubRequest SET status = newStatus,
                        answered = 1,
                        lastModificationTime = getTime() WHERE id = srId;
- IF newStatus = 6 THEN  -- READY
+ IF newStatus IN (6, 11) THEN  -- READY, ARCHIVED
    UPDATE SubRequest SET getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
     WHERE id = srId;
  END IF;
@@ -3034,7 +3102,6 @@ CREATE OR REPLACE PROCEDURE new_stageRm (srId IN INTEGER,
                                      fid IN INTEGER,
                                      nh IN VARCHAR2,
                                      svcClassId IN INTEGER,
-                                     force IN INTEGER,
                                      ret OUT INTEGER) AS
   cfId INTEGER;
   scId INTEGER;
@@ -3105,24 +3172,7 @@ BEGIN
       RETURN;
     END IF;
   END IF;
-  -- mark all get/put requests for those diskcopies
-  -- and the ones waiting on them as failed
-  -- so that clients eventually get an answer;
-  -- don't touch recalls for the moment
-  FOR sr IN (SELECT id, status FROM SubRequest
-              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
-    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      UPDATE SubRequest SET status = 7, parent = 0 WHERE id = sr.id;  -- FAILED
-      UPDATE SubRequest SET status = 7, parent = 0 WHERE parent = sr.id;  -- FAILED
-    END IF;
-  END LOOP;
-  -- Set selected DiskCopies to INVALID. In any case keep
-  -- WAITTAPERECALL diskcopies so that recalls can continue.
-  -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
-  -- so they will only be taken by the cleaning daemon for the failed DCs.
-  UPDATE DiskCopy SET status = 7 -- INVALID
-   WHERE id IN (SELECT * FROM TABLE(dcsToRm));
-  ret := 1;  -- ok
+
   IF scId = 0 THEN
     -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
     -- This is not entirely clean: a proper operation here should be to
@@ -3152,6 +3202,8 @@ BEGIN
              errorCode = 16,  -- EBUSY
              errorMessage = 'The file is being recalled from tape'
        WHERE id = srId;
+      ret := 0;
+      RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Nothing running
       deleteTapeCopies(cfId);
@@ -3169,6 +3221,25 @@ BEGIN
        WHERE castorFile = cfId and status IN (4, 5);   -- WAITTAPERECALL, WAITSUBREQ
     END;
   END IF;
+
+  -- Now perform the remove:
+  -- mark all get/put requests for those diskcopies
+  -- and the ones waiting on them as failed
+  -- so that clients eventually get an answer;
+  -- don't touch recalls for the moment
+  FOR sr IN (SELECT id, status FROM SubRequest
+              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
+    IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+      UPDATE SubRequest SET status = 7, parent = 0 WHERE (id = sr.id) OR (parent = sr.id);  -- FAILED
+    END IF;
+  END LOOP;
+  -- Set selected DiskCopies to INVALID. In any case keep
+  -- WAITTAPERECALL diskcopies so that recalls can continue.
+  -- Note that WAITFS and WAITFS_SCHEDULING DiskCopies don't exist on disk
+  -- so they will only be taken by the cleaning daemon for the failed DCs.
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE id IN (SELECT * FROM TABLE(dcsToRm));
+  ret := 1;  -- ok
 END;
 
 CREATE OR REPLACE PACKAGE castorGC AS
