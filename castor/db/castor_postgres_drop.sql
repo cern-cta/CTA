@@ -200,6 +200,12 @@ DROP TABLE StageRepackRequest;
 /* SQL statements for type StageDiskCopyReplicaRequest */
 DROP TABLE StageDiskCopyReplicaRequest;
 
+/* SQL statements for type NsFilesDeleted */
+DROP TABLE NsFilesDeleted;
+
+/* SQL statements for type Disk2DiskCopyStartRequest */
+DROP TABLE Disk2DiskCopyStartRequest;
+
 /* SQL statements for type TapeAccessSpecification */
 DROP TABLE TapeAccessSpecification;
 
