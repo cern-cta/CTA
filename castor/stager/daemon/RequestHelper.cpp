@@ -68,25 +68,17 @@ namespace castor{
       StagerRequestHelper::StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception){	
         
         try{
-          castor::IService* svc =
-          castor::BaseObject::services()->
-          service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
-          this->stagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
-          if (0 == this->stagerService) {
-            castor::exception::Exception e(SEINTERNAL);
-            throw e;
-          }
+          // get thread-safe pointers to services. They were already initialized
+          // in the main, so we are sure pointers are valid
+          castor::IService* svc = castor::BaseObject::services()->
+            service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
+          stagerService = dynamic_cast<castor::stager::IStagerSvc*>(svc);
           
-          castor::IService* svcDB =
-          castor::BaseObject::services()->
-          service("DbCnvSvc", castor::SVC_DBCNV);
-          this->dbService = dynamic_cast<castor::db::DbCnvSvc*>(svcDB);
-          if (0 == this->dbService) {
-            castor::exception::Exception e(SEINTERNAL);
-            throw e;
-          }
+          svc = castor::BaseObject::services()->
+            service("DbCnvSvc", castor::SVC_DBCNV);
+          dbService = dynamic_cast<castor::db::DbCnvSvc*>(svc);
           
-          this->baseAddr =  new castor::BaseAddress; /* the settings ll be done afterwards */
+          this->baseAddr = new castor::BaseAddress;
           svcClass = 0;
           
           baseAddr->setCnvSvcName("DbCnvSvc");
@@ -282,26 +274,17 @@ namespace castor{
         if(this->svcClassName.empty()){  /* we set the default svcClassName */
           this->svcClassName="default";
           fileRequest->setSvcClassName(this->svcClassName);
-          
         }
         
         
-        svcClass=stagerService->selectSvcClass(this->svcClassName);//check if it is NULL
-        if(this->svcClass == NULL){
-          castor::dlf::Param params[]={ castor::dlf::Param(subrequestUuid),
-            castor::dlf::Param("fileName",subrequest->fileName()),
-            castor::dlf::Param("UserName",username),
-            castor::dlf::Param("GroupName", groupname),
-            castor::dlf::Param("SvcClassName",svcClassName),
-            castor::dlf::Param("Function:", "StagerRequestHelper->getSvcClass")
-          };
-          
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 6 ,params);
+        svcClass=stagerService->selectSvcClass(this->svcClassName);  //check if it is NULL
+        if(this->svcClass == NULL) {
+          logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
           
           castor::exception::Exception ex(SESVCCLASSNFND);
           ex.getMessage()<<"Service Class not found";
           throw ex;
-        }	
+        }
       } 
       
       
@@ -329,9 +312,10 @@ namespace castor{
           // get the fileClass by name
           fileClass = stagerService->selectFileClass(stgCnsHelper->cnsFileclass.name);
           if(fileClass == 0) {
-             castor::exception::Internal ex;
-             ex.getMessage() << "No fileclass " << stgCnsHelper->cnsFileclass.name << " in DB";
-             throw ex;
+            logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
+            castor::exception::Internal ex;
+            ex.getMessage() << "No fileclass " << stgCnsHelper->cnsFileclass.name << " in DB";
+            throw ex;
           }
           u_signed64 fileClassId = fileClass->id();
           u_signed64 svcClassId = svcClass->id();
@@ -345,7 +329,7 @@ namespace castor{
           
           // create links in db and in memory
           dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
-          dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, false);	
+          //dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, false);   not needed?!	
           dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
         }
         catch(castor::exception::Exception e){
