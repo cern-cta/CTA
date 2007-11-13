@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2007/11/07 17:08:16 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2007/11/13 11:38:39 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -594,13 +594,14 @@ void castor::stager::dbService::QueryRequestSvcThread::handleDiskPoolQuery
         e.getMessage() << " describeDiskPools returned NULL";
         throw e;
       }
-      for (std::vector<castor::query::DiskPoolQueryResponse*>::const_iterator it =
+      for (std::vector<castor::query::DiskPoolQueryResponse*>::iterator it =
              result->begin();
            it != result->end();
            it++) {
         (*it)->setReqAssociated(req->reqId());
         castor::replier::RequestReplier::getInstance()->
           sendResponse(client, *it);
+        delete (*it);
       }
       // Send the last response if necessary
       castor::replier::RequestReplier::getInstance()->

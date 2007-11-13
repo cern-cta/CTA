@@ -113,22 +113,19 @@ namespace castor{
       }
       
       
-      
       /* destructor */
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
         delete baseAddr;
-        if(subrequest) {
-          if(subrequest->castorFile()) {
-            delete subrequest->castorFile()->fileClass();
-            delete subrequest->castorFile();
-          }
-          if(fileRequest) {
-            delete fileRequest;  // will delete subrequest too
-          }
-          else {
-            delete subrequest;
-          }
+        if(castorFile) {
+          delete castorFile->fileClass();
+          delete castorFile;
+        }
+        if(fileRequest) {
+          delete fileRequest;  // will delete subrequest too
+        }
+        else if(subrequest) {
+          delete subrequest;
         }
         if(svcClass)
           delete svcClass;
@@ -341,7 +338,7 @@ namespace castor{
         
           // get the castorFile from the stagerService and fill it on the subrequest
           castorFile = stagerService->selectCastorFile(stgCnsHelper->cnsFileid.fileid,
-          stgCnsHelper->cnsFileid.server,svcClassId, fileClassId, stgCnsHelper->cnsFilestat.filesize,subrequest->fileName());
+            stgCnsHelper->cnsFileid.server,svcClassId, fileClassId, stgCnsHelper->cnsFilestat.filesize,subrequest->fileName());
           
           subrequest->setCastorFile(castorFile);
           castorFile->setFileClass(fileClass);

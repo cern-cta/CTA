@@ -113,7 +113,8 @@ namespace castor{
             
             /* and we have to notify the jobManager */
             m_notifyJobManager = true;
-          } else{/* diskCopyForRecall != NULL */
+            delete diskCopyForRecall;
+          } else{
 	    stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(stgCnsHelper->cnsFileid));
             
 
