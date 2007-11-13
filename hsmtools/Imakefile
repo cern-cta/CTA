@@ -147,7 +147,8 @@ PROGS_TO_KEEP =  ProgramTargetName(cleanLostFiles) \
 	 ProgramTargetName(dedicateTapeDrive) \
 	 ProgramTargetName(listDedications) \
 	 ProgramTargetName(houseKeeping) \
-	 ProgramTargetName(springCleaning)
+	 ProgramTargetName(springCleaning) \
+	 ProgramTargetName(checkreplicas)
 #endif
 
 IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
@@ -172,7 +173,8 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(houseKeeping)) \
 	 FileName($(BIN),ProgramTargetName(c2probe)) \
 	 FileName($(BIN),ProgramTargetName(adler32)) \
-	 FileName($(BIN),ProgramTargetName(springCleaning))
+	 FileName($(BIN),ProgramTargetName(springCleaning)) \
+	 FileName($(BIN),ProgramTargetName(checkreplicas))
 
 
 #if BuildVDQMCpp
@@ -201,7 +203,8 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/houseKeeping \
 	 $(EXPORTBIN)/c2probe \
 	 $(EXPORTBIN)/adler32 \
-	 $(EXPORTBIN)/springCleaning
+	 $(EXPORTBIN)/springCleaning \
+	 $(EXPORTBIN)/checkreplicas
 
 
 #if BuildVDQMCpp
@@ -289,6 +292,9 @@ IEXPORT(houseKeeping,$(EXPORTBIN),755);
 
 InstallProgram(springCleaning,$(BIN),root,bin,755)
 IEXPORT(springCleaning,$(EXPORTBIN),755);
+
+InstallProgram(checkreplicas,$(BIN),root,bin,755)
+IEXPORT(checkreplicas,$(EXPORTBIN),755);
 
 InstallProgram(c2probe,$(BIN),root,bin,755)
 IEXPORT(c2probe,$(EXPORTBIN),755);
