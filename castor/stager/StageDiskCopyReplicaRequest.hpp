@@ -116,6 +116,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_destDiskCopyId
+       * The id of the destination diskcopy
+       * @return the value of m_destDiskCopyId
+       */
+      u_signed64 destDiskCopyId() const {
+        return m_destDiskCopyId;
+      }
+
+      /**
+       * Set the value of m_destDiskCopyId
+       * The id of the destination diskcopy
+       * @param new_var the new value of m_destDiskCopyId
+       */
+      void setDestDiskCopyId(u_signed64 new_var) {
+        m_destDiskCopyId = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -137,6 +155,9 @@ namespace castor {
 
       /// The id of the source diskcopy
       u_signed64 m_sourceDiskCopyId;
+
+      /// The id of the destination diskcopy
+      u_signed64 m_destDiskCopyId;
 
       /// The id of this object
       u_signed64 m_id;

@@ -309,6 +309,18 @@ int Cstager_StageDiskCopyReplicaRequest_sourceDiskCopyId(struct Cstager_StageDis
 int Cstager_StageDiskCopyReplicaRequest_setSourceDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of destDiskCopyId
+ * The id of the destination diskcopy
+ */
+int Cstager_StageDiskCopyReplicaRequest_destDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of destDiskCopyId
+ * The id of the destination diskcopy
+ */
+int Cstager_StageDiskCopyReplicaRequest_setDestDiskCopyId(struct Cstager_StageDiskCopyReplicaRequest_t* instance, u_signed64 new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

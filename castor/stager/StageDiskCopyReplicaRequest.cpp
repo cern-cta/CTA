@@ -42,6 +42,7 @@
 castor::stager::StageDiskCopyReplicaRequest::StageDiskCopyReplicaRequest() throw() :
   FileRequest(),
   m_sourceDiskCopyId(0),
+  m_destDiskCopyId(0),
   m_id(0) {
 }
 
@@ -67,6 +68,7 @@ void castor::stager::StageDiskCopyReplicaRequest::print(std::ostream& stream,
   this->FileRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "sourceDiskCopyId : " << m_sourceDiskCopyId << std::endl;
+  stream << indent << "destDiskCopyId : " << m_destDiskCopyId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
