@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/06 12:56:30 $ $Author: gtaur $
+ * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -105,7 +105,7 @@ namespace castor {
 	 * inputForRecallPolicy 
 	 */
 
-        virtual std::vector<castor::infoPolicy::PolicyObj*>  inputForRecallPolicy(std::string scvClassName) throw (castor::exception::Exception);
+        virtual std::vector<castor::infoPolicy::PolicyObj*>  inputForRecallPolicy() throw (castor::exception::Exception);
 
         /**
          * Resurrect Tapes

@@ -7,15 +7,15 @@
 .SH NAME
 recHandlerDaemon \- start the CASTOR Garbage Collector daemon
 .SH SYNOPSIS
-.B recHandlerDaemon [-f] [-t time] [svcclass1 [svcclass2] ... [svcclassN]]
+.B recHandlerDaemon [-f] [-t time] 
 .SH DESCRIPTION
 .LP
 The 
 .B recHandler daemon 
 command starts the rechandler daemon
 which trigger the recall from tape periodically.
-The tapes involed in the process are the ones in the tapepools associated to the input service classes ([svcclass1 [svcclass2] ... [svcclassN]).
-If no svcclass is given as input no tape is analysed.
+The tapes involed in the process are the one in STOPPED. 
+
 
 .LP
 A parameter in the 

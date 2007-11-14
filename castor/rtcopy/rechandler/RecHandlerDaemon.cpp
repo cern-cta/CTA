@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
 
     char* pr=NULL;
     std::string recallPolicyName;
+    std::string recallFunctionName;
 
     if ( (pr = getconfent("Policy","RECALL",1)) != NULL ){ 
       recallPolicyName=pr;
@@ -84,6 +85,13 @@ int main(int argc, char* argv[]) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 8, 1, params);
     }
 
+    if ( (pr = getconfent("Policy","RECALLFUNCTION",1)) != NULL ){ 
+      recallFunctionName=pr;
+    } else {
+        castor::dlf::Param params[] =
+	  {castor::dlf::Param("message","No global function name for recall policy for recall in castor.conf")};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 8, 1, params);
+    }
 
     castor::infoPolicy::RecallPySvc* recallPySvc=NULL;
 
@@ -91,7 +99,7 @@ int main(int argc, char* argv[]) {
 
       // started the interpreter 
       if (pr != NULL )
-      recallPySvc= new castor::infoPolicy::RecallPySvc(recallPolicyName);
+	recallPySvc= new castor::infoPolicy::RecallPySvc(recallPolicyName,recallFunctionName);
     } catch (castor::exception::Exception e) {
     
     // "Exception caught problem to start pyhton policy"
@@ -110,10 +118,9 @@ int main(int argc, char* argv[]) {
     // svc class and time to be executed
 
     u_signed64 sleepTime=newRecHandler->timeSleep();
-    std::vector<std::string> listSvcClass=newRecHandler->listSvcClass();
     
     newRecHandler->addThreadPool(
-      new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(myService,listSvcClass,recallPySvc), 0, sleepTime));
+      new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(myService,recallPySvc), 0, sleepTime));
     
     newRecHandler->getThreadPool('R')->setNbThreads(1);
     newRecHandler->start();
@@ -193,16 +200,11 @@ void castor::rtcopy::rechandler::RecHandlerDaemon::parseCommandLine(int argc, ch
       return;
     }
   }
-  
-  for (int i=Coptind; i<argc; i++ ) {
-   m_listSvcClass.push_back(argv[i]);
-  }
- 
 }
 
 void castor::rtcopy::rechandler::RecHandlerDaemon::usage(){
   std::cout << "\nUsage: " << "RecHandlerDaemon" 
-            << " [options] svcClass1 svcClass2 svcClass3 ...\n "
+            << " [options]\n "
             << "Where options are:\n" 
             << "-f     : to run in foreground\n"
             << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"

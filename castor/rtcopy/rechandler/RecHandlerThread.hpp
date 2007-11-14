@@ -43,8 +43,7 @@ namespace castor {
      */
     
     class RecHandlerThread : public castor::server::BaseDbThread {
-      castor::infoPolicy::IPolicySvc* m_policySvc; // policy service to call the oracle procedure
-      std::vector<std::string> m_listSvcClass;  
+      castor::infoPolicy::IPolicySvc* m_policySvc; // policy service to call the oracle procedure  
       castor::infoPolicy::RecallPySvc* m_recallPolicy;
     
     public:
@@ -54,7 +53,7 @@ namespace castor {
        * @param maximum numbers of days that a request can stay in the datebase before being deleted.
        */    
 
-      RecHandlerThread( castor::infoPolicy::IPolicySvc* mySvc, std::vector<std::string> listSvcClass, castor::infoPolicy::RecallPySvc* recallPolicy);
+      RecHandlerThread( castor::infoPolicy::IPolicySvc* mySvc, castor::infoPolicy::RecallPySvc* recallPolicy);
 
 
       /**

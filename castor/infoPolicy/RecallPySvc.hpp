@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RecallPySvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/06 12:56:29 $ $Author: gtaur $
+ * @(#)$RCSfile: RecallPySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -30,9 +30,10 @@
 namespace castor{
   namespace infoPolicy{
       class RecallPySvc: public castor::infoPolicy::PySvc{
+	std::string m_functionName;
       public:
 	RecallPySvc():PySvc(){};
-	RecallPySvc(std::string module):PySvc(module){};
+	RecallPySvc(std::string module,std::string functionName):PySvc(module){m_functionName=functionName;};
 	virtual bool applyPolicy(castor::infoPolicy::PolicyObj* pObj) throw(castor::exception::Exception);
 
       };     

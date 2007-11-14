@@ -94,22 +94,25 @@ const std::string castor::infoPolicy::ora::OraPolicySvc::s_startChosenStreamsSta
 const std::string castor::infoPolicy::ora::OraPolicySvc::s_resurrectCandidatesStatementString = 
   "BEGIN  resurrectCandidates(:1);END;";
 
+
+/// SQL select tapepoolnames
+
+ const std::string castor::infoPolicy::ora::OraPolicySvc::s_selectTapePoolNamesStatementString =
+ "SELECT TapePool.name, TapePool.id FROM TapePool,SvcClass2TapePool WHERE TapePool.id= SvcClass2TapePool.child AND SvcClass2TapePool.parent=:1";
+
+
 //// DATABASE FOR RECHANDLER
 
 /// SQL statement for inputForRecallPolicy
 
 const std::string castor::infoPolicy::ora::OraPolicySvc::s_inputForRecallPolicyStatementString = 
-  "BEGIN  inputForRecallPolicy(:1,:2,:3);END;";
+  "BEGIN  inputForRecallPolicy(:1);END;";
 
 /// SQL statement for resurrectTapes
 
 const std::string castor::infoPolicy::ora::OraPolicySvc::s_resurrectTapesStatementString = 
   "BEGIN  resurrectTapes(:1);END;";
 
-/// SQL select tapepoolnames
-
- const std::string castor::infoPolicy::ora::OraPolicySvc::s_selectTapePoolNamesStatementString =
- "SELECT TapePool.name, TapePool.id FROM TapePool,SvcClass2TapePool WHERE TapePool.id= SvcClass2TapePool.child AND SvcClass2TapePool.parent=:1";
 
 
 
@@ -125,8 +128,8 @@ castor::infoPolicy::ora::OraPolicySvc::OraPolicySvc(const std::string name) :
   m_startChosenStreamsStatement(0),
   m_inputForRecallPolicyStatement(0),
   m_resurrectTapesStatement(0),
-  m_selectTapePoolNamesStatement(0),
   m_resurrectCandidatesStatement(0),
+  m_selectTapePoolNamesStatement(0),
   m_attachTapeCopiesToStreamsStatement(0){
 }
 
@@ -166,9 +169,9 @@ void castor::infoPolicy::ora::OraPolicySvc::reset() throw() {
     if  (m_startChosenStreamsStatement) deleteStatement(m_startChosenStreamsStatement);
     if  (m_inputForRecallPolicyStatement)deleteStatement(m_inputForRecallPolicyStatement);
     if  (m_resurrectTapesStatement) deleteStatement(m_resurrectTapesStatement);
-    if  (m_selectTapePoolNamesStatement) deleteStatement(m_selectTapePoolNamesStatement);
     if (m_resurrectCandidatesStatement) deleteStatement(m_resurrectCandidatesStatement);
     if (m_attachTapeCopiesToStreamsStatement) deleteStatement(m_attachTapeCopiesToStreamsStatement); 
+    if ( m_selectTapePoolNamesStatement )deleteStatement(m_selectTapePoolNamesStatement);
 
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -179,9 +182,9 @@ void castor::infoPolicy::ora::OraPolicySvc::reset() throw() {
   m_startChosenStreamsStatement=0; 
   m_inputForRecallPolicyStatement=0;
   m_resurrectTapesStatement=0;
-  m_selectTapePoolNamesStatement=0;
   m_resurrectCandidatesStatement=0;
   m_attachTapeCopiesToStreamsStatement=0;
+  m_selectTapePoolNamesStatement=0;
 }
 
 
@@ -536,7 +539,7 @@ void  castor::infoPolicy::ora::OraPolicySvc::startChosenStreams(std::vector<Poli
 // inputForRecallPolicy
 //---------------------------------------------------------------------
 
-std::vector<castor::infoPolicy::PolicyObj*>  castor::infoPolicy::ora::OraPolicySvc::inputForRecallPolicy(std::string svcClassName) throw (castor::exception::Exception){
+std::vector<castor::infoPolicy::PolicyObj*>  castor::infoPolicy::ora::OraPolicySvc::inputForRecallPolicy() throw (castor::exception::Exception){
 
     std::vector<castor::infoPolicy::PolicyObj*> result;
      try {
@@ -545,18 +548,13 @@ std::vector<castor::infoPolicy::PolicyObj*>  castor::infoPolicy::ora::OraPolicyS
       m_inputForRecallPolicyStatement  =
         createStatement(s_inputForRecallPolicyStatementString);
       m_inputForRecallPolicyStatement->registerOutParam
-        (2, oracle::occi::OCCISTRING, 2048);
-      m_inputForRecallPolicyStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
+        (1, oracle::occi::OCCICURSOR);
       m_inputForRecallPolicyStatement->setAutoCommit(true);
     }   
     
-    m_inputForRecallPolicyStatement->setString(1,svcClassName);
     m_inputForRecallPolicyStatement->executeUpdate();
-
-    std::string policyName = m_inputForRecallPolicyStatement->getString(2);
     oracle::occi::ResultSet *rs =
-      m_inputForRecallPolicyStatement->getCursor(3);
+      m_inputForRecallPolicyStatement->getCursor(1);
    
     // Run through the cursor
     
@@ -564,9 +562,6 @@ std::vector<castor::infoPolicy::PolicyObj*>  castor::infoPolicy::ora::OraPolicyS
     while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
       castor::infoPolicy::DbInfoRecallPolicy* item = new castor::infoPolicy::DbInfoRecallPolicy();
       castor::infoPolicy::PolicyObj* resultItem = new castor::infoPolicy::PolicyObj();
-
-      resultItem->setSvcClassName(svcClassName);
-      resultItem->setPolicyName(policyName);
 
       item->setTapeId((u_signed64)rs->getDouble(1));
       item->setVid(rs->getString(2));

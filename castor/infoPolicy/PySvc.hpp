@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PySvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/06 12:56:29 $ $Author: gtaur $
+ * @(#)$RCSfile: PySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -78,7 +78,7 @@ namespace castor {
       PyObject *m_pyDict;
       
       /// Experiment
-      PyThreadState *m_pyTid;
+      //  PyThreadState *m_pyTid;
 
     };
 

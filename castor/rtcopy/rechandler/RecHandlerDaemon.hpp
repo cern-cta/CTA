@@ -44,7 +44,6 @@ namespace castor {
      */
     class RecHandlerDaemon : public castor::server::BaseDaemon{
       u_signed64 m_timeSleep;
-      std::vector<std::string> m_listSvcClass;
       
     public:
     
@@ -54,10 +53,7 @@ namespace castor {
       RecHandlerDaemon();
        
       inline u_signed64 timeSleep(){ return m_timeSleep;}
-      inline std::vector<std::string> listSvcClass(){return m_listSvcClass;}
-      
       inline void setTimeSleep(u_signed64 time){m_timeSleep=time;}
-      inline void setListSvcClass(std::vector<std::string> lsvc){m_listSvcClass=lsvc;}
 
       /**
        * destructor

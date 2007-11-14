@@ -61,8 +61,7 @@ namespace castor {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RecHandlerThread::RecHandlerThread(castor::infoPolicy::IPolicySvc* mySvc, std::vector<std::string> listSvcClass,castor::infoPolicy::RecallPySvc* recallPolicy) { 
-   m_listSvcClass=listSvcClass;  
+RecHandlerThread::RecHandlerThread(castor::infoPolicy::IPolicySvc* mySvc,castor::infoPolicy::RecallPySvc* recallPolicy) { 
    m_policySvc=mySvc;
    m_recallPolicy=recallPolicy;
 
@@ -81,18 +80,14 @@ void RecHandlerThread::run(void* par)
   
   try{
 
-    // loop all the given  svc class 
-    std::vector<std::string>::iterator svcClassName=m_listSvcClass.begin();
-    while(svcClassName != m_listSvcClass.end()){  
-
       // get information from the db    
-      infoCandidateTape = m_policySvc->inputForRecallPolicy(*svcClassName);
+      infoCandidateTape = m_policySvc->inputForRecallPolicy();
       
       if (infoCandidateTape.empty()) {
 	 castor::dlf::Param params[] =
-         {castor::dlf::Param("SvcClass", (*svcClassName)),
+	   {
           castor::dlf::Param("message", "No input tapes for the policy")};
-         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 2, params);
+         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, params);
 
       }
 
@@ -161,15 +156,12 @@ void RecHandlerThread::run(void* par)
       // call the db to put the tape as pending for that svcclass
       if (eligibleTapeIds.empty()){
 	 castor::dlf::Param params[] =
-	      {castor::dlf::Param("SvcCLass",*svcClassName),
-	       castor::dlf::Param("message", "No eligible tape to resurrect")};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 2, params);
+	      {castor::dlf::Param("message", "No eligible tape to resurrect")};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params);
 	
       }
 
       m_policySvc->resurrectTapes(eligibleTapeIds);
-      svcClassName++;
-    }
 
   }
   catch(castor::exception::Exception e) {

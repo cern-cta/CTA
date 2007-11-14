@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RecallPySvc.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/06 12:56:29 $ $Author: gtaur $
+ * @(#)$RCSfile: RecallPySvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -49,7 +49,7 @@ bool castor::infoPolicy::RecallPySvc::applyPolicy(castor::infoPolicy::PolicyObj*
 
   PyObject *inputScript= Py_BuildValue("(s,K,K,K)", (myInfoDb->vid()).c_str(),myInfoDb->numFiles(),myInfoDb->numBytes(),myInfoDb->oldest());
   
-  bool ret= castor::infoPolicy::PySvc::callPolicyFunction(pObj->policyName(),inputScript);
+  bool ret= castor::infoPolicy::PySvc::callPolicyFunction(m_functionName,inputScript);
 
   return ret;
   
