@@ -33,7 +33,6 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "osdep.h"
@@ -53,7 +52,6 @@ castor::stager::Tape::Tape() throw() :
   m_severity(0),
   m_vwAddress(""),
   m_id(0),
-  m_tapepool(0),
   m_stream(0),
   m_status(TapeStatusCodes(0)) {
 }
@@ -98,12 +96,6 @@ void castor::stager::Tape::print(std::ostream& stream,
   stream << indent << "vwAddress : " << m_vwAddress << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "Tapepool : " << std::endl;
-  if (0 != m_tapepool) {
-    m_tapepool->print(stream, indent + "  ", alreadyPrinted);
-  } else {
-    stream << indent << "  null" << std::endl;
-  }
   stream << indent << "Stream : " << std::endl;
   if (0 != m_stream) {
     m_stream->print(stream, indent + "  ", alreadyPrinted);

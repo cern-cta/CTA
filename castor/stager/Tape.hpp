@@ -53,7 +53,6 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class TapePool;
     class Stream;
     class Segment;
 
@@ -256,22 +255,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_tapepool
-       * @return the value of m_tapepool
-       */
-      TapePool* tapepool() const {
-        return m_tapepool;
-      }
-
-      /**
-       * Set the value of m_tapepool
-       * @param new_var the new value of m_tapepool
-       */
-      void setTapepool(TapePool* new_var) {
-        m_tapepool = new_var;
-      }
-
-      /**
        * Get the value of m_stream
        * @return the value of m_stream
        */
@@ -386,8 +369,6 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
-
-      TapePool* m_tapepool;
 
       Stream* m_stream;
 

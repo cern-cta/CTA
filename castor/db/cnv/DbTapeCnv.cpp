@@ -42,7 +42,6 @@
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Tape.hpp"
-#include "castor/stager/TapePool.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include <set>
@@ -59,7 +58,7 @@ static castor::CnvFactory<castor::db::cnv::DbTapeCnv>* s_factoryDbTapeCnv =
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapeCnv::s_insertStatementString =
-"INSERT INTO Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, tapepool, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8,:9,:10) RETURNING id INTO :11";
+"INSERT INTO Tape (vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status) VALUES (:1,:2,:3,:4,:5,:6,:7,ids_seq.nextval,:8,:9) RETURNING id INTO :10";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeCnv::s_deleteStatementString =
@@ -67,7 +66,7 @@ const std::string castor::db::cnv::DbTapeCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeCnv::s_selectStatementString =
-"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, tapepool, stream, status FROM Tape WHERE id = :1";
+"SELECT vid, side, tpmode, errMsgTxt, errorCode, severity, vwAddress, id, stream, status FROM Tape WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeCnv::s_updateStatementString =
@@ -80,14 +79,6 @@ const std::string castor::db::cnv::DbTapeCnv::s_storeTypeStatementString =
 /// SQL statement for type deletion
 const std::string castor::db::cnv::DbTapeCnv::s_deleteTypeStatementString =
 "DELETE FROM Id2Type WHERE id = :1";
-
-/// SQL existence statement for member tapepool
-const std::string castor::db::cnv::DbTapeCnv::s_checkTapePoolExistStatementString =
-"SELECT id FROM TapePool WHERE id = :1";
-
-/// SQL update statement for member tapepool
-const std::string castor::db::cnv::DbTapeCnv::s_updateTapePoolStatementString =
-"UPDATE Tape SET tapepool = :1 WHERE id = :2";
 
 /// SQL select statement for member stream
 const std::string castor::db::cnv::DbTapeCnv::s_selectStreamStatementString =
@@ -144,8 +135,6 @@ castor::db::cnv::DbTapeCnv::DbTapeCnv(castor::ICnvSvc* cnvSvc) :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_checkTapePoolExistStatement(0),
-  m_updateTapePoolStatement(0),
   m_selectStreamStatement(0),
   m_deleteStreamStatement(0),
   m_remoteUpdateStreamStatement(0),
@@ -178,8 +167,6 @@ void castor::db::cnv::DbTapeCnv::reset() throw() {
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
-    if(m_checkTapePoolExistStatement) delete m_checkTapePoolExistStatement;
-    if(m_updateTapePoolStatement) delete m_updateTapePoolStatement;
     if(m_deleteStreamStatement) delete m_deleteStreamStatement;
     if(m_selectStreamStatement) delete m_selectStreamStatement;
     if(m_remoteUpdateStreamStatement) delete m_remoteUpdateStreamStatement;
@@ -199,8 +186,6 @@ void castor::db::cnv::DbTapeCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_checkTapePoolExistStatement = 0;
-  m_updateTapePoolStatement = 0;
   m_selectStreamStatement = 0;
   m_deleteStreamStatement = 0;
   m_remoteUpdateStreamStatement = 0;
@@ -240,9 +225,6 @@ void castor::db::cnv::DbTapeCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::stager::Tape*>(object);
   try {
     switch (type) {
-    case castor::OBJ_TapePool :
-      fillRepTapePool(obj);
-      break;
     case castor::OBJ_Stream :
       fillRepStream(obj);
       break;
@@ -268,38 +250,6 @@ void castor::db::cnv::DbTapeCnv::fillRep(castor::IAddress* address,
                     << std::endl << e.getMessage().str() << std::endl;
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// fillRepTapePool
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeCnv::fillRepTapePool(castor::stager::Tape* obj)
-  throw (castor::exception::Exception) {
-  if (0 != obj->tapepool()) {
-    // Check checkTapePoolExist statement
-    if (0 == m_checkTapePoolExistStatement) {
-      m_checkTapePoolExistStatement = createStatement(s_checkTapePoolExistStatementString);
-    }
-    // retrieve the object from the database
-    m_checkTapePoolExistStatement->setUInt64(1, obj->tapepool()->id());
-    castor::db::IDbResultSet *rset = m_checkTapePoolExistStatement->executeQuery();
-    if (!rset->next()) {
-      castor::BaseAddress ad;
-      ad.setCnvSvcName("DbCnvSvc");
-      ad.setCnvSvcType(castor::SVC_DBCNV);
-      cnvSvc()->createRep(&ad, obj->tapepool(), false, OBJ_Tape);
-    }
-    // Close resultset
-    delete rset;
-  }
-  // Check update statement
-  if (0 == m_updateTapePoolStatement) {
-    m_updateTapePoolStatement = createStatement(s_updateTapePoolStatementString);
-  }
-  // Update local object
-  m_updateTapePoolStatement->setUInt64(1, 0 == obj->tapepool() ? 0 : obj->tapepool()->id());
-  m_updateTapePoolStatement->setUInt64(2, obj->id());
-  m_updateTapePoolStatement->execute();
 }
 
 //------------------------------------------------------------------------------
@@ -475,9 +425,6 @@ void castor::db::cnv::DbTapeCnv::fillObj(castor::IAddress* address,
   castor::stager::Tape* obj = 
     dynamic_cast<castor::stager::Tape*>(object);
   switch (type) {
-  case castor::OBJ_TapePool :
-    fillObjTapePool(obj);
-    break;
   case castor::OBJ_Stream :
     fillObjStream(obj);
     break;
@@ -499,44 +446,6 @@ void castor::db::cnv::DbTapeCnv::fillObj(castor::IAddress* address,
   }
 }
 //------------------------------------------------------------------------------
-// fillObjTapePool
-//------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeCnv::fillObjTapePool(castor::stager::Tape* obj)
-  throw (castor::exception::Exception) {
-  // Check whether the statement is ok
-  if (0 == m_selectStatement) {
-    m_selectStatement = createStatement(s_selectStatementString);
-  }
-  // retrieve the object from the database
-  m_selectStatement->setUInt64(1, obj->id());
-  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
-  if (!rset->next()) {
-    castor::exception::NoEntry ex;
-    ex.getMessage() << "No object found for id :" << obj->id();
-    throw ex;
-  }
-  u_signed64 tapepoolId = rset->getInt64(9);
-  // Close ResultSet
-  delete rset;
-  // Check whether something should be deleted
-  if (0 != obj->tapepool() &&
-      (0 == tapepoolId ||
-       obj->tapepool()->id() != tapepoolId)) {
-    obj->setTapepool(0);
-  }
-  // Update object or create new one
-  if (0 != tapepoolId) {
-    if (0 == obj->tapepool()) {
-      obj->setTapepool
-        (dynamic_cast<castor::stager::TapePool*>
-         (cnvSvc()->getObjFromId(tapepoolId)));
-    } else {
-      cnvSvc()->updateObj(obj->tapepool());
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
 // fillObjStream
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTapeCnv::fillObjStream(castor::stager::Tape* obj)
@@ -553,7 +462,7 @@ void castor::db::cnv::DbTapeCnv::fillObjStream(castor::stager::Tape* obj)
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 streamId = rset->getInt64(10);
+  u_signed64 streamId = rset->getInt64(9);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -693,7 +602,7 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(11, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(10, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -706,11 +615,10 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(5, obj->errorCode());
     m_insertStatement->setInt(6, obj->severity());
     m_insertStatement->setString(7, obj->vwAddress());
-    m_insertStatement->setUInt64(8, (type == OBJ_TapePool && obj->tapepool() != 0) ? obj->tapepool()->id() : 0);
-    m_insertStatement->setUInt64(9, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
-    m_insertStatement->setInt(10, (int)obj->status());
+    m_insertStatement->setUInt64(8, (type == OBJ_Stream && obj->stream() != 0) ? obj->stream()->id() : 0);
+    m_insertStatement->setInt(9, (int)obj->status());
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(11));
+    obj->setId(m_insertStatement->getUInt64(10));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -735,7 +643,6 @@ void castor::db::cnv::DbTapeCnv::createRep(castor::IAddress* address,
                     << "  severity : " << obj->severity() << std::endl
                     << "  vwAddress : " << obj->vwAddress() << std::endl
                     << "  id : " << obj->id() << std::endl
-                    << "  tapepool : " << obj->tapepool() << std::endl
                     << "  stream : " << obj->stream() << std::endl
                     << "  status : " << obj->status() << std::endl;
     throw ex;
@@ -863,7 +770,7 @@ castor::IObject* castor::db::cnv::DbTapeCnv::createObj(castor::IAddress* address
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
     object->setId(rset->getUInt64(8));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(11));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -909,7 +816,7 @@ void castor::db::cnv::DbTapeCnv::updateObj(castor::IObject* obj)
     object->setSeverity(rset->getInt(6));
     object->setVwAddress(rset->getString(7));
     object->setId(rset->getUInt64(8));
-    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(11));
+    object->setStatus((enum castor::stager::TapeStatusCodes)rset->getInt(10));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

@@ -171,14 +171,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type TapePool refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillRepTapePool(castor::stager::Tape* obj)
-          throw (castor::exception::Exception);
-
-        /**
          * Fill the database with objects of type Stream refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
@@ -212,14 +204,6 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool autocommit)
-          throw (castor::exception::Exception);
-
-        /**
-         * Retrieve from the database objects of type TapePool refered by a given object.
-         * @param obj the original object
-         * @exception Exception throws an Exception in case of error
-         */
-        virtual void fillObjTapePool(castor::stager::Tape* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -284,18 +268,6 @@ namespace castor {
 
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
-
-        /// SQL checkExist statement for member tapepool
-        static const std::string s_checkTapePoolExistStatementString;
-
-        /// SQL checkExist statement object for member tapepool
-        castor::db::IDbStatement *m_checkTapePoolExistStatement;
-
-        /// SQL update statement for member tapepool
-        static const std::string s_updateTapePoolStatementString;
-
-        /// SQL update statement object for member tapepool
-        castor::db::IDbStatement *m_updateTapePoolStatement;
 
         /// SQL select statement for member stream
         static const std::string s_selectStreamStatementString;
