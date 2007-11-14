@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/11/02 17:06:18 $ $Author: gtaur $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/11/14 16:57:31 $ $Author: gtaur $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -177,30 +177,6 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
       tape->setVid(vid);
       tape->setSide(side);
       tape->setTpmode(tpmode);
-
-      // I insert a new tape and I need to retrieve from Vmgr the 
-      // tape pool of that tape
-      std::string tapePoolName;
-      u_signed64 tapePoolId=0;
-      
-      struct vmgr_tape_info vmgrTapeInfo;
-      int rc = vmgr_querytape(vid.c_str(),side,&vmgrTapeInfo,0);
-
-      if (rc != -1){ 
-	tapePoolName= (char*) vmgrTapeInfo.poolname;
-	
-	// retrieved the id 
-	 m_selectTapePoolIdStatement->setString(1, vid);
-	 rset = m_selectTapePoolIdStatement->executeQuery();
-	 if (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) tapePoolId = rset->getInt(1);
-	 m_selectTapePoolIdStatement->closeResultSet(rset);
-      }  
-      
-      castor::IObject* item = cnvSvc()->getObjFromId(tapePoolId);
-      castor::stager::TapePool* remoteObj = 
-        dynamic_cast<castor::stager::TapePool*>(item);
-
-      tape->setTapepool(remoteObj);
       tape->setStatus(castor::stager::TAPE_UNUSED);
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
