@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.545 $ $Date: 2007/11/13 16:32:45 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.546 $ $Date: 2007/11/14 17:01:22 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5031,6 +5031,7 @@ END;
 
 /** resurrect Candidates **/
 
+
 CREATE OR REPLACE PROCEDURE resurrectCandidates
 (migrationCandidates IN castor."cnumList") -- all candidate before applying the policy
 AS
@@ -5045,27 +5046,20 @@ END;
 
 /** Get input for python recall policy**/
 
-CREATE OR REPLACE PROCEDURE inputForRecallPolicy(svcClassName IN VARCHAR2,
- policyName OUT VARCHAR2,
- dbInfo OUT castor.DbRecallInfo_Cur) AS
+
+CREATE OR REPLACE PROCEDURE main_dev10.inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_Cur) AS
  svcId NUMBER;
-BEGIN
-  BEGIN
-  	SELECT id,recallerPolicy INTO svcId , policyName FROM svcclass WHERE svcclass.name=svcClassName AND ROWNUM < 2;   
-  EXCEPTION 
-      WHEN NO_DATA_FOUND THEN
-       policyName:=Null;
-       dbInfo:=Null;
-       RETURN;
-  END;   
+BEGIN  
   OPEN dbInfo FOR 
-  	SELECT tape.id,tape.vid, sum(castorfile.filesize),count(distinct segment.id), min(segment.creationtime) 
+  	SELECT tape.id,tape.vid, sum(castorfile.filesize),count(distinct segment.id), min(segment.creationtime)- gettime() 
      	FROM tapecopy,castorfile,segment,tape
         WHERE  tape.id=segment.tape(+) 
           AND tapecopy.id(+)=segment.copy
           AND castorfile.id(+)=tapecopy.castorfile 
            GROUP BY tape.id, tape.vid;
 END;
+
+
 
 /** resurrect tapes **/
 
