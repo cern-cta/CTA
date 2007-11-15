@@ -57,6 +57,7 @@
 #include "castor/Constants.hpp"
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
@@ -92,7 +93,7 @@ namespace castor{
         StagerJobRequestHandler* stgRequestHandler = NULL;
         
         try {
-	  int typeRequest=0;
+          int typeRequest=0;
           stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
           
           switch(typeRequest){
@@ -112,6 +113,11 @@ namespace castor{
               stgRequestHandler = new StagerPrepareToUpdateHandler(stgRequestHelper);
               break;
             
+            default:
+              // XXX should never happen, but happens?!
+              castor::exception::Internal e;
+              e.getMessage() << "Request type " << typeRequest << " not correct for stager svc " << m_name;
+              throw e;
           }
           
           stgRequestHandler->preHandle();

@@ -55,6 +55,7 @@
 #include "castor/Constants.hpp"
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 
@@ -104,6 +105,11 @@ namespace castor{
             stgRequestHandler = new StagerSetGCHandler(stgRequestHelper);
             break;
             
+            default:
+              // XXX should never happen, but happens?!
+              castor::exception::Internal e;
+              e.getMessage() << "Request type " << typeRequest << " not correct for stager svc " << m_name;
+              throw e;
           }//end switch(typeRequest)
           
           
