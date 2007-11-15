@@ -172,7 +172,8 @@ namespace castor {
     OBJ_NsFilesDeleted = 142,
     OBJ_NsFilesDeletedResponse = 143,
 
-    OBJ_Disk2DiskCopyStartRequest = 144
+    OBJ_Disk2DiskCopyStartRequest = 144,
+    OBJ_Disk2DiskCopyStartResponse = 145
   };
 
   /**
@@ -246,7 +247,7 @@ namespace castor {
    * Nb of objectIds currently existing
    */
 
-  static const unsigned int ObjectsIdsNb = 145;
+  static const unsigned int ObjectsIdsNb = 146;
 
   /**
    * Nb of ServicesIds currently existing
@@ -263,7 +264,7 @@ namespace castor {
    * correctly the ObjectsIds enum
    */
 
-  extern const char* ObjectsIdStrings[145];
+  extern const char* ObjectsIdStrings[146];
 
   /**
    * Names of the differents Services, used to display
