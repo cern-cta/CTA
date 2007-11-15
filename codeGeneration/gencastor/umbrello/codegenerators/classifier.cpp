@@ -64,7 +64,7 @@ void UMLClassifier::setBaseType(Uml::Object_Type ot) {
             newIcon = Uml::it_Interface;
             break;
         case ot_Class:
-            UMLObject::setStereotype(QString::null);
+            UMLObject::setStereotype(QString());
             UMLObject::m_bAbstract = false;
             newIcon = Uml::it_Class;
             break;
@@ -182,10 +182,9 @@ UMLOperation* UMLClassifier::createOperation(const QString &name /*=null*/,
     if (params) {
         for (Model_Utils::NameAndType_ListIt it = params->begin(); it != params->end(); ++it ) {
             const Model_Utils::NameAndType &nt = *it;
-            UMLAttribute *par = new UMLAttribute(op, nt.m_name);
-            par->setType(nt.m_type);
+            UMLAttribute *par = new UMLAttribute(op, nt.m_name, Uml::id_None, Uml::Visibility::Private,
+                                                 nt.m_type, nt.m_initialValue);
             par->setParmKind(nt.m_direction);
-            par->setInitialValue(nt.m_initialValue);
             op->addParm(par);
         }
     }
@@ -212,11 +211,8 @@ UMLOperation* UMLClassifier::createOperation(const QString &name /*=null*/,
         return NULL;
     }
 
-    // Comment that so that we don't save the XMI file each time we 
-    // modify something. After all this is the code generation and we        
-    // don't want to modify anything !  
-    //UMLDoc *umldoc = UMLApp::app()->getDocument();
-    //umldoc->signalUMLObjectCreated(op);
+    UMLDoc *umldoc = UMLApp::app()->getDocument();
+    umldoc->signalUMLObjectCreated(op);
     return op;
 }
 
@@ -246,8 +242,8 @@ bool UMLClassifier::addOperation(UMLOperation* op, int position )
         kDebug() << "  UMLClassifier::addOperation list after change: " << buf << endl;
      } else
         m_List.append( op );
-    UMLObject::emitModified();
     emit operationAdded(op);
+    UMLObject::emitModified();
     connect(op,SIGNAL(modified()),this,SIGNAL(modified()));
     return true;
 }
@@ -275,12 +271,12 @@ int UMLClassifier::removeOperation(UMLOperation *op) {
     // disconnection needed.
     // note that we don't delete the operation, just remove it from the Classifier
     disconnect(op,SIGNAL(modified()),this,SIGNAL(modified()));
-    UMLObject::emitModified();
     emit operationRemoved(op);
+    UMLObject::emitModified();
     return m_List.count();
 }
 
-UMLObject* UMLClassifier::createTemplate(const QString& currentName /*= QString::null*/) {
+UMLObject* UMLClassifier::createTemplate(const QString& currentName /*= QString()*/) {
     QString name = currentName;
     bool goodName = !name.isEmpty();
     if (!goodName)
@@ -309,8 +305,11 @@ UMLObject* UMLClassifier::createTemplate(const QString& currentName /*= QString:
 
     addTemplate(newTemplate);
 
-    UMLDoc *umldoc = UMLApp::app()->getDocument();
-    umldoc->signalUMLObjectCreated(newTemplate);
+    // Comment that so that we don't save the XMI file each time we 
+    // modify something. After all this is the code generation and we        
+    // don't want to modify anything !  
+    //UMLDoc *umldoc = UMLApp::app()->getDocument();
+    //umldoc->signalUMLObjectCreated(newTemplate);
     return newTemplate;
 }
 
@@ -319,7 +318,7 @@ int UMLClassifier::attributes() {
     return atts.count();
 }
 
-UMLAttributeList UMLClassifier::getAttributeList() {
+UMLAttributeList UMLClassifier::getAttributeList() const{
     UMLAttributeList attributeList;
     for (UMLObjectListIt lit(m_List); lit.current(); ++lit) {
         UMLObject *listItem = lit.current();
@@ -499,7 +498,10 @@ bool UMLClassifier::acceptAssociationType(Uml::Association_Type type)
     return false; //shutup compiler warning
 }
 
-UMLAttribute* UMLClassifier::createAttribute(const QString &name /*=null*/) {
+UMLAttribute* UMLClassifier::createAttribute(const QString &name,
+                                             UMLObject *type,
+                                             Uml::Visibility vis,
+                                             const QString &init) {
     Uml::IDType id = UniqueID::gen();
     QString currentName;
     if (name.isNull())  {
@@ -507,9 +509,7 @@ UMLAttribute* UMLClassifier::createAttribute(const QString &name /*=null*/) {
     } else {
         currentName = name;
     }
-    const Settings::OptionState optionState = Settings::getOptionState();
-    Uml::Visibility scope = optionState.classState.defaultAttributeScope;
-    UMLAttribute* newAttribute = new UMLAttribute(this, currentName, id, scope);
+    UMLAttribute* newAttribute = new UMLAttribute(this, currentName, id, vis, type, init);
 
     int button = QDialog::Accepted;
     bool goodName = false;
@@ -531,6 +531,7 @@ UMLAttribute* UMLClassifier::createAttribute(const QString &name /*=null*/) {
     }
 
     if (button != QDialog::Accepted) {
+        delete newAttribute;
         return NULL;
     }
 
@@ -550,8 +551,8 @@ UMLAttribute* UMLClassifier::addAttribute(const QString &name, Uml::IDType id /*
     Uml::Visibility scope = Settings::getOptionState().classState.defaultAttributeScope;
     UMLAttribute *a = new UMLAttribute(this, name, id, scope);
     m_List.append(a);
-    UMLObject::emitModified();
     emit attributeAdded(a);
+    UMLObject::emitModified();
     connect(a,SIGNAL(modified()),this,SIGNAL(modified()));
     return a;
 }
@@ -564,8 +565,8 @@ UMLAttribute* UMLClassifier::addAttribute(const QString &name, UMLObject *type, 
     if (type)
         a->setType(type);
     m_List.append(a);
-    UMLObject::emitModified();
     emit attributeAdded(a);
+    UMLObject::emitModified();
     connect(a,SIGNAL(modified()),this,SIGNAL(modified()));
     return a;
 }
@@ -579,8 +580,8 @@ bool UMLClassifier::addAttribute(UMLAttribute* att, IDChangeLog* Log /* = 0 */,
             m_List.insert(position, att);
         else
             m_List.append(att);
-        UMLObject::emitModified();
         emit attributeAdded(att);
+        UMLObject::emitModified();
         connect(att, SIGNAL(modified()), this, SIGNAL(modified()));
         return true;
     } else if (Log) {
@@ -595,8 +596,8 @@ int UMLClassifier::removeAttribute(UMLAttribute* a) {
         kDebug() << "can't find att given in list" << endl;
         return -1;
     }
-    UMLObject::emitModified();
     emit attributeRemoved(a);
+    UMLObject::emitModified();
     // If we are deleting the object, then we don't need to disconnect..this is done auto-magically
     // for us by QObject. -b.t.
     // disconnect(a,SIGNAL(modified()),this,SIGNAL(modified()));
@@ -609,7 +610,7 @@ void UMLClassifier::setClassAssoc(UMLAssociation *assoc) {
     m_pClassAssoc = assoc;
 }
 
-UMLAssociation *UMLClassifier::getClassAssoc() {
+UMLAssociation *UMLClassifier::getClassAssoc() const{
     return m_pClassAssoc;
 }
 
@@ -658,7 +659,7 @@ UMLOperationList UMLClassifier::getOpList(bool includeInherited) {
     return ops;
 }
 
-UMLClassifierListItemList UMLClassifier::getFilteredList(Object_Type ot) {
+UMLClassifierListItemList UMLClassifier::getFilteredList(Uml::Object_Type ot) const {
     UMLClassifierListItemList resultList;
     UMLObject *o;
     for (UMLObjectListIt lit(m_List); (o = lit.current()) != NULL; ++lit) {
@@ -677,8 +678,8 @@ UMLTemplate* UMLClassifier::addTemplate(const QString &name, Uml::IDType id) {
         return t;
     t = new UMLTemplate(this, name, id);
     m_List.append(t);
-    UMLObject::emitModified();
     emit templateAdded(t);
+    UMLObject::emitModified();
     connect(t, SIGNAL(modified()), this, SIGNAL(modified()));
     return t;
 }
@@ -689,8 +690,8 @@ bool UMLClassifier::addTemplate(UMLTemplate* newTemplate, IDChangeLog* log /* = 
         newTemplate->parent()->removeChild(newTemplate);
         this->insertChild(newTemplate);
         m_List.append(newTemplate);
-        UMLObject::emitModified();
         emit templateAdded(newTemplate);
+        UMLObject::emitModified();
         connect(newTemplate,SIGNAL(modified()),this,SIGNAL(modified()));
         return true;
     } else if (log) {
@@ -710,8 +711,8 @@ bool UMLClassifier::addTemplate(UMLTemplate* Template, int position)
             m_List.insert(position,Template);
         else
             m_List.append(Template);
-        UMLObject::emitModified();
         emit templateAdded(Template);
+        UMLObject::emitModified();
         connect(Template,SIGNAL(modified()),this,SIGNAL(modified()));
         return true;
     }
@@ -724,8 +725,8 @@ int UMLClassifier::removeTemplate(UMLTemplate* umltemplate) {
         kWarning() << "can't find att given in list" << endl;
         return -1;
     }
-    UMLObject::emitModified();
     emit templateRemoved(umltemplate);
+    UMLObject::emitModified();
     disconnect(umltemplate,SIGNAL(modified()),this,SIGNAL(modified()));
     return m_List.count();
 }
@@ -745,7 +746,7 @@ int UMLClassifier::templates() {
     return tempList.count();
 }
 
-UMLTemplateList UMLClassifier::getTemplateList() {
+UMLTemplateList UMLClassifier::getTemplateList() const {
     UMLTemplateList templateList;
     for (UMLObjectListIt lit(m_List); lit.current(); ++lit) {
         UMLObject *listItem = lit.current();
@@ -829,7 +830,7 @@ void UMLClassifier::setOriginType(UMLClassifier *origType) {
     m_pSecondary = origType;
 }
 
-UMLClassifier * UMLClassifier::originType() {
+UMLClassifier * UMLClassifier::originType() const{
     return static_cast<UMLClassifier*>(m_pSecondary);
 }
 
@@ -837,7 +838,7 @@ void UMLClassifier::setIsReference(bool isRef) {
     m_isRef = isRef;
 }
 
-bool UMLClassifier::isReference() {
+bool UMLClassifier::isReference() const{
     return m_isRef;
 }
 
@@ -1003,7 +1004,6 @@ bool UMLClassifier::load(QDomElement& element) {
                 totalSuccess = false;
             }
         } else if (!Model_Utils::isCommonXMIAttribute(tag)) {
-            UMLDoc *umldoc = UMLApp::app()->getDocument();
             UMLObject *pObject = Object_Factory::makeObjectFromXMI(tag);
             if (pObject == NULL) {
                 // Not setting totalSuccess to false

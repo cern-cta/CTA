@@ -32,6 +32,8 @@
 #include "model_utils.h"
 #include "uml.h"
 #include "uniqueid.h"
+#include <qregexp.h>
+#include "object_factory.h"
 
 CppWriter::CppWriter( ) :
   CppCastorWriter(UMLApp::app()->getDocument(), "Cpp"), firstGeneration(true) {
@@ -73,6 +75,17 @@ void CppWriter::runGenerator(CppBaseWriter *cg,
   }
 }
 
+UMLObject* CppWriter::getOrCreateObject(QString type) {
+  UMLObject* res = m_doc->findUMLObject(type);
+  if (res == NULL) {
+    if (type.contains( QRegExp("[\\*\\&]") ))
+      res = Object_Factory::createUMLObject(Uml::ot_Datatype, type);
+    else
+      res = Object_Factory::createUMLObject(Uml::ot_Class, type);
+  }
+  return res;
+}
+
 void CppWriter::writeClass(UMLClassifier *c) {
     
   if (firstGeneration) {
@@ -108,6 +121,9 @@ void CppWriter::writeClass(UMLClassifier *c) {
   }
 
   // Check whether some methods or members should be added
+  UMLObject* ostreamType = getOrCreateObject("ostream&");
+  UMLObject* stringType = getOrCreateObject("string");
+  UMLObject* objectSetType = getOrCreateObject("castor::ObjectSet&");
   {
     // first the print method for IObject descendants
     UMLObject* obj = m_doc->findUMLObject(QString("castor::IObject"),
@@ -126,19 +142,19 @@ void CppWriter::writeClass(UMLClassifier *c) {
       }
       UMLAttribute* streamParam =
         new UMLAttribute(printOp, "stream",
-                         "1", Uml::Visibility::Public, "ostream&");
+                         "1", Uml::Visibility::Public, ostreamType);
       streamParam->setDoc("The stream where to print this object");
       printOp->addParm(streamParam);
       UMLAttribute* indentParam =
         new UMLAttribute(printOp, "indent",
                          "2", Uml::Visibility::Public,
-                         "string");
+                         stringType);
       indentParam->setDoc("The indentation to use");
       printOp->addParm(indentParam);
       UMLAttribute* alreadyPrintedParam =
         new UMLAttribute(printOp, "alreadyPrinted",
                          "3", Uml::Visibility::Public,
-                         "castor::ObjectSet&");
+                         objectSetType);
       alreadyPrintedParam->setDoc
         (QString("The set of objects already printed.\n") +
          "This is to avoid looping when printing circular dependencies");

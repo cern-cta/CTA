@@ -640,7 +640,7 @@ UMLView * UMLDoc::findView(Uml::IDType id) {
     return v;
 }
 
-UMLView * UMLDoc::findView(Diagram_Type type, const QString &name,
+UMLView * UMLDoc::findView(Uml::Diagram_Type type, const QString &name,
                            bool searchAllScopes /* =false */) {
     Uml::Model_Type mt = Model_Utils::convert_DT_MT(type);
     return m_root[mt]->findView(type, name, searchAllScopes);
@@ -668,7 +668,7 @@ UMLStereotype * UMLDoc::findStereotypeById(Uml::IDType id) {
 }
 
 UMLObject* UMLDoc::findUMLObject(const QString &name,
-                                 Object_Type type /* = ot_UMLObject */,
+                                 Uml::Object_Type type /* = ot_UMLObject */,
                                  UMLObject *currentObj /* = NULL */) {
     UMLObject *o = m_datatypeRoot->findObject(name);
     if (o)
@@ -903,7 +903,7 @@ void UMLDoc::addAssociation(UMLAssociation *Assoc)
     setModified(true);
 }
 
-QString UMLDoc::uniqViewName(const Diagram_Type type) {
+QString UMLDoc::uniqViewName(const Uml::Diagram_Type type) {
     QString dname;
     if(type == dt_UseCase)
         dname = i18n("use case diagram");
@@ -927,7 +927,7 @@ QString UMLDoc::uniqViewName(const Diagram_Type type) {
         kWarning() << "uniqViewName() called with unknown diagram type" << endl;
     }
     QString name = dname;
-    for (int number = 0; findView(type, name); ++number,
+    for (int number = 0; findView(type, name, true); ++number,
             name = dname + '_' + QString::number(number))
         ;
     return name;
@@ -941,7 +941,7 @@ void UMLDoc::setLoading(bool state /* = true */) {
     m_bLoading = state;
 }
 
-void UMLDoc::createDiagram(UMLFolder *folder, Diagram_Type type, bool askForName /*= true */) {
+UMLView* UMLDoc::createDiagram(UMLFolder *folder, Uml::Diagram_Type type, bool askForName /*= true */) {
     bool ok = true;
     QString name,
     dname = uniqViewName(type);
@@ -968,11 +968,12 @@ void UMLDoc::createDiagram(UMLFolder *folder, Diagram_Type type, bool askForName
             setModified(true, false);
             UMLApp::app()->enablePrint(true);
             changeCurrentView( temp->getID() );
-            break;
+            return temp;
         } else {
             KMessageBox::error(0, i18n("A diagram is already using that name."), i18n("Not a Unique Name"));
         }
     }//end while
+    return 0;
 }
 
 void UMLDoc::renameDiagram(Uml::IDType id) {
@@ -1088,9 +1089,8 @@ UMLFolder *UMLDoc::currentRoot() {
     if (currentView == NULL) {
         if (m_pCurrentRoot)
             return m_pCurrentRoot;
-        kDebug() << "UMLDoc::currentRoot: currentView is NULL, assuming Logical View"
-            << endl;
-        return m_root[Uml::mt_Logical];
+        kError() << "UMLDoc::currentRoot: m_pCurrentRoot is NULL" << endl;
+        return NULL;
     }
     UMLFolder *f = currentView->getFolder();
     while (f->getUMLPackage()) {
@@ -1159,8 +1159,12 @@ void UMLDoc::removeUMLObject(UMLObject* umlobject) {
 
 void UMLDoc::signalUMLObjectCreated(UMLObject * o) {
     emit sigObjectCreated(o);
-    if (!m_bLoading)
-        setModified(true);
+    /* This is the wrong place to do:
+               setModified(true);
+       Instead, that should be done by the callers when object creation and all
+       its side effects (e.g. new widget in view, new list view item, etc.) is
+       finalized.
+     */
 }
 
 void UMLDoc::setName(const QString& name) {
@@ -1631,16 +1635,14 @@ bool UMLDoc::loadUMLObjectsFromXMI(QDomElement& element) {
         // From here on, it's support for stereotypes, pre 1.5.5 versions, and foreign files
         if (tagEq(type, "Namespace.ownedElement") ||
                 tagEq(type, "Namespace.contents") ||
-                tagEq(type, "Model") || tagEq(type, "ModelElement.stereotype")) {
+                tagEq(type, "Model")) {
             //CHECK: Umbrello currently assumes that nested elements
             // are ownedElements anyway.
             // Therefore the <UML:Namespace.ownedElement> tag is of no
             // significance.
             if( !loadUMLObjectsFromXMI( tempElement ) ) {
-                if (! tagEq(type, "ModelElement.stereotype")) {  // not yet implemented
-                    kWarning() << "failed load on " << type << endl;
-                    return false;
-                }
+                kWarning() << "failed load on " << type << endl;
+                return false;
             }
             continue;
         }

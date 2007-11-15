@@ -65,6 +65,8 @@ class CppWriter : public CppCastorWriter {
   void runGenerator(CppBaseWriter *cg,
                     QString fileName,
                     UMLClassifier *c);
+  /** gets the UMLObject for a given type */
+  UMLObject* getOrCreateObject(QString type);
 
   // The code generators used
   CppHClassWriter* hppw;

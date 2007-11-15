@@ -51,7 +51,7 @@ public:
      * @param name              The name of the Concept.
      * @param id                The unique id of the Concept.
      */
-    UMLClassifier(const QString & name = "", Uml::IDType id = Uml::id_None);
+    explicit UMLClassifier(const QString & name = "", Uml::IDType id = Uml::id_None);
 
     /**
      * Standard deconstructor.
@@ -78,9 +78,15 @@ public:
      * Creates an attribute for the class.
      *
      * @param name  An optional name, used by when creating through UMLListView
+     * @param type  An optional type, used by when creating through UMLListView
+     * @param vis   An optional visibility, used by when creating through UMLListView
+     * @param init  An optional initial value, used by when creating through UMLListView
      * @return  The UMLAttribute created
      */
-    virtual UMLAttribute* createAttribute(const QString &name = QString::null);
+    virtual UMLAttribute* createAttribute(const QString &name = QString::null,
+                                          UMLObject *type = 0,
+                                          Uml::Visibility vis = Uml::Visibility::Private,
+                                          const QString &init = QString::null);
 
     /**
      * Adds an attribute to the class.
@@ -127,7 +133,7 @@ public:
      *
      * @return  The number of attributes for the class.
      */
-    int attributes();
+    int attributes() ;
 
     /**
      * Returns the attributes.
@@ -136,7 +142,7 @@ public:
      *
      * @return  List of true attributes for the class.
      */
-    UMLAttributeList getAttributeList();
+    UMLAttributeList getAttributeList() const;
 
     /**
      * Creates an operation in the current document.
@@ -218,7 +224,7 @@ public:
      *
      * @return  The number of operations for the Classifier.
      */
-    int operations();
+    int operations() ;
 
     /**
      * Return a list of operations for the Classifier.
@@ -270,7 +276,7 @@ public:
     /**
      * Removes a template from the class.
      *
-     * @param template  The template to remove.
+     * @param umltemplate  The template to remove.
      * @return  Count of the remaining templates after removal.
      *          Returns -1 if the given template was not found.
      */
@@ -295,7 +301,7 @@ public:
      *
      * @return  Pointer to the list of true templates for the class.
      */
-    UMLTemplateList getTemplateList();
+    UMLTemplateList getTemplateList() const;
 
     /**
      * Take and return a subordinate item from this classifier.
@@ -314,7 +320,7 @@ public:
      *
      * @return  The list of true operations for the Concept.
      */
-    UMLClassifierListItemList getFilteredList(Uml::Object_Type ot);
+    virtual UMLClassifierListItemList getFilteredList(Uml::Object_Type ot) const;
 
     /**
      * Needs to be called after all UML objects are loaded from file.
@@ -384,7 +390,7 @@ public:
      * association class. Returns NULL if this class does not act
      * as an association class.
      */
-    UMLAssociation *getClassAssoc();
+    UMLAssociation *getClassAssoc() const;
 
     /**
      * Reimplementation of method from class UMLObject for controlling the
@@ -410,7 +416,7 @@ public:
     /**
      * Get the origin type (in case of e.g. typedef)
      */
-    UMLClassifier * originType();
+    UMLClassifier * originType() const;
 
     /**
      * Set the m_isRef flag (true when dealing with a pointer type)
@@ -420,7 +426,7 @@ public:
     /**
      * Get the m_isRef flag.
      */
-    bool isReference();
+    bool isReference() const;
 
     /**
      * Return true if this classifier has abstract operations.
