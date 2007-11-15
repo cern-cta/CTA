@@ -1,7 +1,13 @@
+castor (2.1.5-1) unstable; urgency=low
+
+  * Another internal release for the new stager. No complete changelog
+
+-- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>  Thu, 15 November 2007 19:15:00 +0100
+
 castor (2.1.5-0) unstable; urgency=low
 
   * Internal release for the new stager. No complete changelog
-	
+
 -- Sebastien Ponce <sebastien.ponce@cern.ch>  Thu, 8 November 2007 09:00:00 +0100
 
 castor (2.1.4-5) unstable; urgency=low
