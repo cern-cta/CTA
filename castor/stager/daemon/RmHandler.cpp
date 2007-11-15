@@ -49,198 +49,111 @@ namespace castor{
       
       /* constructor */
       StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper) throw() :
-        StagerRequestHandler()
+      StagerRequestHandler()
       {
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_StageRmRequest;
-        
       }
       
-      /*******************************************************************/
-      /* function to set the handler's attributes according to its type */
-      /*****************************************************************/
-      void StagerRmHandler::handlerSettings() throw(castor::exception::Exception)
-      {	
-	/* no setting */
-      }
- 
-
       
-      /* only handler which overwrite the preprocess part due to the specific behavior related with the svcClass */
       void StagerRmHandler::preHandle() throw(castor::exception::Exception)
       {
-	
-	/* get the uuid request string version and check if it is valid */
-	stgRequestHelper->setRequestUuid();
-
-	/* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
-	this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
-
-
-	/* set the username and groupname needed to print them on the log */
-	stgRequestHelper->setUsernameAndGroupname();
-
-	/* get the uuid subrequest string version and check if it is valid */
-	/* we can create one !*/
-	stgRequestHelper->setSubrequestUuid();
-	
-	/* get the associated client and set the iClientAsString variable */
-	stgRequestHelper->getIClient();
-	
-	
-	/* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
-	stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
-	
-
-	
-	/*********************************************************************************************************************************/
-	/* JUST FOR StagerRmHandler TO IMPLEMENT CONSIDERING THAT * CAN BE VALID : get the svcClass and set it on the  stgRequestHelper */
-	/* an link it to */
-	this->rmGetSvcClass();
-	/*****************************************************************************************************************************/
-		
-	/* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
-	/* create the file if it is needed/possible */
-	stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
-	
-	/* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
-	stgRequestHelper->checkFilePermission();
-       
-
-
+        
+        /* get the uuid request string version and check if it is valid */
+        stgRequestHelper->setRequestUuid();
+        
+        /* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
+        this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+        
+        
+        /* set the username and groupname needed to print them on the log */
+        stgRequestHelper->setUsernameAndGroupname();
+        
+        /* get the uuid subrequest string version and check if it is valid */
+        /* we can create one !*/
+        stgRequestHelper->setSubrequestUuid();
+        
+        /* get the associated client and set the iClientAsString variable */
+        stgRequestHelper->getIClient();
+        
+        /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
+        stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
+        
+        // the rest (getting svcClass, checking nameServer) is done in the handle
       }
+        
       
-      
-      /*************************************************************************/
-      /* TO BE CONFIRMED */
-      /* we just need to GET THE svcClassId by getting the right svcClass */
-      void StagerRmHandler::rmGetSvcClass() throw (castor::exception::Exception)
-      {
-
-	
-	 stgRequestHelper->svcClassName=stgRequestHelper->fileRequest->svcClassName(); 
-	  
-	 if(stgRequestHelper->svcClassName.empty()){  /* we set the default svcClassName */
-	   stgRequestHelper->svcClassName="default";
-
-	   /* the goal is to get svcClassId, so the following step might be useless (commented!) */
-	   /* stgRequestHelper->fileRequest->setSvcClassName(stgRequestHelper->svcClassName);*/
-	   stgRequestHelper->svcClass=stgRequestHelper->stagerService->selectSvcClass(stgRequestHelper->svcClassName);
-	   if(stgRequestHelper->svcClass == NULL){
-	     castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Rm"),
-					  castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					  castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					  castor::dlf::Param("UserName",stgRequestHelper->username),
-					  castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					  castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	     };
-	     castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 6 ,params, &(stgCnsHelper->cnsFileid));
-	     
-	     castor::exception::Exception ex(SEINTERNAL);
-	     ex.getMessage()<<"Impossible to get the svcClass";
-	     throw(ex);
-	   }
-	   this->svcClassId = stgRequestHelper->svcClass->id();	   
-	   
-	 }else if(stgRequestHelper->svcClassName == "*"){
-	   this->svcClassId = 0;
-	
-	 }else{
-	   stgRequestHelper->svcClass=stgRequestHelper->stagerService->selectSvcClass(stgRequestHelper->svcClassName);
-	   if(stgRequestHelper->svcClass == NULL){
-	     castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Rm"),
-					  castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					  castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					  castor::dlf::Param("UserName",stgRequestHelper->username),
-					  castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					  castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	     };
-	     castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_SVCCLASS_EXCEPTION, 6 ,params, &(stgCnsHelper->cnsFileid));
-	 
-	     castor::exception::Exception ex(SEINTERNAL);
-	     ex.getMessage()<<"Impossible to get the svcClass";
-	     throw(ex);
-	   }
-	   this->svcClassId = stgRequestHelper->svcClass->id();	  
-	 }
-
-
-      }
-      
-      
-      /******************************/
-      /* handle for the rm request */
-      /****************************/
       void StagerRmHandler::handle() throw(castor::exception::Exception)
       {
+        
+        // check the existence of the file. Don't stop if ENOENT
+        try {
+          stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(),
+             stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
 
-	StagerReplyHelper* stgReplyHelper=NULL;
-	try{
+          /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
+          stgRequestHelper->checkFilePermission();
+        }
+        catch(castor::exception::Exception e) {
+          if(serrno != ENOENT) {
+            throw e;
+          }
+          // else the file does not exist, go on and try to cleanup stager db.
+          // Note that in this case we don't check permissions, but that's fine as
+          // the cleanup would have to be done
+        }
 
-	  /**************************************************************************/
-	  /* common part for all the handlers: get objects, link, check/create file*/
-	  
-	  /**********/
+        // check the service class, and handle the '*' case
+        std::string svcClassName = stgRequestHelper->fileRequest->svcClassName();
+        if(svcClassName == "*") {
+          svcClassId = 0;
+        }
+        else {
+          if(svcClassName.empty()) {
+            svcClassName = "default";
+          }
+          stgRequestHelper->svcClass = stgRequestHelper->stagerService->selectSvcClass(svcClassName);
+          if(stgRequestHelper->svcClass == NULL) {
+            stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION, &(stgCnsHelper->cnsFileid));
 
-	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_RM, 5 ,params, &(stgCnsHelper->cnsFileid));
-	  
-
-
-	  /* execute the main function for the rm request                 */
-	  /* basically, a call to the corresponding stagerService method */
-	  std::string server(stgCnsHelper->cnsFileid.server);
-	  if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest->id(),stgCnsHelper->cnsFileid.fileid, server,this->svcClassId, 0)) {
-
-	  /* FOR THE SYSTEM PART:*/
-	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("Subrequest id",stgRequestHelper->subrequest->id()),
-				       castor::dlf::Param("File id",stgCnsHelper->cnsFileid.fileid),
-				       castor::dlf::Param("nsHost", server),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_RM_DETAILS, 8,params, &(stgCnsHelper->cnsFileid));
-
-    stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+            castor::exception::Exception ex(SEINTERNAL);
+            ex.getMessage() << "Service class '" << svcClassName << "' not found";
+            throw(ex);
+          }
+          svcClassId = stgRequestHelper->svcClass->id();
+        }
+          
+        StagerReplyHelper* stgReplyHelper=NULL;
+        try{
+          // now try to perform the stageRm          
+          if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest->id(),
+            stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, svcClassId, stgRequestHelper->subrequest->fileName())) {
             
-      /* replyToClient Part: */
-      stgReplyHelper = new StagerReplyHelper();	  
-      stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
-      stgReplyHelper->endReplyToClient(stgRequestHelper);
-      delete stgReplyHelper;
-    }
-    else {  // user error, log it
-	    castor::dlf::Param params[]={castor::dlf::Param("Request type", "StageRm"),
-					 castor::dlf::Param(stgRequestHelper->subrequestUuid),
-					 castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-					 castor::dlf::Param("UserName",stgRequestHelper->username),
-					 castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-					 castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	    };
-	    castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 6 ,params, &(stgCnsHelper->cnsFileid));
-    }	  
+            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RM, &(stgCnsHelper->cnsFileid));
             
-	}catch(castor::exception::Exception e){
-	  if(stgReplyHelper != NULL) delete stgReplyHelper;	 
-	  castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-				       castor::dlf::Param("Error Message",e.getMessage().str())
-	  };
-	  
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
-	  throw(e);
-	}
+            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
+            
+            /* replyToClient Part: */
+            stgReplyHelper = new StagerReplyHelper();	  
+            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+            stgReplyHelper->endReplyToClient(stgRequestHelper);
+            delete stgReplyHelper;
+          }
+          else {  // user error, log it
+            stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+          }	  
+        }
+        catch(castor::exception::Exception e){
+          if(stgReplyHelper != NULL) delete stgReplyHelper;	 
+          castor::dlf::Param params[]={
+            castor::dlf::Param("Error Code",sstrerror(e.code())),
+            castor::dlf::Param("Error Message",e.getMessage().str())
+          };
+          
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(stgCnsHelper->cnsFileid));
+          throw(e);
+        }
       }
-
-
-     
       
     }//end dbService
   }//end stager

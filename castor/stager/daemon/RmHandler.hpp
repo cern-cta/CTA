@@ -33,37 +33,32 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
+      
       class StagerRequestHelper;
       class StagerCnsHelper;
       class castor::stager::SubRequest;
-
+      
       class StagerRmHandler : public StagerRequestHandler {
-	
+        
       public:
-	/* constructor */
-	StagerRmHandler(StagerRequestHelper* stgRequestHelper) throw ();
-	/* destructor */
-	~StagerRmHandler() throw() {};
-
-	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
-	/* to be called before the stgRmHandler->handle() */
-	virtual void preHandle() throw(castor::exception::Exception);
-	
-	void handlerSettings() throw(castor::exception::Exception);
-
-	/* rm subrequest handler */
-	void handle() throw(castor::exception::Exception);
-     
-	
-
+        /* constructor */
+        StagerRmHandler(StagerRequestHelper* stgRequestHelper) throw ();
+        /* destructor */
+        ~StagerRmHandler() throw() {};
+        
+        /* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
+        /* to be called before the stgRmHandler->handle() */
+        virtual void preHandle() throw(castor::exception::Exception);
+        
+        /* rm subrequest handler */
+        void handle() throw(castor::exception::Exception);
+        
       private: 
-	u_signed64 svcClassId;
-	void rmGetSvcClass() throw(castor::exception::Exception);
-	
+        u_signed64 svcClassId;
+        
       }; // end StagerRmHandler class
-
-
+      
+      
     }//end namespace dbService 
   }//end namespace stager
 }//end namespace castor
