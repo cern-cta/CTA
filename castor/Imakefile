@@ -152,6 +152,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamQueryParameterCnv.cpp \
               io/StreamDisk2DiskCopyDoneRequestCnv.cpp \
               io/StreamDisk2DiskCopyStartRequestCnv.cpp \
+              io/StreamDisk2DiskCopyStartResponseCnv.cpp \
               io/StreamBasicResponseCnv.cpp \
               io/StreamPutDoneStartCnv.cpp \
               io/StreamSegmentCnv.cpp \
@@ -204,6 +205,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               rh/FileResponseCInt.cpp \
               rh/GetUpdateStartResponse.cpp \
               rh/GetUpdateStartResponseCInt.cpp \
+              rh/Disk2DiskCopyStartResponse.cpp \
               rh/GCFilesResponse.cpp \
               rh/GCFilesResponseCInt.cpp \
               rh/Response.cpp \
