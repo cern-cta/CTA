@@ -110,7 +110,8 @@ namespace castor{
       {
         delete baseAddr;
         if(castorFile) {
-          delete castorFile->fileClass();
+          if(castorFile->fileClass())
+            delete castorFile->fileClass();
           delete castorFile;
         }
         if(fileRequest) {
