@@ -111,8 +111,6 @@ namespace castor{
 
 	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOUPDATE, &(stgCnsHelper->cnsFileid));
 	  
-	  jobOriented();
-	  
     StagerRequestHandler* h = 0;
 	  if(toRecreateCastorFile) {
       // delegate to Put
