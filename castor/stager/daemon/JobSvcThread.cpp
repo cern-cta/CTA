@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2007/11/16 15:38:58 $ $Author: waldron $
  *
  * Service thread for job related requests
  *
@@ -44,6 +44,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -54,9 +55,11 @@
 #include "castor/stager/PutStartRequest.hpp"
 #include "castor/stager/PutDoneStart.hpp"
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
+#include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
+#include "castor/rh/Disk2DiskCopyStartResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/dbService/StagerDlfMessages.hpp"
 #include "castor/stager/dbService/JobSvcThread.hpp"
@@ -152,7 +155,7 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
     fs = jobSvc->selectFileSystem(sReq->fileSystem(),
                                   sReq->diskServer());
     if (0 == fs) {
-      // "Could not find suitable filesystem"},
+      // "Could not find suitable filesystem",
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskServer", sReq->diskServer()),
          castor::dlf::Param("FileSystem", sReq->fileSystem()),
@@ -165,12 +168,16 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
     // Invoking the method
     if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
       // "Invoking getUpdateStart"
-      castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+      castor::dlf::Param params[] = {
+	castor::dlf::Param(suuid)
+      };
       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS, 1, params);
       dc = jobSvc->getUpdateStart(subreq, fs, sources, &emptyFile);
     } else {
       // "Invoking PutStart"
-      castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+      castor::dlf::Param params[] = {
+	castor::dlf::Param(suuid)
+      };
       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS, 1, params);
       dc = jobSvc->putStart(subreq, fs);
     }
@@ -184,7 +191,7 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
     failed = true;
@@ -245,6 +252,96 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
 }
 
 //-----------------------------------------------------------------------------
+// handleDisk2DiskCopyStartRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyStartRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::Disk2DiskCopyStartRequest *uReq;
+  castor::rh::Disk2DiskCopyStartResponse res;
+  castor::stager::DiskCopyInfo *dc = 0;
+  castor::stager::DiskCopyInfo *srcDc = 0;
+  bool failed = false;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    uReq = dynamic_cast<castor::stager::Disk2DiskCopyStartRequest*> (req);
+    // "Invoking disk2DiskCopyStart"
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
+      castor::dlf::Param("SourceDcId", uReq->sourceDiskCopyId()),
+      castor::dlf::Param("SvcClassName", uReq->destSvcClass()),
+      castor::dlf::Param("DiskServer", uReq->diskServer()),
+      castor::dlf::Param("FileSystem", uReq->mountPoint())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCS, 5, params);
+    jobSvc->disk2DiskCopyStart(uReq->diskCopyId(),
+			       uReq->sourceDiskCopyId(),
+			       uReq->destSvcClass(),
+			       uReq->diskServer(),
+			       uReq->mountPoint(), dc, srcDc);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+    failed = true;
+
+    // Fail the disk2disk copy transfer automatically on behalf of the client.
+    // This allows the client to just exit without having to manually call
+    // disk2DiskCopyFailed
+    try {
+      // "Invoking disk2DiskCopyFailed"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD, 1, params);
+      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId());
+    } catch (castor::exception::Exception e) {
+
+      // "Unexpected exception caught"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
+	 castor::dlf::Param("Message", e.getMessage().str()),
+	 castor::dlf::Param("Code", e.code())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    }
+  }
+  // Build the response
+  if (!failed) {
+    res.setDiskCopy(dc);
+    res.setSourceDiskCopy(srcDc);
+  }
+  // Reply To client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+  }
+  // Cleanup
+  if (0 != dc)
+    delete dc;
+  if (0 != srcDc)
+    delete srcDc;
+}
+
+//-----------------------------------------------------------------------------
 // handleDisk2DiskCopyDoneRequest
 //-----------------------------------------------------------------------------
 void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
@@ -277,11 +374,12 @@ void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
       jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId);
     }
   } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -357,10 +455,10 @@ void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
-    if (obj !=0) delete obj;
+    if (obj != 0) delete obj;
   }
   // Reply To Client
   try {
@@ -407,7 +505,7 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateDoneRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -455,7 +553,7 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateFailedRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -503,7 +601,7 @@ void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
       {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -585,6 +683,10 @@ void castor::stager::dbService::JobSvcThread::process
   case castor::OBJ_GetUpdateStartRequest:
   case castor::OBJ_PutStartRequest:
     castor::stager::dbService::JobSvcThread::handleStartRequest
+      (req, client, svcs, jobSvc, ad, uuid);
+    break;
+  case castor::OBJ_Disk2DiskCopyStartRequest:
+    castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyStartRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_Disk2DiskCopyDoneRequest:

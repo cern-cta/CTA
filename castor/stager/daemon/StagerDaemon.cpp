@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/11/16 09:53:37 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/11/16 15:38:58 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -186,8 +186,8 @@ int main(int argc, char* argv[]){
 castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception)
   : castor::server::BaseDaemon("Stager") {
 	
-	castor::dlf::Message stagerDlfMessages[]={
-
+  castor::dlf::Message stagerDlfMessages[]={
+    
     /***************************************/
     /* StagerMainDaemon: To DLF_LVL_DEBUG */
     /*************************************/
@@ -301,11 +301,11 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
     { STAGER_JOBSVC_PUTFAIL, "Invoking putFailed"},
     { STAGER_JOBSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
     { STAGER_JOBSVC_UNKREQ,  "Unknown Request type"},
+    { STAGER_JOBSVC_D2DCS,   "Invoking disk2DiskCopyStart"},
     
     { -1, "" }
-
-	};
-	
+    
+  };
   dlfInit(stagerDlfMessages);
   
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STAGER_DAEMON_START, 0, NULL);
@@ -316,13 +316,13 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
 /*************************************************************/
 void castor::stager::dbService::StagerMainDaemon::help(std::string programName)
 {
-	  std::cout << "Usage: " << programName << " [options]\n"
-	    "\n"
-	    "where options can be:\n"
-	    "\n"
-	    "\t--Pthreads    or -P {integer >= 0}  \tNumber of threads for the Prepare requests\n"
-	    "\n"
-	    "Comments to: Castor.Support@cern.ch\n";
+  std::cout << "Usage: " << programName << " [options]\n"
+    "\n"
+    "where options can be:\n"
+    "\n"
+    "\t--Pthreads    or -P {integer >= 0}  \tNumber of threads for the Prepare requests\n"
+    "\n"
+    "Comments to: Castor.Support@cern.ch\n";
 }
 
 

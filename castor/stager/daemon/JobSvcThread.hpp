@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/24 09:41:59 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/16 15:38:58 $ $Author: waldron $
  *
  * Service thread for job related requests
  *
@@ -44,126 +44,144 @@ namespace castor {
       class JobSvcThread : public virtual castor::server::SelectProcessThread {
 	
       public:
-      
-        /**
-         * Default costructor
-         */
-        JobSvcThread() throw();
-       
-        /**
-         * Default destructor
-         */
-        ~JobSvcThread() throw() {};
-
-        /**
-         * Select a new job request to be processed
-         */
-        virtual castor::IObject* select() throw();
-
-        /**
-         * Processes a request
-         * @param param The IObject returned by select
-         */
-        virtual void process(castor::IObject* param) throw();
-
+	
+	/**
+	 * Default costructor
+	 */
+	JobSvcThread() throw();
+	
+	/**
+	 * Default destructor
+	 */
+	~JobSvcThread() throw() {};
+	
+	/**
+	 * Select a new job request to be processed
+	 */
+	virtual castor::IObject* select() throw();
+	
+	/**
+	 * Processes a request
+	 * @param param The IObject returned by select
+	 */
+	virtual void process(castor::IObject* param) throw();
+	
       private:
-
-        /**
-         * Handles a StartRequest and replies to client.
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handleStartRequest(castor::stager::Request* req,
-                                castor::IClient *client,
-                                castor::Services* svcs,
-                                castor::stager::IJobSvc* jobSvc,
-                                castor::BaseAddress &ad,
-                                Cuuid_t uuid) throw();
-
-        /**
-         * Handles a Disk2DiskCopyDoneRequest and replies to client.
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handleDisk2DiskCopyDoneRequest(castor::stager::Request* req,
-                                            castor::IClient *client,
-                                            castor::Services* svcs,
-                                            castor::stager::IJobSvc* jobSvc,
-                                            castor::BaseAddress &ad,
-                                            Cuuid_t uuid) throw();
-
-        /**
-         * Handles a MoverCloseRequest and replies to client.
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handleMoverCloseRequest(castor::stager::Request* req,
-                                     castor::IClient *client,
-                                     castor::Services* svcs,
-                                     castor::stager::IJobSvc* jobSvc,
-                                     castor::BaseAddress &ad,
-                                     Cuuid_t uuid) throw();
-
-        /**
-         * Handles a GetUpdateDone request and replies to client.
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handleGetUpdateDoneRequest(castor::stager::Request* req,
-                                        castor::IClient *client,
-                                        castor::Services* svcs,
-                                        castor::stager::IJobSvc* jobSvc,
-                                        castor::BaseAddress &ad,
-                                        Cuuid_t uuid) throw();
-
-        /**
-         * Handles a GetUpdateFailed request and replies to client.
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handleGetUpdateFailedRequest(castor::stager::Request* req,
-                                          castor::IClient *client,
-                                          castor::Services* svcs,
-                                          castor::stager::IJobSvc* jobSvc,
-                                          castor::BaseAddress &ad,
-                                          Cuuid_t uuid) throw();
-
-        /**
-         * Handles a PutFailed request and replies to client.
-         * @param req the request to handle
-         * @param client the client where to send the response
-         * @param svcs the Services object to use
-         * @param jobSvc the stager service to use
-         * @param ad the address where to load/store objects in the DB
-         * @param uuid the uuid of the request, for logging purposes
-         */
-        void handlePutFailedRequest(castor::stager::Request* req,
-                                    castor::IClient *client,
-                                    castor::Services* svcs,
-                                    castor::stager::IJobSvc* jobSvc,
-                                    castor::BaseAddress &ad,
-                                    Cuuid_t uuid) throw();
-
+	
+	/**
+	 * Handles a StartRequest and replies to the client.
+	 * @param req the request to handle
+	 * @param client the client where to send the response
+	 * @param svcs the Services object to use
+	 * @param jobSvc the stager service to use
+	 * @param ad the address where to load/store objects in the DB
+	 * @param uuid the uuid of the request, for logging purposes
+	 */
+	void handleStartRequest(castor::stager::Request* req,
+				castor::IClient *client,
+				castor::Services* svcs,
+				castor::stager::IJobSvc* jobSvc,
+				castor::BaseAddress &ad,
+				Cuuid_t uuid) throw();
+	
+	/**
+	 * Handles a Disk2DiskCopyStartRequest and reples to the client.
+	 * If an exception occurs the call will attempt to fail the
+	 * disk2disk copy transfer on behalf of the client
+	 * @param req the request to handle
+	 * @param client the client where to send the response
+	 * @param svcs the Services object to use
+	 * @param jobSvc the stager service to use
+	 * @param ad the address where to load/store objects in the DB
+	 * @param uuid the uuid of the request, for logging purposes
+	 */
+	void handleDisk2DiskCopyStartRequest(castor::stager::Request* req,
+					     castor::IClient *client,
+					     castor::Services* svcs,
+					     castor::stager::IJobSvc* jobSvc,
+					     castor::BaseAddress &ad,
+					     Cuuid_t uuid) throw();
+	
+	/**
+	 * Handles a Disk2DiskCopyDoneRequest and replies to the client.
+	 * @param req the request to handle
+	 * @param client the client where to send the response
+	 * @param svcs the Services object to use
+	 * @param jobSvc the stager service to use
+	 * @param ad the address where to load/store objects in the DB
+	 * @param uuid the uuid of the request, for logging purposes
+	 */
+	void handleDisk2DiskCopyDoneRequest(castor::stager::Request* req,
+					    castor::IClient *client,
+					    castor::Services* svcs,
+					    castor::stager::IJobSvc* jobSvc,
+					    castor::BaseAddress &ad,
+					    Cuuid_t uuid) throw();
+	
+	/**
+	 * Handles a MoverCloseRequest and replies to the client.
+	 * @param req the request to handle
+	 * @param client the client where to send the response
+	 * @param svcs the Services object to use
+	 * @param jobSvc the stager service to use
+	 * @param ad the address where to load/store objects in the DB
+	 * @param uuid the uuid of the request, for logging purposes
+	 */
+	void handleMoverCloseRequest(castor::stager::Request* req,
+				     castor::IClient *client,
+				     castor::Services* svcs,
+				     castor::stager::IJobSvc* jobSvc,
+				     castor::BaseAddress &ad,
+				     Cuuid_t uuid) throw();
+	
+	/**
+	 * Handles a GetUpdateDone request and replies to the client.
+	 * @param req the request to handle
+	 * @param client the client where to send the response
+	 * @param svcs the Services object to use
+	 * @param jobSvc the stager service to use
+	 * @param ad the address where to load/store objects in the DB
+	 * @param uuid the uuid of the request, for logging purposes
+	 */
+	void handleGetUpdateDoneRequest(castor::stager::Request* req,
+					castor::IClient *client,
+					castor::Services* svcs,
+					castor::stager::IJobSvc* jobSvc,
+					castor::BaseAddress &ad,
+					Cuuid_t uuid) throw();
+	
+	/**
+	 * Handles a GetUpdateFailed request and replies to the client.
+	 * @param req the request to handle
+	 * @param client the client where to send the response
+	 * @param svcs the Services object to use
+	 * @param jobSvc the stager service to use
+	 * @param ad the address where to load/store objects in the DB
+	 * @param uuid the uuid of the request, for logging purposes
+	 */
+	void handleGetUpdateFailedRequest(castor::stager::Request* req,
+					  castor::IClient *client,
+					  castor::Services* svcs,
+					  castor::stager::IJobSvc* jobSvc,
+					  castor::BaseAddress &ad,
+					  Cuuid_t uuid) throw();
+	
+	/**
+	 * Handles a PutFailed request and replies to the client.
+	 * @param req the request to handle
+	 * @param client the client where to send the response
+	 * @param svcs the Services object to use
+	 * @param jobSvc the stager service to use
+	 * @param ad the address where to load/store objects in the DB
+	 * @param uuid the uuid of the request, for logging purposes
+	 */
+	void handlePutFailedRequest(castor::stager::Request* req,
+				    castor::IClient *client,
+				    castor::Services* svcs,
+				    castor::stager::IJobSvc* jobSvc,
+				    castor::BaseAddress &ad,
+				    Cuuid_t uuid) throw();
+	
       };
       
     } // end namespace dbService
