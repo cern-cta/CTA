@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2007/08/07 14:39:28 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/11/16 12:56:45 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -224,6 +224,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
 
   Coptind = 1;
   Copterr = 0;
+  Coptreset = 1;
 
   char c;
   while ((c = Cgetopt_long(argc, argv, (char*)m_cmdLineParams.str().c_str(), longopts, NULL)) != -1) {
@@ -232,28 +233,19 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
       m_foreground = true;
       break;
     case 'c':
-      {
-        char* cfgFile = (char *)malloc(strlen("PATH_CONFIG=") + strlen(Coptarg) + 1);
-        if(cfgFile != NULL) {
-          sprintf(cfgFile,"PATH_CONFIG=%s", Coptarg);
-          printf("Using configuration file %s\n", Coptarg);
-          putenv(cfgFile);
-        }
-        free(cfgFile);
-      }
+      setenv("PATH_CONFIG", Coptarg, 1);
+      std::cout << "Using configuration file " << Coptarg << std::endl;
       break;
     case 'h':
       help(argv[0]);
       exit(0);
       break;
+    case '?':
+      break;
     default:
       BaseThreadPool* p = m_threadPools[c];
       if(p != 0) {
         p->setNbThreads(atoi(Coptarg));
-      }
-      else {
-        help(argv[0]);
-        exit(0);
       }
       break;
     }
@@ -271,14 +263,14 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
 void castor::server::BaseServer::help(std::string programName)
 {
   std::cout << "Usage: " << programName << " [options]\n"
-	  "\n"
-	  "where options can be:\n"
-	  "\n"
-	  "\t--foreground            or -f         \tForeground\n"
-	  "\t--config <config-file>  or -c         \tConfiguration file\n"
-	  "\t--help                  or -h         \tThis help\n"
-	  "\n"
-	  "Comments to: Castor.Support@cern.ch\n";
+    "\n"
+    "where options can be:\n"
+    "\n"
+    "\t--foreground            or -f         \tRemain in the Foreground\n"
+    "\t--config <config-file>  or -c         \tConfiguration file\n"
+    "\t--help                  or -h         \tPrint this help and exit\n"
+    "\n"
+    "Comments to: Castor.Support@cern.ch\n";
 }
 
 //------------------------------------------------------------------------------
@@ -302,6 +294,7 @@ void castor::server::BaseServer::sendNotification(std::string host, int port, in
   }
 
   // Prepare the request
+  memset(buf, 0, sizeof(buf));
   p = buf;
   marshall_LONG(p, castor::server::NotificationThread::NOTIFY_MAGIC);
   marshall_LONG(p, nbThreads);
