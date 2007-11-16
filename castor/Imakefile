@@ -130,6 +130,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
 	      io/StreamStartResponseCnv.cpp \
               io/StreamCnvSvc.cpp \
               io/StreamDiskCopyCnv.cpp \
+              io/StreamDiskCopyInfoCnv.cpp \
               io/StreamDiskCopyForRecallCnv.cpp \
               io/StreamEndResponseCnv.cpp \
               io/StreamFileResponseCnv.cpp\
