@@ -109,6 +109,7 @@ namespace castor{
               // XXX should never happen, but happens?!
               castor::exception::Internal e;
               e.getMessage() << "Request type " << typeRequest << " not correct for stager svc " << m_name;
+              stgRequestHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
               throw e;
           }//end switch(typeRequest)
           
@@ -122,10 +123,10 @@ namespace castor{
           /* we have to process the exception and reply to the client in case of error  */
         }catch(castor::exception::Exception ex){
           
-          handleException(stgRequestHelper,stgRequestHandler->getStgCnsHelper(), ex.code(), ex.getMessage().str());
+          handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
-          if(stgRequestHandler) delete stgRequestHandler;	  
+          if(stgRequestHandler) delete stgRequestHandler;
           if(stgRequestHelper) delete stgRequestHelper;
         }
         

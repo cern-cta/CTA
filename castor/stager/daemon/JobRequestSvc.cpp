@@ -73,7 +73,7 @@ namespace castor{
 
       void JobRequestSvc::process(castor::IObject* subRequestToProcess) throw () {
        
-        StagerRequestHelper* stgRequestHelper= NULL;
+        StagerRequestHelper* stgRequestHelper = NULL;
         StagerJobRequestHandler* stgRequestHandler = NULL;
         
         try {
@@ -99,6 +99,7 @@ namespace castor{
               // XXX should never happen, but happens?!
               castor::exception::Internal e;
               e.getMessage() << "Request type " << typeRequest << " not correct for stager svc " << m_name;
+              stgRequestHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
               throw e;
           }
           
@@ -115,11 +116,11 @@ namespace castor{
           
         }catch(castor::exception::Exception ex){ /* process the exception an replyToClient */
           
-          handleException(stgRequestHelper,stgRequestHandler->getStgCnsHelper(), ex.code(), ex.getMessage().str());
+          handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
           
           /* we delete our objects */
-          delete stgRequestHandler;
-          delete stgRequestHelper;
+          if(stgRequestHandler) delete stgRequestHandler;
+          if(stgRequestHelper) delete stgRequestHelper;
         }
         
       }/* end JobRequestSvc::process */
