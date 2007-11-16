@@ -113,7 +113,7 @@
  *   0 - 999 is reserved for local messages
  */
 #define DLF_BASE_SHAREDMEMORY 1000 	    /**< Shared Memory related code               */
-#define DLF_BASE_STAGERIB     1100 	    /**< Stager library related code              */
+#define DLF_BASE_STAGERLIB    1100 	    /**< Stager library related code              */
 #define DLF_BASE_ORACLELIB    1200 	    /**< Oracle library related code              */
 
 /**
