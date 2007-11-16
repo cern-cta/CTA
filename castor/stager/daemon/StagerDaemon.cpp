@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2007/11/05 17:15:22 $ $Author: mmartins $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/11/16 09:53:37 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -252,6 +252,8 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
     {STAGER_SUBREQUESTUUID_EXCEPTION, "Impossible to get the subrequest Uuid"},
     {STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},
     {STAGER_CASTORFILE_EXCEPTION, "Impossible to get the CastorFile"},
+    {STAGER_INVALID_TYPE, "Request type not valid for this thread pool"},
+
     /*******************/
     /* QueryRequestSvc */
     { STAGER_QRYSVC_GETSVC, "Could not get QuerySvc"},

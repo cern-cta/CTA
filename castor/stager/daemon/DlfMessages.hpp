@@ -89,6 +89,7 @@ namespace castor{
      STAGER_SUBREQUESTUUID_EXCEPTION = 80, /* Impossible to get the subrequest Uuid */
      STAGER_REQUESTUUID_EXCEPTION = 81, /* Impossible to get the request Uuid */
      STAGER_CASTORFILE_EXCEPTION = 82, /* Impossible to get the CastorFile */
+     STAGER_INVALID_TYPE = 83,  /* Request type not valid for this thread pool */
 
      /*******************/
      /* QueryRequestSvc */
