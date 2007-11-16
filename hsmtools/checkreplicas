@@ -323,10 +323,14 @@ while (@results) {
   
     if ($readable eq 'DISKCOPY_STAGEOUT') {
       print ("# file in STAGEOUT\n");
-      my $rfdirstat = `rfdir $server{$fsystem}:$mountpoint{$fsystem}$path 2>/dev/null`;
-      if (length($rfdirstat) == 0 ) {
-        print ("# no file in server\n");
-        print ("/usr/bin/cleanLostFiles $diskcopyid\n");
+      my $rfdirstat = `rfdir $server{$fsystem}:$mountpoint{$fsystem}$path 2>&1`;
+      if ($rfdirstat =~ m/\(error\s+\d+\s+on\s+\S+\)/i) {
+        if ($rfdirstat =~ m/No such file or directory/i) {
+          print ("# no file in server\n");
+          print ("/usr/bin/cleanLostFiles $diskcopyid\n");
+        } else {
+          print ("rfdir failed : $rfdirstat");
+        }
       } else {
         my ($rfperm, $rfone, $rfuser, $rfgroup, $rfdirfilesize, $rfmonth, $rfdate, $rftime, $rfrest) = split (/\s+/, $rfdirstat);
         if ($perm !~ m/^m\S+$/i ){ # not migrated
@@ -427,6 +431,8 @@ while (@results) {
       printf ("           $subrequeststat\t\t$subrequestcount\n");
       }
       $Sth->finish;
+
+      print ("diskcopyid=$diskcopyid\n") if ($debug);
       $Sth = $Dbh->prepare(qq{
         select id, status
         from castor_stager.subrequest
