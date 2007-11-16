@@ -37,8 +37,16 @@ struct sqlca *sqlca;
 	extern char db_srvr[33];
 	extern char db_user[33];
 
-	nslogit (func, "%s error: %.*s\n", sql_method, sqlca->sqlerrm.sqlerrml,
-	    sqlca->sqlerrm.sqlerrmc);
+	char   err_msg[512];
+	size_t err_size = sizeof(err_msg);
+	size_t err_len;
+
+	sqlglmt(ctx[dbfd->idx], err_msg, &err_size, &err_len);
+	if (err_msg[err_len - 1]  == '\n') {
+		err_msg[err_len - 1] = '\0';
+	}
+	
+	nslogit (func, "%s error: %.*s\n", sql_method, err_len, err_msg);
 	if (sqlca->sqlcode == -2396 || sqlca->sqlcode == -3113) {
 		nslogit (func, "Trying to reconnect\n");
 		Cns_closedb (dbfd);
