@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/09/11 08:50:31 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/11/16 14:10:04 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -280,6 +280,7 @@ void castor::rh::RHThread::handleRequest
     break;
   case OBJ_GetUpdateStartRequest:
   case OBJ_Disk2DiskCopyDoneRequest:
+  case OBJ_Disk2DiskCopyStartRequest:
   case OBJ_MoverCloseRequest:
   case OBJ_PutStartRequest :
   case OBJ_GetUpdateDone :
