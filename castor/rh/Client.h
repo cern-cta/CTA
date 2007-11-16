@@ -139,6 +139,16 @@ int Crh_Client_version(struct Crh_Client_t* instance, int* var);
 int Crh_Client_setVersion(struct Crh_Client_t* instance, int new_var);
 
 /**
+ * Get the value of secure
+ */
+int Crh_Client_secure(struct Crh_Client_t* instance, int* var);
+
+/**
+ * Set the value of secure
+ */
+int Crh_Client_setSecure(struct Crh_Client_t* instance, int new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

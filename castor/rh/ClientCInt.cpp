@@ -160,6 +160,22 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Crh_Client_secure
+  //----------------------------------------------------------------------------
+  int Crh_Client_secure(castor::rh::Client* instance, int* var) {
+    *var = instance->secure();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Crh_Client_setSecure
+  //----------------------------------------------------------------------------
+  int Crh_Client_setSecure(castor::rh::Client* instance, int new_var) {
+    instance->setSecure(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Crh_Client_id
   //----------------------------------------------------------------------------
   int Crh_Client_id(castor::rh::Client* instance, u_signed64* var) {

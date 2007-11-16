@@ -2,7 +2,7 @@
 CREATE TABLE BaseAddress (objType INT4, cnvSvcName VARCHAR(2048), cnvSvcType INT4, target INT8, id INT8 CONSTRAINT I_BaseAddress_Id PRIMARY KEY);
 
 /* SQL statements for type Client */
-CREATE TABLE Client (ipAddress INT4, port INT4, version INT4, id INT8 CONSTRAINT I_Client_Id PRIMARY KEY);
+CREATE TABLE Client (ipAddress INT4, port INT4, version INT4, secure INT4, id INT8 CONSTRAINT I_Client_Id PRIMARY KEY);
 
 /* SQL statements for type ClientIdentification */
 CREATE TABLE ClientIdentification (machine VARCHAR(2048), userName VARCHAR(2048), port INT4, euid INT4, egid INT4, magic INT4, id INT8 CONSTRAINT I_ClientIdentification_Id PRIMARY KEY);

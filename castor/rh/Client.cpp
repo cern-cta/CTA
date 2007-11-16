@@ -44,6 +44,7 @@ castor::rh::Client::Client() throw() :
   m_ipAddress(0),
   m_port(0),
   m_version(0),
+  m_secure(0),
   m_id(0) {
 }
 
@@ -71,6 +72,7 @@ void castor::rh::Client::print(std::ostream& stream,
   stream << indent << "ipAddress : " << m_ipAddress << std::endl;
   stream << indent << "port : " << m_port << std::endl;
   stream << indent << "version : " << m_version << std::endl;
+  stream << indent << "secure : " << m_secure << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
