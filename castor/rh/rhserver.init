@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/23 06:46:02 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.11 $ $Release$ $Date: 2007/11/16 14:05:59 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -62,16 +62,6 @@ start() {
 
         # Run daemon
         echo -n $"Starting $prog: "
-
-        # Process sysconfig settings
-        if [ -f /etc/sysconfig/$prog ]; then
-	
-                # Enabled ?	    
-                if [ "${RHSERVER_RUN}" != "YES" ]; then
-                        echo -n $"disabled in /etc/sysconfig/$prog" 
-                        failure && echo && exit
-                fi
-        fi
 
         # Start daemons
         if [ "$type" == "public" -o ! -n "$type" ]; then

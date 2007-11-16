@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rtcpclientd.scripts,v $ $Revision: 1.3 $ $Release$ $Date: 2007/08/22 06:29:26 $ $Author: waldron $
+# @(#)$RCSfile: rtcpclientd.scripts,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/16 14:06:00 $ $Author: waldron $
 #
 # chkconfig: 345 74 32
 # description: RTCPCLIENT Daemon Initialisation Script
@@ -45,16 +45,6 @@ fi
 start() {
 	# Run daemon
 	echo -n $"Starting $prog: "
-
-	# Process sysconfig settings
-	if [ -f /etc/sysconfig/$prog ]; then
-
-		# Enabled ?	    
-		if [ "${RTCPCLIENTD_RUN}" != "YES" ]; then
-			echo -n $"disabled in /etc/sysconfig/$prog" 
-			failure && echo && exit
-		fi
-	fi
 
         # Check if daemon is already running
         if [ -e /var/lock/subsys/$prog ]; then

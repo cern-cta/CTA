@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rmMasterDaemon.init,v $ $Revision: 1.5 $ $Release$ $Date: 2007/08/22 06:29:27 $ $Author: waldron $
+# @(#)$RCSfile: rmMasterDaemon.init,v $ $Revision: 1.6 $ $Release$ $Date: 2007/11/16 14:05:59 $ $Author: waldron $
 #
 # chkconfig: 345 74 31
 # description: Resource Monitoring Server Daemon Initialisation Script
@@ -45,16 +45,6 @@ fi
 start() {
 	# Run daemon
 	echo -n $"Starting $prog: "
-
-	# Process sysconfig settings
-	if [ -f /etc/sysconfig/$prog ]; then
-
-		# Enabled ?	    
-		if [ "${RMMASTERDAEMON_RUN}" != "YES" ]; then
-			echo -n $"disabled in /etc/sysconfig/$prog" 
-			failure && echo && exit
-		fi
-	fi
 
         # Check if daemon is already running
         if [ -e /var/lock/subsys/$prog ]; then
