@@ -45,7 +45,7 @@ namespace castor {
   namespace stager {
 
     // Forward declarations
-    class DiskCopy;
+    class DiskCopyInfo;
 
   } /* end of namespace stager */
 
@@ -129,7 +129,7 @@ namespace castor {
        * The information about the destination disk copy
        * @return the value of m_diskCopy
        */
-      castor::stager::DiskCopy* diskCopy() const {
+      castor::stager::DiskCopyInfo* diskCopy() const {
         return m_diskCopy;
       }
 
@@ -138,7 +138,7 @@ namespace castor {
        * The information about the destination disk copy
        * @param new_var the new value of m_diskCopy
        */
-      void setDiskCopy(castor::stager::DiskCopy* new_var) {
+      void setDiskCopy(castor::stager::DiskCopyInfo* new_var) {
         m_diskCopy = new_var;
       }
 
@@ -147,7 +147,7 @@ namespace castor {
        * The information about the source disk copy
        * @return the value of m_sourceDiskCopy
        */
-      castor::stager::DiskCopy* sourceDiskCopy() const {
+      castor::stager::DiskCopyInfo* sourceDiskCopy() const {
         return m_sourceDiskCopy;
       }
 
@@ -156,7 +156,7 @@ namespace castor {
        * The information about the source disk copy
        * @param new_var the new value of m_sourceDiskCopy
        */
-      void setSourceDiskCopy(castor::stager::DiskCopy* new_var) {
+      void setSourceDiskCopy(castor::stager::DiskCopyInfo* new_var) {
         m_sourceDiskCopy = new_var;
       }
 
@@ -166,10 +166,10 @@ namespace castor {
       u_signed64 m_id;
 
       /// The information about the destination disk copy
-      castor::stager::DiskCopy* m_diskCopy;
+      castor::stager::DiskCopyInfo* m_diskCopy;
 
       /// The information about the source disk copy
-      castor::stager::DiskCopy* m_sourceDiskCopy;
+      castor::stager::DiskCopyInfo* m_sourceDiskCopy;
 
     }; /* end of class Disk2DiskCopyStartResponse */
 

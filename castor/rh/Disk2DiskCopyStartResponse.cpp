@@ -32,7 +32,7 @@
 #include "castor/ObjectSet.hpp"
 #include "castor/rh/Disk2DiskCopyStartResponse.hpp"
 #include "castor/rh/Response.hpp"
-#include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>

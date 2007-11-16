@@ -40,7 +40,7 @@
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/rh/Disk2DiskCopyStartResponse.hpp"
-#include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -160,10 +160,10 @@ castor::IObject* castor::io::StreamDisk2DiskCopyStartResponseCnv::unmarshalObjec
     dynamic_cast<castor::rh::Disk2DiskCopyStartResponse*>(object);
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objDiskCopy));
+  obj->setDiskCopy(dynamic_cast<castor::stager::DiskCopyInfo*>(objDiskCopy));
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objSourceDiskCopy = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setSourceDiskCopy(dynamic_cast<castor::stager::DiskCopy*>(objSourceDiskCopy));
+  obj->setSourceDiskCopy(dynamic_cast<castor::stager::DiskCopyInfo*>(objSourceDiskCopy));
   return object;
 }
 
