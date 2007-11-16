@@ -80,6 +80,7 @@ namespace castor{
           
           this->baseAddr = new castor::BaseAddress;
           svcClass = 0;
+          castorFile = 0;
           
           baseAddr->setCnvSvcName("DbCnvSvc");
           baseAddr->setCnvSvcType(SVC_DBCNV);
@@ -99,8 +100,6 @@ namespace castor{
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_SERVICES_EXCEPTION, 1 ,params);	    	  
           e.getMessage()<< "Error on the Database";
           throw e;  
-          
-          
         }
       }
       

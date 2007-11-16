@@ -127,7 +127,7 @@ namespace castor{
           
           /* replyToClient Part: */
           stgReplyHelper = new StagerReplyHelper();
-          stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0, "No error");
+          stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
           stgReplyHelper->endReplyToClient(stgRequestHelper);
           
           delete stgReplyHelper;

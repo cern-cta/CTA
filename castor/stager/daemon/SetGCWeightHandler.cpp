@@ -43,80 +43,49 @@ namespace castor{
       StagerSetGCHandler::StagerSetGCHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
-	this->typeRequest = OBJ_SetFileGCWeight;
+        this->typeRequest = OBJ_SetFileGCWeight;
       }
       
-      /*******************************************************************/
-      /* function to set the handler's attributes according to its type */
-      /*****************************************************************/
-      void StagerSetGCHandler::handlerSettings() throw(castor::exception::Exception)
-      {	
-	/* no setting */
-      }
- 
       void StagerSetGCHandler::handle() throw(castor::exception::Exception)
       {
-
-	StagerReplyHelper* stgReplyHelper=NULL;
-	try{
-
-	  /**************************************************************************/
-	  /* common part for all the handlers: get objects, link, check/create file*/
-	  
-	  /**********/
-
-	  castor::dlf::Param params[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)				     
-	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_DEBUG, STAGER_SETGC, 5 ,params, &(stgCnsHelper->cnsFileid));
-	  
-
-	
-	  /* execute the main function for the setFileGCWeight request   */
-	  /* basically a call to the corresponding stagerService method */
-	  /* passing the SetFileGCWeight object                        */
-	  castor::stager::SetFileGCWeight* setGCWeightReq = dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
-          stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,setGCWeightReq->weight());
-
-	   /* FOR THE SYSTEM PART:*/
-	  castor::dlf::Param param[]={castor::dlf::Param(stgRequestHelper->subrequestUuid),
-				       castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-				       castor::dlf::Param("UserName",stgRequestHelper->username),
-				       castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-				       castor::dlf::Param("DiskCopy Weight setted:",setGCWeightReq->weight()),
-				       castor::dlf::Param("SvcClassName",stgRequestHelper->svcClassName)					 
-	  };
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_SYSTEM, STAGER_SETGC_DETAILS, 6,param, &(stgCnsHelper->cnsFileid));
-
-	  /**************************************************/
-	  /* we don t need to update the subrequestStatus  */
-	  /* but we have to archive the subrequest        */
-	  /* the same as for StagerRmHandler             */
-	  stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
-	  
-	  /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
-	
-	  stgReplyHelper = new StagerReplyHelper();
-	  stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No error");
-	  stgReplyHelper->endReplyToClient(stgRequestHelper);
-	  
-	  delete stgReplyHelper;
-
-	}catch(castor::exception::Exception e){
-	 
-	  if(stgReplyHelper != NULL) delete stgReplyHelper;
-	   castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-					castor::dlf::Param("Error Message",e.getMessage().str())
-	  };
-	  
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
-	  throw(e); 
-       
-	}
-	
+        
+        StagerReplyHelper* stgReplyHelper=NULL;
+        try{
+          
+          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SETGC, &(stgCnsHelper->cnsFileid));
+          
+          /* execute the main function for the setFileGCWeight request   */
+          /* basically a call to the corresponding stagerService method */
+          /* passing the SetFileGCWeight object                        */
+          castor::stager::SetFileGCWeight* setGCWeightReq = dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
+          stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, setGCWeightReq->weight());
+          
+          /**************************************************/
+          /* we don t need to update the subrequestStatus  */
+          /* but we have to archive the subrequest        */
+          /* the same as for StagerRmHandler             */
+          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
+          
+          /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
+          
+          stgReplyHelper = new StagerReplyHelper();
+          stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
+          stgReplyHelper->endReplyToClient(stgRequestHelper);
+          
+          delete stgReplyHelper;
+          
+        }catch(castor::exception::Exception e){
+          
+          if(stgReplyHelper != NULL) delete stgReplyHelper;
+          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+            castor::dlf::Param("Error Message",e.getMessage().str())
+          };
+          
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
+          throw(e); 
+          
+        }
+        
       }
       
       

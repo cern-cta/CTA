@@ -61,7 +61,7 @@ namespace castor{
         /****************************************************************************/
         /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
         /**************************************************************************/
-        void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper,Cns_fileid cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
+        void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
         
         
         /*********************************************************************************************/

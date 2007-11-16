@@ -44,11 +44,11 @@ namespace castor{
       
       StagerGetHandler::StagerGetHandler(StagerRequestHelper* stgRequestHelper) throw (castor::exception::Exception)
       {
-	this->stgRequestHelper = stgRequestHelper;
-	this->typeRequest = OBJ_StageGetRequest;
+        this->stgRequestHelper = stgRequestHelper;
+        this->typeRequest = OBJ_StageGetRequest;
       }
       
-
+      
       /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
@@ -75,10 +75,10 @@ namespace castor{
         this->default_protocol = "rfio";
         
       }
-
-
       
-
+      
+      
+      
       /********************************************/	
       /* for Get, Update                         */
       /*     switch(getDiskCopyForJob):         */                                     
@@ -86,119 +86,101 @@ namespace castor{
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
       bool StagerGetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
-	  
-	  switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
-	case -2:
-	  {
-	    
-	    stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
-	  }break;
-	  
-   case -1:
-	    {
-	      stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
-	    }break;
-	    
-          case 0: // DISKCOPY_STAGED, schedule job
-	    {
-	      bool isToReplicate= replicaSwitch();
-	      if(isToReplicate){
-		processReplica();
-	      }
-	      
-	     stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
-	      
-	      jobManagerPart();
-	     
-	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */	      
-	      
-	      /* and we have to notify the jobManager */
-	      m_notifyJobManager = true;
-	    }break;
-      
-      case 1:   // DISK2DISKCOPY - will disappear soon
-	    {
-	      bool isToReplicate= replicaSwitch();
-	      if(isToReplicate){
-		processReplica();
-	      }
-	      
-	      stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, &(stgCnsHelper->cnsFileid));
-	      /* build the rmjob struct and submit the job */
-	      jobManagerPart();
-	      
-	     
-	      stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-	      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-	      /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-	      stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */	      
-	      
-	      /* and we have to notify the jobManager */
-	      m_notifyJobManager = true;
-	    }break;
+        
+        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
+          case -2:
+            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
+            break;
           
-	case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
-          {
-	     stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
-	      
+          case -1:
+            stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+            break;
+          
+          case 0: // DISKCOPY_STAGED, schedule job
+            {
+              bool isToReplicate= replicaSwitch();
+              if(isToReplicate){
+                processReplica();
+              }
+              
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
+              
+              jobManagerPart();
+              
+              stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
+              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */	      
+              
+              /* and we have to notify the jobManager */
+              m_notifyJobManager = true;
+            }
+            break;
+          
+          case 1:   // DISK2DISKCOPY - will disappear soon
+            {
+              bool isToReplicate= replicaSwitch();
+              if(isToReplicate){
+                processReplica();
+              }
+              
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, &(stgCnsHelper->cnsFileid));
+              /* build the rmjob struct and submit the job */
+              jobManagerPart();
+              
+              
+              stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
+              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */	      
+              
+              /* and we have to notify the jobManager */
+              m_notifyJobManager = true;
+            }
+            break;
+          
+          case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
+            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
+            
             stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
-	    
-          }break;
+            break;
           
         }//end switch
-
-      return false;        
+        
+        return false;        
       }
-
-
-
-
+      
+      
+      
+      
       /****************************************************************************************/
       /* handler for the get subrequest method */
       /****************************************************************************************/
       void StagerGetHandler::handle() throw (castor::exception::Exception)
       {
-	try{
-	  
-	  /**************************************************************************/
-	  /* common part for all the handlers: get objects, link, check/create file*/
-	  
-	  /**********/
-
-	  handlerSettings();
-
-	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_GET, &(stgCnsHelper->cnsFileid));
-	  
-
-	  jobOriented();
-	  
-	  /* for Get, Update                         */
-	  /*     switch(getDiskCopyForJob):         */                                     
-	  /*        case 0,1: (staged) jobManager  */
-	  /*        case 2: (waitRecall) createTapeCopyForRecall */
-	  /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-	  switchDiskCopiesForJob(); 
-
-	 
-
-	}catch(castor::exception::Exception e){
-
-	  castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-				       castor::dlf::Param("Error Message",e.getMessage().str())
-	  };
-	  
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_GET, 2, params, &(stgCnsHelper->cnsFileid));
-	  throw(e);
-	}  
+        try{
+          handlerSettings();
+          
+          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_GET, &(stgCnsHelper->cnsFileid));
+          
+          jobOriented();
+          switchDiskCopiesForJob(); 
+          
+        }catch(castor::exception::Exception e){
+          
+          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+            castor::dlf::Param("Error Message",e.getMessage().str())
+          };
+          
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_GET, 2, params, &(stgCnsHelper->cnsFileid));
+          throw(e);
+        }  
       }
-
+      
       StagerGetHandler::~StagerGetHandler()throw(){
-	
+        
       }
-
+      
     }//end namespace dbService
   }//end namespace stager
 }//end namespace castor

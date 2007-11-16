@@ -94,7 +94,7 @@ namespace castor{
             
             /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
             stgReplyHelper = new StagerReplyHelper();
-            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,stgCnsHelper->cnsFileid,0,"No Error");
+            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No Error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             
             delete stgReplyHelper;
