@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2007/08/27 14:53:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2007/11/16 14:11:04 $ $Author: waldron $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -46,9 +46,9 @@
 #include <stdlib.h>
 #include <list>
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraQuerySvc>* s_factoryOraQuerySvc =
   new castor::SvcFactory<castor::db::ora::OraQuerySvc>();
 
@@ -83,9 +83,9 @@ const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolsStatementStri
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolStatementString =
   "BEGIN describeDiskPool(:1, :2); END;";
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraQuerySvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraQuerySvc::OraQuerySvc(const std::string name) :
   OraCommonSvc(name),
   m_diskCopies4FileNameStatement(0),
@@ -98,23 +98,23 @@ castor::db::ora::OraQuerySvc::OraQuerySvc(const std::string name) :
   m_describeDiskPoolsStatement(0),
   m_describeDiskPoolStatement(0) {}
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraQuerySvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraQuerySvc::~OraQuerySvc() throw() {
   reset();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraQuerySvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraQuerySvc::ID() {
   return castor::SVC_ORAQUERYSVC;
 }
@@ -149,41 +149,39 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
   m_describeDiskPoolStatement = 0;
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // gatherResults
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>*
 castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
   throw (oracle::occi::SQLException) {
-    // Gather the results
-    std::list<castor::stager::DiskCopyInfo*>* result =
-      new std::list<castor::stager::DiskCopyInfo*>();
-    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
-      castor::stager::DiskCopyInfo* item =
-        new castor::stager::DiskCopyInfo();
-      item->setFileId((u_signed64)rset->getDouble(1));
-      item->setNsHost(rset->getString(2));
-      item->setId((u_signed64)rset->getDouble(3));
-      item->setDiskCopyPath(rset->getString(4));
-      item->setSize((u_signed64)rset->getDouble(5));
-      item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
-                              rset->getInt(6));
-      item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)0);
-      item->setSegmentStatus((castor::stager::SegmentStatusCodes)0);
-      item->setDiskServer(rset->getString(7));
-      item->setMountPoint(rset->getString(8));
-      item->setNbAccesses(rset->getInt(9));
-      item->setLastKnownFileName(rset->getString(10));
-      result->push_back(item);
-    }
-    return result;
+  // Gather the results
+  std::list<castor::stager::DiskCopyInfo*>* result =
+    new std::list<castor::stager::DiskCopyInfo*>();
+  while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+    castor::stager::DiskCopyInfo* item =
+      new castor::stager::DiskCopyInfo();
+    item->setFileId((u_signed64)rset->getDouble(1));
+    item->setNsHost(rset->getString(2));
+    item->setId((u_signed64)rset->getDouble(3));
+    item->setDiskCopyPath(rset->getString(4));
+    item->setSize((u_signed64)rset->getDouble(5));
+    item->setDiskCopyStatus((castor::stager::DiskCopyStatusCodes)
+			    rset->getInt(6));
+    item->setTapeCopyStatus((castor::stager::TapeCopyStatusCodes)0);
+    item->setSegmentStatus((castor::stager::SegmentStatusCodes)0);
+    item->setDiskServer(rset->getString(7));
+    item->setMountPoint(rset->getString(8));
+    item->setNbAccesses(rset->getInt(9));
+    item->setLastKnownFileName(rset->getString(10));
+    result->push_back(item);
+  }
+  return result;
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // diskCopies4FileName
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>*
 castor::db::ora::OraQuerySvc::diskCopies4FileName
 (std::string fileName, u_signed64 svcClassId)
@@ -248,11 +246,9 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
   }
 }
 
-
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // diskCopies4File
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>*
 castor::db::ora::OraQuerySvc::diskCopies4File
 (std::string fileId, std::string nsHost, u_signed64 svcClassId)
@@ -290,11 +286,9 @@ castor::db::ora::OraQuerySvc::diskCopies4File
   }
 }
 
-
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // diskCopies4Request
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::list<castor::stager::DiskCopyInfo*>*
 castor::db::ora::OraQuerySvc::diskCopies4Request
 (castor::stager::RequestQueryType reqType, std::string param, u_signed64 svcClassId)
@@ -374,9 +368,9 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // requestToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Request*
 castor::db::ora::OraQuerySvc::requestToDo()
   throw (castor::exception::Exception) {
@@ -430,9 +424,9 @@ castor::db::ora::OraQuerySvc::requestToDo()
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // describeDiskPools
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::query::DiskPoolQueryResponse*>*
 castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
   throw (castor::exception::Exception) {
@@ -515,9 +509,9 @@ castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // describeDiskPool
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::query::DiskPoolQueryResponse*
 castor::db::ora::OraQuerySvc::describeDiskPool (std::string diskPool)
   throw (castor::exception::Exception) {
