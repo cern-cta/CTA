@@ -54,7 +54,7 @@ namespace castor{
     
       public:
 	/* constructor */
-	StagerPrepareToPutHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+	StagerPrepareToPutHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
 
 	/* destructor */
 	~StagerPrepareToPutHandler() throw();

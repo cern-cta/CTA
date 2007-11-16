@@ -42,19 +42,19 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
-      StagerPutHandler::StagerPutHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
+      StagerPutHandler::StagerPutHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
-	this->typeRequest = OBJ_StagePutRequest;        
-      	
+        this->stgCnsHelper = stgCnsHelper;
+        this->typeRequest = OBJ_StagePutRequest;
       }
       
-       /*******************************************************************/
+      /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
       void StagerPutHandler::handlerSettings() throw(castor::exception::Exception)
       {	
-	  /* we don't care about: maxReplicaNb, replicationPolicy, hostlist */
+        /* we don't care about: maxReplicaNb, replicationPolicy, hostlist */
         
         /* get the request's size required on disk */
         this->xsize = this->stgRequestHelper->subrequest->xsize();
@@ -86,16 +86,16 @@ namespace castor{
           /* common part for all the handlers: get objects, link, check/create file*/
           
           /**********/
-	  
-	  handlerSettings();
-	  
-	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PUT, &(stgCnsHelper->cnsFileid));
-	
+          
+          handlerSettings();
+          
+          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PUT, &(stgCnsHelper->cnsFileid));
+          
           jobOriented();
           
           /* use the stagerService to recreate castor file */
           castor::stager::DiskCopyForRecall* diskCopyForRecall = 
-            stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+          stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
           
           if(diskCopyForRecall){  	  
             /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
@@ -104,7 +104,7 @@ namespace castor{
             }
             stgRequestHelper->subrequest->setXsize(this->xsize);
             
-	    stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
+            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
             
             /* updateSubrequestStatus Part: */
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
@@ -115,19 +115,16 @@ namespace castor{
             m_notifyJobManager = true;
             delete diskCopyForRecall;
           } else{
-	    stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(stgCnsHelper->cnsFileid));
-            
-
-	  }
+            stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(stgCnsHelper->cnsFileid));
+          }
           
         }catch(castor::exception::Exception e){
           castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-				       castor::dlf::Param("Error Message",e.getMessage().str())
-	  };
-	  
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUT, 2 ,params, &(stgCnsHelper->cnsFileid));
-	  throw(e);
-	 
+            castor::dlf::Param("Error Message",e.getMessage().str())
+          };
+          
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUT, 2 ,params, &(stgCnsHelper->cnsFileid));
+          throw(e);
         }
         
       }/* end StagerPutHandler::handle()*/

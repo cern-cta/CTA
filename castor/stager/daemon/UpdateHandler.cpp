@@ -52,24 +52,24 @@ namespace castor{
       {
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_StageUpdateRequest;     
-          
+        
       }
       
- 
+      
       
       /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
       void StagerUpdateHandler::preHandle() throw(castor::exception::Exception)
       {
         
-	/* get the uuid request string version and check if it is valid */
-	stgRequestHelper->setRequestUuid();
-
-	/* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
-	this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
-
-	/* set the username and groupname needed to print them on the log */
-	stgRequestHelper->setUsernameAndGroupname();
-
+        /* get the uuid request string version and check if it is valid */
+        stgRequestHelper->setRequestUuid();
+        
+        /* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
+        this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+        
+        /* set the username and groupname needed to print them on the log */
+        stgRequestHelper->setUsernameAndGroupname();
+        
         /* get the uuid subrequest string version and check if it is valid */
         /* we can create one !*/
         stgRequestHelper->setSubrequestUuid();
@@ -80,7 +80,7 @@ namespace castor{
         
         /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
         stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
-       
+        
         
         /* get the svcClass */
         stgRequestHelper->getSvcClass();
@@ -98,39 +98,40 @@ namespace castor{
         
         this->toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0));
       }
-
-
+      
+      
       /************************************/
       /* handler for the update request  */
       /**********************************/
       void StagerUpdateHandler::handle() throw(castor::exception::Exception)
       {
-	try{
-
-	  stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_UPDATE, &(stgCnsHelper->cnsFileid));
-	
-    StagerRequestHandler* h = 0;
-	  if(toRecreateCastorFile) {
-      // delegate to Put
-      h = new StagerPutHandler(stgRequestHelper);
-    } else {
-      // delegate to Get
-      h = new StagerGetHandler(stgRequestHelper);
-    }      
-    h->handle();
-    delete h;
-	       
-	}catch(castor::exception::Exception e){
-	 
-	  castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-				       castor::dlf::Param("Error Message",e.getMessage().str())
-	  };
-	  
-	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
-	  throw(e);
-	 
-	}
-
+        try{
+          
+          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_UPDATE, &(stgCnsHelper->cnsFileid));
+          
+          StagerRequestHandler* h = 0;
+          if(toRecreateCastorFile) {
+            // delegate to Put
+            h = new StagerPutHandler(stgRequestHelper, stgCnsHelper);
+          }
+          else {
+            // delegate to Get
+            h = new StagerGetHandler(stgRequestHelper, stgCnsHelper);
+          }      
+          h->handle();
+          delete h;
+          
+        }catch(castor::exception::Exception e){
+          
+          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
+            castor::dlf::Param("Error Message",e.getMessage().str())
+          };
+          
+          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
+          throw(e);
+          
+        }
+        
       }
       
       

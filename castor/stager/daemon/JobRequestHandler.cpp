@@ -142,7 +142,7 @@ namespace castor{
           ex.getMessage()<<"Error on expert_send_request";
           throw ex;
         }
-        if((expert_send_data(fd,expQuestion.c_str(),expQuestion.size())) != (expQuestion.size())){//sending question
+        if((unsigned)(expert_send_data(fd, expQuestion.c_str(), expQuestion.size())) != (expQuestion.size())) {  //sending question
           
           castor::exception::Exception ex(SEINTERNAL);
           ex.getMessage()<<"Error on expert_send_data";
