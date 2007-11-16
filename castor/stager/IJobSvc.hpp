@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/17 09:31:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/16 14:14:28 $ $Author: waldron $
  *
  * This class provides stager methods related to job handling
  *
@@ -51,6 +51,7 @@ namespace castor {
     class Segment;
     class TapeCopy;
     class DiskCopy;
+    class DiskCopyInfo;
     class DiskPool;
     class SvcClass;
     class FileClass;
@@ -145,6 +146,33 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
+       * Handles the start of a StageDiskCopyReplicaRequest. It checks
+       * that the source DiskCopy stills exists i.e. hasn't been 
+       * garbage collected. Updates the filesystem of the destination
+       * DiskCoy and verifies that the selected destination diskserver
+       * and filesystem are valid for the given service class.
+       * @param diskcopyId the id of the new DiskCopy
+       * @param sourceDiskCopyId the id of the source diskCopy
+       * @param destSvcClass the service class of the diskserver writing
+       * the new castor file.
+       * @param diskServer the name of the destination diskserver
+       * @param fileSystem the file system mount point
+       * Changes are commited
+       * @return diskCopy information about the destination DiskCopy
+       * @return sourceDiskCopy information about the source DiskCopy
+       * @exception Exception in case of error
+       */
+      virtual void disk2DiskCopyStart
+      (const u_signed64 diskCopyId,
+       const u_signed64 sourceDiskCopyId,
+       const std::string destSvcClass,
+       const std::string diskServer,
+       const std::string fileSystem,
+       castor::stager::DiskCopyInfo* &diskCopy,
+       castor::stager::DiskCopyInfo* &sourceDiskCopy)
+	throw(castor::exception::Exception) = 0;
+      
+      /**
        * Updates database after successful completion of a
        * disk to disk copy. This includes setting the DiskCopy
        * status to DISKCOPY_STAGED and setting the SubRequest
@@ -152,7 +180,7 @@ namespace castor {
        * Changes are commited
        * @param diskcopyId the id of the new DiskCopy
        * @param sourceDiskCopyId the id of the source diskCopy
-       * @exception Exception throws an Exception in case of error
+       * @exception Exception in case of error
        */
       virtual void disk2DiskCopyDone
       (u_signed64 diskCopyId,
@@ -163,7 +191,7 @@ namespace castor {
        * Updates database after a failure of a disk to disk copy.
        * Changes are commited
        * @param diskcopyId the id of the failed DiskCopy
-       * @exception Exception throws an Exception in case of error
+       * @exception Exception in case of error
        */
       virtual void disk2DiskCopyFailed
       (u_signed64 diskCopyId)
@@ -183,7 +211,7 @@ namespace castor {
        * @param subreq The SubRequest handling the file to prepare
        * @param fileSize The actual size of the castor file
        * @param timeStamp To know if the fileSize is still valid 
-       * @exception Exception throws an Exception in case of error
+       * @exception Exception in case of error
        */
       virtual void prepareForMigration
       (castor::stager::SubRequest* subreq,
@@ -196,6 +224,7 @@ namespace castor {
        * The SubRequest and potentially the corresponding
        * Request will thus be removed from the DataBase
        * @param subReqId the id of the finished SubRequest
+       * @exception Exception in case error
        */
       virtual void getUpdateDone(u_signed64 subReqId)
         throw (castor::exception::Exception) = 0;
@@ -205,6 +234,7 @@ namespace castor {
        * (without write) failed.
        * The SubRequest's status will thus be set to FAILED
        * @param subReqId the id of the failing SubRequest
+       * @exception Exception in case error
        */
       virtual void getUpdateFailed(u_signed64 subReqId)
         throw (castor::exception::Exception) = 0;
@@ -213,6 +243,7 @@ namespace castor {
        * Informs the stager the a Put or a PutDone SubRequest failed.
        * The SubRequest's status will thus be set to FAILED
        * @param subReqId the id of the failing SubRequest
+       * @exception Exception in case error
        */
       virtual void putFailed(u_signed64 subReqId)
         throw (castor::exception::Exception) = 0;

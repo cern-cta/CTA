@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/17 09:31:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/11/16 14:14:28 $ $Author: waldron $
  *
  *
  *
@@ -35,6 +35,7 @@
 #include "castor/client/BasicResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -52,10 +53,12 @@
 #include "castor/stager/PutStartRequest.hpp"
 #include "castor/stager/PutDoneStart.hpp"
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
+#include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
+#include "castor/rh/Disk2DiskCopyStartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/exception/Internal.hpp"
 #include <errno.h>
@@ -71,40 +74,40 @@ const char* castor::stager::TIMEOUT_CONF = "TIMEOUT";
 const int   castor::stager::DEFAULT_REMOTEJOBSVC_TIMEOUT = 1800;
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::stager::RemoteJobSvc>* s_factoryRemoteJobSvc =
   new castor::SvcFactory<castor::stager::RemoteJobSvc>();
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // RemoteJobSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::RemoteJobSvc::RemoteJobSvc(const std::string name) :
   BaseSvc(name) {}
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~RemoteJobSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::RemoteJobSvc::~RemoteJobSvc() throw() {}
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::stager::RemoteJobSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::stager::RemoteJobSvc::ID() {
   return castor::SVC_REMOTEJOBSVC;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectTape
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Tape*
 castor::stager::RemoteJobSvc::selectTape
 (const std::string vid,
@@ -118,9 +121,9 @@ castor::stager::RemoteJobSvc::selectTape
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // requestToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Request*
 castor::stager::RemoteJobSvc::requestToDo()
   throw (castor::exception::Exception) {
@@ -131,9 +134,10 @@ castor::stager::RemoteJobSvc::requestToDo()
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // GetUpdateStartResponseHandler
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
 /**
  * A dedicated little response handler for the GetUpdateStart
  * requests
@@ -147,7 +151,7 @@ public:
     m_diskCopy(diskCopy),
     m_sources(sources),
     m_emptyFile(emptyFile){}
-
+  
   virtual void handleResponse(castor::rh::Response& r)
     throw (castor::exception::Exception) {
     castor::rh::GetUpdateStartResponse *resp =
@@ -169,18 +173,18 @@ public:
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
-  // where to store the diskCopy
+  // Where to store the diskCopy
   castor::stager::DiskCopy** m_diskCopy;
-  // where to store the sources
+  // Where to store the sources
   std::list<castor::stager::DiskCopyForRecall*>& m_sources;
   // Where to store the emptyFile flag
   bool* m_emptyFile;
 };
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getUpdateStart
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::DiskCopy*
 castor::stager::RemoteJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
@@ -206,9 +210,10 @@ castor::stager::RemoteJobSvc::getUpdateStart
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // putStartResponseHandler
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
 /**
  * A dedicated little response handler for the PutStart
  * requests
@@ -239,13 +244,13 @@ public:
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
-  // where to store the diskCopy
+  // Where to store the diskCopy
   castor::stager::DiskCopy** m_diskCopy;
 };
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // putStart
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::DiskCopy*
 castor::stager::RemoteJobSvc::putStart
 (castor::stager::SubRequest* subreq,
@@ -268,9 +273,9 @@ castor::stager::RemoteJobSvc::putStart
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectSvcClass
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::SvcClass*
 castor::stager::RemoteJobSvc::selectSvcClass
 (const std::string name)
@@ -282,9 +287,9 @@ castor::stager::RemoteJobSvc::selectSvcClass
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFileClass
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::FileClass*
 castor::stager::RemoteJobSvc::selectFileClass
 (const std::string name)
@@ -296,9 +301,9 @@ castor::stager::RemoteJobSvc::selectFileClass
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFileSystem
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::FileSystem*
 castor::stager::RemoteJobSvc::selectFileSystem
 (const std::string mountPoint,
@@ -311,9 +316,84 @@ castor::stager::RemoteJobSvc::selectFileSystem
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// DiskCopyStartResponseHandler
+//------------------------------------------------------------------------------
+
+/**
+ * A dedicated little response handler for the Disk2DiskCopyStart
+ * requests
+ */
+class DiskCopyStartResponseHandler : public castor::client::IResponseHandler {
+public:
+  DiskCopyStartResponseHandler (castor::stager::DiskCopyInfo* &diskCopy,
+				castor::stager::DiskCopyInfo* &sourceDiskCopy) :
+    m_diskCopy(diskCopy),
+    m_sourceDiskCopy(sourceDiskCopy) {}
+
+  /// Handle the response
+  virtual void handleResponse(castor::rh::Response& r)
+    throw(castor::exception::Exception) {
+    if (0 != r.errorCode()) {
+      castor::exception::Exception e(r.errorCode());
+      e.getMessage() << r.errorMessage();
+      throw e;
+    }
+    castor::rh::Disk2DiskCopyStartResponse *resp =
+      dynamic_cast<castor::rh::Disk2DiskCopyStartResponse*>(&r);
+    if (0 == resp) {
+      castor::exception::Internal e;
+      e.getMessage() << "Could not cast response into Disk2DiskCopyStartResponse";
+      throw e;
+    }
+
+    m_diskCopy = resp->diskCopy();
+    m_sourceDiskCopy = resp->sourceDiskCopy();
+  }
+
+  /// Not implemented
+  virtual void terminate()
+    throw(castor::exception::Exception) {};
+
+private:
+
+  // Where to store the destination disk copy
+  castor::stager::DiskCopyInfo* &m_diskCopy;
+
+  // Where to store the source disk copy
+  castor::stager::DiskCopyInfo* &m_sourceDiskCopy;
+};
+
+//------------------------------------------------------------------------------
+// disk2DiskCopyStart
+//------------------------------------------------------------------------------
+void castor::stager::RemoteJobSvc::disk2DiskCopyStart
+(const u_signed64 diskCopyId,
+ const u_signed64 sourceDiskCopyId,
+ const std::string destSvcClass,
+ const std::string diskServer,
+ const std::string fileSystem,
+ castor::stager::DiskCopyInfo* &diskCopy,
+ castor::stager::DiskCopyInfo* &sourceDiskCopy) 
+  throw(castor::exception::Exception) {
+  // Build the Disk2DiskCopyStartRequest
+  castor::stager::Disk2DiskCopyStartRequest req;
+  req.setDiskCopyId(diskCopyId);
+  req.setSourceDiskCopyId(sourceDiskCopyId);
+  req.setDestSvcClass(destSvcClass);
+  req.setDiskServer(diskServer);
+  req.setMountPoint(fileSystem);
+  // Build a response Handler
+  DiskCopyStartResponseHandler rh(diskCopy, sourceDiskCopy);
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteJobClientTimeout());
+  client.setOption(NULL);
+  client.sendRequest(&req, &rh);
+}
+
+//------------------------------------------------------------------------------
 // disk2DiskCopyDone
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
  u_signed64 sourceDiskCopyId)
@@ -330,9 +410,9 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
   client.sendRequest(&req, &rh);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // disk2DiskCopyFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
 (u_signed64 diskCopyId)
   throw (castor::exception::Exception) {
@@ -348,9 +428,9 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
   client.sendRequest(&req, &rh);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // prepareForMigration
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::prepareForMigration
 (castor::stager::SubRequest *subreq,
  u_signed64 fileSize,u_signed64 timeStamp)
@@ -368,9 +448,9 @@ void castor::stager::RemoteJobSvc::prepareForMigration
   client.sendRequest(&req, &rh);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getRemoteJobClientTimeout
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::stager::RemoteJobSvc::getRemoteJobClientTimeout() {
 
   int ret_timeout = castor::stager::DEFAULT_REMOTEJOBSVC_TIMEOUT;
@@ -391,9 +471,9 @@ int castor::stager::RemoteJobSvc::getRemoteJobClientTimeout() {
   return ret_timeout;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getUpdateDone
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::getUpdateDone
 (u_signed64 subReqId)
   throw (castor::exception::Exception) {
@@ -408,9 +488,9 @@ void castor::stager::RemoteJobSvc::getUpdateDone
   client.sendRequest(&req, &rh);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getUpdateFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::getUpdateFailed
 (u_signed64 subReqId)
   throw (castor::exception::Exception) {
@@ -425,9 +505,9 @@ void castor::stager::RemoteJobSvc::getUpdateFailed
   client.sendRequest(&req, &rh);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // putFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::putFailed
 (u_signed64 subReqId)
   throw (castor::exception::Exception) {

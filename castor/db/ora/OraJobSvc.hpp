@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/08/17 09:32:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/11/16 14:12:01 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -150,6 +150,33 @@ namespace castor {
          castor::stager::FileSystem* fileSystem)
           throw (castor::exception::Exception);
 
+	/**
+	 * Handles the start of a StageDiskCopyReplicaRequest. It checks
+	 * that the source DiskCopy stills exists i.e. hasn't been 
+	 * garbage collected. Updates the filesystem of the destination
+	 * DiskCoy and verifies that the selected destination diskserver
+	 * and filesystem are valid for the given service class.
+	 * @param diskcopyId the id of the new DiskCopy
+	 * @param sourceDiskCopyId the id of the source diskCopy
+	 * @param destSvcClass the service class of the diskserver writing
+	 * the new castor file.
+	 * @param diskServer the name of the destination diskserver
+	 * @param fileSystem the file system mount point
+	 * Changes are commited
+	 * @return diskCopy information about the destination DiskCopy
+	 * @return sourceDiskCopy information about the source DiskCopy
+	 * @exception Exception in case of error
+	 */
+	virtual void disk2DiskCopyStart
+	(const u_signed64 diskCopyId,
+	 const u_signed64 sourceDiskCopyId,
+	 const std::string destSvcClass,
+	 const std::string diskServer,
+	 const std::string fileSystem,
+	 castor::stager::DiskCopyInfo* &diskCopy,
+	 castor::stager::DiskCopyInfo* &sourceDiskCopy)
+	  throw(castor::exception::Exception);
+
         /**
          * Updates database after successful completion of a
          * disk to disk copy. This includes setting the DiskCopy
@@ -188,6 +215,7 @@ namespace castor {
          * castorFile.
          * @param subreq The SubRequest handling the file to prepare
          * @param fileSize The actual size of the castor file
+	 * @param timeStamp To know if the fileSize is still valid 
          * @exception Exception throws an Exception in case of error
          */
         virtual void prepareForMigration
@@ -251,6 +279,12 @@ namespace castor {
 
         /// SQL statement object for function putDoneStart
         oracle::occi::Statement *m_putDoneStartStatement;
+
+        /// SQL statement for function disk2DiskCopyStart
+        static const std::string s_disk2DiskCopyStartStatementString;
+
+        /// SQL statement object for function disk2DiskCopyStart
+        oracle::occi::Statement *m_disk2DiskCopyStartStatement;
 
         /// SQL statement for function disk2DiskCopyDone
         static const std::string s_disk2DiskCopyDoneStatementString;

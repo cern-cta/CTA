@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/08/17 09:32:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2007/11/16 14:12:01 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -36,6 +36,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
+#include "castor/stager/DiskCopyInfo.hpp"
 #include "castor/stager/DiskPool.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapeCopy.hpp"
@@ -83,9 +84,9 @@
 
 #define NS_SEGMENT_NOTOK (' ')
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraJobSvc>* s_factoryOraJobSvc =
   new castor::SvcFactory<castor::db::ora::OraJobSvc>();
 
@@ -100,6 +101,10 @@ const std::string castor::db::ora::OraJobSvc::s_getUpdateStartStatementString =
 /// SQL statement for putStart
 const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
   "BEGIN putStart(:1, :2, :3, :4, :5); END;";
+
+/// SQL statement for disk2DiskCopyStart
+const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyStartStatementString =
+  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
@@ -127,15 +132,16 @@ const std::string castor::db::ora::OraJobSvc::s_putFailedStatementString =
 
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraJobSvc::s_requestToDoStatementString =
-  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144) AND ROWNUM < 2 RETURNING id INTO :1; END;";
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraJobSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   OraCommonSvc(name),
   m_getUpdateStartStatement(0),
   m_putStartStatement(0),
+  m_disk2DiskCopyStartStatement(0),
   m_disk2DiskCopyDoneStatement(0),
   m_disk2DiskCopyFailedStatement(0),
   m_prepareForMigrationStatement(0),
@@ -145,23 +151,23 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   m_requestToDoStatement(0) {
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraJobSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraJobSvc::~OraJobSvc() throw() {
   reset();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraJobSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraJobSvc::ID() {
   return castor::SVC_ORAJOBSVC;
 }
@@ -170,12 +176,13 @@ const unsigned int castor::db::ora::OraJobSvc::ID() {
 // reset
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::reset() throw() {
-  //Here we attempt to delete the statements correctly
+  // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
     if (m_getUpdateStartStatement) deleteStatement(m_getUpdateStartStatement);
     if (m_putStartStatement) deleteStatement(m_putStartStatement);
+    if (m_disk2DiskCopyStartStatement) deleteStatement(m_disk2DiskCopyStartStatement);
     if (m_disk2DiskCopyDoneStatement) deleteStatement(m_disk2DiskCopyDoneStatement);
     if (m_disk2DiskCopyFailedStatement) deleteStatement(m_disk2DiskCopyFailedStatement);
     if (m_prepareForMigrationStatement) deleteStatement(m_prepareForMigrationStatement);
@@ -187,6 +194,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   // Now reset all pointers to 0
   m_getUpdateStartStatement = 0;
   m_putStartStatement = 0;
+  m_disk2DiskCopyStartStatement = 0;
   m_disk2DiskCopyDoneStatement = 0;
   m_disk2DiskCopyFailedStatement = 0;
   m_prepareForMigrationStatement = 0;
@@ -196,9 +204,9 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   m_requestToDoStatement = 0;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getUpdateStart
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::DiskCopy*
 castor::db::ora::OraJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
@@ -257,7 +265,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
       result->setStatus(castor::stager::DISKCOPY_WAITDISK2DISKCOPY);
       *emptyFile = true;
     } else {
-    result->setStatus((enum castor::stager::DiskCopyStatusCodes) status);
+      result->setStatus((enum castor::stager::DiskCopyStatusCodes) status);
     }
 
     // A diskcopy was created in WAITDISK2DISKCOPY
@@ -301,9 +309,9 @@ castor::db::ora::OraJobSvc::getUpdateStart
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // putStart
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::DiskCopy*
 castor::db::ora::OraJobSvc::putStart
 (castor::stager::SubRequest* subreq,
@@ -355,9 +363,77 @@ castor::db::ora::OraJobSvc::putStart
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// disk2DiskCopyStart
+//------------------------------------------------------------------------------
+void castor::db::ora::OraJobSvc::disk2DiskCopyStart
+(const u_signed64 diskCopyId,
+ const u_signed64 sourceDiskCopyId,
+ const std::string destSvcClass, 
+ const std::string diskServer, 
+ const std::string fileSystem,
+ castor::stager::DiskCopyInfo* &diskCopy, 
+ castor::stager::DiskCopyInfo* &sourceDiskCopy)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_disk2DiskCopyStartStatement) {
+      m_disk2DiskCopyStartStatement =
+	createStatement(s_disk2DiskCopyStartStatementString);
+      m_disk2DiskCopyStartStatement->registerOutParam
+	(6, oracle::occi::OCCISTRING, 2048);
+      m_disk2DiskCopyStartStatement->registerOutParam
+	(7, oracle::occi::OCCISTRING, 2048);
+      m_disk2DiskCopyStartStatement->registerOutParam
+	(8, oracle::occi::OCCISTRING, 2048);
+      m_disk2DiskCopyStartStatement->registerOutParam
+	(9, oracle::occi::OCCISTRING, 2048);
+    }
+
+    // Execute the statement and see if we found something
+    m_disk2DiskCopyStartStatement->setDouble(1, diskCopyId);
+    m_disk2DiskCopyStartStatement->setDouble(2, sourceDiskCopyId);
+    m_disk2DiskCopyStartStatement->setString(3, destSvcClass);
+    m_disk2DiskCopyStartStatement->setString(4, diskServer);
+    m_disk2DiskCopyStartStatement->setString(5, fileSystem);
+
+    unsigned int nb = m_disk2DiskCopyStartStatement->executeUpdate();
+    if (nb == 0) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "disk2DiskCopyStart did not return any result.";
+      throw ex;
+    }
+
+    // Get the information about the destination disk copy
+    diskCopy = new castor::stager::DiskCopyInfo();
+    diskCopy->setDiskCopyId(diskCopyId);
+    diskCopy->setDiskServer(diskServer);
+    diskCopy->setMountPoint(fileSystem);
+    diskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(6));
+
+    // Get the information about the source disk copy
+    sourceDiskCopy = new castor::stager::DiskCopyInfo();
+    sourceDiskCopy->setDiskCopyId(sourceDiskCopyId);
+    sourceDiskCopy->setDiskServer(m_disk2DiskCopyStartStatement->getString(7));
+    sourceDiskCopy->setMountPoint(m_disk2DiskCopyStartStatement->getString(8));
+    sourceDiskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(9));
+
+    // Return
+    cnvSvc()->commit();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in disk2DiskCopyStart."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // disk2DiskCopyDone
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
  u_signed64 sourceDiskCopyId)
@@ -383,9 +459,9 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyDone
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // disk2DiskCopyFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
 (u_signed64 diskCopyId)
   throw (castor::exception::Exception) {
@@ -409,9 +485,9 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // prepareForMigration
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::prepareForMigration
 (castor::stager::SubRequest *subreq,
  u_signed64 fileSize, u_signed64 timeStamp)
@@ -491,14 +567,15 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     // timeStamp is zero only if this function is used by putDone 
     // it that case with the putDone not scheduled the file size 
     // should NOT be updated
-    if (timeStamp != 0)
-    	if (Cns_setfsize(0, &fileid, fileSize) != 0) {
-     	  castor::exception::Exception ex(serrno);
-      	  ex.getMessage()
-          << "prepareForMigration : Cns_setfsize failed :"
-          << std::endl << cns_error_buffer;
-        throw ex;
-       }
+    if (timeStamp != 0) {
+      if (Cns_setfsize(0, &fileid, fileSize) != 0) {
+	castor::exception::Exception ex(serrno);
+	ex.getMessage()
+	  << "prepareForMigration : Cns_setfsize failed :"
+	  << std::endl << cns_error_buffer;
+	throw ex;
+      }
+    }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -509,9 +586,9 @@ void castor::db::ora::OraJobSvc::prepareForMigration
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getUpdateDone
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::getUpdateDone
 (u_signed64 subReqId)
   throw (castor::exception::Exception) {
@@ -535,9 +612,9 @@ void castor::db::ora::OraJobSvc::getUpdateDone
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getUpdateFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::getUpdateFailed
 (u_signed64 subReqId)
   throw (castor::exception::Exception) {
@@ -561,9 +638,9 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // putFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::putFailed
 (u_signed64 subReqId)
   throw (castor::exception::Exception) {
@@ -587,9 +664,9 @@ void castor::db::ora::OraJobSvc::putFailed
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // requestToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Request*
 castor::db::ora::OraJobSvc::requestToDo()
   throw (castor::exception::Exception) {
