@@ -2755,6 +2755,59 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
+int Cns_srv_bulkExist(magic, req_data, clienthost, thip)
+     int magic;
+     char *req_data;
+     char *clienthost;
+     struct Cns_srv_thread_info *thip;
+{
+  char  func[19];
+  char  *repbuf;
+  char  *rbp;
+  char  *sbp;
+  char  *user;
+  gid_t gid;
+  uid_t uid;
+  u_signed64 *fileIds;
+  int nbFileIds, i, c;
+  
+  strcpy(func, "Cns_srv_bulkExist");
+	
+  /* Extract and log common request attributes */
+  rbp = req_data;
+  unmarshall_LONG(rbp, uid);
+  unmarshall_LONG(rbp, gid);
+  get_client_actual_id(thip, &uid, &gid, &user);
+  nslogit(func, NS092, "bulkExist", user, uid, gid, clienthost);
+	
+  /* Extract fileIds */
+  unmarshall_LONG(rbp, nbFileIds);
+  fileIds = (u_signed64*) malloc(nbFileIds*sizeof(u_signed64));
+  for (i = 0; i < nbFileIds; i++) {
+    unmarshall_HYPER(rbp, fileIds[i]);
+  }
+
+  /* check file existence */
+  c = Cns_check_files_exist(&thip->dbfd, fileIds, &nbFileIds);
+  if (c < 0) {
+    free(fileIds);
+    RETURN (serrno);
+  }
+
+  /* Marshall list of non existent files */
+  repbuf = (char*) malloc(LONGSIZE+nbFileIds*HYPERSIZE);
+  sbp = repbuf;
+  marshall_LONG(sbp, nbFileIds);
+  for (i = 0; i < nbFileIds; i++) {
+    marshall_HYPER(sbp, fileIds[i]);
+  }
+  /* Send response */
+  sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+  free(repbuf);
+  free(fileIds);
+  RETURN (0);
+}
+
 int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, endlist, dblistptr)
 int magic;
 char *req_data;

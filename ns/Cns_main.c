@@ -712,6 +712,9 @@ struct Cns_srv_thread_info *thip;
 	case CNS_LASTFSEQ:
 	        c = Cns_srv_lastfseq (magic, req_data, clienthost, thip);
 		break;
+	case CNS_BULKEXIST:
+	        c = Cns_srv_bulkExist (magic, req_data, clienthost, thip);
+		break;
 	case CNS_STARTSESS:
 		c = procsessreq (magic, req_data, clienthost, thip);
 		break;

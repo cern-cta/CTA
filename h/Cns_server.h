@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.9 2007/10/02 06:24:17 waldron Exp $
+ * $Id: Cns_server.h,v 1.10 2007/11/16 17:46:45 sponcec3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.9 $ $Date: 2007/10/02 06:24:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.10 $ $Date: 2007/11/16 17:46:45 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -211,6 +211,7 @@ EXTERN_C int Cns_get_smd_by_fullid _PROTO((struct Cns_dbfd *, u_signed64, int, i
 EXTERN_C int Cns_get_smd_by_pfid _PROTO((struct Cns_dbfd *, int, u_signed64, struct Cns_seg_metadata *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_smd_by_copyno _PROTO((struct Cns_dbfd *, int, u_signed64, int,struct Cns_seg_metadata *, int, Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_last_smd_by_vid _PROTO((struct Cns_dbfd *, char *, int, struct Cns_seg_metadata *));
+EXTERN_C int Cns_check_files_exist _PROTO((struct Cns_dbfd *, u_signed64 *, int*));
 EXTERN_C int Cns_get_smd_by_vid _PROTO((struct Cns_dbfd *, int, char *, struct Cns_seg_metadata *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_tppool_by_cid _PROTO((struct Cns_dbfd *, int, int, struct Cns_tp_pool *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
 EXTERN_C int Cns_get_umd_by_fileid _PROTO((struct Cns_dbfd *, u_signed64, struct Cns_user_metadata *, int, Cns_dbrec_addr *));
@@ -263,6 +264,7 @@ EXTERN_C int Cns_srv_getcomment _PROTO((int, char *, char *, struct Cns_srv_thre
 EXTERN_C int Cns_srv_getpath _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_getsegattrs _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_lastfseq _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_bulkExist _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_lchown _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_lstat _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_mkdir _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
