@@ -97,21 +97,21 @@ namespace castor {
       /* End of IObject abstract class */
       /*********************************/
       /**
-       * Get the value of m_DiskCopyPath
+       * Get the value of m_diskCopyPath
        * Path of the DiskCopy described
-       * @return the value of m_DiskCopyPath
+       * @return the value of m_diskCopyPath
        */
-      std::string DiskCopyPath() const {
-        return m_DiskCopyPath;
+      std::string diskCopyPath() const {
+        return m_diskCopyPath;
       }
 
       /**
-       * Set the value of m_DiskCopyPath
+       * Set the value of m_diskCopyPath
        * Path of the DiskCopy described
-       * @param new_var the new value of m_DiskCopyPath
+       * @param new_var the new value of m_diskCopyPath
        */
       void setDiskCopyPath(std::string new_var) {
-        m_DiskCopyPath = new_var;
+        m_diskCopyPath = new_var;
       }
 
       /**
@@ -187,21 +187,21 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_DiskCopyId
+       * Get the value of m_diskCopyId
        * Id of the DiskCopy Described
-       * @return the value of m_DiskCopyId
+       * @return the value of m_diskCopyId
        */
-      u_signed64 DiskCopyId() const {
-        return m_DiskCopyId;
+      u_signed64 diskCopyId() const {
+        return m_diskCopyId;
       }
 
       /**
-       * Set the value of m_DiskCopyId
+       * Set the value of m_diskCopyId
        * Id of the DiskCopy Described
-       * @param new_var the new value of m_DiskCopyId
+       * @param new_var the new value of m_diskCopyId
        */
       void setDiskCopyId(u_signed64 new_var) {
-        m_DiskCopyId = new_var;
+        m_diskCopyId = new_var;
       }
 
       /**
@@ -335,7 +335,7 @@ namespace castor {
     private:
 
       /// Path of the DiskCopy described
-      std::string m_DiskCopyPath;
+      std::string m_diskCopyPath;
 
       /// Size of the underlying CastorFile
       u_signed64 m_size;
@@ -350,7 +350,7 @@ namespace castor {
       int m_segmentStatus;
 
       /// Id of the DiskCopy Described
-      u_signed64 m_DiskCopyId;
+      u_signed64 m_diskCopyId;
 
       /// fileId of the underlying castorfile
       u_signed64 m_fileId;

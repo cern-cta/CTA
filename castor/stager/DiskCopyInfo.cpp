@@ -39,12 +39,12 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::stager::DiskCopyInfo::DiskCopyInfo() throw() :
-  m_DiskCopyPath(""),
+  m_diskCopyPath(""),
   m_size(0),
   m_diskCopyStatus(0),
   m_tapeCopyStatus(0),
   m_segmentStatus(0),
-  m_DiskCopyId(0),
+  m_diskCopyId(0),
   m_fileId(0),
   m_nsHost(""),
   m_diskServer(""),
@@ -73,12 +73,12 @@ void castor::stager::DiskCopyInfo::print(std::ostream& stream,
     return;
   }
   // Output of all members
-  stream << indent << "DiskCopyPath : " << m_DiskCopyPath << std::endl;
+  stream << indent << "diskCopyPath : " << m_diskCopyPath << std::endl;
   stream << indent << "size : " << m_size << std::endl;
   stream << indent << "diskCopyStatus : " << m_diskCopyStatus << std::endl;
   stream << indent << "tapeCopyStatus : " << m_tapeCopyStatus << std::endl;
   stream << indent << "segmentStatus : " << m_segmentStatus << std::endl;
-  stream << indent << "DiskCopyId : " << m_DiskCopyId << std::endl;
+  stream << indent << "diskCopyId : " << m_diskCopyId << std::endl;
   stream << indent << "fileId : " << m_fileId << std::endl;
   stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "diskServer : " << m_diskServer << std::endl;

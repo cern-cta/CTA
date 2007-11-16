@@ -97,10 +97,10 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskCopyInfo_DiskCopyPath
+  // Cstager_DiskCopyInfo_diskCopyPath
   //----------------------------------------------------------------------------
-  int Cstager_DiskCopyInfo_DiskCopyPath(castor::stager::DiskCopyInfo* instance, const char** var) {
-    *var = instance->DiskCopyPath().c_str();
+  int Cstager_DiskCopyInfo_diskCopyPath(castor::stager::DiskCopyInfo* instance, const char** var) {
+    *var = instance->diskCopyPath().c_str();
     return 0;
   }
 
@@ -178,10 +178,10 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_DiskCopyInfo_DiskCopyId
+  // Cstager_DiskCopyInfo_diskCopyId
   //----------------------------------------------------------------------------
-  int Cstager_DiskCopyInfo_DiskCopyId(castor::stager::DiskCopyInfo* instance, u_signed64* var) {
-    *var = instance->DiskCopyId();
+  int Cstager_DiskCopyInfo_diskCopyId(castor::stager::DiskCopyInfo* instance, u_signed64* var) {
+    *var = instance->diskCopyId();
     return 0;
   }
 

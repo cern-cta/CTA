@@ -86,13 +86,13 @@ int Cstager_DiskCopyInfo_clone(struct Cstager_DiskCopyInfo_t* instance,
                                struct C_IObject_t* ret);
 
 /**
- * Get the value of DiskCopyPath
+ * Get the value of diskCopyPath
  * Path of the DiskCopy described
  */
-int Cstager_DiskCopyInfo_DiskCopyPath(struct Cstager_DiskCopyInfo_t* instance, const char** var);
+int Cstager_DiskCopyInfo_diskCopyPath(struct Cstager_DiskCopyInfo_t* instance, const char** var);
 
 /**
- * Set the value of DiskCopyPath
+ * Set the value of diskCopyPath
  * Path of the DiskCopy described
  */
 int Cstager_DiskCopyInfo_setDiskCopyPath(struct Cstager_DiskCopyInfo_t* instance, const char* new_var);
@@ -146,13 +146,13 @@ int Cstager_DiskCopyInfo_segmentStatus(struct Cstager_DiskCopyInfo_t* instance, 
 int Cstager_DiskCopyInfo_setSegmentStatus(struct Cstager_DiskCopyInfo_t* instance, int new_var);
 
 /**
- * Get the value of DiskCopyId
+ * Get the value of diskCopyId
  * Id of the DiskCopy Described
  */
-int Cstager_DiskCopyInfo_DiskCopyId(struct Cstager_DiskCopyInfo_t* instance, u_signed64* var);
+int Cstager_DiskCopyInfo_diskCopyId(struct Cstager_DiskCopyInfo_t* instance, u_signed64* var);
 
 /**
- * Set the value of DiskCopyId
+ * Set the value of diskCopyId
  * Id of the DiskCopy Described
  */
 int Cstager_DiskCopyInfo_setDiskCopyId(struct Cstager_DiskCopyInfo_t* instance, u_signed64 new_var);
