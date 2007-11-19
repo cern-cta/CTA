@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.61 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.62 $ $Release$ $Date: 2007/11/19 14:44:21 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -603,9 +603,6 @@ void castor::stager::dbService::QueryRequestSvcThread::handleDiskPoolQuery
           sendResponse(client, *it);
         delete (*it);
       }
-      // Send the last response if necessary
-      castor::replier::RequestReplier::getInstance()->
-        sendEndResponse(client, req->reqId());
       // Cleanup
       delete result;
     } else { // list all DiskPools for a given svcclass
@@ -621,8 +618,8 @@ void castor::stager::dbService::QueryRequestSvcThread::handleDiskPoolQuery
       result->setReqAssociated(req->reqId());
       castor::replier::RequestReplier::getInstance()->
         sendResponse(client, result);
-      castor::replier::RequestReplier::getInstance()->
-        sendEndResponse(client, req->reqId());
+      // Cleanup
+      delete result;
     }
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
