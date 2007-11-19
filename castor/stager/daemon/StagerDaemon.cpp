@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/11/16 15:38:58 $ $Author: waldron $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/11/19 13:15:05 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -116,38 +116,38 @@ int main(int argc, char* argv[]){
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("JobRequestSvcThread", 
         new castor::stager::dbService::JobRequestSvc(jobManagerHost, jobManagerPort), 
-          getConfigPort("JOBREQNOTIFYPORT", STAGER_JOBREQNOTIFYPORT)));
+          getConfigPort("JOBREQNOTIFYPORT", STAGER_JOBREQNOTIFYPORT), 1));
     
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("PrepRequestSvcThread", 
         new castor::stager::dbService::PreRequestSvc(jobManagerHost, jobManagerPort),
-          getConfigPort("PREPREQNOTIFYPORT", STAGER_PREPREQNOTIFYPORT)));
+          getConfigPort("PREPREQNOTIFYPORT", STAGER_PREPREQNOTIFYPORT), 1));
 
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("StageRequestSvcThread", 
         new castor::stager::dbService::StgRequestSvc(),
-          getConfigPort("STAGEREQNOTIFYPORT", STAGER_STAGEREQNOTIFYPORT)));
+          getConfigPort("STAGEREQNOTIFYPORT", STAGER_STAGEREQNOTIFYPORT), 1));
      
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("QueryRequestSvcThread", 
         new castor::stager::dbService::QueryRequestSvcThread(),
-          getConfigPort("QUERYREQNOTIFYPORT", STAGER_QUERYREQNOTIFYPORT)));
+          getConfigPort("QUERYREQNOTIFYPORT", STAGER_QUERYREQNOTIFYPORT), 1));
      
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("ErrorSvcThread", 
         new castor::stager::dbService::ErrorSvcThread(),
-          getConfigPort("ERRORNOTIFYPORT", STAGER_ERRORNOTIFYPORT)));
+          getConfigPort("ERRORNOTIFYPORT", STAGER_ERRORNOTIFYPORT), 1));
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("jobSvcThread", 
         new castor::stager::dbService::JobSvcThread(),
-          getConfigPort("JOBNOTIFYPORT", STAGER_JOBNOTIFYPORT)));
+          getConfigPort("JOBNOTIFYPORT", STAGER_JOBNOTIFYPORT), 1));
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("GcSvcThread", 
         new castor::stager::dbService::GcSvcThread(),
-          getConfigPort("GCNOTIFYPORT", STAGER_GCNOTIFYPORT)));
+          getConfigPort("GCNOTIFYPORT", STAGER_GCNOTIFYPORT), 1));
 
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
