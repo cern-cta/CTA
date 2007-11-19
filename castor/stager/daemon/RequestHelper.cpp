@@ -404,7 +404,7 @@ namespace castor{
         castor::dlf::Param params[] = {
           castor::dlf::Param(subrequestUuid),
           castor::dlf::Param("reqType", 
-            (fileRequest->type() < castor::ObjectsIdsNb ? 
+            ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ? 
              castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
           castor::dlf::Param("fileName", subrequest->fileName()),
           castor::dlf::Param("userName", username),

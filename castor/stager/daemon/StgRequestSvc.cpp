@@ -114,6 +114,7 @@ namespace castor{
           }//end switch(typeRequest)
           
           
+          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_START_PROCESSING, 0);
           stgRequestHandler->preHandle();
           stgRequestHandler->handle();
           

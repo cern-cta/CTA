@@ -71,7 +71,14 @@ namespace castor{
         castor::stager::IStagerSvc* stgService =
           dynamic_cast<castor::stager::IStagerSvc*>(svc);
         // we have already initialized it in the main, so we know the pointer is valid
-        return stgService->subRequestToDo(m_name);
+        IObject* s = stgService->subRequestToDo(m_name);
+        if(s != 0) {
+          castor::dlf::Param params[]={ castor::dlf::Param("SubRequestId", s->id()),
+              castor::dlf::Param("Thread pool", m_name)
+          };
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, STAGER_SUBREQ_SELECTED, 2, params);	    
+        }
+        return s;
       }
      
      
