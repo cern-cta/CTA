@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2007/11/16 12:56:45 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/11/20 15:31:12 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -26,8 +26,8 @@
 
 // Include Files
 #include "castor/server/BaseServer.hpp"
-#include "castor/server/SignalThreadPool.hpp"
-#include "castor/server/NotificationThread.hpp"
+#include "castor/server/ThreadNotification.hpp"
+#include "castor/io/UDPSocket.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
@@ -276,43 +276,22 @@ void castor::server::BaseServer::help(std::string programName)
 //------------------------------------------------------------------------------
 // sendNotification
 //------------------------------------------------------------------------------
-void castor::server::BaseServer::sendNotification(std::string host, int port, int nbThreads)
+void castor::server::BaseServer::sendNotification(std::string host, int port, char tpName, int nbThreads)
   throw(castor::exception::Exception)
 {
-  struct hostent *hp;
-  struct sockaddr_in sin;
-  int s;
-  char buf[HYPERSIZE + LONGSIZE];
-  char *p;
-
-  // Resolve host address
-  if ((hp = Cgethostbyname(host.c_str())) == NULL) {
-    serrno = errno;
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to resolve hostname " << host;
-    throw ex;
+  try {
+    // create notification message
+    castor::server::ThreadNotification notif;
+    notif.setTpName(tpName);
+    notif.setNbThreads(nbThreads);
+    
+    // create UDP socket and send packet
+    castor::io::UDPSocket sock(port, host);
+    sock.sendObject(notif);
+    sock.close();
   }
-
-  // Prepare the request
-  memset(buf, 0, sizeof(buf));
-  p = buf;
-  marshall_LONG(p, castor::server::NotificationThread::NOTIFY_MAGIC);
-  marshall_LONG(p, nbThreads);
-
-  // Create socket
-  if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-    serrno = errno;
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to send notification to host " << host << ":" << port;
-    throw ex;
+  catch (castor::exception::Exception ignored) {
+    // this is a best effort service, ignore any failure 
   }
-
-  // Send packet containing notification magic number + service number
-  memset((char *) &sin, 0, sizeof(sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(port);
-  sin.sin_addr.s_addr = ((struct in_addr *)(hp->h_addr))->s_addr;
-  sendto(s, buf, sizeof(buf), 0, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
-  netclose(s);
 }
 

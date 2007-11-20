@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/07/27 13:40:51 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/11/20 15:31:11 $ $Author: itglp $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -33,7 +33,6 @@
 #include <map>
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/server/Mutex.hpp"
 
@@ -63,10 +62,18 @@ namespace castor {
      */
     BaseDaemon(const std::string serverName);
 
-    /*
+    /**
      * destructor
      */
     virtual ~BaseDaemon() throw() {};
+
+    /**
+     * Adds a dedicated UDP thread pool for getting wakeup notifications
+     * from other Castor daemons. Those notifications are supposed to be
+     * sent using the BaseServer::sendNotification method.
+     * @param port the UDP port where to listen
+     */
+    void addNotifierThreadPool(int port);
 
     /**
      * Starts the thread pools in detached mode.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/07/25 15:36:56 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/11/20 15:31:12 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -93,10 +93,13 @@ namespace castor {
     /**
      * Sends a notification message to the given host,port
      * to wake up nbThreads threads to handle pending requests.
+     * @param host the destination host
+     * @param port the destination port
+     * @param tpName the name of the thread pool to be signaled
+     * @param nbThreads the number of threads to be signaled
      */
-    static void sendNotification(std::string host, int port, int nbThreads = 1)
+    static void sendNotification(std::string host, int port, char tpName, int nbThreads = 1)
       throw(castor::exception::Exception);
-
 
   protected:
 

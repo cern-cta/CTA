@@ -27,19 +27,74 @@
  *****************************************************************************/
 
 // Include Files
+#include "castor/Constants.hpp"
+#include "castor/IObject.hpp"
+#include "castor/ObjectSet.hpp"
 #include "castor/server/ThreadNotification.hpp"
+#include "osdep.h"
+#include <iostream>
+#include <string>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 castor::server::ThreadNotification::ThreadNotification() throw() :
   m_tpName(0),
-  m_nbThreads(0) {
+  m_nbThreads(0),
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
 castor::server::ThreadNotification::~ThreadNotification() throw() {
+}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::server::ThreadNotification::print(std::ostream& stream,
+                                               std::string indent,
+                                               castor::ObjectSet& alreadyPrinted) const {
+  stream << indent << "[# ThreadNotification #]" << std::endl;
+  if (alreadyPrinted.find(this) != alreadyPrinted.end()) {
+    // Circular dependency, this object was already printed
+    stream << indent << "Back pointer, see above" << std::endl;
+    return;
+  }
+  // Output of all members
+  stream << indent << "tpName : " << m_tpName << std::endl;
+  stream << indent << "nbThreads : " << m_nbThreads << std::endl;
+  stream << indent << "id : " << m_id << std::endl;
+  alreadyPrinted.insert(this);
+}
+
+//------------------------------------------------------------------------------
+// print
+//------------------------------------------------------------------------------
+void castor::server::ThreadNotification::print() const {
+  castor::ObjectSet alreadyPrinted;
+  print(std::cout, "", alreadyPrinted);
+}
+
+//------------------------------------------------------------------------------
+// TYPE
+//------------------------------------------------------------------------------
+int castor::server::ThreadNotification::TYPE() {
+  return OBJ_ThreadNotification;
+}
+
+//------------------------------------------------------------------------------
+// type
+//------------------------------------------------------------------------------
+int castor::server::ThreadNotification::type() const {
+  return TYPE();
+}
+
+//------------------------------------------------------------------------------
+// clone
+//------------------------------------------------------------------------------
+castor::IObject* castor::server::ThreadNotification::clone() {
+  return new ThreadNotification(*this);
 }
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/07/25 15:33:13 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/11/20 15:31:13 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -39,18 +39,15 @@ extern "C" {
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                  castor::server::IThread* thread,
-                                 const int notifPort,
                                  const int timeout) :
   BaseThreadPool(poolName, new castor::server::ServiceThread(thread)),
-  m_timeout(timeout), m_notifPort(notifPort) {}
+  m_timeout(timeout) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::server::SignalThreadPool::~SignalThreadPool() throw()
 {
-  if(m_notifTPool)
-    delete m_notifTPool;
   delete m_poolMutex;
 }
 
@@ -75,10 +72,6 @@ void castor::server::SignalThreadPool::init()
 //------------------------------------------------------------------------------
 bool castor::server::SignalThreadPool::shutdown() throw()
 {
-  if(m_notifTPool) {
-    delete m_notifTPool;
-    m_notifTPool = 0;
-  }
   try {
     m_poolMutex->lock();
     if(m_nbActiveThreads > 0) {
@@ -119,8 +112,6 @@ void castor::server::SignalThreadPool::run()
   args->param = this;
 
   // create pool of detached threads
-  // even if nbThreads = 1 it will run detached because we
-  // always run the notification and the signal handler thread.
   for (int i = 0; i < m_nbThreads; i++) {
     if (Cthread_create_detached(castor::server::_thread_run, args) >= 0) {
       ++n;
@@ -136,24 +127,6 @@ void castor::server::SignalThreadPool::run()
     clog() << DEBUG << "Thread pool " << m_poolName << " started with "
            << m_nbThreads << " threads" << std::endl;
   }
-
-  /* create and start notification thread if requested */
-  m_notifTPool = 0;
-  if(m_notifPort <= 0)
-    return;
-
-  m_notifTPool = new BaseThreadPool("_Notif_" + m_poolName, new NotificationThread(m_notifPort));
-  struct threadArgs *nArgs = new threadArgs();
-  nArgs->handler = m_notifTPool;
-  nArgs->param = this;          // reuse BaseThreadPool only for the thread entrypoint
-
-  if(Cthread_create_detached(castor::server::_thread_run, nArgs) < 0) {
-    delete nArgs;
-    delete m_notifTPool;
-    m_notifTPool = 0;
-  }
-
-  /* here we had a wait loop for nbNotifyThreads to change - not needed anymore */
 }
 
 

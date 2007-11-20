@@ -28,6 +28,8 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include "castor/server/BaseDaemon.hpp"
+#include "castor/server/NotifierThread.hpp"
+#include "castor/server/UDPListenerThreadPool.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/MsgSvc.hpp"
 #include "Cgetopt.h"
@@ -103,6 +105,22 @@ void castor::server::BaseDaemon::start() throw (castor::exception::Exception)
 
 
 //------------------------------------------------------------------------------
+// addNotifierThreadPool
+//------------------------------------------------------------------------------
+void castor::server::BaseDaemon::addNotifierThreadPool(int port)
+{
+  if(m_threadPools['_'] != 0) delete m_threadPools['_'];   // sanity check
+    
+  // This is a pool for internal use and we don't use addThreadPool
+  // so to not change the command line parsing behavior
+  m_threadPools['_'] =
+    new castor::server::UDPListenerThreadPool("_NotifierThread",
+      new castor::server::NotifierThread(this), port);
+  m_threadPools['_']->setNbThreads(1);
+}
+
+
+//------------------------------------------------------------------------------
 // handleSignals
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::handleSignals()
@@ -145,10 +163,8 @@ void castor::server::BaseDaemon::handleSignals()
           // the exit. However, in the future we may want to re-fork it!
           pid_t pid = 0;
           while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-	    // For now we log no message here because some threads call API 
-	    // functions which fork and this results in an uncessary message!
-	    // clog() << WARNING << "CHILD STOPPED [SIGCHLD] - PID " 
-	    //	      << pid << std::endl;
+            // we log no message here because some threads call API 
+            // functions which fork and this results in an uncessary message!
           }
           break;
         }

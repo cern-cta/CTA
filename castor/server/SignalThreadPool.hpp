@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/25 15:33:13 $ $Author: itglp $
+ * @(#)$RCSfile: SignalThreadPool.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/11/20 15:31:13 $ $Author: itglp $
  *
  * Thread pool supporting wakeup on signals and periodical run after timeout
  *
@@ -46,7 +46,7 @@
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/server/Mutex.hpp"
-#include "castor/server/NotificationThread.hpp"
+#include "castor/server/NotifierThread.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
 
@@ -57,7 +57,6 @@ namespace castor {
 
   // Forward declaration
   class Mutex;
-  class NotificationThread;
 
   /**
    * CASTOR thread pool supporting wakeup on signals
@@ -66,12 +65,14 @@ namespace castor {
    */
   class SignalThreadPool : public BaseThreadPool {
 
-  friend class NotificationThread;
+  /**
+   * NotifierThread must be friend as it will be in charge
+   * of waking up waiting threads upon notifications
+   */
+  friend class NotifierThread;
 
   public:
 
-    const static int NOTIFY_PORT_BASE = 65015;
-    
     /**
      * empty constructor
      */
@@ -83,10 +84,9 @@ namespace castor {
      */
     SignalThreadPool(const std::string poolName,
                    castor::server::IThread* thread,
-                   const int notifPort = 0,
                    const int timeout = castor::server::Mutex::TIMEOUT);
 
-    /*
+    /**
      * destructor
      */
      virtual ~SignalThreadPool() throw();
@@ -106,7 +106,7 @@ namespace castor {
      * Shutdowns the pool. Waits for all thread of this pool to end.
      * @return true iff no thread is active (i.e. m_nbActiveThreads == 0).
      */
-     virtual bool shutdown() throw ();
+    virtual bool shutdown() throw ();
 
     /**
      * Commit a thread in the list of active threads
@@ -157,19 +157,17 @@ namespace castor {
     /// timeout between two subsequent wake ups of the underlying threads
     int m_timeout;
 
-    /* Formerly struct singleService */
+    /// count of the current number of busy threads in the pool
     int m_nbActiveThreads;
+    
+    /// if > 0, nb of threads that need to be signaled
     int m_notified;
+    
+    /// flag used to make sure a thread is started straight away at startup
     bool m_notTheFirstTime;
 
-    /// a mutex used by the threads to safely access this class' fields
+    /// mutex used by the threads to safely access this class' fields
     Mutex* m_poolMutex;
-
-    /// UDP port where to listen for wake up signals
-    int m_notifPort;
-
-    /// the notification thread; we keep a pool only to reuse the already defined thread entrypoint.
-    BaseThreadPool* m_notifTPool;
 
   };
 

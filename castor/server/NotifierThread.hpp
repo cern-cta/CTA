@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      NotificationThread.hpp
+ *                      NotifierThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,47 +17,47 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotificationThread.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/07/25 15:34:12 $ $Author: itglp $
+ * @(#)$RCSfile: NotifierThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/20 15:31:13 $ $Author: itglp $
  *
  * A thread to handle notifications to wake up workers in a pool
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_NOTIFICATIONTHREAD_HPP
-#define CASTOR_SERVER_NOTIFICATIONTHREAD_HPP 1
+#ifndef CASTOR_SERVER_NOTIFIERTHREAD_HPP
+#define CASTOR_SERVER_NOTIFIERTHREAD_HPP 1
 
 #include <iostream>
 #include <string>
 #include "castor/IObject.hpp"
-#include "castor/server/IThread.hpp"
-#include "castor/server/SignalThreadPool.hpp"
 #include "castor/exception/Exception.hpp"
-
-#define MAX_BIND_RETRY 5
-
+#include "castor/server/IThread.hpp"
+#include "castor/server/BaseDaemon.hpp"
 
 namespace castor {
 
  namespace server {
+   
+  // forward declaration
+  class BaseDaemon;
 
-  class SignalThreadPool;
-  
   /**
    * Notification thread for internal daemon notifications.
-   * This thread can handle infinite loops from user threads.
    */
-  class NotificationThread : public virtual IThread {
+  class NotifierThread : public virtual IThread {
 
   public:
 
-    /// magic number for notification threads
-    static const long NOTIFY_MAGIC = 0x44180876;
-
     /**
      * Initializes a notification thread.
+     * @param owner the daemon which controls this thread
      */
-    NotificationThread(int notifPort);
+    NotifierThread(castor::server::BaseDaemon* owner);
+    
+    /**
+     * standard destructor
+     */
+    virtual ~NotifierThread() throw() {};
     
     /**
      * No initialization is needed for the notification thread.
@@ -70,21 +70,15 @@ namespace castor {
     virtual void run(void* param);
 
     /**
-     * Stops the main loop of the thread.
+     * This thread can be stopped abruptly.
      */
-    virtual void stop();
+     virtual void stop() {};
 
   private:
 
-    /// port where this thread gets UDP notification packets
-    int m_notifPort;
+    /// the daemon which controls this notification thread
+    BaseDaemon* m_owner;
     
-    /// the thread pool which controls this notification thread
-    SignalThreadPool* m_owner;
-    
-    /// flag to stop the activity of this thread
-    bool m_stopped;
-
   };
 
  } // end of namespace server
@@ -92,4 +86,4 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // CASTOR_SERVER_NOTIFICATIONTHREAD_HPP
+#endif // CASTOR_SERVER_NOTIFIERTHREAD_HPP
