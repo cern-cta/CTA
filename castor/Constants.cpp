@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2007/11/15 12:34:53 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2007/11/20 16:07:45 $ $Author: itglp $
  *
  *
  *
@@ -185,7 +185,8 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "NsFilesDeletedResponse",
 
   "Disk2DiskCopyStartRequest",
-  "Disk2DiskCopyStartResponse"
+  "Disk2DiskCopyStartResponse",
+  "ThreadNotification"
 };
 
 
