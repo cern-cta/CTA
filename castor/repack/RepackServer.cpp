@@ -68,7 +68,6 @@ int main(int argc, char *argv[]) {
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Monitor", 
                                             new castor::repack::RepackMonitor(&server),
-                                            0,
                                             server.getPollTime()
                                           ));
 	  server.getThreadPool('M')->setNbThreads(1);
@@ -77,7 +76,6 @@ int main(int argc, char *argv[]) {
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Cleaner",
                                             new castor::repack::RepackCleaner(&server),
-                                            0,
                                             10
                                           ));
 	  server.getThreadPool('C')->setNbThreads(1);
