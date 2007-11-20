@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/10/22 13:55:42 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/20 17:25:07 $ $Author: sponcec3 $
  *
  * Initialization of the DLF messages for the ORACLE part
  *
@@ -32,7 +32,19 @@
 //------------------------------------------------------------------------------
 // DLFInitInstance
 //------------------------------------------------------------------------------
-castor::db::ora::DLFInit DLFInitInstance;
+namespace castor {
+
+  namespace db {
+
+    namespace ora {
+
+      castor::db::ora::DLFInit DLFInitInstance;
+
+    }  // namespace ora
+
+  }  // namespace db
+
+} // namespace castor
 
 //------------------------------------------------------------------------------
 // DLFInit
@@ -54,6 +66,7 @@ castor::db::ora::DLFInit::DLFInit() {
      { 12, "File was dropped by Cleaning Daemon"},
      { 13, "PutDone enforced by Cleaning Daemon"},
      { 14, "Recall canceled by Cleaning Daemon"},
+     { 15, "Error caught in nsFilesDeleted"},
      { -1, ""} };
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_ORACLELIB, messages);
