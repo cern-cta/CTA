@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2007/09/10 06:47:16 $ $Author: waldron $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/11/20 17:17:01 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -103,12 +103,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   // Quick answer if connection available
   if (0 != m_connection) return m_connection;
   
-  // Else try to build one
-  if (0 == m_environment) {
-    m_environment = oracle::occi::Environment::createEnvironment
-      (oracle::occi::Environment::THREADED_MUTEXED);
-  }
-  
+  // No connection available, try to build one
   // get the parameters service to resolve the schema version and the config file
   castor::IService* s = castor::BaseObject::sharedServices()->service("DbParamsSvc", SVC_DBPARAMSSVC);
   castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
@@ -138,6 +133,12 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
       e.getMessage() << "Empty user name or db name, cannot connect to database.";
       throw e;
     }
+  }
+
+  // Setup Oracle connection
+  if (0 == m_environment) {
+    m_environment = oracle::occi::Environment::createEnvironment
+      (oracle::occi::Environment::THREADED_MUTEXED);
   }
   m_connection =
     m_environment->createConnection(m_user, m_passwd, m_dbName);
