@@ -137,7 +137,7 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieves a list of diskcopies for a job to be scheduled.
+         * Retrieves a list of diskcopies for a Read job to be scheduled.
          * Looks at all diskCopies for the file a SubRequest
          * deals with and depending on them, decides whether
          * to schedule the SubRequest. In case it can be scheduled,
@@ -149,24 +149,31 @@ namespace castor {
          * -1: no scheduling because of user error.
          * DISKCOPY_STAGED (0): schedule + list of avail sources,
            a DiskCopy was found and the SubRequest can be scheduled.
-         * DISKCOPY_WAITDISK2DISKCOPY (1): no sources, a disk to disk
-         * copy is necessary.
-         * DISKCOPY_WAITTAPERECALL (2): no schedule, no DiskCopy 
+         * DISKCOPY_WAITTAPERECALL (2): no scheduling, no DiskCopy 
            found anywhere, we need a tape recall.
          * @param subreq the SubRequest to consider
-         * @param reqType the Request type this SubRequest belongs to
          * @param sources this is a list of DiskCopies that
          * can be used by the subrequest.
          * Note that the DiskCopies returned in sources must be
          * deallocated by the caller.
-         * @return -1,0,1,2
+         * @return -2,-1,0,2
          * @exception Exception in case of system error
          */
         virtual int getDiskCopiesForJob
-        (castor::stager::SubRequest* subreq, int reqType,
+        (castor::stager::SubRequest* subreq,
          std::list<castor::stager::DiskCopyForRecall*>& sources)
           throw (castor::exception::Exception);
-
+  
+        /**
+         * Processes a PToGet, PToUpdate, or Repack subrequest.
+         * @param subreq the SubRequest to consider
+         * @return -2,-1,0,2, cf. return value for getDiskCopiesForJob.
+         * @exception Exception in case of system error
+         */
+        virtual int processPrepareRequest
+        (castor::stager::SubRequest* subreq)
+          throw (castor::exception::Exception);
+  
         /**
          * Processes a putDone subrequest.
          * @param subreq the SubRequest to consider
@@ -175,9 +182,10 @@ namespace castor {
          *          1: success.
          * @exception Exception in case of system error
          */
-        virtual int processPutDone
+        virtual int processPutDoneRequest
         (castor::stager::SubRequest* subreq)
           throw (castor::exception::Exception);
+
 
         /**
          * Retrieves a CastorFile from the database based on its fileId.
@@ -425,17 +433,17 @@ namespace castor {
         /// SQL statement object for function getDiskCopiesForJob
         oracle::occi::Statement *m_getDiskCopiesForJobStatement;
 
-        /// SQL statement for function getDiskCopiesForPrepReq
-        static const std::string s_getDiskCopiesForPrepReqStatementString;
+        /// SQL statement for function processPrepareRequest
+        static const std::string s_processPrepareRequestStatementString;
 
-        /// SQL statement object for function getDiskCopiesForPrepReq
-        oracle::occi::Statement *m_getDiskCopiesForPrepReqStatement;
+        /// SQL statement object for function processPrepareRequest
+        oracle::occi::Statement *m_processPrepareRequestStatement;
 
-        /// SQL statement for function processPutDone
-        static const std::string s_processPutDoneStatementString;
+        /// SQL statement for function processPutDoneRequest
+        static const std::string s_processPutDoneRequestStatementString;
 
-        /// SQL statement object for function processPutDone
-        oracle::occi::Statement *m_processPutDoneStatement;
+        /// SQL statement object for function processPutDoneRequest
+        oracle::occi::Statement *m_processPutDoneRequestStatement;
 
         /// SQL statement for function selectCastorFile
         static const std::string s_selectCastorFileStatementString;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.79 $ $Release$ $Date: 2007/11/13 14:43:26 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.80 $ $Release$ $Date: 2007/11/20 14:37:40 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -131,7 +131,7 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Retrieves a list of diskcopies for a job to be scheduled.
+       * Retrieves a list of diskcopies for a Read job to be scheduled.
        * Looks at all diskCopies for the file a SubRequest
        * deals with and depending on them, decides whether
        * to schedule the SubRequest. In case it can be scheduled,
@@ -143,22 +143,29 @@ namespace castor {
        * -1: no scheduling because of user error.
        * DISKCOPY_STAGED (0): schedule + list of avail sources,
          a DiskCopy was found and the SubRequest can be scheduled.
-       * DISKCOPY_WAITDISK2DISKCOPY (1): no sources, a disk to disk
-       * copy is necessary.
-       * DISKCOPY_WAITTAPERECALL (2): no schedule, no DiskCopy 
+       * DISKCOPY_WAITTAPERECALL (2): no scheduling, no DiskCopy 
          found anywhere, we need a tape recall.
        * @param subreq the SubRequest to consider
-       * @param reqType the Request type this SubRequest belongs to
        * @param sources this is a list of DiskCopies that
        * can be used by the subrequest.
        * Note that the DiskCopies returned in sources must be
        * deallocated by the caller.
-       * @return -1,0,1,2
+       * @return -2,-1,0,2
        * @exception Exception in case of system error
        */
       virtual int getDiskCopiesForJob
-      (castor::stager::SubRequest* subreq, int reqType,
+      (castor::stager::SubRequest* subreq,
        std::list<castor::stager::DiskCopyForRecall*>& sources)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Processes a PToGet, PToUpdate, or Repack subrequest.
+       * @param subreq the SubRequest to consider
+       * @return -2,-1,0,2, cf. return value for getDiskCopiesForJob.
+       * @exception Exception in case of system error
+       */
+      virtual int processPrepareRequest
+      (castor::stager::SubRequest* subreq)
         throw (castor::exception::Exception) = 0;
 
       /**
@@ -169,7 +176,7 @@ namespace castor {
        *          1: success.
        * @exception Exception in case of system error
        */
-      virtual int processPutDone
+      virtual int processPutDoneRequest
       (castor::stager::SubRequest* subreq)
         throw (castor::exception::Exception) = 0;
 
