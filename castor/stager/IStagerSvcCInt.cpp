@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2007/11/13 14:43:26 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2007/11/20 16:46:07 $ $Author: itglp $
  *
  *
  *
@@ -98,30 +98,7 @@ extern "C" {
    castor::stager::SubRequest* subreq,
    castor::stager::DiskCopyForRecall*** sources,
    unsigned int* sourcesNb) {
-    int ret = 0;
-    *sourcesNb = 0;
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      std::list<castor::stager::DiskCopyForRecall*> sourcesList;
-      ret = stgSvc->stgSvc->isSubRequestToSchedule(subreq, sourcesList);
-      if(ret == 1) {
-        *sourcesNb = sourcesList.size();
-        if (*sourcesNb > 0) {
-          *sources = (castor::stager::DiskCopyForRecall**)
-            malloc((*sourcesNb) * sizeof(struct Cstager_DiskCopyForRecall_t*));
-          std::list<castor::stager::DiskCopyForRecall*>::iterator it =
-            sourcesList.begin();
-          for (unsigned int i = 0; i < *sourcesNb; i++, it++) {
-            (*sources)[i] = *it;
-          }
-        } 
-      }
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return ret;
+    return -1;
   }
 
   //-------------------------------------------------------------------------

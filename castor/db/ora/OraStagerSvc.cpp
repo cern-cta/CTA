@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.217 $ $Release$ $Date: 2007/11/20 14:37:40 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.218 $ $Release$ $Date: 2007/11/20 16:45:36 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -95,19 +95,11 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc 
 
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
-  "BEGIN new_subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
-
-/// SQL statement for oldSubRequestToDo
-const std::string castor::db::ora::OraStagerSvc::s_oldSubRequestToDoStatementString =
   "BEGIN subrequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11); END;";
 
 /// SQL statement for subRequestFailedToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestFailedToDoStatementString =
   "BEGIN subrequestFailedToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12); END;";
-
-/// SQL statement for isSubRequestToSchedule
-const std::string castor::db::ora::OraStagerSvc::s_isSubRequestToScheduleStatementString =
-  "BEGIN isSubRequestToSchedule(:1, :2, :3); END;";
 
 /// SQL statement for getDiskCopiesForJob
 const std::string castor::db::ora::OraStagerSvc::s_getDiskCopiesForJobStatementString =
@@ -147,7 +139,7 @@ const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
 
 /// SQL statement for stageRm
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
-  "BEGIN new_stageRm(:1, :2, :3, :4, :5); END;";
+  "BEGIN stageRm(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for getCFByName
 const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
@@ -175,9 +167,7 @@ const std::string castor::db::ora::OraStagerSvc::s_lockCastorFileStatementString
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   OraCommonSvc(name),
   m_subRequestToDoStatement(0),
-  m_oldSubRequestToDoStatement(0),
   m_subRequestFailedToDoStatement(0),
-  m_isSubRequestToScheduleStatement(0),
   m_getDiskCopiesForJobStatement(0),
   m_processPrepareRequestStatement(0),
   m_processPutDoneRequestStatement(0),
@@ -225,9 +215,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   OraCommonSvc::reset();
   try {
     if (m_subRequestToDoStatement) deleteStatement(m_subRequestToDoStatement);
-    if (m_oldSubRequestToDoStatement) deleteStatement(m_oldSubRequestToDoStatement);
     if (m_subRequestFailedToDoStatement) deleteStatement(m_subRequestFailedToDoStatement);
-    if (m_isSubRequestToScheduleStatement) deleteStatement(m_isSubRequestToScheduleStatement);
     if (m_getDiskCopiesForJobStatement) deleteStatement(m_getDiskCopiesForJobStatement);
     if (m_processPrepareRequestStatement) deleteStatement(m_processPrepareRequestStatement);
     if (m_processPutDoneRequestStatement) deleteStatement(m_processPutDoneRequestStatement);
@@ -246,9 +234,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
-  m_oldSubRequestToDoStatement = 0;
   m_subRequestFailedToDoStatement = 0;
-  m_isSubRequestToScheduleStatement = 0;
   m_getDiskCopiesForJobStatement = 0;
   m_processPrepareRequestStatement = 0;
   m_processPutDoneRequestStatement = 0;
@@ -301,40 +287,10 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         (11, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->setAutoCommit(true);
     }
-    // to be dropped with the old stager
-    if (0 == m_oldSubRequestToDoStatement) {
-      m_oldSubRequestToDoStatement =
-        createStatement(s_subRequestToDoStatementString);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (2, oracle::occi::OCCIDOUBLE);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (4, oracle::occi::OCCISTRING, 2048);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (6, oracle::occi::OCCIDOUBLE);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (7, oracle::occi::OCCIINT);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (8, oracle::occi::OCCIINT);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (9, oracle::occi::OCCIINT);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (10, oracle::occi::OCCIINT);
-      m_oldSubRequestToDoStatement->registerOutParam
-        (11, oracle::occi::OCCISTRING, 2048);
-      m_oldSubRequestToDoStatement->setAutoCommit(true);
-    }
-    
-    // decide which statement to use - to be dropped with the old stager
-    oracle::occi::Statement *stmt = (service.empty() ?
-      m_oldSubRequestToDoStatement : m_subRequestToDoStatement);
-    stmt->setString(1, service);
+    m_subRequestToDoStatement->setString(1, service);
 
     // execute the statement and see whether we found something
-    unsigned int rc = stmt->executeUpdate();
+    unsigned int rc = m_subRequestToDoStatement->executeUpdate();
     if (0 == rc) {
       castor::exception::Internal ex;
       ex.getMessage()
@@ -342,7 +298,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
         << "unable to get next SubRequest to process.";
       throw ex;
     }
-    u_signed64 srId = (u_signed64)stmt->getDouble(2);
+    u_signed64 srId = (u_signed64)m_subRequestToDoStatement->getDouble(2);
     if (0 == srId) {
       // Found no SubRequest to handle
       return 0;
@@ -351,17 +307,17 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     castor::stager::SubRequest* result =
       new castor::stager::SubRequest();
     result->setId(srId);
-    result->setRetryCounter(stmt->getInt(3));
-    result->setFileName(stmt->getString(4));
-    result->setProtocol(stmt->getString(5));
-    result->setXsize((u_signed64)stmt->getDouble(6));
-    result->setPriority(stmt->getInt(7));
+    result->setRetryCounter(m_subRequestToDoStatement->getInt(3));
+    result->setFileName(m_subRequestToDoStatement->getString(4));
+    result->setProtocol(m_subRequestToDoStatement->getString(5));
+    result->setXsize((u_signed64)m_subRequestToDoStatement->getDouble(6));
+    result->setPriority(m_subRequestToDoStatement->getInt(7));
     result->setStatus
       ((enum castor::stager::SubRequestStatusCodes)
-       stmt->getInt(8));
-    result->setModeBits(stmt->getInt(9));
-    result->setFlags(stmt->getInt(10));
-    result->setSubreqId(stmt->getString(11));
+       m_subRequestToDoStatement->getInt(8));
+    result->setModeBits(m_subRequestToDoStatement->getInt(9));
+    result->setFlags(m_subRequestToDoStatement->getInt(10));
+    result->setSubreqId(m_subRequestToDoStatement->getString(11));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -450,86 +406,6 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in subRequestFailedToDo."
-      << std::endl << e.what();
-    throw ex;
-  }
-}
-
-// -----------------------------------------------------------------------
-// isSubRequestToSchedule
-// -----------------------------------------------------------------------
-int castor::db::ora::OraStagerSvc::isSubRequestToSchedule
-(castor::stager::SubRequest* subreq,
- std::list<castor::stager::DiskCopyForRecall*>& sources)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_isSubRequestToScheduleStatement) {
-      m_isSubRequestToScheduleStatement =
-        createStatement(s_isSubRequestToScheduleStatementString);
-      m_isSubRequestToScheduleStatement->registerOutParam
-        (2, oracle::occi::OCCIINT);
-      m_isSubRequestToScheduleStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
-    }
-    // execute the statement and see whether we found something
-    m_isSubRequestToScheduleStatement->setDouble(1, subreq->id());
-    unsigned int nb =
-      m_isSubRequestToScheduleStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "isSubRequestToSchedule : "
-        << "unable to know whether SubRequest should be scheduled.";
-      throw ex;
-    }
-    // Get result and return
-    unsigned int rc =
-      m_isSubRequestToScheduleStatement->getInt(2);
-
-    if (1 == rc) { /* Reschedule without real Disk2Disk copy */
-      // status 1 means diskcopies are available, list them
-      try {
-        oracle::occi::ResultSet *rs =
-          m_isSubRequestToScheduleStatement->getCursor(3);
-        // Run through the cursor
-        oracle::occi::ResultSet::Status status = rs->next();
-        while (status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-          castor::stager::DiskCopyForRecall* item =
-            new castor::stager::DiskCopyForRecall();
-          item->setId((u_signed64) rs->getDouble(1));
-          item->setPath(rs->getString(2));
-          item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
-          item->setFsWeight(rs->getFloat(4));
-          item->setMountPoint(rs->getString(5));
-          item->setDiskServer(rs->getString(6));
-          sources.push_back(item);
-          status = rs->next();
-        }
-      } catch (oracle::occi::SQLException e) {
-        handleException(e);
-        if (e.getErrorCode() != 24338) {
-          // if not "statement handle not executed"
-          // it's really wrong, else, it's normal
-          throw e;
-        }
-      }
-    }
-    else if(3 == rc) rc = 1; /* do a real Disk2DiskCopy, 
-                              * there are no candidates in this context
-                              * (but in another)
-                              */
-
-    return rc; /* 2: TapeRecall 
-                * 0: no scheduling, request was put in WAIT
-		* 4: no scheduling, request was put in FAILED for lack of space
-                */ 
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in isSubRequestToSchedule."
       << std::endl << e.what();
     throw ex;
   }

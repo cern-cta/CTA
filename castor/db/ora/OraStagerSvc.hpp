@@ -106,37 +106,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Decides whether a SubRequest should be scheduled.
-         * Looks at all diskCopies for the file a SubRequest
-         * deals with and depending on them, decides whether
-         * to schedule the SubRequest. In case it can be scheduled,
-         * also returns a list of diskcopies available to the
-         * subrequest.
-         * The scheduling decision is taken this way :
-         * 0: no scheduling, the SubRequest is set to WAIT and it
-              is linked to the parent SubRequest, which we're waiting
-              on (e.g. TapeRecall, Disk2DiskCopy,..)
-         * 1: schedule + list of avail sources, a DiskCopy was
-              found and the SubRequest needs to be rescheduled.
-         * 2: schedule + no sources, a disk2disk copy is necessary
-         * 3: no schedule, no DiskCopy anywhere found, we need a
-              Tape recall.
-         * 4: no schedule, no DiskCopy anywhere found, there is no
-              space left on the diskpool
-         * @param subreq the SubRequest to consider
-         * @param sources this is a list of DiskCopies that
-         * can be used by the subrequest.
-         * Note that the DiskCopies returned in sources must be
-         * deallocated by the caller.
-         * @return 0,1,2,3,4
-         * @exception Exception in case of error
-         */
-        virtual int isSubRequestToSchedule
-        (castor::stager::SubRequest* subreq,
-         std::list<castor::stager::DiskCopyForRecall*>& sources)
-          throw (castor::exception::Exception);
-
-        /**
          * Retrieves a list of diskcopies for a Read job to be scheduled.
          * Looks at all diskCopies for the file a SubRequest
          * deals with and depending on them, decides whether
