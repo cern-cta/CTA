@@ -801,7 +801,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   cr.isLast = isLastResponse;
 
 
-  clog() << SYSTEM << SETW func
+  clog() << DEBUG << SETW func
          << "Adding Response for ";
   clog() << castor::ip << cr.client.ipAddress() << ":"
          << cr.client.port()
