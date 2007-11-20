@@ -126,7 +126,6 @@ int main(int argc, char* argv[]) {
        ("State",
         new castor::monitoring::rmnode::StateThread
         (rmMasterHost, rmMasterPort),
-        0,
         stateInterval));
     daemon.getThreadPool('S')->setNbThreads(1);
 
@@ -136,7 +135,6 @@ int main(int argc, char* argv[]) {
        ("Metrics",
         new castor::monitoring::rmnode::MetricsThread
         (rmMasterHost, rmMasterPort),
-        0,
         metricsInterval));
     daemon.getThreadPool('M')->setNbThreads(1);
 
