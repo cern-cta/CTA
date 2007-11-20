@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.7 $ $Date: 2003/10/14 07:17:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: tplabel.man,v $ $Revision: 1.8 $ $Date: 2007/11/20 15:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPLABEL 1 "$Date: 2003/10/14 07:17:16 $" CASTOR "Ctape User Commands"
+.TH TPLABEL 1 "$Date: 2007/11/20 15:14:10 $" CASTOR "Ctape User Commands"
 .SH NAME
 tplabel \- initialize a new blank tape
 .SH SYNOPSIS
@@ -26,6 +26,7 @@ tplabel \- initialize a new blank tape
 ] [
 .BI --nbsides " n"
 ]
+.B -f
 .SH DESCRIPTION
 .B tplabel
 checks with VMGR if the tape is available and if the user
@@ -38,7 +39,15 @@ tape marks for labelled tapes or only one or two tape marks for unlabelled
 tapes.
 By default, the number of tapemarks is one for tapes with directory such as DLT,
 IBM 3590, Redwood and STK 9840, two tapemarks otherwise.
-The option -T can be used to force two tapamarks to be written.
+The option -T can be used to force two tapemarks to be written. 
+
+With version 2.1.4 of CASTOR the message daemon has been removed. Hence, there
+is no more interaction with an operator to confirm mounts or check labelling if
+a tape already has a label. In order to prevent accidental labelling, the
+default action if a already labelled tape is about to be labelled is to abort.
+The -f option can override this behaviour and force a labelled tape tp be 
+labelled again.
+
 .SH OPTIONS
 .TP
 .BI \-D " drive"
@@ -150,6 +159,9 @@ The vsn must match the one specified in VMGR (if installed).
 .BI \-\-nbsides " n"
 Specifies the number of sides offered by the piece of media (for example a DVD).
 Default is 1.
+.TP
+.B \-f
+Forces labelling (even if the tape is labelled already).
 .LP
 VOL1 record structure:
 

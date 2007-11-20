@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.24 $ $Date: 2007/02/20 16:56:34 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: Ctape_label.c,v $ $Revision: 1.25 $ $Date: 2007/11/20 15:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	Ctape_label - send a request to the tape daemon to have a tape mounted
@@ -202,8 +202,10 @@ int vdqm_reqid;
 	marshall_WORD (sbp, mode);
 	marshall_STRING (sbp, actual_vsn);
 	marshall_STRING (sbp, actual_lbltype);
-	if (flags == DOUBLETM)
+	if (flags & DOUBLETM)
 		nbhdr |= DOUBLETM;
+	if (flags & FORCEPRELBL)
+		nbhdr |= FORCEPRELBL;
 	marshall_WORD (sbp, nbhdr);
 	marshall_LONG (sbp, vdqm_reqid);
 

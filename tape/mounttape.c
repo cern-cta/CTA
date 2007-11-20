@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.59 $ $Date: 2007/09/20 10:49:33 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.60 $ $Date: 2007/11/20 15:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -119,6 +119,7 @@ char	**argv;
 	int status;
 #endif
 	int Tflag = 0;
+        int Fflag = 0; /* force flag */
 	struct timeval timeval;
 	int tplbl;
 	int tpmode;
@@ -172,9 +173,13 @@ char	**argv;
 	side = atoi (argv[23]);
 	clienthost = argv[24];
 
-	if (prelabel > 2) {
+	if ((prelabel > 2) && (prelabel & DOUBLETM)) {
 		prelabel -= DOUBLETM;
 		Tflag = 1;
+	}
+	if ((prelabel > 2) && (prelabel & FORCEPRELBL)) {
+		prelabel -= FORCEPRELBL;
+                Fflag = 1;
 	}
 #if _AIX
 	scsi = strncmp (dvrname, "mtdd", 4);
@@ -595,7 +600,16 @@ remount_loop:
                                             "VID"    , TL_MSG_PARAM_STR  , vid,
                                             "VSN"    , TL_MSG_PARAM_STR  , tpvsn,
                                             "TPVID"  , TL_MSG_PARAM_TPVID, vid );
-			break;	/* operator gave ok */
+                        if (!Fflag) {
+                                /* default: do not label a prelabelled tape
+                                   unless force flag is set */
+                                usrmsg (func, "Tape is already labelled. Use 'tplabel -f' to override.\n", msg);
+                                c = ETOPAB;
+                                goto reply;                                
+                        } else {        
+                                /* 'operator' gave ok */
+                                break;	
+                        }
 		}
 		if (tplbl == NL && lblcode == NL) break;
 		if (tplbl != NL) {

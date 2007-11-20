@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.12 $ $Date: 2007/03/26 12:14:53 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tplabel.c,v $ $Revision: 1.13 $ $Date: 2007/11/20 15:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	tplabel - prelabel al and sl tapes, write 2 tape marks for nl tapes */
@@ -41,7 +41,7 @@ char *cmd;
 	fprintf (stderr, "%s%s%s",
 	    "[-D device_name] [-d density] [-g device_group_name]\n",
 	    "[-H number_headers] [-l label_type] [-T] [-V visual_identifier]\n",
-	    "[-v volume_serial_number] [--nbsides n]\n");
+	    "[-v volume_serial_number] [--nbsides n] [-f]\n");
 }
 
 int main(argc, argv)
@@ -79,7 +79,7 @@ char	**argv;
 
 	Copterr = 1;
 	Coptind = 1;
-	while ((c = Cgetopt_long (argc, argv, "D:d:g:H:l:TV:v:", longopts, NULL)) != EOF) {
+	while ((c = Cgetopt_long (argc, argv, "D:d:g:H:l:TV:v:f", longopts, NULL)) != EOF) {
 		switch (c) {
 		case 'D':
 			if (! drive[0]) {
@@ -147,7 +147,7 @@ char	**argv;
 			}
 			break;
 		case 'T':
-			flags = DOUBLETM;
+			flags |= DOUBLETM;
 			break;
 		case 'V':
 			if (! vid[0]) {
@@ -182,6 +182,9 @@ char	**argv;
 				    "invalid number of sides %s\n", Coptarg);
 				errflg++;
 			}
+			break;
+		case 'f':          
+			flags |= FORCEPRELBL;
 			break;
 		case '?':
 			errflg++;

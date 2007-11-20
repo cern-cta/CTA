@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_constants.h,v 1.2 2006/11/09 15:12:09 itglp Exp $
+ * $Id: Ctape_constants.h,v 1.3 2007/11/20 15:14:58 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_constants.h,v $ $Revision: 1.2 $ $Date: 2006/11/09 15:12:09 $ CERN IT-PDP/DM Jean-Philippe Baud - Benjamin Couturier
+ * @(#)$RCSfile: Ctape_constants.h,v $ $Revision: 1.3 $ $Date: 2007/11/20 15:14:58 $ CERN IT-PDP/DM Jean-Philippe Baud - Benjamin Couturier
  */
 
 #ifndef _CTAPE_CONSTANTS_H
@@ -44,6 +44,7 @@
 #define	DOUBLETM	4	/* write 2 tapemarks at EOI */
 #define	IGNOREEOI	8	/* do not take 2 consecutive TMs as EOI */
 #define	LOCATE_DONE	16	/* used internally */
+#define FORCEPRELBL     32      /* force a prelabel */
 
 			/* filstat values */
 
