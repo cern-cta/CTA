@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: makeshlib.sh,v 1.5 2006/03/10 13:50:38 itglp Exp $
+# $Id: makeshlib.sh,v 1.6 2007/11/20 17:30:10 sponcec3 Exp $
 
 if (( $# < 3 )); then
 	echo This script is internally executed by make to build or install the shared libraries.
@@ -21,6 +21,17 @@ rm -f $3.$MAJOR_CASTOR_VERSION
 ln -s $target.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION $3.$MAJOR_CASTOR_VERSION
 rm -f $3
 ln -s $target.$MAJOR_CASTOR_VERSION $3
+
+elif [ "$1" = "preinstall" ]; then
+
+echo  preinstalling $target
+
+rm -f $3.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION
+ln -s $target $3.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION
+rm -f $3.$MAJOR_CASTOR_VERSION
+ln -s $3.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION $3.$MAJOR_CASTOR_VERSION
+rm -f $3
+ln -s $3.$MAJOR_CASTOR_VERSION $3
 
 else
 
