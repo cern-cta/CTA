@@ -94,7 +94,7 @@ namespace castor{
           return;        
         }
         if(stgRequestHelper->subrequest != NULL)
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
+          stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED);
       
         /* reply to the client in case of error*/
         if(stgRequestHelper->iClient != NULL){
@@ -103,8 +103,10 @@ namespace castor{
           stgReplyHelper->endReplyToClient(stgRequestHelper);
           delete stgReplyHelper;
         }else{
-          if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest))
+          if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest)) {
+            stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
             stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+          }
         }
       }
     
