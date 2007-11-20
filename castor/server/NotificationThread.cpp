@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/08/07 14:37:20 $ $Author: waldron $
+* @(#)$RCSfile: NotificationThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/11/20 09:45:08 $ $Author: waldron $
 *
 * A thread to handle notifications to wake up workers in a pool
 *
@@ -94,7 +94,7 @@ void castor::server::NotificationThread::run(void* param) {
     while (!m_stopped) {
       int magic;
       int nb_recv;
-      char buf[HYPERSIZE + LONGSIZE];
+      char buf[CA_MAXLINELEN + 1];
       char *p;
       int nb_thread_wanted;
       socklen_t clientAddressLen;
@@ -112,7 +112,7 @@ void castor::server::NotificationThread::run(void* param) {
       if (select(s + 1, &read_handles, NULL, NULL, &timeout) > 0) {
         
         // Reading the header - blocks until there is something to read
-        nb_recv = recvfrom(s, buf, 1024, 0, (struct sockaddr *)&clientAddress, &clientAddressLen);
+        nb_recv = recvfrom(s, buf, sizeof(buf), 0, (struct sockaddr *)&clientAddress, &clientAddressLen);
         
         if (nb_recv != (HYPERSIZE + LONGSIZE)) {
           // Ignore this packet
