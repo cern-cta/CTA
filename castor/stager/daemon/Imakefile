@@ -34,7 +34,7 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
-LIBS = -lshift -lcastorCnvs 
+LIBS = -lshift -lcastorCnvs -lcastorClient
 DBSERVICEDAEMONBIN_SRCS = \
 	StagerCnsHelper.cpp \
 	StagerGetHandler.cpp \
@@ -64,11 +64,12 @@ DBSERVICEDAEMONBIN_SRCS = \
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(../../shlib,castorCnvs) \
+         DepSharedLibraryTargetName(../../castor,castorClient) \
          DepSharedLibraryTargetName(../../shlib,shift)
 
-LDFLAGS += -L FileName(../../..,shlib) $(MTLDFLAGS)
+LDFLAGS += -L FileName(../../..,shlib) -L FileName(../../..,$(COMMONCPPDIR)) $(MTLDFLAGS)
 LD = g++
-GLOBLIB = -lshift -lcastorCnvs
+GLOBLIB = -lshift -lcastorCnvs -lcastorClient
 
 PROGS_STAGER = ProgramTargetName(stagerDaemon)
 IPROGS_STAGER = FileName($(BIN),ProgramTargetName(stagerDaemon))

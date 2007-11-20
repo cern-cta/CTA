@@ -35,7 +35,7 @@ namespace castor{
 	STAGER_PREREQSVC_CREATION= 22, /* "Created new PreRequestSvc Thread" */   
 	STAGER_STGREQSVC_CREATION= 23, /* "Created new StgRequestSvc Thread" */
 	STAGER_SUBREQ_SELECTED= 24,
-  STAGER_START_PROCESSING = 25,
+	STAGER_START_PROCESSING = 25,
   
 	/* JobRequestSvcThread */     
 	STAGER_GET= 31, /*Get Request" */
@@ -109,7 +109,9 @@ namespace castor{
 	STAGER_GCSVC_FDELFAIL= 116, /* "Invoking filesDeletionFailed" */
 	STAGER_GCSVC_SELF2DEL= 117, /* "Invoking selectFiles2Delete" */
 	STAGER_GCSVC_FSEL4DEL= 118, /* "File selected for deletion" */
-	
+	STAGER_GCSVC_NSFILDEL= 119, /* "Invoking nsFilesDeleted" */
+	STAGER_GCSVC_FNSDEL= 120, /* "File deleted since it disappeared from nameServer" */
+
 	/************/
 	/* ErrorSvc */
 	STAGER_ERRSVC_GETSVC= 121, /* "Could not get StagerSvc" */

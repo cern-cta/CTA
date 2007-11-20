@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/01/10 17:08:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/20 17:20:34 $ $Author: sponcec3 $
  *
  *
  *
@@ -40,6 +40,8 @@
 #include "castor/stager/FileSystem.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/FilesDeleted.hpp"
+#include "castor/stager/NsFilesDeleted.hpp"
+#include "castor/stager/NsFilesDeletedResponse.hpp"
 #include "castor/stager/FilesDeletionFailed.hpp"
 #include "castor/stager/GetUpdateDone.hpp"
 #include "castor/stager/GetUpdateFailed.hpp"
@@ -324,4 +326,89 @@ void castor::stager::RemoteGCSvc::filesDeletionFailed
   client.sendRequest(&req, &rh);
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
+}
+
+// -----------------------------------------------------------------------
+// NsFilesDeletedResponseHandler
+// -----------------------------------------------------------------------
+/**
+ * A dedicated little response handler for the nsFilesDeleted
+ * requests
+ */
+class NsFilesDeletedResponseHandler : public castor::client::IResponseHandler {
+public:
+  NsFilesDeletedResponseHandler
+  (std::vector<u_signed64>* result) :
+    m_result(result) {}
+
+  virtual void handleResponse(castor::rh::Response& r)
+    throw (castor::exception::Exception) {
+    if (0 != r.errorCode()) {
+      castor::exception::Exception e(r.errorCode());
+      e.getMessage() << r.errorMessage();
+      throw e;
+    }
+    castor::stager::NsFilesDeletedResponse *resp =
+      dynamic_cast<castor::stager::NsFilesDeletedResponse*>(&r);
+    if (0 == resp) {
+      castor::exception::Internal e;
+      e.getMessage() << "Could not cast response into FIdResponse";
+      throw e;
+    }
+    for (std::vector<castor::stager::GCFile*>::iterator
+           it = resp->orphanFileIds().begin();
+         it != resp->orphanFileIds().end();
+         it++) {
+      // we are pushing fileids here, despite the function name
+      // This is a bad object reuse, I apologize...
+      m_result->push_back((*it)->diskCopyId());
+    }
+    // we clear the response
+    resp->orphanFileIds().clear();
+  };
+  virtual void terminate()
+    throw (castor::exception::Exception) {};
+private:
+  // where to store the list of files not found
+  std::vector<u_signed64>* m_result;
+};
+
+// -----------------------------------------------------------------------
+// nsFilesDeleted
+// -----------------------------------------------------------------------
+std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
+(std::vector<u_signed64> &fileIds,
+ std::string nsHost) throw() {
+  // Build the nsFilesDeleted Request
+  castor::stager::NsFilesDeleted req;
+  req.setNsHost(nsHost);
+  int i = 0;
+  for (std::vector<u_signed64>::iterator it = fileIds.begin();
+       it != fileIds.end();
+       it++) {
+    castor::stager::GCFile* file = new castor::stager::GCFile;
+    file->setDiskCopyId(*it);
+    file->setRequest(&req);
+    // Here the owner ship of files[i] is transmitted to req !
+    req.files().push_back(file);
+    i++;
+  }
+  // Prepare a result vector
+  std::vector<u_signed64> result;
+  try {
+    // Build a response Handler
+    NsFilesDeletedResponseHandler rh(&result);
+    // Uses a BaseClient to handle the request
+    castor::client::BaseClient client(getRemoteGCClientTimeout());
+    client.setOption(NULL);
+    client.sendRequest(&req, &rh);
+  } catch (castor::exception::Exception e) {
+    // Exception caught in RemoteGCSvc::nsFilesDeleted
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 0, 1, params);
+  }
+  // no need to cleanup fileIds since the ownership of its content
+  // was transmitted to req and the deletion of req will delete it !
+  return result;
 }

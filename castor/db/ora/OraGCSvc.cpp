@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/08/09 06:32:37 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/11/20 17:24:23 $ $Author: sponcec3 $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -118,7 +118,11 @@ const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementStrin
 
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraGCSvc::s_requestToDoStatementString =
-  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (73, 74, 83) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (73, 74, 83, 142) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+
+/// SQL statement for nsFilesDeleted
+const std::string castor::db::ora::OraGCSvc::s_nsFilesDeletedStatementString =
+  "BEGIN nsFilesDeletedProc(:1, :2, :3); END;";
 
 // -----------------------------------------------------------------------
 // OraGCSvc
@@ -130,7 +134,8 @@ castor::db::ora::OraGCSvc::OraGCSvc(const std::string name) :
   m_filesDeletedStatement(0),
   m_filesDeletedTruncateStatement(0),
   m_filesDeletionFailedStatement(0),
-  m_requestToDoStatement(0) {
+  m_requestToDoStatement(0),
+  m_nsFilesDeletedStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -168,6 +173,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
     if (m_filesDeletedTruncateStatement) deleteStatement(m_filesDeletedTruncateStatement);
     if (m_filesDeletionFailedStatement) deleteStatement(m_filesDeletionFailedStatement);
     if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
+    if (m_nsFilesDeletedStatement) deleteStatement(m_nsFilesDeletedStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_selectFiles2DeleteStatement = 0;
@@ -176,6 +182,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
   m_filesDeletedTruncateStatement = 0;
   m_filesDeletionFailedStatement = 0;
   m_requestToDoStatement = 0;
+  m_nsFilesDeletedStatement = 0;
 }
 
 
@@ -473,7 +480,6 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     m_filesDeletionFailedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
-  //unsigned long id;
   ub2 *lens;
   unsigned char (*buffer)[21] = 0;
   unsigned int nba;
@@ -566,4 +572,63 @@ castor::db::ora::OraGCSvc::requestToDo()
       << std::endl << e.what();
     throw ex;
   }
+}
+
+// -----------------------------------------------------------------------
+// nsFilesDeleted
+// -----------------------------------------------------------------------
+std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
+(std::vector<u_signed64> &fileIds,
+ std::string nsHost) throw() {
+  std::vector<u_signed64> orphans;
+  // do not call oracle if not needed
+  if (0 == fileIds.size()) return orphans;
+  ub2 *lens = 0;
+  unsigned char (*buffer)[21] = 0;
+  try {
+    // Check whether the statements are ok
+    if (0 == m_nsFilesDeletedStatement) {
+      m_nsFilesDeletedStatement =
+        createStatement(s_nsFilesDeletedStatementString);
+      m_nsFilesDeletedStatement->registerOutParam
+        (3, oracle::occi::OCCICURSOR);
+    }
+    // Deal with the list of fileIds
+    unsigned int nb = fileIds.size();
+    lens=(ub2 *)malloc(sizeof(ub2)*nb);
+    buffer=(unsigned char(*)[21]) calloc(nb * 21, sizeof(unsigned char));
+    for (unsigned int i = 0; i < nb; i++) {
+      oracle::occi::Number n = (double)(fileIds[i]);
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(buffer[i],b.length());
+      lens[i] = b.length();
+    }
+    ub4 unused = nb;
+    m_nsFilesDeletedStatement->setString(1, nsHost);
+    m_nsFilesDeletedStatement->setDataBufferArray
+      (2, buffer, oracle::occi::OCCI_SQLT_NUM,
+       nb, &unused, 21, lens);
+    // execute the statement
+    m_nsFilesDeletedStatement->executeUpdate();
+    // get the result, that is a cursor on the fileIds that were not
+    // present in the stager
+    oracle::occi::ResultSet *rset =
+      m_nsFilesDeletedStatement->getCursor(3);
+    // Loop over the files returned
+    while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
+      orphans.push_back((u_signed64)rset->getDouble(1));
+    }
+    commit();
+    if (0 != lens) free(lens);
+    if (0 != buffer) free(buffer);
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    // "Error caught in nsFilesDeleted"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("message", e.getMessage())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 15, 1, params);
+    if (0 != lens) free(lens);
+    if (0 != buffer) free(buffer);
+  }
+  return orphans;
 }

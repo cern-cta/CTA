@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.547 $ $Date: 2007/11/20 16:44:11 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.548 $ $Date: 2007/11/20 17:25:26 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -171,6 +171,16 @@ CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
 /* Global temporary table to help selectFiles2Delete procedure */
 CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
   (id NUMBER, path VARCHAR2(2048))
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary table to handle output of the nsFilesDeletedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
+  (fileid NUMBER)
+  ON COMMIT DELETE ROWS;
+
+/* Global temporary table to implement nsFilesDeletedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedCastorFiles
+  (cfIds NUMBER)
   ON COMMIT DELETE ROWS;
 
 /* Global temporary tables for the cleanup procedures */
@@ -4652,6 +4662,38 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   res := -1;
 END;
 
+/* PL/SQL method implementing nsFilesDeletedProc
+ */
+CREATE OR REPLACE PROCEDURE nsFilesDeletedProc
+(nsh IN VARCHAR2,
+ fileIds IN castor."cnumList",
+ orphans OUT castor.IdRecord_Cur) AS
+  delFids castor."cnumList";
+  cfId NUMBER;
+BEGIN
+  IF fileIds.COUNT <= 0 THEN
+    RETURN;
+  END IF;
+  -- Loop over the deleted files and split the orphan ones
+  -- from the normal ones
+  FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
+    BEGIN
+      SELECT id INTO cfId FROM CastorFile
+       WHERE fileid = fid AND nsHost = nsh;
+      INSERT INTO NsFilesDeletedCastorFiles VALUES(fid);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- this file was dropped from nameServer AND stager
+      -- and still exists on disk. We put it into the list
+      -- of orphan fileids to return
+      INSERT INTO NsFilesDeletedOrphans VALUES(fid);
+    END;
+  END LOOP;
+  -- delete normal ones
+  SELECT * BULK COLLECT INTO delFids FROM NsFilesDeletedCastorFiles;
+  filesClearedProc(delFids);
+  -- return orphan ones
+  OPEN orphans FOR SELECT * FROM NsFilesDeletedOrphans;
+END;
 
 /**********************************/
 /* Useful functions for debugging */

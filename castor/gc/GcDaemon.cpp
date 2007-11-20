@@ -29,6 +29,7 @@
 // Include files
 #include "castor/gc/GcDaemon.hpp"
 #include "castor/gc/DeletionThread.hpp"
+#include "castor/gc/SynchronizationThread.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "Cgetopt.h"
@@ -48,6 +49,13 @@ int main(int argc, char *argv[]) {
        ("Deletion",
 	new castor::gc::DeletionThread, 0, 10));
     daemon.getThreadPool('D')->setNbThreads(1);
+
+    // Create the Synchronization thread
+    daemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("Synchronization",
+	new castor::gc::SynchronizationThread(), 0, 10));
+    daemon.getThreadPool('S')->setNbThreads(1);
 
     // Start daemon
     daemon.parseCommandLine(argc, argv);
@@ -97,6 +105,19 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 16, "Error caught while informing stager of the failed deletions" },
     { 17, "Exception caught trying to getHostName" },
     { 17, "Exception caught when starting GcDaemon" },
+    { 18, "Starting synchronization thread" },
+    { 19, "Invalid value for synchronization interval. Used previous or default" },
+    { 20, "Invalid value for chunk size. Used previous or default" },
+    { 21, "New synchronization interval" },
+    { 22, "New synchronization chunk size" },
+    { 23, "Unable to retrieve mountPoints, giving up with synchronization" },
+    { 24, "Could not list filesystem directories, giving up with filesystem's synchronisation" },
+    { 25, "Could not list filesystem subdirectory, ignoring it for synchronization" },
+    { 26, "Synchronization configuration" },
+    { 27, "Deleting local file that was not in nameserver neither in stager catalog" },
+    { 28, "Deletion of orphan local file failed" },
+    { 29, "Malloc failure" },
+    { 30, "Synchronization configuration" },
     { -1, ""}}; 
   dlfInit(messages);
 }

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/11/20 17:20:35 $ $Author: sponcec3 $
  *
  * Service thread for garbage collection related requests
  *
@@ -42,6 +42,8 @@
 #include "castor/stager/GCFileList.hpp"
 #include "castor/stager/GCFile.hpp"
 #include "castor/stager/Files2Delete.hpp"
+#include "castor/stager/NsFilesDeleted.hpp"
+#include "castor/stager/NsFilesDeletedResponse.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/BasicResponse.hpp"
@@ -202,7 +204,7 @@ void castor::stager::dbService::GcSvcThread::handleFiles2Delete
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskServer", uReq->diskServer()),
          castor::dlf::Param("FileName", (*it)->fileName())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FSEL4DEL, 1, params, &fileId);
+      castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FSEL4DEL, 2, params, &fileId);
     }
   }
   // Reply To Client
@@ -221,6 +223,82 @@ void castor::stager::dbService::GcSvcThread::handleFiles2Delete
   }
   // Cleanup
   if (result) delete result;
+}
+
+//-----------------------------------------------------------------------------
+// handleNsFilesDeleted
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::GcSvcThread::handleNsFilesDeleted
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IGCSvc* gcSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::NsFilesDeleted *uReq;
+  std::vector<u_signed64> result;
+  castor::stager::NsFilesDeletedResponse res;
+  try {
+    // get the NsFilesDeleted request
+    // cannot return 0 since we check the type before calling this method
+    uReq = dynamic_cast<castor::stager::NsFilesDeleted*> (req);
+    // Fills it with files to be deleted
+    svcs->fillObj(&ad, req, castor::OBJ_GCFile);
+    // collect input fileids
+    std::vector<u_signed64> input;
+    for (std::vector<castor::stager::GCFile*>::const_iterator it =
+           uReq->files().begin();
+         it != uReq->files().end();
+         it++) {
+      // despite the syntax, this IS a fileId.
+      // Some bad reuse of exiting object, I apologize...
+      input.push_back((*it)->diskCopyId());
+    }
+    // "Invoking nsFilesDeleted"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("nbFiles", uReq->files().size())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_NSFILDEL, 1, params);
+    result = gcSvc->nsFilesDeleted(input, uReq->nsHost());
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::handleNsFilesDeleted"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  Cns_fileid fileId;
+  strncpy(fileId.server, uReq->nsHost().c_str(), CA_MAXHOSTNAMELEN+1);
+  for(std::vector<u_signed64>::iterator it =
+	result.begin();
+      it != result.end();
+      it++) {
+    // Here we transfer the ownership of the GCFiles
+    // to res. Thus we will not reallocate them
+    castor::stager::GCFile *gf = new castor::stager::GCFile();
+    gf->setDiskCopyId(*it);
+    res.addOrphanFileIds(gf);
+    // "File deleted since it disappeared from nameServer"
+    fileId.fileid = *it;
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FNSDEL, 0, 0, &fileId);
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "GcSvcThread::handleNsFilesDeleted.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -289,6 +367,10 @@ void castor::stager::dbService::GcSvcThread::process
     break;
   case castor::OBJ_Files2Delete:
     castor::stager::dbService::GcSvcThread::handleFiles2Delete
+      (req, client, svcs, gcSvc, ad, uuid);
+    break;
+  case castor::OBJ_NsFilesDeleted:
+    castor::stager::dbService::GcSvcThread::handleNsFilesDeleted
       (req, client, svcs, gcSvc, ad, uuid);
     break;
   default:
