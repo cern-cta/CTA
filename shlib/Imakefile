@@ -18,7 +18,8 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(RHCLIENTLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB)
+LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB)
+SHLIBREQLIBS0 = $(SHLIBREQLIBS) -L../../$(COMMONCPPDIR) -lcastorClient
 
 LIBRARIES1 = $(RHORALIB)
 SHLIBREQLIBS1 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshift
@@ -45,7 +46,7 @@ LIBRARIES7 = $(INFOPOLICYLIB)
 CASTOR_HOME=../
 SHLIBREQLIBS7 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs $(PYTHONLIBS) -L$(ORACLE_HOME)/lib -locci
 
-ALL0=SharedLibraryTargetName(shift)
+ALL0=SharedLibraryTargetName(shift) SharedLibraryTargetName(castorClient)
 
 #if BuildOraCpp
 #if UseOraCDBC
@@ -103,6 +104,7 @@ EXPORTSEC+=FileName($(LIBDIR),SharedLibraryTargetName(Csec_plugin_KRB4))
 all: $(ALL0) $(ALL1) $(ALL2) $(ALL4) $(ALL5) $(ALL6) $(ALL7) $(ALLSEC)  
 
 INSTALL0=FileName($(LIBDIR),SharedLibraryTargetName(shift))
+INSTALL0+=FileName($(LIBDIR),SharedLibraryTargetName(castorClient))
 #if BuildOraCpp
 INSTALL1=FileName($(LIBDIR),SharedLibraryTargetName(castorCommonOra))
 #if UseOraCDBC
@@ -128,6 +130,7 @@ INSTALL7=FileName($(LIBDIR),SharedLibraryTargetName(castorInfoPolicy))
 install: $(LIBDIR) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $(INSTALL6) $(INSTALLSEC)
 
 EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
+EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorClient)
 #if BuildOraCpp
 EXPORT1=$(EXPORTLIB)/SharedLibraryTargetName(castorCommonOra)
 #if UseOraCDBC
@@ -155,13 +158,16 @@ exportman:
 
 exportshr: 
 
-libshift.sl libshift.so: $(LIBRARIES0)
+libshift.sl libshift.so: $(LIBRARIES0) $(SLIBRARIES0)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
 	@for i in $(LIBRARIES0) ;\
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
-	./makeshlib.sh '$(CXX)' libshift.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS)
+	./makeshlib.sh '$(CXX)' libshift.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS0)
+
+libcastorClient.sl libcastorClient.so: $(LIBRARIES0) $(SLIBRARIES0)
+	./makeshlib.sh preinstall ../$(COMMONCPPDIR)/SharedLibraryTargetName(castorClient) ./SharedLibraryTargetName(castorClient)
 
 libcastorCommonOra.so: $(LIBRARIES1)
 	@echo " making $@ in `pwd`"
@@ -253,23 +259,25 @@ libcastorInfoPolicy.dll:	$(LIBRARIES7)
 
 MakeDir($(LIBDIR),root,bin,0755)
 
-InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorMonitor,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
-InstallSharedLibrary(castorInfoPolicy,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(LIBDIR))
+InstallSharedLibrary(shift,,,$(LIBDIR))
+InstallSharedLibrary(castorClient,,,$(LIBDIR))
+InstallSharedLibrary(castorCnvs,,,$(LIBDIR))
+InstallSharedLibrary(castorCommonOra,,,$(LIBDIR))
+InstallSharedLibrary(castorCommonMysql,,,$(LIBDIR))
+InstallSharedLibrary(castorCommonPgsql,,,$(LIBDIR))
+InstallSharedLibrary(castorVdqmOra,,,$(LIBDIR))
+InstallSharedLibrary(castorMonitor,,,$(LIBDIR))
+InstallSharedLibrary(castorInfoPolicy,,,$(LIBDIR))
 
-InstallSharedLibrary(shift,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorCnvs,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorCommonOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorCommonMysql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorCommonPgsql,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorVdqmOra,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorMonitor,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
-InstallSharedLibrary(castorInfoPolicy,$(MAJOR_CASTOR_VERSION),$(MINOR_CASTOR_VERSION),$(EXPORTLIB))
+InstallSharedLibrary(shift,,,$(EXPORTLIB))
+InstallSharedLibrary(castorClient,,,$(EXPORTDIR))
+InstallSharedLibrary(castorCnvs,,,$(EXPORTLIB))
+InstallSharedLibrary(castorCommonOra,,,$(EXPORTLIB))
+InstallSharedLibrary(castorCommonMysql,,,$(EXPORTLIB))
+InstallSharedLibrary(castorCommonPgsql,,,$(EXPORTLIB))
+InstallSharedLibrary(castorVdqmOra,,,$(EXPORTLIB))
+InstallSharedLibrary(castorMonitor,,,$(EXPORTLIB))
+InstallSharedLibrary(castorInfoPolicy,,,$(EXPORTLIB))
 
 install.man:
 
