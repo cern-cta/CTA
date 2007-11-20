@@ -137,6 +137,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamFileSystemCnv.cpp \
               io/StreamFiles2DeleteCnv.cpp \
               io/StreamFilesDeletedCnv.cpp \
+              io/StreamNsFilesDeletedCnv.cpp \
+              io/StreamNsFilesDeletedResponseCnv.cpp \
               io/StreamFilesDeletionFailedCnv.cpp \
               io/StreamGetUpdateStartRequestCnv.cpp \
               io/StreamGetUpdateStartResponseCnv.cpp \
@@ -257,6 +259,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/Disk2DiskCopyDoneRequest.cpp \
               stager/Disk2DiskCopyDoneRequestCInt.cpp \
               stager/Disk2DiskCopyStartRequest.cpp \
+              stager/DLFInit.cpp \
               stager/FileClass.cpp \
               stager/FileClassCInt.cpp \
               stager/FileRequest.cpp \
@@ -267,6 +270,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/Files2Delete.cpp \
               stager/Files2DeleteCInt.cpp \
               stager/FilesDeleted.cpp \
+              stager/NsFilesDeleted.cpp \
+              stager/NsFilesDeletedResponse.cpp \
               stager/FilesDeletedCInt.cpp \
               stager/FilesDeletionFailed.cpp \
               stager/FilesDeletionFailedCInt.cpp \
@@ -424,7 +429,7 @@ STGLIB_OBJS = $(STGLIB_SRCS:.cpp=.Osuf)
 
 
 #if BuildCastorClientCPPLibrary
-COMMONLIB = LibraryTargetName(castorClient)
+COMMONLIB = SharedLibraryTargetName(castorClient)
 #endif
 
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
@@ -435,7 +440,7 @@ LD = g++
 all: $(COMMONLIB)
 
 MakeDepSharedLibrary(shlib,shift)
-NormalLibraryTarget(castorClient,$(STGLIB_OBJS))
+SharedLibraryTarget(castorClient,$(STGLIB_OBJS),,)
 
 MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(install,$(SUBDIRS))
