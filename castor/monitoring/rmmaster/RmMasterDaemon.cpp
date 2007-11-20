@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
       (new castor::server::SignalThreadPool
        ("DatabaseActuator",
         new castor::monitoring::rmmaster::DatabaseActuatorThread
-        (daemon.clusterStatus()), 0, interval));
+        (daemon.clusterStatus()), interval));
     // this threadpool is supposed to have a single thread because
     // it uses shared member fields, see its implementation  
     daemon.getThreadPool('D')->setNbThreads(1);
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
       (new castor::server::SignalThreadPool
        ("Heartbeat",
         new castor::monitoring::rmmaster::HeartbeatThread
-	(daemon.clusterStatus()), 0, interval));
+	(daemon.clusterStatus()), interval));
     daemon.getThreadPool('H')->setNbThreads(1);
 
     daemon.parseCommandLine(argc, argv);
