@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbParamsSvc.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/10/24 14:55:47 $ $Author: itglp $
+ * @(#)$RCSfile: DbParamsSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/11/20 16:44:27 $ $Author: itglp $
  *  
  * A service to provide parameters to access the db layer of a Castor application
  *
@@ -33,7 +33,7 @@
 // and provide their versioning.
 namespace castor {
   namespace db {
-    const std::string STAGERSCHEMAVERSION = "2_1_4_3";
+    const std::string STAGERSCHEMAVERSION = "2_1_6_0";
   }
 }
 
