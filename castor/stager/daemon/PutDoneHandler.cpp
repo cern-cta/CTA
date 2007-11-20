@@ -77,7 +77,7 @@ namespace castor{
 	  jobOriented();/* until it will be explored */
 	 
 	  
-	  switch(stgRequestHelper->stagerService->processPutDone(stgRequestHelper->subrequest)) {
+	  switch(stgRequestHelper->stagerService->processPutDoneRequest(stgRequestHelper->subrequest)) {
       
       case -1:  // request put in wait
         stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));

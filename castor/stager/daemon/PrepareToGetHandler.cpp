@@ -70,7 +70,7 @@ namespace castor{
       bool StagerPrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
         bool result = false;
-        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
+        switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)){
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
             break;

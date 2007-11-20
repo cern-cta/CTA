@@ -88,7 +88,7 @@ namespace castor{
       bool StagerGetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
         
-        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
+        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
             break;
@@ -109,9 +109,8 @@ namespace castor{
               jobManagerPart();
               
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
               stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-              /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */	      
               
               /* and we have to notify the jobManager */
               m_notifyJobManager = true;
@@ -131,9 +130,8 @@ namespace castor{
               
               
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
               stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-              /* we have to setGetNextStatus since the newSub...== SUBREQUEST_READYFORSCHED */
-              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); /* 126 */	      
               
               /* and we have to notify the jobManager */
               m_notifyJobManager = true;

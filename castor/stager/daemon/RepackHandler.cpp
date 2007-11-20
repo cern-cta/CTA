@@ -86,7 +86,7 @@ namespace castor{
       /*        case 2: (waitRecall) createRecallCandidate */
       bool StagerRepackHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
-        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,typeRequest,this->sources)){
+        switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)){
           case -2:
           {
             castor::dlf::Param params[]={castor::dlf::Param("Request type:", "Repack"),
