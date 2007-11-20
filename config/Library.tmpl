@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.32 $ $Date: 2007/11/06 13:37:16 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.33 $ $Date: 2007/11/20 17:27:38 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 #include <Project.tmpl>
@@ -56,7 +56,7 @@ DLFLIB = DepLibraryTargetName(dlf,dlf)
 EXPERTLIB = DepLibraryTargetName(expert,expert)
 #endif
 #if BuildCastorClientCPPLibrary
-RHCLIENTLIB = DepLibraryTargetName(castor,castorClient)
+RHCLIENTLIB = DepSharedLibraryTargetName(castor,castorClient)
 #endif
 #if BuildOraCpp
 RHORALIB = DepLibraryTargetName(castor/db/$(ORACPPDIR),castorCommonOra)
