@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/11/13 17:02:39 $ $Author: waldron $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/11/21 08:23:30 $ $Author: waldron $
  *
  * Service thread for dealing with requests that failed
  *
@@ -169,7 +169,11 @@ void castor::stager::dbService::ErrorSvcThread::process
       res.setErrorMessage(ss.str());
     } else {
       res.setErrorCode(subReq->errorCode());
-      res.setErrorMessage(subReq->errorMessage());
+      if (subReq->errorMessage().empty()) {
+	res.setErrorMessage(sstrerror(subReq->errorCode()));
+      } else {
+	res.setErrorMessage(subReq->errorMessage());
+      }
     }
     res.setStatus(castor::stager::SUBREQUEST_FAILED);
     res.setCastorFileName(subReq->fileName());
