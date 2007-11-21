@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2007/11/20 17:20:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/11/21 07:32:56 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -263,9 +263,9 @@ void castor::stager::dbService::GcSvcThread::handleNsFilesDeleted
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::handleNsFilesDeleted"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::handleNsFilesDeleted"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
@@ -294,9 +294,9 @@ void castor::stager::dbService::GcSvcThread::handleNsFilesDeleted
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "GcSvcThread::handleNsFilesDeleted.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
+      {castor::dlf::Param("Function", "GcSvcThread::handleNsFilesDeleted.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
   }
 }
