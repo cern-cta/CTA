@@ -47,14 +47,14 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Deletion",
-	new castor::gc::DeletionThread, 0, 10));
+	new castor::gc::DeletionThread()));
     daemon.getThreadPool('D')->setNbThreads(1);
 
     // Create the Synchronization thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Synchronization",
-	new castor::gc::SynchronizationThread(), 0, 10));
+	new castor::gc::SynchronizationThread()));
     daemon.getThreadPool('S')->setNbThreads(1);
 
     // Start daemon
