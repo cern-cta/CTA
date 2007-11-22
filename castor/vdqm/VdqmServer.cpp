@@ -449,8 +449,6 @@ void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
 			  {castor::dlf::Param("Message", ex.getMessage().str())};
 			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
 			
-			throw ex;  
-			
 			exit(-1);
     }	  		
   		
