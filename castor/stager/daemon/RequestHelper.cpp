@@ -124,39 +124,6 @@ namespace castor{
       }
       
       
-      /***********************************************/
-      /* get request uuid (we cannon' t create it!) */
-      /* needed to log on dlf */ 
-      /*********************************************/
-      void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
-      {
-        try{
-          
-          if(fileRequest->reqId().empty()){/* we cannon' t generate one!*/
-            castor::exception::Exception ex(SEINTERNAL); 
-            throw ex;
-          }else{/*convert to the Cuuid_t version and copy in our thread safe variable */
-            
-            if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
-              castor::exception::Exception ex(SEINTERNAL);	      
-              throw ex;
-            }
-          }
-        }catch(castor::exception::Exception e){
-          
-          castor::dlf::Param params[]={ castor::dlf::Param("fileName:", subrequest->fileName()),
-            castor::dlf::Param("Function:","StagerRequestHelper->setRequestUuid")
-          };
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_REQUESTUUID_EXCEPTION, 2 ,params);	    
-          
-          e.getMessage()<< "Impossible to perform the request";
-          throw e; 
-        }
-        
-      }
-      
-      /* since we already got the requestUuid; from now on, we dont need to use the nullCuuid for dlf */
-      
       /************************************************************************************/
       /* set the username and groupname string versions using id2name c function  */
       /**********************************************************************************/
@@ -197,6 +164,25 @@ namespace castor{
         
       }
       
+      
+      /*****************************************/
+      /* get request uuid needed to log on dlf */
+      /*****************************************/
+      void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
+      {
+        if(!fileRequest->reqId().empty()){
+          /*convert to the Cuuid_t version and copy in our thread safe variable */
+          if (string2Cuuid(&(this->requestUuid),(char*) fileRequest->reqId().c_str()) != 0) {
+            requestUuid = nullCuuid;
+          }
+        }
+        else {
+          requestUuid = nullCuuid;
+          castor::dlf::Param params[]={ castor::dlf::Param("fileName:", subrequest->fileName()) };
+          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 1, params);
+        }
+      }
+      
       /******************************************************************************************/
       /* get and (create or initialize) Cuuid_t subrequest and request                         */
       /* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
@@ -204,47 +190,24 @@ namespace castor{
       /* get or create subrequest uuid */
       void StagerRequestHelper::setSubrequestUuid() throw(castor::exception::Exception)
       {
+        char subrequest_uuid_as_string[CUUID_STRING_LEN+1];	
+        subrequestUuid = nullCuuid;
         
-        try{
-          char subrequest_uuid_as_string[CUUID_STRING_LEN+1];	
+        if (subrequest->subreqId().empty()){/* we create a new Cuuid_t, copy to thread-safe variable, and update it on subrequest...*/
+          Cuuid_create(&(this->subrequestUuid));
           
-          if (subrequest->subreqId().empty()){/* we create a new Cuuid_t, copy to thread-safe variable, and update it on subrequest...*/
-            Cuuid_create(&(this->subrequestUuid));
-            
-            
-            /* convert to the string version, needed to update the subrequest and fill it on DB*/ 
-            if(Cuuid2string(subrequest_uuid_as_string, CUUID_STRING_LEN+1, &(this->subrequestUuid)) != 0){
-              castor::exception::Exception ex(SEINTERNAL);
-              throw ex;
-              
-            }else{
-              subrequest_uuid_as_string[CUUID_STRING_LEN] = '\0';
-              /* update on subrequest */
-              subrequest->setSubreqId(subrequest_uuid_as_string);
-              /* update it in DB*/
-              dbService->updateRep(baseAddr, subrequest, true);	
-              
-            }
-            
-          }else{ /* translate to the Cuuid_t version and copy to our thread-safe variable */
-            
-            if( string2Cuuid(&(this->subrequestUuid), (char *) subrequest_uuid_as_string)!=0){
-              castor::exception::Exception ex(SEINTERNAL);
-              throw ex;
-            }
-            
+          /* convert to the string version, needed to update the subrequest and fill it on DB*/ 
+          if(Cuuid2string(subrequest_uuid_as_string, CUUID_STRING_LEN+1, &(this->subrequestUuid)) == 0){
+            subrequest_uuid_as_string[CUUID_STRING_LEN] = '\0';
+            /* update on subrequest */
+            subrequest->setSubreqId(subrequest_uuid_as_string);
+            /* update it in DB */
+            dbService->updateRep(baseAddr, subrequest, false);	
           }
-        }catch(castor::exception::Exception e){
-          castor::dlf::Param params[]={	castor::dlf::Param("fileName",subrequest->fileName()),
-            castor::dlf::Param("UserName",username),
-            castor::dlf::Param("GroupName", groupname),
-            castor::dlf::Param("Function","StagerRequestHelper->setSubrequestUuid")
-          };
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_SUBREQUESTUUID_EXCEPTION, 4 ,params);	   
-          
-          e.getMessage()<< "Impossible to perform the request";
-          throw e;  
-          
+        }
+        else {
+          /* translate to the Cuuid_t version and copy to our thread-safe variable */
+          string2Cuuid(&(this->subrequestUuid), (char *)subrequest->subreqId().c_str());
         }
       }
       
