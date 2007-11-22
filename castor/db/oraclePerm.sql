@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.548 $ $Date: 2007/11/20 17:25:26 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.549 $ $Date: 2007/11/22 15:01:23 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4634,32 +4634,32 @@ CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             res OUT NUMBER) AS
   unused NUMBER;
 BEGIN
-  SELECT reqType
-    INTO unused
+  SELECT count(reqType) INTO unused
     FROM WhiteList
    WHERE (svcClass = isvcClass OR svcClass IS NULL
           OR (length(isvcClass) IS NULL AND svcClass = 'default'))
      AND (egid = iegid OR egid IS NULL)
      AND (euid = ieuid OR euid IS NULL)
      AND (reqType = ireqType OR reqType IS NULL);
-  BEGIN
-    SELECT reqType
-      INTO unused
+  IF unused = 0 THEN
+    -- Not found in White list -> no access
+    res := -1;
+  ELSE
+    SELECT count(reqType) INTO unused
       FROM BlackList
      WHERE (svcClass = isvcClass OR svcClass IS NULL
             OR (length(isvcClass) IS NULL AND svcClass = 'default'))
        AND (egid = iegid OR egid IS NULL)
        AND (euid = ieuid OR euid IS NULL)
        AND (reqType = ireqType OR reqType IS NULL);
-    -- found in Black list -> no access
-    res := -1;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Not Found in Black list -> access
-    res := 0;
-  END;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- Not found in White list -> no access
-  res := -1;
+    IF unused = 0 THEN
+      -- Not Found in Black list -> access
+      res := 0;
+    ELSE
+      -- found in Black list -> no access
+      res := -1;
+    END IF;
+  END IF;
 END;
 
 /* PL/SQL method implementing nsFilesDeletedProc
