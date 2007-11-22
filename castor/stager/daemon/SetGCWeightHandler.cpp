@@ -64,6 +64,7 @@ namespace castor{
           /* we don t need to update the subrequestStatus  */
           /* but we have to archive the subrequest        */
           /* the same as for StagerRmHandler             */
+          stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
           stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
           
           /* replyToClient Part: *//* we always have to reply to the client in case of exception! */

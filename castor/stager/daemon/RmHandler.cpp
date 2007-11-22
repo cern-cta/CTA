@@ -100,7 +100,7 @@ namespace castor{
           }
           // else the file does not exist, go on and try to cleanup stager db.
           // Note that in this case we don't check permissions, but that's fine as
-          // the cleanup would have to be done
+          // the cleanup would anyway need to be done
         }
 
         // check the service class, and handle the '*' case
@@ -131,6 +131,7 @@ namespace castor{
             
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RM, &(stgCnsHelper->cnsFileid));
             
+            stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
             
             /* replyToClient Part: */
