@@ -50,8 +50,8 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler() 
-	throw(castor::exception::Exception) {
-
+throw(castor::exception::Exception)
+{
   castor::IService* svc = NULL;
 
   /**
@@ -60,40 +60,48 @@ castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler()
    */
   
   ptr_svcs = services();
-	
-	try {
-		/**
-		 * Getting DbVdqmSvc: It can be the OraVdqmSvc or the MyVdqmSvc
-		 */
-		svc = ptr_svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
-	  if (0 == svc) {
-	    castor::exception::Internal ex;
-	    ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
-	    
-	    throw ex;
-	  }
-//	} catch (oracle::occi::SQLException e) {
-//    castor::exception::Internal ex;
-//    
-//    ex.getMessage() << "Error in castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler(): "
-//                    << std::endl << e.what() << std::endl;
-//    throw ex;
+
+  try
+  {
+    /**
+     * Getting DbVdqmSvc: It can be the OraVdqmSvc or the MyVdqmSvc
+     */
+    svc = ptr_svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+
+    if (0 == svc)
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
+
+      throw ex;
+    }
   }
-	catch (...) {
-		castor::exception::Internal ex;
-		
-		ex.getMessage() << "Error in castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler(): "
-                    << std::endl;
+  catch(castor::exception::Exception &ex)
+  {
+    ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
+
     throw ex;
-	} 
-  
-  ptr_IVdqmService = dynamic_cast<IVdqmSvc*>(svc);
-  if (0 == ptr_IVdqmService) {
+  }
+  catch (...)
+  {
     castor::exception::Internal ex;
+
+    ex.getMessage() << "Could not get DbVdqmSvc"      << std::endl;
+    ex.getMessage() << "Caught and unknown exception" << std::endl;
+
+    throw ex;
+  } 
+
+  ptr_IVdqmService = dynamic_cast<IVdqmSvc*>(svc);
+
+  if(0 == ptr_IVdqmService)
+  {
+    castor::exception::Internal ex;
+
     ex.getMessage() << "Got a bad DbVdqmSvc: "
-    								<< "ID=" << svc->id()
-    								<< ", Name=" << svc->name()
-    								<< std::endl;
+      << "ID=" << svc->id()
+      << ", Name=" << svc->name()
+      << std::endl;
 
     throw ex;
   }
