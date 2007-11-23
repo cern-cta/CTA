@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: 2.1.4_to_2.1.5-0.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/11/20 14:43:19 $ $Author: itglp $
+ * @(#)$RCSfile: 2.1.4_to_2.1.5-0.sql,v $ $Release: 1.2 $ $Release$ $Date: 2007/11/23 18:16:07 $ $Author: itglp $
  *
  * This script upgrades a CASTOR v2.1.4 database into v2.1.5-0
  *
@@ -155,25 +155,29 @@ CREATE OR REPLACE PROCEDURE new_subRequestToDo(service IN VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                            srSubReqId OUT VARCHAR2) AS
-  firstRow VARCHAR2(18);
-  CURSOR c IS
-    SELECT /*+ USE_NL */ rowidtochar(rowid) FROM SubRequest
-     WHERE status in (0,1,2)    -- START, RESTART, RETRY
-       AND EXISTS
+CURSOR c IS
+   SELECT /*+ USE_NL */ id
+     FROM SubRequest
+    WHERE status in (0,1,2)    -- START, RESTART, RETRY
+      AND EXISTS
          (SELECT /*+ index(a I_Id2Type_id) */ 'x'
             FROM Id2Type a, Type2Obj
            WHERE a.id = SubRequest.request
              AND a.type = Type2Obj.type
-             AND Type2Obj.svcHandler = service);
+             AND Type2Obj.svcHandler = service)
+    FOR UPDATE SKIP LOCKED;
 BEGIN
+  srId := 0;
   OPEN c;
-  FETCH c INTO firstRow;
-  UPDATE subrequest SET status = 3 WHERE rowid = CHARTOROWID(firstRow)   -- SUBREQUEST_WAITSCHED
-    RETURNING id, retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
-    INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
+  FETCH c INTO srId;
+  UPDATE SubRequest SET status = 3 WHERE id = srId
+    RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
+    INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
   CLOSE c;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- just return srId = 0, nothing to do
+  NULL;
 END;
-
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall */
 /* Internally used by getDiskCopiesForJob and getDiskCopiesForPrepReq */
@@ -487,7 +491,7 @@ BEGIN
  UPDATE SubRequest SET status = newStatus,
                        answered = 1,
                        lastModificationTime = getTime() WHERE id = srId;
- IF newStatus = 6 THEN  -- READY
+ IF newStatus in (6, 11) THEN  -- READY, ARCHIVED
    UPDATE SubRequest SET getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
     WHERE id = srId;
  END IF;
