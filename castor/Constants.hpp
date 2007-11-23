@@ -174,7 +174,8 @@ namespace castor {
 
     OBJ_Disk2DiskCopyStartRequest = 144,
     OBJ_Disk2DiskCopyStartResponse = 145,
-    OBJ_ThreadNotification = 146
+    OBJ_ThreadNotification = 146,
+    OBJ_FirstByteWritten=147
   };
 
   /**
@@ -248,7 +249,7 @@ namespace castor {
    * Nb of objectIds currently existing
    */
 
-  static const unsigned int ObjectsIdsNb = 147;
+  static const unsigned int ObjectsIdsNb = 148;
 
   /**
    * Nb of ServicesIds currently existing
@@ -265,7 +266,7 @@ namespace castor {
    * correctly the ObjectsIds enum
    */
 
-  extern const char* ObjectsIdStrings[147];
+  extern const char* ObjectsIdStrings[148];
 
   /**
    * Names of the differents Services, used to display

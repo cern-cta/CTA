@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2007/11/20 16:07:45 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2007/11/23 11:24:38 $ $Author: sponcec3 $
  *
  *
  *
@@ -187,6 +187,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "Disk2DiskCopyStartRequest",
   "Disk2DiskCopyStartResponse",
   "ThreadNotification"
+  "FirstByteWritten"
 };
 
 

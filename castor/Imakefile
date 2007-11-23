@@ -187,6 +187,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamFileQryResponseCnv.cpp \
               io/StreamFindReqResponseCnv.cpp \
+              io/StreamFirstByteWrittenCnv.cpp \
               io/StreamIOResponseCnv.cpp \
               io/StreamRequestQueryResponseCnv.cpp \
               io/StreamDiskPoolQueryResponseCnv.cpp \
@@ -277,6 +278,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/FilesDeletedCInt.cpp \
               stager/FilesDeletionFailed.cpp \
               stager/FilesDeletionFailedCInt.cpp \
+              stager/FirstByteWritten.cpp \
               stager/GetUpdateDone.cpp \
               stager/GetUpdateDoneCInt.cpp \
               stager/GetUpdateFailed.cpp \

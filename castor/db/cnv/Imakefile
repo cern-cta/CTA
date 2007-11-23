@@ -57,6 +57,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbFilesDeletedCnv.cpp \
      DbNsFilesDeletedCnv.cpp \
      DbFilesDeletionFailedCnv.cpp \
+     DbFirstByteWrittenCnv.cpp \
      DbGCFileCnv.cpp \
      DbGCLocalFileCnv.cpp \
      DbGetUpdateDoneCnv.cpp \
