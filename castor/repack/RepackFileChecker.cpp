@@ -95,12 +95,18 @@ void RepackFileChecker::run(void* param) throw(){
   
       /** check the filelist for multi-tapecopy repacking - we can easily
           return, because a message was written to DLF. */
-      if ( checkMultiRepack(sreq) == -1 ) return; 
-      
-      sreq->setFiles(sreq->repacksegment().size());
-      sreq->setStatus(SUBREQUEST_TOBESTAGED);
-      m_dbhelper->updateSubRequest(sreq,true, cuuid);
-      stage_trace(3,"Found %d files, RepackSubRequest for Tape %s ready for Staging ",sreq->files(),(char*)sreq->vid().c_str());
+
+      if ( checkMultiRepack(sreq) == -1 ) { 
+	sreq->setStatus(SUBREQUEST_FAILED); // against loop 
+        m_dbhelper->updateSubRequest(sreq,true, cuuid);
+      } else {
+	sreq->setFiles(sreq->repacksegment().size());
+	sreq->setStatus(SUBREQUEST_TOBESTAGED);
+	m_dbhelper->updateSubRequest(sreq,true, cuuid);
+	stage_trace(3,"Found %d files, RepackSubRequest for Tape %s ready for Staging ",sreq->files(),(char*)sreq->vid().c_str());
+       
+      }
+
     }catch (castor::exception::Exception e){
        castor::dlf::Param params[] =
         {castor::dlf::Param("Message","Exception caugt inRepack FileChecker"), 

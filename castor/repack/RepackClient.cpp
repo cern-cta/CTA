@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/10/22 12:58:47 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2007/11/23 13:25:48 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -58,13 +58,16 @@ void printTime(time_t* rawtime){
   mon_name[6]= "Jul"; mon_name[7]="Aug"; mon_name[8]="Sep";
   mon_name[9]=  "Oct"; mon_name[10]=  "Nov"; mon_name[11]= "Dec";
   if (timeptr->tm_mday < 10) std::cout<<"0";
-  std::cout<< (timeptr->tm_mday)<<"-"<<mon_name[timeptr->tm_mon]<<"-"<< (timeptr->tm_year)+1900<<"_";
+  if ((timeptr->tm_year)%100 < 10) {
+    std::cout<< (timeptr->tm_mday)<<"-"<<mon_name[timeptr->tm_mon]<<"-0"<< (timeptr->tm_year)%100<<"_";
+  } else {
+    std::cout<< (timeptr->tm_mday)<<"-"<<mon_name[timeptr->tm_mon]<<"-"<< (timeptr->tm_year)%100<<"_"; 
+  }
   if (timeptr->tm_hour <10) std::cout<<"0";
   std::cout << timeptr->tm_hour <<":";
   if (timeptr->tm_min <10) std::cout<<"0";
-  std::cout<<timeptr->tm_min<<":";
-  if (timeptr->tm_sec <10) std::cout<<"0";
-  std::cout<<timeptr->tm_sec; 
+  std::cout<<timeptr->tm_min;
+  std::cout<<"  "; 
 }
 
 
@@ -478,7 +481,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
 	     break;
 	  }
 	  std::cout << "==============================================================================================================" << std::endl;
-	  std::cout << " fileid      copyno     fsec        segsize       compression    vid     fseq       blockid         checksum"<< std::endl;  
+	  std::cout << " Fileid      Copyno     Fsec        Segsize       Compression    Vid     Fseq       Blockid         Checksum"<< std::endl;  
 	  std::cout << "==============================================================================================================" << std::endl;
 	  
 	  while ( segs != (*sreq)->repacksegment().end() ) {
@@ -494,14 +497,11 @@ void RepackClient::handleResponse(RepackAck* ack) {
       case ARCHIVE: 
       case ARCHIVE_ALL:
       { 
-	std::cout <<"\ncurrent time: ";
-	printTime(&current_time);
-	std::cout<<std::endl;
 
-	std::cout << "\n========================================================================================================================" 
+	std::cout << "\n=======================================================================================================================" 
               << std::endl;
-	std::cout << " submission             vid     total     size     toBeRecalled    toBeMigrated    failed     migrated      status" <<std::endl;
-        std::cout << "------------------------------------------------------------------------------------------------------------------------"
+	std::cout << " CurrentTime        SubmitTime           Vid     Total     Size    toRecall   toMigr   Failed   Migrated     Status" <<std::endl;
+        std::cout << "-----------------------------------------------------------------------------------------------------------------------"
                   << std::endl;
 
 
@@ -511,17 +511,14 @@ void RepackClient::handleResponse(RepackAck* ack) {
           printTapeDetail((*tape));
           tape++;
         }
-	std::cout << "========================================================================================================================" << std::endl;
+	std::cout << "======================================================================================================================" << std::endl;
         break;
       }
     case GET_STATUS:
 
-      	std::cout <<"\ncurrent time: ";
-	printTime(&current_time);
-	std::cout<<std::endl;        
-	std::cout << "\n=======================================================================================================================" 
+      	std::cout << "\n=======================================================================================================================" 
               << std::endl;
-	std::cout << " submission             vid      total     size     toBeRecalled    toBeMigrated    failed     migrated     status" <<std::endl;
+	std::cout << " CurrentTime        SubmitTime           Vid     Total     Size    toRecall   toMigr   Failed   Migrated     Status" <<std::endl;
         std::cout << "-----------------------------------------------------------------------------------------------------------------------"
                   << std::endl;
 
@@ -530,13 +527,13 @@ void RepackClient::handleResponse(RepackAck* ack) {
           printTapeDetail((*tape));
           tape++;
         }
-	std::cout << "=======================================================================================================================" << std::endl; 
+	std::cout << "========================================================================================================================" << std::endl; 
     case GET_ERRORS:
       resp = ack->repackrequest()->repackresponse().begin();
       while ( resp != ack->repackrequest()->repackresponse().end()){
         std::vector<RepackFileQry*>::iterator file= (*resp)->repackfileqry().begin();
         std::cout<<"---------------------------------------------------------------------------"<<std::endl;
-        std::cout<<"  Tape      Castorfile     fileid     status   ErrorCode  ErrorMessage        "<<std::endl;
+        std::cout<<"  Tape      Castorfile     Fileid     Status   ErrorCode  ErrorMessage        "<<std::endl;
         std::cout<<"---------------------------------------------------------------------------"<<std::endl;
         std::cout<<(*resp)->vid()<<std::endl;
         while (file != (*resp)->repackfileqry().end()) {
@@ -574,6 +571,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
 void RepackClient::printTapeDetail(RepackSubRequest *tape){
   char buf[21];
   time_t submit_time = 0;
+  time_t current_time = time(NULL);
   submit_time = (long)tape->submitTime();
   std::map<int,std::string> statuslist;
   statuslist[SUBREQUEST_READYFORSTAGING] = "START";
@@ -587,16 +585,17 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   statuslist[SUBREQUEST_FAILED] = "FAILED";
 
   u64tostru(tape->xsize(), buf, 0);
+  printTime(&current_time);
   printTime(&submit_time);
   std::cout <<"\t"<<
         tape->vid() <<	"    "<<
 	std::setw(8) <<std::left <<  tape->files() << 
-        std::setw(13) << std::left << buf <<
-	std::setw(15) << std::left << tape->filesStaging() <<
-	std::setw(15) << std::left << tape->filesMigrating() <<
-	std::setw(13) << std::left << tape->filesFailed() + tape->filesFailedSubmit()   <<
+        std::setw(10) << std::left << buf <<
+	std::setw(10) << std::left << tape->filesStaging() <<
+	std::setw(10) << std::left << tape->filesMigrating() <<
+	std::setw(10) << std::left << tape->filesFailed() + tape->filesFailedSubmit()   <<
 	std::setw(10) << std::left << tape->filesStaged() <<
-	std::setw(10) << statuslist[tape->status()] <<
+	std::setw(12) << statuslist[tape->status()] <<
   std::endl;
 }
 

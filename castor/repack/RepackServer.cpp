@@ -159,7 +159,7 @@ castor::repack::RepackServer::RepackServer() :
      {35, "RepackCleaner: Cleaner started"},
      {36, "There are no more files on tape to repack"},
      {39, "RepackFileChecker: No files found on tape"},               // RepackFileStager:stage_files
-     {37, "RepackFileStager: checkExistingTapeCopy failed"}, 
+     {37, "RepackFileChecker: checkExistingTapeCopy failed"}, 
      {38, "RepackFileStager: Failed to submit recall for file to Stager"},
      {40, "RepackMonitor: Changing status"},
      {41, "Stager query failed"},
