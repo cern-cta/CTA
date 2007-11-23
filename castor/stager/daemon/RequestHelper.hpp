@@ -51,7 +51,7 @@
 #include <iostream>
 #include <string>
 #include <string.h>
-
+#include <sys/time.h>
 
 namespace castor{
   namespace stager{
@@ -92,10 +92,6 @@ namespace castor{
 	
 	castor::stager::FileRequest* fileRequest;
 
-	/* client associated to the request */
-	castor::IClient* iClient;
-	std::string iClientAsString;
-	
 	/* service class */
 	std::string svcClassName;
 	castor::stager::SvcClass* svcClass;
@@ -103,9 +99,6 @@ namespace castor{
 	/* castorFile attached to the subrequest*/
 	castor::stager::CastorFile* castorFile;
 	
-	/* get from the stagerService using as key Cnsfileclass.name (JOB ORIENTED)*/
-	castor::stager::FileClass* fileClass;
-       
 	std::string username;
 	std::string groupname;
 
@@ -115,8 +108,7 @@ namespace castor{
 	
 	std::string default_protocol;
 
-
-
+  timeval tvStart;
 
 	/****************************************************/
 	/*  called on the different thread (job, pre, stg) */
@@ -125,12 +117,7 @@ namespace castor{
 	/* destructor */
 	~StagerRequestHelper() throw();
 
-	/***********************************************************************************/
-	/* get the link (fillObject~SELECT) between fileRequest and its associated client */
-	/* using dbService, and get the client                                           */
-	/********************************************************************************/
-	void getIClient() throw(castor::exception::Exception);
-	
+
 	/****************************************************************************************/
 	/* get svClass by selecting with stagerService                                         */
 	/* (using the svcClassName:getting from request OR defaultName (!!update on request)) */

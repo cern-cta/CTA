@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/11/22 18:10:54 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/11/23 18:19:08 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -219,7 +219,7 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::ex
     /*  SYSTEM LEVEL */
     /* after calling the corresponding stagerService function, to show the decision taken */
     { STAGER_SUBREQ_SELECTED, "Request selected by subRequestToDo"},
-    { STAGER_START_PROCESSING, "Start request processing"},
+    { STAGER_REQ_PROCESSED, "Request processed"},
     {STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
     {STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
     {STAGER_WAITSUBREQ, "Request moved to Wait"},

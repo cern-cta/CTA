@@ -35,7 +35,7 @@ namespace castor{
 	STAGER_PREREQSVC_CREATION= 22, /* "Created new PreRequestSvc Thread" */   
 	STAGER_STGREQSVC_CREATION= 23, /* "Created new StgRequestSvc Thread" */
 	STAGER_SUBREQ_SELECTED= 24,
-	STAGER_START_PROCESSING = 25,
+	STAGER_REQ_PROCESSED = 25,
   
 	/* JobRequestSvcThread */     
 	STAGER_GET= 31, /*Get Request" */

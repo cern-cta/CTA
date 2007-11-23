@@ -68,6 +68,9 @@ namespace castor{
       StagerRequestHelper::StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception){	
         
         try{
+          // for monitoring purposes
+          gettimeofday(&tvStart, NULL);
+
           // get thread-safe pointers to services. They were already initialized
           // in the main, so we are sure pointers are valid
           castor::IService* svc = castor::BaseObject::services()->
@@ -107,6 +110,23 @@ namespace castor{
       /* destructor */
       StagerRequestHelper::~StagerRequestHelper() throw()
       {
+        if(fileRequest && subrequest) {
+          // Calculate statistics
+          timeval tv;
+          gettimeofday(&tv, NULL);
+          signed64 procTime = ((tv.tv_sec * 1000000) + tv.tv_usec) - ((tvStart.tv_sec * 1000000) + tvStart.tv_usec);
+          castor::dlf::Param params[] = {
+            castor::dlf::Param(subrequestUuid),
+            castor::dlf::Param("reqType", castor::ObjectsIdStrings[fileRequest->type()]),
+            castor::dlf::Param("fileName", subrequest->fileName()),
+            castor::dlf::Param("userName", username),
+            castor::dlf::Param("groupName", groupname),
+            castor::dlf::Param("svcClass", svcClassName),
+            castor::dlf::Param("processingTime", procTime  * 0.000001)
+          };
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_MONITORING, STAGER_REQ_PROCESSED, 7, params, 0);
+        }
+
         delete baseAddr;
         if(castorFile) {
           if(castorFile->fileClass())
@@ -114,6 +134,9 @@ namespace castor{
           delete castorFile;
         }
         if(fileRequest) {
+          if(fileRequest->client()) {
+            delete fileRequest->client();
+          }
           delete fileRequest;  // will delete subrequest too
         }
         else if(subrequest) {
@@ -212,21 +235,6 @@ namespace castor{
       }
       
       
-      /***********************************************************************************/
-      /* get the link (fillObject~SELECT) between fileRequest and its associated client */
-      /* using dbService, and get the client                                           */
-      /********************************************************************************/
-      void StagerRequestHelper::getIClient() throw(castor::exception::Exception){
-        
-        dbService->fillObj(baseAddr, fileRequest,castor::OBJ_IClient, false);//196
-        this->iClient=fileRequest->client();
-        this->iClientAsString = IClientFactory::client2String(*(this->iClient));/* IClientFactory singleton */
-        
-      }
-      
-      
-      
-      
       /****************************************************************************************/
       /* get svClass by selecting with stagerService                                         */
       /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
@@ -273,7 +281,7 @@ namespace castor{
       {
         try{
           // get the fileClass by name
-          fileClass = stagerService->selectFileClass(stgCnsHelper->cnsFileclass.name);
+          castor::stager::FileClass* fileClass = stagerService->selectFileClass(stgCnsHelper->cnsFileclass.name);
           if(fileClass == 0) {
             logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
             castor::exception::Internal ex;

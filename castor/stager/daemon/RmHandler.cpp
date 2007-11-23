@@ -74,7 +74,7 @@ namespace castor{
         stgRequestHelper->setSubrequestUuid();
         
         /* get the associated client and set the iClientAsString variable */
-        stgRequestHelper->getIClient();
+        
         
         /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
         stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);

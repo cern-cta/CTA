@@ -49,7 +49,6 @@ namespace castor{
         
         castor::rh::IOResponse *ioResponse;
         castor::replier::RequestReplier *requestReplier;
-        std::string uuid_as_string;
         
         /* constructor  */
         StagerReplyHelper() throw(castor::exception::Exception);

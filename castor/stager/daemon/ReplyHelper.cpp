@@ -19,6 +19,7 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
 
 #include "serrno.h"
 #include "Cns_struct.h"
@@ -62,19 +63,29 @@ namespace castor{
       /**************************************************************************/
       void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
       {
+        if(stgRequestHelper->fileRequest) {
+          if(stgRequestHelper->fileRequest->client() == 0) {
+            stgRequestHelper->dbService->fillObj(stgRequestHelper->baseAddr, stgRequestHelper->fileRequest, castor::OBJ_IClient, false);
+          }
+        }
+        else {
+          castor::exception::Internal e;
+          e.getMessage() << "No request available, cannot answer to client";
+          throw e;
+        }
+
         if(cnsFileid)
           ioResponse->setFileId((u_signed64) cnsFileid->fileid);
         
-        this->uuid_as_string = stgRequestHelper->fileRequest->reqId();
-        if((uuid_as_string.empty()) == false){
-          this->ioResponse->setReqAssociated(uuid_as_string);
+        if(!stgRequestHelper->fileRequest->reqId().empty()){
+          this->ioResponse->setReqAssociated(stgRequestHelper->fileRequest->reqId());
         }else{
           // no UUID?? at this stage just log it and try to go on
           castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
             castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
             castor::dlf::Param("UserName",stgRequestHelper->username),
             castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-            castor::dlf::Param("Function:", "StagerReplyHelper.setAndSendIoResponse")
+            castor::dlf::Param("Function", "StagerReplyHelper.setAndSendIoResponse")
           };
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
         }
@@ -95,23 +106,19 @@ namespace castor{
           this->ioResponse->setErrorMessage(ioRespErrorMessage);
         }
         
-        this->requestReplier->sendResponse(stgRequestHelper->iClient,ioResponse,false);
+        this->requestReplier->sendResponse(stgRequestHelper->fileRequest->client(), ioResponse, false);
       }
-      
-      
       
       
       /*********************************************************************************************/
       /* check if there is any subrequest left and send the endResponse to client if it is needed */
       /*******************************************************************************************/
       void StagerReplyHelper::endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
-        
         /* to update the subrequest on DB */
         bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
-        if(requestLeft == false){
-          requestReplier->sendEndResponse(stgRequestHelper->iClient, this->uuid_as_string);
-        }  
-        
+        if(!requestLeft && stgRequestHelper->fileRequest != 0) {
+          requestReplier->sendEndResponse(stgRequestHelper->fileRequest->client(), stgRequestHelper->fileRequest->reqId());
+        }        
       }
       
       
