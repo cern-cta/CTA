@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.7 2007/09/28 15:04:33 sponcec3 Exp $
+ * $Id: stream64.c,v 1.8 2007/11/23 13:31:55 gtaur Exp $
  */
 
 /*
@@ -531,6 +531,7 @@ int     ctrl_sock, size;
    char     rfio_buf[BUFSIZ];
    int ctrl_sock_index;
    char      tmpbuf[21];
+   int data_sock;
 
    // Avoiding Valgrind error messages about uninitialized data
    memset(rfio_buf, 0, BUFSIZ);
@@ -635,8 +636,8 @@ int     ctrl_sock, size;
       TRACE(2,"rfio", "rfio_read64_v3: filesize is %s bytes",
          u64tostr(rfilefdt[ctrl_sock_index]->filesize64,tmpbuf,0)) ;
    }
-
-
+   data_sock=rfilefdt[ctrl_sock_index]->lseekhow;
+   
    iobuffer = ptr;
    byte_in_buffer = 0;
 
@@ -655,7 +656,7 @@ int     ctrl_sock, size;
       /* Bother of ctrl socket till eof has not been received */
       if (!rfilefdt[ctrl_sock_index]->eof_received)
          FD_SET(ctrl_sock,&fdvar);
-      FD_SET(rfilefdt[ctrl_sock_index]->lseekhow,&fdvar);
+      FD_SET(data_sock,&fdvar);
       t.tv_sec = 30;
       t.tv_usec = 0;
 
@@ -726,23 +727,23 @@ int     ctrl_sock, size;
          
       }
 
-      if (FD_ISSET(rfilefdt[ctrl_sock_index]->lseekhow,&fdvar))
+      if (FD_ISSET(data_sock,&fdvar))
       {
          /* Receiving data using data socket */
          /* Do not use read here because NT doesn't support that with socket fds */
-         n = s_nrecv(rfilefdt[ctrl_sock_index]->lseekhow, iobuffer, size-byte_in_buffer);
+         n = s_nrecv(data_sock, iobuffer, size-byte_in_buffer);
          if (n <= 0) {
             if (n == 0)
             {
                TRACE(2,"rfio","read64_v3: datasoket %d  closed by remote end",
-                  rfilefdt[ctrl_sock_index]->lseekhow) ;
+                  data_sock) ;
                END_TRACE() ;
                return(-1);
             }
             else
             {
                TRACE(2,"rfio","read64_v3: datasoket %d  read(): ERROR occured (errno=%d)",
-                  rfilefdt[ctrl_sock_index]->lseekhow, errno) ;
+                 data_sock, errno) ;
                END_TRACE() ;
                return -1 ;
             }
