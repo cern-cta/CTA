@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/16 14:14:28 $ $Author: waldron $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
  *
  * This class provides stager methods related to job handling
  *
@@ -256,6 +256,17 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::Request* requestToDo()
+        throw (castor::exception::Exception) = 0;
+    
+      /**
+       * Informs the stager that an update subrequest has written
+       * bytes into a given diskCopy. The diskCopy's status will
+       * be updated to STAGEOUT and the other diskcopies of the
+       * CastorFile will be invalidated
+       * @param subReqId the id of the SubRequest concerned
+       * @exception Exception in case of error
+       */
+      virtual void firstByteWritten(u_signed64 subRequestId)
         throw (castor::exception::Exception) = 0;
     
     }; // end of class IJobSvc

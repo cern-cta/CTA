@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/11/16 14:12:01 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -259,6 +259,17 @@ namespace castor {
          */
         virtual castor::stager::Request* requestToDo()
           throw (castor::exception::Exception);
+    
+        /**
+         * Informs the stager that an update subrequest has written
+         * bytes into a given diskCopy. The diskCopy's status will
+         * be updated to STAGEOUT and the other diskcopies of the
+         * CastorFile will be invalidated
+         * @param subReqId the id of the SubRequest concerned
+         * @exception Exception in case of error
+         */
+        virtual void firstByteWritten(u_signed64 subRequestId)
+          throw (castor::exception::Exception);
 
       private:
 
@@ -327,6 +338,12 @@ namespace castor {
 
         /// SQL statement object for function requestToDo
         oracle::occi::Statement *m_requestToDoStatement;
+
+        /// SQL statement for function firstByteWritten
+        static const std::string s_firstByteWrittenStatementString;
+
+        /// SQL statement object for function firstByteWritten
+        oracle::occi::Statement *m_firstByteWrittenStatement;
 
       }; // end of class OraJobSvc
 

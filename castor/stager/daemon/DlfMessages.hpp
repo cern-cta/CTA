@@ -136,7 +136,9 @@ namespace castor{
 	STAGER_JOBSVC_PUTFAIL= 143, /* "Invoking putFailed" */
 	STAGER_JOBSVC_NOCLI= 144, /* "No client associated with request ! Cannot answer !" */
 	STAGER_JOBSVC_UNKREQ= 145, /* "Unknown Request type" */
-	STAGER_JOBSVC_D2DCS= 146 /* Invoking disk2DiskCopyStart" */
+	STAGER_JOBSVC_D2DCS= 146, /* Invoking disk2DiskCopyStart" */
+        STAGER_JOBSVC_1STBWR= 147 /* "Invoking firstByteWritten"*/
+
       };
     }// end namespace dbService
   }// end namespace stager

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/08/17 09:31:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -285,6 +285,23 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       jobSvc->jobSvc->putFailed(subReqId);
+    } catch (castor::exception::Exception e) {
+      serrno = e.code();
+      jobSvc->errorMsg = e.getMessage().str();
+      return -1;
+    }
+    return 0;
+  }
+
+  //-------------------------------------------------------------------------
+  // Cstager_IJobSvc_firstByteWritten
+  //-------------------------------------------------------------------------
+  int Cstager_IJobSvc_firstByteWritten
+  (struct Cstager_IJobSvc_t* jobSvc,
+   u_signed64 subRequestId) {
+    if (!checkIJobSvc(jobSvc)) return -1;
+    try {
+      jobSvc->jobSvc->firstByteWritten(subRequestId);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();

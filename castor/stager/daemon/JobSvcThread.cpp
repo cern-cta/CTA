@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2007/11/16 15:38:58 $ $Author: waldron $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2007/11/23 11:27:45 $ $Author: sponcec3 $
  *
  * Service thread for job related requests
  *
@@ -57,6 +57,7 @@
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
+#include "castor/stager/FirstByteWritten.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/Disk2DiskCopyStartResponse.hpp"
@@ -591,7 +592,7 @@ void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
     // Note that casting the request will never be
     // null since select returns one for sure
     uReq = dynamic_cast<castor::stager::PutFailed*> (req);
-    // Invoking the method
+    // "Invoking putFailed"
     castor::dlf::Param params[] =
       {castor::dlf::Param("SubReqId", uReq->subReqId())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTFAIL, 1, params);
@@ -617,6 +618,55 @@ void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
       {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest.reply"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// handleFirstByteWrittenRequest
+//-----------------------------------------------------------------------------
+void castor::stager::dbService::JobSvcThread::handleFirstByteWrittenRequest
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IJobSvc* jobSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::FirstByteWritten *uReq;
+  castor::rh::BasicResponse res;
+  try {
+    // Retrieving request from the database
+    // Note that casting the request will never be
+    // null since select returns one for sure
+    uReq = dynamic_cast<castor::stager::FirstByteWritten*> (req);
+    // "Invoking firstByteWritten"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("SubReqId", uReq->subReqId())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_1STBWR, 1, params);
+    jobSvc->firstByteWritten(uReq->subReqId());
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleFirstByteWrittenRequest"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code()),
+       castor::dlf::Param("SubReqId", uReq->subReqId())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "JobSvcThread::handleFirstByteWrittenRequest.reply"),
+       castor::dlf::Param("message", e.getMessage().str()),
+       castor::dlf::Param("code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
   }
 }
@@ -707,6 +757,10 @@ void castor::stager::dbService::JobSvcThread::process
     break;
   case castor::OBJ_PutFailed:
     castor::stager::dbService::JobSvcThread::handlePutFailedRequest
+      (req, client, svcs, jobSvc, ad, uuid);
+    break;
+  case castor::OBJ_FirstByteWritten:
+    castor::stager::dbService::JobSvcThread::handleFirstByteWrittenRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   default:

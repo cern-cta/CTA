@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2007/11/16 14:12:01 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -134,7 +134,11 @@ const std::string castor::db::ora::OraJobSvc::s_putFailedStatementString =
 const std::string castor::db::ora::OraJobSvc::s_requestToDoStatementString =
   "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144) AND ROWNUM < 2 RETURNING id INTO :1; END;";
 
-//------------------------------------------------------------------------------
+/// SQL statement for firstByteWritten
+const std::string castor::db::ora::OraJobSvc::s_firstByteWrittenStatementString =
+  "BEGIN firstByteWrittenProc(:1); END;";
+
+// -----------------------------------------------------------------------------
 // OraJobSvc
 //------------------------------------------------------------------------------
 castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
@@ -148,7 +152,8 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
   m_putFailedStatement(0),
-  m_requestToDoStatement(0) {
+  m_requestToDoStatement(0),
+  m_firstByteWrittenStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -190,6 +195,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
     if (m_getUpdateFailedStatement) deleteStatement(m_getUpdateFailedStatement);
     if (m_putFailedStatement) deleteStatement(m_putFailedStatement);
     if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
+    if (m_firstByteWrittenStatement) deleteStatement(m_firstByteWrittenStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_getUpdateStartStatement = 0;
@@ -202,6 +208,7 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   m_getUpdateFailedStatement = 0;
   m_putFailedStatement = 0;
   m_requestToDoStatement = 0;
+  m_firstByteWrittenStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -715,6 +722,31 @@ castor::db::ora::OraJobSvc::requestToDo()
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in requestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+// -----------------------------------------------------------------------
+// firstByteWritten
+// -----------------------------------------------------------------------
+void castor::db::ora::OraJobSvc::firstByteWritten(u_signed64 subRequestId)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_firstByteWrittenStatement) {
+      m_firstByteWrittenStatement =
+        createStatement(s_firstByteWrittenStatementString);
+      m_firstByteWrittenStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    m_firstByteWrittenStatement->setDouble(1, subRequestId);
+    m_firstByteWrittenStatement->executeUpdate();
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in firstByteWritten."
       << std::endl << e.what();
     throw ex;
   }

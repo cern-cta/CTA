@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/11/16 14:14:28 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -55,6 +55,7 @@
 #include "castor/stager/Disk2DiskCopyDoneRequest.hpp"
 #include "castor/stager/Disk2DiskCopyStartRequest.hpp"
 #include "castor/stager/MoverCloseRequest.hpp"
+#include "castor/stager/FirstByteWritten.hpp"
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
@@ -522,3 +523,19 @@ void castor::stager::RemoteJobSvc::putFailed
   client.sendRequest(&req, &rh);
 }
 
+// -----------------------------------------------------------------------
+// firstByteWritten
+// -----------------------------------------------------------------------
+void castor::stager::RemoteJobSvc::firstByteWritten
+(u_signed64 subRequestId)
+  throw (castor::exception::Exception) {
+  // Build the FirstByteWrittenRequest
+  castor::stager::FirstByteWritten req;
+  req.setSubReqId(subRequestId);
+  // Build a response Handler
+  castor::client::BasicResponseHandler rh;
+  // Uses a BaseClient to handle the request
+  castor::client::BaseClient client(getRemoteJobClientTimeout());
+  client.setOption(NULL);
+  client.sendRequest(&req, &rh);
+}

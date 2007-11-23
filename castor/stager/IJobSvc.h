@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/17 09:31:55 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
  *
  *
  *
@@ -331,5 +331,20 @@ int Cstager_IJobSvc_putFailed
 (struct Cstager_IJobSvc_t* jobSvc,
  u_signed64 subReqId);
 
+/**
+ * Informs the stager that an update subrequest has written
+ * bytes into a given diskCopy. The diskCopy's status will
+ * be updated to STAGEOUT and the other diskcopies of the
+ * CastorFile will be invalidated
+ * @param jobSvc the IJobSvc used
+ * @param subRequestId the id of the SubRequest concerned
+ * @return 0 : OK.
+ * -1 : an error occurred and serrno is set to the corresponding error code
+ * A detailed error message can be retrieved by calling
+ * Cstager_IJobSvc_errorMsg
+ */
+int Cstager_IJobSvc_firstByteWritten
+(struct Cstager_IJobSvc_t* jobSvc,
+ u_signed64 subRequestId);
 
 #endif /* CASTOR_IJOBSVC_H */
