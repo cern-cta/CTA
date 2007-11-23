@@ -239,6 +239,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               server/Mutex.cpp \
               server/ServiceThread.cpp \
               server/SignalThreadPool.cpp \
+	      server/NotifierThread.cpp \
+	      server/ThreadNotification.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
               stager/ClientIdentification.cpp \
@@ -302,8 +304,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/PutFailedCInt.cpp \
               stager/ReqIdRequest.cpp \
               stager/ReqIdRequestCInt.cpp \
-              stager/Request.cpp \
-              stager/RequestHelper.cpp \
+	      stager/Request.cpp \
+	      stager/RequestHelper.cpp \
               stager/RequestCInt.cpp \
               stager/RequestQueryType.cpp \
               stager/RemoteGCSvc.cpp \
@@ -411,7 +413,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               sharedMemory/DLFInit.cpp
 
 #if !defined(_WIN32)
-STGLIB_SRCSNW32 =  server/BaseDaemon.cpp  server/BaseServer.cpp server/NotificationThread.cpp
+STGLIB_SRCSNW32 =  server/BaseDaemon.cpp  server/BaseServer.cpp
 #endif
 
 #if BuildSecurity
