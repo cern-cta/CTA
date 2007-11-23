@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.549 $ $Date: 2007/11/22 15:01:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.550 $ $Date: 2007/11/23 11:28:56 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2349,26 +2349,27 @@ END;
 CREATE OR REPLACE PROCEDURE updateAndCheckSubRequest(srId IN INTEGER, newStatus IN INTEGER, result OUT INTEGER) AS
   reqId INTEGER;
 BEGIN
- -- Lock the access to the Request
- SELECT Id2Type.id INTO reqId
-  FROM SubRequest, Id2Type
-  WHERE SubRequest.id = srId
-  AND Id2Type.id = SubRequest.request
-  FOR UPDATE;
- -- Update Status
- UPDATE SubRequest SET status = newStatus,
-                       answered = 1,
-                       lastModificationTime = getTime() WHERE id = srId;
- IF newStatus IN (6, 11) THEN  -- READY, ARCHIVED
-   UPDATE SubRequest SET getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
-    WHERE id = srId;
- END IF;
- -- Check whether it was the last subrequest in the request
- SELECT id INTO result FROM SubRequest
-  WHERE request = reqId
-    AND status IN (0, 1, 2, 3, 4, 5, 7, 10)   -- START, RESTART, RETRY, WAITSCHED, WAITTAPERECALL, WAITSUBREQ, FAILED, FAILED_ANSWERING
-    AND answered = 0
-    AND ROWNUM < 2;
+  -- Lock the access to the Request
+  SELECT Id2Type.id INTO reqId
+    FROM SubRequest, Id2Type
+   WHERE SubRequest.id = srId
+     AND Id2Type.id = SubRequest.request
+     FOR UPDATE;
+  -- Update Status
+  UPDATE SubRequest SET status = newStatus,
+                        answered = 1,
+                        lastModificationTime = getTime() WHERE id = srId;
+  IF newStatus IN (6, 11) THEN  -- READY, ARCHIVED
+    UPDATE SubRequest SET getNextStatus = 1 -- GETNEXTSTATUS_FILESTAGED
+     WHERE id = srId;
+  END IF;
+  -- Check whether it was the last subrequest in the request
+  result := 1;
+  SELECT id INTO result FROM SubRequest
+   WHERE request = reqId
+     AND status IN (0, 1, 2, 3, 4, 5, 7, 10)   -- START, RESTART, RETRY, WAITSCHED, WAITTAPERECALL, WAITSUBREQ, FAILED, FAILED_ANSWERING
+     AND answered = 0
+     AND ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- No data found means we were last
   result := 0;
 END;
@@ -2794,58 +2795,50 @@ BEGIN
   -- get CastorFile
   SELECT castorFile, diskCopy INTO cfId, dcId FROM SubRequest where id = srId;
   -- Determine the context (Put inside PrepareToPut or not)
+  -- check that we are a Put or an Update
+  SELECT Request.id INTO unused
+    FROM SubRequest,
+       (SELECT id FROM StagePutRequest UNION ALL
+        SELECT id FROM StageUpdateRequest) Request
+   WHERE SubRequest.id = srId
+     AND Request.id = SubRequest.request;
   BEGIN
-    -- check that we are a Put or an Update
-    SELECT Request.id INTO unused
+    -- check that there is a PrepareToPut going on
+    SELECT SubRequest.diskCopy INTO unused
       FROM SubRequest,
-         (SELECT id FROM StagePutRequest UNION ALL
-          SELECT id FROM StageUpdateRequest) Request
-     WHERE SubRequest.id = srId
-       AND Request.id = SubRequest.request;
-    BEGIN
-      -- check that there is a PrepareToPut going on
-      SELECT SubRequest.diskCopy INTO unused
-        FROM SubRequest,
-         (SELECT id FROM StagePrepareToPutRequest UNION ALL
-          SELECT id FROM StagePrepareToUpdateRequest) Request
-       WHERE SubRequest.CastorFile = cfId
-         AND Request.id = SubRequest.request
-         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      -- if we got here, we are a Put inside a PrepareToPut
-      contextPIPP := 0;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- here we are a standalone Put
-      contextPIPP := 1;
-    END;
+       (SELECT id FROM StagePrepareToPutRequest UNION ALL
+        SELECT id FROM StagePrepareToUpdateRequest) Request
+     WHERE SubRequest.CastorFile = cfId
+       AND Request.id = SubRequest.request
+       AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+    -- if we got here, we are a Put inside a PrepareToPut
+    contextPIPP := 0;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- here we are a PutDone
-    contextPIPP := 2;
+    -- here we are a standalone Put
+    contextPIPP := 1;
   END;
   
-  IF contextPIPP != 2 THEN
-    -- Check whether the diskCopy is still in STAGEOUT. If not, the file
-    -- was deleted via stageRm while being written to. Thus, we should just give up
-    BEGIN
-      SELECT status INTO unused
-        FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- so we are in the case, we give up
-      errorCode := 1;
-      -- but we still would like to have the fileId and nameserver
-      -- host for logging reasons
-      SELECT fileId, nsHost INTO fId, nh
-        FROM CastorFile WHERE id = cfId;
-      RETURN;
-    END;
-    -- now we can safely update CastorFile's file size
-    UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts 
-     WHERE id = cfId AND (lastUpdateTime is NULL or ts > lastUpdateTime); 
-    -- if ts < lastUpdateTime, we were late and another job already updated the
-    -- CastorFile. But we still need to call updateFsFileClosed() so we go on
-  END IF;
-  -- Take a lock on the CastorFile. Together with triggers, this insures that
+  -- Check whether the diskCopy is still in STAGEOUT. If not, the file
+  -- was deleted via stageRm while being written to. Thus, we should just give up
+  BEGIN
+    SELECT status INTO unused
+      FROM DiskCopy WHERE id = dcId AND status = 6; -- STAGEOUT
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- so we are in the case, we give up
+    errorCode := 1;
+    -- but we still would like to have the fileId and nameserver
+    -- host for logging reasons
+    SELECT fileId, nsHost INTO fId, nh
+      FROM CastorFile WHERE id = cfId;
+    RETURN;
+  END;
+  -- now we can safely update CastorFile's file size
+  UPDATE CastorFile SET fileSize = fs, lastUpdateTime = ts 
+   WHERE id = cfId AND (lastUpdateTime is NULL or ts > lastUpdateTime); 
+  -- If ts < lastUpdateTime, we were late and another job already updated the
+  -- CastorFile. So we nevertheless retrieve the real file size, and
+  -- we take a lock on the CastorFile. Together with triggers, this insures that
   -- we are the only ones to deal with its copies.
-  -- We also get here the real file size too because fs = 0 for a PutDone
   SELECT fileId, nsHost, fileSize INTO fId, nh, realFileSize
     FROM CastorFile
     WHERE id = cfId
@@ -2858,23 +2851,17 @@ BEGIN
        SELECT euid, egid, id, svcClass from StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   
-  IF contextPIPP != 2 THEN   
-    -- any Put, either standalone or inside PrepareToPut
-    SELECT fileSystem into fsId from DiskCopy
-     WHERE castorFile = cfId AND status = 6;
-    updateFsFileClosed(fsId);
-  END IF;  
+  SELECT fileSystem into fsId from DiskCopy
+   WHERE castorFile = cfId AND status = 6;
+  updateFsFileClosed(fsId);
 
-  -- archive Subrequest
-  archiveSubReq(srId);
-  -- If not a put inside a PrepareToPut/Update, create TapeCopies
-  -- and update DiskCopy status
   IF contextPIPP != 0 THEN
+    -- If not a put inside a PrepareToPut/Update, create TapeCopies
+    -- and update DiskCopy status
     putDoneFunc(cfId, realFileSize, contextPIPP);
-  END IF;
-  -- If put inside PrepareToPut/Update, restart any PutDone currently
-  -- waiting on this put/update
-  IF contextPIPP = 0 THEN
+  ELSE
+    -- If put inside PrepareToPut/Update, restart any PutDone currently
+    -- waiting on this put/update
     UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
      WHERE id IN
       (SELECT SubRequest.id FROM SubRequest, Id2Type
@@ -2883,6 +2870,8 @@ BEGIN
           AND SubRequest.castorFile = cfId
           AND SubRequest.status = 5); -- WAITSUBREQ
   END IF;
+  -- archive Subrequest
+  archiveSubReq(srId);
   COMMIT;
 END;
 
