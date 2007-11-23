@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
     u_signed64 sleepTime=newRecHandler->timeSleep();
     
     newRecHandler->addThreadPool(
-      new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(myService,recallPySvc), 0, sleepTime));
+      new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(myService,recallPySvc), sleepTime));
     
     newRecHandler->getThreadPool('R')->setNbThreads(1);
     newRecHandler->start();

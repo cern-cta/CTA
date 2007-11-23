@@ -155,7 +155,7 @@ int main(int argc, char* argv[]){
     std::vector<std::string> listSvcClass=newMigHunter.listSvcClass();
 
     newMigHunter.addThreadPool(
-      new castor::server::SignalThreadPool("MigHunterThread", new castor::rtcopy::mighunter::MigHunterThread(mySvc,listSvcClass,minByteVolume,doClone,migrSvc,strSvc), 0, sleepTime));
+      new castor::server::SignalThreadPool("MigHunterThread", new castor::rtcopy::mighunter::MigHunterThread(mySvc,listSvcClass,minByteVolume,doClone,migrSvc,strSvc), sleepTime));
     newMigHunter.getThreadPool('M')->setNbThreads(1);
     newMigHunter.start();
   
