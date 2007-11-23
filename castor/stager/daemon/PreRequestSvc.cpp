@@ -121,7 +121,6 @@ namespace castor{
               throw e;
           }
           
-          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_START_PROCESSING, 0);
           stgRequestHandler->preHandle();
           stgRequestHandler->handle();
           
@@ -148,19 +147,3 @@ namespace castor{
     }//end namespace dbService
   }//end namespace stager
 }//end namespace castor
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

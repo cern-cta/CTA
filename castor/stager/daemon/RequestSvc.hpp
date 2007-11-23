@@ -39,7 +39,7 @@ namespace castor {
         /*************************************************************************/
         virtual castor::IObject* select() throw();
         
-        void handleException(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage);
+        void handleException(StagerRequestHelper* stgRequestHelper,StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw();
         
       protected:
         std::string m_name;

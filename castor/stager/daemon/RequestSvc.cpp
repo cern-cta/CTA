@@ -95,26 +95,31 @@ namespace castor{
       /* function to handle the exception (set subrequest to FAILED and replyToClient) */
       /* things to do: */
       /********************************************************************************/
-      void RequestSvc::handleException(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage){
-        if(stgRequestHelper == NULL) {
+      void RequestSvc::handleException(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw() {
+        if(stgRequestHelper == 0 || stgRequestHelper->dbService == 0 || stgRequestHelper->subrequest == 0) {
           // exception thrown before being able to do anything with the db
           // we can't do much here...
           return;        
         }
-        if(stgRequestHelper->subrequest != NULL)
-          stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED);
+        stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED);
       
-        /* reply to the client in case of error*/
-        if(stgRequestHelper->iClient != NULL){
-          StagerReplyHelper *stgReplyHelper = new StagerReplyHelper();
-          stgReplyHelper->setAndSendIoResponse(stgRequestHelper, (stgCnsHelper ? &(stgCnsHelper->cnsFileid) : 0), errorCode, errorMessage);
-          stgReplyHelper->endReplyToClient(stgRequestHelper);
-          delete stgReplyHelper;
-        }else{
-          if((stgRequestHelper->dbService)&&(stgRequestHelper->subrequest)) {
+        if(stgRequestHelper->fileRequest != NULL) {
+          try {
+            // inform the client about the error
+            StagerReplyHelper *stgReplyHelper = new StagerReplyHelper();
+            stgReplyHelper->setAndSendIoResponse(stgRequestHelper, (stgCnsHelper ? &(stgCnsHelper->cnsFileid) : 0), errorCode, errorMessage);
+            stgReplyHelper->endReplyToClient(stgRequestHelper);
+            delete stgReplyHelper;
+          } catch (castor::exception::Exception ignored) {}
+        }
+        else {
+          // if we didn't get the fileRequest, we probably got a serious failure, and we can't answer the client
+          // just try to update the db
+          try {
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
             stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
           }
+          catch (castor::exception::Exception ignored) {}
         }
       }
     

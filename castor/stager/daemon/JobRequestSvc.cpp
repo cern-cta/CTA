@@ -77,7 +77,6 @@ namespace castor{
         StagerJobRequestHandler* stgRequestHandler = NULL;
         
         try {
-         
           int typeRequest=0;
           stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
 
@@ -103,7 +102,6 @@ namespace castor{
               throw e;
           }
           
-          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_START_PROCESSING, 0);
           stgRequestHandler->preHandle();
           stgRequestHandler->handle();
           
@@ -113,7 +111,6 @@ namespace castor{
           
           delete stgRequestHandler;
           delete stgRequestHelper;         
-         
           
         }catch(castor::exception::Exception ex){ /* process the exception an replyToClient */
           
