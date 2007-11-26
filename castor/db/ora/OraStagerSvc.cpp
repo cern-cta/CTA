@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.218 $ $Release$ $Date: 2007/11/20 16:45:36 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.219 $ $Release$ $Date: 2007/11/26 17:31:56 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -622,30 +622,27 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
       subreq->setDiskcopy(NULL);
       delete dc;
   }
-  catch (castor::exception::Exception forward){
+  catch (castor::exception::Exception e) {
     // no valid tape copy found. In such a case, we rollback and
     // set the subrequest to failed. The original message is forwarded
     try{
-
         cnvSvc()->rollback();
         if(dc) {
           delete dc;
           subreq->setDiskcopy(0);
         }
         subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
+        subreq->setErrorCode(1716);
+        subreq->setErrorMessage("No valid tape copy found");
         cnvSvc()->updateRep(&ad, subreq, true);
-       
-    }catch(castor::exception::Exception forward2){
+    }
+    catch(castor::exception::Exception forward) {
+        // should never happen
         castor::exception::Internal ex2;
-        ex2.getMessage() << "Exception in try-catch of createRecallCandidate"
-        << std::endl << forward2.getMessage().str();
+        ex2.getMessage() << "Couldn't fail subrequest in createRecallCandidate: "
+        << std::endl << forward.getMessage().str();
         throw ex2;
     }
-
-    castor::exception::Internal ex;
-    ex.getMessage() << "Exception in createRecallCandidate"
-    << std::endl << forward.getMessage().str();
-    throw ex;
   }
 }
 
