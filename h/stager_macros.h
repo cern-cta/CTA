@@ -1,5 +1,5 @@
 /*
- * $Id: stager_macros.h,v 1.24 2007/08/16 06:41:38 waldron Exp $
+ * $Id: stager_macros.h,v 1.25 2007/11/26 13:27:18 waldron Exp $
  */
 
 #ifndef __stager_macros_h
@@ -85,29 +85,7 @@
     exit(value); \
   } \
 }
-/* Special version of STAGER_LOG_STARTUP but with fileid, used in the job */
-#define STAGER_LOG_STARTUP_FULL(fileid) { \
-  if (! stagerNoDlf) { \
-    int _save_serrno = serrno; \
-    dlf_write( \
-	      stager_request_uuid, \
-	      stagerMessages[STAGER_MSG_STARTUP].defaultSeverity, \
-	      STAGER_MSG_STARTUP, \
-	      (struct Cns_fileid *)fileid, \
-	      9, \
-	      stagerMessages[STAGER_MSG_STARTUP].what2Type,DLF_MSG_PARAM_STR,func, \
-	      "GENERATED_DATE",DLF_MSG_PARAM_STR,__DATE__, \
-	      "GENERATED_TIME",DLF_MSG_PARAM_STR,__TIME__, \
-	      "ARGUMENTS",DLF_MSG_PARAM_STR,stagerConcatenatedArgv, \
-	      "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
-	      "File",DLF_MSG_PARAM_STR,__FILE__, \
-	      "Line",DLF_MSG_PARAM_INT,__LINE__, \
-	      "errno",DLF_MSG_PARAM_INT,errno, \
-	      "serrno",DLF_MSG_PARAM_INT,serrno \
-	      ); \
-    serrno = _save_serrno; \
-  } \
-}
+
 /* Special version of STAGER_LOG_EXIT but with fileid, used in the job */
 #define STAGER_LOG_EXIT_FULL(fileid,value) { \
   if (! stagerNoDlf) { \
@@ -117,14 +95,11 @@
 	      stagerMessages[STAGER_MSG_EXIT].defaultSeverity, \
 	      STAGER_MSG_EXIT, \
 	      (struct Cns_fileid *)fileid, \
-	      7, \
-	      stagerMessages[STAGER_MSG_EXIT].what2Type,DLF_MSG_PARAM_STR,func, \
-	      "EXIT STATUS",DLF_MSG_PARAM_INT,value, \
-	      "SubRequestUuid",DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
-	      "File",DLF_MSG_PARAM_STR,__FILE__, \
-	      "Line",DLF_MSG_PARAM_INT,__LINE__, \
-	      "errno",DLF_MSG_PARAM_INT,errno, \
-	      "serrno",DLF_MSG_PARAM_INT,serrno \
+	      4, \
+	      "ExitStatus",DLF_MSG_PARAM_INT,value, \
+	      NULL,DLF_MSG_PARAM_UUID,stager_subrequest_uuid, \
+	      "Errno",DLF_MSG_PARAM_INT,errno, \
+	      "Serrno",DLF_MSG_PARAM_INT,serrno \
 	      ); \
     serrno = _save_serrno; \
     dlf_shutdown(5); \
