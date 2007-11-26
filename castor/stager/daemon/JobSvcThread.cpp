@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2007/11/23 11:27:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2007/11/26 10:29:49 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -137,7 +137,6 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
         {castor::dlf::Param("SubRequest DbId", sReq->subreqId()),
          castor::dlf::Param("Request Type", "StartRequest")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ, 2, params);
-      delete sReq;
       return;
     }
     subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
@@ -147,7 +146,6 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
         {castor::dlf::Param("Type", obj->type()),
          castor::dlf::Param("Request Type", "StartRequest")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT, 2, params);
-      delete sReq;
       delete obj;
       return;
     }
@@ -162,7 +160,6 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
          castor::dlf::Param("FileSystem", sReq->fileSystem()),
          castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOFSOK, 3, params);
-      delete sReq;
       delete obj;
       return;
     }
@@ -429,7 +426,6 @@ void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
         {castor::dlf::Param("SubRequest DbId", mcReq->subReqId()),
          castor::dlf::Param("Request Type", "MoverCloseRequest")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ, 2, params);
-      delete mcReq;
       return;
     }
     subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
@@ -439,7 +435,6 @@ void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
         {castor::dlf::Param("Type", obj->type()),
          castor::dlf::Param("Request Type", "MoverCloseRequest")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT, 2, params);
-      delete mcReq;
       delete obj;
       return;
     }
@@ -788,7 +783,7 @@ void castor::stager::dbService::JobSvcThread::process
     }
   }
   try {
-    // Delete Request From the database
+    // Delete Request from the database, even when it failed 
     svcs->deleteRep(&ad, req, true);
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
