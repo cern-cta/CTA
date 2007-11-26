@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/20 15:31:13 $ $Author: itglp $
+* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/26 13:17:23 $ $Author: waldron $
 *
 * A thread to handle notifications to wake up workers in a pool
 *
@@ -86,7 +86,7 @@ void castor::server::NotifierThread::run(void* param) {
       pool->clog() << WARNING << any.getMessage().str() << std::endl;
       try {
         pool->m_poolMutex->release();
-	    } catch(...) {}
+      } catch(...) {}
     }
   }
 }
