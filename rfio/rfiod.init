@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.7 $ $Release$ $Date: 2007/11/22 11:02:02 $ $Author: waldron $
+# @(#)$RCSfile: rfiod.init,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/26 13:23:17 $ $Author: waldron $
 #
 # chkconfig: 345 65 40
 # description: RFIO Server Daemon Initialisation Script
@@ -47,16 +47,6 @@ start() {
 	# Run daemon
 	echo -n $"Starting $prog: "
 
-        # Check if daemon is already running
-        if [ -e /var/lock/subsys/$prog ]; then
-                if [ -n "`/sbin/pidof $prog`" ]; then
-                        echo -n $"already running"
-                        failure
-                        echo
-                        return 1
-                fi
-        fi
-
 	daemon /usr/bin/$prog $OPTIONS $RFIOD_OPTIONS
 	
 	# Write the pid to a file. This way when we stop() the rfiod daemon
@@ -67,7 +57,7 @@ start() {
 		pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
 		rm -f /var/run/$prog.pid
 		if [ -n "$pid" ]; then
-		    echo $pid > /var/run/$prog.pid
+			echo $pid > /var/run/$prog.pid
 			RETVAL=0
 		else
 			RETVAL=1
