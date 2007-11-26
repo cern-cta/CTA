@@ -64,6 +64,8 @@ Cns_bulkExist(const char* server, u_signed64 *fileIds, int *nbFileIds)
     for (i = 0; i < *nbFileIds; i++) {
       unmarshall_HYPER (rbp, fileIds[i]);
     }
+  } else {
+    *nbFileIds = 0;
   }
   free(sendbuf);
   free(repbuf);
