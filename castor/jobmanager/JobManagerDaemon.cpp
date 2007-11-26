@@ -17,17 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/10/04 07:44:42 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/26 15:22:41 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
 
 // Include files
 #include "castor/jobmanager/JobManagerDaemon.hpp"
-#include "castor/jobmanager/CancellationThread.hpp"
+#include "castor/jobmanager/ManagementThread.hpp"
 #include "castor/jobmanager/DispatchThread.hpp"
 #include "castor/jobmanager/SubmissionProcess.hpp"
 #include "castor/server/SignalThreadPool.hpp"
+#include "castor/server/NotifierThread.hpp"
 #include "castor/server/ForkedProcessPool.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/Constants.hpp"
@@ -35,14 +36,14 @@
 #include "signal.h"
 
 // Definitions
-#define DEFAULT_KILLRETRY_INTERVAL 30
-#define DEFAULT_DISPATCH_INTERVAL  10
-#define DEFAULT_NOTIFICATION_PORT  15011
-#define DEFAULT_PREFORKED_WORKERS  2
+#define DEFAULT_MANAGEMENT_INTERVAL 30
+#define DEFAULT_DISPATCH_INTERVAL   10
+#define DEFAULT_NOTIFICATION_PORT   15011
+#define DEFAULT_PREFORKED_WORKERS   2
 
 
 //-----------------------------------------------------------------------------
-// main
+// Main
 //-----------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
@@ -88,9 +89,9 @@ int main(int argc, char *argv[]) {
     }
 
     // Determine if the job manager should perform sanity checks on the uids
-    // that it retrieves from the database. These checks include a verse lookup
-    // of uid to username and checks to see if the user belongs to the group
-    // reported.
+    // that it retrieves from the database. These checks include a reverse 
+    // lookup of uid to username and checks to see if the user belongs to the 
+    // group reported.
     value = getconfent("JobManager", "ReverseUidLookups", 0);
     bool reverseUidLookups = true;
     if (value) {
@@ -154,33 +155,35 @@ int main(int argc, char *argv[]) {
        ("DispatchThread",
 	new castor::jobmanager::DispatchThread
 	(dynamic_cast<castor::server::ForkedProcessPool*>
-	 (daemon.getThreadPool('F'))), notifyPort, DEFAULT_DISPATCH_INTERVAL));
+	 (daemon.getThreadPool('F'))), DEFAULT_DISPATCH_INTERVAL));
     daemon.getThreadPool('D')->setNbThreads(1);
+    daemon.addNotifierThreadPool(notifyPort);
 
-    // Determine the polling interval for the cancellation thread. This thread
+    // Determine the polling interval for the management thread. This thread
     // communicates with LSF. A polling interval which is too small will most 
     // likely stress the LSF master unnecessarily, maybe even kill it!
-    value = getconfent("JobManager", "KillRetryInterval", 0);
-    int interval = DEFAULT_KILLRETRY_INTERVAL;
+    value = getconfent("JobManager", "ManagementInterval", 0);
+    int interval = DEFAULT_MANAGEMENT_INTERVAL;
     if (value) {
       interval = std::strtol(value, 0, 10);
       if (interval == 0) {
-	interval = DEFAULT_KILLRETRY_INTERVAL;
-      } else if (interval < 10) {
+	interval = DEFAULT_MANAGEMENT_INTERVAL;
+      } else if ((interval < 10) && (interval != 0)) {
 	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "KillRetryInterval value too small: " << interval
+	e.getMessage() << "ManagementInterval value too small: " << interval
 		       << "- must be > 10" << std::endl;
 	throw e;
       }
     }
 
-    // Cancellation ThreadPool
+    // Management ThreadPool
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
-       ("CancellationThread",
-	new castor::jobmanager::CancellationThread
-	(interval), 0, interval));
-    daemon.getThreadPool('C')->setNbThreads(1);
+       ("ManagementThread",
+    	new castor::jobmanager::ManagementThread(interval), interval));
+    if (interval != 0) {
+      daemon.getThreadPool('M')->setNbThreads(1);
+    }
 
     // Start daemon
     daemon.parseCommandLine(argc, argv);
@@ -194,7 +197,7 @@ int main(int argc, char *argv[]) {
 
     // "Exception caught when starting JobManager"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Code", sstrerror(e.code())),
+      {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
   } catch (...) {
@@ -219,7 +222,7 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      {  2, "Failed to initialize the LSF batch library (LSBLIB)" },
      {  3, "Exception caught when starting JobManager" },
 
-     // Cancellation
+     // Management
      { 20, "Invalid JobManager/PendingTimeout option, ignoring entry" },
      { 21, "Failed to retrieve historical LSF job information from batch master" },
      { 22, "Failed to retrieve current LSF job information from batch master" },
@@ -227,12 +230,14 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 24, "Failed to terminate LSF job" },
      { 25, "Job terminated, timeout occurred" },
      { 26, "Job terminated by service administrator" },
-     { 27, "Cancellation thread interval is greater then CLEAN_PERIOD in lsb.params, detection of abnormally EXITING jobs disabled" },
+     { 27, "Management thread interval is greater then CLEAN_PERIOD in lsb.params, detection of abnormally EXITING jobs disabled" },
      { 28, "Exception caught in trying to fail subrequest" },
      { 29, "Failed to execute failSchedulerJob procedure" },
-     { 30, "Exception caught in trying to get filesystem states, continuing anyway" },
-     { 31, "Failed to execute fileSystemStates procedure, continuing anyway" },
+     { 30, "Exception caught in trying to get scheduler resources, continuing anyway" },
+     { 31, "Failed to execute getSchedulerResources procedure, continuing anyway" },
      { 32, "Job terminated, all requested filesystems are DISABLED" },
+     { 33, "Job terminated, source filesystem for disk2disk copy is DISABLED, restarting SubRequest" },
+     { 34, "Job terminated, diskpool/svcclass has no filesystems in DRAINING or PRODUCTION" },
 
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },
@@ -246,8 +251,11 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 48, "Failed to submit job into LSF, fatal error encountered" },
      { 49, "Exception caught trying to submit a job into LSF" },
      { 50, "Failed to execute lsfSubmit in SubmissionProcess::run" },
-     { 51, "Failed to submit job into LSF, svcclass/queue name is a reserved word" },
-     
+     { 51, "Cannot submit job into LSF, svcclass/queue name is a reserved word" },
+     { 52, "Cannot submit job into LSF, target service class has no diskservers" },
+     { 53, "Memory allocation failure, job submission cancelled" },
+     { 54, "Invalid diskCopySource syntax, job submission cancelled" },
+
      // Dispatch
      { 60, "Job received" },
      { 61, "Exception caught selecting a new job to schedule in DispatchThread::select" },

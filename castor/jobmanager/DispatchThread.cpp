@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/22 17:57:18 $ $Author: itglp $
+ * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/26 15:22:41 $ $Author: waldron $
  *
  * A thread used to dispatch subrequest's in a SUBREQUEST_READYFORSCHED into 
  * the scheduler using the forked process pool
@@ -35,7 +35,7 @@
 
 
 //-----------------------------------------------------------------------------
-// constructor
+// Constructor
 //-----------------------------------------------------------------------------
 castor::jobmanager::DispatchThread::DispatchThread
 (castor::server::ForkedProcessPool *processPool)
@@ -62,7 +62,7 @@ castor::jobmanager::DispatchThread::DispatchThread
 
 
 //-----------------------------------------------------------------------------
-// select
+// Select
 //-----------------------------------------------------------------------------
 castor::IObject *castor::jobmanager::DispatchThread::select() throw() {
   try {
@@ -73,7 +73,7 @@ castor::IObject *castor::jobmanager::DispatchThread::select() throw() {
     
     // "Exception caught selecting a new job to schedule in DispatchThread::select"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Code", sstrerror(e.code())),
+      {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 61, 2, params);
   } catch (...) {
@@ -88,7 +88,7 @@ castor::IObject *castor::jobmanager::DispatchThread::select() throw() {
 
 
 //-----------------------------------------------------------------------------
-// process
+// Process
 //-----------------------------------------------------------------------------
 void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw() {
 
@@ -103,12 +103,13 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
   string2Cuuid(&m_requestId, (char *)request->reqId().c_str());
   string2Cuuid(&m_subRequestId, (char *)request->subReqId().c_str());
   m_fileId.fileid = request->fileId();
-  strncpy(m_fileId.server, request->nsHost().c_str(), CA_MAXHOSTNAMELEN);
-    
+  strncpy(m_fileId.server, request->nsHost().c_str(), CA_MAXHOSTNAMELEN + 1);
+  m_fileId.server[CA_MAXHOSTNAMELEN + 1] = '\0';
+  
   // "Job received"
   castor::dlf::Param params[] =
-    {castor::dlf::Param(m_subRequestId),
-     castor::dlf::Param("ID", request->id())};
+    {castor::dlf::Param("ID", request->id()),
+     castor::dlf::Param(m_subRequestId)};
   castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 60, 2, params, &m_fileId);
 
   try {
@@ -124,7 +125,7 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
       // "Exception caught trying to restart a job in DispatchThread::process, 
       // job will remain incorrectly in SUBREQUEST_BEINGSCHED"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Code", sstrerror(e.code())),
+	{castor::dlf::Param("Type", sstrerror(e.code())),
 	 castor::dlf::Param("Message", e.getMessage().str()),
 	 castor::dlf::Param("ID", request->id()),
 	 castor::dlf::Param(m_subRequestId)};
