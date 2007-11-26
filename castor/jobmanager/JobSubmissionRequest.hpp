@@ -407,24 +407,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_jobId
-       * The jobId identify the job in the scheduler
-       * @return the value of m_jobId
-       */
-      u_signed64 jobId() const {
-        return m_jobId;
-      }
-
-      /**
-       * Set the value of m_jobId
-       * The jobId identify the job in the scheduler
-       * @param new_var the new value of m_jobId
-       */
-      void setJobId(u_signed64 new_var) {
-        m_jobId = new_var;
-      }
-
-      /**
        * Get the value of m_clientType
        * The Id2type of the client
        * @return the value of m_clientType
@@ -458,6 +440,78 @@ namespace castor {
        */
       void setOpenFlags(std::string new_var) {
         m_openFlags = new_var;
+      }
+
+      /**
+       * Get the value of m_sourceDiskCopyId
+       * The id of the source diskcopy
+       * @return the value of m_sourceDiskCopyId
+       */
+      u_signed64 sourceDiskCopyId() const {
+        return m_sourceDiskCopyId;
+      }
+
+      /**
+       * Set the value of m_sourceDiskCopyId
+       * The id of the source diskcopy
+       * @param new_var the new value of m_sourceDiskCopyId
+       */
+      void setSourceDiskCopyId(u_signed64 new_var) {
+        m_sourceDiskCopyId = new_var;
+      }
+
+      /**
+       * Get the value of m_askedHosts
+       * A list of hosts to provide to LSF where the job could potentially run.
+       * @return the value of m_askedHosts
+       */
+      std::string askedHosts() const {
+        return m_askedHosts;
+      }
+
+      /**
+       * Set the value of m_askedHosts
+       * A list of hosts to provide to LSF where the job could potentially run.
+       * @param new_var the new value of m_askedHosts
+       */
+      void setAskedHosts(std::string new_var) {
+        m_askedHosts = new_var;
+      }
+
+      /**
+       * Get the value of m_numAskedHosts
+       * The number of hosts defined in the askedHosts attribute
+       * @return the value of m_numAskedHosts
+       */
+      u_signed64 numAskedHosts() const {
+        return m_numAskedHosts;
+      }
+
+      /**
+       * Set the value of m_numAskedHosts
+       * The number of hosts defined in the askedHosts attribute
+       * @param new_var the new value of m_numAskedHosts
+       */
+      void setNumAskedHosts(u_signed64 new_var) {
+        m_numAskedHosts = new_var;
+      }
+
+      /**
+       * Get the value of m_destDiskCopyId
+       * The id of the destination diskcopy
+       * @return the value of m_destDiskCopyId
+       */
+      u_signed64 destDiskCopyId() const {
+        return m_destDiskCopyId;
+      }
+
+      /**
+       * Set the value of m_destDiskCopyId
+       * The id of the destination diskcopy
+       * @param new_var the new value of m_destDiskCopyId
+       */
+      void setDestDiskCopyId(u_signed64 new_var) {
+        m_destDiskCopyId = new_var;
       }
 
       /**
@@ -531,14 +585,23 @@ namespace castor {
       /// The time the request started to be submitted into the scheduler
       u_signed64 m_submitStartTime;
 
-      /// The jobId identify the job in the scheduler
-      u_signed64 m_jobId;
-
       /// The Id2type of the client
       u_signed64 m_clientType;
 
       /// The direction of the transfer, e.g. read, write, read/write
       std::string m_openFlags;
+
+      /// The id of the source diskcopy
+      u_signed64 m_sourceDiskCopyId;
+
+      /// A list of hosts to provide to LSF where the job could potentially run.
+      std::string m_askedHosts;
+
+      /// The number of hosts defined in the askedHosts attribute
+      u_signed64 m_numAskedHosts;
+
+      /// The id of the destination diskcopy
+      u_signed64 m_destDiskCopyId;
 
       /// The id of this object
       u_signed64 m_id;

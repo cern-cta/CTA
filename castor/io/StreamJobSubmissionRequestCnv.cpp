@@ -105,9 +105,12 @@ void castor::io::StreamJobSubmissionRequestCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->egid();
   ad->stream() << obj->selectTime();
   ad->stream() << obj->submitStartTime();
-  ad->stream() << obj->jobId();
   ad->stream() << obj->clientType();
   ad->stream() << obj->openFlags();
+  ad->stream() << obj->sourceDiskCopyId();
+  ad->stream() << obj->askedHosts();
+  ad->stream() << obj->numAskedHosts();
+  ad->stream() << obj->destDiskCopyId();
   ad->stream() << obj->id();
 }
 
@@ -172,15 +175,24 @@ castor::IObject* castor::io::StreamJobSubmissionRequestCnv::createObj(castor::IA
   u_signed64 submitStartTime;
   ad->stream() >> submitStartTime;
   object->setSubmitStartTime(submitStartTime);
-  u_signed64 jobId;
-  ad->stream() >> jobId;
-  object->setJobId(jobId);
   u_signed64 clientType;
   ad->stream() >> clientType;
   object->setClientType(clientType);
   std::string openFlags;
   ad->stream() >> openFlags;
   object->setOpenFlags(openFlags);
+  u_signed64 sourceDiskCopyId;
+  ad->stream() >> sourceDiskCopyId;
+  object->setSourceDiskCopyId(sourceDiskCopyId);
+  std::string askedHosts;
+  ad->stream() >> askedHosts;
+  object->setAskedHosts(askedHosts);
+  u_signed64 numAskedHosts;
+  ad->stream() >> numAskedHosts;
+  object->setNumAskedHosts(numAskedHosts);
+  u_signed64 destDiskCopyId;
+  ad->stream() >> destDiskCopyId;
+  object->setDestDiskCopyId(destDiskCopyId);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

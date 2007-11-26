@@ -56,9 +56,12 @@ castor::jobmanager::JobSubmissionRequest::JobSubmissionRequest() throw() :
   m_egid(0),
   m_selectTime(0),
   m_submitStartTime(0),
-  m_jobId(0),
   m_clientType(0),
   m_openFlags(""),
+  m_sourceDiskCopyId(0),
+  m_askedHosts(""),
+  m_numAskedHosts(0),
+  m_destDiskCopyId(0),
   m_id(0) {
 }
 
@@ -98,9 +101,12 @@ void castor::jobmanager::JobSubmissionRequest::print(std::ostream& stream,
   stream << indent << "egid : " << m_egid << std::endl;
   stream << indent << "selectTime : " << m_selectTime << std::endl;
   stream << indent << "submitStartTime : " << m_submitStartTime << std::endl;
-  stream << indent << "jobId : " << m_jobId << std::endl;
   stream << indent << "clientType : " << m_clientType << std::endl;
   stream << indent << "openFlags : " << m_openFlags << std::endl;
+  stream << indent << "sourceDiskCopyId : " << m_sourceDiskCopyId << std::endl;
+  stream << indent << "askedHosts : " << m_askedHosts << std::endl;
+  stream << indent << "numAskedHosts : " << m_numAskedHosts << std::endl;
+  stream << indent << "destDiskCopyId : " << m_destDiskCopyId << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
