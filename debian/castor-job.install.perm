@@ -1,1 +1,2 @@
 %attr(6755,stage,st) usr/bin/stagerJob
+%attr(6775,stage,st) usr/bin/diskCopyTransfer
