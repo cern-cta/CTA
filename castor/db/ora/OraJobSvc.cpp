@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/11/26 14:39:50 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -104,7 +104,7 @@ const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
 
 /// SQL statement for disk2DiskCopyStart
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyStartStatementString =
-  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
+  "BEGIN disk2DiskCopyStart(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10); END;";
 
 /// SQL statement for disk2DiskCopyDone
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString =
@@ -112,7 +112,7 @@ const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyDoneStatementString
 
 /// SQL statement for disk2DiskCopyFailed
 const std::string castor::db::ora::OraJobSvc::s_disk2DiskCopyFailedStatementString =
-  "BEGIN disk2DiskCopyFailed(:1); END;";
+  "BEGIN disk2DiskCopyFailed(:1, :2); END;";
 
 /// SQL statement for prepareForMigration
 const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
@@ -395,6 +395,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
 	(8, oracle::occi::OCCISTRING, 2048);
       m_disk2DiskCopyStartStatement->registerOutParam
 	(9, oracle::occi::OCCISTRING, 2048);
+      m_disk2DiskCopyStartStatement->registerOutParam
+	(10, oracle::occi::OCCISTRING, 2048);      
     }
 
     // Execute the statement and see if we found something
@@ -418,6 +420,7 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     diskCopy->setDiskServer(diskServer);
     diskCopy->setMountPoint(fileSystem);
     diskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(6));
+    diskCopy->setSvcClass(destSvcClass);
 
     // Get the information about the source disk copy
     sourceDiskCopy = new castor::stager::DiskCopyInfo();
@@ -425,6 +428,18 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     sourceDiskCopy->setDiskServer(m_disk2DiskCopyStartStatement->getString(7));
     sourceDiskCopy->setMountPoint(m_disk2DiskCopyStartStatement->getString(8));
     sourceDiskCopy->setDiskCopyPath(m_disk2DiskCopyStartStatement->getString(9));
+    sourceDiskCopy->setSvcClass(m_disk2DiskCopyStartStatement->getString(10));
+
+    // Make sure the filesystems have a trailing '/'
+    u_signed64 len = diskCopy->mountPoint().size();
+    if ((len > 2) && (diskCopy->mountPoint()[len - 1] != '/')) {
+      diskCopy->setMountPoint(diskCopy->mountPoint() + "/");
+    }
+    
+    len = sourceDiskCopy->mountPoint().size();
+    if ((len > 2) && (sourceDiskCopy->mountPoint()[len - 1] != '/')) {
+      sourceDiskCopy->setMountPoint(sourceDiskCopy->mountPoint() + "/");
+    }
 
     // Return
     cnvSvc()->commit();
@@ -432,8 +447,15 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyStart
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in disk2DiskCopyStart."
-      << std::endl << e.what();
+      << "Error caught in disk2DiskCopyStart. ";
+    if ((e.getErrorCode() == 20108) ||
+	(e.getErrorCode() == 20109) ||
+	(e.getErrorCode() == 20110)) {
+      std::string error = e.what();
+      ex.getMessage() << error.substr(0, error.find("ORA-", 4));
+    } else {
+      ex.getMessage() << std::endl << e.what();
+    }
     throw ex;
   }
 }
@@ -477,6 +499,8 @@ void castor::db::ora::OraJobSvc::disk2DiskCopyFailed
     if (0 == m_disk2DiskCopyFailedStatement) {
       m_disk2DiskCopyFailedStatement =
         createStatement(s_disk2DiskCopyFailedStatementString);
+      m_disk2DiskCopyFailedStatement->registerOutParam
+	(2, oracle::occi::OCCIDOUBLE);
       m_disk2DiskCopyFailedStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
