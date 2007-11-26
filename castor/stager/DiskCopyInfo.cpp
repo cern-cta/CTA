@@ -51,6 +51,7 @@ castor::stager::DiskCopyInfo::DiskCopyInfo() throw() :
   m_mountPoint(""),
   m_nbAccesses(0),
   m_lastKnownFileName(""),
+  m_svcClass(""),
   m_id(0) {
 }
 
@@ -85,6 +86,7 @@ void castor::stager::DiskCopyInfo::print(std::ostream& stream,
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
   stream << indent << "nbAccesses : " << m_nbAccesses << std::endl;
   stream << indent << "lastKnownFileName : " << m_lastKnownFileName << std::endl;
+  stream << indent << "svcClass : " << m_svcClass << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

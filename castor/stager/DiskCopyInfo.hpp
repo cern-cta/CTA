@@ -315,6 +315,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_svcClass
+       * The service class that the diskcopy is in
+       * @return the value of m_svcClass
+       */
+      std::string svcClass() const {
+        return m_svcClass;
+      }
+
+      /**
+       * Set the value of m_svcClass
+       * The service class that the diskcopy is in
+       * @param new_var the new value of m_svcClass
+       */
+      void setSvcClass(std::string new_var) {
+        m_svcClass = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -369,6 +387,9 @@ namespace castor {
 
       /// Last known file name for this file, from the stager point of view. This does not mean it is the current one in the nameserver
       std::string m_lastKnownFileName;
+
+      /// The service class that the diskcopy is in
+      std::string m_svcClass;
 
       /// The id of this object
       u_signed64 m_id;
