@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/08/07 14:56:32 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/26 15:20:47 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -84,27 +84,26 @@ namespace castor {
 
       /// Not Implemented
       virtual void stop() {};
+      
+      /**
+       * Submit a job into the LSF scheduler. If an error occurs the method
+       * will also fail the subrequest in the database.
+       * @param request The submission request information needed to submit
+       * a job into the scheduler.
+       * @exception Exception in case of error
+       */
+      virtual void submitJob
+      (castor::jobmanager::JobSubmissionRequest *request)
+	throw(castor::exception::Exception);
 
       /**
        * Terminate the subrequest associated with the LSF job in the database
        * using the given errorCode.
        * @param request The submission request information 
        * @param errorCode The error code to use when terminating the job
-       * @param errorMessage The errror message to use
        */
-      virtual void failSubRequest
-      (castor::jobmanager::JobSubmissionRequest *request, 
-       int errorCode, std::string errorMessage);
-      
-      /**
-       * Submit a job into the LSF scheduler. If an error occurs the method
-       * will also fail the subrequest in the database.
-       * @param request The submission request information needed to submit
-       * a job into the scheduler
-       * @exception Exception in case of error
-       */
-      virtual void lsfSubmit(castor::jobmanager::JobSubmissionRequest *request)
-	throw(castor::exception::Exception);
+      virtual void terminateRequest
+      (castor::jobmanager::JobSubmissionRequest *request, int errorCode);
 
     private:
 
