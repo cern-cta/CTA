@@ -271,6 +271,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Job killed by service administrator",
    "Job timed out while waiting to be scheduled",
    "Scheduler error",
+   "No filesystems available in service class",
    "BAD ERROR NUMBER"
   };
 

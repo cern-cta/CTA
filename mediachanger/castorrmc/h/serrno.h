@@ -278,14 +278,15 @@
 #define ESTJOBKILLED	ESTBASEOFF+19   /* Job killed by service administrator */
 #define ESTJOBTIMEDOUT	ESTBASEOFF+20	/* Job timed out while waiting to be scheduled */
 #define ESTSCHEDERR     ESTBASEOFF+21   /* Scheduler error */
-#define ESTMAXERR       ESTBASEOFF+21
+#define ESTSVCCLASSNOFS ESTBASEOFF+22   /* No filesystems available in service class */
+#define ESTMAXERR       ESTBASEOFF+22
 
 /*
  *------------------------------------------------------------------------
  * SYSREQ errors
  *------------------------------------------------------------------------
  */
-#define ESQTMSNOTACT    ESQBASEOFF+1    /* TMS not active               */
+#define ESQTMSNOTACT    ESQBASEOFF+1    /* TMS not active                 */
 #define ESQMAXERR       ESQBASEOFF+1    /* Maximum error number of SYSREQ */
 /*
  * Backward compatibility
