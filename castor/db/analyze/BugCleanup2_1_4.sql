@@ -85,7 +85,7 @@ BEGIN
 	UPDATE subrequest SET status=0 WHERE status IN (4,5) AND castorfile MEMBER OF cfIds;  
         COMMIT;
         -- log 
-        UPDATE CleanupLogTable SET message = 'Cleaning STAGIN diskcopy without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 10;
+        UPDATE CleanupLogTable SET message = 'STAGIN diskcopy without tapecopy: cleaned - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 10;
 	COMMIT;
 END;
 
@@ -105,7 +105,7 @@ BEGIN
 	DELETE FROM Id2type WHERE id MEMBER OF sIds;
 	COMMIT;
         -- log
-        UPDATE CleanupLogTable SET message = 'Cleaning segments without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 11;
+        UPDATE CleanupLogTable SET message = 'Segments without tapecopy: cleaned - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 11;
 	COMMIT;
 END; 
 
