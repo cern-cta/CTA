@@ -155,6 +155,8 @@ namespace castor {
 
       /**
        * Get the value of m_secure
+       * The secure attribute is used to know if the client is running secure or unsecure
+       * mode.
        * @return the value of m_secure
        */
       int secure() const {
@@ -163,6 +165,8 @@ namespace castor {
 
       /**
        * Set the value of m_secure
+       * The secure attribute is used to know if the client is running secure or unsecure
+       * mode.
        * @param new_var the new value of m_secure
        */
       void setSecure(int new_var) {
@@ -197,6 +201,7 @@ namespace castor {
       /// The client version. A free integer to be used by the server to know which kind of response to send back.
       int m_version;
 
+      /// The secure attribute is used to know if the client is running secure or unsecure mode.
       int m_secure;
 
       /// The id of this object
