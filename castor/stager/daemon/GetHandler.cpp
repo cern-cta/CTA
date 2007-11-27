@@ -141,7 +141,9 @@ namespace castor{
           case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
             
-            stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+            // here we don't care about the return value: we don't need to answer the client in any case
+            stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->fileRequest->euid(),
+              stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
             break;
           
         }//end switch

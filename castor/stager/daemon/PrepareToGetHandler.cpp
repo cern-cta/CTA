@@ -57,20 +57,12 @@ namespace castor{
         this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
         this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
       }
+
       
-      
-      
-      
-      
-      /*******************************************/	
-      /*     switch(getDiskCopyForJob):         */  
-      /*        case 0: (staged) archiveSubrequest */                                   
-      /*        case 1: (staged) waitD2DCopy  */
-      /*        case 2: (waitRecall) createRecallCandidate */
       bool StagerPrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
         bool result = false;
-        switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)){
+        switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)) {
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
             break;
@@ -84,35 +76,19 @@ namespace castor{
             stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
             
-            
             /* we archive the subrequest */
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
             result = true;
-          
-          case 1:    // DISK2DISKCOPY - will disappear soon
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, &(stgCnsHelper->cnsFileid));
-            
-            if(replicaSwitch()) {
-              processReplica();
-            }
-            
-            /* build the rmjob struct and submit the job */
-            jobManagerPart();
-            
-            stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-            stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED); 
-            stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-            /* and we have to notify the jobManager */
-            m_notifyJobManager = true;
-            result = true;
+            break;
           
           case 2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
             
-            stgRequestHelper->stagerService->createRecallCandidate(
+            // if success, answer client
+            result = stgRequestHelper->stagerService->createRecallCandidate(
               stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
-            result = true;
-        }//end switch
+            break;
+        }
         return result;
       }
       
@@ -126,14 +102,13 @@ namespace castor{
           handlerSettings();
           
           stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOGET, &(stgCnsHelper->cnsFileid));
-          
           jobOriented();	  
           
           /* depending on the value returned by getDiskCopiesForJob */
           /* if needed, we update the subrequestStatus internally  */
           if(switchDiskCopiesForJob()) {
             stgReplyHelper = new StagerReplyHelper();
-            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
+            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             
             delete stgReplyHelper;
@@ -151,10 +126,8 @@ namespace castor{
           };
           
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOGET, 2 ,params, &(stgCnsHelper->cnsFileid));
-          
           throw(e);
-        }  
-        
+        }        
         
       }
       
