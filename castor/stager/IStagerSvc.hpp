@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.81 $ $Release$ $Date: 2007/11/20 16:46:07 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.82 $ $Release$ $Date: 2007/11/27 15:25:14 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -315,11 +315,14 @@ namespace castor {
        * @param euid the user id
        * @param egid the group id of the user
        * @param svcClass svc class for recall policy
-       * @exception in case of error
+       * @return 0: error (e.g. no valid segments)
+       *         1: success
+       * @exception in case of system error
        */
-     virtual void createRecallCandidate
+     virtual int createRecallCandidate
      (castor::stager::SubRequest *subreq,
-      const unsigned long euid, const unsigned long egid,castor::stager::SvcClass *svcClass) 
+      const unsigned long euid, const unsigned long egid,
+      castor::stager::SvcClass *svcClass) 
         throw (castor::exception::Exception) = 0;
 
       /**

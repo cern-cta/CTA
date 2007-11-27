@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.219 $ $Release$ $Date: 2007/11/26 17:31:56 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.220 $ $Release$ $Date: 2007/11/27 15:25:15 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -62,6 +62,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
+#include "castor/exception/SegmentNotAccessible.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
@@ -564,7 +565,7 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
 // -----------------------------------------------------------------------
 // createRecallCandidate
 // -----------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::createRecallCandidate
+int castor::db::ora::OraStagerSvc::createRecallCandidate
 (castor::stager::SubRequest *subreq,
  unsigned long euid,
  unsigned long egid,
@@ -621,28 +622,42 @@ void castor::db::ora::OraStagerSvc::createRecallCandidate
       cnvSvc()->commit();   
       subreq->setDiskcopy(NULL);
       delete dc;
+      
+      return 1;
   }
-  catch (castor::exception::Exception e) {
+  catch (castor::exception::SegmentNotAccessible e) {
     // no valid tape copy found. In such a case, we rollback and
-    // set the subrequest to failed. The original message is forwarded
+    // set the subrequest to failed.
     try{
-        cnvSvc()->rollback();
-        if(dc) {
-          delete dc;
-          subreq->setDiskcopy(0);
-        }
-        subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
-        subreq->setErrorCode(1716);
-        subreq->setErrorMessage("No valid tape copy found");
-        cnvSvc()->updateRep(&ad, subreq, true);
+      cnvSvc()->rollback();
+      if(dc) {
+        delete dc;
+        subreq->setDiskcopy(0);
+      }
+      subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
+      subreq->setErrorCode(e.code());
+      subreq->setErrorMessage("No valid tape copy found");
+      cnvSvc()->updateRep(&ad, subreq, true);
+      return 0;
     }
-    catch(castor::exception::Exception forward) {
-        // should never happen
-        castor::exception::Internal ex2;
-        ex2.getMessage() << "Couldn't fail subrequest in createRecallCandidate: "
-        << std::endl << forward.getMessage().str();
-        throw ex2;
+    catch(castor::exception::Exception e) {
+      // should never happen
+      castor::exception::Internal ex2;
+      ex2.getMessage() << "Couldn't fail subrequest in createRecallCandidate: "
+      << std::endl << e.getMessage().str();
+      throw ex2;
     }
+  }
+  catch(castor::exception::Exception forward) {
+    // any other exception is forwarded, but we still try
+    // and rollback to cleanup the db
+    cnvSvc()->rollback();
+    if(dc) {
+      delete dc;
+      subreq->setDiskcopy(0);
+    }
+    cnvSvc()->updateRep(&ad, subreq, true);
+    throw(forward);
   }
 }
 
@@ -1041,9 +1056,8 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
  castor::stager::SvcClass *svcClass)
   throw (castor::exception::Exception) {
   // check argument
-
   if (0 == castorFile) {
-    castor::exception::Internal e;
+    castor::exception::InvalidArgument e;
     e.getMessage() << "createTapeCopySegmentsForRecall "
                    << "called with null argument";
     throw e;
@@ -1121,14 +1135,12 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     }
   }
   if (useCopyNb == -1) {  //something went bad.
-    
     if (nsSegmentAttrs != NULL ) free(nsSegmentAttrs); 
-
-    // No valid copy found
-    //	return -1;
-    castor::exception::Internal e;
-    e.getMessage() << "createTapeCopySegmentsForRecall : "
-                   << "No valid copy found";
+    // No valid tape copy found. This is considered user error
+    // and it's handled differently, thought it might be that we
+    // really lost a file on tape!
+    castor::exception::SegmentNotAccessible e;
+    e.getMessage() << "No valid tape copy found";
     throw e;
   }
 
@@ -1188,28 +1200,23 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 
     //  recaller policy retrieved
     //  in case it is given the tape status won't change into TAPE_PENDING
-     
-    
     std::string recallerPolicyStr = svcClass->recallerPolicy();
-
     switch (tape->status()) {
-             case castor::stager::TAPE_UNUSED:
-             case castor::stager::TAPE_FINISHED:
-             case castor::stager::TAPE_FAILED:
-             case castor::stager::TAPE_UNKNOWN:
-	        if (recallerPolicyStr.empty())
-		  tape->setStatus(castor::stager::TAPE_PENDING);
-		else
-		  tape->setStatus(castor::stager::TAPE_WAITPOLICY);
-                break;
-             default:
-                break;
+      case castor::stager::TAPE_UNUSED:
+      case castor::stager::TAPE_FINISHED:
+      case castor::stager::TAPE_FAILED:
+      case castor::stager::TAPE_UNKNOWN:
+        if (recallerPolicyStr.empty())
+          tape->setStatus(castor::stager::TAPE_PENDING);
+        else
+          tape->setStatus(castor::stager::TAPE_WAITPOLICY);
+        break;
+      default:
+        break;
     }
     cnvSvc()->updateRep(&ad, tape, false);
-     
 
-     // In any case with or without recaller policy the following operation are executed
-
+    // In any case with or without recaller policy the following operation are executed
     // Link Tape with Segment
     segment->setTape(tape);
     tape->addSegments(segment);

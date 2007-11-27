@@ -319,13 +319,15 @@ namespace castor {
          * @param subreq the subreq of the file to recall
          * @param euid the user id
          * @param egid the group id of the user
-         * @ param svcClass the svcClass to be use for the recall policy
-         * @exception in case of error
+         * @param svcClass the svcClass to be used for the recall policy
+         * @return 0: error (e.g. no valid segments)
+         *         1: success
+         * @exception in case of system error
          */
-        virtual void createRecallCandidate
+        virtual int createRecallCandidate
         (castor::stager::SubRequest* subreq,
-         unsigned long euid,
-         unsigned long egid,
+         const unsigned long euid,
+         const unsigned long egid,
          castor::stager::SvcClass* svcClass)
            throw (castor::exception::Exception);
           
