@@ -175,14 +175,10 @@ castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::serve
 
 
 void castor::rtcopy::rechandler::RecHandlerDaemon::parseCommandLine(int argc, char* argv[]){
-  if (argc <= 1 ) {
-    usage();
-    return;
-  }
   Coptind = 1;
   Copterr = 1;
   int c;  
-  while ( (c = Cgetopt(argc,argv,"t:f")) != -1 ) {
+  while ( (c = Cgetopt(argc,argv,"t:fh")) != -1 ) {
     switch (c) {
     case 't':
       m_timeSleep = strutou64(Coptarg);
@@ -190,9 +186,12 @@ void castor::rtcopy::rechandler::RecHandlerDaemon::parseCommandLine(int argc, ch
     case 'f':
       m_foreground = true;
       break;
+    case 'h':
+      usage();
+      exit(0);
     default:
       usage();
-      return;
+      exit(0);
     }
   }
 }
@@ -203,5 +202,7 @@ void castor::rtcopy::rechandler::RecHandlerDaemon::usage(){
             << "Where options are:\n" 
             << "-f     : to run in foreground\n"
             << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
+            << "-h : to ask for help\n"
 	    <<std::endl; 
+  
 }
