@@ -76,14 +76,16 @@ DECLARE
     totalIds NUMBER;
 BEGIN
 	INSERT INTO CleanupLogTable VALUES (10, 'Cleaning STAGIN diskcopy without tapecopy 0 done', getTime());
-	COMMIT;    
+	COMMIT; 
+        -- info for log   
 	SELECT count(*) INTO totalIds FROM diskcopy WHERE castorfile NOT IN ( SELECT castorfile FROM tapecopy) AND status=2;  
-	UPDATE CleanupLogTable SET message = 'Cleaning STAGIN diskcopy without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 10;
-	COMMIT;
 	-- diskcopy as invalid
 	UPDATE diskcopy SET status=7 WHERE castorfile NOT IN ( SELECT castorfile FROM tapecopy) AND status=2 RETURNING castorfile BULK COLLECT INTO cfIds;
 	-- restart the subrequests
 	UPDATE subrequest SET status=0 WHERE status IN (4,5) AND castorfile MEMBER OF cfIds;  
+        COMMIT;
+        -- log 
+        UPDATE CleanupLogTable SET message = 'Cleaning STAGIN diskcopy without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 10;
 	COMMIT;
 END;
 
@@ -95,12 +97,15 @@ DECLARE
 BEGIN
 	INSERT INTO CleanupLogTable VALUES (11, 'Cleaning segments without tapecopy 0 done', getTime());
 	COMMIT;
+        -- info for log
 	SELECT count(*) INTO totalIds FROM segment WHERE status IN (6, 8) AND copy NOT IN( SELECT id FROM tapecopy);
-	UPDATE CleanupLogTable SET message = 'Cleaning segments without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 11;
-	COMMIT;
+
 	-- delete segments
 	DELETE FROM segment WHERE status IN (6, 8) AND copy NOT IN (SELECT id FROM tapecopy) RETURNING id BULK COLLECT INTO sIds;
 	DELETE FROM Id2type WHERE id MEMBER OF sIds;
+	COMMIT;
+        -- log
+        UPDATE CleanupLogTable SET message = 'Cleaning segments without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 11;
 	COMMIT;
 END; 
 
