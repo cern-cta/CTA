@@ -109,38 +109,13 @@ int main(int argc, char* argv[]){
     castor::infoPolicy::StreamPySvc* strSvc=NULL;
     
     //migration
-    try {
-      if (pm != NULL)
+    if (pm != NULL)
 	migrSvc = new castor::infoPolicy::MigrationPySvc(migrationPolicyName);
-      
-    }catch (castor::exception::Exception e) {
-    
-    // "Exception caught problem to start pyhton policy"
-      castor::dlf::Param params[] =
-	  {castor::dlf::Param("Policy type", "Migration"),
-	   castor::dlf::Param("Policy", migrationPolicyName.c_str()),
-	   castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	   castor::dlf::Param("Precise Message", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 4, params);
-      
-    }
 
     // stream
-
-    try {
-      if (ps != NULL )
+    if (ps != NULL )
 	strSvc = new  castor::infoPolicy::StreamPySvc(streamPolicyName);
-    } catch (castor::exception::Exception e) {
-    
-    // "Exception caught problem to start pyhton policy"
-      castor::dlf::Param params[] =
-	  {castor::dlf::Param("Policy type", "Stream"),
-	   castor::dlf::Param("Policy", migrationPolicyName.c_str()),
-	   castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	   castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	   castor::dlf::Param("Precise Message", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 4, params);
-    }
+  
 
     // new BaseDaemon as Server 
     
@@ -220,7 +195,7 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
   Coptind = 1;
   Copterr = 1;
   int c; // ???? 
-  while ( (c = Cgetopt(argc,argv,"Ct:v:f")) != -1 ) {
+  while ( (c = Cgetopt(argc,argv,"Ct:v:fh")) != -1 ) {
     switch (c) {
     case 'C':
       m_doClone = true;
@@ -234,9 +209,12 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
     case 'f':
       m_foreground = true;
       break;
+    case 'h':
+      usage();
+      exit(0);
     default:
       usage();
-      return;
+      exit(0);
     }
   }
   
@@ -252,5 +230,5 @@ void castor::rtcopy::mighunter::MigHunterDaemon::usage(){
             << "-C  : clone tapecopies from existing to new streams (very slow!)\n"
             << "-f     : to run in foreground\n"
             << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
-            << "-v volume(bytes)       : data volume threshold below migration will not start"<<std::endl; 
+            << "-v volume(bytes)       : data volume threshold below migration will not start\n"<<std::endl; 
 }
