@@ -95,20 +95,14 @@ int main(int argc, char* argv[]) {
 
     castor::infoPolicy::RecallPySvc* recallPySvc=NULL;
 
-    try {
-
       // started the interpreter 
-      if (pr != NULL )
+      // this call might raise fatal exceptions if the information in castor.conf are not
+      // valid ( be aware that castor.conf parsing is based only on tabs) 
+      
+      if ( !recallPolicyName.empty() && !recallFunctionName.empty() )
 	recallPySvc= new castor::infoPolicy::RecallPySvc(recallPolicyName,recallFunctionName);
-    } catch (castor::exception::Exception e) {
+
     
-    // "Exception caught problem to start pyhton policy"
-      castor::dlf::Param params[] =
-	  {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	   castor::dlf::Param("Precise Message", e.getMessage().str())};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 9, 2, params);
-      recallPySvc=NULL;
-    }
 
     // new BaseDaemon as Server 
     
@@ -126,8 +120,9 @@ int main(int argc, char* argv[]) {
     newRecHandler->start();
     
   }// end try block
-  catch (castor::exception::Exception e) {
-    
+     catch (castor::exception::Exception e) {
+       std::cerr << "Caught Fatal exception!\n" << e.getMessage().str() << std::endl;
+
     // "Exception caught problem to start the daemon"
     castor::dlf::Param params[] =
 	  {castor::dlf::Param("Standard Message", sstrerror(e.code())),

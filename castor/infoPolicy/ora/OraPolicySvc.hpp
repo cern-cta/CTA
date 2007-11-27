@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
+ * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/27 16:12:06 $ $Author: gtaur $
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -163,17 +163,18 @@ namespace castor {
         /// SQL statement object for function resurrectTapes
 	oracle::occi::Statement *m_resurrectTapesStatement;
 
-        /// SQL statement select TapepoolsName
-        static const std::string s_selectTapePoolNamesStatementString;
-
-        /// SQL statement object for TapePoolsNameStatementString
-	oracle::occi::Statement *m_selectTapePoolNamesStatement;
 
         /// SQL statement resurrect candidates
         static const std::string s_resurrectCandidatesStatementString;
 
         /// SQL statement object for resurrectCandidatesNameStatementString
 	oracle::occi::Statement *m_resurrectCandidatesStatement;
+
+ /// SQL statement select TapepoolsName
+        static const std::string s_selectTapePoolNamesStatementString;
+
+        /// SQL statement object for TapePoolsNameStatementString
+	oracle::occi::Statement *m_selectTapePoolNamesStatement;
 
         /// SQL statement attach tape copies to streams
         static const std::string s_attachTapeCopiesToStreamsStatementString;

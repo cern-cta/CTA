@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
+ * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/27 16:12:05 $ $Author: gtaur $
  *
  * CPP Wrapper for Python 
  *
@@ -49,7 +49,7 @@ castor::infoPolicy::PySvc::PySvc(std::string module)
   FILE *fp = fopen(m_moduleFile.c_str(), "r");
   if (fp == NULL) {
     castor::exception::Exception ex(errno);
-    ex.getMessage() << "Failed to open file: " << m_moduleFile << std::endl;
+    ex.getMessage() << " Failed to open file: " << m_moduleFile.c_str() << std::endl;
     throw ex;
   }
 
