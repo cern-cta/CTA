@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/11/26 15:19:56 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/11/27 17:04:47 $ $Author: riojac3 $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -54,7 +54,7 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_failSchedulerJobS
 
 /// SQL statement for function jobToSchedule
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_jobToScheduleString =
-  "BEGIN jobToSchedule(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21); END;";
+  "BEGIN jobToSchedule(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22); END;";
 
 /// SQL statement for function updateSchedulerJob
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJobString =
@@ -221,6 +221,8 @@ castor::jobmanager::JobSubmissionRequest
 	(20, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
 	(21, oracle::occi::OCCICURSOR);
+      m_jobToScheduleStatement->registerOutParam
+	(22, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->setAutoCommit(true);
     }
     
@@ -260,7 +262,7 @@ castor::jobmanager::JobSubmissionRequest
     result->setClientType((u_signed64)m_jobToScheduleStatement->getDouble(18));
     result->setSourceDiskCopyId((u_signed64)m_jobToScheduleStatement->getDouble(19));
     result->setDestDiskCopyId((u_signed64)m_jobToScheduleStatement->getDouble(20));
- 
+    
     // Append the hosts from the requested filesystems attribute to the asked
     // hosts list.
     result->setNumAskedHosts(0);
@@ -305,6 +307,8 @@ castor::jobmanager::JobSubmissionRequest
       }
     }
 
+    result->setClientSecure(m_jobToScheduleStatement->getInt(22));
+    
     // For statistical purposes
     timeval tv;
     gettimeofday(&tv, NULL);
