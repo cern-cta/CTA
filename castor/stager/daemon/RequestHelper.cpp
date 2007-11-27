@@ -134,9 +134,6 @@ namespace castor{
           delete castorFile;
         }
         if(fileRequest) {
-          if(fileRequest->client()) {
-            delete fileRequest->client();
-          }
           delete fileRequest;  // will delete subrequest too
         }
         else if(subrequest) {
