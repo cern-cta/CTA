@@ -68,6 +68,41 @@ BEGIN
  END LOOP;
 END;
 
+-- Cleanup for diskcopies in STAGIN without associated TAPECOPY. 
+
+DECLARE 
+    cfIds "numList";
+    sIds "numList";
+    totalIds NUMBER;
+BEGIN
+	INSERT INTO CleanupLogTable VALUES (10, 'Cleaning STAGIN diskcopy without tapecopy 0 done', getTime());
+	COMMIT;    
+	SELECT count(*) INTO totalIds FROM diskcopy WHERE castorfile NOT IN ( SELECT castorfile FROM tapecopy) AND status=2;  
+	UPDATE CleanupLogTable SET message = 'Cleaning STAGIN diskcopy without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 10;
+	COMMIT;
+	-- diskcopy as invalid
+	UPDATE diskcopy SET status=7 WHERE castorfile NOT IN ( SELECT castorfile FROM tapecopy) AND status=2 RETURNING castorfile BULK COLLECT INTO cfIds;
+	-- restart the subrequests
+	UPDATE subrequest SET status=0 WHERE status IN (4,5) AND castorfile MEMBER OF cfIds;  
+	COMMIT;
+END;
+
+
+-- Cleanup for orphan segment.
+DECLARE
+	sIds "numList";
+ 	totalIds NUMBER;
+BEGIN
+	INSERT INTO CleanupLogTable VALUES (11, 'Cleaning segments without tapecopy 0 done', getTime());
+	COMMIT;
+	SELECT count(*) INTO totalIds FROM segment WHERE status IN (6, 8) AND copy NOT IN( SELECT id FROM tapecopy);
+	UPDATE CleanupLogTable SET message = 'Cleaning segments without tapecopy - ' || TO_CHAR(totalIds) || ' entries', logDate = getTime() WHERE fac = 11;
+	COMMIT;
+	-- delete segments
+	DELETE FROM segment WHERE status IN (6, 8) AND copy NOT IN (SELECT id FROM tapecopy) RETURNING id BULK COLLECT INTO sIds;
+	DELETE FROM Id2type WHERE id MEMBER OF sIds;
+	COMMIT;
+END; 
 
 -- Optional steps follow
 INSERT INTO CleanupLogTable VALUES (16, 'Shrinking tables', getTime());
@@ -86,6 +121,8 @@ ALTER TABLE StageRmRequest SHRINK SPACE CASCADE;
 ALTER TABLE StageGetRequest SHRINK SPACE CASCADE;
 ALTER TABLE StagePutRequest SHRINK SPACE CASCADE;
 ALTER TABLE SubRequest SHRINK SPACE CASCADE;
+ALTER TABLE Segment SHRINK SPACE CASCADE;
+ALTER TABLE id2type SHRINK SPACE CASCADE;
 
 UPDATE CleanupLogTable
    SET message = 'All tables were shrunk', logDate = getTime()
