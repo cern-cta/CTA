@@ -515,6 +515,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_clientSecure
+       * The clientSecure specifies if the Client runs in secure mode
+       * @return the value of m_clientSecure
+       */
+      int clientSecure() const {
+        return m_clientSecure;
+      }
+
+      /**
+       * Set the value of m_clientSecure
+       * The clientSecure specifies if the Client runs in secure mode
+       * @param new_var the new value of m_clientSecure
+       */
+      void setClientSecure(int new_var) {
+        m_clientSecure = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -602,6 +620,9 @@ namespace castor {
 
       /// The id of the destination diskcopy
       u_signed64 m_destDiskCopyId;
+
+      /// The clientSecure specifies if the Client runs in secure mode
+      int m_clientSecure;
 
       /// The id of this object
       u_signed64 m_id;

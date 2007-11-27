@@ -111,6 +111,7 @@ void castor::io::StreamJobSubmissionRequestCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->askedHosts();
   ad->stream() << obj->numAskedHosts();
   ad->stream() << obj->destDiskCopyId();
+  ad->stream() << obj->clientSecure();
   ad->stream() << obj->id();
 }
 
@@ -193,6 +194,9 @@ castor::IObject* castor::io::StreamJobSubmissionRequestCnv::createObj(castor::IA
   u_signed64 destDiskCopyId;
   ad->stream() >> destDiskCopyId;
   object->setDestDiskCopyId(destDiskCopyId);
+  int clientSecure;
+  ad->stream() >> clientSecure;
+  object->setClientSecure(clientSecure);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

@@ -62,6 +62,7 @@ castor::jobmanager::JobSubmissionRequest::JobSubmissionRequest() throw() :
   m_askedHosts(""),
   m_numAskedHosts(0),
   m_destDiskCopyId(0),
+  m_clientSecure(0),
   m_id(0) {
 }
 
@@ -107,6 +108,7 @@ void castor::jobmanager::JobSubmissionRequest::print(std::ostream& stream,
   stream << indent << "askedHosts : " << m_askedHosts << std::endl;
   stream << indent << "numAskedHosts : " << m_numAskedHosts << std::endl;
   stream << indent << "destDiskCopyId : " << m_destDiskCopyId << std::endl;
+  stream << indent << "clientSecure : " << m_clientSecure << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
