@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.552 $ $Date: 2007/11/26 15:43:29 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.553 $ $Date: 2007/11/27 17:12:00 $ $Author: riojac3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4743,7 +4743,7 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         reqUsername OUT VARCHAR2, srOpenFlags OUT VARCHAR2, clientIp OUT INTEGER,
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
 			reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
-			askedHosts OUT castor.DiskServerList_Cur) AS
+			askedHosts OUT castor.DiskServerList_Cur, clientSecure OUT INTEGER) AS
   dsId INTEGER;                   
 BEGIN
   -- Get the next subrequest to be scheduled.
@@ -4762,10 +4762,10 @@ BEGIN
 	 Client.ipAddress, Client.port, Client.version,
 	 (SELECT type 
             FROM Id2type 
-           WHERE id = Client.id) clientType
+           WHERE id = Client.id) clientType, Client.secure
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType
+         clientVersion, clientType,  clientSecure
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, 
                  'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
