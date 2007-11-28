@@ -1,5 +1,19 @@
 -- For logging
---DROP TABLE CleanupLogTable;
+
+-- drop the table if it exists
+
+DECLARE
+ t varchar2(2048);
+BEGIN
+	SELECT table_name INTO t FROM user_tables WHERE table_name = 'CLEANUPLOGTABLE';
+	execute immediate 'DROP TABLE CleanupLogTable';
+EXCEPTION WHEN no_data_found THEN
+   	NULL;
+END;
+/
+
+-- create/recreate the table
+
 CREATE TABLE CleanupLogTable (fac NUMBER, message VARCHAR2(256), logDate NUMBER);
 
 -- Cleanup of subrequests stuck in status WAITSUBREQ and
