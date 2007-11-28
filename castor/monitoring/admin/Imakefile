@@ -34,7 +34,7 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -lcastorMonitor -lshift
+LIBS = -lcastorMonitor -lshift -Wl,-rpath-link,../../../shlib
 RMMASTERADMINBIN_SRCS = RmAdminNode.cpp
 
 RMMASTERADMINBIN_OBJS = $(RMMASTERADMINBIN_SRCS:.cpp=.Osuf)

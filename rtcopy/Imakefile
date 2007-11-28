@@ -126,7 +126,7 @@ LDLIBS = -lodm
 #endif
 #else
 #if linux
-LDLIBS = $(ADNSLIB) -lnsl
+LDLIBS = $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if _WIN32
 LDLIBS = ..\lib\shift.lib ws2_32.lib advapi32.lib

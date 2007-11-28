@@ -2,15 +2,15 @@ COMM
 COMM  Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Date: 2005/01/20 08:22:55 $ CERN IT-PDP/DM Jean-Philippe Baud
- 
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2007/11/28 10:14:43 $ CERN IT-PDP/DM Jean-Philippe Baud
+
 COMM 	Make SCSI media changer server programs. 
 
 #include <Project.tmpl>
 
 INCLUDES = FileName(..,h)
 #if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if SOLARIS
 LIBS = -L../shlib -lshift -lsocket -lnsl
@@ -159,5 +159,4 @@ FORCE:
 
 COMM####################### DEPENDENCIES ##########################
 
- 
 COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.

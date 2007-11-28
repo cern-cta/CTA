@@ -3,7 +3,7 @@ COMM  Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
 COMM       @(#)Imakefile,v 1.24 2005/12/06 10:52:56 CERN IT-PDP/DM Jean-Philippe Baud
- 
+
 COMM    Make HSM admin tools.
 
 #include <Project.tmpl>
@@ -26,7 +26,7 @@ LIBS = -no_so -L../shlib -lshift -so_archive
 LIBS = -L../shlib -lshift
 #else
 #if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if sgi
 LIBS = -L../shlib -lshift
@@ -52,11 +52,11 @@ SPOOL = HsmToolsSpool
 PERLLIBDIR = /usr/lib/perl/CASTOR
 
 CKSUMLIB = -lz
- 
+
 COMM######################### FLAGS ##############################
- 
+
 DFLAGS = -D$(TMS) -g -pthread
- 
+
 CPPFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
 CFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
 
@@ -65,7 +65,7 @@ LD = g++
 #endif
 
 COMM######################### DEPENDENCY LIBRARIES ###############
- 
+
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
 DEPLIB2 = $(DEPLIB)
 COMM######################### RULES ##############################
@@ -323,7 +323,7 @@ IEXPORT(listDedications,$(EXPORTBIN),755);
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
 MakeDir($(PERLLIBDIR),root,bin,0755)
- 
+
 install.man: $(MANDIR) $(MANPAGES)
 
 MakeDir($(MANDIR),root,bin,0755)
@@ -385,13 +385,13 @@ exportman: $(EXPORTMANPAGES)
 exportshr:
 
 COMM###################### CLEANING RULES ########################
- 
+
 clean:
 	-@RemoveFiles(FilesToClean)
- 
+
 clobber:        clean
 	-@RemoveFiles($(PROGS_TO_CLEAN))
- 
+
 #if _WIN32
 depend:
 	@echo Not supported on this platform
@@ -401,7 +401,7 @@ depend:
 #endif
 
 Makefiles:
- 
+
 FORCE:
 
 COMM###################### DEPENDENCIES ##########################

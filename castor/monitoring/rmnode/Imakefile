@@ -34,7 +34,7 @@ INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
 
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -lcastorMonitor -lshift
+LIBS = -lcastorMonitor -lshift -Wl,-rpath-link,../../../shlib
 RMNODEDAEMONBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
 
 RMNODEDAEMONBIN_OBJS = $(RMNODEDAEMONBIN_SRCS:.cpp=.Osuf)

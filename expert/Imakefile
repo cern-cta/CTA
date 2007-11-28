@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 2004 by CERN/IT/ADC
 COMM  All rights reserved
 COMM
-COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2005/01/20 08:20:25 $ CERN IT-ADC Vitaly Motyakov
+COMM     @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2007/11/28 10:14:42 $ CERN IT-ADC Vitaly Motyakov
 COMM    Make expert programs.
 
 #include <Project.tmpl>
@@ -18,7 +18,7 @@ LIBS = -no_so -L../shlib -lshift -so_archive
 LIBS = -L../shlib -lshift
 #else
 #if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if sgi
 LIBS = -L../shlib -lshift
@@ -40,18 +40,18 @@ SPOOL = ExpertSpool
 LOGFILE = FileName($(SPOOL),log)
 EXPERT_CONFIG = ExpertConfigFile
 EXPERT_HOST = ExpertHost
- 
+
 COMM######################### FLAGS ##############################
- 
+
 DFLAGS = -DBIN=\"$(BIN)\" -DEXPERT_HOST=\"$(EXPERT_HOST)\" \
          -DLOGFILE=\"$(LOGFILE)\" -DEXPERT_CONFIG=\"$(EXPERT_CONFIG)\"
- 
-CFLAGS =        -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
- 
+
+CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS)
+
 COMM######################### DEPENDENCY LIBRARIES ###############
- 
+
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
- 
+
 COMM######################### RULES ##############################
 
 MANPAGES = $(MANDIR)/expertd.$(MANSUFFIX) \
@@ -109,7 +109,7 @@ IEXPORT(expertd,$(EXPORTBIN),750);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
- 
+
 install.man: $(MANDIR) $(MANPAGES)
 
 MakeDir($(MANDIR),root,bin,0755)
@@ -133,13 +133,13 @@ exportman: $(EXPORTMANPAGES)
 exportshr:
 
 COMM###################### CLEANING RULES ########################
- 
+
 clean:
 	-@RemoveFiles(FilesToClean)
- 
+
 clobber:        clean
 	-@RemoveFiles($(CLIENT) $(PROGS_D))
- 
+
 #if _WIN32
 depend:
 	@echo Not supported on this platform
@@ -149,7 +149,7 @@ depend:
 #endif
 
 Makefiles:
- 
+
 FORCE:
 
 COMM###################### DEPENDENCIES ##########################

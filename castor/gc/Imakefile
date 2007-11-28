@@ -40,7 +40,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man1/gcDaemon.$(MANSUFFIX)
 INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
-LIBS = -lshift -ldl -lcastorClient
+LIBS = -lshift -ldl -lcastorClient -Wl,-rpath-link,../../shlib
 
 GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
 

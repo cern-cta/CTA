@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 14:54:55 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/28 10:14:40 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 DiskCopy mover
 #
@@ -49,7 +49,7 @@ STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 INCLUDES = -I FileName(FileName(../..,..),h) -I FileName(../..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP) `curl-config --cflags`
 
-LIBS = -lshift `curl-config --libs`
+LIBS = -lshift `curl-config --libs` -Wl,-rpath-link,../../../shlib
 
 JOB_SRCS = DiskCopyTransfer.cpp MainThread.cpp ../SharedResourceHelper.cpp ../BaseMover.cpp ../RfioMover.cpp
 JOB_OBJS = $(JOB_SRCS:.cpp=.Osuf)

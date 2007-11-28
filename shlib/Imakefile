@@ -18,7 +18,7 @@ SYMTABNAM = __.SYMDEF
 #endif
 
 COMM Libraries to include in SharedLibraryTargetName(shift)
-LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB)
+LIBRARIES0 = $(COMMONLIB) $(RFIOLIB) $(MSGLIB) $(NSLIB) $(STGLIB) $(VMGRLIB) $(UPVLIB) $(SECURITYLIB) $(RTCOPYLIB) $(VDQMLIB) $(DLFLIB) $(TAPELIB) $(DBLIB) $(MONITORLIB) $(RMCLIB) $(EXPERTLIB) $(RHCLIENTLIB)
 SHLIBREQLIBS0 = $(SHLIBREQLIBS) -L../../$(COMMONCPPDIR) -lcastorClient
 
 LIBRARIES1 = $(RHORALIB)
@@ -309,7 +309,7 @@ MakeDepLibrary(vmgr,vmgr)
 
 MakeDepLibrary(upv,upv)
 
-MakeDepLibrary(castor,castorClient)
+MakeDepSharedLibrary(castor,castorClient)
 
 MakeDepLibrary(castor/proto,castorProto)
 
@@ -320,7 +320,6 @@ MakeDepLibrary(vdqm,vdqmapi)
 MakeDepLibrary(dlf,dlf)
 
 MakeDepLibrary(tape,tape)
-
 
 #if UseOraCDBC || UseMySql || UsePgSql
 MakeDepLibrary(castor/db/cnv,castorCnvs)

@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1993-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Date: 2007/04/18 12:41:59 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2007/11/28 10:14:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 
 COMM 	Make stage daemon programs. 
 
@@ -37,7 +37,7 @@ OSLIBS = -L../shlib -lshift -lsun
 #endif
 #else
 #if linux
-OSLIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+OSLIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if SOLARIS
 OSLIBS = -L../shlib -lshift -lsocket -lnsl

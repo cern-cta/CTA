@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/05 09:07:17 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/28 10:14:42 $ $Author: waldron $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -47,7 +47,7 @@ DSI_SRCS = globus_gridftp_server_CASTOR2ext.c
 DSI_OBJS = $(DSI_SRCS:.c=.Osuf)
 DSI_LIBNAME = globus_gridftp_server_CASTOR2ext_$(FLAVOR)
 DSI_LIB = SharedLibraryTargetName($(DSI_LIBNAME))
-DSI_LDLIBS = -lglobus_ftp_control_$(FLAVOR) -lshift
+DSI_LDLIBS = -lglobus_ftp_control_$(FLAVOR) -lshift -Wl,-rpath-link,../../shlib
 DSI_DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift)
 DSI_XINETDIR = /etc/xinetd.d
 DSI_LIBDIR = $(GLOBUS_LOCATION)/lib

@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/26 15:24:07 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/28 10:14:40 $ $Author: waldron $
 #
 # Makefile for the CASTOR2 Job submission daemon
 #
@@ -51,7 +51,7 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),jobManager.$(MAN
 INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(FileName(..,..),h) -I FileName(..,..)
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1 $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
-LIBS = -lshift -ldl -lbat -llsf -llsbstream -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci
+LIBS = -lshift -ldl -lbat -llsf -llsbstream -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci -Wl,-rpath-link,../../shlib
 
 JOBMANAGER_SRCS = JobManagerDaemon.cpp ManagementThread.cpp DispatchThread.cpp SubmissionProcess.cpp JobSubmissionRequest.cpp DiskServerResource.cpp FileSystemResource.cpp ../io/StreamJobSubmissionRequestCnv.cpp ora/OraJobManagerSvc.cpp
 JOBMANAGER_OBJS = $(JOBMANAGER_SRCS:.cpp=.Osuf)

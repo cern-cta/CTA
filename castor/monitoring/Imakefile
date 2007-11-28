@@ -61,7 +61,7 @@ RMADMINNODESBIN_OBJS = $(RMADMINNODESBIN_SRCS:.cpp=.Osuf)
 DUMPSHAREDMEMORYBIN_SRCS = DumpSharedMemory.cpp
 DUMPSHAREDMEMORYBIN_OBJS = $(DUMPSHAREDMEMORYBIN_SRCS:.cpp=.Osuf)
 
-LIBS = $(OSLIBS) $(MTLDLIBS) -lcastorMonitor -lshift
+LIBS = $(OSLIBS) $(MTLDLIBS) -lcastorMonitor -lshift -Wl,-rpath-link,../../shlib
 DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor) \
          DepSharedLibraryTargetName(FileName(..,shlib),shift)
 

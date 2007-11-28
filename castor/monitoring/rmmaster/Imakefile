@@ -34,7 +34,7 @@ INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I F
 
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
-LIBS = -lcastorMonitor -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci
+LIBS = -lcastorMonitor -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci -Wl,-rpath-link,../../../shlib
 RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp \
          HeartbeatThread.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
 

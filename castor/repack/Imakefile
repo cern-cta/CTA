@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Release$ $Date: 2007/10/10 06:21:38 $ $Author: gtaur $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Release$ $Date: 2007/11/28 10:14:41 $ $Author: waldron $
 #
 # Make Castor Repack System
 #
@@ -39,7 +39,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DDEFAULT_CNS=castorns -DORAREPACKC
 
 REPACKLIB = LibraryTargetName(castorRepack)
 
-LIBS = -lshift -lcastorCnvs 
+LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,../../shlib
 
 REPACKCOMMON_SRC = ../io/StreamRepackRequestCnv.cpp \
 		../io/StreamRepackSubRequestCnv.cpp \

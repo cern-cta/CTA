@@ -2,8 +2,8 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.6 $ $Date: 2007/04/18 12:41:59 $ CERN IT-PDP/DM Jean-Philippe Baud
- 
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2007/11/28 10:14:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+
 COMM    Make volume manager programs.
 
 #include <Project.tmpl>
@@ -19,7 +19,7 @@ LIBS = -no_so -L../shlib -lshift -so_archive
 LIBS = -L../shlib -lshift
 #else
 #if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if sgi
 LIBS = -L../shlib -lshift
@@ -93,18 +93,18 @@ SECURITYFLAG=-DCSEC
 LIBS+= -ldl
 #endif  
 COMM######################### FLAGS ##############################
- 
+
 DFLAGS = -DBIN=\"$(BIN)\" -DVMGR_HOST=\"$(VMGR_HOST)\" \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DVMGRCONFIG=\"$(VMGRCONFIG)\" \
          $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(MYSFLG)
- 
+
 CFLAGS =        -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(MYSINC) $(SECURITYFLAG)
- 
+
 COMM######################### DEPENDENCY LIBRARIES ###############
- 
+
 DEPLIB = DepSharedLibraryTargetName(shlib,shift)
- 
+
 COMM######################### RULES ##############################
 
 MANPAGES = $(LIBMANDIR)/vmgr_deletedenmap.$(LIBMANSUFFIX) \
@@ -502,7 +502,7 @@ IEXPORT(vmgrshutdown,$(EXPORTBIN),755);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
- 
+
 #if Accounting
 MakeDir($(SACCTDIR),root,bin,0777)
 #endif
@@ -641,13 +641,13 @@ exportman: $(EXPORTMANPAGES)
 exportshr:
 
 COMM###################### CLEANING RULES ########################
- 
+
 clean:
 	-@RemoveFiles(FilesToClean)
- 
+
 clobber:        clean
 	-@RemoveFiles($(CLIENT) $(PROGS_D) vmgr_oracle_ifce.c vmgr_oracle_ifce.lis tp*)
- 
+
 #if _WIN32
 depend:
 	@echo Not supported on this platform
@@ -657,7 +657,7 @@ depend:
 #endif
 
 Makefiles:
- 
+
 FORCE:
 
 COMM###################### DEPENDENCIES ##########################

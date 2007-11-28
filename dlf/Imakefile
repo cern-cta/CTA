@@ -42,7 +42,7 @@ LIBS = -no_so -L../shlib -lshift -so_archive
 LIBS = -L../shlib -lshift
 #else
 #if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl
+LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if sgi
 LIBS = -L../shlib -lshift
