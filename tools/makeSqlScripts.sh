@@ -21,7 +21,15 @@ echo >> $1_oracle_create.sql
 echo "CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));" >> $1_oracle_create.sql
 echo "INSERT INTO CastorVersion VALUES ('-', '"$3"');" >> $1_oracle_create.sql
 echo >> $1_oracle_create.sql
-cat oracleTrailer.sql >> $1_oracle_create.sql
+
+# append trailers
+if [ -f $1_oracle_create.sql ]; then
+  for f in `cat $1_oracle_create.list`; do
+    cat $f >> $1_oracle_create.sql
+  done
+else
+  cat oracleTrailer.sql >> $1_oracle_create.sql
+fi
 
 # remove CVS keywords
 sed 's/\$//g' $1_oracle_create.sql > ora.sql
