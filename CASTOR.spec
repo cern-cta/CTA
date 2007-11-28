@@ -34,6 +34,9 @@
 %else
 %{expand:%define has_globus %(if [ ! -r $GLOBUS_LOCATION/lib/libglobus_ftp_control_%{FLAVOR}.so ]; then echo 0; else echo 1; fi)}
 %endif
+%if %has_globus
+%{expand:%define has_globus %(if [ ! -d $GLOBUS_LOCATION/include -a ! -d /opt/globus/include ]; then echo 0; else echo 1; fi)}
+%endif
 
 #
 ## General settings
@@ -202,21 +205,6 @@ install -m 644 debian/policies.py ${RPM_BUILD_ROOT}/etc/castor/policies.py.examp
 for i in debian/*.logrotate; do
     install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
 done
-#for i in debian/*.cron.d; do
-#    install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/cron.d/`basename ${i} | sed 's/\.cron\.d//g'`
-#done
-#for i in debian/*.cron.hourly; do
-#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.hourly/`basename ${i} | sed 's/\.cron\.hourly//g'`
-#done
-#for i in debian/*.cron.daily; do
-#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.daily/`basename ${i} | sed 's/\.cron\.daily//g'`
-#done
-#for i in debian/*.cron.weekly; do
-#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.weekly/`basename ${i} | sed 's/\.cron\.weekly//g'`
-#done
-#for i in debian/*.cron.monthly; do
-#    install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/cron.monthly/`basename ${i} | sed 's/\.cron\.monthly//g'`
-#done
 for i in `find . -name "*.sysconfig"`; do
     install -m 644 ${i} ${RPM_BUILD_ROOT}/etc/sysconfig/`basename ${i} | sed 's/\.sysconfig//g'`.example
 done
