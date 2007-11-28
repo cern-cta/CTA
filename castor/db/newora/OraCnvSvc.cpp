@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2007/11/20 17:17:01 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/11/28 17:56:33 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -38,7 +38,10 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include <sstream>
 #include <iomanip>
+#include <sys/types.h>
+#include <linux/unistd.h>
 
 // Local Files
 #include "castor/db/newora/OraCnvSvc.hpp"
@@ -163,7 +166,16 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
                      << codeVersion << "\"";
       throw e;
     }
-  } catch (oracle::occi::SQLException e) {
+    
+    // for logging/debugging purposes, we set an identifier for this session
+    std::ostringstream ss;
+    ss << "BEGIN DBMS_APPLICATION_INFO.SET_CLIENT_INFO('CASTOR pid="
+       << getpid() << " tid=" << syscall(__NR_gettid) << "'); END;";    // gettid() is not defined???
+    stmt = m_connection->createStatement(ss.str());
+    stmt->execute();
+    m_connection->terminateStatement(stmt);
+  }
+  catch (oracle::occi::SQLException e) {
     // No CastorVersion table ?? This means bad version
     if (0 != stmt) m_connection->terminateStatement(stmt);
     castor::exception::BadVersion ex;
