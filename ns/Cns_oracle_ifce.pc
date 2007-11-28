@@ -1226,46 +1226,43 @@ struct Cns_dbfd *dbfd;
 u_signed64 *fileIds;
 int *nbFileIds;
 {
-  double *dfileIds;
-  int i;
+	double *dfileIds;
+	int i;
 
-	char fileid_str[21];
 	char func[19];
-	char segsize_str[21];
 	struct sqlca sqlca;
-	short checksum_name_ind;
 
-  // prepare input
-  dfileIds = (double*) malloc(*nbFileIds*sizeof(double));
-  for (i = 0; i < *nbFileIds; i++) {
-    dfileIds[i] = fileIds[i];
-  }
-  // check existence
-  EXEC SQL FOR :*nbFileIds INSERT INTO Cns_files_Exist_tmp VALUES (:dfileIds);
-  EXEC SQL DECLARE files_exist_cursor CURSOR FOR
-    SELECT tmpFileId FROM Cns_files_Exist_tmp
-     WHERE NOT EXISTS (SELECT 'x' FROM Cns_file_metadata
-                        WHERE fileid = tmpFileId);
-  EXEC SQL OPEN files_exist_cursor;
-  EXEC SQL FOR :*nbFileIds FETCH files_exist_cursor INTO :dfileIds;
-  switch (sqlca.sqlcode) {
-  case 0:
-  case 1403:
-    // extract output
-    *nbFileIds = sqlca.sqlerrd[2];
-    for (i = 0; i < *nbFileIds; i++) {
-      fileIds[i] = dfileIds[i];
-    }
-    break;
-  default:
-    Cns_oracle_error (func, "Cursor", dbfd, &sqlca);
-    EXEC SQL ROLLBACK WORK;
-    free(dfileIds);
-    return(-1);
-  }
-  EXEC SQL COMMIT WORK;
-  free(dfileIds);
-  return(0);
+	// prepare input
+	dfileIds = (double*) malloc(*nbFileIds*sizeof(double));
+	for (i = 0; i < *nbFileIds; i++) {
+		dfileIds[i] = fileIds[i];
+	}
+	// check existence
+	EXEC SQL FOR :*nbFileIds INSERT INTO Cns_files_Exist_tmp VALUES (:dfileIds);
+	EXEC SQL DECLARE files_exist_cursor CURSOR FOR
+	SELECT tmpFileId FROM Cns_files_Exist_tmp
+	 WHERE NOT EXISTS (SELECT 'x' FROM Cns_file_metadata
+                            WHERE fileid = tmpFileId);
+	EXEC SQL OPEN files_exist_cursor;
+	EXEC SQL FOR :*nbFileIds FETCH files_exist_cursor INTO :dfileIds;
+	switch (sqlca.sqlcode) {
+	case 0:
+	case 1403:
+		// extract output
+		*nbFileIds = sqlca.sqlerrd[2];
+		for (i = 0; i < *nbFileIds; i++) {
+			fileIds[i] = dfileIds[i];
+		}
+		break;
+	default:
+		Cns_oracle_error (func, "Cursor", dbfd, &sqlca);
+		EXEC SQL ROLLBACK WORK;
+		free(dfileIds);
+		return(-1);
+	}
+	EXEC SQL COMMIT WORK;
+	free(dfileIds);
+	return(0);
 }
 
 int Cns_get_smd_by_vid(dbfd, bov, vid, smd_entry, endlist, dblistptr)
