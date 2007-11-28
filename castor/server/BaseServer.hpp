@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/11/20 15:31:12 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/11/28 17:59:19 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -99,7 +99,7 @@ namespace castor {
      * @param nbThreads the number of threads to be signaled
      */
     static void sendNotification(std::string host, int port, char tpName, int nbThreads = 1)
-      throw(castor::exception::Exception);
+      throw();
 
   protected:
 

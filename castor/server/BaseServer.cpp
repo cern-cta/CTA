@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2007/11/20 15:31:12 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/11/28 17:59:19 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -277,7 +277,7 @@ void castor::server::BaseServer::help(std::string programName)
 // sendNotification
 //------------------------------------------------------------------------------
 void castor::server::BaseServer::sendNotification(std::string host, int port, char tpName, int nbThreads)
-  throw(castor::exception::Exception)
+  throw()
 {
   try {
     // create notification message
