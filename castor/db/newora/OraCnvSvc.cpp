@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/11/29 13:58:53 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/11/29 14:04:01 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -173,7 +173,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     ss << "BEGIN DBMS_APPLICATION_INFO.SET_CLIENT_INFO('CASTOR pid="
        << getpid() << " tid=" << syscall(__NR_gettid) << "'); END;";    // gettid() is not defined???
     stmt = m_connection->createStatement(ss.str());
-    stmt->execute();
+    stmt->executeUpdate();
     m_connection->terminateStatement(stmt);
 
     // Uncomment this to enable tracing of the DB
