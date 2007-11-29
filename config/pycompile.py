@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: pycompile.py,v $ $Revision: 1.2 $ $Release$ $Date: 2007/09/17 06:46:01 $ $Author: waldron $
+# @(#)$RCSfile: pycompile.py,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/29 15:03:41 $ $Author: gtaur $
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #******************************************************************************
@@ -74,7 +74,7 @@ def main(argv):
     sysconfig = distutils.sysconfig.get_config_vars()
 
     if cflags:
-        flags = '%s -I%s -L%s ' % (sysconfig['CFLAGS'], sysconfig['INCLUDEPY'], sysconfig['LIBPL'])
+        flags = ' -I%s ' % (sysconfig['INCLUDEPY'])
     if libs:
         flags += '-lpython%s %s %s' % (sysconfig['VERSION'], sysconfig['LIBS'], sysconfig['LIBM'])
 
