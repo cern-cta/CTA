@@ -30,7 +30,7 @@
 #include "Cpwd.h"
 #include "Cgrp.h"
 
-#include "castor/IClientFactory.hpp"
+
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 

@@ -26,7 +26,7 @@
 
 #include "Cpwd.h"
 #include "Cgrp.h"
-#include "castor/IClientFactory.hpp"
+
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/stager/DiskCopyForRecall.hpp"

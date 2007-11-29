@@ -27,7 +27,7 @@
 #include "Cgrp.h"
 #include "u64subr.h"
 
-#include "castor/IClientFactory.hpp"
+
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
 

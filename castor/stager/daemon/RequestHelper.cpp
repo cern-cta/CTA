@@ -37,7 +37,7 @@
 
 
 
-#include "castor/IClientFactory.hpp"
+
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
