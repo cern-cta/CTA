@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.556 $ $Date: 2007/11/29 09:24:51 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.557 $ $Date: 2007/11/29 10:05:46 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2269,23 +2269,21 @@ BEGIN
 END;
 
 
-/* TO BE REMOVED. Temporary hack to avoid losing file modifications in case of update */
-CREATE OR REPLACE PROCEDURE fixUpdateRequestProblem(dcid IN INTEGER,
-                                                    cfid IN INTEGER,
-                                                    srid IN INTEGER) AS
+/* This method should be called when the first byte is written to a file
+ * opened with an update. This will kind of convert the update from a
+ * get to a put behavior.
+ */
+CREATE OR REPLACE PROCEDURE firstByteWrittenProc(srId IN INTEGER) AS
+  dcId NUMBER;
+  cfId NUMBER;
   nbres NUMBER;
   unused NUMBER;
 BEGIN
-  -- we only want to do something for updates
-  BEGIN
-    SELECT r.id INTO unused
-      FROM stageUpdateRequest r, SubRequest s
-     WHERE s.request = r.id
-       AND s.id = srId;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    RETURN;
-  END;
-  -- First check that the file is not busy, i.e. that we are not
+  -- lock the Castorfile
+  SELECT castorfile, diskCopy INTO cfId, dcId
+    FROM SubRequest WHERE id = srId;
+  SELECT id INTO unused FROM CastorFile WHERE id = cfId FOR UPDATE;
+  -- Check that the file is not busy, i.e. that we are not
   -- in the middle of migrating it. If we are, just stop and raise
   -- a user exception
   SELECT count(*) INTO nbRes FROM TapeCopy
@@ -2305,6 +2303,15 @@ BEGIN
   deleteTapeCopies(cfId);
 END;
 
+/* Checks whether the protocol used is supporting updates and when not
+ * calls firstByteWrittenProc as if the file was already modified */
+CREATE OR REPLACE PROCEDURE handleProtoNoUpd
+(srId IN INTEGER, protocol VARCHAR2) AS
+BEGIN
+  IF protocol != 'rfio' THEN
+    firstByteWrittenProc(srId);
+  END IF;
+END;
 
 /* PL/SQL method implementing getUpdateStart */
 CREATE OR REPLACE PROCEDURE getUpdateStart
@@ -2317,16 +2324,18 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   nh VARCHAR2(2048);
   realFileSize INTEGER;
   srSvcClass INTEGER;
+  proto VARCHAR2(2048);
+  isUpd NUMBER;
 BEGIN
   -- Get and uid, gid
-  SELECT euid, egid, svcClass
-    INTO reuid, regid, srSvcClass
+  SELECT euid, egid, svcClass, upd
+    INTO reuid, regid, srSvcClass, isUpd
     FROM SubRequest,
-        (SELECT id, euid, egid, svcClass from StageGetRequest UNION ALL
-         SELECT id, euid, egid, svcClass from StagePrepareToGetRequest UNION ALL
-         SELECT id, euid, egid, svcClass from StageRepackRequest UNION ALL
-         SELECT id, euid, egid, svcClass from StageUpdateRequest UNION ALL
-         SELECT id, euid, egid, svcClass from StagePrepareToUpdateRequest) Request
+        (SELECT id, euid, egid, svcClass, 0 as upd from StageGetRequest UNION ALL
+         SELECT id, euid, egid, svcClass, 0 as upd from StagePrepareToGetRequest UNION ALL
+         SELECT id, euid, egid, svcClass, 0 as upd from StageRepackRequest UNION ALL
+         SELECT id, euid, egid, svcClass, 1 as upd from StageUpdateRequest UNION ALL
+         SELECT id, euid, egid, svcClass, 0 as upd from StagePrepareToUpdateRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   -- Take a lock on the CastorFile. Associated with triggers,
   -- this guarantee we are the only ones dealing with its copies
@@ -2349,14 +2358,14 @@ BEGIN
     dci := 0;
     rpath := '';
   END IF;
-  -- No wait, so we are settled and we'll use the local copy. However,
-  -- in case of an update, we should update it to STAGEOUT and make the
-  -- other copies INVALID.
-  -- We should NOT do so, and we should wait for the first byte to be
-  -- written in the file to do so, but for now, we do it now...
-  -- Note that we do the same in Disk2DiskCopyDone for the case of
-  -- replication due to the update
-  fixUpdateRequestProblem(dci, cfId, srId);
+  -- No wait, so we are settled and we'll use the local copy.
+  -- Let's update the SubRequest and set the link with the DiskCopy
+  UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
+  -- In case of an update, if the protocol used does not support
+  -- updates properly (vis firstByteWritten call), we should
+  -- call firstByteWritten now and consider that the file is being
+  -- modified.
+  IF isUpd = 1 THEN handleProtoNoUpd(srId, proto); END IF;
   -- It could be that we end up here, while we were supposed to do
   -- a file replication, i.e. a disk2diskcopy. The reason is that
   -- the selected filesytem in such a case can be any, including
@@ -2607,6 +2616,8 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   maxRepl INTEGER;
   repl INTEGER;
   srcStatus INTEGER;
+  proto VARCHAR2(2048);
+  reqId NUMBER;
 BEGIN
   -- try to get the source status
   SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
@@ -2635,16 +2646,16 @@ BEGIN
   UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
-   WHERE diskCopy = dcId RETURNING id INTO srId;
+   WHERE diskCopy = dcId RETURNING id, protocol, request INTO srId, proto, reqId;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
   -- DRAINING filesystem to INVALID.
-  -- We do the check only for Get requests as for the update requests we still
-  -- have the fixUpdateRequestProblem procedure...
   BEGIN
     SELECT maxReplicaNb into maxRepl
       FROM SvcClass, (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
+                      SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
                       SELECT id, svcClass FROM StageRepackRequest UNION ALL
-                      SELECT id, svcClass FROM StageGetRequest) Request,
+                      SELECT id, svcClass FROM StageGetRequest UNION ALL
+                      SELECT id, svcClass FROM StageUpdateRequest) Request,
            SubRequest
      WHERE SubRequest.id = srId
        AND SubRequest.request = Request.id
@@ -2666,13 +2677,16 @@ BEGIN
     NULL;
   END;
   
-  -- In case of an update, we should update the new copy to STAGEOUT,
-  -- independently of the original status make the other copies INVALID.
-  -- We should NOT do so, and we should wait for the first byte to be
-  -- written in the file to do so, but for now, we do it now...
-  -- Note that we do the same in GetUpdateStart for the case with no
-  -- replication due to the update request.
-  fixUpdateRequestProblem(dcId, cfId, srId);
+  -- In case of an update, if the protocol used does not support
+  -- updates properly (vis firstByteWritten call), we should
+  -- call firstByteWritten now and consider that the file is being
+  -- modified.
+  DECLARE
+    reqType NUMBER;
+  BEGIN
+    SELECT type INTO reqType FROM id2Type WHERE id = reqId;
+    IF reqType = 44 THEN handleProtoNoUpd(srId, proto); END IF; -- StageUpdateRequest
+  END;
 
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
