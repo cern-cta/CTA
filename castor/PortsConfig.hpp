@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PortsConfig.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/29 12:58:37 $ $Author: itglp $
+ * @(#)$RCSfile: PortsConfig.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/29 14:43:31 $ $Author: itglp $
  *
  * A central place to provide notification hosts and ports of the Castor daemons
  *
@@ -40,7 +40,7 @@ namespace castor {
   static const int JOBMANAGER_DEFAULT_NOTIFYPORT = 15011;
   static const int RTCPCLIENTD_DEFAULT_NOTIFYPORT = 5050;  // for future use
   
-  enum castorDaemons {
+  enum castorDaemon {
     CASTOR_STAGER = 0,
     CASTOR_JOBMANAGER = 1,
     CASTOR_RTCPCLIENTD = 2
@@ -62,11 +62,11 @@ namespace castor {
      * Get the hostname for a given daemon
      * @return the value of m_confFile
      */
-    std::string getHostName(castorDaemons daemon) const {
+    std::string getHostName(castorDaemon daemon) const {
       return m_hosts[daemon];
     }
     
-    unsigned getNotifPort(castorDaemons daemon) const {
+    unsigned getNotifPort(castorDaemon daemon) const {
       return m_ports[daemon];
     }
 
