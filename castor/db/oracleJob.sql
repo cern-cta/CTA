@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.559 $ $Date: 2007/11/29 16:24:36 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.560 $ $Date: 2007/11/29 17:48:11 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3875,19 +3875,42 @@ BEGIN
 END;
 
 
-DECLARE
-  nb NUMBER;
+/*
+ * Runs a table shrink operation for maintenance purposes 
+ */
+CREATE OR REPLACE PROCEDURE tableShrink AS
 BEGIN
-  -- if the job already exists delete it
-  SELECT count(*) INTO nb FROM user_scheduler_jobs WHERE job_name = 'GARBAGECOLLECTJOB';
-  IF nb != 0 THEN
-    DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'GARBAGECOLLECTJOB', FORCE => TRUE);
-  END IF;
-  -- creates a db job to be run every 15 mins for the garbage collector.
+  -- Loop over all tables which support row movement and recover space from 
+  -- the object and all dependant objects. We deliberately ignore tables 
+  -- with function based indexes here as the 'shrink space' option is not 
+  -- supported.
+  FOR a IN (SELECT table_name FROM user_tables
+             WHERE row_movement = 'ENABLED'
+               AND table_name NOT IN (
+                 SELECT table_name FROM user_indexes
+                  WHERE index_type LIKE 'FUNCTION-BASED%'))
+  LOOP
+    EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' SHRINK SPACE CASCADE';
+  END LOOP;
+END;
+
+
+/*
+ * Database jobs
+ */
+BEGIN
+  -- Remove database jobs before recreating them
+  FOR a IN (SELECT job_name FROM user_scheduler_jobs
+             WHERE job_name IN ('GARBAGECOLLECTJOB', 'TABLESHRINKJOB'))
+  LOOP
+    DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
+  END LOOP;
+
+  -- Creates a db job to be run every 15 mins for the garbage collector.
   -- Such interval allows for ~300 filesystem to be processed for each round
   -- under normal conditions.
   -- XXX In case more are present, jobs will overlap during their run
-  DBMS_SCHEDULER.CREATE_JOB (
+  DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'garbageCollectJob',
       JOB_TYPE        => 'PLSQL_BLOCK',
       JOB_ACTION      => 'BEGIN garbageCollect(); END;',
@@ -3895,6 +3918,16 @@ BEGIN
       REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
       ENABLED         => TRUE,
       COMMENTS        => 'Castor Garbage Collector');
+
+  -- Creates a db job to be run every day executing the tableShrink procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'tableShrinkJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN tableShrink(); END;',
+      START_DATE      => SYSDATE,
+      REPEAT_INTERVAL => 'FREQ=DAILY; INTERVAL=1',
+      ENABLED         => TRUE,
+      COMMENTS        => '');
 END;
 
 
