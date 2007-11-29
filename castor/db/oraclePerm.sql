@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.557 $ $Date: 2007/11/29 10:05:46 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.558 $ $Date: 2007/11/29 11:06:13 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -610,7 +610,7 @@ BEGIN
   srId := 0;
   OPEN c;
   FETCH c INTO srId;
-  UPDATE SubRequest SET status = 3 WHERE id = srId
+  UPDATE SubRequest SET status = 3, subReqId = uuidGen() WHERE id = srId
     RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
     INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
   CLOSE c;
@@ -1522,244 +1522,9 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing isSubRequestToSchedule (deprecated) */
-CREATE OR REPLACE PROCEDURE isSubRequestToSchedule
-        (rsubreqId IN INTEGER, result OUT INTEGER,
-         sources OUT castor.DiskCopy_Cur) AS
-  stat "numList";
-  dci "numList";
-  svcClassId NUMBER;
-  reqId NUMBER;
-  cfId NUMBER;
-  reqType NUMBER;
-BEGIN
- ---- retrieve the castorfile and the request id --- 
-   SELECT SubRequest.castorfile, SubRequest.request
-    INTO cfId, reqId
-    FROM SubRequest
-   WHERE SubRequest.id = rsubreqId;
-  --- lock the castor file to be safe in case of two concurrent subrequest
-   SELECT id into cfId FROM CastorFile where CastorFile.id=cfId FOR UPDATE;
-  
-  -- First see whether we should wait on an ongoing request
-  SELECT DiskCopy.status, DiskCopy.id
-    BULK COLLECT INTO stat, dci
-    FROM DiskCopy, FileSystem, DiskServer, Id2Type
-   WHERE reqId = Id2Type.id  -- Avoid that PutDone waits
-     AND Id2Type.type != 39               -- on the prepareToPut
-     AND cfId = DiskCopy.castorfile
-     AND FileSystem.id(+) = DiskCopy.fileSystem
-     AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
-     AND DiskServer.id(+) = FileSystem.diskServer
-     AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
-     AND DiskCopy.status IN (1, 2); -- WAITDISK2DISKCOPY, WAITTAPERECALL
-
-  IF stat.COUNT > 0 THEN
-    -- Only DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
-    makeSubRequestWait(rsubreqId, dci(1));
-    result := 0;  -- no schedule
-    COMMIT;
-    RETURN;
-  END IF;
-  -- Get the svcclass and the reqId for this subrequest
-  SELECT Request.id, Request.svcclass, SubRequest.castorfile
-    INTO reqId, svcClassId, cfId
-    FROM (SELECT id, svcClass from StageGetRequest UNION ALL
-          SELECT id, svcClass from StagePrepareToGetRequest UNION ALL
-          SELECT id, svcClass from StageRepackRequest UNION ALL
-          SELECT id, svcClass from StageUpdateRequest UNION ALL
-          SELECT id, svcClass from StagePrepareToUpdateRequest UNION ALL
-          SELECT id, svcClass from StagePutDoneRequest) Request,
-         SubRequest
-   WHERE Subrequest.request = Request.id
-     AND Subrequest.id = rsubreqId;
-     
-  -- PutDone processing is different from now on, handle it separately
-  SELECT type INTO reqType FROM Id2Type WHERE id = reqId;
-  IF reqType = 39 THEN -- PutDone
-    -- Try to see whether we have available DiskCopies.
-    -- Here we look on all FileSystems regardless the status
-    -- so that a putDone on a disabled one goes through as there's
-    -- no real IO activity involved.
-    SELECT DiskCopy.status, DiskCopy.id
-      BULK COLLECT INTO stat, dci
-      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.diskserver = DiskServer.id
-       AND DiskCopy.status = 6; -- STAGEOUT
-    IF stat.COUNT > 0 THEN
-      -- Check that there is no put going on
-      -- If any, we'll wait on one of them
-      DECLARE
-        putSubReq NUMBER;
-      BEGIN
-        -- Try to find a running put
-        SELECT subrequest.id INTO putSubReq
-          FROM SubRequest, Id2Type
-         WHERE SubRequest.castorfile = cfId
-           AND SubRequest.request = Id2Type.id
-           AND Id2Type.type = 40 -- Put
-           AND SubRequest.status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
-           AND ROWNUM < 2;
-        -- we've found one, putDone will have to wait
-        UPDATE SubRequest
-           SET parent = putSubReq,
-               status = 5, -- WAITSUBREQ
-               lastModificationTime = getTime()
-         WHERE id = rsubreqId;
-        result := 0;  -- no schedule
-        COMMIT;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- no put waiting, we can continue
-        result := 1;
-        OPEN sources
-          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, 0,   -- fs rate does not apply here
-                     FileSystem.mountPoint, DiskServer.name
-                FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-               WHERE DiskCopy.castorfile = cfId
-                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                 AND DiskPool2SvcClass.child = svcClassId
-                 AND DiskCopy.status = 6 -- STAGEOUT
-                 AND FileSystem.id = DiskCopy.fileSystem
-                 AND DiskServer.id = FileSystem.diskServer;
-      END;
-    ELSE
-      -- This is a PutDone without a put (otherwise we would have found
-      -- a DiskCopy on a FileSystem). We answer 1 without sources,
-      -- the stager correctly handles this case.
-      result := 1;
-    END IF;
-  
-  ELSE
-    -- All other requests: try to see whether we have available DiskCopies
-    SELECT DiskCopy.status, DiskCopy.id
-      BULK COLLECT INTO stat, dci
-      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status = 0 -- PRODUCTION
-       AND FileSystem.diskserver = DiskServer.id
-       AND DiskServer.status = 0 -- PRODUCTION
-       AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
-    IF stat.COUNT > 0 THEN
-      -- Yes, we should schedule and give a list of sources.
-      -- However, in case of PrepareToGet/Update this is a no-op,
-      -- so we answer no
-      IF reqType in (36, 38) THEN
-        result := 0;
-      ELSE
-        result := 1;
-        OPEN sources
-          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, 0,   -- fs rate does not apply here
-                     FileSystem.mountPoint, DiskServer.name
-                FROM DiskCopy, SubRequest, FileSystem, DiskServer, DiskPool2SvcClass
-               WHERE SubRequest.id = rsubreqId
-                 AND SubRequest.castorfile = DiskCopy.castorfile
-                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                 AND DiskPool2SvcClass.child = svcClassId
-                 AND DiskCopy.status IN (0, 6, 10) -- STAGED, STAGEOUT, CANBEMIGR
-                 AND FileSystem.id = DiskCopy.fileSystem
-                 AND FileSystem.status = 0 -- PRODUCTION
-                 AND DiskServer.id = FileSystem.diskServer
-                 AND DiskServer.status = 0; -- PRODUCTION
-      END IF;
-    ELSE
-      -- No diskcopies available for this service class;
-      -- check whether we are a disk only pool that is already full.
-      -- In such a case, we should fail the request with an ENOSPACE error
-      IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
-        result := 4; -- no schedule
-        UPDATE SubRequest
-           SET status = 7, -- FAILED
-               errorCode = 28, -- ENOSPC
-               errorMessage = 'File creation canceled since diskPool is full'
-         WHERE id = rsubreqId;
-        COMMIT;
-        RETURN;
-      END IF;  
-      -- check whether there are any diskcopies available for a disk2disk copy
-      DECLARE
-        unused NUMBER;
-      BEGIN
-        SELECT DiskCopy.id INTO unused 
-          FROM DiskCopy, FileSystem, DiskServer
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-           AND FileSystem.id = DiskCopy.fileSystem
-           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-           AND DiskServer.id = FileSystem.diskserver
-           AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-           AND ROWNUM < 2;
-        -- We found at least one, therefore we schedule anywhere  
-        -- forcing a disk2disk copy from the existing diskcopy
-        -- not available to this svcclass
-        result := 3;
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- We found no diskcopies at all. We should not schedule
-        -- and make a tape recall... except ... in 2 cases :
-        --   - if there is some temporarily unavailable diskcopy
-        --     that is in CANBEMIGR or STAGEOUT
-        -- in such a case, what we have is an existing file, that
-        -- was migrated, then overwritten but never migrated again.
-        -- So the unavailable diskCopy is the only copy that is valid.
-        -- We will tell the client that the file is unavailable
-        -- and he/she will retry later
-        --   - if we have an available STAGEOUT copy. This can happen
-        -- when the copy is in a given svcclass and we were looking
-        -- in another one. Since disk to disk copy is impossible in this
-        -- case, the file is declared BUSY.
-        --   - if we have an available WAITFS, WAITFSSCHEDULING copy in such
-        -- a case, we tell the client that the file is BUSY
-        DECLARE
-          dcStatus NUMBER;
-          fsStatus NUMBER;
-          dsStatus NUMBER;
-        BEGIN
-          SELECT DiskCopy.status, nvl(FileSystem.status, 0), nvl(DiskServer.status, 0)
-            INTO dcStatus, fsStatus, dsStatus
-            FROM DiskCopy, FileSystem, DiskServer
-           WHERE DiskCopy.castorfile = cfId
-             AND DiskCopy.status IN (5, 6, 10, 11) -- WAITFS, STAGEOUT, CANBEMIGR, WAITFSSCHEDULING
-             AND FileSystem.id(+) = DiskCopy.fileSystem
-             AND DiskServer.id(+) = FileSystem.diskserver
-             AND ROWNUM < 2;
-          -- We are in one of the special cases. Don't schedule, don't recall
-          result := 4; -- no schedule
-          UPDATE SubRequest
-             SET status = 7, -- FAILED
-                 errorCode = CASE
-                   WHEN dcStatus IN (5,11) THEN 16 -- WAITFS, WAITFSSCHEDULING, EBUSY
-                   WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN 16 -- STAGEOUT, PRODUCTION, PRODUCTION, EBUSY
-                   ELSE 1718 -- ESTNOTAVAIL
-                 END,
-                 errorMessage = CASE
-                   WHEN dcStatus IN (5, 11) THEN -- WAITFS, WAITFSSCHEDULING
-                     'File is being (re)created right now by another user'
-                   WHEN dcStatus = 6 AND fsStatus = 0 and dsStatus = 0 THEN -- STAGEOUT, PRODUCTION, PRODUCTION
-                     'File is being written to in another SvcClass'
-                   ELSE
-                     'All copies of this file are unavailable for now. Please retry later'
-                 END
-           WHERE id = rsubreqId;
-          COMMIT;
-        EXCEPTION WHEN NO_DATA_FOUND THEN
-	  -- We did not found the very special case, go for recall
-          result := 2;
-        END;
-      END;
-    END IF;
-  END IF;   -- IF type = PutDone
-END;
-
-
 /* PL/SQL method implementing checkForD2DCopyOrRecall */
 /* dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error */
-/* Internally used by getDiskCopiesForJob and getDiskCopiesForPrepReq */
+/* Internally used by getDiskCopiesForJob and processPrepareRequest */
 CREATE OR REPLACE PROCEDURE checkForD2DCopyOrRecall
                             (cfId IN NUMBER, srId IN NUMBER, svcClassId IN NUMBER,
                              dcId OUT NUMBER) AS
@@ -2187,7 +1952,7 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing processPutDone */
+/* PL/SQL method implementing processPutDoneRequest */
 CREATE OR REPLACE PROCEDURE processPutDoneRequest
         (rsubreqId IN INTEGER, result OUT INTEGER) AS
   svcClassId NUMBER;
