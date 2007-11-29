@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.555 $ $Date: 2007/11/28 11:15:09 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.556 $ $Date: 2007/11/29 09:24:51 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5211,3 +5211,343 @@ BEGIN
   END LOOP;
   COMMIT;
 END;
+
+/**
+  * Black and while list mechanism
+  * In order to be able to enter a request for a given service class, you need :
+  *   - to be in the white list for this service class
+  *   - to not be in the black list for this services class
+  * Being in a list means :
+  *   - either that your uid,gid is explicitely in the list
+  *   - or that your gid is in the list with null uid (that is group wildcard)
+  *   - or there is an entry with null uid and null gid (full wild card)
+  * The permissions can also have a request type. Default is null, that is everything
+  */
+CREATE OR REPLACE PACKAGE castorBW AS
+  TYPE Privilege IS RECORD (
+    svcCLass NUMBER,
+    euid NUMBER,
+    egid NUMBER,
+    reqType NUMBER);
+  -- Intersection of 2 priviledges
+  -- raises -20109, "Empty privilege" in case the intersection is empty
+  FUNCTION intersection(p1 IN Privilege, p2 IN Privilege) RETURN Privilege;
+  -- Does one priviledge P1 contain another one P2 ?
+  FUNCTION contains(p1 Privilege, p2 Privilege) RETURN Boolean;
+  -- Intersection of a priviledge P with the WhiteList
+  -- The result is stored in the temporary table removePrivilegeTmpTable
+  -- that is cleaned up when the procedure starts
+  PROCEDURE intersectionWithWhiteList(p Privilege);
+  -- Difference between priviledge P1 and priviledge P2
+  -- raises -20108, "Invalid privilege intersection" in case the difference
+  -- can not be computed
+  -- raises -20109, "Empty privilege" in case the difference is empty
+  FUNCTION diff(P1 Privilege, P2 Privilege) RETURN Privilege;
+  -- remove priviledge P from list L
+  PROCEDURE removePrivilegeFromBlackList(p Privilege);
+  -- Add priviledge P to WhiteList
+  PROCEDURE addPrivilegeToWL(p Privilege);
+  -- Add priviledge P to BlackList
+  PROCEDURE addPrivilegeToBL(p Privilege);
+  -- cleanup BlackList after privileges were removed from the whitelist
+  PROCEDURE cleanupBL;
+  -- Add priviledge P
+  PROCEDURE addPrivilege(P Privilege);
+  -- Remove priviledge P
+  PROCEDURE removePrivilege(P Privilege);
+END castorBW;
+
+/*
+ * Temporary table to handle removing of priviledges
+ */
+CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
+  (WhiteList%ROWTYPE)
+  ON COMMIT DELETE ROWS;
+
+CREATE OR REPLACE PACKAGE BODY castorBW AS
+
+  -- Intersection of 2 priviledges
+  FUNCTION intersection(p1 IN Privilege, p2 IN Privilege)
+  RETURN Privilege AS
+    res Privilege;
+  BEGIN
+    IF p1.euid IS NULL OR p1.euid = p2.euid THEN
+      res.euid := p2.euid;
+    ELSIF p2.euid IS NULL THEN
+      res.euid := p1.euid;
+    ELSE
+      raise_application_error(-20109, 'Empty privilege');
+    END IF;
+    IF p1.egid IS NULL OR p1.egid = p2.egid THEN
+      res.egid := p2.egid;
+    ELSIF p2.egid IS NULL THEN
+      res.egid := p1.egid;
+    ELSE
+      raise_application_error(-20109, 'Empty privilege');
+    END IF;
+    IF p1.svcClass IS NULL OR p1.svcClass = p2.svcClass THEN
+      res.svcClass := p2.svcClass;
+    ELSIF p2.svcClass IS NULL THEN
+      res.svcClass := p1.svcClass;
+    ELSE
+      raise_application_error(-20109, 'Empty privilege');
+    END IF;
+    IF p1.reqType IS NULL OR p1.reqType = p2.reqType THEN
+      res.reqType := p2.reqType;
+    ELSIF p2.reqType IS NULL THEN
+      res.reqType := p1.reqType;
+    ELSE
+      raise_application_error(-20109, 'Empty privilege');
+    END IF;
+    RETURN res;
+  END;
+  
+  -- Does one priviledge P1 contain another one P2 ?
+  FUNCTION contains(p1 Privilege, p2 Privilege) RETURN Boolean AS
+  BEGIN
+    IF p1.euid IS NOT NULL -- p1 NULL means it contains everything !
+       AND (p2.euid IS NULL OR p1.euid != p2.euid) THEN
+      RETURN FALSE;
+    END IF;
+    IF p1.egid IS NOT NULL -- p1 NULL means it contains everything !
+       AND (p2.egid IS NULL OR p1.egid != p2.egid) THEN
+      RETURN FALSE;
+    END IF;
+    IF p1.svcClass IS NOT NULL -- p1 NULL means it contains everything !
+       AND (p2.svcClass IS NULL OR p1.svcClass != p2.svcClass) THEN
+      RETURN FALSE;
+    END IF;
+    IF p1.reqType IS NOT NULL -- p1 NULL means it contains everything !
+       AND (p2.reqType IS NULL OR p1.reqType != p2.reqType) THEN
+      RETURN FALSE;
+    END IF;
+    RETURN TRUE;
+  END;
+  
+  -- Intersection of a priviledge P with the WhiteList
+  -- The result is stored in the temporary table removePrivilegeTmpTable
+  PROCEDURE intersectionWithWhiteList(p Privilege) AS
+    wlr Privilege;
+    tmp Privilege;
+    empty_privilege EXCEPTION;
+    PRAGMA EXCEPTION_INIT(empty_privilege, -20109);
+  BEGIN
+    DELETE FROM removePrivilegeTmpTable;
+    FOR r IN (SELECT * FROM WhiteList) LOOP
+      BEGIN
+        wlr.svcClass := r.svcClass;
+        wlr.euid := r.euid;
+        wlr.egid := r.egid;
+        wlr.reqType := r.reqType;
+        tmp := intersection(wlr, p);
+        INSERT INTO removePrivilegeTmpTable
+        VALUES (tmp.svcClass, tmp.euid, tmp.egid, tmp.reqType);
+      EXCEPTION WHEN empty_privilege THEN
+        NULL;
+      END;
+    END LOOP;
+  END;
+
+  -- Difference between priviledge P1 and priviledge P2
+  FUNCTION diff(P1 Privilege, P2 Privilege) RETURN Privilege AS
+    empty_privilege EXCEPTION;
+    PRAGMA EXCEPTION_INIT(empty_privilege, -20109);
+    unused Privilege;
+  BEGIN
+    IF contains(P1, P2) THEN
+      IF P1.euid = P2.euid OR P1.egid = P2.egid OR P1.svcClass = P2.svcClass OR P1.reqType = P2.reqType THEN
+        raise_application_error(-20109, 'Empty privilege');
+      ELSE
+        raise_application_error(-20108, 'Invalid privilege intersection');
+      END IF;
+    ELSE
+      BEGIN
+        unused := intersection(P1, P2);
+        -- no exception, so the intersection is not empty.
+        -- we don't know how to handle such a case
+        raise_application_error(-20108, 'Invalid privilege intersection');
+      EXCEPTION WHEN empty_privilege THEN
+      -- P1 and P2 do not intersect, the diff is thus P1
+        RETURN P1;
+      END;
+    END IF;
+  END;
+  
+  -- remove priviledge P from list L
+  PROCEDURE removePrivilegeFromBlackList(p Privilege) AS
+    blr Privilege;
+    tmp Privilege;
+    empty_privilege EXCEPTION;
+    PRAGMA EXCEPTION_INIT(empty_privilege, -20109);
+  BEGIN
+    FOR r IN (SELECT * FROM BlackList) LOOP
+      BEGIN
+        blr.svcClass := r.svcClass;
+        blr.euid := r.euid;
+        blr.egid := r.egid;
+        blr.reqType := r.reqType;
+        tmp := diff(blr, p);
+      EXCEPTION WHEN empty_privilege THEN
+        -- diff raised an exception saying that the diff is empty
+        -- thus we drop the line
+        DELETE FROM BlackList
+         WHERE  nvl(svcClass, -1) = nvl(r.svcClass, -1) AND
+               nvl(euid, -1) = nvl(r.euid, -1) AND
+               nvl(egid, -1) = nvl(r.egid, -1) AND
+               nvl(reqType, -1) = nvl(r.reqType, -1);
+      END;
+    END LOOP;
+  END;
+  
+  -- Add priviledge P to list L :
+  PROCEDURE addPrivilegeToWL(p Privilege) AS
+    wlr Privilege;
+    extended boolean := FALSE;
+  BEGIN
+    FOR r IN (SELECT * FROM WhiteList) LOOP
+      wlr.svcClass := r.svcClass;
+      wlr.euid := r.euid;
+      wlr.egid := r.egid;
+      wlr.reqType := r.reqType;
+      -- check if we extend a privilege
+      IF contains(p, wlr) THEN
+        IF extended THEN
+          -- drop this row, it merged into the new one
+          DELETE FROM WhiteList
+           WHERE nvl(svcClass, -1) = nvl(wlr.svcClass, -1) AND
+                 nvl(euid, -1) = nvl(wlr.euid, -1) AND
+                 nvl(egid, -1) = nvl(wlr.egid, -1) AND
+                 nvl(reqType, -1) = nvl(wlr.reqType, -1);
+        ELSE
+          -- replace old row with new one
+          UPDATE WhiteList
+             SET svcClass = p.svcClass,
+                 euid = p.euid,
+                 egid = p.egid,
+                 reqType = p.reqType
+           WHERE nvl(svcClass, -1) = nvl(wlr.svcClass, -1) AND
+                 nvl(euid, -1) = nvl(wlr.euid, -1) AND
+                 nvl(egid, -1) = nvl(wlr.egid, -1) AND
+                 nvl(reqType, -1) = nvl(wlr.reqType, -1);
+          extended := TRUE;
+        END IF;
+      END IF;
+      -- check if privilege is there
+      IF contains(wlr, p) THEN RETURN; END IF;
+    END LOOP;
+    IF NOT extended THEN
+      INSERT INTO WhiteList VALUES p;
+    END IF;
+  END;
+  
+  -- Add priviledge P to list L :
+  PROCEDURE addPrivilegeToBL(p Privilege) AS
+    blr Privilege;
+    extended boolean := FALSE;
+  BEGIN
+    FOR r IN (SELECT * FROM BlackList) LOOP
+      blr.svcClass := r.svcClass;
+      blr.euid := r.euid;
+      blr.egid := r.egid;
+      blr.reqType := r.reqType;
+      -- check if privilege is there
+      IF contains(blr, p) THEN RETURN; END IF;
+      -- check if we extend a privilege
+      IF contains(p, blr) THEN
+        IF extended THEN
+          -- drop this row, it merged into the new one
+          DELETE FROM BlackList
+           WHERE nvl(svcClass, -1) = nvl(blr.svcClass, -1) AND
+                 nvl(euid, -1) = nvl(blr.euid, -1) AND
+                 nvl(egid, -1) = nvl(blr.egid, -1) AND
+                 nvl(reqType, -1) = nvl(blr.reqType, -1);
+        ELSE
+          -- replace old row with new one
+          UPDATE BlackList
+             SET svcClass = p.svcClass,
+                 euid = p.euid,
+                 egid = p.egid,
+                 reqType = p.reqType
+           WHERE nvl(svcClass, -1) = nvl(blr.svcClass, -1) AND
+                 nvl(euid, -1) = nvl(blr.euid, -1) AND
+                 nvl(egid, -1) = nvl(blr.egid, -1) AND
+                 nvl(reqType, -1) = nvl(blr.reqType, -1);
+          extended := TRUE;
+        END IF;
+      END IF;
+    END LOOP;
+    IF NOT extended THEN
+      INSERT INTO BlackList VALUES p;
+    END IF;
+  END;
+  
+  -- cleanup BlackList when a privilege was removed from the whitelist
+  PROCEDURE cleanupBL AS
+    blr Privilege;
+    c NUMBER;
+  BEGIN
+    FOR r IN (SELECT * FROM BlackList) LOOP
+      blr.svcClass := r.svcClass;
+      blr.euid := r.euid;
+      blr.egid := r.egid;
+      blr.reqType := r.reqType;
+      intersectionWithWhiteList(blr);
+      SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
+      IF c = 0 THEN
+        -- we can safely drop this line
+        DELETE FROM BlackList
+         WHERE  nvl(svcClass, -1) = nvl(r.svcClass, -1) AND
+               nvl(euid, -1) = nvl(r.euid, -1) AND
+               nvl(egid, -1) = nvl(r.egid, -1) AND
+               nvl(reqType, -1) = nvl(r.reqType, -1);
+      END IF;
+    END LOOP;
+  END;
+
+  -- Add priviledge P
+  PROCEDURE addPrivilege(P Privilege) AS
+  BEGIN
+    removePrivilegeFromBlackList(P);
+    addPrivilegeToWL(P);
+    COMMIT;
+  EXCEPTION WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE;
+  END;
+  
+  -- Remove priviledge P
+  PROCEDURE removePrivilege(P Privilege) AS
+    c NUMBER;
+    wlr Privilege;
+  BEGIN
+    -- Check first whether there is something to remove
+    intersectionWithWhiteList(P);
+    SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
+    IF c = 0 THEN RETURN; END IF;
+    -- Remove effectively what can be removed
+    FOR r IN (SELECT * FROM WHITELIST) LOOP
+      wlr.svcClass := r.svcClass;
+      wlr.euid := r.euid;
+      wlr.egid := r.egid;
+      wlr.reqType := r.reqType;
+      IF contains(P, wlr) THEN
+        DELETE FROM WhiteList
+         WHERE nvl(svcClass, -1) = nvl(wlr.svcClass, -1) AND
+               nvl(euid, -1) = nvl(wlr.euid, -1) AND
+               nvl(egid, -1) = nvl(wlr.egid, -1) AND
+               nvl(reqType, -1) = nvl(wlr.reqType, -1);
+      END IF;
+    END LOOP;
+    -- cleanup blackList
+    cleanUpBL();
+    -- check what remains
+    intersectionWithWhiteList(P);
+    SELECT COUNT(*) INTO c FROM removePrivilegeTmpTable;
+    IF c = 0 THEN RETURN; END IF;
+    -- If any, add them to blackList
+    FOR q IN (SELECT * FROM removePrivilegeTmpTable) LOOP
+      addPrivilegeToBL(q);
+    END LOOP;
+  END;
+    
+END castorBW;
