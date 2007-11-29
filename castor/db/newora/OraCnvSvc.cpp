@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/11/28 17:56:33 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/11/29 13:58:53 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -160,6 +160,7 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     }   
     m_connection->terminateStatement(stmt);
     if (codeVersion != DBVersion) {
+      dropConnection();
       castor::exception::BadVersion e;
       e.getMessage() << "Version mismatch between the database and the code : \""
                      << DBVersion << "\" versus \""
@@ -174,9 +175,17 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     stmt = m_connection->createStatement(ss.str());
     stmt->execute();
     m_connection->terminateStatement(stmt);
+
+    // Uncomment this to enable tracing of the DB
+    //stmt = m_connection->createStatement
+    //  ("alter session set events '10046 trace name context forever, level 8'");
+    //stmt->executeUpdate();
+    //m_connection->terminateStatement(stmt);
+    //m_connection->commit();
   }
   catch (oracle::occi::SQLException e) {
     // No CastorVersion table ?? This means bad version
+    dropConnection();
     if (0 != stmt) m_connection->terminateStatement(stmt);
     castor::exception::BadVersion ex;
     ex.getMessage() << "Not able to find the version of castor in the database"
@@ -185,14 +194,6 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
   }
   
   clog() << SYSTEM << "Created new Oracle connection" << std::endl;
-
-  // Uncomment this to enable tracing of the DB
-  //stmt = m_connection->createStatement
-  //  ("alter session set events '10046 trace name context forever, level 8'");
-  //stmt->executeUpdate();
-  //m_connection->terminateStatement(stmt);
-  //m_connection->commit();
-
   return m_connection;
 }
 
