@@ -41,7 +41,7 @@ CASTOR_HOME = ../../..
 INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I FileName(../..,..) $(PYTHONINC)
 
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) 
-LIBS = -lshift -lcastorCnvs -lcastorInfoPolicy -lcastorCommonOra -L$(ORACLE_HOME)/lib -locci -lclntsh
+LIBS = -lshift -lcastorCnvs -lcastorInfoPolicy -lcastorCommonOra -L$(ORACLE_HOME)/lib -locci -lclntsh -Wl,-rpath-link,../../../shlib
 MIGHUNTERDAEMONBIN_SRCS = \
 	MigHunterDaemon.cpp \
 	MigHunterThread.cpp 
