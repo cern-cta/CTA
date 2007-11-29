@@ -22,10 +22,10 @@
 #include "castor/stager/dbService/StagerSetGCHandler.hpp"
 
 
-
-
 #include "castor/server/SelectProcessThread.hpp"
 #include "castor/BaseObject.hpp"
+#include "castor/PortsConfig.hpp"
+#include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "stager_constants.h"
@@ -51,8 +51,6 @@
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
 #include "castor/stager/IStagerSvc.hpp"
-#include "castor/BaseObject.hpp"
-#include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/Constants.hpp"
 
@@ -75,12 +73,11 @@ namespace castor{
       /****************/
       /* constructor */
       /**************/
-      PreRequestSvc::PreRequestSvc(std::string jobManagerHost, int jobManagerPort) throw() :
-      RequestSvc("PrepReqSvc"), m_jobManagerHost(jobManagerHost), m_jobManagerPort(jobManagerPort)
+      PreRequestSvc::PreRequestSvc() throw(castor::exception::Exception) :
+      RequestSvc("PrepReqSvc")
       {
-        /* Initializes the DLF logging */
-        /*	castor::dlf::Messages messages[]={{1, "Starting PreRequestSvc Thread"},{2, "StagerRequestHelper"},{3, "StagerCnsHelper"},{4, "StagerReplyHelper"},{5, "StagerRequestHelper failed"},{6, "StagerCnsHelper failed"},{7, "StagerReplyHelper failed"},{8, "StagerHandler"}, {9, "StagerHandler successfully finished"},{10,"StagerHandler failed finished"},{11, "PreRequestSvc Thread successfully finished"},{12, "PreRequestSvc Thread failed finished"}};
-        castor::dlf::dlf_init("PreRequestSvc", messages);*/
+        m_jobManagerHost = castor::PortsConfig::getInstance()->getHostName(castor::CASTOR_JOBMANAGER);
+        m_jobManagerPort = castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_JOBMANAGER);
       }
       
       
@@ -125,7 +122,7 @@ namespace castor{
           stgRequestHandler->handle();
           
           if (stgRequestHandler->notifyJobManager()) {
-            castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 1);
+            castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 'D');
           }
           
           delete stgRequestHandler;          

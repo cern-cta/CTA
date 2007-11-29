@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/11/16 14:10:04 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/11/29 12:59:01 $ $Author: itglp $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -33,6 +33,9 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/BaseAddress.hpp"
+#include "castor/PortsConfig.hpp"
+#include "castor/server/BaseServer.hpp"
+#include "castor/server/ThreadNotification.hpp"
 
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
@@ -45,13 +48,22 @@
 #include "castor/rh/Server.hpp"
 #include "castor/MessageAck.hpp"
 
-#include "h/stager_service_api.h"
-
 #include <iostream>
 #include <errno.h>
 #include <sys/times.h>
 #include <unistd.h>
 
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+castor::rh::RHThread::RHThread(bool useAccessLists)
+throw (castor::exception::Exception) :
+  m_useAccessLists(useAccessLists) {
+  m_stagerHost = castor::PortsConfig::getInstance()->
+    getHostName(castor::CASTOR_STAGER);
+  m_stagerPort = castor::PortsConfig::getInstance()->
+    getNotifPort(castor::CASTOR_STAGER);
+}
 
 //------------------------------------------------------------------------------
 // run
@@ -260,23 +272,30 @@ void castor::rh::RHThread::handleRequest
   // Send an UDP message to the right stager service
   switch (fr->type()) {
   case OBJ_StageGetRequest:
+  case OBJ_StagePutRequest:
+  case OBJ_StageUpdateRequest:
+    // JobRequest Service
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'J', nbSubReqs);
+    break;
+  case OBJ_StagePrepareToPutRequest:
   case OBJ_StagePrepareToGetRequest:
   case OBJ_StageRepackRequest:
-  case OBJ_StagePutRequest:
-  case OBJ_StagePrepareToPutRequest:
-  case OBJ_StageUpdateRequest:
   case OBJ_StagePrepareToUpdateRequest:
+    // PrepareRequest Service
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'P', nbSubReqs);
+    break;
   case OBJ_StageRmRequest:
   case OBJ_StagePutDoneRequest:
-    // Query Service
-    stager_notifyService_v2(::STAGER_SERVICE_DB, nbSubReqs);
+  case OBJ_SetFileGCWeight:
+    // StagerRequest Service
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'S', nbSubReqs);
     break;
   case OBJ_StageFileQueryRequest :
   case OBJ_StageFindRequestRequest :
   case OBJ_StageRequestQueryRequest :
   case OBJ_DiskPoolQuery :
-    // Query Service
-    stager_notifyService(::STAGER_SERVICE_QUERY);
+    // QueryRequest Service
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'Q', nbSubReqs);
     break;
   case OBJ_GetUpdateStartRequest:
   case OBJ_Disk2DiskCopyDoneRequest:
@@ -288,13 +307,13 @@ void castor::rh::RHThread::handleRequest
   case OBJ_PutFailed :
   case OBJ_PutDoneStart :
     // Job Service
-    stager_notifyService(::STAGER_SERVICE_JOB);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'j', 1);
     break;
   case OBJ_Files2Delete:
   case OBJ_FilesDeleted:
   case OBJ_FilesDeletionFailed:
     // Garbage Collector Service
-    stager_notifyService(::STAGER_SERVICE_GC);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'G', 1);
     break;
   default:
     // We should not go this way, this would not be optimal
@@ -302,6 +321,7 @@ void castor::rh::RHThread::handleRequest
     castor::dlf::Param params[] =
       {castor::dlf::Param("Request type", fr->type())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 13, 1, params);
-    stager_notifyServices();
+    // XXX not supported for the time being in the new framework,
+    // XXX to be seen if needed.
   }
 }

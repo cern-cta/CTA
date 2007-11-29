@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/09/11 08:50:31 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/29 12:59:01 $ $Author: itglp $
  *
  *
  *
@@ -49,10 +49,13 @@ namespace castor {
       /**
        * constructor
        * @param useAccessLists whether to use access lists
-       * @param rhSvc pointer to the requestHandler service
        */
-      RHThread(bool useAccessLists) :
-        m_useAccessLists(useAccessLists) {}
+      RHThread(bool useAccessLists) throw (castor::exception::Exception);
+      
+      /**
+       * default destructor
+       */
+      ~RHThread() throw() {};
 
       /**
        * Method called once per request, where all the code resides
@@ -82,6 +85,12 @@ namespace castor {
 
       /// whether to use access lists
       bool m_useAccessLists;
+      
+      /// stager host
+      std::string m_stagerHost;
+      
+      /// stager notify port
+      unsigned m_stagerPort;
 
     }; // class RHThread
 

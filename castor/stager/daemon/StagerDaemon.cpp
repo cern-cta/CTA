@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2007/11/23 18:19:08 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/11/29 13:00:01 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -35,6 +35,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/PortsConfig.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 
@@ -49,51 +50,11 @@
 
 #include "castor/stager/dbService/StagerDlfMessages.hpp"
 
-// default values
-#define STAGER_NOTIFYPORT    10001
-
-
-int getConfigPort(const char* configLabel, int defaultValue) {
-  const char* value;
-  int notifyPort = 0;
-
-  if ((value = getconfent((char*)"STAGER", (char*)configLabel, 0))) {
-    notifyPort = std::strtol(value, 0, 10);
-    if (notifyPort == 0) {
-      notifyPort = defaultValue;
-    } else if (notifyPort > 65535) {
-      std::cerr << "Invalid value configured for " << configLabel <<": " 
-         << notifyPort << " - must be < 65535" << std::endl;
-      exit(EXIT_FAILURE);
-    }
-  }
-  return notifyPort;
-}
-
-
 
 int main(int argc, char* argv[]){
   try{
 
     castor::stager::dbService::StagerMainDaemon stagerDaemon;
-    
-    // read the jobManager notification port
-    int jobManagerPort = 0;
-    char *value = getconfent((char*)"JOBMANAGER", (char*)"NOTIFYPORT", 0);
-    if(value) {
-      jobManagerPort = std::strtol(value, 0, 10);
-    }
-    if ((jobManagerPort <= 0) || (jobManagerPort > 65535)) {
-      castor::exception::Exception e(EINVAL);
-      e.getMessage() << "Invalid JOBMANAGER NOTIFYPORT value configured: " << jobManagerPort<< " - must be < 65535" << std::endl;
-      throw e;
-    }
-    std::string jobManagerHost = getconfent((char*)"JOBMANAGER", (char*)"HOST", 0);
-    if(jobManagerHost == "") {
-      castor::exception::Exception e(EINVAL);
-      e.getMessage() << "No JOBMANAGER HOST value configured" << std::endl;
-      throw e;
-    }
     
     castor::stager::IStagerSvc* stgService =
       dynamic_cast<castor::stager::IStagerSvc*>(
@@ -109,11 +70,11 @@ int main(int argc, char* argv[]){
     /*******************************/
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("JobRequestSvcThread", 
-        new castor::stager::dbService::JobRequestSvc(jobManagerHost, jobManagerPort)));
+        new castor::stager::dbService::JobRequestSvc()));
     
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("PrepRequestSvcThread", 
-        new castor::stager::dbService::PreRequestSvc(jobManagerHost, jobManagerPort)));
+        new castor::stager::dbService::PreRequestSvc()));
 
 
     stagerDaemon.addThreadPool(
@@ -144,7 +105,8 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('j')->setNbThreads(10);
     stagerDaemon.getThreadPool('G')->setNbThreads(6);
     
-    stagerDaemon.addNotifierThreadPool(STAGER_NOTIFYPORT);
+    stagerDaemon.addNotifierThreadPool(
+      castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_STAGER));
     
     /* we need to call this function before setting the number of threads */
     stagerDaemon.parseCommandLine(argc, argv);
@@ -172,7 +134,7 @@ int main(int argc, char* argv[]){
 /******************************************************************************************/
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /****************************************************************************************/
-castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw(castor::exception::Exception)
+castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw (castor::exception::Exception)
   : castor::server::BaseDaemon("Stager") {
 	
   castor::dlf::Message stagerDlfMessages[]={
@@ -312,10 +274,14 @@ void castor::stager::dbService::StagerMainDaemon::help(std::string programName)
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--Pthreads    or -P {integer >= 0}  \tNumber of threads for the Prepare requests\n"
+    "\t--Jthreads    or -J {integer >= 0}  \tNumber of threads for the Job requests service\n"
+    "\t--Pthreads    or -P {integer >= 0}  \tNumber of threads for the Prepare requests service\n"
+    "\t--Sthreads    or -S {integer >= 0}  \tNumber of threads for the Stager requests service\n"
+    "\t--Qthreads    or -Q {integer >= 0}  \tNumber of threads for the Query requests service\n"
+    "\t--Ethreads    or -E {integer >= 0}  \tNumber of threads for the Error service\n"
+    "\t--jthreads    or -j {integer >= 0}  \tNumber of threads for the Job service\n"
+    "\t--Gthreads    or -G {integer >= 0}  \tNumber of threads for the GC service\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
 }
-
-
 

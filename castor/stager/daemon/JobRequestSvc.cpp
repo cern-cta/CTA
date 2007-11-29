@@ -15,6 +15,8 @@
 
 #include "castor/stager/dbService/RequestSvc.hpp"
 #include "castor/BaseObject.hpp"
+#include "castor/PortsConfig.hpp"
+#include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "stager_constants.h"
@@ -40,8 +42,6 @@
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
 #include "castor/stager/IStagerSvc.hpp"
-#include "castor/BaseObject.hpp"
-#include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/Constants.hpp"
 
@@ -65,9 +65,11 @@ namespace castor{
       /****************/
       /* constructor */
       /**************/
-      JobRequestSvc::JobRequestSvc(std::string jobManagerHost, int jobManagerPort) throw() :
-      RequestSvc("JobReqSvc"), m_jobManagerHost(jobManagerHost), m_jobManagerPort(jobManagerPort)
+      JobRequestSvc::JobRequestSvc() throw(castor::exception::Exception) :
+      RequestSvc("JobReqSvc")
       {
+        m_jobManagerHost = castor::PortsConfig::getInstance()->getHostName(castor::CASTOR_JOBMANAGER);
+        m_jobManagerPort = castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_JOBMANAGER);
       }
       
 
@@ -106,7 +108,7 @@ namespace castor{
           stgRequestHandler->handle();
           
           if (stgRequestHandler->notifyJobManager()) {
-            castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 1);
+            castor::server::BaseServer::sendNotification(m_jobManagerHost, m_jobManagerPort, 'D');
           }
           
           delete stgRequestHandler;
