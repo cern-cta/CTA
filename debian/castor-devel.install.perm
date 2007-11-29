@@ -132,5 +132,5 @@
 %attr(0644,root,bin) usr/include/shift/vmgr_server.h
 %attr(0644,root,bin) usr/include/shift/vmgr_struct.h
 %attr(0644,root,bin) usr/include/shift/ypgetacctent.h
-%attr(0644,root,bin) usr/lib/libshift.a
 %attr(-,root,root) usr/lib/libshift.so
+%attr(-,root,root) usr/lib/libcastorClient.so
