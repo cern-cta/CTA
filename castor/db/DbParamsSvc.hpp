@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      IService.hpp
+ *                      DbParamsSvc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DbParamsSvc.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/07/13 10:20:21 $ $Author: itglp $
+ * @(#)$RCSfile: DbParamsSvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/29 12:57:36 $ $Author: itglp $
  *
  * A service to provide parameters to access the db layer of a Castor application
  *
@@ -37,7 +37,7 @@ namespace castor {
  namespace db {
 
   /**
-   * base of all services
+   * The DbParams service
    */
   class DbParamsSvc : public castor::BaseSvc {
 
