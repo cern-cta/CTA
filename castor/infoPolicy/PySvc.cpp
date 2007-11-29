@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/27 16:12:05 $ $Author: gtaur $
+ * @(#)$RCSfile: PySvc.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/29 16:17:42 $ $Author: waldron $
  *
  * CPP Wrapper for Python 
  *
@@ -87,7 +87,7 @@ bool castor::infoPolicy::PySvc::callPolicyFunction(std::string functionName, PyO
   // Attempt to find the function in the Python modules dictionary with the
   // function name. If the function cannot be found revert to the default.
 
-  PyObject *pyFunc = PyDict_GetItemString(m_pyDict,functionName.c_str());
+  PyObject *pyFunc = PyDict_GetItemString(m_pyDict,(char *)functionName.c_str());
   //  if (pyFunc == NULL) {
   //  pyFunc = PyDict_GetItemString(m_pyDict, "default");
   //  }
