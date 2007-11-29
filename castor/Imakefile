@@ -91,8 +91,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               IObject.cpp \
               IClient.cpp \
               IClientCInt.cpp \
-              IClientFactory.cpp \
-              IClientFactoryCInt.cpp \
               IObjectCInt.cpp \
               MessageAck.cpp \
               MessageAckCInt.cpp \
@@ -101,6 +99,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               StdMsgSvc.cpp \
               ObjectCatalog.cpp \
               ObjectSet.cpp \
+              PortsConfig.cpp \
               Services.cpp \
               ServicesCInt.cpp \
 	      System.cpp \
