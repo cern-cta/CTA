@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      DbParamsSvc.cpp
+ *                      PortsConfig.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PortsConfig.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/29 12:58:37 $ $Author: itglp $
+ * @(#)$RCSfile: PortsConfig.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/29 14:39:15 $ $Author: itglp $
  *  
  * A service to provide parameters to access the db layer of a Castor application
  *
@@ -57,12 +57,12 @@ castor::PortsConfig* castor::PortsConfig::getInstance()
 // -----------------------------------------------------------------------
 castor::PortsConfig::PortsConfig() throw (castor::exception::Exception) :
   BaseObject() {
-    m_hosts[castor::CASTOR_STAGER] = getConfigHost("STAGER");
-    m_ports[castor::CASTOR_STAGER] = getConfigPort("STAGER", STAGER_DEFAULT_NOTIFYPORT);
-    m_hosts[castor::CASTOR_JOBMANAGER] = getConfigHost("JOBMANAGER");
-    m_ports[castor::CASTOR_JOBMANAGER] = getConfigPort("JOBMANAGER", JOBMANAGER_DEFAULT_NOTIFYPORT);
-    //m_hosts[castor::CASTOR_RTCPCLIENTD] = getConfigHost("RTCPCLIENTD");
-    //m_ports[castor::CASTOR_RTCPCLIENTD] = getConfigPort("RTCPCLIENTD", RTCPCLIENTD_DEFAULT_NOTIFYPORT);
+    m_hosts.push_back(getConfigHost("STAGER"));
+    m_ports.push_back(getConfigPort("STAGER", STAGER_DEFAULT_NOTIFYPORT));
+    m_hosts.push_back(getConfigHost("JOBMANAGER"));
+    m_ports.push_back(getConfigPort("JOBMANAGER", JOBMANAGER_DEFAULT_NOTIFYPORT));
+    //m_hosts.push_back(getConfigHost("RTCPCLIENTD"));
+    //m_ports.push_back(getConfigPort("RTCPCLIENTD", RTCPCLIENTD_DEFAULT_NOTIFYPORT));
 }
 
 // -----------------------------------------------------------------------
@@ -92,12 +92,12 @@ std::string castor::PortsConfig::getConfigHost(const char* configLabel)
   throw (castor::exception::Exception) {
   const char* value;
 
-  if ((value = getconfent((char*)configLabel, "HOST", 0)) &&
-      // XXX let's try and read the NOTIFYHOST value as well, for the stager...
-      (value = getconfent((char*)configLabel, "NOTIFYHOST", 0))) {
+  // XXX we need to first try and read the NOTIFYHOST value, for the stager...
+  if (!(value = getconfent((char*)configLabel, "NOTIFYHOST", 0)) &&
+      !(value = getconfent((char*)configLabel, "HOST", 0))) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Invalid or missing value configured for "
-      << configLabel << "_HOST" << value;
+      << configLabel << "_HOST: " << value;
     throw e;
   }
   return value;
