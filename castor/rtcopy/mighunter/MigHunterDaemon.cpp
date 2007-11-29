@@ -154,7 +154,7 @@ int main(int argc, char* argv[]){
 // also initialises the logging facility
 //------------------------------------------------------------------------------
 
-castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::BaseDaemon("MigHunterDaemon") 
+castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::BaseDaemon("mighunter") 
 {
     m_timeSleep=SLEEP_TIME;
     m_byteVolume= MIN_BYTE_VOLUME;
