@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.558 $ $Date: 2007/11/29 11:06:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.559 $ $Date: 2007/11/29 16:24:36 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4901,6 +4901,7 @@ BEGIN
           (id, initialsizetotransfer, lastFileSystemChange, tape, lastFileSystemUsed, 
            lastButOneFileSystemUsed, tapepool, status)  
         VALUES (ids_seq.nextval, initSize, 0, 0, 0, 0, tpId, 5) RETURN id INTO strId;
+        INSERT INTO Id2Type (id, type) values (strId,26); -- Stream type
     	IF doClone = 1 THEN
 	  -- clone the new stream with one from the same tapepool
 	  SELECT id INTO streamToClone 
@@ -4938,20 +4939,27 @@ BEGIN
 END;
 
 /* start choosen stream */
+
+
 CREATE OR REPLACE PROCEDURE startChosenStreams
-(streamIds IN castor."cnumList", initSize IN NUMBER) AS
+        (streamIds IN castor."cnumList",
+	initSize IN NUMBER) AS
 BEGIN	
-  IF initSize > 0 THEN 
-  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
-    UPDATE Stream SET Stream.status = 0, Stream.initialSizeToTransfer = initSize -- PENDING
-     WHERE Stream.status IN (4, 5, 6) -- CREATED WAITSPACE STOPPED
-       AND Stream.initialSizeToTransfer = 0 
-       AND id = streamIds(i);
-    END LOOP;	
-  END IF;
-  UPDATE Stream SET Stream.Status = 6 
-   WHERE Stream.Status IN (4, 5, 6); -- CREATED WAITSPACE STOPPED (the one not changed as pending)
+	
+	FOR i in streamIds.FIRST .. streamIds.LAST LOOP
+            	UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
+			WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
+		 		AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
+		 		AND id=streamIds(i);
+		 		
+		UPDATE Stream SET Stream.status=0 -- PENDING
+			WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
+		 		AND id=streamIds(i);
+	END LOOP;	
+	UPDATE Stream SET Stream.Status=6 WHERE Stream.Status IN (4,5,6);  -- CREATED WAITSPACE STOPPED (the one not changed as pending)
+	COMMIT;
 END;
+
 
 /* resurrect Candidates */
 CREATE OR REPLACE PROCEDURE resurrectCandidates
