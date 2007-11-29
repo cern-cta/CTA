@@ -1,0 +1,8 @@
+#! /bin/sh
+#
+# $Id: castor-rechandler-server.postinst,v 1.1 2007/11/29 14:20:02 gtaur Exp $
+#
+CASTOR_SERVICE=rechandler
+export CASTOR_SERVICE
+[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
+exit $?

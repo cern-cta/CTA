@@ -1,0 +1,8 @@
+#! /bin/sh
+#
+# $Id: castor-mighunter-server.prerm,v 1.1 2007/11/29 14:20:01 gtaur Exp $
+#
+CASTOR_SERVICE=mighunter
+export CASTOR_SERVICE
+[ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
+exit $?
