@@ -18,7 +18,8 @@ SHLIBLDFLAGS = -shared
 SHLIBREQLIBS = -lc -lpthread `g++ -print-file-name=libstdc++.so` -ldl
 
 PYTHONLIBS = `python ${CASTOR_HOME}/config/pycompile.py --libs`
-PYTHONINC = `python ${CASTOR_HOME}/config/pycompile.py --cflags`
+PYTHONINC = `python ${CASTOR_HOME}/config/pycompile.py --inc`
+PYTHONCFLAGS = `python ${CASTOR_HOME}/config/pycompile.py --cflags`
 
 #if UseAdns
 ADNSLIB = -ladns

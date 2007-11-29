@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: pycompile.py,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/29 15:03:41 $ $Author: gtaur $
+# @(#)$RCSfile: pycompile.py,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/29 16:17:01 $ $Author: waldron $
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #******************************************************************************
@@ -38,6 +38,7 @@ def usage():
     print '-h, --help      Display this help and exit'
     print '    --cflags    Display pre-processor and compile flags'
     print '    --libs      Display the link flag\n'
+    print '    --inc       Display inclusion path\n'
     print 'Report bugs to <castor-support@cern.ch>'
 
 #
@@ -48,11 +49,12 @@ def main(argv):
     # default values
     cflags = 0
     libs   = 0
+    inc    = 0
     flags  = ''
 
     # process command line arguments
     try:
-	opts, args = getopt.getopt(argv, 'hcl', ['help', 'cflags', 'libs'])
+	opts, args = getopt.getopt(argv, 'hcli', ['help', 'cflags', 'libs', 'inc'])
     except getopt.GetoptError:
 	usage()
 	sys.exit(2)
@@ -67,6 +69,8 @@ def main(argv):
 		cflags = 1;
 	    elif opt in ('-l', '--libs'):
 		libs = 1;
+	    elif opt in ('-i', '--inc'):
+		inc = 1;
     except ValueError:
 	sys.exit(1)
 
@@ -74,7 +78,9 @@ def main(argv):
     sysconfig = distutils.sysconfig.get_config_vars()
 
     if cflags:
-        flags = ' -I%s ' % (sysconfig['INCLUDEPY'])
+	flags = '%s' % (sysconfig['CFLAGS'])
+    if inc:
+	flags += '-I%s -L%s/config ' % (sysconfig['INCLUDEPY'], sysconfig['BINLIBDEST'])
     if libs:
         flags += '-lpython%s %s %s' % (sysconfig['VERSION'], sysconfig['LIBS'], sysconfig['LIBM'])
 
