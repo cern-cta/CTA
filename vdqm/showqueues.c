@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.26 $ $Date: 2007/09/27 14:01:42 $ CERN IT-PDP/DM Olof Barring";
+static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.27 $ $Date: 2007/11/30 12:34:36 $ CERN IT-PDP/DM Olof Barring";
 #endif /* not lint */
 
 /*
@@ -34,7 +34,7 @@ static char sccsid[] = "@(#)$RCSfile: showqueues.c,v $ $Revision: 1.26 $ $Date: 
 #include "Cgrp.h"
 #include "Csnprintf.h"
 
-#define BUF_SIZE     30
+#define BUF_SIZE     40
 #define BUF_ID_SIZE   CA_MAXLINELEN+1
 #define NO_DEDICATION "No_dedication"
 #define NONE_VOLUME "None"
@@ -307,7 +307,7 @@ void shq_display_standard(struct vdqm_reqlist *reqlist, int give_jid) {
             }
             if ( drives_only == 0 ) {
                 mode = tmp1->volreq.mode;
-                sprintf(buf_user,"(%s)@%s",buf_id,tmp1->volreq.client_host);
+                snprintf(buf_user,BUF_SIZE,"(%s)@%s",buf_id,tmp1->volreq.client_host);
             } else {
                 mode = tmp1->drvreq.mode;
                 *buf_user = '\0';
