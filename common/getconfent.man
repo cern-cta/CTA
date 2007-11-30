@@ -1,8 +1,8 @@
-.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.6 $ $Date: 2005/05/23 14:51:10 $ CERN IT-PDP/DC Frederic Hemmer
+.\" @(#)@(#)$RCSfile: getconfent.man,v $ $Revision: 1.7 $ $Date: 2007/11/30 14:17:07 $ CERN IT-PDP/DC Frederic Hemmer
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH GETCONFENT 3 "$Date: 2005/05/23 14:51:10 $" CASTOR "Common Library Functions"
+.TH GETCONFENT 3 "$Date: 2007/11/30 14:17:07 $" CASTOR "Common Library Functions"
 .SH NAME
 getconfent, getconfent_r \- Get configuration entry
 .SH SYNOPSIS
@@ -137,7 +137,7 @@ function fail,
 may be set to one of the following values:
 .TP
 .B SENOCONFIG
-configuration file not found.
+can't open configuration file.
 .SH "SEE ALSO"
 .BR shift.conf(4),
 .BR Cthread_create(3)
