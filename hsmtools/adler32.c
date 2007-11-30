@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: adler32.c,v $ $Revision: 1.1 $ $Release$ $Date: 2007/06/07 14:11:11 $ $Author: obarring $
+ * @(#)$RCSfile: adler32.c,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/30 09:55:31 $ $Author: murrayc3 $
  *
  * 
  *
@@ -26,7 +26,7 @@
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <shift.h>
+#include <rfio.h>
 #include <zlib.h>
 
 void usage(char *cmd) 
