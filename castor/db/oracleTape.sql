@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.560 $ $Date: 2007/11/29 17:48:11 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.561 $ $Date: 2007/11/30 08:42:56 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -844,7 +844,7 @@ BEGIN
      WHERE subrequest.request = id2type.id
      GROUP BY request, type
     HAVING min(status) = 11
-       AND max(status) = 11 
+       AND max(status) = 12 -- a repack subrequest can be there
        AND max(lastModificationTime) < getTime() - timeOut;
   COMMIT;
   internalCleaningProc('ArchivedRequestCleaning');
@@ -859,7 +859,7 @@ BEGIN
      WHERE subrequest.request = id2type.id
      GROUP BY request, type
     HAVING min(status) >= 8
-       AND max(status) <= 11 
+       AND max(status) <= 12 -- repack 
        AND max(lastModificationTime) < getTime() - timeOut;
   COMMIT;
   internalCleaningProc('OutOfDateRequestCleaning');
