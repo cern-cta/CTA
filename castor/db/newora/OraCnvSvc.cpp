@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/11/29 14:04:01 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/11/30 14:30:47 $ $Author: murrayc3 $
  *
  * The conversion service to Oracle
  *
@@ -124,11 +124,59 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
     }
     // get the new values
     char* cuser = getconfent_fromfile(confFile.c_str(), name().c_str(), "user", 0);
-    if (0 != cuser) m_user = std::string(cuser);
+    if(cuser == 0)
+    {
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "FILE:" << __FILE__ " LINE:" << __LINE__
+        << " FUNCTION: " << __FUNCTION__ << " ERROR: "
+        << "Failed to get DB username from " << confFile.c_str() << ".";
+      if(serrno == SENOCONFIG)
+      {
+         e.getMessage() << " The file could not be opened.";
+      }
+      throw e;
+    }
+    else
+    {
+      m_user = std::string(cuser);
+    }
+
     char* cpasswd = getconfent_fromfile(confFile.c_str(), name().c_str(), "passwd", 0);
-    if (0 != cpasswd) m_passwd = std::string(cpasswd);
+    if(cpasswd == 0)
+    {
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "FILE:" << __FILE__ " LINE:" << __LINE__
+        << " FUNCTION: " << __FUNCTION__ << " ERROR: "
+        << "Failed to get DB password from " << confFile.c_str() << ".";
+      if(serrno == SENOCONFIG)
+      {
+         e.getMessage() << " The file could not be opened.";
+      }
+      throw e;
+    }
+    else
+    {
+      m_passwd = std::string(cpasswd);
+    }
+
     char* cdbName = getconfent_fromfile(confFile.c_str(), name().c_str(), "dbName", 0);
-    if (0 != cdbName) m_dbName = std::string(cdbName);
+    if(cdbName == 0)
+    {
+      castor::exception::InvalidArgument e;
+      e.getMessage() << "FILE:" << __FILE__ " LINE:" << __LINE__
+        << " FUNCTION: " << __FUNCTION__ << " ERROR: "
+        << "Failed to get DB name from " << confFile.c_str() << ".";
+      if(serrno == SENOCONFIG)
+      {
+         e.getMessage() << " The file could not be opened.";
+      }
+      throw e;
+    }
+    else
+    {
+      m_dbName = std::string(cdbName);
+    }
+
     if ("" == m_user || "" == m_dbName) {
       // If still empty, try to avoid connecting with empty string, since
       // ORACLE would core dump !
