@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Release$ $Date: 2007/08/20 10:23:43 $ $Author: sponcec3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.18 $ $Release$ $Date: 2007/12/03 10:51:34 $ $Author: murrayc3 $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -56,16 +56,7 @@ LD = g++
 
 #if BuildVDQMCpp
 #VDQM related objects
-ORAVDQMLIB_SRCS = ../ora/OraVdqmSvc.cpp \
-                ../cnv/DbClientIdentificationCnv.cpp \
-                ../cnv/DbErrorHistoryCnv.cpp \
-                ../cnv/DbDeviceGroupNameCnv.cpp \
-                ../cnv/DbTapeAccessSpecificationCnv.cpp \
-                ../cnv/DbTapeDriveCnv.cpp \
-                ../cnv/DbTapeDriveCompatibilityCnv.cpp \
-                ../cnv/DbTapeDriveDedicationCnv.cpp \
-                ../cnv/DbTapeRequestCnv.cpp \
-                ../cnv/DbTapeServerCnv.cpp
+ORAVDQMLIB_SRCS = ../ora/OraVdqmSvc.cpp
 
 ORAVDQMLIB_OBJS = $(ORAVDQMLIB_SRCS:.cpp=.Osuf)
 VDQMLIB = LibraryTargetName(castorVdqmOra)
