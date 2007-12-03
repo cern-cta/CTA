@@ -154,7 +154,19 @@ namespace castor {
         virtual int processPutDoneRequest
         (castor::stager::SubRequest* subreq)
           throw (castor::exception::Exception);
-
+  
+        /**
+         * Create an internal request to trigger a diskcopy replication.
+         * @param subreq the SubRequest which has to wait for the replication
+         * @param srcDiskCopy the source diskCopy
+         * @param destSc the destination service class
+         * @exception Exception in case of system error
+         */
+        virtual void createDiskCopyReplicaRequest
+        (castor::stager::SubRequest* subreq,
+         castor::stager::DiskCopyForRecall* srcDiskCopy, 
+         castor::stager::SvcClass* destSc)
+          throw (castor::exception::Exception);
 
         /**
          * Retrieves a CastorFile from the database based on its fileId.
@@ -392,12 +404,6 @@ namespace castor {
         /// SQL statement object for function subRequestFailedToDo
         oracle::occi::Statement *m_subRequestFailedToDoStatement;
 
-        /// SQL statement for function isSubRequestToSchedule
-        static const std::string s_isSubRequestToScheduleStatementString;
-
-        /// SQL statement object for function isSubRequestToSchedule
-        oracle::occi::Statement *m_isSubRequestToScheduleStatement;
-
         /// SQL statement for function getDiskCopiesForJob
         static const std::string s_getDiskCopiesForJobStatementString;
 
@@ -415,6 +421,12 @@ namespace castor {
 
         /// SQL statement object for function processPutDoneRequest
         oracle::occi::Statement *m_processPutDoneRequestStatement;
+
+        /// SQL statement for function createDiskCopyReplicaRequest
+        static const std::string s_createDiskCopyReplicaRequestStatementString;
+
+        /// SQL statement object for function createDiskCopyReplicaRequest
+        oracle::occi::Statement *m_createDiskCopyReplicaRequestStatement;
 
         /// SQL statement for function selectCastorFile
         static const std::string s_selectCastorFileStatementString;

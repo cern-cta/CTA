@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.220 $ $Release$ $Date: 2007/11/27 15:25:15 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.221 $ $Release$ $Date: 2007/12/03 16:45:29 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -114,6 +114,10 @@ const std::string castor::db::ora::OraStagerSvc::s_processPrepareRequestStatemen
 const std::string castor::db::ora::OraStagerSvc::s_processPutDoneRequestStatementString =
   "BEGIN processPutDoneRequest(:1, :2); END;";
 
+/// SQL statement for createDiskCopyReplicaRequest
+const std::string castor::db::ora::OraStagerSvc::s_createDiskCopyReplicaRequestStatementString =
+  "BEGIN createDiskCopyReplicaRequest(:1, :2, :3); END;";
+
 /// SQL statement for selectCastorFile
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
   "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8); END;";
@@ -172,6 +176,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_getDiskCopiesForJobStatement(0),
   m_processPrepareRequestStatement(0),
   m_processPutDoneRequestStatement(0),
+  m_createDiskCopyReplicaRequestStatement(0),
   m_selectCastorFileStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0),
@@ -220,6 +225,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_getDiskCopiesForJobStatement) deleteStatement(m_getDiskCopiesForJobStatement);
     if (m_processPrepareRequestStatement) deleteStatement(m_processPrepareRequestStatement);
     if (m_processPutDoneRequestStatement) deleteStatement(m_processPutDoneRequestStatement);
+    if (m_createDiskCopyReplicaRequestStatement) deleteStatement(m_createDiskCopyReplicaRequestStatement);
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
     if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
@@ -239,6 +245,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_getDiskCopiesForJobStatement = 0;
   m_processPrepareRequestStatement = 0;
   m_processPutDoneRequestStatement = 0;
+  m_createDiskCopyReplicaRequestStatement = 0;
   m_selectCastorFileStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
@@ -556,6 +563,43 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
     castor::exception::Internal ex;
     ex.getMessage()
       << "Error caught in processPutDoneRequest."
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+
+
+// -----------------------------------------------------------------------
+// createDiskCopyReplicaRequest
+// -----------------------------------------------------------------------
+void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
+(castor::stager::SubRequest* subreq, castor::stager::DiskCopyForRecall* srcDiskCopy, 
+ castor::stager::SvcClass* destSc)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statement is ok
+    if (0 == m_createDiskCopyReplicaRequestStatement) {
+      m_createDiskCopyReplicaRequestStatement =
+        createStatement(s_createDiskCopyReplicaRequestStatementString);
+      m_createDiskCopyReplicaRequestStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    m_createDiskCopyReplicaRequestStatement->setDouble(1, (subreq ? subreq->id() : 0));
+    m_createDiskCopyReplicaRequestStatement->setDouble(2, srcDiskCopy->id());
+    m_createDiskCopyReplicaRequestStatement->setDouble(3, destSc->id());
+    unsigned int rc =
+      m_createDiskCopyReplicaRequestStatement->executeUpdate();
+    if (0 == rc) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "createDiskCopyReplicaRequest : unable to create the request.";
+      throw ex;
+    }
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in createDiskCopyReplicaRequest."
       << std::endl << e.what();
     throw ex;
   }
