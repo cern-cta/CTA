@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/07/25 15:31:43 $ $Author: itglp $
+ * @(#)$RCSfile: ListenerThreadPool.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/12/03 17:21:08 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -66,6 +66,12 @@ void castor::server::ListenerThreadPool::run() throw (castor::exception::Excepti
     clog() << DEBUG << "Thread pool '" << m_poolName << "' created with "
            << m_nbThreads << " threads" << std::endl;
   }
+  
+  // Initialize the underlying thread. We do it here once for the whole thread
+  // pool instead of once per thread as the threads are created in a suspended
+  // state and will get some work only when the listener socket will have
+  // something to dispatch
+  m_thread->init();
   
   // start the listening loop
   if(m_spawnListener) {
