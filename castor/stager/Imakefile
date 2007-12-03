@@ -32,8 +32,8 @@ MakeSubdirs(all,$(SUBDIRS))
 MakeSubdirs(install,$(SUBDIRS))
 MakeSubdirs(install.man,$(SUBDIRS))
 MakeSubdirs(exportman,$(SUBDIRS))
-MakeCondSubdirs(clean,$(SUBDIRS),clean0)
-MakeCondSubdirs(clobber,$(SUBDIRS),clobber0)
+MakeCondSubdirs(clean,$(SUBDIRS),)
+MakeCondSubdirs(clobber,$(SUBDIRS),)
 
 Makefiles:
 	@. ../../setosflags ;\
