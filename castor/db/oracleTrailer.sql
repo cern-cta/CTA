@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.563 $ $Date: 2007/12/03 14:26:46 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.564 $ $Date: 2007/12/03 16:54:32 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1627,7 +1627,6 @@ CREATE OR REPLACE PROCEDURE createDiskCopyReplicaRequest
   nsHost VARCHAR2(2048);
   rpath VARCHAR2(2048);
 BEGIN
-
   -- Extract the castorfile associated with the request, this is needed to 
   -- create the StageDiskCopyReplicaRequest's diskcopy and subrequest entries. 
   -- Also for disk2disk copying across service classes make the originating 
@@ -1929,10 +1928,10 @@ BEGIN
          AND SubRequest.castorFile = cfId
          AND DiskCopy.castorFile = cfId
          AND DiskCopy.status = 4;  -- WAITTAPERECALL
-       -- we found one: we need to wait if either we are in a different svcClass
-       -- so that afterwards a disk-to-disk copy is triggered, or in case of
-       -- Repack so to trigger the repack migration. Note that Repack never
-       -- sends a double repack request on the same file.
+      -- we found one: we need to wait if either we are in a different svcClass
+      -- so that afterwards a disk-to-disk copy is triggered, or in case of
+      -- Repack so to trigger the repack migration. Note that Repack never
+      -- sends a double repack request on the same file.
       IF svcClassId <> recSvcClass OR repack = 1 THEN
         -- make this request wait on the existing WAITTAPERECALL diskcopy
         makeSubRequestWait(srId, recDcId);
@@ -2029,7 +2028,7 @@ CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
                                                 path OUT VARCHAR2) AS
 BEGIN
   path := CONCAT(CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),'FM09'), '/'),
-                        CONCAT(TO_CHAR(fid), '@')),
+                 CONCAT(TO_CHAR(fid), '@')),
                  nsHost), CONCAT('.', TO_CHAR(dcid)));
 END;
 
@@ -2116,12 +2115,13 @@ BEGIN
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.filesystem = fileSystemId
-     AND DiskCopy.status IN (0, 1, 2, 5, 6, 10, 11); -- STAGED, WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+     AND DiskCopy.status IN (0, 2, 5, 6, 10, 11); -- STAGED, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
   -- If found local one, check whether to wait on it
-  IF rstatus IN (1, 2, 5, 11) THEN -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING, Make SubRequest Wait
+  IF rstatus IN (2, 5, 11) THEN -- WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
     makeSubRequestWait(srId, dci);
     dci := 0;
     rpath := '';
+    RETURN;
   END IF;
   -- No wait, so we are settled and we'll use the local copy.
   -- Let's update the SubRequest and set the link with the DiskCopy
@@ -2130,106 +2130,15 @@ BEGIN
   -- updates properly (vis firstByteWritten call), we should
   -- call firstByteWritten now and consider that the file is being
   -- modified.
-  IF isUpd = 1 THEN handleProtoNoUpd(srId, proto); END IF;
-  -- It could be that we end up here, while we were supposed to do
-  -- a file replication, i.e. a disk2diskcopy. The reason is that
-  -- the selected filesytem in such a case can be any, including
-  -- the one(s) already having a valid diskcopy. We have to detect that
-  -- and call updateFSFileClose in such a case.
-  DECLARE
-    maxNbRepl NUMBER;
-    repPolicy VARCHAR2(2048);
-    curNbRepl NUMBER;
-  BEGIN
-    IF rstatus IN (0, 10) THEN
-      -- see maxNbReplicas for the svcclass
-      SELECT maxReplicaNb, replicationPolicy INTO maxNbRepl, repPolicy
-        FROM SvcClass WHERE id = srSvcClass;
-      -- only deal with replication
-      IF maxNbRepl = 0 OR maxNbRepl > 1 THEN
-        -- see current nb of copies
-        SELECT count(*) INTO curNbRepl
-          FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-           AND FileSystem.id = DiskCopy.fileSystem
-           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-           AND DiskServer.id = FileSystem.diskServer
-           AND DiskServer.status IN (0, 1)
-           AND DiskPool2SvcClass.parent = FileSystem.diskPool
-           AND DiskPool2SvcClass.child = srSvcClass;
-        -- compare the 2
-        IF curNbRepl < maxNbRepl OR
-           (maxNbRepl = 0 AND repPolicy IS NULL) THEN
-          -- update filesystem status
-          updateFSFileClosed(fileSystemId);
-        END IF;
-      END IF;
-    END IF;
-  END;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- No disk copy found on selected FileSystem, look in others
-    BEGIN
-      -- Try to see whether we should wait on some DiskCopy
-        SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
-          INTO dci, rpath, rstatus
-          FROM DiskCopy, FileSystem, DiskServer
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISKTODISKCOPY, WAITTAPERECALL, WAIFS, WAITFS_SCHEDULING, STAGEOUT
-           AND FileSystem.id(+) = DiskCopy.fileSystem
-           AND FileSystem.status(+) = 0 -- PRODUCTION
-           AND DiskServer.id(+) = FileSystem.diskserver
-           AND DiskServer.status(+) = 0 -- PRODUCTION
-           AND ROWNUM < 2;
-      -- Found a DiskCopy, we have to wait on it
-      makeSubRequestWait(srId, dci);
-      dci := 0;
-      rpath := '';
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- No disk copy found in WAIT*, we don't have to wait
-      BEGIN
-        -- Check whether there are any diskcopy available
-        SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status
-          INTO dci, rpath, rstatus
-          FROM DiskCopy, FileSystem, DiskServer
-         WHERE DiskCopy.castorfile = cfId
-           AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-           AND FileSystem.id = DiskCopy.fileSystem
-           AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-           AND DiskServer.id = FileSystem.diskserver
-           AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-           AND ROWNUM < 2;
-        -- We found at least a DiskCopy. Let's list all of them
-        OPEN sources
-          FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
-                     FileSystemRate(FileSystem.readRate, FileSystem.WriteRate,
-                                    FileSystem.nbReadStreams, FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams, 
-	      	                    FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams),
-                     FileSystem.mountPoint,
-                     DiskServer.name
-                FROM DiskCopy, FileSystem, DiskServer
-               WHERE DiskCopy.castorfile = cfId
-                 AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
-                 AND FileSystem.id = DiskCopy.fileSystem
-                 AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
-                 AND DiskServer.id = FileSystem.diskServer
-                 AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
-        -- create DiskCopy for Disk to Disk copy
-        UPDATE SubRequest SET diskCopy = ids_seq.nextval,
-                              lastModificationTime = getTime() WHERE id = srId
-        RETURNING castorFile, diskCopy INTO cfid, dci;
-        SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfid;
-        buildPathFromFileId(fid, nh, dci, rpath);
-        INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-             VALUES (rpath, dci, fileSystemId, cfid, 1, getTime()); -- status WAITDISK2DISKCOPY
-        INSERT INTO Id2Type (id, type) VALUES (dci, 5); -- OBJ_DiskCopy
-        rstatus := 1; -- status WAITDISK2DISKCOPY
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- No disk copy found on any FileSystem. This can happen only if a diskcopy was available
-        -- and got disabled before this job got scheduled. Bad luck, we restart from scratch
-        UPDATE SubRequest SET status = 1 WHERE id = srId;
-    END;
-  END;
+  IF isUpd = 1 THEN
+    handleProtoNoUpd(srId, proto);
+  END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- No disk copy found on selected FileSystem. This can happen if a diskcopy was available
+  -- and got disabled before this job got scheduled. Bad luck, we restart from scratch
+  UPDATE SubRequest SET status = 1 WHERE id = srId;
+  dci := 0;
+  rpath := '';
 END;
 
 
