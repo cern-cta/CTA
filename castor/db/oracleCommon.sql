@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.564 $ $Date: 2007/12/03 16:54:32 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.565 $ $Date: 2007/12/03 16:57:24 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2096,10 +2096,7 @@ BEGIN
     INTO reuid, regid, srSvcClass, isUpd
     FROM SubRequest,
         (SELECT id, euid, egid, svcClass, 0 as upd from StageGetRequest UNION ALL
-         SELECT id, euid, egid, svcClass, 0 as upd from StagePrepareToGetRequest UNION ALL
-         SELECT id, euid, egid, svcClass, 0 as upd from StageRepackRequest UNION ALL
-         SELECT id, euid, egid, svcClass, 1 as upd from StageUpdateRequest UNION ALL
-         SELECT id, euid, egid, svcClass, 0 as upd from StagePrepareToUpdateRequest) Request
+         SELECT id, euid, egid, svcClass, 1 as upd from StageUpdateRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   -- Take a lock on the CastorFile. Associated with triggers,
   -- this guarantee we are the only ones dealing with its copies
@@ -2127,7 +2124,7 @@ BEGIN
   -- Let's update the SubRequest and set the link with the DiskCopy
   UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
   -- In case of an update, if the protocol used does not support
-  -- updates properly (vis firstByteWritten call), we should
+  -- updates properly (via firstByteWritten call), we should
   -- call firstByteWritten now and consider that the file is being
   -- modified.
   IF isUpd = 1 THEN
