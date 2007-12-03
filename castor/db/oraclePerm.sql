@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.561 $ $Date: 2007/11/30 08:42:56 $ $Author: gtaur $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.562 $ $Date: 2007/12/03 14:00:11 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2970,7 +2970,37 @@ BEGIN
 END;
 
 
+/* PL/SQL method implementing segmentsForTape */
+
+
+CREATE OR REPLACE PROCEDURE segmentsForTape (tapeId IN INTEGER, segments
+OUT castor.Segment_Cur) AS
+  segs "numList";
+  rows PLS_INTEGER := 500;
+  CURSOR c1 IS
+    SELECT Segment.id FROM Segment
+    WHERE Segment.tape = tapeId AND Segment.status = 0 ORDER BY Segment.fseq
+    FOR UPDATE;
+BEGIN
+  OPEN c1;
+  FETCH c1 BULK COLLECT INTO segs LIMIT rows;
+  CLOSE c1;
+
+  IF segs.COUNT > 0 THEN
+     UPDATE Tape SET status = 4 -- MOUNTED
+       WHERE id = tapeId;
+    FORALL j in segs.FIRST..segs.LAST -- bulk update with the forall..
+--much faster
+       UPDATE Segment set status = 7 -- SELECTED
+       WHERE id = segs(j);
+  END IF;
+
+  OPEN segments FOR SELECT * FROM Segment
+                     where id in (select * from table(segs));
+END;
+
 /* PL/SQL method implementing anySegmentsForTape */
+
 CREATE OR REPLACE PROCEDURE anySegmentsForTape
 (tapeId IN INTEGER, nb OUT INTEGER) AS
 BEGIN
@@ -2981,25 +3011,6 @@ BEGIN
     UPDATE Tape SET status = 3 -- WAITMOUNT
     WHERE id = tapeId;
   END IF;
-END;
-
-
-/* PL/SQL method implementing segmentsForTape */
-CREATE OR REPLACE PROCEDURE segmentsForTape
-(tapeId IN INTEGER, segments OUT castor.Segment_Cur) AS
-  segs "numList";
-BEGIN
-  SELECT Segment.id BULK COLLECT INTO segs FROM Segment
-   WHERE Segment.tape = tapeId
-     AND Segment.status = 0 FOR UPDATE;
-  IF segs.COUNT > 0 THEN
-    UPDATE Tape SET status = 4 -- MOUNTED
-     WHERE id = tapeId;
-    UPDATE Segment set status = 7 -- SELECTED
-     WHERE id MEMBER OF segs;
-  END IF;
-  OPEN segments FOR SELECT * FROM Segment 
-                     where id MEMBER OF segs;
 END;
 
 
