@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.562 $ $Date: 2007/12/03 14:00:11 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.563 $ $Date: 2007/12/03 14:26:46 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2979,7 +2979,7 @@ OUT castor.Segment_Cur) AS
   rows PLS_INTEGER := 500;
   CURSOR c1 IS
     SELECT Segment.id FROM Segment
-    WHERE Segment.tape = tapeId AND Segment.status = 0 ORDER BY Segment.fseq
+    WHERE Segment.tape = tapeId AND Segment.status = 0 
     FOR UPDATE;
 BEGIN
   OPEN c1;
