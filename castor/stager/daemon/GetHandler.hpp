@@ -46,32 +46,45 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
+      
       class StagerRequestHelper;
       class StagerCnsHelper;
-
+      
       class StagerGetHandler : public virtual StagerJobRequestHandler{
-
-	
+        
+        
       public:
-	/* constructor */
-	StagerGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
-	/* destructor */
-	~StagerGetHandler() throw();
-	
-	void handlerSettings() throw(castor::exception::Exception);
 
-	virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception);
-  
-
-	/* Get request handler */
-	void handle() throw(castor::exception::Exception);
-
-
-
+        /* constructor */
+        StagerGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
+        /* destructor */
+        ~StagerGetHandler() throw();
+        
+        void handlerSettings() throw(castor::exception::Exception);
+        
+        virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception);
+        
+        /* Get request handler */
+        void handle() throw(castor::exception::Exception);
+        
+      private:
+        
+        /**********************************************/
+        /* return if it is to replicate considering: */
+        /* - sources.size() */
+        /* - maxReplicaNb */
+        /* - replicationPolicy (call to the expert system) */
+        void processReplica() throw(castor::exception::Exception);
+        
+        /***************************************************************************************************************************/
+        /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
+        /**************************************************************************************************************************/
+        int checkReplicationPolicy() throw(castor::exception::Exception);
+        
+        
       }; // end StagerGetHandler class
-
-
+      
+      
     }//end namespace dbService
   }//end namespace stager
 }//end namespace castor

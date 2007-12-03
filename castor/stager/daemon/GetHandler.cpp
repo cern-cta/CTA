@@ -22,6 +22,7 @@
 #include "osdep.h"
 
 
+#include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/SubRequestGetNextStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
@@ -55,8 +56,8 @@ namespace castor{
       /*****************************************************************/
       void StagerGetHandler::handlerSettings() throw(castor::exception::Exception)
       {	
-        this->maxReplicaNb = this->stgRequestHelper->svcClass->maxReplicaNb();	
-        this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
+        this->maxReplicaNb = stgRequestHelper->svcClass->maxReplicaNb();	
+        this->replicationPolicy = stgRequestHelper->svcClass->replicationPolicy();
         
         /* get the request's size required on disk */
         /* depending if the file exist, we ll need to update this variable */
@@ -97,45 +98,18 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
             break;
           
-          case 0: // DISKCOPY_STAGED, schedule job
-            {
-              bool isToReplicate= replicaSwitch();
-              if(isToReplicate){
-                processReplica();
-              }
-              
-              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
-              
-              jobManagerPart();
-              
-              stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-              
-              /* and we have to notify the jobManager */
-              m_notifyJobManager = true;
-            }
-            break;
-          
-          case 1:   // DISK2DISKCOPY - will disappear soon
-            {
-              bool isToReplicate= replicaSwitch();
-              if(isToReplicate){
-                processReplica();
-              }
-              
-              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_DISKTODISK_COPY, &(stgCnsHelper->cnsFileid));
-              /* build the rmjob struct and submit the job */
-              jobManagerPart();
-              
-              
-              stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-              
-              /* and we have to notify the jobManager */
-              m_notifyJobManager = true;
-            }
+          case 0:   // DISKCOPY_STAGED, schedule job
+            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
+            
+            processReplica();
+            jobManagerPart();
+            
+            stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+            stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
+            stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+            
+            /* and we have to notify the jobManager */
+            m_notifyJobManager = true;
             break;
           
           case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
@@ -150,8 +124,6 @@ namespace castor{
         
         return false;        
       }
-      
-      
       
       
       /****************************************************************************************/
@@ -178,8 +150,98 @@ namespace castor{
         }  
       }
       
-      StagerGetHandler::~StagerGetHandler()throw(){
+
+      /************************************************************************************/
+      /* decides if it is to replicate considering: */
+      /* - sources.size() */
+      /* - maxReplicaNb */
+      /* - replicationPolicy (call to the expert system) */
+      /**********************************************************************************/
+      void StagerGetHandler::processReplica() throw(castor::exception::Exception)
+      {
+        bool replicate = true;
         
+        /* if the status of the unique copy is STAGEOUT, then don't replicate */
+        if(sources.size() == 1 && sources.front()->status() == DISKCOPY_STAGEOUT) {
+          maxReplicaNb = 1;
+        }
+        
+        if(sources.size() > 0) {
+          if(maxReplicaNb > 0) {
+            if(maxReplicaNb <= sources.size()) {
+              replicate = false;
+            }
+          }
+          else if((replicationPolicy.empty()) == false) { 
+            maxReplicaNb = checkReplicationPolicy();
+            if(maxReplicaNb > 0){
+              if(maxReplicaNb <= sources.size()){
+                replicate = false;
+              }
+            }
+          }
+        }
+
+        if(replicate) {
+          // We need to replicate, create a diskCopyReplica request
+          stgRequestHelper->stagerService->createDiskCopyReplicaRequest(0, sources.front(), stgRequestHelper->svcClass);
+        }
+        
+        // Fill the requested filesystems for the request being processed: we won't wait
+        // for the disk-to-disk copy if it's to be done
+        std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
+        rfs = "";
+        for(unsigned int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
+          if(!rfs.empty())
+            rfs += "|";
+          rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
+        }
+        
+        // cleanup sources list
+        for(iter = sources.begin(); iter != sources.end(); iter++) {
+          delete (*iter);
+        }
+        sources.clear();
+      }
+
+     
+      /***************************************************************************************************************************/
+      /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
+      /**************************************************************************************************************************/
+      int StagerGetHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
+      {
+        const std::string filename = stgRequestHelper->subrequest->fileName();
+        std::string expQuestion=replicationPolicy + " " + filename;
+        char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
+        int fd;
+        
+	  
+        if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
+            
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"Error on expert_send_request";
+          throw ex;
+        }
+        if((unsigned)(expert_send_data(fd, expQuestion.c_str(), expQuestion.size())) != (expQuestion.size())) {  //sending question
+          
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"Error on expert_send_data";
+          throw ex;
+        }
+        
+        memset(expAnswer, '\0',sizeof(expAnswer));
+        if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
+          
+          castor::exception::Exception ex(SEINTERNAL);
+          ex.getMessage()<<"Error on expert_receive_data";
+          throw ex;
+        }
+        
+        return(atoi(expAnswer));
+      }
+      
+       
+      StagerGetHandler::~StagerGetHandler()throw(){        
       }
       
     }//end namespace dbService

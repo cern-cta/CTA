@@ -36,88 +36,63 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
-    
+      
+      
       class StagerJobRequestHandler : public virtual StagerRequestHandler{
-	
+        
       public:
         StagerJobRequestHandler() throw() : m_notifyJobManager(false) {};
         virtual ~StagerJobRequestHandler() throw() {};
+        
+        /* main function which must be implemented on each handler */
+        virtual void handle() throw(castor::exception::Exception) = 0;
+        
+        
+        /****************************************************************************************/
+        /* job oriented block  */
+        /****************************************************************************************/
+        void jobOriented() throw(castor::exception::Exception);
+        
+        
+        /********************************************/	
+        /* for Get, Update                         */
+        /*     switch(getDiskCopyForJob):         */                                     
+        /*        case 0,1: (staged) jobManager  */
+        /*        case 2: (waitRecall) createTapeCopyForRecall */
+        /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
+        virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception) { return false; }; 
+        
+        
+        /*******************************************************************************************/
+        /* build the rmjob needed structures(buildRmJobHelperPart() and buildRmJobRequestPart())  */
+        /* and submit the job  */
+        /****************************************************************************************/
+        void jobManagerPart() throw(castor::exception::Exception);
+        
+        
+        bool notifyJobManager() {
+          return m_notifyJobManager;
+        }
 
-    	/* main function which must be implemented on each handler */
-	virtual void handle() throw(castor::exception::Exception) = 0;
-
-
-	
-
-	/****************************************************************************************/
-	/* job oriented block  */
-	/****************************************************************************************/
-	void jobOriented() throw(castor::exception::Exception);
-
-
-	/********************************************/	
-	/* for Get, Update                         */
-	/*     switch(getDiskCopyForJob):         */                                     
-	/*        case 0,1: (staged) jobManager  */
-	/*        case 2: (waitRecall) createTapeCopyForRecall */
-	/* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-	virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception) { return false; }; 
-
-
-	/**********************************************/
-	/* return if it is to replicate considering: */
-	/* - sources.size() */
-	/* - maxReplicaNb */
-	/* - replicationPolicy (call to the expert system) */
-	/**********************************************************************************/
-	bool replicaSwitch() throw(castor::exception::Exception);
-
-
-	/***************************************************************************************************************************/
-	/* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
-	/**************************************************************************************************************************/
-	int checkReplicationPolicy() throw(castor::exception::Exception);
-
-
-	/************************************************************************************/
-	/* process the replicas = build rfs string (and hostlist) */
-	/* diskServerName and mountPoint getting from sources (=diskCopyForRecall)*/
-	/* - rfs + = ("|") + diskServerName + ":" + mountPoint */
-	/**********************************************************************************/
-	void processReplica() throw(castor::exception::Exception);
-
-	
-	/*******************************************************************************************/
-	/* build the rmjob needed structures(buildRmJobHelperPart() and buildRmJobRequestPart())  */
-	/* and submit the job  */
-	/****************************************************************************************/
-	void jobManagerPart() throw(castor::exception::Exception);
-  
-  
-	bool notifyJobManager() {
-	  return m_notifyJobManager;
-	}
-	
       protected:
-	
-	unsigned int maxReplicaNb;
-	std::string replicationPolicy;
-	std::string default_protocol;
-
-
-	std::string rfs;
-
-	std::list<castor::stager::DiskCopyForRecall *> sources;
-
-	unsigned int xsize;	
-  
-	bool m_notifyJobManager;
-
+        
+        unsigned int maxReplicaNb;
+        std::string replicationPolicy;
+        std::string default_protocol;
+        
+        
+        std::string rfs;
+        
+        std::list<castor::stager::DiskCopyForRecall *> sources;
+        
+        unsigned int xsize;	
+        
+        bool m_notifyJobManager;
+        
       }; //end class StagerJobRequestHandler
-
       
-
+      
+      
     }//end namespace dbService
   }//end namespace stager
 }//end namespace castor

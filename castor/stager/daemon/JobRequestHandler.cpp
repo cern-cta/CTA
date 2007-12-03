@@ -25,7 +25,6 @@
 #include "stager_constants.h"
 #include "Cglobals.h"
 #include "Cns_api.h"
-#include "expert_api.h"
 
 #include "Cpwd.h"
 #include "Cgrp.h"
@@ -74,115 +73,6 @@ namespace castor{
         // forward any db exception to the upper level
         /* link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name ) */
         stgRequestHelper->getCastorFileFromSvcClass(stgCnsHelper);
-      }
-      
-
-     
-      
-      
-      
-      /************************************************************************************/
-      /* return if it is to replicate considering: */
-      /* - sources.size() */
-      /* - maxReplicaNb */
-      /* - replicationPolicy (call to the expert system) */
-      /**********************************************************************************/
-      bool StagerJobRequestHandler::replicaSwitch() throw(castor::exception::Exception)
-      {
-        bool toProcessReplicate=false;
-        
-        /* the exception can just be throwed on "checkReplicationPolicy" */
-        /*if the status of the unique copy is STAGE_OUT, then force to don' t replicate */
-        if((sources.size())==1)
-        {
-          if((sources.front()->status()) == DISKCOPY_STAGEOUT){/* coming from the latest stager_db_service.c */
-            maxReplicaNb = 1;
-          }
-        }
-        
-        /* rfs.clear(); coming from the latest stager_db_service.c */
-        if(sources.size() > 0){
-          if(maxReplicaNb>0){
-            if(maxReplicaNb <= sources.size()){
-              toProcessReplicate = true;
-            }
-            
-          }else if((replicationPolicy.empty()) == false){ /* replicationPolicy(= svcClass.replicationPolicy())  EXISTS */
-            
-            maxReplicaNb = checkReplicationPolicy();
-            if(maxReplicaNb > 0){
-              if(maxReplicaNb <= sources.size()){
-                toProcessReplicate = true;
-              }
-            }
-            
-          }
-        }
-        
-        return(toProcessReplicate);
-      }
-      
-      
-      
-      
-      /***************************************************************************************************************************/
-      /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
-      /**************************************************************************************************************************/
-      int StagerJobRequestHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
-      {
-        const std::string filename = stgRequestHelper->subrequest->fileName();
-        std::string expQuestion=replicationPolicy + " " + filename;
-        char expAnswer[21];//SINCE unsigned64 maxReplicaNb=expAnswer.stringTOnumber() THEN  expAnswer.size()=21 (=us64.size)
-        int fd;
-        
-	  
-        if(expert_send_request(&fd, EXP_RQ_REPLICATION)){//connecting to the expert system
-            
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Error on expert_send_request";
-          throw ex;
-        }
-        if((unsigned)(expert_send_data(fd, expQuestion.c_str(), expQuestion.size())) != (expQuestion.size())) {  //sending question
-          
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Error on expert_send_data";
-          throw ex;
-        }
-        
-        memset(expAnswer, '\0',sizeof(expAnswer));
-        if((expert_receive_data(fd,expAnswer,sizeof(expAnswer),STAGER_DEFAULT_REPLICATION_EXP_TIMEOUT)) <= 0){
-          
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Error on expert_receive_data";
-          throw ex;
-        }
-        
-        return(atoi(expAnswer));
-      }
-      
-      
-      /************************************************************************************/
-      /* process the replicas = build rfs string (and hostlist) */
-      /* - rfs + = ("|") + diskServerName + ":" + mountPoint */
-      /* changes coming from the latest stager_db_service.c */
-      /**********************************************************************************/
-      void StagerJobRequestHandler::processReplica() throw(castor::exception::Exception)
-      {	//it will represent the case1:
-        //build "rfs" (and "hostlist" if it is defined)
-        
-        std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
-        rfs = "";
-        for(unsigned int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
-          if(!rfs.empty())
-            rfs += "|";
-          rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
-        }
-
-        // cleanup sources list
-        for(iter = sources.begin(); iter != sources.end(); iter++) {
-          delete (*iter);
-        }
-        sources.clear();
       }
       
       
