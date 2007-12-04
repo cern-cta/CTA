@@ -67,6 +67,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Too many symbolic links",
    "BAD ERROR NUMBER"
   };
+
 /*
  * Package specific error messages (don't forget to update h/serrno.h)
  */
@@ -434,7 +435,6 @@ char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
    "BAD ERROR NUMBER"
   };
 
-
 /*
  *------------------------------------------------------------------------
  * Monitor specific error messages
@@ -473,9 +473,6 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
    "BAD ERROR NUMBER"
   };
 
-
-
-
 /*
  *------------------------------------------------------------------------
  * End of package specific error messages
@@ -493,17 +490,17 @@ char DLL_DECL *  sstrerror_r(n,buf,buflen)
   memset(buf,'\0',buflen);
   tmpstr = NULL;
 
-  if ((n>SEBASEOFF) && (n<=SEMAXERR))   {
+  if ((n>SEBASEOFF) && (n<=SEMAXERR)) {
     /*
      * COMMON error messages
      */
     tmpstr = sys_serrlist[n-SEBASEOFF];
-  } else if ((n>ECBASEOFF) && (n<=ECMAXERR))   {
+  } else if ((n>ECBASEOFF) && (n<=ECMAXERR)) {
     /*
      * COPYTAPE specific error messages
      */
     tmpstr = sys_cerrlist[n-ECBASEOFF];
-  } else if ((n>EDBBASEOFF) && (n<=EDBMAXERR))   {
+  } else if ((n>EDBBASEOFF) && (n<=EDBMAXERR)) {
     /*
      * DB specific error messages
      */
