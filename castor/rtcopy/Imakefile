@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/06 13:34:46 $ $Author: gtaur $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/04 12:57:27 $ $Author: waldron $
 #
 # Make Castor libraries and executables
 #
@@ -30,6 +30,9 @@ SUBDIRS = $(MIGDIR) $(RECDIR)
 DEPENDDIRS = $(MIGDIR) $(RECDIR) 
 
 MakeSubdirs(all,$(SUBDIRS))
+MakeSubdirs(install,$(SUBDIRS))
+MakeSubdirs(install.man,$(SUBDIRS))
+MakeSubdirs(exportman,$(SUBDIRS))
 MakeCondSubdirs(clean,$(SUBDIRS),)
 MakeCondSubdirs(clobber,$(SUBDIRS),)
 
