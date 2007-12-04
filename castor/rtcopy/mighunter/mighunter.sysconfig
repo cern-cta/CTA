@@ -1,0 +1,11 @@
+# Arguments for the mighunter
+#   -f             keep process in the foreground, do not fork
+#   -t timeSec     time between two checks
+#   -V dataVolume  dataVolume in byte to use as threashold
+#   svcclass1 svcclass2 ... list of svcclass to take into account
+#
+# Options ot pass to the recHandlerDaemon
+#MIGHUNTER_OPTIONS=
+
+# Should we run with another limit on the core file size than the default?
+#DAEMON_COREFILE_LIMIT=unlimited
