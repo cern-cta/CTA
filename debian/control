@@ -96,13 +96,12 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-jobmanager-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets, castor-lib-monitor
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets
 Description: castor (Cern Advanced STORage system)
  The Job Manager server used to submit jobs into the scheduler
 
 Package: castor-lib
 Architecture: any
-Provides: libshift.so
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: castor (Cern Advanced STORage system)
  Static and shared libraries for end-users
@@ -357,3 +356,20 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib, xinetd, edg-mkgridmap, 
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module 
 
+Package: castor-lib-policy
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, castor-lib
+Description: castor (Cern Advanced STORage system)
+ Shared libraries for the policy framework
+
+Package: castor-mighunter-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets, castor-lib-policy
+Description: castor (Cern Advanced STORage system)
+ Migration Hunter Daemon
+
+Package: castor-rechandler-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-scriptlets, castor-lib-policy
+Description: castor (Cern Advanced STORage system)
+ Recall Handler Daemon
