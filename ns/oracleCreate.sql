@@ -1,10 +1,11 @@
---
---  Copyright (C) 1999-2005 by CERN/IT/PDP/DM
---  All rights reserved
---
---       @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-PDP/DM Jean-Philippe Baud
- 
---     Create name server Oracle tables.
+/*******************************************************************
+ *
+ * @(#)$RCSfile: oracleCreate.sql,v $ $Revision: 1.3 $ $Date: 2007/12/04 12:28:38 $ $Author: waldron $
+ *
+ * This file creates the Name Server database schema.
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *******************************************************************/
 
 CREATE TABLE Cns_class_metadata (
        classid NUMBER(5),
@@ -63,7 +64,6 @@ CREATE TABLE Cns_seg_metadata (
        blockid RAW(4),
        checksum_name VARCHAR2(16),
        checksum NUMBER);
-
 
 CREATE TABLE Cns_symlinks (
        fileid NUMBER,
@@ -127,14 +127,10 @@ ALTER TABLE Cns_symlinks
 ALTER TABLE Cns_file_replica
        ADD CONSTRAINT fk_r_fileid FOREIGN KEY (fileid) REFERENCES Cns_file_metadata(fileid);
 
-
 -- Create an index on Cns_file_metadata(PARENT_FILEID)
-
 CREATE INDEX PARENT_FILEID_IDX on Cns_file_metadata(PARENT_FILEID);
 
 -- Create the "schema_version" table
-
-DROP TABLE schema_version;
 CREATE TABLE schema_version (major NUMBER(1), minor NUMBER(1), patch NUMBER(1));
 INSERT INTO schema_version VALUES (1, 1, 1);
 
