@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/26 15:22:41 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/04 12:24:55 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -32,6 +32,7 @@
 #include "castor/server/ForkedProcessPool.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/Constants.hpp"
+#include "castor/System.hpp"
 #include "getconfent.h"
 #include "signal.h"
 
@@ -138,14 +139,13 @@ int main(int argc, char *argv[]) {
     // the thread when a job requires LSF submission
     int notifyPort = DEFAULT_NOTIFICATION_PORT;
     if ((value = getconfent("JOBMANAGER", "NOTIFYPORT", 0))) {
-      notifyPort = std::strtol(value, 0, 10);
-      if (notifyPort == 0) {
-	notifyPort = DEFAULT_NOTIFICATION_PORT;
-      } else if (notifyPort > 65535) {
+      try {
+	notifyPort = castor::System::porttoi(value);
+      } catch (castor::exception::Exception ex) {
 	castor::exception::Exception e(EINVAL);
-	e.getMessage() << "Invalid NOTIFYPORT value configured: " << notifyPort
-		       << "- must be < 65535" << std::endl;
-	throw e;
+	e.getMessage() << "Invalid JOBMANAGER/NOTIFYPORT value: " 
+		       << ex.getMessage() << std::endl;
+	throw e;	
       }
     }
 
