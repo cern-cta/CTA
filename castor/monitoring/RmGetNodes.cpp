@@ -34,7 +34,7 @@
 
 void help(std::string programName) {
   std::cout << "Usage: " << programName
-            << " [-h,--help] [-n,--node diskServerName]"
+            << " [-h,--help] [-n,--node diskServerName] [-d,--deltas]"
             << std::endl;
 }
 
@@ -43,15 +43,17 @@ int main(int argc, char** argv) {
     // Parse command line
     Coptind = 1; /* Required */
     Coptions_t longopts[] = {
-      {"help", NO_ARGUMENT, NULL, 'h'},
-      {"all", NO_ARGUMENT, NULL, 'a'},
-      {"node", REQUIRED_ARGUMENT, NULL, 'n'},
-      {0, 0, 0, 0}
+      { "help",   NO_ARGUMENT,       NULL, 'h' },
+      { "all",    NO_ARGUMENT,       NULL, 'a' },
+      { "node",   REQUIRED_ARGUMENT, NULL, 'n' },
+      { "deltas", NO_ARGUMENT,       NULL, 'd' },
+      { 0, 0, 0, 0}
     };
     char c;
     char* node = 0;
     int all = 0;
-    while ((c = Cgetopt_long(argc, argv, "han:", longopts, NULL)) != -1) {
+    bool showDeltas = false;
+    while ((c = Cgetopt_long(argc, argv, "han:d", longopts, NULL)) != -1) {
       switch (c) {
       case 'n':
         node = strdup(Coptarg);
@@ -62,6 +64,9 @@ int main(int argc, char** argv) {
       case 'h':
         help(argv[0]);
         exit(0);
+      case 'd':
+	showDeltas = true;
+	break;
       default:
 	std::cerr << "Unknown option \n";
         help(argv[0]);
@@ -88,7 +93,7 @@ int main(int argc, char** argv) {
       std::cout << "No diskserver registered" << std::endl;
       return 0;
     }
-    
+
     // Loop over cluster status
     int found = 0;
     std::string dsIndent = "   ";
@@ -114,8 +119,8 @@ int main(int argc, char** argv) {
 		    << castor::monitoring::AdminStatusCodesStrings[it->second.adminStatus()] << "\n";
 	}
       } else {
-	std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";	
-	it->second.print(std::cout, dsIndent); 
+	std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";
+	it->second.print(std::cout, dsIndent, showDeltas);
       }
       found++;
     }
@@ -123,7 +128,7 @@ int main(int argc, char** argv) {
     if ((0 == found) && (node != 0)) {
       std::cerr << "No diskserver found with name '"
 		<< node << "'. Maybe check the domain."
-		<< std::endl;     
+		<< std::endl;
     }
   } catch (castor::exception::Exception e) {
     std::cout << e.getMessage().str() << std::endl;
