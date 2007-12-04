@@ -1,10 +1,10 @@
-.TH RMADMINNODE 1 "$Date: 2007/08/07 15:05:42 $" CASTOR "stager catalogue administrative commands"
+.TH RMADMINNODE 1 "$Date: 2007/12/04 13:10:33 $" CASTOR "stager catalogue administrative commands"
 .SH NAME
 rmAdminNode \- handle statuses in rmMaster
 .SH SYNOPSIS
 .B rmAdminNode
 [
-.BI -h, 
+.BI -h,
 .BI --help
 ]
 [
@@ -67,7 +67,7 @@ reinstated using this option.
 .TP
 .BI \-d,\-\-delete
 Deletes the diskServer/filesystem from the stager DB and marks it as deleted in
-the monitoring system. The diskServer/filesystem will only diseappear from the
+the monitoring system. The diskServer/filesystem will only disappear from the
 monitoring at the next reset of the monitoring system.
 .TP
 .BI \-m,\-\-mountPoint " fileSystemMountPoint"
