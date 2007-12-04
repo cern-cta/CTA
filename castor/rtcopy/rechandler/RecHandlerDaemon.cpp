@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
 // also initialises the logging facility
 //------------------------------------------------------------------------------
 
-castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::server::BaseDaemon("rechandler") 
+castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::server::BaseDaemon("Rechandler") 
 {
   
   m_timeSleep=SLEEP_TIME;      // seconds
