@@ -44,7 +44,7 @@ SHLIBREQLIBS6 = $(SHLIBREQLIBS) -L$(ORACLE_HOME)/lib -locci -lclntsh -L.. -lshif
 
 LIBRARIES7 = $(INFOPOLICYLIB)
 CASTOR_HOME=../
-SHLIBREQLIBS7 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs $(PYTHONLIBS) -L$(ORACLE_HOME)/lib -locci
+SHLIBREQLIBS7 = $(SHLIBREQLIBS) -L.. -lshift -lcastorCnvs $(PYTHONLIBS) $(PYTHONINC) -L$(ORACLE_HOME)/lib -locci
 
 ALL0=SharedLibraryTargetName(shift) SharedLibraryTargetName(castorClient)
 
@@ -127,7 +127,7 @@ INSTALL6=FileName($(LIBDIR),SharedLibraryTargetName(castorVdqmOra))
 INSTALL7=FileName($(LIBDIR),SharedLibraryTargetName(castorInfoPolicy))
 #endif
 
-install: $(LIBDIR) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $(INSTALL6) $(INSTALLSEC)
+install: $(LIBDIR) $(INSTALL0) $(INSTALL1) $(INSTALL2) $(INSTALL4) $(INSTALL5) $(INSTALL6) $(INSTALL7) $(INSTALLSEC)
 
 EXPORT0=$(EXPORTLIB)/SharedLibraryTargetName(shift)
 EXPORT0+=$(EXPORTLIB)/SharedLibraryTargetName(castorClient)
@@ -339,9 +339,13 @@ MakeDepLibrary(db,db)
 
 MakeDepLibrary(monitor,monitor)
 
-MakeDepLibrary(castor/monitoring,CastorMonitor)
+#if BuildRmMasterCpp || BuildRmNodeCpp 
+MakeDepLibrary(castor/monitoring,castorMonitor)
+#endif
 
-MakeDepLibrary(castor/infoPolicy,CastorInfoPolicy)
+#if BuildMigHunterDaemon || BuildRecHandlerDaemon || BuildInfoPolicyLibrary
+MakeDepLibrary(castor/infoPolicy,castorInfoPolicy)
+#endif
 
 MakeDepLibrary(rmc,rmc)
 
@@ -374,10 +378,6 @@ SharedLibraryTargetName(Csec_plugin_KRB4): DepSharedLibraryTargetName(security,C
 		$(CP) DepSharedLibraryTargetName(security,Csec_plugin_KRB4) ../shlib
 
 #endif
-#endif
-
-#if BuildRmMasterCpp || BuildRmNodeCpp
-MakeDepLibrary(castor/monitoring,castorMonitor)
 #endif
 
 FORCE:
