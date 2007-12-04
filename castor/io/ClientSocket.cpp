@@ -85,7 +85,7 @@ void castor::io::ClientSocket::connect()
   throw (castor::exception::Exception) {
   // Connects the socket
   if (::connect(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr)) < 0) {
-    castor::exception::Communication ex("", serrno);
+    castor::exception::Communication ex("", errno);
     ex.getMessage() << "Unable to connect socket";
     if (m_saddr.sin_family == AF_INET) {
       unsigned long ip = m_saddr.sin_addr.s_addr;

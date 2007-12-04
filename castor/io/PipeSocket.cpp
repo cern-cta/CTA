@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/13 11:51:21 $ $Author: sponcec3 $
+ * @(#)$RCSfile: PipeSocket.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/04 12:21:01 $ $Author: waldron $
  *
  * A dedicated socket on top of standard file descriptors to be used
  * as communication channel between a parent and its forked children process
@@ -44,16 +44,16 @@ castor::io::PipeSocket::PipeSocket()
   throw (castor::exception::Exception) :
   AbstractSocket(0, false), m_mode(castor::io::PIPE_RW) 
 {
-    int fds[2];
-    if(pipe(fds) < 0) {
-      castor::exception::Exception ex(errno);
-      ex.getMessage() << "Failed to create a pipe";
-      throw ex;
-    }
-    else {
-      m_fdIn = fds[0];
-      m_fdOut = fds[1];
-    }
+  int fds[2];
+  if(pipe(fds) < 0) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Failed to create a pipe";
+    throw ex;
+  }
+  else {
+    m_fdIn = fds[0];
+    m_fdOut = fds[1];
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ void castor::io::PipeSocket::sendBuffer(const unsigned int magic,
             (char*)(&header),
             2 * sizeof(unsigned int)) != 2 * sizeof(unsigned int) ||
       ::write(m_fdOut, (char *)buf, n) != n) {
-    castor::exception::Exception ex(serrno);
+    castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to send data";
     throw ex;
   }
@@ -145,7 +145,7 @@ void castor::io::PipeSocket::readBuffer(const unsigned int magic,
                       << "The connection was closed by remote end";
       throw ex;
     } else if (-1 == ret) {
-      castor::exception::Exception ex(serrno);
+      castor::exception::Exception ex(errno);
       ex.getMessage() << "Unable to receive header";
       throw ex;
     } else {
@@ -178,7 +178,7 @@ void castor::io::PipeSocket::readBuffer(const unsigned int magic,
     readBytes += nb;
   }
   if (readBytes < n) {
-    castor::exception::Exception ex(serrno);
+    castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to receive all data. "
                     << "Got " << readBytes << " bytes instead of "
                     << n << ".";
