@@ -3,6 +3,8 @@
 /* This file contains SQL code that will destroy the dlf database schema    */
 /* DBA privileges must be present for removing the scheduled job            */
 
+DECLARE
+  v_current_user  VARCHAR2(2048);
 BEGIN
 
   -- Purge the recycle bin
@@ -31,12 +33,16 @@ BEGIN
     END IF;
   END LOOP;
 
+  -- Extract the name of the current user running the PLSQL procedure.
+  SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER') 
+    INTO v_current_user
+    FROM dual;
+
   -- Drop tablespaces
   FOR rec IN (SELECT tablespace_name
                 FROM user_tablespaces
-               WHERE tablespace_name LIKE 'DLF_%'
-                 AND tablespace_name NOT IN ('DLF_DATA', 'DLF_IDX', 'DLF_INDX')
-                 AND LENGTH(tablespace_name) = 12)
+               WHERE tablespace_name LIKE CONCAT('DLF_%_', v_current_user)
+                 AND tablespace_name NOT IN ('DLF_DATA', 'DLF_IDX', 'DLF_INDX'))
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||rec.tablespace_name||' OFFLINE';
     EXECUTE IMMEDIATE 'DROP TABLESPACE '||rec.tablespace_name||'
