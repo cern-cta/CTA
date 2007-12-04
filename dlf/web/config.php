@@ -180,7 +180,7 @@ $stager_sql_tables = array(
 		"table"		=> "subrequest",
 		"lookup"	=> "castorfile",
 		"fields"	=> array(
-			"diskcopy:link", "castorfile:link", "retrycounter", "filename", "protocol", "xsize", "priority", "subreqid", "status:status", "parent", "request", "creationtime:time", "lastmodificationtime:time"
+			"diskcopy:link", "castorfile:link", "retrycounter", "filename", "protocol", "xsize", "priority", "subreqid", "status:status", "parent", "request", "creationtime:time", "lastmodificationtime:time", "requestedfilesystems"
 		),
 		"links"		=> array(
 			"diskcopy" 	 => array("diskcopy:yes"),
@@ -240,7 +240,7 @@ $stager_sql_tables = array(
 		"table"		=> "svcclass",
 		"lookup"	=> "id",
 		"fields"	=> array(
-			"nbdrives", "name", "defaultfilesize:size", "maxperlicanb", "replicationpolicy", "gcpolicy", "migratorpolicy", "recallerpolicy"
+			"nbdrives", "name", "defaultfilesize:size", "maxperlicanb", "replicationpolicy", "gcpolicy", "migratorpolicy", "recallerpolicy", "hasdiskonlybehavior", "forcedfileclass", "streampolicy"
 		),
 	),
 
