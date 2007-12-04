@@ -27,18 +27,14 @@
 extern int being_shutdown;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 
-/* prototypes */
-int vmgrlogit(char *func, char *msg, ...);
-int sendrep(int rpfd, int rep_type, ...);
-
 #define RESETID(UID,GID) resetid(&UID, &GID, thip);
  
 void resetid(uid_t *u, gid_t *g, struct vmgr_srv_thread_info *thip) {
 #ifdef CSEC
-  if (thip->Csec_service_type < 0) {
-    *u = thip->Csec_uid;
-    *g = thip->Csec_gid;
-  }
+	if (thip->Csec_service_type < 0) {
+		*u = thip->Csec_uid;
+		*g = thip->Csec_gid;
+	}
 #endif
 }
 

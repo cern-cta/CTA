@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_server.h,v 1.3 2007/08/07 15:25:42 waldron Exp $
+ * $Id: vmgr_server.h,v 1.4 2007/12/04 12:34:39 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.3 $ $Date: 2007/08/07 15:25:42 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.4 $ $Date: 2007/12/04 12:34:39 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_SERVER_H
@@ -130,6 +130,9 @@ struct vmgr_tape_tag {
 
 			/* volume manager function prototypes */
 
+EXTERN_C int vmgrlogit _PROTO((char *, char *, ...));
+EXTERN_C int sendrep _PROTO((int, int, ...));
+
 EXTERN_C int vmgr_abort_tr _PROTO((struct vmgr_dbfd *));
 EXTERN_C int vmgr_closedb _PROTO((struct vmgr_dbfd *));
 EXTERN_C int vmgr_delete_denmap_entry _PROTO((struct vmgr_dbfd *, vmgr_dbrec_addr *));
@@ -164,7 +167,7 @@ EXTERN_C int vmgr_list_library_entry _PROTO((struct vmgr_dbfd *, int, struct vmg
 EXTERN_C int vmgr_list_model_entry _PROTO((struct vmgr_dbfd *, int, struct vmgr_tape_media *, int, DBLISTPTR *));
 EXTERN_C int vmgr_list_pool_entry _PROTO((struct vmgr_dbfd *, int, struct vmgr_tape_pool *, int, DBLISTPTR *));
 EXTERN_C int vmgr_list_side_entry _PROTO((struct vmgr_dbfd *, int, char *, char *, struct vmgr_tape_side *, int, DBLISTPTR *));
-EXTERN_C int vmgr_opendb _PROTO((char *, char *, char *, struct vmgr_dbfd *));
+EXTERN_C int vmgr_opendb _PROTO((struct vmgr_dbfd *));
 EXTERN_C int vmgr_start_tr _PROTO((int, struct vmgr_dbfd *));
 EXTERN_C int vmgr_update_library_entry _PROTO((struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_library *));
 EXTERN_C int vmgr_update_model_entry _PROTO((struct vmgr_dbfd *, vmgr_dbrec_addr *, struct vmgr_tape_media *));

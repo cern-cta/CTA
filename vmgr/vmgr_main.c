@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_main.c,v 1.7 2007/08/07 14:32:12 waldron Exp $
+ * $Id: vmgr_main.c,v 1.8 2007/12/04 12:34:38 waldron Exp $
  *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
@@ -35,14 +35,10 @@
 #endif
 
 /* prototypes */
-int vmgrlogit(char *func, char *msg, ...);
-int sendrep(int rpfd, int rep_type, ...);
 int vmgr_init_dbpkg();
 
 int being_shutdown;
-char db_pwd[33];
-char db_srvr[33];
-char db_user[33];
+char vmgrconfigfile[CA_MAXPATHLEN+1];
 char func[16];
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
@@ -52,8 +48,7 @@ struct vmgr_srv_thread_info vmgr_srv_thread_info[VMGR_NBTHREADS];
 int vmgr_main(main_args)
 struct main_args *main_args;
 {
-	FILE *fopen(), *cf;
-	char cfbuf[80];
+	struct vmgr_dbfd dbfd;
 	void *doit(void *);
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct sockaddr_in from;
@@ -63,7 +58,6 @@ struct main_args *main_args;
 	int ipool;
 	int on = 1;	/* for REUSEADDR */
 	char *p;
-	char *p_p, *p_s, *p_u;
 	fd_set readfd, readmask;
 	int rqfd;
 	int s;
@@ -71,7 +65,6 @@ struct main_args *main_args;
 	struct servent *sp;
 	int thread_index;
 	struct timeval timeval;
-	char vmgrconfigfile[CA_MAXPATHLEN+1];
 
 	jid = getpid();
 	strcpy (func, "vmgr_serv");
@@ -86,33 +79,22 @@ struct main_args *main_args;
 		strcat (localhost, domainname);
 	}
 
-	/* get login info from the volume manager config file */
-
+	/* set the location of the volume manager login file */
+	vmgrconfigfile[0] = '\0';
 	if (strncmp (VMGRCONFIG, "%SystemRoot%\\", 13) == 0 &&
 	   (p = getenv ("SystemRoot")))
 		sprintf (vmgrconfigfile, "%s%s", p, strchr (VMGRCONFIG, '\\'));
 	else
 		strcpy (vmgrconfigfile, VMGRCONFIG);
-	if ((cf = fopen (vmgrconfigfile, "r")) == NULL) {
-		vmgrlogit (func, VMG23, vmgrconfigfile);
-		return (CONFERR);
-	}
-	if (fgets (cfbuf, sizeof(cfbuf), cf) &&
-	    strlen (cfbuf) >= 5 && (p_u = strtok (cfbuf, "/\n")) &&
-	    (p_p = strtok (NULL, "@\n")) && (p_s = strtok (NULL, "\n"))) {
-		strcpy (db_user, p_u);
-		strcpy (db_pwd, p_p);
-		strcpy (db_srvr, p_s);
-	} else {
-		vmgrlogit (func, VMG09, vmgrconfigfile, "incorrect");
-		return (CONFERR);
-	}
-	(void) fclose (cf);
 
 	(void) vmgr_init_dbpkg ();
+	memset (&dbfd, 0, sizeof(dbfd));
+	dbfd.idx = VMGR_NBTHREADS;
+	if (vmgr_opendb (&dbfd) < 0)
+		return (SYERR);
+	(void) vmgr_closedb (&dbfd);
 
 	/* create a pool of threads */
-
 	if ((ipool = Cpool_create (VMGR_NBTHREADS, NULL)) < 0) {
 		vmgrlogit (func, VMG02, "Cpool_create", sstrerror(serrno));
 		return (SYERR);
@@ -210,7 +192,7 @@ struct main_args *main_args;
 	}
 }
 
-main()
+int main()
 {
 #if ! defined(_WIN32)
 	if ((maxfds = Cinitdaemon ("vmgr_serv", NULL)) < 0)
@@ -370,7 +352,7 @@ struct vmgr_srv_thread_info *thip;
 			return;
 		}
 		if (req_type != VMGR_SHUTDOWN) {
-			if (vmgr_opendb (db_srvr, db_user, db_pwd, &thip->dbfd) < 0) {
+			if (vmgr_opendb (&thip->dbfd) < 0) {
 				c = serrno;
 				sendrep (thip->s, MSG_ERR, "db open error: %d\n", c);
 				sendrep (thip->s, VMGR_RC, c);

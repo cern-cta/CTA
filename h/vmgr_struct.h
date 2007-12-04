@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_struct.h,v 1.1 2005/03/17 10:12:17 obarring Exp $
+ * $Id: vmgr_struct.h,v 1.2 2007/12/04 12:34:39 waldron Exp $
  */
 
 /*
@@ -8,12 +8,14 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_struct.h,v $ $Revision: 1.1 $ $Date: 2005/03/17 10:12:17 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_struct.h,v $ $Revision: 1.2 $ $Date: 2007/12/04 12:34:39 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_STRUCT_H
 #define _VMGR_STRUCT_H
- 
+#include "vmgr_constants.h"
+#include "vmgr.h"
+
                         /* structures common to volume manager client and server */
 
 struct vmgr_tape_info {

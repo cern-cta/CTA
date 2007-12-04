@@ -15,10 +15,8 @@
 #include <stdarg.h>
 #include "marshall.h"
 #include "net.h"
+#include "vmgr_server.h"
 #include "vmgr.h"
-
-/* prototypes */
-int vmgrlogit(char *func, char *msg, ...);
 
 int sendrep(int rpfd, int rep_type, ...)
 {
