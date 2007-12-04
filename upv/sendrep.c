@@ -3,11 +3,8 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2003/09/08 17:16:43 $ CERN IT-DS/HSM Ben Couturier";
-#endif /* not lint */
-
 #include <errno.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <string.h>
 #if defined(_WIN32)
@@ -18,16 +15,16 @@ static char sccsid[] = "$RCSfile: sendrep.c,v $ $Revision: 1.2 $ $Date: 2003/09/
 #include <stdarg.h>
 #include "marshall.h"
 #include "net.h"
+#include "Cupv_server.h"
 #include "Cupv.h"
-sendrep(int rpfd, int rep_type, ...)
+
+int sendrep(int rpfd, int rep_type, ...)
 {
 	va_list args;
 	char func[16];
 	char *msg;
 	int n;
-	char *p;
 	char prtbuf[PRTBUFSZ];
-	char *q;
 	char *rbp;
 	int rc;
 	char repbuf[REPBUFSZ+12];

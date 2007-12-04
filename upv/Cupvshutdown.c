@@ -3,9 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)Cupvshutdown.c,v 1.2 2002/06/12 08:17:11 CERN IT-DS/HSM Ben Couturier";
-#endif /* not lint */
 
 /*	Cupvshutdown - shutdown the UPV */
 #include <stdlib.h>

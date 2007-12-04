@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "$RCSfile: Cupvlogit.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 12:48:01 $ CERN IT-DS/HSM Ben Couturier";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -14,11 +10,12 @@ static char sccsid[] = "$RCSfile: Cupvlogit.c,v $ $Revision: 1.3 $ $Date: 2005/0
 #include <sys/types.h>
 #include <time.h>
 #include <stdarg.h>
+#include <unistd.h>
 #include "Cglobals.h"
 #include "Cupv.h"
 extern int jid;
 
-Cupvlogit(char *func, char *msg, ...)
+int Cupvlogit(char *func, char *msg, ...)
 {
 	va_list args;
 	char prtbuf[LOGBUFSZ];

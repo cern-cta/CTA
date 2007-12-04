@@ -3,10 +3,6 @@
  * All rights reserved
  */
  
-#ifndef lint
-static char sccsid[] = "@(#)Cupvadd.c,v 1.5 2002/06/12 08:21:34 CERN IT-DS/HSM Ben Couturier";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
