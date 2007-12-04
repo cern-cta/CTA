@@ -80,7 +80,7 @@ void castor::monitoring::ClusterStatus::print
       out << std::setw(20);
       out << "name" << ": ";
       out << it->first << "\n";
-      it->second.print(out, dsIndent);
+      it->second.print(out, dsIndent, true);
     }
   }
 }
