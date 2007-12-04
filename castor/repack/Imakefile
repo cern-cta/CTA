@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Release$ $Date: 2007/11/28 10:14:41 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2007/12/04 16:01:33 $ $Author: waldron $
 #
 # Make Castor Repack System
 #
@@ -81,8 +81,6 @@ EMANPAGES_REPACK = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),repack.$(MANSU
 REPACKLIB_SRCS = $(REPACKCOMMON_SRC)
 REPACKLIB_OBJS = $(REPACKLIB_SRCS:.cpp=.Osuf)
 
-
-
 REPACKSERVERBIN_OBJS = $(REPACKSERVERBIN_SRCS:.cpp=.Osuf)
 REPACKBIN_OBJS = $(REPACKBIN_SRCS:.cpp=.Osuf)
 
@@ -103,8 +101,6 @@ MakeDepSharedLibrary(FileName(..,shlib),castorCnvs)
 
 # The repack Library
 NormalLibraryTarget(castorRepack,$(REPACKLIB_OBJS))
-
-
 
 Makefiles:
 
@@ -135,7 +131,7 @@ EMANPAGE(repackserver,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 
 clean:
 	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
+	-@RemoveFiles(FilesToClean $(REPACKSERVERBIN_OBJS))
 
 clobber:	clean
 	@echo clobbering in CurDir

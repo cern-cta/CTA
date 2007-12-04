@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.16 $ $Release$ $Date: 2007/11/28 10:14:41 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Release$ $Date: 2007/12/04 16:01:34 $ $Author: waldron $
 #
 # Make Castor vdqm library
 #
@@ -42,7 +42,7 @@ LIBS = -lshift -Wl,-rpath-link,../../shlib
 VDQMBIN_SRCS =  NewProtocolInterpreter.cpp \
                 OldProtocolInterpreter.cpp \
                 OldRequestFacade.cpp \
-								ProtocolFacade.cpp \
+		ProtocolFacade.cpp \
                 RTCopyDConnection.cpp \
                 VdqmServer.cpp \
                 VdqmServerSocket.cpp \
@@ -84,7 +84,7 @@ exportman:
 
 clean:
 	@echo cleaning in CurDir
-	-@RemoveFiles(FilesToClean)
+	-@RemoveFiles(FilesToClean $(VDQMBIN_OBJS))
 
 clobber:	clean
 	@echo clobbering in CurDir
