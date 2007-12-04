@@ -1,5 +1,5 @@
 #
-# $Id: if.has_oracle,v 1.9 2007/09/25 15:56:03 sponcec3 Exp $
+# $Id: if.has_oracle,v 1.10 2007/12/04 12:50:47 waldron Exp $
 #
 ## List of packages to do only if oracle is available
 #
@@ -21,3 +21,6 @@ castor-dbtools
 castor-repack-server
 castor-repack-client
 castor-rmmaster-server
+castor-lib-policy
+castor-mighunter-server
+castor-rechandler-server

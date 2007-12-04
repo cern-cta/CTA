@@ -79,8 +79,8 @@ export MINOR_CASTOR_VERSION
 %if ! %has_oracle
 echo "### Warning, no ORACLE environment"
 echo "The following packages will NOT be built:"
-echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-repack-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server, castor-rmmaster-server, castor-jobmanager-server"
-for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemonCpp BuildVDQMCpp BuildDbTools BuildCleaning BuildRmMasterCpp BuildJobManagerCpp; do
+echo "castor-devel-oracle, castor-dlf-server, castor-lib-oracle, castor-lsf-plugin, castor-ns-server, castor-rh-server, castor-repack-server, castor-rtcopy-clientserver, castor-rtcopy-mighunter, castor-stager-server, castor-upv-server, castor-vmgr-server, castor-rmmaster-server, castor-jobmanager-server castor-lib-policy castor-mighunter-server"
+for this in BuildCupvDaemon BuildDlfDaemon BuildNameServerDaemon BuildRHCpp BuildRepack BuildRtcpclientd BuildSchedPlugin BuildVolumeMgrDaemon UseOracle UseScheduler BuildOraCpp BuildStageDaemonCpp BuildVDQMCpp BuildDbTools BuildCleaning BuildRmMasterCpp BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
 %else
@@ -123,6 +123,7 @@ make -f Makefile.ini Makefiles
 which makedepend >& /dev/null
 [ $? -eq 0 ] && make depend
 make -j $((`grep processor /proc/cpuinfo | wc -l`*2))
+make
 %install
 # define castor version (modified by maketar.sh to put the exact version)
 MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
@@ -140,6 +141,7 @@ mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man3
 mkdir -p ${RPM_BUILD_ROOT}/usr/share/man/man4
 mkdir -p ${RPM_BUILD_ROOT}/etc/castor
 mkdir -p ${RPM_BUILD_ROOT}/etc/castor/expert
+mkdir -p ${RPM_BUILD_ROOT}/etc/castor/policies
 mkdir -p ${RPM_BUILD_ROOT}/etc/sysconfig
 mkdir -p ${RPM_BUILD_ROOT}/etc/init.d
 mkdir -p ${RPM_BUILD_ROOT}/etc/logrotate.d
@@ -152,10 +154,12 @@ mkdir -p ${RPM_BUILD_ROOT}/var/spool/gc
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/job
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/jobmanager
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/monitor
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/mighunter
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/msg
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/ns
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rfio
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rhserver
+mkdir -p ${RPM_BUILD_ROOT}/var/spool/rechandler
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/repack
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmc
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/rmmaster
@@ -201,7 +205,10 @@ install -m 755 debian/castor-service.postrm ${RPM_BUILD_ROOT}/usr/sbin/castor-se
 install -m 755 debian/castor-service.prerm ${RPM_BUILD_ROOT}/usr/sbin/castor-service.prerm
 # Install the sample castor.conf
 install -m 644 debian/castor.conf ${RPM_BUILD_ROOT}/etc/castor/castor.conf.example
-install -m 644 debian/policies.py ${RPM_BUILD_ROOT}/etc/castor/policies.py.example
+install -m 644 debian/scheduler.py ${RPM_BUILD_ROOT}/etc/castor/policies/scheduler.py.example
+install -m 644 debian/migration.py ${RPM_BUILD_ROOT}/etc/castor/policies/migration.py.example
+install -m 644 debian/stream.py ${RPM_BUILD_ROOT}/etc/castor/policies/stream.py.example
+install -m 644 debian/rechandler.py ${RPM_BUILD_ROOT}/etc/castor/policies/rechandler.py.example
 for i in debian/*.logrotate; do
     install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/logrotate.d/`basename ${i} | sed 's/\.logrotate//g'`
 done
