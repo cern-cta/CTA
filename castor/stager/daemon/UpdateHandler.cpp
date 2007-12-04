@@ -74,17 +74,11 @@ namespace castor{
         /* we can create one !*/
         stgRequestHelper->setSubrequestUuid();
         
-        /* get the associated client and set the iClientAsString variable */
-        
-        
-        
         /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
         stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
         
-        
         /* get the svcClass */
         stgRequestHelper->getSvcClass();
-        
         
         /* create and fill request->svcClass link on DB */
         stgRequestHelper->linkRequestToSvcClassOnDB();

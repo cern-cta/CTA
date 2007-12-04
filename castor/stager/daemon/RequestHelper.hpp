@@ -68,7 +68,6 @@ namespace castor{
       class castor::stager::CastorFile;
       class castor::stager::FileClass;
       class castor::stager::dbService::StagerCnsHelper;
-      class castor::IClientFactory;
     
       
 
