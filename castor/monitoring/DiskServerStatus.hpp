@@ -54,7 +54,7 @@ namespace castor {
 
     public:
 
-      /*
+      /**
        * Constructor
        */
       DiskServerStatus();
@@ -63,7 +63,8 @@ namespace castor {
        * print method
        */
       void print(std::ostream& out,
-                 const std::string& indentation = "") const
+		 std::string& indentation = "",
+		 const bool showDeltas = true) const
         throw();
 
     public:

@@ -43,7 +43,7 @@ namespace castor {
 
     public:
 
-      /*
+      /**
        * Constructor
        */
       FileSystemStatus();
@@ -52,7 +52,8 @@ namespace castor {
        * print method
        */
       void print(std::ostream& out,
-                 const std::string& indentation = "") const
+		 const std::string& indentation = "",
+		 const bool showDeltas = false) const
         throw();
 
     public:
