@@ -1,3 +1,5 @@
 %attr(0755,root,bin) etc/init.d/mighunter
 %attr(0644,root,bin) etc/sysconfig/mighunter.example
-%attr(0750,root,root) usr/bin/mighunter
+%attr(0750,root,root) usr/bin/migHunterDaemon
+%attr(0644,root,bin) etc/castor/policies/migration.py.example
+%attr(0644,root,bin) etc/castor/policies/stream.py.example
