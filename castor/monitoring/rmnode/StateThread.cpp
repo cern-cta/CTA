@@ -19,14 +19,15 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The StateThread of the RmNode daemon collects and send to
- * the rmmaster the state of the node on which it runs.
+ * The StateThread of the RmNode daemon collects information about the state
+ * of the diskserver and its filesystems
  *
- * @author Sebastien Ponce
+ * @author castor-dev team
  *****************************************************************************/
 
 // Include files
 #include "castor/monitoring/rmnode/StateThread.hpp"
+#include "castor/monitoring/rmnode/RmNodeDaemon.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
@@ -39,122 +40,168 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/IObject.hpp"
 #include "castor/System.hpp"
+#include "castor/Constants.hpp"
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include "getconfent.h"
 #include <unistd.h>
 #include <sys/sysinfo.h>
 #include <sys/vfs.h>
 #include "errno.h"
 
-// Default value for minFreeSpace, maxFreeSpace, minAllowedFreeSpace
-#define MINFREESPACE .10
-#define MAXFREESPACE .15
-#define MINALLOWEDFREESPACE .05
+// Definitions
+#define DEFAULT_MINFREESPACE .10
+#define DEFAULT_MAXFREESPACE .15
+#define DEFAULT_MINALLOWEDFREESPACE .05
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Constructor
+//-----------------------------------------------------------------------------
 castor::monitoring::rmnode::StateThread::StateThread
-(std::string rmMasterHost, int rmMasterPort) :
-  m_rmMasterHost(rmMasterHost), m_rmMasterPort(rmMasterPort) {
+(std::map<std::string, u_signed64> hostList, int port) :
+  m_hostList(hostList),
+  m_port(port) {
+
   // "State thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 6, 0, 0);
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Destructor
+//-----------------------------------------------------------------------------
 castor::monitoring::rmnode::StateThread::~StateThread() throw() {
-  // "State thread destructed"
+  // "State thread destroyed"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 12, 0, 0);
 }
 
-//------------------------------------------------------------------------------
-// runs the thread starts by threadassign()
-//------------------------------------------------------------------------------
-void castor::monitoring::rmnode::StateThread::run(void* par)
+
+//-----------------------------------------------------------------------------
+// Run
+//-----------------------------------------------------------------------------
+void castor::monitoring::rmnode::StateThread::run(void *param)
   throw(castor::exception::Exception) {
-  // "State thread started"
+
+  // "State thread running"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 8, 0, 0);
-  castor::monitoring::DiskServerStateReport* state = 0;
+
+  // Collect state information
+  castor::monitoring::DiskServerStateReport *state = 0;
   try {
-    // collect
     state = collectDiskServerState();
-    // send state to rmMaster
-    castor::io::ClientSocket s(m_rmMasterPort, m_rmMasterHost);
-    s.connect();
-    s.sendObject(*state);
-    // "State sent to rmMaster"
+  } catch (castor::exception::Exception e) {
+
+    // "Failed to collect diskserver status"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("content", state)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 16, 1, params);
-    // cleanup memory
+      {castor::dlf::Param("Type", sstrerror(e.code())),
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 23, 2, params);
+    return;
+  }
+
+  // Send information to resource masters
+  for(std::map<std::string, u_signed64>::iterator it =
+	m_hostList.begin();
+      it != m_hostList.end(); it++) {
+    try {
+      castor::io::ClientSocket s((*it).second, (*it).first);
+      s.connect();
+      s.sendObject(*state);
+
+      // "State information has been sent"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Content", state)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 16, 1, params);
+
+      // Check the acknowledgement
+      castor::IObject *obj = s.readObject();
+      castor::monitoring::MonitorMessageAck *ack = 0;
+
+      if (OBJ_MonitorMessageAck == obj->type()) {
+	ack = dynamic_cast<castor::monitoring::MonitorMessageAck *>(obj);
+      } else {
+
+	// "Received unknown object for acknowledgement from socket"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Type", obj->type()),
+	   castor::dlf::Param("Server", (*it).first),
+	   castor::dlf::Param("Port", (*it).second)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 13, 3, params);
+      }
+
+      // Update the status file
+      if (ack != 0) {
+	char *filename = getconfent("RmNode", "StatusFile", 0);
+	if ((filename) && (ack->ack().size())) {
+	  FILE *fp = fopen(filename, "w");
+	  if (fp == NULL) {
+
+	    // "Failed to update the RmNode/StatusFile"
+	    castor::dlf::Param params[] =
+	      {castor::dlf::Param("Filename", filename),
+	       castor::dlf::Param("Error", strerror(errno))};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 22, 2, params);
+	  } else {
+
+	    // Update the status of the diskserver
+	    fprintf(fp, "DiskServerStatus=%s",
+		    castor::stager::DiskServerStatusCodeStrings[ack->diskServerStatus()]);
+
+	    // Update the status of the filesystems
+	    std::vector<FileSystemStateAck *>::const_iterator it;
+	    int i = 1;
+	    for (it = ack->ack().begin();
+		 it != ack->ack().end();
+		 it++, i++) {
+	      fprintf(fp, "FS%d=%s", i,
+		      castor::stager::FileSystemStatusCodesStrings[(*it)->fileSystemStatus()]);
+	    }
+	    fclose(fp);
+	  }
+	}
+	delete ack;
+      }
+    } catch (castor::exception::Exception e) {
+
+      // "Error caught when trying to send state information"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Type", sstrerror(e.code())),
+	 castor::dlf::Param("Message", e.getMessage().str()),
+	 castor::dlf::Param("Server", (*it).first),
+	 castor::dlf::Param("Port", (*it).second)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 4, params);
+    } catch (...) {
+
+      // "Failed to send state information"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Message", "General exception caught")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 21, 1, params);
+    }
+  }
+
+  // Cleanup
+  if (state != 0) {
     delete state;
     state = 0;
-    // check the acknowledgment
-    castor::IObject* obj = s.readObject();
-    castor::monitoring::MonitorMessageAck* ack =
-      dynamic_cast<castor::monitoring::MonitorMessageAck*>(obj);
-    if (0 == ack) {
-      castor::exception::InvalidArgument e; // XXX To be changed
-      e.getMessage() << "No Acknowledgement from the Server";
-      delete ack;
-      throw e;
-    }
-    // write status file
-    char *filename = getconfent("RmNode", "StatusFile", 0);
-    if (filename) {
-      std::fstream out(filename, std::ios::out);
-      if (!out.is_open()) {
-        castor::exception::InvalidArgument e;
-        e.getMessage() << "Failed to open file " << filename << " for status update";
-        delete ack;
-        throw e;
-      }
-      // disk server status
-      out << "DiskServerStatus=" << castor::stager::DiskServerStatusCodeStrings[ack->diskServerStatus()] << std::endl;
-      // file system status
-      std::vector<FileSystemStateAck*>::const_iterator it;
-      int i = 1;
-      for (it = ack->ack().begin(); it != ack->ack().end(); it++, i++) {
-	      out << "FS" << i << "=" << castor::stager::FileSystemStatusCodesStrings[(*it)->fileSystemStatus()] << std::endl;
-      }
-      out.close();
-    }
-    delete ack;
-  }
-  catch(castor::exception::Exception e) {
-    // cleanup
-    if (0 != state) {
-      delete state;
-      state = 0;
-    }
-    // "Error caught in StateThread::run"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("code", sstrerror(e.code())),
-       castor::dlf::Param("message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 2, params);
-  }
-  catch (...) {
-    // "Error caught in StateThread::run"
-    castor::dlf::Param params2[] =
-      {castor::dlf::Param("message", "general exception caught")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 14, 1, params2);
   }
 }
 
-//------------------------------------------------------------------------------
-// collectDiskServerState
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// CollectDiskServerState
+//-----------------------------------------------------------------------------
 castor::monitoring::DiskServerStateReport*
 castor::monitoring::rmnode::StateThread::collectDiskServerState()
   throw(castor::exception::Exception) {
   castor::monitoring::DiskServerStateReport* state =
     new castor::monitoring::DiskServerStateReport();
-  // fill the machine name
+
+  // Fill in the machine name
   state->setName(castor::System::getHostName());
-  // use sysinfo to get total RAM, Memory and Swap
+
+  // Use sysinfo to get total RAM, Memory and Swap
   struct sysinfo si;
   if (0 == sysinfo(&si)) {
     // RAM
@@ -172,87 +219,94 @@ castor::monitoring::rmnode::StateThread::collectDiskServerState()
   } else {
     delete state;
     castor::exception::Exception e(errno);
-    e.getMessage()
-      << "StateThread::collectDiskServerState : sysinfo call failed";
+    e.getMessage() << "sysinfo call failed in collectDiskServerState";
     throw e;
   }
-  // fill the status, always the same
+
+  // Set status (always the same)
   state->setStatus(castor::stager::DISKSERVER_PRODUCTION);
   state->setAdminStatus(castor::monitoring::ADMIN_NONE);
-  // Get the current values for min/max/minAllowedFreeSpace
-  float minFreeSpace = MINFREESPACE;
-  char* minFreeSpaceStr = getconfent("RmNode","MinFreeSpace", 0);
-  if (minFreeSpaceStr){
-    minFreeSpace = std::strtof(minFreeSpaceStr,0);
+
+  // Get the current values for min, max and minAllowedFreeSpace
+  char *value = getconfent("RmNode","MinFreeSpace", 0);
+  float minFreeSpace = DEFAULT_MINFREESPACE;
+  if (value) {
+    minFreeSpace = std::strtof(value, 0);
     if (minFreeSpace > 1 || minFreeSpace < 0) {
-      // Go back to default
-      minFreeSpace = MINFREESPACE;
-      // "Bad minFreeSpace value in configuration file"
+      minFreeSpace = DEFAULT_MINFREESPACE;
+
+      // "Invalid RmNode/MinFreeSpace option, using default"
       castor::dlf::Param initParams[] =
-	{castor::dlf::Param("Given value", minFreeSpaceStr)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 18, 1, initParams);
+	{castor::dlf::Param("Value", value),
+	 castor::dlf::Param("Default", minFreeSpace)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 18, 2, initParams);
     }
   }
-  float maxFreeSpace = MAXFREESPACE;
-  char* maxFreeSpaceStr = getconfent("RmNode","MaxFreeSpace", 0);
-  if (maxFreeSpaceStr){
-    maxFreeSpace = std::strtof(maxFreeSpaceStr,0);
+
+  value = getconfent("RmNode","MaxFreeSpace", 0);
+  float maxFreeSpace = DEFAULT_MAXFREESPACE;
+  if (value) {
+    maxFreeSpace = std::strtof(value, 0);
     if (maxFreeSpace > 1 || maxFreeSpace < 0) {
-      // Go back to default
-      maxFreeSpace = MAXFREESPACE;
-      // "Bad maxFreeSpace value in configuration file"
+      maxFreeSpace = DEFAULT_MAXFREESPACE;
+
+      // "Invalid RmNode/MaxFreeSpace option, using default"
       castor::dlf::Param initParams[] =
-	{castor::dlf::Param("Given value", maxFreeSpaceStr)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 19, 1, initParams);
+	{castor::dlf::Param("Value", value),
+	 castor::dlf::Param("Default", maxFreeSpace)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 19, 2, initParams);
     }
   }
-  float minAllowedFreeSpace = MINALLOWEDFREESPACE;
-  char* minAllowedFreeSpaceStr = getconfent("RmNode","MinAllowedFreeSpace", 0);
-  if (minAllowedFreeSpaceStr){
-    minAllowedFreeSpace = std::strtof(minAllowedFreeSpaceStr,0);
+
+  value = getconfent("RmNode","MinAllowedFreeSpace", 0);
+  float minAllowedFreeSpace = DEFAULT_MINALLOWEDFREESPACE;
+  if (value) {
+    minAllowedFreeSpace = std::strtof(value, 0);
     if (minAllowedFreeSpace > 1 || minAllowedFreeSpace < 0) {
-      // Go back to default
-      minAllowedFreeSpace = MINALLOWEDFREESPACE;
-      // "Bad minAllowedFreeSpace value in configuration file"
+      minAllowedFreeSpace = DEFAULT_MINALLOWEDFREESPACE;
+
+      // "Invalid RmNode/MinAllowedFreeSpace option, using default"
       castor::dlf::Param initParams[] =
-	{castor::dlf::Param("Given value", minAllowedFreeSpaceStr)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 20, 1, initParams);
+	{castor::dlf::Param("Value", value),
+	 castor::dlf::Param("Default", minAllowedFreeSpace)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 20, 2, initParams);
     }
   }
-  // get current list of filesystems
-  char** fs;
-  int nbFs;
-  if (getconfent_multi
-      ("RmNode", "MountPoints", 1, &fs, &nbFs) < 0) {
-    castor::exception::Exception e(errno);
-    delete state;
-    e.getMessage()
-      << "StateThread::collectDiskServerState : getconfent_multi failed";
-    throw e;
+
+  // Convert the value of the RmNode/MountPoints configuration option into a
+  // vector of strings
+  std::vector<std::string> fsList;
+  char **values;
+  int  count;
+  if (getconfent_multi("RmNode", "MountPoints", 1, &values, &count) == 0) {
+    for (int i = 0; i < count; i++) {
+      fsList.push_back(values[i]);
+      free(values[i]);
+    }
+    free(values);
   }
-  // fill state for each FileSystems
+
+  // Fill the state for each filesystem
   try {
-    for (int i = 0; i < nbFs; i++) {
+    for (u_signed64 i = 0; i < fsList.size(); i++) {
       state->addFileSystemStatesReports
-	(collectFileSystemState(fs[i], minFreeSpace,
-				maxFreeSpace, minAllowedFreeSpace));
+	(collectFileSystemState(fsList[i],
+				minFreeSpace,
+				maxFreeSpace,
+				minAllowedFreeSpace));
     }
   } catch (castor::exception::Exception e) {
-    // free Memory
     delete state;
-    for (int i = 0; i < nbFs; i++) free(fs[i]);
-    free(fs);
     throw e;
   }
-  // free Memory
-  for (int i = 0; i < nbFs; i++) free(fs[i]);
-  free(fs);
+
   return state;
 }
 
-//------------------------------------------------------------------------------
-// collectFileSystemState
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// CollectFileSystemState
+//-----------------------------------------------------------------------------
 castor::monitoring::FileSystemStateReport*
 castor::monitoring::rmnode::StateThread::collectFileSystemState
 (std::string mountPoint, float minFreeSpace,
@@ -260,28 +314,26 @@ castor::monitoring::rmnode::StateThread::collectFileSystemState
   throw(castor::exception::Exception) {
   castor::monitoring::FileSystemStateReport* state =
     new castor::monitoring::FileSystemStateReport();
-  // set mountpoint
+
+  // Set mountpoint
   state->setMountPoint(mountPoint);
   state->setMinFreeSpace(minFreeSpace);
   state->setMaxFreeSpace(maxFreeSpace);
   state->setMinAllowedFreeSpace(minAllowedFreeSpace);
-  // set space
+
+  // Set space
   struct statfs sf;
   if (statfs(mountPoint.c_str(),&sf) == 0) {
     state->setSpace(((u_signed64) sf.f_blocks) * ((u_signed64) sf.f_bsize));
   } else {
     delete state;
     castor::exception::Exception e(errno);
-    e.getMessage()
-      << "StateThread::collectFileSystemState : statfs call failed";
+    e.getMessage() << "statfs call failed for " << mountPoint;
     throw e;
   }
-  // set status (always the same)
+
+  // Set status (always the same)
   state->setStatus(castor::stager::FILESYSTEM_PRODUCTION);
   state->setAdminStatus(castor::monitoring::ADMIN_NONE);
   return state;
 }
-
-#undef MINFREESPACE
-#undef MAXFREESPACE
-#undef MINALLOWEDFREESPACE

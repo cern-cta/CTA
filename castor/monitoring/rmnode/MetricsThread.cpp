@@ -19,10 +19,10 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The MetricsThread of the RmNode daemon collects and send to
- * the rmmaster the metrics of the node on which it runs.
+ * The MetricsThread of the RmNode daemon collects the metrics of the
+ * diskserver and sends them to the resource master
  *
- * @author Sebastien Ponce
+ * @author castor-dev team
  *****************************************************************************/
 
 // Include files
@@ -48,238 +48,269 @@
 #include <dirent.h>
 #include <pwd.h>
 
-/// File locations
+// Definitions
 #define PARTITIONS_FILE "/proc/partitions"
-#define DISKSTATS_FILE  "/proc/diskstats"
-#define MTAB_FILE       "/etc/mtab"
+#define DISKSTATS_FILE "/proc/diskstats"
+#define MTAB_FILE "/etc/mtab"
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Constructor
+//-----------------------------------------------------------------------------
 castor::monitoring::rmnode::MetricsThread::MetricsThread
-(std::string rmMasterHost, int rmMasterPort) :
-  m_rmMasterHost(rmMasterHost), m_rmMasterPort(rmMasterPort) {
+(std::map<std::string, u_signed64> hostList, int port) :
+  m_hostList(hostList),
+  m_port(port) {
+
   // "Metrics thread created"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 7, 0, 0);
-  
-  dsMetrics = new castor::monitoring::DiskServerMetricsReport();
+  m_diskServerMetrics = new castor::monitoring::DiskServerMetricsReport();
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Destructor
+//-----------------------------------------------------------------------------
 castor::monitoring::rmnode::MetricsThread::~MetricsThread() throw() {
-  // "Metrics thread destructed"
+  // "Metrics thread destroyed"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 13, 0, 0);
-
-  if (dsMetrics != 0) {
-    delete dsMetrics;
-    dsMetrics = 0;
+  if (m_diskServerMetrics != 0) {
+    delete m_diskServerMetrics;
+    m_diskServerMetrics = 0;
   }
 }
 
-//------------------------------------------------------------------------------
-// runs the thread starts by threadassign()
-//------------------------------------------------------------------------------
-void castor::monitoring::rmnode::MetricsThread::run(void* par)
+
+//-----------------------------------------------------------------------------
+// Run
+//-----------------------------------------------------------------------------
+void castor::monitoring::rmnode::MetricsThread::run(void *param)
   throw(castor::exception::Exception) {
-  // "Metrics thread started"
+
+  // "Metrics thread running"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 9, 0, 0);
+
+  // Collect metrics information
   try {
-    // collect
     collectDiskServerMetrics();
-    // send metrics to rmMaster
-    castor::io::ClientSocket s(m_rmMasterPort, m_rmMasterHost);
-    s.connect();
-    s.sendObject(*dsMetrics);
-    // "Metrics sent to rmMaster"
+  } catch (castor::exception::Exception e) {
+
+    // "Failed to collect diskserver metrics"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("content", dsMetrics)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 17, 1, params);
-    // check the acknowledgment. Status file updates are only performed in the
-    // state update thread
-    castor::IObject* obj = s.readObject();
-    castor::monitoring::MonitorMessageAck* ack =
-      dynamic_cast<castor::monitoring::MonitorMessageAck*>(obj);
-    if (0 == ack) {
-      castor::exception::InvalidArgument e; // XXX To be changed
-      e.getMessage() << "No Acknowledgement from the Server";
-      delete ack;
-      throw e;
+      {castor::dlf::Param("Type", sstrerror(e.code())),
+       castor::dlf::Param("Message", e.getMessage().str())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 24, 2, params);
+    return;
+  }
+
+  // Send information to resource masters
+  for(std::map<std::string, u_signed64>::iterator it =
+	m_hostList.begin();
+      it != m_hostList.end(); it++) {
+    try {
+      castor::io::ClientSocket s((*it).second, (*it).first);
+      s.connect();
+      s.sendObject(*m_diskServerMetrics);
+
+      // "Metrics information has been sent"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Content", m_diskServerMetrics)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 17, 1, params);
+
+      // Check the acknowledgement
+      castor::IObject *obj = s.readObject();
+      castor::MessageAck *ack =
+	dynamic_cast<castor::monitoring::MonitorMessageAck *>(obj);
+      if (ack == 0) {
+
+	// "Received no acknowledgement from server"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Server", (*it).first),
+	   castor::dlf::Param("Port", (*it).second)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 26, 2, params);
+      } else {
+	delete ack;
+      }
+    } catch (castor::exception::Exception e) {
+
+      // "Error caught when trying to send metric information"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Type", sstrerror(e.code())),
+	 castor::dlf::Param("Message", e.getMessage().str()),
+	 castor::dlf::Param("Server", (*it).first),
+	 castor::dlf::Param("Port", (*it).second)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 4, params);
+    } catch (...) {
+
+      // "Failed to send metrics information"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Message", "General exception caught")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 25, 1, params);
     }
-    delete ack;
-  }
-  catch(castor::exception::Exception e) {
-    // "Error caught in MetricsThread::run"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("code", sstrerror(e.code())),
-       castor::dlf::Param("message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 2, params);
-  }
-  catch (...) {
-    // "Error caught in MetricsThread::run"
-    castor::dlf::Param params2[] =
-      {castor::dlf::Param("message", "general exception caught")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 1, params2);
   }
 }
 
+
 //------------------------------------------------------------------------------
-// collectDiskServerMetrics
+// CollectDiskServerMetrics
 //------------------------------------------------------------------------------
 void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
   throw(castor::exception::Exception) {
-  // set diskServer name
-  dsMetrics->setName(castor::System::getHostName());
-  // use sysinfo to get all data
+
+  // Fill in the machine name
+  m_diskServerMetrics->setName(castor::System::getHostName());
+
+  // Use sysinfo to get total RAM, Memory and Swap
   struct sysinfo si;
   if (0 == sysinfo(&si)) {
     // RAM
     u_signed64 ram = si.freeram;
     ram *= si.mem_unit;
-    dsMetrics->setFreeRam(ram);
+    m_diskServerMetrics->setFreeRam(ram);
     // Memory
     u_signed64 memory = si.freehigh;
     memory *= si.mem_unit;
-    dsMetrics->setFreeMemory(memory);
+    m_diskServerMetrics->setFreeMemory(memory);
     // Swap
     u_signed64 swap = si.freeswap;
     swap *= si.mem_unit;
-    dsMetrics->setFreeSwap(swap);
+    m_diskServerMetrics->setFreeSwap(swap);
   } else {
     castor::exception::Exception e(errno);
-    e.getMessage()
-      << "MetricsThread::collectDiskServerMetrics : sysinfo call failed";
+    e.getMessage() << "sysinfo call failed in collectDiskServerMetrics";
     throw e;
   }
-  // get current list of filesystems
-  char** fs;
-  char   path[CA_MAXPATHLEN + 1];
-  int    nbFs;
-  int    rc;
 
-  if (getconfent_multi
-      ("RmNode", "MountPoints", 1, &fs, &nbFs) < 0) {
-    castor::exception::Exception e(errno);
-    e.getMessage()
-      << "MetricsThread::collectDiskServerMetrics : getconfent_multi failed";
-    throw e;
+  // Convert the value of the RmNode/MountPoints configuration option into a
+  // vector of strings
+  std::vector<std::string> fsList;
+  char **values;
+  int  count;
+  if (getconfent_multi("RmNode", "MountPoints", 1, &values, &count) == 0) {
+    for (int i = 0; i < count; i++) {
+      fsList.push_back(values[i]);
+      free(values[i]);
+    }
+    free(values);
   }
-  // fill metrics for each FileSystems
+
+  // Fill metrics for each filesystem
   try {
-    for (int i = 0; i < nbFs; i++) {
- 
-      // search for the mountpoint in the filesystem vector
-      castor::monitoring::FileSystemMetricsReport* metrics = NULL;
+    for (u_signed64 i = 0; i < fsList.size(); i++) {
+
+      // Search for the filesystem in the filesystem vector
+      castor::monitoring::FileSystemMetricsReport* metrics = 0;
       for (std::vector<castor::monitoring::FileSystemMetricsReport*>::const_iterator
-	     it = dsMetrics->fileSystemMetricsReports().begin();
-	   it != dsMetrics->fileSystemMetricsReports().end();
-	   it++) { 
-	if ((*it)->mountPoint() == fs[i]) {
+	     it = m_diskServerMetrics->fileSystemMetricsReports().begin();
+	   it != m_diskServerMetrics->fileSystemMetricsReports().end();
+	   it++) {
+	if ((*it)->mountPoint() == fsList[i]) {
 	  metrics = *it;
 	  break;
 	}
       }
 
-      // entry not found ?
-      if (metrics == NULL) {
+      // Entry not found? This must be a new filesystem
+      if (metrics == 0) {
 	metrics = new castor::monitoring::FileSystemMetricsReport();
-	metrics->setMountPoint(fs[i]);
-	dsMetrics->addFileSystemMetricsReports(metrics);
+	metrics->setMountPoint(fsList[i]);
+	m_diskServerMetrics->addFileSystemMetricsReports(metrics);
 
-	// search the password file for the stage user.
-	struct passwd *pw = getpwnam("stage");
-	if (pw == NULL) {
+	// Search the passwd database for the stage super user
+	passwd *pw = getpwnam(STAGERSUPERUSER);
+	if (pw == 0) {
 	  castor::exception::Exception e(errno);
-	  e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
-			 << "failed to get username information for user "
-			 << "'stage', check account exists";
+	  e.getMessage() << "Failed to user information for the stage super "
+			 << "user: " << STAGERSUPERUSER ;
 	  throw e;
 	}
 
-	// create the sub-directories in the filesystem
+	// Create the sub-directories in the filesystem
 	for (int j = 0; j < 100; j++) {
-	  sprintf(path, "%s/%.2d", fs[i], j);
+	  std::ostringstream path("");
+	  path << fsList[i] << "/" << j;
 
-	  rc = mkdir(path, 0700);
-	  if ((rc != 0) && (errno != EEXIST)) {
+	  int rv = mkdir(path.str().c_str(), 0700);
+	  if ((rv < 0) && (errno != EEXIST)) {
 	    castor::exception::Exception e(errno);
-	    e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
-			   << "failed to create directory " << path;
+	    e.getMessage() << "Failed to create directory: " << path.str();
 	    throw e;
 	  }
 
-	  rc = chown(path, pw->pw_uid, pw->pw_gid);
-	  if (rc != 0) {
+	  rv = chown(path.str().c_str(), pw->pw_uid, pw->pw_gid);
+	  if (rv < 0) {
 	    castor::exception::Exception e(errno);
-	    e.getMessage() << "MetricsThread::collectDiskServerMetrics : "
-			   << "unable to change directory ownership on " 
-			   << path << " to uid:" << pw->pw_uid << " gid:"
-			   << pw->pw_gid;
+	    e.getMessage() << "Unable to change directory ownersip on :"
+			   << path << " to " << pw->pw_uid << ":" << pw->pw_gid;
 	    throw e;
 	  }
 	}
       }
-      collectFileSystemMetrics(metrics);
+
+      // Get the filesystems metric information
+      try {
+	collectFileSystemMetrics(metrics);
+      } catch (castor::exception::InvalidArgument e) {
+
+	// If we got this far then the mountpoint/filesystem has been considered
+	// invalid. We throttle the error message here to not fill up the log
+	// file.
+	std::map<std::string, u_signed64>::const_iterator it =
+	  m_invalidMountPoints.find(metrics->mountPoint());
+	if (it == m_invalidMountPoints.end()) {
+	  m_invalidMountPoints[metrics->mountPoint()] = time(NULL);
+	} else if ((time(NULL) - (*it).second) > 3600) {
+
+	  // "Invalid mountpoint, cannot collect metric information"
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("MountPoint", metrics->mountPoint())};
+	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
+	}
+	m_diskServerMetrics->removeFileSystemMetricsReports(metrics);
+      }
     }
   } catch (castor::exception::Exception e) {
-    // free memory
-    for (int i = 0; i < nbFs; i++) {
-      free(fs[i]);
-    }
-    free(fs);
     throw e;
   }
-  // free memory
-  for (int i = 0; i < nbFs; i++) {
-    free(fs[i]);
-  }
-  free(fs);
 }
 
+
 //------------------------------------------------------------------------------
-// collectFileSystemMetrics
+// CollectFileSystemMetrics
 //------------------------------------------------------------------------------
 void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
 (castor::monitoring::FileSystemMetricsReport* filesystem)
   throw(castor::exception::Exception) {
 
-  // determine the number of streams reading, writing and in read/write mode on 
-  // the given mountpoint/filesystem. The only way to do this is to cycle through
-  // all processes listed in /proc/ and determine if ant file descriptors are 
-  // open to the mountpoint in question
+  // Determine the number of streams reading, writing and in read/write mode on
+  // the given mountpoint/filesystem. The only way to do this is to cycle
+  // through all processes listed in /proc/ and determine if ant file descriptors
+  // are open to the mountpoint in question
   DIR *dir_proc = opendir("/proc/");
   if (dir_proc == NULL) {
     castor::exception::Exception e(errno);
-    e.getMessage()
-      << "MetricsThread::collectFileSystemMetrics : opendir failed";
+    e.getMessage() << "Failed to opendir: /proc/";
     throw e;
   }
 
-  // variables
-  struct dirent *entry_proc;
-  struct dirent *entry_fd;
-  struct stat   statbuf;
+  // Set initial stream values
+  filesystem->setNbReadStreams(0);
+  filesystem->setNbWriteStreams(0);
+  filesystem->setNbReadWriteStreams(0);
+  filesystem->setNbMigratorStreams(0);
+  filesystem->setNbRecallerStreams(0);
 
-  unsigned int  nBReadUsers      = 0;
-  unsigned int  nBWriteUsers     = 0;
-  unsigned int  nBReadWriteUsers = 0;
-  unsigned int  nBReadMigrators  = 0;
-  unsigned int  nBWriteRecallers = 0;
-  unsigned int  x        = 0;
-  int           len      = 0;
-  int           migrecal = 0;
-  char          buf[CA_MAXPATHLEN + 1];
-  FILE          *fd;
-
-  // loop over directory entries
+  // Loop over directory entries
+  dirent *entry_proc = 0;
   while ((entry_proc = readdir(dir_proc))) {
-    std::ostringstream path;
+    std::ostringstream path("");
     std::istringstream i(entry_proc->d_name);
+    u_signed64 x = 0;
     if (!(i >> x)) {
       continue;            // not a process, i.e not a digit
     }
-    // open the processes file descriptor listing. The 'fd' directory can only be
+
+    // Open the processes file descriptor listing. The 'fd' directory can only be
     // viewed by the user of the process or root!! We don't trap any more errors
     // from this point forward as the error is mostly likely related to process
     // death.
@@ -288,68 +319,84 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
     if (dir_fd == NULL) {
       continue;
     }
+
+    dirent *entry_fd = 0;
     while ((entry_fd = readdir(dir_fd))) {
-      std::ostringstream file(entry_fd->d_name);
-      std::istringstream fd(file.str());
+      std::istringstream fd(entry_fd->d_name);
       if (!(fd >> x)) {
 	continue;          // not a file descriptor
       }
-      std::ostringstream fdpath;
-      fdpath << path.str() << "/" << fd.str();
-      // the fd directory contains a list of symlinks to a given resource. We
+
+      // The fd directory contains a list of symlinks to a given resource. We
       // need to resolve these first before processing further.
+      std::ostringstream fdpath("");
+      fdpath << path.str() << "/" << fd.str();
+      struct stat statbuf;
       if (lstat(fdpath.str().c_str(), &statbuf) != 0) {
 	continue;
       }
       if (!S_ISLNK(statbuf.st_mode)) {
 	continue;
       }
+      char buf[CA_MAXPATHLEN + 1];
+      int len;
       buf[0] = '\0';
       if ((len = readlink(fdpath.str().c_str(), buf, CA_MAXPATHLEN)) < 0) {
 	continue;
       }
       buf[len] = '\0';
-      // resource not of interest ?
+
+      // Resource not of interest ?
       if (strncmp(filesystem->mountPoint().c_str(), buf,
 		  filesystem->mountPoint().length())) {
 	continue;
       }
-      std::ostringstream cmdpath;
-      migrecal = 0;
+
+      // Migrator or recaller ? we distinguish between the two in order to
+      // improve scheduling on the box. If the command line of the process is
+      // /usr/bin/rfiod -sl it is either a migrator or a recaller. The exact one
+      // depends on the direction of the stream.
+      std::ostringstream cmdpath("");
       cmdpath << "/proc/" << entry_proc->d_name << "/cmdline";
-      // migrator or recaller ? we distinguish between the two in order to improve
-      // scheduling on the box. If the command line of the process is /usr/bin/rfiod 
-      // -sl it is either a migrator or a recaller. The exact one depends on the 
-      // direction of the stream.
+      int migrecal = 0;
+
       std::ifstream in(cmdpath.str().c_str());
       if (in) {
-	std::stringstream ss;
+	std::stringstream ss("");
 	ss << in.rdbuf();
-	// /proc/<pid>/cmdline stores its values using NULL byte termination for each
-	// field. As a result it is necessary to replace all NULL bytes with spaces.
-	std::string cmdline(ss.str());	
+	// /proc/<pid>/cmdline stores its values using NULL byte termination for
+	// each field. As a result it is necessary to replace all NULL bytes with
+	// spaces.
+	std::string cmdline(ss.str());
 	std::replace(cmdline.begin(), cmdline.end(), '\0', ' ');
 	if (!strncmp("/usr/bin/rfiod -sl", cmdline.c_str(), 18)) {
 	  migrecal = 1;
 	}
 	in.close();
       }
-      // the permission bits on the file indicate what mode the stream is in
+
+      // The permission bits on the file indicate what mode the stream is in
       if ((statbuf.st_mode & S_IRUSR) == S_IRUSR) {
 	if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
-	  nBReadWriteUsers++;  // read/write (can only be user streams)
+	  // read/write (can only be user streams)
+	  filesystem->setNbReadWriteStreams
+	    (filesystem->nbReadWriteStreams() + 1);
 	} else {
 	  if (migrecal) {
-	    nBReadMigrators++;
+	    filesystem->setNbMigratorStreams
+	      (filesystem->nbMigratorStreams() + 1);
 	  } else {
-	    nBReadUsers++;     // read only;
+	    filesystem->setNbReadStreams
+	      (filesystem->nbReadStreams() + 1); // read only;
 	  }
 	}
       } else if ((statbuf.st_mode & S_IWUSR) == S_IWUSR) {
 	if (migrecal) {
-	  nBWriteRecallers++;
+	  filesystem->setNbRecallerStreams
+	    (filesystem->nbRecallerStreams() + 1);
 	} else {
-	  nBWriteUsers++;      // write only
+	  filesystem->setNbWriteStreams
+	    (filesystem->nbWriteStreams() + 1);  // write only
 	}
       }
     }
@@ -357,26 +404,18 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   }
   closedir(dir_proc);
 
-  // Set stream values
-  filesystem->setNbReadStreams(nBReadUsers);
-  filesystem->setNbWriteStreams(nBWriteUsers);
-  filesystem->setNbReadWriteStreams(nBReadWriteUsers);
-  filesystem->setNbMigratorStreams(nBReadMigrators);
-  filesystem->setNbRecallerStreams(nBWriteRecallers);
-
-  // access the mounted file system description file and determine if the mountpoint
-  // is actually present and what file system (mnt_fsname) it is associated with.
-  fd = setmntent(MTAB_FILE, "r");
+  // Access the filesystem descriptor table and determine if the mountpoint is
+  // actually present and what mnt_fsname it is associated with.
+  FILE *fd = setmntent(MTAB_FILE, "r");
   if (fd == NULL) {
     castor::exception::Exception e(errno);
-    e.getMessage()
-      << "MetricsThread::collectFileSystemMetrics : setmntent failed '/etc/mtab'";
+    e.getMessage() << "Failed to setmntent: " << MTAB_FILE;
     throw e;
   }
 
-  // loop over mounted file system information
-  struct mntent *m;
-  std::string   fsname("");
+  // Loop over the mounted file system information
+  mntent *m;
+  std::string fsname("");
   while ((m = getmntent(fd)) != NULL) {
     unsigned int len = strlen(m->mnt_dir);
     if (!strncmp(m->mnt_dir, filesystem->mountPoint().c_str(), len)) {
@@ -391,16 +430,16 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   }
   endmntent(fd);
 
-  // entry found ?
+  // Entry found ?
   if (fsname == "") {
-    castor::exception::InvalidArgument e; 
+    castor::exception::InvalidArgument e;
     e.getMessage() << "Invalid mountpoint " + filesystem->mountPoint();
     throw e;
   }
 
-  // extract the IO statistics for the mountpoint/filesystem from proc. The exact
-  // file to open is dependant on the kernel. On 2.4 its /proc/partitions and on 2.6
-  // its /proc/diskstats
+  // Extract the IO statistics for the mountpoint/filesystem from proc. The exact
+  // file to open is dependant  on the kernel. On 2.4 its /proc/partitions and on
+  // 2.6 its /proc/diskstats
   fd = fopen(DISKSTATS_FILE, "r");
   if (fd == NULL) {
     fd = fopen(PARTITIONS_FILE, "r");
@@ -410,20 +449,21 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
     // partition remove the last digit to get the block device. This method is
     // probably not the best!!
     std::istringstream i(fsname.substr(fsname.length() - 1));
+    u_signed64 x;
     if (i >> x) {
       fsname = fsname.substr(0, fsname.length() - 1);
     }
   }
-  
+
   if (fd == NULL) {
     castor::exception::Exception e(errno);
-    e.getMessage() << "fopen failed, unable to get IO statistics";
+    e.getMessage() << "Unable to get IO statistics for mountpoint "
+		   << filesystem->mountPoint();
     throw e;
   }
 
-  // variables
-  signed64 rsect = 0;
-  signed64 wsect = 0;
+  // Useful variables
+  signed64 rsect = 0, wsect = 0;
   unsigned long ul;
   unsigned int  ui;
   char   line[256];
@@ -434,55 +474,54 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   while (fgets(line, sizeof(line), fd) != NULL) {
 
     // 2.4 kernel
-    if (sscanf(line, "%u %u %lu %70s %lu %lu %lld %lu %lu %lu %lld %lu %lu %lu %lu", 
-	       &ui, &ui, &ul, dev_name, &ul, &ul, &rsect, &ul, &ul, &ul, &wsect, 
+    if (sscanf(line, "%u %u %lu %70s %lu %lu %lld %lu %lu %lu %lld %lu %lu %lu %lu",
+	       &ui, &ui, &ul, dev_name, &ul, &ul, &rsect, &ul, &ul, &ul, &wsect,
 	       &ul, &ul, &ul, &ul) != 15) {
-     
+
       // 2.6 kernel
       if (sscanf(line, "%u %u %70s %lu %lu %lld %lu %lu %lu %lld %lu %lu %lu %lu",
-		 &ui, &ui, dev_name, &ul, &ul, &rsect, &ul, &ul, &ul, &wsect, 
+		 &ui, &ui, dev_name, &ul, &ul, &rsect, &ul, &ul, &ul, &wsect,
 		 &ul, &ul, &ul, &ul) != 14) {
-	continue;
+	continue;        // format not recognised
       }
-    } 
+    }
 
     if (fsname != dev_name) {
       continue;          // device/partition not of interest
     }
 
-    // protect against counter overflows
+    // Protect against counter overflows
     if (filesystem->lastUpdateTime()) {
       if ((wsect >= (signed64)filesystem->previousWriteCounter()) &&
 	  (rsect >= (signed64)filesystem->previousReadCounter())) {
 	diff = now - filesystem->lastUpdateTime();
 
-	// update read rate
+	// Update read rate
 	filesystem->setReadRate((u_signed64)(
 	  0.5 * (rsect - filesystem->previousReadCounter()) / diff)
 	);
 
-	// update write rate
+	// Update write rate
 	filesystem->setWriteRate((u_signed64)(
 	  0.5 * (wsect - filesystem->previousWriteCounter()) / diff)
 	);
-      } 
+      }
     }
-    
-    // record values for later
+
+    // Record values for later
     filesystem->setLastUpdateTime(now);
     filesystem->setPreviousWriteCounter(wsect);
     filesystem->setPreviousReadCounter(rsect);
   }
   fclose(fd);
-  
+
   // Set free space
   struct statfs sf;
   if (statfs(filesystem->mountPoint().c_str(),&sf) == 0) {
     filesystem->setFreeSpace(((u_signed64) sf.f_bavail) * ((u_signed64) sf.f_bsize));
   } else {
     castor::exception::Exception e(errno);
-    e.getMessage()
-      << "MetricsThread::collectFileSystemMetrics : statfs call failed";
+    e.getMessage() << "statfs call failed for " << filesystem->mountPoint();
     throw e;
   }
 }

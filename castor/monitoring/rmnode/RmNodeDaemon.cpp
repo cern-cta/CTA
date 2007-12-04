@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile $ $Author $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
  * This daemons collects data concerning its node and sends them to
  * the monitoring master daemon
@@ -27,169 +27,191 @@
 
 // Include Files
 #include "castor/Constants.hpp"
+#include "castor/System.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/monitoring/rmnode/RmNodeDaemon.hpp"
 #include "castor/monitoring/rmnode/StateThread.hpp"
 #include "castor/monitoring/rmnode/MetricsThread.hpp"
+#include "getconfent.h"
+#include <map>
 
-#define RMMASTER_PORT 15003
-#define STATE_UPDATE_INTERVAL 60 // in seconds
-#define METRICS_UPDATE_INTERVAL 10 // in seconds
+// Definitions
+#define DEFAULT_RMMASTER_PORT    15003
+#define DEFAULT_STATE_INTERVAL   60
+#define DEFAULT_METRICS_INTERVAL 10
 
-// -----------------------------------------------------------------------
-// External C function used for getting configuration from shift.conf file
-// -----------------------------------------------------------------------
-extern "C" {
-  char* getconfent (const char *, const char *, int);
-}
 
-//------------------------------------------------------------------------------
-// main method
-//------------------------------------------------------------------------------
-int main(int argc, char* argv[]) {
+//-----------------------------------------------------------------------------
+// Main
+//-----------------------------------------------------------------------------
+int main(int argc, char *argv[]) {
 
   try {
-
-    // new BaseDaemon as Server
     castor::monitoring::rmnode::RmNodeDaemon daemon;
 
-    // intervals default values
-    int stateInterval = STATE_UPDATE_INTERVAL;
-    int metricsInterval = METRICS_UPDATE_INTERVAL;
+    // A container for a list of hosts and ports to send monitoring
+    // information to
+    std::map<std::string, u_signed64> hostList;
+    std::ostringstream hosts;
 
-    // Try to retrieve interval values from the config file
-    // otherwise use the default one
-    char* intervalStr = getconfent("RmNode","StateUpdateInterval", 0);
-    if (intervalStr){
-      stateInterval = std::strtol(intervalStr,0,10);
-      if (0 == stateInterval) {
-        // Go back to default
-        stateInterval = STATE_UPDATE_INTERVAL;
-        // "Bad state interval value in configuration file"
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Given value", intervalStr)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, initParams);
-      }
-    }
-
-    intervalStr = getconfent("RmNode","MetricsUpdateInterval", 0);
-    if (intervalStr) {
-      metricsInterval = std::strtol(intervalStr,0,10);
-      if (0 == metricsInterval) {
-        // Go back to default
-        metricsInterval = METRICS_UPDATE_INTERVAL;
-        // "Bad metrics interval value in configuration file"
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Given value", intervalStr)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, initParams);
-      }
-    }
-
-    // Try to retrieve the rmmaster machine and port from the
-    // config file. No default provided for the machine.
-    char* rmMasterHost = getconfent("RM", "HOST", 0);
-    if (0 == rmMasterHost) {
-      // Raise an exception
-      castor::exception::NoEntry e;
-      e.getMessage() << "Found not entry RM/HOST in config file";
+    // Extract the list of hosts to send to. For reasons of redundancy we
+    // support sending information to multiple hosts i.e. the master and slave
+    // LSF masters.
+    char **values;
+    int  count;
+    if (getconfent_multi("RM", "HOST", 1, &values, &count) < 0) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Missing configuration option RM/HOST" << std::endl;
       throw e;
     } else {
-      rmMasterHost = strdup(rmMasterHost);
-    }
-    int rmMasterPort = RMMASTER_PORT;
-    char* rmMasterPortStr = getconfent("RM", "PORT", 0);
-    if (rmMasterPortStr){
-      rmMasterPort = std::strtol(rmMasterPortStr,0,10);
-      if (0 == rmMasterPort) {
-        // Go back to default
-        rmMasterPort = STATE_UPDATE_INTERVAL;
-        // "Bad rmmaster port value in configuration file"
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Given value", rmMasterPortStr)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, initParams);
+      for (int i = 0; i < count; i++) {
+	hostList[values[i]] = 0;
+	hosts << values[i] << " ";
+	free(values[i]);
       }
-    }    
+      free(values);
+    }
 
-    // Inform user : "Starting RmNode Daemon"
-    castor::dlf::Param initParams[] =
-      {castor::dlf::Param("State interval", stateInterval),
-       castor::dlf::Param("Metrics interval", metricsInterval),
-       castor::dlf::Param("Rmmaster host", rmMasterHost),
-       castor::dlf::Param("Rmmaster port", rmMasterPort)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 4, 4, initParams);
+    // Extract the port for the hosts.
+    char *value = getconfent("RM", "PORT", 0);
+    int port = DEFAULT_RMMASTER_PORT;
+    if (value) {
+      try {
+	port = castor::System::porttoi(value);
+      } catch (castor::exception::Exception ex) {
+	castor::exception::Exception e(EINVAL);
+	e.getMessage() << "Invalid RM/PORT value: "
+		       << ex.getMessage() << std::endl;
+	throw e;
+      }
+    }
 
-    // Create a thread for DiskServer State monitoring
-    daemon.addThreadPool
-      (new castor::server::SignalThreadPool
-       ("State",
-        new castor::monitoring::rmnode::StateThread
-        (rmMasterHost, rmMasterPort),
-        stateInterval));
-    daemon.getThreadPool('S')->setNbThreads(1);
+    // If any hosts have a 0 port entry set it to the default
+    for (std::map<std::string, u_signed64>::iterator it =
+	   hostList.begin();
+	 it != hostList.end(); it++) {
+      if ((*it).second == 0) {
+	(*it).second = port;
+      }
+    }
 
-    // Create a thread for DiskServer Metrics monitoring
+    // Extract the frequency at which the state thread runs
+    value = getconfent("RmNode", "StateUpdateInterval", 0);
+    u_signed64 stateInterval = DEFAULT_STATE_INTERVAL;
+    if (value) {
+      stateInterval = std::strtol(value, 0, 10);
+      if (stateInterval == 0) {
+	stateInterval = DEFAULT_STATE_INTERVAL;
+	// "Invalid RmNode/StateUpdateInterval option, using default"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Default", stateInterval)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 1, 1, params);
+      }
+    }
+
+    // Extract the frequency at which the metrics thread runs
+    value = getconfent("RmNode", "MetricsUpdateInterval", 0);
+    u_signed64 metricsInterval = DEFAULT_METRICS_INTERVAL;
+    if (value) {
+      metricsInterval = std::strtol(value, 0, 10);
+      if (metricsInterval == 0) {
+	metricsInterval = DEFAULT_METRICS_INTERVAL;
+	// "Invalid RmNode/MetricsUpdateInterval option, using default"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Default", metricsInterval)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 1, 1, params);
+      }
+    }
+
+    // "RmNode Daemon started"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Servers", hosts.str()),
+       castor::dlf::Param("Port", port),
+       castor::dlf::Param("StateInterval", stateInterval),
+       castor::dlf::Param("MetricsInterval", metricsInterval)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 4, 4, params);
+
+    // Metrics Thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Metrics",
-        new castor::monitoring::rmnode::MetricsThread
-        (rmMasterHost, rmMasterPort),
+        new castor::monitoring::rmnode::MetricsThread(hostList, port),
         metricsInterval));
     daemon.getThreadPool('M')->setNbThreads(1);
 
+    // State Thread
+    daemon.addThreadPool
+      (new castor::server::SignalThreadPool
+       ("State",
+        new castor::monitoring::rmnode::StateThread(hostList, port),
+        stateInterval));
+    daemon.getThreadPool('S')->setNbThreads(1);
+
+    // Start daemon
     daemon.parseCommandLine(argc, argv);
     daemon.start();
+    return 0;
 
   } catch (castor::exception::Exception e) {
+    std::cerr << "Caught exception: "
+	      << sstrerror(e.code()) << std::endl
+	      << e.getMessage().str() << std::endl;
 
-    // "Exception caught problem to start the daemon"
+    // "Exception caught when starting RmNodeDaemon"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-       castor::dlf::Param("Precise Message", e.getMessage().str())};
+      {castor::dlf::Param("Type", sstrerror(e.code())),
+       castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
-    return -1;
+  } catch (...) {
+    std::cerr << "Caught exception!" << std::endl;
   }
-  catch (...) {
-    std::cerr << "Caught general exception!" << std::endl;
-    castor::dlf::Param params2[] =
-      {castor::dlf::Param("Standard Message", "Caught general exception in cleaning daemon.")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, params2);
-    return -1;
-  }
-  return 0;
+
+  return 1;
 }
 
-//------------------------------------------------------------------------------
-// RmNodeDaemon Constructor
-// also initialises the logging facility
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Constructor
+//-----------------------------------------------------------------------------
 castor::monitoring::rmnode::RmNodeDaemon::RmNodeDaemon() :
   castor::server::BaseDaemon("RmNode") {
 
-  // Initializes the DLF logging. This includes
-  // registration of the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, ""},
-     { 1, "Bad state interval value in configuration file"},
-     { 2, "Bad metrics interval value in configuration file"},
-     { 3, "Starting of RmNode Daemon failed"},
-     { 4, "Starting RmNode Daemon"},
-     { 5, "Bad rmmaster port value in configuration file"},
-     { 6, "State thread created"},
-     { 7, "Metrics thread created"},
-     { 8, "State thread started"},
-     { 9, "Metrics thread started"},
-     {12, "State thread destructed"},
-     {13, "Metrics thread destructed"},
-     {14, "Error caught in StateThread::run"},
-     {15, "Error caught in MetricsThread::run"},
-     {16, "State sent to rmMaster"},
-     {17, "Metrics sent to rmMaster"},
-     {18, "Bad minFreeSpace value in configuration file"},
-     {19, "Bad maxFreeSpace interval value in configuration file"},
-     {20, "Bad minAllowedFreeSpace interval value in configuration file"},
-     {-1, ""}};
+  // Now with predefined messages
+  castor::dlf::Message messages[] = {
+
+    // General
+    { 1,  "Invalid RmNode/StateUpdateInterval option, using default" },
+    { 2,  "Invalid RmNode/MetricsUpdateInterval option, using default" },
+    { 3,  "Exception caught when starting RmNode" },
+    { 4,  "RmNode Daemon started" },
+
+    // State Thread
+    { 6,  "State thread created" },
+    { 8,  "State thread running" },
+    { 12, "State thread destroyed" },
+    { 13, "Received unknown object for acknowledgement from socket" },
+    { 14, "Error caught when trying to send state information" },
+    { 16, "State information has been sent" },
+    { 18, "Invalid RmNode/MinFreeSpace option, using default" },
+    { 19, "Invalid RmNode/MaxFreeSpace option, using default" },
+    { 20, "Invalid RmNode/MinAllowedFreeSpace option, using default" },
+    { 21, "Failed to send state information" },
+    { 22, "Failed to update the RmNode/StatusFile" },
+    { 23, "Failed to collect diskserver status" },
+
+    // Metrics Thread
+    { 7,  "Metrics thread created" },
+    { 9,  "Metrics thread running" },
+    { 13, "Metrics thread destroyed" },
+    { 15, "Error caught when trying to send metric information" },
+    { 17, "Metrics information has been sent" },
+    { 24, "Failed to collect diskserver metrics" },
+    { 25, "Failed to send metrics information" },
+    { 26, "Received no acknowledgement from server" },
+    { 27, "Invalid mountpoint, cannot collect metric information" },
+
+    { -1, "" }};
   dlfInit(messages);
 }
-

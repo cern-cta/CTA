@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Author$
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The StateThread of the RmNode daemon collects and send to
- * the rmmaster the state of the node on which it runs.
+ * The StateThread of the RmNode daemon collects information about the state
+ * of the diskserver and its filesystems
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -31,6 +31,8 @@
 #include "castor/server/IThread.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
+#include <map>
+
 
 namespace castor {
 
@@ -43,25 +45,26 @@ namespace castor {
     namespace rmnode {
 
       /**
-       * StateThread  thread.
+       * StateThread thread.
        */
       class StateThread : public castor::server::IThread {
 
       public:
 
         /**
-         * constructor
-         * @param rmMasterHost the rmMasterHost to which we should log
-         * @param rmMasterPort the port on which rmMaster is listening
+         * Constructor
+         * @param hostList a list of hosts to which information should be sent
+         * @param port the port on which the resource masters are listening
          */
-        StateThread(std::string rmMasterHost, int rmMasterPort);
+        StateThread
+	(std::map<std::string, u_signed64> hostList, int port);
 
         /**
-         * destructor
+         * Destructor
          */
         virtual ~StateThread() throw();
 
-        /// empty initialization
+        /// Not implemented
         virtual void init() {};
 
         /**
@@ -69,8 +72,8 @@ namespace castor {
          */
         virtual void run(void *param)
           throw(castor::exception::Exception);
-      
-        /// not implemented
+
+        /// Not implemented
         virtual void stop() {};
 
       private:
@@ -78,6 +81,7 @@ namespace castor {
         /**
          * Collects the diskServer state
          * The user is responsible for deleting the returned object
+	 * @exception Exception in case of error
          */
         castor::monitoring::DiskServerStateReport* collectDiskServerState()
           throw(castor::exception::Exception);
@@ -90,6 +94,7 @@ namespace castor {
          * @param maxFreeSpace the maxFreeSpace to use for the fileSystem
          * @param minAllowedFreeSpace the minAllowedFreeSpace to use for the
 	 * fileSystem
+	 * @exception Exception in case of error
          */
         castor::monitoring::FileSystemStateReport* collectFileSystemState
         (std::string mountPoint, float minFreeSpace,
@@ -97,12 +102,12 @@ namespace castor {
           throw(castor::exception::Exception);
 
       private:
-      
-        /// RmMaster host
-        std::string m_rmMasterHost;
 
-        /// RmMaster port
-        int m_rmMasterPort;
+        /// The list of hosts to send information to.
+        std::map<std::string, u_signed64> m_hostList;
+
+        /// The port of the listening resource masters
+        int m_port;
 
       };
 

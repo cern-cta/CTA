@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Author$
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The MetricsThread of the RmNode daemon collects and send to
- * the rmmaster the metrics of the node on which it runs.
+ * The MetricsThread of the RmNode daemon collects the metrics of the
+ * diskserver and sends them to the resource master
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -50,18 +50,19 @@ namespace castor {
       public:
 
         /**
-         * constructor
-         * @param rmMasterHost the rmMasterHost to which we should log
-         * @param rmMasterPort the port on which rmMaster is listening
+         * Constructor
+         * @param hostList a list of hosts to which information should be sent
+         * @param port the port on which the resource masters are listening
          */
-        MetricsThread(std::string rmMasterHost, int rmMasterPort);
+        MetricsThread
+	(std::map<std::string, u_signed64> hostList, int port);
 
         /**
-         * destructor
+         * Destructor
          */
         virtual ~MetricsThread() throw();
 
-        /// empty initialization
+        /// Not implemented
         virtual void init() {};
 
         /**
@@ -69,12 +70,15 @@ namespace castor {
          */
         virtual void run(void *param)
           throw(castor::exception::Exception);
-      
-        /// not implemented
+
+        /// Not implemented
         virtual void stop() {};
+
+      private:
 
         /**
          * Collects the diskServer metrics
+	 * @exception Exception in case of error
          */
         void collectDiskServerMetrics()
           throw(castor::exception::Exception);
@@ -82,20 +86,25 @@ namespace castor {
         /**
          * Collects a given fileSystem metrics.
          * @param filesystem the file system object to be updated
+	 * @exception Exception in case of error
          */
-	void collectFileSystemMetrics(castor::monitoring::FileSystemMetricsReport* filesystem)
+	void collectFileSystemMetrics
+	(castor::monitoring::FileSystemMetricsReport* filesystem)
 	  throw(castor::exception::Exception);
 
       private:
-      
-        /// RmMaster host
-        std::string m_rmMasterHost;
 
-        /// RmMaster port
-        int m_rmMasterPort;
+        /// The list of hosts to send information to.
+        std::map<std::string, u_signed64> m_hostList;
+
+        /// The port of the listening resource masters
+        int m_port;
 
 	/// DiskServerMetricsReport pointer
-	castor::monitoring::DiskServerMetricsReport* dsMetrics;
+	castor::monitoring::DiskServerMetricsReport* m_diskServerMetrics;
+
+	/// A list of invalid mountpoints
+	std::map<std::string, u_signed64> m_invalidMountPoints;
 
       };
 
