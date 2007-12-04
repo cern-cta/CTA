@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.565 $ $Date: 2007/12/03 16:57:24 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.566 $ $Date: 2007/12/04 14:39:31 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4614,7 +4614,7 @@ CREATE OR REPLACE PROCEDURE checkPermission(isvcClass IN VARCHAR2,
                                             res OUT NUMBER) AS
   unused NUMBER;
 BEGIN
-  SELECT count(reqType) INTO unused
+  SELECT count(*) INTO unused
     FROM WhiteList
    WHERE (svcClass = isvcClass OR svcClass IS NULL
           OR (length(isvcClass) IS NULL AND svcClass = 'default'))
@@ -4625,7 +4625,7 @@ BEGIN
     -- Not found in White list -> no access
     res := -1;
   ELSE
-    SELECT count(reqType) INTO unused
+    SELECT count(*) INTO unused
       FROM BlackList
      WHERE (svcClass = isvcClass OR svcClass IS NULL
             OR (length(isvcClass) IS NULL AND svcClass = 'default'))
@@ -4998,7 +4998,10 @@ END castorBW;
  * Temporary table to handle removing of priviledges
  */
 CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
-  (WhiteList%ROWTYPE)
+  (svcCLass NUMBER,
+   euid NUMBER,
+   egid NUMBER,
+   reqType NUMBER)
   ON COMMIT DELETE ROWS;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
