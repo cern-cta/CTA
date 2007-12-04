@@ -264,6 +264,13 @@ td.sev_warning {
 	min-width: 60px;
 }
 
+td.sev_usererror {
+	background-color : #FFEC5A;
+	border: 1px solid #999999;
+	text-align: center;
+	min-width: 60px;
+}
+
 td.sev_auth {
 	background-color : #EB981D;
 	border: 1px solid #999999;
