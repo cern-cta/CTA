@@ -63,7 +63,7 @@ namespace castor {
        * print method
        */
       void print(std::ostream& out,
-		 std::string& indentation = "",
+		 const std::string& indentation = "",
 		 const bool showDeltas = true) const
         throw();
 
