@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.10 2007/11/16 17:46:45 sponcec3 Exp $
+ * $Id: Cns_server.h,v 1.11 2007/12/04 12:41:27 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.10 $ $Date: 2007/11/16 17:46:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.11 $ $Date: 2007/12/04 12:41:27 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -227,7 +227,7 @@ EXTERN_C int Cns_list_lnk_entry _PROTO((struct Cns_dbfd *, int, char *, struct C
 EXTERN_C int Cns_list_rep4admin _PROTO((struct Cns_dbfd *, int, char *, char *, char *, struct Cns_file_replica *, int, DBLISTPTR *));
 EXTERN_C int Cns_list_rep4gc _PROTO((struct Cns_dbfd *, int, char *, struct Cns_file_replica *, int, DBLISTPTR *));
 EXTERN_C int Cns_list_rep_entry _PROTO((struct Cns_dbfd *, int, u_signed64, struct Cns_file_replica *, int,  Cns_dbrec_addr *, int, DBLISTPTR *));
-EXTERN_C int Cns_opendb _PROTO((char *, char *, char *, char *, struct Cns_dbfd *));
+EXTERN_C int Cns_opendb _PROTO((struct Cns_dbfd *));
 EXTERN_C int Cns_parsepath _PROTO((struct Cns_dbfd *, u_signed64, char *, uid_t, gid_t, char *, struct Cns_file_metadata *, Cns_dbrec_addr *, struct Cns_file_metadata *, Cns_dbrec_addr *, int));
 EXTERN_C int Cns_start_tr _PROTO((int, struct Cns_dbfd *));
 EXTERN_C int Cns_unique_id _PROTO((struct Cns_dbfd *, u_signed64 *));

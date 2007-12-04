@@ -32,11 +32,6 @@ char *sql_method;
 struct Cns_dbfd *dbfd;
 struct sqlca *sqlca;
 {
-	extern char db_name[33];
-	extern char db_pwd[33];
-	extern char db_srvr[33];
-	extern char db_user[33];
-
 	char   err_msg[512];
 	size_t err_size = sizeof(err_msg);
 	size_t err_len;
@@ -47,11 +42,21 @@ struct sqlca *sqlca;
 	}
 	
 	nslogit (func, "%s error: %.*s\n", sql_method, err_len, err_msg);
-	if (sqlca->sqlcode == -2396 || sqlca->sqlcode == -3113) {
+	
+	/* Connection to the database was lost ? */
+	if (sqlca->sqlcode == -2396  || sqlca->sqlcode == -3113  ||
+	    sqlca->sqlcode == -28    || sqlca->sqlcode == -3114  || 
+	    sqlca->sqlcode == -32102 || sqlca->sqlcode == -3135  || 
+	    sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 || 
+	    sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  || 
+	    sqlca->sqlcode == -12571 || sqlca->sqlcode == -25408 || 
+	    sqlca->sqlcode == -1033) {
 		nslogit (func, "Trying to reconnect\n");
 		Cns_closedb (dbfd);
-		if (Cns_opendb (db_srvr, db_user, db_pwd, db_name, dbfd) < 0)
+		if (Cns_opendb (dbfd) < 0)
 			nslogit (func, "Reconnect failed\n");
+		else
+			nslogit (func, "Reconnect successful\n");
 	}
 	serrno = SEINTERNAL;
 }
@@ -1228,16 +1233,15 @@ int *nbFileIds;
 {
 	double *dfileIds;
 	int i;
-
 	char func[19];
 	struct sqlca sqlca;
 
-	// prepare input
+	/* prepare input */
 	dfileIds = (double*) malloc(*nbFileIds*sizeof(double));
 	for (i = 0; i < *nbFileIds; i++) {
 		dfileIds[i] = fileIds[i];
 	}
-	// check existence
+	/* check existence */
 	EXEC SQL FOR :*nbFileIds INSERT INTO Cns_files_Exist_tmp VALUES (:dfileIds);
 	EXEC SQL DECLARE files_exist_cursor CURSOR FOR
 	SELECT tmpFileId FROM Cns_files_Exist_tmp
@@ -1248,7 +1252,7 @@ int *nbFileIds;
 	switch (sqlca.sqlcode) {
 	case 0:
 	case 1403:
-		// extract output
+		/* extract output */
 		*nbFileIds = sqlca.sqlerrd[2];
 		for (i = 0; i < *nbFileIds; i++) {
 			fileIds[i] = dfileIds[i];
@@ -2037,23 +2041,51 @@ DBLISTPTR *dblistptr;
 	}
 }
 
-int Cns_opendb(db_srvr, db_user, db_pwd, db_name, dbfd)
-char *db_srvr;
-char *db_user;
-char *db_pwd;
-char *db_name;
+int Cns_opendb(dbfd)
 struct Cns_dbfd *dbfd;
 {
+	extern char nsconfigfile[CA_MAXPATHLEN+1];
 	char func[16];
 	int ntries;
 	struct sqlca sqlca;
 	char db_connect[104];
+	char buf[CA_MAXLINELEN+1];
+	char db_user[CA_MAXLINELEN+1];
+	char db_pwd[CA_MAXLINELEN+1];
+	char db_srv[CA_MAXLINELEN+1];
+	char db_name[CA_MAXLINELEN+1];
+	char *p;
+	FILE *fp;
+
+	ntries = 0;
 	strcpy (func, "Cns_opendb");
 	EXEC SQL CONTEXT ALLOCATE :ctx[dbfd->idx];
-	ntries = 0;
+
+	db_user[0] = db_pwd[0] = db_srv[0] = '\0';
+	if ((fp = fopen(nsconfigfile, "r")) == NULL) {
+		nslogit(func, NS023, nsconfigfile);
+		return (-1);
+	}
+	if (fgets(buf, sizeof(buf), fp) && strlen(buf) >= 5) {
+		if ((p = strtok(buf, "/\n")) != NULL)
+			strcpy (db_user, p);
+		if ((p = strtok(NULL, "@\n")) != NULL)
+			strcpy (db_pwd, p);
+		if ((p = strtok(NULL, "/\n")) != NULL)
+			strcpy (db_srv, p);
+		if ((p = strtok(NULL, "\n")) != NULL)
+			strcpy (db_name, p);
+		else
+			strcpy(db_name, "Cns_db");
+	} else {
+		nslogit(func, NS009, nsconfigfile, "incorrect");
+		return (-1);
+	}
+	fclose(fp);
+
 	while (1) {
-		if (strlen(db_srvr) > 0) {
-			sprintf(db_connect, "%s/%s@%s", db_user, db_pwd, db_srvr);
+		if (strlen(db_srv) > 0) {
+			sprintf(db_connect, "%s/%s@%s", db_user, db_pwd, db_srv);
 		} else {
 			sprintf(db_connect, "%s/%s", db_user, db_pwd);
 		}

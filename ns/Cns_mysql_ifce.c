@@ -8,16 +8,15 @@
 #include <sys/types.h>
 #include <errmsg.h>
 #include <mysqld_error.h>
+#include <stdio.h>
 #include "Cns.h"
 #include "Cns_server.h"
 #include "Cthread_api.h"
 #include "serrno.h"
 #include "u64subr.h"
 
-Cns_init_dbpkg()
+int Cns_init_dbpkg()
 {
-	int i;
-
 	return (0);
 }
 
@@ -27,23 +26,21 @@ char *func;
 char *sql_method;
 struct Cns_dbfd *dbfd;
 {
-	extern char db_name[33];
-	extern char db_pwd[33];
-	extern char db_srvr[33];
-	extern char db_user[33];
 	int error = mysql_errno (&dbfd->mysql);
 
 	nslogit (func, "%s error: %s\n", sql_method, mysql_error (&dbfd->mysql));
 	if (error == CR_SERVER_GONE_ERROR || error == CR_SERVER_LOST) {
 		nslogit (func, "Trying to reconnect\n");
 		Cns_closedb (dbfd);
-		if (Cns_opendb (db_srvr, db_user, db_pwd, db_name, dbfd) < 0)
+		if (Cns_opendb (dbfd) < 0)
 			nslogit (func, "Reconnect failed\n");
+		else
+			nslogit (func, "Reconnect successful\n");
 	}
 	serrno = SEINTERNAL;
 }
 
-Cns_abort_tr(dbfd)
+int Cns_abort_tr(dbfd)
 struct Cns_dbfd *dbfd;
 {
 	(void) mysql_query (&dbfd->mysql, "ROLLBACK");
@@ -52,14 +49,14 @@ struct Cns_dbfd *dbfd;
 	return (0);
 }
 
-Cns_closedb(dbfd)
+int Cns_closedb(dbfd)
 struct Cns_dbfd *dbfd;
 {
 	mysql_close (&dbfd->mysql);
 	return (0);
 }
 
-Cns_decode_class_entry(row, lock, rec_addr, class_entry)
+void Cns_decode_class_entry(row, lock, rec_addr, class_entry)
 MYSQL_ROW row;
 int lock;
 Cns_dbrec_addr *rec_addr;
@@ -85,7 +82,7 @@ struct Cns_class_metadata *class_entry;
 	class_entry->retenp_on_disk = atoi (row[i]);
 }
 
-Cns_decode_fmd_entry(row, lock, rec_addr, fmd_entry)
+void Cns_decode_fmd_entry(row, lock, rec_addr, fmd_entry)
 MYSQL_ROW row;
 int lock;
 Cns_dbrec_addr *rec_addr;
@@ -115,7 +112,7 @@ struct Cns_file_metadata *fmd_entry;
 	strcpy (fmd_entry->acl, row[i]);
 }
 
-Cns_decode_rep_entry (row, lock, rec_addr, rep_entry)
+void Cns_decode_rep_entry (row, lock, rec_addr, rep_entry)
 MYSQL_ROW row;
 int lock;
 Cns_dbrec_addr *rec_addr;
@@ -138,7 +135,7 @@ struct Cns_file_replica *rep_entry;
 	strcpy (rep_entry->sfn, row[i]);
 }
 
-Cns_decode_smd_entry(row, lock, rec_addr, smd_entry)
+void Cns_decode_smd_entry(row, lock, rec_addr, smd_entry)
 MYSQL_ROW row;
 int lock;
 Cns_dbrec_addr *rec_addr;
@@ -164,7 +161,7 @@ struct Cns_seg_metadata *smd_entry;
 	  smd_entry->blockid[i] = blockid_tmp[i];
 }
 
-Cns_decode_tppool_entry(row, lock, rec_addr, tppool_entry)
+void Cns_decode_tppool_entry(row, lock, rec_addr, tppool_entry)
 MYSQL_ROW row;
 int lock;
 Cns_dbrec_addr *rec_addr;
@@ -178,7 +175,7 @@ struct Cns_tp_pool *tppool_entry;
 	strcpy (tppool_entry->tape_pool, row[i]);
 }
 
-Cns_delete_class_entry(dbfd, rec_addr)
+int Cns_delete_class_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -196,7 +193,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_fmd_entry(dbfd, rec_addr)
+int Cns_delete_fmd_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -214,7 +211,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_lnk_entry(dbfd, rec_addr)
+int Cns_delete_lnk_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -232,7 +229,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_rep_entry(dbfd, rec_addr)
+int Cns_delete_rep_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -250,7 +247,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_smd_entry(dbfd, rec_addr)
+int Cns_delete_smd_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -268,7 +265,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_tppool_entry(dbfd, rec_addr)
+int Cns_delete_tppool_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -286,7 +283,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_umd_entry(dbfd, rec_addr)
+int Cns_delete_umd_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -304,7 +301,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_end_tr(dbfd)
+int Cns_end_tr(dbfd)
 struct Cns_dbfd *dbfd;
 {
 	(void) mysql_query (&dbfd->mysql, "COMMIT");
@@ -313,7 +310,7 @@ struct Cns_dbfd *dbfd;
 	return (0);
 }
 
-Cns_exec_query(func, dbfd, sql_stmt, res)
+int Cns_exec_query(func, dbfd, sql_stmt, res)
 char *func;
 struct Cns_dbfd *dbfd;
 char *sql_stmt;
@@ -330,7 +327,7 @@ MYSQL_RES **res;
 	return (0);
 }
 
-Cns_get_class_by_id(dbfd, classid, class_entry, lock, rec_addr)
+int Cns_get_class_by_id(dbfd, classid, class_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 int classid;
 struct Cns_class_metadata *class_entry;
@@ -373,7 +370,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_class_by_name(dbfd, class_name, class_entry, lock, rec_addr)
+int Cns_get_class_by_name(dbfd, class_name, class_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *class_name;
 struct Cns_class_metadata *class_entry;
@@ -416,7 +413,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_fmd_by_fileid(dbfd, fileid, fmd_entry, lock, rec_addr)
+int Cns_get_fmd_by_fileid(dbfd, fileid, fmd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 struct Cns_file_metadata *fmd_entry;
@@ -459,7 +456,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_fmd_by_fullid(dbfd, parent_fileid, name, fmd_entry, lock, rec_addr)
+int Cns_get_fmd_by_fullid(dbfd, parent_fileid, name, fmd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 parent_fileid;
 char *name;
@@ -508,7 +505,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_fmd_by_guid(dbfd, guid, fmd_entry, lock, rec_addr)
+int Cns_get_fmd_by_guid(dbfd, guid, fmd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *guid;
 struct Cns_file_metadata *fmd_entry;
@@ -549,7 +546,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_fmd_by_pfid(dbfd, bod, parent_fileid, fmd_entry, getattr, endlist, dblistptr)
+int Cns_get_fmd_by_pfid(dbfd, bod, parent_fileid, fmd_entry, getattr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bod;
 u_signed64 parent_fileid;
@@ -598,7 +595,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_get_lnk_by_fileid(dbfd, fileid, lnk_entry, lock, rec_addr)
+int Cns_get_lnk_by_fileid(dbfd, fileid, lnk_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 struct Cns_symlinks *lnk_entry;
@@ -640,7 +637,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_max_copyno (dbfd, fileid, copyno)
+int Cns_get_max_copyno (dbfd, fileid, copyno)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 int *copyno;
@@ -670,7 +667,7 @@ int *copyno;
 	return (0);
 }
 
-Cns_get_rep_by_sfn(dbfd, sfn, rep_entry, lock, rec_addr)
+int Cns_get_rep_by_sfn(dbfd, sfn, rep_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *sfn;
 struct Cns_file_replica *rep_entry;
@@ -709,7 +706,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_smd_by_fullid(dbfd, fileid, copyno, fsec, smd_entry, lock, rec_addr)
+int Cns_get_smd_by_fullid(dbfd, fileid, copyno, fsec, smd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 int copyno;
@@ -754,7 +751,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_smd_by_pfid(dbfd, bof, fileid, smd_entry, lock, rec_addr, endlist, dblistptr)
+int Cns_get_smd_by_pfid(dbfd, bof, fileid, smd_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bof;
 u_signed64 fileid;
@@ -804,7 +801,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_get_smd_by_vid(dbfd, bov, vid, smd_entry, endlist, dblistptr)
+int Cns_get_smd_by_vid(dbfd, bov, vid, smd_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bov;
 char *vid;
@@ -840,7 +837,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_get_tppool_by_cid(dbfd, bol, classid, tppool_entry, lock, rec_addr, endlist, dblistptr)
+int Cns_get_tppool_by_cid(dbfd, bol, classid, tppool_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 int classid;
@@ -882,7 +879,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_get_umd_by_fileid(dbfd, fileid, umd_entry, lock, rec_addr)
+int Cns_get_umd_by_fileid(dbfd, fileid, umd_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 u_signed64 fileid;
 struct Cns_user_metadata *umd_entry;
@@ -924,7 +921,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_insert_class_entry(dbfd, class_entry)
+int Cns_insert_class_entry(dbfd, class_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_class_metadata *class_entry;
 {
@@ -960,7 +957,7 @@ struct Cns_class_metadata *class_entry;
 	return (0);
 }
 
-Cns_insert_fmd_entry(dbfd, fmd_entry)
+int Cns_insert_fmd_entry(dbfd, fmd_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_file_metadata *fmd_entry;
 {
@@ -1021,7 +1018,7 @@ struct Cns_file_metadata *fmd_entry;
 	return (0);
 }
 
-Cns_insert_lnk_entry(dbfd, lnk_entry)
+int Cns_insert_lnk_entry(dbfd, lnk_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_symlinks *lnk_entry;
 {
@@ -1050,7 +1047,7 @@ struct Cns_symlinks *lnk_entry;
 	return (0);
 }
 
-Cns_insert_rep_entry(dbfd, rep_entry)
+int Cns_insert_rep_entry(dbfd, rep_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_file_replica *rep_entry;
 {
@@ -1098,7 +1095,7 @@ struct Cns_file_replica *rep_entry;
 	return (0);
 }
 
-Cns_insert_smd_entry(dbfd, smd_entry)
+int Cns_insert_smd_entry(dbfd, smd_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_seg_metadata *smd_entry;
 {
@@ -1137,7 +1134,7 @@ struct Cns_seg_metadata *smd_entry;
 	return (0);
 }
 
-Cns_insert_tppool_entry(dbfd, tppool_entry)
+int Cns_insert_tppool_entry(dbfd, tppool_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_tp_pool *tppool_entry;
 {
@@ -1164,7 +1161,7 @@ struct Cns_tp_pool *tppool_entry;
 	return (0);
 }
 
-Cns_insert_umd_entry(dbfd, umd_entry)
+int Cns_insert_umd_entry(dbfd, umd_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_user_metadata *umd_entry;
 {
@@ -1193,7 +1190,7 @@ struct Cns_user_metadata *umd_entry;
 	return (0);
 }
 
-Cns_list_class_entry(dbfd, bol, class_entry, endlist, dblistptr)
+int Cns_list_class_entry(dbfd, bol, class_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 struct Cns_class_metadata *class_entry;
@@ -1230,7 +1227,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_list_lnk_entry(dbfd, bol, linkname, lnk_entry, endlist, dblistptr)
+int Cns_list_lnk_entry(dbfd, bol, linkname, lnk_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 char *linkname;
@@ -1238,7 +1235,6 @@ struct Cns_symlinks *lnk_entry;
 int endlist;
 DBLISTPTR *dblistptr;
 {
-	char fileid_str[21];
 	char func[19];
 	static char query[] =
 		"SELECT \
@@ -1266,7 +1262,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_list_rep4admin(dbfd, bol, poolname, server, fs, rep_entry, endlist, dblistptr)
+int Cns_list_rep4admin(dbfd, bol, poolname, server, fs, rep_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 char *poolname;
@@ -1276,7 +1272,6 @@ struct Cns_file_replica *rep_entry;
 int endlist;
 DBLISTPTR *dblistptr;
 {
-	char fileid_str[21];
 	char func[19];
 	static char queryf[] =
 		"SELECT \
@@ -1321,7 +1316,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_list_rep4gc(dbfd, bol, poolname, rep_entry, endlist, dblistptr)
+int Cns_list_rep4gc(dbfd, bol, poolname, rep_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 char *poolname;
@@ -1329,7 +1324,6 @@ struct Cns_file_replica *rep_entry;
 int endlist;
 DBLISTPTR *dblistptr;
 {
-	char fileid_str[21];
 	char func[16];
 	static char query[] =
 		"SELECT \
@@ -1358,7 +1352,7 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_list_rep_entry(dbfd, bol, fileid, rep_entry, lock, rec_addr, endlist, dblistptr)
+int Cns_list_rep_entry(dbfd, bol, fileid, rep_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bol;
 u_signed64 fileid;
@@ -1405,21 +1399,47 @@ DBLISTPTR *dblistptr;
 	return (0);
 }
 
-Cns_opendb(db_srvr, db_user, db_pwd, db_name, dbfd)
-char *db_srvr;
-char *db_user;
-char *db_pwd;
-char *db_name;
+int Cns_opendb(dbfd)
 struct Cns_dbfd *dbfd;
 {
+	extern char nsconfigfile[CA_MAXPATHLEN+1];
 	char func[16];
 	int ntries;
+	char buf[CA_MAXLINELEN+1];
+	char db_user[CA_MAXLINELEN+1];
+	char db_pwd[CA_MAXLINELEN+1];
+	char db_srv[CA_MAXLINELEN+1];
+	char db_name[CA_MAXLINELEN+1];
+	char *p;
+	FILE *fp;
 
+	ntries = 0;
 	strcpy (func, "Cns_opendb");
 	(void) mysql_init (&dbfd->mysql);
-	ntries = 0;
+	db_user[0] = db_pwd[0] = db_srv[0] = '\0';
+	if ((fp = fopen(nsconfigfile, "r")) == NULL) {
+		nslogit(func, NS023, nsconfigfile);
+		return (-1);
+	}
+	if (fgets(buf, sizeof(buf), fp) && strlen(buf) >= 5) {
+		if ((p = strtok(buf, "/\n")) != NULL)
+			strcpy (db_user, p);
+		if ((p = strtok(NULL, "@\n")) != NULL)
+			strcpy (db_pwd, p);
+		if ((p = strtok(NULL, "/\n")) != NULL)
+			strcpy (db_srv, p);
+		if ((p = strtok(NULL, "\n")) != NULL)
+			strcpy (db_name, p);
+		else
+			strcpy(db_name, "Cns_db");
+	} else {
+		nslogit(func, NS009, nsconfigfile, "incorrect");
+		return (-1);
+	}
+	fclose(fp);
+
 	while (1) {
-		if (mysql_real_connect (&dbfd->mysql, db_srvr, db_user, db_pwd,
+		if (mysql_real_connect (&dbfd->mysql, db_srv, db_user, db_pwd,
 		    db_name, 0, NULL, 0)) return (0);
 		if (ntries++ >= MAXRETRY) break;
 		sleep (RETRYI);
@@ -1428,7 +1448,7 @@ struct Cns_dbfd *dbfd;
 	return (-1);
 }
 
-Cns_start_tr(s, dbfd)
+int Cns_start_tr(s, dbfd)
 int s;
 struct Cns_dbfd *dbfd;
 {
@@ -1439,7 +1459,7 @@ struct Cns_dbfd *dbfd;
 	return (0);
 }
 
-Cns_unique_id(dbfd, unique_id)
+int Cns_unique_id(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 u_signed64 *unique_id;
 {
@@ -1480,7 +1500,7 @@ u_signed64 *unique_id;
 	return (0);
 }
 
-Cns_update_class_entry(dbfd, rec_addr, class_entry)
+int Cns_update_class_entry(dbfd, rec_addr, class_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_class_metadata *class_entry;
@@ -1513,7 +1533,7 @@ struct Cns_class_metadata *class_entry;
 	return (0);
 }
 
-Cns_update_fmd_entry(dbfd, rec_addr, fmd_entry)
+int Cns_update_fmd_entry(dbfd, rec_addr, fmd_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_file_metadata *fmd_entry;
@@ -1568,7 +1588,7 @@ struct Cns_file_metadata *fmd_entry;
 	return (0);
 }
 
-Cns_update_rep_entry(dbfd, rec_addr, rep_entry)
+int Cns_update_rep_entry(dbfd, rec_addr, rep_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_file_replica *rep_entry;
@@ -1608,7 +1628,7 @@ struct Cns_file_replica *rep_entry;
 	return (0);
 }
 
-Cns_update_smd_entry(dbfd, rec_addr, smd_entry)
+int Cns_update_smd_entry(dbfd, rec_addr, smd_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_seg_metadata *smd_entry;
@@ -1640,7 +1660,7 @@ struct Cns_seg_metadata *smd_entry;
 	return (0);
 }
 
-Cns_update_umd_entry(dbfd, rec_addr, umd_entry)
+int Cns_update_umd_entry(dbfd, rec_addr, umd_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_user_metadata *umd_entry;
@@ -1665,7 +1685,7 @@ struct Cns_user_metadata *umd_entry;
 
 	/* Routines for identity mapping */
 
-Cns_delete_group_entry(dbfd, rec_addr)
+int Cns_delete_group_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -1683,7 +1703,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_delete_user_entry(dbfd, rec_addr)
+int Cns_delete_user_entry(dbfd, rec_addr)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 {
@@ -1701,7 +1721,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_grpinfo_by_gid(dbfd, gid, group_entry, lock, rec_addr)
+int Cns_get_grpinfo_by_gid(dbfd, gid, group_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 gid_t gid;
 struct Cns_groupinfo *group_entry;
@@ -1737,7 +1757,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_grpinfo_by_name(dbfd, name, group_entry, lock, rec_addr)
+int Cns_get_grpinfo_by_name(dbfd, name, group_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *name;
 struct Cns_groupinfo *group_entry;
@@ -1773,7 +1793,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_usrinfo_by_name(dbfd, name, user_entry, lock, rec_addr)
+int Cns_get_usrinfo_by_name(dbfd, name, user_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 char *name;
 struct Cns_userinfo *user_entry;
@@ -1809,7 +1829,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_get_usrinfo_by_uid(dbfd, uid, user_entry, lock, rec_addr)
+int Cns_get_usrinfo_by_uid(dbfd, uid, user_entry, lock, rec_addr)
 struct Cns_dbfd *dbfd;
 uid_t uid;
 struct Cns_userinfo *user_entry;
@@ -1845,7 +1865,7 @@ Cns_dbrec_addr *rec_addr;
 	return (0);
 }
 
-Cns_insert_group_entry(dbfd, group_entry)
+int Cns_insert_group_entry(dbfd, group_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_groupinfo *group_entry;
 {
@@ -1867,7 +1887,7 @@ struct Cns_groupinfo *group_entry;
 	return (0);
 }
 
-Cns_insert_user_entry(dbfd, user_entry)
+int Cns_insert_user_entry(dbfd, user_entry)
 struct Cns_dbfd *dbfd;
 struct Cns_userinfo *user_entry;
 {
@@ -1890,7 +1910,7 @@ struct Cns_userinfo *user_entry;
 }
 
 int oneuniquegid;
-Cns_unique_gid(dbfd, unique_id)
+int Cns_unique_gid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int *unique_id;
 {
@@ -1936,7 +1956,7 @@ unsigned int *unique_id;
 }
 
 int oneuniqueuid;
-Cns_unique_uid(dbfd, unique_id)
+int Cns_unique_uid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int *unique_id;
 {
@@ -1981,7 +2001,7 @@ unsigned int *unique_id;
 	return (0);
 }
 
-Cns_update_group_entry(dbfd, rec_addr, group_entry)
+int Cns_update_group_entry(dbfd, rec_addr, group_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_groupinfo *group_entry;
@@ -2001,7 +2021,7 @@ struct Cns_groupinfo *group_entry;
 	return (0);
 }
 
-Cns_update_unique_gid(dbfd, unique_id)
+int Cns_update_unique_gid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int unique_id;
 {
@@ -2045,7 +2065,7 @@ unsigned int unique_id;
 	return (0);
 }
 
-Cns_update_unique_uid(dbfd, unique_id)
+int Cns_update_unique_uid(dbfd, unique_id)
 struct Cns_dbfd *dbfd;
 unsigned int unique_id;
 {
@@ -2089,7 +2109,7 @@ unsigned int unique_id;
 	return (0);
 }
 
-Cns_update_user_entry(dbfd, rec_addr, user_entry)
+int Cns_update_user_entry(dbfd, rec_addr, user_entry)
 struct Cns_dbfd *dbfd;
 Cns_dbrec_addr *rec_addr;
 struct Cns_userinfo *user_entry;

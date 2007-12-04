@@ -32,24 +32,21 @@
 #include "net.h"
 #include "serrno.h"
 
-int procsessreq(int  magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
-int procsessreq(int  magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
+int procsessreq(int magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
+int procsessreq(int magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
 int proctransreq(int magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
 int procdirreq(int magic, int req_type, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
 int Cns_init_dbpkg();
 
 int being_shutdown;
 char *cmd;
-char db_name[33];
-char db_pwd[33];
-char db_srvr[33];
-char db_user[33];
 char func[16];
 int jid;
 char lcgdmmapfile[CA_MAXPATHLEN+1];
 char localdomain[CA_MAXHOSTNAMELEN+1];
 char localhost[CA_MAXHOSTNAMELEN+1];
 char logfile[CA_MAXPATHLEN+1];
+char nsconfigfile[CA_MAXPATHLEN+1];
 int maxfds;
 int rdonly;
 struct Cns_srv_thread_info *Cns_srv_thread_info;
@@ -58,8 +55,6 @@ int Cns_main(main_args)
 struct main_args *main_args;
 {
 	int c;
-	FILE *fopen(), *cf;
-	char cfbuf[80];
 	struct Cns_dbfd dbfd;
 	struct Cns_file_metadata direntry;
 	void *doit(void *);
@@ -71,9 +66,7 @@ struct main_args *main_args;
 	int ipool;
 	int nbthreads = CNS_NBTHREADS;
 	int on = 1;	/* for REUSEADDR */
-	char nsconfigfile[CA_MAXPATHLEN+1];
 	char *p;
-	char *p_n, *p_p, *p_s, *p_u;
 	fd_set readfd, readmask;
 	int rqfd;
 	int s;
@@ -136,48 +129,22 @@ struct main_args *main_args;
 		strcat (localhost, localdomain);
 	}
 
-	/* get DB login info from the name server config file */
-
-	if (! *nsconfigfile) {
+	/* set the location of the name server login file */
+	if (!*nsconfigfile) {
 		if (strncmp (NSCONFIG, "%SystemRoot%\\", 13) == 0 &&
 		    (p = getenv ("SystemRoot")))
 			sprintf (nsconfigfile, "%s%s", p, strchr (NSCONFIG, '\\'));
 		else
 			strcpy (nsconfigfile, NSCONFIG);
 	}
-	if ((cf = fopen (nsconfigfile, "r")) == NULL) {
-		nslogit (func, NS023, nsconfigfile);
-		return (CONFERR);
-	}
-	if (fgets (cfbuf, sizeof(cfbuf), cf) &&
-		strlen (cfbuf) >= 5) {
-		p_u = strtok (cfbuf, "/\n");
-		p_p = strtok (NULL, "@\n");
-		p_s = strtok (NULL, "/\n");
-		p_n = strtok (NULL, "\n");
-		db_user[0] = db_pwd[0] = db_srvr[0] = '\0';
-		if (p_u != NULL) strcpy (db_user, p_u);
-		if (p_p != NULL) strcpy (db_pwd, p_p);
-		if (p_s != NULL) strcpy (db_srvr, p_s);
-		if (p_n != NULL)  {
-			strcpy (db_name, p_n);
-		} else {
-			strcpy(db_name, "Cns_db");
-		}
-	} else {
-		nslogit (func, NS009, nsconfigfile, "incorrect");
-		return (CONFERR);
-	}
-	(void) fclose (cf);
 
 	(void) Cns_init_dbpkg ();
-
-	/* create entry in the catalog for "/" if not already done */
-
 	memset (&dbfd, 0, sizeof(dbfd));
 	dbfd.idx = nbthreads;
-	if (Cns_opendb (db_srvr, db_user, db_pwd, db_name, &dbfd) < 0)
+	if (Cns_opendb (&dbfd) < 0)
 		return (SYERR);
+
+	/* create entry in the catalog for "/" if not already done */
 	if (Cns_get_fmd_by_fullid (&dbfd, (u_signed64) 0, "/", &direntry, 0, NULL) < 0) {
 		if (serrno != ENOENT)
 			return (SYERR);
@@ -517,8 +484,7 @@ struct Cns_srv_thread_info *thip;
 			return (c);
 		}
 		if (req_type != CNS_SHUTDOWN) {
-			if (Cns_opendb (db_srvr, db_user, db_pwd, db_name,
-			    &thip->dbfd) < 0) {
+			if (Cns_opendb (&thip->dbfd) < 0) {
 				c = serrno;
 				sendrep (thip->s, MSG_ERR, "db open error: %d\n", c);
 				return (c);
