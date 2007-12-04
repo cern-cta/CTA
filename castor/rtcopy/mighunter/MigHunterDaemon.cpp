@@ -84,7 +84,7 @@ int main(int argc, char* argv[]){
     
     // get migration policy name
 
-    if ( (pm = getconfent("Policy","MIGRATION",1)) != NULL ){ 
+    if ( (pm = getconfent("Policy","Migration",1)) != NULL ){ 
       migrationPolicyName=pm;
     } else {
        castor::dlf::Param params[] =
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]){
 
     // get stream policy name
 
-    if ( (ps = getconfent("Policy","STREAM",1)) != NULL ){ 
+    if ( (ps = getconfent("Policy","Stream",1)) != NULL ){ 
       streamPolicyName=ps;
     } else {
       castor::dlf::Param params[] =

@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     std::string recallPolicyName;
     std::string recallFunctionName;
 
-    if ( (pr = getconfent("Policy","RECALL",1)) != NULL ){ 
+    if ( (pr = getconfent("Policy","Recall",1)) != NULL ){ 
       recallPolicyName=pr;
     } else {
         castor::dlf::Param params[] =
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 8, 1, params);
     }
 
-    if ( (pr = getconfent("Policy","RECALLFUNCTION",1)) != NULL ){ 
+    if ( (pr = getconfent("Policy","RecallFunction",1)) != NULL ){ 
       recallFunctionName=pr;
     } else {
         castor::dlf::Param params[] =
