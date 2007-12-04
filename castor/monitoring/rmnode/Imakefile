@@ -26,17 +26,35 @@
 
 #include <Project.tmpl>
 
+#if !defined(_WIN32)
+#if linux
 DEBUG  = -g -O0
-MANPAGES = 
-EXPORTMANPAGES = 
+#else
+DEBUG  = -g
+#endif
+#endif
 
+#ifdef StagerSuperUser
+STAGERSUPERUSER0 = StagerSuperUser
+#else
+STAGERSUPERUSER0 = stage
+#endif
+#ifdef StagerSuperGroup
+STAGERSUPERGROUP0 = StagerSuperGroup
+#else
+STAGERSUPERGROUP0 = st
+#endif
+STAGERSUPERUSER  = -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER0)\"
+STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
+
+MANPAGES =
+EXPORTMANPAGES =
 INCLUDES = -I FileName(../../..,h) -I FileName(../..,..)
-
-CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 LIBS = -lcastorMonitor -lshift -Wl,-rpath-link,../../../shlib
-RMNODEDAEMONBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
 
+RMNODEDAEMONBIN_SRCS = MetricsThread.cpp StateThread.cpp RmNodeDaemon.cpp
 RMNODEDAEMONBIN_OBJS = $(RMNODEDAEMONBIN_SRCS:.cpp=.Osuf)
 
 DEPLIB = DepSharedLibraryTargetName(FileName(../..,shlib),castorMonitor) \
@@ -75,7 +93,7 @@ exportman: $(EXPORTMANPAGES)
 
 clean:
 	@echo rmnode in CurDir
-	-@RemoveFiles(FilesToClean)
+	-@RemoveFiles(FilesToClean $(RMNODEDAEMONBIN_OBJS))
 
 clobber:	clean
 	@echo clobbering in CurDir
