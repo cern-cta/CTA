@@ -28,12 +28,13 @@
 #ifndef MONITORING_STATUSUPDATEHELPER_HPP
 #define MONITORING_STATUSUPDATEHELPER_HPP 1
 
+// Include files
 #include "castor/monitoring/ClusterStatus.hpp"
 
 namespace castor {
-  
+
   namespace monitoring {
-    
+
     // Forward declarations
     class DiskServerStateReport;
     class DiskServerMetricsReport;
@@ -42,110 +43,118 @@ namespace castor {
       class DiskServerAdminReport;
       class FileSystemAdminReport;
     }
-    
+
     namespace rmmaster {
-      
+
       namespace ora {
 
         /**
          * Status update helper
          */
         class StatusUpdateHelper {
-          
-          public:
-            
-            /**
-             * constructor
-             * @param clusterStatus pointer to the status of the cluster
-             */
-            StatusUpdateHelper(castor::monitoring::ClusterStatus* clusterStatus);
-            
-            ~StatusUpdateHelper() {};
-            
-            /**
-             * handles state updates; this method is public because
-             * it is also used by OraRmMasterSvc.retrieveClusterStatus
-             * @param state the new state
-	     * @exception Exception in case of error
-             */
-            void handleStateUpdate
-            (castor::monitoring::DiskServerStateReport* state)
+
+	public:
+
+	  /**
+	   * Constructor
+	   * @param clusterStatus pointer to the status of the cluster
+	   */
+	  StatusUpdateHelper
+	  (castor::monitoring::ClusterStatus* clusterStatus);
+
+	  /**
+	   * Destructor
+	   */
+	  ~StatusUpdateHelper() {};
+
+	  /**
+	   * Handles state updates; this method is public because
+	   * it is also used by OraRmMasterSvc.retrieveClusterStatus
+	   * @param state the new state
+	   * @param master flag to indicate if the daemon is the resource
+	   * monitoring master
+	   * @exception Exception in case of error
+	   */
+	  void handleStateUpdate
+	  (castor::monitoring::DiskServerStateReport* state, bool master)
             throw (castor::exception::Exception);
-            
-            /**
-             * handles metrics updates
-             * @param metrics the new metrics
-	     * @exception Exception in case of error
-             */
-            void handleMetricsUpdate
-            (castor::monitoring::DiskServerMetricsReport* metrics)
+
+	  /**
+	   * Handles metrics updates
+	   * @param metrics the new metrics
+	   * @param master flag to indicate if the daemon is the resource
+	   * monitoring master
+	   * @exception Exception in case of error
+	   */
+	  void handleMetricsUpdate
+	  (castor::monitoring::DiskServerMetricsReport* metrics, bool master)
             throw (castor::exception::Exception);
-            
-            /**
-             * handles DiskServer admin updates
-             * @param admin the new admin report
-	     * @param ip the address of the client
-	     * @exception Exception in case of error
-             */
-            void handleDiskServerAdminUpdate
-            (castor::monitoring::admin::DiskServerAdminReport* admin,
-	     unsigned long ip)
+
+	  /**
+	   * Handles DiskServer admin updates
+	   * @param admin the new admin report
+	   * @param ip the address of the client
+	   * @exception Exception in case of error
+	   */
+	  void handleDiskServerAdminUpdate
+	  (castor::monitoring::admin::DiskServerAdminReport* admin,
+	   unsigned long ip)
             throw (castor::exception::Exception);
-            
-            /**
-             * handles FileSystem admin updates
-             * @param admin the new admin report
-	     * @param ip the address of the client
-	     * @exception Exception in case of error
-             */
-            void handleFileSystemAdminUpdate
-            (castor::monitoring::admin::FileSystemAdminReport* admin,
-	     unsigned long ip)
+
+	  /**
+	   * Handles FileSystem admin updates
+	   * @param admin the new admin report
+	   * @param ip the address of the client
+	   * @exception Exception in case of error
+	   */
+	  void handleFileSystemAdminUpdate
+	  (castor::monitoring::admin::FileSystemAdminReport* admin,
+	   unsigned long ip)
             throw (castor::exception::Exception);
-	  
-          private:
-            
-            /*
-             * gets an iterator on a specific machine from the
-             * ClusterStatus map or create one if the machine is
-             * not existing in the map yet
-             * @param name name of the machine
-             * @param it the returned iterator
-             * @return true if the machine was found or created successfully,
-             * false if the creation failed
-             */
-            bool getOrCreateDiskServer
-            (std::string name,
-            castor::monitoring::ClusterStatus::iterator& it) throw();
-            
-            /*
-             * gets an iterator on a specific fileSystem from a
-             * DiskServerStatus map or create one if the fileSystem is
-             * not existing in the map yet
-             * @param it dss the DiskServerStatus map
-             * @param mountPoint the mountPoint of the fileSystem
-             * @param it2 the returned iterator
-             * @return true if the fileSystem was found or created successfully,
-             * false if the creation failed
-             */
-            bool getOrCreateFileSystem
-            (castor::monitoring::DiskServerStatus& dss,
-            std::string mountPoint,
-            castor::monitoring::DiskServerStatus::iterator& it2) throw();
-            
-          private:
-            
-            // Machine Status List
-            castor::monitoring::ClusterStatus* m_clusterStatus;
-        
+
+	private:
+
+	  /*
+	   * Gets an iterator on a specific machine from the
+	   * ClusterStatus map or create one if the machine is
+	   * not existing in the map yet
+	   * @param name name of the machine
+	   * @param it the returned iterator
+	   * @return true if the machine was found or created successfully,
+	   * false if the creation failed
+	   */
+	  bool getOrCreateDiskServer
+	  (std::string name,
+	   castor::monitoring::ClusterStatus::iterator& it) throw();
+
+	  /*
+	   * Gets an iterator on a specific fileSystem from a
+	   * DiskServerStatus map or create one if the fileSystem is
+	   * not existing in the map yet
+	   * @param it dss the DiskServerStatus map
+	   * @param mountPoint the mountPoint of the fileSystem
+	   * @param it2 the returned iterator
+	   * @return true if the fileSystem was found or created successfully,
+	   * false if the creation failed
+	   */
+	  bool getOrCreateFileSystem
+	  (castor::monitoring::DiskServerStatus& dss,
+	   std::string mountPoint,
+	   castor::monitoring::DiskServerStatus::iterator& it2) throw();
+
+	private:
+
+	  // Machine Status List
+	  castor::monitoring::ClusterStatus* m_clusterStatus;
+
         };
 
       } // end of namespace ora
-        
+
     } // end of namespace rmmaster
-    
+
   } // end of namespace monitoring
-  
+
 } // end of namespace castor
 
 #endif // MONITORING_STATUSUPDATEHELPER_HPP

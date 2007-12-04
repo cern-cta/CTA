@@ -17,12 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $ $Author $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The monitoring Daemon master, collecting all the inputs from
- * the different nodes and updating both the database and the
- * LSF scheduler shared memory. It also receives UDP messages
- * migration and recall processes whenever a stream is open/closed
+ * The monitoring resource master daemon is resonsible for collecting all
+ * input from the diskservers and updating both the database and the LSF
+ * scheduler shared memory. It also receives UDP messages migration and recall
+ * processes whenever a stream is open/closed
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -31,7 +31,6 @@
 #define RMMASTER_RMMASTERDAEMON_HPP 1
 
 // Include Files
-
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -57,17 +56,17 @@ namespace castor {
       public:
 
         /**
-         * constructor
+         * Constructor
          */
-        RmMasterDaemon() throw (castor::exception::Exception);
+        RmMasterDaemon();
 
         /**
-         * destructor
+         * Destructor
          */
         virtual ~RmMasterDaemon() throw() {};
 
         /**
-         * accessor to the Cluster status
+         * Accessor to the Cluster status
          */
         castor::monitoring::ClusterStatus* clusterStatus() {
           return m_clusterStatus;
@@ -75,10 +74,10 @@ namespace castor {
 
       private:
 
-        // the shared memory area identifier
+        /// The shared memory area identifier
         int m_smemoryId;
 
-        // the shared memory area
+        /// The shared memory area
         castor::monitoring::ClusterStatus* m_clusterStatus;
 
       };

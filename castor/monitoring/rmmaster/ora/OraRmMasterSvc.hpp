@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/13 13:44:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraRmMasterSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/04 13:25:56 $ $Author: waldron $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -45,42 +45,42 @@ namespace castor {
     namespace rmmaster {
 
       namespace ora {
-  
+
         /**
          * Implementation of the IRmMasterSvc for Oracle
          */
         class OraRmMasterSvc : public castor::db::ora::OraCommonSvc,
              public virtual castor::monitoring::rmmaster::IRmMasterSvc {
-  
+
         public:
-  
+
           /**
-           * default constructor
+           * Default constructor
            */
           OraRmMasterSvc(const std::string name);
-  
+
           /**
-           * default destructor
+           * Default destructor
            */
           virtual ~OraRmMasterSvc() throw();
-  
+
           /**
            * Get the service id
            */
           virtual inline const unsigned int id() const;
-  
+
           /**
            * Get the service id
            */
           static const unsigned int ID();
-  
+
           /**
            * Reset the converter statements.
            */
           void reset() throw ();
-  
+
         public:
-  
+
           /**
            * Stores the current ClusterStatus into the stager database
            * @param clusterStatus the ClusterStatus as known by RmMaster
@@ -89,33 +89,39 @@ namespace castor {
           virtual void storeClusterStatus
           (castor::monitoring::ClusterStatus* clusterStatus)
             throw (castor::exception::Exception);
-  
+
           /**
            * Retrieves the last known cluster status from the stager database
            * and updates the passed ClusterStatus
            * @param clusterStatus the ClusterStatus as known by RmMaster
+	   * @param master flag to indicate if the daemon is the resource
+	   * monitoring master
+	   * @param dsDisabled flag to indicate whether the diskservers should
+	   * be added to the shared memory in a disabled state or the state as
+	   * defined in the database
            * @exception Exception in case of error
            */
           virtual void retrieveClusterStatus
-          (castor::monitoring::ClusterStatus* clusterStatus)
+          (castor::monitoring::ClusterStatus* clusterStatus,
+	   bool master, bool dsDisabled)
             throw (castor::exception::Exception);
-            
+
         private:
-  
+
           /// SQL statement for function storeClusterStatus
           static const std::string s_storeClusterStatusStatementString;
-  
+
           /// SQL statement object for function storeClusterStatus
           oracle::occi::Statement *m_storeClusterStatusStatement;
-  
+
           /// SQL statements for function retrieveClusterStatus
           static const std::string s_getDiskServersStatementString;
           static const std::string s_getFileSystemsStatementString;
-  
+
           /// SQL statement object for function retrieveClusterStatus
           oracle::occi::Statement *m_getDiskServersStatement;
-          oracle::occi::Statement *m_getFileSystemsStatement;
-  
+	  oracle::occi::Statement *m_getFileSystemsStatement;
+
         }; // end of class OraRmMasterSvc
 
       } // end of namespace ora

@@ -27,6 +27,7 @@
 #ifndef RMMASTER_DISKSERVERSTATUS_HPP
 #define RMMASTER_DISKSERVERSTATUS_HPP 1
 
+// Include files
 #include "castor/rmmaster/FileSystemStatus.hpp"
 #include "castor/sharedMemory/Allocator.hpp"
 #include "castor/sharedMemory/string"
@@ -67,7 +68,7 @@ namespace castor {
 
     private:
 
-      /// the diskServer id
+      /// The diskServer id
       u_signed64 m_id;
 
     }; // end DiskServerStatus

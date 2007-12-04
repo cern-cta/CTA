@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/09 17:04:21 $ $Author: itglp $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/12/04 13:25:56 $ $Author: waldron $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -54,59 +54,60 @@
 #include <vector>
 #include <serrno.h>
 
-// -----------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 static castor::SvcFactory<castor::monitoring::rmmaster::ora::OraRmMasterSvc>* s_factoryOraRmMasterSvc =
   new castor::SvcFactory<castor::monitoring::rmmaster::ora::OraRmMasterSvc>();
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // Static constants initialization
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 /// SQL statement for storeClusterStatus
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_storeClusterStatusStatementString =
   "BEGIN storeClusterStatus(:1, :2, :3, :4); END;";
 
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getDiskServersStatementString =
-  "SELECT id, name, adminStatus FROM DiskServer";
+  "SELECT id, name, adminStatus, status FROM DiskServer";
 
 const std::string castor::monitoring::rmmaster::ora::OraRmMasterSvc::s_getFileSystemsStatementString =
   "SELECT mountPoint, adminStatus FROM FileSystem WHERE diskServer = :1";
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // OraRmMasterSvc
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::ora::OraRmMasterSvc::OraRmMasterSvc(const std::string name) :
   OraCommonSvc(name),
   m_storeClusterStatusStatement(0), m_getDiskServersStatement(0),
   m_getFileSystemsStatement (0) {}
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // ~OraRmMasterSvc
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::ora::OraRmMasterSvc::~OraRmMasterSvc() throw() {
   reset();
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 const unsigned int castor::monitoring::rmmaster::ora::OraRmMasterSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 const unsigned int castor::monitoring::rmmaster::ora::OraRmMasterSvc::ID() {
   return castor::SVC_ORARMMASTERSVC;
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // reset
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::OraRmMasterSvc::reset() throw() {
-  //Here we attempt to delete the statements correctly
+  // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
@@ -120,9 +121,9 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::reset() throw() {
   m_getFileSystemsStatement = 0;
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // fillOracleBuffer
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 inline void fillOracleBuffer(unsigned char buf[][21],
 			     ub2* lensBuf,
 			     unsigned int index,
@@ -132,9 +133,9 @@ inline void fillOracleBuffer(unsigned char buf[][21],
   lensBuf[index] = b.length();
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // storeClusterStatus
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 (castor::monitoring::ClusterStatus* clusterStatus)
   throw (castor::exception::Exception) {
@@ -153,6 +154,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       throw ex;
     }
   }
+
   // Compute array lengths
   unsigned int diskServersL = clusterStatus->size();
   unsigned int diskServersFSL = 0;
@@ -161,15 +163,17 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 	 clusterStatus->begin();
        it != clusterStatus->end();
        it++) {
-    // don't send FileSystems for deleted nodes
+    // Don't send FileSystems for deleted nodes
     if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
       diskServersFSL++;
       fileSystemsL += it->second.size();
     }
   }
+
   // Since ORACLE does not like 0 length arrays, it's better
   // to protect ourselves and give up in such a case
   if (0 == fileSystemsL) return;
+
   // Find max length of the string parameters
   ub2 *lensDS = (ub2*) malloc(diskServersL * sizeof(ub2));
   if (0 == lensDS) { castor::exception::OutOfMemory e; throw e; };
@@ -187,7 +191,8 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     lensDS[ds] = it->first.length();
     if (lensDS[ds] > maxDSL) maxDSL = lensDS[ds];
     ds++;
-    // don't send FileSystems for deleted nodes
+
+    // Don't send FileSystems for deleted nodes
     if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
       lensFS[dfs+fs] = it->first.length();
       if (lensFS[dfs+fs] > maxFSL) maxFSL = lensFS[dfs+fs];
@@ -202,6 +207,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       }
     }
   }
+
   // Allocate buffer for giving the parameters to ORACLE
   unsigned int bufferDSCellSize = maxDSL * sizeof(char);
   char *bufferDS =
@@ -217,6 +223,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     free (lensDS); free (lensFS); free (bufferDS);
     castor::exception::OutOfMemory e; throw e;
   };
+
   // Put DiskServer and FileSystem names into the buffers
   unsigned int d = 0;  // diskserver index
   unsigned int df = 0; // diskserver index within filesystems list
@@ -227,7 +234,8 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
        it++) {
     strncpy(bufferDS+(d*bufferDSCellSize), it->first.c_str(), lensDS[d]);
     d++;
-    // don't send FileSystems for deleted nodes
+
+    // Don't send FileSystems for deleted nodes
     if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
       strncpy(bufferFS+((df+f)*bufferFSCellSize), it->first.c_str(), lensDS[d-1]);
       df++;
@@ -240,6 +248,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       }
     }
   }
+
   // Deal with parameters for both DiskServers and FileSystems
   ub2 *lensDSP = (ub2*) malloc(diskServersL * 9 * sizeof(ub2));
   if (0 == lensDSP) {
@@ -275,7 +284,8 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 	 it != clusterStatus->end();
 	 it++) {
       const castor::monitoring::DiskServerStatus& dss = it->second;
-      // fill buffers
+
+      // Fill buffers
       fillOracleBuffer(bufferDSP, lensDSP, 9*d, dss.status());
       fillOracleBuffer(bufferDSP, lensDSP, (9*d)+1, dss.adminStatus());
       fillOracleBuffer(bufferDSP, lensDSP, (9*d)+2, (double)dss.readRate());
@@ -286,14 +296,16 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       fillOracleBuffer(bufferDSP, lensDSP, (9*d)+7, dss.nbMigratorStreams());
       fillOracleBuffer(bufferDSP, lensDSP, (9*d)+8, dss.nbRecallerStreams());
       d++;
-      // don't send FileSystems for deleted nodes
+
+      // Don't send FileSystems for deleted nodes
       if (it->second.adminStatus() != castor::monitoring::ADMIN_DELETED) {
 	for (castor::monitoring::DiskServerStatus::const_iterator it2
 	       = it->second.begin();
 	     it2 != dss.end();
 	     it2++) {
 	  const castor::monitoring::FileSystemStatus& fss = it2->second;
-	  // fill buffers
+
+	  // Fill buffers
 	  fillOracleBuffer(bufferFSP, lensFSP, 14*f, fss.status());
 	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+1, fss.adminStatus());
 	  fillOracleBuffer(bufferFSP, lensFSP, (14*f)+2, (double)fss.readRate());
@@ -312,7 +324,8 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
 	}
       }
     }
-    // prepare the statement
+
+    // Prepare the statement
     ub4 DSL = diskServersL;
     ub4 FSL = diskServersFSL+fileSystemsL;
     ub4 DSPL = 9*diskServersL;
@@ -330,7 +343,9 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
       (4, bufferFSP, oracle::occi::OCCI_SQLT_NUM,
        FSPL, &FSPL, 21, lensFSP);
     // Finally execute the statement
+
     m_storeClusterStatusStatement->executeUpdate();
+
     // And release the memory
     free(lensDS);
     free(lensFS);
@@ -341,7 +356,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     free(bufferDSP);
     free(bufferFSP);
   } catch (oracle::occi::SQLException e) {
-    // release the memory
+    // Release the memory
     free(lensDS);
     free(lensFS);
     free(bufferDS);
@@ -350,7 +365,8 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
     free(lensFSP);
     free(bufferDSP);
     free(bufferFSP);
-    // and handle exception
+
+    // Handle exception
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
@@ -360,13 +376,15 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::storeClusterStatus
   }
 }
 
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // retrieveClusterStatus
-// -----------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
-(castor::monitoring::ClusterStatus* clusterStatus)
+(castor::monitoring::ClusterStatus* clusterStatus,
+ bool master, bool dsDisabled)
   throw (castor::exception::Exception) {
-  // init statements
+
+  // Initailize statements
   if (0 == m_getDiskServersStatement) {
     try {
       m_getDiskServersStatement = createStatement(s_getDiskServersStatementString);
@@ -382,30 +400,37 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       throw ex;
     }
   }
-  
-  StatusUpdateHelper* updater = 0; 
+
+  StatusUpdateHelper* updater = 0;
   try {
     // init the Status Update helper (shared with RmMasterDaemon/CollectorThread)
-    updater = new StatusUpdateHelper(clusterStatus); 
-  
-    // look for all DiskServers
+    updater = new StatusUpdateHelper(clusterStatus);
+
+    // Look for all DiskServers
     oracle::occi::ResultSet *dsRset = m_getDiskServersStatement->executeQuery();
     while (oracle::occi::ResultSet::END_OF_FETCH != dsRset->next()) {
-      // create a state report for each diskserver
+      // Create a state report for each diskserver
       castor::monitoring::DiskServerStateReport* dsReport =
         new castor::monitoring::DiskServerStateReport();
       dsReport->setName(dsRset->getString(2));
-      // by default we start with everything disabled, when the node comes up rmNode
-      // will send a full report reenabling the node
-      dsReport->setStatus(castor::stager::DISKSERVER_DISABLED);
-      // make sure an ADMIN_NONE status in db resets anything found before
+
+      // By default we start with everything disabled, when the node comes up
+      // rmNode will send a full report reenabling it. If the dsDisabled option
+      // is enabled then we take the status as seen in the database
+      if (dsDisabled == false) {
+	dsReport->setStatus((castor::stager::DiskServerStatusCode)dsRset->getInt(4));
+      } else {
+	dsReport->setStatus(castor::stager::DISKSERVER_DISABLED);
+      }
+
+      // Make sure an ADMIN_NONE status in db resets anything found before
       castor::monitoring::AdminStatusCodes adStatus =
         (castor::monitoring::AdminStatusCodes)dsRset->getInt(3);
       if(adStatus == castor::monitoring::ADMIN_NONE)
         adStatus = castor::monitoring::ADMIN_RELEASE;
       dsReport->setAdminStatus(adStatus);
 
-      // loop on its FileSystems
+      // Loop on its FileSystems
       m_getFileSystemsStatement->setDouble(1, dsRset->getDouble(1));
       oracle::occi::ResultSet *fsRset = m_getFileSystemsStatement->executeQuery();
       while (oracle::occi::ResultSet::END_OF_FETCH != fsRset->next()) {
@@ -419,9 +444,9 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
         fs->setAdminStatus(adStatus);
         dsReport->addFileSystemStatesReports(fs);
       }
-      
+
       // "send" the report to update the cluster status
-      updater->handleStateUpdate(dsReport);
+      updater->handleStateUpdate(dsReport, master);
       delete dsReport;
     }
     delete updater;
@@ -435,5 +460,5 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       << std::endl << e.getMessage();
     throw ex;
   }
-  // forward other exceptions (typically from handleStateUpdate) to the caller
+  // Forward other exceptions (typically from handleStateUpdate) to the caller
 }

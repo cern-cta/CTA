@@ -17,11 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile $ $Author $
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The monitoring Daemon master, collecting all the inputs from
- * the different nodes and updating both the database and the
- * LSF scheduler shared memory
+ * The monitoring resource master daemon is resonsible for collecting all
+ * input from the diskservers and updating both the database and the LSF
+ * scheduler shared memory. It also receives UDP messages migration and recall
+ * processes whenever a stream is open/closed
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -41,81 +42,87 @@
 #include "castor/monitoring/rmmaster/IRmMasterSvc.hpp"
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
+#include "castor/System.hpp"
+#include "getconfent.h"
 
-#define UPDATE_INTERVAL 10 // in seconds
-#define RMMASTER_DEFAULT_PORT 15003
+// Definitions
+#define DEFAULT_LISTENING_PORT  15003
+#define DEFAULT_UPDATE_INTERVAL 10
 
-// -----------------------------------------------------------------------
-// External C function used for getting configuration from shift.conf file
-// -----------------------------------------------------------------------
-extern "C" {
-  char* getconfent (const char *, const char *, int);
-}
 
-//------------------------------------------------------------------------------
-// main method
-//------------------------------------------------------------------------------
-
-int main(int argc, char* argv[]) {
+//-----------------------------------------------------------------------------
+// Main
+//-----------------------------------------------------------------------------
+int main(int argc, char *argv[]) {
 
   try {
-
-    // new BaseDaemon as Server
     castor::monitoring::rmmaster::RmMasterDaemon daemon;
-    int interval;
-    int port = RMMASTER_DEFAULT_PORT;
 
-    //default values
-    interval = UPDATE_INTERVAL;
-
-    // Try to retrieve values from the config file otherwise use the default one
-    char* intervalStr = getconfent("RmMaster","UpdateInterval", 0);
-    if (intervalStr){
-      interval = std::strtol(intervalStr,0,10);
-      if (0 == interval) {
-        // Go back to default
-        interval = UPDATE_INTERVAL;
-        // Log this
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Given value", intervalStr)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 1, 1, initParams);
-      }
-    }
-    char* portStr = getconfent("RM","PORT", 0);
-    if (portStr){
-      port = std::strtol(portStr,0,10);
-      if (0 == port) {
-        // Go back to default
-        port = RMMASTER_DEFAULT_PORT;
-        // Log this
-        castor::dlf::Param initParams[] =
-          {castor::dlf::Param("Given value", portStr)};
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 18, 1, initParams);
+    // Extract the frequency at which the synchronisation from the shared
+    // memory to the database is performed
+    char *value = getconfent("RmMaster", "UpdateInterval", 0);
+    u_signed64 updateInterval = DEFAULT_UPDATE_INTERVAL;
+    if (value) {
+      updateInterval = std::strtol(value, 0, 10);
+      if (updateInterval == 0) {
+	updateInterval = DEFAULT_UPDATE_INTERVAL;
+	// "Invalid RmMaster/UpdateInterval option, using default"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Default", updateInterval)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 1, 1, params);
       }
     }
 
-    // Inform user
-    castor::dlf::Param initParams[] =
-      {castor::dlf::Param("Update interval value", interval)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 2, 1, initParams);
+    // Determine the listening port for incoming data from diskservers and
+    // requests to change status with rmAdminNode
+    int listenPort = DEFAULT_LISTENING_PORT;
+    if ((value = getconfent("RM", "PORT", 0))) {
+      try {
+	listenPort = castor::System::porttoi(value);
+      } catch (castor::exception::Exception ex) {
+	castor::exception::Exception e(EINVAL);
+	e.getMessage() << "Invalid RM/PORT value: "
+		       << ex.getMessage() << std::endl;
+	throw e;
+      }
+    }
+
+    // Attempt to find the LSF cluster and master name for logging purposes.
+    // This isn't really required but could be useful for future debugging
+    // efforts
+    std::string clusterName("Unknown");
+    std::string masterName("Unknown");
+    char **results = NULL;
+
+    // Errors are ignored here!
+    lsb_init("RmMasterDaemon");
+    clusterInfo *cInfo = ls_clusterinfo(NULL, NULL, results, 0, 0);
+    if (cInfo != NULL) {
+      clusterName = cInfo[0].clusterName;
+      masterName  = cInfo[0].masterName;
+    }
+
+    // "RmMaster Daemon started"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Port", listenPort),
+       castor::dlf::Param("UpdateInterval", updateInterval),
+       castor::dlf::Param("Cluster", clusterName),
+       castor::dlf::Param("Master", masterName)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 2, 4, params);
 
     // DB threadPool
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("DatabaseActuator",
         new castor::monitoring::rmmaster::DatabaseActuatorThread
-        (daemon.clusterStatus()), interval));
-    // this threadpool is supposed to have a single thread because
-    // it uses shared member fields, see its implementation  
+        (daemon.clusterStatus()), updateInterval));
     daemon.getThreadPool('D')->setNbThreads(1);
-    
     // Update threadpool
     daemon.addThreadPool
       (new castor::server::UDPListenerThreadPool
        ("Update",
         new castor::monitoring::rmmaster::UpdateThread
-        (daemon.clusterStatus()),
-        port));
+        (daemon.clusterStatus()), listenPort));
     daemon.getThreadPool('U')->setNbThreads(1);
 
     // Monitor threadpool
@@ -123,8 +130,7 @@ int main(int argc, char* argv[]) {
       (new castor::server::TCPListenerThreadPool
        ("Collector",
         new castor::monitoring::rmmaster::CollectorThread
-        (daemon.clusterStatus()),
-        port));
+        (daemon.clusterStatus()), listenPort));
     daemon.getThreadPool('C')->setNbThreads(3);
 
     // Heartbeat threadpool
@@ -132,111 +138,123 @@ int main(int argc, char* argv[]) {
       (new castor::server::SignalThreadPool
        ("Heartbeat",
         new castor::monitoring::rmmaster::HeartbeatThread
-	(daemon.clusterStatus()), interval));
+	(daemon.clusterStatus()), updateInterval));
     daemon.getThreadPool('H')->setNbThreads(1);
 
+    // Start daemon
     daemon.parseCommandLine(argc, argv);
     daemon.start();
+    return 0;
 
   } catch (castor::exception::Exception e) {
+    std::cerr << "Caught exception: "
+	      << sstrerror(e.code()) << std::endl
+	      << e.getMessage().str() << std::endl;
 
-    // "Exception caught problem to start the daemon"
+    // "Exception caught when starting RmMasterDaemon"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-       castor::dlf::Param("Precise Message", e.getMessage().str())};
+      {castor::dlf::Param("Type", sstrerror(e.code())),
+       castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 2, params);
-    return -1;
+  } catch (...) {
+    std::cerr << "Caught exception!" << std::endl;
   }
-  catch (...) {
 
-    std::cerr << "Caught general exception!" << std::endl;
-    castor::dlf::Param params2[] =
-      {castor::dlf::Param("Standard Message", "Caught general exception in cleaning daemon.")};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3, 1, params2);
-    return -1;
-
-  }
-  return 0;
+  return 1;
 }
 
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
 // Constructor
-//------------------------------------------------------------------------------
-castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon()
-throw (castor::exception::Exception) :
+//-----------------------------------------------------------------------------
+castor::monitoring::rmmaster::RmMasterDaemon::RmMasterDaemon() :
   castor::server::BaseDaemon("RmMaster") {
 
-  // Initializes the DLF logging. This includes
-  // registration of the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 1, "Bad interval value in configuration file"},
-     { 2, "Starting RmMaster Daemon"},
-     { 3, "Starting of RmMaster Daemon failed"},
-     { 4, "Unable to get shared memory id. Giving up"},
-     { 5, "Unable to create shared memory. Giving up"},
-     { 6, "Created the shared memory."},
-     { 7, "Unable to get pointer to shared memory. Giving up"},
-     { 8, "Exception caught in Collector::run"},
-     { 9, "Thread Collector started."},
-     {10, "Thread Collector created."},
-     {11, "Error caught in CollectorThread::run"},
-     {12, "Unable to read Object from socket"},
-     {13, "Received unknown object from socket"},
-     {14, "Caught exception in CollectorThread"},
-     {15, "Sending acknowledgement to client"},
-     {16, "Unable to send Ack to client"},
-     {17, "General exception caught"},
-     {18, "Bad port value in configuration file"},
-     {19, "Thread Update started."},
-     {20, "Caught exception in UpdateThread"},
-     {21, "Ignored state report for machine with empty name"},
-     {22, "Ignored metrics report for machine with empty name"},
-     {23, "Ignored admin diskserver report for machine with empty name"},
-     {24, "Ignored admin filesystem report for machine with empty name"},
-     {25, "Ignored admin filesystem report for filesystem with empty name"},
-     {26, "Ignored metrics report for filesystem with empty name"},
-     {27, "Ignored state report for filesystem with empty name"},
-     {28, "Unable to allocate SharedMemoryString"},
-     {29, "Ignored admin diskServer report for unknown machine"},
-     {30, "Ignored admin fileSystem report for unknown machine"},
-     {31, "Ignored admin fileSystem report for unknown mountPoint"},
-     {32, "Thread DatabaseActuator started. Synchronizing shared memory data"},
-     {33, "Thread DatabaseActuator created"},
-     {34, "Thread Update created"},
-     {35, "Retrieving cluster status from database to shared memory"},
-     {36, "Heartbeat Thread created."},
-     {37, "Heartbeat Thread started."},
-     {38, "Heartbeat check failed for diskserver, status changed to DISABLED."},
-     {39, "Heartbeat resumed for diskserver, status changed to PRODUCTION."},
-     {40, "Admin change request detected, filesystem DELETED"},
-     {41, "Admin change request detected for filesystem, setting new status"},
-     {42, "Admin change request detected, diskserver DELETED"},
-     {43, "Admin change request detected for diskserver, setting new status"},
-     {-1, ""}};
+  // Now with predefined messages
+  castor::dlf::Message messages[] = {
+
+    // General
+    { 1,  "Invalid RmMaster/UpdateInterval option, using default" },
+    { 2,  "RmMaster Daemon started" },
+    { 3,  "Exception caught when starting RmMaster" },
+    { 13, "Received unknown object from socket" },
+    { 17, "General exception caught" },
+    { 35, "Updating cluster status information from database to shared memory" },
+    { 46, "Failed to determine the hostname of the LSF master" },
+    { 49,  "Failed to create LSF Helper" },
+
+    // Heartbeat thread
+    { 18, "Invalid RmMaster/HeartbeatInterval option, using default" },
+    { 36, "Heartbeat thread created" },
+    { 37, "Heartbeat thread running" },
+    { 38, "Heartbeat check failed for diskserver, status changed to DISABLED" },
+
+    // Update thread
+    { 19, "Update thread running" },
+    { 20, "Caught exception in UpdateThread" },
+    { 34, "Update thread created" },
+
+    // Collector thread
+    { 9,  "Thread Collector running" },
+    { 10, "Collector thread created" },
+    { 12, "Unable to read object from socket" },
+    { 15, "Sending acknowledgement to client" },
+    { 16, "Unable to send ack to client" },
+    { 45, "Caught exception in CollectorThread" },
+
+    // Status Update Helper
+    { 21, "Ignored state report for machine with empty name" },
+    { 22, "Ignored metrics report for machine with empty name" },
+    { 23, "Ignored admin diskserver report for machine with empty name" },
+    { 24, "Ignored admin filesystem report for machine with empty name" },
+    { 25, "Ignored admin filesystem report for filesystem with empty name" },
+    { 26, "Ignored metrics report for filesystem with empty name" },
+    { 27, "Ignored state report for filesystem with empty name" },
+    { 28, "Unable to allocate SharedMemoryString" },
+    { 29, "Ignored admin diskServer report for unknown machine" },
+    { 30, "Ignored admin fileSystem report for unknown machine" },
+    { 31, "Ignored admin fileSystem report for unknown mountPoint" },
+    { 39, "Heartbeat resumed for diskserver, status changed to PRODUCTION" },
+    { 40, "Admin change request detected, filesystem DELETED" },
+    { 41, "Admin change request detected for filesystem, setting new status" },
+    { 42, "Admin change request detected, diskserver DELETED" },
+    { 43, "Admin change request detected for diskserver, setting new status" },
+
+    // Database actuator thread
+    { 32, "DatabaseActuator thread running" },
+    { 33, "DatabaseAcutator thread created" },
+    { 44, "Failed to synchronise shared memory with stager database" },
+    { 47, "Assuming role as production RmMaster server. LSF failover detected" },
+    { 48, "Assuming role as slave RmMaster server. LSF failover detected" },
+
+    { -1, "" }};
   dlfInit(messages);
 
-  // get the cluster status singleton
+  // Update the shared memory with the initial status and metrics for the
+  // diskservers and filesystems as currently recorded in the stager database
   bool created = true;
-  m_clusterStatus = castor::monitoring::ClusterStatus::getClusterStatus(created);
+  m_clusterStatus =
+    castor::monitoring::ClusterStatus::getClusterStatus(created);
 
-  if (created) {
-    // the cluster status has just been created and it's empty, probably RmMaster got restarted
-    // get db service
-    castor::IService* orasvc = castor::BaseObject::services()->service("OraRmMasterSvc", castor::SVC_ORARMMASTERSVC);
-    if (0 == orasvc) {
-      castor::exception::Internal e;
-      e.getMessage() << "Unable to get OraRmMasterSvc";
-      throw e;
-    }
-    castor::monitoring::rmmaster::IRmMasterSvc* rmMasterService = dynamic_cast<castor::monitoring::rmmaster::IRmMasterSvc*>(orasvc);
-    if (0 == rmMasterService) {
-      castor::exception::Internal e;
-      e.getMessage() << "Could not cast newly retrieved service into IRmMasterSvc" << std::endl;
-      throw e;
-    }
-
-    // now populate cluster status with last saved status in the database if any
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 35);
-    rmMasterService->retrieveClusterStatus(m_clusterStatus);
+  // Initialize the oracle rmmaster service.
+  castor::IService *orasvc =
+    castor::BaseObject::services()->service("OraRmMasterSvc",
+					    castor::SVC_ORARMMASTERSVC);
+  if (orasvc == NULL) {
+    castor::exception::Internal e;
+    e.getMessage() << "Unable to get OraRmMasterSVC";
+    throw e;
   }
+  castor::monitoring::rmmaster::IRmMasterSvc *rmMasterService =
+    dynamic_cast<castor::monitoring::rmmaster::IRmMasterSvc *>(orasvc);
+  if (rmMasterService == NULL) {
+    castor::exception::Internal e;
+    e.getMessage() << "Could not convert newly retrieved service into "
+		   << "IRmMasterSvc" << std::endl;
+    throw e;
+  }
+
+  // "Updating cluster status information from database to shared memory"
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 35, 0, 0);
+  rmMasterService->retrieveClusterStatus(m_clusterStatus, true, true);
 }

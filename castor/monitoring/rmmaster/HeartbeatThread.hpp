@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HeartbeatThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/07/09 17:04:33 $ $Author: itglp $
+ * @(#)$RCSfile: HeartbeatThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/04 13:25:55 $ $Author: waldron $
  *
  * The Heartbeat thread of the rmMasterDaemon is responsible for checking all
  * disk servers in shared memory and automatically disabling them if no data
@@ -29,18 +29,20 @@
 #ifndef RMMASTER_HEARTBEATTHREAD_HPP
 #define RMMASTER_HEARTBEATTHREAD_HPP 1
 
+// Include files
 #include "castor/server/IThread.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
+#include "castor/monitoring/rmmaster/LSFSingleton.hpp"
 
 namespace castor {
-  
+
   namespace monitoring {
-    
+
     // Forward declarations
     class ClusterStatus;
 
     namespace rmmaster {
-      
+
       /**
        * Heartbeat thread.
        */
@@ -53,9 +55,8 @@ namespace castor {
 	 * @param clusterStatus pointer to the status of the cluster
 	 */
 	HeartbeatThread(ClusterStatus* clusterStatus);
-	
 
-	/// empty initialization
+	/// Not implemented
 	virtual void init() {};
 
 	/**
@@ -63,7 +64,7 @@ namespace castor {
 	 */
 	virtual void run(void *param) throw();
 
-	/// not implemented
+	/// Not implemented
 	virtual void stop() {};
 
       private:
@@ -75,13 +76,17 @@ namespace castor {
 	u_signed64 m_startup;
 
 	/// The timeout after which a diskserver is declared down
-	int timeout;
+	int m_timeout;
+
+	/// The time that the server became the resource master
+	u_signed64 m_lastPause;
+
       };
 
     } // end of namespace rmmaster
-    
+
   } // end of namespace monitoring
-  
+
 } // end of namespace castor
 
 #endif // RMMASTER_HEARTBEATTHREAD_HPP

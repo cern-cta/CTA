@@ -26,17 +26,22 @@
 
 #include <Project.tmpl>
 
+#if !defined(_WIN32)
+#if linux
 DEBUG  = -g -O0
-MANPAGES = 
-EXPORTMANPAGES = 
+#else
+DEBUG  = -g
+#endif
+#endif
 
+MANPAGES =
+EXPORTMANPAGES =
 INCLUDES = -I FileName($(ORACLE_HOME)/rdbms,public) -I FileName(../../..,h) -I FileName(../..,..)
-
 CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
-LIBS = -lcastorMonitor -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci -Wl,-rpath-link,../../../shlib
+LIBS = -lcastorMonitor -lbat -llsf -llsbstream -lshift -lcastorCommonOra -lcastorCnvs -L$(ORACLE_HOME)/lib -locci -Wl,-rpath-link,../../../shlib
 RMMASTERDAEMONBIN_SRCS = RmMasterDaemon.cpp CollectorThread.cpp DatabaseActuatorThread.cpp UpdateThread.cpp \
-         HeartbeatThread.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
+         HeartbeatThread.cpp LSFSingleton.cpp ora/OraRmMasterSvc.cpp ora/StatusUpdateHelper.cpp
 
 RMMASTERDAEMONBIN_OBJS = $(RMMASTERDAEMONBIN_SRCS:.cpp=.Osuf)
 

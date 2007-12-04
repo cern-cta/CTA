@@ -19,14 +19,13 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
- *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RMMASTER_CLUSTERSTATUS_HPP 
+#ifndef RMMASTER_CLUSTERSTATUS_HPP
 #define RMMASTER_CLUSTERSTATUS_HPP 1
 
+// Include files
 #include "castor/rmmaster/MachineStatus.hpp"
 #include "castor/sharedMemory/Allocator.hpp"
 #include "castor/sharedMemory/string"
@@ -51,7 +50,7 @@ namespace castor {
     public:
 
       /**
-       * gets a pointer to the cluster status. This status
+       * Gets a pointer to the cluster status. This status
        * is a "shared memory singleton" meaning that this
        * method will return a pointer to the same instance
        * of ClusterStatus for all calls in all processes
@@ -61,7 +60,7 @@ namespace castor {
     public:
 
       /**
-       * print method
+       * Print method
        * @param out the stream where to print
        */
       void print(std::ostream& out) throw();

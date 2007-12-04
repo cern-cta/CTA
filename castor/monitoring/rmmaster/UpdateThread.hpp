@@ -17,11 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UpdateThread.hpp,v $ $Author: itglp $
+ * @(#)$RCSfile: UpdateThread.hpp,v $ $Author: waldron $
  *
- * The Update thread of the RmMaster daemon.
- * It receives updates from the stager about openings and closings
- * of streams and updates the memory representation accordingly
+ * The Update thread of the RmMaster daemon. It receives updates from the
+ * stager about openings and closings of streams and updates the memory
+ * representation accordingly
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -29,8 +29,10 @@
 #ifndef RMMASTER_UPDATETHREAD_HPP
 #define RMMASTER_UPDATETHREAD_HPP 1
 
+// Include files
 #include "castor/server/IThread.hpp"
 #include "castor/monitoring/ClusterStatus.hpp"
+#include "castor/monitoring/rmmaster/LSFSingleton.hpp"
 
 namespace castor {
 
@@ -50,27 +52,27 @@ namespace castor {
       public:
 
         /**
-         * constructor
+         * Constructor
          * @param clusterStatus pointer to the status of the cluster
          */
         UpdateThread(castor::monitoring::ClusterStatus* clusterStatus);
 
-        /// empty initialization
-        virtual void init() {};
-	
+	/// Not implemented
+	virtual void init() {};
+
 	/**
          * Method called once per request, where all the code resides
          * @param param the socket obtained from the calling thread pool
          */
         virtual void run(void *param) throw();
 
-        /// not implemented
+        /// Not implemented
         virtual void stop() {};
 
       private:
 
         /**
-         * handles stream reports
+         * Handles stream reports
          * @param reprot the stream report
          */
         void handleStreamReport
@@ -79,7 +81,7 @@ namespace castor {
 
       private:
 
-        // Machine Status List
+        /// Machine Status List
         castor::monitoring::ClusterStatus* m_clusterStatus;
 
       };

@@ -17,12 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile$ $Author$
+ * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * The Collector thread of the RmMaster daemon.
- * It collects the data from the different nodes and updates a shared
- * memory representation of the cluster. The real implementation of the
- * cluster update is implemented in a separated helper class.
+ * The Collector thread of the RmMaster daemon. It collects the data from the
+ * different nodes and updates a shared memory representation of the cluster.
+ * The real implementation of the cluster update is implemented in a separated
+ * helper class.
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -30,8 +30,10 @@
 #ifndef RMMASTER_COLLECTORTHREAD_HPP
 #define RMMASTER_COLLECTORTHREAD_HPP 1
 
+// Include files
 #include "castor/server/IThread.hpp"
 #include "castor/monitoring/rmmaster/ora/StatusUpdateHelper.hpp"
+#include "castor/monitoring/rmmaster/LSFSingleton.hpp"
 
 namespace castor {
 
@@ -47,12 +49,12 @@ namespace castor {
       public:
 
         /**
-         * constructor
+         * Constructor
          * @param clusterStatus pointer to the status of the cluster
          */
         CollectorThread(castor::monitoring::ClusterStatus* clusterStatus);
-	
-        /// empty initialization
+
+        /// Not implemented
         virtual void init() {};
 
         /**
@@ -61,12 +63,12 @@ namespace castor {
          */
         virtual void run(void *param) throw();
 
-        /// not implemented
+        /// Not implemented
         virtual void stop() {};
 
       private:
 
-        // Cluster update status helper, shared with OraRmMasterSvc
+        /// Cluster update status helper, shared with OraRmMasterSvc
         castor::monitoring::rmmaster::ora::StatusUpdateHelper* m_updater;
 
       };

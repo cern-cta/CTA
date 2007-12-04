@@ -25,6 +25,7 @@
  * @author castor-dev team
  *****************************************************************************/
 
+// Include files
 #include "castor/monitoring/rmmaster/ora/StatusUpdateHelper.hpp"
 #include "castor/stager/DiskServer.hpp"
 #include "castor/stager/FileSystem.hpp"
@@ -43,53 +44,64 @@
 #include <time.h>
 #include <errno.h>
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Constructor
+//-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::ora::StatusUpdateHelper::StatusUpdateHelper
 (castor::monitoring::ClusterStatus* clusterStatus) :
   m_clusterStatus(clusterStatus) {
 }
 
-//------------------------------------------------------------------------------
-// handleStateUpdate
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// HandleStateUpdate
+//-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
-(castor::monitoring::DiskServerStateReport* state)
+(castor::monitoring::DiskServerStateReport* state, bool master)
   throw (castor::exception::Exception) {
-  // Throw away reports with no name cause the build of
-  // a shared memory string fails for empty strings. This
-  // is due to an optimization inside the string implementation
-  // that tries to delay memory allocation when not needed
-  // (typically for empty strings). This could be avoided
-  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
-  // but the default version distributed does not have this
-  // The consequence of accepting this is a seg fault in any
-  // process attempting to read it (other than the one that
+
+  // We are operating in master mode?
+  if (master == false) {
+    return;
+  }
+
+  // Throw away reports with no name cause the build of a shared memory string
+  // fails for empty strings. This is due to an optimization inside the string
+  // implementation that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided by recompiling
+  // libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING but the default version
+  // distributed does not have this. The consequence of accepting this is a seg
+  // fault in any process attempting to read it (other than the one that
   // created the empty string).
   if (state->name().size() == 0) {
     // "Ignored state report for machine with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 21);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 21, 0, 0);
     return;
   }
+
   // Take care of DiskServer creation
   castor::monitoring::ClusterStatus::iterator it;
   if (!getOrCreateDiskServer(state->name(), it)) {
     return;
   }
-  // update DiskServer status
+
+  // Update DiskServer status
   it->second.setRam(state->ram());
   it->second.setMemory(state->memory());
   it->second.setSwap(state->swap());
+
   // Announce a diskservers change of status ? (e.g. being re-enabled after
   // heartbeat check failure)
-  if ((it->second.adminStatus() == ADMIN_NONE) && 
+  if ((it->second.adminStatus() == ADMIN_NONE) &&
       (it->second.status() == castor::stager::DISKSERVER_DISABLED) &&
       (state->status() == castor::stager::DISKSERVER_PRODUCTION)) {
+    // "Heartbeat resumed for diskserver, status changed to PRODUCTION"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Hostname", state->name())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 39, 1, params);
   }
+
   // Update status if needed
   if (it->second.adminStatus() == ADMIN_NONE ||
       state->adminStatus() != ADMIN_NONE) {
@@ -100,23 +112,23 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
       it->second.setAdminStatus(ADMIN_NONE);
     }
   }
+
   // Update lastUpdate
   it->second.setLastStateUpdate(time(0));
+
   // Update FileSystems
   for (std::vector<castor::monitoring::FileSystemStateReport*>::const_iterator
          itFs = state->FileSystemStatesReports().begin();
        itFs != state->FileSystemStatesReports().end();
        itFs++) {
-    // Throw away reports from filesystems with no name cause the build of
-    // a shared memory string fails for empty strings. This
-    // is due to an optimization inside the string implementation
-    // that tries to delay memory allocation when not needed
-    // (typically for empty strings). This could be avoided
-    // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
-    // but the default version distributed does not have this
-    // The consequence of accepting this is a seg fault in any
-    // process attempting to read it (other than the one that
-    // created the empty string).
+    // Throw away reports from filesystems with no name cause the build of a
+    // shared memory string fails for empty strings. This is due to an
+    // optimization inside the string implementation that tries to delay memory
+    // allocation when not needed (typically for empty strings). This could be
+    // avoided by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+    // but the default version distributed does not have this. The consequence
+    // of accepting this is a seg fault in any process attempting to read it
+    // (other than the one that created the empty string).
     if ((*itFs)->mountPoint().size() == 0) {
       // "Ignored state report for filesystem with empty name"
       castor::dlf::Param params[] =
@@ -131,11 +143,13 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
 			       it2)) {
       return;
     }
+
     // Update FileSystem status
     it2->second.setSpace((*itFs)->space());
     it2->second.setMinFreeSpace((*itFs)->minFreeSpace());
     it2->second.setMaxFreeSpace((*itFs)->maxFreeSpace());
     it2->second.setMinAllowedFreeSpace((*itFs)->minAllowedFreeSpace());
+
     // Update status if needed
     if (it2->second.adminStatus() == ADMIN_NONE ||
         (*itFs)->adminStatus() != ADMIN_NONE) {
@@ -146,37 +160,38 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
         it2->second.setAdminStatus(ADMIN_NONE);
       }
     }
+
     // Update lastUpdate
     it2->second.setLastStateUpdate(time(0));
   }
 }
 
-//------------------------------------------------------------------------------
-// getOrCreateDiskServer
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// GetOrCreateDiskServer
+//-----------------------------------------------------------------------------
 bool
 castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateDiskServer
 (std::string name,
  castor::monitoring::ClusterStatus::iterator& it) throw() {
-  // cast normal string into sharedMemory one in order to be able
-  // to search for it in the ClusterStatus map.
-  // This is safe because the difference in the types is only
-  // the allocator and because the 2 allocators have identical
+  // Cast normal string into sharedMemory one in order to be able to search for
+  // it in the ClusterStatus map. This is safe because the difference in the
+  // types is only the allocator and because the 2 allocators have identical
   // members
   castor::monitoring::SharedMemoryString *smName =
     (castor::monitoring::SharedMemoryString*)(&name);
   it = m_clusterStatus->find(*smName);
   if (it == m_clusterStatus->end()) {
     try {
-      // here we really have to create a shared memory string,
-      // the previous cast won't work since we need to allocate memory
+      // Here we really have to create a shared memory string, the previous
+      // cast won't work since we need to allocate memory
       const castor::monitoring::SharedMemoryString smName2(name.c_str());
       it = m_clusterStatus->insert
 	(std::make_pair(smName2,
 			castor::monitoring::DiskServerStatus())).first;
     } catch (std::exception e) {
       // "Unable to allocate SharedMemoryString"
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 0, 0);
       // not enough shared memory... let's give up
       return false;
     }
@@ -184,26 +199,26 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateDiskServer
   return true;
 }
 
-//------------------------------------------------------------------------------
-// getOrCreateFileSystem
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// GetOrCreateFileSystem
+//-----------------------------------------------------------------------------
 bool
 castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateFileSystem
 (castor::monitoring::DiskServerStatus& dss,
  std::string mountPoint,
  castor::monitoring::DiskServerStatus::iterator& it2) throw() {
-  // cast normal string into sharedMemory one in order to be able
-  // to search for it in the DiskServerStatus map.
-  // This is safe because the difference in the types is only
-  // the allocator and because the 2 allocators have identical
+  // Cast normal string into sharedMemory one in order to be able to search for
+  // it in the ClusterStatus map. This is safe because the difference in the
+  // types is only the allocator and because the 2 allocators have identical
   // members
   castor::monitoring::SharedMemoryString *smMountPoint =
     (castor::monitoring::SharedMemoryString*)(&mountPoint);
   it2 = dss.find(*smMountPoint);
   if (it2 == dss.end()) {
     try {
-      // here we really have to create a shared memory string,
-      // the previous cast won't work
+      // Here we really have to create a shared memory string, the previous
+      // cast won't work
       const castor::monitoring::SharedMemoryString smMountPoint2
 	(mountPoint.c_str());
       it2 = dss.insert(std::make_pair
@@ -211,7 +226,7 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateFileSystem
 			castor::monitoring::FileSystemStatus())).first;
     } catch (std::exception e) {
       // "Unable to allocate SharedMemoryString"
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 28, 0, 0);
       // not enough shared memory... let's give up
       return false;
     }
@@ -219,33 +234,40 @@ castor::monitoring::rmmaster::ora::StatusUpdateHelper::getOrCreateFileSystem
   return true;
 }
 
-//------------------------------------------------------------------------------
-// handleMetricsUpdate
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// HandleMetricsUpdate
+//-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
-(castor::monitoring::DiskServerMetricsReport* metrics)
+(castor::monitoring::DiskServerMetricsReport* metrics, bool master)
   throw (castor::exception::Exception) {
-  // Throw away reports with no name cause the build of
-  // a shared memory string fails for empty strings. This
-  // is due to an optimization inside the string implementation
-  // that tries to delay memory allocation when not needed
-  // (typically for empty strings). This could be avoided
-  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
-  // but the default version distributed does not have this
-  // The consequence of accepting this is a seg fault in any
-  // process attempting to read it (other than the one that
+
+  // We are operating in master mode?
+  if (master == false) {
+    return;
+  }
+
+  // Throw away reports with no name cause the build of a shared memory string
+  // fails for empty strings. This is due to an optimization inside the string
+  // implementation that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided by recompiling
+  // libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING but the default version
+  // distributed does not have this. The consequence of accepting this is a seg
+  // fault in any process attempting to read it (other than the one that
   // created the empty string).
   if (metrics->name().size() == 0) {
     // "Ignored metrics report for machine with empty name"
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 22);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 22, 0, 0);
     return;
   }
+
   // Take care of DiskServer creation
   castor::monitoring::ClusterStatus::iterator it;
   if (!getOrCreateDiskServer(metrics->name(), it)) {
     return;
   }
-  // gather totals
+
+  // Gather totals
   u_signed64 totalReadRate = 0;
   u_signed64 totalWriteRate = 0;
   unsigned int totalNbReadStreams = 0;
@@ -258,16 +280,14 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
          itFs = metrics->fileSystemMetricsReports().begin();
        itFs != metrics->fileSystemMetricsReports().end();
        itFs++) {
-    // Throw away reports from filesystems with no name cause the build of
-    // a shared memory string fails for empty strings. This
-    // is due to an optimization inside the string implementation
-    // that tries to delay memory allocation when not needed
-    // (typically for empty strings). This could be avoided
-    // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
-    // but the default version distributed does not have this
-    // The consequence of accepting this is a seg fault in any
-    // process attempting to read it (other than the one that
-    // created the empty string).
+    // Throw away reports from filesystems with no name cause the build of a
+    // shared memory string fails for empty strings. This is due to an
+    // optimization inside the string implementation that tries to delay memory
+    // allocation when not needed (typically for empty strings). This could be
+    // avoided by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
+    // but the default version distributed does not have this. The consequence
+    // of accepting this is a seg fault in any process attempting to read it
+    // (other than the one that created the empty string).
     if ((*itFs)->mountPoint().size() == 0) {
       // "Ignored metrics report for filesystem with empty name"
       castor::dlf::Param params[] =
@@ -275,6 +295,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 26, 1, params);
       continue;
     }
+
     // Take care of the FileSystem creation
     castor::monitoring::DiskServerStatus::iterator it2;
     if (!getOrCreateFileSystem(it->second,
@@ -282,6 +303,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
 			       it2)) {
       return;
     }
+
     // Update FileSystem metrics
     it2->second.setReadRate((*itFs)->readRate());
     it2->second.setDeltaReadRate(0);
@@ -309,7 +331,8 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
     // Update lastUpdate
     it2->second.setLastMetricsUpdate(time(0));
   }
-  // update DiskServer metrics
+
+  // Update DiskServer metrics
   it->second.setFreeRam(metrics->freeRam());
   it->second.setFreeMemory(metrics->freeMemory());
   it->second.setFreeSwap(metrics->freeSwap());
@@ -327,25 +350,26 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleMetricsUpdate
   it->second.setDeltaNbMigratorStreams(0);
   it->second.setNbRecallerStreams(totalNbRecallerStreams);
   it->second.setDeltaNbRecallerStreams(0);
+
   // Update lastUpdate
   it->second.setLastMetricsUpdate(time(0));
 }
 
-//------------------------------------------------------------------------------
-// handleDiskServerAdminUpdate
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// HandleDiskServerAdminUpdate
+//-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdminUpdate
 (castor::monitoring::admin::DiskServerAdminReport* admin, unsigned long ip)
   throw (castor::exception::Exception) {
-  // Throw away reports with no name cause the build of
-  // a shared memory string fails for empty strings. This
-  // is due to an optimization inside the string implementation
-  // that tries to delay memory allocation when not needed
-  // (typically for empty strings). This could be avoided
-  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
-  // but the default version distributed does not have this
-  // The consequence of accepting this is a seg fault in any
-  // process attempting to read it (other than the one that
+
+  // Throw away reports with no name cause the build of a shared memory string
+  // fails for empty strings. This is due to an optimization inside the string
+  // implementation that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided by recompiling
+  // libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING but the default version
+  // distributed does not have this. The consequence of accepting this is a seg
+  // fault in any process attempting to read it (other than the one that
   // created the empty string).
   if (admin->diskServerName().size() == 0) {
     // "Ignored admin diskserver report for machine with empty name"
@@ -354,14 +378,15 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 23, 1, params);
     return;
   }
-  // cast normal string into sharedMemory one in order to be able
-  // to search for it in the ClusterStatus map.
-  // This is safe because the difference in the types is only
-  // the allocator and because the 2 allocators have identical
+
+  // Cast normal string into sharedMemory one in order to be able to search for
+  // it in the ClusterStatus map. This is safe because the difference in the
+  // types is only the allocator and because the 2 allocators have identical
   // members
   std::string machineName = admin->diskServerName();
   castor::monitoring::SharedMemoryString *smMachineName =
     (castor::monitoring::SharedMemoryString*)(&machineName);
+
   // Take care of DiskServer creation
   castor::monitoring::ClusterStatus::iterator it =
     m_clusterStatus->find(*smMachineName);
@@ -371,6 +396,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       {castor::dlf::Param("MachineName", admin->diskServerName()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 29, 2, params);
+
     // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown machine '"
@@ -378,6 +404,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
 		   << "'. Please check the name and provide the domain.";
     throw e;
   }
+
   // Ignore all status changes apart from release when the diskserver
   // is in a deleted status
   if (it->second.adminStatus() == ADMIN_DELETED) {
@@ -390,6 +417,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       throw e;
     }
   }
+
   // Update status if needed
   if (it->second.adminStatus() == ADMIN_NONE ||
       admin->adminStatus() != ADMIN_NONE) {
@@ -412,14 +440,15 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       castor::dlf::Param params[] =
 	{castor::dlf::Param("MachineName", admin->diskServerName()),
 	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-	 castor::dlf::Param("Status", 
+	 castor::dlf::Param("Status",
 	   castor::stager::DiskServerStatusCodeStrings[admin->status()]),
-	 castor::dlf::Param("AdminStatus", 
+	 castor::dlf::Param("AdminStatus",
 	   castor::monitoring::AdminStatusCodesStrings[admin->adminStatus()]),
 	 castor::dlf::Param("Recursive", admin->recursive() ? "yes" : "no")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 43, 5, params);
     }
   }
+
   // Go over the fileSystems if required
   if (admin->recursive()) {
     for (castor::monitoring::DiskServerStatus::iterator it2 =
@@ -454,21 +483,21 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
   }
 }
 
-//------------------------------------------------------------------------------
-// handleFileSystemAdminUpdate
-//------------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// HandleFileSystemAdminUpdate
+//-----------------------------------------------------------------------------
 void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdminUpdate
 (castor::monitoring::admin::FileSystemAdminReport* admin, unsigned long ip)
   throw (castor::exception::Exception) {
-  // Throw away reports with no name cause the build of
-  // a shared memory string fails for empty strings. This
-  // is due to an optimization inside the string implementation
-  // that tries to delay memory allocation when not needed
-  // (typically for empty strings). This could be avoided
-  // by recompiling libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING
-  // but the default version distributed does not have this
-  // The consequence of accepting this is a seg fault in any
-  // process attempting to read it (other than the one that
+
+  // Throw away reports with no name cause the build of a shared memory string
+  // fails for empty strings. This is due to an optimization inside the string
+  // implementation that tries to delay memory allocation when not needed
+  // (typically for empty strings). This could be avoided by recompiling
+  // libstdc++ with -D_GLIBCXX_FULLY_DYNAMIC_STRING but the default version
+  // distributed does not have this. The consequence of accepting this is a seg
+  // fault in any process attempting to read it (other than the one that
   // created the empty string).
   if (admin->diskServerName().size() == 0) {
     // "Ignored admin filesystem report for machine with empty name"
@@ -477,6 +506,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 24, 1, params);
     return;
   }
+
   if (admin->mountPoint().size() == 0) {
     // "Ignored admin filesystem report for filesystem with empty name"
     castor::dlf::Param params[] =
@@ -484,10 +514,10 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 25, 1, params);
     return;
   }
-  // cast normal string into sharedMemory one in order to be able
-  // to search for it in the ClusterStatus map.
-  // This is safe because the difference in the types is only
-  // the allocator and because the 2 allocators have identical
+
+  // Cast normal string into sharedMemory one in order to be able to search for
+  // it in the ClusterStatus map. This is safe because the difference in the
+  // types is only the allocator and because the 2 allocators have identical
   // members
   std::string machineName = admin->diskServerName();
   castor::monitoring::SharedMemoryString *smMachineName =
@@ -501,6 +531,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       {castor::dlf::Param("MachineName", admin->diskServerName()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 30, 2, params);
+
     // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown machine '"
@@ -508,10 +539,10 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
 		   << "'. Please check the name and provide the domain.";
     throw e;
   }
-  // cast normal string into sharedMemory one in order to be able
-  // to search for it in the DiskServerStatus map.
-  // This is safe because the difference in the types is only
-  // the allocator and because the 2 allocators have identical
+
+  // Cast normal string into sharedMemory one in order to be able to search for
+  // it in the DiskServerStatus map. This is safe because the difference in the
+  // types is only the allocator and because the 2 allocators have identical
   // members
   std::string mountPoint = admin->mountPoint();
   castor::monitoring::SharedMemoryString *smMountPoint =
@@ -526,6 +557,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
        castor::dlf::Param("MountPoint", admin->mountPoint()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 31, 3, params);
+
     // Inform user via the exception mechanism
     castor::exception::NoEntry e;
     e.getMessage() << "Unknown mountPoint '"
@@ -535,6 +567,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
 		   << "'.";
     throw e;
   }
+
   // Ignore all status changes apart from release when the filesystem or
   // diskserver is in a deleted status
   if (it2->second.adminStatus() == ADMIN_DELETED) {
@@ -557,6 +590,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       throw e;
     }
   }
+
   // Update status if needed
   if (it2->second.adminStatus() == ADMIN_NONE ||
       admin->adminStatus() != ADMIN_NONE) {
@@ -564,7 +598,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       it2->second.setStatus(castor::stager::FILESYSTEM_DISABLED);
       it2->second.setAdminStatus(ADMIN_DELETED);
       // "Admin change request detected, filesystem DELETED"
-      castor::dlf::Param params[] = 
+      castor::dlf::Param params[] =
 	{castor::dlf::Param("MachineName", admin->diskServerName()),
 	 castor::dlf::Param("MountPoint", admin->mountPoint()),
 	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
@@ -581,9 +615,9 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
 	{castor::dlf::Param("MachineName", admin->diskServerName()),
 	 castor::dlf::Param("MountPoint", admin->mountPoint()),
 	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-	 castor::dlf::Param("Status", 
+	 castor::dlf::Param("Status",
            castor::stager::FileSystemStatusCodesStrings[admin->status()]),
-	 castor::dlf::Param("AdminStatus", 
+	 castor::dlf::Param("AdminStatus",
            castor::monitoring::AdminStatusCodesStrings[admin->adminStatus()])};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 41, 5, params);
     }

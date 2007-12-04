@@ -19,8 +19,6 @@
  *
  * @(#)$RCSfile$ $Revision$ $Release$ $Date$ $Author$
  *
- * 
- *
  * @author Sebastien Ponce
  *****************************************************************************/
 
@@ -28,21 +26,21 @@
 #include "castor/sharedMemory/Block.hpp"
 #include "castor/sharedMemory/Helper.hpp"
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // getClusterStatus
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 castor::rmmaster::ClusterStatus*
 castor::rmmaster::ClusterStatus::getClusterStatus() {
-  // get the shared memory block
+  // Get the shared memory block
   castor::sharedMemory::Block* smBlock =
     castor::sharedMemory::Helper::getBlock();
-  // return the Cluster Status
+  // Return the Cluster Status
   return smBlock->clusterStatus();
 }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // print
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::rmmaster::ClusterStatus::print(std::ostream& out) throw() {
   if (0 == size()) {
     out << "No machine in shared memory" << std::endl;

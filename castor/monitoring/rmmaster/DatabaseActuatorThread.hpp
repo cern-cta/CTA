@@ -17,10 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DatabaseActuatorThread.hpp,v $ $Author: itglp $
+ * @(#)$RCSfile: DatabaseActuatorThread.hpp,v $ $Author: waldron $
  *
- * The DatabaseActuator thread of the RmMaster daemon.
- * It updates the stager database with monitoring data
+ * The DatabaseActuator thread of the RmMaster daemon. It updates the stager
+ * database with monitoring data
  *
  * @author castor-dev team
  *****************************************************************************/
@@ -28,8 +28,10 @@
 #ifndef RMMASTER_DATABASEACTUATORTHREAD_HPP
 #define RMMASTER_DATABASEACTUATORTHREAD_HPP 1
 
+// Include files
 #include "castor/server/IThread.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/monitoring/rmmaster/LSFSingleton.hpp"
 
 namespace castor {
 
@@ -51,29 +53,39 @@ namespace castor {
       public:
 
         /**
-         * constructor
+         * Constructor
          * @param clusterStatus pointer to the status of the cluster
          */
         DatabaseActuatorThread(ClusterStatus* clusterStatus)
           throw (castor::exception::Exception);
 
         /**
-         * destructor
+         * Destructor
          */
         virtual ~DatabaseActuatorThread() throw();
 
-        /*For thread management*/
+	/// Not implemented
         virtual void init() {};
-	void run(void*) throw();
-        void stop() throw() {};
+
+	/**
+	 * Method called to synchornize the shared memory with the stager
+	 * database.
+	 */
+	virtual void run(void*) throw();
+
+	/// Not implemented
+        virtual void stop() throw() {};
 
       private:
-      
-        // rmmaster service to call the oracle procedures
+
+        /// rmmaster service to call the oracle procedures
         castor::monitoring::rmmaster::IRmMasterSvc* m_rmMasterService;
 
-        // Machine Status List
+        /// Machine Status List
         castor::monitoring::ClusterStatus* m_clusterStatus;
+
+	/// The previous recorded name of the LSF master
+	std::string m_prevMasterName;
 
       };
 
