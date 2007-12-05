@@ -76,6 +76,8 @@ namespace castor{
         switch(result) {
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
+            // we nevertheless notify the jobManager as we may have to wait on diskcopy replication across svcclasses
+            m_notifyJobManager = true;
             break;
           
           case -1:
@@ -108,7 +110,7 @@ namespace castor{
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
               stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
               
-              /* and we have to notify the jobManager */
+              // and we have to notify the jobManager
               m_notifyJobManager = true;
             }
             break;
