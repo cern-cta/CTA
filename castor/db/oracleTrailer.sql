@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.566 $ $Date: 2007/12/04 14:39:31 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.567 $ $Date: 2007/12/05 13:39:48 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -595,6 +595,8 @@ CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER, srPriority OUT INTEGER,
                                            srStatus OUT INTEGER, srModeBits OUT INTEGER, srFlags OUT INTEGER,
                                            srSubReqId OUT VARCHAR2) AS
+LockError EXCEPTION;
+PRAGMA EXCEPTION_INIT (LockError, -54);
 CURSOR c IS
    SELECT /*+ USE_NL */ id
      FROM SubRequest
@@ -616,6 +618,11 @@ BEGIN
   CLOSE c;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- just return srId = 0, nothing to do
+  NULL;
+WHEN LockError THEN
+  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
+  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
+  -- what to do, another thread will pick up the request so we don't do anything.
   NULL;
 END;
 
