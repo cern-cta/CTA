@@ -42,7 +42,9 @@
 
 #include <Cpwd.h>
 #include "castor/io/ClientSocket.hpp"
+#include "castor/io/AuthClientSocket.hpp"
 #include "castor/io/ServerSocket.hpp"
+#include "castor/io/AuthServerSocket.hpp"
 #include "castor/Constants.hpp"
 #include "castor/System.hpp"
 #include "castor/IClient.hpp"
@@ -77,14 +79,20 @@ const char *castor::client::HOST_ENV_ALT = "STAGE_HOST";
 const char *castor::client::HOST_ENV = "STAGER_HOST";
 const char *castor::client::PORT_ENV_ALT = "STAGE_PORT";
 const char *castor::client::PORT_ENV = "STAGER_PORT";
+const char *castor::client::SEC_PORT_ENV_ALT = "STAGE_SEC_PORT";
+const char *castor::client::SEC_PORT_ENV = "STAGER_SEC_PORT";
 const char *castor::client::CATEGORY_CONF = "STAGER";
 const char *castor::client::HOST_CONF = "HOST";
 const char *castor::client::PORT_CONF = "PORT";
+const char *castor::client::SEC_PORT_CONF = "SEC_PORT";
 const char *castor::client::STAGE_EUID = "STAGE_EUID";
 const char *castor::client::STAGE_EGID = "STAGE_EGID";
 const char *castor::client::CLIENT_CONF = "CLIENT";
 const char *castor::client::LOWPORT_CONF = "LOWPORT";
 const char *castor::client::HIGHPORT_CONF = "HIGHPORT";
+const char *castor::client::SEC_MECH_ENV = "CSEC_MECH"; // Security protocol GSI, ID, KRB5,KRB4
+const char *castor::client::SECURITY_ENV = "CASTOR_SEC"; //Security enable
+
 
 //------------------------------------------------------------------------------
 // Numeric constants
@@ -140,8 +148,30 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
   BaseObject(), m_rhPort(-1), m_callbackSocket(0), m_requestId(""),
-  m_acceptTimeout(acceptTimeout),  m_hasAuthorizationId(false), m_authUid(0), 
-  m_authGid(0) {}
+  m_acceptTimeout(acceptTimeout),  m_hasAuthorizationId(false), m_hasSecAuthorization(false), m_authUid(0), 
+  m_authGid(0) {
+    //Check if security env option is set. 
+    
+    char *security;
+    char *mech;
+
+  if ((security = getenv (castor::client::SECURITY_ENV)) != 0 && strcasecmp(security,"YES") == 0 ){
+    if (( mech = getenv (castor::client::SEC_MECH_ENV)) !=0) {
+      if(strlen(mech) > CA_MAXCSECPROTOLEN){
+	serrno = EINVAL;
+	castor::exception::Exception e(serrno);
+    	e.getMessage()
+      	<< "Supplied Security protocol is too long" << std::endl;
+    	throw e;
+      }else {
+        m_Sec_mech = mech;
+        m_hasSecAuthorization = true;
+      }
+    }
+  } 
+
+
+  }
 
 //------------------------------------------------------------------------------
 // destructor
@@ -198,6 +228,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
 
   // Tracing the submit time
   char timestr[64];
+  castor::io::ClientSocket* s;
   time_t now = time(NULL);
   BaseClient_util_time(now, timestr);
   stage_trace(3, "%s (%u) Sending request", timestr, now);
@@ -210,13 +241,18 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   startTime = clock();
 #endif
   // creates a socket
-  castor::io::ClientSocket s(m_rhPort, m_rhHost);
-  s.connect();
+  if (m_hasSecAuthorization){
+     s = new castor::io::AuthClientSocket(m_rhPort, m_rhHost);
+     //if the context can not been establish there will be an expection thrown.
+  } else {
+     s = new castor::io::ClientSocket(m_rhPort, m_rhHost);
+  }
+  s->connect();
   // sends the request
-  s.sendObject(request);
+  s->sendObject(request);
   // wait for acknowledgment
   stage_trace(3, "Waiting for acknowledgement");
-  IObject* obj = s.readObject();
+  IObject* obj = s->readObject();
   castor::MessageAck* ack =
     dynamic_cast<castor::MessageAck*>(obj);
   if (0 == ack) {
@@ -345,19 +381,35 @@ void castor::client::BaseClient::setRhPort(int optPort)
 	 return;
    }
    char* port;
+
+   // If security mode is used get the RH Secure server port,
+   // if you can not get it throws and exception, don't go on in unsecure mode.
    // RH server port. Can be given through the environment
    // variable RH_PORT or in the castor.conf file as a
    // RH/PORT entry. If none is given, default is used
-   if ((port = getenv (castor::client::PORT_ENV)) != 0 
-      || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
-      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+   if(m_hasSecAuthorization){
+     if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
+        || (port = getenv (castor::client::SEC_PORT_ENV_ALT)) != 0
+        || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+			    (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
+         m_rhPort = castor::System::porttoi(port);
+     }else{
+         clog() << "Contacting RH server on default secure port ("
+          << CSP_RHSERVER_SEC_PORT << ")." << std::endl;
+         m_rhPort = CSP_RHSERVER_SEC_PORT; castor::exception::Exception e(errno);
+     }	 
+   }else{
+     if ((port = getenv (castor::client::PORT_ENV)) != 0 
+        || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
+        || (port = getconfent((char *)castor::client::CATEGORY_CONF,
 			    (char *)castor::client::PORT_CONF,0)) != 0) {
-     m_rhPort = castor::System::porttoi(port);
-  } else {
-   clog() << "Contacting RH server on default port ("
+       m_rhPort = castor::System::porttoi(port);
+     } else {
+       clog() << "Contacting RH server on default port ("
           << CSP_RHSERVER_PORT << ")." << std::endl;
-    m_rhPort = CSP_RHSERVER_PORT;
-  }
+       m_rhPort = CSP_RHSERVER_PORT;
+     }
+   }  
   stage_trace(3, "Looking up RH Port - Using %d", m_rhPort);
 }
 
@@ -473,7 +525,64 @@ void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw(
   m_authUid = uid;
   m_authGid = gid;
   m_hasAuthorizationId = true;
+
 }
+
+//------------------------------------------------------------------------------
+// setAutorization
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::setAuthorization() throw(castor::exception::Exception) {
+  char *security;
+  char *mech;
+  //Check if security env option is set. 
+  if ((security = getenv (castor::client::SECURITY_ENV)) != 0 && strcasecmp(security,"YES") == 0 ){
+    if (( mech = getenv (castor::client::SEC_MECH_ENV)) !=0) {
+      if(strlen(mech) > CA_MAXCSECPROTOLEN){
+	serrno = EINVAL;
+	castor::exception::Exception e(serrno);
+    	e.getMessage()
+      	<< "Supplied Security protocol is too long" << std::endl;
+    	throw e;
+      }else {
+        m_Sec_mech = mech;
+        m_hasSecAuthorization = true;
+        stage_trace(3, "Setting security mechanism: %s", mech);
+      }
+    }
+  } 
+ }
+
+//------------------------------------------------------------------------------
+// setAutorization
+//------------------------------------------------------------------------------
+void castor::client::BaseClient::setAuthorization(char *mech, char *id) throw(castor::exception::Exception) {
+ if(strlen(mech) > CA_MAXCSECPROTOLEN){
+	serrno = EINVAL;
+	castor::exception::Exception e(serrno);
+    	e.getMessage()
+      	<< "Supplied Security protocol is too long" << std::endl;
+    	throw e;
+  }
+ 	
+  m_Sec_mech = mech;
+   
+  if (strlen (id) > CA_MAXCSECNAMELEN) {
+  	serrno = EINVAL;
+	castor::exception::Exception e(serrno);
+    	e.getMessage()
+      	<< "Supplied authorization id is too long" << std::endl;
+    	throw e;
+  }
+  
+  m_Csec_auth_id = id;
+  
+  m_voname = NULL;
+  m_nbfqan = 0;
+  m_fqan = NULL;
+  m_hasSecAuthorization = true;
+  stage_trace(3, "Setting security mechanism: %s", mech);
+}
+
 
 //------------------------------------------------------------------------------
 // createClientAndSend
@@ -555,8 +664,13 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   // create a socket for the callback with no port
   stage_trace(3, "Creating socket for stager callback");
 
-  // not to let the client to reuse the port 
-  m_callbackSocket = new castor::io::ServerSocket(false); 
+  // not to let the client to reuse the port
+  //if (m_hasSecAuthorization){
+  //   m_callbackSocket = new castor::io::AuthServerSocket(false); 
+  //} else {
+     m_callbackSocket = new castor::io::ServerSocket(false); 
+  //}
+
   // get the port range to be used
   int lowPort = LOW_CLIENT_PORT_RANGE;
   int highPort = HIGH_CLIENT_PORT_RANGE;

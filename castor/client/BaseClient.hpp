@@ -35,6 +35,7 @@
 #include "stager_client_api.h"
 
 #define CSP_RHSERVER_PORT 9002
+#define CSP_RHSERVER_SEC_PORT 9007
 
 namespace castor {
 
@@ -45,6 +46,7 @@ namespace castor {
   namespace io {
     // Forward declaration
     class ServerSocket;
+    class AuthServerSocket;
   }
   
   namespace stager {
@@ -61,14 +63,19 @@ namespace castor {
     extern const char* HOST_ENV_ALT;
     extern const char* PORT_ENV;
     extern const char* PORT_ENV_ALT;
+    extern const char* SEC_PORT_ENV;
+    extern const char* SEC_PORT_ENV_ALT;
     extern const char* CATEGORY_CONF;
     extern const char* HOST_CONF;
     extern const char* PORT_CONF;
+    extern const char* SEC_PORT_CONF;
     extern const char* STAGE_EUID;
     extern const char* STAGE_EGID;
     extern const char* CLIENT_CONF;
     extern const char* LOWPORT_CONF;
     extern const char* HIGHPORT_CONF;
+    extern const char* SEC_MECH_ENV;
+    extern const char* SECURITY_ENV;
     extern const int LOW_CLIENT_PORT_RANGE;
     extern const int HIGH_CLIENT_PORT_RANGE;
 
@@ -115,6 +122,14 @@ namespace castor {
        * Sets the authorization ID under which the request should be sent.
        */
       void setAuthorizationId(uid_t uid, gid_t gid) throw();
+      
+       
+      /**
+       * Set the Authorization mechanism.
+       */
+
+      void setAuthorization() throw (castor::exception::Exception );
+      void setAuthorization(char *mech, char *id) throw (castor::exception::Exception );
 
       /**
        * gets the request handler port to use and put it
@@ -135,6 +150,8 @@ namespace castor {
        * May be overwritten in case this behavior should be
        * modified.
        */
+
+      
       virtual void setRhHost(std::string optHost) throw (castor::exception::Exception);
       virtual void setRhHost()throw (castor::exception::Exception);
       virtual void setRhSvcClass(std::string optSvcClass) throw (castor::exception::Exception);
@@ -227,7 +244,14 @@ namespace castor {
       bool m_hasAuthorizationId;
       uid_t m_authUid;
       gid_t m_authGid;
-
+      
+      /// Strong Authentication parameters
+      bool m_hasSecAuthorization;
+      char *m_Sec_mech;
+      char *m_Csec_auth_id;
+      char *m_voname;
+      int  m_nbfqan;
+      char **m_fqan;
       
     };
 
