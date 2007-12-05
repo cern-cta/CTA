@@ -102,12 +102,12 @@ namespace castor{
           case 1:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
             
-            if(result == 1)
+            if(result == 1) {
               // there's room for internal replication, check if it's to be done
               processReplica();
+            }
 
-            // Fill the requested filesystems for the request being processed: we won't wait
-            // for the disk-to-disk copy if it's to be done
+            // Fill the requested filesystems for the request being processed
             std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
             rfs = "";
             for(unsigned int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
@@ -132,7 +132,7 @@ namespace castor{
             m_notifyJobManager = true;
             break;
           
-          case 2: /* create a tape copy and corresponding segment objects on stager catalogue */
+          case 2:   // DISKCOPY_WAITTAPERECALL, create a tape copy and corresponding segment objects on stager catalogue
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
             
             // here we don't care about the return value: we don't need to answer the client in any case
@@ -181,24 +181,16 @@ namespace castor{
       {
         bool replicate = true;
         
-        /* if the status of the unique copy is STAGEOUT, then don't replicate */
-        if(sources.size() == 1 && sources.front()->status() == DISKCOPY_STAGEOUT) {
-          maxReplicaNb = 1;
-        }
-        
-        if(sources.size() > 0) {
-          if(maxReplicaNb > 0) {
-            if(maxReplicaNb <= sources.size()) {
-              replicate = false;
-            }
+        if(maxReplicaNb > 0) {
+          if(maxReplicaNb <= sources.size()) {
+            replicate = false;
           }
-          else if((replicationPolicy.empty()) == false) { 
-            maxReplicaNb = checkReplicationPolicy();
-            if(maxReplicaNb > 0){
-              if(maxReplicaNb <= sources.size()){
-                replicate = false;
-              }
-            }
+          // else maxReplicaNb == 0 means infinite replication
+        }
+        else if((replicationPolicy.empty()) == false) { 
+          maxReplicaNb = checkReplicationPolicy();
+          if(maxReplicaNb > 0 && maxReplicaNb <= sources.size()) {
+            replicate = false;
           }
         }
 
