@@ -22,7 +22,7 @@ for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_6
 
 # build RPMs
 print 'Building RPMs for ' + targetOs + '/' + targetArch + ' ...'
-nbRpms = 59
+nbRpms = 58
 if targetOs == 'SLC3':
     oraPath = '/afs/cern.ch/project/oracle/@sys/10201'
 else:
