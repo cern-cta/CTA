@@ -1,5 +1,5 @@
 #
-# $Id: if.has_oracle,v 1.10 2007/12/04 12:50:47 waldron Exp $
+# $Id: if.has_oracle,v 1.11 2007/12/05 07:42:24 waldron Exp $
 #
 ## List of packages to do only if oracle is available
 #
@@ -11,7 +11,6 @@ castor-lib-oracle
 castor-ns-server
 castor-rh-server
 castor-rtcopy-clientserver
-castor-rtcopy-mighunter
 castor-stager-server
 castor-upv-server
 castor-vmgr-server
