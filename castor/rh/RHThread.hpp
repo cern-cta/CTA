@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/29 12:59:01 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/12/05 14:49:30 $ $Author: riojac3 $
  *
  *
  *
@@ -31,6 +31,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
+#include "castor/io/AuthServerSocket.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/dlf/Param.hpp"
 #include "castor/rh/IRHSvc.hpp"

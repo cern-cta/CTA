@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/11/29 12:59:01 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/12/05 14:49:30 $ $Author: riojac3 $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -123,6 +123,15 @@ void castor::rh::RHThread::run(void* param) {
     ack.setErrorMessage(stst.str());
   }
 
+  //if the request comes from a secure connection then set Client values in Request object.
+  bool secure=false;
+  castor::io::AuthServerSocket* authSock = dynamic_cast<castor::io::AuthServerSocket*>(sock);
+  if(authSock != 0) {
+    fr->setEuid(authSock->getClientEuid());
+    fr->setEgid(authSock->getClientEgid());
+    secure=true;
+  }
+
   // placeholder for the request uuid if any
   Cuuid_t cuuid = nullCuuid;
   if (ack.status()) {
@@ -149,7 +158,10 @@ void castor::rh::RHThread::run(void* param) {
         throw e;
       }
       client->setIpAddress(ip);
-      
+      if (secure){
+        client->setSecure(1);
+      }
+
       // handle the request. Pass the ip:port for logging purposes
       handleRequest(fr, cuuid, ip, port);
       ack.setRequestId(uuid);
