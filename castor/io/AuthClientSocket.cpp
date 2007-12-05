@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/07/09 17:14:50 $ $Author: itglp $
+ * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/05 14:05:31 $ $Author: riojac3 $
  *
  *
  *
@@ -46,16 +46,27 @@
 // Local Includes
 #include "AuthClientSocket.hpp"
 
-#include "Csec_api.h"
+//#include "Csec_api.h"
 
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::AuthClientSocket::AuthClientSocket(int socket) throw () :
+castor::io::AuthClientSocket::AuthClientSocket(int socket) throw (castor::exception::Exception) :
   ClientSocket(socket) {
-    // XXX Check what the default should be, why no exception ?
-    Csec_client_initContext(&m_security_context, 0, NULL);
+ 
+
+ if (loader()== -1){
+     castor::exception::Exception ex(serrno);
+      ex.getMessage() << "dynamic library was not proprely loaded";
+     throw ex;
+  }
+
+  if (getClient_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
+      castor::exception::Exception ex(serrno);
+      ex.getMessage()<<"The initialization of the security context failed";
+      throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -66,13 +77,19 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       int service_type)
   throw (castor::exception::Exception): ClientSocket(port, host) {
 
-    if (Csec_client_initContext(&m_security_context, 
-				 service_type, 
-				 NULL) < 0) {
+  if (loader()== -1){
+     castor::exception::Exception ex(serrno);
+      ex.getMessage() << "dynamic library was not proprely loaded";
+     throw ex;
+  }
+
+  if (getClient_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << Csec_getErrorMessage();
+      ex.getMessage()<<"The initialization of the security context failed";
       throw ex;
-    }
+  }
+
+
 }
 
 //------------------------------------------------------------------------------
@@ -82,20 +99,27 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const unsigned long ip,
 					       int service_type)
   throw (castor::exception::Exception) : ClientSocket(port, ip) {
-    if (Csec_client_initContext(&m_security_context, 
-				 service_type, 
-				 NULL) < 0) {
+
+  if (loader()==-1){
+     castor::exception::Exception ex(serrno);
+      ex.getMessage() << "dynamic library was not proprely loaded";
+     throw ex;
+  }
+
+  if (getClient_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
       castor::exception::Exception ex(serrno);
-      ex.getMessage() << Csec_getErrorMessage();
+      ex.getMessage()<<"The initialization of the security context failed";
       throw ex;
-    }
+  }
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::io::AuthClientSocket::~AuthClientSocket() throw () {
-  Csec_clearContext(&m_security_context);
+ // Csec_clearContext(&m_security_context);
+
+  getClearContext(&m_security_context);
   if (m_socket >= 0) {
     ::close(m_socket);
   }
@@ -110,11 +134,14 @@ void castor::io::AuthClientSocket::connect()
   
   castor::io::ClientSocket::connect();
 
-  if (Csec_client_establishContext(&m_security_context, 
-				    this->socket()) < 0) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << Csec_getErrorMessage();
-    throw ex;
-  }  
+
+ if (getClient_establishContext(&m_security_context ,m_socket) < 0) {
+      close();
+      castor::exception::Exception ex(serrno);
+      ex.getMessage()<<"The initialization of the security context failed";
+      throw ex;
+  }
+
+  
 }
 
