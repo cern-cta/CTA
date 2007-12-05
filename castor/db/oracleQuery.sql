@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.567 $ $Date: 2007/12/05 13:39:48 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.568 $ $Date: 2007/12/05 14:23:05 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -612,7 +612,7 @@ BEGIN
   srId := 0;
   OPEN c;
   FETCH c INTO srId;
-  UPDATE SubRequest SET status = 3, subReqId = uuidGen() WHERE id = srId
+  UPDATE SubRequest SET status = 3, subReqId = uuidGen() WHERE id = srId  -- WAITSCHED
     RETURNING retryCounter, fileName, protocol, xsize, priority, status, modeBits, flags, subReqId
     INTO srRetryCounter, srFileName, srProtocol, srXsize, srPriority, srStatus, srModeBits, srFlags, srSubReqId;
   CLOSE c;
@@ -1690,12 +1690,13 @@ BEGIN
 END;
 
 /* PL/SQL method implementing getDiskCopiesForJob */
-/* the result output is a DiskCopy status for STAGED or RECALL,
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
    -1 for user failure, -2 for subrequest put in WAITSUBREQ */
 CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
         (srId IN INTEGER, result OUT INTEGER,
          sources OUT castor.DiskCopy_Cur) AS
   nbDCs INTEGER;
+  nbDSs INTEGER;
   dcIds "numList";
   svcClassId NUMBER;
   cfId NUMBER;
@@ -1742,7 +1743,6 @@ BEGIN
      AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
   IF nbDCs > 0 THEN
     -- Yes, we have some
-    result := 0;   -- DISKCOPY_STAGED
     -- List available diskcopies for job scheduling
     OPEN sources
       FOR SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status,
@@ -1761,6 +1761,33 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = 0  -- PRODUCTION
            ORDER BY fsRate DESC;
+    -- give an hint to the stager whether internal replication can happen or not:
+    -- count the number of diskservers which DON'T contain a diskCopy for this castorFile
+    -- and are hence eligible for replication should it need to be done
+    SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs 
+      FROM DiskServer, FileSystem, DiskPool2SvcClass
+     WHERE FileSystem.diskServer = DiskServer.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = SvcClass.id
+       AND FileSystem.status = 0 -- PRODUCTION
+       AND DiskServer.status = 0 -- PRODUCTION
+       AND DiskPool2SvcClass.child = svcClassId
+       AND DiskServer.id NOT IN ( 
+         SELECT DiskServer.id
+           FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+          WHERE DiskCopy.castorfile = cfId
+            AND DiskCopy.fileSystem = FileSystem.id
+            AND FileSystem.diskpool = DiskPool2SvcClass.parent
+            AND DiskPool2SvcClass.child = svcClassId
+            AND FileSystem.diskserver = DiskServer.id
+            AND DiskCopy.status IN (0, 10));  -- STAGED, CANBEMIGR
+    IF nbDSs = 0 THEN
+      -- no room for replication
+      result := 0;  -- DISKCOPY_STAGED
+    ELSE
+      -- we have some diskservers, the stager will ultimately decide whether to replicate
+      result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY
+    END IF;
   ELSE
     -- No diskcopies available for this service class:
     -- we may have to schedule a disk to disk copy or trigger a recall
