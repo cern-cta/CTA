@@ -158,7 +158,7 @@ exportman:
 
 exportshr: 
 
-libshift.sl libshift.so: $(LIBRARIES0) $(SLIBRARIES0)
+libshift.sl libshift.so: $(LIBRARIES0) DepSharedLibraryTargetName($(COMMONCPPDIR),castorClient)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -169,7 +169,7 @@ libshift.sl libshift.so: $(LIBRARIES0) $(SLIBRARIES0)
 libcastorClient.sl libcastorClient.so: $(LIBRARIES0) $(SLIBRARIES0)
 	./makeshlib.sh preinstall ../$(COMMONCPPDIR)/SharedLibraryTargetName(castorClient) ./SharedLibraryTargetName(castorClient)
 
-libcastorCommonOra.so: $(LIBRARIES1)
+libcastorCommonOra.so: $(LIBRARIES1) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -185,7 +185,7 @@ libcastorCnvs.so: $(LIBRARIES3)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorCnvs.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS3)
 
-libcastorCommonMysql.so: $(LIBRARIES4)
+libcastorCommonMysql.so: $(LIBRARIES4) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -193,7 +193,7 @@ libcastorCommonMysql.so: $(LIBRARIES4)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorCommonMysql.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS4)
 
-libcastorCommonPgsql.so: $(LIBRARIES5)
+libcastorCommonPgsql.so: $(LIBRARIES5) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -201,7 +201,7 @@ libcastorCommonPgsql.so: $(LIBRARIES5)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorCommonPgsql.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS5)
 
-libcastorVdqmOra.so: $(LIBRARIES6)
+libcastorVdqmOra.so: $(LIBRARIES6) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCommonOra)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -209,7 +209,7 @@ libcastorVdqmOra.so: $(LIBRARIES6)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorVdqmOra.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS6)
 
-libcastorMonitor.so: $(LIBRARIES2)
+libcastorMonitor.so: $(LIBRARIES2) SharedLibraryTargetName(shift)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
@@ -217,7 +217,7 @@ libcastorMonitor.so: $(LIBRARIES2)
 	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorMonitor.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
 
-libcastorInfoPolicy.so: $(LIBRARIES7)
+libcastorInfoPolicy.so: $(LIBRARIES7) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmp
 	@mkdir tmp
