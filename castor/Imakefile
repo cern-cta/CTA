@@ -440,6 +440,13 @@ COMMONLIB = SharedLibraryTargetName(castorClient)
 
 GLOBLIB = DepSharedLibraryTargetName(shlib,shift)
 
+ifeq ($(MAJOR_CASTOR_VERSION)x,x)
+  MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
+endif
+ifeq ($(MINOR_CASTOR_VERSION)x,x)
+  MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
+endif
+
 LDFLAGS += $(DEBUG) $(MTLDFLAGS) -Wl,-soname,libcastorClient.so.$(MAJOR_CASTOR_VERSION)
 LD = g++
 
