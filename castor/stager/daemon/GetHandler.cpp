@@ -88,8 +88,8 @@ namespace castor{
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
       bool StagerGetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
-        
-        switch(stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources)){
+        int result = stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources);
+        switch(result){
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
             break;
@@ -98,10 +98,30 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
             break;
           
-          case 0:   // DISKCOPY_STAGED, schedule job
+          case 0:   // DISKCOPY_STAGED or DISKCOPY_WAITDISK2DISKCOPY, schedule job
+          case 1:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
             
-            processReplica();
+            if(result == 1)
+              // there's room for internal replication, check if it's to be done
+              processReplica();
+
+            // Fill the requested filesystems for the request being processed: we won't wait
+            // for the disk-to-disk copy if it's to be done
+            std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
+            rfs = "";
+            for(unsigned int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
+              if(!rfs.empty())
+                rfs += "|";
+              rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
+            }
+            
+            // cleanup sources list
+            for(iter = sources.begin(); iter != sources.end(); iter++) {
+              delete (*iter);
+            }
+            sources.clear();
+            
             jobManagerPart();
             
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
@@ -186,22 +206,6 @@ namespace castor{
           // We need to replicate, create a diskCopyReplica request
           stgRequestHelper->stagerService->createDiskCopyReplicaRequest(0, sources.front(), stgRequestHelper->svcClass);
         }
-        
-        // Fill the requested filesystems for the request being processed: we won't wait
-        // for the disk-to-disk copy if it's to be done
-        std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
-        rfs = "";
-        for(unsigned int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
-          if(!rfs.empty())
-            rfs += "|";
-          rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
-        }
-        
-        // cleanup sources list
-        for(iter = sources.begin(); iter != sources.end(); iter++) {
-          delete (*iter);
-        }
-        sources.clear();
       }
 
      
