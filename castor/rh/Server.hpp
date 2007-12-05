@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/08/23 06:45:11 $ $Author: waldron $
+ * @(#)$RCSfile: Server.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/12/05 14:52:59 $ $Author: riojac3 $
  *
  *
  *
@@ -32,6 +32,7 @@
 
 #define CSP_MSG_MAGIC 0xCA001
 #define CSP_RHSERVER_PORT 9002
+#define CSP_RHSERVER_SEC_PORT 9007
 #define CSP_NOTIFICATION_PORT 9001
 
 namespace castor {
@@ -42,11 +43,14 @@ namespace castor {
      * Constants
      */
     extern const char* PORT_ENV;
+    extern const char* PORT_SEC_ENV;
     extern const char* CATEGORY_CONF;
     extern const char* PORT_CONF;
+    extern const char* PORT_SEC_CONF;
     extern const char* ACCESSLISTS_ENV;
     extern const char* ACCESSLISTS_CONF;
-
+    extern const char* CASTOR_SEC_ENV;
+    extern const char* CASTOR_SEC_CONF;
     /**
      * The Request Handler server. This is where client requests
      * arrive. The main task of this component is to store them
