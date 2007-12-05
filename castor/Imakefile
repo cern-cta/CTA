@@ -185,6 +185,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStageUpdateNextRequestCnv.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
 	      io/StreamStageRepackRequestCnv.cpp \
+	      io/StreamThreadNotificationCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamFileQryResponseCnv.cpp \
               io/StreamFindReqResponseCnv.cpp \
