@@ -59,23 +59,7 @@ namespace castor{
         this->maxReplicaNb = stgRequestHelper->svcClass->maxReplicaNb();	
         this->replicationPolicy = stgRequestHelper->svcClass->replicationPolicy();
         
-        /* get the request's size required on disk */
-        /* depending if the file exist, we ll need to update this variable */
-        this->xsize = this->stgRequestHelper->subrequest->xsize();
-        
-        if( xsize > 0 ){
-          if(xsize < (stgCnsHelper->cnsFilestat.filesize)){
-            /* warning, user is requesting less bytes than the real size */
-            /* just print a message. we don't update xsize!!! */
-          }
-          
-        }else{
-          this->xsize = stgCnsHelper->cnsFilestat.filesize;
-        }
-        
-        
         this->default_protocol = "rfio";
-        
       }
       
       
@@ -88,8 +72,8 @@ namespace castor{
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
       bool StagerGetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
-        int result = stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest,this->sources);
-        switch(result){
+        int result = stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest, sources);
+        switch(result) {
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
             break;
@@ -100,38 +84,35 @@ namespace castor{
           
           case 0:   // DISKCOPY_STAGED or DISKCOPY_WAITDISK2DISKCOPY, schedule job
           case 1:
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
-            
-            if(result == 1) {
-              // there's room for internal replication, check if it's to be done
-              processReplica();
+            {
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
+              
+              if(result == 1) {
+                // there's room for internal replication, check if it's to be done
+                processReplica();
+              }
+  
+              // Fill the requested filesystems for the request being processed
+              std::string rfs = "";
+              std::list<castor::stager::DiskCopyForRecall*>::iterator it;
+              for(it = sources.begin(); it != sources.end(); it++) {
+                if(!rfs.empty()) rfs += "|";
+                rfs += (*it)->diskServer() + ":" + (*it)->mountPoint();
+                delete (*it);
+              }
+              sources.clear();
+              stgRequestHelper->subrequest->setRequestedFileSystems(rfs);
+              stgRequestHelper->subrequest->setXsize(0);   // no size requirements for a Get  
+              
+              stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
+              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              
+              /* and we have to notify the jobManager */
+              m_notifyJobManager = true;
             }
-
-            // Fill the requested filesystems for the request being processed
-            std::list<DiskCopyForRecall *>::iterator iter = sources.begin();
-            rfs = "";
-            for(unsigned int iReplica=0; (iReplica<maxReplicaNb) && (iter != sources.end()); iReplica++, iter++){
-              if(!rfs.empty())
-                rfs += "|";
-              rfs += (*iter)->diskServer()+":"+(*iter)->mountPoint();
-            }
-            
-            // cleanup sources list
-            for(iter = sources.begin(); iter != sources.end(); iter++) {
-              delete (*iter);
-            }
-            sources.clear();
-            
-            jobManagerPart();
-            
-            stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-            stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-            stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-            
-            /* and we have to notify the jobManager */
-            m_notifyJobManager = true;
             break;
-          
+           
           case 2:   // DISKCOPY_WAITTAPERECALL, create a tape copy and corresponding segment objects on stager catalogue
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
             
@@ -185,17 +166,18 @@ namespace castor{
           if(maxReplicaNb <= sources.size()) {
             replicate = false;
           }
-          // else maxReplicaNb == 0 means infinite replication
         }
         else if((replicationPolicy.empty()) == false) { 
           maxReplicaNb = checkReplicationPolicy();
           if(maxReplicaNb > 0 && maxReplicaNb <= sources.size()) {
             replicate = false;
           }
+          // else maxReplicaNb == 0 means infinite replication
         }
 
         if(replicate) {
           // We need to replicate, create a diskCopyReplica request
+          stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_GET_REPLICATION, &(stgCnsHelper->cnsFileid));
           stgRequestHelper->stagerService->createDiskCopyReplicaRequest(0, sources.front(), stgRequestHelper->svcClass);
         }
       }

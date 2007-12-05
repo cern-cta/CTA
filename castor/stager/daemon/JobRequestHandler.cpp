@@ -58,8 +58,6 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
-      
-      
       /****************************************************************************************/
       /* job oriented block                                                                  */
       /**************************************************************************************/
@@ -74,26 +72,6 @@ namespace castor{
         /* link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name ) */
         stgRequestHelper->getCastorFileFromSvcClass(stgCnsHelper);
       }
-      
-      
-      /*******************************************************************************************/
-      /* build the rmjob needed structures(buildRmJobHelperPart() and buildRmJobRequestPart())  */
-      /* and submit the job  */
-      /****************************************************************************************/
-      void StagerJobRequestHandler::jobManagerPart() throw(castor::exception::Exception){
-        
-        if(((typeRequest==OBJ_StageGetRequest) || (typeRequest==OBJ_StagePrepareToGetRequest)|| (typeRequest == OBJ_StageRepackRequest))&& (rfs.empty() == false)){
-          /* if the file exists we don't have any size requirements */
-          this->xsize = 0;
-        }
-        
-        /* update the subrequest table (coming from the latest stager_db_service.c) */
-        if(rfs.empty() == false){
-          stgRequestHelper->subrequest->setRequestedFileSystems(this->rfs);
-        }
-        stgRequestHelper->subrequest->setXsize(this->xsize);
-        
-      }      
       
     }//end namespace dbService
   }//end namespace stager

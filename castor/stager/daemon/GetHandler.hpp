@@ -80,8 +80,10 @@ namespace castor{
         /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
         /**************************************************************************************************************************/
         int checkReplicationPolicy() throw(castor::exception::Exception);
-        
-        
+
+        /// list of available diskcopies for the request to be scheduled        
+        std::list<castor::stager::DiskCopyForRecall *> sources;
+                
       }; // end StagerGetHandler class
       
       

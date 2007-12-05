@@ -47,12 +47,10 @@ namespace castor{
         /* main function which must be implemented on each handler */
         virtual void handle() throw(castor::exception::Exception) = 0;
         
-        
         /****************************************************************************************/
         /* job oriented block  */
         /****************************************************************************************/
         void jobOriented() throw(castor::exception::Exception);
-        
         
         /********************************************/	
         /* for Get, Update                         */
@@ -61,14 +59,6 @@ namespace castor{
         /*        case 2: (waitRecall) createTapeCopyForRecall */
         /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
         virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception) { return false; }; 
-        
-        
-        /*******************************************************************************************/
-        /* build the rmjob needed structures(buildRmJobHelperPart() and buildRmJobRequestPart())  */
-        /* and submit the job  */
-        /****************************************************************************************/
-        void jobManagerPart() throw(castor::exception::Exception);
-        
         
         bool notifyJobManager() {
           return m_notifyJobManager;
@@ -79,11 +69,6 @@ namespace castor{
         unsigned int maxReplicaNb;
         std::string replicationPolicy;
         std::string default_protocol;
-        
-        
-        std::string rfs;
-        
-        std::list<castor::stager::DiskCopyForRecall *> sources;
         
         unsigned int xsize;	
         
