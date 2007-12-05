@@ -162,6 +162,10 @@ namespace castor{
       {
         bool replicate = true;
         
+        if(sources.size() == 1 && sources.front()->status() == DISKCOPY_STAGEOUT) {
+          // a Get on a STAGEOUT DiskCopy is not allowed to replicate
+          maxReplicaNb = 1;
+        }
         if(maxReplicaNb > 0) {
           if(maxReplicaNb <= sources.size()) {
             replicate = false;
