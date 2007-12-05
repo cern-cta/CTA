@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/01/16 15:42:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: AbstractSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/05 14:07:07 $ $Author: riojac3 $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -155,6 +155,14 @@ namespace castor {
        */
       int socket() {
         return m_socket;
+      }
+
+      /**
+       * Resets the internal socket. Useful if this socket descriptor
+       * has been cloned elsewhere and this instance needs to be deleted
+       */
+      void resetSocket() throw() {
+        m_socket = -1;
       }
 
     protected:
