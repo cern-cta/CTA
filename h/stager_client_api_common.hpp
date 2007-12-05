@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.hpp,v 1.1 2006/12/14 14:01:14 itglp Exp $
+ * $Id: stager_client_api_common.hpp,v 1.2 2007/12/05 17:11:06 riojac3 Exp $
  *
  * Header file for internal stager client functions.
  * Note that this is only included from C++ code and it *is* C++
@@ -15,6 +15,7 @@
 #define DEFAULT_HOST "stagepublic"
 #define DEFAULT_PORT1 5007
 #define DEFAULT_PORT2 9002
+#define DEFAULT_SEC_PORT 9007
 #define DEFAULT_SVCCLASS ""  
 #define DEFAULT_VERSION 1
 
