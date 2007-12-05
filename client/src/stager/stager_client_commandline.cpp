@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.4 2007/04/04 16:39:53 gtaur Exp $
+ * $Id: stager_client_commandline.cpp,v 1.5 2007/12/05 16:30:11 riojac3 Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -53,7 +53,8 @@ int DLL_DECL getDefaultForGlobal(
 { 
 	char *hostMap, *hostDefault, *svcMap, *svcDefault;
 	int versionMap,versionDefault, portDefault, ret;
-	char* aux=NULL; 
+	char* aux=NULL;
+	char* security=NULL;
         struct group* grp=NULL; 
 	gid_t gid;
 
@@ -142,16 +143,27 @@ int DLL_DECL getDefaultForGlobal(
 	}
 
 	if (portDefault<=0){
-		aux=getenv("STAGE_PORT");
-		portDefault=aux==NULL?0:atoi(aux);
-		if (portDefault<=0){
-			aux=(char*)getconfent("STAGER", "PORT", 0);
-			portDefault=aux==NULL?0:atoi(aux);
-			if (portDefault<=0){
-			   portDefault= versionDefault==2?DEFAULT_PORT2:DEFAULT_PORT1;
+		if ((security = getenv ("CASTOR_SEC")) != 0 && strcasecmp(security,"YES") == 0 ){
+		    aux=getenv("STAGE_SEC_PORT");
+		    portDefault=aux==NULL?0:atoi(aux);
+		    if (portDefault<=0){
+		        aux=(char*)getconfent("STAGER", "SEC_PORT", 0);
+		        portDefault=aux==NULL?0:atoi(aux);
+		        if (portDefault<=0){
+		            portDefault= DEFAULT_SEC_PORT;
 			}
+		    }
+		}else{
+		    aux=getenv("STAGE_PORT");
+		    portDefault=aux==NULL?0:atoi(aux);
+		    if (portDefault<=0){
+		        aux=(char*)getconfent("STAGER", "PORT", 0);
+		        portDefault=aux==NULL?0:atoi(aux);
+		        if (portDefault<=0){
+		            portDefault= versionDefault==2?DEFAULT_PORT2:DEFAULT_PORT1;
+			}
+		    }
 		}
-		
 	}
 
 	if (*host==NULL || strcmp(*host,"")){*host=strdup(hostDefault);}	
