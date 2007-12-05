@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/04 12:24:55 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/12/05 07:03:42 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
     if (value) {
       if (!strcasecmp(value, "no")) {
 	reverseUidLookups = false;
-      } else if (!strcasecmp(value, "yes")) {
+      } else if (strcasecmp(value, "yes")) {
 	castor::exception::Exception e(EINVAL);
 	e.getMessage() << "Invalid option for ReverseUidLookups: " << value
 		       << " - must be 'yes' or 'no'" << std::endl;
