@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/11/29 13:00:01 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2007/12/05 14:40:54 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -186,7 +186,7 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw (castor::e
     {STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
     {STAGER_WAITSUBREQ, "Request moved to Wait"},
     {STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
-    {STAGER_DISKTODISK_COPY, "Triggering Disk2Disk Copy"},
+    {STAGER_GET_REPLICATION, "Triggering internal DiskCopy replication"},
     {STAGER_TAPE_RECALL, "Triggering Tape Recall"},
     {STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
     {STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
