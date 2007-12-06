@@ -98,7 +98,7 @@ namespace castor{
         }
         catch(castor::exception::Exception e){
           // should never happen: the db service is initialized in the main as well
-          castor::dlf::Param params[]={	castor::dlf::Param("Function:","StagerRequestHelper constructor")};
+          castor::dlf::Param params[]={	castor::dlf::Param("Function","StagerRequestHelper constructor")};
           
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_SERVICES_EXCEPTION, 1 ,params);	    	  
           e.getMessage()<< "Error on the Database";
@@ -174,7 +174,7 @@ namespace castor{
           groupname = this_gr->gr_name;
         }catch(castor::exception::Exception e){
           castor::dlf::Param params[]={ castor::dlf::Param("fileName",subrequest->fileName()),
-            castor::dlf::Param("Function:", "StagerRequestHelper->setUsernameAndGroupname")
+            castor::dlf::Param("Function", "StagerRequestHelper->setUsernameAndGroupname")
           };
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 2 ,params);	    
           
@@ -198,7 +198,7 @@ namespace castor{
         }
         else {
           requestUuid = nullCuuid;
-          castor::dlf::Param params[]={ castor::dlf::Param("fileName:", subrequest->fileName()) };
+          castor::dlf::Param params[]={ castor::dlf::Param("fileName", subrequest->fileName()) };
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 1, params);
         }
       }
