@@ -235,9 +235,8 @@ namespace castor {
          * deleted. A new DiskCopy is then created in
          * DISKCOPY_WAITFS status, linked to the given
          * SubRequest returned.
-         * Note that everything is commited and that the caller
-         * is responsible for the deletion of the returned
-         * DiskCopy (if any)
+         * Note that the caller is responsible for the
+         * deletion of the returned DiskCopy (if any)
          * @param castorFile the file to recreate
          * @param subreq the SubRequest recreating the file
          * @return the new DiskCopy in DISKCOPY_WAITFS status

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.83 $ $Release$ $Date: 2007/12/03 16:45:29 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.84 $ $Release$ $Date: 2007/12/06 13:13:35 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -231,9 +231,8 @@ namespace castor {
        * deleted. A new DiskCopy is then created in
        * DISKCOPY_WAITFS status, linked to the given
        * SubRequest returned.
-       * Note that everything is commited and that the caller
-       * is responsible for the deletion of the returned
-       * DiskCopy (if any)
+       * Note that the caller is responsible for the
+       * deletion of the returned DiskCopy (if any)
        * @param castorFile the file to recreate
        * @param subreq the SubRequest recreating the file
        * @return the new DiskCopy in DISKCOPY_WAITFS status

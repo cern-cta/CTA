@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.221 $ $Release$ $Date: 2007/12/03 16:45:29 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.222 $ $Release$ $Date: 2007/12/06 13:13:35 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -817,7 +817,6 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
         (5, oracle::occi::OCCISTRING, 2048);
       m_recreateCastorFileStatement->registerOutParam
         (6, oracle::occi::OCCISTRING, 2048);
-      m_recreateCastorFileStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
     m_recreateCastorFileStatement->setDouble(1, castorFile->id());
