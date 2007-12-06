@@ -1,5 +1,5 @@
 /*
- * $Id: castor.c,v 1.7 2007/08/27 14:57:45 sponcec3 Exp $
+ * $Id: castor.c,v 1.8 2007/12/06 14:51:15 itglp Exp $
  */
 
 /*	castor - display current CASTOR version */
@@ -10,8 +10,6 @@
 #include <stager_api.h>
 #include <stager_client_commandline.h>
 #include "patchlevel.h"
-#define __BASEVERSION__ "?"
-#define __PATCHLEVEL__ 0
 
 int main(int argc, char ** argv) {
   struct stage_options opts;
@@ -26,7 +24,7 @@ int main(int argc, char ** argv) {
   while ((c = getopt (argc, argv, "hvs")) != EOF) {
     switch (c) {
     case 'v':
-      printf ("%s.%d\n", BASEVERSION, PATCHLEVEL);
+      printf ("%d.%d.%d-%d\n", MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
       break;
     case 's':
       ret = stage_version(&Mv, &mv, &Mr, &mr, &opts);
@@ -36,7 +34,7 @@ int main(int argc, char ** argv) {
       break;
     case 'h':
     default:
-      printf ("usage : %s [-r] [-s] [-h]\n", argv[0]);
+      printf ("usage : %s [-v] [-s] [-h]\n", argv[0]);
       break;
     }
   }

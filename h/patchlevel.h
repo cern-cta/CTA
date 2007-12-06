@@ -1,9 +1,9 @@
 /*
- * $Id: patchlevel.h,v 1.6 2007/08/27 10:13:31 itglp Exp $
+ * $Id: patchlevel.h,v 1.7 2007/12/06 14:51:16 itglp Exp $
  */
 
 /*
- * @(#)$RCSfile: patchlevel.h,v $ $Revision: 1.6 $ $Date: 2007/08/27 10:13:31 $ CERN IT-PDP/CS F. Hemmer
+ * @(#)$RCSfile: patchlevel.h,v $ $Revision: 1.7 $ $Date: 2007/12/06 14:51:16 $ CERN IT-PDP/CS F. Hemmer
  */
 
 /*
@@ -16,12 +16,19 @@
 #ifndef _PATCHLEVEL_H_INCLUDED_
 #define _PATCHLEVEL_H_INCLUDED_
 
-#define BASEVERSION     __BASEVERSION__
 #define MAJORVERSION    __MAJORVERSION__
 #define MINORVERSION    __MINORVERSION__
 #define MAJORRELEASE    __MAJORRELEASE__
 #define MINORRELEASE    __MINORRELEASE__
-#define PATCHLEVEL      __PATCHLEVEL__
+#define BASEVERSION     __BASEVERSION__
 #define TIMESTAMP       __TIMESTAMP__
+
+/* For untagged builds (e.g. from CVS) we redefine the replacement macros */
+#define __MAJORVERSION__ 0
+#define __MINORVERSION__ 0
+#define __MAJORRELEASE__ 0
+#define __MINORRELEASE__ 0
+
+#define PATCHLEVEL      MINORRELEASE
 
 #endif /* _PATCHLEVEL_H_INCLUDED_ */

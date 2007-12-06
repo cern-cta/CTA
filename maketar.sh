@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.67 2007/12/04 12:50:47 waldron Exp $
+# $Id: maketar.sh,v 1.68 2007/12/06 14:51:14 itglp Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -89,16 +89,16 @@ perl -pi -e s/__B__/${b}/g CASTOR.spec
 perl -pi -e s/__C__/${c}/g CASTOR.spec
 perl -pi -e s/__D__/${d}/g CASTOR.spec
 #
-## Replace __BASEVERSION__, __PATCHLEVEL__ and __TIMESTAMP__ in patchlevel.h
+## Replace __X__ macros in patchlevel.h
 #
 timestamp=`date "+%s"`
-perl -pi -e s/__MAJORVERSION__/${a}/g h/patchlevel.h
-perl -pi -e s/__MINORVERSION__/${b}/g h/patchlevel.h
-perl -pi -e s/__MAJORRELEASE__/${c}/g h/patchlevel.h
-perl -pi -e s/__MINORRELEASE__/${d}/g h/patchlevel.h
-perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/g h/patchlevel.h
-perl -pi -e s/__PATCHLEVEL__/${d}/g h/patchlevel.h
-perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/g h/patchlevel.h
+perl -pi -e s/__MAJORVERSION__/${a}/ h/patchlevel.h
+perl -pi -e s/__MINORVERSION__/${b}/ h/patchlevel.h
+perl -pi -e s/__MAJORRELEASE__/${c}/ h/patchlevel.h
+perl -pi -e s/__MINORRELEASE__/${d}/ h/patchlevel.h
+perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/ h/patchlevel.h
+perl -pi -e s/__PATCHLEVEL__/${d}/ h/patchlevel.h
+perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/ h/patchlevel.h
 #
 ## make sure imake is not shipped with object files
 #

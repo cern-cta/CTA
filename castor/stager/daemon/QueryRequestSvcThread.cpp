@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.63 $ $Release$ $Date: 2007/11/20 16:46:45 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2007/12/06 14:53:14 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -66,16 +66,7 @@
 #include "stager_client_api.h"
 #include "Cns_api.h"
 #include "u64subr.h"
-
-// All this to get the default version. The defines
-// are here to be able to compile in case the patchlevel
-// file was not properly filled with proper numbers
-// since this is done only by maketar
-#include "patchlevel.h"
-#define __MAJORVERSION__ -1
-#define __MINORVERSION__ -1
-#define __MAJORRELEASE__ -1
-#define __MINORRELEASE__ -1
+#include "patchlevel.h"    // to get the default version
 
 //-----------------------------------------------------------------------------
 // constructor
