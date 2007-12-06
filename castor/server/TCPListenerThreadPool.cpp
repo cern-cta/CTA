@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/09/04 12:32:10 $ $Author: waldron $
+ * @(#)$RCSfile: TCPListenerThreadPool.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/12/06 14:54:43 $ $Author: itglp $
  *
  * Listener thread pool based on TCP
  *
@@ -72,7 +72,7 @@ void castor::server::TCPListenerThreadPool::listenLoop() {
       // socket resulting in a bad file descriptor during the thread shutdown
       // process. If we encounter this problem we exit the loop. 
       if (any.code() == EBADF) {
-	break;
+        break;
       }
       clog() << ERROR << "Error while accepting connections to port " << m_port << ": "
              << any.getMessage().str() << std::endl;
