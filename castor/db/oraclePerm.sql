@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.568 $ $Date: 2007/12/05 14:23:05 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.569 $ $Date: 2007/12/06 10:37:22 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2446,7 +2446,6 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing recreateCastorFile */
 CREATE OR REPLACE PROCEDURE recreateCastorFile(cfId IN INTEGER,
                                                srId IN INTEGER,
                                                dcId OUT INTEGER,
@@ -2468,22 +2467,24 @@ BEGIN
   SELECT id INTO unused FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut ?)
   BEGIN
-    -- check that we are a Put
-    SELECT StagePutRequest.svcClass INTO putSC
-      FROM StagePutRequest, SubRequest
+    -- check that we are a Put/Update
+    SELECT Request.svcClass INTO putSC
+      FROM (SELECT id, svcClass FROM StagePutRequest UNION ALL
+            SELECT id, svcClass FROM StageUpdateRequest) Request, SubRequest
      WHERE SubRequest.id = srId
-       AND StagePutRequest.id = SubRequest.request;
+       AND Request.id = SubRequest.request;
     BEGIN
-      -- check that there is a PrepareToPut going on
-      SELECT SubRequest.diskCopy, StagePrepareToPutRequest.svcClass INTO dcId, pputSC
-        FROM StagePrepareToPutRequest, SubRequest
+      -- check that there is a PrepareToPut/Update going on
+      SELECT SubRequest.diskCopy, PrepareRequest.svcClass INTO dcId, pputSC
+        FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
+              SELECT id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.CastorFile = cfId
-         AND StagePrepareToPutRequest.id = SubRequest.request
+         AND PrepareRequest.id = SubRequest.request
          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      -- if we got here, we are a Put inside a PrepareToPut
+      -- if we got here, we are a Put/Update inside a PrepareToPut
       -- however, are we in the same service class ?
       IF putSC != pputSC THEN
-        -- No, this means we are a put and another PrepareToPut
+        -- No, this means we are a Put/Update and another PrepareToPut
         -- is already running in a different service class. This is forbidden
         dcId := 0;
         UPDATE SubRequest
@@ -2494,25 +2495,26 @@ BEGIN
         COMMIT;
         RETURN;
       END IF;
-      -- if we got here, we are a Put inside a PrepareToPut
+      -- if we got here, we are a Put/Update inside a PrepareToPut
       -- both running in the same service class
       contextPIPP := 1;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- if we got here, we are a standalone Put
+      -- if we got here, we are a standalone Put/Update
       contextPIPP := 0;
     END;   
   EXCEPTION WHEN NO_DATA_FOUND THEN
     BEGIN
-      -- we are a prepareToPut. Fine, but are we the only one ?
+      -- we are a prepareToPut/Update. Fine, but are we the only one ?
       SELECT SubRequest.diskCopy INTO dcId
-        FROM StagePrepareToPutRequest, SubRequest
-       WHERE SubRequest.CastorFile = cfId
-         AND StagePrepareToPutRequest.id = SubRequest.request
+        FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
+              SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
+       WHERE SubRequest.castorFile = cfId
+         AND PrepareRequest.id = SubRequest.request
          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
       -- Yes, everything is ok then
       contextPIPP := 0;
     EXCEPTION WHEN TOO_MANY_ROWS THEN
-      -- No, this means we are a PrepareToPut and another PrepareToPut
+      -- No, this means we are a PrepareToPut/Update and another PrepareToPut
       -- is already running. This is forbidden
       dcId := 0;
       UPDATE SubRequest
@@ -2533,8 +2535,10 @@ BEGIN
       -- get the svcclass
       SELECT svcClass INTO svcClassId
         FROM Subrequest,
-             (SELECT id, svcClass from StagePutRequest UNION ALL
-              SELECT id, svcClass from StagePrepareToPutRequest) Request
+             (SELECT id, svcClass FROM StagePutRequest UNION ALL
+              SELECT id, svcClass FROM StageUpdateRequest UNION ALL
+              SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
+              SELECT id, svcClass FROM StagePrepareToUpdateRequest) Request
        WHERE SubRequest.id = srId
          AND Request.id = SubRequest.request;
       IF (checkFailJobsWhenNoSpace(svcClassId) = 1) THEN
