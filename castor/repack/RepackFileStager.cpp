@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2007/12/06 17:09:15 $ $Author: itglp $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2007/12/06 18:27:01 $ $Author: itglp $
  *
  *
  *
@@ -360,7 +360,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
 
   /** Uses a BaseClient to handle the request */
   castor::client::BaseClient client(stage_getClientTimeout());
-  client.setOption(opts, &req);
+  client.setOption(opts, req);
 
   client.setAuthorizationId(rsreq->repackrequest()->userId(), rsreq->repackrequest()->groupId());
   

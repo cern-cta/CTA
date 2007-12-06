@@ -159,9 +159,7 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
   opts.stage_port = 0; 
   opts.stage_version = 0;
 
-  
   castor::client::BaseClient client(stage_getClientTimeout());
-  client.setOption(NULL, &req);       /** to initialize the RH,stager, etc. */
   /* set the service class information from repackrequest */
   getStageOpts(&opts, sreq);
   client.setOption(&opts, &req);
