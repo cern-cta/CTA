@@ -3,11 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: solveln.c,v $ $Revision: 1.5 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Felix Hassine";
-#endif /* not lint */
-
-
 #include <errno.h>
 #include <stdio.h>
 #if defined(_WIN32)

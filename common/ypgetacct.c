@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char cvsId[] = "@(#)$RCSfile: ypgetacct.c,v $ $Revision: 1.6 $ $Date: 2001/09/16 05:43:03 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /* ypgetacct()              Getting account id in YP      */
 
 #if defined(NIS)

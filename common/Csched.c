@@ -1,15 +1,11 @@
 /*
- * $Id: Csched.c,v 1.2 2007/02/13 07:52:24 waldron Exp $
+ * $Id: Csched.c,v 1.3 2007/12/06 14:24:47 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 1999-2000 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Csched.c,v $ $Revision: 1.2 $ $Date: 2007/02/13 07:52:24 $ CERN IT-PDP/DM Olof Barring, Jean-Damien Durand";
-#endif /* not lint */
 
 #include <Csched_api.h>
 #include <Cthread_api.h>

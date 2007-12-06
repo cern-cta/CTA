@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#if !defined(lint)
-static char sccsid[] =  "@(#)socket.c,v 1.7 2000/05/31 10:33:54 CERN/IT/PDP/DM Olof Barring";
-#endif /* lint */
-
 /* socket.c     Generalized network interface                           */
 
 

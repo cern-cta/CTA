@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.18 $ $Date: 2007/02/13 07:52:24 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.19 $ $Date: 2007/12/06 14:24:49 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
 #endif /* not lint */
 
 /*	send_scsi_cmd - Send a SCSI command to a device */
@@ -57,9 +57,6 @@ static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.18 $ $Date:
 /* Impossible unless very very old kernels: */
 #ifndef KERNEL_VERSION
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
-#endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
-#include <linux/compiler.h>
 #endif
 #include SCSIINC
 #include <sys/stat.h>

@@ -4,11 +4,6 @@
  * All rights reserved
  */
 
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpwd.c,v $ $Revision: 1.8 $ $Date: 2002/12/11 08:31:50 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /*
  * Cpwd.c - CASTOR MT-safe wrappers on some pwd routines.
  */ 

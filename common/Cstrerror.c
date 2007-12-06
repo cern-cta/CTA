@@ -4,7 +4,7 @@
  */
 
 /*
- * $Id: Cstrerror.c,v 1.3 2007/02/13 07:52:24 waldron Exp $
+ * $Id: Cstrerror.c,v 1.4 2007/12/06 14:24:47 sponcec3 Exp $
  */
 
 #include <string.h>
@@ -13,10 +13,6 @@
 #include "osdep.h"
 #include "Cstrerror.h"
 #include "Cglobals.h"
-
-#ifndef lint
-static char sccsid[] =  "@(#)$RCSfile: Cstrerror.c,v $ $Revision: 1.3 $ $Date: 2007/02/13 07:52:24 $ CERN IT-ADC/CA Jean-Damien Durand";
-#endif
 
 #define INTERNAL_BUFLEN 1023
 

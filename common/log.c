@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: log.c,v $ $Revision: 1.18 $ $Date: 2007/02/13 07:52:24 $ CERN IT/ADC/CA Jean-Damien Durand";
-#endif /* not lint */
-
 /* log.c        - generalized logging routines                          */
 
 #if defined(_WIN32)

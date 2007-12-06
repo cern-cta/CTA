@@ -30,9 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgetopt.c,v $ $Revision: 1.8 $ $Date: 2004/04/28 15:09:05 $ CERN IT-PDP/DM Jean-Damien Durand";
-#endif /* lint */
 
 /* ============== */
 /* System headers */

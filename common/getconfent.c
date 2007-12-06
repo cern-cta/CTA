@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char cvsId[] = "@(#)$RCSfile: getconfent.c,v $ $Revision: 1.17 $ $Date: 2007/04/16 13:19:57 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

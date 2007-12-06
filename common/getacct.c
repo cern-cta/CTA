@@ -4,10 +4,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getacct.c,v $ $Revision: 1.7 $ $Date: 2000/05/31 10:33:53 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /*  getacct() - Getting the current account id  */
 
 /*

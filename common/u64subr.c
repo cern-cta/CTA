@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: u64subr.c,v $ $Revision: 1.3 $ $Date: 2007/02/13 07:52:24 $ CERN IT-ADC/CA Jean-Damien Durand";
-#endif /* not lint */
- 
 #include <stdio.h>       /* For sprintf */
 #include <string.h>      /* For memset */
 #include <ctype.h>       /* For isspace and al. */

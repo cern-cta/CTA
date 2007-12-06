@@ -3,11 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getacctent.c,v $ $Revision: 1.8 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
-
-
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>

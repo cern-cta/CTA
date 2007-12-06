@@ -1,15 +1,11 @@
 /*
- * $Id: Cexportconf.c,v 1.2 2003/10/31 12:53:24 jdurand Exp $
+ * $Id: Cexportconf.c,v 1.3 2007/12/06 14:24:45 sponcec3 Exp $
  */
 
 /*   
  * Copyright (C) 1993-2000 by CERN/IT/DS/HSM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cexportconf.c,v $ $Revision: 1.2 $ $Date: 2003/10/31 12:53:24 $ CERN IT/DS/HSM Benjamin Couturier";
-#endif /* not lint */
 
 #include "Castor_limits.h"
 #include "osdep.h"

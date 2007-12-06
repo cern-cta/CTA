@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getfilep.c,v $ $Revision: 1.4 $ $Date: 2000/06/05 05:37:37 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
-
 /* getfilep.c   Fortran I/O to C mapper                                 */
 
 /*

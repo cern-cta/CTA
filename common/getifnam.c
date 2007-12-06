@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getifnam.c,v $ $Revision: 1.10 $ $Date: 2005/07/11 10:09:32 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
-
 /* getifnam.c   Get connected socket interface name                     */
 
 #include <stdio.h>                      /* Standard input/output        */

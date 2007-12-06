@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: getuser.c,v $ $Revision: 1.11 $ $Date: 2003/10/31 12:34:42 $ CERN IT/ADC/CA Jean-Damien Durand";
-#endif /* not lint */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

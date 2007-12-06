@@ -1,5 +1,5 @@
 /*
- * $Id: Cglobals.c,v 1.17 2001/06/12 07:42:54 jdurand Exp $
+ * $Id: Cglobals.c,v 1.18 2007/12/06 14:24:46 sponcec3 Exp $
  */
 
 /*
@@ -7,9 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cglobals.c,v $ $Revision: 1.17 $ $Date: 2001/06/12 07:42:54 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* lint */
 /*
  * Castor_globals.c - central entry to maintain all Castor globals
  */

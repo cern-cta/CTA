@@ -5,10 +5,6 @@
 
 /* trace.c      General tracing facility                                */
 
-#ifndef lint
-static char sccsid[] = "@(#)trace.c,v 1.7 2000/05/31 10:33:54 CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 #include <stdio.h>              /* standard input/output definitions    */
 #include <stdlib.h>
 #include <stdarg.h>             /* variable argument list definitions   */

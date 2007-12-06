@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char cvsId[] = "@(#)$RCSfile: setnetio.c,v $ $Revision: 1.7 $ $Date: 2005/01/20 16:26:03 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
-
 /* setnetio.c   Set network input/output characteristics                */
 
 #include <stdio.h>                      /* Standard Input/Output        */

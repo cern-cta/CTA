@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: socket_timeout.c,v $ $Revision: 1.23 $ $Date: 2005/07/11 10:34:24 $ CERN IT-PDP/DM Jean-Damien Durand";
-#endif /* not lint */
-
 #if defined(linux)
 #define USE_POLL_INSTEAD_OF_SELECT
 /* #define __FD_SETSIZE 65536 */

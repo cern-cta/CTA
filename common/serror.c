@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] =  "@(#)serror.c,v 1.57 2003/05/09 09:35:12 CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /* serror.c     Global error reporting routines                         */
 
 #include <stdio.h>      /* standard input/output                        */

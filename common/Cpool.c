@@ -6,9 +6,6 @@
 /* ------------------------------------ */
 /* For the what command                 */
 /* ------------------------------------ */
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cpool.c,v $ $Revision: 1.39 $ $Date: 2007/02/13 07:52:24 $ CERN IT-ADC-CA/HSM Jean-Damien Durand";
-#endif /* not lint */
 
 #include <Cpool_api.h>
 /* We do these #undef because we want to create entry points */

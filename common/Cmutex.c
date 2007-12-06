@@ -1,5 +1,5 @@
 /*
- * $Id: Cmutex.c,v 1.1 2000/07/07 11:05:56 jdurand Exp $
+ * $Id: Cmutex.c,v 1.2 2007/12/06 14:24:46 sponcec3 Exp $
  */
 
 /*
@@ -7,9 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cmutex.c,v $ $Revision: 1.1 $ $Date: 2000/07/07 11:05:56 $ CERN/IT/PDP/DM Jean-Damien Durand";
-#endif /* lint */
 /*
  * Cmutex.c - central entry to get and release all Castor mutexes
  */

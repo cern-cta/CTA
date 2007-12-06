@@ -5,10 +5,6 @@
  */
 
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cnetdb.c,v $ $Revision: 1.11 $ $Date: 2003/09/27 09:02:54 $ CERN IT-PDP/DM Olof Barring";
-#endif /* not lint */
-
 /*
  * Cnetdb.c - CASTOR MT-safe wrappers on netdb routines.
  */ 
