@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char cvsId[] = "@(#)$RCSfile: remote.c,v $ $Revision: 1.17 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>

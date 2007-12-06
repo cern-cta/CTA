@@ -5,10 +5,6 @@
  */
 
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cgrp.c,v $ $Revision: 1.3 $ $Date: 2002/12/11 08:31:49 $ CERN IT-PDP/DM Jean-Damien Durand";
-#endif /* not lint */
-
 /*
  * Cgrp.c - CASTOR MT-safe wrappers on some grp routines.
  */ 

@@ -1,10 +1,6 @@
 /*
- * $Id: Cregexp.c,v 1.5 2007/02/13 07:52:24 waldron Exp $
+ * $Id: Cregexp.c,v 1.6 2007/12/06 14:24:47 sponcec3 Exp $
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: Cregexp.c,v $ $Revision: 1.5 $ $Date: 2007/02/13 07:52:24 $ CERN/IT/PDP/DM Jean-Damien Durand";
-#endif /* not lint */
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: readc.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Antoine Trannoy";
-#endif /* not lint */
-
 /* readc.c              Fortran callable C I/O functions                */
 
 /*
