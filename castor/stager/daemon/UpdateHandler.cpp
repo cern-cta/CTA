@@ -112,6 +112,7 @@ namespace castor{
         }      
         h->handle();   // may throw exception, just forward it - logging is done in the callee
         delete h;
+        stgCnsHelper = 0;   // the delegated handler has already deleted this object
       }
       
       
