@@ -84,7 +84,9 @@ namespace castor{
       /* since the StagerCnsHelper is created in this class */
       /* it will be deleted in its destructor */
       StagerRequestHandler:: ~StagerRequestHandler() throw(){
-	delete stgCnsHelper;
+        if(stgCnsHelper)
+          delete stgCnsHelper;
+        stgCnsHelper = 0;
       }
       
    }//end namespace dbService
