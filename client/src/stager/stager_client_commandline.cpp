@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.5 2007/12/05 16:30:11 riojac3 Exp $
+ * $Id: stager_client_commandline.cpp,v 1.6 2007/12/06 14:46:21 itglp Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -26,10 +26,10 @@
 #include "serrno.h"
 #include "Cglobals.h"
 #include "Csnprintf.h"
-#include "stager_api.h"
 #include "stager_mapper.h"
 #include "stager_client_api_common.hpp"
 #include "stager_client_commandline.h"
+#include "Cgetopt.h"
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
@@ -48,24 +48,23 @@ int DLL_DECL getDefaultForGlobal(
 			int* port,
 			char** svc,
 			int* version)
-
-
 { 
 	char *hostMap, *hostDefault, *svcMap, *svcDefault;
 	int versionMap,versionDefault, portDefault, ret;
-	char* aux=NULL;
+	char* aux=NULL; 
+  struct group* grp=NULL; 
 	char* security=NULL;
-        struct group* grp=NULL; 
 	gid_t gid;
 
-        hostMap=hostDefault=svcMap=svcDefault=NULL;
-        versionMap=versionDefault=portDefault=ret=0;
+  hostMap=hostDefault=svcMap=svcDefault=NULL;
+  versionMap=versionDefault=portDefault=ret=0;
 
-	if(host == NULL || port == NULL || svc == NULL || version == NULL ){ return (-1);}
+	if(host == NULL || port == NULL || svc == NULL || version == NULL )
+    { return (-1);}
 	if (*host) hostDefault=strdup(*host);
 	else hostDefault=NULL;
 	
-        if (*svc) svcDefault=strdup(*svc);
+  if (*svc) svcDefault=strdup(*svc);
 	else svcDefault=NULL;
 
 	portDefault=*port;
@@ -175,6 +174,105 @@ int DLL_DECL getDefaultForGlobal(
 }
 
 
+/* command line parser for a generic stager command line client */
+int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
+                          char** stage_host, char** service_class,
+                          char** usertag, int* display_reqid)
+{
+  int nargs, Coptind, Copterr, errflg;
+  char c;
+  static struct Coptions longopts[] =
+    {
+      {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+      {"service_class", REQUIRED_ARGUMENT,  NULL,      'S'},
+      {"usertag",       REQUIRED_ARGUMENT,  NULL,      'U'},
+      {"display_reqid", NO_ARGUMENT,        NULL,      'r'},
+      {"help",          NO_ARGUMENT,        NULL,      'h'},
+      {NULL,            0,                  NULL,        0}
+    };
+
+  nargs = argc;
+  Coptind = 1;
+  Copterr = 1;
+  errflg = 0;
+
+  while ((c = Cgetopt_long (argc, argv, "M:S:U:rh", longopts, NULL)) != -1) {
+    switch (c) {
+    case 'M':
+      callback(Coptarg);
+      break;
+    case 'S':
+      *service_class = Coptarg;
+      break;
+    case 'U':
+      *usertag = Coptarg;
+      break;
+    case 'r':
+      *display_reqid = 1;
+      break;
+    case 'h':
+    case '?':
+      errflg++;
+      break;
+    default:
+      errflg++;
+      break;
+    }
+    if (errflg != 0) break;
+  }
+
+  return errflg;
+}
 
 
+int DLL_DECL printFileResponses(int nbresps, struct stage_fileresp *responses) {
+  int i;
+  if (responses == NULL) {
+    fprintf(stderr, "Error: Response object is NULL\n");
+    exit(EXIT_FAILURE);
+  }
 
+  int rc = EXIT_SUCCESS;
+  printf("Received %d responses\n", nbresps);
+
+  for (i=0; i<nbresps; i++) {
+    printf("%s %s",
+           responses[i].filename,
+           stage_statusName(responses[i].status));
+    if (responses[i].errorCode != 0) {
+      printf(" %d %s",
+             responses[i].errorCode,
+             responses[i].errorMessage);
+      rc = EXIT_FAILURE;
+    }
+    printf ("\n");
+  }
+
+  return rc;
+}
+
+int DLL_DECL printPrepareResponses(int nbresps, struct stage_prepareToGet_fileresp *responses) {
+  int i;
+  if (responses == NULL) {
+    fprintf(stderr, "Error: Response object is NULL\n");
+    exit(EXIT_FAILURE);
+  }
+
+  int rc = EXIT_SUCCESS;
+  printf("Received %d responses\n", nbresps);
+
+  for (i=0; i<nbresps; i++) {
+    printf("%s %s",
+           responses[i].filename,
+           stage_statusName(responses[i].status));
+    if (responses[i].errorCode != 0) {
+      printf(" %d %s",
+             responses[i].errorCode,
+             responses[i].errorMessage);
+      rc = EXIT_FAILURE;
+    }
+    printf ("\n");
+  }
+
+  return rc;
+}

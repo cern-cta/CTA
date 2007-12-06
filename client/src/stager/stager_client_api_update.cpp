@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.14 2007/07/02 14:16:35 riojac3 Exp $
+ * $Id: stager_client_api_update.cpp,v 1.15 2007/12/06 14:46:21 itglp Exp $
  */
 
 /*
@@ -23,7 +23,6 @@
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/RequestHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/StagePrepareToUpdateRequest.hpp"
 #include "castor/stager/StageUpdateRequest.hpp"
@@ -76,10 +75,8 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePrepareToUpdateRequest req;
 
-    castor::stager::RequestHelper reqh(&req);  
     ret=setDefaultOption(opts);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId(); 
     if (ret==-1){free(opts);}
 
@@ -207,10 +204,8 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
       req.setUserTag(std::string(userTag));
     }
 
-    castor::stager::RequestHelper reqh(&req);
     ret=setDefaultOption(opts);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId(); 
     if (ret==-1){free(opts);}  
     if (0 != protocol) {

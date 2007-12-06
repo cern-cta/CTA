@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.3 $ $Release$ $Date: 2007/05/24 13:53:35 $ $Author: waldron $
+ * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/06 14:46:23 $ $Author: itglp $
  *
  * command line for stager_setFileGCWeight
  *
@@ -30,6 +30,7 @@
 #include <stager_api.h>
 #include <serrno.h>
 #include "Cgetopt.h"
+#include "stager_client_commandline.h"
 
 static struct Coptions longopts[] =
   {
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]) {
   int nbresps, nbreqs;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
-  int errflg, rc, i;
+  int errflg, rc;
   
   /* Parsing the command line */
   memset(&errbuf,  '\0', sizeof(errbuf));
@@ -73,29 +74,14 @@ int main(int argc, char *argv[]) {
                              &reqid,
                              NULL);
  
-  if (rc < 0) { 
-    fprintf(stderr, "Error %s\n", sstrerror(serrno));
+  if (rc < 0) {
+    fprintf(stderr, "Error: %s\n", sstrerror(serrno));
     fprintf(stderr, "<%s>\n", errbuf);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
-  if (response == NULL) {
-    fprintf(stderr, "Error: Response object is NULL\n");
-    exit(1);
-  }
-  
-  fprintf(stdout, "%s Received %d responses\n", reqid, nbresps);
-  for (i = 0; i < nbresps; i++) {
-    fprintf(stdout, "%s:%s",response[i].filename, 
-            stage_statusName(response[i].status));
-    if (response[i].errorCode != 0) {      
-      fprintf(stdout, " (%d, %s)",  
-              response[i].errorCode,  
-              response[i].errorMessage);
-    }
-    fprintf(stdout, "\n");
-  }
-  return 0;
+  rc = printFileResponses(nbresps, response);
+  return rc;
 }
 
 

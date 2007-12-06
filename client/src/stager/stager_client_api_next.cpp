@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_next.cpp,v 1.7 2007/07/02 14:16:35 riojac3 Exp $
+ * $Id: stager_client_api_next.cpp,v 1.8 2007/12/06 14:46:21 itglp Exp $
  */
 
 /*
@@ -24,7 +24,6 @@
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/RequestHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/ReqIdRequest.hpp"
 #include "castor/stager/StageGetNextRequest.hpp"
@@ -63,9 +62,7 @@ static int _processReqIdRequest(char *func,
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
     ret=setDefaultOption(opts);
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
     

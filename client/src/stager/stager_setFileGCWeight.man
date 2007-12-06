@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_setFileGCWeight.man,v $ $Revision: 1.1 $ $Date: 2005/11/25 11:11:01 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_setFileGCWeight.man,v $ $Revision: 1.2 $ $Date: 2007/12/06 14:46:23 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2005/11/25 11:11:01 $" CASTOR "STAGER Commands"
+.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2007/12/06 14:46:23 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_setFileGCWeight \- Sets the weight of a file for the garbage collection 
 .SH SYNOPSIS
@@ -38,7 +38,7 @@ the new weight of the file(s)
 
 .SH EXAMPLE
 .fi
-# stager_setFileGCWeight -M /castor/cern.ch/user/t/test/file1 2.4
+$ stager_setFileGCWeight -M /castor/cern.ch/user/t/test/file1 2.4
 .fi
 42cd469e-0000-1000-81ea-8514e17e0800 Received 1 responses
 .fi

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_version.cpp,v 1.1 2007/08/27 10:37:28 sponcec3 Exp $
+ * $Id: stager_client_api_version.cpp,v 1.2 2007/12/06 14:46:21 itglp Exp $
  */
 
 /* ============= */
@@ -13,7 +13,6 @@
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/RequestHelper.hpp"
 #include "castor/rh/Response.hpp"
 #include "castor/query/VersionResponse.hpp"
 #include "castor/query/VersionQuery.hpp"
@@ -41,11 +40,9 @@ EXTERN_C int DLL_DECL stage_version(int *majorVersion,
 
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client;
-    ret=setDefaultOption(opts);
     castor::query::VersionQuery req;
-    castor::stager::RequestHelper reqh(&req);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    ret=setDefaultOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
 

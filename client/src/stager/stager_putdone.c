@@ -1,11 +1,28 @@
-/*
+/******************************************************************************
+ *                      stager_putdone.c
  *
- */
-
-/*
- * Copyright (C) 2005 by CERN/IT/ADC/CA Benjamin Couturier
- * All rights reserved
- */
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003-2007 CERN/IT
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: stager_putdone.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/06 14:46:22 $ $Author: itglp $
+ *
+ * command line for stage_putDone
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,172 +32,89 @@
 #include "Cgetopt.h"
 #include "stager_client_commandline.h"
 
-struct cmd_args {
-  int nbreqs;
-  struct stage_filereq* reqs;
-  char *requestid;
-  struct stage_options opts;
-};
-
-static struct Coptions longopts[] =
-  {
-    {"hsm_filename",       REQUIRED_ARGUMENT,  NULL,      'M'},
-    {"requestid",          REQUIRED_ARGUMENT,  NULL,      'r'},
-    {"help",               NO_ARGUMENT,        NULL,      'h'},
-    {NULL,                 0,                  NULL,        0}
-  };
-
-
-
 void usage _PROTO((char *));
-int cmd_parse(int argc, char *argv[], struct cmd_args *args);
-int cmd_countHsmFiles(int argc, char *argv[]);
 
-#define ERRBUFSIZE 255
+/* Global vars used by common functions */
+static int filenb;
+static struct stage_filereq *requests;
+
+
+/* Uses the filenb global variable
+   that should be set to 0 before 1st call */
+static int DLL_DECL _countFiles(char *filename) {
+  filenb++;
+  return 0;
+}
+
+/* uses the requests global variable,
+   which should already be initialized */
+static int DLL_DECL _fillStruct(char *filename) {
+  requests[filenb].filename = (char *)strdup(filename);
+  filenb++;
+  return 0;
+}
+
 
 int
 main(int argc, char *argv[]) {
-  struct cmd_args args;
-  struct stage_fileresp *response;
-  int nbresps;
+  struct stage_fileresp *responses;
+  int errflg, total_nb_files, rc, nbresps, ret;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
-  int errflg, rc, ret = 1;
+  int display_reqid = 0;
+  char* usertag = NULL;
+  char* unused = NULL;
+  struct stage_options opts;
+  opts.stage_host = NULL;
+  opts.service_class = NULL;
+  opts.stage_port=0;
+  opts.stage_version=2;
+  usertag = NULL;
+  filenb = 0;
 
-
-  /* Parsing the command line */
-  memset(&errbuf,  '\0', sizeof(errbuf));
-  args.opts.stage_host = NULL;
-  args.opts.service_class = NULL;
-  args.opts.stage_version=2;
-  args.opts.stage_port=0;
-  
-  errflg =  cmd_parse(argc, argv, &args);
-  if (errflg != 0) {
+  /* Parsing command line */
+  errflg =  parseCmdLine(argc, argv, _countFiles, &opts.stage_host, &opts.service_class, &usertag, &display_reqid);
+  if (errflg != 0 || filenb <= 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
-  
-  /* Setting the error buffer */
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  total_nb_files = filenb;
 
-   ret=getDefaultForGlobal (&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class,&args.opts.stage_version);
-   ret=1;
+  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
+
+  /* Setting the error buffer and preparing the array of file requests */
+  stage_seterrbuf(errbuf, sizeof(errbuf));
+  create_filereq(&requests, total_nb_files);
+
+  /* Iterating over the command line again to fill in the array of requests */
+  filenb = 0;
+  errflg = parseCmdLine(argc, argv, _fillStruct, &unused, &unused, &unused, &display_reqid);
 
   /* Performing the actual call */
-  rc = stage_putDone(args.requestid,
-                     args.reqs,
-                     args.nbreqs,
-                     &response,
+  rc = stage_putDone(usertag,
+                     requests,
+                     total_nb_files,
+                     &responses,
                      &nbresps,
                      &reqid,
-                     &(args.opts));
+                     &opts);
 
   if (rc < 0) {
     fprintf(stderr, "Error: %s\n", sstrerror(serrno));
     fprintf(stderr, "<%s>\n", errbuf);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
-  if (response == NULL) {
-    fprintf(stderr, "Error: Response object is NULL\n");
-    exit(1);
+  ret = printFileResponses(nbresps, responses);
+  if (display_reqid) {
+    printf("Stager request ID: %s\n", reqid);
   }
 
-  if (response->errorCode != 0) {
-    fprintf(stderr, "Error: %d (%s) Status: %s\n",
-            response->errorCode,
-            response->errorMessage,
-            stage_statusName(response->status));
-    ret = 1;
-  } else {
-    ret = 0;
-  }
   return ret;
 }
 
 
-
-int
-cmd_parse(int argc, char *argv[], struct cmd_args *args) {
-  int nbfiles, Coptind, Copterr, errflg;
-  char c;
-
-  /* Reinitializing the structure with null pointers */
-  memset(args, '\0', sizeof(struct cmd_args));
-
-  /* Counting the number of HSM files */
-  if ((args->nbreqs = cmd_countHsmFiles(argc, argv)) < 0) {
-    return -1;
-  }
-
-  if (args->nbreqs > 0) {
-    /* Creating the structure for files */
-    create_filereq(&(args->reqs), args->nbreqs);
-  }
-
-  /* Now parsing the command line */
-  Coptind = 1;
-  Copterr = 1;
-  errflg = 0;
-  nbfiles = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:r:h", longopts, NULL)) != -1) {
-    switch (c) {
-    case 'M':
-      args->reqs[nbfiles].filename = Coptarg;
-      nbfiles++;
-      break;
-    case 'r':
-      if (args->requestid!= NULL) {
-        errflg++;
-      } else {
-        args->requestid = Coptarg;
-      }
-      break;
-    case 'h':
-    default:
-      errflg++;
-      break;
-    }
-    if (errflg != 0) break;
-  }
-  if (args->nbreqs == 0 && args->requestid == NULL) errflg++;
-  return errflg;
-}
-
-
-/**
- * Just count the number of args so as to prepare stage_fileQuery argument list
- */
-int
-cmd_countHsmFiles(int argc, char *argv[]) {
-  int Coptind, Copterr, errflg, nbargs;
-  char c;
-
-  Coptind = 1;
-  Copterr = 1;
-  errflg = 0;
-  nbargs = 0;
-  while ((c = Cgetopt_long (argc, argv, "M:r:h:", longopts, NULL)) != -1) {
-    switch (c) {
-    case 'M':
-      nbargs++;;
-      break;
-    default:
-      break;
-    }
-    if (errflg != 0) break;
-  }
-
-  if (errflg)
-    return -1;
-  else
-    return nbargs;
-}
-
-
-void
-usage(char *cmd) {
+void usage(char *cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
            "-M hsmfile [-M hsmfile ...] [-r requestid] [-h]\n");

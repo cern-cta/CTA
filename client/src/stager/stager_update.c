@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      stager_put.c
+ *                      stager_update.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,9 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_put.c,v $ $Revision: 1.18 $ $Release$ $Date: 2007/12/06 14:46:22 $ $Author: itglp $
+ * @(#)$RCSfile: stager_update.c,v $ $Revision: 1.1 $ $Release$ $Date: 2007/12/06 14:46:23 $ $Author: itglp $
  *
- * command line for stage_prepareToPut
+ * command line for stage_prepareToUpdate 
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -36,7 +36,7 @@ void usage _PROTO((char *));
 
 /* Global vars used by common functions */
 static int filenb;
-static struct stage_prepareToPut_filereq *requests;
+static struct stage_prepareToUpdate_filereq *requests;
 static char *protocol = DEFAULT_PROTOCOL;
 
 
@@ -52,14 +52,14 @@ static int DLL_DECL _countFiles(char *filename) {
 static int DLL_DECL _fillStruct(char *filename) {
   requests[filenb].filename = (char *)strdup(filename);
   requests[filenb].protocol = (char *)strdup(protocol);
-  requests[filenb].mode = 0666;
+  requests[filenb].priority = 0;
   filenb++;
   return 0;
 }
 
 
 int main(int argc, char *argv[]) {
-  struct stage_prepareToPut_fileresp *responses;
+  struct stage_prepareToUpdate_fileresp *responses;
   int errflg, total_nb_files, rc, nbresps, ret;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
@@ -86,14 +86,14 @@ int main(int argc, char *argv[]) {
 
   /* Setting the error buffer and preparing the array of file requests */
   stage_seterrbuf(errbuf, sizeof(errbuf));
-  create_prepareToPut_filereq(&requests, total_nb_files);
+  create_prepareToUpdate_filereq(&requests, total_nb_files);
 
   /* Iterating over the command line again to fill in the array of requests */
   filenb = 0;
   errflg = parseCmdLine(argc, argv, _fillStruct, &unused, &unused, &unused, &display_reqid);
 
-  /* Performing the actual call */
-  rc = stage_prepareToPut(usertag,
+  /* Actual call to prepareToUpdate */
+  rc = stage_prepareToUpdate(usertag,
                           requests,
                           total_nb_files,
                           &responses,
@@ -112,14 +112,14 @@ int main(int argc, char *argv[]) {
     printf("Stager request ID: %s\n", reqid);
   }
 
-  free_prepareToPut_filereq(requests, total_nb_files);
-  free_prepareToPut_fileresp(responses, nbresps);
+  free_prepareToUpdate_filereq(requests, total_nb_files);
+  free_prepareToUpdate_fileresp(responses, nbresps);
 
   exit(ret);
 }
 
 
-void usage(char *cmd) {
+void usage(char* cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
            "-M hsmfile [-M hsmfile ...] [-S svcClass] [-U usertag] [-r] [-h]\n");

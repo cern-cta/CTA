@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.30 2007/07/02 14:16:35 riojac3 Exp $
+ * $Id: stager_client_api_get.cpp,v 1.31 2007/12/06 14:46:21 itglp Exp $
  */
 
 /*
@@ -25,7 +25,6 @@
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
 #include "castor/stager/StageGetRequest.hpp"
-#include "castor/stager/RequestHelper.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/ObjectSet.hpp"
@@ -78,16 +77,11 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
     
 
     // Uses a BaseClient to handle the request
-
-
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StagePrepareToGetRequest req;
-    castor::stager::RequestHelper reqh(&req);
     ret=setDefaultOption(opts);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId();
-    
     if (ret==-1){free(opts);}
 
     if (0 != userTag) {
@@ -234,10 +228,8 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
     castor::client::BaseClient client(stage_getClientTimeout());
     castor::stager::StageGetRequest req;
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
-    castor::stager::RequestHelper reqh(&req);
     ret=setDefaultOption(opts);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId();
 
     if(ret==-1){free(opts);}

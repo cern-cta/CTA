@@ -1,102 +1,55 @@
-/*
- * $Id: stager_get.c,v 1.10 2007/05/29 08:41:49 waldron Exp $
- */
+/******************************************************************************
+ *                      stager_get.c
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003-2007 CERN/IT
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * @(#)$RCSfile: stager_get.c,v $ $Revision: 1.11 $ $Release$ $Date: 2007/12/06 14:46:21 $ $Author: itglp $
+ *
+ * command line for stage_prepareToGet 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
 
-/*
- * Copyright (C) 2005 by CERN/IT/ADC/CA
- * All rights reserved
- */
-
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "stager_api.h"
 #include "serrno.h"
-#include "Cgetopt.h"
 #include "stager_client_commandline.h"
-
-#define BUFSIZE 1000
-#define DEFAULT_PROTOCOL "rfio"
 
 
 void usage _PROTO((char *));
 
-
-/* Global flags */
-static int display_reqid = 0;
-static char* service_class = NULL;
-static char* usertag = NULL;
-static char* stage_host = NULL;
-
-/* Global vars used by _fillStruct and _countFiles */
-static int filenb; /* Number of files to be staged in */
+/* Global vars used by common functions */
+static int filenb;
 static struct stage_prepareToGet_filereq *requests;
 static char *protocol = DEFAULT_PROTOCOL;
 
-/* Local functions */
-int parseCmdLine(int argc, char *argv[], int (*cb)(char *) );
-static int _countFiles(char *filename);
-static int _fillStruct(char *filename);
-
-
-int parseCmdLine(int argc, char *argv[], int (*cb)(char *) ) {
-  int nargs, Coptind, Copterr, errflg;
-  char c;
-  static struct Coptions longopts[] =
-    {
-      {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
-      {"service_class", REQUIRED_ARGUMENT,  NULL,      'S'},
-      {"usertag",       REQUIRED_ARGUMENT,  NULL,      'U'},
-      {"display_reqid", NO_ARGUMENT,        NULL,      'r'},
-      {"help",          NO_ARGUMENT,        NULL,      'h'},
-      {NULL,            0,                  NULL,        0}
-    };
-
-  nargs = argc;
-  Coptind = 1;
-  Copterr = 1;
-  errflg = 0;
-
-  while ((c = Cgetopt_long (argc, argv, "M:S:U:rh", longopts, NULL)) != -1) {
-    switch (c) {
-    case 'M':
-      cb(Coptarg);
-      break;
-    case 'S':
-      service_class = Coptarg;
-      break;
-    case 'U':
-      usertag = Coptarg;
-      break;
-    case 'r':
-      display_reqid = 1;
-      break;
-    case 'h':
-    case '?':
-      errflg++;
-      break;
-    default:
-      errflg++;
-      break;
-    }
-    if (errflg != 0) break;
-  }
-
-  return errflg;
-}
 
 /* Uses the filenb global variable
    that should be set to 0 before 1st call */
-static int _countFiles(char *filename) {
+static int DLL_DECL _countFiles(char *filename) {
   filenb++;
   return 0;
 }
 
-/* Uses the filenb global variable,
-   that should be set to 0 before 1st call */
-/* Uses the requests global variable,
+/* uses the requests global variable,
    which should already be initialized */
-static int _fillStruct(char *filename) {
+static int DLL_DECL _fillStruct(char *filename) {
   requests[filenb].filename = (char *)strdup(filename);
   requests[filenb].protocol = (char *)strdup(protocol);
   requests[filenb].priority = 0;
@@ -104,38 +57,30 @@ static int _fillStruct(char *filename) {
   return 0;
 }
 
-int main(argc, argv)
-     int argc;
-     char **argv;
-{
-  int errflg, total_nb_files, rc, nbresps, i, ret;
-  char *reqid;
-  struct stage_prepareToGet_fileresp *responses;
-  char errbuf[BUFSIZE];
-  struct stage_options opts;
 
+int main(int argc, char *argv[]) {
+  struct stage_prepareToGet_fileresp *responses;
+  int errflg, total_nb_files, rc, nbresps, ret;
+  char *reqid;
+  char errbuf[ERRBUFSIZE+1];
+  int display_reqid = 0;
+  char* usertag = NULL;
+  char* unused = NULL;
+  struct stage_options opts;
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
   opts.stage_version=2;
-
   usertag = NULL;
-
   filenb = 0;
-  errflg =  parseCmdLine(argc, argv, _countFiles);
+
+  /* Parsing command line */
+  errflg =  parseCmdLine(argc, argv, _countFiles, &opts.stage_host, &opts.service_class, &usertag, &display_reqid);
   if (errflg != 0 || filenb <= 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
   total_nb_files = filenb;
-
-  if (service_class) {
-    opts.service_class = service_class;
-  }
-
-  if (stage_host) {
-    opts.stage_host = stage_host;
-  }
 
   ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 
@@ -145,7 +90,7 @@ int main(argc, argv)
 
   /* Iterating over the command line again to fill in the array of requests */
   filenb = 0;
-  errflg =  parseCmdLine(argc, argv, _fillStruct);
+  errflg = parseCmdLine(argc, argv, _fillStruct, &unused, &unused, &unused, &display_reqid);
 
   /* Actual call to prepareToGet */
   rc = stage_prepareToGet(usertag,
@@ -157,28 +102,14 @@ int main(argc, argv)
                           &opts);
 
   if (rc < 0) {
-    fprintf(stderr, "Error %s\n", sstrerror(serrno));
+    fprintf(stderr, "Error: %s\n", sstrerror(serrno));
     fprintf(stderr, "<%s>\n", errbuf);
     exit(EXIT_FAILURE);
   }
 
-  printf("Received %d responses\n", nbresps);
-
-  ret = EXIT_SUCCESS;
-  for (i=0; i<nbresps; i++) {
-    printf("%s %s",
-           responses[i].filename,
-           stage_statusName(responses[i].status));
-    if (responses[i].errorCode != 0) {
-      printf(" %d %s",
-             responses[i].errorCode,
-             responses[i].errorMessage);
-      ret = EXIT_FAILURE;
-    }
-    printf ("\n");
-  }
+  ret = printPrepareResponses(nbresps, responses);
   if (display_reqid) {
-    fprintf(stdout, "Stager request ID: %s\n", reqid);
+    printf("Stager request ID: %s\n", reqid);
   }
 
   free_prepareToGet_filereq(requests, total_nb_files);
@@ -188,12 +119,8 @@ int main(argc, argv)
 }
 
 
-
-void usage(cmd)
-     char *cmd;
-{
+void usage(char* cmd) {
   fprintf (stderr, "usage: %s ", cmd);
   fprintf (stderr, "%s",
-           "-M hsmfile [-M...] [-S service_class] [-U usertag] [-r] [-h]\n");
-
+           "-M hsmfile [-M hsmfile ...] [-S svcClass] [-U usertag] [-r] [-h]\n");
 }

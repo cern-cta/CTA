@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.33 2007/07/02 14:16:35 riojac3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.34 2007/12/06 14:46:21 itglp Exp $
  */
 
 /*
@@ -31,7 +31,6 @@
 #include "castor/stager/SubRequest.hpp"
 #include "stager_client_api_common.hpp"
 #include "stager_client_api.h"
-#include "castor/stager/RequestHelper.hpp"
 #include "castor/query/DiskPoolQuery.hpp"
 #include "castor/query/DiskPoolQueryResponse.hpp"
 #include "castor/query/DiskServerDescription.hpp"
@@ -66,20 +65,15 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     return -1;
   }
 
-  stage_trace(3, "%s", func);
-  
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
-    client.setOption(NULL);
     castor::stager::StageFileQueryRequest req;
     
-    castor::stager::RequestHelper reqh(&req);
     ret=setDefaultOption(opts);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId();
     if (ret==-1){free(opts);}
     
@@ -206,12 +200,10 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
-    client.setOption(NULL);
     castor::stager::StageRequestQueryRequest req;
+
     ret=setDefaultOption(opts);
-    castor::stager::RequestHelper reqh(&req);  
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId();
     if(ret==-1){free(opts);}
     // Preparing the requests
@@ -358,15 +350,12 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
-    client.setOption(NULL);
     castor::query::DiskPoolQuery req;
-    castor::stager::RequestHelper reqh(&req);
     req.setDiskPoolName(diskPoolName);
 
     // Dealing with options
     ret = setDefaultOption(opts);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId();
     if (-1 == ret) { free(opts); }
 
@@ -437,14 +426,11 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     
     // Uses a BaseClient to handle the request
     castor::client::BaseClient client(stage_getClientTimeout());
-    client.setOption(NULL);
     castor::query::DiskPoolQuery req;
-    castor::stager::RequestHelper reqh(&req);
 
     // Dealing with options
     ret = setDefaultOption(opts);
-    reqh.setOptions(opts);
-    client.setOption(opts);
+    client.setOption(opts, &req);
     client.setAuthorizationId(); 
     if (-1 == ret) { free(opts); }
 

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.7 $ $Date: 2005/06/21 15:05:52 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_put.man,v $ $Revision: 1.8 $ $Date: 2007/12/06 14:46:22 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUT 1castor "$Date: 2005/06/21 15:05:52 $" CASTOR "STAGER Commands"
+.TH STAGER_PUT 1castor "$Date: 2007/12/06 14:46:22 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_put \- request for writing a file into CASTOR
 .SH SYNOPSIS
@@ -76,29 +76,31 @@ display command usage help
 
 .SH EXAMPLE
 .fi
-# stager_put -M /castor/cern.ch/user/t/test/file1 -U test1 -r
+$ stager_put -M /castor/cern.ch/user/t/test/file1 -U test1 -r
 .fi
 42b002d7-0000-1000-9db8-cf9fcba30800
 .fi
 /castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
 .fi
-# rfcp /etc/group /castor/cern.ch/user/t/test/file1
+$ rfcp /etc/group /castor/cern.ch/user/t/test/file1
 .fi
 2317 bytes in 0 seconds through local (in) and eth0 (out)
 .fi
-# stager_qry -U test1
+$ stager_qry -U test1
 .fi
 Received 1 responses
 .fi
 59316604@cnsuser STAGEOUT
 .fi
-# rfcp /etc/passwd /castor/cern.ch/user/t/test/file1
+$ rfcp /etc/passwd /castor/cern.ch/user/t/test/file1
 .fi
 1240856 bytes in 0 seconds through local (in) and eth0 (out)
 .fi
-# stager_putdone -M /castor/cern.ch/user/t/test/file1
+$ stager_putdone -M /castor/cern.ch/user/t/test/file1
 .fi
-# stager_qry -M /castor/cern.ch/user/t/test/file1
+/castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
+.fi
+$ stager_qry -M /castor/cern.ch/user/t/test/file1
 .fi
 Received 1 responses
 .fi
@@ -112,6 +114,7 @@ failed.
 .SH SEE ALSO
 .BR stager_qry(1castor) ,
 .BR stager_get(1castor) ,
+.BR stager_update(1castor) ,
 .BR stager_putdone(1castor),
 .BR rfcp(1castor)
 

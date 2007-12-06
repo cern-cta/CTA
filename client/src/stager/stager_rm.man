@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.4 $ $Date: 2007/06/26 16:32:03 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_rm.man,v $ $Revision: 1.5 $ $Date: 2007/12/06 14:46:22 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_RM 1castor "$Date: 2007/06/26 16:32:03 $" CASTOR "STAGER Commands"
+.TH STAGER_RM 1castor "$Date: 2007/12/06 14:46:22 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_rm \- request for removing a file from the CASTOR stager
 .SH SYNOPSIS
@@ -59,11 +59,11 @@ display command usage help
 
 .SH EXAMPLE
 .fi
-# stager_rm -M /castor/cern.ch/user/t/test/file1
+$ stager_rm -M /castor/cern.ch/user/t/test/file1
 .fi
 42cd469e-0000-1000-81ea-8514e17e0800 Received 1 responses
 .fi
-/castor/cern.ch/user/t/test/file1:SUBRQUEST_READY
+/castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
 .fi
 
 .SH EXIT STATUS

@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.17 $ $Date: 2007/09/17 12:40:49 $ CERN IT/ADC Olof Barring
+.\" @(#)$RCSfile: stager_qry.man,v $ $Revision: 1.18 $ $Date: 2007/12/06 14:46:22 $ CERN IT/ADC Olof Barring
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_QRY 1castor "$Date: 2007/09/17 12:40:49 $" CASTOR "STAGER Commands"
+.TH STAGER_QRY 1castor "$Date: 2007/12/06 14:46:22 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_qry \- query the CASTOR stager for files and requests
 .SH SYNOPSIS
@@ -233,20 +233,11 @@ Received 1 responses
 $ stager_qry -s
 .fi
 .nf
-POOL default          CAPACITY 372.45G      FREE 372.04G(99%)    RESERVED       0( 0%)
-  DiskServer lxfsrk605        STATUS DISKSERVER_PRODUCTION     CAPACITY 372.45G      FREE 372.04G(99%)     RESERVED       0( 0%)
-     /shift/lxfsrk605/data02/         STATUS FILESYSTEM_PRODUCTION     CAPACITY 372.45G      FREE 372.04G(99%)    RESERVED       0( 0%)    GCBOUNDS 0.20, 0.30
-POOL test             CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)
-  DiskServer lxfsrk605        STATUS DISKSERVER_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)     RESERVED       0( 0%)
-     /shift/lxfsrk605/data01/         STATUS FILESYSTEM_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)    GCBOUNDS 0.20, 0.30
-.fi
-
-$ stager_qry -s -d test
-.fi
-.nf
-POOL test             CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)
-  DiskServer lxfsrk605        STATUS DISKSERVER_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)     RESERVED       0( 0%)
-     /shift/lxfsrk605/data01/         STATUS FILESYSTEM_PRODUCTION     CAPACITY 372.51G      FREE 372.31G(99%)    RESERVED       0( 0%)    GCBOUNDS 0.20, 0.30
+POOL default          CAPACITY 893.82G    FREE 889.62G(99%)
+  DiskServer lxfsrk462.cern.ch DISKSERVER_PRODUCTION   CAPACITY 893.82G    FREE 889.62G(99%)
+     FileSystems                       STATUS                  CAPACITY      FREE       GCBOUNDS
+     /srv/castor/01/                   FILESYSTEM_PRODUCTION   223.45G    221.36G(99%) 0.10, 0.15
+     /srv/castor/02/                   FILESYSTEM_PRODUCTION   670.36G    668.26G(99%) 0.10, 0.15
 .fi
 
 .SH EXIT STATUS

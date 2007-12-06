@@ -1,10 +1,10 @@
 /******************************************************************************
- *                      stager/stager_rm.c
+ *                      stager_rm.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
  *
- * Copyright (C) 2003  CERN
+ * Copyright (C) 2003-2007 CERN
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.7 $ $Release$ $Date: 2007/06/26 16:32:03 $ $Author: itglp $
+ * @(#)$RCSfile: stager_rm.c,v $ $Revision: 1.8 $ $Release$ $Date: 2007/12/06 14:46:22 $ $Author: itglp $
  *
  * command line for stager_rm
  *
@@ -45,11 +45,9 @@ void usage _PROTO((char *));
 int cmd_parse(int argc, char *argv[], struct stage_filereq **reqs, int* nbreqs, struct stage_options* opts);
 int cmd_countHsmFiles(int argc, char *argv[]);
 
-#define ERRBUFSIZE 255
-
 int main(int argc, char *argv[]) {
   struct stage_filereq *reqs;
-  struct stage_fileresp *response;
+  struct stage_fileresp *responses;
   int nbresps, nbreqs;
   char *reqid;
   char errbuf[ERRBUFSIZE+1];
@@ -76,34 +74,20 @@ int main(int argc, char *argv[]) {
   /* Performing the actual call */
   rc = stage_rm(reqs,
                 nbreqs,
-                &response,
+                &responses,
                 &nbresps,
                 &reqid,
                 &opts);
  
-  if (rc < 0) { 
-    fprintf(stderr, "Error %s\n", sstrerror(serrno));
+ if (rc < 0) {
+    fprintf(stderr, "Error: %s\n", sstrerror(serrno));
     fprintf(stderr, "<%s>\n", errbuf);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
-  if (response == NULL) {
-    fprintf(stderr, "Error: Response object is NULL\n");
-    exit(1);
-  }
+  ret = printFileResponses(nbresps, responses);
   
-  fprintf(stdout, "%s Received %d responses\n", reqid, nbresps);
-  for (i = 0; i < nbresps; i++) {
-    fprintf(stdout, "%s:%s",response[i].filename, 
-            stage_statusName(response[i].status));
-    if (response[i].errorCode != 0) {      
-      fprintf(stdout, " (%d, %s)",  
-              response[i].errorCode,  
-              response[i].errorMessage);
-    }
-    fprintf(stdout, "\n");
-  }
-  return 0;
+  return ret;
 }
 
 
