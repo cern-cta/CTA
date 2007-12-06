@@ -381,6 +381,7 @@ void castor::client::BaseClient::setRhPort(int optPort)
   }
   if (optPort > 0) {
     m_rhPort = optPort;
+    return;
   }
   char* port;
 
