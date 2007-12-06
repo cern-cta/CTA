@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.572 $ $Date: 2007/12/06 13:11:50 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.573 $ $Date: 2007/12/06 14:13:21 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1768,10 +1768,9 @@ BEGIN
       FROM DiskServer, FileSystem, DiskPool2SvcClass
      WHERE FileSystem.diskServer = DiskServer.id
        AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = SvcClass.id
+       AND DiskPool2SvcClass.child = svcClassId
        AND FileSystem.status = 0 -- PRODUCTION
        AND DiskServer.status = 0 -- PRODUCTION
-       AND DiskPool2SvcClass.child = svcClassId
        AND DiskServer.id NOT IN ( 
          SELECT DiskServer.id
            FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
