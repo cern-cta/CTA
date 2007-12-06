@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.570 $ $Date: 2007/12/06 10:48:46 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.571 $ $Date: 2007/12/06 10:51:32 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2076,6 +2076,7 @@ CREATE OR REPLACE PROCEDURE firstByteWrittenProc(srId IN INTEGER) AS
   cfId NUMBER;
   nbres NUMBER;
   unused NUMBER;
+  stat NUMBER;
 BEGIN
   -- lock the Castorfile
   SELECT castorfile, diskCopy INTO cfId, dcId
@@ -2088,17 +2089,49 @@ BEGIN
     WHERE status = 3 -- TAPECOPY_SELECTED
     AND castorFile = cfId;
   IF nbRes > 0 THEN
-    raise_application_error(-20106, 'Trying to update a busy file');
+    raise_application_error(-20106, 'Trying to update a busy file (ongoing migration)');
   END IF;
-  -- invalidate all diskcopies
-  UPDATE DiskCopy SET status = 7 -- INVALID 
-   WHERE castorFile  = cfId
-     AND status IN (0, 10);
-  -- except the one we are dealing with that goes to STAGEOUT
-  UPDATE DiskCopy SET status = 6 -- STAGEOUT
-   WHERE id = dcid;
-  -- Suppress all Tapecopies (avoid migration of previous version of the file)
-  deleteTapeCopies(cfId);
+  -- Check that we can indeed open the file in write mode
+  -- 2 criteria have to be met :
+  --   - we are not using a INVALID copy (we should not update an old version)
+  --   - there is no other update/put going on or there is a prepareTo and we are
+  --     dealing with the same copy.
+  SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
+  -- First the invalid case
+  IF stat = 7 THEN -- INVALID
+    raise_application_error(-20106, 'Trying to update an invalid copy of a file (file has been modified by somebody else concurrently)');
+  END IF;
+  -- if not invalid, either we are alone or we are on the right copy and we
+  -- only have to check that there is a prepareTo statement. We do the check
+  -- only when needed, that is STAGEOUT case
+  IF stat = 6 THEN -- STAGEOUT
+    BEGIN
+      -- do we have a prepareTo Request ?
+      SELECT SubRequest.id INTO unused
+        FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
+              SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest,
+             SubRequest
+       WHERE SubRequest.CastorFile = cfId
+         AND PrepareRequest.id = SubRequest.request
+         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+      -- we do have a prepareTo, so eveything is fine
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- No prepareTo, so prevent the writing
+      raise_application_error(-20106, 'Trying to update a file already open for write (and no prepareToPut/Update context found)');
+    END;
+  ELSE
+    -- If we are not having a STAGEOUT diskCopy, we are the only ones to write,
+    -- so we have to setup everything
+    -- invalidate all diskcopies
+    UPDATE DiskCopy SET status = 7 -- INVALID 
+     WHERE castorFile  = cfId
+       AND status IN (0, 10);
+    -- except the one we are dealing with that goes to STAGEOUT
+    UPDATE DiskCopy SET status = 6 -- STAGEOUT
+     WHERE id = dcid;
+    -- Suppress all Tapecopies (avoid migration of previous version of the file)
+    deleteTapeCopies(cfId);
+  END IF;
 END;
 
 /* Checks whether the protocol used is supporting updates and when not
@@ -2119,6 +2152,7 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
+  dcId INTEGER;
   nh VARCHAR2(2048);
   realFileSize INTEGER;
   srSvcClass INTEGER;
@@ -2126,8 +2160,8 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   isUpd NUMBER;
 BEGIN
   -- Get and uid, gid
-  SELECT euid, egid, svcClass, upd
-    INTO reuid, regid, srSvcClass, isUpd
+  SELECT euid, egid, svcClass, upd, diskCopy
+    INTO reuid, regid, srSvcClass, isUpd, dcId
     FROM SubRequest,
         (SELECT id, euid, egid, svcClass, 0 as upd from StageGetRequest UNION ALL
          SELECT id, euid, egid, svcClass, 1 as upd from StageUpdateRequest) Request
@@ -2146,14 +2180,7 @@ BEGIN
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.filesystem = fileSystemId
-     AND DiskCopy.status IN (0, 2, 5, 6, 10, 11); -- STAGED, WAITTAPERECALL, WAIFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
-  -- If found local one, check whether to wait on it
-  IF rstatus IN (2, 5, 11) THEN -- WAITTAPERECALL, WAITFS, WAITFS_SCHEDULING
-    makeSubRequestWait(srId, dci);
-    dci := 0;
-    rpath := '';
-    RETURN;
-  END IF;
+     AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
   -- No wait, so we are settled and we'll use the local copy.
   -- Let's update the SubRequest and set the link with the DiskCopy
   UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
@@ -2165,8 +2192,25 @@ BEGIN
     handleProtoNoUpd(srId, proto);
   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem. This can happen if a diskcopy was available
-  -- and got disabled before this job got scheduled. Bad luck, we restart from scratch
+  -- No disk copy found on selected FileSystem. This can happen in 2 cases :
+  --  + either a diskcopy was available and got disabled before this job
+  --    was scheduled. Bad luck, we restart from scratch
+  --  + or we are an update creating a file and there is a diskcopy in WAITFS
+  --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
+  -- So we first check the update hypothesis
+  IF isUpd = 1 AND dcId IS NOT NULL THEN
+    DECLARE
+      stat NUMBER;
+    BEGIN
+      SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
+      IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
+        -- it is an update creating a file, let's call putStart
+        putStart(srId, fileSystemId, dci, rstatus, rpath);
+        RETURN;
+      END IF;
+    END;
+  END IF;
+  -- It was not an update creating a file, so we restart
   UPDATE SubRequest SET status = 1 WHERE id = srId;
   dci := 0;
   rpath := '';
