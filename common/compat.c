@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: compat.c,v $ $Revision: 1.3 $ $Date: 2000/05/31 10:33:53 $ CERN/IT/PDP/DM Frederic Hemmer";
-#endif /* not lint */
-
 /* compat.c     Compatibility library                                   */
 #include <osdep.h>
 #include <net.h>
