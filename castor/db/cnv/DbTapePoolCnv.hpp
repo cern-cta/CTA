@@ -252,24 +252,6 @@ namespace castor {
         /// SQL statement object for type deletion
         castor::db::IDbStatement *m_deleteTypeStatement;
 
-        /// SQL select statement for member 
-        static const std::string s_selectTapeStatementString;
-
-        /// SQL select statement object for member 
-        castor::db::IDbStatement *m_selectTapeStatement;
-
-        /// SQL delete statement for member 
-        static const std::string s_deleteTapeStatementString;
-
-        /// SQL delete statement object for member 
-        castor::db::IDbStatement *m_deleteTapeStatement;
-
-        /// SQL remote update statement for member 
-        static const std::string s_remoteUpdateTapeStatementString;
-
-        /// SQL remote update statement object for member 
-        castor::db::IDbStatement *m_remoteUpdateTapeStatement;
-
         /// SQL insert statement for member svcClasses
         static const std::string s_insertSvcClassStatementString;
 
