@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.571 $ $Date: 2007/12/06 10:51:32 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.572 $ $Date: 2007/12/06 13:11:50 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1961,7 +1961,8 @@ BEGIN
        WHERE SubRequest.request = Request.id
          AND SubRequest.castorFile = cfId
          AND DiskCopy.castorFile = cfId
-         AND DiskCopy.status = 4;  -- WAITTAPERECALL
+         AND DiskCopy.status = 4  -- WAITTAPERECALL
+         AND SubRequest.status = 2;  -- WAITTAPERECALL 
       -- we found one: we need to wait if either we are in a different svcClass
       -- so that afterwards a disk-to-disk copy is triggered, or in case of
       -- Repack so to trigger the repack migration. Note that Repack never
@@ -2106,14 +2107,16 @@ BEGIN
   -- only when needed, that is STAGEOUT case
   IF stat = 6 THEN -- STAGEOUT
     BEGIN
-      -- do we have a prepareTo Request ?
+      -- do we have a prepareTo Request ? There can be only a single one
+      -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
+      -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
       SELECT SubRequest.id INTO unused
         FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
               SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest,
              SubRequest
        WHERE SubRequest.CastorFile = cfId
          AND PrepareRequest.id = SubRequest.request
-         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND SubRequest.status = 6;  -- READY
       -- we do have a prepareTo, so eveything is fine
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- No prepareTo, so prevent the writing
@@ -2519,13 +2522,15 @@ BEGIN
      WHERE SubRequest.id = srId
        AND Request.id = SubRequest.request;
     BEGIN
-      -- check that there is a PrepareToPut/Update going on
+      -- check that there is a PrepareToPut/Update going on. There can be only a single one
+      -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
+      -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
       SELECT SubRequest.diskCopy, PrepareRequest.svcClass INTO dcId, pputSC
         FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
               SELECT id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.CastorFile = cfId
          AND PrepareRequest.id = SubRequest.request
-         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND SubRequest.status = 6;  -- READY
       -- if we got here, we are a Put/Update inside a PrepareToPut
       -- however, are we in the same service class ?
       IF putSC != pputSC THEN
@@ -2549,23 +2554,24 @@ BEGIN
     END;   
   EXCEPTION WHEN NO_DATA_FOUND THEN
     BEGIN
-      -- we are a prepareToPut/Update. Fine, but are we the only one ?
+      -- we are either a prepareToPut, or a prepareToUpdate and it's the only one (file is being created).
+      -- In case of prepareToPut we need to check that we are we the only one
       SELECT SubRequest.diskCopy INTO dcId
         FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
               SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.castorFile = cfId
          AND PrepareRequest.id = SubRequest.request
-         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      -- Yes, everything is ok then
+         AND SubRequest.status = 6;  -- READY
+      -- Everything is ok then
       contextPIPP := 0;
     EXCEPTION WHEN TOO_MANY_ROWS THEN
-      -- No, this means we are a PrepareToPut/Update and another PrepareToPut
+      -- No, this means we are a PrepareToPut and another PrepareToPut/Update
       -- is already running. This is forbidden
       dcId := 0;
       UPDATE SubRequest
          SET status = 7, -- FAILED
              errorCode = 16, -- EBUSY
-             errorMessage = 'Another prepareToPut is ongoing for this file'
+             errorMessage = 'Another prepareToPut/Update is ongoing for this file'
        WHERE id = srId;
       COMMIT;
       RETURN;
@@ -2670,7 +2676,7 @@ BEGIN
   -- link SubRequest and DiskCopy
   UPDATE SubRequest SET diskCopy = dcId,
                         lastModificationTime = getTime() WHERE id = srId;
-  COMMIT;
+  -- we don't commit here, the stager will do that when the subRequest status will be updated to 6
 END;
 
 
@@ -2714,13 +2720,15 @@ BEGIN
     DECLARE
       srId NUMBER;
     BEGIN
+      -- There can be only a single PrepareTo request: any subsequent PPut would be
+      -- rejected and any subsequent PUpdate would be directly archived (cf. processPrepareRequest).
       SELECT SubRequest.id INTO srId
         FROM SubRequest, 
-         (SELECT id from StagePrepareToPutRequest UNION ALL
-          SELECT id from StagePrepareToUpdateRequest) Request
+         (SELECT id FROM StagePrepareToPutRequest UNION ALL
+          SELECT id FROM StagePrepareToUpdateRequest) Request
        WHERE SubRequest.castorFile = cfId
          AND SubRequest.request = Request.id
-         AND SubRequest.status = 6;
+         AND SubRequest.status = 6;  -- READY
       archiveSubReq(srId);
       EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL; --Ignore the missing subrequest
@@ -2771,14 +2779,16 @@ BEGIN
    WHERE SubRequest.id = srId
      AND Request.id = SubRequest.request;
   BEGIN
-    -- check that there is a PrepareToPut going on
+    -- check that there is a PrepareToPut/Update going on. There can be only a single one
+    -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
+    -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
     SELECT SubRequest.diskCopy INTO unused
       FROM SubRequest,
        (SELECT id FROM StagePrepareToPutRequest UNION ALL
         SELECT id FROM StagePrepareToUpdateRequest) Request
      WHERE SubRequest.CastorFile = cfId
        AND Request.id = SubRequest.request
-       AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14);  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+       AND SubRequest.status = 6;  -- READY
     -- if we got here, we are a Put inside a PrepareToPut
     contextPIPP := 0;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3598,15 +3608,18 @@ BEGIN
   IF fsId > 0 THEN
     updateFsFileClosed(fsId);
   END IF;
-  -- Determine the context (Put inside PrepareToPut ?)
+  -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
-    -- check that there is a PrepareToPut going on
+    -- check that there is a PrepareToPut/Update going on. There can be only a single one
+    -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
+    -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
     SELECT SubRequest.id INTO unused
-      FROM StagePrepareToPutRequest, SubRequest
+      FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
+            SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
      WHERE SubRequest.CastorFile = cfId
-       AND StagePrepareToPutRequest.id = SubRequest.request
+       AND PrepareRequest.id = SubRequest.request
        AND SubRequest.status = 6; -- READY
-    -- the select worked out, so we have a prepareToPut
+    -- the select worked out, so we have a prepareToPut/Update
     -- In such a case, we do not cleanup DiskCopy and CastorFile
     -- but we have to wake up a potential waiting putDone
     UPDATE SubRequest SET status = 1, parent = 0 -- RESTART
