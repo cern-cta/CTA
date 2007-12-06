@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.58 $ $Release$ $Date: 2007/12/05 14:52:58 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2007/12/06 09:28:14 $ $Author: riojac3 $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -213,7 +213,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[])
   Coptind = 1;
   Copterr = 0;
   char c;
-  while ((c = Cgetopt_long(argc, argv, "fhR:p:c:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "fhR:p:c:s:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
