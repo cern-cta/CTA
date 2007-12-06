@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2007/11/26 14:39:50 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/12/06 10:52:13 $ $Author: sponcec3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -58,12 +58,9 @@
 #include "castor/stager/DiskCopyForRecall.hpp"
 #include "castor/stager/TapeCopyForMigration.hpp"
 #include "castor/db/ora/OraJobSvc.hpp"
-#include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/exception/NoEntry.hpp"
-#include "castor/exception/NotSupported.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
 #include "castor/stager/TapeCopyStatusCodes.hpp"
 #include "castor/stager/StreamStatusCodes.hpp"
@@ -767,11 +764,18 @@ void castor::db::ora::OraJobSvc::firstByteWritten(u_signed64 subRequestId)
     m_firstByteWrittenStatement->setDouble(1, subRequestId);
     m_firstByteWrittenStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in firstByteWritten."
-      << std::endl << e.what();
-    throw ex;
+    if (e.getErrorCode() == 20106) {
+      // File is busy
+      castor::exception::Busy ex;
+      ex.getMessage() << e.getMessage();
+      throw ex;
+    } else {
+      handleException(e);
+      castor::exception::Internal ex;
+      ex.getMessage()
+	<< "Error caught in firstByteWritten."
+	<< std::endl << e.what();
+      throw ex;
+    }
   }
 }
