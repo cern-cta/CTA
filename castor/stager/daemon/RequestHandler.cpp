@@ -72,7 +72,7 @@ namespace castor{
         
         /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
         /* create the file if it is needed/possible */
-        stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHselper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
+        stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
         
         /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
         stgRequestHelper->checkFilePermission();
