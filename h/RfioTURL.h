@@ -3,7 +3,7 @@
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
  *
- * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.5 $ $Release$ $Date: 2006/12/14 14:55:20 $ $Author: itglp $
+ * @(#)$RCSfile: RfioTURL.h,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/06 14:35:23 $ $Author: sponcec3 $
  *
  *
  *
@@ -123,7 +123,7 @@ EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
 /* EXTERN_C int DLL_DECL initRfioTURLPrefix _PROTO((
                                                  char *prefix
                                                  ));
-
+*/
 /** Get the current RFIO TURL prefix
  *
  * Returns a character pointer to the current RFIO TURL in use.
@@ -133,7 +133,7 @@ EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
 /* EXTERN_C char DLL_DECL *getRfioTURLPrefix _PROTO((
                                          void
                                          ));
-
+*/
 
 /** Build a RFIO TURL string representation
  *
@@ -154,7 +154,7 @@ EXTERN_C int DLL_DECL rfioTURLFromString _PROTO((
                                                char *tURLString,
                                                int len
                                                ));
-
+*/
 /** Builds a RFIO TURL from the input RFIO path
  *  
  * @param rfioPath - input RFIO path
