@@ -37,7 +37,7 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
+      
       /********************************************************************/
       /* function to perform the common flow for all the Stager__Handler */
       /* basically, calls to the helpers to create the objects and   */
@@ -46,40 +46,40 @@ namespace castor{
       /************************************/
       void StagerRequestHandler::preHandle() throw(castor::exception::Exception)
       {
-	
-	/* get the uuid request string version and check if it is valid */
-	stgRequestHelper->setRequestUuid();
-
-	/* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
-	this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
-
-	/* set the username and groupname needed to print them on the log */
-	stgRequestHelper->setUsernameAndGroupname();
-
-	/* get the uuid subrequest string version and check if it is valid */
-	/* we can create one !*/
-	stgRequestHelper->setSubrequestUuid();
-	
-	/* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
-	stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
-	
-	/* get the svcClass */
-	stgRequestHelper->getSvcClass();
-	
-	/* create and fill request->svcClass link on DB */
-	stgRequestHelper->linkRequestToSvcClassOnDB();
-		
-	
-	/* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
-	/* create the file if it is needed/possible */
-	stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
-	
-	/* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
-	stgRequestHelper->checkFilePermission();
-	       
+        
+        /* get the uuid request string version and check if it is valid */
+        stgRequestHelper->setRequestUuid();
+        
+        /* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
+        this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+        
+        /* set the username and groupname needed to print them on the log */
+        stgRequestHelper->setUsernameAndGroupname();
+        
+        /* get the uuid subrequest string version and check if it is valid */
+        /* we can create one !*/
+        stgRequestHelper->setSubrequestUuid();
+        
+        /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
+        stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
+        
+        /* get the svcClass */
+        stgRequestHelper->getSvcClass();
+        
+        /* create and fill request->svcClass link on DB */
+        stgRequestHelper->linkRequestToSvcClassOnDB();
+        
+        
+        /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
+        /* create the file if it is needed/possible */
+        stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHselper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
+        
+        /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
+        stgRequestHelper->checkFilePermission();
+        
       }
-
-
+      
+      
       /*******************************************************/
       /* since the StagerCnsHelper is created in this class */
       /* it will be deleted in its destructor */
@@ -89,6 +89,6 @@ namespace castor{
         stgCnsHelper = 0;
       }
       
-   }//end namespace dbService
+    }//end namespace dbService
   }//end namespace stager
 }//end namespace castor
