@@ -97,34 +97,18 @@ namespace castor{
       /*******************************************/
       void StagerPrepareToUpdateHandler::handle() throw(castor::exception::Exception)
       {
-        StagerReplyHelper* stgReplyHelper=NULL;
-        try{
-          
-          
-          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOUPDATE, &(stgCnsHelper->cnsFileid));
-          
-          StagerRequestHandler* h = 0;
-          if(toRecreateCastorFile) {
-            // delegate to Put
-            h = new StagerPrepareToPutHandler(stgRequestHelper, stgCnsHelper);
-          } else {
-            // delegate to Get
-            h = new StagerPrepareToGetHandler(stgRequestHelper, stgCnsHelper);
-          }      
-          h->handle();
-          delete h;
-          
-        }catch(castor::exception::Exception e){
-          
-          if(stgReplyHelper != NULL) delete stgReplyHelper;
-          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-            castor::dlf::Param("Error Message",e.getMessage().str())
-          };
-          
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PREPARETOUPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
-          
-          throw(e);
-        }
+        stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOUPDATE, &(stgCnsHelper->cnsFileid));
+        
+        StagerRequestHandler* h = 0;
+        if(toRecreateCastorFile) {
+          // delegate to PPut
+          h = new StagerPrepareToPutHandler(stgRequestHelper, stgCnsHelper);
+        } else {
+          // delegate to PGet
+          h = new StagerPrepareToGetHandler(stgRequestHelper, stgCnsHelper);
+        }      
+        h->handle();   // may throw exception, just forward it - logging is done in the callee
+        delete h;
       }
       
       

@@ -99,33 +99,19 @@ namespace castor{
       /**********************************/
       void StagerUpdateHandler::handle() throw(castor::exception::Exception)
       {
-        try{
-          
-          stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_UPDATE, &(stgCnsHelper->cnsFileid));
-          
-          StagerRequestHandler* h = 0;
-          if(toRecreateCastorFile) {
-            // delegate to Put
-            h = new StagerPutHandler(stgRequestHelper, stgCnsHelper);
-          }
-          else {
-            // delegate to Get
-            h = new StagerGetHandler(stgRequestHelper, stgCnsHelper);
-          }      
-          h->handle();
-          delete h;
-          
-        }catch(castor::exception::Exception e){
-          
-          castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
-            castor::dlf::Param("Error Message",e.getMessage().str())
-          };
-          
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_UPDATE, 2 ,params, &(stgCnsHelper->cnsFileid));
-          throw(e);
-          
-        }
+        stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_UPDATE, &(stgCnsHelper->cnsFileid));
         
+        StagerRequestHandler* h = 0;
+        if(toRecreateCastorFile) {
+          // delegate to Put
+          h = new StagerPutHandler(stgRequestHelper, stgCnsHelper);
+        }
+        else {
+          // delegate to Get
+          h = new StagerGetHandler(stgRequestHelper, stgCnsHelper);
+        }      
+        h->handle();   // may throw exception, just forward it - logging is done in the callee
+        delete h;
       }
       
       
