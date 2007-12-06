@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_commandline.cpp,v 1.6 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_commandline.cpp,v 1.7 2007/12/06 18:32:37 waldron Exp $
  *
  * Copyright (C) 2004-2006 by CERN/IT/FIO/FD
  * All rights reserved
@@ -30,8 +30,7 @@
 #include "stager_client_api_common.hpp"
 #include "stager_client_commandline.h"
 #include "Cgetopt.h"
-
-EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
+#include "getconfent.h"
 
 
 /********************************************************************************************************************
@@ -173,6 +172,7 @@ int DLL_DECL getDefaultForGlobal(
 	return (1);
 }
 
+extern "C" {
 
 /* command line parser for a generic stager command line client */
 int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
@@ -222,6 +222,8 @@ int DLL_DECL parseCmdLine(int argc, char *argv[], int (*callback)(char *),
   }
 
   return errflg;
+}
+
 }
 
 
@@ -276,3 +278,4 @@ int DLL_DECL printPrepareResponses(int nbresps, struct stage_prepareToGet_filere
 
   return rc;
 }
+
