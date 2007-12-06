@@ -32,6 +32,7 @@
 #include <string>
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
+#include "castor/stager/Request.hpp"
 #include "stager_client_api.h"
 
 #define CSP_RHSERVER_PORT 9002
@@ -65,6 +66,8 @@ namespace castor {
     extern const char* PORT_ENV_ALT;
     extern const char* SEC_PORT_ENV;
     extern const char* SEC_PORT_ENV_ALT;
+    extern const char* SVCCLASS_ENV;
+    extern const char* SVCCLASS_ENV_ALT;
     extern const char* CATEGORY_CONF;
     extern const char* HOST_CONF;
     extern const char* PORT_CONF;
@@ -156,7 +159,8 @@ namespace castor {
       virtual void setRhHost()throw (castor::exception::Exception);
       virtual void setRhSvcClass(std::string optSvcClass) throw (castor::exception::Exception);
       virtual void setRhSvcClass()throw (castor::exception::Exception);
-      virtual void setOption(struct stage_options* opts)throw (castor::exception::Exception);
+      virtual void setOption(struct stage_options* opts, castor::stager::Request* req)
+        throw (castor::exception::Exception);
 
       /**
        * Sets the request ID in the base client
@@ -175,8 +179,8 @@ namespace castor {
        * @exception in case of an error 
        */
       void pollAnswersFromStager(castor::stager::Request* req,
-				 castor::client::IResponseHandler* rh)
-	throw (castor::exception::Exception);
+				castor::client::IResponseHandler* rh)
+        throw (castor::exception::Exception);
       
       /**
        * calls buildClient and internalSendRequest to create and send the
@@ -185,7 +189,7 @@ namespace castor {
        * @exception in case of an error 
        */
       std::string createClientAndSend(castor::stager::Request *req)
-	throw (castor::exception::Exception);
+        throw (castor::exception::Exception);
 
     private:
       
@@ -219,7 +223,8 @@ namespace castor {
        * @exception in case of an error 
        */
       void buildClient(castor::stager::Request* req)
-	throw (castor::exception::Exception);
+        throw (castor::exception::Exception);
+        
     public: // protected:
       
       /// The request handler host

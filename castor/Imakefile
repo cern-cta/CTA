@@ -312,7 +312,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/ReqIdRequest.cpp \
               stager/ReqIdRequestCInt.cpp \
 	      stager/Request.cpp \
-	      stager/RequestHelper.cpp \
               stager/RequestCInt.cpp \
               stager/RequestQueryType.cpp \
               stager/RemoteGCSvc.cpp \

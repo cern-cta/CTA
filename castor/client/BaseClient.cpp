@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 
 #include <Cpwd.h>
+#include "patchlevel.h"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/AuthClientSocket.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -81,6 +82,8 @@ const char *castor::client::PORT_ENV_ALT = "STAGE_PORT";
 const char *castor::client::PORT_ENV = "STAGER_PORT";
 const char *castor::client::SEC_PORT_ENV_ALT = "STAGE_SEC_PORT";
 const char *castor::client::SEC_PORT_ENV = "STAGER_SEC_PORT";
+const char *castor::client::SVCCLASS_ENV_ALT = "SVCCLASS";
+const char *castor::client::SVCCLASS_ENV = "STAGE_SVCCLASS";
 const char *castor::client::CATEGORY_CONF = "STAGER";
 const char *castor::client::HOST_CONF = "HOST";
 const char *castor::client::PORT_CONF = "PORT";
@@ -148,8 +151,8 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
 //------------------------------------------------------------------------------
 castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
   BaseObject(), m_rhPort(-1), m_callbackSocket(0), m_requestId(""),
-  m_acceptTimeout(acceptTimeout),  m_hasAuthorizationId(false), m_hasSecAuthorization(false), m_authUid(0), 
-  m_authGid(0) {
+  m_acceptTimeout(acceptTimeout), m_hasAuthorizationId(false),
+  m_authUid(0), m_authGid(0), m_hasSecAuthorization(false) {
     //Check if security env option is set. 
     
     char *security;
@@ -216,6 +219,7 @@ castor::IClient* castor::client::BaseClient::createClient()
   castor::rh::Client *result = new castor::rh::Client();
   result->setIpAddress(ip);
   result->setPort(port);
+  result->setVersion(MAJORVERSION*1000000+MINORVERSION*10000+MAJORRELEASE*100+MINORRELEASE);
   return result;
 }
 
@@ -251,7 +255,6 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   // sends the request
   s->sendObject(request);
   // wait for acknowledgment
-  stage_trace(3, "Waiting for acknowledgement");
   IObject* obj = s->readObject();
   castor::MessageAck* ack =
     dynamic_cast<castor::MessageAck*>(obj);
@@ -293,7 +296,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
 castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
   throw (castor::exception::Exception) {
 
-  stage_trace(3, "Waiting for callback from stager");
+  stage_trace(3, "Waiting for callback from castor");
   clock_t startTime;
 #if !defined(_WIN32)
   struct tms buf;
@@ -375,42 +378,37 @@ void castor::client::BaseClient::setRhPort(int optPort)
         << "Invalid port value : " << optPort
         << ". Must be < 65535." << std::endl;
       throw e;
-   }
-   if (optPort >0){
-	 m_rhPort=optPort;
-	 return;
-   }
-   char* port;
+  }
+  if (optPort > 0) {
+    m_rhPort = optPort;
+  }
+  char* port;
 
-   // If security mode is used get the RH Secure server port,
-   // if you can not get it throws and exception, don't go on in unsecure mode.
-   // RH server port. Can be given through the environment
-   // variable RH_PORT or in the castor.conf file as a
-   // RH/PORT entry. If none is given, default is used
-   if(m_hasSecAuthorization){
-     if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
-        || (port = getenv (castor::client::SEC_PORT_ENV_ALT)) != 0
-        || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-			    (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
-         m_rhPort = castor::System::porttoi(port);
-     }else{
-         clog() << "Contacting RH server on default secure port ("
-          << CSP_RHSERVER_SEC_PORT << ")." << std::endl;
-         m_rhPort = CSP_RHSERVER_SEC_PORT; castor::exception::Exception e(errno);
-     }	 
-   }else{
-     if ((port = getenv (castor::client::PORT_ENV)) != 0 
-        || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
-        || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-			    (char *)castor::client::PORT_CONF,0)) != 0) {
-       m_rhPort = castor::System::porttoi(port);
-     } else {
-       clog() << "Contacting RH server on default port ("
-          << CSP_RHSERVER_PORT << ")." << std::endl;
-       m_rhPort = CSP_RHSERVER_PORT;
-     }
-   }  
-  stage_trace(3, "Looking up RH Port - Using %d", m_rhPort);
+  // If security mode is used get the RH Secure server port,
+  // the value can be given through the environment
+  // or in the castor.conf file. If none is given, default is used
+  if(m_hasSecAuthorization) {
+    if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
+      || (port = getenv (castor::client::SEC_PORT_ENV_ALT)) != 0
+      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+           (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
+      m_rhPort = castor::System::porttoi(port);
+    } else {
+      m_rhPort = CSP_RHSERVER_SEC_PORT;
+    }
+    stage_trace(3, "Looking up RH secure port - Using %d", m_rhPort);
+  }
+  else {
+    if ((port = getenv (castor::client::PORT_ENV)) != 0 
+      || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
+      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+           (char *)castor::client::PORT_CONF,0)) != 0) {
+      m_rhPort = castor::System::porttoi(port);
+    } else {
+      m_rhPort = CSP_RHSERVER_PORT;
+    }
+    stage_trace(3, "Looking up RH unsecure port - Using %d", m_rhPort);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -426,22 +424,21 @@ void castor::client::BaseClient::setRhHost(std::string optHost)
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
-  if (optHost.compare("")){
+  if (optHost.compare("")) {
     m_rhHost = optHost;
-    return;
   }
-
-  char* host;
-  if ((host = getenv (castor::client::HOST_ENV)) != 0
-      || (host = getenv (castor::client::HOST_ENV_ALT)) != 0
-      || (host = getconfent((char *)castor::client::CATEGORY_CONF,
-			    (char *)castor::client::HOST_CONF,0)) != 0) {
-    m_rhHost = host;
-  } else {
-    m_rhHost = RH_HOST;
+  else {
+    char* host;
+    if ((host = getenv (castor::client::HOST_ENV)) != 0
+        || (host = getenv (castor::client::HOST_ENV_ALT)) != 0
+        || (host = getconfent((char *)castor::client::CATEGORY_CONF,
+                              (char *)castor::client::HOST_CONF,0)) != 0) {
+      m_rhHost = host;
+    } else {
+      m_rhHost = RH_HOST;
+    }
   }
-
-  stage_trace(3, "Looking up RH Host - Using %s", m_rhHost.c_str());
+  stage_trace(3, "Looking up RH host - Using %s", m_rhHost.c_str());
 }
 
 //------------------------------------------------------------------------------
@@ -459,34 +456,39 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
   // file as a RH/HOST entry
   if (optSvcClass.compare("")){
     m_rhSvcClass = optSvcClass;
-    return;
   }
-
-  char* svc;
-  if ((svc = getenv ("STAGE_SVCCLASS")) != 0
-      || (svc = getconfent("STAGER", "SVCCLASS",0)) != 0) {
-    m_rhSvcClass = svc;
-    stage_trace(3, "Looking up RH svc class - Using %s", m_rhSvcClass.c_str());
-  } else {
-    m_rhSvcClass = "";
+  else {
+    char* svc;
+    if ((svc = getenv ("STAGE_SVCCLASS")) != 0
+        || (svc = getconfent("STAGER", "SVCCLASS",0)) != 0) {
+      m_rhSvcClass = svc;
+    } else {
+      m_rhSvcClass = "";
+    }
+  }
+  if(!m_rhSvcClass.empty()) {
+    stage_trace(3, "Looking up service class - Using %s", m_rhSvcClass.c_str());
   }
 }
+
 
 //------------------------------------------------------------------------------
 // setOption
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setOption(struct stage_options* opts)
-  throw (castor::exception::Exception){
-
-  if(opts != 0){
+void castor::client::BaseClient::setOption
+  (struct stage_options* opts, castor::stager::Request* req)
+  throw (castor::exception::Exception) {
+  if (0 != opts) {
     setRhHost(opts->stage_host);
     setRhPort(opts->stage_port);
     setRhSvcClass(opts->service_class);
-  } else{
+  } else {
     setRhHost("");
     setRhPort(0);
     setRhSvcClass("");
   }
+  // now the service class has been resolved, attach it to the request
+  req->setSvcClassName(m_rhSvcClass);
 }       
 
 //------------------------------------------------------------------------------
@@ -595,7 +597,6 @@ std::string castor::client::BaseClient::createClientAndSend
 
   // sends the request
   std::string requestId = internalSendRequest(*req);
-  stage_trace(3, "Request sent to RH - Request ID: %s", requestId.c_str());
   return requestId;
 }
 
@@ -652,18 +653,13 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   // Machine
   req->setMachine(castor::System::getHostName());
   if (m_rhHost == "") {
-    clog() << "RH host not specified: "
-           << strerror(errno) << std::endl;
     castor::exception::Exception e(errno);
     e.getMessage() << "Could not get rh host name"
                    <<  strerror(errno);
     throw e;
-    //m_rhHost = hostname;
   }
 
   // create a socket for the callback with no port
-  stage_trace(3, "Creating socket for stager callback");
-
   // not to let the client to reuse the port
   //if (m_hasSecAuthorization){
   //   m_callbackSocket = new castor::io::AuthServerSocket(false); 
@@ -689,9 +685,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   unsigned short port;
   unsigned long ip;
   m_callbackSocket->getPortIp(port, ip);
-  clog() << DEBUG << "Opened callback socket on port "
-         << port << std::endl;
-  stage_trace(3, "Will wait for stager callback on port %d", port);
+  stage_trace(3, "Creating socket for castor callback - Using port %d", port);
   // set the Client
   castor::IClient *cl = createClient();
   req->setClient(cl);
@@ -760,8 +754,6 @@ void castor::client::BaseClient::pollAnswersFromStager
 	      continue;
 	    }
 	    
-	    // flush messages
-	    clog() << std::flush;
 	    // terminate response handler
 	    rh->terminate();
 	    stop = true;
