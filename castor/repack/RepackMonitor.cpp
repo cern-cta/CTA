@@ -129,15 +129,12 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
   castor::stager::StageFileQueryRequest req;
   struct stage_options opts;
   memset(&opts,0,sizeof(stage_options));
-  client.setOption(NULL);
+  client.setOption(NULL, &req);
 
   /// set the service class information from repackrequest
   getStageOpts(&opts, sreq);
-  client.setOption(&opts);
+  client.setOption(&opts, &req);
 
-  castor::stager::RequestHelper reqh(&req);
-  reqh.setOptions(&opts);
- 
   // Prepare the Request
   castor::stager::QueryParameter *par = new castor::stager::QueryParameter();
   par->setQueryType( (castor::stager::RequestQueryType) BY_REQID );

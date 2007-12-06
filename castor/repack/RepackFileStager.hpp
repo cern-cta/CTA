@@ -14,7 +14,6 @@
 #include "castor/rh/FileResponse.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
 #include "castor/client/BaseClient.hpp"
-#include "castor/stager/RequestHelper.hpp"
 /*************************************/
 
 namespace castor {

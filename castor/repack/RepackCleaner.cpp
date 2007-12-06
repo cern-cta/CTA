@@ -161,15 +161,13 @@ void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::
 
   
   castor::client::BaseClient client(stage_getClientTimeout());
-  client.setOption(NULL);       /** to initialize the RH,stager, etc. */
+  client.setOption(NULL, &req);       /** to initialize the RH,stager, etc. */
   /* set the service class information from repackrequest */
   getStageOpts(&opts, sreq);
-  client.setOption(&opts);
+  client.setOption(&opts, &req);
 
-  castor::stager::RequestHelper reqh(&req);
   std::vector<castor::rh::Response *>respvec;
   castor::client::VectorResponseHandler rh(&respvec);
-  reqh.setOptions(&opts);
 
   //  client.setAuthorizationId(sreq->repackrequest()->userId(), sreq->repackrequest()->groupId());
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2007/10/02 09:53:16 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2007/12/06 17:09:15 $ $Author: itglp $
  *
  *
  *
@@ -358,13 +358,9 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   int failed = 0; /** counter for failed files during submit */	
   Cuuid_t cuuid = stringtoCuuid(rsreq->cuuid());
 
-	/** Uses a BaseClient to handle the request */
+  /** Uses a BaseClient to handle the request */
   castor::client::BaseClient client(stage_getClientTimeout());
-  client.setOption(NULL);	/** to initialize the RH,stager, etc. */
-
-  castor::stager::RequestHelper reqh(req);
-  reqh.setOptions(opts);
-  client.setOption(opts);
+  client.setOption(opts, &req);
 
   client.setAuthorizationId(rsreq->repackrequest()->userId(), rsreq->repackrequest()->groupId());
   
