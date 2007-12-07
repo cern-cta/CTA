@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.573 $ $Date: 2007/12/06 14:13:21 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.574 $ $Date: 2007/12/07 14:12:37 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -221,6 +221,15 @@ CREATE GLOBAL TEMPORARY TABLE OutOfDateStageOutPutDone
 CREATE GLOBAL TEMPORARY TABLE OutOfDateRecallDropped
   (fileId NUMBER, nsHost VARCHAR2(2048))
   ON COMMIT DELETE ROWS;
+
+/* Temporary table to handle removing of priviledges */
+CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
+  (svcCLass NUMBER,
+   euid NUMBER,
+   egid NUMBER,
+   reqType NUMBER)
+  ON COMMIT DELETE ROWS;
+
 
 /**
   * Black and while list mechanism
@@ -5088,16 +5097,6 @@ CREATE OR REPLACE PACKAGE castorBW AS
   -- Remove priviledge P
   PROCEDURE removePrivilege(P Privilege);
 END castorBW;
-
-/*
- * Temporary table to handle removing of priviledges
- */
-CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
-  (svcCLass NUMBER,
-   euid NUMBER,
-   egid NUMBER,
-   reqType NUMBER)
-  ON COMMIT DELETE ROWS;
 
 CREATE OR REPLACE PACKAGE BODY castorBW AS
 
