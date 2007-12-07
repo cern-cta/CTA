@@ -80,6 +80,9 @@ extern int rtcp_CallVMGR _PROTO((tape_list_t *, char *));
 #endif
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {
+#if defined(RTCP_SERVER)
+    file_list_t *file = NULL;
+#endif
     tape_list_t *tl;
     int rc = 0;
     rtcpTapeRequest_t *tapereq;
