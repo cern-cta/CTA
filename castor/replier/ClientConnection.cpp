@@ -64,7 +64,7 @@ castor::replier::ClientConnection::ClientConnection() throw() :
   BaseObject(), m_client(), m_messages(), m_fd(-1),
   m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false),
   m_nextMessageId(1) {
-    char *func = "cc::ClientConnection ";
+    const char *func = "cc::ClientConnection ";
     m_clientStr = buildClientStr(m_client);
     clog() << VERBOSE << SETW func  << this->toString() << " created" << std::endl;
 }
@@ -73,7 +73,7 @@ castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
   BaseObject(), m_client(cr.client), m_messages(), m_fd(-1),
   m_lastEventDate(time(0)), m_status(INACTIVE), m_terminate(false),
   m_nextMessageId(1)  {
-    char *func = "cc::ClientConnection ";
+    const char *func = "cc::ClientConnection ";
     m_clientStr = buildClientStr(m_client);
     cr.messageId = m_nextMessageId;
     m_nextMessageId++;
@@ -84,7 +84,7 @@ castor::replier::ClientConnection::ClientConnection(ClientResponse cr) throw() :
 }
 
 void castor::replier::ClientConnection::addMessage(ClientResponse cr) throw() {
-  char *func = "cc::addMessage ";
+  const char *func = "cc::addMessage ";
   cr.messageId = m_nextMessageId;
   m_nextMessageId++;
   m_messages.push(cr);
@@ -138,7 +138,7 @@ std::string castor::replier::ClientConnection::getStatusStr()
 
 void castor::replier::ClientConnection::close() throw() {
 
-  char *func = "cc::close ";
+  const char *func = "cc::close ";
 #if !defined(_WIN32)
   ::close(m_fd);
 #else
@@ -193,7 +193,7 @@ bool castor::replier::ClientConnection::hasMessagesToSend() throw() {
 
 void castor::replier::ClientConnection::setStatus(enum RCStatus stat)
   throw() {
-  char *func = "cc::setStatus ";
+  const char *func = "cc::setStatus ";
   m_status = stat;
   m_lastEventDate = time(0);
   clog() << VERBOSE << SETW func  << this->toString() << " Setting status to "
@@ -253,7 +253,7 @@ void castor::replier::ClientConnection::createSocket()
 void castor::replier::ClientConnection::connect()
   throw(castor::exception::Exception) {
 
-  char *func = "cc::connect ";
+  const char *func = "cc::connect ";
 
   // Preparing the client address
   struct sockaddr_in saddr;
@@ -286,7 +286,7 @@ void castor::replier::ClientConnection::connect()
 }
 
 void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::exception::Exception) {
-  char *func = "cc::deleteNextMessage ";
+  const char *func = "cc::deleteNextMessage ";
   if (!m_messages.empty()) {
     ClientResponse message = m_messages.front();
     clog() << VERBOSE << SETW func  << this->toString() << " Deleting msg "
@@ -298,7 +298,7 @@ void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::excep
 }
 
 void castor::replier::ClientConnection::sendNextMessage()  throw(castor::exception::Exception) {
-  char *func = "cc::sendNextMessage ";
+  const char *func = "cc::sendNextMessage ";
   if (m_messages.empty()) {
     clog() << DEBUG << SETW func  << this->toString() 
 	   << "No more messages in queue!" << std::endl;
@@ -315,7 +315,7 @@ void castor::replier::ClientConnection::sendNextMessage()  throw(castor::excepti
 void castor::replier::ClientConnection::send()
   throw(castor::exception::Exception) {
 
-  char *func = "cc::send ";
+  const char *func = "cc::send ";
   castor::io::biniostream *response;
   ClientResponse message;
 

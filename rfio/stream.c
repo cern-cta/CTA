@@ -400,7 +400,7 @@ char  	*vmstr ;
    if (netwrite_timeout(rfp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
       save_errno = errno; save_serrno = serrno;
       TRACE(2,"rfio","rfio_open_v3: write(): ERROR occured (errno=%d)", errno) ;
-      syslog(LOG_ALERT, "rfio: open_v3: %s (error %d , serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
+      syslog(LOG_ALERT, "rfio: open_v3: %s (error %d , serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,%p,%d)",
 	     strerror(errno > 0 ? errno : serrno), errno, serrno, 
              rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, 
              RQSTSIZE+len);
@@ -434,7 +434,7 @@ char  	*vmstr ;
       {
          save_errno = errno; save_serrno = serrno;
 	 TRACE(2, "rfio", "rfio_open_v3: read(): ERROR occured (errno=%d)", errno);
-	 syslog(LOG_ALERT, "rfio: open_v3: %s (error %d, serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
+	 syslog(LOG_ALERT, "rfio: open_v3: %s (error %d, serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,%p,%d)",
 		strerror(errno > 0 ? errno : serrno), errno, serrno, 
                 rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, 
                 RQSTSIZE);

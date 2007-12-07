@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.9 2007/12/07 13:26:08 sponcec3 Exp $
+ * $Id: stream64.c,v 1.10 2007/12/07 13:54:33 sponcec3 Exp $
  */
 
 /*
@@ -358,7 +358,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
       save_errno = errno; save_serrno = serrno;
       TRACE(2,"rfio","rfio_open64_v3: write(): ERROR occured (errno=%d)", errno) ;
       syslog(LOG_ALERT,
-         "rfio: open64_v3: %s (error %d , serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
+         "rfio: open64_v3: %s (error %d , serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,%p,%d)",
          strerror(errno > 0 ? errno : serrno), errno, serrno, 
          rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, 
          RQSTSIZE+len);
@@ -401,7 +401,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
 	 TRACE(2, "rfio", "rfio_open64_v3: read(): ERROR %d occured (errno=%d, serrno=%d)",
             rb, errno, serrno);
 	 syslog(LOG_ALERT,
-            "rfio: open64_v3: %s (error %d, serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
+            "rfio: open64_v3: %s (error %d, serrno %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,%p,%d)",
             strerror(errno > 0 ? errno : serrno), errno, serrno, 
             rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, 
             rlen);

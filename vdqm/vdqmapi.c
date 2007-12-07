@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.5 2007/08/17 09:36:25 sponcec3 Exp $
+ * $Id: vdqmapi.c,v 1.6 2007/12/07 13:54:33 sponcec3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -282,7 +282,7 @@ int DLL_DECL vdqm_SendVolReq(vdqmnw_t *nw,
     VDQM_API_ENTER(vdqm_SendVolReq);
 
     memset(&volreq,'\0',sizeof(vdqmVolReq_t));
-    if ( nw != NULL && nw->connect_socket == INVALID_SOCKET ||
+    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
         VID == NULL || dgn == NULL || client_port < 0 ) {
         TRACE(1,"vdqm","vdqm_SendVolReq() called with invalid socket");
         serrno = EINVAL;
@@ -351,7 +351,7 @@ int DLL_DECL vdqm_DelVolumeReq(vdqmnw_t *nw,
 
     memset(&hdr,'\0',sizeof(hdr));
     memset(&volreq,'\0',sizeof(vdqmVolReq_t));
-    if ( nw != NULL && nw->connect_socket == INVALID_SOCKET ||
+    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
         reqID <= 0 || VID == NULL || dgn == NULL || client_port < 0 ) {
         TRACE(1,"vdqm","vdqm_DelVolumeReq() called with invalid argument");
         serrno = EINVAL;
@@ -456,7 +456,7 @@ int DLL_DECL vdqm_UnitStatus(vdqmnw_t *nw,
     VDQM_API_ENTER(vdqm_UnitStatus);
 
     memset(&drvreq,'\0',sizeof(vdqmDrvReq_t));
-    if ( nw != NULL && nw->connect_socket == INVALID_SOCKET ||
+    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
         status == NULL || (*status != VDQM_TPD_STARTED && 
         (unit == NULL || dgn == NULL)) ) {
         TRACE(1,"vdqm","vdqm_UnitStatus() called with invalid argument");
@@ -560,7 +560,7 @@ int DLL_DECL vdqm_DelDrive(vdqmnw_t *nw,
 
     memset(&hdr,'\0',sizeof(hdr));
     memset(&drvreq,'\0',sizeof(vdqmDrvReq_t));
-    if ( nw != NULL && nw->connect_socket == INVALID_SOCKET ||
+    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
         unit == NULL || dgn == NULL ) {
         TRACE(1,"vdqm","vdqm_DelDrive() called with invalid argument");
         serrno = EINVAL;

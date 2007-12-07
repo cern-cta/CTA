@@ -1,5 +1,5 @@
 /*
- * $Id: open64.c,v 1.10 2007/12/07 13:26:07 sponcec3 Exp $
+ * $Id: open64.c,v 1.11 2007/12/07 13:54:33 sponcec3 Exp $
  */
 
 /*
@@ -329,7 +329,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    TRACE(2,"rfio","rfio_open64_ext: sending %d bytes",RQSTSIZE+len) ;
    if (netwrite_timeout(rfp->s,rfio_buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
       TRACE(2,"rfio","rfio_open64_ext: write(): ERROR occured (errno=%d)", errno) ;
-      syslog(LOG_ALERT, "rfio: open64: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,0X%X,%d)",
+      syslog(LOG_ALERT, "rfio: open64: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netwrite(%d,%p,%d)",
 	     strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, RQSTSIZE+len);
       rfio_cleanup(rfp->s) ;
       END_TRACE() ;
@@ -355,7 +355,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
       }
       else {
          syslog(LOG_ALERT,
-            "rfio: open64: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,0X%X,%d)",
+            "rfio: open64: %s (error %d with %s) [uid=%d,gid=%d,pid=%d] in netread(%d,%p,%d)",
             strerror(errno), errno, rfp->host, rfp->uid, rfp->gid, getpid(), rfp->s, rfio_buf, replen);
          rfio_cleanup(rfp->s);
          return(-1);

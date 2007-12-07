@@ -1,7 +1,10 @@
 /*
- * $Id: socket_timeout.h,v 1.7 2007/12/07 13:26:07 sponcec3 Exp $
+ * $Id: socket_timeout.h,v 1.8 2007/12/07 13:54:32 sponcec3 Exp $
  *
  * $Log: socket_timeout.h,v $
+ * Revision 1.8  2007/12/07 13:54:32  sponcec3
+ * Fixed warnings
+ *
  * Revision 1.7  2007/12/07 13:26:07  sponcec3
  * Fixed warnings
  *
@@ -28,6 +31,7 @@
 
 #include <osdep.h>
 #include <net.h>
+#include <sys/socket.h>
 
 #if _WIN32
 #include <windows.h>
