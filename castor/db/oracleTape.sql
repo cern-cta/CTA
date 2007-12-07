@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.574 $ $Date: 2007/12/07 14:12:37 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.575 $ $Date: 2007/12/07 15:30:12 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3411,7 +3411,7 @@ BEGIN
                 AND s.request = r.id
                 AND c.id = d.castorfile
                 AND d.creationtime < getTime() - timeOut
-                AND d.status IN (5, 6, 11)) LOOP -- WAITFS, STAGEOUT, WAITFSCHEDULING
+                AND d.status = 2) LOOP -- WAITTAPERECALL
     -- cancel recall and fail subrequests
     cancelRecall(cf.id, cf.dcId, 7); -- FAILED
     INSERT INTO OutOfDateRecallDropped VALUES (cf.fileId, cf.nsHost);
