@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <dlfcn.h>
+#include <Cdlopen_api.h>
 #include <Csec_api.h>
 
 
@@ -20,23 +20,23 @@ int loader(){
    if (loaded==1)
      return 1; // is already loaded
 
-   handle = dlopen ("libsecurity.so", RTLD_LAZY);
+   handle = Cdlopen ("libsecurity.so", RTLD_LAZY);
    if (!handle) {
       fprintf (stderr, "%s\n", dlerror());
       return -1;
    }
-   dlerror();    /* Clear any existing error */
+   Cdlerror();    /* Clear any existing error */
    //*(void **) (&cosine) = dlsym(handle, "cos");
-   *(void **) (&Cclient_initContext) = dlsym(handle, "Csec_client_initContext");
-   *(void **) (&Cserver_initContext) = dlsym(handle, "Csec_server_initContext");
-   *(void **) (&Cclient_establishContext) = dlsym(handle, "Csec_client_establishContext");
-   *(void **) (&Cserver_establishContext) = dlsym(handle, "Csec_server_establishContext");
-   *(void **) (&CclearContext) = dlsym(handle, "Csec_clearContext");
-   *(void **) (&CgetClientId) = dlsym(handle, "Csec_server_getClientId");
-   *(void **) (&CmapUser) = dlsym(handle, "Csec_mapToLocalUser");
+   *(void **) (&Cclient_initContext) = Cdlsym(handle, "Csec_client_initContext");
+   *(void **) (&Cserver_initContext) = Cdlsym(handle, "Csec_server_initContext");
+   *(void **) (&Cclient_establishContext) = Cdlsym(handle, "Csec_client_establishContext");
+   *(void **) (&Cserver_establishContext) = Cdlsym(handle, "Csec_server_establishContext");
+   *(void **) (&CclearContext) = Cdlsym(handle, "Csec_clearContext");
+   *(void **) (&CgetClientId) = Cdlsym(handle, "Csec_server_getClientId");
+   *(void **) (&CmapUser) = Cdlsym(handle, "Csec_mapToLocalUser");
     
     
-   if ((error = dlerror()) != NULL)  {
+   if ((error = Cdlerror()) != NULL)  {
      fprintf (stderr, "%s\n", error);
      return -1;
    }
@@ -75,7 +75,7 @@ int getClearContext(Csec_context_t *security_context){
 }
 
 void close(){
-  dlclose(handle);
+  Cdlclose(handle);
 }
 
 
