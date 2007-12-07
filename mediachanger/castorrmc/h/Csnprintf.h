@@ -1,5 +1,5 @@
 /*
- * $Id: Csnprintf.h,v 1.1 2003/11/04 13:02:56 jdurand Exp $
+ * $Id: Csnprintf.h,v 1.2 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 #ifndef __Csnprintf_h
@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include "osdep.h"
 
-EXTERN_C int DLL_DECL Csnprintf _PROTO((char *, size_t, char *, ...));
-EXTERN_C int DLL_DECL Cvsnprintf _PROTO((char *, size_t, char *, va_list));
+EXTERN_C int DLL_DECL Csnprintf _PROTO((char *, size_t, const char *, ...));
+EXTERN_C int DLL_DECL Cvsnprintf _PROTO((char *, size_t, const char *, va_list));
 
 #endif /* __Csnprintf_h */

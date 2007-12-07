@@ -1,5 +1,5 @@
 /*
- * $Id: Csnprintf.c,v 1.1 2003/11/04 13:02:35 jdurand Exp $
+ * $Id: Csnprintf.c,v 1.2 2007/12/07 11:40:52 sponcec3 Exp $
  */
 
 #include "Csnprintf.h"
@@ -7,7 +7,7 @@
 /* Hide the snprintf and al. call v.s. different OS. */
 /* Sometimes a different name, sometimes do not exist */
 
-int DLL_DECL Csnprintf(char *str, size_t size, char *format, ...) {
+int DLL_DECL Csnprintf(char *str, size_t size, const char *format, ...) {
 	int rc;
 	va_list args;
 
@@ -20,7 +20,7 @@ int DLL_DECL Csnprintf(char *str, size_t size, char *format, ...) {
 	return(rc);
 }
 
-int DLL_DECL Cvsnprintf(char *str, size_t size, char *format, va_list args)
+int DLL_DECL Cvsnprintf(char *str, size_t size, const char *format, va_list args)
 {
 #if (defined(__osf__) && defined(__alpha))
 	return(vsprintf(str, format, args));
