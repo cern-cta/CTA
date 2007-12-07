@@ -15,21 +15,6 @@
    //double (*cosine)(double);
    char *error;
 
-  /* void executer(Csec_context_t *);
-   int loader();
-   void close();
- */
-/*int main(int argc, char **argv) {
-   Csec_context_t m_security_context;
-
-   printf("voy a cargar la libreria\n");
-   loader();
-   printf("voy a ejecurtar\n");
-   executer(&m_security_context);
-   printf("voy a cerrar\n");
-   close();
-}
-*/
   
 int loader(){
    if (loaded==1)
@@ -88,34 +73,9 @@ int getMapUser(const char *mech, const char *principal, char *username, size_t u
 int getClearContext(Csec_context_t *security_context){
  return  (*CclearContext)(security_context);
 }
-/*
-void executer(Csec_context_t *  security_context){   
-
-   printf("%d \n",(*Cclient_initContext)(security_context,0,NULL));
-   int sol=getClient_initContext(security_context,0,NULL);
-   printf("%d \n",sol);
-   //printf ("%f\n", (*cosine)(2.0));
- //  dlclose(handle);
-   //return 0;
-}
 
 void close(){
   dlclose(handle);
 }
-
-
-
-
-int main(int argc, char **argv) {
-   Csec_context_t m_security_context;
-
-   printf("voy a cargar la libreria\n");
-   loader();
-   printf("voy a ejecurtar\n");
-   executer(&m_security_context);
-   printf("voy a cerrar\n");
-   close();
-}
-*/
 
 
