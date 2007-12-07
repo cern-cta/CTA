@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: migrator.c,v $ $Revision: 1.55 $ $Release$ $Date: 2007/10/29 21:37:11 $ $Author: obarring $
+ * @(#)$RCSfile: migrator.c,v $ $Revision: 1.56 $ $Release$ $Date: 2007/12/07 16:29:28 $ $Author: sponcec3 $
  *
  * 
  *
@@ -83,7 +83,6 @@ extern int (*rtcpc_ClientCallback) _PROTO((
                                            rtcpTapeRequest_t *, 
                                            rtcpFileRequest_t *
                                            ));
-extern char *getconfent _PROTO((char *, char *, int));
 Cuuid_t childUuid, mainUuid;
 int inChild = 1;
 extern int checkFile;
