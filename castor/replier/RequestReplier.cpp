@@ -90,7 +90,7 @@ castor::replier::RequestReplier *castor::replier::RequestReplier::s_rr = 0;
 castor::replier::RequestReplier *
 castor::replier::RequestReplier::getInstance() throw() {
 
-  char *func = "rr::getInstance";
+  const char *func = "rr::getInstance";
   // XXX lock ?
   if (0 == s_rr) {
     s_rr = new castor::replier::RequestReplier();
@@ -104,7 +104,7 @@ castor::replier::RequestReplier::getInstance() throw() {
 //-----------------------------------------------------------------------------
 castor::replier::RequestReplier::RequestReplier() throw() {
 
-  char *func = "rr::RequestReplier";
+  const char *func = "rr::RequestReplier";
 
   // Initializing collections
   m_clientQueue = new std::queue<ClientResponse>();
@@ -141,7 +141,7 @@ castor::replier::RequestReplier::RequestReplier() throw() {
 //-----------------------------------------------------------------------------
 void
 castor::replier::RequestReplier::start() throw() {
-  char *func = "rr::start ";
+  const char *func = "rr::start ";
   if ((m_threadId = Cthread_create(&(staticReplierThread), this))<0) {
     clog() << ALERT << SETW func  <<  "Could not create thread !" << std::endl;
   }
@@ -187,7 +187,7 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
   unsigned int nbPollFd = 1000;
   struct ::pollfd *toPoll = new struct ::pollfd[nbPollFd];
 
-  char *func = "rr::replierThread ";
+  const char *func = "rr::replierThread ";
   m_lastStatTime = time(0);
 
   while (1) {
@@ -288,7 +288,7 @@ castor::replier::RequestReplier::replierThread(void *arg) throw() {
 void castor::replier::RequestReplier::createNewClientConnection(ClientResponse cr)
   throw() {
 
-  char *func = "rr::createNewClientConnection ";
+  const char *func = "rr::createNewClientConnection ";
 
   // Looking in the hash of client to find if there is one already established
   ClientConnection *r = 0;
@@ -340,7 +340,7 @@ void castor::replier::RequestReplier::createNewClientConnection(ClientResponse c
 //-----------------------------------------------------------------------------
 void castor::replier::RequestReplier::deleteConnection(int dfd) throw() {
 
-  char *func = "rr::deleteConnection ";
+  const char *func = "rr::deleteConnection ";
 
   ClientConnection *cr = (*m_connections)[dfd];
   clog() << VERBOSE << SETW func  <<  cr->toString()
@@ -364,7 +364,7 @@ void castor::replier::RequestReplier::garbageCollect() throw() {
   int t = time(0);
   const int TIMEOUT = 60;
   std::stack<int> toremove;
-  char *func = "rr::garbageCollect ";
+  const char *func = "rr::garbageCollect ";
 
   for(std::map<int, ClientConnection *>::iterator iter = m_connections->begin();
       iter != m_connections->end();
@@ -426,7 +426,7 @@ int
 castor::replier::RequestReplier::buildNewPollArray(struct ::pollfd pl[])
   throw() {
 
-  char *func = "rr::buildNewPollArray ";
+  const char *func = "rr::buildNewPollArray ";
 
   // BEWARE: Keep entry 0 identical as this the pollfd for the messaging pipe
   pl[0].fd = *m_pipeRead;
@@ -477,7 +477,7 @@ void
 castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd)
   throw() {
 
-  char *func = "rr::processPollArray ";
+  const char *func = "rr::processPollArray ";
 
   clog() << VERBOSE << SETW func  <<  "Processing poll Array. (New requests waiting?: "
          << pl[0].revents << ")" << std::endl;
@@ -602,7 +602,7 @@ castor::replier::RequestReplier::processPollArray(struct ::pollfd pl[], int nbfd
 void
 castor::replier::RequestReplier::readFromClientQueue() throw() {
 
-  char *func = "rr::readFromClientQueue ";
+  const char *func = "rr::readFromClientQueue ";
 
   clog() << VERBOSE << SETW func  <<  "Locking m_clientQueue" << std::endl;
   Cthread_mutex_lock(&m_clientQueue);
@@ -659,7 +659,7 @@ void
 castor::replier::RequestReplier::terminate()
   throw() {
 
-  char *func = "rr::terminate ";
+  const char *func = "rr::terminate ";
 
   clog() << IMPORTANT << SETW func  <<  "Requesting RequestReplier termination"
          << std::endl;
@@ -738,7 +738,7 @@ void
 castor::replier::RequestReplier::setCallback(void (*callback)(castor::IClient *, MajorConnectionStatus))
   throw(castor::exception::Exception) {
 
-  char *func = "rr::setCallback    CLIENT ";
+  const char *func = "rr::setCallback    CLIENT ";
 
   if (0 == callback) {
     castor::exception::Exception e(EINVAL);
@@ -768,7 +768,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
                                               bool isLastResponse)
   throw(castor::exception::Exception) {
 
-  char *func = "rr::sendResponse    CLIENT ";
+  const char *func = "rr::sendResponse    CLIENT ";
 
   if (0 == client || 0 == response) {
     castor::exception::Exception e(EINVAL);
@@ -867,7 +867,7 @@ castor::replier::RequestReplier::sendEndResponse
  std::string reqId)
   throw(castor::exception::Exception) {
 
-  char *func = "rr::sendEndResponse CLIENT ";
+  const char *func = "rr::sendEndResponse CLIENT ";
 
   if (0 == client) {
     castor::exception::Exception e(EINVAL);

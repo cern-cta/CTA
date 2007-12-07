@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: common.h,v $ $Revision: 1.2 $ $Date: 2007/12/07 13:26:07 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: common.h,v $ $Revision: 1.3 $ $Date: 2007/12/07 16:09:40 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -39,8 +39,8 @@
 #include <u64subr.h>
 #include <ypgetacctent.h>
 
-EXTERN_C char DLL_DECL *getconfent_r _PROTO((char *, char *, int, char *, int));
-EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
+EXTERN_C char DLL_DECL *getconfent_r _PROTO((const char *, const char *, int, char *, int));
+EXTERN_C char DLL_DECL *getconfent _PROTO((const char *, const char *, int));
 EXTERN_C int DLL_DECL setnetio _PROTO((int));
 EXTERN_C int DLL_DECL solveln _PROTO((char *, char *, int));
 EXTERN_C int DLL_DECL seelink _PROTO((char *, char *, int));

@@ -64,7 +64,7 @@ struct Cmonit_server_entry  *get_Cmonit_server_entry(struct Cmonit_server_entry 
 struct Cm_stager *get_stager(struct sockaddr_in *stager_host);
 int read_migrator_record(char **p, struct Cm_stager *stager);
 int read_pool_record(char **p, struct Cm_stager *stager);
-int read_record(char **p, struct Cm_stager *stager);
+void read_record(char **p, struct Cm_stager *stager);
 struct Cm_pool *get_pool(struct Cm_stager *stager,char *poolname);
 struct Cm_migrator *get_migrator(struct Cm_stager *stager,char *migrname);
 int Cmonit_processmsg_stager_v2 (char *buf, int nb_recv, struct sockaddr_in *stager_host);

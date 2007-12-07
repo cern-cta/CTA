@@ -1,5 +1,5 @@
 /*
- * $Id: Cthread.c,v 1.51 2007/12/06 14:24:47 sponcec3 Exp $
+ * $Id: Cthread.c,v 1.52 2007/12/07 16:09:40 sponcec3 Exp $
  */
 
 /*
@@ -30,20 +30,20 @@
 /* Internal Prototypes                          */
 /* ============================================ */
 /* Add a Cthread ID */
-int   _Cthread_addcid _PROTO((char *, int, char *, int, Cth_pid_t *, unsigned, void *(*)(void *), int));
+int   _Cthread_addcid _PROTO((const char *, int, const char *, int, Cth_pid_t *, unsigned, void *(*)(void *), int));
 /* Add a mutex */
-int   _Cthread_addmtx _PROTO((char *, int, struct Cmtx_element_t *));
+int   _Cthread_addmtx _PROTO((const char *, int, struct Cmtx_element_t *));
 /* Add a TSD */
-int   _Cthread_addspec _PROTO((char *, int, struct Cspec_element_t *));
+int   _Cthread_addspec _PROTO((const char *, int, struct Cspec_element_t *));
 /* Obain a mutex lock */
 #ifndef CTHREAD_DEBUG
-int   _Cthread_obtain_mtx _PROTO((char *, int, Cth_mtx_t *, int));
+int   _Cthread_obtain_mtx _PROTO((const char *, int, Cth_mtx_t *, int));
 #else
 #define _Cthread_obtain_mtx(a,b,c,d) _Cthread_obtain_mtx_debug(__FILE__,__LINE__,a,b,c,d)
-int   _Cthread_obtain_mtx_debug _PROTO((char *, int, char *, int, Cth_mtx_t *, int));
+int   _Cthread_obtain_mtx_debug _PROTO((const char *, int, const char *, int, Cth_mtx_t *, int));
 #endif
 /* Release a mutex lock */
-int   _Cthread_release_mtx _PROTO((char *, int, Cth_mtx_t *));
+int   _Cthread_release_mtx _PROTO((const char *, int, Cth_mtx_t *));
 /* Methods to create a mutex to protect Cthread */
 /* internal tables and linked lists             */
 /* This is useful only in thread environment    */
@@ -52,7 +52,7 @@ int   _Cthread_init _PROTO((void));
 /* Release of a thread-specific variable        */
 void  _Cthread_keydestructor _PROTO((void *));
 /* Release of a thread                          */
-int   _Cthread_destroy _PROTO((char *, int, int));
+int   _Cthread_destroy _PROTO((const char *, int, int));
 #ifdef _CTHREAD
 #if _CTHREAD_PROTO == _CTHREAD_PROTO_WIN32
 unsigned __stdcall _Cthread_start_threadex _PROTO((void *));
@@ -68,13 +68,13 @@ void *_Cthread_start_pthread _PROTO((void *));
 #else
 /* Signal handler - Simplify the POSIX sigaction calls */
 typedef void    Sigfunc _PROTO((int));
-Sigfunc *_Cthread_signal _PROTO((char *, int, int, Sigfunc *));
+Sigfunc *_Cthread_signal _PROTO((const char *, int, int, Sigfunc *));
 void     _Cthread_sigchld _PROTO((int));
 void    *_Cthread_start_nothread _PROTO((void *(*)(void *), void *, Sigfunc *));
 #endif /* _CTHREAD */
 
 /* Find a global key in Cspec structure         */
-struct Cspec_element_t *_Cthread_findglobalkey _PROTO((char *, int, int *));
+struct Cspec_element_t *_Cthread_findglobalkey _PROTO((const char *, int, int *));
 /* Cthread-ID (as a Thread-Specific variable) destructor */
 void _Cthread_cid_destructor _PROTO((void *));
 /* Cthread-ID once for all... */
@@ -612,7 +612,7 @@ void *_Cthread_start_nothread(startroutine, arg, old_sigchld)
 /*   2) Insure synchronization                  */
 /* ============================================ */
 int DLL_DECL Cthread_Create(file, line, startroutine, arg)
-     char *file;
+     const char *file;
      int line;
      void *(*startroutine) _PROTO((void *));
      void *arg;
@@ -846,7 +846,7 @@ int DLL_DECL Cthread_Create(file, line, startroutine, arg)
 /*   2) Insure synchronization                  */
 /* ============================================ */
 int DLL_DECL Cthread_Create_Detached(file, line, startroutine, arg)
-     char *file;
+     const char *file;
      int line;
      void *(*startroutine) _PROTO((void *));
      void *arg;
@@ -991,7 +991,7 @@ int DLL_DECL Cthread_Create_Detached(file, line, startroutine, arg)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Join(file, line, cid, status)
-     char *file;
+     const char *file;
      int line;
      int cid;
      int **status;
@@ -1140,7 +1140,7 @@ int DLL_DECL Cthread_Join(file, line, cid, status)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Detach(file, line, cid)
-     char *file;
+     const char *file;
      int line;
      int cid;
 {
@@ -1243,7 +1243,7 @@ int DLL_DECL Cthread_Self0() {
   return(_Cthread_self());
 }
 int DLL_DECL Cthread_Self(file, line)
-     char *file;
+     const char *file;
      int line;
 {
 #ifdef _CTHREAD
@@ -1409,7 +1409,7 @@ int DLL_DECL Cthread_Self(file, line)
 /*                   (Olof.Barring@cern.ch)     */
 /* ============================================ */
 int _Cthread_destroy(file, line, cid)
-     char *file;
+     const char *file;
      int line;
      int cid;
 {
@@ -1493,7 +1493,7 @@ int _Cthread_destroy(file, line, cid)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Cond_Broadcast_ext(file, line, addr)
-     char *file;
+     const char *file;
      int line;
      void *addr;
 {
@@ -1589,7 +1589,7 @@ int DLL_DECL Cthread_Cond_Broadcast_ext(file, line, addr)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Cond_Broadcast(file, line, addr)
-     char *file;
+     const char *file;
      int line;
      void *addr;
 {
@@ -1720,7 +1720,7 @@ int DLL_DECL Cthread_Cond_Broadcast(file, line, addr)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
-     char *file;
+     const char *file;
      int line;
      void *addr;
      int timeout;
@@ -1882,7 +1882,7 @@ int DLL_DECL Cthread_Wait_Condition_ext(file, line, addr, timeout)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
-     char *file;
+     const char *file;
      int line;
      void *addr;
      int timeout;
@@ -2090,7 +2090,7 @@ int DLL_DECL Cthread_Wait_Condition(file, line, addr, timeout)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
-     char *file;
+     const char *file;
      int line;
      void *addr;
      int timeout;
@@ -2383,7 +2383,7 @@ int DLL_DECL Cthread_Lock_Mtx(file, line, addr, timeout)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Lock_Mtx_ext(file, line, addr, timeout)
-     char *file;
+     const char *file;
      int line;
      void *addr;
      int timeout;
@@ -2440,7 +2440,7 @@ int DLL_DECL Cthread_Lock_Mtx_ext(file, line, addr, timeout)
 /*       given in parameter.                    */
 /* ============================================ */
 void DLL_DECL *Cthread_Lock_Mtx_addr(file, line, addr)
-     char *file;
+     const char *file;
      int line;
      void *addr;
 {
@@ -2517,7 +2517,7 @@ void DLL_DECL *Cthread_Lock_Mtx_addr(file, line, addr)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Mutex_Unlock_ext(file, line, addr)
-     char *file;
+     const char *file;
      int line;
      void *addr;
 {
@@ -2566,7 +2566,7 @@ int DLL_DECL Cthread_Mutex_Unlock_ext(file, line, addr)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Mutex_Unlock(file, line, addr)
-     char *file;
+     const char *file;
      int line;
      void *addr;
 {
@@ -2639,7 +2639,7 @@ int DLL_DECL Cthread_Mutex_Unlock(file, line, addr)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Mutex_Destroy(file, line, addr)
-     char *file;
+     const char *file;
      int line;
      void *addr;
 {
@@ -2749,7 +2749,7 @@ int DLL_DECL Cthread_Mutex_Destroy(file, line, addr)
 /* ==================================================================================== */
 
 int _Cthread_release_mtx(file, line, mtx)
-     char *file;
+     const char *file;
      int line;
      Cth_mtx_t *mtx;
 {
@@ -2879,7 +2879,7 @@ int _Cthread_release_mtx(file, line, mtx)
 /* ==================================================================================== */
 
 int _Cthread_obtain_mtx(file, line, mtx, timeout)
-     char *file;
+     const char *file;
      int line;
      Cth_mtx_t *mtx;
      int timeout;
@@ -3123,9 +3123,9 @@ int _Cthread_obtain_mtx(file, line, mtx, timeout)
 /* ==================================================================================== */
 
 int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeout)
-     char *Cthread_file;
+     const char *Cthread_file;
      int Cthread_line;
-     char *file;
+     const char *file;
      int line;
      Cth_mtx_t *mtx;
      int timeout;
@@ -3358,7 +3358,7 @@ int _Cthread_obtain_mtx_debug(Cthread_file, Cthread_line, file, line, mtx, timeo
 /* This routine is adding a new mtx element     */
 /* ============================================ */
 int _Cthread_addmtx(file, line, Cmtx_new)
-     char *file;
+     const char *file;
      int line;
      struct Cmtx_element_t *Cmtx_new;
 {
@@ -3429,9 +3429,9 @@ int _Cthread_addmtx(file, line, Cmtx_new)
 /* cid is returned                              */
 /* ============================================ */
 int _Cthread_addcid(Cthread_file, Cthread_line, file, line, pid, thID, startroutine, detached)
-     char *Cthread_file;
+     const char *Cthread_file;
      int Cthread_line;
-     char *file;
+     const char *file;
      int line;
      Cth_pid_t *pid;
      unsigned thID;
@@ -3969,7 +3969,7 @@ void _Cthread_keydestructor(addr)
 /* ==================================================================================== */
 
 struct Cspec_element_t *_Cthread_findglobalkey(file, line, global_key)
-     char *file;
+     const char *file;
      int line;
      int *global_key;
 {
@@ -4035,7 +4035,7 @@ int DLL_DECL Cthread_Setspecific0(global_key, addr)
 }
 
 int DLL_DECL Cthread_Setspecific(file, line, global_key, addr)
-     char *file;
+     const char *file;
      int line;
      int *global_key;
      void *addr;
@@ -4180,7 +4180,7 @@ int DLL_DECL Cthread_Mutex_Unlock_init(addr)
 /* ==================================================================================== */
 
 int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
-     char *file;
+     const char *file;
      int line;
      int *global_key;
      void **addr;
@@ -4372,7 +4372,7 @@ int DLL_DECL Cthread_Getspecific(file, line, global_key, addr)
 /* This routine is adding a new mtx element     */
 /* ============================================ */
 int _Cthread_addspec(file, line, Cspec_new)
-     char *file;
+     const char *file;
      int line;
      struct Cspec_element_t *Cspec_new;
 {
@@ -4953,7 +4953,7 @@ void DLL_DECL Cthread_unprotect() {
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 int DLL_DECL Cthread_Kill(file, line, cid, signo)
-     char *file;
+     const char *file;
      int line;
      int cid;
      int signo;
@@ -5051,7 +5051,7 @@ int DLL_DECL Cthread_Kill(file, line, cid, signo)
 /*                   Jean-Damien.Durand@cern.ch */
 /* ============================================ */
 void DLL_DECL Cthread_Exit(file, line, status)
-     char *file;
+     const char *file;
      int line;
      void *status;
 {
