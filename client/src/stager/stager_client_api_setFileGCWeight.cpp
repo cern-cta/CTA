@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_setFileGCWeight.cpp,v 1.6 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_setFileGCWeight.cpp,v 1.7 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -39,7 +39,7 @@
 /* ================= */
 /* Internal routines */
 /* ================= */
-static int _processFileRequest(char *func,
+static int _processFileRequest(const char *func,
                                castor::stager::SetFileGCWeight& req,
                                struct stage_filereq *requests,
                                int nbreqs,
@@ -171,7 +171,7 @@ EXTERN_C int DLL_DECL stage_setFileGCWeight(struct stage_filereq *requests,
                                             char **requestId,
                                             struct stage_options* opts) {
   
-  char *func = "stage_setFileGCWeight";
+  const char *func = "stage_setFileGCWeight";
   castor::stager::SetFileGCWeight req;
 
   return _processFileRequest(func,

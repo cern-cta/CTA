@@ -1,5 +1,5 @@
 /*
- * $Id: stager_admin_api.h,v 1.16 2005/07/06 08:57:43 jdurand Exp $
+ * $Id: stager_admin_api.h,v 1.17 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 #ifndef stager_admin_api_h
@@ -36,7 +36,7 @@ EXTERN_C int DLL_DECL stager_geterrbuf               _PROTO((char **, int *));
 EXTERN_C int DLL_DECL stager_getoutbuf               _PROTO((char **, int *));
 EXTERN_C int DLL_DECL stager_setlog                  _PROTO((void (*)(int, char*)));
 EXTERN_C int DLL_DECL stage_getlog                   _PROTO((void (**)(int, char*)));
-EXTERN_C int DLL_DECL stage_errmsg                   _PROTO((char *, char *, ...));
+EXTERN_C int DLL_DECL stage_errmsg                   _PROTO((const char *, const char *, ...));
 EXTERN_C int DLL_DECL stage_outmsg                   _PROTO((char *, char *, ...));
 
 #endif /* stager_admin_api_h */

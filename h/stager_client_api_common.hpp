@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.hpp,v 1.2 2007/12/05 17:11:06 riojac3 Exp $
+ * $Id: stager_client_api_common.hpp,v 1.3 2007/12/07 11:40:53 sponcec3 Exp $
  *
  * Header file for internal stager client functions.
  * Note that this is only included from C++ code and it *is* C++
@@ -36,7 +36,7 @@ EXTERN_C int DLL_DECL
 stage_apiInit(struct stager_client_api_thread_info **thip);
 
 EXTERN_C void DLL_DECL
-stage_trace(int level, char *format, ...);
+stage_trace(int level, const char *format, ...);
 
 EXTERN_C int DLL_DECL
 stage_setid(uid_t uid, gid_t gid);

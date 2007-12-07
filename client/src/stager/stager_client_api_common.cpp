@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.31 2007/09/14 15:09:17 waldron Exp $
+ * $Id: stager_client_api_common.cpp,v 1.32 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -29,6 +29,7 @@
 #include "Cglobals.h"
 #include "Csnprintf.h"
 #include "stager_api.h"
+#include "getconfent.h"
 #include "stager_client_api_common.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/DiskCopy.hpp"
@@ -36,8 +37,6 @@
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/stager/FileSystemStatusCodes.hpp"
 #include "stager_client_api_authid.hpp"
-
-EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
 /* ================= */
 /* Internal routines */
@@ -181,7 +180,7 @@ EXTERN_C char *stage_statusName(int statusCode) {
 
 
 EXTERN_C char *stage_requestStatusName(int statusCode) {
-  char *ret = STATUS_NA;
+  char *ret = (char*)STATUS_NA;
   if (statusCode >= 0 
       && (unsigned int) statusCode < (sizeof(castor::stager::SubRequestStatusCodesStrings)/
                                     sizeof(castor::stager::SubRequestStatusCodesStrings[0]))) {
@@ -192,7 +191,7 @@ EXTERN_C char *stage_requestStatusName(int statusCode) {
 }
 
 #define NB_FILE_STATUS 8
-static char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
+static const char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
   "INVALID",
   "STAGEOUT",
   "STAGEIN",
@@ -203,10 +202,10 @@ static char* stage_fileStatusNameStr[NB_FILE_STATUS] = {
   "PUT_FAILED"};
 
 EXTERN_C char *stage_fileStatusName(int statusCode) {
-  char *ret = STATUS_NA;
+  char *ret = (char*)STATUS_NA;
   if (statusCode >= 0 
       && statusCode < NB_FILE_STATUS) {
-    ret = stage_fileStatusNameStr[statusCode];
+    ret = (char*)stage_fileStatusNameStr[statusCode];
   }
   return ret;
 }
@@ -221,7 +220,7 @@ EXTERN_C char *stage_fileSystemStatusName(int statusCode) {
 
 EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
   
-  char *func = "stage_geturl";
+  const char *func = "stage_geturl";
   
   if (io == NULL) {
     serrno = EINVAL;
@@ -289,10 +288,10 @@ stage_apiInit(struct stager_client_api_thread_info **thip) {
 
 
 #define STBUFSIZE 200
-EXTERN_C void DLL_DECL stage_trace(int level, char *format, ...) {
+EXTERN_C void DLL_DECL stage_trace(int level, const char *format, ...) {
   va_list args;           /* arguments */
   struct stager_client_api_thread_info *thip;
-  char *label = "stager";
+  const char *label = "stager";
   char buffer[STBUFSIZE+1];
 
   va_start(args, format);

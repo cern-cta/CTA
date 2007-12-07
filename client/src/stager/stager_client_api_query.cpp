@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.34 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_query.cpp,v 1.35 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -54,7 +54,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
 				      struct stage_options* opts){
 
   
-  char *func = "stage_filequery";
+  const char *func = "stage_filequery";
   int ret;
   if (requests == NULL
       || nbreqs <= 0
@@ -183,8 +183,8 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 					 struct stage_options* opts) {
 
 
-   char *func = "stage_requestquery";
-   int ret=0;
+  const char *func = "stage_requestquery";
+  int ret=0;
  
   if (requests == NULL
       || nbreqs <= 0
@@ -343,7 +343,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
  struct stage_options* opts) {
 
   int ret;
-  char *func = "stage_diskpoolquery";
+  const char *func = "stage_diskpoolquery";
  
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);
@@ -419,7 +419,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
  struct stage_options* opts) {
 
   int ret;
-  char *func = "stage_diskpoolsquery";
+  const char *func = "stage_diskpoolsquery";
  
   try {
     castor::BaseObject::initLog("", castor::SVC_NOMSG);

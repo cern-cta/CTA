@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.36 $ $Release$ $Date: 2007/08/27 13:42:19 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.37 $ $Release$ $Date: 2007/12/07 11:40:53 $ $Author: sponcec3 $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.36 $
- * @date $Date: 2007/08/27 13:42:19 $
+ * @version $Revision: 1.37 $
+ * @date $Date: 2007/12/07 11:40:53 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.36 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.37 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -163,8 +163,8 @@
  * The CASTOR file name must be specified, as well as the mode (RO/RW)
  */
 struct stage_options {
-  char *stage_host;
-  char *service_class;
+  const char *stage_host;
+  const char *service_class;
   int stage_version;
   int stage_port;
 };

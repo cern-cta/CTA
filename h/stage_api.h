@@ -1,5 +1,5 @@
 /*
- * $Id: stage_api.h,v 1.67 2004/04/01 12:00:54 jdurand Exp $
+ * $Id: stage_api.h,v 1.68 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 #ifndef __stage_api_h
@@ -327,7 +327,7 @@ EXTERN_C int  DLL_DECL  stage_getoutbuf _PROTO((char **, int *));
 #ifndef SWIG
 EXTERN_C int  DLL_DECL  stage_getlog    _PROTO((void (**)(int, char*)));
 #endif
-EXTERN_C int  DLL_DECL  stage_errmsg _PROTO((char *, char *, ...));
+EXTERN_C int  DLL_DECL  stage_errmsg _PROTO((const char *, const char *, ...));
 EXTERN_C int  DLL_DECL  stage_outmsg _PROTO((char *, char *, ...));
 EXTERN_C int  DLL_DECL  stage_setcallback _PROTO((void (*)(struct stgcat_entry *, struct stgpath_entry *)));
 EXTERN_C int  DLL_DECL  stage_getcallback _PROTO((void (**)(struct stgcat_entry *, struct stgpath_entry *)));

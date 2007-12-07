@@ -25,12 +25,12 @@
 #endif /* _REENTRANT || _THREAD_SAFE */
 
 
-static char *getconfent_r _PROTO((char *, char *, char *, int, char *, int));
+static char *getconfent_r _PROTO((const char *, const char *, const char *, int, char *, int));
 
 static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
-     char *filename;
-     char *category;
-     char *name;
+     const char *filename;
+     const char *category;
+     const char *name;
      int flags;
      char *buffer;
      int bufsiz;
@@ -111,8 +111,8 @@ static char *getconfent_r(filename,category, name, flags, buffer, bufsiz)
 static int value_key = -1;
 
 char DLL_DECL *getconfent(category, name, flags)
-     char *category;
-     char *name;
+     const char *category;
+     const char *name;
      int flags;
 {
     char *value = NULL;
@@ -126,9 +126,9 @@ char DLL_DECL *getconfent(category, name, flags)
 }
 
 char DLL_DECL *getconfent_fromfile(filename,category, name, flags)
-     char *filename;
-     char *category;
-     char *name;
+     const char *filename;
+     const char *category;
+     const char *name;
      int flags;
 {
     char *value = NULL;
@@ -170,9 +170,9 @@ int DLL_DECL getconfent_parser(conf_val, result, count)
 }
 
 int DLL_DECL getconfent_multi_fromfile(filename, category, name, flags, result, count)
-     char *filename;
-     char *category;
-     char *name;
+     const char *filename;
+     const char *category;
+     const char *name;
      int flags;
      char ***result;
      int *count;
@@ -193,8 +193,8 @@ int DLL_DECL getconfent_multi_fromfile(filename, category, name, flags, result, 
 
 
 int DLL_DECL getconfent_multi(category, name, flags, result, count)
-     char *category;
-     char *name;
+     const char *category;
+     const char *name;
      int flags;
      char ***result;
      int *count;

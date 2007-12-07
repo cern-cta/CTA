@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_next.cpp,v 1.8 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_next.cpp,v 1.9 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -41,7 +41,7 @@
 /* ================= */
 /* Internal routines */
 /* ================= */
-static int _processReqIdRequest(char *func,
+static int _processReqIdRequest(const char *func,
 				castor::stager::ReqIdRequest& req,
 				const char *prevRequestId,
 				struct stage_io_fileresp ** response,
@@ -144,7 +144,7 @@ EXTERN_C int stage_getNext(const char *reqId,
 			   struct stage_io_fileresp ** response,
 			   struct stage_options* opts) {
  
-  char *func = "stage_getNext";
+  const char *func = "stage_getNext";
   castor::stager::StageGetNextRequest req;
   int rc =  _processReqIdRequest(func, req, reqId, response, opts);
   return rc;
@@ -159,7 +159,7 @@ EXTERN_C int stage_getNext(const char *reqId,
 EXTERN_C int stage_updateNext(const char *reqId,
 			      struct stage_io_fileresp ** response,
 			      struct stage_options* opts) {
-  char *func = "stage_updateNext";
+  const char *func = "stage_updateNext";
   castor::stager::StageUpdateNextRequest req;
   int rc =  _processReqIdRequest(func, req, reqId, response, opts);
   return rc;
@@ -176,7 +176,7 @@ EXTERN_C int stage_updateNext(const char *reqId,
 EXTERN_C int stage_putNext(const char *reqId,
 			   struct stage_io_fileresp ** response,
 			   struct stage_options* opts) {
-  char *func = "stage_putNext";
+  const char *func = "stage_putNext";
   castor::stager::StagePutNextRequest req;
   int rc =  _processReqIdRequest(func, req, reqId, response, opts);
   return rc;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/11/28 17:59:19 $ $Author: itglp $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/12/07 11:40:52 $ $Author: sponcec3 $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -252,7 +252,7 @@ void castor::server::BaseServer::parseCommandLine(int argc, char *argv[])
   }
   // free memory
   for(int j = 3; j < i;j++) {
-    free(longopts[j].name);
+    free((char*)longopts[j].name);
   };
   delete [] longopts;
 }

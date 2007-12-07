@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.31 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_put.cpp,v 1.32 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -58,7 +58,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 					char **requestId,
 					 struct stage_options* opts) {
 
-  char *func = "stage_prepareToPut";
+  const char *func = "stage_prepareToPut";
   int ret=0;
   if (requests == NULL
       || nbreqs <= 0
@@ -197,7 +197,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
 				char **requestId,
 				struct stage_options* opts) {
   
-  char *func = "stage_put";
+  const char *func = "stage_put";
   int ret=0;
 
   if (0 == filename
@@ -323,7 +323,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
                                     char **requestId,
                                     struct stage_options* opts) {
 
-  char *func = "stage_putDone";
+  const char *func = "stage_putDone";
   int ret=0;
  
   if (requests == NULL

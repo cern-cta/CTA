@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_update.cpp,v 1.15 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_update.cpp,v 1.16 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ EXTERN_C int DLL_DECL stage_prepareToUpdate(const char *userTag,
 					char **requestId,
 					 struct stage_options* opts) {
 
-  char *func = "stage_prepareToUpdate";
+  const char *func = "stage_prepareToUpdate";
   int ret=0;
  
   if (requests == NULL
@@ -177,8 +177,8 @@ EXTERN_C int DLL_DECL stage_update(const char *userTag,
                                    char **requestId,
                                    struct stage_options* opts) {
   
-  char *func = "stage_update";
- int ret=0;
+  const char *func = "stage_update";
+  int ret=0;
 
   if (0 == filename
       || 0 ==  response) {

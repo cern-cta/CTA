@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: sendscsicmd.c,v $ $Revision: 1.19 $ $Date: 2007/12/06 14:24:49 $ CERN IT-PDP/DM Fabien Collin/Jean-Philippe Baud";
-#endif /* not lint */
-
 /*	send_scsi_cmd - Send a SCSI command to a device */
 /*	return	-5	if not supported on this platform (serrno = SEOPNOTSUP)
  *		-4	if SCSI error (serrno = EIO)

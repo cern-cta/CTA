@@ -174,7 +174,7 @@ int DLL_DECL
 Cgetopt_long(nargc, nargv, options, long_options, index)
      int nargc;
      char **nargv;
-     char *options;
+     const char *options;
      Coptions_t *long_options;
      int *index;
 {

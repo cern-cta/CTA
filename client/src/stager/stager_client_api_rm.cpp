@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_rm.cpp,v 1.10 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_rm.cpp,v 1.11 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -42,7 +42,7 @@
 /* ================= */
 /* Internal routines */
 /* ================= */
-static int _processFileRequest(char *func,
+static int _processFileRequest(const char *func,
 			       castor::stager::FileRequest& req,
 			       struct stage_filereq *requests,
 			       int nbreqs,
@@ -173,7 +173,7 @@ EXTERN_C int DLL_DECL stage_rm(struct stage_filereq *requests,
                                     char **requestId,
                                     struct stage_options* opts) {
 
-  char *func = "stage_rm";
+  const char *func = "stage_rm";
   castor::stager::StageRmRequest req;
 
   stage_trace(3, "%s", func);
@@ -202,7 +202,7 @@ EXTERN_C int DLL_DECL stage_releaseFiles(struct stage_filereq *requests,
 					 char **requestId,
 					 struct stage_options* opts) {
 
-  char *func = "stage_releaseFiles";
+  const char *func = "stage_releaseFiles";
   castor::stager::StageReleaseFilesRequest req;
   return _processFileRequest(func,
 			     req,
@@ -226,7 +226,7 @@ EXTERN_C int DLL_DECL stage_abortRequest(char *requestId,
 					 struct stage_options* opts) {
 
 
-  char *func = "stage_abortRequest";
+  const char *func = "stage_abortRequest";
   int ret=0;
 
   if (requestId == NULL) {

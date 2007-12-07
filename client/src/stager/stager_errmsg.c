@@ -128,7 +128,7 @@ int DLL_DECL stager_getlog(logfunction)
 
 /* stager_errmsg - send error message to user defined client buffer or to stderr */
 
-int DLL_DECL stager_errmsg(char *func, char *msg, ...) {
+int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 	va_list args;
 	char prtbuf[STAGER_PRTBUFSZ];
 	int save_errno;

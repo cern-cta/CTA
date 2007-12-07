@@ -27,7 +27,7 @@ typedef struct trc_spec {
 
 extern  char* getenv();         /* get environment variable             */
 
-void DLL_DECL print_trace(int level, char *label, char *format, ...)
+void DLL_DECL print_trace(int level, const char *label, const char *format, ...)
 {
 	va_list args;           /* arguments                            */
 	register int i;         /* general purpose index                */
@@ -51,7 +51,7 @@ void DLL_DECL print_trace(int level, char *label, char *format, ...)
 }
 
 void DLL_DECL init_trace(name)  /* initialize trace level               */
-char    *name;                  /* environment variable name            */
+const char    *name;                  /* environment variable name            */
 {
 	register char    *p;    /* general purpose char. string pointer */
 	trc_spec_t *trc;
@@ -88,7 +88,7 @@ void DLL_DECL end_trace()         /* end trace level                      */
 
 
 
-void DLL_DECL print_trace_r(void *trace, int level, char *label, char *format, ...)
+void DLL_DECL print_trace_r(void *trace, int level, const char *label, const char *format, ...)
 {
 	va_list args;           /* arguments                            */
 	register int i;         /* general purpose index                */
@@ -114,7 +114,7 @@ void DLL_DECL print_trace_r(void *trace, int level, char *label, char *format, .
 
 void DLL_DECL init_trace_r(trace, name)  /* initialize trace level               */
 void    **trace;
-char    *name;                  /* environment variable name            */
+const char    *name;                  /* environment variable name            */
 {
 	register char    *p;    /* general purpose char. string pointer */
 	trc_spec_t *trc;

@@ -15,11 +15,11 @@
 #include <osdep.h>
 #endif
 
-EXTERN_C void DLL_DECL print_trace _PROTO((int, char *, char *, ...));
-EXTERN_C void DLL_DECL init_trace _PROTO((char *));
+EXTERN_C void DLL_DECL print_trace _PROTO((int, const char *, const char *, ...));
+EXTERN_C void DLL_DECL init_trace _PROTO((const char *));
 EXTERN_C void DLL_DECL end_trace _PROTO((void));
-EXTERN_C void DLL_DECL print_trace_r _PROTO((void *, int, char *, char *, ...));
-EXTERN_C void DLL_DECL init_trace_r _PROTO((void **, char *));
+EXTERN_C void DLL_DECL print_trace_r _PROTO((void *, int, const char *, const char *, ...));
+EXTERN_C void DLL_DECL init_trace_r _PROTO((void **, const char *));
 EXTERN_C void DLL_DECL end_trace_r _PROTO((void *));
 
 EXTERN_C int  DLL_DECL notrace;

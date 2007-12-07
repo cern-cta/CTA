@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_get.cpp,v 1.31 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_get.cpp,v 1.32 2007/12/07 11:40:53 sponcec3 Exp $
  */
 
 /*
@@ -56,7 +56,7 @@ EXTERN_C int DLL_DECL stage_prepareToGet(const char *userTag,
                                   struct stage_options* opts) {
 
  
-  char *func = "stage_prepareToGet";
+  const char *func = "stage_prepareToGet";
   int ret=0;
 
   if (requests == NULL
@@ -203,7 +203,7 @@ EXTERN_C int DLL_DECL stage_get(const char *userTag,
 				char **requestId,
 				struct stage_options* opts) {
   
-  char *func = "stage_get";
+  const char *func = "stage_get";
   int rc = -1;
   int saved_serrno = 0;
   int ret=0;

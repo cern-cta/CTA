@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/27 16:12:06 $ $Author: gtaur $
+ * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/07 11:40:52 $ $Author: sponcec3 $
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -80,7 +80,7 @@ namespace castor {
          *  inputForMigrationPolicy
          */
 
-	virtual std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySvc::inputForMigrationPolicy(std::string  svcClassName, u_signed64* byteThres) throw (castor::exception::Exception); 
+	virtual std::vector<castor::infoPolicy::PolicyObj*> inputForMigrationPolicy(std::string  svcClassName, u_signed64* byteThres) throw (castor::exception::Exception); 
               
          /**
           * createOrUpdateStream 
@@ -117,13 +117,13 @@ namespace castor {
 	 * Attach TapeCopies To Streams
 	 */
 	
-	virtual void  castor::infoPolicy::ora::OraPolicySvc::attachTapeCopiesToStreams(std::vector<PolicyObj*> outputFromMigrationPolicy) throw (castor::exception::Exception);
+	virtual void attachTapeCopiesToStreams(std::vector<PolicyObj*> outputFromMigrationPolicy) throw (castor::exception::Exception);
 	
 	/**
 	 * resurrect tape copies 
 	 */
 
-	virtual void   castor::infoPolicy::ora::OraPolicySvc::resurrectTapeCopies(std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception);
+	virtual void resurrectTapeCopies(std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception);
 
       private:
 

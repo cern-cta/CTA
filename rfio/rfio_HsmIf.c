@@ -1522,4 +1522,7 @@ int DLL_DECL use_castor2_api() {
   ret=getDefaultForGlobal(globalHost,globalPort,globalSvc,globalVersion);
   if (ret<0) return 0;
   if (globalVersion) return (*globalVersion)-1;
+  // This should never happen since getDefaultForGlobal
+  // should always set globalVersion
+  return 0;
 }

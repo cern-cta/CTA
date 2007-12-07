@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_version.cpp,v 1.2 2007/12/06 14:46:21 itglp Exp $
+ * $Id: stager_client_api_version.cpp,v 1.3 2007/12/07 11:40:54 sponcec3 Exp $
  */
 
 /* ============= */
@@ -29,7 +29,7 @@ EXTERN_C int DLL_DECL stage_version(int *majorVersion,
                                     int *majorRelease,
                                     int *minorRelease,
                                     struct stage_options* opts) {  
-  char *func = "stage_version";
+  const char *func = "stage_version";
   int ret=0;
   int rc = -1;
   int saved_serrno = 0;

@@ -3,10 +3,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: vdqm_SendRecv.c,v $ $Revision: 1.3 $ $Date: 2005/07/11 11:01:13 $ CERN IT/ADC Olof Barring";
-#endif /* not lint */
-
 /*
  * vdqm_SendRecv.c - Send and receive VDQM request and acknowledge messages.
  */
