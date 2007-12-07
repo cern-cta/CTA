@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.29 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: open.c,v 1.30 2007/12/07 13:26:07 sponcec3 Exp $
  */
 
 /*
@@ -27,6 +27,10 @@
 #include <Cpwd.h>
 
 RFILE  *rfilefdt[MAXRFD];        /* File descriptors tables             */
+
+// Forward declarations
+int rfio_open_v2(char*, int, int);
+
 
 static void rfio_setup_ext(iop,uid,gid,passwd)
 RFILE   *iop;

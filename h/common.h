@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: common.h,v $ $Revision: 1.1 $ $Date: 2004/10/29 07:52:55 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: common.h,v $ $Revision: 1.2 $ $Date: 2007/12/07 13:26:07 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -50,6 +50,10 @@ EXTERN_C int DLL_DECL isadminhost _PROTO((SOCKET s, char *));
 EXTERN_C char DLL_DECL *getifnam_r _PROTO((SOCKET, char *, size_t));
 EXTERN_C char DLL_DECL *getifnam _PROTO((SOCKET));
 EXTERN_C int DLL_DECL get_user _PROTO((char *, char *, int, int, char *, int *, int *));
+
+EXTERN_C int DLL_DECL s_nrecv _PROTO((SOCKET, char *, int));
+EXTERN_C int DLL_DECL s_close _PROTO((SOCKET));
+
 
 /**
  * Checks whether the given string is a size.

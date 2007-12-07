@@ -1,5 +1,5 @@
 /*
- * $Id: connect.c,v 1.15 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: connect.c,v 1.16 2007/12/07 13:26:07 sponcec3 Exp $
  */
 
 /*
@@ -25,6 +25,10 @@
 #endif
 #include "Castor_limits.h"
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <common.h>
 
 #ifndef _WIN32
 #if defined(_REENTRANT) || defined(_THREAD_SAFE)
@@ -36,6 +40,7 @@ extern char     *getconfent();
 extern char     *getenv();      /* get environmental variable value     */
 char *rfio_lasthost _PROTO(()); /* returns last succesfully connected host     */
 int rfio_newhost _PROTO((char *)); /* returns last succesfully connected host     */
+int rfio_connect_with_port _PROTO((char*,int,int*)); /* Connect <node>'s rfio server on port <port> */
 
 /** Parses the node name to check whether it contains the port number as well */
 int rfio_nodeHasPort(char *node, char *host, int *port) {

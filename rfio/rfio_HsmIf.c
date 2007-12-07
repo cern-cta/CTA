@@ -39,6 +39,7 @@
 #if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
 #include "rfio_lcastorfdt.h"
 #endif
+#include "stager_client_commandline.h"
 
 #if defined(CNS_ROOT)
 

@@ -1,5 +1,5 @@
 /*
- * $Id: open64.c,v 1.9 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: open64.c,v 1.10 2007/12/07 13:26:07 sponcec3 Exp $
  */
 
 /*
@@ -95,34 +95,7 @@ int	passwd;
    iop->lseekoff64 = 0;
    strcpy(iop->host,"????????");
 }
-
-int DLL_DECL rfio_open64(filepath, flags, mode)
-char    *filepath ;
-int     flags,mode ;
-{
-   int n;
-   int old;
-
-   old = rfioreadopt(RFIO_READOPT);
-
-   /* The decay of protocol 64 into 32 is assumed innerly */
-   if ((old & RFIO_STREAM) == RFIO_STREAM)
-      n = rfio_open64_v3(filepath,flags,mode);
-   else 
-      n = rfio_open64_v2(filepath,flags,mode);
-   return(n);
-} 
 	
-int 	rfio_open64_v2(filepath, flags, mode)
-char    * filepath ;
-int     flags,mode ;
-{
-   char rh[1] ;
-   rh[0]='\0' ;
-  
-   return(rfio_open64_ext(filepath, flags, mode,(uid_t)0,(gid_t)0,0,rh));
-} 
-
 /*
  * Remote file open.
  */
@@ -438,6 +411,33 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    END_TRACE() ;
    return (rfp->s) ;
 }
+
+int 	rfio_open64_v2(filepath, flags, mode)
+char    * filepath ;
+int     flags,mode ;
+{
+   char rh[1] ;
+   rh[0]='\0' ;
+  
+   return(rfio_open64_ext(filepath, flags, mode,(uid_t)0,(gid_t)0,0,rh));
+} 
+
+int DLL_DECL rfio_open64(filepath, flags, mode)
+char    *filepath ;
+int     flags,mode ;
+{
+   int n;
+   int old;
+
+   old = rfioreadopt(RFIO_READOPT);
+
+   /* The decay of protocol 64 into 32 is assumed innerly */
+   if ((old & RFIO_STREAM) == RFIO_STREAM)
+      n = rfio_open64_v3(filepath,flags,mode);
+   else 
+      n = rfio_open64_v2(filepath,flags,mode);
+   return(n);
+} 
 
 void rfio_setup64(iop)
 RFILE   *iop;

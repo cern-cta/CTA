@@ -61,6 +61,7 @@
 #endif
 #include <netinet/tcp.h>
 #endif
+#include <common.h>
 
 int data_rfio_connect();
 
@@ -989,7 +990,7 @@ int     s;
    int rcode,status,status1,HsmType;
    struct timeval t;
    fd_set fdvar;
-   unsigned char *dummy;
+   char *dummy;
    int sizeofdummy = 128 * 1024;
    int n;
    char     rfio_buf[BUFSIZ];
@@ -1157,7 +1158,7 @@ int     s;
       if (FD_ISSET(rfilefdt[s_index]->lseekhow,&fdvar))
       {	    
 	 TRACE(2, "rfio", "rfio_close_v3: emptying data socket") ;
-	 dummy = (unsigned char *)malloc(sizeof(unsigned char) * sizeofdummy);
+	 dummy = (char *)malloc(sizeof(char) * sizeofdummy);
 
 	 if (dummy == NULL) {
 	     TRACE(2,"rfio","rfio_close_v3(): Cannot allocate memory") ; 
@@ -1301,6 +1302,46 @@ static int 	lasthost_key = -1; /* key to hold the last connect host name in TLS 
 
 extern int rfio_nodeHasPort(char *node, char *host, int *port);
 
+
+int set_rcv_sockparam(s,value)
+int s,value;
+{
+   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
+#if defined(_WIN32)
+      if (errno != WSAENOBUFS)
+#else
+      if (errno != ENOBUFS)
+#endif
+	 {
+	    TRACE(2,"rfio", "setsockopt rcvbuf(): %s\n",strerror(errno));
+	    return(-1);
+	 }
+	 else
+	    return(-1);
+   }
+   /* else */
+   return(value);
+}
+
+int set_snd_sockparam(s,value)
+int s,value;
+{
+   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
+#if defined(_WIN32)
+      if (errno != WSAENOBUFS)
+#else
+      if (errno != ENOBUFS)
+#endif
+	 {
+	    TRACE(2,"rfio", "setsockopt sndbuf(): %s\n",strerror(errno));
+	    return(-1);
+	 }
+	 else
+	    return(-1);
+   }
+   /* else */
+   return(value);
+}
 
 int     data_rfio_connect(node,remote,port,flags)       /* Connect <node>'s rfio server */
 char    *node;                  /* remote host to connect               */
@@ -1606,46 +1647,4 @@ int     flags;
    TRACE(1, "rfio", "rfio_dataconnect: return socket %d", s);
    END_TRACE();
    return(s);
-}
-
-
-int set_rcv_sockparam(s,value)
-int s,value;
-{
-   if (setsockopt(s,SOL_SOCKET,SO_RCVBUF,(char *)&value, sizeof(value)) < 0) {
-#if defined(_WIN32)
-      if (errno != WSAENOBUFS)
-#else
-      if (errno != ENOBUFS)
-#endif
-	 {
-	    TRACE(2,"rfio", "setsockopt rcvbuf(): %s\n",strerror(errno));
-	    return(-1);
-	 }
-	 else
-	    return(-1);
-   }
-   /* else */
-   return(value);
-}
-
-
-int set_snd_sockparam(s,value)
-int s,value;
-{
-   if (setsockopt(s,SOL_SOCKET,SO_SNDBUF,(char *)&value, sizeof(value)) < 0) {
-#if defined(_WIN32)
-      if (errno != WSAENOBUFS)
-#else
-      if (errno != ENOBUFS)
-#endif
-	 {
-	    TRACE(2,"rfio", "setsockopt sndbuf(): %s\n",strerror(errno));
-	    return(-1);
-	 }
-	 else
-	    return(-1);
-   }
-   /* else */
-   return(value);
 }

@@ -1,5 +1,5 @@
 /*
- * $Id: switch_req.c,v 1.5 2007/09/28 15:04:33 sponcec3 Exp $
+ * $Id: switch_req.c,v 1.6 2007/12/07 13:26:08 sponcec3 Exp $
  */
 
 /*
@@ -17,6 +17,7 @@
 #include "rfio.h"                       /* Remote file I/O              */
 #include "osdep.h"
 #include <log.h>                        /* Genralized error logger      */
+#include "fio.h"                       /* Remote file I/O              */
 
 #if defined(CRAY)
 #define fopn_us_	FOPN_US

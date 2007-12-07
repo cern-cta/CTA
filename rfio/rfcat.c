@@ -1,16 +1,11 @@
 /*
- * $Id: rfcat.c,v 1.6 2006/04/28 16:24:46 gtaur Exp $
+ * $Id: rfcat.c,v 1.7 2007/12/07 13:26:08 sponcec3 Exp $
  */
 
 /*
  * Copyright (C) 2001-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.6 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM Jean-Philippe Baud";
-#endif /* not lint */
-
 
 #include <stdlib.h>
 #include <errno.h>
@@ -21,33 +16,7 @@ static char sccsid[] = "@(#)$RCSfile: rfcat.c,v $ $Revision: 1.6 $ $Date: 2006/0
 #endif
 #include "rfio_api.h"
 
-main(argc, argv)
-int argc;
-char **argv;
-{
-	int errflg = 0;
-	int i;
-#if defined(_WIN32)
-	WSADATA wsadata;
-
-	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
-		fprintf (stderr, "WSAStartup unsuccessful\n");
-		exit (2);
-	}
-#endif
-
-	if (argc == 1)
-		errflg = catfile ("-");
-	else
-		for (i = 1; i < argc; i++)
-			errflg += catfile (argv[i]);
-#if defined(_WIN32)
-	WSACleanup();
-#endif
-	exit (errflg ? 1 : 0);
-}
-
-catfile(inpfile)
+int catfile(inpfile)
 char *inpfile;
 {
 	char buf [32768];
@@ -79,3 +48,30 @@ char *inpfile;
 		rfio_fclose (s);
 	return (0);
 }
+
+int main(argc, argv)
+int argc;
+char **argv;
+{
+	int errflg = 0;
+	int i;
+#if defined(_WIN32)
+	WSADATA wsadata;
+
+	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
+		fprintf (stderr, "WSAStartup unsuccessful\n");
+		exit (2);
+	}
+#endif
+
+	if (argc == 1)
+		errflg = catfile ("-");
+	else
+		for (i = 1; i < argc; i++)
+			errflg += catfile (argv[i]);
+#if defined(_WIN32)
+	WSACleanup();
+#endif
+	exit (errflg ? 1 : 0);
+}
+

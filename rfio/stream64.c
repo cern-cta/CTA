@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.8 2007/11/23 13:31:55 gtaur Exp $
+ * $Id: stream64.c,v 1.9 2007/12/07 13:26:08 sponcec3 Exp $
  */
 
 /*
@@ -56,6 +56,7 @@
 #endif
 #include <netinet/tcp.h>
 #endif
+#include <common.h>
 
 EXTERN_C int DLL_DECL data_rfio_connect _PROTO((char *, int *, int, int));
 
@@ -957,7 +958,7 @@ int     s;
    int      rcode,status,status1,HsmType;
    struct   timeval t;
    fd_set   fdvar;
-   unsigned char *dummy;
+   char *dummy;
    int      sizeofdummy = 128 * 1024;
    int      n;
    char     rfio_buf[BUFSIZ];
@@ -1130,7 +1131,7 @@ int     s;
       if (FD_ISSET(rfilefdt[s_index]->lseekhow,&fdvar))
       {	    
 	 TRACE(2, "rfio", "rfio_close64_v3: emptying data socket") ;
-	 dummy = (unsigned char *)malloc(sizeof(unsigned char) * sizeofdummy);
+	 dummy = (char *)malloc(sizeof(char) * sizeofdummy);
 
 	 if (dummy == NULL) {
 	     TRACE(2,"rfio","rfio_close64_v3(): Cannot allocate memory") ; 

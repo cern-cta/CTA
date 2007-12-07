@@ -1,5 +1,5 @@
 /*
- * $Id: xyopen.c,v 1.12 2007/09/28 15:04:33 sponcec3 Exp $
+ * $Id: xyopen.c,v 1.13 2007/12/07 13:26:08 sponcec3 Exp $
  */
 
 /*
@@ -52,16 +52,6 @@ int lun ;
       return ftnlun[lun]->s ;
 }
 		 
-int DLL_DECL rfio_xyopen(name,node,lun,lrecl,chopt,irc)
-char    *name, *node, *chopt;
-int     lun, lrecl;
-int     *irc;
-{
-   char rh[1];
-   rh[0]='\0';
-   return( rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,(uid_t)0,(gid_t)0,0,rh) );
-}
-
 int
 rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,uid,gid,key,reqhost)
 char    *name, *node, *chopt;
@@ -331,6 +321,16 @@ char *reqhost;
    TRACE(1, "rfio", "rfio_xyopen: status: %d, irc: %d",status,*irc);
    END_TRACE();
    return(status);
+}
+
+int DLL_DECL rfio_xyopen(name,node,lun,lrecl,chopt,irc)
+char    *name, *node, *chopt;
+int     lun, lrecl;
+int     *irc;
+{
+   char rh[1];
+   rh[0]='\0';
+   return( rfio_xyopen_ext(name,node,lun,lrecl,chopt,irc,(uid_t)0,(gid_t)0,0,rh) );
 }
 
 /*

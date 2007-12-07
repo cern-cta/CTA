@@ -1,5 +1,5 @@
 /*
- * $Id: close.c,v 1.4 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: close.c,v 1.5 2007/12/07 13:26:07 sponcec3 Exp $
  */
 
 /*
@@ -19,6 +19,9 @@
 #if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
 #include "rfio_lcastorfdt.h"
 #endif
+
+// Forward declarations
+int rfio_close_v2(int s);
 
 /*
  * remote file close

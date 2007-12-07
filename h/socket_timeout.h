@@ -1,7 +1,10 @@
 /*
- * $Id: socket_timeout.h,v 1.6 2002/09/04 08:06:51 jdurand Exp $
+ * $Id: socket_timeout.h,v 1.7 2007/12/07 13:26:07 sponcec3 Exp $
  *
  * $Log: socket_timeout.h,v $
+ * Revision 1.7  2007/12/07 13:26:07  sponcec3
+ * Fixed warnings
+ *
  * Revision 1.6  2002/09/04 08:06:51  jdurand
  * nbytes argument changed from int for ssize_t
  *
@@ -35,5 +38,6 @@ typedef size_t ssize_t;
 
 EXTERN_C ssize_t DLL_DECL  netread_timeout _PROTO((SOCKET, void *, ssize_t, int));
 EXTERN_C ssize_t DLL_DECL  netwrite_timeout _PROTO((SOCKET, void *, ssize_t, int));
+EXTERN_C int DLL_DECL netconnect_timeout _PROTO((SOCKET, struct sockaddr *, size_t, int));
 
 #endif /* __stgtimeout_h */

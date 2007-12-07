@@ -1,5 +1,5 @@
 /*
- * $Id: fio.c,v 1.5 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: fio.c,v 1.6 2007/12/07 13:26:07 sponcec3 Exp $
  */
 
 /*
@@ -60,6 +60,7 @@
 #endif /* apollo */
 
 static int lun2fd[MAXFTNLUN];  /* Fortran logical units to file descr. mapping */
+int is_usf (int);
 
 /*
  * Fortran logical unit record length (direct access). -1 for

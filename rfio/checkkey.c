@@ -1,5 +1,5 @@
 /*
- * $Id: checkkey.c,v 1.6 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: checkkey.c,v 1.7 2007/12/07 13:26:07 sponcec3 Exp $
  */
 
 /*
@@ -30,6 +30,7 @@
 #include <Cnetdb.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <common.h>
 
 #define RFIO2TPREAD_MAGIC 0X0110
 #define OK 1
