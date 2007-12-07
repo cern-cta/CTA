@@ -1,3 +1,9 @@
+castor (2.1.6-0) unstable; urgency=low
+
+  * First internal release of CASTOR 2.1.6
+
+-- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 7 December 2007 16:40:00 +0100
+
 castor (2.1.5-1) unstable; urgency=low
 
   * Another internal release for the new stager. No complete changelog
