@@ -1,5 +1,5 @@
 /*
- * $Id: Cuuid.c,v 1.12 2007/05/29 09:19:33 waldron Exp $
+ * $Id: Cuuid.c,v 1.13 2007/12/07 13:27:11 sponcec3 Exp $
  *
  * Copyright (C) 2003 by CERN/IT/ADC/CA
  * All rights reserved
@@ -372,9 +372,9 @@ void DLL_DECL Cuuid_create_from_name(uuid,nsid,name)
   /* put name space ID in network byte order so it hashes the same
      no matter what endian machine we're on */
   net_nsid = nsid;
-  htonl(net_nsid.time_low);
-  htons(net_nsid.time_mid);
-  htons(net_nsid.time_hi_and_version);
+  net_nsid.time_low = htonl(net_nsid.time_low);
+  net_nsid.time_mid = htons(net_nsid.time_mid);
+  net_nsid.time_hi_and_version = htons(net_nsid.time_hi_and_version);
   
   _Cuuid_MD5Init(&c);
   _Cuuid_MD5Update(&c, (unsigned char *) &net_nsid,
@@ -399,9 +399,9 @@ static void _Cuuid_format_uuid_v3(uuid, hash)
   memcpy(uuid, hash, sizeof(Cuuid_t));
   
   /* convert UUID to local byte order */
-  ntohl(uuid->time_low);
-  ntohs(uuid->time_mid);
-  ntohs(uuid->time_hi_and_version);
+  uuid->time_low = ntohl(uuid->time_low);
+  uuid->time_mid = ntohs(uuid->time_mid);
+  uuid->time_hi_and_version = ntohs(uuid->time_hi_and_version);
   
   /* put in the variant and version bits */
   uuid->time_hi_and_version &= 0x0FFF;
