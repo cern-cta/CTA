@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.69 2007/12/07 17:19:30 itglp Exp $
+# $Id: maketar.sh,v 1.70 2007/12/07 17:28:23 sponcec3 Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -92,10 +92,10 @@ perl -pi -e s/__D__/${d}/g CASTOR.spec
 ## Replace __X__ macros in patchlevel.h
 #
 timestamp=`date "+%s"`
-perl -pi -e s/  __MAJORVERSION__/${a}/ h/patchlevel.h
-perl -pi -e s/  __MINORVERSION__/${b}/ h/patchlevel.h
-perl -pi -e s/  __MAJORRELEASE__/${c}/ h/patchlevel.h
-perl -pi -e s/  __MINORRELEASE__/${d}/ h/patchlevel.h
+perl -pi -e s/\ \ __MAJORVERSION__/${a}/ h/patchlevel.h
+perl -pi -e s/\ \ __MINORVERSION__/${b}/ h/patchlevel.h
+perl -pi -e s/\ \ __MAJORRELEASE__/${c}/ h/patchlevel.h
+perl -pi -e s/\ \ __MINORRELEASE__/${d}/ h/patchlevel.h
 perl -pi -e s/__BASEVERSION__/\"${a}.${b}.${c}\"/ h/patchlevel.h
 perl -pi -e s/__PATCHLEVEL__/${d}/ h/patchlevel.h
 perl -pi -e s/__TIMESTAMP__/\"${timestamp}\"/ h/patchlevel.h
