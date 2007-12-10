@@ -265,7 +265,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/DiskServerCInt.cpp \
               stager/DiskServerStatusCode.cpp \
               stager/Disk2DiskCopyDoneRequest.cpp \
-              stager/Disk2DiskCopyDoneRequestCInt.cpp \
               stager/Disk2DiskCopyStartRequest.cpp \
               stager/DLFInit.cpp \
               stager/FileClass.cpp \
@@ -276,13 +275,10 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/FileSystemCInt.cpp \
               stager/FileSystemStatusCodes.cpp \
               stager/Files2Delete.cpp \
-              stager/Files2DeleteCInt.cpp \
               stager/FilesDeleted.cpp \
               stager/NsFilesDeleted.cpp \
               stager/NsFilesDeletedResponse.cpp \
-              stager/FilesDeletedCInt.cpp \
               stager/FilesDeletionFailed.cpp \
-              stager/FilesDeletionFailedCInt.cpp \
               stager/FirstByteWritten.cpp \
               stager/GetUpdateDone.cpp \
               stager/GetUpdateDoneCInt.cpp \
@@ -291,13 +287,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/GetUpdateStartRequest.cpp \
               stager/GetUpdateStartRequestCInt.cpp \
               stager/GCLocalFile.cpp \
-              stager/GCLocalFileCInt.cpp \
               stager/GCFile.cpp \
-              stager/GCFileCInt.cpp \
               stager/GCFileList.cpp \
-              stager/GCFileListCInt.cpp \
-              stager/IStagerSvcCInt.cpp \
-              stager/IJobSvcCInt.cpp \
               stager/ITapeSvcCInt.cpp \
               stager/MoverCloseRequest.cpp \
               stager/MoverCloseRequestCInt.cpp \
