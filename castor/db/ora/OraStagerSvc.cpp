@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.222 $ $Release$ $Date: 2007/12/06 13:13:35 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.223 $ $Release$ $Date: 2007/12/10 14:20:22 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -80,6 +80,7 @@
 #include <vmgr_api.h>
 #include <Ctape_api.h>
 #include <serrno.h>
+#include <errno.h>
 #include <time.h>
 
 #define NS_SEGMENT_NOTOK (' ')
@@ -964,7 +965,7 @@ void castor::db::ora::OraStagerSvc::stageRelease
 // stageRm
 // -----------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::stageRm
-(const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
+(castor::stager::SubRequest* subreq, const u_signed64 fileId, const std::string nsHost,
  const u_signed64 svcClassId, const std::string fileName)
   throw (castor::exception::Exception) {
   try {
@@ -978,20 +979,79 @@ int castor::db::ora::OraStagerSvc::stageRm
       m_getCFByNameStatement =
         createStatement(s_getCFByNameStatementString);
     }
-    // execute the statement and see whether we found something
-    m_stageRmStatement->setDouble(1, subReqId);
-    m_stageRmStatement->setDouble(2, fileId);
-    m_stageRmStatement->setString(3, nsHost);
-    m_stageRmStatement->setDouble(4, svcClassId);
-    unsigned int nb = m_stageRmStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "stageRm : No return code after PL/SQL call.";
-      throw ex;
+    if(fileId > 0) {
+      // the file exists, try to execute stageRm
+      m_stageRmStatement->setDouble(1, subreq->id());
+      m_stageRmStatement->setDouble(2, fileId);
+      m_stageRmStatement->setString(3, nsHost);
+      m_stageRmStatement->setDouble(4, svcClassId);
+      unsigned int nb = m_stageRmStatement->executeUpdate();
+      if (0 == nb) {
+        castor::exception::Internal ex;
+        ex.getMessage()
+          << "stageRm : No return code after PL/SQL call.";
+        throw ex;
+      }
+      // Return the return code given by the procedure
+      return m_stageRmStatement->getInt(5);
     }
-    // Return the return code given by the procedure
-    return m_stageRmStatement->getInt(5);
+    else {
+      // the file does not exist, try to see whether it got renamed
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
+      m_getCFByNameStatement->setString(1, fileName);
+      oracle::occi::ResultSet *rset = m_getCFByNameStatement->executeQuery();
+      if (oracle::occi::ResultSet::END_OF_FETCH == rset->next()) {
+        // Nothing found, fail the request
+        m_getCFByNameStatement->closeResultSet(rset);
+        subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
+        subreq->setErrorCode(ENOENT);
+        cnvSvc()->updateRep(&ad, subreq, true);
+        return 0;
+      }
+      // found something, let's validate it against the NameServer
+      castor::stager::CastorFile* cf = dynamic_cast<castor::stager::CastorFile*>
+        (cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1)));
+      m_getCFByNameStatement->closeResultSet(rset);
+      char nspath[CA_MAXPATHLEN+1];
+      
+      if(Cns_getpath((char*)cf->nsHost().c_str(), cf->fileId(), nspath) != 0 
+         && serrno == ENOENT) {
+        // indeed the file exists only in the stager db,
+        // execute stageRm and force full deletion
+        m_stageRmStatement->setDouble(1, subreq->id());
+        m_stageRmStatement->setDouble(2, cf->fileId());
+        m_stageRmStatement->setString(3, cf->nsHost());
+        m_stageRmStatement->setDouble(4, 0);
+        unsigned int nb = m_stageRmStatement->executeUpdate();
+        if (0 == nb) {
+          castor::exception::Internal ex;
+          ex.getMessage()
+            << "stageRm : No return code after PL/SQL call.";
+          delete cf;
+          throw ex;
+        }
+        delete cf;
+        // Return the return code given by the procedure
+        return m_stageRmStatement->getInt(5);
+      }
+      else {
+        // the nameserver contains a file with this fileid, but
+        // with a different name than the stager. Obviously the
+        // file got renamed and the requested deletion cannot succeed;
+        // anyway we update the stager catalogue with the new name
+        cf->setLastKnownFileName(nspath);
+        cnvSvc()->updateRep(&ad, cf, false);
+        // and we fail the request
+        subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
+        subreq->setErrorCode(ENOENT);
+        subreq->setErrorMessage("The file got renamed by another user request");
+        cnvSvc()->updateRep(&ad, subreq, true);
+        delete cf;
+        return 0;
+      }
+    }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;

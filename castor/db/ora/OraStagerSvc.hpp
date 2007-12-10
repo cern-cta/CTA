@@ -295,22 +295,23 @@ namespace castor {
          * Otherwise, it deletes all running requests
          * for the file and marks all the copies of the file
          * as candidates for the garbage collection.
-         * @param srId the subRequest id
+         * @param subreq the subRequest to be processed
          * @param fileId the fileId of the CastorFile
          * @param nsHost the name server to use
          * @param svcClassId the svcClass where to perform
          * the rm operation; 0 for all svcClasses.
          * @param fileName the HSM fileName in case the
-         * fileId was not found. In such a case, a fileClear
-         * is performed in the stager if anything is found
-         * for this file.
-         * @return 0: user error
+         * fileId was not found. In such a case, a stageRm
+         * is still performed in the stager if nothing is
+         * found on the nameserver for this file.
+         * @return 0: user error (ENOENT)
          *         1: success.
          * @exception in case of system error
          */
         virtual int stageRm
-        (const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
-         const u_signed64 svcClassId, const std::string fileName)
+        (castor::stager::SubRequest* subreq, const u_signed64 fileId,
+         const std::string nsHost, const u_signed64 svcClassId,
+         const std::string fileName)
           throw (castor::exception::Exception);
 
         /**

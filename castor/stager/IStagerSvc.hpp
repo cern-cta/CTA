@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.84 $ $Release$ $Date: 2007/12/06 13:13:35 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.85 $ $Release$ $Date: 2007/12/10 14:20:21 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -291,22 +291,23 @@ namespace castor {
        * Otherwise, it deletes all running requests
        * for the file and marks all the copies of the file
        * as candidates for the garbage collection.
-       * @param srId the subRequest id
+       * @param subreq the SubRequest to be processed
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
        * @param svcClassId the svcClass where to perform
-       * the rm operation; 0 for all svcClasses
+       * the rm operation; 0 for all svcClasses.
        * @param fileName the HSM fileName in case the
-       * fileId was not found. In such a case, a fileClear
-       * is performed in the stager if anything is found
-       * for this file.
-       * @return 0: user error
+       * fileId was not found. In such a case, a stageRm
+       * is still performed in the stager if nothing is
+       * found on the nameserver for this file.
+       * @return 0: user error (ENOENT)
        *         1: success.
        * @exception in case of system error
        */
       virtual int stageRm
-      (const u_signed64 subReqId, const u_signed64 fileId, const std::string nsHost,
-       const u_signed64 svcClassId, const std::string fileName)
+      (castor::stager::SubRequest* subreq, const u_signed64 fileId,
+       const std::string nsHost, const u_signed64 svcClassId,
+       const std::string fileName)
         throw (castor::exception::Exception) = 0;
 
       /**
