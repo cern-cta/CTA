@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.575 $ $Date: 2007/12/07 15:30:12 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.576 $ $Date: 2007/12/10 09:39:41 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3210,8 +3210,7 @@ BEGIN
   -- Now perform the remove:
   -- mark all get/put requests for those diskcopies
   -- and the ones waiting on them as failed
-  -- so that clients eventually get an answer;
-  -- don't touch recalls for the moment
+  -- so that clients eventually get an answer
   FOR sr IN (SELECT id, status FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
     IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
