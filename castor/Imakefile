@@ -253,7 +253,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/DiskCopy.cpp \
               stager/DiskCopyCInt.cpp \
               stager/DiskCopyInfo.cpp \
-              stager/DiskCopyInfoCInt.cpp \
               stager/DiskCopyForRecall.cpp \
               stager/DiskCopyForRecallCInt.cpp \
               stager/DiskCopyStatusCodes.cpp \
