@@ -206,6 +206,12 @@ DROP TABLE NsFilesDeleted;
 /* SQL statements for type Disk2DiskCopyStartRequest */
 DROP TABLE Disk2DiskCopyStartRequest;
 
+/* SQL statements for type FirstByteWritten */
+DROP TABLE FirstByteWritten;
+
+/* SQL statements for type StageGetRequest */
+DROP TABLE StageGetRequest;
+
 /* SQL statements for type TapeAccessSpecification */
 DROP TABLE TapeAccessSpecification;
 

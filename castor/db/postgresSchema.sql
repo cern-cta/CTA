@@ -157,8 +157,11 @@ CREATE TABLE NsFilesDeleted (flags INT8, userName VARCHAR(2048), euid INT4, egid
 /* SQL statements for type Disk2DiskCopyStartRequest */
 CREATE TABLE Disk2DiskCopyStartRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, sourceDiskCopyId INT8, destSvcClass VARCHAR(2048), diskServer VARCHAR(2048), mountPoint VARCHAR(2048), id INT8 CONSTRAINT I_Disk2DiskCopyStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
-/* SQL statements for type NsFilesDeleted */
-CREATE TABLE NsFilesDeleted (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+/* SQL statements for type FirstByteWritten */
+CREATE TABLE FirstByteWritten (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, id INT8 CONSTRAINT I_FirstByteWritten_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type StageGetRequest */
+CREATE TABLE StageGetRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type TapeAccessSpecification */
 CREATE TABLE TapeAccessSpecification (accessMode INT4, density VARCHAR(2048), tapeModel VARCHAR(2048), id INT8 CONSTRAINT I_TapeAccessSpecification_Id PRIMARY KEY);
