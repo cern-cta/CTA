@@ -175,7 +175,7 @@ namespace castor {
     OBJ_Disk2DiskCopyStartRequest = 144,
     OBJ_Disk2DiskCopyStartResponse = 145,
     OBJ_ThreadNotification = 146,
-    OBJ_FirstByteWritten=147
+    OBJ_FirstByteWritten = 147
   };
 
   /**

@@ -383,11 +383,11 @@ void castor::client::BaseClient::setRhPort(int optPort)
     m_rhPort = optPort;
     return;
   }
-  char* port;
 
   // If security mode is used get the RH Secure server port,
   // the value can be given through the environment
   // or in the castor.conf file. If none is given, default is used
+  char* port;
   if(m_hasSecAuthorization) {
     if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
       || (port = getenv (castor::client::SEC_PORT_ENV_ALT)) != 0
