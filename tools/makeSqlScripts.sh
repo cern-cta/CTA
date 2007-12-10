@@ -23,7 +23,7 @@ echo "INSERT INTO CastorVersion VALUES ('-', '"$3"');" >> $1_oracle_create.sql
 echo >> $1_oracle_create.sql
 
 # append trailers
-if [ -f $1_oracle_create.sql ]; then
+if [ -f $1_oracle_create.list ]; then
   for f in `cat $1_oracle_create.list`; do
     cat $f >> $1_oracle_create.sql
   done
