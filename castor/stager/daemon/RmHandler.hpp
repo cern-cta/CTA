@@ -51,9 +51,6 @@ namespace castor{
         /* rm subrequest handler */
         void handle() throw(castor::exception::Exception);
         
-      private: 
-        u_signed64 svcClassId;
-        
       }; // end StagerRmHandler class
       
       

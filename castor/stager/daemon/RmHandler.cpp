@@ -102,10 +102,9 @@ namespace castor{
 
         // check the service class, and handle the '*' case
         std::string svcClassName = stgRequestHelper->fileRequest->svcClassName();
-        if(svcClassName == "*") {
-          svcClassId = 0;
-        }
-        else {
+        u_signed64 svcClassId = 0;
+
+        if(svcClassName != "*") {
           if(svcClassName.empty()) {
             svcClassName = "default";
           }
@@ -122,8 +121,8 @@ namespace castor{
           
         StagerReplyHelper* stgReplyHelper=NULL;
         try{
-          // now try to perform the stageRm          
-          if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest->id(),
+          // try to perform the stageRm; internally, the method checks for non existing files
+          if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest,
             stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, svcClassId, stgRequestHelper->subrequest->fileName())) {
             
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RM, &(stgCnsHelper->cnsFileid));
@@ -139,7 +138,7 @@ namespace castor{
           }
           else {  // user error, log it
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
-          }	  
+          }
         }
         catch(castor::exception::Exception e){
           if(stgReplyHelper != NULL) delete stgReplyHelper;	 
