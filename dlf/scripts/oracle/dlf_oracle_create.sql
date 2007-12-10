@@ -295,7 +295,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_4_5');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_6_0');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
@@ -309,6 +309,7 @@ INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('8', 'System');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('9', 'Important');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('10', 'Monitoring');
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('11', 'Debug');
+INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('12', 'UserError');
 
 /* initialise facilities */
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (0, 'rtcpcld');
@@ -333,6 +334,10 @@ INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (18, 'rtcpd');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (19, 'RmMaster');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (20, 'RmNode');
 INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (21, 'JobManager');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (22, 'Stager');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (23, 'DiskCopy');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (24, 'Mighunter');
+INSERT INTO dlf_facilities (fac_no, fac_name) VALUES (25, 'Rechandler');
 
 /* initialise sequences */
 INSERT INTO dlf_sequences (seq_name, seq_no) VALUES ('id',       1);
@@ -353,29 +358,35 @@ INSERT INTO dlf_settings VALUES ('ENABLE_TAPESTATS', '0',  'Enable the automatic
 /*
  * dlf_partition procedure
  */
-CREATE OR REPLACE PROCEDURE DLF_PARTITION 
+CREATE OR REPLACE PROCEDURE dlf_partition
 AS
 
   -- Variables
   v_partition_max INTEGER;
   v_high_value	  DATE;
-  v_table_name	  VARCHAR2(20);
-  v_tablespace    VARCHAR2(20);
+  v_table_name	  VARCHAR2(2048);
+  v_tablespace    VARCHAR2(2048);
   v_exists        INTEGER;
-  v_split_name    VARCHAR2(20);
-
+  v_split_name    VARCHAR2(2048);
+  v_current_user  VARCHAR2(2048);
+  
 BEGIN
+  -- Extract the name of the current user running the PLSQL procedure. This name
+  -- will be used for tablespace names.
+  SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER') 
+    INTO v_current_user
+    FROM dual;
 
   -- Set the nls_date_format
   EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
-
+    
   -- Loop over all partitioned tables
   FOR a IN (SELECT DISTINCT(table_name)
               FROM user_tab_partitions
              WHERE table_name LIKE 'DLF_%'
              ORDER BY table_name)
-  LOOP
-
+  LOOP    
+  
     -- Determine the high value on which to split the MAX_VALUE partition
     SELECT MAX(SUBSTR(PARTITION_NAME, 3, 10))
       INTO v_partition_max
@@ -386,12 +397,12 @@ BEGIN
       v_partition_max := TO_NUMBER(
         TO_CHAR(TRUNC(TO_DATE(v_partition_max, 'YYYYMMDD') + 1), 'YYYYMMDD'));
 
-    -- If this is the first execution there will be no high value, so
-    -- set it to today
+    -- If this is the first execution there will be no high value, so set it to
+    -- today
     IF v_partition_max IS NULL THEN
       v_partition_max := TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD'));
     END IF;
- 
+    
     -- Create partitions
     FOR b IN (SELECT TO_DATE(v_partition_max, 'YYYYMMDD') + rownum - 1 value
                 FROM all_objects
@@ -404,25 +415,35 @@ BEGIN
       -- http://www.oracle.com/technology/oramag/oracle/06-sep/o56partition.html
 
       -- Check if a new tablespace is required before creating the partition
+      v_tablespace := 'DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||'_'||v_current_user;
       SELECT COUNT(*) INTO v_exists 
-        FROM  user_tablespaces
-       WHERE tablespace_name = 'DLF_'||TO_CHAR(b.value, 'YYYYMMDD');
+        FROM user_tablespaces
+       WHERE tablespace_name = v_tablespace;
       
       IF v_exists = 0 THEN
-        EXECUTE IMMEDIATE 'CREATE TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||'
+        EXECUTE IMMEDIATE 'CREATE TABLESPACE '||v_tablespace||'
                            DATAFILE SIZE 100M
                            AUTOEXTEND ON NEXT 200M 
                            MAXSIZE 30G
                            EXTENT MANAGEMENT LOCAL 
                            SEGMENT SPACE MANAGEMENT AUTO';
       END IF;      
-           
+
+      -- If the tablespace is read only, alter its status to read write for this
+      -- operation.
+      FOR d IN (SELECT tablespace_name FROM user_tablespaces
+                 WHERE tablespace_name = v_tablespace
+                   AND status = 'READ ONLY')
+      LOOP
+        EXECUTE IMMEDIATE 'ALTER TABLESPACE '||d.tablespace_name||' READ WRITE';
+      END LOOP;
+
       v_high_value := TRUNC(b.value + 1);
       EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' 
                          SPLIT PARTITION MAX_VALUE 
                          AT    ('''||TO_CHAR(v_high_value, 'DD-MON-YYYY')||''') 
                          INTO  (PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||'
-                                TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD')||', 
+                                TABLESPACE '||v_tablespace||', 
                                 PARTITION MAX_VALUE)
                          UPDATE INDEXES';
                          
@@ -433,19 +454,28 @@ BEGIN
       LOOP
         EXECUTE IMMEDIATE 'ALTER INDEX '||c.index_name||' 
                            REBUILD PARTITION P_'||TO_CHAR(b.value, 'YYYYMMDD')||'
-                           TABLESPACE DLF_'||TO_CHAR(b.value, 'YYYYMMDD');
+                           TABLESPACE '||v_tablespace;
       END LOOP;
     END LOOP;
-  END LOOP;
-  
-  -- Set the status of tablespaces older then 2 days to read only
+  END LOOP;    
+    
+  -- Set the status of tablespaces older then 2 days to read only.
   v_tablespace := 'DLF_'||TO_CHAR(SYSDATE - 2, 'YYYYMMDD');
-  FOR a IN (SELECT DISTINCT(tablespace_name)
+  FOR a IN (SELECT tablespace_name
               FROM user_tablespaces
-             WHERE tablespace_name LIKE 'DLF_%'
-               AND tablespace_name NOT IN ('DLF_DATA', 'DLF_IDX', 'DLF_INDX')
-               AND tablespace_name < v_tablespace
-               AND status <> 'READ ONLY')
+             WHERE status <> 'READ ONLY'
+               AND tablespace_name IN (
+                 SELECT tablespace_name
+                   FROM user_tablespaces
+                  WHERE tablespace_name LIKE CONCAT('DLF_%_', v_current_user)
+                    AND tablespace_name < v_tablespace||'_'||v_current_user
+             UNION 
+                 SELECT tablespace_name
+                   FROM user_tablespaces
+                  WHERE tablespace_name LIKE 'DLF_%'
+                    AND length(tablespace_name) = length(v_tablespace)
+                    AND tablespace_name < v_tablespace)
+             ORDER BY tablespace_name ASC)
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' READ ONLY';
   END LOOP;
@@ -474,16 +504,24 @@ END;
 
 
 /*
- * archive procedure 
+ * archive/backup procedure 
  */
 CREATE OR REPLACE PROCEDURE dlf_archive
 AS
 
   -- Variables
-  v_expire      NUMBER := 0;
-  v_value       VARCHAR2(255);
+  v_expire        NUMBER := 0;
+  v_value         VARCHAR2(2048);
+  v_tablespace    VARCHAR2(2048);
+  v_current_user  VARCHAR2(2048);
 
 BEGIN
+
+  -- Extract the name of the current user running the PLSQL procedure. This name
+  -- will be used for tablespace names.
+  SELECT SYS_CONTEXT('USERENV', 'CURRENT_USER') 
+    INTO v_current_user
+    FROM dual;
 
   -- Set the nls_date_format
   EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = "DD-MON-YYYY"';
@@ -492,7 +530,7 @@ BEGIN
   v_expire := TO_NUMBER(v_value);
 
   -- An expiry value of 0 means keep indefinately!
-  IF v_expire = 0 THEN
+  IF v_expire <= 0 THEN
     RETURN;
   END IF;
   
@@ -508,11 +546,22 @@ BEGIN
   END LOOP;
   
   -- Drop tablespaces
+  v_tablespace := 'DLF_'||TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD');
   FOR a IN (SELECT tablespace_name
               FROM user_tablespaces
-             WHERE tablespace_name < CONCAT('DLF_', TO_CHAR(SYSDATE - v_expire, 'YYYYMMDD'))
-               AND tablespace_name LIKE 'DLF_%'
-               AND status <> 'OFFLINE')
+             WHERE status <> 'OFFLINE'
+               AND tablespace_name IN (
+                 SELECT tablespace_name
+                   FROM user_tablespaces
+                  WHERE tablespace_name LIKE CONCAT('DLF_%_', v_current_user)
+                    AND tablespace_name < v_tablespace||'_'||v_current_user
+                  UNION 
+                 SELECT tablespace_name
+                   FROM user_tablespaces
+                  WHERE tablespace_name LIKE 'DLF_%'
+                    AND length(tablespace_name) = length(v_tablespace)
+                    AND tablespace_name < v_tablespace)
+                  ORDER BY tablespace_name ASC)
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||a.tablespace_name||' OFFLINE';
     EXECUTE IMMEDIATE 'DROP TABLESPACE '||a.tablespace_name||' 
