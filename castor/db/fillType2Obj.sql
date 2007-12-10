@@ -1,4 +1,4 @@
-DROP TABLE Type2Obj;
+/* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
 INSERT INTO Type2Obj (type, object) VALUES (0, 'INVALID');
 INSERT INTO Type2Obj (type, object) VALUES (1, 'Ptr');
@@ -123,14 +123,5 @@ INSERT INTO Type2Obj (type, object) VALUES (143, 'NsFilesDeletedResponse');
 INSERT INTO Type2Obj (type, object) VALUES (144, 'Disk2DiskCopyStartRequest');
 INSERT INTO Type2Obj (type, object) VALUES (145, 'Disk2DiskCopyStartResponse');
 INSERT INTO Type2Obj (type, object) VALUES (146, 'ThreadNotification');
-INSERT INTO Type2Obj (type, object) VALUES (FirstByteWritten=147, '');
-INSERT INTO Type2Obj (type, object) VALUES (1000, 'INVALID');
-INSERT INTO Type2Obj (type, object) VALUES (1001, 'RequestStatusHistory');
-INSERT INTO Type2Obj (type, object) VALUES (1002, 'StageRequest');
-INSERT INTO Type2Obj (type, object) VALUES (1003, 'StorageArea');
-INSERT INTO Type2Obj (type, object) VALUES (1004, 'SrmUser');
-INSERT INTO Type2Obj (type, object) VALUES (1005, 'UserFile');
-INSERT INTO Type2Obj (type, object) VALUES (1006, 'UserPermission');
-INSERT INTO Type2Obj (type, object) VALUES (1007, 'Pin');
-INSERT INTO Type2Obj (type, object) VALUES (1008, 'SubRequest');
-INSERT INTO Type2Obj (type, object) VALUES (1009, 'CopySubRequest');
+INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
+
