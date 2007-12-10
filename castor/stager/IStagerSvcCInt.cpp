@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2007/11/20 16:46:07 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvcCInt.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2007/12/10 15:47:18 $ $Author: itglp $
  *
  *
  *
@@ -75,33 +75,6 @@ extern "C" {
   }
 
   //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_subRequestToDo
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_subRequestToDo(struct Cstager_IStagerSvc_t* stgSvc,
-                                        castor::stager::SubRequest** subreq) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      *subreq = stgSvc->stgSvc->subRequestToDo("");
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_isSubRequestToSchedule
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_isSubRequestToSchedule
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   castor::stager::SubRequest* subreq,
-   castor::stager::DiskCopyForRecall*** sources,
-   unsigned int* sourcesNb) {
-    return -1;
-  }
-
-  //-------------------------------------------------------------------------
   // Cstager_IStagerSvc_errorMsg
   //-------------------------------------------------------------------------
   const char* Cstager_IStagerSvc_errorMsg(Cstager_IStagerSvc_t* stgSvc) {
@@ -156,159 +129,6 @@ extern "C" {
       *castorFile = stgSvc->stgSvc->selectCastorFile
         (fileId, nsHost, svcClass, fileClass,
          fileSize, fileName);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_updateAndCheckSubRequest
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_updateAndCheckSubRequest
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   castor::stager::SubRequest* subreq,
-   int* result) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      *result =
-        stgSvc->stgSvc->updateAndCheckSubRequest(subreq) ? 1 : 0;
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_recreateCastorFile
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_recreateCastorFile
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   castor::stager::CastorFile* castorFile,
-   castor::stager::SubRequest *subreq,
-   castor::stager::DiskCopyForRecall** diskCopy) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      *diskCopy = stgSvc->stgSvc->recreateCastorFile(castorFile, subreq);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_updateFileSystemForJob
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_updateFileSystemForJob
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   char* fileSystem, char* diskServer,
-   u_signed64 fileSize) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      stgSvc->stgSvc->updateFileSystemForJob
-        (fileSystem, diskServer, fileSize);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_archiveSubReq
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_archiveSubReq
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   u_signed64 subReqId) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      stgSvc->stgSvc->archiveSubReq(subReqId);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_stageRm
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_stageRm
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   const u_signed64 subReqId,
-   const u_signed64 fileId,
-   const char* nsHost,
-   const u_signed64 svcClassId,
-   int* result) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      *result = stgSvc->stgSvc->stageRm(subReqId, fileId, nsHost, svcClassId, "");
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_stageRelease
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_stageRelease
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   const u_signed64 fileId,
-   const char* nsHost) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      stgSvc->stgSvc->stageRelease(fileId, nsHost);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_setFileGCWeight
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_setFileGCWeight
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   const u_signed64 fileId,
-   const char* nsHost,
-   const float weight) {
-    if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      stgSvc->stgSvc->setFileGCWeight(fileId, nsHost, weight);
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      stgSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IStagerSvc_createRecallCandidate
-  //-------------------------------------------------------------------------
-  int Cstager_IStagerSvc_createRecallCandidate
-  (struct Cstager_IStagerSvc_t* stgSvc,
-   castor::stager::SubRequest* subreq,
-   const unsigned long euid,
-   const unsigned long egid,
-   castor::stager::SvcClass* svcClass) {
-   
-   if (!checkIStagerSvc(stgSvc)) return -1;
-    try {
-      stgSvc->stgSvc->createRecallCandidate(subreq, euid, egid, svcClass);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       stgSvc->errorMsg = e.getMessage().str();
