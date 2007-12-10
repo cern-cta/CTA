@@ -74,8 +74,5 @@ int getClearContext(Csec_context_t *security_context){
  return  (*CclearContext)(security_context);
 }
 
-void close(){
-  Cdlclose(handle);
-}
 
 
