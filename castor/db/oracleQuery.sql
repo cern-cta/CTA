@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.576 $ $Date: 2007/12/10 09:39:41 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.577 $ $Date: 2007/12/10 10:48:20 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -154,28 +154,6 @@ ALTER TABLE SvcClass ADD CONSTRAINT I_SvcClass_Name UNIQUE (NAME);
 
 /* The primary key in this table allows for materialized views */
 ALTER TABLE DiskPool2SvcClass ADD CONSTRAINT I_DiskPool2SvcCla_ParentChild PRIMARY KEY (parent, child);
-
-
-/* Get current time as a time_t. Not that easy in ORACLE */
-CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
-  ret NUMBER;
-BEGIN
-  SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60) INTO ret FROM DUAL;
-  RETURN ret;
-END;
-
-/* Generate a universally unique id (UUID) */
-CREATE OR REPLACE FUNCTION uuidGen RETURN VARCHAR2 IS
-  ret VARCHAR2(36);
-BEGIN
-  -- Note: the guid generator provided by ORACLE produces sequential uuid's, not
-  -- random ones. The reason for this is because random uuid's are not good for
-  -- indexing!
-  SELECT lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'))
-    INTO ret FROM Dual;
-  RETURN ret;
-END;
-
 
 /* Global temporary table to handle output of the filesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE FilesDeletedProcOutput
@@ -345,6 +323,26 @@ CREATE INDEX I_FileSystem_Rate
 /*   Triggers and Procedures definitions   */
 /*                                         */
 /*******************************************/
+
+/* Get current time as a time_t. Not that easy in ORACLE */
+CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
+  ret NUMBER;
+BEGIN
+  SELECT (SYSDATE - to_date('01-jan-1970 01:00:00','dd-mon-yyyy HH:MI:SS')) * (24*60*60) INTO ret FROM DUAL;
+  RETURN ret;
+END;
+
+/* Generate a universally unique id (UUID) */
+CREATE OR REPLACE FUNCTION uuidGen RETURN VARCHAR2 IS
+  ret VARCHAR2(36);
+BEGIN
+  -- Note: the guid generator provided by ORACLE produces sequential uuid's, not
+  -- random ones. The reason for this is because random uuid's are not good for
+  -- indexing!
+  SELECT lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'))
+    INTO ret FROM Dual;
+  RETURN ret;
+END;
 
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
 CREATE OR REPLACE PROCEDURE deleteTapeCopies(cfId NUMBER) AS
@@ -1629,6 +1627,18 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   END;
 END;
 
+
+/* Build diskCopy path from fileId */
+CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
+                                                nsHost IN VARCHAR2,
+                                                dcid IN INTEGER,
+                                                path OUT VARCHAR2) AS
+BEGIN
+  path := CONCAT(CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),'FM09'), '/'),
+                 CONCAT(TO_CHAR(fid), '@')),
+                 nsHost), CONCAT('.', TO_CHAR(dcid)));
+END;
+
 /* PL/SQL method implementing createDiskCopyReplicaRequest */
 CREATE OR REPLACE PROCEDURE createDiskCopyReplicaRequest
 (sourceSrId IN INTEGER, sourceDcId IN INTEGER, destSvcId IN INTEGER) AS
@@ -1812,6 +1822,76 @@ BEGIN
       result := -1;
     END IF;
   END IF;
+END;
+
+/* PL/SQL method internalPutDoneFunc, used by fileRecalled and putDoneFunc.
+   checks for diskcopies in STAGEOUT and creates the tapecopies for migration
+ */
+CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
+                                                 fs IN INTEGER,
+                                                 context IN INTEGER,
+                                                 nbTC IN INTEGER) AS
+  tcId INTEGER;
+  dcId INTEGER;
+
+BEGIN
+  -- if no tape copy or 0 length file, no migration
+  -- so we go directly to status STAGED
+  IF nbTC = 0 OR fs = 0 THEN
+    UPDATE DiskCopy SET status = 0 -- STAGED
+     WHERE castorFile = cfId AND status = 6; -- STAGEOUT
+  ELSE
+    -- update the DiskCopy status to CANBEMIGR
+    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
+     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
+     RETURNING id INTO dcId;
+    -- Create TapeCopies
+    FOR i IN 1..nbTC LOOP
+      INSERT INTO TapeCopy (id, copyNb, castorFile, status)
+           VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
+      RETURNING id INTO tcId;
+      INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
+    END LOOP;
+    -- Restart any waiting Disk2DiskCopies
+    UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
+       SET status = 1, lastModificationTime = getTime(), parent = 0
+     WHERE status = 5 -- WAIT_SUBREQ
+       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status IN (3, 6));
+  END IF;
+  -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
+  -- then we have to archive the original prepareToPut/Update subRequest
+  IF context = 2 THEN
+    DECLARE
+      srId NUMBER;
+    BEGIN
+      -- There can be only a single PrepareTo request: any subsequent PPut would be
+      -- rejected and any subsequent PUpdate would be directly archived (cf. processPrepareRequest).
+      SELECT SubRequest.id INTO srId
+        FROM SubRequest, 
+         (SELECT id FROM StagePrepareToPutRequest UNION ALL
+          SELECT id FROM StagePrepareToUpdateRequest) Request
+       WHERE SubRequest.castorFile = cfId
+         AND SubRequest.request = Request.id
+         AND SubRequest.status = 6;  -- READY
+      archiveSubReq(srId);
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+      NULL; --Ignore the missing subrequest
+    END;
+  END IF;
+END;
+
+
+/* PL/SQL method putDoneFunc */
+CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
+                                         fs IN INTEGER,
+                                         context IN INTEGER) AS
+  nc INTEGER;
+BEGIN
+  -- get number of TapeCopies to create
+  SELECT nbCopies INTO nc FROM FileClass, CastorFile
+   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
+  -- and execute the internal putDoneFunc with the number of TapeCopies to be created
+  internalPutDoneFunc(cfId, fs, context, nc);
 END;
 
 
@@ -2064,17 +2144,6 @@ BEGIN
   END IF;
 END;
 
-/* Build diskCopy path from fileId */
-CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
-                                                nsHost IN VARCHAR2,
-                                                dcid IN INTEGER,
-                                                path OUT VARCHAR2) AS
-BEGIN
-  path := CONCAT(CONCAT(CONCAT(CONCAT(TO_CHAR(MOD(fid,100),'FM09'), '/'),
-                 CONCAT(TO_CHAR(fid), '@')),
-                 nsHost), CONCAT('.', TO_CHAR(dcid)));
-END;
-
 
 /* This method should be called when the first byte is written to a file
  * opened with an update. This will kind of convert the update from a
@@ -2155,6 +2224,50 @@ BEGIN
   END IF;
 END;
 
+
+/* PL/SQL method implementing putStart */
+CREATE OR REPLACE PROCEDURE putStart
+        (srId IN INTEGER, fileSystemId IN INTEGER,
+         rdcId OUT INTEGER, rdcStatus OUT INTEGER,
+         rdcPath OUT VARCHAR2) AS
+  srStatus INTEGER;
+  prevFsId INTEGER;
+BEGIN
+  -- Get diskCopy id
+  SELECT diskCopy, SubRequest.status, fileSystem INTO rdcId, srStatus, prevFsId
+    FROM SubRequest, DiskCopy
+   WHERE SubRequest.diskcopy = Diskcopy.id
+     AND SubRequest.id = srId;
+  -- Check that we did not cancel the SubRequest in the mean time
+  IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
+    raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
+  END IF;
+  IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
+    -- this could happen if LSF schedules the same job twice!
+    -- (see bug report #14358 for the whole story)
+    raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
+  END IF;
+  
+  -- Get older castorFiles with the same name and drop their lastKnownFileName
+  UPDATE /*+ INDEX (castorFile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
+   WHERE id IN (
+    SELECT /*+ INDEX (cfOld) */ cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
+     WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
+       AND cfOld.fileid <> cfNew.fileid
+       AND cfNew.id = SubRequest.castorFile
+       AND SubRequest.id = srId);
+  -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
+  -- waiting SubRequests in RESTART
+  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
+   WHERE parent = srId;
+  -- link DiskCopy and FileSystem and update DiskCopyStatus
+  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
+                      fileSystem = fileSystemId
+   WHERE id = rdcId
+   RETURNING status, path
+   INTO rdcStatus, rdcPath;
+END;
+
 /* PL/SQL method implementing getUpdateStart */
 CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
@@ -2225,50 +2338,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   UPDATE SubRequest SET status = 1 WHERE id = srId;
   dci := 0;
   rpath := '';
-END;
-
-
-/* PL/SQL method implementing putStart */
-CREATE OR REPLACE PROCEDURE putStart
-        (srId IN INTEGER, fileSystemId IN INTEGER,
-         rdcId OUT INTEGER, rdcStatus OUT INTEGER,
-         rdcPath OUT VARCHAR2) AS
-  srStatus INTEGER;
-  prevFsId INTEGER;
-BEGIN
-  -- Get diskCopy id
-  SELECT diskCopy, SubRequest.status, fileSystem INTO rdcId, srStatus, prevFsId
-    FROM SubRequest, DiskCopy
-   WHERE SubRequest.diskcopy = Diskcopy.id
-     AND SubRequest.id = srId;
-  -- Check that we did not cancel the SubRequest in the mean time
-  IF srStatus IN (7, 9, 10) THEN -- FAILED, FAILED_FINISHED, FAILED_ANSWERING
-    raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
-  END IF;
-  IF prevFsId > 0 AND prevFsId <> fileSystemId THEN
-    -- this could happen if LSF schedules the same job twice!
-    -- (see bug report #14358 for the whole story)
-    raise_application_error(-20107, 'This job has already started for this DiskCopy. Giving up.');
-  END IF;
-  
-  -- Get older castorFiles with the same name and drop their lastKnownFileName
-  UPDATE /*+ INDEX (castorFile) */ CastorFile SET lastKnownFileName = TO_CHAR(id)
-   WHERE id IN (
-    SELECT /*+ INDEX (cfOld) */ cfOld.id FROM CastorFile cfOld, CastorFile cfNew, SubRequest
-     WHERE cfOld.lastKnownFileName = cfNew.lastKnownFileName
-       AND cfOld.fileid <> cfNew.fileid
-       AND cfNew.id = SubRequest.castorFile
-       AND SubRequest.id = srId);
-  -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
-  -- waiting SubRequests in RESTART
-  UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
-   WHERE parent = srId;
-  -- link DiskCopy and FileSystem and update DiskCopyStatus
-  UPDATE DiskCopy SET status = 6, -- DISKCOPY_STAGEOUT
-                      fileSystem = fileSystemId
-   WHERE id = rdcId
-   RETURNING status, path
-   INTO rdcStatus, rdcPath;
 END;
 
 
@@ -2687,76 +2756,6 @@ BEGIN
   -- we don't commit here, the stager will do that when the subRequest status will be updated to 6
 END;
 
-
-/* PL/SQL method internalPutDoneFunc, used by fileRecalled and putDoneFunc.
-   checks for diskcopies in STAGEOUT and creates the tapecopies for migration
- */
-CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
-                                                 fs IN INTEGER,
-                                                 context IN INTEGER,
-                                                 nbTC IN INTEGER) AS
-  tcId INTEGER;
-  dcId INTEGER;
-
-BEGIN
-  -- if no tape copy or 0 length file, no migration
-  -- so we go directly to status STAGED
-  IF nbTC = 0 OR fs = 0 THEN
-    UPDATE DiskCopy SET status = 0 -- STAGED
-     WHERE castorFile = cfId AND status = 6; -- STAGEOUT
-  ELSE
-    -- update the DiskCopy status to CANBEMIGR
-    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
-     WHERE castorFile = cfId AND status = 6 -- STAGEOUT
-     RETURNING id INTO dcId;
-    -- Create TapeCopies
-    FOR i IN 1..nbTC LOOP
-      INSERT INTO TapeCopy (id, copyNb, castorFile, status)
-           VALUES (ids_seq.nextval, i, cfId, 0) -- TAPECOPY_CREATED
-      RETURNING id INTO tcId;
-      INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
-    END LOOP;
-    -- Restart any waiting Disk2DiskCopies
-    UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
-       SET status = 1, lastModificationTime = getTime(), parent = 0
-     WHERE status = 5 -- WAIT_SUBREQ
-       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status IN (3, 6));
-  END IF;
-  -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
-  -- then we have to archive the original prepareToPut/Update subRequest
-  IF context = 2 THEN
-    DECLARE
-      srId NUMBER;
-    BEGIN
-      -- There can be only a single PrepareTo request: any subsequent PPut would be
-      -- rejected and any subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-      SELECT SubRequest.id INTO srId
-        FROM SubRequest, 
-         (SELECT id FROM StagePrepareToPutRequest UNION ALL
-          SELECT id FROM StagePrepareToUpdateRequest) Request
-       WHERE SubRequest.castorFile = cfId
-         AND SubRequest.request = Request.id
-         AND SubRequest.status = 6;  -- READY
-      archiveSubReq(srId);
-      EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL; --Ignore the missing subrequest
-    END;
-  END IF;
-END;
-
-
-/* PL/SQL method putDoneFunc */
-CREATE OR REPLACE PROCEDURE putDoneFunc (cfId IN INTEGER,
-                                         fs IN INTEGER,
-                                         context IN INTEGER) AS
-  nc INTEGER;
-BEGIN
-  -- get number of TapeCopies to create
-  SELECT nbCopies INTO nc FROM FileClass, CastorFile
-   WHERE CastorFile.id = cfId AND CastorFile.fileClass = FileClass.id;
-  -- and execute the internal putDoneFunc with the number of TapeCopies to be created
-  internalPutDoneFunc(cfId, fs, context, nc);
-END;
 
 /* PL/SQL method implementing prepareForMigration */
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
