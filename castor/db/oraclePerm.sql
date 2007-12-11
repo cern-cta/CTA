@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.577 $ $Date: 2007/12/10 10:48:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.578 $ $Date: 2007/12/11 16:23:52 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2630,28 +2630,32 @@ BEGIN
       contextPIPP := 0;
     END;   
   EXCEPTION WHEN NO_DATA_FOUND THEN
+    DECLARE
+      nbPReqs NUMBER;
     BEGIN
       -- we are either a prepareToPut, or a prepareToUpdate and it's the only one (file is being created).
       -- In case of prepareToPut we need to check that we are we the only one
-      SELECT SubRequest.diskCopy INTO dcId
+      SELECT count(SubRequest.diskCopy) INTO nbPReqs
         FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
               SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
        WHERE SubRequest.castorFile = cfId
          AND PrepareRequest.id = SubRequest.request
          AND SubRequest.status = 6;  -- READY
+      -- Note that we did not select ourselves (we are in status 3)
+      IF nbPReqs > 0 THEN
+        -- this means we are a PrepareToPut and another PrepareToPut/Update
+        -- is already running. This is forbidden
+        dcId := 0;
+        UPDATE SubRequest
+           SET status = 7, -- FAILED
+               errorCode = 16, -- EBUSY
+               errorMessage = 'Another prepareToPut/Update is ongoing for this file'
+         WHERE id = srId;
+        COMMIT;
+        RETURN;
+      END IF;
       -- Everything is ok then
       contextPIPP := 0;
-    EXCEPTION WHEN TOO_MANY_ROWS THEN
-      -- No, this means we are a PrepareToPut and another PrepareToPut/Update
-      -- is already running. This is forbidden
-      dcId := 0;
-      UPDATE SubRequest
-         SET status = 7, -- FAILED
-             errorCode = 16, -- EBUSY
-             errorMessage = 'Another prepareToPut/Update is ongoing for this file'
-       WHERE id = srId;
-      COMMIT;
-      RETURN;
     END;
   END;
   IF contextPIPP = 0 THEN
