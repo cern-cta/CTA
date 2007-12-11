@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.19 $ $Date: 2007/11/07 14:51:34 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posittape.c,v $ $Revision: 1.20 $ $Date: 2007/12/11 10:20:30 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -36,7 +36,7 @@ int *tmr;
 	if ((c = readlbl (tapefd, path, hdr2)) < 0) return (c);
 	if (c == 1) {
                 
-                sprintf( badLabelReason, "Could not read a whole hdr2 label, only %ld bytes", 
+                sprintf( badLabelReason, "Read unexpected number of bytes. HDR2 Label corrupted? Length: %ld", 
                          strlen( hdr2 ) );
                 sprintf( badLabelContent, "%s", hdr2 );
 
@@ -62,7 +62,7 @@ int *tmr;
 	if ((c = readlbl (tapefd, path, uhl1)) < 0) return (c);
 	if (c == 1) {
 
-                sprintf( badLabelReason, "Could not read a whole uhl1 label, only %ld bytes", 
+                sprintf( badLabelReason, "Read unexpected number of bytes. UHL1 Label corrupted? Length: %ld", 
                          strlen( uhl1 ) );
                 sprintf( badLabelContent, "%s", uhl1 );
 
@@ -288,7 +288,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
 
                                 if (1 == c) {
                                         
-                                        sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
+                                        sprintf( badLabelReason, "Read unexpected number of bytes. HDR1 Label corrupted? Length: %ld",  
                                                  strlen( hdr1 ) );
                                         sprintf( badLabelContent, "%s", hdr1 );
                                         
@@ -336,7 +336,7 @@ char *vol1, *hdr1, *hdr2, *uhl1;
                                 
                                 if (1 == c) {
                                         
-                                        sprintf( badLabelReason, "Could not read a whole hdr1 label, only %ld bytes", 
+                                        sprintf( badLabelReason, "Read unexpected number of bytes. HDR1 Label corrupted? Length: %ld",   
                                                  strlen( hdr1 ) );
                                         sprintf( badLabelContent, "%s", hdr1 );
                                         
