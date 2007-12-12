@@ -80,6 +80,7 @@ namespace castor{
       /*******************************/
       void StagerPutHandler::handle() throw(castor::exception::Exception)
       {
+        castor::stager::DiskCopyForRecall* dc = 0;
         try{
           
           /**************************************************************************/
@@ -94,39 +95,44 @@ namespace castor{
           jobOriented();
           
           /* use the stagerService to recreate castor file */
-          castor::stager::DiskCopyForRecall* diskCopyForRecall = 
-          stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+          dc = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile, stgRequestHelper->subrequest);
           
-          if(diskCopyForRecall){  	  
-            /* we never replicate... we make by hand the rfs (and we don't fill the hostlist) */
-            if(!diskCopyForRecall->mountPoint().empty()) {
-              stgRequestHelper->subrequest->setRequestedFileSystems(diskCopyForRecall->diskServer() + ":" + diskCopyForRecall->mountPoint());
+          if(dc) {
+            // check for request in wait due to concurrent puts
+            if(dc->status() == DISKCOPY_WAITFS_SCHEDULING) {
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
+              stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);   // the db representation is already in WAITSUBREQ
+              stgRequestHelper->dbService->commit();
             }
-            stgRequestHelper->subrequest->setXsize(this->xsize);
-            
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
-            
-            /* updateSubrequestStatus Part: */
-            stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
-            stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-            stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
-            
-            /* and we have to notify the jobManager */
-            m_notifyJobManager = true;
-            delete diskCopyForRecall;
-          } else{
+            else {
+              // schedule the put
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
+              if(!dc->mountPoint().empty()) {
+                stgRequestHelper->subrequest->setRequestedFileSystems(dc->diskServer() + ":" + dc->mountPoint());
+              }
+              stgRequestHelper->subrequest->setXsize(this->xsize);
+              
+              stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+              stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
+              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              
+              // we have to notify the jobManager
+              m_notifyJobManager = true;
+            }
+            delete dc;
+          }
+          else {
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(stgCnsHelper->cnsFileid));
           }
-          
-        }catch(castor::exception::Exception e){
+        }
+        catch(castor::exception::Exception e) {
           castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
             castor::dlf::Param("Error Message",e.getMessage().str())
           };
-          
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUT, 2 ,params, &(stgCnsHelper->cnsFileid));
+          if(dc) delete dc;
           throw(e);
         }
-        
       }/* end StagerPutHandler::handle()*/
       
       
