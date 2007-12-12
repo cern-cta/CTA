@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.580 $ $Date: 2007/12/12 15:34:14 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.581 $ $Date: 2007/12/12 15:41:40 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -237,8 +237,8 @@ UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type in (35, 40, 44);
 UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type in (36, 37, 38, 119);
 UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type in (39, 42, 95);
 UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type in (33, 34, 41, 103, 131);
-UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type in (60, 64, 65, 67, 78, 79, 80, 93, 144);
-UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type in (73, 74, 83);
+UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type in (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
+UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type in (73, 74, 83, 142);
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
