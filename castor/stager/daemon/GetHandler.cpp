@@ -84,12 +84,12 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
             break;
           
-          case 0:   // DISKCOPY_STAGED or DISKCOPY_WAITDISK2DISKCOPY, schedule job
-          case 1:
+          case DISKCOPY_STAGED:   // schedule job
+          case DISKCOPY_WAITDISK2DISKCOPY:
             {
               stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SCHEDULINGJOB, &(stgCnsHelper->cnsFileid));
               
-              if(result == 1) {
+              if(result == DISKCOPY_WAITDISK2DISKCOPY) {
                 // there's room for internal replication, check if it's to be done
                 processReplica();
               }
@@ -110,12 +110,38 @@ namespace castor{
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
               stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
               
-              // and we have to notify the jobManager
+              // and we notify the jobManager
               m_notifyJobManager = true;
             }
             break;
-           
-          case 2:   // DISKCOPY_WAITTAPERECALL, create a tape copy and corresponding segment objects on stager catalogue
+          
+          case DISKCOPY_WAITFS:   // case of update in a prepareToPut: we actually need to behave as a Put and schedule
+            {
+              castor::stager::DiskCopyForRecall* diskCopyForRecall = 
+              stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile, stgRequestHelper->subrequest);
+              
+              if(diskCopyForRecall){  	  
+                if(!diskCopyForRecall->mountPoint().empty()) {
+                  stgRequestHelper->subrequest->setRequestedFileSystems(diskCopyForRecall->diskServer() + ":" + diskCopyForRecall->mountPoint());
+                }
+                stgRequestHelper->subrequest->setXsize(this->xsize);
+                stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_CASTORFILE_RECREATION, &(stgCnsHelper->cnsFileid));
+                
+                /* updateSubrequestStatus Part: */
+                stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
+                stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
+                stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+                
+                /* and we have to notify the jobManager */
+                m_notifyJobManager = true;
+                delete diskCopyForRecall;
+              } else{
+                stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_RECREATION_IMPOSSIBLE, &(stgCnsHelper->cnsFileid));
+              }
+            }
+            break;
+            
+          case DISKCOPY_WAITTAPERECALL:   // create a tape copy and corresponding segment objects on stager catalogue
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
             
             // here we don't care about the return value: we don't need to answer the client in any case
