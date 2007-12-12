@@ -71,7 +71,7 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
             break;
           
-          case 0:   // DiskCopy STAGED
+          case DISKCOPY_STAGED:   // nothing to do
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
             stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
@@ -81,7 +81,7 @@ namespace castor{
             result = true;
             break;
           
-          case 2:
+          case DISKCOPY_WAITTAPERECALL:   // trigger a recall
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
             
             // if success, answer client
