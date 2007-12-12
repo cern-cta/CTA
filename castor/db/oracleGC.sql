@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.579 $ $Date: 2007/12/12 10:33:21 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.580 $ $Date: 2007/12/12 15:34:14 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -858,7 +858,7 @@ BEGIN
      WHERE subrequest.request = id2type.id
      GROUP BY request, type
     HAVING min(status) = 11
-       AND max(status) = 12 -- a repack subrequest can be there
+       AND max(status) = 11  -- only ARCHIVED requests are taken into account here
        AND max(lastModificationTime) < getTime() - timeOut;
   COMMIT;
   internalCleaningProc('ArchivedRequestCleaning');
@@ -1001,27 +1001,6 @@ BEGIN
       checkFSBackInProd(fs.id);
     END IF;
   END LOOP;
-END;
-
-
-/* PL/SQL method implementing updateFileSystemForJob */
-CREATE OR REPLACE PROCEDURE updateFileSystemForJob
-(fs IN VARCHAR2, ds IN VARCHAR2,
- fileSize IN NUMBER) AS
-  fsID NUMBER;
-  dsId NUMBER;
-  unused NUMBER;
-BEGIN
-  SELECT FileSystem.id, DiskServer.id INTO fsId, dsId
-    FROM FileSystem, DiskServer
-   WHERE FileSystem.diskServer = DiskServer.id
-     AND FileSystem.mountPoint = fs
-     AND DiskServer.name = ds;
-  -- We have to lock the DiskServer in the LockTable TABLE if we want
-  -- to avoid dead locks with bestTapeCopyForStream. See the definition
-  -- of the table for a complete explanation on why it exists
-  SELECT TheLock INTO unused FROM LockTable WHERE DiskServerId = dsId FOR UPDATE;
-  updateFsFileOpened(dsId, fsId, fileSize);
 END;
 
 
@@ -1741,7 +1720,7 @@ BEGIN
      AND nvl(FileSystem.status, 0) = 0 -- PRODUCTION
      AND DiskServer.id(+) = FileSystem.diskServer
      AND nvl(DiskServer.status, 0) = 0 -- PRODUCTION
-     AND DiskCopy.status IN (1, 2); -- WAITDISK2DISKCOPY, WAITTAPERECALL
+     AND DiskCopy.status IN (1, 2, 11); -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS_SCHEDULING
   IF dcIds.COUNT > 0 THEN
     -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
     makeSubRequestWait(srId, dcIds(1));
@@ -1766,12 +1745,16 @@ BEGIN
     SELECT COUNT(DiskCopy.id) INTO nbDCs
       FROM DiskCopy
      WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.status IN (5, 11);  -- WAITFS, WAITFS_SCHEDULING
+       AND DiskCopy.status = 5;  -- WAITFS
     IF nbDCs = 1 THEN
-      result := 5;  -- DISKCOPY_WAITFS
+      result := 5;  -- DISKCOPY_WAITFS, try recreation
       RETURN;
+      -- note that we don't do here all the needed consistency checks,
+      -- but recreateCastorFile takes care of all cases and will fail
+      -- the subrequest or make it wait if needed.
     END IF;    
   END IF;
+  
   IF nbDCs > 0 THEN
     -- Yes, we have some
     -- List available diskcopies for job scheduling
@@ -1792,7 +1775,7 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = 0  -- PRODUCTION
            ORDER BY fsRate DESC;
-    -- give an hint to the stager whether internal replication can happen or not:
+    -- Give an hint to the stager whether internal replication can happen or not:
     -- count the number of diskservers which DON'T contain a diskCopy for this castorFile
     -- and are hence eligible for replication should it need to be done
     SELECT COUNT(DISTINCT(DiskServer.name)) INTO nbDSs 
@@ -2268,8 +2251,8 @@ BEGIN
        AND cfOld.fileid <> cfNew.fileid
        AND cfNew.id = SubRequest.castorFile
        AND SubRequest.id = srId);
-  -- In case the DiskCopy was in WAITFS_SCHEDULING, PUT the
-  -- waiting SubRequests in RESTART
+  -- In case the DiskCopy was in WAITFS_SCHEDULING,
+  -- restart the waiting SubRequests
   UPDATE SubRequest SET status = 1, lastModificationTime = getTime(), parent = 0 -- SUBREQUEST_RESTART
    WHERE parent = srId;
   -- link DiskCopy and FileSystem and update DiskCopyStatus
@@ -2743,7 +2726,6 @@ BEGIN
     rmountPoint := '';
     rdiskServer := '';
     INSERT INTO Id2Type (id, type) VALUES (dcId, 5); -- OBJ_DiskCopy
-    COMMIT;
   ELSE
     DECLARE
       fsId INTEGER;
@@ -2760,16 +2742,24 @@ BEGIN
           FROM FileSystem WHERE FileSystem.id = fsId;
         SELECT name INTO rdiskServer FROM DiskServer WHERE id = dsId;
       END IF;
-      -- See whether we should wait on the previous Put Request
-      IF rstatus = 11 THEN -- WAITFS_SCHEDULING
+      -- See whether we should wait on another concurrent Put|Update request
+      IF rstatus = 11 THEN  -- WAITFS_SCHEDULING
+        -- another Put|Update request was faster than us, we have to wait
         makeSubRequestWait(srId, dcId);
+      ELSE
+        -- we are the first, we change status as we are about to go to the scheduler
+        UPDATE DiskCopy SET status = 11  -- WAITFS_SCHEDULING
+         WHERE castorFile = cfId
+           AND status = 5;  -- WAITFS
       END IF;
     END;
   END IF; 
   -- link SubRequest and DiskCopy
   UPDATE SubRequest SET diskCopy = dcId,
-                        lastModificationTime = getTime() WHERE id = srId;
-  -- we don't commit here, the stager will do that when the subRequest status will be updated to 6
+                        lastModificationTime = getTime()                        
+   WHERE id = srId;
+  -- we don't commit here, the stager will do that when
+  -- the subRequest status will be updated to 6
 END;
 
 
@@ -3399,7 +3389,7 @@ BEGIN
                 AND s.request = r.id
                 AND c.id = d.castorfile
                 AND d.creationtime < getTime() - timeOut
-                AND d.status IN (5, 6, 11)) LOOP -- WAITFS, STAGEOUT, WAITFSCHEDULING
+                AND d.status IN (5, 6, 11)) LOOP -- WAITFS, STAGEOUT, WAITFS_SCHEDULING
     IF 0 = cf.fileSize THEN
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7 WHERE id = cf.dcid;
@@ -4356,26 +4346,22 @@ END;
 CREATE OR REPLACE PROCEDURE checkFileForRepack(fid IN INTEGER, ret OUT VARCHAR2) AS
   sreqid NUMBER;
 BEGIN
-  BEGIN
-    ret := NULL;
-    -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
-    SELECT SubRequest.id, StageRepackRequest.repackvid 
-      INTO sreqid, ret
-      FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
-     WHERE stagerepackrequest.id = subrequest.request
-       AND diskcopy.id = subrequest.diskcopy
-       AND diskcopy.status = 10 -- CANBEMIGR
-       AND subrequest.status = 12 -- SUBREQUEST_REPACK
-       AND diskcopy.castorfile = castorfile.id
-       AND castorfile.fileid = fid
-       AND ROWNUM < 2;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    NULL;
-  END;
-  IF ret IS NOT NULL THEN
-    UPDATE SubRequest set status = 11
-    WHERE SubRequest.id = sreqid;
-  END IF;
+  ret := NULL;
+  -- Get the repackvid field from the existing request (if none, then we are not in a repack process)
+  SELECT SubRequest.id, StageRepackRequest.repackvid 
+    INTO sreqid, ret
+    FROM SubRequest, DiskCopy, CastorFile, StageRepackRequest
+   WHERE stagerepackrequest.id = subrequest.request
+     AND diskcopy.id = subrequest.diskcopy
+     AND diskcopy.status = 10 -- CANBEMIGR
+     AND subrequest.status = 12 -- SUBREQUEST_REPACK
+     AND diskcopy.castorfile = castorfile.id
+     AND castorfile.fileid = fid
+     AND ROWNUM < 2;
+  UPDATE SubRequest set status = 11  -- SUBREQUEST_ARCHIVED
+   WHERE SubRequest.id = sreqid;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  NULL;
 END;
 
 
