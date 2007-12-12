@@ -41,35 +41,34 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
+      
       class StagerRequestHelper;
       class StagerCnsHelper;
-
+      
       class StagerUpdateHandler : public virtual StagerJobRequestHandler{
-
+        
       private:
-	bool fileExist;
-	bool toRecreateCastorFile;
-	
+        
+        bool recreateCastorFile;
+        
       public:
-	/* constructor */
-	StagerUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
-	/* destructor */
-	~StagerUpdateHandler() throw();
-
-	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
-	/* to be called before the stgUpdateHandler->handle() */
-	/* set the internal attribute "toRecreateCastorFile depending on fileExist" */
-	/* which determines the real flow of the handler */
-	virtual void preHandle() throw(castor::exception::Exception);
-
-	/* handler for the Update request  */
-	void handle() throw(castor::exception::Exception);
-
-	
+      
+        /* constructor */
+        StagerUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        /* destructor */
+        ~StagerUpdateHandler() throw();
+        
+        /* set the internal attribute "toRecreateCastorFile depending on fileExist" */
+        /* which determines the real flow of the handler */
+        virtual void preHandle() throw(castor::exception::Exception);
+        
+        /* handler for the Update request  */
+        void handle() throw(castor::exception::Exception);
+        
+        
       }; //end StagerUpdateHandler class
-
-
+      
+      
     }//end namespace dbService
   }//end namespace stager
 }//end namespace castor
