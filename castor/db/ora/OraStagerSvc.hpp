@@ -436,12 +436,6 @@ namespace castor {
         /// SQL statement object for function recreateCastorFile
         oracle::occi::Statement *m_recreateCastorFileStatement;
 
-        /// SQL statement for function updateFileSystemForJob
-        static const std::string s_updateFileSystemForJobStatementString;
-
-        /// SQL statement object for function updateFileSystemForJob
-        oracle::occi::Statement *m_updateFileSystemForJobStatement;
-
         /// SQL statement for function archiveSubReq
         static const std::string s_archiveSubReqStatementString;
 

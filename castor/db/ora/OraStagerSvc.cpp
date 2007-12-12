@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.225 $ $Release$ $Date: 2007/12/12 15:21:55 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.226 $ $Release$ $Date: 2007/12/12 15:34:49 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -131,10 +131,6 @@ const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestState
 const std::string castor::db::ora::OraStagerSvc::s_recreateCastorFileStatementString =
   "BEGIN recreateCastorFile(:1, :2, :3, :4, :5, :6); END;";
 
-/// SQL statement for updateFileSystemForJob
-const std::string castor::db::ora::OraStagerSvc::s_updateFileSystemForJobStatementString =
-  "BEGIN updateFileSystemForJob(:1, :2, :3); END;";
-
 /// SQL statement for archiveSubReq
 const std::string castor::db::ora::OraStagerSvc::s_archiveSubReqStatementString =
   "BEGIN archiveSubReq(:1); END;";
@@ -181,7 +177,6 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_selectCastorFileStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_recreateCastorFileStatement(0),
-  m_updateFileSystemForJobStatement(0),
   m_archiveSubReqStatement(0),
   m_stageReleaseStatement(0),
   m_stageRmStatement(0),
@@ -230,7 +225,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
     if (m_recreateCastorFileStatement) deleteStatement(m_recreateCastorFileStatement);
-    if (m_updateFileSystemForJobStatement) deleteStatement(m_updateFileSystemForJobStatement);
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
     if (m_stageReleaseStatement) deleteStatement(m_stageReleaseStatement);
     if (m_stageRmStatement) deleteStatement(m_stageRmStatement);
@@ -250,7 +244,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_selectCastorFileStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_recreateCastorFileStatement = 0;
-  m_updateFileSystemForJobStatement = 0;
   m_archiveSubReqStatement = 0;
   m_stageReleaseStatement = 0;
   m_stageRmStatement = 0;
