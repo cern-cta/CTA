@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# $Id: makeshlib.sh,v 1.6 2007/11/20 17:30:10 sponcec3 Exp $
+# $Id: makeshlib.sh,v 1.7 2007/12/12 13:34:46 sponcec3 Exp $
 
 if (( $# < 3 )); then
 	echo This script is internally executed by make to build or install the shared libraries.
@@ -41,11 +41,11 @@ echo  building $target.$MAJOR_CASTOR_VERSION
 # this nasty trick allows getting all the args from the 3rd one on
 shift
 shift
-cd tmp ; \
+cd tmp$target ; \
 $cmd -Wl,-soname,$target.$MAJOR_CASTOR_VERSION -o ../$target.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION *.o $@ ; \
 cd ..
 
-rm -rf tmp
+rm -rf tmp$target
 rm -f $target.$MAJOR_CASTOR_VERSION
 ln -s $target.$MAJOR_CASTOR_VERSION.$MINOR_CASTOR_VERSION $target.$MAJOR_CASTOR_VERSION
 rm -f $target

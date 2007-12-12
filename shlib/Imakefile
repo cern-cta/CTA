@@ -160,10 +160,10 @@ exportshr:
 
 libshift.sl libshift.so: $(LIBRARIES0) DepSharedLibraryTargetName($(COMMONCPPDIR),castorClient)
 	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
+	@-rm -rf tmplibshift.so
+	@mkdir tmplibshift.so
 	@for i in $(LIBRARIES0) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	do (cd tmplibshift.so; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libshift.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS0)
 
 libcastorClient.sl libcastorClient.so: $(LIBRARIES0) $(SLIBRARIES0)
@@ -171,18 +171,18 @@ libcastorClient.sl libcastorClient.so: $(LIBRARIES0) $(SLIBRARIES0)
 
 libcastorCommonOra.so: $(LIBRARIES1) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
+	@-rm -rf tmplibcastorCommonOra.so
+	@mkdir tmplibcastorCommonOra.so
 	@for i in $(LIBRARIES1) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	do (cd tmplibcastorCommonOra.so; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorCommonOra.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS1)
 
 libcastorCnvs.so: $(LIBRARIES3)
 	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
+	@-rm -rf tmplibcastorCnvs.so
+	@mkdir tmplibcastorCnvs.so
 	for i in $(LIBRARIES3) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	do (cd tmplibcastorCnvs.so; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorCnvs.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS3)
 
 libcastorCommonMysql.so: $(LIBRARIES4) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
@@ -195,34 +195,34 @@ libcastorCommonMysql.so: $(LIBRARIES4) SharedLibraryTargetName(shift) SharedLibr
 
 libcastorCommonPgsql.so: $(LIBRARIES5) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
+	@-rm -rf tmplibcastorCommonPgsql.so
+	@mkdir tmplibcastorCommonPgsql.so
 	@for i in $(LIBRARIES5) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	do (cd tmplibcastorCommonPgsql.so; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorCommonPgsql.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS5)
 
 libcastorVdqmOra.so: $(LIBRARIES6) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCommonOra)
 	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
+	@-rm -rf tmplibcastorVdqmOra.so
+	@mkdir tmplibcastorVdqmOra.so
 	@for i in $(LIBRARIES6) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	do (cd tmplibcastorVdqmOra.so; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorVdqmOra.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS6)
 
 libcastorMonitor.so: $(LIBRARIES2) SharedLibraryTargetName(shift)
 	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
+	@-rm -rf tmplibcastorMonitor.so
+	@mkdir tmplibcastorMonitor.so
 	@for i in $(LIBRARIES2) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	do (cd tmplibcastorMonitor.so; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorMonitor.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS2)
 
 libcastorInfoPolicy.so: $(LIBRARIES7) SharedLibraryTargetName(shift) SharedLibraryTargetName(castorCnvs)
 	@echo " making $@ in `pwd`"
-	@-rm -rf tmp
-	@mkdir tmp
+	@-rm -rf tmplibcastorInfoPolicy.so
+	@mkdir tmplibcastorInfoPolicy.so
 	@for i in $(LIBRARIES7) ;\
-	do (cd tmp; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
+	do (cd tmplibcastorInfoPolicy.so; $(AR) x ../$$i; rm -f $(SYMTABNAM)) done
 	./makeshlib.sh '$(CXX)' libcastorInfoPolicy.so $(LDFLAGS) $(SHLIBLDFLAGS) $(SHLIBREQLIBS7)
 
 shift.dll:	$(LIBRARIES0)
