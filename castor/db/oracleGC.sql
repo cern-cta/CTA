@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.578 $ $Date: 2007/12/11 16:23:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.579 $ $Date: 2007/12/12 10:33:21 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1709,23 +1709,24 @@ BEGIN
 END;
 
 /* PL/SQL method implementing getDiskCopiesForJob */
-/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY, RECALL or WAITFS
    -1 for user failure, -2 for subrequest put in WAITSUBREQ */
 CREATE OR REPLACE PROCEDURE getDiskCopiesForJob
         (srId IN INTEGER, result OUT INTEGER,
          sources OUT castor.DiskCopy_Cur) AS
   nbDCs INTEGER;
   nbDSs INTEGER;
+  upd INTEGER;
   dcIds "numList";
   svcClassId NUMBER;
   cfId NUMBER;
   srcDcId NUMBER;
 BEGIN
   -- retrieve the castorFile and the svcClass for this subrequest
-  SELECT SubRequest.castorFile, Request.svcClass
-    INTO cfId, svcClassId
-    FROM (SELECT id, svcClass from StageGetRequest UNION ALL
-          SELECT id, svcClass from StageUpdateRequest) Request,
+  SELECT SubRequest.castorFile, Request.svcClass, Request.upd
+    INTO cfId, svcClassId, upd
+    FROM (SELECT id, svcClass, 0 upd from StageGetRequest UNION ALL
+          SELECT id, svcClass, 1 upd from StageUpdateRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
      AND Subrequest.id = srId;
@@ -1759,7 +1760,18 @@ BEGIN
      AND FileSystem.status = 0 -- PRODUCTION
      AND FileSystem.diskserver = DiskServer.id
      AND DiskServer.status = 0 -- PRODUCTION
-     AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
+     AND DiskCopy.status IN (0, 6, 10);  -- STAGED, STAGEOUT, CANBEMIGR
+  IF nbDCs = 0 AND upd = 1 THEN
+    -- we may be the first update inside a prepareToPut, and this is allowed
+    SELECT COUNT(DiskCopy.id) INTO nbDCs
+      FROM DiskCopy
+     WHERE DiskCopy.castorfile = cfId
+       AND DiskCopy.status IN (5, 11);  -- WAITFS, WAITFS_SCHEDULING
+    IF nbDCs = 1 THEN
+      result := 5;  -- DISKCOPY_WAITFS
+      RETURN;
+    END IF;    
+  END IF;
   IF nbDCs > 0 THEN
     -- Yes, we have some
     -- List available diskcopies for job scheduling

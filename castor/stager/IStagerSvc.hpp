@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.85 $ $Release$ $Date: 2007/12/10 14:20:21 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.86 $ $Release$ $Date: 2007/12/12 10:33:21 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -112,14 +112,19 @@ namespace castor {
        * -1: no scheduling because of user error.
        * DISKCOPY_STAGED (0): schedule + list of avail sources,
          a DiskCopy was found and the SubRequest can be scheduled.
+       * DISKCOPY_WAITDISK2DISKCOPY (1): like above, plus the
+       * stager is allowed to replicate according to policies.
        * DISKCOPY_WAITTAPERECALL (2): no scheduling, no DiskCopy 
-         found anywhere, we need a tape recall.
+         found anywhere, a tape recall is needed.
+       * DISKCOPY_WAITFS (5): the only available DiskCopy is in
+       * WAITFS, i.e. this is an Update inside PrepareToPut:
+       * recreateCastorFile is to be called in such a case.
        * @param subreq the SubRequest to consider
        * @param sources this is a list of DiskCopies that
        * can be used by the subrequest.
        * Note that the DiskCopies returned in sources must be
        * deallocated by the caller.
-       * @return -2,-1,0,2
+       * @return -2,-1,0,1,2,5
        * @exception Exception in case of system error
        */
       virtual int getDiskCopiesForJob

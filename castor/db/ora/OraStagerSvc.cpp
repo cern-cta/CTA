@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.223 $ $Release$ $Date: 2007/12/10 14:20:22 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.224 $ $Release$ $Date: 2007/12/12 10:33:22 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -449,7 +449,8 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
     }
     int status = m_getDiskCopiesForJobStatement->getInt(2);
 
-    if (castor::stager::DISKCOPY_STAGED == status) {  
+    if (castor::stager::DISKCOPY_STAGED == status ||
+        castor::stager::DISKCOPY_WAITDISK2DISKCOPY == status) {  
       // diskcopies are available, list them
       try {
         oracle::occi::ResultSet *rs = 
@@ -480,7 +481,9 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
     return status; /* -2 = SubRequest put in WAITSUBREQ
                     * -1 = no schedule, user error
                     *  0 = DISKCOPY_STAGED, disk copies available
-                    *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */ 
+                    *  1 = DISKCOPY_WAITDISK2DISKCOPY, disk copies available and replication allowed
+                    *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed
+                    *  5 = DISKCOPY_WAITFS, update inside prepareToPut, recreateCastorFile is needed */
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
