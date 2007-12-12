@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.224 $ $Release$ $Date: 2007/12/12 10:33:22 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.225 $ $Release$ $Date: 2007/12/12 15:21:55 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -478,12 +478,13 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
         }
       }
     }
-    return status; /* -2 = SubRequest put in WAITSUBREQ
-                    * -1 = no schedule, user error
-                    *  0 = DISKCOPY_STAGED, disk copies available
-                    *  1 = DISKCOPY_WAITDISK2DISKCOPY, disk copies available and replication allowed
-                    *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed
-                    *  5 = DISKCOPY_WAITFS, update inside prepareToPut, recreateCastorFile is needed */
+    return status;
+     /* -2 = SubRequest put in WAITSUBREQ
+      * -1 = no schedule, user error
+      *  0 = DISKCOPY_STAGED, disk copies available
+      *  1 = DISKCOPY_WAITDISK2DISKCOPY, disk copies available and replication allowed
+      *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed
+      *  5 = DISKCOPY_WAITFS, update inside prepareToPut, recreateCastorFile is needed */
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -521,10 +522,10 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
     }
     // return result
     return m_processPrepareRequestStatement->getInt(2);
-       /* -2 = SubRequest put in WAITSUBREQ
-        * -1 = user error
-        *  0 = DISKCOPY_STAGED, disk copies available
-        *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */ 
+     /* -2 = SubRequest put in WAITSUBREQ
+      * -1 = user error
+      *  0 = DISKCOPY_STAGED, disk copies available
+      *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */ 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -835,14 +836,16 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
     // get the result
     u_signed64 id =
       (u_signed64)m_recreateCastorFileStatement->getDouble(3);
-    // case of No CastorFile, return 0
+    // case of no recreation due to user error, return 0
     if (0 == id) return 0;
-    // Otherwise, build a DiskCopyForRecall
+    // Otherwise, build a DiskCopyForRecall.
+    // The case of status == WAITFS_SCHEDULING means that
+    // the subRequest has been put in wait: the stager will handle this case
     castor::stager::DiskCopyForRecall *result =
       new castor::stager::DiskCopyForRecall();
     result->setId(id);
     result->setStatus((castor::stager::DiskCopyStatusCodes)
-                      m_recreateCastorFileStatement->getInt(4));
+      m_recreateCastorFileStatement->getInt(4));
     result->setMountPoint(m_recreateCastorFileStatement->getString(5));
     result->setDiskServer(m_recreateCastorFileStatement->getString(6));
     return result;
@@ -854,42 +857,6 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
       << std::endl << e.what();
     throw ex;
   }  
-}
-
-// -----------------------------------------------------------------------
-// updateFileSystemForJob
-// -----------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::updateFileSystemForJob
-(std::string fileSystem,
- std::string diskServer,
- u_signed64 fileSize)
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_updateFileSystemForJobStatement) {
-      m_updateFileSystemForJobStatement =
-        createStatement(s_updateFileSystemForJobStatementString);
-      m_updateFileSystemForJobStatement->setAutoCommit(true);
-    }
-    // execute the statement and see whether we found something
-    m_updateFileSystemForJobStatement->setString(1, fileSystem);
-    m_updateFileSystemForJobStatement->setString(2, diskServer);
-    m_updateFileSystemForJobStatement->setDouble(3, fileSize);
-    unsigned int nb = m_updateFileSystemForJobStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "updateFileSystemForJob did not do anything.";
-      throw ex;
-    }
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in updateFileSystemForJob."
-      << std::endl << e.what();
-    throw ex;
-  }
 }
 
 // -----------------------------------------------------------------------

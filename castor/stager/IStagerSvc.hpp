@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.86 $ $Release$ $Date: 2007/12/12 10:33:21 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.87 $ $Release$ $Date: 2007/12/12 15:21:55 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -229,7 +229,9 @@ namespace castor {
        * status and no DiskCopy of the file is in either
        * WAITFS, WAITFS_SCHEDULING, WAITTAPERECALL or
        * WAITDISK2DISKCOPY status. When recreation is not
-       * possible, a null pointer is returned.
+       * possible, a null pointer is returned, with the exception
+       * of WAITFS_SCHEDULING, where a DiskCopy is still returned
+       * for logging purposes.
        * Else, all DiskCopies for the given file are marked
        * INVALID (that is those not in DISKCOPY_FAILED and
        * DISKCOPY_DELETED status) and all TapeCopies are
@@ -240,30 +242,13 @@ namespace castor {
        * deletion of the returned DiskCopy (if any)
        * @param castorFile the file to recreate
        * @param subreq the SubRequest recreating the file
-       * @return the new DiskCopy in DISKCOPY_WAITFS status
-       * or null if recreation is not possible
+       * @return the new DiskCopy in DISKCOPY_WAITFS|DISKCOPY_WAITFS_SCHEDULING
+       * status, or null if recreation is not possible.
        * @exception Exception throws an Exception in case of error
        */
       virtual castor::stager::DiskCopyForRecall* recreateCastorFile
       (castor::stager::CastorFile *castorFile,
        castor::stager::SubRequest *subreq)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Updates a filesystem state (e.g : weight,
-       * fsdeviation) to take into account the opening of
-       * a new job.
-       * @param fileSystem the file system mount point
-       * @param diskServer the name of the diskserver
-       * where the filesystem resides
-       * @param fileSize the (supposed) size of the file
-       * to be written by the job
-       * @exception Exception throws an Exception in case of error
-       */
-      virtual void updateFileSystemForJob
-      (std::string fileSystem,
-       std::string diskServer,
-       u_signed64 fileSize)
         throw (castor::exception::Exception) = 0;
 
       /**
