@@ -903,6 +903,27 @@ char tmpbuf[21], tmpbuf2[21];
    return fd ;
 }
 
+// useful function to answer the client
+int rfio_call64_answer_client_internal
+(char* rqstbuf, int code, int status, int s) {
+  char* p;
+  p = rqstbuf;
+  marshall_WORD(p,RQST_WRITE64) ;
+  marshall_LONG(p,status) ; 
+  marshall_LONG(p,code) ;
+  marshall_LONG(p,0) ;
+  log(LOG_DEBUG, "srwrite64: status %d, rcode %d\n", status, code) ;
+  if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != WORDSIZE+3*LONGSIZE ) {
+#if defined(_WIN32) 
+    log(LOG_ERR, "srwrite64: netwrite(): %s\n", geterr());
+#else           
+    log(LOG_ERR, "srwrite64: netwrite(): %s\n", strerror(errno));
+#endif
+    return -1;      
+  }
+  return 0;
+}
+
 int srwrite64(s, infop, fd)
 #if defined(_WIN32)
 SOCKET s;
@@ -920,7 +941,6 @@ struct rfiostat * infop ;
    int       size;                        /* Requeste write size       */
    char      *p;                          /* Pointer to buffer         */
    int       reqlen;                      /* residual request len      */
-   int       replen=WORDSIZE+3*LONGSIZE;  /* Reply buffer length       */
    char      tmpbuf[21];
 
 #if defined(_WIN32)
@@ -933,7 +953,8 @@ struct rfiostat * infop ;
      status = rfio_handle_firstwrite(handler_context);
      if (status != 0) {
        log(LOG_ERR, "srwrite64: rfio_handle_firstwrite(): %s\n", strerror(serrno)) ;
-       return -1 ;
+       rfio_call64_answer_client_internal(rqstbuf, serrno, status, s);
+       return -1;
      }
    }
    
@@ -970,22 +991,7 @@ struct rfiostat * infop ;
          (void) free(iobuffer) ;
       }
       if ((iobuffer = malloc(size)) == NULL)    {
-         status= -1 ; 
-         rcode= errno ;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_WRITE64) ;                     
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ; 
-         log(LOG_ERR, "srwrite64: malloc(): %s\n", strerror(errno)) ;
-         if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
-#if defined(_WIN32)
-            log(LOG_ERR, "srwrite64: netwrite(): %s\n", geterr());
-#else           
-            log(LOG_ERR, "srwrite64: netwrite(): %s\n", strerror(errno)) ;
-#endif
-            return -1 ;
-         }
+         rfio_call64_answer_client_internal(rqstbuf, errno, -1, s);
          return -1 ;
       }
       iobufsiz = size ;
@@ -1021,21 +1027,7 @@ struct rfiostat * infop ;
          u64tostr(offset,tmpbuf,0), how) ; 
       infop->seekop++;
       if ( (offsetout = lseek64(fd,offset,how)) == -1 ) { 
-         rcode= errno ;
-         status = -1;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_WRITE64) ;                     
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ; 
-         if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
-#if defined(_WIN32)
-            log(LOG_ERR, "srwrite64: netwrite(): %s\n", geterr());
-#else           
-            log(LOG_ERR, "srwrite64: netwrite(): %s\n", strerror(errno));
-#endif           
-            return -1 ;
-         }
+         rfio_call64_answer_client_internal(rqstbuf, errno, -1, s);
          return -1 ;
       }
    }
@@ -1056,19 +1048,8 @@ struct rfiostat * infop ;
       sprintf(alarmbuf,"srwrite64(): %s",filename) ;
       rfio_alrm(rcode,alarmbuf) ;
    }
-   p = rqstbuf;
-   marshall_WORD(p,RQST_WRITE64) ;                     
-   marshall_LONG(p,status) ;
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,0) ;
-   log(LOG_DEBUG, "srwrite64: status %d, rcode %d\n", status, rcode) ;
-   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
-#if defined(_WIN32)
-      log(LOG_ERR, "srwrite64: write(): %s\n", geterr());
-#else      
-      log(LOG_ERR, "srwrite64: write(): %s\n", strerror(errno)) ;
-#endif      
-      return -1 ; 
+   if (rfio_call64_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
+     return -1;
    }
    return status ; 
 }
@@ -3526,6 +3507,7 @@ struct rfiostat   *infop;
       status = rfio_handle_firstwrite(handler_context);
       if (status != 0)  {
         log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
+        writerror64_v3(ctrl_sock, EBUSY, &myinfo);
         return -1 ;
       }
 

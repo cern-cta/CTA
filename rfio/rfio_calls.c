@@ -1901,6 +1901,27 @@ int   bet ; /* Version indicator: 0(old) or 1(new) */
    return fd ;
 }
 
+// useful function to answer the client
+int rfio_calls_answer_client_internal
+(char* rqstbuf, int code, int status, int s) {
+  char* p;
+  p = rqstbuf;
+  marshall_WORD(p,RQST_WRITE) ;
+  marshall_LONG(p,status) ; 
+  marshall_LONG(p,code) ;
+  marshall_LONG(p,0) ;
+  log(LOG_DEBUG, "srwrite: status %d, rcode %d\n", status, code) ;
+  if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != WORDSIZE+3*LONGSIZE ) {
+#if defined(_WIN32) 
+    log(LOG_ERR, "srwrite: netwrite(): %s\n", geterr());
+#else            
+    log(LOG_ERR, "srwrite: netwrite(): %s\n", strerror(errno));
+#endif
+    return -1;
+  } 
+  return 0;
+} 
+
 int srwrite(s, infop, fd)
 #if defined(_WIN32)
 SOCKET s;
@@ -1927,6 +1948,7 @@ struct rfiostat * infop ;
      status = rfio_handle_firstwrite(handler_context);
      if (status != 0) {
        log(LOG_ERR, "srwrite: rfio_handle_firstwrite(): %s\n", strerror(serrno));
+       rfio_calls_answer_client_internal(rqstbuf, serrno, status, s);
        return -1 ;
      }
    }
@@ -1951,22 +1973,7 @@ struct rfiostat * infop ;
          (void) free(iobuffer) ;
       }
       if ((iobuffer = malloc(size)) == NULL)    {
-         status= -1 ; 
-         rcode= errno ;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_WRITE) ;
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ; 
-         log(LOG_ERR, "rwrite: malloc(): %s\n", strerror(errno)) ;
-         if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
-#if defined(_WIN32)
-            log(LOG_ERR, "rwrite: netwrite_timeout(): %s\n", geterr());
-#else    
-            log(LOG_ERR, "rwrite: netwrite_timeout(): %s\n", strerror(errno)) ;
-#endif
-            return -1 ;
-         }
+         rfio_calls_answer_client_internal(rqstbuf, errno, -1, s);
          return -1 ;
       }
       iobufsiz = size ;
@@ -2001,20 +2008,7 @@ struct rfiostat * infop ;
       log(LOG_DEBUG,"rwrite(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how) ; 
       infop->seekop++;
       if ( (status= lseek(fd,offset,how)) == -1 ) { 
-         rcode= errno ;
-         p= rqstbuf ; 
-         marshall_WORD(p,RQST_WRITE) ;
-         marshall_LONG(p,status) ; 
-         marshall_LONG(p,rcode) ; 
-         marshall_LONG(p,0) ; 
-         if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
-#if defined(_WIN32)
-            log(LOG_ERR, "rwrite: netwrite_timeout(): %s\n", geterr());
-#else    
-            log(LOG_ERR, "rwrite: netwrite_timeout(): %s\n", strerror(errno));
-#endif    
-            return -1 ;
-         }
+         rfio_calls_answer_client_internal(rqstbuf, errno, status, s);
          return -1 ;
       }
    }
@@ -2034,19 +2028,8 @@ struct rfiostat * infop ;
       sprintf(alarmbuf,"srwrite(): %s",filename) ;
       rfio_alrm(rcode,alarmbuf) ;
    }
-   p = rqstbuf;
-   marshall_WORD(p,RQST_WRITE) ;
-   marshall_LONG(p,status) ;
-   marshall_LONG(p,rcode) ;
-   marshall_LONG(p,0) ;
-   log(LOG_DEBUG, "rwrite: status %d, rcode %d\n", status, rcode) ;
-   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
-#if defined(_WIN32)
-      log(LOG_ERR, "rwrite: netwrite_timeout(): %s\n", geterr());
-#else      
-      log(LOG_ERR, "rwrite: netwrite_timeout(): %s\n", strerror(errno)) ;
-#endif      
-      return -1 ; 
+   if (rfio_calls_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
+     return -1;
    }
    return status ; 
 }
@@ -5076,6 +5059,17 @@ struct rfiostat *infop;
       status = rfio_handle_firstwrite(handler_context);
       if (status != 0)  {
         log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
+        p = rqstbuf;
+        marshall_WORD(p,REP_ERROR) ;
+        marshall_LONG(p,status) ;
+        marshall_LONG(p,serrno) ;
+        if( netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE )  {
+#if defined(_WIN32)
+           log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", ws_strerr(errno));
+#else
+           log(LOG_ERR, "rwrite_v3: netwrite_timeout(): %s\n", strerror(errno));
+#endif
+        }
         return -1 ;
       }
 #if !defined(HPSS)
@@ -5238,7 +5232,7 @@ struct rfiostat *infop;
          return -1 ;
       }
 #endif   /* WIN32 */
-      
+
       if( FD_ISSET(ctrl_sock, &fdvar) )  {
          int n, magic, code;
   
