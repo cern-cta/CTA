@@ -87,7 +87,7 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
   // header buffer is shorter, 
   //because the magic number should already be read out
   int headerBufSize = VDQM_HDRBUFSIZ - LONGSIZE;
-  char hdrbuf[headerBufSize];
+  char hdrbuf[VDQM_HDRBUFSIZ - LONGSIZE];
   
   char buf[VDQM_MSGBUFSIZ];
   char *p,*domain;
