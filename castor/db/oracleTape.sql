@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.581 $ $Date: 2007/12/12 15:41:40 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.582 $ $Date: 2007/12/13 15:29:49 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -662,8 +662,7 @@ END;
 
 
 /* PL/SQL method to get the next request to do according to the given service */
-/*
-PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
+CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
 BEGIN
  DELETE FROM NewRequests 
   WHERE type IN (
@@ -672,8 +671,9 @@ BEGIN
        AND Type2Obj.svcHandler = service
     )
   AND ROWNUM < 2 RETURNING id INTO rId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  rId := 0;   -- nothing to do
 END;
-*/
 
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(srId IN INTEGER, dci IN INTEGER) AS
