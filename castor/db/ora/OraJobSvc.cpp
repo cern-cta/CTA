@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2007/12/06 10:52:13 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/12/13 15:28:37 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -129,7 +129,7 @@ const std::string castor::db::ora::OraJobSvc::s_putFailedStatementString =
 
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraJobSvc::s_requestToDoStatementString =
-  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (60, 64, 65, 67, 78, 79, 80, 93, 144) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+  "BEGIN requestToDo(:1, :2); END;";
 
 /// SQL statement for firstByteWritten
 const std::string castor::db::ora::OraJobSvc::s_firstByteWrittenStatementString =
@@ -704,13 +704,14 @@ castor::db::ora::OraJobSvc::requestToDo()
       m_requestToDoStatement =
         createStatement(s_requestToDoStatementString);
       m_requestToDoStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
+        (2, oracle::occi::OCCIDOUBLE);
       m_requestToDoStatement->setAutoCommit(true);
     }
     // execute the statement
+    m_requestToDoStatement->setString(1, "JobSvc");
     m_requestToDoStatement->executeUpdate();
     // see whether we've found something
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(2);
     if (0 == id) {
       // Found no Request to handle
       return 0;

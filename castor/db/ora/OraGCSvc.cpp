@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/11/20 17:24:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/12/13 15:28:36 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -118,7 +118,7 @@ const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementStrin
 
 /// SQL statement for requestToDo
 const std::string castor::db::ora::OraGCSvc::s_requestToDoStatementString =
-  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (73, 74, 83, 142) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+  "BEGIN requestToDo(:1, :2); END;";
 
 /// SQL statement for nsFilesDeleted
 const std::string castor::db::ora::OraGCSvc::s_nsFilesDeletedStatementString =
@@ -530,13 +530,14 @@ castor::db::ora::OraGCSvc::requestToDo()
       m_requestToDoStatement =
         createStatement(s_requestToDoStatementString);
       m_requestToDoStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
+        (2, oracle::occi::OCCIDOUBLE);
       m_requestToDoStatement->setAutoCommit(true);
     }
     // execute the statement
+    m_requestToDoStatement->setString(1, "GCSvc");
     m_requestToDoStatement->executeUpdate();
     // see whether we've found something
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(2);
     if (0 == id) {
       // Found no Request to handle
       return 0;

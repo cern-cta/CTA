@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2007/11/16 14:11:04 $ $Author: waldron $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2007/12/13 15:28:37 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -75,7 +75,7 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UserTagLastRecallsS
   "BEGIN userTagLastRecallsStageQuery(:1, :2, :3, :4); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
-  "BEGIN :1 := 0; DELETE FROM newRequests WHERE type IN (33, 34, 41, 103, 131) AND ROWNUM < 2 RETURNING id INTO :1; END;";
+  "BEGIN requestToDo(:1, :2); END;";
 
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolsStatementString =
   "BEGIN describeDiskPools(:1, :2); END;";
@@ -380,13 +380,14 @@ castor::db::ora::OraQuerySvc::requestToDo()
       m_requestToDoStatement =
         createStatement(s_requestToDoStatementString);
       m_requestToDoStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
+        (2, oracle::occi::OCCIDOUBLE);
       m_requestToDoStatement->setAutoCommit(true);
     }
     // execute the statement
+    m_requestToDoStatement->setString(1, "QueryReqSvc");
     m_requestToDoStatement->executeUpdate();
     // see whether we've found something
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(1);
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(2);
     if (0 == id) {
       // Found no Request to handle
       return 0;
