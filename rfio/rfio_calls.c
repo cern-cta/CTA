@@ -1924,7 +1924,11 @@ struct rfiostat * infop ;
 
    if (first_write) {
      first_write = 0;
-     rfio_handle_firstwrite(handler_context);
+     status = rfio_handle_firstwrite(handler_context);
+     if (status != 0) {
+       log(LOG_ERR, "srwrite: rfio_handle_firstwrite(): %s\n", strerror(serrno));
+       return -1 ;
+     }
    }
 
    /*
@@ -5069,7 +5073,11 @@ struct rfiostat *infop;
 #endif
       
       first_write = 0;
-      rfio_handle_firstwrite(handler_context);
+      status = rfio_handle_firstwrite(handler_context);
+      if (status != 0)  {
+        log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
+        return -1 ;
+      }
 #if !defined(HPSS)
       if ((p = getconfent("RFIO","DAEMONV3_WRSIZE",0)) != NULL)  {
          if (atoi(p) > 0)

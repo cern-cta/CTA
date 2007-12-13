@@ -930,7 +930,11 @@ struct rfiostat * infop ;
 
    if (first_write) {
      first_write = 0;
-     rfio_handle_firstwrite(handler_context);
+     status = rfio_handle_firstwrite(handler_context);
+     if (status != 0) {
+       log(LOG_ERR, "srwrite64: rfio_handle_firstwrite(): %s\n", strerror(serrno)) ;
+       return -1 ;
+     }
    }
    
    p= rqstbuf + 2*WORDSIZE ; 
@@ -3519,15 +3523,12 @@ struct rfiostat   *infop;
 #endif
 
       first_write = 0;
-      rfio_handle_firstwrite(handler_context);
-#if !defined(HPSS)
-      if ((p = getconfent("RFIO","DAEMONV3_WRSIZE",0)) != NULL)  {
-         if (atoi(p) > 0)
-            DISKBUFSIZE_WRITE = atoi(p);
+      status = rfio_handle_firstwrite(handler_context);
+      if (status != 0)  {
+        log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
+        return -1 ;
       }
-#endif /* HPSS */
 
-#if !defined(HPSS)
       daemonv3_wrmt = DAEMONV3_WRMT;
       if( (p = getconfent("RFIO", "DAEMONV3_WRMT", 0)) != NULL )
          if (*p == '0')
@@ -3583,29 +3584,7 @@ struct rfiostat   *infop;
                el, array[el].p);      
          }
       }
-#endif   /* !HPSS */
       
-#if defined(HPSS)
-      /*
-       * For HPSS we reuse the buffer defined in the global structure
-       * for this thread rather than reserving a new local buffer.
-       */
-      if ( iobufsiz>0 && iobufsiz<DISKBUFSIZE_WRITE) {
-         free(iobuffer);
-         iobufsiz = 0;
-         iobuffer = NULL;
-      }
-      if ( iobufsiz <= 0 ) {
-         log(LOG_DEBUG, "rwrite64_v3: allocating malloc buffer: %d bytes\n", DISKBUFSIZE_WRITE);
-         if ((iobuffer = (char *)malloc(DISKBUFSIZE_WRITE)) == NULL) {
-            log(LOG_ERR, "rwrite64_v3: malloc: ERROR occured (errno=%d)\n", errno);
-            return -1 ;
-         }
-         log(LOG_DEBUG, "rwrite64_v3: malloc buffer allocated at 0X%X\n", iobuffer);
-         iobufsiz = DISKBUFSIZE_WRITE;
-      }
-#else    /* HPSS */
-
       /* Don't allocate this buffer if we are multithreaded */
       if (!daemonv3_wrmt) {
          log(LOG_DEBUG, "rwrite64_v3: allocating malloc buffer: %d bytes\n", DISKBUFSIZE_WRITE);
@@ -3616,17 +3595,12 @@ struct rfiostat   *infop;
          log(LOG_DEBUG, "rwrite64_v3: malloc buffer allocated at 0X%X\n", iobuffer);
          iobufsiz = DISKBUFSIZE_WRITE;
       }
-#endif   /* else HPSS */
       
       byte_in_diskbuffer = 0;
-#if !defined(HPSS)
       if (daemonv3_wrmt)
          iobuffer_p = NULL; /* For safety */
       else
          iobuffer_p = iobuffer;
-#else
-      iobuffer_p = iobuffer;
-#endif   /* else !HPSS */
 
 #if !defined(_WIN32)
       optlen = sizeof(maxseg);
