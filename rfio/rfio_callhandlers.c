@@ -66,25 +66,36 @@ int *need_user_check) {
 int rfio_handle_firstwrite(void *ctx) {
   struct internal_context *internal_context = (struct internal_context *) ctx;
   if (internal_context != NULL) {
-    internal_context->one_byte_at_least = 1;
-    struct Cstager_IJobSvc_t **jobSvc;
-    struct C_Services_t **dbService;
-    C_BaseObject_initLog("rfio", SVC_STDMSG);
-    if (stager_getRemJobAndDbSvc(&jobSvc,&dbService) == 0) {
-      char tmpbuf[21];
-      int rc;
-      log(LOG_INFO,
-          "rfio_handle_firstwrite : Calling Cstager_IJobSvc_firstByteWritten on subrequest_id=%s\n",
-          u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-      rc = Cstager_IJobSvc_firstByteWritten(*jobSvc,internal_context->subrequest_id);
-      if (rc != 0) {
-        log(LOG_ERR,
-            "rfio_handle_firstwrite : Cstager_IJobSvc_firstByteWritten error for subrequest_id=%s (%s)\n",
-            u64tostr(internal_context->subrequest_id, tmpbuf, 0),
-            Cstager_IJobSvc_errorMsg(*jobSvc));
-        return rc;
+    // In case of an update, we should call firstByteWritten
+    if (!((internal_context->flags == O_RDONLY) ||
+          (internal_context->flags == (O_TRUNC|O_RDONLY)) ||
+          (internal_context->flags == (O_CREAT|O_RDONLY)) ||      // Get case
+          (internal_context->flags == (O_LARGEFILE|O_RDONLY)) ||
+          (internal_context->flags == (O_LARGEFILE|O_TRUNC|O_RDONLY)) ||
+          (internal_context->flags == (O_LARGEFILE|O_CREAT|O_RDONLY)))
+      &&
+        !(((internal_context->flags & O_TRUNC) == O_TRUNC) &&     // put Case
+          ((internal_context->flags & O_CREAT) == O_CREAT))) {
+      struct Cstager_IJobSvc_t **jobSvc;
+      struct C_Services_t **dbService;
+      C_BaseObject_initLog("rfio", SVC_STDMSG);
+      if (stager_getRemJobAndDbSvc(&jobSvc,&dbService) == 0) {
+        char tmpbuf[21];
+        int rc;
+        log(LOG_INFO,
+            "rfio_handle_firstwrite : Calling Cstager_IJobSvc_firstByteWritten on subrequest_id=%s\n",
+            u64tostr(internal_context->subrequest_id, tmpbuf, 0));
+        rc = Cstager_IJobSvc_firstByteWritten(*jobSvc,internal_context->subrequest_id);
+        if (rc != 0) {
+          log(LOG_ERR,
+              "rfio_handle_firstwrite : Cstager_IJobSvc_firstByteWritten error for subrequest_id=%s (%s)\n",
+              u64tostr(internal_context->subrequest_id, tmpbuf, 0),
+              Cstager_IJobSvc_errorMsg(*jobSvc));
+          return rc;
+        }
       }
     }
+    internal_context->one_byte_at_least = 1;
   }
   return 0;
 }
