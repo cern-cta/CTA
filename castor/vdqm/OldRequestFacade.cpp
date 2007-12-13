@@ -72,8 +72,6 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
 	std::string req_strings[] = VDQM_REQ_STRINGS;
 	std::string req_string;
 	
-	void *hold_lock = NULL;
-	
 	i=0;
 	//Check, if it's a right request type
   while (req_values[i] != -1 && req_values[i] != m_reqtype) i++;
@@ -134,8 +132,6 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     			handleRequest = false;
     		else {				
 					// Handle VDQM_DEL_VOLREQ
-			    castor::dlf::Param params[] =
-			      {castor::dlf::Param("volreq ID", ptr_volumeRequest->VolReqID)};
 	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 21);
 					
 					

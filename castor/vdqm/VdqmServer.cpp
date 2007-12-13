@@ -190,10 +190,7 @@ castor::vdqm::VdqmServer::~VdqmServer() throw() {
   delete tapeRequestDedicationHandler;
   
   // hack to release thread specific allocated memory
-  castor::Services* svcs = services();
-//  if (0 != svcs) {
-//    delete svcs;
-//  }
+  services();
 }
 
 
