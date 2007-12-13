@@ -1,3 +1,9 @@
+castor (2.1.6-2) unstable; urgency=low
+
+  * Third internal release of CASTOR 2.1.6
+
+-- Sebastien Ponce <sebastien.ponce@cern.ch>  Thu, 13 December 2007 23:40:00 +0100
+
 castor (2.1.6-1) unstable; urgency=low
 
   * Second internal release of CASTOR 2.1.6
