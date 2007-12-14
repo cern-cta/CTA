@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: JobRequestSvcThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
+* @(#)$RCSfile: JobRequestSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/14 18:39:42 $ $Author: itglp $
 *
 * Service thread for handling Job oriented requests
 *
@@ -39,7 +39,7 @@ namespace castor {
 
     namespace dbService {
       
-      class JobRequestSvcThread : public castor::stager::dbService::BaseRequestSvcThread{
+      class JobRequestSvcThread : public BaseRequestSvcThread {
         
       public: 
         JobRequestSvcThread() throw (castor::exception::Exception);
