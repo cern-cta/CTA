@@ -21,6 +21,7 @@ namespace castor{
         switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)) {
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
+            result = true;
             break;
           
           case -1:
