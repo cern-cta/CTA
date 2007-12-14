@@ -1113,10 +1113,12 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
 
     rtcp_log(LOG_DEBUG,"rtcpd_Release() called with path=%s\n",
         (path == NULL ? "(nil)" : path));
-    tl_rtcpd.tl_log( &tl_rtcpd, 36, 3,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_Release",
-                     "Message", TL_MSG_PARAM_STR, "called",
-                     "Path"   , TL_MSG_PARAM_STR, (path == NULL ? "(nil)" : path) ); 
+    tl_rtcpd.tl_log( &tl_rtcpd, 36, 5,
+                     "func"   , TL_MSG_PARAM_STR  , "rtcpd_Release",
+                     "Message", TL_MSG_PARAM_STR  , "called",
+                     "Path"   , TL_MSG_PARAM_STR  , (path == NULL ? "(nil)" : path),
+                     "VID"    , TL_MSG_PARAM_STR  , tape->tapereq.vid,
+                     "TPVID"  , TL_MSG_PARAM_TPVID, tape->tapereq.vid ); 
 
     rtcpd_ResetCtapeError();
     if ( tapereq != NULL ) tapereq->TStartUnmount = (int)time(NULL);
@@ -1160,9 +1162,11 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
     } else {
         rc = 0;
         rtcp_log(LOG_DEBUG,"rtcpd_Release() Ctape_rls() successful\n");
-        tl_rtcpd.tl_log( &tl_rtcpd, 37, 2,
-                         "func"   , TL_MSG_PARAM_STR, "rtcpd_Release",
-                         "Message", TL_MSG_PARAM_STR, "successful" );
+        tl_rtcpd.tl_log( &tl_rtcpd, 37, 4,
+                         "func"   , TL_MSG_PARAM_STR  , "rtcpd_Release",
+                         "Message", TL_MSG_PARAM_STR  , "successful",
+                         "VID"    , TL_MSG_PARAM_STR  , tape->tapereq.vid,
+                         "TPVID"  , TL_MSG_PARAM_TPVID, tape->tapereq.vid );
     }
 
     serrno = save_serrno;
