@@ -101,7 +101,8 @@ namespace castor{
             // check for request in wait due to concurrent puts
             if(dc->status() == DISKCOPY_WAITFS_SCHEDULING) {
               stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
-              stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);   // the db representation is already in WAITSUBREQ
+              // we don't need to do anything, the request will be restarted
+              // however we have to commit the transaction
               stgRequestHelper->dbService->commit();
             }
             else {
