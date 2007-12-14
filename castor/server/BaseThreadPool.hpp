@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2007/07/25 15:30:39 $ $Author: itglp $
+ * @(#)$RCSfile: BaseThreadPool.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/12/14 18:39:53 $ $Author: itglp $
  *
  * Abstract CASTOR thread pool
  *
@@ -139,7 +139,7 @@ namespace castor {
     std::string m_poolName;
 
     /**
-     * The working thread
+     * The worker thread
      */
     IThread* m_thread;
     
