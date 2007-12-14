@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/11/20 17:24:23 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -119,16 +119,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Selects the next request the GC service should deal with.
-         * Selects a Request in START status and move its status
-         * PROCESSED to avoid double processing.
-         * @return the Request to process
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::Request* requestToDo()
-          throw (castor::exception::Exception);
-
-        /**
          * Handles a set of files that were deleted from
          * a nameServer but may still be in the stager.
          * Proper cleaning will be done both of the diskServers
@@ -172,12 +162,6 @@ namespace castor {
 
         /// SQL statement object for function filesDeletionFailed
         oracle::occi::Statement *m_filesDeletionFailedStatement;
-
-        /// SQL statement for function requestToDo
-        static const std::string s_requestToDoStatementString;
-
-        /// SQL statement object for function requestToDo
-        oracle::occi::Statement *m_requestToDoStatement;
 
         /// SQL statement for function nsFilesDeleted
         static const std::string s_nsFilesDeletedStatementString;

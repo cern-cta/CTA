@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2007/12/13 15:28:37 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -127,10 +127,6 @@ const std::string castor::db::ora::OraJobSvc::s_getUpdateFailedStatementString =
 const std::string castor::db::ora::OraJobSvc::s_putFailedStatementString =
   "BEGIN putFailedProc(:1); END;";
 
-/// SQL statement for requestToDo
-const std::string castor::db::ora::OraJobSvc::s_requestToDoStatementString =
-  "BEGIN requestToDo(:1, :2); END;";
-
 /// SQL statement for firstByteWritten
 const std::string castor::db::ora::OraJobSvc::s_firstByteWrittenStatementString =
   "BEGIN firstByteWrittenProc(:1); END;";
@@ -149,7 +145,6 @@ castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   m_getUpdateDoneStatement(0),
   m_getUpdateFailedStatement(0),
   m_putFailedStatement(0),
-  m_requestToDoStatement(0),
   m_firstByteWrittenStatement(0) {
 }
 
@@ -191,7 +186,6 @@ void castor::db::ora::OraJobSvc::reset() throw() {
     if (m_getUpdateDoneStatement) deleteStatement(m_getUpdateDoneStatement);
     if (m_getUpdateFailedStatement) deleteStatement(m_getUpdateFailedStatement);
     if (m_putFailedStatement) deleteStatement(m_putFailedStatement);
-    if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
     if (m_firstByteWrittenStatement) deleteStatement(m_firstByteWrittenStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -204,7 +198,6 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   m_getUpdateDoneStatement = 0;
   m_getUpdateFailedStatement = 0;
   m_putFailedStatement = 0;
-  m_requestToDoStatement = 0;
   m_firstByteWrittenStatement = 0;
 }
 
@@ -688,63 +681,6 @@ void castor::db::ora::OraJobSvc::putFailed
     ex.getMessage()
       << "Unable to clean Put subRequest :"
       << std::endl << e.getMessage();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// requestToDo
-//------------------------------------------------------------------------------
-castor::stager::Request*
-castor::db::ora::OraJobSvc::requestToDo()
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_requestToDoStatement) {
-      m_requestToDoStatement =
-        createStatement(s_requestToDoStatementString);
-      m_requestToDoStatement->registerOutParam
-        (2, oracle::occi::OCCIDOUBLE);
-      m_requestToDoStatement->setAutoCommit(true);
-    }
-    // execute the statement
-    m_requestToDoStatement->setString(1, "JobSvc");
-    m_requestToDoStatement->executeUpdate();
-    // see whether we've found something
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(2);
-    if (0 == id) {
-      // Found no Request to handle
-      return 0;
-    }
-    // Create result
-    IObject* obj = cnvSvc()->getObjFromId(id);
-    if (0 == obj) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : could not retrieve object for id "
-        << id;
-      throw ex;
-    }
-    castor::stager::Request* result =
-      dynamic_cast<castor::stager::Request*>(obj);
-    if (0 == result) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : object retrieved for id "
-        << id << " was a "
-        << castor::ObjectsIdStrings[obj->type()]
-        << " while a Request was expected.";
-      delete obj;
-      throw ex;
-    }
-    // return
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in requestToDo."
-      << std::endl << e.what();
     throw ex;
   }
 }

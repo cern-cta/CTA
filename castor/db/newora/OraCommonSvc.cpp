@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2007/11/14 16:57:31 $ $Author: gtaur $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -68,6 +68,10 @@ static castor::SvcFactory<castor::db::ora::OraCommonSvc>* s_factoryOraCommonSvc 
 //------------------------------------------------------------------------------
 // Static constants initialization
 //------------------------------------------------------------------------------
+/// SQL statement for requestToDo
+const std::string castor::db::ora::OraCommonSvc::s_requestToDoStatementString =
+  "BEGIN requestToDo(:1, :2); END;";
+
 /// SQL statement for selectTape
 const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
   "SELECT id FROM Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
@@ -84,23 +88,22 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
   "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
 
-/// SQL for selectTapePool 
-
+/// SQL statement for selectTapePool
 const std::string castor::db::ora::OraCommonSvc::s_selectTapePoolIdStatementString =
   "SELECT id FROM TapePool WHERE name = :1 AND ROWNUM<2";
 
 
-  
 // -----------------------------------------------------------------------
 // OraCommonSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   BaseSvc(name), DbBaseObj(0),
+  m_requestToDoStatement(0),
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
   m_selectFileSystemStatement(0),
-  m_selectTapePoolIdStatement(0){
+  m_selectTapePoolIdStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -131,6 +134,7 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   //Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
+    if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
     if (m_selectTapeStatement) deleteStatement(m_selectTapeStatement);
     if (m_selectSvcClassStatement) deleteStatement(m_selectSvcClassStatement);
     if (m_selectFileClassStatement) deleteStatement(m_selectFileClassStatement);
@@ -138,11 +142,69 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
     if (m_selectTapePoolIdStatement) deleteStatement(m_selectTapePoolIdStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
+  m_requestToDoStatement = 0;
   m_selectTapeStatement = 0;
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
   m_selectTapePoolIdStatement = 0;
+}
+
+// -----------------------------------------------------------------------
+// requestToDo
+// -----------------------------------------------------------------------
+castor::stager::Request*
+castor::db::ora::OraGCSvc::requestToDo(std::string service)
+  throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_requestToDoStatement) {
+      m_requestToDoStatement =
+        createStatement(s_requestToDoStatementString);
+      m_requestToDoStatement->registerOutParam
+        (2, oracle::occi::OCCIDOUBLE);
+      m_requestToDoStatement->setAutoCommit(true);
+    }
+    // execute the statement
+    m_requestToDoStatement->setString(1, service);
+    m_requestToDoStatement->executeUpdate();
+    // see whether we've found something
+    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(2);
+    if (0 == id) {
+      // Found no Request to handle
+      return 0;
+    }
+    // Create result
+    IObject* obj = cnvSvc()->getObjFromId(id);
+    if (0 == obj) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : could not retrieve object for id "
+        << id;
+      throw ex;
+    }
+    castor::stager::Request* result =
+      dynamic_cast<castor::stager::Request*>(obj);
+    if (0 == result) {
+      castor::exception::Internal ex;
+      ex.getMessage()
+        << "requestToDo : object retrieved for id "
+        << id << " was a "
+        << castor::ObjectsIdStrings[obj->type()]
+        << " while a Request was expected.";
+      delete obj;
+      throw ex;
+    }
+    // return
+    return result;
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in requestToDo."
+      << std::endl << e.what();
+    throw ex;
+  }
 }
 
 // -----------------------------------------------------------------------
@@ -442,7 +504,6 @@ castor::db::ora::OraCommonSvc::rollback() {
   }
 }
 
-
 // -------------------------------------------------------------------------
 //  handleException
 // -------------------------------------------------------------------------
@@ -450,8 +511,6 @@ void
 castor::db::ora::OraCommonSvc::handleException(oracle::occi::SQLException& e) {
   dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->handleException(e);
 }
-
-
 
 // -----------------------------------------------------------------------
 // createStatement - for Oracle specific statements

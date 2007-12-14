@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/06 09:29:11 $ $Author: gtaur $
+ * @(#)$RCSfile: OraCommonSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle/CDBC
  *
@@ -76,6 +76,17 @@ namespace castor {
         void reset() throw ();
 
       public:
+
+        /**
+         * Selects the next request a stager service should deal with.
+         * Selects a Request in START status and deletes it from the
+         * NewRequests helper table to avoid double processing.
+         * @param service the stager service that will process the Request
+         * @return the Request to process
+         * @exception Exception in case of error
+         */
+        virtual castor::stager::Request* requestToDo(std::string service)
+          throw (castor::exception::Exception);
 
         /**
          * Retrieves a tape from the database based on its vid,
@@ -164,6 +175,12 @@ namespace castor {
           throw (castor::exception::Exception);
         
       private:
+
+        /// SQL statement for function requestToDo
+        static const std::string s_requestToDoStatementString;
+
+        /// SQL statement object for function requestToDo
+        oracle::occi::Statement *m_requestToDoStatement;
 
         /// SQL statement for function selectTape
         static const std::string s_selectTapeStatementString;

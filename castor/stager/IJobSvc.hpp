@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  * This class provides stager methods related to job handling
  *
@@ -170,7 +170,7 @@ namespace castor {
        const std::string fileSystem,
        castor::stager::DiskCopyInfo* &diskCopy,
        castor::stager::DiskCopyInfo* &sourceDiskCopy)
-	throw(castor::exception::Exception) = 0;
+        throw(castor::exception::Exception) = 0;
       
       /**
        * Updates database after successful completion of a
@@ -248,16 +248,6 @@ namespace castor {
       virtual void putFailed(u_signed64 subReqId)
         throw (castor::exception::Exception) = 0;
 
-      /**
-       * Selects the next request the Job service should deal with.
-       * Selects a Request in START status and move its status
-       * PROCESSED to avoid double processing.
-       * @return the Request to process
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::Request* requestToDo()
-        throw (castor::exception::Exception) = 0;
-    
       /**
        * Informs the stager that an update subrequest has written
        * bytes into a given diskCopy. The diskCopy's status will

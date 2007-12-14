@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2007/12/13 15:28:37 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -74,9 +74,6 @@ const std::string castor::db::ora::OraQuerySvc::s_diskCopies4ReqIdLastRecallsSta
 const std::string castor::db::ora::OraQuerySvc::s_diskCopies4UserTagLastRecallsStatementString =
   "BEGIN userTagLastRecallsStageQuery(:1, :2, :3, :4); END;";
 
-const std::string castor::db::ora::OraQuerySvc::s_requestToDoStatementString =
-  "BEGIN requestToDo(:1, :2); END;";
-
 const std::string castor::db::ora::OraQuerySvc::s_describeDiskPoolsStatementString =
   "BEGIN describeDiskPools(:1, :2); END;";
 
@@ -94,7 +91,6 @@ castor::db::ora::OraQuerySvc::OraQuerySvc(const std::string name) :
   m_diskCopies4UserTagStatement(0),
   m_diskCopies4ReqIdLastRecallsStatement(0),
   m_diskCopies4UserTagLastRecallsStatement(0),
-  m_requestToDoStatement(0),
   m_describeDiskPoolsStatement(0),
   m_describeDiskPoolStatement(0) {}
 
@@ -133,7 +129,6 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
     if (m_diskCopies4UserTagStatement) deleteStatement(m_diskCopies4UserTagStatement);
     if (m_diskCopies4ReqIdLastRecallsStatement) deleteStatement(m_diskCopies4ReqIdLastRecallsStatement);
     if (m_diskCopies4UserTagLastRecallsStatement) deleteStatement(m_diskCopies4UserTagLastRecallsStatement);
-    if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
     if (m_describeDiskPoolsStatement) deleteStatement(m_describeDiskPoolsStatement);
     if (m_describeDiskPoolStatement) deleteStatement(m_describeDiskPoolStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -144,7 +139,6 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
   m_diskCopies4UserTagStatement = 0;
   m_diskCopies4ReqIdLastRecallsStatement = 0;
   m_diskCopies4UserTagLastRecallsStatement = 0;
-  m_requestToDoStatement = 0;
   m_describeDiskPoolsStatement = 0;
   m_describeDiskPoolStatement = 0;
 }
@@ -364,63 +358,6 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
     castor::exception::Internal ex;
     ex.getMessage() << "Error caught in diskCopies4Request."
                     << std::endl << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// requestToDo
-//------------------------------------------------------------------------------
-castor::stager::Request*
-castor::db::ora::OraQuerySvc::requestToDo()
-  throw (castor::exception::Exception) {
-  try {
-    // Check whether the statements are ok
-    if (0 == m_requestToDoStatement) {
-      m_requestToDoStatement =
-        createStatement(s_requestToDoStatementString);
-      m_requestToDoStatement->registerOutParam
-        (2, oracle::occi::OCCIDOUBLE);
-      m_requestToDoStatement->setAutoCommit(true);
-    }
-    // execute the statement
-    m_requestToDoStatement->setString(1, "QueryReqSvc");
-    m_requestToDoStatement->executeUpdate();
-    // see whether we've found something
-    u_signed64 id = (u_signed64)m_requestToDoStatement->getDouble(2);
-    if (0 == id) {
-      // Found no Request to handle
-      return 0;
-    }
-    // Create result
-    IObject* obj = cnvSvc()->getObjFromId(id);
-    if (0 == obj) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : could not retrieve object for id "
-        << id;
-      throw ex;
-    }
-    castor::stager::Request* result =
-      dynamic_cast<castor::stager::Request*>(obj);
-    if (0 == result) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "requestToDo : object retrieved for id "
-        << id << " was a "
-        << castor::ObjectsIdStrings[obj->type()]
-        << " while a Request was expected.";
-      delete obj;
-      throw ex;
-    }
-    // return
-    return result;
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in requestToDo."
-      << std::endl << e.what();
     throw ex;
   }
 }

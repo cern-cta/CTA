@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2006/04/13 15:44:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraQuerySvc.hpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -92,13 +92,13 @@ namespace castor {
          * Gets all DiskCopies for a given file name.
          * The caller is responsible for the deallocation of
          * the returned objects.
-	 * Note that this function only makes use of the
+         * Note that this function only makes use of the
          * lastKnownFileName stored in the stager database
-	 * for each file, that is in no way accurate. In case
-	 * a renaming took place between the last request for
-	 * this file and the call to this function, no
-	 * DiskCopy will be returned for the new name while
-	 * the old name will still be known
+         * for each file, that is in no way accurate. In case
+         * a renaming took place between the last request for
+         * this file and the call to this function, no
+         * DiskCopy will be returned for the new name while
+         * the old name will still be known
          * @param fileName the fileName to be used for the query
          * @param svcClassId the Id of the service class we're using
          * @return the list of DiskCopies available
@@ -147,17 +147,6 @@ namespace castor {
                             u_signed64 svcClassId)
           throw (castor::exception::Exception);
 
-
-        /**
-         * Selects the next request the query service should deal with.
-         * Selects a Request in START status and move its status to
-         * PROCESSED to avoid double processing.
-         * @return the Request to process
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::Request* requestToDo()
-          throw (castor::exception::Exception);
-
         /**
          * Lists diskpools and give details on their machine/filesystems
          * @param svcClass the Service class to consider, or empty string if none
@@ -165,7 +154,7 @@ namespace castor {
          * is responsible for freeing the allocated memory
          * @exception Exception in case of error
          */
-	virtual std::vector<castor::query::DiskPoolQueryResponse*>*
+        virtual std::vector<castor::query::DiskPoolQueryResponse*>*
         describeDiskPools (std::string svcClass)
           throw (castor::exception::Exception);
         
@@ -217,12 +206,6 @@ namespace castor {
 
         /// SQL statement object for function diskCopies4UserTagLastRecalls
         oracle::occi::Statement *m_diskCopies4UserTagLastRecallsStatement;
-
-        /// SQL statement for function requestToDo
-        static const std::string s_requestToDoStatementString;
-
-        /// SQL statement object for function requestToDo
-        oracle::occi::Statement *m_requestToDoStatement;
 
         /// SQL statement for function describeDiskPools
         static const std::string s_describeDiskPoolsStatementString;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2005/09/05 12:54:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ICommonSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  * This class provides common methods useful to the stager to
  * deal with database queries
@@ -60,6 +60,17 @@ namespace castor {
     class ICommonSvc : public virtual castor::IService {
 
     public:
+
+      /**
+       * Selects the next request a stager service should deal with.
+       * Selects a Request in START status and deletes it from the
+       * NewRequests helper table to avoid double processing.
+       * @param service the stager service that will process the Request
+       * @return the Request to process
+       * @exception Exception in case of error
+       */
+      virtual castor::stager::Request* requestToDo(std::string service)
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Retrieves a SvcClass from the database based on its name.

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/11/23 11:27:45 $ $Author: sponcec3 $
+ * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  *
  *
@@ -313,7 +313,7 @@ namespace castor {
        * @return the Request to process
        * @exception Exception in case of error
        */
-      virtual castor::stager::Request* requestToDo()
+      virtual castor::stager::Request* requestToDo(std::string service)
         throw (castor::exception::Exception);
     
       /**

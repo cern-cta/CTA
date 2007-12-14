@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/12/06 14:49:52 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  *
  *
@@ -124,7 +124,7 @@ castor::stager::RemoteGCSvc::selectTape
 // requestToDo
 // -----------------------------------------------------------------------
 castor::stager::Request*
-castor::stager::RemoteGCSvc::requestToDo()
+castor::stager::RemoteGCSvc::requestToDo(std::string service)
   throw (castor::exception::Exception) {
   castor::exception::NotSupported ex;
   ex.getMessage()

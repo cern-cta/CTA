@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/20 17:20:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  * This class provides stager methods related to Garbage Collection
  *
@@ -93,16 +93,6 @@ namespace castor {
        */
       virtual void filesDeletionFailed
       (std::vector<u_signed64*>& diskCopyIds)
-        throw (castor::exception::Exception) = 0;
-
-      /**
-       * Selects the next request the GC service should deal with.
-       * Selects a Request in START status and move its status
-       * PROCESSED to avoid double processing.
-       * @return the Request to process
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::Request* requestToDo()
         throw (castor::exception::Exception) = 0;
 
       /**

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
  *
  *
  *
@@ -71,22 +71,6 @@ extern "C" {
       return -1;
     }
     delete jobSvc;
-    return 0;
-  }
-
-  //-------------------------------------------------------------------------
-  // Cstager_IJobSvc_requestToDo
-  //-------------------------------------------------------------------------
-  int Cstager_IJobSvc_requestToDo(struct Cstager_IJobSvc_t* jobSvc,
-                                  castor::stager::Request** request) {
-    if (!checkIJobSvc(jobSvc)) return -1;
-    try {
-      *request = jobSvc->jobSvc->requestToDo();
-    } catch (castor::exception::Exception e) {
-      serrno = e.code();
-      jobSvc->errorMsg = e.getMessage().str();
-      return -1;
-    }
     return 0;
   }
 
