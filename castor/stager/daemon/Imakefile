@@ -101,7 +101,7 @@ install.man: $(MANDIR) $(MANPAGES)
 exportman: $(EXPORTMANPAGES)
 
 clean:
-	@echo rmmaster in CurDir
+	@echo Stager in CurDir
 	-@RemoveFiles(FilesToClean)
 
 clobber:	clean
