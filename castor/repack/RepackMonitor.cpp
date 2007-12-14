@@ -299,7 +299,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
 	    castor::dlf::Param("STATUS", sreq->status())};
 	    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
 	} else {
-	   sreq->setStatus(SUBREQUEST_FAILED);
+	   sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
 	 castor::dlf::Param params[] =
 	   {castor::dlf::Param("VID", sreq->vid()),
 	    castor::dlf::Param("STATUS", sreq->status())};

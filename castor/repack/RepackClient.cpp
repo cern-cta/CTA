@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2007/11/23 13:25:48 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -511,7 +511,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
           printTapeDetail((*tape));
           tape++;
         }
-	std::cout << "======================================================================================================================" << std::endl;
+	std::cout << "=====================================================================================================================" << std::endl;
         break;
       }
     case GET_STATUS:
@@ -527,7 +527,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
           printTapeDetail((*tape));
           tape++;
         }
-	std::cout << "========================================================================================================================" << std::endl; 
+	std::cout << "=======================================================================================================================" << std::endl; 
     case GET_ERRORS:
       resp = ack->repackrequest()->repackresponse().begin();
       while ( resp != ack->repackrequest()->repackresponse().end()){

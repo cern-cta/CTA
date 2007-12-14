@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2007/12/06 18:27:01 $ $Author: itglp $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
  *
  *
  *
@@ -26,7 +26,8 @@
  
 #include "RepackFileStager.hpp"
 #include "castor/rh/FileQryResponse.hpp"
- 
+#include "castor/stager/StageRmRequest.hpp"
+
 namespace castor {
 	namespace repack {
 		
@@ -66,7 +67,10 @@ void RepackFileStager::run(void *param) throw() {
     Cuuid_t cuuid = nullCuuid;
 
     try {
-      sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_TOBESTAGED);
+      sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_TOBEREMOVED);
+      /// no one ready for staging, so look for restartable ones
+      if ( sreq == NULL )
+	sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_TOBESTAGED);
       /// no one ready for staging, so look for restartable ones
       if ( sreq == NULL )
         sreq = m_dbhelper->checkSubRequestStatus(SUBREQUEST_RESTART);
@@ -87,16 +91,15 @@ void RepackFileStager::run(void *param) throw() {
       castor::dlf::dlf_writep( cuuid, DLF_LVL_SYSTEM, 22, 3, params);
       try {
           /// main handling
-          if ( sreq->status() == SUBREQUEST_TOBESTAGED ){ 
+          if ( sreq->status() == SUBREQUEST_TOBEREMOVED )
+	    abortRepack(sreq);
+	
+          if ( sreq->status() == SUBREQUEST_TOBESTAGED ) 
             startRepack(sreq);
-          }
-          else
+          
+          if ( sreq->status() == SUBREQUEST_RESTART ) 
             restartRepack(sreq);
 
-	  //m_dbhelper->unlock();
-
-        /// the Request has now status SUBREQUEST_STAGING
-        /// try to stage the files, and forget the errors
       }
       catch (castor::exception::Exception ex){
        castor::dlf::Param params[] =
@@ -108,7 +111,6 @@ void RepackFileStager::run(void *param) throw() {
       freeRepackObj(sreq->repackrequest()); /// always delete from the top
       sreq = NULL;
     }
-    //m_dbhelper->unlock();
 }
 
 
@@ -121,9 +123,9 @@ void RepackFileStager::stop() throw() {
 
 
 //------------------------------------------------------------------------------
-// stage_files
+// stageFiles
 //------------------------------------------------------------------------------
-void RepackFileStager::stage_files(RepackSubRequest* sreq) 
+void RepackFileStager::stageFiles(RepackSubRequest* sreq) 
                                             throw (castor::exception::Exception)
 {
 
@@ -146,16 +148,12 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   // as parameter. For now we have to get the paths first.
   std::vector<std::string>* filelist = m_filehelper->getFilePathnames(sreq);
   std::vector<std::string>::iterator filename = filelist->begin();
-  // ---------------------------------------------------------------
-  //std::vector<u_signed64>* filelist = m_filehelper->getFileList(sreq,cuuid);
-  //std::vector<u_signed64>::iterator fileid;
-
 
   /// here we build the Request for the stager 
   while (filename != filelist->end()) {
     castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
     subreq->setFileName((*filename));
-    subreq->setProtocol(ptr_server->getProtocol());	// we have to specify a protocol, otherwise our call is not scheduled!
+    subreq->setProtocol(ptr_server->getProtocol()); // we have to specify a protocol, otherwise our call is not scheduled!
     subreq->setRequest(&req);
     req.addSubRequests(subreq);
     filename++;
@@ -172,8 +170,7 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
   /// the service class information is checked and 
   getStageOpts(&opts, sreq);  /// would through an exception, if repackrequest is not available
 
-
-	/// Msg: Staging files
+  /// Msg: Staging files
   castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 26, 0, NULL);
 
 
@@ -213,6 +210,37 @@ void RepackFileStager::stage_files(RepackSubRequest* sreq)
     delete (*stager_subreq);
 
 }
+
+//------------------------------------------------------------------------------
+// abortRepack
+//------------------------------------------------------------------------------
+
+void  RepackFileStager::abortRepack(RepackSubRequest* sreq) throw (castor::exception::Exception){
+  _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
+  try {
+    sendRepackRemoveRequest(sreq);
+  }catch (castor::exception::Exception ex){
+    castor::dlf::Param params[] =
+    {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+     castor::dlf::Param("Precise Message", ex.getMessage().str()),
+     castor::dlf::Param("VID", sreq->vid())
+    };
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 3, params);
+    sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
+    m_dbhelper->updateSubRequest(sreq,false, cuuid);
+    return;
+  }
+  sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
+  m_dbhelper->updateSubRequest(sreq,false, cuuid);
+  m_dbhelper->updateSubRequest(sreq,false, cuuid);
+  stage_trace(2,"File are sent to stager, repack request updated.");
+  castor::dlf::dlf_writep(stringtoCuuid(sreq->cuuid()), DLF_LVL_DEBUG, 25, 0, NULL);
+
+  
+  
+}
+
+
 
 
 //------------------------------------------------------------------------------
@@ -300,7 +328,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
       sreq->setFilesMigrating(0);
 
       /** Here we send the stager request */
-      stage_files(faked);
+      stageFiles(faked);
 
       sreq->setCuuid(faked->cuuid());
       sreq->setStatus(faked->status());
@@ -327,7 +355,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
 void RepackFileStager::startRepack(RepackSubRequest* sreq){
   _Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
   try {
-    stage_files(sreq);
+    stageFiles(sreq);
   }catch (castor::exception::Exception ex){
     castor::dlf::Param params[] =
     {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
@@ -427,6 +455,78 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   return failed;
 }
 
+//-----------------------------------------------------------------------------------------------------------------
+// sendRepackRemoveRequest
+//-----------------------------------------------------------------------------------------------------------------
+
+
+void  RepackFileStager::sendRepackRemoveRequest( RepackSubRequest*sreq)throw(castor::exception::Exception)
+{
+  
+  struct stage_options opts;
+  castor::stager::StageRmRequest req;
+
+ 
+  if ( sreq == NULL ){
+    castor::exception::Internal ex;
+    ex.getMessage() << "passed SubRequest ist NULL" << std::endl; 
+    throw ex;
+  }
+  
+  /* get the files using the Filelisthelper */
+  FileListHelper flp(ptr_server->getNsName());
+  Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
+  std::vector<std::string>* filelist = flp.getFilePathnames(sreq);
+  std::vector<std::string>::iterator filename = filelist->begin();
+
+  if ( !filelist->size() ) {
+    /* this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP
+     * => ERROR, this must not happen!
+     * but we leave it to the Monitor Service to solve that problem
+     */
+    castor::exception::Internal ex;
+    ex.getMessage() << "No files found during cleanup phase for " << sreq->vid() 
+              << std::endl;
+    throw ex;
+  }
+
+  /* add the SubRequests to the Request */
+  while (filename != filelist->end()) {
+    castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
+    subreq->setFileName((*filename));
+    subreq->setRequest(&req);
+     req.addSubRequests(subreq);
+     filename++;
+  }
+  
+  /* we need the stager name and service class for correct removal
+   * the port and version has to be set be the BaseClient. Nevertheless the 
+   * values have to be 0.
+   */
+  opts.stage_port = 0; 
+  opts.stage_version = 0;
+
+  castor::client::BaseClient client(stage_getClientTimeout());
+  /* set the service class information from repackrequest */
+  getStageOpts(&opts, sreq);
+  client.setOption(&opts, &req);
+
+  std::vector<castor::rh::Response *>respvec;
+  castor::client::VectorResponseHandler rh(&respvec);
+
+  //  client.setAuthorizationId(sreq->repackrequest()->userId(), sreq->repackrequest()->groupId());
+
+  uid_t stageUid = 14029; // stage 
+  gid_t stGid = 1474; //  st
+
+  client.setAuthorizationId(stageUid,stGid);
+  client.sendRequest(&req,&rh); 
+
+  /** we ignore the results from the stager */
+  for (unsigned int i=0; i<respvec.size(); i++) {
+    delete respvec[i];
+  }
+}
 
 		
 	} //END NAMESPACE REPACK

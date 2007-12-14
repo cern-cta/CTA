@@ -63,7 +63,8 @@ namespace castor{
     SUBREQUEST_ARCHIVED        = 6,
     SUBREQUEST_RESTART         = 7,
     SUBREQUEST_TOBESTAGED      = 8,
-    SUBREQUEST_FAILED          = 9
+    SUBREQUEST_FAILED          = 9,
+    SUBREQUEST_TOBEREMOVED     = 10
 
     };
 

@@ -68,7 +68,7 @@ namespace castor {
        * @param sreq The RepackSubRequest to stage in files
        * @throws castor::exeption::Exception in case of an error
        */
-      void stage_files(RepackSubRequest* sreq) throw (castor::exception::Exception);
+      void stageFiles(RepackSubRequest* sreq) throw (castor::exception::Exception);
 
 
       /** Sends the request to the stager.
@@ -104,6 +104,19 @@ namespace castor {
        * In both cases the Cuuid is updated and the stats set to '0';
        */
       void restartRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
+
+       /**
+       * Abort a RepackSubRequest. 
+       */
+
+      void abortRepack(RepackSubRequest* sreq) throw (castor::exception::Exception);
+
+
+      /** 
+       * Send stager_rm for the file of the request
+       */
+
+      void sendRepackRemoveRequest( RepackSubRequest*sreq)throw(castor::exception::Exception);
 
 
       /**

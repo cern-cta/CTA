@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2007/10/02 11:42:15 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
  *
  *
  *
@@ -255,7 +255,7 @@ void  RepackWorker::getStatus(RepackRequest* rreq) throw (castor::exception::Exc
 
 
 //------------------------------------------------------------------------------
-// Retrieves all subrequests in the repack system
+// Retrieves all the not archived subrequests in the repack system 
 //------------------------------------------------------------------------------
 void RepackWorker::getStatusAll(RepackRequest* rreq) throw (castor::exception::Exception)
 {
@@ -337,7 +337,7 @@ void RepackWorker::archiveAllSubRequests(RepackRequest* rreq) throw (castor::exc
     tape++;
   }
   delete result;
- 
+
 }
 
 
@@ -405,9 +405,9 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
     if ( tmp != NULL ) {
       Cuuid_t cuuid = stringtoCuuid(tmp->cuuid());
       if ( tmp->status() == SUBREQUEST_TOBESTAGED || tmp->status() == SUBREQUEST_READYFORSTAGING )
-        tmp->setStatus(SUBREQUEST_DONE);
-      else
         tmp->setStatus(SUBREQUEST_READYFORCLEANUP);
+      else
+        tmp->setStatus(SUBREQUEST_TOBEREMOVED);
 
       m_databasehelper->updateSubRequest(tmp,false,cuuid);
       freeRepackObj(tmp);
@@ -444,7 +444,7 @@ void RepackWorker::handleRepack(RepackRequest* rreq) throw (castor::exception::E
   {
     RepackSubRequest* subRequest = rreq->repacksubrequest().at(tapecnt);
     // set the status
-    subRequest->setStatus(SUBREQUEST_READYFORSTAGING);
+    subRequest->setStatus(SUBREQUEST_READYFORSTAGING); // started
     // and for each subrequest a own cuuid, for DLF logging
     Cuuid_t cuuid = nullCuuid;
     Cuuid_create(&cuuid);
@@ -552,7 +552,7 @@ int RepackWorker::getPoolInfo(castor::repack::RepackRequest* rreq) throw (castor
 bool RepackWorker::checkTapeForRepack(std::string tapename) throw (castor::exception::Exception)
 {
   /** checks if already in queue */
-  if  ( m_databasehelper->is_stored(tapename)  ){
+  if  ( m_databasehelper->isStored(tapename)  ){
     castor::exception::Internal ex;
     ex.getMessage() << "Tape " << tapename << " already in repack queue." << std::endl;
     throw ex;

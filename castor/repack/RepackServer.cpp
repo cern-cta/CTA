@@ -75,9 +75,7 @@ int main(int argc, char *argv[]) {
     /// The Repack Cleaner
 	  server.addThreadPool(
       new castor::server::SignalThreadPool("Cleaner",
-                                            new castor::repack::RepackCleaner(&server),
-                                            10
-                                          ));
+                                            new castor::repack::RepackCleaner(&server)));
 	  server.getThreadPool('C')->setNbThreads(1);
 
     /// Read the command line parameters
@@ -269,7 +267,7 @@ castor::repack::RepackServer::RepackServer() :
 
   /* --------------------------------------------------------------------- */
 
-  /** Get the polling time for the Monitor and Cleaner service. This value should be not less
+  /** Get the polling time for the Monitor and service. This value should be not less
       than 120 ( to stage a file takes about that time).
     */
   if ( (tmp2 = getenv ("REPACK_POLLTIME")) != 0 ){

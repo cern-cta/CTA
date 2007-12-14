@@ -19,7 +19,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/03/29 08:34:37 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
  *
  * The Filelisthelper offers some little functions for getting the file 
  * information for a tape.
@@ -68,9 +68,8 @@ namespace castor {
        * @param rreq The Request of the Tape
        * @return pointer to vector of u_signed64
        */
-      std::vector<u_signed64>* getFileList(
-                                    castor::repack::RepackSubRequest *sreq)
-                                                    throw ();
+
+      std::vector<u_signed64>* getFileList(castor::repack::RepackSubRequest *subreq) throw();
 
       /**
        * Fills the Request with the segments on the tape
@@ -81,6 +80,14 @@ namespace castor {
       void getFileListSegs(castor::repack::RepackSubRequest *sreq)
                                                       throw (castor::exception::Exception);
       
+      /** 
+       * Returns number of files in left in a tape. 
+       * @param vid string of the tape
+       * @retun number of files
+       */
+
+      u_signed64 countFilesOnTape(std::string vid) throw (castor::exception::Exception);
+
       /**
         * Retrieves the filenames for the fileids given in the passed
         * RepackSubRequest.

@@ -76,6 +76,16 @@ namespace castor {
         * it sends a stage_rm command with the filelist.
         */
       void removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Exception);
+
+
+      /**
+        * Compare the result in repack db and the nameserver and, if needed, 
+        *  changes the repack counter's values
+        */
+      
+	  
+      bool checkTape(castor::repack::RepackSubRequest*);
+
 		
 			/**
 			 * The DatabaseHelper for updatting finished jobs in the Repack Tables
@@ -87,7 +97,7 @@ namespace castor {
        */
       RepackServer* ptr_server;
 	};
-		
+	      
 		
 	}
 }

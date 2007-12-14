@@ -26,7 +26,6 @@
 
 
 #include "RepackCleaner.hpp"
-#include "castor/stager/StageRmRequest.hpp"
 
 namespace castor{
 	namespace repack {
@@ -60,16 +59,24 @@ void RepackCleaner::run(void* param) {
   try {
     tape = m_dbhelper->checkSubRequestStatus(SUBREQUEST_READYFORCLEANUP);
 
-    if ( tape != NULL )	{
-      //m_dbhelper->lock(tape);
-      cuuid = stringtoCuuid(tape->cuuid());
-      if ( cleanupTape(tape) ){
+    if ( tape != NULL )	{  
+      m_dbhelper->remove(tape);
+      if (checkTape(tape)) {
+	//tape done
         castor::dlf::Param params[] =
-        {castor::dlf::Param("VID", tape->vid())};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 35, 1, params);
-      }
-      //m_dbhelper->unlock();
-      cuuid = nullCuuid;
+	  {castor::dlf::Param("VID", tape->vid()),
+	   castor::dlf::Param("STATUS", "SUBREQUEST_DONE" )};
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
+	
+
+      } else {
+	// tape failed
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("VID", tape->vid()),
+	   castor::dlf::Param("STATUS", "SUBREQUEST_FAILED" )};
+	castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 40, 2, params);
+      } 
+      m_dbhelper->updateSubRequest(tape,false,cuuid);
       freeRepackObj(tape->repackrequest()); 
       tape = NULL;
     }
@@ -83,7 +90,33 @@ void RepackCleaner::run(void* param) {
     
   }
 }
-		
+
+
+//-----------------------------------------------------------------------------
+// checkTape
+//-----------------------------------------------------------------------------
+
+
+bool  RepackCleaner::checkTape(RepackSubRequest* tape){
+ 
+//file list helper get files on tape
+ FileListHelper filelisthelper(ptr_server->getNsName());
+ u_signed64 fileOnTape=filelisthelper.countFilesOnTape(tape->vid());
+ tape->setFilesStaged(tape->files()-fileOnTape);
+ tape->setFilesFailed(fileOnTape);
+ tape->setFilesFailedSubmit(0);
+ tape->setFilesStaging(0);
+ tape->setFilesMigrating(0);
+
+ if (fileOnTape ==0){
+   tape->setStatus(SUBREQUEST_DONE);
+   return true;
+ }
+ tape->setStatus(SUBREQUEST_FAILED);
+ return false;   
+ }
+
+	
 	
 //------------------------------------------------------------------------------
 // stop
@@ -91,97 +124,6 @@ void RepackCleaner::run(void* param) {
 void RepackCleaner::stop() throw(){
 	
 }
-
-//------------------------------------------------------------------------------
-// cleanupTape
-//------------------------------------------------------------------------------
-int RepackCleaner::cleanupTape(RepackSubRequest* sreq) throw(castor::exception::Exception)
-{ 
-    Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-
-    /// we remove the files from stager
-    /// and set the status to SUBREQUEST_DONE. This indicates
-    /// that the RepackSubRequest can now be archived
-
-    removeFilesFromStager(sreq);
-    m_dbhelper->remove(sreq);
-    sreq->setStatus(SUBREQUEST_DONE);
-    m_dbhelper->updateSubRequest(sreq,false,cuuid);
-    return true;
-}
-
-//------------------------------------------------------------------------------
-// removeFilesFromStager
-//------------------------------------------------------------------------------
-void RepackCleaner::removeFilesFromStager(RepackSubRequest* sreq) throw(castor::exception::Exception)
-{
-  
-  struct stage_options opts;
-  castor::stager::StageRmRequest req;
-
- 
-  if ( sreq == NULL ){
-    castor::exception::Internal ex;
-    ex.getMessage() << "passed SubRequest ist NULL" << std::endl; 
-    throw ex;
-  }
-  
-  /* get the files using the Filelisthelper */
-  FileListHelper flp(ptr_server->getNsName());
-  Cuuid_t cuuid = stringtoCuuid(sreq->cuuid());
-  std::vector<std::string>* filelist = flp.getFilePathnames(sreq);
-  std::vector<std::string>::iterator filename = filelist->begin();
-
-  if ( !filelist->size() ) {
-    /* this means that there are no files for a repack tape in SUBREQUEST_READYFORCLEANUP
-     * => ERROR, this must not happen!
-     * but we leave it to the Monitor Service to solve that problem
-     */
-    castor::exception::Internal ex;
-    ex.getMessage() << "No files found during cleanup phase for " << sreq->vid() 
-              << std::endl;
-    throw ex;
-  }
-
-  /* add the SubRequests to the Request */
-  while (filename != filelist->end()) {
-    castor::stager::SubRequest *subreq = new castor::stager::SubRequest();
-    subreq->setFileName((*filename));
-    subreq->setRequest(&req);
-     req.addSubRequests(subreq);
-     filename++;
-  }
-  
-  /* we need the stager name and service class for correct removal
-   * the port and version has to be set be the BaseClient. Nevertheless the 
-   * values have to be 0.
-   */
-  opts.stage_port = 0; 
-  opts.stage_version = 0;
-
-  castor::client::BaseClient client(stage_getClientTimeout());
-  /* set the service class information from repackrequest */
-  getStageOpts(&opts, sreq);
-  client.setOption(&opts, &req);
-
-  std::vector<castor::rh::Response *>respvec;
-  castor::client::VectorResponseHandler rh(&respvec);
-
-  //  client.setAuthorizationId(sreq->repackrequest()->userId(), sreq->repackrequest()->groupId());
-
-  uid_t stageUid = 14029; // stage 
-  gid_t stGid = 1474; //  st
-
-  client.setAuthorizationId(stageUid,stGid);
-  client.sendRequest(&req,&rh); 
-
-  /** we ignore the results from the stager */
-  for (unsigned int i=0; i<respvec.size(); i++) {
-    delete respvec[i];
-  }
-}
-
-
 
 		
 	} //END NAMESPACE REPACK

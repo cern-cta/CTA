@@ -45,11 +45,11 @@ const std::string castor::repack::DatabaseHelper::s_selectCheckSubRequestStateme
 
 /// SQL for existing segment check
 const std::string castor::repack::DatabaseHelper::s_selectExistingSegmentsStatementString =
-  "SELECT fileid,compression,segsize,filesec, RepackSegment.id,copyno, RepackSubRequest.status FROM RepackSegment,RepackSubRequest WHERE RepackSegment.fileid = :1 AND RepackSubRequest.id = RepackSegment.repacksubrequest AND RepackSubRequest.status != 6";
+  "SELECT fileid,compression,segsize,filesec, RepackSegment.id,copyno, RepackSubRequest.status FROM RepackSegment,RepackSubRequest WHERE RepackSegment.fileid = :1 AND RepackSubRequest.id = RepackSegment.repacksubrequest AND RepackSubRequest.status not in (5,6,9)";
 
 /// SQL for archiving RepackSubRequests
 const std::string castor::repack::DatabaseHelper::s_archiveStatementString =
-  "UPDATE RepackSubRequest set status = 6 where vid=:1 and status = 5"; // ARCHIVED, FINISHED
+  "UPDATE RepackSubRequest set status = 6 where vid=:1 and status in (5,9)"; // FAILED, FINISHED
 
 /// SQL for getting a specified RepacksubRequest in a certain status
 const std::string castor::repack::DatabaseHelper::s_isStoredStatementString =
@@ -66,10 +66,6 @@ const std::string castor::repack::DatabaseHelper::s_selectAllSubRequestsVidState
 /// SQL for getting RepackSubRequest which are not SUBREQUEST_ARCHIVED
 const std::string castor::repack::DatabaseHelper::s_selectAllSubRequestsStatementString =
   "SELECT id FROM RepackSubRequest where status != 6 order by vid"; // ARCHIVED
-
-/// SQL for locking a table row of a RepackSubRequest
-const std::string castor::repack::DatabaseHelper::s_selectLockStatementString = 
-  "SELECT * from RepackSubRequest where id = :1 FOR UPDATE";
 
 
 /// SQL for getting lattest information of a tapy copy to do a repack undo
@@ -91,7 +87,6 @@ castor::repack::DatabaseHelper::DatabaseHelper() :
     m_selectAllSubRequestsStatusStatement(NULL),
     m_selectAllSubRequestsVidStatement(NULL),
     m_archiveStatement(NULL),
-    m_selectLockStatement(NULL),
     m_selectLastSegmentsSituationStatement(NULL){
     try {
 	ad.setCnvSvcName("DbCnvSvc");
@@ -114,7 +109,6 @@ castor::repack::DatabaseHelper::DatabaseHelper() :
 //------------------------------------------------------------------------------
 castor::repack::DatabaseHelper::~DatabaseHelper() throw(){
   reset();
-  //cnvSvc()->dropConnection(); why dropping the connection?
 };
 
 
@@ -135,7 +129,6 @@ void castor::repack::DatabaseHelper::reset() throw() {
    if ( m_archiveStatement ) delete m_archiveStatement;
    if ( m_selectAllSubRequestsStatusStatement ) delete m_selectAllSubRequestsStatusStatement;
    if ( m_selectAllSubRequestsVidStatement ) delete m_selectAllSubRequestsVidStatement;
-   if ( m_selectLockStatement ) delete m_selectLockStatement;
    if (m_selectLastSegmentsSituationStatement) delete m_selectLastSegmentsSituationStatement;
   } catch (castor::exception::SQLError e) {};
   // Now reset all pointers to 0
@@ -147,7 +140,6 @@ void castor::repack::DatabaseHelper::reset() throw() {
    m_archiveStatement = NULL;
    m_selectAllSubRequestsStatusStatement = NULL;
    m_selectAllSubRequestsVidStatement = NULL;
-   m_selectLockStatement = NULL;
    m_selectLastSegmentsSituationStatement=NULL;
 }
 
@@ -155,7 +147,7 @@ void castor::repack::DatabaseHelper::reset() throw() {
 
 
 //------------------------------------------------------------------------------
-// store_Request 
+// storeRequest 
 //------------------------------------------------------------------------------
 void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest* rreq)
 						throw (castor::exception::Exception)
@@ -178,13 +170,12 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
     }
 
   } catch (castor::exception::SQLError e) {
-    
-    // handleException(e);
+
     castor::exception::Internal ex;
     ex.getMessage() << "Exception caught in DatabaseHelper::storeRequest(...)" 
                     << std::endl << e.getMessage().str();
     throw ex;
-    /* cnvSvc()->rollback();*/
+
   }
   
   return;
@@ -199,9 +190,9 @@ void castor::repack::DatabaseHelper::storeRequest(castor::repack::RepackRequest*
 
 
 //------------------------------------------------------------------------------
-// is_stored
+// isStored
 //------------------------------------------------------------------------------
-bool castor::repack::DatabaseHelper::is_stored(std::string vid) 
+bool castor::repack::DatabaseHelper::isStored(std::string vid) 
 						throw (castor::exception::Exception)
 {
   bool result = false;
@@ -224,26 +215,16 @@ bool castor::repack::DatabaseHelper::is_stored(std::string vid)
     delete rset;
 
   }catch (castor::exception::SQLError e){
-    // delete m_selectCheckStatement;
+
     castor::exception::Internal ex;
     ex.getMessage() << "Exception caught in DatabaseHelper::is_stored(...)" 
                     << std::endl << e.getMessage().str();
     throw ex;
   }	
   
-  //delete m_isStoredStatement;
-  //m_isStoredStatement = NULL;
   
   return result;
 }
-
-
-
-
-
-
-
-
 
 
 //------------------------------------------------------------------------------
@@ -297,16 +278,13 @@ castor::repack::RepackSubRequest*
 		
   /// Exception handling
   }catch (castor::exception::SQLError e){
-    //delete m_selectCheckStatement;
+
    castor::exception::Internal ex;
    ex.getMessage() << "Exception caught in DatabaseHelper::getSubRequestByVid(...)" 
                    << std::endl << e.getMessage().str();
    throw ex;
   }	
 
-  /// delete Statement and return result
-  //delete m_selectCheckStatement;
-  //m_selectCheckStatement = NULL;
   return result;
 }
 
@@ -341,15 +319,7 @@ void castor::repack::DatabaseHelper::updateSubRequest(
                    << std::endl << e.getMessage().str();
    throw ex;
     
-
-    //svcs()->rollback(&ad);
-   /*  castor::dlf::Param params[] =
-    {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-     castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 27, 2, params);
-    return;*/
   }
-  // castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 30, 0, NULL);
 }
 
 
@@ -397,78 +367,6 @@ castor::repack::RepackSubRequest*
 }
 
 
-//------------------------------------------------------------------------------
-// lock
-//------------------------------------------------------------------------------
-
-/* Never used */
-void castor::repack::DatabaseHelper::lock(RepackSubRequest* tape) 
-                                            throw (castor::exception::Exception)
-{
-  if ( tape != NULL ){
-  /// Since the RepacksubRequest is the only object, which is changed in the DB
-  /// we take a statement which locks only this in the DB   
-  try {
-      if ( m_selectLockStatement == NULL ) {
-        m_selectLockStatement = createStatement(s_selectLockStatementString);
-      }
-      /** Lock the entry */
-      m_selectLockStatement->setInt(1, tape->id());
-      castor::db::IDbResultSet *rset = m_selectLockStatement->executeQuery();
-      if ( !rset->next() ){
-        castor::exception::Internal ex;
-        ex.getMessage() << "DatabaseHelper::lock(..):"
-                        << "Cannot lock table entry for tape " << tape->id() 
-                        << std::endl;
-        throw ex;
-      }
-
-      delete rset;
-    }catch (castor::exception::SQLError e){
-      // handleException(e);
-      castor::exception::Internal ex;
-      ex.getMessage()  << "Exception caugth in DatabaseHelper::lock(...) "
-                       << std::endl;
-      throw ex;
-
-    /*  svcs()->rollback(&ad);
-      castor::dlf::Param params[] = 
-        {castor::dlf::Param("Error", e.getMessage().str() )};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);*/
-    }
-  }
-  /** AFTER THIS CALL AN UNLOCK HAS TO BE DONE */
-}
-
-
-
-//------------------------------------------------------------------------------
-// unlock
-//------------------------------------------------------------------------------
-
-/* Never used */
-
-void castor::repack::DatabaseHelper::unlock() throw (castor::exception::Exception)
-{
-   try {
-    svcs()->commit(&ad);
-  }catch (castor::exception::SQLError e){
-    // handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()  << "Exception caught in DatabaseHelper::unlock(...)"
-                        << std::endl;
-    throw ex;
-
-    /* cnvSvc()->rollback();
-    castor::dlf::Param params[] = 
-      {castor::dlf::Param("Error", e.getMessage().str() )};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 1, params);*/
-  }
-
-
-}
-
-
 
 //------------------------------------------------------------------------------
 // private : checkSubRequestStatus
@@ -506,10 +404,6 @@ castor::repack::RepackSubRequest*
     if ( result && result->repackrequest()) freeRepackObj(result->repackrequest());
     if ( rset ) delete rset;
 
-    //if ( m_selectCheckSubRequestStatement) delete m_selectCheckSubRequestStatement;
-    //m_selectCheckSubRequestStatement = NULL;
-    //svcs()->rollback(&ad);
-    // handleException(e);
     castor::exception::Internal ex;
 	  ex.getMessage() 
 	  << "Exception caught in DatabaseHelper::checkSubRequestStatus(...): "
@@ -518,9 +412,6 @@ castor::repack::RepackSubRequest*
 	  throw ex;
   }
             
-  //delete m_selectCheckSubRequestStatement;
-  //m_selectCheckSubRequestStatement = NULL;
-  //stage_trace(3,"OK");
   
   return result;	
 }
@@ -537,8 +428,6 @@ void castor::repack::DatabaseHelper::archive(std::string vid) throw (castor::exc
     m_archiveStatement->execute();
     svcs()->commit(&ad);
   }catch (castor::exception::SQLError e) {
-    // handleException(e);
-    //svcs()->rollback(&ad);
     castor::exception::Internal ex;
     ex.getMessage() 
     << "Exception caught in DatabaseHelper::archive(...): "
@@ -556,7 +445,7 @@ void castor::repack::DatabaseHelper::remove(castor::IObject* obj)
 					throw (castor::exception::Exception)
 {
   /* we don't really delete something from the database, since a history is 
-   * to be kept, so only the RepackSubRequest is set to ARCHIVED
+   * to be kept, so only the RepackSubRequest is set to FINISHED
    */
   try {
     
@@ -568,9 +457,6 @@ void castor::repack::DatabaseHelper::remove(castor::IObject* obj)
       svcs()->commit(&ad);
     }
   }catch (castor::exception::SQLError e){
-    // handleException(e);
-    //svcs()->rollback(&ad);
-    //cnvSvc()->rollback();
     castor::exception::Internal ex;
     ex.getMessage() << "Exception caught in DatabaseHelper::remove(...):"
                     << "Unable to remove Object with Type "
@@ -594,7 +480,7 @@ std::vector<castor::repack::RepackSubRequest*>*
       m_selectAllSubRequestsStatement = 
                          createStatement(s_selectAllSubRequestsStatementString);
     }
-    result = internalgetSubRequests(m_selectAllSubRequestsStatement);
+    result = internalGetSubRequests(m_selectAllSubRequestsStatement);
   }catch (castor::exception::Exception e){
     castor::exception::Internal ex;
     ex.getMessage() << "Exception caught in DatabaseHelper::getAllSubRequests(...)"
@@ -622,7 +508,7 @@ std::vector<castor::repack::RepackSubRequest*>*
     }
     m_selectAllSubRequestsStatusStatement->setInt(1, status);
   
-    result = internalgetSubRequests(m_selectAllSubRequestsStatusStatement);
+    result = internalGetSubRequests(m_selectAllSubRequestsStatusStatement);
   
     /// we want to have to corresponding RepackRequest for each RepackSubRequest
     for (unsigned int i=0; i<result->size(); i++ ){
@@ -656,7 +542,7 @@ std::vector<castor::repack::RepackSubRequest*>*
     }
     m_selectAllSubRequestsVidStatement->setString(1, vid);
 
-    result = internalgetSubRequests(m_selectAllSubRequestsVidStatement);
+    result = internalGetSubRequests(m_selectAllSubRequestsVidStatement);
   
   /// we want to have to corresponding RepackRequest for each RepackSubRequest
     for (unsigned int i=0; i<result->size(); i++ ){
@@ -676,10 +562,10 @@ std::vector<castor::repack::RepackSubRequest*>*
 
 
 //------------------------------------------------------------------------------
-// private : getSubRequests 
+// private : internalGetSubRequests 
 //------------------------------------------------------------------------------
 std::vector<castor::repack::RepackSubRequest*>* 
-                          castor::repack::DatabaseHelper::internalgetSubRequests
+                          castor::repack::DatabaseHelper::internalGetSubRequests
                                            (castor::db::IDbStatement* statement) 
                                              throw (castor::exception::Exception)
 {
@@ -700,8 +586,6 @@ std::vector<castor::repack::RepackSubRequest*>*
 
   }catch (castor::exception::SQLError e) {
     delete rset;  
-    // handleException(e);
-    //cnvSvc()->rollback();
     castor::exception::Internal ex;
     ex.getMessage()
     << "DatabaseHelper::internalgetSubRequests(...):"
