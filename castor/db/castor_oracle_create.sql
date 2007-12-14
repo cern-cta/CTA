@@ -394,7 +394,7 @@ partition by list (type)
   partition type_79 values (79)  tablespace stager_data,
   partition type_80 values (80)  tablespace stager_data,
   partition type_84 values (84)  tablespace stager_data,
-  partition type_90 values (90)  tablespace stager_data
+  partition type_90 values (90)  tablespace stager_data,
   partition type_144 values (144)  tablespace stager_data,
   partition notlisted values (default) tablespace stager_data
  );
