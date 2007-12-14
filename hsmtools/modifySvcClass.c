@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.14 $ $Release$ $Date: 2007/08/09 12:35:11 $ $Author: waldron $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.15 $ $Release$ $Date: 2007/12/14 18:39:02 $ $Author: itglp $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -402,6 +402,7 @@ int main(int argc, char *argv[])
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
   struct Cstager_SvcClass_t *svcClass = NULL;
+  struct Cstager_FileClass_t *fileClass = NULL;
   struct Cstager_TapePool_t **tapePoolsArray = NULL;
   struct Cstager_DiskPool_t **diskPoolsArray = NULL;
   u_signed64 defaultFileSize = 0;
@@ -518,7 +519,19 @@ int main(int argc, char *argv[])
     Cstager_SvcClass_setStreamPolicy(svcClass,streamPolicy);
   }
   if ( forcedFileClass != NULL) {
-    Cstager_SvcClass_setForcedFileClass(svcClass,forcedFileClass);
+    rc = Cstager_IStagerSvc_selectFileClass(stgSvc,&fileClass,forcedFileClass);
+    if ( (rc == -1) || (fileClass == NULL) ) {
+      if ( rc == -1 ) {
+        fprintf(stderr,"Cstager_IStagerSvc_selectFileClass(%s): %s, %s\n",
+                name,sstrerror(serrno),
+                Cstager_IStagerSvc_errorMsg(stgSvc));
+        return(1);
+      }
+      fprintf(stderr,
+              "FileClass %s does not exists\n",forcedFileClass);
+      return(1);
+    }  
+    Cstager_SvcClass_setForcedFileClass(svcClass,fileClass);
   }
   if ( diskOnlyBehavior != NULL) {
     if (!strcasecmp(diskOnlyBehavior, "yes") ||
