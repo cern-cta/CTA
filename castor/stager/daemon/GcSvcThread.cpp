@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2007/11/21 07:32:56 $ $Author: waldron $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/12/14 16:45:45 $ $Author: itglp $
  *
  * Service thread for garbage collection related requests
  *
@@ -54,40 +54,9 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::GcSvcThread::GcSvcThread() throw () {}
+castor::stager::dbService::GcSvcThread::GcSvcThread() throw () :
+  BaseRequestSvcThread("GCSvc", "DbGCSvc", castor::SVC_DBGCSVC) {}
 
-//-----------------------------------------------------------------------------
-// select
-//-----------------------------------------------------------------------------
-castor::IObject* castor::stager::dbService::GcSvcThread::select()
-  throw() {
-  try {
-    // get the GcSvc. Note that we cannot cache it since we
-    // would not be thread safe
-    castor::Services *svcs = castor::BaseObject::services();
-    castor::IService *svc = svcs->service("DbGCSvc", castor::SVC_DBGCSVC);
-    castor::stager::IGCSvc *gcSvc = dynamic_cast<castor::stager::IGCSvc*>(svc);
-    if (0 == gcSvc) {
-      // "Could not get GCSvc"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "GcSvcThread::select")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_GETSVC, 1, params);
-      return 0;
-    }
-    // actual work
-    castor::stager::Request* req = gcSvc->requestToDo();
-    gcSvc->release();
-    return req;
-  } catch (castor::exception::Exception e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "GcSvcThread::select"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
-    return 0;
-  }
-}
 
 //-----------------------------------------------------------------------------
 // handleFilesDeletedOrFailed

@@ -51,14 +51,14 @@ DBSERVICEDAEMONBIN_SRCS = \
 	StagerRmHandler.cpp \
 	StagerSetGCHandler.cpp \
 	StagerUpdateHandler.cpp \
-	RequestSvc.cpp\
-	PreRequestSvc.cpp\
-	StgRequestSvc.cpp\
-	JobRequestSvc.cpp\
-	StagerRequestHandler.cpp\
-	QueryRequestSvcThread.cpp\
-	GcSvcThread.cpp\
-	ErrorSvcThread.cpp\
+	StagerRequestHandler.cpp \
+	BaseRequestSvcThread.cpp \
+	PrepRequestSvcThread.cpp \
+	StageRequestSvcThread.cpp \
+	JobRequestSvcThread.cpp \
+	QueryRequestSvcThread.cpp \
+	GcSvcThread.cpp \
+	ErrorSvcThread.cpp \
         JobSvcThread.cpp
 
 DBSERVICEDAEMONBIN_OBJS = $(DBSERVICEDAEMONBIN_SRCS:.cpp=.Osuf)

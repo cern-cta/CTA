@@ -64,7 +64,7 @@ namespace castor{
       void StagerJobRequestHandler::jobOriented() throw(castor::exception::Exception)
       {
         memset(&(stgCnsHelper->cnsFileclass), 0, sizeof(stgCnsHelper->cnsFileclass));
-        Cns_queryclass(stgCnsHelper->cnsFileid.server,stgCnsHelper->cnsFilestat.fileclass, NULL, &(stgCnsHelper->cnsFileclass));
+        Cns_queryclass(stgCnsHelper->cnsFileid.server, stgCnsHelper->cnsFilestat.fileclass, NULL, &(stgCnsHelper->cnsFileclass));
         /* free the tppols*/
         free(stgCnsHelper->cnsFileclass.tppools);
         

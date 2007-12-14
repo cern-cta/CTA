@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.64 $ $Release$ $Date: 2007/12/06 14:53:14 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -72,40 +72,8 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::stager::dbService::QueryRequestSvcThread::QueryRequestSvcThread()
-  throw () {}
-
-//-----------------------------------------------------------------------------
-// select
-//-----------------------------------------------------------------------------
-castor::IObject* castor::stager::dbService::QueryRequestSvcThread::select()
-  throw() {
-  try {
-    // get the QuerySvc. Note that we cannot cache it since we
-    // would not be thread safe
-    castor::Services *svcs = castor::BaseObject::services();
-    castor::IService *svc = svcs->service("DbQuerySvc", castor::SVC_DBQUERYSVC);
-    castor::query::IQuerySvc *qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
-    if (0 == qrySvc) {
-      // "Could not get QuerySvc"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "QueryRequestSvcThread::select")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_GETSVC, 1, params);
-      return 0;
-    }
-    // actual work
-    castor::IObject* obj = qrySvc->requestToDo();
-    qrySvc->release();
-    return obj;
-  } catch (castor::exception::Exception e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "QueryRequestSvcThread::select"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
-    return 0;
-  }
-}
+  throw () :
+  BaseRequestSvcThread("QueryReqSvc", "DbQuerySvc", castor::SVC_DBQUERYSVC) {}
 
 //-----------------------------------------------------------------------------
 // setFileResponseStatus
@@ -692,13 +660,6 @@ void castor::stager::dbService::QueryRequestSvcThread::process
     svcs = castor::BaseObject::services();
     castor::IService *svc = svcs->service("DbQuerySvc", castor::SVC_DBQUERYSVC);
     qrySvc = dynamic_cast<castor::query::IQuerySvc*>(svc);
-    if (0 == qrySvc) {
-      // "Could not get QuerySvc"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "QueryRequestSvcThread::process")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_GETSVC, 1, params);
-      return;
-    }
     // Retrieving request and client from the database
     // Note that casting the request will never give 0
     // since select does return a request for sure

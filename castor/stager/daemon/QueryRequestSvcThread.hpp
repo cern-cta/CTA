@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/10/24 09:41:59 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -34,7 +34,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "castor/rh/FileQryResponse.hpp"
-#include "castor/server/SelectProcessThread.hpp"
+#include "castor/stager/dbService/BaseRequestSvcThread.hpp"
 
 
 namespace castor {
@@ -43,7 +43,7 @@ namespace castor {
 
     namespace dbService {
 
-      class QueryRequestSvcThread : public virtual castor::server::SelectProcessThread {
+      class QueryRequestSvcThread : public virtual BaseRequestSvcThread {
 
       public:
 
@@ -56,11 +56,6 @@ namespace castor {
          * Default destructor
          */
         ~QueryRequestSvcThread() throw() {};
-
-        /**
-         * Select a new queryRequest to be processed
-         */
-        virtual castor::IObject* select() throw();
 
         /**
          * Performs the selected query
@@ -87,6 +82,7 @@ namespace castor {
                                               std::string reqId,
                                               Cuuid_t uuid)
           throw (castor::exception::Exception);
+          
         /**
          * Handles a filequery by fileId and replies to client.
          */

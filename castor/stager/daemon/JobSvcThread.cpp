@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2007/11/26 10:29:49 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -68,40 +68,9 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::JobSvcThread::JobSvcThread() throw () {}
+castor::stager::dbService::JobSvcThread::JobSvcThread() throw () :
+  BaseRequestSvcThread("JobSvc", "DbJobSvc", castor::SVC_DBJOBSVC) {}
 
-//-----------------------------------------------------------------------------
-// select
-//-----------------------------------------------------------------------------
-castor::IObject* castor::stager::dbService::JobSvcThread::select()
-  throw() {
-  try {
-    // get the JobSvc. Note that we cannot cache it since we
-    // would not be thread safe
-    castor::Services *svcs = castor::BaseObject::services();
-    castor::IService *svc = svcs->service("DbJobSvc", castor::SVC_DBJOBSVC);
-    castor::stager::IJobSvc *jobSvc = dynamic_cast<castor::stager::IJobSvc*>(svc);
-    if (0 == jobSvc) {
-      // "Could not get JobSvc"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "JobSvcThread::select")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_GETSVC, 1, params);
-      return 0;
-    }
-    // actual work
-    castor::stager::Request* req = jobSvc->requestToDo();
-    jobSvc->release();
-    return req;
-  } catch (castor::exception::Exception e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "JobSvcThread::select"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
-    return 0;
-  }
-}
 
 //-----------------------------------------------------------------------------
 // handleStartRequest

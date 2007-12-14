@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2007/12/05 14:40:54 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2007/12/14 16:45:47 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -40,9 +40,9 @@
 #include "castor/server/SignalThreadPool.hpp"
 
 #include "castor/stager/dbService/StagerMainDaemon.hpp"
-#include "castor/stager/dbService/JobRequestSvc.hpp"
-#include "castor/stager/dbService/PreRequestSvc.hpp"
-#include "castor/stager/dbService/StgRequestSvc.hpp"
+#include "castor/stager/dbService/JobRequestSvcThread.hpp"
+#include "castor/stager/dbService/PrepRequestSvcThread.hpp"
+#include "castor/stager/dbService/StageRequestSvcThread.hpp"
 #include "castor/stager/dbService/QueryRequestSvcThread.hpp"
 #include "castor/stager/dbService/ErrorSvcThread.hpp"
 #include "castor/stager/dbService/JobSvcThread.hpp"
@@ -70,16 +70,16 @@ int main(int argc, char* argv[]){
     /*******************************/
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("JobRequestSvcThread", 
-        new castor::stager::dbService::JobRequestSvc()));
+        new castor::stager::dbService::JobRequestSvcThread()));
     
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("PrepRequestSvcThread", 
-        new castor::stager::dbService::PreRequestSvc()));
+        new castor::stager::dbService::PrepRequestSvcThread()));
 
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("StageRequestSvcThread", 
-        new castor::stager::dbService::StgRequestSvc()));
+        new castor::stager::dbService::StageRequestSvcThread()));
      
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("QueryRequestSvcThread", 
@@ -108,7 +108,6 @@ int main(int argc, char* argv[]){
     stagerDaemon.addNotifierThreadPool(
       castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_STAGER));
     
-    /* we need to call this function before setting the number of threads */
     stagerDaemon.parseCommandLine(argc, argv);
 
     stagerDaemon.start();  
@@ -284,4 +283,3 @@ void castor::stager::dbService::StagerMainDaemon::help(std::string programName)
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
 }
-

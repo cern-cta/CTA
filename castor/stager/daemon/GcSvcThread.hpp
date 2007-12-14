@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/20 17:20:35 $ $Author: sponcec3 $
+ * @(#)$RCSfile: GcSvcThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/14 16:45:45 $ $Author: itglp $
  *
  * Service thread for garbage collection related requests
  *
@@ -32,7 +32,7 @@
 #include "castor/Services.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/server/SelectProcessThread.hpp"
+#include "castor/stager/dbService/BaseRequestSvcThread.hpp"
 #include "castor/stager/IGCSvc.hpp"
 
 namespace castor {
@@ -41,7 +41,7 @@ namespace castor {
     
     namespace dbService {
       
-      class GcSvcThread : public virtual castor::server::SelectProcessThread {
+      class GcSvcThread : public virtual BaseRequestSvcThread {
 	
       public:
       
@@ -54,11 +54,6 @@ namespace castor {
          * Default destructor
          */
         ~GcSvcThread() throw() {};
-
-        /**
-         * Select a new gc request to be processed
-         */
-        virtual castor::IObject* select() throw();
 
         /**
          * Processes a request
