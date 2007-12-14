@@ -45,6 +45,7 @@ namespace castor {
 
     // Forward declarations
     class TapePool;
+    class FileClass;
     class DiskPool;
 
     /**
@@ -281,28 +282,6 @@ namespace castor {
       }
 
       /**
-       * Get the value of m_forcedFileClass
-       * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
-       * all files created in this svcclass, independently of the fileclass of the
-       * directory where they are created
-       * @return the value of m_forcedFileClass
-       */
-      std::string forcedFileClass() const {
-        return m_forcedFileClass;
-      }
-
-      /**
-       * Set the value of m_forcedFileClass
-       * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
-       * all files created in this svcclass, independently of the fileclass of the
-       * directory where they are created
-       * @param new_var the new value of m_forcedFileClass
-       */
-      void setForcedFileClass(std::string new_var) {
-        m_forcedFileClass = new_var;
-      }
-
-      /**
        * Get the value of m_streamPolicy
        * @return the value of m_streamPolicy
        */
@@ -394,6 +373,22 @@ namespace castor {
         return m_diskPoolsVector;
       }
 
+      /**
+       * Get the value of m_forcedFileClass
+       * @return the value of m_forcedFileClass
+       */
+      FileClass* forcedFileClass() const {
+        return m_forcedFileClass;
+      }
+
+      /**
+       * Set the value of m_forcedFileClass
+       * @param new_var the new value of m_forcedFileClass
+       */
+      void setForcedFileClass(FileClass* new_var) {
+        m_forcedFileClass = new_var;
+      }
+
     private:
 
       /*
@@ -426,9 +421,6 @@ namespace castor {
       /// Whether the diskpools under this serviceClass should behave like disk only pools. This include failing jobs that want to allocate space when no space is available and forcing the fileClass of files if forcedFileClass is not empty
       bool m_hasDiskOnlyBehavior;
 
-      /// In case hasDiskOnlyBehavior is set, this is the file class that will be used for all files created in this svcclass, independently of the fileclass of the directory where they are created
-      std::string m_forcedFileClass;
-
       std::string m_streamPolicy;
 
       /// The id of this object
@@ -438,6 +430,11 @@ namespace castor {
 
       std::vector<DiskPool*> m_diskPoolsVector;
 
+      /// In case hasDiskOnlyBehavior is set, this is the file class that will be used for all files created in this svcclass, independently of the fileclass of the directory where they are created
+      FileClass* m_forcedFileClass;
+
+      /// In case hasDiskOnlyBehavior is set, this is the file class that will be used for all files created in this svcclass, independently of the fileclass of the directory where they are created
+      /// In case hasDiskOnlyBehavior is set, this is the file class that will be used for all files created in this svcclass, independently of the fileclass of the directory where they are created
     }; /* end of class SvcClass */
 
   } /* end of namespace stager */

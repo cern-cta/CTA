@@ -40,6 +40,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/stager/DiskPool.hpp"
+#include "castor/stager/FileClass.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
 #include <set>
@@ -56,7 +57,7 @@ static castor::CnvFactory<castor::db::cnv::DbSvcClassCnv>* s_factoryDbSvcClassCn
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbSvcClassCnv::s_insertStatementString =
-"INSERT INTO SvcClass (nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, forcedFileClass, streamPolicy, id) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,ids_seq.nextval) RETURNING id INTO :12";
+"INSERT INTO SvcClass (nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy, id, forcedFileClass) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,ids_seq.nextval,:11) RETURNING id INTO :12";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbSvcClassCnv::s_deleteStatementString =
@@ -64,11 +65,11 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbSvcClassCnv::s_selectStatementString =
-"SELECT nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, forcedFileClass, streamPolicy, id FROM SvcClass WHERE id = :1";
+"SELECT nbDrives, name, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy, id, forcedFileClass FROM SvcClass WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbSvcClassCnv::s_updateStatementString =
-"UPDATE SvcClass SET nbDrives = :1, name = :2, defaultFileSize = :3, maxReplicaNb = :4, replicationPolicy = :5, gcPolicy = :6, migratorPolicy = :7, recallerPolicy = :8, hasDiskOnlyBehavior = :9, forcedFileClass = :10, streamPolicy = :11 WHERE id = :12";
+"UPDATE SvcClass SET nbDrives = :1, name = :2, defaultFileSize = :3, maxReplicaNb = :4, replicationPolicy = :5, gcPolicy = :6, migratorPolicy = :7, recallerPolicy = :8, hasDiskOnlyBehavior = :9, streamPolicy = :10 WHERE id = :11";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbSvcClassCnv::s_storeTypeStatementString =
@@ -106,6 +107,14 @@ const std::string castor::db::cnv::DbSvcClassCnv::s_deleteDiskPoolStatementStrin
 const std::string castor::db::cnv::DbSvcClassCnv::s_selectDiskPoolStatementString =
 "SELECT Parent FROM DiskPool2SvcClass WHERE Child = :1 FOR UPDATE";
 
+/// SQL existence statement for member forcedFileClass
+const std::string castor::db::cnv::DbSvcClassCnv::s_checkFileClassExistStatementString =
+"SELECT id FROM FileClass WHERE id = :1";
+
+/// SQL update statement for member forcedFileClass
+const std::string castor::db::cnv::DbSvcClassCnv::s_updateFileClassStatementString =
+"UPDATE SvcClass SET forcedFileClass = :1 WHERE id = :2";
+
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
@@ -122,7 +131,9 @@ castor::db::cnv::DbSvcClassCnv::DbSvcClassCnv(castor::ICnvSvc* cnvSvc) :
   m_selectTapePoolStatement(0),
   m_insertDiskPoolStatement(0),
   m_deleteDiskPoolStatement(0),
-  m_selectDiskPoolStatement(0) {}
+  m_selectDiskPoolStatement(0),
+  m_checkFileClassExistStatement(0),
+  m_updateFileClassStatement(0) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -150,6 +161,8 @@ void castor::db::cnv::DbSvcClassCnv::reset() throw() {
     if(m_insertDiskPoolStatement) delete m_insertDiskPoolStatement;
     if(m_deleteDiskPoolStatement) delete m_deleteDiskPoolStatement;
     if(m_selectDiskPoolStatement) delete m_selectDiskPoolStatement;
+    if(m_checkFileClassExistStatement) delete m_checkFileClassExistStatement;
+    if(m_updateFileClassStatement) delete m_updateFileClassStatement;
   } catch (castor::exception::Exception ignored) {};
   // Now reset all pointers to 0
   m_insertStatement = 0;
@@ -164,6 +177,8 @@ void castor::db::cnv::DbSvcClassCnv::reset() throw() {
   m_insertDiskPoolStatement = 0;
   m_deleteDiskPoolStatement = 0;
   m_selectDiskPoolStatement = 0;
+  m_checkFileClassExistStatement = 0;
+  m_updateFileClassStatement = 0;
 }
 
 //------------------------------------------------------------------------------
@@ -197,6 +212,9 @@ void castor::db::cnv::DbSvcClassCnv::fillRep(castor::IAddress* address,
       break;
     case castor::OBJ_DiskPool :
       fillRepDiskPool(obj);
+      break;
+    case castor::OBJ_FileClass :
+      fillRepFileClass(obj);
       break;
     default :
       castor::exception::InvalidArgument ex;
@@ -315,6 +333,38 @@ void castor::db::cnv::DbSvcClassCnv::fillRepDiskPool(castor::stager::SvcClass* o
 }
 
 //------------------------------------------------------------------------------
+// fillRepFileClass
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbSvcClassCnv::fillRepFileClass(castor::stager::SvcClass* obj)
+  throw (castor::exception::Exception) {
+  if (0 != obj->forcedFileClass()) {
+    // Check checkFileClassExist statement
+    if (0 == m_checkFileClassExistStatement) {
+      m_checkFileClassExistStatement = createStatement(s_checkFileClassExistStatementString);
+    }
+    // retrieve the object from the database
+    m_checkFileClassExistStatement->setUInt64(1, obj->forcedFileClass()->id());
+    castor::db::IDbResultSet *rset = m_checkFileClassExistStatement->executeQuery();
+    if (!rset->next()) {
+      castor::BaseAddress ad;
+      ad.setCnvSvcName("DbCnvSvc");
+      ad.setCnvSvcType(castor::SVC_DBCNV);
+      cnvSvc()->createRep(&ad, obj->forcedFileClass(), false);
+    }
+    // Close resultset
+    delete rset;
+  }
+  // Check update statement
+  if (0 == m_updateFileClassStatement) {
+    m_updateFileClassStatement = createStatement(s_updateFileClassStatementString);
+  }
+  // Update local object
+  m_updateFileClassStatement->setUInt64(1, 0 == obj->forcedFileClass() ? 0 : obj->forcedFileClass()->id());
+  m_updateFileClassStatement->setUInt64(2, obj->id());
+  m_updateFileClassStatement->execute();
+}
+
+//------------------------------------------------------------------------------
 // fillObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbSvcClassCnv::fillObj(castor::IAddress* address,
@@ -330,6 +380,9 @@ void castor::db::cnv::DbSvcClassCnv::fillObj(castor::IAddress* address,
     break;
   case castor::OBJ_DiskPool :
     fillObjDiskPool(obj);
+    break;
+  case castor::OBJ_FileClass :
+    fillObjFileClass(obj);
     break;
   default :
     castor::exception::InvalidArgument ex;
@@ -443,6 +496,44 @@ void castor::db::cnv::DbSvcClassCnv::fillObjDiskPool(castor::stager::SvcClass* o
 }
 
 //------------------------------------------------------------------------------
+// fillObjFileClass
+//------------------------------------------------------------------------------
+void castor::db::cnv::DbSvcClassCnv::fillObjFileClass(castor::stager::SvcClass* obj)
+  throw (castor::exception::Exception) {
+  // Check whether the statement is ok
+  if (0 == m_selectStatement) {
+    m_selectStatement = createStatement(s_selectStatementString);
+  }
+  // retrieve the object from the database
+  m_selectStatement->setUInt64(1, obj->id());
+  castor::db::IDbResultSet *rset = m_selectStatement->executeQuery();
+  if (!rset->next()) {
+    castor::exception::NoEntry ex;
+    ex.getMessage() << "No object found for id :" << obj->id();
+    throw ex;
+  }
+  u_signed64 forcedFileClassId = rset->getInt64(12);
+  // Close ResultSet
+  delete rset;
+  // Check whether something should be deleted
+  if (0 != obj->forcedFileClass() &&
+      (0 == forcedFileClassId ||
+       obj->forcedFileClass()->id() != forcedFileClassId)) {
+    obj->setForcedFileClass(0);
+  }
+  // Update object or create new one
+  if (0 != forcedFileClassId) {
+    if (0 == obj->forcedFileClass()) {
+      obj->setForcedFileClass
+        (dynamic_cast<castor::stager::FileClass*>
+         (cnvSvc()->getObjFromId(forcedFileClassId)));
+    } else {
+      cnvSvc()->updateObj(obj->forcedFileClass());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // createRep
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
@@ -474,8 +565,8 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
     m_insertStatement->setString(7, obj->migratorPolicy());
     m_insertStatement->setString(8, obj->recallerPolicy());
     m_insertStatement->setInt(9, obj->hasDiskOnlyBehavior());
-    m_insertStatement->setString(10, obj->forcedFileClass());
-    m_insertStatement->setString(11, obj->streamPolicy());
+    m_insertStatement->setString(10, obj->streamPolicy());
+    m_insertStatement->setUInt64(11, (type == OBJ_FileClass && obj->forcedFileClass() != 0) ? obj->forcedFileClass()->id() : 0);
     m_insertStatement->execute();
     obj->setId(m_insertStatement->getUInt64(12));
     m_storeTypeStatement->setUInt64(1, obj->id());
@@ -503,9 +594,9 @@ void castor::db::cnv::DbSvcClassCnv::createRep(castor::IAddress* address,
                     << "  migratorPolicy : " << obj->migratorPolicy() << std::endl
                     << "  recallerPolicy : " << obj->recallerPolicy() << std::endl
                     << "  hasDiskOnlyBehavior : " << obj->hasDiskOnlyBehavior() << std::endl
-                    << "  forcedFileClass : " << obj->forcedFileClass() << std::endl
                     << "  streamPolicy : " << obj->streamPolicy() << std::endl
-                    << "  id : " << obj->id() << std::endl;
+                    << "  id : " << obj->id() << std::endl
+                    << "  forcedFileClass : " << obj->forcedFileClass() << std::endl;
     throw ex;
   }
 }
@@ -536,9 +627,8 @@ void castor::db::cnv::DbSvcClassCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(7, obj->migratorPolicy());
     m_updateStatement->setString(8, obj->recallerPolicy());
     m_updateStatement->setInt(9, obj->hasDiskOnlyBehavior());
-    m_updateStatement->setString(10, obj->forcedFileClass());
-    m_updateStatement->setString(11, obj->streamPolicy());
-    m_updateStatement->setUInt64(12, obj->id());
+    m_updateStatement->setString(10, obj->streamPolicy());
+    m_updateStatement->setUInt64(11, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -630,9 +720,8 @@ castor::IObject* castor::db::cnv::DbSvcClassCnv::createObj(castor::IAddress* add
     object->setMigratorPolicy(rset->getString(7));
     object->setRecallerPolicy(rset->getString(8));
     object->setHasDiskOnlyBehavior(rset->getInt(9));
-    object->setForcedFileClass(rset->getString(10));
-    object->setStreamPolicy(rset->getString(11));
-    object->setId(rset->getUInt64(12));
+    object->setStreamPolicy(rset->getString(10));
+    object->setId(rset->getUInt64(11));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -679,9 +768,8 @@ void castor::db::cnv::DbSvcClassCnv::updateObj(castor::IObject* obj)
     object->setMigratorPolicy(rset->getString(7));
     object->setRecallerPolicy(rset->getString(8));
     object->setHasDiskOnlyBehavior(rset->getInt(9));
-    object->setForcedFileClass(rset->getString(10));
-    object->setStreamPolicy(rset->getString(11));
-    object->setId(rset->getUInt64(12));
+    object->setStreamPolicy(rset->getString(10));
+    object->setId(rset->getUInt64(11));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

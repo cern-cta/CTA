@@ -230,6 +230,24 @@ namespace castor {
         /// SQL remote update statement object for member 
         castor::db::IDbStatement *m_remoteUpdateCastorFileStatement;
 
+        /// SQL select statement for member 
+        static const std::string s_selectSvcClassStatementString;
+
+        /// SQL select statement object for member 
+        castor::db::IDbStatement *m_selectSvcClassStatement;
+
+        /// SQL delete statement for member 
+        static const std::string s_deleteSvcClassStatementString;
+
+        /// SQL delete statement object for member 
+        castor::db::IDbStatement *m_deleteSvcClassStatement;
+
+        /// SQL remote update statement for member 
+        static const std::string s_remoteUpdateSvcClassStatementString;
+
+        /// SQL remote update statement object for member 
+        castor::db::IDbStatement *m_remoteUpdateSvcClassStatement;
+
       }; // end of class DbFileClassCnv
 
     } /* end of namespace cnv */

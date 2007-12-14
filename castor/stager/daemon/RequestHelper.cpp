@@ -252,6 +252,10 @@ namespace castor{
           ex.getMessage()<<"Service Class not found";
           throw ex;
         }
+        
+        if(svcClass->hasDiskOnlyBehavior()) {   // for later use  
+          dbService->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
+        }
       } 
       
       

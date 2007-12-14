@@ -33,6 +33,7 @@
 #include "osdep.h"
 struct C_IObject_t;
 struct Cstager_DiskPool_t;
+struct Cstager_FileClass_t;
 struct Cstager_SvcClass_t;
 struct Cstager_TapePool_t;
 
@@ -213,22 +214,6 @@ int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, in
 int Cstager_SvcClass_setHasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int new_var);
 
 /**
- * Get the value of forcedFileClass
- * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
- * all files created in this svcclass, independently of the fileclass of the
- * directory where they are created
- */
-int Cstager_SvcClass_forcedFileClass(struct Cstager_SvcClass_t* instance, const char** var);
-
-/**
- * Set the value of forcedFileClass
- * In case hasDiskOnlyBehavior is set, this is the file class that will be used for
- * all files created in this svcclass, independently of the fileclass of the
- * directory where they are created
- */
-int Cstager_SvcClass_setForcedFileClass(struct Cstager_SvcClass_t* instance, const char* new_var);
-
-/**
  * Get the value of streamPolicy
  */
 int Cstager_SvcClass_streamPolicy(struct Cstager_SvcClass_t* instance, const char** var);
@@ -281,5 +266,15 @@ int Cstager_SvcClass_removeDiskPools(struct Cstager_SvcClass_t* instance, struct
  * the caller is responsible for the deletion of the returned vector.
  */
 int Cstager_SvcClass_diskPools(struct Cstager_SvcClass_t* instance, struct Cstager_DiskPool_t*** var, int* len);
+
+/**
+ * Get the value of forcedFileClass
+ */
+int Cstager_SvcClass_forcedFileClass(struct Cstager_SvcClass_t* instance, struct Cstager_FileClass_t** var);
+
+/**
+ * Set the value of forcedFileClass
+ */
+int Cstager_SvcClass_setForcedFileClass(struct Cstager_SvcClass_t* instance, struct Cstager_FileClass_t* new_var);
 
 #endif /* CASTOR_STAGER_SVCCLASS_H */

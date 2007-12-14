@@ -31,6 +31,7 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/stager/DiskPool.hpp"
+#include "castor/stager/FileClass.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
@@ -51,9 +52,9 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_migratorPolicy(""),
   m_recallerPolicy(""),
   m_hasDiskOnlyBehavior(false),
-  m_forcedFileClass(""),
   m_streamPolicy(""),
-  m_id(0) {
+  m_id(0),
+  m_forcedFileClass(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -92,7 +93,6 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "migratorPolicy : " << m_migratorPolicy << std::endl;
   stream << indent << "recallerPolicy : " << m_recallerPolicy << std::endl;
   stream << indent << "hasDiskOnlyBehavior : " << m_hasDiskOnlyBehavior << std::endl;
-  stream << indent << "forcedFileClass : " << m_forcedFileClass << std::endl;
   stream << indent << "streamPolicy : " << m_streamPolicy << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
@@ -117,6 +117,12 @@ void castor::stager::SvcClass::print(std::ostream& stream,
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);
     }
+  }
+  stream << indent << "ForcedFileClass : " << std::endl;
+  if (0 != m_forcedFileClass) {
+    m_forcedFileClass->print(stream, indent + "  ", alreadyPrinted);
+  } else {
+    stream << indent << "  null" << std::endl;
   }
 }
 

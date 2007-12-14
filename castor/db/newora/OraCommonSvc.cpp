@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.28 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/12/14 18:42:15 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -31,6 +31,7 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IClient.hpp"
+#include "castor/stager/Request.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/FileClass.hpp"
@@ -78,7 +79,7 @@ const std::string castor::db::ora::OraCommonSvc::s_selectTapeStatementString =
 
 /// SQL statement for selectSvcClass
 const std::string castor::db::ora::OraCommonSvc::s_selectSvcClassStatementString =
-  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, forcedFileClass, streamPolicy FROM SvcClass WHERE name = :1";
+  "SELECT id, nbDrives, defaultFileSize, maxReplicaNb, replicationPolicy, gcPolicy, migratorPolicy, recallerPolicy, hasDiskOnlyBehavior, streamPolicy FROM SvcClass WHERE name = :1";
 
 /// SQL statement for selectFileClass
 const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementString =
@@ -154,7 +155,7 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
 // requestToDo
 // -----------------------------------------------------------------------
 castor::stager::Request*
-castor::db::ora::OraGCSvc::requestToDo(std::string service)
+castor::db::ora::OraCommonSvc::requestToDo(std::string service)
   throw (castor::exception::Exception) {
   try {
     // Check whether the statements are ok
@@ -349,8 +350,7 @@ castor::db::ora::OraCommonSvc::selectSvcClass
     result->setMigratorPolicy(rset->getString(7));
     result->setRecallerPolicy(rset->getString(8));
     result->setHasDiskOnlyBehavior(rset->getInt(9));
-    result->setForcedFileClass(rset->getString(10));
-    result->setStreamPolicy(rset->getString(11));
+    result->setStreamPolicy(rset->getString(10));
     result->setName(name);
     m_selectSvcClassStatement->closeResultSet(rset);
     return result;

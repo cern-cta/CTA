@@ -4,6 +4,7 @@
 
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
+#include "castor/stager/FileClass.hpp"
 
 
 #include "stager_uuid.h"
@@ -128,25 +129,22 @@ namespace castor{
               }
               
               /* in case of Disk1 pool, we want to force the fileClass of the file */
-              if(svcClass->hasDiskOnlyBehavior()){
-                std::string forcedFileClassName = svcClass->forcedFileClass();
-                
-                if(!forcedFileClassName.empty()){
-                  Cns_unsetid();
-                  if(Cns_chclass(fileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
-                    int tempserrno = serrno;
-                    Cns_delete(fileName.c_str());
-                    serrno = tempserrno;
-                    
-                    castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.2")};
-                    castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
-                    
-                    castor::exception::Exception ex(serrno);
-                    ex.getMessage()<<"Impossible to force file class for this file";
-                    throw ex;
-                  }
-                  Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
-                }                  
+              if(svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
+                std::string forcedFileClassName = svcClass->forcedFileClass()->name();
+                Cns_unsetid();
+                if(Cns_chclass(fileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
+                  int tempserrno = serrno;
+                  Cns_delete(fileName.c_str());
+                  serrno = tempserrno;
+                  
+                  castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.2")};
+                  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+                  
+                  castor::exception::Exception ex(serrno);
+                  ex.getMessage()<<"Impossible to force file class for this file";
+                  throw ex;
+                }
+                Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
               }
               
               Cns_statx(fileName.c_str(),&(cnsFileid),&(cnsFilestat));

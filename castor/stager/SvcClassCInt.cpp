@@ -29,6 +29,7 @@
 // Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/DiskPool.hpp"
+#include "castor/stager/FileClass.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/stager/TapePool.hpp"
 #include "osdep.h"
@@ -249,23 +250,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_forcedFileClass
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_forcedFileClass(castor::stager::SvcClass* instance, const char** var) {
-    *var = instance->forcedFileClass().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setForcedFileClass
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setForcedFileClass(castor::stager::SvcClass* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setForcedFileClass(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SvcClass_streamPolicy
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_streamPolicy(castor::stager::SvcClass* instance, const char** var) {
@@ -353,6 +337,22 @@ extern "C" {
     for (int i = 0; i < *len; i++) {
       (*var)[i] = result[i];
     }
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_forcedFileClass
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_forcedFileClass(castor::stager::SvcClass* instance, castor::stager::FileClass** var) {
+    *var = instance->forcedFileClass();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setForcedFileClass
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setForcedFileClass(castor::stager::SvcClass* instance, castor::stager::FileClass* new_var) {
+    instance->setForcedFileClass(new_var);
     return 0;
   }
 

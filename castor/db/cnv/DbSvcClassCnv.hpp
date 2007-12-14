@@ -187,6 +187,14 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
+         * Fill the database with objects of type FileClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillRepFileClass(castor::stager::SvcClass* obj)
+          throw (castor::exception::Exception);
+
+        /**
          * Retrieve from the database some of the objects refered by a given object.
          * @param object the original object
          * @param type the type of the refered objects to retrieve
@@ -212,6 +220,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjDiskPool(castor::stager::SvcClass* obj)
+          throw (castor::exception::Exception);
+
+        /**
+         * Retrieve from the database objects of type FileClass refered by a given object.
+         * @param obj the original object
+         * @exception Exception throws an Exception in case of error
+         */
+        virtual void fillObjFileClass(castor::stager::SvcClass* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -287,6 +303,18 @@ namespace castor {
 
         /// SQL select statement object for member diskPools
         castor::db::IDbStatement *m_selectDiskPoolStatement;
+
+        /// SQL checkExist statement for member forcedFileClass
+        static const std::string s_checkFileClassExistStatementString;
+
+        /// SQL checkExist statement object for member forcedFileClass
+        castor::db::IDbStatement *m_checkFileClassExistStatement;
+
+        /// SQL update statement for member forcedFileClass
+        static const std::string s_updateFileClassStatementString;
+
+        /// SQL update statement object for member forcedFileClass
+        castor::db::IDbStatement *m_updateFileClassStatement;
 
       }; // end of class DbSvcClassCnv
 
