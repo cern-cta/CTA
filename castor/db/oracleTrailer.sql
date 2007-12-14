@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.582 $ $Date: 2007/12/13 15:29:49 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.583 $ $Date: 2007/12/14 15:18:16 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3038,7 +3038,7 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateFailedProc
 (srId IN NUMBER) AS
 BEGIN
-  UPDATE SubRequest SET status = 7 -- FAILED
+  UPDATE SubRequest SET status = 9 -- FAILED_FINISHED
    WHERE id = srId;
   UPDATE SubRequest SET status = 1 -- RESTART
    WHERE parent = srId;
