@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2006/04/13 15:41:43 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IQuerySvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/12/14 16:58:07 $ $Author: itglp $
  *
  *
  *
@@ -58,26 +58,26 @@ namespace castor {
 
     public:
 
-        /**
-         * Gets all DiskCopies for a given file name.
-         * The caller is responsible for the deallocation of
-         * the returned objects.
-	 * Note that this function only makes use of the
-         * lastKnownFileName stored in the stager database
-	 * for each file, that is in no way accurate. In case
-	 * a renaming took place between the last request for
-	 * this file and the call to this function, no
-	 * DiskCopy will be returned for the new name while
-	 * the old name will still be known
-         * @param fileName the fileName to be used for the query
-         * @param svcClassId the Id of the service class we're using
-         * @return the list of DiskCopies available
-         * @exception in case of error
-         */
-        virtual std::list<castor::stager::DiskCopyInfo*>*
-        diskCopies4FileName (std::string fileName,
-                             u_signed64 svcClassId)
-          throw (castor::exception::Exception) = 0;
+      /**
+       * Gets all DiskCopies for a given file name.
+       * The caller is responsible for the deallocation of
+       * the returned objects.
+       * Note that this function only makes use of the
+       * lastKnownFileName stored in the stager database
+       * for each file, that is in no way accurate. In case
+       * a renaming took place between the last request for
+       * this file and the call to this function, no
+       * DiskCopy will be returned for the new name while
+       * the old name will still be known
+       * @param fileName the fileName to be used for the query
+       * @param svcClassId the Id of the service class we're using
+       * @return the list of DiskCopies available
+       * @exception in case of error
+       */
+      virtual std::list<castor::stager::DiskCopyInfo*>*
+      diskCopies4FileName (std::string fileName,
+                           u_signed64 svcClassId)
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Gets all DiskCopies for a given file.
@@ -118,17 +118,6 @@ namespace castor {
                            u_signed64 svcClassId)
          throw (castor::exception::Exception) = 0;
 
-
-      /**
-       * Selects the next request the query service should deal with.
-       * Selects a Request in START status and move its status to
-       * PROCESSED to avoid double processing.
-       * @return the Request to process
-       * @exception Exception in case of error
-       */
-      virtual castor::stager::Request* requestToDo()
-        throw (castor::exception::Exception) = 0;
-
       /**
        * Lists diskpools and give details on their machine/filesystems
        * @param svcClass the Service class to consider, or empty string if none
@@ -138,7 +127,7 @@ namespace castor {
        */
       virtual std::vector<castor::query::DiskPoolQueryResponse*>*
       describeDiskPools (std::string svcClass)
-	throw (castor::exception::Exception) = 0;
+        throw (castor::exception::Exception) = 0;
 
       /**
        * Give details on the machines/filesystems of a given diskpool
@@ -149,7 +138,7 @@ namespace castor {
        */
       virtual castor::query::DiskPoolQueryResponse*
       describeDiskPool(std::string diskPool)
-	throw (castor::exception::Exception) = 0;
+        throw (castor::exception::Exception) = 0;
 
     }; // end of class IQuerySvc
 
