@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.584 $ $Date: 2007/12/14 16:57:41 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.585 $ $Date: 2007/12/14 17:24:14 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2044,8 +2044,8 @@ BEGIN
        WHERE SubRequest.request = Request.id
          AND SubRequest.castorFile = cfId
          AND DiskCopy.castorFile = cfId
-         AND DiskCopy.status = 4  -- WAITTAPERECALL
-         AND SubRequest.status = 2;  -- WAITTAPERECALL 
+         AND DiskCopy.status = 2  -- WAITTAPERECALL
+         AND SubRequest.status = 4;  -- WAITTAPERECALL 
       -- we found one: we need to wait if either we are in a different svcClass
       -- so that afterwards a disk-to-disk copy is triggered, or in case of
       -- Repack so to trigger the repack migration. Note that Repack never
