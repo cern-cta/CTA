@@ -243,8 +243,7 @@ namespace castor{
           this->svcClassName="default";
           fileRequest->setSvcClassName(this->svcClassName);
         }
-        
-        
+                
         svcClass=stagerService->selectSvcClass(this->svcClassName);  //check if it is NULL
         if(this->svcClass == NULL) {
           logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
@@ -266,7 +265,7 @@ namespace castor{
         fileRequest->setSvcClass(svcClass);
         
         /* fill the svcClass object using the request as a key  */
-        dbService->fillRep(baseAddr, fileRequest,castor::OBJ_SvcClass, false);
+        dbService->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
         
       }
       
@@ -290,14 +289,13 @@ namespace castor{
         
           // get the castorFile from the stagerService and fill it on the subrequest
           castorFile = stagerService->selectCastorFile(stgCnsHelper->cnsFileid.fileid,
-            stgCnsHelper->cnsFileid.server,svcClassId, fileClassId, stgCnsHelper->cnsFilestat.filesize,subrequest->fileName());
+            stgCnsHelper->cnsFileid.server, svcClassId, fileClassId, stgCnsHelper->cnsFilestat.filesize,subrequest->fileName());
           
           subrequest->setCastorFile(castorFile);
           castorFile->setFileClass(fileClass);
           
           // create links in db and in memory
           dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
-          //dbService->fillObj(baseAddr, castorFile, castor::OBJ_SvcClass, false);   not needed?!	
           dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
         }
         catch(castor::exception::Exception e){
