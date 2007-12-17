@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.9 $ $Release$ $Date: 2007/09/14 15:06:43 $ $Author: waldron $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/17 10:27:00 $ $Author: itglp $
  *
  * 
  *
@@ -176,6 +176,7 @@ int main(int argc, char *argv[])
   struct Cstager_IStagerSvc_t *fsSvc = NULL;
   struct C_Services_t *svcs = NULL;
   struct C_IService_t *iSvc = NULL;
+  struct Cstager_FileClass_t *fileClass = NULL;
   struct Cstager_SvcClass_t *svcClass = NULL, *svcClassOld = NULL;
   struct Cstager_TapePool_t *tapePool = NULL;
   struct Cstager_DiskPool_t *diskPool = NULL;
@@ -241,19 +242,31 @@ int main(int argc, char *argv[])
       break;
     case DiskOnlyBehavior:
       if (!strcasecmp(Coptarg, "yes") ||
-	  !strcasecmp(Coptarg, "1")) {
-	Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
+          !strcasecmp(Coptarg, "1")) {
+        Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
       } else if (!strcasecmp(Coptarg, "no") ||
-		 !strcasecmp(Coptarg, "0")) {
-	Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
+                 !strcasecmp(Coptarg, "0")) {
+        Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
       } else {
-	fprintf(stdout,
-		"Invalid option for DiskOnlyBehavior, value must be 'yes' or 'no'\n");
-	return(1);
+        fprintf(stdout,
+        "Invalid option for DiskOnlyBehavior, value must be 'yes' or 'no'\n");
+        return(1);
       }
       break;
     case ForcedFileClass:
-      Cstager_SvcClass_setForcedFileClass(svcClass,Coptarg);
+      rc = Cstager_IStagerSvc_selectFileClass(fsSvc,&fileClass,Coptarg);
+      if ( (rc == -1) || (fileClass == NULL) ) {
+        if ( rc == -1 ) {
+          fprintf(stderr,"Cstager_IStagerSvc_selectFileClass(%s): %s, %s\n",
+                  name,sstrerror(serrno),
+                  Cstager_IStagerSvc_errorMsg(fsSvc));
+          return(1);
+        }
+        fprintf(stderr,
+                "FileClass %s does not exists\n",Coptarg);
+        return(1);
+      }  
+      Cstager_SvcClass_setForcedFileClass(svcClass,fileClass);
       break;
     case StreamPolicy:
       Cstager_SvcClass_setStreamPolicy(svcClass,Coptarg);
