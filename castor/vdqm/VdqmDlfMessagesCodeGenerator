@@ -1,0 +1,63 @@
+#!/usr/bin/perl -w
+
+my $help =         "Description:\n";
+$help    = $help . "\tGenerates enum and array code for VDQM DLF messages\n\n";
+$help    = $help . "Usage:\n";
+$help    = $help . "\t$0 mode\n\n";
+$help    = $help . "Where\n";
+$help    = $help . "\tmode is either enum or array\n";
+
+die "Wrong number of arguments\n\n$help"
+  if @ARGV != 1;
+
+my $mode = "\U$ARGV[0]";
+
+die "Unknown mode: $mode\n\n$help"
+  if ($mode ne "ENUM") && ($mode ne "ARRAY");
+
+open VDQMDLFMESSAGES, "<VdqmDlfMessages.csv"
+  or die "Could not open VdqmDlfMessages.csv for reading: $!\n";
+
+my $enum_indent  = "    ";
+my $const_indent = "      ";
+
+my $array_indent   = "  ";
+my $element_indent = "    ";
+
+if($mode eq "ENUM") {
+  print("${enum_indent}enum VdqmDlfMessages {\n");
+} elsif($mode eq "ARRAY") {
+  print("${array_indent}castor::dlf::Message messages[] = {\n");
+} else {
+  die("Unknown mode");
+}
+
+my $const_name;
+my $const_val;
+my $msg;
+
+while(<VDQMDLFMESSAGES>) {
+  m/^([A-Z0-9_]*),(\d*),(.*)/;
+  $const_name = $1;
+  $const_val  = $2;
+  $msg        = $3;
+
+  if($mode eq "ENUM") {
+    print("${const_indent}${const_name}=${const_val}, /* ${msg} */\n");
+  } elsif($mode eq "ARRAY") {
+    print("${element_indent}{${const_name}, ${msg}},\n");
+  } else {
+    die("Unknown mode");
+  }
+}
+
+close VDQMDLFMESSAGES;
+
+if($mode eq "ENUM") {
+  print("${enum_indent}}; // enum VdqmDlfMessages\n");
+} elsif($mode eq "ARRAY") {
+  print("${element_indent}{-1, \"\"}\n");
+  print("${array_indent}}; // castor::dlf::Message messages[]\n");
+} else {
+  die("Unknown mode");
+}
