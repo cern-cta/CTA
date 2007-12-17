@@ -153,27 +153,7 @@ castor::client::BaseClient::BaseClient(int acceptTimeout) throw() :
   BaseObject(), m_rhPort(-1), m_callbackSocket(0), m_requestId(""),
   m_acceptTimeout(acceptTimeout), m_hasAuthorizationId(false),
   m_authUid(0), m_authGid(0), m_hasSecAuthorization(false) {
-    //Check if security env option is set. 
-    
-    char *security;
-    char *mech;
-
-  if ((security = getenv (castor::client::SECURITY_ENV)) != 0 && strcasecmp(security,"YES") == 0 ){
-    if (( mech = getenv (castor::client::SEC_MECH_ENV)) !=0) {
-      if(strlen(mech) > CA_MAXCSECPROTOLEN){
-	serrno = EINVAL;
-	castor::exception::Exception e(serrno);
-    	e.getMessage()
-      	<< "Supplied Security protocol is too long" << std::endl;
-    	throw e;
-      }else {
-        m_Sec_mech = mech;
-        m_hasSecAuthorization = true;
-      }
-    }
-  } 
-
-
+  setAuthorization();
   }
 
 //------------------------------------------------------------------------------
@@ -381,35 +361,35 @@ void castor::client::BaseClient::setRhPort(int optPort)
   }
   if (optPort > 0) {
     m_rhPort = optPort;
-    return;
-  }
-
-  // If security mode is used get the RH Secure server port,
-  // the value can be given through the environment
-  // or in the castor.conf file. If none is given, default is used
-  char* port;
-  if(m_hasSecAuthorization) {
-    if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
-      || (port = getenv (castor::client::SEC_PORT_ENV_ALT)) != 0
-      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-           (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
-      m_rhPort = castor::System::porttoi(port);
-    } else {
-      m_rhPort = CSP_RHSERVER_SEC_PORT;
-    }
-    stage_trace(3, "Looking up RH secure port - Using %d", m_rhPort);
   }
   else {
-    if ((port = getenv (castor::client::PORT_ENV)) != 0 
-      || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
-      || (port = getconfent((char *)castor::client::CATEGORY_CONF,
-           (char *)castor::client::PORT_CONF,0)) != 0) {
-      m_rhPort = castor::System::porttoi(port);
-    } else {
-      m_rhPort = CSP_RHSERVER_PORT;
+    // Resolve RH port:
+    // if security mode is used get the RH Secure server port,
+    // the value can be given through the environment
+    // or in the castor.conf file. If none is given, default is used
+    char* port;
+    if(m_hasSecAuthorization) {
+      if ((port = getenv (castor::client::SEC_PORT_ENV)) != 0 
+        || (port = getenv (castor::client::SEC_PORT_ENV_ALT)) != 0
+        || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+             (char *)castor::client::SEC_PORT_CONF,0)) != 0) {
+        m_rhPort = castor::System::porttoi(port);
+      } else {
+        m_rhPort = CSP_RHSERVER_SEC_PORT;
+      }
     }
-    stage_trace(3, "Looking up RH unsecure port - Using %d", m_rhPort);
+    else {
+      if ((port = getenv (castor::client::PORT_ENV)) != 0 
+        || (port = getenv (castor::client::PORT_ENV_ALT)) != 0
+        || (port = getconfent((char *)castor::client::CATEGORY_CONF,
+             (char *)castor::client::PORT_CONF,0)) != 0) {
+        m_rhPort = castor::System::porttoi(port);
+      } else {
+        m_rhPort = CSP_RHSERVER_PORT;
+      }
+    }
   }
+  stage_trace(3, "Looking up RH port - Using %d", m_rhPort);
 }
 
 //------------------------------------------------------------------------------
