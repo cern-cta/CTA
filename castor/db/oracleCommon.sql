@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.585 $ $Date: 2007/12/14 17:24:14 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.586 $ $Date: 2007/12/18 15:44:09 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4885,6 +4885,7 @@ BEGIN
 END;
 
 /* createOrUpdateStreams */
+
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
  initialSizeToTransfer IN NUMBER, -- total initialSizeToTransfer for the svcClass
@@ -4942,7 +4943,7 @@ BEGIN
         -- get the tape pool with less stream
         BEGIN        	   
           SELECT id INTO tpId FROM TapePool 
-           WHERE id NOT IN (SELECT tapepool FROM Stream);
+           WHERE id NOT IN (SELECT tapepool FROM Stream) AND ROWNUM <2;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- at least one stream foreach tapepool
           SELECT tapepool INTO tpId 
