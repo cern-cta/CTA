@@ -201,7 +201,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
        
       infoCandidateStreams=m_policySvc->inputForStreamPolicy((*svcClassName));
       
-      if  (infoCandidateStreams[0] == NULL) {
+      if  (infoCandidateStreams.empty() ||  infoCandidateStreams[0] == NULL) {
 	// log error and continue with the next svc class
 	castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
         castor::dlf::Param("message", "Not data found error for input for  stream policy")};
