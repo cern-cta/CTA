@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: printSvcClass.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/03/30 12:52:51 $ $Author: itglp $
+ * @(#)$RCSfile: printSvcClass.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/12/18 16:06:13 $ $Author: itglp $
  *
  * 
  *
@@ -108,13 +108,14 @@ int main(int argc, char *argv[]) {
       return(0);
     }
     
-    // get DiskPools and TapePools. The final true
-    // is needed to commit the lock taken by fillObj
+    // get DiskPools, TapePools and eventually the forcedFileClass
+    // the final true is needed to commit the lock taken by fillObj
     castor::BaseAddress ad;
     ad.setCnvSvcName("DbCnvSvc");
     ad.setCnvSvcType(castor::SVC_DBCNV);
     svcs->fillObj(&ad, svcclass, castor::OBJ_TapePool);
-    svcs->fillObj(&ad, svcclass, castor::OBJ_DiskPool, true);
+    svcs->fillObj(&ad, svcclass, castor::OBJ_DiskPool);
+    svcs->fillObj(&ad, svcclass, castor::OBJ_FileClass, true);
     
     // print out everything
     svcclass->print();
