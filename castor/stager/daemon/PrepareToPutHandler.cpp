@@ -79,7 +79,8 @@ namespace castor{
           jobOriented();
           
           /* use the stagerService to recreate castor file */
-          castor::stager::DiskCopyForRecall* diskCopyForRecall = stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
+          castor::stager::DiskCopyForRecall* diskCopyForRecall =
+            stgRequestHelper->stagerService->recreateCastorFile(stgRequestHelper->castorFile,stgRequestHelper->subrequest);
           
           
           if(diskCopyForRecall == NULL){

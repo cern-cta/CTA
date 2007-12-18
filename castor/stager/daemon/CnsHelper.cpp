@@ -52,14 +52,7 @@ namespace castor{
         this->requestUuid = requestUuid;
       }
       
-      StagerCnsHelper::~StagerCnsHelper() throw(){
-        //
-      }
-      
-      
-      /*******************/
-      /* Cns structures */
-      /*****************/ 
+      StagerCnsHelper::~StagerCnsHelper() throw() {}
       
       /****************************************************************************************/
       /* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
@@ -83,7 +76,7 @@ namespace castor{
         euid = fileRequest->euid();
         egid = fileRequest->egid();
         if (Cns_setid(euid,egid) != 0) {
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","StagerCnsHelper->cnsSetEuidAndEgid")};
+          castor::dlf::Param params[]={	castor::dlf::Param("Function","Cns_setid")};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
@@ -92,11 +85,11 @@ namespace castor{
         }
         
         if (Cns_umask(fileRequest->mask()) < 0) {
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","StagerCnsHelper->cnsSetEuidAndEgid")};
+          castor::dlf::Param params[]={	castor::dlf::Param("Function","Cns_umask")};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Impossible to set the user on the Name Server";
+          ex.getMessage()<<"Impossible to set the mask on the Name Server";
           throw ex;
         }
       }
@@ -105,76 +98,62 @@ namespace castor{
       /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
       /* create the file if it is needed/possible */
       /**************************************************************************************************************/
-      bool StagerCnsHelper::checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, mode_t modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception){
+      bool StagerCnsHelper::checkFileOnNameServer(castor::stager::SubRequest* subReq, castor::stager::SvcClass* svcClass)
+        throw(castor::exception::Exception){
         
         /* check if the required file exists */
         memset(&(cnsFileid), '\0', sizeof(cnsFileid)); /* reset cnsFileid structure  */
-        fileExist = (0 == Cns_statx(fileName.c_str(),&(cnsFileid),&(cnsFilestat)));
+        bool newFile = (0 != Cns_statx(subReq->fileName().c_str(), &(cnsFileid), &(cnsFilestat))) && (serrno == ENOENT);
+        int type = subReq->request()->type();
         
-        
-        if(!fileExist){
-          if(isFileToCreateOrException(type, subrequestFlags)){/* create the file is the type is like put, ...*/
-            if(serrno == ENOENT){
-              
-              /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
-              memset(&(cnsFileid),0, sizeof(cnsFileid));
-              
-              if (Cns_creatx(fileName.c_str(), modeBits, &(cnsFileid)) != 0) {
-                castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.1")};
-                castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
-                
-                castor::exception::Exception ex(serrno);
-                ex.getMessage()<<"Impossible to create the file";
-                throw ex;
-              }
-              
-              /* in case of Disk1 pool, we want to force the fileClass of the file */
-              if(svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
-                std::string forcedFileClassName = svcClass->forcedFileClass()->name();
-                Cns_unsetid();
-                if(Cns_chclass(fileName.c_str(), 0, (char*)forcedFileClassName.c_str())){
-                  int tempserrno = serrno;
-                  Cns_delete(fileName.c_str());
-                  serrno = tempserrno;
-                  
-                  castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.2")};
-                  castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
-                  
-                  castor::exception::Exception ex(serrno);
-                  ex.getMessage()<<"Impossible to force file class for this file";
-                  throw ex;
-                }
-                Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
-              }
-              
-              Cns_statx(fileName.c_str(),&(cnsFileid),&(cnsFilestat));
-            }
+        if(newFile && ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type && ((subReq->modeBits() & W_OK) == W_OK)) ||
+           (((subReq->flags() & O_CREAT) == O_CREAT) && ((OBJ_StageUpdateRequest == type) || (OBJ_StagePrepareToUpdateRequest == type))))) {
+           // creation is allowed on the above type of requests
+
+          /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
+          memset(&(cnsFileid), 0, sizeof(cnsFileid));
+          if (Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &(cnsFileid)) != 0) {
+            castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.1")};
+            castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+            
+            castor::exception::Exception ex(serrno);
+            ex.getMessage() << "Impossible to create the file";
+            throw ex;
           }
+          
+          /* in case of Disk1 pool, we want to force the fileClass of the file */
+          if(svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
+            std::string forcedFileClassName = svcClass->forcedFileClass()->name();
+            Cns_unsetid();
+            if(Cns_chclass(subReq->fileName().c_str(), 0, (char*)forcedFileClassName.c_str())) {
+              int tempserrno = serrno;
+              Cns_delete(subReq->fileName().c_str());
+              serrno = tempserrno;
+              
+              castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.2")};
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+              
+              castor::exception::Exception ex(serrno);
+              ex.getMessage() << "Impossible to force file class for this file";
+              throw ex;
+            }
+            Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
+          }
+          
+          Cns_statx(subReq->fileName().c_str(), &(cnsFileid), &(cnsFilestat));
         }
-        return(fileExist);
-      }
-      
-      
-      /******************************************************************************/
-      /* return toCreate= true when type = put/prepareToPut/update/prepareToUpdate */
-      /****************************************************************************/
-      bool StagerCnsHelper::isFileToCreateOrException(int type, int subRequestFlags) throw(castor::exception::Exception){
-        bool toCreate = false;
-        
-        
-        if ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type)||((O_CREAT == (subRequestFlags & O_CREAT))&&((OBJ_StageUpdateRequest == type) ||(OBJ_StagePrepareToUpdateRequest == type)))) {
+        else if(newFile) {
+          // other requests cannot create non existing files
+          castor::dlf::Param params[]={ castor::dlf::Param("Function", "StagerCnsHelper->checkAndSetFileOnNameServer.3")};
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1, params);
           
-          toCreate = true;
-        }else if((OBJ_StageGetRequest == type) || (OBJ_StagePrepareToGetRequest == type) ||(OBJ_StageRepackRequest == type) ||(OBJ_StageUpdateRequest == type) ||                          (OBJ_StagePrepareToUpdateRequest == type)||(OBJ_StageRmRequest == type) ||(OBJ_SetFileGCWeight == type) ||(OBJ_StagePutDoneRequest == type)){
-          
-          castor::dlf::Param params[]={ castor::dlf::Param("Function", "StagerCnsHelper->isFileToCreateOrException")};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1 ,params);
-          
-          castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"User asking for a non existing file";
+          castor::exception::Exception ex(ENOENT);
+          ex.getMessage() << (OBJ_StagePrepareToPutRequest == type || OBJ_StagePrepareToUpdateRequest == type ?
+            "Cannot PrepareToPut a non-writable file" :
+            "No such file or directory");
           throw ex;
         }
-        return(toCreate);
+        return newFile;
       }
       
     }//end namespace dbService

@@ -82,14 +82,12 @@ namespace castor{
       
       void StagerRmHandler::handle() throw(castor::exception::Exception)
       {
-        
         // check the existence of the file. Don't stop if ENOENT
         try {
-          stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(),
-             stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
+          stgCnsHelper->checkFileOnNameServer(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
 
-          /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
-          stgRequestHelper->checkFilePermission();
+          // check if the user (euid,egid) has the right permission for the request's type. otherwise throw exception
+          stgRequestHelper->checkFilePermission(false);
         }
         catch(castor::exception::Exception e) {
           if(serrno != ENOENT) {

@@ -47,9 +47,9 @@ namespace castor{
       
       class StagerUpdateHandler : public virtual StagerJobRequestHandler{
         
-      private:
+      protected:
         
-        bool recreateCastorFile;
+        bool recreate;
         
       public:
       

@@ -46,52 +46,12 @@ namespace castor{
   namespace stager{
     namespace dbService{
       
-      StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
+      StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception) :
+        StagerUpdateHandler(stgRequestHelper)
       {
-        this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_StagePrepareToUpdateRequest;
-        
       }
-      
-      
-      /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
-      void StagerPrepareToUpdateHandler::preHandle() throw(castor::exception::Exception)
-      {
-        
-        /* get the uuid request string version and check if it is valid */
-        stgRequestHelper->setRequestUuid();
-        
-        /* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
-        this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
-        
-        /* set the username and groupname needed to print them on the log */
-        stgRequestHelper->setUsernameAndGroupname();
-        
-        /* get the uuid subrequest string version and check if it is valid */
-        /* we can create one !*/
-        stgRequestHelper->setSubrequestUuid();
-        
-        /* set the euid, egid attributes on stgCnsHelper (from fileRequest) */ 
-        stgCnsHelper->cnsSetEuidAndEgid(stgRequestHelper->fileRequest);
-        
-        /* get the svcClass */
-        stgRequestHelper->getSvcClass();
-        
-        /* create and fill request->svcClass link on DB */
-        stgRequestHelper->linkRequestToSvcClassOnDB();
-        
-        /* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
-        /* create the file if it is needed/possible */
-        this->fileExist = stgCnsHelper->checkAndSetFileOnNameServer(stgRequestHelper->subrequest->fileName(), this->typeRequest, stgRequestHelper->subrequest->flags(), stgRequestHelper->subrequest->modeBits(), stgRequestHelper->svcClass);
-        
-        /* check if the user (euid,egid) has the right permission for the request's type. otherwise-> throw exception  */
-        stgRequestHelper->checkFilePermission();
-        
-        this->toRecreateCastorFile = !(fileExist && (((stgRequestHelper->subrequest->flags()) & O_TRUNC) == 0));
-      }
-      
-      
-      
+
       /*********************************************/
       /* handler for the PrepareToUpdate request  */
       /*******************************************/
@@ -100,7 +60,7 @@ namespace castor{
         stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_PREPARETOUPDATE, &(stgCnsHelper->cnsFileid));
         
         StagerRequestHandler* h = 0;
-        if(toRecreateCastorFile) {
+        if(recreate) {
           // delegate to PPut
           h = new StagerPrepareToPutHandler(stgRequestHelper, stgCnsHelper);
         } else {

@@ -12,8 +12,7 @@
 #include "castor/stager/dbService/StagerCnsHelper.hpp"
 #include "castor/stager/dbService/StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/dbService/StagerUpdateHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -45,33 +44,18 @@ namespace castor{
       class StagerCnsHelper;
 
 
-      class StagerPrepareToUpdateHandler : public virtual StagerJobRequestHandler{
-
-      private:
-	bool fileExist;
-	/* flag to schedule or to recreateCastorFile depending if the file exists... */
-	bool toRecreateCastorFile;
-
+      class StagerPrepareToUpdateHandler : public virtual StagerUpdateHandler {
 	
       public:
-	/* constructor */
-	StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
-	/* destructor */
-	~StagerPrepareToUpdateHandler() throw() {};
-
-	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
-	/* to be called before the stgPrepareToUpdate->handle() */
-	/* set the internal attribute "toRecreateCastorFile depending on fileExist" */
-	/* which determines the real flow of the handler */
-	virtual void preHandle() throw(castor::exception::Exception);
-
-	/* PrepareToUpdate request handler */
-	void handle() throw(castor::exception::Exception);
+        /* constructor */
+        StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        /* destructor */
+        ~StagerPrepareToUpdateHandler() throw() {};
+        
+        /* PrepareToUpdate request handler */
+        void handle() throw(castor::exception::Exception);
 	
-
-
-
-      }; //end StagerPrepareToUpdateHandler class
+      };
 
     }//end dbService namespace
   }//end stager namespace

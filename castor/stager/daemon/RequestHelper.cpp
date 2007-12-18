@@ -316,30 +316,22 @@ namespace castor{
       /* check if the user (euid,egid) has the ritght permission for the request's type                   */
       /* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */
       /**************************************************************************************************/
-      bool StagerRequestHelper::checkFilePermission() throw(castor::exception::Exception)
+      void StagerRequestHelper::checkFilePermission(bool fileCreated) throw(castor::exception::Exception)
       {
-        
-        bool filePermission = true;
         try{
-          
-          int type =  this->fileRequest->type();
           std::string filename = this->subrequest->fileName();
           uid_t euid = this->fileRequest->euid();
           uid_t egid = this->fileRequest->egid();
           
-          
-          switch(type) {
+          switch(fileRequest->type()) {
             case OBJ_StageGetRequest:
             case OBJ_StagePrepareToGetRequest:
             case OBJ_StageRepackRequest:
-            filePermission=R_OK;
-            if ( Cns_accessUser(filename.c_str(),R_OK,euid,egid) == -1 ) {
-              filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
-              castor::exception::Exception ex(SEINTERNAL);
-              throw ex;
-              
-            }	   
-            break;
+              if ( Cns_accessUser(filename.c_str(), R_OK, euid, egid) == -1 ) {
+                castor::exception::Exception ex(SEINTERNAL);
+                throw ex;
+              }	   
+              break;
             
             case OBJ_StagePrepareToPutRequest:
             case OBJ_StagePrepareToUpdateRequest:
@@ -348,24 +340,21 @@ namespace castor{
             case OBJ_StageUpdateRequest:
             case OBJ_StagePutDoneRequest:
             case OBJ_SetFileGCWeight:
-            filePermission=W_OK;
-            if ( Cns_accessUser(filename.c_str(),W_OK,euid,egid) == -1 ) {
-              filePermission=false; // even if we treat internally the exception, lets gonna use it as a flag
-              castor::exception::Exception ex(SEINTERNAL);
-              throw ex;
-              
-            }
-            break;
+              if ( Cns_accessUser(filename.c_str(), (fileCreated ? R_OK : W_OK), euid, egid) == -1 ) {
+                castor::exception::Exception ex(SEINTERNAL);
+                throw ex;
+              }
+              break;
             
             default:
-            break;
+              break;
           }
-        }catch(castor::exception::Exception e){
+        }
+        catch(castor::exception::Exception e){
           logToDlf(DLF_LVL_USER_ERROR, STAGER_USER_PERMISSION);	    
-          e.getMessage()<< "Access denied";
+          e.getMessage() << "Access denied";
           throw e;  
         }
-        return(filePermission);
       }
       
             

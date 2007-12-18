@@ -157,11 +157,15 @@ namespace castor{
 	void setUsernameAndGroupname() throw(castor::exception::Exception);
 
 
-	/* check if the user (euid,egid) has the right permission for the request's type
-	   note that we were not checking the permissions for SetFileGCWeight and PutDone request (true),
-	   now you need write permissions
-	*/
-	bool checkFilePermission() throw(castor::exception::Exception);
+	/**
+   * Checks if the user (euid,egid) has the right permission for this request.
+   * Write permissions are needed for any request that changes any attribute of the file
+   * (including SetFileGCWeight and PutDone).
+   * @param fileCreated true if the file has just been created. In such a case, read permission
+   * is sufficient for any operation, allowing for putting read-only files.
+   * @throw exception when the user has not enough permissions for this request.
+	 */
+	void checkFilePermission(bool fileCreated) throw(castor::exception::Exception);
      
   /**
    * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)

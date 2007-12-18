@@ -41,65 +41,47 @@
 namespace castor{
   namespace stager{
     namespace dbService{
-
+      
       class StagerCnsHelper : public virtual castor::BaseObject{
-	
-      private: 
-	Cuuid_t requestUuid;
-
+        
+      private:
+      
+        Cuuid_t requestUuid;
+        
       public:
-	
-	struct Cns_fileid cnsFileid;
-	struct Cns_filestat cnsFilestat;
-	struct Cns_fileclass cnsFileclass;
-	
-	uid_t euid;/* stgRequestHelper->fileRequest->euid() */ 
-	uid_t egid;/* stgRequestHelper->fileRequest->egid() */
-	int fileExist;	
-
-
-	
-	
-	StagerCnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception);
-	~StagerCnsHelper() throw();
-
-	
-
-
-
-	/*******************/
-	/* Cns structures */
-	/*****************/ 
-
-	/****************************************************************************/
-	/* set the subrequestFileName from stgRequestHelper->subrequest->fileName()*/
-	void setSubrequestFileName(std::string subReqFileName);
-	
-	
-	/****************************************************************************************/
-	/* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
-	void getCnsFileclass() throw(castor::exception::Exception);
-      
-	/***************************************************************/
-	/* set the user and group id needed to call the Cns functions */
-	/*************************************************************/
-	void cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest) throw(castor::exception::Exception);
-      
-
-	/****************************************************************************************************************/
-	/* check the existence of the file, if the user hasTo/can create it and set the fileId and server for the file */
-	/* create the file if it is needed/possible */
-	/**************************************************************************************************************/
-	bool checkAndSetFileOnNameServer(std::string fileName, int type, int subrequestFlags, mode_t modeBits, castor::stager::SvcClass* svcClass) throw(castor::exception::Exception);
-
-
-	/******************************************************************************/
-	/* return toCreate= true when type = put/prepareToPut/update/prepareToUpdate */
-	/****************************************************************************/
-	bool isFileToCreateOrException(int type, int subRequestFlags) throw(castor::exception::Exception);
-	
-
-
+        
+        struct Cns_fileid cnsFileid;
+        struct Cns_filestat cnsFilestat;
+        struct Cns_fileclass cnsFileclass;
+        
+        uid_t euid;/* stgRequestHelper->fileRequest->euid() */ 
+        uid_t egid;/* stgRequestHelper->fileRequest->egid() */
+        
+        StagerCnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception);
+        ~StagerCnsHelper() throw();
+        
+        
+        /****************************************************************************************/
+        /* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
+        void getCnsFileclass() throw(castor::exception::Exception);
+        
+        /***************************************************************/
+        /* set the user and group id needed to call the Cns functions */
+        /*************************************************************/
+        void cnsSetEuidAndEgid(castor::stager::FileRequest* fileRequest) throw(castor::exception::Exception);
+        
+        
+        /**
+         * checks the existence of the file in the nameserver, and creates it if the request allows for
+         * creation. Internally sets the fileId and nsHost for the file.
+         * @param subReq the subRequest being processed
+         * @param svcClass the service class to which it belongs
+         * @return true if the file has been created 
+         * @throw exception when the file does not exist and the user or the request don't allow for creation
+         */
+        bool checkFileOnNameServer(castor::stager::SubRequest* subReq, castor::stager::SvcClass* svcClass)
+          throw(castor::exception::Exception);
+        
       }; // end StagerCnsHelper class
     }//end namespace dbService
   }// end namespace stager
