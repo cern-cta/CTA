@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.7 $ $Date: 2007/03/13 16:22:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.8 $ $Date: 2007/12/18 08:37:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -31,6 +31,9 @@
 #endif
 #include <unistd.h>
 #include "tplogger_api.h"
+#if defined(linux)
+#include <sys/mtio.h>
+#endif
 int jid;
 int main(argc, argv)
 int	argc;
@@ -50,7 +53,14 @@ char	**argv;
 	uid_t uid;
 	int vdqm_rc;
 	int vdqm_status;
-
+#if defined(linux)
+        struct mtop mt_cmd;
+        int st_buffer_writes = 0;
+        int st_read_ahead = 0;
+        int st_async_writes = 0;
+        char *p;
+        char *getconfent();
+#endif
 	ENTRY (confdrive);
 
         tl_init_handle( &tl_tpdaemon, "dlf" );
@@ -87,6 +97,85 @@ char	**argv;
 					if (ioctl (tapefd, SIOC_RESERVE, 0) < 0)
 						c = errno;
 #endif
+#if defined(linux)
+                                /* set st parameters (moved from tape_residue_report kernel patch) */
+                                mt_cmd.mt_op = MTSETDRVBUFFER;
+
+                                st_buffer_writes = 0;
+                                if ((p = getconfent ("TAPE", "ST_BUFFER_WRITES", 0))) {
+                                        st_buffer_writes = (int)atoi(p);
+                                        if ((0 != st_buffer_writes) && (1 != st_buffer_writes)) {
+                                                st_buffer_writes = 0;   
+                                        }
+                                }
+                                if (!st_buffer_writes) {
+                                        tplogit (func, "Clear ST_BUFFER_WRITES (0)\n");
+                                        mt_cmd.mt_count = MT_ST_CLEARBOOLEANS |
+                                                MT_ST_BUFFER_WRITES;
+                                } else {
+                                        tplogit (func, "Set ST_BUFFER_WRITES (1)\n");
+                                        mt_cmd.mt_count = MT_ST_SETBOOLEANS |
+                                                MT_ST_BUFFER_WRITES;
+                                }
+                                if (ioctl(tapefd, MTIOCTOP, &mt_cmd) < 0) {
+                                        tplogit (func, TP002, "ioctl (MT_ST_BUFFER_WRITES)", strerror(errno));
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "ioctl (MT_ST_BUFFER_WRITES)",
+                                                            "Value",   TL_MSG_PARAM_STR, strerror(errno) );
+                                        c = errno;
+                                }
+
+                                st_async_writes = 0;
+                                if ((p = getconfent ("TAPE", "ST_ASYNC_WRITES", 0))) {
+                                        st_async_writes = (int)atoi(p);
+                                        if ((0 != st_async_writes) && (1 != st_async_writes)) {
+                                                st_async_writes = 0;   
+                                        }
+                                }
+                                if (!st_async_writes) {
+                                        tplogit (func, "Clear ST_ASYNC_WRITES (0)\n");
+                                        mt_cmd.mt_count = MT_ST_CLEARBOOLEANS |
+                                                MT_ST_ASYNC_WRITES;
+                                } else {
+                                        tplogit (func, "Set ST_ASYNC_WRITES (1)\n");
+                                        mt_cmd.mt_count = MT_ST_SETBOOLEANS |
+                                                MT_ST_ASYNC_WRITES;
+                                }
+                                if (ioctl(tapefd, MTIOCTOP, &mt_cmd) < 0) {
+                                        tplogit (func, TP002, "ioctl (MT_ST_ASYNC_WRITES)", strerror(errno));
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "ioctl (MT_ST_ASYNC_WRITES)",
+                                                            "Value",   TL_MSG_PARAM_STR, strerror(errno) );
+                                        c = errno;
+                                }
+
+                                st_read_ahead = 0;
+                                if ((p = getconfent ("TAPE", "ST_READ_AHEAD", 0))) {
+                                        st_read_ahead = (int)atoi(p);
+                                        if ((0 != st_read_ahead) && (1 != st_read_ahead)) {
+                                                st_read_ahead = 0;   
+                                        }
+                                }
+                                if (!st_read_ahead) {
+                                        tplogit (func, "Clear ST_READ_AHEAD (0)\n");
+                                        mt_cmd.mt_count = MT_ST_CLEARBOOLEANS |
+                                                MT_ST_READ_AHEAD;
+                                } else {
+                                        tplogit (func, "Set ST_READ_AHEAD (1)\n");
+                                        mt_cmd.mt_count = MT_ST_SETBOOLEANS |
+                                                MT_ST_READ_AHEAD;
+                                }
+                                if (ioctl(tapefd, MTIOCTOP, &mt_cmd) < 0) {
+                                        tplogit (func, TP002, "ioctl (MT_ST_READ_AHEAD)", strerror(errno));
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "ioctl (MT_ST_READ_AHEAD)",
+                                                            "Value",   TL_MSG_PARAM_STR, strerror(errno) );
+                                        c = errno;
+                                }
+#endif 
 				close (tapefd);
 			}
 		}
