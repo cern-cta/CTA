@@ -32,17 +32,17 @@
 #include <vdqm_constants.h>	//e.g. Magic Number of old vdqm protocol
  
 // Local includes
-#include "newVdqm.h" //Needed for the client_connection
-#include "OldRequestFacade.hpp"
-#include "OldProtocolInterpreter.hpp"
-#include "ProtocolFacade.hpp"
-#include "VdqmServerSocket.hpp"
+#include "castor/vdqm/newVdqm.h" //Needed for the client_connection
+#include "castor/vdqm/OldRequestFacade.hpp"
+#include "castor/vdqm/OldProtocolInterpreter.hpp"
+#include "castor/vdqm/ProtocolFacade.hpp"
+#include "castor/vdqm/VdqmSocketHelper.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::ProtocolFacade::ProtocolFacade(
-	VdqmServerSocket* serverSocket,
+	castor::io::ServerSocket* serverSocket,
 	const Cuuid_t* cuuid) throw(castor::exception::Exception) {
 	
 	if ( 0 == serverSocket || 0 == cuuid) {
@@ -76,7 +76,8 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
 	// get the incoming request
   try {
   	//First check of the Protocol
-  	magicNumber = ptr_serverSocket->readMagicNumber();
+  	magicNumber =
+          VdqmSocketHelper::readMagicNumber(ptr_serverSocket->socket());
   } catch (castor::exception::Exception e) {  
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =

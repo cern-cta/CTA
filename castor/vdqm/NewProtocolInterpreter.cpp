@@ -34,33 +34,32 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
  
-// Local includes
-#include "NewProtocolInterpreter.hpp"
-#include "VdqmServerSocket.hpp"
+#include "castor/vdqm/NewProtocolInterpreter.hpp"
+
  
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::NewProtocolInterpreter::NewProtocolInterpreter(
-	VdqmServerSocket* serverSocket,
-	const Cuuid_t* cuuid) throw(castor::exception::Exception) {
-	
-	if ( 0 == serverSocket || 0 == cuuid) {
-		castor::exception::InvalidArgument ex;
-  	ex.getMessage() << "One of the arguments is NULL";
-  	throw ex;
-	}
-	else {
-		ptr_serverSocket = serverSocket;
-		m_cuuid = cuuid;
-	}
+  castor::io::ServerSocket* serverSocket, const Cuuid_t* cuuid)
+throw(castor::exception::Exception) {
+  
+  if ( 0 == serverSocket || 0 == cuuid) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "One of the arguments is NULL";
+    throw ex;
+  }
+  else {
+    ptr_serverSocket = serverSocket;
+    m_cuuid = cuuid;
+  }
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::vdqm::NewProtocolInterpreter::~NewProtocolInterpreter() 
-	throw() {
+throw() {
 }
 
 
@@ -68,7 +67,7 @@ castor::vdqm::NewProtocolInterpreter::~NewProtocolInterpreter()
 // readObject
 //------------------------------------------------------------------------------
 castor::IObject* castor::vdqm::NewProtocolInterpreter::readObject()
-  throw(castor::exception::Exception) {
+throw(castor::exception::Exception) {
 
   char* buffer;
   int length;
@@ -93,8 +92,8 @@ castor::IObject* castor::vdqm::NewProtocolInterpreter::readObject()
 // readRestOfBuffer
 //------------------------------------------------------------------------------
 void castor::vdqm::NewProtocolInterpreter::readRestOfBuffer(char** buf, int& n)
-  throw (castor::exception::Exception) {
-  	
+throw (castor::exception::Exception) {
+    
   // First read the header
   unsigned int length;
   int ret = netread(ptr_serverSocket->socket(),

@@ -24,8 +24,7 @@
  *****************************************************************************/
  
  
- // Include Files
-#include <signal.h>
+// Include Files
 #include <string>
 
 #include "Cgetopt.h"
@@ -39,13 +38,14 @@
 #include <net.h>
 #include <vdqm_constants.h>	//e.g. Magic Number of old vdqm protocol
 
+#include "castor/server/SignalThreadPool.hpp"
+#include "castor/server/TCPListenerThreadPool.hpp"
+#include "castor/vdqm/DriveDedicationThread.hpp"
+#include "castor/vdqm/ProtocolFacade.hpp"
+#include "castor/vdqm/RequestHandlerThread.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/VdqmServer.hpp"
 #include "castor/vdqm/handler/TapeRequestDedicationHandler.hpp"
-
-// Local Includes
-#include "VdqmServer.hpp"
-#include "VdqmServerSocket.hpp"
-#include "ProtocolFacade.hpp"
-
 
 
 //------------------------------------------------------------------------------
@@ -53,29 +53,52 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
-  // First ignoring SIGPIPE and SIGXFSZ 
-  // to avoid crashing when a file is too big or
-  // when the connection is lost with a client
-#if ! defined(_WIN32)
-	signal (SIGPIPE,SIG_IGN);
-	signal (SIGXFSZ,SIG_IGN);
-#endif
-
-	
   try {
     castor::vdqm::VdqmServer server;
+
+
+    //-----------------------
+    // Parse the command line
+    //-----------------------
+
     server.parseCommandLine(argc, argv);
-    std::cout << "Starting VDQM Daemon" << std::endl;
+
+
+    //--------------------
+    // Create thread pools
+    //--------------------
+
+    server.addThreadPool(
+      new castor::server::TCPListenerThreadPool("RequestHandlerThread",
+        new castor::vdqm::RequestHandlerThread(), server.getListenPort()));
+
+    server.addThreadPool(
+      new castor::server::SignalThreadPool("DriveDedicationThread",
+        new castor::vdqm::DriveDedicationThread()));
+
+
+    //----------------------------------------------
+    // Set the number of threads in each thread pool
+    //----------------------------------------------
+
+    server.getThreadPool('R')->setNbThreads(server.getRqstHandlerThreadNb());
+    server.getThreadPool('D')->setNbThreads(server.getDedicationThreadNb());
+
+
+    //-----------------
+    // Start the server
+    //-----------------
+
     server.start();
-    return 0;
+
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
-    
+
     return 1;
   } catch (...) {
-    std::cerr << "Caught exception!" << std::endl;
+    std::cerr << "Caught general exception!" << std::endl;
     
     return 1;
   }
@@ -85,227 +108,103 @@ int main(int argc, char *argv[]) {
 
 
 //------------------------------------------------------------------------------
-// Constructor
+// constructor
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmServer::VdqmServer(): 
-	m_foreground(false), 
-	m_threadPoolId(-1),
-  m_threadNumber(DEFAULT_THREAD_NUMBER),
-  m_dedicationThreadNumber(DEFAULT_THREAD_NUMBER), 
-  m_serverName("VdqmServer") {
-  	
-  initLog("Vdqm", SVC_DLFMSG);
-  // Initializes the DLF logging. This includes
-  // registration of the predefined messages
-  castor::dlf::Message messages[] =
-    {{ 0, " - "},
-     { 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Database"},
-     { 3, "Could not get Conversion Service for Streaming"},
-     { 4, "Exception caught : server is stopping"},
-     { 5, "Exception caught : ignored"},
-     { 6, "Request has MagicNumber from old VDQM Protocol"},
-     { 7, "Unable to read Request from socket"},
-     { 8, "Unable to initialize TapeRequestDedicationHandler thread"},
-     { 9, "Exception caught"},
-     {10, "Sending reply to client"},
-     {11, "Unable to send Ack to client"},
-     {12, "Request stored in DB"},
-     {13, "Wrong Magic number"},
-     {14, "Handle old vdqm request type"},
-     {15, "ADMIN request"},
-     {16, "New VDQM request"},
-     {17, "Handle Request type error"},
-     {18, "shutdown server requested"},//not used
-     {19, "Handle VDQM_VOL_REQ"},
-     {20, "Handle VDQM_DRV_REQ"},
-     {21, "Handle VDQM_DEL_VOLREQ"},
-     {22, "Handle VDQM_DEL_DRVREQ"},
-     {23, "The parameters of the old vdqm VolReq Request"},
-     {24, "Request priority changed"},
-     {25, "Handle VDQM_PING"},
-     {26, "Queue position of TapeRequest"},
-     {27, "Send VDQM_PING back to client"},
-     {28, "TapeRequest and its ClientIdentification removed"},
-     {29, "Request deleted from DB"},
-     {30, "Client didn't send a VDQM_COMMIT => Rollback of request in db"},
-     {31, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
-     {32, "Try to store Request into the data base"},
-     {33, "The parameters of the old vdqm DrvReq Request"},
-     {34, "Create new TapeDrive in DB"},
-     {35, "The desired \"old Protocol\" status of the client"},     
-     {36, "The actual \"new Protocol\" status of the client"},     
-     {37, "Remove old TapeRequest from db"},     
-     {38, "WAIT DOWN request from tpdaemon client"}, 
-     {39, "Assign of tapeRequest to jobID"},     
-     {40, "Local assign to jobID"},     
-     {41, "Inconsistent release on tape drive"},     
-     {42, "client has requested a forced unmount."},
-     {43, "tape drive in STATUS_UNKNOWN status. Force unmount!"},
-     {44, "No tape request left for mounted tape"},
-     {45, "Update of representation in DB"}, 
-     {46, "No free TapeDrive, or no TapeRequest in the db"}, 
-     {47, "Try to get information about the tape from the VMGR daemon"},
-     {48, "RTCopyDConnection: Too large errmsg buffer requested"},
-     {49, "RTCopyDConnection: rtcopy daemon returned an error"}, 
-     {50, "Exception caught in TapeRequestDedicationHandler::run()"}, 
-     {51, "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request"},
-     {52, "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"},
-     {53, "Handle VDQM_DEDICATE_DRV"},
-     {54, "Handle VDQM_GET_VOLQUEUE"},
-     {55, "Handle VDQM_GET_DRVQUEUE"},
-     {56, "Exception caught in TapeRequestDedicationHandler::handleDedication()"},
-     {57, "Send information for showqueues command"},
-     {58, "Thread pool created"},
-     {59, "Thread pool creation error"},
-     {60, "Error while assigning request to pool"},
-     {61, "Start tape to tape drive dedication thread"},
-     {62, "Dedication thread pool created"},
-     {63, "Exception caught in TapeRequestDedicationHandler::dedicationRequest()"},
-     {64, "No TapeDrive object to commit to RTCPD"},
-     {65, "Found a queued tape request for mounted tape"},
-     {66, "VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge"},
-     {67, "Couldn't find the tape request in db. Maybe it is already deleted?"},
-     {-1, ""}};
-  castor::dlf::dlf_init("Vdqm", messages);
+castor::vdqm::VdqmServer::VdqmServer()
+throw():
+  castor::server::BaseDaemon("Vdqm")
+{
+  initDlf();
 }
 
 
 //------------------------------------------------------------------------------
-// destructor
+// initDlf
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmServer::~VdqmServer() throw() {
-   castor::vdqm::handler::TapeRequestDedicationHandler* 
-  	tapeRequestDedicationHandler = 
-  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance(0);
-  	
-  /**
-   * Stopping the thread, which is handling the dedication of the tape
-   * to a tape drive
-   */
-  tapeRequestDedicationHandler->stop();	
-  
-  sleep(1);
-  
-  delete tapeRequestDedicationHandler;
-  
-  // hack to release thread specific allocated memory
-  services();
-}
+void castor::vdqm::VdqmServer::initDlf()
+throw()
+{
+  castor::dlf::Message messages[] = {
+    {VDQM_NULL, " - "},
+    {VDQM_NEW_REQUEST_ARRIVAL, "New Request Arrival"},
+    {VDQM_FAILED_TO_GET_CNVS_FOR_DB, "Could not get Conversion Service for Database"},
+    {VDQM_FAILED_TO_GET_CNVS_FOR_STREAMING, "Could not get Conversion Service for Streaming"},
+    {VDQM_EXCEPTION_SERVER_STOPPING, "Exception caught : server is stopping"},
+    {VDQM_EXCEPTION_IGNORED, "Exception caught : ignored"},
+    {VDQM_REQUEST_HAS_OLD_PROTOCOL_MAGIC_NB, "Request has MagicNumber from old VDQM Protocol"},
+    {VDQM_FAILED_SOCK_READ, "Unable to read Request from socket"},
+    {VDQM_FAILED_INIT_DRIVE_DEDICATION_THREAD, "Unable to initialize TapeRequestDedicationHandler thread"},
+    {VDQM_EXCEPTION, "Exception caught"},
+    {VDQM_SEND_REPLY_TO_CLIENT, "Sending reply to client"},
+    {VDQM_FAILED_SEND_ACK_TO_CLIENT, "Unable to send Ack to client"},
+    {VDQM_REQUEST_STORED_IN_DB, "Request stored in DB"},
+    {VDQM_WRONG_MAGIC_NB, "Wrong Magic number"},
+    {VDQM_HANDLE_OLD_VDQM_REQUEST_TYPE, "Handle old vdqm request type"},
+    {VDQM_ADMIN_REQUEST, "ADMIN request"},
+    {VDQM_NEW_VDQM_REQUEST, "New VDQM request"},
+    {VDQM_HANDLE_REQUEST_TYPE_ERROR, "Handle Request type error"},
+    {VDQM_SERVER_SHUTDOWN_REQUSTED, "shutdown server requested"},
+    {VDQM_HANDLE_VOL_REQ, "Handle VDQM_VOL_REQ"},
+    {VDQM_HANDLE_DRV_REQ, "Handle VDQM_DRV_REQ"},
+    {VDQM_HANDLE_DEL_VOLREQ, "Handle VDQM_DEL_VOLREQ"},
+    {VDQM_HANDLE_DEL_DRVREQ, "Handle VDQM_DEL_DRVREQ"},
+    {VDQM_OLD_VDQM_VOLREQ_PARAMS, "The parameters of the old vdqm VolReq Request"},
+    {VDQM_REQUEST_PRIORITY_CHANGED, "Request priority changed"},
+    {VDQM_HANDLE_VDQM_PING, "Handle VDQM_PING"},
+    {VDQM_QUEUE_POS_OF_TAPE_REQUEST, "Queue position of TapeRequest"},
+    {VDQM_SEND_BACK_VDQM_PING, "Send VDQM_PING back to client"},
+    {VDQM_TAPE_REQUEST_ANDCLIENT_ID_REMOVED, "TapeRequest and its ClientIdentification removed"},
+    {VDQM_REQUEST_DELETED_FROM_DB, "Request deleted from DB"},
+    {VDQM_NO_VDQM_COMMIT_FROM_CLIENT, "Client didn't send a VDQM_COMMIT => Rollback of request in db"},
+    {VDQM_VERIFY_REQUEST_NON_EXISTANT, "Verify that the request doesn't exist, by calling IVdqmSvc->checkTapeRequest"},
+    {VDQM_STORE_REQUEST_IN_DB, "Try to store Request into the data base"},
+    {VDQM_OLD_VDQM_DRV_REQ_PARAMS, "The parameters of the old vdqm DrvReq Request"},
+    {VDQM_CREATE_DRIVE_IN_DB, "Create new TapeDrive in DB"},
+    {VDQM_DESIRED_OLD_PROTOCOL_CLIENT_STATUS, "The desired \"old Protocol\" status of the client"},
+    {VDQM_ACTUAL_NEW_PROTOCOL_CLIENT_STATUS, "The actual \"new Protocol\" status of the client"},
+    {VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, "Remove old TapeRequest from db"},
+    {VDQM_WAIT_DOWN_REQUEST_FROM_TPDAEMON_CLIENT, "WAIT DOWN request from tpdaemon client"},
+    {VDQM_ASSIGN_TAPE_REQUEST_TO_JOB_ID, "Assign of tapeRequest to jobID"},
+    {VDQM_LOCAL_ASSIGN_TO_JOB_ID, "Local assign to jobID"},
+    {VDQM_INCONSISTENT_RELEASE_ON_DRIVE, "Inconsistent release on tape drive"},
+    {VDQM_CLIENT_REQUESTED_FORCED_UNMOUNT, "client has requested a forced unmount."},
+    {VDQM_DRIVE_STATUS_UNKNOWN_FORCE_UNMOUNT, "tape drive in STATUS_UNKNOWN status. Force unmount!"},
+    {VDQM_NO_TAPE_REQUEST_FOR_MOUNTED_TAPE, "No tape request left for mounted tape"},
+    {VDQM_UPDATE_REPRESENTATION_IN_DB, "Update of representation in DB"},
+    {VDQM_NO_FREE_DRIVE_OR_NO_TAPE_REQUEST_IN_DB, "No free TapeDrive, or no TapeRequest in the db"},
+    {VDQM_GET_TAPE_INFO_FROM_VMGR, "Try to get information about the tape from the VMGR daemon"},
+    {VDQM_RTCOPYDCONNECTION_ERRMSG_TOO_LARGE, "RTCopyDConnection: Too large errmsg buffer requested"},
+    {VDQM_RTCOPYDCONNECTION_RTCOPY_ERROR, "RTCopyDConnection: rtcopy daemon returned an error"},
+    {VDQM_TAPE_REQUEST_DEDICATION_HANDLER_RUN_EXCEPTION, "Exception caught in TapeRequestDedicationHandler::run()"},
+    {VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK, "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request"},
+    {VDQM_HANDLE_VOL_MOUNT_STATUS_MOUNTED, "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"},
+    {VDQM_HANDLE_VDQM_DEDICATE_DRV, "Handle VDQM_DEDICATE_DRV"},
+    {VDQM_HANDLE_VDQM_GET_VOLQUEUE, "Handle VDQM_GET_VOLQUEUE"},
+    {VDQM_HANDLE_VDQM_GET_DRVQUEUE, "Handle VDQM_GET_DRVQUEUE"},
+    {VDQM_HANDLE_DEDICATION_EXCEPTION, "Exception caught in TapeRequestDedicationHandler::handleDedication()"},
+    {VDQM_SEND_SHOWQUEUES_INFO, "Send information for showqueues command"},
+    {VDQM_THREAD_POOL_CREATED, "Thread pool created"},
+    {VDQM_THREAD_POOL_CREATION_ERROR, "Thread pool creation error"},
+    {VDQM_ASSIGN_REQUEST_TO_POOL_ERROR, "Error while assigning request to pool"},
+    {VDQM_START_TAPE_TO_TAPE_DRIVE_DEDICATION_THREAD, "Start tape to tape drive dedication thread"},
+    {VDQM_DEDICATION_THREAD_POOL_CREATED, "Dedication thread pool created"},
+    {VDQM_DEDICATION_REQUEST_EXCEPTION, "Exception caught in TapeRequestDedicationHandler::dedicationRequest()"},
+    {VDQM_NO_TAPE_DRIVE_TO_COMMIT_TO_RTCPD, "No TapeDrive object to commit to RTCPD"},
+    {VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, "Found a queued tape request for mounted tape"},
+    {VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK, "VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge"},
+    {VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, "Couldn't find the tape request in db. Maybe it is already deleted?"},
+    {-1, ""}
+  }; // castor::dlf::Message messages[]
 
-
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::main () {
-  
-  try {    
-
-		/** Starts the TapeDriveDedication loop in a thread **/
-		threadAssign(NULL);    
-    
-    /* Create a socket for the server, bind, and listen */
-    VdqmServerSocket sock(VDQM_PORT, true); 
-     
-    for (;;) {
-      /* Accept connections */
-      VdqmServerSocket* s = sock.accept();
-      /* handle the command. */
-      threadAssign(s);
-    }
-    
-  } catch(castor::exception::Exception e) {
-    // "Exception caught : server is stopping" message
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-       castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 2, params);
-    
-    return 1;
-  }
-  
-  return 0;
-}
-
-
-//------------------------------------------------------------------------------
-// start
-//------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::start() {
-  int rc;
-  if (!m_foreground) {
-    if ((rc = Cinitdaemon ((char *)m_serverName.c_str(), 0)) < 0) {
-      return -1;
-    }
-  }
-  return serverMain();
-}
-
-//------------------------------------------------------------------------------
-// serverMain
-//------------------------------------------------------------------------------
-int  castor::vdqm::VdqmServer::serverMain () {
-  // create threads if in multithreaded mode
-  int nbThreads, actualNbThreads;
-  nbThreads = m_threadNumber;
-  
-  m_threadPoolId = Cpool_create(nbThreads, &actualNbThreads);
-  if (m_threadPoolId < 0) {
-  	// "Thread pool creation error" message
-  	castor::dlf::Param params[] =
-			{castor::dlf::Param("threadPoolId", m_threadPoolId)};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 59, 1, params);
-
-    return -1;
-  } else {
-  	// "Thread pool created" message
-		castor::dlf::Param params[] =
-			{castor::dlf::Param("threadPoolId", m_threadPoolId),
-			castor::dlf::Param("actualNbThreads", actualNbThreads)};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 58, 2, params);
-
-    m_threadNumber = actualNbThreads;
-  }
-  
-  // Ignore SIGPIPE AND SIGXFSZ
-#if ! defined(_WIN32)
-	signal (SIGPIPE,SIG_IGN);
-	signal (SIGXFSZ,SIG_IGN);
-#endif
-
-  return main();
-}
-
-//------------------------------------------------------------------------------
-// threadAssign
-//------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::threadAssign(void *param) {
-
-  // Initializing the arguments to pass to the static request processor
-  struct processRequestArgs *args = new processRequestArgs();
-  args->handler = this;
-  args->param = param;
-
-  
-  int assign_rc = Cpool_assign(m_threadPoolId,
-                               &castor::vdqm::staticProcessRequest,
-                               args,
-                               -1);
-  if (assign_rc < 0) {
-  	// "Error while assigning request to pool" message
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 60);
-
-    return -1;
-  }
-  
-  return 0;
+  dlfInit(messages);
 }
 
 
 //------------------------------------------------------------------------------
 // staticProcessRequest
 //------------------------------------------------------------------------------
-void *castor::vdqm::staticProcessRequest(void *param) {
+void *castor::vdqm::staticProcessRequest(void *param)
+throw() {
   castor::vdqm::VdqmServer *server = 0;
   struct processRequestArgs *args;
 
@@ -333,24 +232,20 @@ void *castor::vdqm::staticProcessRequest(void *param) {
   return res;
 }
 
-//------------------------------------------------------------------------------
-// setForeground
-//------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::setForeground(bool value) {
-  m_foreground = value;
-}
 
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[]) {
-
+void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
+throw() {
   static struct Coptions longopts[] =
     {
-      {"foreground", NO_ARGUMENT, NULL, 'f'},
-      {"nbThreads", REQUIRED_ARGUMENT, NULL, 'n'},
-      {"dedicationThreads", REQUIRED_ARGUMENT, NULL, 'd'},
-      {NULL, 0, NULL, 0}
+      {"foreground"        , NO_ARGUMENT      , NULL, 'f'},
+      {"config"            , REQUIRED_ARGUMENT, NULL, 'c'},
+      {"help"              , NO_ARGUMENT      , NULL, 'h'},
+      {"rqstHandlerThreads", REQUIRED_ARGUMENT, NULL, 'n'},
+      {"dedicationThreads" , REQUIRED_ARGUMENT, NULL, 'd'},
+      {NULL                , 0                , NULL,  0 }
     };
 
   Coptind = 1;
@@ -362,101 +257,146 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[]) {
     case 'f':
       m_foreground = true;
       break;
+    case 'c':
+      setenv("PATH_CONFIG", Coptarg, 1);
+      break;
+    case 'h':
+      help(argv[0]);
+      exit(0);
     case 'n':
-      m_threadNumber = atoi(Coptarg);
+      m_rqstHandlerThreadNumber = atoi(Coptarg);
       break;
     case 'd':
       m_dedicationThreadNumber = atoi(Coptarg);
       break;
+    default:
+      help(argv[0]);
+      exit(0);
     }
-	}
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// help
+//------------------------------------------------------------------------------
+void castor::vdqm::VdqmServer::help(std::string programName)
+throw() {
+  std::cout << "Usage: " << programName << " [options]\n"
+    "\n"
+    "where options can be:\n"
+    "\n"
+    "\t--foreground or -f             \tRemain in the Foreground\n"
+    "\t--config <config-file> or -c   \tConfiguration file\n"
+    "\t--help       or -h             \tPrint this help and exit\n"
+    "\t--rqstHandlerThreads or -n num \tRequest handler threads (default 1)\n"
+    "\t--dedicationThreads or -d num  \tDrive dedication threads (default 1)\n"
+    "\n"
+    "Comments to: Castor.Support@cern.ch" << std::endl;
+}
+
+
+//------------------------------------------------------------------------------
+// getListenPort
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::getListenPort()
+{
+  return VDQM_PORT;
+}
+
+
+//------------------------------------------------------------------------------
+// getRqstHandlerThreadNb
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::getRqstHandlerThreadNb()
+{
+  return m_rqstHandlerThreadNumber;
+}
+
+
+//------------------------------------------------------------------------------
+// getDedicationThreadNb
+//------------------------------------------------------------------------------
+int castor::vdqm::VdqmServer::getDedicationThreadNb()
+{
+  return m_dedicationThreadNumber;
 }
 
 
 //------------------------------------------------------------------------------
 // processRequest: Method called once per request, where all the code resides
 //------------------------------------------------------------------------------
-void *castor::vdqm::VdqmServer::processRequest(void *param) throw() {
-  
+void *castor::vdqm::VdqmServer::processRequest(void *param)
+throw() {
   castor::BaseObject* baseObject = 
-  	(castor::BaseObject*) param;
+    (castor::BaseObject*) param;
   
-  castor::vdqm::VdqmServerSocket* sock = 
-  	dynamic_cast<castor::vdqm::VdqmServerSocket*>(baseObject);
+  castor::io::ServerSocket* sock = 
+    dynamic_cast<castor::io::ServerSocket*>(baseObject);
   	
   baseObject = 0;
   	
   if (0 != sock) {
-	  // placeholder for the request uuid if any
-	  Cuuid_t cuuid = nullCuuid;
+    // placeholder for the request uuid if any
+    Cuuid_t cuuid = nullCuuid;
 	  
-	  // Retrieve info on the client
-	  unsigned short port;
-	  unsigned long ip;
+    // Retrieve info on the client
+    unsigned short port;
+    unsigned long ip;
 		
-		// gives a Cuuid to the request
-	  Cuuid_create(&cuuid); 
+    // gives a Cuuid to the request
+    Cuuid_create(&cuuid); 
 		
-	  try {
-	    sock->getPeerIp(port, ip);
+    try {
+      sock->getPeerIp(port, ip);
 	    
-   	  // "New Request Arrival" message
-			castor::dlf::Param params[] =
-				{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-				castor::dlf::Param("Port", port)};
-			castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, params);
-	  } catch(castor::exception::Exception e) {
-	    // "Exception caught : ignored" message
-	    castor::dlf::Param params[] =
-	      {castor::dlf::Param("Standard Message", sstrerror(e.code())),
-	       castor::dlf::Param("Precise Message", e.getMessage().str())};
-	    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
-	  }
+      // "New Request Arrival" message
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+        castor::dlf::Param("Port", port)
+      };
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, params);
+    } catch(castor::exception::Exception e) {
+      // "Exception caught : ignored" message
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Standard Message", sstrerror(e.code())),
+        castor::dlf::Param("Precise Message", e.getMessage().str())
+      };
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
+    }
 	
-		/**
-		 * The ProtocolFacade manages the analysis of the remaining socket message
-		 */
-		ProtocolFacade protocolFacade = ProtocolFacade(sock, &cuuid);
-	  protocolFacade.handleProtocolVersion();
+    // The ProtocolFacade manages the analysis of the remaining socket message
+    ProtocolFacade protocolFacade = ProtocolFacade(sock, &cuuid);
+    protocolFacade.handleProtocolVersion();
 	
-	  delete sock;
-  }
-  else { // If it's not a socket, then it's our dedication loop!
-  	// "Start tape to tape drive dedication thread" message
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 61);
+    delete sock;
+  } else { // If it's not a socket, then it's our dedication loop!
+    // "Start tape to tape drive dedication thread" message
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 61);
 
-	  /**
-	   * The Singleton with the main loop to dedicate a
-	   * tape to a tape drive.
-	   */
-	  castor::vdqm::handler::TapeRequestDedicationHandler* 
-	  	tapeRequestDedicationHandler;  		
+    // The Singleton with the main loop to dedicate a tape to a tape drive.
+    castor::vdqm::handler::TapeRequestDedicationHandler* 
+      tapeRequestDedicationHandler;  		
 	  	
     try {
-	    /**
-	     * Create thread, which dedicates the tapes to the tape drives
-	     */
-	    tapeRequestDedicationHandler = 
-	  		castor::vdqm::handler::TapeRequestDedicationHandler::Instance(
-	  		m_dedicationThreadNumber);
-    }
-    catch (castor::exception::Exception ex) {
-			// "Unable to initialize TapeRequestDedicationHandler thread" message
-			castor::dlf::Param params[] =
-			  {castor::dlf::Param("Message", ex.getMessage().str())};
-			castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
-			
-			exit(-1);
+      // Create thread, which dedicates the tapes to the tape drives
+      tapeRequestDedicationHandler = 
+        castor::vdqm::handler::TapeRequestDedicationHandler::Instance(
+          m_dedicationThreadNumber);
+    } catch (castor::exception::Exception ex) {
+      // "Unable to initialize TapeRequestDedicationHandler thread" message
+      castor::dlf::Param params[] = {
+        castor::dlf::Param("Message", ex.getMessage().str())
+      };
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
+
+      exit(-1);
     }	  		
   		
-  	/**
-  	 * This function ends only, if the stop() function is beeing called.
-  	 */
-  	tapeRequestDedicationHandler->run();
+    // This function ends only, if the stop() function is beeing called.
+    tapeRequestDedicationHandler->run();
   	
-  	delete tapeRequestDedicationHandler;
-  	
-  	std::cout << "tapeRequestDedicationHandler finished" << std::endl;
+    delete tapeRequestDedicationHandler;
   }
   
   return 0;

@@ -44,35 +44,36 @@
 #include "castor/exception/Internal.hpp"
  
 // Local includes
-#include "OldProtocolInterpreter.hpp"
-#include "VdqmServerSocket.hpp"
-#include "newVdqm.h"
-#include "vdqmMacros.h"  // Needed for marshalling
+#include "castor/vdqm/OldProtocolInterpreter.hpp"
+#include "castor/vdqm/newVdqm.h"
+#include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
+#include "castor/vdqm/VdqmSocketHelper.hpp"
 
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::OldProtocolInterpreter::OldProtocolInterpreter(
-	VdqmServerSocket* serverSocket,
-	const Cuuid_t* cuuid) throw(castor::exception::Exception) {
-	
-	if ( 0 == serverSocket || 0 == cuuid) {
-		castor::exception::InvalidArgument ex;
-  	ex.getMessage() << "One of the arguments is NULL";
-  	throw ex;
-	}
-	else {
-		ptr_serverSocket = serverSocket;
-		m_cuuid = cuuid;
-	}
+  castor::io::ServerSocket* serverSocket,
+  const Cuuid_t* cuuid)
+throw(castor::exception::Exception) {
+  
+  if ( 0 == serverSocket || 0 == cuuid) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "One of the arguments is NULL";
+    throw ex;
+  }
+  else {
+    ptr_serverSocket = serverSocket;
+    m_cuuid = cuuid;
+  }
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::vdqm::OldProtocolInterpreter::~OldProtocolInterpreter() 
-	throw() {
+throw() {
 }
 
 
@@ -80,9 +81,9 @@ castor::vdqm::OldProtocolInterpreter::~OldProtocolInterpreter()
 // readProtocol
 //------------------------------------------------------------------------------
 int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header, 
-      																					newVdqmVolReq_t *volumeRequest, 
-													      								newVdqmDrvReq_t *driveRequest) 
-	throw (castor::exception::Exception) {
+                                                newVdqmVolReq_t *volumeRequest, 
+                                                newVdqmDrvReq_t *driveRequest) 
+throw (castor::exception::Exception) {
 
   // header buffer is shorter, 
   //because the magic number should already be read out
@@ -105,134 +106,134 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
   
   //read rest of header. The magic number is already read out
   rc = netread_timeout(ptr_serverSocket->socket(), hdrbuf, headerBufSize, VDQM_TIMEOUT);
-	
-	if (rc == -1) {
-		serrno = SECOMERR;
-		castor::exception::Exception ex(serrno);
-		ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
-										<< "netread(header): "
-                		<< neterror() << std::endl;
-		throw ex;
-	}
+  
+  if (rc == -1) {
+    serrno = SECOMERR;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
+                    << "netread(header): "
+                    << neterror() << std::endl;
+    throw ex;
+  }
   else if (rc == 0) {
-		serrno = SECONNDROP;
-		castor::exception::Exception ex(serrno);
-		ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
-										<< "netread(header): "
-										<< "connection dropped" << std::endl;
-		throw ex;
-	}
+    serrno = SECONNDROP;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
+                    << "netread(header): "
+                    << "connection dropped" << std::endl;
+    throw ex;
+  }
     
   p = hdrbuf;
 
   DO_MARSHALL(LONG, p, reqtype, ReceiveFrom);
   DO_MARSHALL(LONG, p, len, ReceiveFrom);
-	
-	if ( header != NULL ) {
-	    header->reqtype = reqtype;
-	    header->len = len;
-	} 
-	else {
-		castor::exception::Internal ex;
+  
+  if ( header != NULL ) {
+      header->reqtype = reqtype;
+      header->len = len;
+  } 
+  else {
+    castor::exception::Internal ex;
     ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
-      							<< "header struct == NULL" << std::endl;
+                    << "header struct == NULL" << std::endl;
     throw ex;
-	}
+  }
 
-	if ( VALID_VDQM_MSGLEN(len) ) {
-		rc = netread_timeout(ptr_serverSocket->socket(),buf,len,VDQM_TIMEOUT);
-		
-		if (rc == -1) {
+  if ( VALID_VDQM_MSGLEN(len) ) {
+    rc = netread_timeout(ptr_serverSocket->socket(),buf,len,VDQM_TIMEOUT);
+    
+    if (rc == -1) {
 
-						serrno = SECOMERR;
-						castor::exception::Exception ex(serrno);
-						ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
-														<< "netread(REQ): "
-														<< neterror() << std::endl;
-						throw ex;
-		}
-		else if (rc == 0) {
-						serrno = SECONNDROP;
-						castor::exception::Exception ex(serrno);						
-						ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
-      											<< "netread(REQ): "
-      											<< "connection dropped" << std::endl;
-      			throw ex;
-  	}
-	} 
-	else if ( len > 0 ) {
-		serrno = SEUMSG2LONG;
-		castor::exception::Exception ex(serrno);						
-		ex.getMessage() << "OldProtocolInterpreter::readProtocol() netread(REQ): "
-										<< "invalid message length "
-										<< len << std::endl;
-		throw ex;
-	}
+            serrno = SECOMERR;
+            castor::exception::Exception ex(serrno);
+            ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
+                            << "netread(REQ): "
+                            << neterror() << std::endl;
+            throw ex;
+    }
+    else if (rc == 0) {
+            serrno = SECONNDROP;
+            castor::exception::Exception ex(serrno);            
+            ex.getMessage() << "OldProtocolInterpreter::readProtocol() "
+                            << "netread(REQ): "
+                            << "connection dropped" << std::endl;
+            throw ex;
+    }
+  } 
+  else if ( len > 0 ) {
+    serrno = SEUMSG2LONG;
+    castor::exception::Exception ex(serrno);            
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol() netread(REQ): "
+                    << "invalid message length "
+                    << len << std::endl;
+    throw ex;
+  }
         
-	fromlen = sizeof(from);
-	rc = getpeername(ptr_serverSocket->socket(), (struct sockaddr *)&from, (socklen_t *)&fromlen);
-	if ( rc == SOCKET_ERROR ) {
-		castor::exception::Internal ex;
-		ex.getMessage() << "OldProtocolInterpreter::readProtocol() getpeername(): "
-										<< neterror() << std::endl;			
-		throw ex;
-	} 
+  fromlen = sizeof(from);
+  rc = getpeername(ptr_serverSocket->socket(), (struct sockaddr *)&from, (socklen_t *)&fromlen);
+  if ( rc == SOCKET_ERROR ) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol() getpeername(): "
+                    << neterror() << std::endl;      
+    throw ex;
+  } 
   
-	if ( (hp = Cgethostbyaddr((void *)&(from.sin_addr), 
-														sizeof(struct in_addr),
-														from.sin_family)) == NULL ) {
-		castor::exception::Internal ex;
-		ex.getMessage() << "OldProtocolInterpreter::readProtocol() Cgethostbyaddr(): " 
-										<< "h_errno = " << h_errno << neterror() << std::endl;
-		throw ex;
-	}
+  if ( (hp = Cgethostbyaddr((void *)&(from.sin_addr), 
+                            sizeof(struct in_addr),
+                            from.sin_family)) == NULL ) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol() Cgethostbyaddr(): " 
+                    << "h_errno = " << h_errno << neterror() << std::endl;
+    throw ex;
+  }
   
-	if (	(REQTYPE(VOL,reqtype) && volumeRequest == NULL) ||
-				(REQTYPE(DRV,reqtype) && driveRequest == NULL) ) {
-		serrno = EINVAL;
-		castor::exception::Exception ex(serrno);
-		ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
-										<< "no buffer for reqtype = 0x" 
-										<< std::hex << reqtype << std::endl;
-  	throw ex;   
-	} 
-	else if ( REQTYPE(DRV, reqtype) ) {
-	  /* 
-	   * We need to authorize request host if not same as server name.
-	   */
-	  strcpy(driveRequest->reqhost,hp->h_name);
-	  if ( isremote(from.sin_addr, driveRequest->reqhost) == 1 &&
-    			getconfent("VDQM", "REMOTE_ACCESS", 1) == NULL ) {
-			castor::exception::Internal ex;
-			ex.getMessage() << "OldProtocolInterpreter::readProtocol(): " 
-											<< "remote access attempted, host = " 
-											<< driveRequest->reqhost << std::endl;
-			throw ex;
-		} 
-		else {
-			local_access = 1;
-			if ( (domain = strstr(driveRequest->reqhost,".")) != NULL ) 
-				*domain = '\0';
-		}
-	}
+  if (  (REQTYPE(VOL,reqtype) && volumeRequest == NULL) ||
+        (REQTYPE(DRV,reqtype) && driveRequest == NULL) ) {
+    serrno = EINVAL;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
+                    << "no buffer for reqtype = 0x" 
+                    << std::hex << reqtype << std::endl;
+    throw ex;   
+  } 
+  else if ( REQTYPE(DRV, reqtype) ) {
+    /* 
+     * We need to authorize request host if not same as server name.
+     */
+    strcpy(driveRequest->reqhost,hp->h_name);
+    if ( isremote(from.sin_addr, driveRequest->reqhost) == 1 &&
+          getconfent("VDQM", "REMOTE_ACCESS", 1) == NULL ) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "OldProtocolInterpreter::readProtocol(): " 
+                      << "remote access attempted, host = " 
+                      << driveRequest->reqhost << std::endl;
+      throw ex;
+    } 
+    else {
+      local_access = 1;
+      if ( (domain = strstr(driveRequest->reqhost,".")) != NULL ) 
+        *domain = '\0';
+    }
+  }
   
-	if ( ADMINREQ(reqtype) ) {
-		// ADMIN request
-		castor::dlf::Param params[] =
-    	{castor::dlf::Param("reqtype", reqtype),
-     	 castor::dlf::Param("h_name", hp->h_name)};
-  	castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 15, 2, params);
+  if ( ADMINREQ(reqtype) ) {
+    // ADMIN request
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("reqtype", reqtype),
+        castor::dlf::Param("h_name", hp->h_name)};
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 15, 2, params);
 
-		if ( (isadminhost(ptr_serverSocket->socket(),hp->h_name) != 0) ) {
-    	serrno = EPERM;
-    	castor::exception::Exception ex(serrno);
-			ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
-											<< "unauthorised ADMIN request (0x" << std::hex << reqtype 
-											<< ") from " << hp->h_name << std::endl;
-			throw ex;
+    if ( (isadminhost(ptr_serverSocket->socket(),hp->h_name) != 0) ) {
+      serrno = EPERM;
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
+                      << "unauthorised ADMIN request (0x" << std::hex << reqtype 
+                      << ") from " << hp->h_name << std::endl;
+      throw ex;
 
-  	}   
-	}
+    }   
+  }
   
   p = buf;
   if ( REQTYPE(VOL,reqtype) && volumeRequest != NULL ) {
@@ -279,20 +280,20 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
   }
  
   
-	if ( REQTYPE(DRV,reqtype) && (reqtype != VDQM_GET_DRVQUEUE) ) {
-		if (	(strcmp(driveRequest->reqhost,driveRequest->server) != 0) &&
-    			(isadminhost(ptr_serverSocket->socket(),driveRequest->reqhost) != 0) ) {
-			serrno = EPERM;
+  if ( REQTYPE(DRV,reqtype) && (reqtype != VDQM_GET_DRVQUEUE) ) {
+    if (  (strcmp(driveRequest->reqhost,driveRequest->server) != 0) &&
+          (isadminhost(ptr_serverSocket->socket(),driveRequest->reqhost) != 0) ) {
+      serrno = EPERM;
       castor::exception::Exception ex(serrno);
-			ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
-											<< "unauthorised drive request (0x" << std::hex << reqtype 
-											<< ") for " << driveRequest->drive 
-											<< "@" << driveRequest->server
-											<< " from " << driveRequest->reqhost << std::endl;
-			throw ex;	
-		}
-	}
-	
+      ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
+                      << "unauthorised drive request (0x" << std::hex << reqtype 
+                      << ") for " << driveRequest->drive 
+                      << "@" << driveRequest->server
+                      << " from " << driveRequest->reqhost << std::endl;
+      throw ex;  
+    }
+  }
+  
   return(reqtype);
 }
 
@@ -301,9 +302,9 @@ int castor::vdqm::OldProtocolInterpreter::readProtocol(newVdqmHdr_t *header,
 // sendToOldClient
 //------------------------------------------------------------------------------
 int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header, 
-											      										newVdqmVolReq_t *volumeRequest, 
-   																							newVdqmDrvReq_t *driveRequest) 
-	throw (castor::exception::Exception) {
+                                                newVdqmVolReq_t *volumeRequest, 
+                                                 newVdqmDrvReq_t *driveRequest) 
+throw (castor::exception::Exception) {
 
   char hdrbuf[VDQM_HDRBUFSIZ];
   char buf[VDQM_MSGBUFSIZ];
@@ -317,20 +318,20 @@ int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header,
   *servername = '\0';
   magic = len = 0;
  
-	rc = gethostname(servername, CA_MAXHOSTNAMELEN);
+  rc = gethostname(servername, CA_MAXHOSTNAMELEN);
 
     
   if ( header != NULL && VDQM_VALID_REQTYPE(header->reqtype) ) 
-  	reqtype = header->reqtype;
+    reqtype = header->reqtype;
   else if ( volumeRequest != NULL ) reqtype = VDQM_VOL_REQ;
   else if ( driveRequest != NULL ) reqtype = VDQM_DRV_REQ;
   else {
-		serrno = SECOMERR;
-	  castor::exception::Internal ex;
-		ex.getMessage() << "OldProtocolInterpreter::sendToOldClient(): "
-										<< "cannot determine request type to send" 
-										<< std::endl;
-		throw ex;	
+    serrno = SECOMERR;
+    castor::exception::Internal ex;
+    ex.getMessage() << "OldProtocolInterpreter::sendToOldClient(): "
+                    << "cannot determine request type to send" 
+                    << std::endl;
+    throw ex;  
   }
   
   if ( *servername != '\0' ) {
@@ -376,9 +377,9 @@ int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header,
       DO_MARSHALL_STRING(p,driveRequest->dgn,SendTo, sizeof(driveRequest->dgn));
       
       /**
-	     * Normally we sent the dedicate String now, but we ignore it and use 
-	     * it for the errorHistory. This will be interpreted by newer tapeDaemon
-	     */
+       * Normally we sent the dedicate String now, but we ignore it and use 
+       * it for the errorHistory. This will be interpreted by newer tapeDaemon
+       */
       DO_MARSHALL_STRING(p,driveRequest->errorHistory,SendTo, sizeof(driveRequest->errorHistory));
   }
  
@@ -391,16 +392,16 @@ int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header,
   
   len = 0;
   if ( REQTYPE(VOL,reqtype)) {
-  	len = NEWVDQM_VOLREQLEN(volumeRequest);
+    len = NEWVDQM_VOLREQLEN(volumeRequest);
   }
   else if ( REQTYPE(DRV,reqtype) ) {
     len = NEWVDQM_DRVREQLEN(driveRequest);
   }
   else if ( ADMINREQ(reqtype) ) {
-  	len = 0;
+    len = 0;
   }
   else if ( header != NULL ) {
-  	len = header->len;
+    len = header->len;
   }
         
   p = hdrbuf;
@@ -409,25 +410,25 @@ int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header,
   DO_MARSHALL(LONG,p,len,SendTo);
 
   //send buffer to the client
-  ptr_serverSocket->vdqmNetwrite(hdrbuf);
+  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
    
   if ( len > 0 ) {
-		rc = netwrite_timeout(ptr_serverSocket->socket(), buf, len, VDQM_TIMEOUT);
-		if (rc == -1) {
-  		serrno = SECOMERR;
+    rc = netwrite_timeout(ptr_serverSocket->socket(), buf, len, VDQM_TIMEOUT);
+    if (rc == -1) {
+      serrno = SECOMERR;
       castor::exception::Exception ex(serrno);
-			ex.getMessage() << "OldProtocolInterpreter::sendToOldClient(): "
-											<< "netwrite(REQ): " 
-											<< neterror() << std::endl;
-			throw ex;	
-		}
-		else if (rc == 0) {
-    	serrno = SECONNDROP;
+      ex.getMessage() << "OldProtocolInterpreter::sendToOldClient(): "
+                      << "netwrite(REQ): " 
+                      << neterror() << std::endl;
+      throw ex;  
+    }
+    else if (rc == 0) {
+      serrno = SECONNDROP;
       castor::exception::Exception ex(serrno);
-			ex.getMessage() << "OldProtocolInterpreter::sendToOldClient(): "
-											<< "netwrite(REQ): connection dropped" << std::endl;
-			throw ex;	
-		}
+      ex.getMessage() << "OldProtocolInterpreter::sendToOldClient(): "
+                      << "netwrite(REQ): connection dropped" << std::endl;
+      throw ex;  
+    }
   }
   
     
@@ -440,14 +441,14 @@ int castor::vdqm::OldProtocolInterpreter::sendToOldClient(newVdqmHdr_t *header,
 // sendAcknCommit
 //------------------------------------------------------------------------------
 void castor::vdqm::OldProtocolInterpreter::sendAcknCommit() 
-	throw (castor::exception::Exception) {
-		
-	char hdrbuf[VDQM_HDRBUFSIZ];
-	int recvreqtype, len;
-	unsigned int magic;
-	char *p;
+throw (castor::exception::Exception) {
+    
+  char hdrbuf[VDQM_HDRBUFSIZ];
+  int recvreqtype, len;
+  unsigned int magic;
+  char *p;
 
-	    
+      
   magic = VDQM_MAGIC;
   len = 0;
   recvreqtype = VDQM_COMMIT;
@@ -456,13 +457,13 @@ void castor::vdqm::OldProtocolInterpreter::sendAcknCommit()
   DO_MARSHALL(LONG,p,magic,SendTo);
   DO_MARSHALL(LONG,p,recvreqtype,SendTo);
   DO_MARSHALL(LONG,p,len,SendTo);
-	  	 
+       
   magic = VDQM_MAGIC;
   len = 0;
   p = hdrbuf;
   
   //send buffer to the client
-  ptr_serverSocket->vdqmNetwrite(hdrbuf);
+  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
 }
 
 
@@ -470,25 +471,25 @@ void castor::vdqm::OldProtocolInterpreter::sendAcknCommit()
 // recvAcknFromOldClient
 //------------------------------------------------------------------------------
 int castor::vdqm::OldProtocolInterpreter::recvAcknFromOldClient() 
-	throw (castor::exception::Exception) {
-	
-    char hdrbuf[VDQM_HDRBUFSIZ];
-    unsigned int magic, recvreqtype, len;
-    char *p;
+throw (castor::exception::Exception) {
+  
+  char hdrbuf[VDQM_HDRBUFSIZ];
+  unsigned int magic, recvreqtype, len;
+  char *p;
+  
+  magic = VDQM_MAGIC;
+  len = 0;
+  recvreqtype = 0;
+  
+  //Reads the header from the socket
+  VdqmSocketHelper::vdqmNetread(ptr_serverSocket->socket(), hdrbuf);
+  
+  p = hdrbuf;
+  DO_MARSHALL(LONG, p, magic, ReceiveFrom);
+  DO_MARSHALL(LONG, p, recvreqtype, ReceiveFrom);
+  DO_MARSHALL(LONG, p, len, ReceiveFrom);
     
-    magic = VDQM_MAGIC;
-    len = 0;
-    recvreqtype = 0;
-    
-    //Reads the header from the socket
-    ptr_serverSocket->vdqmNetread(hdrbuf);
-    
-    p = hdrbuf;
-    DO_MARSHALL(LONG, p, magic, ReceiveFrom);
-    DO_MARSHALL(LONG, p, recvreqtype, ReceiveFrom);
-    DO_MARSHALL(LONG, p, len, ReceiveFrom);
-    
-    return recvreqtype;
+  return recvreqtype;
 }
 
 
@@ -496,9 +497,9 @@ int castor::vdqm::OldProtocolInterpreter::recvAcknFromOldClient()
 // sendAcknPing
 //------------------------------------------------------------------------------
 void castor::vdqm::OldProtocolInterpreter::sendAcknPing(int queuePosition)
-	throw (castor::exception::Exception) {
-	
-	int reqtype;
+throw (castor::exception::Exception) {
+  
+  int reqtype;
   char hdrbuf[VDQM_HDRBUFSIZ];
   int magic, len;
   char *p;
@@ -517,16 +518,15 @@ void castor::vdqm::OldProtocolInterpreter::sendAcknPing(int queuePosition)
   p = hdrbuf;
   
   //Send buffer to client
-  ptr_serverSocket->vdqmNetwrite(hdrbuf);
+  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
 }
 
 
 //------------------------------------------------------------------------------
 // sendAcknRollback
 //------------------------------------------------------------------------------
-void castor::vdqm::OldProtocolInterpreter::sendAcknRollback(
-	int errorCode) 
-	throw (castor::exception::Exception) {
+void castor::vdqm::OldProtocolInterpreter::sendAcknRollback(int errorCode) 
+throw (castor::exception::Exception) {
     
   char hdrbuf[VDQM_HDRBUFSIZ];
   int magic, recvreqtype, len;
@@ -549,5 +549,5 @@ void castor::vdqm::OldProtocolInterpreter::sendAcknRollback(
   p = hdrbuf;
   
   //Send buffer to client
-  ptr_serverSocket->vdqmNetwrite(hdrbuf);
+  VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
 }

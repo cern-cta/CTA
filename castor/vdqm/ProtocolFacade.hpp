@@ -25,77 +25,78 @@
  *****************************************************************************/
 
 #ifndef _PROTOCOLFACADE_HPP_
-#define _PROTOCOLFACADE_HPP_
+#define _PROTOCOLFACADE_HPP_ 1
 
 #include "castor/BaseObject.hpp"
+#include "castor/io/ServerSocket.hpp"
+
 
 namespace castor {
 
   namespace vdqm {
-  	
-		//Forward Declarations
-  	class VdqmServerSocket;
-
+    
     /**
-     * The ProtocolFacede class is an etra layer between the VdqmServer and those
-     * classes, which are implementing the protocol handling.
+     * The ProtocolFacede class is an etra layer between the VdqmServer and
+     * those classes, which are implementing the protocol handling.
      * VdqmServer calls the handleProtocolVersion() function, which takes the
      * protocol decision due to the sent magic number.
      */
     class ProtocolFacade : public castor::BaseObject {
 
-    	public:
-    		/**
-	       * Constructor
-	       * 
-	       * @param serverSocket The Object, which includes the actual socket 
-	       * connection to the client
-	       * @param cuuid the cuuid of the incoming request 
-	       * @exception In case that one of the parameter is NULL
-	       */
-	    	ProtocolFacade(VdqmServerSocket* serverSocket, const Cuuid_t* cuuid)
-	    	  throw (castor::exception::Exception);
-    	
-	    	/**
-		     * Destructor
-		     */  
-		    virtual ~ProtocolFacade() throw();
-	    	
-	    	/**
-		     * This function is called by the VdqmServer to handle the 
-		     * different protocol versions. Please edit this function, if
-		     * you want to include new protocols!
-		     *
-		     * @exception Throws an exception in case of errors
-		     */
-		    void handleProtocolVersion()
-	     		throw (castor::exception::Exception);	    
-		    
-		    
-		  private:
-	      /**
-	       * Internal function to handle the old Vdqm request. Puts the values into
-	       * the old structs and reads out the request typr number, to delegates
-	       * them to the right function.
-	       * 
-	       * @param magicNumber The magic Number of the used protocol
-	       * @exception Throws an exception in case of errors
-	       */
-	      void handleOldVdqmRequest(unsigned int magicNumber)
-	      	throw (castor::exception::Exception);
-	      
-	      	
-	      /**
-	  		 * The object which includes the socket connection to the client
-	  		 */
-	  		VdqmServerSocket* ptr_serverSocket;  
-	  		
-	  		/**
-	  		 * The cuuid of the request
-	  		 */
-	  		const Cuuid_t* m_cuuid;
+    public:
+
+      /**
+       * Constructor
+       * 
+       * @param serverSocket The Object, which includes the actual socket 
+       * connection to the client
+       * @param cuuid the cuuid of the incoming request 
+       * @exception In case that one of the parameter is NULL
+       */
+      ProtocolFacade(castor::io::ServerSocket* serverSocket,
+        const Cuuid_t* cuuid)
+      throw (castor::exception::Exception);
+      
+      /**
+       * Destructor
+       */  
+      virtual ~ProtocolFacade() throw();
+        
+      /**
+       * This function is called by the VdqmServer to handle the 
+       * different protocol versions. Please edit this function, if
+       * you want to include new protocols!
+       *
+       * @exception Throws an exception in case of errors
+       */
+      void handleProtocolVersion()
+      throw (castor::exception::Exception);      
+      
+        
+    private:
+
+      /**
+       * Internal function to handle the old Vdqm request. Puts the values into
+       * the old structs and reads out the request typr number, to delegates
+       * them to the right function.
+       * 
+       * @param magicNumber The magic Number of the used protocol
+       * @exception Throws an exception in case of errors
+       */
+      void handleOldVdqmRequest(unsigned int magicNumber)
+      throw (castor::exception::Exception);
+          
+      /**
+       * The object which includes the socket connection to the client
+       */
+      castor::io::ServerSocket* ptr_serverSocket;  
+        
+      /**
+       * The cuuid of the request
+       */
+      const Cuuid_t* m_cuuid;
     
-  	}; // class ProtocolFacade
+    }; // class ProtocolFacade
 
   } // end of namespace vdqm
 

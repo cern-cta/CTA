@@ -24,116 +24,90 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef RH_VDQMSERVER_HPP
-#define RH_VDQMSERVER_HPP 1
+#ifndef CASTOR_VDQM_VDQMSERVER_HPP
+#define CASTOR_VDQM_VDQMSERVER_HPP 1
 
-#include "castor/BaseObject.hpp"
+#include "castor/server/BaseDaemon.hpp"
+#include <string>
 
 namespace castor {
 
   namespace vdqm {
   	
-	  /**
-	   * Static method used to pass to Cpool_assign
-	   */
-	  void *staticProcessRequest(void *param);
-  	
-		//Forward Declarations
-  	class VdqmServerSocket;
-
     /**
-     * The Request Handler server. This is were client requests
-     * arrive. The main task of this component is to store them
-     * for future use
+     * Static method used to pass to Cpool_assign
      */
-    class VdqmServer : public castor::BaseObject {
-
+    void *staticProcessRequest(void *param) throw();
+  	
+    /**
+     * The Volume and Drive Queue Manager.
+     */
+    class VdqmServer : public castor::server::BaseDaemon {
     public:
     
-	    /**
-	     * default number of threads in the server thread pool
-	     */    
-	    static const int DEFAULT_THREAD_NUMBER = 20;
+      /**
+       * Default number of threads in the server thread pool
+       */    
+      static const int DEFAULT_THREAD_NUMBER = 20;
 
       /**
        * Constructor
        */
-      VdqmServer();
-      
-      /**
-       * Destructor
-       */
-      ~VdqmServer() throw();
+      VdqmServer() throw();
 
+      /**
+       * Parses the command line and sets the server options accordingly
+       */    
+      void parseCommandLine(int argc, char *argv[]) throw();
+
+      /**
+       * Returns the port on which the server will listen.
+       */
+      int getListenPort();
+
+      /**
+       * Returns the number of threads in the request handler thread pool.
+       */
+      int getRqstHandlerThreadNb();
+
+      /**
+       * Returns the number of threads in the drive dedication thread pool.
+       */
+      int getDedicationThreadNb();
+      
       /**
        * Method called once per request, where all the code resides
        */
       virtual void *processRequest(void *param) throw();
 
-      /**
-       * Main Server loop, listening for the clients
-       */
-      virtual int main();
-
-	    /**
-	     * Starts the server, as a daemon and execs the 
-	     * server main function.
-	     */
-	    virtual int start();
-	
-	    /**
-	     * Assigns work to a thread from the pool
-	     */    
-	    int threadAssign(void *param);
-	
-	    /**
-	     * Sets the foreground flag
-	     */    
-	    void setForeground(bool value);
-	
-	    /**
-	     * parses a command line to set the server oprions
-	     */    
-	    void parseCommandLine(int argc, char *argv[]);
-
     private:
-    
-	    /**
-	     * BaseServer main method called by start
-	     */
-	    int serverMain();
-	
-	    /**
-	     * Flag indicating whether the server should 
-	     * run in foreground or background mode.
-	     */
-	    bool m_foreground;
-	
-	    /**
-	     * The id of the pool created
-	     */
-	    int m_threadPoolId;
-	
-	    /**
-	     * Number of threads in the pool
-	     */
-	    int m_threadNumber;
-	    
-	    /**
-	     * Number of threads in the tape to tape drive dedication pool
-	     */
-	    int m_dedicationThreadNumber;
-	
-	    /**
-	     * Name of the server
-	     */
-	    std::string m_serverName;    
 
+      /**
+       * Number of request handler threads
+       */
+      int m_rqstHandlerThreadNumber;
+
+      /**
+       * Number of drive dedication threads
+       */
+      int m_dedicationThreadNumber;
+    
+      /**
+       * Initializes the DLF logging including the definition of the predefined
+       * messages.
+       */
+      void initDlf() throw();
+
+      /**
+       * Prints out the online help
+       */
+      void help(std::string programName) throw();
+    
     }; // class VdqmServer
 
-  } // end of namespace vdqm
+  } // namespace vdqm
 
-} // end of namespace castor
+} // namespace castor
 
 
 /**
@@ -144,4 +118,4 @@ struct processRequestArgs {
   void *param;
 };
 
-#endif // RH_VDQMSERVER_HPP
+#endif // CASTOR_VDQM_VDQMSERVER_HPP

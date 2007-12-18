@@ -24,95 +24,94 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _NEWPROTOCOLINTERPRETER_HPP_
-#define _NEWPROTOCOLINTERPRETER_HPP_
+#ifndef CASTOR_VDQM_NEWPROTOCOLINTERPRETER_HPP
+#define CASTOR_VDQM_NEWPROTOCOLINTERPRETER_HPP
 
 #include "castor/BaseObject.hpp"
+#include "castor/io/ServerSocket.hpp"
+
 
 namespace castor {
 
   namespace vdqm {
-  	
-  	// Forward declaration
-  	class VdqmServerSocket;
-
+    
     /**
      * This class provides the functions to send and receive messages through a 
      * socket, due to the rules of the NEW vdqm protocol 
      * (which is not implemented yet). 
      * When a new RTCOPYClient or a new TPDAEMON will be implemented, 
      * please insert here the functions to read out the message.
-     * Because it don't implements a socket, neither the functionality to handle
-     * the connection, the OldProtocolInterpreter is strongly dependent from the 
-     * VdqmServerSocket class.
+     *
+     * This class does not implement a socket and is therefore strongly
+     * dependent on castor::io::ServerSocket and castor::vdqm::SocketHelper
+     *
      * This class will be used in future by the VdqmServer.
      */
     class NewProtocolInterpreter : public castor::BaseObject {
 
-	    public:
-	
-	      /**
-	       * Constructor
-	       * 
-	       * @param serverSocket The Object, which includes the actual socket 
-	       * connection to the client
-	       * @param cuuid the cuuid of the incoming request 
-	       * @exception In case that one of the parameter is NULL
-	       */
-	      NewProtocolInterpreter(VdqmServerSocket* serverSocket, const Cuuid_t* cuuid) 
-		      throw (castor::exception::Exception);
-		      
-		    /**
-		     * Destructor
-		     */  
-		    virtual ~NewProtocolInterpreter() throw();
-		    
-	      /**
-	       * Reads an object from the socket. Please use 
-	       * this function only after having read out the magic number!
-	       * Note that the deallocation of it is the responsability of the caller
-	       * 
-	       * @return the IObject read
-	       * @exception In case of error
-	       */
-	      virtual castor::IObject* readObject() throw(castor::exception::Exception);		    
-		    	      	
+    public:
+  
+      /**
+       * Constructor
+       * 
+       * @param serverSocket The Object, which includes the actual socket 
+       * connection to the client
+       * @param cuuid the cuuid of the incoming request 
+       * @exception In case that one of the parameter is NULL
+       */
+      NewProtocolInterpreter(castor::io::ServerSocket* serverSocket,
+        const Cuuid_t* cuuid) 
+      throw (castor::exception::Exception);
+          
+      /**
+       * Destructor
+       */  
+      virtual ~NewProtocolInterpreter() throw();
+        
+      /**
+       * Reads an object from the socket. Please use 
+       * this function only after having read out the magic number!
+       * Note that the deallocation of it is the responsability of the caller
+       * 
+       * @return the IObject read
+       * @exception In case of error
+       */
+      virtual castor::IObject* readObject()
+      throw(castor::exception::Exception);        
+                  
 
-//--------------------------------------------------------------------------
-// Private Part of the class
-//--------------------------------------------------------------------------
-	    private:	
-	      /**
-	       * Internal function to read from a socket the rest of the Message into 
-	       * a buffer. This method is only used by readObject.
-	       * @param magic the magic number expected as the first 4 bytes read.
-	       * An exception is sent if the correct magic number is not found
-	       * @param buf allocated by the method, it contains the data read.
-	       * Note that the deallocation of this buffer is the responsability
-	       * of the caller
-	       * 
-	       * @param buf Allocated buffer for the rest of the message waiting in the socket
-	       * @param n the length of the allocated buffer
-	       * @exception In case of error
-	       */
-	      void readRestOfBuffer(char** buf, int& n)
-	        	throw (castor::exception::Exception);	    
-	    
-	      	
-	  		/**
-	  		 * The object which includes the socket connection to the client
-	  		 */
-	  		VdqmServerSocket* ptr_serverSocket;  
-	  		
-	  		/**
-	  		 * The cuuid of the request
-	  		 */
-	  		const Cuuid_t* m_cuuid;	  		
-    };
+    private:  
+      /**
+       * Internal function to read from a socket the rest of the Message into 
+       * a buffer. This method is only used by readObject.
+       * @param magic the magic number expected as the first 4 bytes read.
+       * An exception is sent if the correct magic number is not found
+       * @param buf allocated by the method, it contains the data read.
+       * Note that the deallocation of this buffer is the responsability
+       * of the caller
+       * 
+       * @param buf Allocated buffer for the rest of the message waiting in the socket
+       * @param n the length of the allocated buffer
+       * @exception In case of error
+       */
+      void readRestOfBuffer(char** buf, int& n)
+      throw (castor::exception::Exception);      
+          
+      /**
+       * The object which includes the socket connection to the client
+       */
+      castor::io::ServerSocket* ptr_serverSocket;  
+        
+      /**
+       * The cuuid of the request
+       */
+      const Cuuid_t* m_cuuid;        
 
-  } // end of namespace vdqm
+    }; // class NewProtocolInterpreter
 
-} // end of namespace castor      
+  } // namespace vdqm
+
+} // namespace castor      
 
 
-#endif //_NEWPROTOCOLINTERPRETER_HPP_
+#endif // CASTOR_VDQM_NEWPROTOCOLINTERPRETER_HPP
