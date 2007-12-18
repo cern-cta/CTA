@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.8 $ $Date: 2007/12/18 08:37:25 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.9 $ $Date: 2007/12/18 14:44:45 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include "tplogger_api.h"
 #if defined(linux)
-#include <sys/mtio.h>
+#include <linux/mtio.h>
 #endif
 int jid;
 int main(argc, argv)
@@ -60,6 +60,8 @@ char	**argv;
         int st_async_writes = 0;
         char *p;
         char *getconfent();
+        int st_timeout;
+        int st_long_timeout;
 #endif
 	ENTRY (confdrive);
 
@@ -98,9 +100,10 @@ char	**argv;
 						c = errno;
 #endif
 #if defined(linux)
-                                /* set st parameters (moved from tape_residue_report kernel patch) */
+                                /* set st parameters (moved here from kernel patches) */
                                 mt_cmd.mt_op = MTSETDRVBUFFER;
 
+                                /* ST_BUFFER_WRITES */
                                 st_buffer_writes = 0;
                                 if ((p = getconfent ("TAPE", "ST_BUFFER_WRITES", 0))) {
                                         st_buffer_writes = (int)atoi(p);
@@ -110,10 +113,16 @@ char	**argv;
                                 }
                                 if (!st_buffer_writes) {
                                         tplogit (func, "Clear ST_BUFFER_WRITES (0)\n");
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Clear ST_BUFFER_WRITES (0)" );
                                         mt_cmd.mt_count = MT_ST_CLEARBOOLEANS |
                                                 MT_ST_BUFFER_WRITES;
                                 } else {
                                         tplogit (func, "Set ST_BUFFER_WRITES (1)\n");
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Set ST_BUFFER_WRITES (1)" );
                                         mt_cmd.mt_count = MT_ST_SETBOOLEANS |
                                                 MT_ST_BUFFER_WRITES;
                                 }
@@ -126,6 +135,7 @@ char	**argv;
                                         c = errno;
                                 }
 
+                                /* ST_ASYNC_WRITES */
                                 st_async_writes = 0;
                                 if ((p = getconfent ("TAPE", "ST_ASYNC_WRITES", 0))) {
                                         st_async_writes = (int)atoi(p);
@@ -135,10 +145,16 @@ char	**argv;
                                 }
                                 if (!st_async_writes) {
                                         tplogit (func, "Clear ST_ASYNC_WRITES (0)\n");
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Clear ST_ASYNC_WRITES (0)" );
                                         mt_cmd.mt_count = MT_ST_CLEARBOOLEANS |
                                                 MT_ST_ASYNC_WRITES;
                                 } else {
                                         tplogit (func, "Set ST_ASYNC_WRITES (1)\n");
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Set ST_ASYNC_WRITES (1)" );
                                         mt_cmd.mt_count = MT_ST_SETBOOLEANS |
                                                 MT_ST_ASYNC_WRITES;
                                 }
@@ -151,6 +167,7 @@ char	**argv;
                                         c = errno;
                                 }
 
+                                /* ST_READ_AHEAD */
                                 st_read_ahead = 0;
                                 if ((p = getconfent ("TAPE", "ST_READ_AHEAD", 0))) {
                                         st_read_ahead = (int)atoi(p);
@@ -160,10 +177,16 @@ char	**argv;
                                 }
                                 if (!st_read_ahead) {
                                         tplogit (func, "Clear ST_READ_AHEAD (0)\n");
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Clear ST_READ_AHEAD (0)" );
                                         mt_cmd.mt_count = MT_ST_CLEARBOOLEANS |
                                                 MT_ST_READ_AHEAD;
                                 } else {
                                         tplogit (func, "Set ST_READ_AHEAD (1)\n");
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "Set ST_READ_AHEAD (1)" );
                                         mt_cmd.mt_count = MT_ST_SETBOOLEANS |
                                                 MT_ST_READ_AHEAD;
                                 }
@@ -175,7 +198,55 @@ char	**argv;
                                                             "Value",   TL_MSG_PARAM_STR, strerror(errno) );
                                         c = errno;
                                 }
-#endif 
+
+                                /* ST_TIMEOUT */
+                                st_timeout = 900;
+                                if ((p = getconfent ("TAPE", "ST_TIMEOUT", 0))) {
+                                        st_timeout = (int)atoi(p);
+                                        if (st_timeout < 0) {
+                                                st_timeout = 900;   
+                                        }
+                                }
+                                tplogit (func, "Set ST_TIMEOUT to %d seconds.\n", st_timeout);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "Message", TL_MSG_PARAM_STR, "Set ST_TIMEOUT",
+                                                    "Value",   TL_MSG_PARAM_INT, st_timeout );
+
+                                mt_cmd.mt_count = MT_ST_SET_TIMEOUT | st_timeout;
+                                if (ioctl(tapefd, MTIOCTOP, &mt_cmd) < 0) {
+                                        tplogit (func, TP002, "ioctl (ST_SET_TIMEOUT)", strerror(errno));
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "ioctl (ST_SET_TIMEOUT)",
+                                                            "Value",   TL_MSG_PARAM_STR, strerror(errno) );
+                                        c = errno;
+                                }
+
+                                /* ST_LONG_TIMEOUT */
+                                st_long_timeout = 3600;
+                                if ((p = getconfent ("TAPE", "ST_LONG_TIMEOUT", 0))) {
+                                        st_long_timeout = (int)atoi(p);
+                                        if (st_timeout < 0) {
+                                                st_long_timeout = 3600;   
+                                        }
+                                }
+                                tplogit (func, "Set ST_LONG_TIMEOUT to %d seconds.\n", st_long_timeout);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
+                                                    "func",    TL_MSG_PARAM_STR, func,
+                                                    "Message", TL_MSG_PARAM_STR, "Set ST_LONG_TIMEOUT",
+                                                    "Value",   TL_MSG_PARAM_INT, st_long_timeout );
+
+                                mt_cmd.mt_count = MT_ST_SET_LONG_TIMEOUT | st_long_timeout;
+                                if (ioctl(tapefd, MTIOCTOP, &mt_cmd) < 0) {
+                                        tplogit (func, TP002, "ioctl (ST_SET_LONG_TIMEOUT)", strerror(errno));
+                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
+                                                            "func",    TL_MSG_PARAM_STR, func,
+                                                            "Message", TL_MSG_PARAM_STR, "ioctl (ST_SET_LONG_TIMEOUT)",
+                                                            "Value",   TL_MSG_PARAM_STR, strerror(errno) );
+                                        c = errno;
+                                }
+#endif /* linux */
 				close (tapefd);
 			}
 		}
