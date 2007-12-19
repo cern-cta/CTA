@@ -151,11 +151,11 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
        // policy called for each tape copy for each tape pool
  	try {
   
-	  if ( m_migrSvc == NULL ||  m_migrSvc->applyPolicy(*infoCandidate)){
+	  if ( m_migrSvc == NULL || ((*infoCandidate)->policyName()).empty() ||  m_migrSvc->applyPolicy(*infoCandidate)){
 	    eligibleCandidates.push_back(*infoCandidate); // tapecopy has to be attached to the stream 
 	    
-	    if (m_migrSvc != NULL) {
-	      castor::dlf::Param params2[]={castor::dlf::Param("fileId", realInfo->fileId()),					  castor::dlf::Param("policy", "Migration Policy used")};
+	    if (m_migrSvc != NULL && ((*infoCandidate)->policyName()).empty() ) {
+	      castor::dlf::Param params2[]={castor::dlf::Param("fileId", realInfo->fileId()),					      castor::dlf::Param("policy", "Migration Policy used")};
 	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 2, params2);
 	    } else {
 	      castor::dlf::Param params2[]={castor::dlf::Param("fileId", realInfo->fileId()),					  castor::dlf::Param("policy", "No Policy used")};
@@ -235,7 +235,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	streamInfo->setRunningStream(runningStreams); // initial value
 	try {
-	  if (m_strSvc == NULL ||  m_strSvc->applyPolicy(*infoCandidateStream)){
+	  if (m_strSvc == NULL ||((*infoCandidateStream)->policyName()).empty() || m_strSvc->applyPolicy(*infoCandidateStream)){
 	  // new one potentially  running
 	    if (streamInfo->status() != castor::stager::STREAM_RUNNING ){ 
 	      runningStreams++;
@@ -254,7 +254,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	      }
 	    }
 
-	    if (m_strSvc != NULL) {
+	    if (m_strSvc != NULL && ((*infoCandidateStream)->policyName()).empty()) {
 	      castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 					      castor::dlf::Param("policy","Stream policy" ),
 					      castor::dlf::Param("message", "running stream not stopped")};
