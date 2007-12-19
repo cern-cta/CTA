@@ -28,18 +28,23 @@ namespace castor{
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
             break;
           
-          case 0:   
-            // DiskCopy STAGED: the repack migration has been already started, just answer the client
+          case DISKCOPY_STAGED:   
+            // the repack migration has been already started, just log it and answer the client
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_REPACK_MIGRATION, &(stgCnsHelper->cnsFileid));
             result = true;
             break;
           
-          case 2:
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
-            
-            // if success, answer client
-            result = stgRequestHelper->stagerService->createRecallCandidate(
-              stgRequestHelper->subrequest,stgRequestHelper->fileRequest->euid(), stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+          case DISKCOPY_WAITTAPERECALL:
+            // trigger recall, the repack migration will be started at the end of it; answer client only if success
+            result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
+            if(result) {
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
+            }
+            else {
+              // no tape copy found because of Tape0 file, log it
+              // any other tape error will throw an exception and will be classified as LVL_ERROR 
+              stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+            }
             break;
           
           default:

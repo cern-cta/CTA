@@ -149,11 +149,16 @@ namespace castor{
             break;
             
           case DISKCOPY_WAITTAPERECALL:   // create a tape copy and corresponding segment objects on stager catalogue
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
-            
-            // here we don't care about the return value: we don't need to answer the client in any case
-            stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->fileRequest->euid(),
-              stgRequestHelper->fileRequest->egid(), stgRequestHelper->svcClass);
+            // answer client only if success
+            result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
+            if(result) {
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
+            }
+            else {
+              // no tape copy found because of Tape0 file, log it
+              // any other tape error will throw an exception and will be classified as LVL_ERROR 
+              stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
+            }
             break;
           
         }        

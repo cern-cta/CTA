@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.226 $ $Release$ $Date: 2007/12/12 15:34:49 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.227 $ $Release$ $Date: 2007/12/19 16:45:04 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -34,6 +34,7 @@
 #include "castor/stager/Tape.hpp"
 #include "castor/stager/Stream.hpp"
 #include "castor/stager/Request.hpp"
+#include "castor/stager/FileRequest.hpp"
 #include "castor/stager/Segment.hpp"
 #include "castor/stager/DiskCopy.hpp"
 #include "castor/stager/DiskPool.hpp"
@@ -45,7 +46,6 @@
 #include "castor/stager/CastorFile.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileSystem.hpp"
-#include "castor/stager/CastorFile.hpp"
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/FilesDeletionFailed.hpp"
@@ -609,8 +609,6 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
 // -----------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::createRecallCandidate
 (castor::stager::SubRequest *subreq,
- unsigned long euid,
- unsigned long egid,
  castor::stager::SvcClass *svcClass)
   throw (castor::exception::Exception) {
 
@@ -623,11 +621,14 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
   try {
       castor::stager::CastorFile* cf = subreq->castorFile();
 
-      // create needed TapeCopy(ies) and Segment(s). This takes
-      // a lock on the castorfile that we will keep in order to
-      // prevent the concurrent creation of 2 recalls for a
-      // single file
-      createTapeCopySegmentsForRecall(cf, euid, egid, svcClass);
+      // create needed TapeCopy(ies) and Segment(s). We already
+      // have a lock on the castorfile and so we prevent the
+      // concurrent creation of 2 recalls for a single file
+      if(!subreq->request()) {
+        cnvSvc()->fillObj(&ad, subreq, OBJ_FileRequest, false);
+      }
+      createTapeCopySegmentsForRecall(cf, subreq->request()->euid(),
+        subreq->request()->egid(), svcClass);
 
       // if we are here, we do have segments to recall
       // create DiskCopy
@@ -668,7 +669,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       return 1;
   }
   catch (castor::exception::SegmentNotAccessible e) {
-    // no valid tape copy found. In such a case, we rollback and
+    // File has no segments. In such a case, we rollback and
     // set the subrequest to failed.
     try{
       cnvSvc()->rollback();
@@ -1168,6 +1169,13 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
                    << "Cns_getsegattrs failed";
     throw e;
   }
+  if(nbNsSegments == 0) {
+    // This file has no copy on tape. This is considered user error
+    castor::exception::SegmentNotAccessible e;
+    e.getMessage() << "No valid tape copy found";
+    throw e;
+  }
+    
   // Sort segments
   qsort((void *)nsSegmentAttrs,
         (size_t)nbNsSegments,
@@ -1202,10 +1210,9 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   }
   if (useCopyNb == -1) {  //something went bad.
     if (nsSegmentAttrs != NULL ) free(nsSegmentAttrs); 
-    // No valid tape copy found. This is considered user error
-    // and it's handled differently, thought it might be that we
+    // No valid tape copy found. Here it means that we
     // really lost a file on tape!
-    castor::exception::SegmentNotAccessible e;
+    castor::exception::Exception e(serrno);
     e.getMessage() << "No valid tape copy found";
     throw e;
   }

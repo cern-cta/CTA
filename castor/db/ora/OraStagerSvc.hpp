@@ -319,8 +319,6 @@ namespace castor {
          * Creates a candidate for a recall. This includes TapeCopy with
          * its Segment(s), a DiskCopy and a SubRequest in WAITTAPERECALL.
          * @param subreq the subreq of the file to recall
-         * @param euid the user id
-         * @param egid the group id of the user
          * @param svcClass the svcClass to be used for the recall policy
          * @return 0: error (e.g. no valid segments)
          *         1: success
@@ -328,8 +326,6 @@ namespace castor {
          */
         virtual int createRecallCandidate
         (castor::stager::SubRequest* subreq,
-         const unsigned long euid,
-         const unsigned long egid,
          castor::stager::SvcClass* svcClass)
            throw (castor::exception::Exception);
           
