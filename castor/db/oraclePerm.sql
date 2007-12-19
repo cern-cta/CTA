@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.588 $ $Date: 2007/12/19 16:36:48 $ $Author: gtaur $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.589 $ $Date: 2007/12/19 16:38:05 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -168,11 +168,6 @@ CREATE GLOBAL TEMPORARY TABLE SelectFiles2DeleteProcHelper
 /* Global temporary table to handle output of the nsFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
   (fileid NUMBER)
-  ON COMMIT DELETE ROWS;
-
-/* Global temporary table to implement nsFilesDeletedProc procedure */
-CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedCastorFiles
-  (cfIds NUMBER)
   ON COMMIT DELETE ROWS;
 
 /* Global temporary tables for the cleanup procedures */
@@ -3089,6 +3084,44 @@ BEGIN
   ret := 0;
 END;
 
+/* PL/SQL method implementing stageForcedRm */
+CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
+                                           nh IN VARCHAR2) AS
+  cfId INTEGER;
+  nbRes INTEGER;
+  dcsToRm "numList";
+      unusedIds "numList";
+BEGIN
+  -- Lock the access to the CastorFile
+  -- This, together with triggers will avoid new TapeCopies
+  -- or DiskCopies to be added
+  SELECT id INTO cfId FROM CastorFile
+   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+  -- list diskcopies
+  SELECT id BULK COLLECT INTO dcsToRm
+    FROM DiskCopy
+   WHERE castorFile = cfId
+     AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+  -- Stop ongoing recalls
+  deleteTapeCopies(cfId);
+  -- mark all get/put requests for those diskcopies
+  -- and the ones waiting on them as failed
+  -- so that clients eventually get an answer
+  FOR sr IN (SELECT id, status FROM SubRequest
+              WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
+    IF sr.status IN (0, 1, 2, 3, 5, 6, 10, 13, 14) THEN  -- All but FAILED, FINISHED, FAILED_FINISHED, ARCHIVED
+      UPDATE SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 4,  -- EINTR
+             errorMessage = 'Canceled via stagerm',
+             parent = 0
+       WHERE (id = sr.id) OR (parent = sr.id);  -- FAILED
+    END IF;
+  END LOOP;
+  -- Set selected DiskCopies to INVALID
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE id IN (SELECT * FROM TABLE(dcsToRm));
+END;
 
 /* PL/SQL method implementing stageRm */
 CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
@@ -4753,8 +4786,7 @@ CREATE OR REPLACE PROCEDURE nsFilesDeletedProc
 (nsh IN VARCHAR2,
  fileIds IN castor."cnumList",
  orphans OUT castor.IdRecord_Cur) AS
-  delFids castor."cnumList";
-  cfId NUMBER;
+  unused NUMBER;
 BEGIN
   IF fileIds.COUNT <= 0 THEN
     RETURN;
@@ -4763,9 +4795,9 @@ BEGIN
   -- from the normal ones
   FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
     BEGIN
-      SELECT id INTO cfId FROM CastorFile
+      SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsh;
-      INSERT INTO NsFilesDeletedCastorFiles VALUES(fileIds(fid));
+      stageForcedRm(fileIds(fid), nsh);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list
@@ -4773,9 +4805,6 @@ BEGIN
       INSERT INTO NsFilesDeletedOrphans VALUES(fileIds(fid));
     END;
   END LOOP;
-  -- delete normal ones
-  SELECT * BULK COLLECT INTO delFids FROM NsFilesDeletedCastorFiles;
-  filesClearedProc(delFids);
   -- return orphan ones
   OPEN orphans FOR SELECT * FROM NsFilesDeletedOrphans;
 END;
