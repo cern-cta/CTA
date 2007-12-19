@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/07 11:40:52 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/12/19 16:36:49 $ $Author: gtaur $
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -100,6 +100,11 @@ namespace castor {
 
 	virtual void startChosenStreams(std::vector<PolicyObj*> outputFromStreamPolicy,u_signed64 initialSize) throw (castor::exception::Exception);
 
+         /**
+         * stopChosenStreams 
+         */
+
+	virtual void stopChosenStreams(std::vector<PolicyObj*> outputFromStreamPolicy) throw (castor::exception::Exception);
 
 	/**                    
 	 * inputForRecallPolicy 
@@ -150,6 +155,12 @@ namespace castor {
 
         /// SQL statement object for function startChosenStreams 
 	oracle::occi::Statement *m_startChosenStreamsStatement;
+
+        /// SQL statement for stopChosenStreams
+        static const std::string s_stopChosenStreamsStatementString;
+
+        /// SQL statement object for function stopChosenStreams 
+	oracle::occi::Statement *m_stopChosenStreamsStatement;
 
         /// SQL statement for inputForRecallPolicy  
         static const std::string s_inputForRecallPolicyStatementString;

@@ -74,6 +74,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
  std::vector<castor::infoPolicy::PolicyObj*> eligibleCandidates;
  std::vector<castor::infoPolicy::PolicyObj*> candidatesToRestore;
  std::vector<castor::infoPolicy::PolicyObj*> eligibleStreams;
+ std::vector<castor::infoPolicy::PolicyObj*> streamsToRestore;
  std::vector<castor::infoPolicy::PolicyObj*>::iterator infoCandidate;
  std::vector<castor::infoPolicy::PolicyObj*>::iterator infoCandidateStream;
 
@@ -154,7 +155,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	  if ( m_migrSvc == NULL || ((*infoCandidate)->policyName()).empty() ||  m_migrSvc->applyPolicy(*infoCandidate)){
 	    eligibleCandidates.push_back(*infoCandidate); // tapecopy has to be attached to the stream 
 	    
-	    if (m_migrSvc != NULL && ((*infoCandidate)->policyName()).empty() ) {
+	    if (m_migrSvc != NULL && !((*infoCandidate)->policyName()).empty() ) {
 	      castor::dlf::Param params2[]={castor::dlf::Param("fileId", realInfo->fileId()),					      castor::dlf::Param("policy", "Migration Policy used")};
 	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 2, params2);
 	    } else {
@@ -240,7 +241,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	    if (streamInfo->status() != castor::stager::STREAM_RUNNING ){ 
 	      runningStreams++;
 	      eligibleStreams.push_back(*infoCandidateStream);
-	      if (m_strSvc != NULL) {
+	      if (m_strSvc != NULL && !((*infoCandidateStream)->policyName()).empty() ) {
 		castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 						castor::dlf::Param("policy","Stream policy" ),
 					        castor::dlf::Param("message", "stream allowed to start")};
@@ -254,7 +255,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	      }
 	    }
 
-	    if (m_strSvc != NULL && ((*infoCandidateStream)->policyName()).empty()) {
+	    if (m_strSvc != NULL && !((*infoCandidateStream)->policyName()).empty()) {
 	      castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 					      castor::dlf::Param("policy","Stream policy" ),
 					      castor::dlf::Param("message", "running stream not stopped")};
@@ -271,7 +272,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	  } else {
 
 	     // to be stopped and it was running or not allowed to start
-
+	     streamsToRestore.push_back(*infoCandidateStream);
              if (streamInfo->status() == castor::stager::STREAM_RUNNING ) {
 	       runningStreams--;
 	       // it is enough not to be in the list to be stopped
@@ -301,6 +302,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
       initialSizeForStream= (initialSizeCeiling > 0 && initialSizeForStream>initialSizeCeiling)?initialSizeCeiling:initialSizeForStream;
      
       m_policySvc->startChosenStreams(eligibleStreams,initialSizeForStream);
+      m_policySvc->stopChosenStreams(streamsToRestore);
 	 
 	 // CLEANUP
 
@@ -327,6 +329,11 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	}
       }
 
+      // cleanup vectors
+
+      infoCandidateTapeCopies.clear();
+      eligibleCandidates.clear();
+      candidatesToRestore.clear();
 
       // delete stream policy object
  
@@ -343,6 +350,13 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	}
 	   infoCandidateStream++;
        } 
+       
+      // cleanup vectors
+      infoCandidateStreams.clear();
+      eligibleStreams.clear();
+      streamsToRestore.clear();
+   
+      // new SvcClass
 
       svcClassName++;
     } // loop for svcclass

@@ -89,6 +89,10 @@ const std::string castor::infoPolicy::ora::OraPolicySvc::s_inputForStreamPolicyS
 const std::string castor::infoPolicy::ora::OraPolicySvc::s_startChosenStreamsStatementString = 
   "BEGIN startChosenStreams(:1,:2); END;";
 
+/// SQL statement for startChosenStreams
+
+const std::string castor::infoPolicy::ora::OraPolicySvc::s_stopChosenStreamsStatementString = 
+  "BEGIN stopChosenStreams(:1); END;";
 
 /// SQL resurrect candidates
 const std::string castor::infoPolicy::ora::OraPolicySvc::s_resurrectCandidatesStatementString = 
@@ -126,6 +130,7 @@ castor::infoPolicy::ora::OraPolicySvc::OraPolicySvc(const std::string name) :
   m_createOrUpdateStreamStatement(0),
   m_inputForStreamPolicyStatement(0),
   m_startChosenStreamsStatement(0),
+  m_stopChosenStreamsStatement(0),
   m_inputForRecallPolicyStatement(0),
   m_resurrectTapesStatement(0),
   m_resurrectCandidatesStatement(0),
@@ -167,6 +172,7 @@ void castor::infoPolicy::ora::OraPolicySvc::reset() throw() {
     if  (m_createOrUpdateStreamStatement) deleteStatement(m_createOrUpdateStreamStatement);
     if  (m_inputForStreamPolicyStatement) deleteStatement(m_inputForStreamPolicyStatement);
     if  (m_startChosenStreamsStatement) deleteStatement(m_startChosenStreamsStatement);
+    if  (m_stopChosenStreamsStatement) deleteStatement(m_startChosenStreamsStatement);
     if  (m_inputForRecallPolicyStatement)deleteStatement(m_inputForRecallPolicyStatement);
     if  (m_resurrectTapesStatement) deleteStatement(m_resurrectTapesStatement);
     if (m_resurrectCandidatesStatement) deleteStatement(m_resurrectCandidatesStatement);
@@ -180,6 +186,7 @@ void castor::infoPolicy::ora::OraPolicySvc::reset() throw() {
   m_createOrUpdateStreamStatement=0;
   m_inputForStreamPolicyStatement=0;
   m_startChosenStreamsStatement=0; 
+  m_stopChosenStreamsStatement=0;
   m_inputForRecallPolicyStatement=0;
   m_resurrectTapesStatement=0;
   m_resurrectCandidatesStatement=0;
@@ -534,6 +541,56 @@ void  castor::infoPolicy::ora::OraPolicySvc::startChosenStreams(std::vector<Poli
         
 }
 
+//--------------------------------------------------------------------------
+// stopChosenStreams
+//--------------------------------------------------------------------------
+
+void  castor::infoPolicy::ora::OraPolicySvc::stopChosenStreams(std::vector<PolicyObj*> outputFromStreamPolicy) throw (castor::exception::Exception){
+  unsigned char (*buffer)[21] = 0;
+  ub2 *lens =0;
+  try {
+    // Check whether the statements are ok
+    if (0 ==  m_stopChosenStreamsStatement) {
+      m_stopChosenStreamsStatement  =
+        createStatement(s_stopChosenStreamsStatementString); 
+      m_stopChosenStreamsStatement->setAutoCommit(true);
+    }
+    unsigned int  nb = outputFromStreamPolicy.size();
+
+    if (nb == 0 ) return;
+
+    lens = (ub2 *)malloc (sizeof(ub2)*nb);
+    buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+    lens = (ub2 *)malloc (sizeof(ub2)*nb);
+
+    for (unsigned int i = 0; i < nb; i++) {
+      oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoStreamPolicy*>(outputFromStreamPolicy.at(i)->dbInfoPolicy()[0])->streamId());
+      oracle::occi::Bytes b = n.toBytes();
+      b.getBytes(buffer[i],b.length());
+      lens[i] = b.length();
+    }
+    ub4 unused = nb;
+    m_stopChosenStreamsStatement->setDataBufferArray
+         (1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+   
+    nb= m_stopChosenStreamsStatement->executeUpdate();
+
+    //free allocated memory needed because of oracle unfriendly interface
+    if (lens) {free(lens);lens=0;}
+    if (buffer){free(buffer);buffer=0;}
+
+  } catch (oracle::occi::SQLException e) {
+    if (lens) {free(lens);lens=0;}
+    if (buffer){free(buffer);buffer=0;}
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in stopChosensStreams."
+      << std::endl << e.what();
+    throw ex;
+  }
+        
+}
 
 //---------------------------------------------------------------------
 // inputForRecallPolicy

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IPolicySvc.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
+ * @(#)$RCSfile: IPolicySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/12/19 16:36:49 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -79,6 +79,11 @@ namespace castor {
 
 	virtual void startChosenStreams(std::vector<PolicyObj*> outputFromStreamPolicy,u_signed64 initialSize) throw (castor::exception::Exception)=0;
 
+          /**
+         * stopChosenStreams 
+         */
+
+	virtual void stopChosenStreams(std::vector<PolicyObj*> outputFromStreamPolicy) throw (castor::exception::Exception)=0;
 
 	/**                    
 	 * inputForRecallPolicy 

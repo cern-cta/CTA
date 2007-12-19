@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.587 $ $Date: 2007/12/19 13:38:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.588 $ $Date: 2007/12/19 16:36:48 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4859,6 +4859,7 @@ BEGIN
 END;
 
 /* Get input for python Stream Policy */
+
 CREATE OR REPLACE PROCEDURE inputForStreamPolicy
 (svcClassName IN VARCHAR2,
  policyName OUT VARCHAR2,
@@ -4869,18 +4870,21 @@ AS
   tpId NUMBER; -- used in the loop
   tcId NUMBER; -- used in the loop
   streamId NUMBER; -- stream attached to the tapepool
+  svcId NUMBER; -- id for the svcclass
 BEGIN	
   -- info for policy
-  SELECT streamPolicy, nbDrives INTO policyName, maxStream 
+  SELECT streamPolicy, nbDrives, id INTO policyName, maxStream, svcId 
     FROM SvcClass WHERE SvcClass.name = svcClassName;
-  SELECT count(*) INTO runningStreams FROM Stream WHERE Stream.status = 3; 
+  SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool WHERE Stream.TapePool = SvcClass2TapePool.child AND SvcClass2TapePool.parent=svcId AND Stream.status = 3; 
   --- return for policy
   OPEN dbInfo FOR
     SELECT Stream.id, Stream.status, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize)
-      FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream 
+      FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream, SvcClass2TapePool
      WHERE Stream2TapeCopy.child = TapeCopy.id(+)  
        AND TapeCopy.castorfile = CastorFile.id(+) 
        AND Stream.id = Stream2TapeCopy.parent(+)
+       AND Stream.Tapepool=SvcClass2TapePool.child
+       AND SvcClass2TapePool.parent=svcId 
      GROUP BY Stream.id, Stream.status;
 END;
 
@@ -5015,6 +5019,17 @@ BEGIN
 	COMMIT;
 END;
 
+/* stop chosen stream */
+
+CREATE OR REPLACE PROCEDURE stopChosenStreams
+        (streamIds IN castor."cnumList") AS
+BEGIN	
+	FOR i in streamIds.FIRST .. streamIds.LAST LOOP		 		
+		UPDATE Stream SET Stream.status=6 -- PENDING
+			WHERE id=streamIds(i);
+	END LOOP;	
+	COMMIT;
+END;
 
 /* resurrect Candidates */
 CREATE OR REPLACE PROCEDURE resurrectCandidates
