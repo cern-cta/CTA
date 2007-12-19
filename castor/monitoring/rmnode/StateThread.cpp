@@ -146,7 +146,7 @@ void castor::monitoring::rmnode::StateThread::run(void *param)
 	  } else {
 
 	    // Update the status of the diskserver
-	    fprintf(fp, "DiskServerStatus=%s",
+	    fprintf(fp, "DiskServerStatus=%s\n",
 		    castor::stager::DiskServerStatusCodeStrings[ack->diskServerStatus()]);
 
 	    // Update the status of the filesystems
@@ -155,7 +155,7 @@ void castor::monitoring::rmnode::StateThread::run(void *param)
 	    for (it = ack->ack().begin();
 		 it != ack->ack().end();
 		 it++, i++) {
-	      fprintf(fp, "FS%d=%s", i,
+	      fprintf(fp, "FS%d=%s\n", i,
 		      castor::stager::FileSystemStatusCodesStrings[(*it)->fileSystemStatus()]);
 	    }
 	    fclose(fp);
