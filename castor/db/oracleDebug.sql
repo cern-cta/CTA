@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.1 $ $Date: 2007/11/28 11:16:01 $ $Author: itglp $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.2 $ $Date: 2007/12/19 14:54:30 $ $Author: sponcec3 $
  *
  * Some SQL code to ease support and debugging
  *
@@ -55,6 +55,8 @@ BEGIN
     SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
   ELSIF (t = 30) THEN -- TapeCopy
     SELECT castorFile INTO cfId FROM TapeCopy WHERE id = ref;
+  ELSIF (t = 18) THEN -- Segment
+    SELECT castorFile INTO cfId FROM TapeCopy, Segment WHERE Segment.id = ref AND TapeCopy.id = Segment.copy;
   END IF;
   RETURN cfId;
 EXCEPTION WHEN NO_DATA_FOUND THEN -- fileid ?
