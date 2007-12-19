@@ -97,7 +97,6 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
   DeviceGroupName *dgName = NULL;
   TapeAccessSpecification *tapeAccessSpec = NULL;
   
-  bool exist = false; 
   int rowNumber = 0; 
   int rc = 0; // return value from vmgr_querytape
   char *p;
@@ -305,7 +304,6 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
  	//The db related informations
   TapeRequest *tapeReq = NULL;
   castor::BaseAddress ad;
-  int rowNumber = -1;
 	
 	// Get the tapeReq from its id
 	try {

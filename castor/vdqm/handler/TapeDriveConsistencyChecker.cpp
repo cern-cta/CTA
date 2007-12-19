@@ -315,7 +315,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
 				throw ex;
       }
       else {
-      	if ( (tapeRequest->id() != ptr_driveRequest->VolReqID)) {
+      	if ( ((int)tapeRequest->id() != ptr_driveRequest->VolReqID)) {
       			
 	 				castor::exception::Exception ex(EVQBADID);
     			ex.getMessage() << "TapeDriveConsistencyChecker::checkAssignConsistency(): "

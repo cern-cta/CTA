@@ -33,6 +33,7 @@
 // for WRITE_ENABLE WRITE_DISABLE
 #include <Ctape_constants.h>
 
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
@@ -565,6 +566,11 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
 		case STATUS_UNKNOWN:
 			ptr_driveRequest->status = VDQM_UNIT_UNKNOWN;
 			break;
+		default:
+			castor::exception::Internal ex;
+			ex.getMessage() << "Unknown drive status: "
+                          << tapeDrive->status() << std::endl;
+			throw ex;
 	}
   
   
@@ -1048,7 +1054,6 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
 	
 	vmgr_list list;
 	struct vmgr_tape_dgnmap *dgnmap;
-	bool tdcUpdate;
 	int flags, priorityLevel;
 	unsigned int i = 0;
 	
