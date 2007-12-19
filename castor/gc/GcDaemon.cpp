@@ -118,6 +118,9 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 28, "Deletion of orphan local file failed" },
     { 29, "Malloc failure" },
     { 30, "Synchronization configuration" },
+    { 31, "Synchronizing files with nameserver" },
+    { 32, "Nameserver error" },
+    { 33, "Cleaned up a number of files from the stager database" },
     { -1, ""}}; 
   dlfInit(messages);
 }
