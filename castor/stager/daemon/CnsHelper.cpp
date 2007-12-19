@@ -60,7 +60,7 @@ namespace castor{
         memset(&(cnsFileclass),0, sizeof(cnsFileclass));
         if( Cns_queryclass((cnsFileid.server),(cnsFilestat.fileclass), NULL, &(cnsFileclass)) != 0 ){
           
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","StagerCnsHelper->getCnsFileclass")};
+          castor::dlf::Param params[]={	castor::dlf::Param("Function","Cns_queryclass")};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
@@ -113,7 +113,7 @@ namespace castor{
           /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
           memset(&(cnsFileid), 0, sizeof(cnsFileid));
           if (Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &(cnsFileid)) != 0) {
-            castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.1")};
+            castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkFileOnNameServer.1")};
             castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
             
             castor::exception::Exception ex(serrno);
@@ -130,7 +130,7 @@ namespace castor{
               Cns_delete(subReq->fileName().c_str());
               serrno = tempserrno;
               
-              castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkAndSetFileOnNameServer.2")};
+              castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkFileOnNameServer.2")};
               castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
               
               castor::exception::Exception ex(serrno);
@@ -144,14 +144,19 @@ namespace castor{
         }
         else if(newFile) {
           // other requests cannot create non existing files
-          castor::dlf::Param params[]={ castor::dlf::Param("Function", "StagerCnsHelper->checkAndSetFileOnNameServer.3")};
+          castor::dlf::Param params[]={ castor::dlf::Param("Function", "StagerCnsHelper->checkFileOnNameServer.3")};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1, params);
           
-          castor::exception::Exception ex(ENOENT);
-          ex.getMessage() << (OBJ_StagePrepareToPutRequest == type || OBJ_StagePrepareToUpdateRequest == type ?
-            "Cannot PrepareToPut a non-writable file" :
-            "No such file or directory");
-          throw ex;
+          if(OBJ_StagePrepareToPutRequest == type || OBJ_StagePrepareToUpdateRequest == type) {
+            // this should never happen, let's provide a custom error message
+            castor::exception::Exception ex(EINVAL);
+            ex.getMessage() << "Cannot PrepareToPut a non-writable file";
+            throw ex;
+          }
+          else {
+            castor::exception::Exception ex(ENOENT);
+            throw ex;
+          }
         }
         return newFile;
       }
