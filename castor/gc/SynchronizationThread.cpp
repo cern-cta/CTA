@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/20 17:19:37 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/19 10:07:26 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be deleted
  *
@@ -137,7 +137,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
             std::pair<std::string, u_signed64> fid =
               fileIdFromFileName(file->d_name);
             fileIds[fid.first].push_back(fid.second);
-            paths[fid.first][fid.second] = *it+file->d_name;
+            paths[fid.first][fid.second] = *it+"/"+file->d_name;
             // in case of large number of files, synchronize a first chunk
             if (fileIds[fid.first].size() >= chunkSize) {
               synchronizeFiles(fid.first, fileIds[fid.first], paths[fid.first]);
@@ -320,11 +320,12 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     castor::dlf::Param params[] =
       {castor::dlf::Param("fileName", paths.find(*it)->second)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 1, params, &fid);
-    if (unlink(paths.find(*it)->second.c_str())) {
+    if (unlink(paths.find(*it)->second.c_str()) < 0) {
       // "Deletion of orphan local file failed"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("fileName", paths.find(*it)->second)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 1, params, &fid);
+	{castor::dlf::Param("fileName", paths.find(*it)->second),
+	 castor::dlf::Param("Error", strerror(errno))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 2, params, &fid);
     }
   }
 }
