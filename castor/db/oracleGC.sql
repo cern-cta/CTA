@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.586 $ $Date: 2007/12/18 15:44:09 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.587 $ $Date: 2007/12/19 13:38:05 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4764,13 +4764,13 @@ BEGIN
   FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
     BEGIN
       SELECT id INTO cfId FROM CastorFile
-       WHERE fileid = fid AND nsHost = nsh;
-      INSERT INTO NsFilesDeletedCastorFiles VALUES(fid);
+       WHERE fileid = fileIds(fid) AND nsHost = nsh;
+      INSERT INTO NsFilesDeletedCastorFiles VALUES(fileIds(fid));
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list
       -- of orphan fileids to return
-      INSERT INTO NsFilesDeletedOrphans VALUES(fid);
+      INSERT INTO NsFilesDeletedOrphans VALUES(fileIds(fid));
     END;
   END LOOP;
   -- delete normal ones
