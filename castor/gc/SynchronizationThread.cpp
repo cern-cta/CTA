@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/19 10:07:26 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/12/19 13:31:36 $ $Author: sponcec3 $
  *
  * Synchronization thread used to check periodically whether files need to be deleted
  *
@@ -140,6 +140,12 @@ void castor::gc::SynchronizationThread::run(void *param) {
             paths[fid.first][fid.second] = *it+"/"+file->d_name;
             // in case of large number of files, synchronize a first chunk
             if (fileIds[fid.first].size() >= chunkSize) {
+              // Synchronizing files with nameserver
+              castor::dlf::Param params[] =
+                {castor::dlf::Param("Directory", *it),
+                 castor::dlf::Param("NbFiles", fileIds[fid.first].size()),
+                 castor::dlf::Param("NameServer", fid.first)};
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 3, params);
               synchronizeFiles(fid.first, fileIds[fid.first], paths[fid.first]);
               fileIds[fid.first].clear();
               paths[fid.first].clear();
@@ -149,15 +155,19 @@ void castor::gc::SynchronizationThread::run(void *param) {
             // ignore files badly named, they are probably not ours
           }
         }
-	std::map<std::string, std::map<u_signed64, std::string> >::const_iterator it3 =
-	  paths.begin();
         // synchronize all files for all nameservers
         for (std::map<std::string, std::vector<u_signed64> >::const_iterator it2 =
                fileIds.begin();
              it2 != fileIds.end();
-             it2++, it3++) {
+             it2++) {
           if (it2->second.size() > 0) {
-            synchronizeFiles(it2->first, it2->second, it3->second);
+            // Synchronizing files with nameserver
+            castor::dlf::Param params[] =
+              {castor::dlf::Param("Directory", *it),
+               castor::dlf::Param("NbFiles", it2->second.size()),
+               castor::dlf::Param("NameServer", it2->first)};
+            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 31, 3, params);
+            synchronizeFiles(it2->first, it2->second, paths[it2->first]);
 	    sleep(syncInterval);
           }
         }
@@ -272,6 +282,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   int nbFids = fileIds.size();
   u_signed64* cfids = (u_signed64*) malloc(nbFids * sizeof(u_signed64));
   if (0 == cfids) {
+    // "Malloc failure"
     castor::dlf::Param params[] =
       {castor::dlf::Param("function", "synchronizeFiles"),
        castor::dlf::Param("ErrorMessage", strerror(errno)) };
@@ -280,7 +291,15 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   for (int i = 0; i < nbFids; i++) {
     cfids[i] = fileIds[i];
   }
-  Cns_bulkExist(nameServer.c_str(), cfids, &nbFids);
+  int rc = Cns_bulkExist(nameServer.c_str(), cfids, &nbFids);
+  if (rc != 0) {
+    // NameServer error
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("function", "synchronizeFiles"),
+       castor::dlf::Param("ErrorMessage", sstrerror(serrno)) };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 32, 2, params);
+    return;
+  }
   // Stop here if we have no deleted files
   if (0 == nbFids) {
     free(cfids);
@@ -308,6 +327,11 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   // and get back the orphan files that we should locally delete
   std::vector<u_signed64> orphans =
     gcSvc->nsFilesDeleted(delFileIds, nameServer);
+  // "Cleaned up a number of files from the stager database"
+  castor::dlf::Param params[] =
+    {castor::dlf::Param("nbFilesCleanedUp", delFileIds.size()-orphans.size()),
+     castor::dlf::Param("nbOrphanFiles", orphans.size())};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 33, 2, params);
 
   // remove local files that are orphaned
   struct Cns_fileid fid;
@@ -323,9 +347,9 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     if (unlink(paths.find(*it)->second.c_str()) < 0) {
       // "Deletion of orphan local file failed"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("fileName", paths.find(*it)->second),
-	 castor::dlf::Param("Error", strerror(errno))};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 2, params, &fid);
+	{castor::dlf::Param("FileName", paths.find(*it)->second),
+         castor::dlf::Param("Error", strerror(errno))};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 28, 2, params, &fid);
     }
   }
 }
