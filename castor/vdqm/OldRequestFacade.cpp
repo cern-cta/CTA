@@ -37,10 +37,10 @@
 #include <net.h>
 #include <vdqm_constants.h>
  
-// Local Includes
-#include "newVdqm.h"
-#include "OldRequestFacade.hpp"
-#include "OldProtocolInterpreter.hpp"
+#include "castor/vdqm/newVdqm.h"
+#include "castor/vdqm/OldRequestFacade.hpp"
+#include "castor/vdqm/OldProtocolInterpreter.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 
 // To make the code more readable
 using namespace castor::vdqm::handler;
@@ -84,7 +84,7 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
 
 		castor::dlf::Param params[] =
       {castor::dlf::Param("req_string", req_string)};
-		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 16, 1, params);
+		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_NEW_VDQM_REQUEST, 1, params);
 	}
   
   if ( !VDQM_VALID_REQTYPE(m_reqtype) ) {
@@ -111,7 +111,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     			handleRequest = false;
     		else {
 	    		// Handle VDQM_VOL_REQ
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 19);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VOL_REQ);
 					
   				TapeRequestHandler requestHandler;
 					requestHandler.newTapeRequest(ptr_header, ptr_volumeRequest, cuuid); 
@@ -122,7 +122,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     			handleRequest = false;
     		else {
 	    		// Handle VDQM_DRV_REQ
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 20);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_DRV_REQ);
 					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
 					tapeDriveHandler.newTapeDriveRequest();
     		}
@@ -132,7 +132,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     			handleRequest = false;
     		else {				
 					// Handle VDQM_DEL_VOLREQ
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 21);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_DEL_VOLREQ);
 					
 					
     			TapeRequestHandler requestHandler;
@@ -147,7 +147,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 	    		castor::dlf::Param params[] =
 			      {castor::dlf::Param("tape drive", ptr_driveRequest->drive),
 			       castor::dlf::Param("tape server", ptr_driveRequest->server)};
-	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 22, 2, params);
+	    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_DEL_DRVREQ, 2, params);
 	    		
 					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
 					tapeDriveHandler.deleteTapeDrive();
@@ -155,7 +155,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
         break;
     case VDQM_GET_VOLQUEUE:
     		// Handle VDQM_GET_VOLQUEUE
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 54);
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM_GET_VOLQUEUE);
 				{	
 					TapeRequestHandler requestHandler;
 					// Sends the tape request queue back to the client
@@ -169,7 +169,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     		break;
     case VDQM_GET_DRVQUEUE:
     		// Handle VDQM_GET_DRVQUEUE
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 55);
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM_GET_DRVQUEUE);
 				{					
 					TapeDriveHandler tapeDriveHandler(ptr_header, ptr_driveRequest, cuuid);
 					tapeDriveHandler.sendTapeDriveQueue(
@@ -179,7 +179,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
     		break;
     case VDQM_PING:
     		// Handle VDQM_PING
-    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 25);
+    		castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VDQM_PING);
     		
     		{
     			int queuePosition = -1;
@@ -189,7 +189,7 @@ bool castor::vdqm::OldRequestFacade::handleRequestType(
 					// Send VDQM_PING back to client
 				  castor::dlf::Param params[] =
 				  	{castor::dlf::Param("Queue position", queuePosition)};
-					castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 27, 1, params);
+					castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_SEND_BACK_VDQM_PING, 1, params);
 					oldProtInterpreter->sendAcknPing(queuePosition);
     		}
     		break;

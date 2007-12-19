@@ -28,20 +28,18 @@
  
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/Tape.hpp"
-
+#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
-#include "castor/vdqm/newVdqm.h"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/handler/TapeDriveStatusHandler.hpp"
 
 #include <net.h>
 #include <vdqm_constants.h>
- 
-// Local Includes
-#include "TapeDriveStatusHandler.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -250,7 +248,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
 			 castor::dlf::Param("tape ID", mountedTape->id()),
 			 castor::dlf::Param("tapeRequest ID", tapeRequest->id())};
-		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 52, 3, params);
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VOL_MOUNT_STATUS_MOUNTED, 3, params);
 	}
 	else {
   	// "TapeDriveStatusHandler::handleVolMountStatus(): Tape mounted in tapeDrive"
@@ -258,7 +256,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 	  	{castor::dlf::Param("tapeDrive ID", ptr_tapeDrive->id()),
 			 castor::dlf::Param("tape ID", mountedTape->id()),
 			 castor::dlf::Param("tapeRequest ID", "Local Request")};
-		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 52, 3, params);
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_VOL_MOUNT_STATUS_MOUNTED, 3, params);
 	}
 }
 
@@ -354,7 +352,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
   			 castor::dlf::Param("volid from client", ptr_driveRequest->volid),
   			 castor::dlf::Param("volid from tape drive", tape->vid()),
   			 castor::dlf::Param("jobID", ptr_tapeDrive->jobID())};
-			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, 41, 5, params);
+			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_ERROR, VDQM_INCONSISTENT_RELEASE_ON_DRIVE, 5, params);
     }
     
     /*
@@ -390,11 +388,11 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
       if ( ptr_tapeDrive->status() == FORCED_UNMOUNT ||
            (ptr_driveRequest->status & VDQM_FORCE_UNMOUNT)) {
 				// "client has requested a forced unmount." message
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING, 42);	            	          
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING, VDQM_CLIENT_REQUESTED_FORCED_UNMOUNT);	            	          
       }
       else if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ) {
 				// "tape drive in STATUS_UNKNOWN status. Force unmount!" message
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING, 43);	            
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_WARNING, VDQM_DRIVE_STATUS_UNKNOWN_FORCE_UNMOUNT);	            
       }
       
       if ( newTapeRequest == NULL ) {
@@ -403,7 +401,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 	  			{castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
 	  			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
 	  			 castor::dlf::Param("tape vid", tape->vid())};          	
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 44, 3, params);	            
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_NO_TAPE_REQUEST_FOR_MOUNTED_TAPE, 3, params);	            
       }
       	        
       /*
@@ -431,7 +429,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
   			 castor::dlf::Param("serverName", ptr_tapeDrive->tapeServer()->serverName()),
   			 castor::dlf::Param("tape vid", tape->vid()),
   			 castor::dlf::Param("tapeRequest ID", newTapeRequest->id())};          	
-			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 65, 4, params);
+			castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
     	
       /**
        * Switch tape Drive to status UNIT_STARTING

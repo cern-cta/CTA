@@ -39,13 +39,15 @@
 #include "castor/BaseAddress.hpp"
 
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
-#include "castor/vdqm/newVdqm.h"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/handler/TapeRequestHandler.hpp"
 
 #define VDQMSERV 1
 
@@ -60,10 +62,6 @@
 #include <vmgr_struct.h>
 #include <sys/types.h>
 #include "vmgr_api.h"
-
-
-//Local includes
-#include "TapeRequestHandler.hpp"
  
 
 //------------------------------------------------------------------------------
@@ -125,7 +123,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
      castor::dlf::Param("dgn", volumeRequest->dgn),
      castor::dlf::Param("drive", (*volumeRequest->drive == '\0' ? "***" : volumeRequest->drive)),
      castor::dlf::Param("server", (*volumeRequest->server == '\0' ? "***" : volumeRequest->server))};
-  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 23, 10, params);
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_OLD_VDQM_VOLREQ_PARAMS, 10, params);
   
   try {
 	  //------------------------------------------------------------------------
@@ -168,7 +166,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  memset(&tape_info,'\0',sizeof(vmgr_tape_info));
 	  
 		// "Try to get information about the tape from the VMGR daemon" message
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 47);	   
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_GET_TAPE_INFO_FROM_VMGR);	   
 	  
 	  /**
 	   * Create a connection to vmgr daemon, to obtain more information about the
@@ -235,12 +233,12 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 		// Request priority changed
 	  castor::dlf::Param params2[] =
 	  	{castor::dlf::Param("priority", newTapeReq->priority())};
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 24, 1, params2);
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_REQUEST_PRIORITY_CHANGED, 1, params2);
 	  
 	  
 	  // Verify that the request doesn't exist, 
 	  // by calling IVdqmSvc->checkTapeRequest
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 31);
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_VERIFY_REQUEST_NON_EXISTANT);
 	  /*
 	   * Verify that the request doesn't (yet) exist. If it doesn't exist,
 	   * the return value should be true.
@@ -254,7 +252,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  }
 	  
 	  // Try to store Request into the data base
- 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 32);
+ 	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_STORE_REQUEST_IN_DB);
 	  /*
 	   * Add the record to the volume queue
 	   */
@@ -323,7 +321,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	    castor::dlf::Param params[] =
 		  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
 		     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()")};
-		  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
+		  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
 		  
 		  return;
     }
@@ -338,7 +336,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	  	{castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
 	     castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()"),
 	     castor::dlf::Param("Message", e.getMessage().str().c_str())};
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 67, 2, params);
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
     
     if ( tapeReq ) {
     	if ( tapeReq->tapeDrive() ) {
@@ -399,7 +397,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 			// "TapeRequest and its ClientIdentification removed" message
 		  castor::dlf::Param params[] =
 		  	{castor::dlf::Param("TapeRequest ID", tapeReq->id())};
-		  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 28, 1, params);
+		  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_TAPE_REQUEST_ANDCLIENT_ID_REMOVED, 1, params);
 	  }
   } catch(castor::exception::Exception e) {
  		if (tapeReq) {
@@ -446,7 +444,7 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
 	  castor::dlf::Param params[] =
 	  	{castor::dlf::Param("Queue position", queuePosition),
 	  	 castor::dlf::Param("TapeRequest id", tapeReq->id())};
-	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 26, 2, params);
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_QUEUE_POS_OF_TAPE_REQUEST, 2, params);
 	  
   } catch(castor::exception::Exception e) {
  		if (tapeReq) {
@@ -555,7 +553,7 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
 			  castor::dlf::Param param[] =
 	  			{castor::dlf::Param("message", "TapeRequest info"),
 	  			 castor::dlf::Param("TapeRequest ID", volumeRequest->VolReqID)};
-	  		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 57, 2, param);
+	  		castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_SEND_SHOWQUEUES_INFO, 2, param);
 		  	
 		  	//Send informations to the client
 		  	oldProtInterpreter->sendToOldClient(

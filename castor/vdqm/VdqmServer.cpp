@@ -355,14 +355,14 @@ throw() {
         castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
         castor::dlf::Param("Port", port)
       };
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_NEW_REQUEST_ARRIVAL, 2, params);
     } catch(castor::exception::Exception e) {
       // "Exception caught : ignored" message
       castor::dlf::Param params[] = {
         castor::dlf::Param("Standard Message", sstrerror(e.code())),
         castor::dlf::Param("Precise Message", e.getMessage().str())
       };
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION_IGNORED, 2, params);
     }
 	
     // The ProtocolFacade manages the analysis of the remaining socket message
@@ -372,7 +372,7 @@ throw() {
     delete sock;
   } else { // If it's not a socket, then it's our dedication loop!
     // "Start tape to tape drive dedication thread" message
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 61);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_START_TAPE_TO_TAPE_DRIVE_DEDICATION_THREAD);
 
     // The Singleton with the main loop to dedicate a tape to a tape drive.
     castor::vdqm::handler::TapeRequestDedicationHandler* 
@@ -388,7 +388,7 @@ throw() {
       castor::dlf::Param params[] = {
         castor::dlf::Param("Message", ex.getMessage().str())
       };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 8, 1, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_FAILED_INIT_DRIVE_DEDICATION_THREAD, 1, params);
 
       exit(-1);
     }	  		

@@ -42,10 +42,9 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
- 
-// Local includes
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/newVdqm.h"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
 #include "castor/vdqm/VdqmSocketHelper.hpp"
 
@@ -222,7 +221,7 @@ throw (castor::exception::Exception) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("reqtype", reqtype),
         castor::dlf::Param("h_name", hp->h_name)};
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 15, 2, params);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_ADMIN_REQUEST, 2, params);
 
     if ( (isadminhost(ptr_serverSocket->socket(),hp->h_name) != 0) ) {
       serrno = EPERM;

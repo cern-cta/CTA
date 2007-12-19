@@ -29,22 +29,17 @@
 #include <string>
 #include "Cpool_api.h"
 
-#include "castor/exception/Internal.hpp"
-
 #include "castor/BaseAddress.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/Services.hpp"
- 
 #include "castor/stager/Tape.hpp"
- 
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/RTCopyDConnection.hpp"
-
-
-// Local include
-#include "TapeRequestDedicationHandler.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/handler/TapeRequestDedicationHandler.hpp"
 
 
 /**
@@ -123,7 +118,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 			
 			if ( freeTapeDrive == NULL || waitingTapeRequest == NULL) {
 		    // "No free TapeDrive, or no TapeRequest in the db" message
-//		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 46);
+//		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, VDQM_NO_FREE_DRIVE_OR_NO_TAPE_REQUEST_IN_DB);
 		    
 		    castor::BaseAddress ad;
 		   	ad.setCnvSvcName("DbCnvSvc");
@@ -145,7 +140,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 	    // "Exception caught in TapeRequestDedicationHandler::run()" message
 	    castor::dlf::Param param[] =
 	      {castor::dlf::Param("Message", ex.getMessage().str())};      
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_TAPE_REQUEST_DEDICATION_HANDLER_RUN_EXCEPTION, 1, param);
 	    
 	    try {  
 		  	freeMemory(freeTapeDrive, waitingTapeRequest);		  	
@@ -153,7 +148,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 		    // "Exception caught in TapeRequestDedicationHandler::run()" message
 		    castor::dlf::Param param[] =
 		      {castor::dlf::Param("Message", e.getMessage().str())};      
-		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 50, 1, param);			
+		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_TAPE_REQUEST_DEDICATION_HANDLER_RUN_EXCEPTION, 1, param);			
 			}
 		}
 	  	
@@ -241,7 +236,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::handleDedication(
     {castor::dlf::Param("ID tapeDrive", freeTapeDrive->id()),
      castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id()),
      castor::dlf::Param("tapeDrive status", "UNIT_STARTING")};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 45, 3, params);	
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, VDQM_UPDATE_REPRESENTATION_IN_DB, 3, params);	
 
   
  	/**
@@ -275,7 +270,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::createThreadPool()
 		castor::dlf::Param params[] =
 			{castor::dlf::Param("threadPoolId", m_threadPoolId),
 			castor::dlf::Param("actualNbThreads", actualNbThreads)};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 62, 2, params);
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, VDQM_DEDICATION_THREAD_POOL_CREATED, 2, params);
 
     m_dedicationThreadNumber = actualNbThreads;
   }
@@ -300,7 +295,7 @@ int castor::vdqm::handler::TapeRequestDedicationHandler::threadAssign(
                                -1);
   if (assign_rc < 0) {
   	// "Error while assigning request to pool" message
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 60);
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_ASSIGN_REQUEST_TO_POOL_ERROR);
 
     return -1;
   }
@@ -372,7 +367,7 @@ void *castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest(
 	    // "Exception caught in TapeRequestDedicationHandler::dedicationRequest()" message
 	    castor::dlf::Param param[] =
 	      {castor::dlf::Param("Message", e.getMessage().str())};      
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 63, 1, param);
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DEDICATION_REQUEST_EXCEPTION, 1, param);
 			
 			try {
 				rollback(freeTapeDrive);
@@ -380,7 +375,7 @@ void *castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest(
 		    // "Exception caught in TapeRequestDedicationHandler::dedicationRequest()" message
 		    castor::dlf::Param param[] =
 		      {castor::dlf::Param("Message", ex.getMessage().str())};      
-		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 63, 1, param);			
+		    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DEDICATION_REQUEST_EXCEPTION, 1, param);			
 			}
 		}
 		
@@ -397,7 +392,7 @@ void *castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest(
 	    // "Exception caught in TapeRequestDedicationHandler::dedicationRequest()" message
 	    castor::dlf::Param param[] =
 	      {castor::dlf::Param("Message", ex.getMessage().str())};      
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 63, 1, param);			
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DEDICATION_REQUEST_EXCEPTION, 1, param);			
 		}
   }
   else {
@@ -405,7 +400,7 @@ void *castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest(
   	castor::dlf::Param param[] =
      {castor::dlf::Param("function", 
      	"castor::vdqm::handler::TapeRequestDedicationHandler::dedicationRequest")};
-  	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 64, 1, param);
+  	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_NO_TAPE_DRIVE_TO_COMMIT_TO_RTCPD, 1, param);
   }
   
   return 0; 
@@ -451,7 +446,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::rollback(
 	  {castor::dlf::Param("ID tapeDrive", freeTapeDrive->id()),
 	   castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id()),
 	   castor::dlf::Param("tapeDrive status", "UNIT_UP")};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 45, 3, params);				
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_UPDATE_REPRESENTATION_IN_DB, 3, params);				
 }
 
 

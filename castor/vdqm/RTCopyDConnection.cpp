@@ -32,16 +32,15 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/ClientIdentification.hpp"
-
-// Local includes
-#include "RTCopyDConnection.hpp"
-#include "TapeDrive.hpp"
-#include "TapeRequest.hpp"
-#include "DeviceGroupName.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/newVdqm.h"
+#include "castor/vdqm/RTCopyDConnection.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeRequest.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
 
 #include "osdep.h" //for LONGSIZE
-#include "newVdqm.h"
-#include "vdqmMacros.h"  // Needed for marshalling
 
 
 //------------------------------------------------------------------------------
@@ -271,7 +270,7 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
       castor::dlf::Param params[] =
         {castor::dlf::Param("valid length", (VDQM_MSGBUFSIZ-3*LONGSIZE)),
          castor::dlf::Param("requested length", len)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 48, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_RTCOPYDCONNECTION_ERRMSG_TOO_LARGE, 2, params);
 
       len = VDQM_MSGBUFSIZ - 3*LONGSIZE;
     }
@@ -328,7 +327,7 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
       castor::dlf::Param params[] =
         {castor::dlf::Param("status", status),
          castor::dlf::Param("error msg", errmsg)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 49, 2, params);
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_RTCOPYDCONNECTION_RTCOPY_ERROR, 2, params);
 
       return false;
     }

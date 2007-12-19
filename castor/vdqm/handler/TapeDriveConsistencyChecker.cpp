@@ -26,19 +26,17 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/Tape.hpp"
-
+#include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
-#include "castor/vdqm/newVdqm.h"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/handler/TapeDriveConsistencyChecker.hpp"
 
 #include <net.h>
 #include <vdqm_constants.h>
  
-// Local Includes
-#include "TapeDriveConsistencyChecker.hpp"
-
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -188,7 +186,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest()
   	// "Remove old TapeRequest from db" message
   	castor::dlf::Param param[] =
 			{castor::dlf::Param("TapeRequest ID", ptr_tapeDrive->runningTapeReq()->id())};
-		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, 37, 1, param);
+		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, 1, param);
 
 		//Delete the tape request from the db and from the tapeDrive Object
     deleteRepresentation(ptr_tapeDrive->runningTapeReq(), m_cuuid);
@@ -334,7 +332,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
           castor::dlf::Param params[] =
 						{castor::dlf::Param("tapeRequest ID", tapeRequest->id()),
 						 castor::dlf::Param("jobID", ptr_driveRequest->jobID)};
-					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 39, 2, params);
+					castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_ASSIGN_TAPE_REQUEST_TO_JOB_ID, 2, params);
         }
       }
   }
@@ -430,7 +428,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkAssignConsistency(
 					{castor::dlf::Param("driveName", ptr_driveRequest->drive),
 					 castor::dlf::Param("serverName", ptr_driveRequest->server),
 					 castor::dlf::Param("jobID", ptr_driveRequest->jobID)};
-				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, 40, 2, params);	        
+				castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_LOCAL_ASSIGN_TO_JOB_ID, 2, params);	        
         
         ptr_tapeDrive->setJobID(ptr_driveRequest->jobID);
         

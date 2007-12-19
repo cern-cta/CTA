@@ -25,6 +25,7 @@
 #include "castor/io/ServerSocket.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -74,14 +75,14 @@ throw() {
       castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
       castor::dlf::Param("Port", port)
     };
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_NEW_REQUEST_ARRIVAL, 2, params);
   } catch(castor::exception::Exception e) {
     // "Exception caught : ignored" message
     castor::dlf::Param params[] = {
       castor::dlf::Param("Standard Message", sstrerror(e.code())),
       castor::dlf::Param("Precise Message", e.getMessage().str())
     };
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 5, 2, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION_IGNORED, 2, params);
   }
 
   // The ProtocolFacade manages the analysis of the remaining socket message

@@ -31,11 +31,11 @@
 
 #include <vdqm_constants.h>	//e.g. Magic Number of old vdqm protocol
  
-// Local includes
 #include "castor/vdqm/newVdqm.h" //Needed for the client_connection
 #include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
+#include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmSocketHelper.hpp"
 
 //------------------------------------------------------------------------------
@@ -83,13 +83,13 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, 7, 2, params);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_FAILED_SOCK_READ, 2, params);
   }
 
 	switch (magicNumber) {
 		case VDQM_MAGIC:
 			//Request has MagicNumber from old VDQM Protocol
-			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 6 );
+			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_REQUEST_HAS_OLD_PROTOCOL_MAGIC_NB );
 			
 			try {
 				handleOldVdqmRequest(magicNumber);
@@ -100,7 +100,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
 		    castor::dlf::Param params[] =
 		      {castor::dlf::Param("Message", e.getMessage().str().c_str()),
 		       castor::dlf::Param("errorCode", e.code())};      
-		    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, 9, 2, params);		  	
+		    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2, params);		  	
 		  }
 		  break;
 		
@@ -109,7 +109,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
 			castor::dlf::Param params[] =
 	      {castor::dlf::Param("Magic Number", magicNumber),
 	       castor::dlf::Param("VDQM_MAGIC", VDQM_MAGIC)};
-			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, 13, 2, params);
+			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_WRONG_MAGIC_NB, 2, params);
 	}		
 }
 
@@ -158,7 +158,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     // "Unable to read Request from socket" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, 7, 1, params);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_FAILED_SOCK_READ, 1, params);
     
     delete oldProtInterpreter;
     
@@ -176,7 +176,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 	// The request handling phase
 	try {
 		// Handle old vdqm request type																			
-		castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, 14);
+		castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_HANDLE_OLD_VDQM_REQUEST_TYPE);
 		
 		oldRequestFacade.checkRequestType(*m_cuuid);
 		reqHandled = oldRequestFacade.handleRequestType(oldProtInterpreter, *m_cuuid);
@@ -193,14 +193,14 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     	 * a tape request, which is still assigned to a tape drive or vice versa.
     	 * Anyway, it is not a big deal, so we just log a warning message.
     	 */
-	    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_WARNING, 9, 2, params2);
+	    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_WARNING, VDQM_EXCEPTION, 2, params2);
     }
 	  else
-	  	castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, 9, 2, params2);
+	  	castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2, params2);
     
     
     // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 51);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK);
 		svcs()->rollback(&ad); 
 		
     /**
@@ -219,7 +219,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 	    // "Exception caught" message
 	    castor::dlf::Param params[] =
 	      {castor::dlf::Param("Message", e.getMessage().str())};
-	    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, 9, 1, params);
+	    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 1, params);
 	  }
 	  
 	  delete oldProtInterpreter;
@@ -239,13 +239,13 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 		 */
 		if (reqHandled && reqtype != VDQM_PING) {
 			//Sending reply to client
-			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 10);
+			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_SEND_REPLY_TO_CLIENT);
 			
 			oldProtInterpreter->sendAcknCommit();
 			oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
 			
 			//"VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge" message
-			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 66);
+			castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK);
 			rc = oldProtInterpreter->recvAcknFromOldClient();
 
 			/**
@@ -255,23 +255,23 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 				svcs()->commit(&ad);
 				
 		    // "Request stored in DB" message
-		    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 12);				
+		    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_REQUEST_STORED_IN_DB);				
 			}
 			else {
 				// "Client didn't send a VDQM_COMMIT => Rollback of request in db"
 				svcs()->rollback(&ad);
 					
-		    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 30);				
+		    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_NO_VDQM_COMMIT_FROM_CLIENT);				
 			}
 		}
 	} catch (castor::exception::Exception e) { 
     // "Exception caught" message
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, 9, 1, params);
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 1, params);
     
     // "VdqmServer::handleOldVdqmRequest(): Rollback of the whole request" message   
-    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, 51);        
+    castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_OLD_VDQM_REQUEST_ROLLBACK);        
  		svcs()->rollback(&ad);
 	}
   
