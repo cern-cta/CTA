@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/07/13 10:25:15 $ $Author: itglp $
+* @(#)$RCSfile: OraCnvSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
 *
 * The conversion service to Oracle
 *
@@ -30,6 +30,7 @@
 // Include Files
 #include "occi.h"
 #include "castor/db/DbCnvSvc.hpp"
+#include "castor/exception/SQLError.hpp"
 
 namespace castor {
   
@@ -136,7 +137,7 @@ namespace castor {
         * @param stmt the statement to be deleted 
         */
         virtual void closeStatement(castor::db::IDbStatement* stmt)
-          throw (castor::exception::Exception);
+          throw (castor::exception::SQLError);
         
         /// Oracle user name
         std::string m_user;

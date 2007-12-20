@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/09/26 15:24:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStatement.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
  *
  *
  *
@@ -38,7 +38,6 @@ namespace castor {
 
       /**
        * Oracle implementation for IDbStatement
-       *
        */
       class OraStatement : public virtual castor::db::IDbStatement {
 
@@ -47,13 +46,14 @@ namespace castor {
         OraStatement(oracle::occi::Statement* stmt, castor::db::ora::OraCnvSvc* cnvSvc);
 
         /**
-         *
+         * Standard destructor. Closes the statement
          */
-        virtual ~OraStatement() throw (castor::exception::Exception);
+        virtual ~OraStatement();
 
         virtual void autoCommit();
+        
         /**
-         *
+         * Setter methods
          * @param pos
          * @param value
          */
@@ -68,13 +68,18 @@ namespace castor {
         virtual void registerOutParam(int pos, int dbType)
           throw (castor::exception::SQLError);
 
-        virtual int getInt(int pos);
-        virtual signed64 getInt64(int pos);
-        virtual u_signed64 getUInt64(int pos);
-        virtual std::string getString(int pos);
-        virtual std::string getClob(int pos);
-        virtual float getFloat(int pos);
-        virtual double getDouble(int pos);
+        /**
+         * Getter methods
+         * @param pos
+         * @return value
+         */
+        virtual int getInt(int pos) throw (castor::exception::SQLError);
+        virtual signed64 getInt64(int pos) throw (castor::exception::SQLError);
+        virtual u_signed64 getUInt64(int pos) throw (castor::exception::SQLError);
+        virtual std::string getString(int pos) throw (castor::exception::SQLError);
+        virtual std::string getClob(int pos) throw (castor::exception::SQLError);
+        virtual float getFloat(int pos) throw (castor::exception::SQLError);
+        virtual double getDouble(int pos) throw (castor::exception::SQLError);
 
         /**
          *
@@ -82,7 +87,7 @@ namespace castor {
         virtual IDbResultSet* executeQuery()
           throw (castor::exception::SQLError);
 
-        virtual int execute()
+        virtual void execute()
           throw (castor::exception::SQLError);
 
         inline oracle::occi::Statement* getStatementImpl() {
@@ -90,7 +95,9 @@ namespace castor {
         }
 
       private:
+      
         oracle::occi::Statement *m_statement;
+        
         castor::db::ora::OraCnvSvc* m_cnvSvc;
       };
 

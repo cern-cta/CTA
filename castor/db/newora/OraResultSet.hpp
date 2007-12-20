@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraResultSet.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/09/26 15:24:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraResultSet.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
  *
  *
  *
@@ -28,9 +28,8 @@
 #define CASTOR_ORARESULTSET_HPP
 
 #include <string>
-#include "occi.h"
-
 #include "castor/db/IDbResultSet.hpp"
+#include "occi.h"
 
 
 namespace castor {
@@ -58,19 +57,19 @@ namespace castor {
         /**
          *
          */
-        virtual bool next();
+        virtual bool next() throw (castor::exception::SQLError);
 
         /**
          *
          * @param i
          */
-        virtual int getInt(int i);
-        virtual signed64 getInt64(int i);
-        virtual u_signed64 getUInt64(int i);
-        virtual std::string getString(int i);
-        virtual std::string getClob(int i);
-        virtual float getFloat(int i);
-        virtual double getDouble(int i);
+        virtual int getInt(int i) throw (castor::exception::SQLError);
+        virtual signed64 getInt64(int i) throw (castor::exception::SQLError);
+        virtual u_signed64 getUInt64(int i) throw (castor::exception::SQLError);
+        virtual std::string getString(int i) throw (castor::exception::SQLError);
+        virtual std::string getClob(int i) throw (castor::exception::SQLError);
+        virtual float getFloat(int i) throw (castor::exception::SQLError);
+        virtual double getDouble(int i) throw (castor::exception::SQLError);
 
       private:
         oracle::occi::ResultSet *m_rset;

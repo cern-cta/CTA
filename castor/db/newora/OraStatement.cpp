@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/09/26 15:24:28 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStatement.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
  *
  *
  *
@@ -34,9 +34,11 @@ castor::db::ora::OraStatement::OraStatement(oracle::occi::Statement* stmt, casto
   m_statement->setAutoCommit(false);
 }
 
-castor::db::ora::OraStatement::~OraStatement() throw (castor::exception::Exception)
-{
-  m_cnvSvc->closeStatement(this);
+castor::db::ora::OraStatement::~OraStatement() {
+  try {
+    m_cnvSvc->closeStatement(this);
+  }
+  catch(oracle::occi::SQLException ignored) {}
 }
 
 void castor::db::ora::OraStatement::autoCommit()
@@ -108,47 +110,103 @@ void castor::db::ora::OraStatement::registerOutParam(int pos, int dbType)
 }
 
 int castor::db::ora::OraStatement::getInt(int pos)
-{
-  return m_statement->getInt(pos);
+  throw (castor::exception::SQLError) {
+  try {
+    return m_statement->getInt(pos);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
 }
 
 signed64 castor::db::ora::OraStatement::getInt64(int pos)
-{
-  return (signed64)m_statement->getDouble(pos);
+  throw (castor::exception::SQLError) {
+  try {
+    return (signed64)m_statement->getDouble(pos);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
 }
 
 u_signed64 castor::db::ora::OraStatement::getUInt64(int pos)
-{
-  return (u_signed64)m_statement->getDouble(pos);
+  throw (castor::exception::SQLError) {
+  try {
+    return (u_signed64)m_statement->getDouble(pos);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
 }
 
 std::string castor::db::ora::OraStatement::getString(int pos)
-{
-  return m_statement->getString(pos);
+  throw (castor::exception::SQLError) {
+  try {
+    return m_statement->getString(pos);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
 }
 
 std::string castor::db::ora::OraStatement::getClob(int pos)
-{
-  oracle::occi::Clob clob = m_statement->getClob(pos);
-  clob.open(oracle::occi::OCCI_LOB_READONLY);
-  int len = clob.length();
-  char* buf = (char*) malloc(len+1);
-  buf[len] = 0;
-  clob.read(len, (unsigned char*)buf, len+1);
-  clob.close();
-  std::string res(buf);
-  free(buf);
-  return std::string(res);
+  throw (castor::exception::SQLError) {
+  try {
+    oracle::occi::Clob clob = m_statement->getClob(pos);
+    clob.open(oracle::occi::OCCI_LOB_READONLY);
+    int len = clob.length();
+    char* buf = (char*) malloc(len+1);
+    buf[len] = 0;
+    clob.read(len, (unsigned char*)buf, len+1);
+    clob.close();
+    std::string res(buf);
+    free(buf);
+    return std::string(res);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
 }
 
 float castor::db::ora::OraStatement::getFloat(int pos)
-{
-  return m_statement->getFloat(pos);
+  throw (castor::exception::SQLError) {
+  try {
+    return m_statement->getFloat(pos);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
 }
 
 double castor::db::ora::OraStatement::getDouble(int pos)
-{
-  return m_statement->getDouble(pos);
+  throw (castor::exception::SQLError) {
+  try {
+    return m_statement->getDouble(pos);
+  }
+  catch(oracle::occi::SQLException e) {
+    castor::exception::SQLError ex;
+    ex.getMessage() << "Database error, Oracle code: " << e.getErrorCode()
+                    << std::endl << e.what();
+    throw ex;
+  }
 }
 
 
@@ -156,7 +214,8 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
   throw (castor::exception::SQLError) {
   try {
     return new castor::db::ora::OraResultSet(m_statement->executeQuery(), m_statement);
-  } catch(oracle::occi::SQLException e) {
+  }
+  catch(oracle::occi::SQLException e) {
     m_cnvSvc->handleException(e);
 
     castor::exception::SQLError ex;
@@ -167,11 +226,12 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
   }
 }
 
-int castor::db::ora::OraStatement::execute()
+void castor::db::ora::OraStatement::execute()
   throw (castor::exception::SQLError) {
   try {
-    return m_statement->executeUpdate();
-  } catch(oracle::occi::SQLException e) {
+    m_statement->executeUpdate();
+  }
+  catch(oracle::occi::SQLException e) {
     m_cnvSvc->handleException(e);
 
     castor::exception::SQLError ex;

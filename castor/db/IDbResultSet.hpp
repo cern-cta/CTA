@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbResultSet.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/09/26 15:25:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IDbResultSet.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
  *
  * 
  *
@@ -29,6 +29,7 @@
 
 #include <string>
 #include "osdep.h"
+#include "castor/exception/SQLError.hpp"
 
 namespace castor {
     
@@ -50,19 +51,19 @@ class IDbResultSet {
     /**
      * 
      */
-    virtual bool next() = 0;
+    virtual bool next() throw (castor::exception::SQLError) = 0;
     
     /**
      * 
      * @param i 
      */
-    virtual int getInt(int i) = 0;
-    virtual signed64 getInt64(int i) = 0;
-    virtual u_signed64 getUInt64(int i) = 0;
-    virtual std::string getString(int i) = 0;
-    virtual std::string getClob(int i) = 0;
-    virtual float getFloat(int i) = 0;
-    virtual double getDouble(int i) = 0;
+    virtual int getInt(int i) throw (castor::exception::SQLError) = 0;
+    virtual signed64 getInt64(int i) throw (castor::exception::SQLError) = 0;
+    virtual u_signed64 getUInt64(int i) throw (castor::exception::SQLError) = 0;
+    virtual std::string getString(int i) throw (castor::exception::SQLError) = 0;
+    virtual std::string getClob(int i) throw (castor::exception::SQLError) = 0;
+    virtual float getFloat(int i) throw (castor::exception::SQLError) = 0;
+    virtual double getDouble(int i) throw (castor::exception::SQLError) = 0;
 };
 
 }

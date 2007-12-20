@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2007/12/03 11:27:24 $ $Author: murrayc3 $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
  *
  * The conversion service to Oracle
  *
@@ -336,7 +336,7 @@ oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const st
 // closeStatement
 // -----------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::closeStatement(castor::db::IDbStatement* stmt)
-  throw (castor::exception::Exception) {
+  throw (castor::exception::SQLError) {
   try {
     castor::db::ora::OraStatement* oraStmt = dynamic_cast<castor::db::ora::OraStatement*>(stmt);
     if(oraStmt == 0) return;

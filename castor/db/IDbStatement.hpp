@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/09/26 15:25:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IDbStatement.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
  *
  * 
  *
@@ -64,8 +64,8 @@ class IDbStatement {
     virtual void registerOutParam(int pos, int dbType)
       throw (castor::exception::SQLError) = 0;
 
-    virtual int getInt(int pos) = 0;
-    virtual signed64 getInt64(int pos) = 0;
+    virtual int getInt(int pos) throw (castor::exception::SQLError) = 0;
+    virtual signed64 getInt64(int pos) throw (castor::exception::SQLError) = 0;
     virtual u_signed64 getUInt64(int pos) = 0;
     virtual std::string getString(int pos) = 0;
     virtual std::string getClob(int pos) = 0;
@@ -76,13 +76,13 @@ class IDbStatement {
      * 
      */
     virtual castor::db::IDbResultSet* executeQuery()
-	  throw (castor::exception::SQLError) = 0;
+	    throw (castor::exception::SQLError) = 0;
 
     /**
      * 
      */
-    virtual int execute()
-	  throw (castor::exception::SQLError) = 0;
+    virtual void execute()
+	    throw (castor::exception::SQLError) = 0;
 
 };
 
