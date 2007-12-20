@@ -32,21 +32,21 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::vdqm::RequestHandlerThread::RequestHandlerThread()
-throw () {
+  throw () {
 }
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::vdqm::RequestHandlerThread::~RequestHandlerThread()
-throw () {
+  throw () {
 }
 
 //-----------------------------------------------------------------------------
 // init
 //-----------------------------------------------------------------------------
 void castor::vdqm::RequestHandlerThread::init()
-throw() {
+  throw() {
 }
 
 
@@ -54,7 +54,7 @@ throw() {
 // run
 //-----------------------------------------------------------------------------
 void castor::vdqm::RequestHandlerThread::run(void *param)
-throw() {
+  throw() {
   castor::io::ServerSocket *sock = (castor::io::ServerSocket*)param;
 
   // placeholder for the request uuid if any
@@ -97,5 +97,5 @@ throw() {
 // stop
 //-----------------------------------------------------------------------------
 void castor::vdqm::RequestHandlerThread::stop()
-throw() {
+  throw() {
 }

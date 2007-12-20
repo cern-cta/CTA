@@ -52,7 +52,7 @@
 // readMagicNumber
 //------------------------------------------------------------------------------
 unsigned int castor::vdqm::VdqmSocketHelper::readMagicNumber(const int socket)
-throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) {
 
   char buffer[sizeof(unsigned int)];
   char *p;
@@ -110,7 +110,7 @@ throw (castor::exception::Exception) {
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmSocketHelper::vdqmNetwrite(const int socket,
   void* hdrbuf)
-throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) {
   int rc;
 
   rc = netwrite_timeout(socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
@@ -142,7 +142,7 @@ throw (castor::exception::Exception) {
 // vdqmNetread
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmSocketHelper::vdqmNetread(const int socket, void* hdrbuf)
-throw (castor::exception::Exception) {
+  throw (castor::exception::Exception) {
   int rc;
 
   rc = netread_timeout(socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);

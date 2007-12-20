@@ -63,9 +63,9 @@ int main(int argc, char *argv[]) {
     server.parseCommandLine(argc, argv);
 
 
-    //--------------------
-    // Create thread pools
-    //--------------------
+    //------------------------
+    // Create the thread pools
+    //------------------------
 
     server.addThreadPool(
       new castor::server::TCPListenerThreadPool("RequestHandlerThread",
@@ -110,7 +110,7 @@ int main(int argc, char *argv[]) {
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServer::VdqmServer()
-throw():
+  throw():
   castor::server::BaseDaemon("Vdqm")
 {
   initDlf();
@@ -121,7 +121,7 @@ throw():
 // initDlf
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::initDlf()
-throw()
+  throw()
 {
   castor::dlf::Message messages[] = {
     {VDQM_NULL, " - "},
@@ -205,7 +205,7 @@ throw()
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
-throw() {
+  throw() {
   static struct Coptions longopts[] =
     {
       {"foreground"        , NO_ARGUMENT      , NULL, 'f'},
@@ -249,7 +249,7 @@ throw() {
 // help
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::help(std::string programName)
-throw() {
+  throw() {
   std::cout << "Usage: " << programName << " [options]\n"
     "\n"
     "where options can be:\n"

@@ -34,7 +34,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::vdqm::DriveDedicationThread::DriveDedicationThread()
-throw () {
+  throw () {
 }
 
 
@@ -42,7 +42,7 @@ throw () {
 // destructor
 //-----------------------------------------------------------------------------
 castor::vdqm::DriveDedicationThread::~DriveDedicationThread()
-throw () {
+  throw () {
 }
 
 
@@ -50,7 +50,7 @@ throw () {
 // select
 //-----------------------------------------------------------------------------
 castor::IObject* castor::vdqm::DriveDedicationThread::select()
-throw() {
+  throw() {
   try {
     // Get the DbVdqmSvc. Note that we cannot cache it since we
     // would not be thread safe
@@ -90,7 +90,7 @@ throw() {
 // process
 //-----------------------------------------------------------------------------
 void castor::vdqm::DriveDedicationThread::process(castor::IObject *param)
-throw() {
+  throw() {
   try {
     // Get the DbVdqmSvc. Note that we cannot cache it since we
     // would not be thread safe
