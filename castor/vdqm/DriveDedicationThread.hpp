@@ -32,6 +32,10 @@ namespace castor {
 
   namespace vdqm {
 
+    // Forward declarations
+    class IVdqmSvc;
+
+
     /**
      * Handles the dedication of tape drives.
      */
@@ -51,15 +55,39 @@ namespace castor {
       ~DriveDedicationThread() throw();
 
       /**
-       * Select a new ... to be processed
+       * Performs the select query
        */
       virtual castor::IObject* select() throw();
 
       /**
-       * Performs the selected query
+       * Processes the results of the select.  This method allocates the
+       * required resources to do the work, then delegates the work to
+       * processWork, and finally cleans up independent of whether or not
+       * processWork raised an exception.
+       *
        * @param param The IObject returned by select
        */
       virtual void process(castor::IObject* param) throw();
+
+
+    private:
+
+      /**
+       * The process method delegates the actual work to be done to this method
+       * and then cleans up after this method has returned or has thrown an
+       * exception.
+       */
+      void processWork(castor::IObject* param)
+        throw(castor::exception::Exception);
+
+      /**
+       * Returns a pointer to the DbVdqmSvc or throws an exception if it cannot.
+       *
+       * Please note that this method never returns NULL.  The method returns a
+       * non-zero pointer or it throws an exception.
+       */
+      castor::vdqm::IVdqmSvc *getDbVdqmSvc()
+        throw(castor::exception::Exception);
 
     }; // class DriveDedicationThread
 

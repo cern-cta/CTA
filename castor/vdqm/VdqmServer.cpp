@@ -193,7 +193,8 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK, "VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge"},
     {VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, "Couldn't find the tape request in db. Maybe it is already deleted?"},
     {VDQM_DBVDQMSVC_GETSVC, "Could not get DbVdqmSvc"},
-    {VDQM_DBVDQMSVC_EXCEPT, "Unexpected exception caught"},
+    {VDQM_MATCHTAPE2TAPEDRIVE_ERROR, "Error occured when determining if there is matching free drive and waiting request"},
+    {VDQM_DRIVEDEDICATONTHREAD_PROCESSWORK_EXCEPT, "Exception raised by castor::vdqm::DriveDedicationThread::processWork"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

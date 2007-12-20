@@ -25,6 +25,8 @@
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/vdqm/DriveAndRequestPair.hpp"
 #include "castor/vdqm/DriveDedicationThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
@@ -51,38 +53,42 @@ castor::vdqm::DriveDedicationThread::~DriveDedicationThread()
 //-----------------------------------------------------------------------------
 castor::IObject* castor::vdqm::DriveDedicationThread::select()
   throw() {
+
+  castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
+  castor::IObject        *obj     = NULL;
+
+
   try {
-    // Get the DbVdqmSvc. Note that we cannot cache it since we
-    // would not be thread safe
-    castor::Services *svcs = castor::BaseObject::services();
-    castor::IService *svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
-    castor::vdqm::IVdqmSvc *vdqmSvc =
-      dynamic_cast<castor::vdqm::IVdqmSvc*>(svc);
+    vdqmSvc = getDbVdqmSvc();
+  } catch(castor::exception::Exception &e) {
+    // "Could not get DbVdqmSvc"
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", "DriveDedicationThread::select"),
+      castor::dlf::Param("Message", e.getMessage().str()),
+      castor::dlf::Param("Code", e.code())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
+      3, params);
 
-    if (0 == vdqmSvc) {
-      // "Could not get DbVdqmSvc"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "DriveDedicationThread::select")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
-        1, params);
-      return 0;
-    }
-
-    // Actual work
-//  castor::IObject* obj = vdqmSvc->matchTape2TapeDrive();
-//  vdqmSvc->release();
-//  return obj;
-  } catch (castor::exception::Exception e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "DriveDedicationThread::select"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_EXCEPT, 3,
-      params);
+    return NULL;
   }
 
-  return 0;
+  try
+  {
+    obj = vdqmSvc->matchTape2TapeDrive();
+  } catch (castor::exception::Exception e) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", "DriveDedicationThread::select"),
+      castor::dlf::Param("Message", e.getMessage().str()),
+      castor::dlf::Param("Code", e.code())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_MATCHTAPE2TAPEDRIVE_ERROR, 3, params);
+
+    return NULL;
+  }
+
+  return obj;
 }
 
 
@@ -91,32 +97,58 @@ castor::IObject* castor::vdqm::DriveDedicationThread::select()
 //-----------------------------------------------------------------------------
 void castor::vdqm::DriveDedicationThread::process(castor::IObject *param)
   throw() {
-  try {
-    // Get the DbVdqmSvc. Note that we cannot cache it since we
-    // would not be thread safe
-    castor::Services *svcs = castor::BaseObject::services();
-    castor::IService *svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
-    castor::vdqm::IVdqmSvc *vdqmSvc =
-      dynamic_cast<castor::vdqm::IVdqmSvc*>(svc);
 
-    if (0 == vdqmSvc) {
-      // "Could not get DbVdqmSvc"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "DriveDedicationThread::select")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_GETSVC,
-        1, params);
-      return;
-    }
-
-  } catch (castor::exception::Exception e) {
-    // "Unexpected exception caught"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "DriveDedicationThread::select"),
-       castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_DBVDQMSVC_EXCEPT, 3,
-      params);
+  // Delegate the work to processWork
+  try
+  {
+    processWork(param);
+  }
+  catch(castor::exception::Exception &e) {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", "DriveDedicationThread::process"),
+      castor::dlf::Param("Message", e.getMessage().str()),
+      castor::dlf::Param("Code", e.code())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_DRIVEDEDICATONTHREAD_PROCESSWORK_EXCEPT, 3, params);
   }
 
-  return;
+  // Clean up
+  if(param != 0)
+  {
+    // The destructor of castor::vdqm::DriveAndRequestPair deletes the tape
+    // drive and tape request objects
+    delete param;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
+// getDbVdqmSvc
+//-----------------------------------------------------------------------------
+castor::vdqm::IVdqmSvc *castor::vdqm::DriveDedicationThread::getDbVdqmSvc()
+  throw(castor::exception::Exception)
+{
+  castor::Services *svcs = castor::BaseObject::services();
+  castor::IService *svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
+  castor::vdqm::IVdqmSvc *vdqmSvc = dynamic_cast<castor::vdqm::IVdqmSvc*>(svc);
+
+  if (0 == vdqmSvc) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Failed to cast castor::IService* to castor::vdqm::IVdqmSvc*";
+
+    throw ex;
+  }
+
+  return vdqmSvc;
+}
+
+
+//-----------------------------------------------------------------------------
+// processWork
+//-----------------------------------------------------------------------------
+void castor::vdqm::DriveDedicationThread::processWork(castor::IObject *param)
+  throw(castor::exception::Exception) {
+  std::cout << "Process Work" << std::endl;
 }
