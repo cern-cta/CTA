@@ -177,7 +177,7 @@ namespace castor {
     OBJ_ThreadNotification = 146,
     OBJ_FirstByteWritten = 147,
 
-    // 20/12/07 S. Murray: Non auto-generated type used by the VDQM2
+    /* 20/12/07 S. Murray: Non auto-generated type used by the VDQM2 */
     OBJ_DriveAndRequestPair = 148
   };
 
