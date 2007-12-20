@@ -175,7 +175,10 @@ namespace castor {
     OBJ_Disk2DiskCopyStartRequest = 144,
     OBJ_Disk2DiskCopyStartResponse = 145,
     OBJ_ThreadNotification = 146,
-    OBJ_FirstByteWritten = 147
+    OBJ_FirstByteWritten = 147,
+
+    // 20/12/07 S. Murray: Non auto-generated type used by the VDQM2
+    OBJ_DriveAndRequestPair = 148
   };
 
   /**
@@ -248,8 +251,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-
-  static const unsigned int ObjectsIdsNb = 148;
+  static const unsigned int ObjectsIdsNb = 149;
 
   /**
    * Nb of ServicesIds currently existing
@@ -265,8 +267,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-
-  extern const char* ObjectsIdStrings[148];
+  extern const char* ObjectsIdStrings[149];
 
   /**
    * Names of the differents Services, used to display

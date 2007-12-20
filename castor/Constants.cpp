@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2007/12/05 07:06:45 $ $Author: waldron $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2007/12/20 09:22:27 $ $Author: murrayc3 $
  *
  *
  *
@@ -187,7 +187,10 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "Disk2DiskCopyStartRequest",
   "Disk2DiskCopyStartResponse",
   "ThreadNotification",
-  "FirstByteWritten"
+  "FirstByteWritten",
+
+  // 20/12/07 S. Murray: Non auto-generated type used by the VDQM2
+  "DriveAndRequestPair"
 };
 
 
