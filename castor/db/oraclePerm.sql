@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.589 $ $Date: 2007/12/19 16:38:05 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.590 $ $Date: 2007/12/20 09:37:42 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5084,6 +5084,7 @@ BEGIN
      WHERE Tape.id = Segment.tape(+) 
        AND TapeCopy.id(+) = Segment.copy
        AND CastorFile.id(+) = TapeCopy.castorfile 
+       AND Tape.status=8
      GROUP BY Tape.id, Tape.vid;
 END;
 
