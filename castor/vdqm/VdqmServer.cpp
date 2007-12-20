@@ -45,7 +45,6 @@
 #include "castor/vdqm/RequestHandlerThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
-#include "castor/vdqm/handler/TapeRequestDedicationHandler.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -193,43 +192,12 @@ throw()
     {VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, "Found a queued tape request for mounted tape"},
     {VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK, "VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge"},
     {VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, "Couldn't find the tape request in db. Maybe it is already deleted?"},
+    {VDQM_DBVDQMSVC_GETSVC, "Could not get DbVdqmSvc"},
+    {VDQM_DBVDQMSVC_EXCEPT, "Unexpected exception caught"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 
   dlfInit(messages);
-}
-
-
-//------------------------------------------------------------------------------
-// staticProcessRequest
-//------------------------------------------------------------------------------
-void *castor::vdqm::staticProcessRequest(void *param)
-throw() {
-  castor::vdqm::VdqmServer *server = 0;
-  struct processRequestArgs *args;
-
-  if (param == NULL) {
-    return 0;
-  }
-
-  // Recovering the processRequestArgs
-  args = (struct processRequestArgs *)param;
-
-  if (args->handler == NULL) {
-    delete args;
-    return 0;
-  }
-
-  server = dynamic_cast<castor::vdqm::VdqmServer *>(args->handler);
-  if (server == 0) {
-    delete args;
-    return 0;
-  }
-
-  // Executing the method
-  void *res = server->processRequest(args->param);
-  delete args;
-  return res;
 }
 
 
@@ -320,84 +288,4 @@ int castor::vdqm::VdqmServer::getRqstHandlerThreadNb()
 int castor::vdqm::VdqmServer::getDedicationThreadNb()
 {
   return m_dedicationThreadNumber;
-}
-
-
-//------------------------------------------------------------------------------
-// processRequest: Method called once per request, where all the code resides
-//------------------------------------------------------------------------------
-void *castor::vdqm::VdqmServer::processRequest(void *param)
-throw() {
-  castor::BaseObject* baseObject = 
-    (castor::BaseObject*) param;
-  
-  castor::io::ServerSocket* sock = 
-    dynamic_cast<castor::io::ServerSocket*>(baseObject);
-  	
-  baseObject = 0;
-  	
-  if (0 != sock) {
-    // placeholder for the request uuid if any
-    Cuuid_t cuuid = nullCuuid;
-	  
-    // Retrieve info on the client
-    unsigned short port;
-    unsigned long ip;
-		
-    // gives a Cuuid to the request
-    Cuuid_create(&cuuid); 
-		
-    try {
-      sock->getPeerIp(port, ip);
-	    
-      // "New Request Arrival" message
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-        castor::dlf::Param("Port", port)
-      };
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_NEW_REQUEST_ARRIVAL, 2, params);
-    } catch(castor::exception::Exception e) {
-      // "Exception caught : ignored" message
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("Standard Message", sstrerror(e.code())),
-        castor::dlf::Param("Precise Message", e.getMessage().str())
-      };
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION_IGNORED, 2, params);
-    }
-	
-    // The ProtocolFacade manages the analysis of the remaining socket message
-    ProtocolFacade protocolFacade = ProtocolFacade(sock, &cuuid);
-    protocolFacade.handleProtocolVersion();
-	
-    delete sock;
-  } else { // If it's not a socket, then it's our dedication loop!
-    // "Start tape to tape drive dedication thread" message
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, VDQM_START_TAPE_TO_TAPE_DRIVE_DEDICATION_THREAD);
-
-    // The Singleton with the main loop to dedicate a tape to a tape drive.
-    castor::vdqm::handler::TapeRequestDedicationHandler* 
-      tapeRequestDedicationHandler;  		
-	  	
-    try {
-      // Create thread, which dedicates the tapes to the tape drives
-      tapeRequestDedicationHandler = 
-        castor::vdqm::handler::TapeRequestDedicationHandler::Instance(
-          m_dedicationThreadNumber);
-    } catch (castor::exception::Exception ex) {
-      // "Unable to initialize TapeRequestDedicationHandler thread" message
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("Message", ex.getMessage().str())
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, VDQM_FAILED_INIT_DRIVE_DEDICATION_THREAD, 1, params);
-
-      exit(-1);
-    }	  		
-  		
-    // This function ends only, if the stop() function is beeing called.
-    tapeRequestDedicationHandler->run();
-  	
-    delete tapeRequestDedicationHandler;
-  }
-  
-  return 0;
 }

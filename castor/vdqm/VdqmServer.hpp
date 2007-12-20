@@ -35,11 +35,6 @@ namespace castor {
   namespace vdqm {
   	
     /**
-     * Static method used to pass to Cpool_assign
-     */
-    void *staticProcessRequest(void *param) throw();
-  	
-    /**
      * The Volume and Drive Queue Manager.
      */
     class VdqmServer : public castor::server::BaseDaemon {
@@ -75,10 +70,6 @@ namespace castor {
        */
       int getDedicationThreadNb();
       
-      /**
-       * Method called once per request, where all the code resides
-       */
-      virtual void *processRequest(void *param) throw();
 
     private:
 
@@ -109,13 +100,5 @@ namespace castor {
 
 } // namespace castor
 
-
-/**
- * Structure used to pass arguments to the method through Cpool_assign
- */
-struct processRequestArgs {
-  castor::vdqm::VdqmServer *handler;
-  void *param;
-};
 
 #endif // CASTOR_VDQM_VDQMSERVER_HPP

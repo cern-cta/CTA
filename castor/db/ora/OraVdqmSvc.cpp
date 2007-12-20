@@ -26,12 +26,13 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
+#include "castor/db/ora/OraVdqmSvc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
-
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/DriveAndRequestPair.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
@@ -43,9 +44,6 @@
 #include <Cuuid.h>
 #include <vdqm_constants.h>
 #include <net.h>
-
-// Local includes
-#include "OraVdqmSvc.hpp"
 
 
 // -----------------------------------------------------------------------
@@ -1250,19 +1248,21 @@ castor::vdqm::TapeRequest*
 // -----------------------------------------------------------------------
 // matchTape2TapeDrive
 // -----------------------------------------------------------------------
-void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
-	castor::vdqm::TapeDrive** freeTapeDrive, 
-	castor::vdqm::TapeRequest** waitingTapeRequest)
+castor::vdqm::DriveAndRequestPair*
+  castor::db::ora::OraVdqmSvc::matchTape2TapeDrive ()
   throw (castor::exception::Exception) {
+
+  u_signed64                        idTapeDrive          = 0;
+  u_signed64                        idTapeRequest        = 0;
+  castor::vdqm::TapeDrive           *tapeDrive           = NULL;
+  castor::vdqm::TapeRequest         *tapeRequest         = NULL;
+  castor::vdqm::DriveAndRequestPair *tapeDriveAndRequest = NULL;
   
-  u_signed64 idTapeDrive, idTapeRequest;
-  
-  castor::vdqm::TapeDrive* tapeDrive = NULL;
-	castor::vdqm::TapeRequest* tapeRequest = NULL;
   
   // Check whether the statements are ok
   if (0 == m_matchTape2TapeDriveStatement) {
-    m_matchTape2TapeDriveStatement = createStatement(s_matchTape2TapeDriveStatementString);
+    m_matchTape2TapeDriveStatement =
+      createStatement(s_matchTape2TapeDriveStatementString);
     
     m_matchTape2TapeDriveStatement->registerOutParam
         (1, oracle::occi::OCCIDOUBLE);
@@ -1280,14 +1280,9 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
     idTapeRequest = (u_signed64)m_matchTape2TapeDriveStatement->getDouble(2);
     
     if ( idTapeDrive == 0 || idTapeRequest == 0 ) {
-      // we found nothing, so let's just return two NULL Pointers
-      
-      *freeTapeDrive = NULL;      
-      *waitingTapeRequest = NULL;
-      
-      return;    	
+      // We found nothing, so return NULL
+      return NULL;    	
     }
-    
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1297,7 +1292,7 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
     throw ex;
   }
   
-  // Now get the the two Objects from their id's
+  // Now get the two Objects from their id's
   try {
     castor::BaseAddress ad;
     ad.setTarget(idTapeDrive);
@@ -1320,17 +1315,16 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);		
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);		
     
-    
     castor::BaseAddress ad2;
     ad2.setTarget(idTapeRequest);
     ad2.setCnvSvcName("DbCnvSvc");
     ad2.setCnvSvcType(castor::SVC_DBCNV);
 		
-		obj = cnvSvc()->createObj(&ad2);
+    obj = cnvSvc()->createObj(&ad2);
     tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
     if (0 == tapeRequest) {
       castor::exception::Internal e;
-      e.getMessage() << "createObj return unexpected type "
+      e.getMessage() << "createObj returned unexpected type "
                      << obj->type() << " for id " << idTapeRequest;
       delete obj;
       delete tapeDrive;
@@ -1340,13 +1334,6 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
     // Get the foreign related objects
     cnvSvc()->fillObj(&ad2, obj, castor::OBJ_TapeDrive);
     cnvSvc()->fillObj(&ad2, obj, castor::OBJ_ClientIdentification);		
-    
-    /**
-     * If we are here, everything went fine and we found a new 
-     * tape <--> tape drive couple 
-     */    
-    *freeTapeDrive = tapeDrive;
-    *waitingTapeRequest = tapeRequest;      
     
   } catch (oracle::occi::SQLException e) {
     handleException(e);
@@ -1359,6 +1346,13 @@ void castor::db::ora::OraVdqmSvc::matchTape2TapeDrive (
       << std::endl << e.getMessage();
     throw ex;
   }
+
+  // If we are here, everything went fine and we found a new 
+  // tape <--> tape drive pair 
+  tapeDriveAndRequest = new castor::vdqm::DriveAndRequestPair();
+  tapeDriveAndRequest->setTapeDrive(tapeDrive);
+  tapeDriveAndRequest->setTapeRequest(tapeRequest);
+  return tapeDriveAndRequest;
 }
 
 // -----------------------------------------------------------------------

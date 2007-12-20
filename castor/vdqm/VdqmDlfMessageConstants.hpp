@@ -98,7 +98,9 @@ namespace castor {
       VDQM_NO_TAPE_DRIVE_TO_COMMIT_TO_RTCPD=64, /* "No TapeDrive object to commit to RTCPD" */
       VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE=65, /* "Found a queued tape request for mounted tape" */
       VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK=66, /* "VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge" */
-      VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB=67 /* "Couldn't find the tape request in db. Maybe it is already deleted?" */
+      VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB=67, /* "Couldn't find the tape request in db. Maybe it is already deleted?" */
+      VDQM_DBVDQMSVC_GETSVC=68, /* "Could not get DbVdqmSvc" */
+      VDQM_DBVDQMSVC_EXCEPT=69 /* "Unexpected exception caught" */
     }; // enum VdqmDlfMessages
 
   } // namespace vdqm
