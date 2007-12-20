@@ -71,15 +71,25 @@ int main(int argc, char* argv[]) {
     
   try {
 
-    // get the policy svc
-
     char* pr=NULL;
     std::string recallPolicyName;
     std::string recallFunctionName;
+    castor::infoPolicy::RecallPySvc* recallPySvc=NULL;   
+
+    // new BaseDaemon as Server 
+    
+    castor::rtcopy::rechandler::RecHandlerDaemon*  newRecHandler= new castor::rtcopy::rechandler::RecHandlerDaemon();
+    newRecHandler->parseCommandLine(argc,argv);
+
+    // svc class and time to be executed
+
+    u_signed64 sleepTime=newRecHandler->timeSleep();
+
+    // get policy information
 
     if ( (pr = getconfent("Policy","Recall",1)) != NULL ){ 
       recallPolicyName=pr;
-    } else {
+    } else { 
         castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No policy for recall in castor.conf")};
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 8, 1, params);
@@ -93,25 +103,12 @@ int main(int argc, char* argv[]) {
 	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 8, 1, params);
     }
 
-    castor::infoPolicy::RecallPySvc* recallPySvc=NULL;
-
-      // started the interpreter 
-      // this call might raise fatal exceptions if the information in castor.conf are not
-      // valid ( be aware that castor.conf parsing is based only on tabs) 
-      
-      if ( !recallPolicyName.empty() && !recallFunctionName.empty() )
+    if ( !recallPolicyName.empty() && !recallFunctionName.empty() ){
 	recallPySvc= new castor::infoPolicy::RecallPySvc(recallPolicyName,recallFunctionName);
-
-    
-
-    // new BaseDaemon as Server 
-    
-    castor::rtcopy::rechandler::RecHandlerDaemon*  newRecHandler= new castor::rtcopy::rechandler::RecHandlerDaemon();
-    newRecHandler->parseCommandLine(argc,argv);
-
-    // svc class and time to be executed
-
-    u_signed64 sleepTime=newRecHandler->timeSleep();
+    } else {
+      std::cerr << "Couldn't find a valid recall function, check the castor.conf" << std::endl;
+      return -1;
+    }
     
     newRecHandler->addThreadPool(
       new castor::server::SignalThreadPool("RecHandlerThread", new castor::rtcopy::rechandler::RecHandlerThread(myService,recallPySvc), sleepTime));
