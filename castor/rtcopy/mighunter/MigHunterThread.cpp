@@ -207,103 +207,103 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
         castor::dlf::Param("message", "Not data found error for input for  stream policy")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 7, 2, params4);
-      continue;
  
-      }
+      } else {
 
-      // call the policy for the different stream
-      u_signed64 nbDrives=0;
-      u_signed64 runningStreams=0;
-      infoCandidateStream=infoCandidateStreams.begin();
-      if (infoCandidateStream != infoCandidateStreams.end()){
-	streamInfo=dynamic_cast<castor::infoPolicy::DbInfoStreamPolicy*> ((*infoCandidateStream)->dbInfoPolicy()[0]);
-        // the following information are always the same in all the candidates for the same svcclass
-	nbDrives=streamInfo->maxNumStreams();
-        runningStreams=streamInfo->runningStream();
-      }
-
-      while (infoCandidateStream != infoCandidateStreams.end()){
-        streamInfo=NULL;
-	if (!((*infoCandidateStream)->dbInfoPolicy()).empty())
+	// call the policy for the different stream
+	u_signed64 nbDrives=0;
+	u_signed64 runningStreams=0;
+	infoCandidateStream=infoCandidateStreams.begin();
+	if (infoCandidateStream != infoCandidateStreams.end()){
 	  streamInfo=dynamic_cast<castor::infoPolicy::DbInfoStreamPolicy*> ((*infoCandidateStream)->dbInfoPolicy()[0]);
-
-        if (streamInfo == NULL){
-	     castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
-	     castor::dlf::Param("message", "retrieving stream information not possible")};
-	     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 2, params4);
-	     continue;
+	  // the following information are always the same in all the candidates for the same svcclass
+	  nbDrives=streamInfo->maxNumStreams();
+	  runningStreams=streamInfo->runningStream();
 	}
 
-	streamInfo->setRunningStream(runningStreams); // initial value
-	try {
-	  if (m_strSvc == NULL ||((*infoCandidateStream)->policyName()).empty() || m_strSvc->applyPolicy(*infoCandidateStream)){
+	while (infoCandidateStream != infoCandidateStreams.end()){
+	  streamInfo=NULL;
+	  if (!((*infoCandidateStream)->dbInfoPolicy()).empty())
+	    streamInfo=dynamic_cast<castor::infoPolicy::DbInfoStreamPolicy*> ((*infoCandidateStream)->dbInfoPolicy()[0]);
+
+	  if (streamInfo == NULL){
+	    castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
+					    castor::dlf::Param("message", "retrieving stream information not possible")};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 2, params4);
+	    continue;
+	  }
+
+	  streamInfo->setRunningStream(runningStreams); // initial value
+	  try {
+	    if (m_strSvc == NULL ||((*infoCandidateStream)->policyName()).empty() || m_strSvc->applyPolicy(*infoCandidateStream)){
 	  // new one potentially  running
-	    if (streamInfo->status() != castor::stager::STREAM_RUNNING ){ 
-	      runningStreams++;
-	      eligibleStreams.push_back(*infoCandidateStream);
-	      if (m_strSvc != NULL && !((*infoCandidateStream)->policyName()).empty() ) {
-		castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
+	      if (streamInfo->status() != castor::stager::STREAM_RUNNING ){ 
+		runningStreams++;
+		eligibleStreams.push_back(*infoCandidateStream);
+		if (m_strSvc != NULL && !((*infoCandidateStream)->policyName()).empty() ) {
+		  castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 						castor::dlf::Param("policy","Stream policy" ),
 					        castor::dlf::Param("message", "stream allowed to start")};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 3, params4);
-	      } else {
-		castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
+		  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 3, params4);
+		} else {
+		  castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 						castor::dlf::Param("policy","no policy used" ),
 					        castor::dlf::Param("message", "stream allowed to start")};
-		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 3, params4);
+		  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 3, params4);
 		
+		}
 	      }
-	    }
 
-	    if (m_strSvc != NULL && !((*infoCandidateStream)->policyName()).empty()) {
-	      castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
+	      if (m_strSvc != NULL && !((*infoCandidateStream)->policyName()).empty()) {
+		castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 					      castor::dlf::Param("policy","Stream policy" ),
 					      castor::dlf::Param("message", "running stream not stopped")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 2, params4);
-	    } else {
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 2, params4);
+	      } else {
 
-	      castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
+		castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 					      castor::dlf::Param("policy","no policy used" ),
 					      castor::dlf::Param("message", "running stream not stopped")};
-	      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 2, params4);
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 8, 2, params4);
 
-	    }
+	      }
 
-	  } else {
+	    } else {
 
-	     // to be stopped and it was running or not allowed to start
-	     streamsToRestore.push_back(*infoCandidateStream);
-             if (streamInfo->status() == castor::stager::STREAM_RUNNING ) {
-	       runningStreams--;
-	       // it is enough not to be in the list to be stopped
+	      // to be stopped and it was running or not allowed to start
+	      streamsToRestore.push_back(*infoCandidateStream);
+	      if (streamInfo->status() == castor::stager::STREAM_RUNNING ) {
+		runningStreams--;
+		// it is enough not to be in the list to be stopped
 
-	       castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
+		castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 					       castor::dlf::Param("message", "running stream to be stopped")};
-	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 2, params4);
-	     }else {
-	       castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 2, params4);
+	      }else {
+		castor::dlf::Param params4 []= {castor::dlf::Param("SvcClass",(*svcClassName) ),
 					       castor::dlf::Param("message", "stream not  allowed to start")};
-	       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 2, params4);
-	   }
+		castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 9, 2, params4);
+	      }
+	    }
+	  }catch (castor::exception::Exception e){
+	    castor::dlf::Param params[] =
+	      { castor::dlf::Param("policy","Stream Policy"),
+		castor::dlf::Param("code", sstrerror(e.code())),
+		castor::dlf::Param("stream",streamInfo->streamId()),
+		castor::dlf::Param("message", e.getMessage().str())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 4, params);
 	  }
-	}catch (castor::exception::Exception e){
-	  castor::dlf::Param params[] =
-	    { castor::dlf::Param("policy","Stream Policy"),
-	      castor::dlf::Param("code", sstrerror(e.code())),
-	      castor::dlf::Param("stream",streamInfo->streamId()),
-	      castor::dlf::Param("message", e.getMessage().str())};
-	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 15, 4, params);
+
+	  infoCandidateStream++;
 	}
 
-	infoCandidateStream++;
-      }
-
-      u_signed64 initialSizeForStream =(u_signed64) initialSizeToTransfer/nbDrives;
-      initialSizeForStream= (initialSizeCeiling > 0 && initialSizeForStream>initialSizeCeiling)?initialSizeCeiling:initialSizeForStream;
+	u_signed64 initialSizeForStream =(u_signed64) initialSizeToTransfer/nbDrives;
+	initialSizeForStream= (initialSizeCeiling > 0 && initialSizeForStream>initialSizeCeiling)?initialSizeCeiling:initialSizeForStream;
      
-      m_policySvc->startChosenStreams(eligibleStreams,initialSizeForStream);
-      m_policySvc->stopChosenStreams(streamsToRestore);
-	 
+	m_policySvc->startChosenStreams(eligibleStreams,initialSizeForStream);
+	m_policySvc->stopChosenStreams(streamsToRestore);
+
+      } 
 	 // CLEANUP
 
       infoCandidate=infoCandidateTapeCopies.begin();
@@ -329,12 +329,6 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	}
       }
 
-      // cleanup vectors
-
-      infoCandidateTapeCopies.clear();
-      eligibleCandidates.clear();
-      candidatesToRestore.clear();
-
       // delete stream policy object
  
       infoCandidateStream=infoCandidateStreams.begin();
@@ -352,6 +346,10 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
        } 
        
       // cleanup vectors
+
+      infoCandidateTapeCopies.clear();
+      eligibleCandidates.clear();
+      candidatesToRestore.clear();
       infoCandidateStreams.clear();
       eligibleStreams.clear();
       streamsToRestore.clear();
@@ -371,7 +369,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
       // delete migration policy object
  
       infoCandidate=infoCandidateTapeCopies.begin();
-      while ( infoCandidate !=eligibleCandidates.end() ){
+      while ( infoCandidate != infoCandidateTapeCopies.end() ){
          if (*infoCandidate){
 	   realInfo=NULL;
 	   if (!(*infoCandidate)->dbInfoPolicy().empty())
@@ -413,7 +411,14 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	infoCandidateStream++;
        } 
        
-      
+      // clear vectors
+      infoCandidateTapeCopies.clear();
+      eligibleCandidates.clear();
+      candidatesToRestore.clear();
+      infoCandidateStreams.clear();
+      eligibleStreams.clear();
+      streamsToRestore.clear();
+
   }
     catch (...){
      castor::dlf::Param params2[] =
@@ -464,6 +469,15 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	}
 	   infoCandidateStream++;
        } 
+
+      // clear vectors
+
+      infoCandidateTapeCopies.clear();
+      eligibleCandidates.clear();
+      candidatesToRestore.clear();
+      infoCandidateStreams.clear();
+      eligibleStreams.clear();
+      streamsToRestore.clear();
 
     }
 }
