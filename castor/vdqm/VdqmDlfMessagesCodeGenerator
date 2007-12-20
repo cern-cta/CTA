@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
 
+use strict;
+
+
 my $help =         "Description:\n";
 $help    = $help . "\tGenerates enum and array code for VDQM DLF messages\n\n";
 $help    = $help . "Usage:\n";
@@ -18,20 +21,8 @@ die "Unknown mode: $mode\n\n$help"
 open VDQMDLFMESSAGES, "<VdqmDlfMessages.csv"
   or die "Could not open VdqmDlfMessages.csv for reading: $!\n";
 
-my $enum_indent  = "    ";
 my $const_indent = "      ";
-
-my $array_indent   = "  ";
 my $element_indent = "    ";
-
-if($mode eq "ENUM") {
-  print("${enum_indent}enum VdqmDlfMessages {\n");
-} elsif($mode eq "ARRAY") {
-  print("${array_indent}castor::dlf::Message messages[] = {\n");
-} else {
-  die("Unknown mode");
-}
-
 my $const_name;
 my $const_val;
 my $msg;
@@ -52,12 +43,3 @@ while(<VDQMDLFMESSAGES>) {
 }
 
 close VDQMDLFMESSAGES;
-
-if($mode eq "ENUM") {
-  print("${enum_indent}}; // enum VdqmDlfMessages\n");
-} elsif($mode eq "ARRAY") {
-  print("${element_indent}{-1, \"\"}\n");
-  print("${array_indent}}; // castor::dlf::Message messages[]\n");
-} else {
-  die("Unknown mode");
-}
