@@ -40,6 +40,22 @@ castor::vdqm::DriveAndRequestPair::DriveAndRequestPair() throw() :
 
 
 //-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::vdqm::DriveAndRequestPair::~DriveAndRequestPair() throw() {
+  if(0 != m_tapeDrive) {
+    delete m_tapeDrive;
+    m_tapeDrive = 0;
+  }
+
+  if(0 != m_tapeRequest) {
+    delete m_tapeRequest;
+    m_tapeRequest = 0;
+  }
+}
+
+
+//-----------------------------------------------------------------------------
 // setId
 //-----------------------------------------------------------------------------
 void castor::vdqm::DriveAndRequestPair::setId(u_signed64 id) {

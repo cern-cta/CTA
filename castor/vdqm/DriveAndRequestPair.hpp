@@ -37,7 +37,10 @@ namespace castor {
     class TapeRequest;
 
     /**
-     * A tape and a tape drive.
+     * A tape drive and tape request pair.
+     *
+     * Please note that the destructor of this object will delete the tape
+     * drive and tape request objects.
      */
     class DriveAndRequestPair : public castor::IObject {
 
@@ -47,6 +50,14 @@ namespace castor {
        * Constructor.
        */
       DriveAndRequestPair() throw();
+
+      /**
+       * Destructor.
+       *
+       * Please note that this destructor deletes the tape drive object and
+       * tape request objects.
+       */
+      virtual ~DriveAndRequestPair() throw();
 
       /**
        * Sets the id of the object
