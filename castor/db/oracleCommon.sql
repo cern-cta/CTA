@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.590 $ $Date: 2007/12/20 09:37:42 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.591 $ $Date: 2007/12/21 13:48:49 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2174,16 +2174,20 @@ BEGIN
   -- only when needed, that is STAGEOUT case
   IF stat = 6 THEN -- STAGEOUT
     BEGIN
-      -- do we have a prepareTo Request ? There can be only a single one
-      -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
-      -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-      SELECT SubRequest.id INTO unused
-        FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
-              SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest,
-             SubRequest
-       WHERE SubRequest.CastorFile = cfId
-         AND PrepareRequest.id = SubRequest.request
-         AND SubRequest.status = 6;  -- READY
+      -- do we are other ongoing requests ?
+      SELECT count(*) INTO unused FROM SubRequest WHERE diskCopy = dcId AND id != srId;
+      IF (unused > 0) THEN
+        -- do we have a prepareTo Request ? There can be only a single one
+        -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
+        -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
+        SELECT SubRequest.id INTO unused
+          FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
+                SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest,
+              SubRequest
+          WHERE SubRequest.CastorFile = cfId
+           AND PrepareRequest.id = SubRequest.request
+           AND SubRequest.status = 6;  -- READY
+      END IF;
       -- we do have a prepareTo, so eveything is fine
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- No prepareTo, so prevent the writing
