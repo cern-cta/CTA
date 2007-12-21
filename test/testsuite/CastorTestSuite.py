@@ -5,6 +5,7 @@ import string
 
 import ClientTest
 import RfioTest
+import RootTest
 import TapeTest
 #import DlfTest
 #import CommonTest
@@ -22,6 +23,10 @@ class ClientSuite(unittest.TestSuite):
 	unittest.TestSuite.__init__(self)
 
 class RfioSuite(unittest.TestSuite):
+    def __init__(self):    
+	unittest.TestSuite.__init__(self)
+
+class RootSuite(unittest.TestSuite):
     def __init__(self):    
 	unittest.TestSuite.__init__(self)
 
@@ -43,13 +48,15 @@ class CoreSuite(unittest.TestSuite):
 
 #####  allCastorSuites is a dictonary with a test suite for each module ###########
 	
-allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'TAPE':TapeSuite(),'DLF':DlfSuite(),'COMMON':CommonSuite(),'CORE':CoreSuite()}
+allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'ROOT':RootSuite(),'TAPE':TapeSuite(),'DLF':DlfSuite(),'COMMON':CommonSuite(),'CORE':CoreSuite()}
 
 ################ for each module all the possible test suites included #######################
 
 clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerPutSuite(),'PUTDONE':ClientTest.StagerPutDoneSuite(),'GET':ClientTest.StagerGetSuite(),'UPD':ClientTest.StagerUpdSuite(),'RM':ClientTest.StagerRmSuite(),'EXTRAQRY':ClientTest.StagerQuerySpecialSuite(),'DISKONLY':ClientTest.StagerDiskOnlySuite(),'EXTRATEST':ClientTest.StagerExtraTestSuite()}
 
 rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_NEW_TURL': RfioTest.RfioRfcpNewTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_NEW_TURL': RfioTest.RfioOtherCmdNewTurlSuite(),'API': RfioTest.RfioApiSuite(), 'STRESS':RfioTest.RfioApiSuite()}
+
+rootTest={'PREREQ':RootTest.RootPreRequisitesSuite(),'RFIO':RootTest.RootRFIOSuite(),'CASTOR':RootTest.RootCastorSuite()}
 
 tapeTest={'PREREQ':TapeTest.TapePreSuite(),'MIGRATION':TapeTest.TapeMigrationSuite(),'RECALL':TapeTest.TapeRecallSuite(),'MIGRATION_AND_RECALL':TapeTest.TapeMigrationAndRecallSuite(), 'STRESS_CASTOR':TapeTest.TapeStressCastorSuite(),'TAPE_ONLY':TapeTest.TapeTapeOnlySuite()}
 
@@ -60,7 +67,7 @@ commonTest={'PREREQ':0,'TEST':0}
 
 coreTest={'PREREQ':0,'TEST':0}
 
-listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'TAPE':tapeTest,'DLF':dlfTest,'COMMON':commonTest,'CORE':coreTest}
+listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'ROOT':rootTest,'TAPE':tapeTest,'DLF':dlfTest,'COMMON':commonTest,'CORE':coreTest}
 
 
 #################### opening the file with the list of tests wanted  ################################

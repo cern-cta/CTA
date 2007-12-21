@@ -60,7 +60,7 @@ def saveOnFile(namefile,cmdS,scen=None):
             fin=open(namefile+("%d"%count),"wb")
         if scen != None:
             singleCmd=scen+singleCmd
-        
+
         myOut=os.popen4(singleCmd)
         fin.write((myOut[1]).read())
         fin.close()
@@ -165,7 +165,7 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                                 myScen+="unset "+envVar[0]+";"
                 return myScen
 
-	if myShell.find("tcsh"):
+	if myShell.find("tcsh") != -1:
 	        if host !=-1:
 			myScen+="setenv STAGE_HOST "+host+";"
 		if port !=-1:

@@ -1,14 +1,13 @@
 *** Test choice ***
 
-CLIENT		PUT		NO
-CLIENT		GET		NO
-CLIENT		UPD		NO
-CLIENT		PUTDONE		NO
-CLIENT		RM		NO
-CLIENT		EXTRAQRY	NO
-CLIENT          DISKONLY        NO
-CLIENT          EXTRATEST       NO
- 
+CLIENT          PUT        NO
+CLIENT          GET        NO
+CLIENT          UPD        NO
+CLIENT          PUTDONE    NO
+CLIENT          RM         NO
+CLIENT          EXTRAQRY   NO
+CLIENT          DISKONLY   NO
+CLIENT          EXTRATEST  NO
 
 RFIO            BASIC_RFCP                   NO
 RFIO            BASIC_OTHERCMD               NO
@@ -19,6 +18,8 @@ RFIO            CASTOR_OTHERCMD_NEW_TURL     NO
 RFIO            API                          NO
 RFIO            STRESS                       NO
 
+ROOT            RFIO       NO
+ROOT            CASTOR     NO
  
 TAPE            MIGRATION                    NO
 TAPE            RECALL                       NO
@@ -26,14 +27,9 @@ TAPE            MIGRATION_AND_RECALL         NO
 TAPE            STRESS_CASTOR                NO
 TAPE            TAPE_ONLY                    NO
 
-
-DLF		TEST            NO
-
-
-COMMON          TEST            NO 
-
-
-CORE            TEST            NO 
+DLF             TEST       NO
+COMMON          TEST       NO 
+CORE            TEST       NO 
 
 *** Generic parameters ***
 
@@ -52,11 +48,16 @@ USE_CASTOR_ENV    NO
 USE_STAGEMAP      NO
 USE_CASTOR_CONF   NO   
 
-LOG_DIR      /tmp/tmpRfio
+LOG_DIR           /tmp/tmpRfio
 
 INPUT_FILE        /etc/group
 STRESS_INPUT_DIR  /tmp/dir 
 
+*** Root test specific parameters ***
+
+ROOTSYS           /afs/cern.ch/sw/lcg/external/root/head/slc3_ia32_gcc323/root
+LOG_DIR           /tmp/tmpRoot
+INPUT_FILE        /etc/group
 
 *** Client test specific parameters ***
 
