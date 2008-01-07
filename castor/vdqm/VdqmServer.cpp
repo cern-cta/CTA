@@ -52,37 +52,52 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
 
+  castor::vdqm::VdqmServer       server;
+  castor::server::BaseThreadPool *requestHandlerThreadPool  = NULL;
+  castor::server::BaseThreadPool *driveDedicationThreadPool = NULL;
+
+
+  //-----------------------
+  // Parse the command line
+  //-----------------------
+
+  server.parseCommandLine(argc, argv);
+
+
+  //------------------------
+  // Create the thread pools
+  //------------------------
+
+  server.addThreadPool(
+    new castor::server::TCPListenerThreadPool("RequestHandlerThreadPool",
+      new castor::vdqm::RequestHandlerThread(), server.getListenPort()));
+
+  server.addThreadPool(
+    new castor::server::SignalThreadPool("DriveDedicationThreadPool",
+      new castor::vdqm::DriveDedicationThread()));
+
+
+  //----------------------------------------------
+  // Set the number of threads in each thread pool
+  //----------------------------------------------
+
+  requestHandlerThreadPool = server.getThreadPool('R');
+  if(requestHandlerThreadPool == NULL) {
+    std::cerr << "Failed to get RequestHandlerThreadPool" << std::endl;
+    return 1;
+  }
+
+  requestHandlerThreadPool->setNbThreads(server.getRqstHandlerThreadNb());
+
+  driveDedicationThreadPool = server.getThreadPool('D');
+  if(driveDedicationThreadPool == NULL) {
+    std::cerr << "Failed to get DriveDedicationThreadPool" << std::endl;
+    return 1;
+  }
+
+  driveDedicationThreadPool->setNbThreads(server.getDedicationThreadNb());
+
   try {
-    castor::vdqm::VdqmServer server;
-
-
-    //-----------------------
-    // Parse the command line
-    //-----------------------
-
-    server.parseCommandLine(argc, argv);
-
-
-    //------------------------
-    // Create the thread pools
-    //------------------------
-
-    server.addThreadPool(
-      new castor::server::TCPListenerThreadPool("RequestHandlerThread",
-        new castor::vdqm::RequestHandlerThread(), server.getListenPort()));
-
-    server.addThreadPool(
-      new castor::server::SignalThreadPool("DriveDedicationThread",
-        new castor::vdqm::DriveDedicationThread()));
-
-
-    //----------------------------------------------
-    // Set the number of threads in each thread pool
-    //----------------------------------------------
-
-    server.getThreadPool('R')->setNbThreads(server.getRqstHandlerThreadNb());
-    server.getThreadPool('D')->setNbThreads(server.getDedicationThreadNb());
-
 
     //-----------------
     // Start the server
@@ -91,13 +106,14 @@ int main(int argc, char *argv[]) {
     server.start();
 
   } catch (castor::exception::Exception e) {
-    std::cerr << "Caught exception : "
+    std::cerr << "Failed to start VDQM server : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
 
     return 1;
   } catch (...) {
-    std::cerr << "Caught general exception!" << std::endl;
+    std::cerr << "Failed to start VDQM server : Caught general exception!"
+      << std::endl;
     
     return 1;
   }
