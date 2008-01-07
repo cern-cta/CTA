@@ -256,18 +256,32 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
     case 'd':
       m_dedicationThreadNumber = atoi(Coptarg);
       break;
-    default:
+    case '?':
+      std::cerr << "Error: Unknown command-line option: " << (char)Coptopt
+        << std::endl << std::endl;
       help(argv[0]);
+      exit(1);
+    default:
+      std::cerr << "Internal error: Unknown return value from Cgetopt_long"
+        << std::endl << std::endl;
       exit(1);
     }
   }
 
+  if(Coptind > argc) {
+    std::cerr << "Internal error.  Invalid value for Coptind: " << Coptind
+      << std::endl;
+    exit(1);
+  }
+
   // Best to abort if there is some extra text on the command-line which has
   // not been parsed as it could indicate that a valid option never got parsed
-  if(Coptind != argc)
+  if(Coptind < argc)
   {
-    help(argv[0]);
-    exit(1);
+      std::cerr << "Error:  Unexpected command-line argument: "
+        << argv[Coptind] << std::endl << std::endl;
+      help(argv[0]);
+      exit(1);
   }
 }
 
@@ -277,7 +291,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::help(std::string programName)
   throw() {
-  std::cout << "Usage: " << programName << " [options]\n"
+  std::cerr << "Usage: " << programName << " [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
