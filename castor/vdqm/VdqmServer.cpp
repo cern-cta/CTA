@@ -127,7 +127,9 @@ int main(int argc, char *argv[]) {
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServer::VdqmServer()
   throw():
-  castor::server::BaseDaemon("Vdqm")
+  castor::server::BaseDaemon("Vdqm"),
+  m_rqstHandlerThreadNumber(1),
+  m_dedicationThreadNumber(1)
 {
   initDlf();
 }
