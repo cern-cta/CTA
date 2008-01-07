@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.227 $ $Release$ $Date: 2007/12/19 16:45:04 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.228 $ $Release$ $Date: 2008/01/07 10:48:14 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -143,6 +143,10 @@ const std::string castor::db::ora::OraStagerSvc::s_stageReleaseStatementString =
 const std::string castor::db::ora::OraStagerSvc::s_stageRmStatementString =
   "BEGIN stageRm(:1, :2, :3, :4, :5); END;";
 
+/// SQL statement for stageForcedRm
+const std::string castor::db::ora::OraStagerSvc::s_stageForcedRmStatementString =
+  "BEGIN stageForcedRm(:1, :2); END;";
+
 /// SQL statement for getCFByName
 const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
   "SELECT id FROM CastorFile WHERE lastKnownFileName = :1";
@@ -180,6 +184,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_archiveSubReqStatement(0),
   m_stageReleaseStatement(0),
   m_stageRmStatement(0),
+  m_stageForcedRmStatement(0),
   m_getCFByNameStatement(0),
   m_setFileGCWeightStatement(0),
   m_selectDiskPoolStatement(0),
@@ -228,6 +233,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
     if (m_stageReleaseStatement) deleteStatement(m_stageReleaseStatement);
     if (m_stageRmStatement) deleteStatement(m_stageRmStatement);
+    if (m_stageForcedRmStatement) deleteStatement(m_stageForcedRmStatement);
     if (m_getCFByNameStatement) deleteStatement(m_getCFByNameStatement);
     if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
     if (m_selectDiskPoolStatement) deleteStatement(m_selectDiskPoolStatement);
@@ -247,6 +253,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_archiveSubReqStatement = 0;
   m_stageReleaseStatement = 0;
   m_stageRmStatement = 0;
+  m_stageForcedRmStatement = 0;
   m_getCFByNameStatement = 0;
   m_setFileGCWeightStatement = 0;
   m_selectDiskPoolStatement = 0;
@@ -940,6 +947,9 @@ int castor::db::ora::OraStagerSvc::stageRm
       m_stageRmStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
       m_stageRmStatement->setAutoCommit(true);
+      m_stageForcedRmStatement =
+        createStatement(s_stageForcedRmStatementString);
+      m_stageForcedRmStatement->setAutoCommit(true);
       m_getCFByNameStatement =
         createStatement(s_getCFByNameStatementString);
     }
@@ -983,12 +993,10 @@ int castor::db::ora::OraStagerSvc::stageRm
       if(Cns_getpath((char*)cf->nsHost().c_str(), cf->fileId(), nspath) != 0 
          && serrno == ENOENT) {
         // indeed the file exists only in the stager db,
-        // execute stageRm and force full deletion
-        m_stageRmStatement->setDouble(1, subreq->id());
-        m_stageRmStatement->setDouble(2, cf->fileId());
-        m_stageRmStatement->setString(3, cf->nsHost());
-        m_stageRmStatement->setDouble(4, 0);
-        unsigned int nb = m_stageRmStatement->executeUpdate();
+        // execute stageForcedRm (cf. ns synch performed in gcDaemon) 
+        m_stageForcedRmStatement->setDouble(1, cf->fileId());
+        m_stageForcedRmStatement->setString(2, cf->nsHost());
+        unsigned int nb = m_stageForcedRmStatement->executeUpdate();
         if (0 == nb) {
           castor::exception::Internal ex;
           ex.getMessage()

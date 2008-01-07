@@ -451,6 +451,12 @@ namespace castor {
         oracle::occi::Statement *m_stageRmStatement;
 
         /// SQL statement for function stageRm
+        static const std::string s_stageForcedRmStatementString;
+
+        /// SQL statement object for function stageRm
+        oracle::occi::Statement *m_stageForcedRmStatement;
+
+        /// SQL statement for function stageRm
         static const std::string s_getCFByNameStatementString;
 
         /// SQL statement object for function stageRm
