@@ -170,7 +170,8 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
 #else
     ssize_t nb = ::recv(m_socket, (*buf)+readBytes, n - readBytes, 0);
 #endif
-    if (nb == -1) {
+    if (nb == -1 || nb == 0) {
+      // nb == 0 on an EOF, which typically means that the client went away
       if (errno == EAGAIN) {
         continue;
       } else {
