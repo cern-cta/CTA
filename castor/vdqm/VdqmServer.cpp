@@ -225,15 +225,15 @@ void castor::vdqm::VdqmServer::initDlf()
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
   throw() {
-  static struct Coptions longopts[] =
-    {
-      {"foreground"        , NO_ARGUMENT      , NULL, 'f'},
-      {"config"            , REQUIRED_ARGUMENT, NULL, 'c'},
-      {"help"              , NO_ARGUMENT      , NULL, 'h'},
-      {"rqstHandlerThreads", REQUIRED_ARGUMENT, NULL, 'n'},
-      {"dedicationThreads" , REQUIRED_ARGUMENT, NULL, 'd'},
-      {NULL                , 0                , NULL,  0 }
-    };
+
+  static struct Coptions longopts[] = {
+    {"foreground"        , NO_ARGUMENT      , NULL, 'f'},
+    {"config"            , REQUIRED_ARGUMENT, NULL, 'c'},
+    {"help"              , NO_ARGUMENT      , NULL, 'h'},
+    {"rqstHandlerThreads", REQUIRED_ARGUMENT, NULL, 'n'},
+    {"dedicationThreads" , REQUIRED_ARGUMENT, NULL, 'd'},
+    {NULL                , 0                , NULL,  0 }
+  };
 
   Coptind = 1;
   Copterr = 0;
@@ -258,8 +258,16 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
       break;
     default:
       help(argv[0]);
-      exit(0);
+      exit(1);
     }
+  }
+
+  // Best to abort if there is some extra text on the command-line which has
+  // not been parsed as it could indicate that a valid option never got parsed
+  if(Coptind != argc)
+  {
+    help(argv[0]);
+    exit(1);
   }
 }
 
