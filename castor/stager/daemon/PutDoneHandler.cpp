@@ -88,15 +88,14 @@ namespace castor{
             break;
             
             case 1:   // ok
-            /* we archive the subrequest */
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
-            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
             
-            /* replyToClient Part: */
             stgReplyHelper = new StagerReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             delete stgReplyHelper;
+
+            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
             break;
           }
           

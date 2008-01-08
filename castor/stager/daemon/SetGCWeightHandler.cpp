@@ -60,21 +60,14 @@ namespace castor{
           castor::stager::SetFileGCWeight* setGCWeightReq = dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
           stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, setGCWeightReq->weight());
           
-          /**************************************************/
-          /* we don t need to update the subrequestStatus  */
-          /* but we have to archive the subrequest        */
-          /* the same as for StagerRmHandler             */
           stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
-          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
-          
-          /* replyToClient Part: *//* we always have to reply to the client in case of exception! */
           
           stgReplyHelper = new StagerReplyHelper();
           stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
           stgReplyHelper->endReplyToClient(stgRequestHelper);
-          
           delete stgReplyHelper;
           
+          stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
         }catch(castor::exception::Exception e){
           
           if(stgReplyHelper != NULL) delete stgReplyHelper;

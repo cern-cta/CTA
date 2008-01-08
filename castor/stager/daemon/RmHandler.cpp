@@ -123,16 +123,14 @@ namespace castor{
           if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest,
             stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, svcClassId, stgRequestHelper->subrequest->fileName())) {
             
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_RM, &(stgCnsHelper->cnsFileid));
-            
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
-            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
             
-            /* replyToClient Part: */
             stgReplyHelper = new StagerReplyHelper();	  
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             delete stgReplyHelper;
+
+            stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
           }
           else {  // user error, log it
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
