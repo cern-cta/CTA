@@ -112,7 +112,8 @@ namespace castor{
 
           /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
           memset(&(cnsFileid), 0, sizeof(cnsFileid));
-          if (Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &(cnsFileid)) != 0) {
+          serrno = 0;
+          if ((0 != Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &(cnsFileid))) && (serrno != EEXIST)) {
             castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkFileOnNameServer.1")};
             castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
             
@@ -120,7 +121,15 @@ namespace castor{
             ex.getMessage() << "Impossible to create the file";
             throw ex;
           }
-          
+          else if(serrno == EEXIST) {
+            // the file exists: this might happen if two threads are concurrently 
+            // creating the same file and they both got ENOENT at the Cns_statx call above.
+            // That's fine, one of the two will win at the end, as of now
+            // we let the request go through and we'll call again Cns_statx to have the
+            // up-to-date information from the nameserver.
+            newFile = false;
+          }
+
           /* in case of Disk1 pool, we want to force the fileClass of the file */
           if(svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
             std::string forcedFileClassName = svcClass->forcedFileClass()->name();
@@ -148,7 +157,7 @@ namespace castor{
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1, params);
           
           if(OBJ_StagePrepareToPutRequest == type || OBJ_StagePrepareToUpdateRequest == type) {
-            // this should never happen, let's provide a custom error message
+            // this should never happen: PrepareToPut was called with readonly mode. Let's provide a custom error message
             castor::exception::Exception ex(EINVAL);
             ex.getMessage() << "Cannot PrepareToPut a non-writable file";
             throw ex;
