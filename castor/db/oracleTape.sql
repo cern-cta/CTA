@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.592 $ $Date: 2008/01/08 09:14:48 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.593 $ $Date: 2008/01/08 18:25:34 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -293,7 +293,7 @@ INSERT INTO LockTable SELECT id, id FROM DiskServer;
 /* Computes a 'rate' for the filesystem which is an agglomeration
    of weight and fsDeviation. The goal is to be able to classify
    the fileSystems using a single value and to put an index on it */
-CREATE OR REPLACE FUNCTION FileSystemRate
+CREATE OR REPLACE FUNCTION fileSystemRate
 (readRate IN NUMBER,
  writeRate IN NUMBER,
  nbReadStreams IN NUMBER,
@@ -309,7 +309,7 @@ END;
 
 /* FileSystem index based on the rate. */
 CREATE INDEX I_FileSystem_Rate
-    ON FileSystem(FileSystemRate(readRate, writeRate,
+    ON FileSystem(fileSystemRate(readRate, writeRate,
 	          nbReadStreams,nbWriteStreams, nbReadWriteStreams, nbMigratorStreams, nbRecallerStreams));
 
 
@@ -659,13 +659,12 @@ END;
 /* PL/SQL method to get the next request to do according to the given service */
 CREATE OR REPLACE PROCEDURE requestToDo(service IN VARCHAR2, rId OUT INTEGER) AS
 BEGIN
- DELETE FROM NewRequests 
-  WHERE type IN (
-    SELECT Id2Type.type FROM Id2Type, Type2Obj
-     WHERE Id2Type.type = Type2Obj.type
-       AND Type2Obj.svcHandler = service
-    )
-  AND ROWNUM < 2 RETURNING id INTO rId;
+  DELETE FROM NewRequests 
+   WHERE type IN (
+     SELECT type FROM Type2Obj
+      WHERE svcHandler = service
+     )
+   AND ROWNUM < 2 RETURNING id INTO rId;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   rId := 0;   -- nothing to do
 END;
@@ -685,43 +684,6 @@ BEGIN
         status = 5, -- WAITSUBREQ
         lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
-END;
-
-
-/*  PL/SQL method to archive a SubRequest */
-CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
-  rid INTEGER;
-  nb INTEGER;
-  cfId NUMBER;
-BEGIN
-  UPDATE SubRequest
-     SET status = 8, parent = 0 -- FINISHED
-   WHERE id = srId
-  RETURNING request, castorFile INTO rid, cfId;
-
-  -- Try to see whether another subrequest in the same
-  -- request is still processing
-  SELECT count(*) INTO nb FROM SubRequest
-   WHERE request = rid AND status <> 8;  -- all but FINISHED
-
-  -- Archive request if all subrequests have finished
-  IF nb = 0 THEN
-    UPDATE SubRequest SET status=11 WHERE request=rid and status=8;  -- ARCHIVED 
-  END IF;
-
-  -- Check that we don't have too many requests for this file in the DB
-  SELECT count(request) INTO nb FROM SubRequest WHERE castorFile = cfId AND status IN (9, 11);
-  IF nb > 100 THEN
-    -- keep the most recents and drop the rest
-    FOR sr IN
-      (SELECT request FROM
-         (SELECT /*+INDEX(a I_SubRequest_CastorFile) */ a.request FROM SubRequest a
-           WHERE a.castorFile = cfId AND a.status IN (9, 11)
-           ORDER BY a.creationTime ASC)
-       WHERE ROWNUM < nb-100) LOOP
-      deleteRequest(sr.request);
-    END LOOP;
-  END IF;
 END;
 
 
@@ -752,8 +714,12 @@ BEGIN  -- delete Request, Client and SubRequests
     DELETE FROM StagePrepareToPutRequest WHERE id = rId RETURNING client INTO rclient;
   ELSIF rtype = 38 THEN -- StagePrepareToUpdateRequest
     DELETE FROM StagePrepareToUpdateRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 95 THEN -- SetFileGCWeightRequest
+    DELETE FROM SetFileGCWeight WHERE id = rId RETURNING client INTO rclient;
   ELSIF rtype = 119 THEN -- StageRepackRequest
     DELETE FROM StageRepackRequest WHERE id = rId RETURNING client INTO rclient;
+  ELSIF rtype = 133 THEN -- StageDiskCopyReplicaRequest
+    DELETE FROM StageDiskCopyReplicaRequest WHERE id = rId RETURNING client INTO rclient;
   END IF;
 
   -- Delete Client
@@ -764,6 +730,61 @@ BEGIN  -- delete Request, Client and SubRequests
   DELETE FROM Id2Type WHERE id IN
     (SELECT id FROM SubRequest WHERE request = rId);
   DELETE FROM SubRequest WHERE request = rId;
+END;
+
+
+/*  PL/SQL method to archive a SubRequest */
+CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER) AS
+  rId INTEGER;
+  nb INTEGER;
+  nbReqs INTEGER;
+  cfId NUMBER;
+  rtype INTEGER;
+BEGIN
+  UPDATE SubRequest
+     SET status = 8, parent = 0 -- FINISHED
+   WHERE id = srId
+  RETURNING request, castorFile INTO rId, cfId;
+
+  -- Try to see whether another subrequest in the same
+  -- request is still processing
+  SELECT count(*) INTO nb FROM SubRequest
+   WHERE request = rid AND status <> 8;  -- all but FINISHED
+
+  IF nb = 0 THEN
+    -- all subrequests have finished: archive or delete depending on the request type
+    SELECT type INTO rtype FROM Id2Type WHERE id = rId;
+    IF rtype IN (39, 42, 51, 95, 133) THEN   -- PutDone, Rm, Release, SetFileGCWeight, DiskCopyReplica
+      deleteRequest(rId);
+    ELSE
+      UPDATE SubRequest SET status = 11 WHERE request = rId;  -- ARCHIVED 
+    END IF;
+  END IF;
+
+  -- Check that we don't have too many requests for this file in the DB
+  SELECT COUNT(request) INTO nb FROM SubRequest WHERE castorFile = cfId AND status IN (9, 11);
+  IF nb > 100 THEN
+    -- keep the most recents and drop the rest
+    FOR sr IN
+      (SELECT id, request FROM
+         (SELECT /*+INDEX(SR I_SubRequest_CastorFile) */ SR.id, SR.request FROM SubRequest SR
+           WHERE SR.castorFile = cfId AND SR.status IN (9, 11)
+           ORDER BY SR.creationTime ASC)
+       WHERE ROWNUM < nb-100) LOOP
+      SELECT COUNT(*) INTO nbReqs 
+        FROM SubRequest 
+       WHERE request = sr.request AND status NOT IN (9, 11);
+      IF nbReqs = 0 THEN
+        -- the subreq we're going to drop belongs to a request, which only contains
+        -- completed subrequests, so it's safe to completely drop it
+        deleteRequest(sr.request);
+      ELSE
+        -- the request contains other subreqs, keep it and drop only this subreq
+        DELETE FROM SubRequest WHERE id = sr.id;
+        DELETE FROM Id2Type WHERE id = sr.id;
+      END IF;
+    END LOOP;
+  END IF;
 END;
 
 
@@ -825,7 +846,7 @@ BEGIN
      'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
        WHERE SubRequest.request = '||cleanTab||'.id;',
      'SubRequest');
-  -- Delete Request + Clients 
+  -- Delete Request + Clients. Other types are deleted at archive time
     ---- Get ----
   deleteRequests('StageGetRequest', '35', cleanTab);
     ---- Put ----
@@ -834,12 +855,16 @@ BEGIN
   deleteRequests('StageUpdateRequest', '44', cleanTab);
     ---- Rm ----
   deleteRequests('StageRmRequest', '42', cleanTab);
-    ---- PutDone ----
-  deleteRequests('StagePutDoneRequest', '39', cleanTab);
     ---- PrepareToGet -----
   deleteRequests('StagePrepareToGetRequest', '36', cleanTab);
     ---- PrepareToPut ----
   deleteRequests('StagePrepareToPutRequest', '37', cleanTab);
+    ---- PrepareToUpdate ----
+  deleteRequests('StagePrepareToUpdateRequest', '38', cleanTab);
+    ---- Repack ----
+  deleteRequests('StageRepackRequest', '119', cleanTab);
+    ---- DiskCopyReplica ----
+  deleteRequests('StageDiskCopyReplicaRequest', '133', cleanTab);
   EXECUTE IMMEDIATE 'TRUNCATE TABLE '||cleanTab;
 END;
 
@@ -1594,7 +1619,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
                'All copies of this file are unavailable for now. Please retry later'
            END
      WHERE id = srId;
-     COMMIT;
+    COMMIT;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- We did not find the very special case, go for recall
     dcId := 0;
@@ -1740,7 +1765,7 @@ BEGIN
     SELECT COUNT(DiskCopy.id) INTO nbDCs
       FROM DiskCopy
      WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.status = 5;  -- WAITFS
+       AND DiskCopy.status IN (5, 11);  -- WAITFS, WAITFS_SCHEDULING
     IF nbDCs = 1 THEN
       result := 5;  -- DISKCOPY_WAITFS, try recreation
       RETURN;
@@ -1781,12 +1806,10 @@ BEGIN
        AND FileSystem.status = 0 -- PRODUCTION
        AND DiskServer.status = 0 -- PRODUCTION
        AND DiskServer.id NOT IN ( 
-         SELECT DiskServer.id
-           FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+         SELECT DISTINCT(DiskServer.id)
+           FROM DiskCopy, FileSystem, DiskServer
           WHERE DiskCopy.castorfile = cfId
             AND DiskCopy.fileSystem = FileSystem.id
-            AND FileSystem.diskpool = DiskPool2SvcClass.parent
-            AND DiskPool2SvcClass.child = svcClassId
             AND FileSystem.diskserver = DiskServer.id
             AND DiskCopy.status IN (0, 10));  -- STAGED, CANBEMIGR
     IF nbDSs = 0 THEN
@@ -1842,11 +1865,6 @@ BEGIN
       RETURNING id INTO tcId;
       INSERT INTO Id2Type (id, type) VALUES (tcId, 30); -- OBJ_TapeCopy
     END LOOP;
-    -- Restart any waiting Disk2DiskCopies
-    UPDATE /*+ INDEX (SubRequest) */ SubRequest -- SUBREQUEST_RESTART
-       SET status = 1, lastModificationTime = getTime(), parent = 0
-     WHERE status = 5 -- WAIT_SUBREQ
-       AND parent IN (SELECT id from SubRequest WHERE diskCopy = dcId AND status IN (3, 6));
   END IF;
   -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
   -- then we have to archive the original prepareToPut/Update subRequest
@@ -2266,18 +2284,18 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateStart
         (srId IN INTEGER, fileSystemId IN INTEGER,
          dci OUT INTEGER, rpath OUT VARCHAR2,
-         rstatus OUT NUMBER, sources OUT castor.DiskCopy_Cur,
+         rstatus OUT NUMBER,
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
   dcId INTEGER;
   nh VARCHAR2(2048);
-  realFileSize INTEGER;
+  fileSize INTEGER;
   srSvcClass INTEGER;
   proto VARCHAR2(2048);
   isUpd NUMBER;
 BEGIN
-  -- Get and uid, gid
+  -- Get data
   SELECT euid, egid, svcClass, upd, diskCopy
     INTO reuid, regid, srSvcClass, isUpd, dcId
     FROM SubRequest,
@@ -2287,7 +2305,7 @@ BEGIN
   -- Take a lock on the CastorFile. Associated with triggers,
   -- this guarantee we are the only ones dealing with its copies
   SELECT CastorFile.fileSize, CastorFile.id
-    INTO realFileSize, cfId
+    INTO fileSize, cfId
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.id = srId FOR UPDATE;
@@ -2310,11 +2328,12 @@ BEGIN
     handleProtoNoUpd(srId, proto);
   END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem. This can happen in 2 cases :
+  -- No disk copy found on selected FileSystem. This can happen in 3 cases :
   --  + either a diskcopy was available and got disabled before this job
   --    was scheduled. Bad luck, we restart from scratch
   --  + or we are an update creating a file and there is a diskcopy in WAITFS
   --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
+  --  + or we are recalling a 0-size file
   -- So we first check the update hypothesis
   IF isUpd = 1 AND dcId IS NOT NULL THEN
     DECLARE
@@ -2328,6 +2347,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
       END IF;
     END;
   END IF;
+  -- Now we check the 0-size file hypothesis
+  -- XXX this is currently broken, to be fixed later
   -- It was not an update creating a file, so we restart
   UPDATE SubRequest SET status = 1 WHERE id = srId;
   dci := 0;
@@ -2441,6 +2462,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srcStatus INTEGER;
   proto VARCHAR2(2048);
   reqId NUMBER;
+  svcClassId NUMBER;
 BEGIN
   -- try to get the source status
   SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
@@ -2458,6 +2480,8 @@ BEGIN
      WHERE parent = srId; -- SUBREQUEST_RESTART
     -- update filesystem status
     updateFsFileClosed(fsId);
+    -- archive the diskCopy replica request
+    archiveSubReq(srId);
     RETURN;
   END IF;
   -- otherwise, we can validate the new diskcopy
@@ -2472,45 +2496,35 @@ BEGIN
    WHERE diskCopy = dcId RETURNING id, protocol, request INTO srId, proto, reqId;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
   -- DRAINING filesystem to INVALID.
-  BEGIN
-    SELECT maxReplicaNb into maxRepl
-      FROM SvcClass, (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
-                      SELECT id, svcClass FROM StagePrepareToUpdateRequest UNION ALL
-                      SELECT id, svcClass FROM StageRepackRequest UNION ALL
-                      SELECT id, svcClass FROM StageGetRequest UNION ALL
-                      SELECT id, svcClass FROM StageUpdateRequest) Request,
-           SubRequest
-     WHERE SubRequest.id = srId
-       AND SubRequest.request = Request.id
-       AND Request.svcClass = SvcClass.id;
-    SELECT count(*) into repl FROM DiskCopy
-     WHERE castorFile = cfId
-       AND status in (0, 10);  -- STAGED, CANBEMIGR
-    IF repl > maxRepl THEN
-      -- We did replicate only because of a DRAINING filesystem.
-      -- Invalidate one of the original diskcopies, not all of them for fault resiliency purposes
-      UPDATE DiskCopy set status = 7
-       WHERE status in (0, 10)  -- STAGED, CANBEMIGR
-         AND castorFile = cfId
-         AND fileSystem in (SELECT id FROM FileSystem WHERE status = 1)  -- DRAINING
-         AND ROWNUM < 2;
-    END IF;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- this is not a Get request, ignore
-    NULL;
-  END;
+  SELECT maxReplicaNb, SvcClass.id INTO maxRepl, svcClassId
+    FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
+   WHERE SubRequest.id = srId
+     AND SubRequest.request = Req.id
+     AND Req.svcClass = SvcClass.id;
+  SELECT count(*) into repl 
+    FROM DiskCopy, FileSystem, DiskPool2SvcClass DP2SC
+   WHERE castorFile = cfId
+     AND DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskPool = DP2SC.parent
+     AND DP2SC.child = svcClassId
+     AND DiskCopy.status in (0, 10);  -- STAGED, CANBEMIGR
+  IF repl > maxRepl THEN
+    -- We did replicate only because of a DRAINING filesystem.
+    -- Invalidate one of the original diskcopies, not all of them for fault resiliency purposes
+    UPDATE DiskCopy set status = 7
+     WHERE status in (0, 10)  -- STAGED, CANBEMIGR
+       AND castorFile = cfId
+       AND fileSystem in (
+         SELECT FileSystem.id 
+           FROM FileSystem, DiskPool2SvcClass DP2SC
+          WHERE FileSystem.diskPool = DP2SC.parent
+            AND DP2SC.child = svcClassId
+            AND status = 1)  -- DRAINING 
+       AND ROWNUM < 2;
+  END IF;
   
-  -- In case of an update, if the protocol used does not support
-  -- updates properly (vis firstByteWritten call), we should
-  -- call firstByteWritten now and consider that the file is being
-  -- modified.
-  DECLARE
-    reqType NUMBER;
-  BEGIN
-    SELECT type INTO reqType FROM id2Type WHERE id = reqId;
-    IF reqType = 44 THEN handleProtoNoUpd(srId, proto); END IF; -- StageUpdateRequest
-  END;
-
+  -- archive the diskCopy replica request
+  archiveSubReq(srId);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
          lastModificationTime = getTime(), parent = 0
@@ -2743,13 +2757,32 @@ BEGIN
       END IF;
       -- See whether we should wait on another concurrent Put|Update request
       IF rstatus = 11 THEN  -- WAITFS_SCHEDULING
-        -- another Put|Update request was faster than us, we have to wait
-        makeSubRequestWait(srId, dcId);
+        -- another Put|Update request was faster than us, so we have to wait on it
+        -- to be scheduled; we will be restarted at PutStart of that one
+        DECLARE
+          srParent NUMBER;
+        BEGIN
+          -- look for it
+          SELECT SubRequest.id INTO srParent
+            FROM SubRequest, Id2Type
+           WHERE request = Id2Type.id
+             AND type IN (40, 44)  -- Put, Update
+             AND diskCopy = dcId 
+             AND status IN (13, 14, 6)  -- READYFORSCHED, BEINGSCHED, READY
+             AND ROWNUM < 2;   -- if we have more than one just take one of them
+          UPDATE SubRequest
+             SET status = 5, parent = srParent  -- WAITSUBREQ
+           WHERE id = srId;
+        EXCEPTION WHEN NO_DATA_FOUND THEN
+          -- we didn't find that request, it probably failed, so we override the status 11
+          rstatus := 5;  -- WAITFS
+        END;
       ELSE
         -- we are the first, we change status as we are about to go to the scheduler
         UPDATE DiskCopy SET status = 11  -- WAITFS_SCHEDULING
          WHERE castorFile = cfId
            AND status = 5;  -- WAITFS
+        -- and we still return 5 = WAITFS to the stager so to go on
       END IF;
     END;
   END IF; 
@@ -2982,8 +3015,6 @@ END;
 
 
 /* PL/SQL method implementing segmentsForTape */
-
-
 CREATE OR REPLACE PROCEDURE segmentsForTape (tapeId IN INTEGER, segments
 OUT castor.Segment_Cur) AS
   segs "numList";
@@ -3094,7 +3125,6 @@ CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
   cfId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
-      unusedIds "numList";
 BEGIN
   -- Lock the access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
@@ -3117,9 +3147,9 @@ BEGIN
       UPDATE SubRequest
          SET status = 7,  -- FAILED
              errorCode = 4,  -- EINTR
-             errorMessage = 'Canceled via stagerm',
+             errorMessage = 'Canceled by another user request',
              parent = 0
-       WHERE (id = sr.id) OR (parent = sr.id);  -- FAILED
+       WHERE (id = sr.id) OR (parent = sr.id);
     END IF;
   END LOOP;
   -- Set selected DiskCopies to INVALID
@@ -3256,7 +3286,11 @@ BEGIN
   FOR sr IN (SELECT id, status FROM SubRequest
               WHERE diskcopy IN (SELECT * FROM TABLE(dcsToRm))) LOOP
     IF sr.status IN (0, 1, 2, 3, 5, 6, 7, 10, 13, 14) THEN  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-      UPDATE SubRequest SET status = 7, parent = 0 WHERE (id = sr.id) OR (parent = sr.id);  -- FAILED
+      UPDATE SubRequest 
+         SET status = 7, parent = 0,  -- FAILED
+             errorCode = 4,  -- EINTR
+             errorMessage = 'Canceled by another user request'
+       WHERE (id = sr.id) OR (parent = sr.id);             
     END IF;
   END LOOP;
   -- Set selected DiskCopies to INVALID. In any case keep
@@ -3654,10 +3688,16 @@ BEGIN
    WHERE id = srId
   RETURNING diskCopy, castorFile
     INTO dcId, cfId;
-  SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
-  -- take file closing into account
-  IF fsId > 0 THEN
-    updateFsFileClosed(fsId);
+  IF dcId > 0 THEN
+    SELECT fileSystem INTO fsId FROM DiskCopy WHERE id = dcId;
+    -- take file closing into account
+    IF fsId > 0 THEN
+      updateFsFileClosed(fsId);
+    END IF;
+  -- ELSE the subRequest is not linked to a diskCopy: should never happen,
+  -- but we observed NO DATA FOUND errors and the above SELECT is the only
+  -- query that could trigger them! Anyway it's fine to ignore the FS update,
+  -- it will be properly updated by the monitoring.
   END IF;
   -- Determine the context (Put inside PrepareToPut/Update ?)
   BEGIN
@@ -3667,7 +3707,7 @@ BEGIN
     SELECT SubRequest.id INTO unused
       FROM (SELECT id FROM StagePrepareToPutRequest UNION ALL
             SELECT id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
-     WHERE SubRequest.CastorFile = cfId
+     WHERE SubRequest.castorFile = cfId
        AND PrepareRequest.id = SubRequest.request
        AND SubRequest.status = 6; -- READY
     -- the select worked out, so we have a prepareToPut/Update
@@ -4450,7 +4490,7 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing syncClusterStatus */
+/* PL/SQL method implementing storeClusterStatus */
 CREATE OR REPLACE PROCEDURE storeClusterStatus
 (machines IN castor."strList",
  fileSystems IN castor."strList",
