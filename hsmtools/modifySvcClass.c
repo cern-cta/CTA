@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.16 $ $Release$ $Date: 2008/01/08 14:42:01 $ $Author: itglp $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.17 $ $Release$ $Date: 2008/01/08 14:44:40 $ $Author: itglp $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -519,7 +519,7 @@ int main(int argc, char *argv[])
     Cstager_SvcClass_setStreamPolicy(svcClass,streamPolicy);
   }
   if ( forcedFileClass != NULL) {
-    if(strcmp(forcedFileClass,"") == 0) {
+    if(strcmp(forcedFileClass,"") != 0) {
       rc = Cstager_IStagerSvc_selectFileClass(stgSvc,&fileClass,forcedFileClass);
       if ( (rc == -1) || (fileClass == NULL) ) {
         if ( rc == -1 ) {
