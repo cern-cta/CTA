@@ -137,7 +137,8 @@ namespace castor{
 	STAGER_JOBSVC_NOCLI= 144, /* "No client associated with request ! Cannot answer !" */
 	STAGER_JOBSVC_UNKREQ= 145, /* "Unknown Request type" */
 	STAGER_JOBSVC_D2DCS= 146, /* Invoking disk2DiskCopyStart" */
-        STAGER_JOBSVC_1STBWR= 147 /* "Invoking firstByteWritten"*/
+        STAGER_JOBSVC_1STBWR= 147, /* "Invoking firstByteWritten"*/
+        STAGER_JOBSVC_DELWWR= 148 /* "File was removed by another user while being modified" */
 
       };
     }// end namespace dbService

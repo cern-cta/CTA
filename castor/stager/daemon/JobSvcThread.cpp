@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2008/01/08 10:42:01 $ $Author: sponcec3 $
  *
  * Service thread for job related requests
  *
@@ -411,10 +411,25 @@ void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
     // "Invoking prepareForMigration"
     castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PFMIG, 1, params);
-    jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp());
+    try {
+      jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp());
+    } catch (castor::exception::Exception e) {
+      if (e.code() == ENOENT) {
+	// File was removed by another user while being modified
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
+	   castor::dlf::Param(suuid)};
+	castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_JOBSVC_DELWWR, 2, params);
+	res.setErrorCode(e.code());
+	res.setErrorMessage("File was removed by another user while being modified");
+      } else {
+	throw e;
+      }
+    }
     // Cleaning
     delete obj;
   } catch (castor::exception::Exception e) {
+    // Unexpected exception caught
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
