@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/17 10:27:00 $ $Author: itglp $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/08 14:42:01 $ $Author: itglp $
  *
  * 
  *
@@ -418,6 +418,23 @@ int main(int argc, char *argv[])
       return(1);
     }
   }
+  
+  if ( fileClass != NULL ) {
+    rc = C_Services_fillRep(
+                            svcs,
+                            iAddr,
+                            iObj,
+                            OBJ_FileClass,
+                            0
+                            );
+    if ( rc == -1 ) {
+      fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_FileClass): %s, %s\n",
+        sstrerror(serrno),
+        C_Services_errorMsg(svcs));
+      return(1);
+    }
+  }
+
   rc = C_Services_commit(svcs,iAddr);
   if ( rc == -1 ) {
     fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_DiskPool): %s, %s\n",

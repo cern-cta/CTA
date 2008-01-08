@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.15 $ $Release$ $Date: 2007/12/14 18:39:02 $ $Author: itglp $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.16 $ $Release$ $Date: 2008/01/08 14:42:01 $ $Author: itglp $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -519,19 +519,25 @@ int main(int argc, char *argv[])
     Cstager_SvcClass_setStreamPolicy(svcClass,streamPolicy);
   }
   if ( forcedFileClass != NULL) {
-    rc = Cstager_IStagerSvc_selectFileClass(stgSvc,&fileClass,forcedFileClass);
-    if ( (rc == -1) || (fileClass == NULL) ) {
-      if ( rc == -1 ) {
-        fprintf(stderr,"Cstager_IStagerSvc_selectFileClass(%s): %s, %s\n",
-                name,sstrerror(serrno),
-                Cstager_IStagerSvc_errorMsg(stgSvc));
+    if(strcmp(forcedFileClass,"") == 0) {
+      rc = Cstager_IStagerSvc_selectFileClass(stgSvc,&fileClass,forcedFileClass);
+      if ( (rc == -1) || (fileClass == NULL) ) {
+        if ( rc == -1 ) {
+          fprintf(stderr,"Cstager_IStagerSvc_selectFileClass(%s): %s, %s\n",
+                  name,sstrerror(serrno),
+                  Cstager_IStagerSvc_errorMsg(stgSvc));
+          return(1);
+        }
+        fprintf(stderr,
+                "FileClass %s does not exists\n",forcedFileClass);
         return(1);
       }
-      fprintf(stderr,
-              "FileClass %s does not exists\n",forcedFileClass);
-      return(1);
-    }  
-    Cstager_SvcClass_setForcedFileClass(svcClass,fileClass);
+      Cstager_SvcClass_setForcedFileClass(svcClass,fileClass);
+    }
+    else {
+      /* forcedFileClass == "" means we want to unforce it */
+      Cstager_SvcClass_setForcedFileClass(svcClass, 0);
+    }      
   }
   if ( diskOnlyBehavior != NULL) {
     if (!strcasecmp(diskOnlyBehavior, "yes") ||
@@ -703,6 +709,22 @@ int main(int argc, char *argv[])
                             );
     if ( rc == -1 ) {
       fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_DiskPool): %s, %s\n",
+        sstrerror(serrno),
+        C_Services_errorMsg(svcs));
+      return(1);
+    }
+  }
+
+  if ( forcedFileClass != NULL ) {
+    rc = C_Services_fillRep(
+                            svcs,
+                            iAddr,
+                            iObj,
+                            OBJ_FileClass,
+                            0
+                            );
+    if ( rc == -1 ) {
+      fprintf(stderr,"C_Services_fillRep(svcClass,OBJ_FileClass): %s, %s\n",
         sstrerror(serrno),
         C_Services_errorMsg(svcs));
       return(1);
