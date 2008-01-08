@@ -101,7 +101,7 @@ namespace castor {
       VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB=67, /* "Couldn't find the tape request in db. Maybe it is already deleted?" */
       VDQM_DBVDQMSVC_GETSVC=68, /* "Could not get DbVdqmSvc" */
       VDQM_MATCHTAPE2TAPEDRIVE_ERROR=69, /* "Error occured when determining if there is matching free drive and waiting request" */
-      VDQM_DRIVEDEDICATONTHREAD_PROCESSWORK_EXCEPT=70, /* "Exception raised by castor::vdqm::DriveDedicationThread::processWork" */
+      VDQM_DRIVE_ALLOCATION_ERROR=70, /* "Error occurred whilst allocating a free drive to a tape request" */
       VDQM_HANDLE_REQUEST_EXCEPT=71 /* "Exception raised by castor::vdqm::VdqmServer::handleRequest" */
     }; // enum VdqmDlfMessages
 

@@ -83,6 +83,10 @@ void castor::vdqm::RequestHandlerThread::run(void *param)
   }
 } 
 
+
+//-----------------------------------------------------------------------------
+// handleRequest
+//-----------------------------------------------------------------------------
 void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t *cuuid,
   castor::io::ServerSocket *sock)
   throw(castor::exception::Exception) {

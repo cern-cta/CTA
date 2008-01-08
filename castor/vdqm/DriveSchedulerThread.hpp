@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/vdqm/DriveDedicationThread.hpp
+ *                castor/vdqm/DriveSchedulerThread.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_DRIVEDEDICATIONTHREAD_HPP
-#define CASTOR_VDQM_DRIVEDEDICATIONTHREAD_HPP 1
+#ifndef CASTOR_VDQM_DRIVESCHEDULERTHREAD_HPP
+#define CASTOR_VDQM_DRIVESCHEDULERTHREAD_HPP 1
 
 #include "castor/server/SelectProcessThread.hpp"
 
@@ -37,9 +37,9 @@ namespace castor {
 
 
     /**
-     * Handles the dedication of tape drives.
+     * Allocates free tape drives to tape requests.
      */
-    class DriveDedicationThread :
+    class DriveSchedulerThread :
     public virtual castor::server::SelectProcessThread {
 
     public:
@@ -47,12 +47,12 @@ namespace castor {
       /**
        * Constructor
        */
-      DriveDedicationThread() throw();
+      DriveSchedulerThread() throw();
 
       /**
        * Destructor
        */
-      ~DriveDedicationThread() throw();
+      ~DriveSchedulerThread() throw();
 
       /**
        * Performs the select query
@@ -60,10 +60,7 @@ namespace castor {
       virtual castor::IObject* select() throw();
 
       /**
-       * Processes the results of the select.  This method allocates the
-       * required resources to do the work, then delegates the work to
-       * processWork, and finally cleans up independent of whether or not
-       * processWork raised an exception.
+       * Processes the results of the select.
        *
        * @param param The IObject returned by select
        */
@@ -73,11 +70,9 @@ namespace castor {
     private:
 
       /**
-       * The process method delegates the actual work to be done to this method
-       * and then cleans up after this method has returned or has thrown an
-       * exception.
+       * Allocates a free drive to a tape request.
        */
-      void processWork(castor::IObject* param)
+      void allocateDrive(castor::IObject* param)
         throw(castor::exception::Exception);
 
       /**
@@ -89,10 +84,10 @@ namespace castor {
       castor::vdqm::IVdqmSvc *getDbVdqmSvc()
         throw(castor::exception::Exception);
 
-    }; // class DriveDedicationThread
+    }; // class DriveSchedulerThread
 
   } // end namespace vdqm
 
 } //end namespace castor
 
-#endif // CASTOR_VDQM_DRIVEDEDICATIONTHREAD_HPP
+#endif // CASTOR_VDQM_DRIVESCHEDULERTHREAD_HPP

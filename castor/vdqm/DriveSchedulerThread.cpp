@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/vdqm/DriveDedicationThread.cpp
+ *                castor/vdqm/DriveSchedulerThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,7 +27,7 @@
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/vdqm/DriveAndRequestPair.hpp"
-#include "castor/vdqm/DriveDedicationThread.hpp"
+#include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 
@@ -35,7 +35,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::vdqm::DriveDedicationThread::DriveDedicationThread()
+castor::vdqm::DriveSchedulerThread::DriveSchedulerThread()
   throw () {
 }
 
@@ -43,7 +43,7 @@ castor::vdqm::DriveDedicationThread::DriveDedicationThread()
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::vdqm::DriveDedicationThread::~DriveDedicationThread()
+castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
   throw () {
 }
 
@@ -51,7 +51,7 @@ castor::vdqm::DriveDedicationThread::~DriveDedicationThread()
 //-----------------------------------------------------------------------------
 // select
 //-----------------------------------------------------------------------------
-castor::IObject* castor::vdqm::DriveDedicationThread::select()
+castor::IObject* castor::vdqm::DriveSchedulerThread::select()
   throw() {
 
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
@@ -63,7 +63,7 @@ castor::IObject* castor::vdqm::DriveDedicationThread::select()
   } catch(castor::exception::Exception &e) {
     // "Could not get DbVdqmSvc"
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", "DriveDedicationThread::select"),
+      castor::dlf::Param("Function", "DriveSchedulerThread::select"),
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())
     };
@@ -78,7 +78,7 @@ castor::IObject* castor::vdqm::DriveDedicationThread::select()
     obj = vdqmSvc->matchTape2TapeDrive();
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", "DriveDedicationThread::select"),
+      castor::dlf::Param("Function", "DriveSchedulerThread::select"),
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())
     };
@@ -95,22 +95,21 @@ castor::IObject* castor::vdqm::DriveDedicationThread::select()
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::vdqm::DriveDedicationThread::process(castor::IObject *param)
+void castor::vdqm::DriveSchedulerThread::process(castor::IObject *param)
   throw() {
 
-  // Delegate the work to processWork
   try
   {
-    processWork(param);
+    allocateDrive(param);
   }
   catch(castor::exception::Exception &e) {
     castor::dlf::Param params[] = {
-      castor::dlf::Param("Function", "DriveDedicationThread::process"),
+      castor::dlf::Param("Function", "DriveSchedulerThread::process"),
       castor::dlf::Param("Message", e.getMessage().str()),
       castor::dlf::Param("Code", e.code())
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-      VDQM_DRIVEDEDICATONTHREAD_PROCESSWORK_EXCEPT, 3, params);
+      VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
   }
 
   // Clean up
@@ -126,7 +125,7 @@ void castor::vdqm::DriveDedicationThread::process(castor::IObject *param)
 //-----------------------------------------------------------------------------
 // getDbVdqmSvc
 //-----------------------------------------------------------------------------
-castor::vdqm::IVdqmSvc *castor::vdqm::DriveDedicationThread::getDbVdqmSvc()
+castor::vdqm::IVdqmSvc *castor::vdqm::DriveSchedulerThread::getDbVdqmSvc()
   throw(castor::exception::Exception)
 {
   castor::Services *svcs = castor::BaseObject::services();
@@ -146,9 +145,9 @@ castor::vdqm::IVdqmSvc *castor::vdqm::DriveDedicationThread::getDbVdqmSvc()
 
 
 //-----------------------------------------------------------------------------
-// processWork
+// allocateDrive
 //-----------------------------------------------------------------------------
-void castor::vdqm::DriveDedicationThread::processWork(castor::IObject *param)
+void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
   throw(castor::exception::Exception) {
-  std::cout << "Process Work" << std::endl;
+  std::cout << "castor::vdqm::DriveSchedulerThread::allocateDrive" << std::endl;
 }

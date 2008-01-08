@@ -39,7 +39,7 @@
 
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
-#include "castor/vdqm/DriveDedicationThread.hpp"
+#include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
       new castor::vdqm::RequestHandlerThread(), server.getListenPort()));
 
   server.addThreadPool(
-    new castor::server::SignalThreadPool("DriveDedicationThreadPool",
-      new castor::vdqm::DriveDedicationThread()));
+    new castor::server::SignalThreadPool("DriveSchedulerThreadPool",
+      new castor::vdqm::DriveSchedulerThread()));
 
 
   //----------------------------------------------
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
   driveDedicationThreadPool = server.getThreadPool('D');
   if(driveDedicationThreadPool == NULL) {
-    std::cerr << "Failed to get DriveDedicationThreadPool" << std::endl;
+    std::cerr << "Failed to get DriveSchedulerThreadPool" << std::endl;
     return 1;
   }
 
@@ -211,7 +211,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, "Couldn't find the tape request in db. Maybe it is already deleted?"},
     {VDQM_DBVDQMSVC_GETSVC, "Could not get DbVdqmSvc"},
     {VDQM_MATCHTAPE2TAPEDRIVE_ERROR, "Error occured when determining if there is matching free drive and waiting request"},
-    {VDQM_DRIVEDEDICATONTHREAD_PROCESSWORK_EXCEPT, "Exception raised by castor::vdqm::DriveDedicationThread::processWork"},
+    {VDQM_DRIVE_ALLOCATION_ERROR, "Error occurred whilst allocating a free drive to a tape request"},
     {VDQM_HANDLE_REQUEST_EXCEPT, "Exception raised by castor::vdqm::VdqmServer::handleRequest"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
