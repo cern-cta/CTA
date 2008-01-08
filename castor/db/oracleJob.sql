@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.591 $ $Date: 2007/12/21 13:48:49 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.592 $ $Date: 2008/01/08 09:14:48 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3567,22 +3567,24 @@ BEGIN
       DELETE FROM Id2Type WHERE id = d.id;
       DELETE FROM DiskCopy WHERE id = d.id
         RETURNING fileSystem INTO fsId;
-      -- against deadlock
-      -- I need a lock on the diskserver if I need more than one filesystem on it
-      IF isFirst = 1 THEN
-        DECLARE
+      if fsId != 0 THEN
+        -- against deadlock
+        -- I need a lock on the diskserver if I need more than one filesystem on it
+        IF isFirst = 1 THEN
+          DECLARE
             dsId NUMBER;
-          unused NUMBER;
-        BEGIN
-          SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
-          SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
-          isFirst := 0;	
-        END;
-      END IF; 
-      -- update the FileSystem
-      UPDATE FileSystem
-         SET spaceToBeFreed = spaceToBeFreed - fsize
-       WHERE id = fsId;
+            unused NUMBER;
+          BEGIN
+            SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
+            SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
+            isFirst := 0;	
+          END;
+        END IF; 
+        -- update the FileSystem
+        UPDATE FileSystem
+           SET spaceToBeFreed = spaceToBeFreed - fsize
+         WHERE id = fsId;
+      END IF;
     END LOOP;
     -- put SubRequests into FAILED (for non FINISHED ONES)
     UPDATE SubRequest SET status = 7, parent = 0 WHERE castorfile = cfIds(i) AND status < 7;
