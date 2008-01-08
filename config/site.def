@@ -311,6 +311,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UsePgSQL		NO
 #define UseMySQL		NO
 #define UseVmgr			YES
+#define UseVdqm			YES
 #define UseLsf			YES
 #define UseScheduler    	YES
 #define UseExpert		YES
