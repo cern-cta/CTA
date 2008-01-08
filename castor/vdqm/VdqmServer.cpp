@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: VdqmServer.cpp  Revision: 1.0  Release Date: Apr 11, 2005  Author: mbraeger 
  *
  *
- * @author Matthias Braeger
+ * @author castor dev team
  *****************************************************************************/
  
  
@@ -213,6 +212,7 @@ void castor::vdqm::VdqmServer::initDlf()
     {VDQM_DBVDQMSVC_GETSVC, "Could not get DbVdqmSvc"},
     {VDQM_MATCHTAPE2TAPEDRIVE_ERROR, "Error occured when determining if there is matching free drive and waiting request"},
     {VDQM_DRIVEDEDICATONTHREAD_PROCESSWORK_EXCEPT, "Exception raised by castor::vdqm::DriveDedicationThread::processWork"},
+    {VDQM_HANDLE_REQUEST_EXCEPT, "Exception raised by castor::vdqm::VdqmServer::handleRequest"},
     {-1, ""}
   }; // castor::dlf::Message messages[]
 

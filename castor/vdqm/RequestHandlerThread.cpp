@@ -22,6 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
@@ -55,41 +56,78 @@ void castor::vdqm::RequestHandlerThread::init()
 //-----------------------------------------------------------------------------
 void castor::vdqm::RequestHandlerThread::run(void *param)
   throw() {
+
+  Cuuid_t cuuid = nullCuuid; // Placeholder for the request uuid if any
   castor::io::ServerSocket *sock = (castor::io::ServerSocket*)param;
 
-  // placeholder for the request uuid if any
-  Cuuid_t cuuid = nullCuuid;
-
-  // Retrieve info on the client
-  unsigned short port;
-  unsigned long ip;
-
-  // gives a Cuuid to the request
+  // Gives a Cuuid to the request
   Cuuid_create(&cuuid);
 
   try {
-    sock->getPeerIp(port, ip);
 
-    // "New Request Arrival" message
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-      castor::dlf::Param("Port", port)
-    };
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_NEW_REQUEST_ARRIVAL, 2, params);
-  } catch(castor::exception::Exception e) {
-    // "Exception caught : ignored" message
+    handleRequest(&cuuid, sock);
+
+  } catch(castor::exception::Exception &e) {
+
     castor::dlf::Param params[] = {
       castor::dlf::Param("Standard Message", sstrerror(e.code())),
       castor::dlf::Param("Precise Message", e.getMessage().str())
     };
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION_IGNORED, 2, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, VDQM_HANDLE_REQUEST_EXCEPT, 2,
+      params);
   }
 
-  // The ProtocolFacade manages the analysis of the remaining socket message
-  ProtocolFacade protocolFacade = ProtocolFacade(sock, &cuuid);
-  protocolFacade.handleProtocolVersion();
+  // De-allocate the socket
+  if(sock != NULL) {
+    delete sock;
+  }
+} 
 
-  delete sock;
+void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t *cuuid,
+  castor::io::ServerSocket *sock)
+  throw(castor::exception::Exception) {
+
+  unsigned short port;              // Client port
+  unsigned long  ip;                // Client IP
+
+  try {
+
+    // Get client IP info
+    sock->getPeerIp(port, ip);
+
+  } catch(castor::exception::Exception &e) {
+
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Failed to get peer port and IP: "
+      << e.getMessage().str();
+
+    throw ie;
+  }
+
+  // "New Request Arrival" message
+  castor::dlf::Param params[] = {
+    castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+    castor::dlf::Param("Port", port)
+  };
+  castor::dlf::dlf_writep(*cuuid, DLF_LVL_SYSTEM, VDQM_NEW_REQUEST_ARRIVAL,
+    2, params);
+
+  try {
+
+    // The ProtocolFacade manages the analysis of the remaining socket message
+    ProtocolFacade protocolFacade(sock, cuuid);
+
+    protocolFacade.handleProtocolVersion();
+
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Caught ProtocolFacade exception: "
+      << e.getMessage().str();
+
+    throw ie;
+  }
 }
 
 

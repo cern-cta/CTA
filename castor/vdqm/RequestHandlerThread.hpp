@@ -64,6 +64,14 @@ namespace castor {
        */
       virtual void stop() throw();
 
+    private:
+
+      /**
+       * Handles the request with the specified cuuid on the specified socket.
+       */
+      void handleRequest(Cuuid_t *cuuid, castor::io::ServerSocket *sock)
+        throw(castor::exception::Exception);
+
     }; // class RequestHandlerThread
 
   } // end namespace vdqm
