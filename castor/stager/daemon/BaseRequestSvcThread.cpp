@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/12/14 16:45:45 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/08 17:19:59 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -36,10 +36,6 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileRequest.hpp"
-#include "castor/IClient.hpp"
-#include "castor/stager/SvcClass.hpp"
-#include "castor/stager/CastorFile.hpp"
-#include "castor/stager/FileClass.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
