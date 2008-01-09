@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 15:12:25 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/09 14:16:47 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a 
  * PENDING status for too long 
@@ -311,8 +311,8 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
       } else if (key == "FILEID") {
 	fileId.fileid = strutou64(value.c_str());
       } else if (key == "NSHOST") {
-	strncpy(fileId.server, value.c_str(), CA_MAXHOSTNAMELEN + 1);
-	fileId.server[CA_MAXHOSTNAMELEN + 1] = '\0';
+	strncpy(fileId.server, value.c_str(), CA_MAXHOSTNAMELEN);
+	fileId.server[CA_MAXHOSTNAMELEN] = '\0';
       } else if (key == "TYPE") {
 	requestType = strtou64(value.c_str());
       } else if (key == "RFS") {

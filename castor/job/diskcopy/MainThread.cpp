@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/07 16:35:53 $ $Author: sponcec3 $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/09 14:16:35 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -229,8 +229,8 @@ void castor::job::diskcopy::MainThread::parseCommandLine
       m_fileId.fileid = strutou64(Coptarg);
       break;
     case 'H':
-      strncpy(m_fileId.server, Coptarg, CA_MAXHOSTNAMELEN + 1);
-      m_fileId.server[CA_MAXHOSTNAMELEN + 1] = '\0';
+      strncpy(m_fileId.server, Coptarg, CA_MAXHOSTNAMELEN);
+      m_fileId.server[CA_MAXHOSTNAMELEN] = '\0';
       break;
     case 'D':
       m_diskCopyId = strutou64(Coptarg);

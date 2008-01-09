@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/26 15:22:41 $ $Author: waldron $
+ * @(#)$RCSfile: DispatchThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/09 14:16:47 $ $Author: waldron $
  *
  * A thread used to dispatch subrequest's in a SUBREQUEST_READYFORSCHED into 
  * the scheduler using the forked process pool
@@ -103,9 +103,9 @@ void castor::jobmanager::DispatchThread::process(castor::IObject *param) throw()
   string2Cuuid(&m_requestId, (char *)request->reqId().c_str());
   string2Cuuid(&m_subRequestId, (char *)request->subReqId().c_str());
   m_fileId.fileid = request->fileId();
-  strncpy(m_fileId.server, request->nsHost().c_str(), CA_MAXHOSTNAMELEN + 1);
-  m_fileId.server[CA_MAXHOSTNAMELEN + 1] = '\0';
-  
+  strncpy(m_fileId.server, request->nsHost().c_str(), CA_MAXHOSTNAMELEN);
+  m_fileId.server[CA_MAXHOSTNAMELEN] = '\0';
+    
   // "Job received"
   castor::dlf::Param params[] =
     {castor::dlf::Param("ID", request->id()),

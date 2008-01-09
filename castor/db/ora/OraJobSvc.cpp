@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2008/01/09 10:32:30 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2008/01/09 14:16:00 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -549,8 +549,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
     if (Cns_setid(euid,egid) != 0) {
       castor::exception::Exception ex(serrno);
       ex.getMessage()
-        << "prepareForMigration : Cns_setid failed :"
-        << std::endl << cns_error_buffer;
+        << "prepareForMigration : Cns_setid failed : "
+	<< *cns_error_buffer == 0 ? sstrerror(serrno) : cns_error_buffer;
       throw ex;
     }
 
@@ -561,8 +561,8 @@ void castor::db::ora::OraJobSvc::prepareForMigration
       if (Cns_setfsize(0, &fileid, fileSize) != 0) {
 	castor::exception::Exception ex(serrno);
 	ex.getMessage()
-	  << "prepareForMigration : Cns_setfsize failed :"
-	  << std::endl << cns_error_buffer;
+	  << "prepareForMigration : Cns_setfsize failed : "
+	  << *cns_error_buffer == 0 ? sstrerror(serrno) : cns_error_buffer;
 	throw ex;
       }
     }
@@ -654,9 +654,9 @@ void castor::db::ora::OraJobSvc::putFailed
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // firstByteWritten
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::firstByteWritten(u_signed64 subRequestId)
   throw (castor::exception::Exception) {
   try {

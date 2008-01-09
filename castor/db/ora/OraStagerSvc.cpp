@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.228 $ $Release$ $Date: 2008/01/07 10:48:14 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.229 $ $Release$ $Date: 2008/01/09 14:16:00 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -85,9 +85,9 @@
 
 #define NS_SEGMENT_NOTOK (' ')
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraStagerSvc>* s_factoryOraStagerSvc =
   new castor::SvcFactory<castor::db::ora::OraStagerSvc>();
 
@@ -167,9 +167,9 @@ const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString
 const std::string castor::db::ora::OraStagerSvc::s_lockCastorFileStatementString =
   "SELECT id FROM CastorFile WHERE id = :1 FOR UPDATE";
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraStagerSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   OraCommonSvc(name),
   m_subRequestToDoStatement(0),
@@ -192,23 +192,23 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_lockCastorFileStatement(0) {
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraStagerSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraStagerSvc::~OraStagerSvc() throw() {
   reset();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraStagerSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraStagerSvc::ID() {
   return castor::SVC_ORASTAGERSVC;
 }
@@ -261,10 +261,9 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_lockCastorFileStatement = 0;
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // subRequestToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::SubRequest*
 castor::db::ora::OraStagerSvc::subRequestToDo
 (const std::string service)
@@ -339,9 +338,9 @@ castor::db::ora::OraStagerSvc::subRequestToDo
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // subRequestFailedToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::SubRequest*
 castor::db::ora::OraStagerSvc::subRequestFailedToDo()
   throw (castor::exception::Exception) {
@@ -420,9 +419,9 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getDiskCopiesForJob
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
 (castor::stager::SubRequest* subreq,
  std::list<castor::stager::DiskCopyForRecall*>& sources)
@@ -496,9 +495,9 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // processPrepareRequest
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::processPrepareRequest
 (castor::stager::SubRequest* subreq)
   throw (castor::exception::Exception) {
@@ -536,9 +535,9 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // processPutDoneRequest
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::processPutDoneRequest
 (castor::stager::SubRequest* subreq)
   throw (castor::exception::Exception) {
@@ -573,10 +572,9 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
   }
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createDiskCopyReplicaRequest
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
 (castor::stager::SubRequest* subreq, castor::stager::DiskCopyForRecall* srcDiskCopy, 
  castor::stager::SvcClass* destSc)
@@ -610,10 +608,9 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
   }
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createRecallCandidate
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::createRecallCandidate
 (castor::stager::SubRequest *subreq,
  castor::stager::SvcClass *svcClass)
@@ -711,9 +708,9 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectCastorFile
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::CastorFile*
 castor::db::ora::OraStagerSvc::selectCastorFile
 (const u_signed64 fileId, const std::string nsHost,
@@ -765,9 +762,9 @@ castor::db::ora::OraStagerSvc::selectCastorFile
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // updateAndCheckSubRequest
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
 (castor::stager::SubRequest* subreq)
   throw (castor::exception::Exception) {
@@ -802,9 +799,9 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // recreateCastorFile
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::DiskCopyForRecall*
 castor::db::ora::OraStagerSvc::recreateCastorFile
 (castor::stager::CastorFile *castorFile,
@@ -860,9 +857,9 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
   }  
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // archiveSubReq
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::archiveSubReq
 (u_signed64 subReqId)
   throw (castor::exception::Exception) {
@@ -886,9 +883,9 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // stageRelease
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::stageRelease
 (const u_signed64 fileId, const std::string nsHost)
   throw (castor::exception::Exception) {
@@ -932,9 +929,9 @@ void castor::db::ora::OraStagerSvc::stageRelease
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // stageRm
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::stageRm
 (castor::stager::SubRequest* subreq, const u_signed64 fileId, const std::string nsHost,
  const u_signed64 svcClassId, const std::string fileName)
@@ -1034,9 +1031,9 @@ int castor::db::ora::OraStagerSvc::stageRm
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // setFileGCWeight
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::setFileGCWeight
 (const u_signed64 fileId, const std::string nsHost, const float weight)
   throw (castor::exception::Exception) {
@@ -1069,9 +1066,9 @@ void castor::db::ora::OraStagerSvc::setFileGCWeight
 }
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // validNsSegment
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int validNsSegment(struct Cns_segattrs *nsSegment) {
   if ((0 == nsSegment) || (*nsSegment->vid == '\0') ||
       (nsSegment->s_status != '-')) {
@@ -1088,9 +1085,9 @@ int validNsSegment(struct Cns_segattrs *nsSegment) {
   return 1;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // invalidateAllSegmentsForCopy
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void invalidateAllSegmentsForCopy(int copyNb,
                                   struct Cns_segattrs * nsSegmentArray,
                                   int nbNsSegments) {
@@ -1105,9 +1102,9 @@ void invalidateAllSegmentsForCopy(int copyNb,
   return;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // compareSegments
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Helper method to compare segments
 extern "C" {
   int compareSegments
@@ -1121,9 +1118,9 @@ extern "C" {
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createTapeCopySegmentsForRecall (private)
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
 (castor::stager::CastorFile *castorFile,
  unsigned long euid,
@@ -1147,6 +1144,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   }
   // Prepare access to name server : avoid log and set uid
   char cns_error_buffer[512];  /* Cns error buffer */
+  *cns_error_buffer = 0;
   if (Cns_seterrbuf(cns_error_buffer,sizeof(cns_error_buffer)) != 0) {
     castor::exception::Internal ex;
     ex.getMessage()
@@ -1156,8 +1154,8 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   if (Cns_setid(euid,egid) != 0) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "createTapeCopySegmentsForRecall : Cns_setid failed :"
-      << std::endl << cns_error_buffer;
+      << "createTapeCopySegmentsForRecall : Cns_setid failed : "
+      << *cns_error_buffer == 0 ? sstrerror(serrno) : cns_error_buffer;
     throw ex;
   }
   // Get segments for castorFile
@@ -1322,9 +1320,9 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   return 0;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectDiskPool
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::DiskPool*
 castor::db::ora::OraStagerSvc::selectDiskPool
 (const std::string name)
@@ -1359,9 +1357,9 @@ castor::db::ora::OraStagerSvc::selectDiskPool
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectTapePool
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::TapePool*
 castor::db::ora::OraStagerSvc::selectTapePool
 (const std::string name)

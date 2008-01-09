@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/12/05 07:03:42 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/01/09 14:16:47 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -166,9 +166,7 @@ int main(int argc, char *argv[]) {
     int interval = DEFAULT_MANAGEMENT_INTERVAL;
     if (value) {
       interval = std::strtol(value, 0, 10);
-      if (interval == 0) {
-	interval = DEFAULT_MANAGEMENT_INTERVAL;
-      } else if ((interval < 10) && (interval != 0)) {
+      if ((interval < 10) && (interval != 0)) {
 	castor::exception::Exception e(EINVAL);
 	e.getMessage() << "ManagementInterval value too small: " << interval
 		       << "- must be > 10" << std::endl;
@@ -180,9 +178,11 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("ManagementThread",
-    	new castor::jobmanager::ManagementThread(interval), interval));
-    if (interval != 0) {
+	new castor::jobmanager::ManagementThread(interval), interval));
+    if (interval > 0) {
       daemon.getThreadPool('M')->setNbThreads(1);
+    } else {
+      daemon.getThreadPool('M')->setNbThreads(0);
     }
 
     // Start daemon

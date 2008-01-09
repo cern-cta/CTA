@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/01/09 14:15:59 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -83,11 +83,13 @@
 
 #define NS_SEGMENT_NOTOK (' ')
 
-// -----------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraGCSvc>* s_factoryOraGCSvc =
   new castor::SvcFactory<castor::db::ora::OraGCSvc>();
+
 
 //------------------------------------------------------------------------------
 // Static constants initialization
@@ -120,9 +122,9 @@ const std::string castor::db::ora::OraGCSvc::s_filesDeletionFailedStatementStrin
 const std::string castor::db::ora::OraGCSvc::s_nsFilesDeletedStatementString =
   "BEGIN nsFilesDeletedProc(:1, :2, :3); END;";
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraGCSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraGCSvc::OraGCSvc(const std::string name) :
   OraCommonSvc(name),
   m_selectFiles2DeleteStatement(0),
@@ -133,23 +135,23 @@ castor::db::ora::OraGCSvc::OraGCSvc(const std::string name) :
   m_nsFilesDeletedStatement(0) {
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraGCSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraGCSvc::~OraGCSvc() throw() {
   reset();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraGCSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraGCSvc::ID() {
   return castor::SVC_ORAGCSVC;
 }
@@ -178,10 +180,9 @@ void castor::db::ora::OraGCSvc::reset() throw() {
   m_nsFilesDeletedStatement = 0;
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFiles2Delete
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::stager::GCLocalFile*>*
 castor::db::ora::OraGCSvc::selectFiles2Delete
 (std::string diskServer)
@@ -276,9 +277,9 @@ castor::db::ora::OraGCSvc::selectFiles2Delete
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // filesDeleted
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraGCSvc::filesDeleted
 (std::vector<u_signed64*>& diskCopyIds)
   throw (castor::exception::Exception) {
@@ -402,6 +403,11 @@ void castor::db::ora::OraGCSvc::filesDeleted
         return;
       }
 
+      // If the error buffer from the name server is empty use sstrerror
+      if (!strcmp((char *)errBuf, "")) {
+	strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+      }
+
       // Second thing, we need a buffer to store the castor
       // file names.
       // XXX LIMITATION ON A STRING LENGTH
@@ -421,7 +427,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
           clog() << ERROR
                  << "Error caught when calling Cns_getpath in filesDeleted "
                  << "for fileid " << fileid << " and nsHost "
-                 << nsHost << " : " << (char*) errBuf
+                 << nsHost << " : " << (char*)errBuf
                  << ". This file won't be "
                  << "deleted from name server while it should have been."
                  << std::endl;
@@ -431,8 +437,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
                    << "Error caught when unlinking "
                    << castorFileName << " (fileid "
                    << fileid << ") from name server "
-                   << nsHost << " : "
-                   << (char*) errBuf
+                   << nsHost << " : " << (char*)errBuf
                    << std::endl;
           }
         }
@@ -460,9 +465,9 @@ void castor::db::ora::OraGCSvc::filesDeleted
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // filesDeletionFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::db::ora::OraGCSvc::filesDeletionFailed
 (std::vector<u_signed64*>& diskCopyIds)
   throw (castor::exception::Exception) {
@@ -511,9 +516,9 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // nsFilesDeleted
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
 (std::vector<u_signed64> &fileIds,
  std::string nsHost) throw() {
