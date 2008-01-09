@@ -373,7 +373,7 @@ class StagerGetCase(unittest.TestCase):
         
         
     def getSvcClass(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientGetSvc"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvc"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvc"+ticket+" -S"+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_put -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvcBis"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass]
+        cmd=["stager_put -M "+dirCastor+"fileClientGetSvc"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvc"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_put -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"rfcp "+inputFile+" "+dirCastor+"fileClientGetSvcBis"+ticket,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_get -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetSvcBis"+ticket+" -S "+stagerSvcClass]
 
         UtilityForCastorTest.saveOnFile(localDir+"ClientGetSvc",cmd,myScen)
         
@@ -992,7 +992,7 @@ class StagerRmCase(unittest.TestCase):
         
     def rmSvcClass(self):
         
-        cmd=["stager_put -M "+dirCastor+"fileClientRmSvc"+ticket+" -S"+stagerSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientRmSvc"+ticket]
+        cmd=["stager_put -M "+dirCastor+"fileClientRmSvc"+ticket+" -S "+stagerSvcClass,"stager_rm -M "+dirCastor+"fileClientRmSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientRmSvc"+ticket]
         
         UtilityForCastorTest.saveOnFile(localDir+"ClientRmSvc",cmd,myScen)
         
@@ -1007,36 +1007,42 @@ class StagerRmCase(unittest.TestCase):
         assert buffOut.rfind("INVALID") != -1, "stager_rm doesn't work with svc class option -S"
 
     def rmDualSvcClass(self):
+        cmd=["STAGE_SVCCLASS="+ stagerDiskOnlySvcClass+" rfcp "+inputFile+" "+dirCastor+"fileClientRmDualSvc"+ticket,"stager_get -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass]
         
-        cmd=["STAGE_SVCCLASS="+ stagerDiskOnlySvcClass+" rfcp "+inputFile+" "+dirCastor+"fileClientRmDualSvc"+ticket,"stager_get -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
+        UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvcP1",cmd,myScen)
         
-        UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvc",cmd,myScen)
-        
-        fi=open(localDir+"ClientRmDualSvc1","r")
+        fi=open(localDir+"ClientRmDualSvcP11","r")
         buffOut=fi.read()
-        fi.close()        
+        fi.close()
         assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_get doesn't work with svc class option -S"
         
-        fi=open(localDir+"ClientRmDualSvc2","r")
-        buffOut=fi.read()
-        fi.close()        
-        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
+	buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
+	while buffOut[0].find("CANBEMIGR") == -1 and buffOut[0].find("STAGED") == -1:
+          time.sleep(10)
+	  buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
+	
+	cmd=["stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
+	UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvcP2",cmd,myScen)
 
-        fi=open(localDir+"ClientRmDualSvc3","r")
+        fi=open(localDir+"ClientRmDualSvcP2","r")
         buffOut=fi.read()
-        fi.close()        
-        assert buffOut.find("STAGED") != -1, "stager_qry doesn't work after stager_rm with svc class option -S"
+        fi.close()
+	assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
 
-        fi=open(localDir+"ClientRmDualSvc4","r")
+        fi=open(localDir+"ClientRmDualSvcP21","r")
         buffOut=fi.read()
-        fi.close()        
-        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
+        fi.close()
+        assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after stager_rm with svc class option -S"
 
-        fi=open(localDir+"ClientRmDualSvc5","r")
+        fi=open(localDir+"ClientRmDualSvcP22","r")
         buffOut=fi.read()
-        fi.close()        
+        fi.close()
+        assert buffOut.rfind("SUBREQUEST_READY") != -1 or buffOut.find("SUBREQUEST_FAILED 16 The file is not yet migrated") != -1, "stager_rm doesn't work with svc class option -S"
+
+        fi=open(localDir+"ClientRmDualSvcP23","r")
+        buffOut=fi.read()
+        fi.close()
         assert buffOut.rfind("No such file or directory") != -1, "stager_qry doesn't work after stager_rm with svc class option -S"
-
         
 class StagerSpecialQueryCase(unittest.TestCase):
     def queryS(self):
