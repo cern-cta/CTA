@@ -28,6 +28,7 @@
  
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
@@ -323,7 +324,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 	 */
 	tapeRequest = ptr_tapeDrive->runningTapeReq();
 	if ( tapeRequest != NULL) {
-		deleteRepresentation(tapeRequest, m_cuuid);
+		castor::vdqm::DatabaseHelper::remove(tapeRequest, m_cuuid);
 		delete tapeRequest;
 		tapeRequest = 0;
 		ptr_tapeDrive->setRunningTapeReq(0);
@@ -467,7 +468,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 			
 			
 			//update the TapeRequest in the db
-			updateRepresentation(newTapeRequest, m_cuuid);
+			castor::vdqm::DatabaseHelper::update(newTapeRequest,
+			  m_cuuid);
 		}
 	} else {
 	    /*
@@ -519,7 +521,8 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus()
 	 */
 	if ( tapeRequest != NULL ) {
 		
-			deleteRepresentation(tapeRequest, m_cuuid);
+			castor::vdqm::DatabaseHelper::remove(tapeRequest,
+			  m_cuuid);
 			delete tapeRequest;
 			
 			tapeRequest = 0;

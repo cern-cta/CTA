@@ -17,11 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)RCSfile: BaseRequestHandler.hpp  Revision: 1.0  Release Date: Apr 20, 2005  Author: mbraeger 
  *
  *
- *
- * @author Matthias Braeger
+ * @author castor dev team
  *****************************************************************************/
 
 #ifndef _BASEREQUESTHANDLER_HPP_
@@ -34,74 +32,41 @@
 #include "serrno.h"
 
 namespace castor {
-	//Forward declaration
-	class IObject;
-	class Services;
-	
+  //Forward declaration
+  class IObject;
+  class Services;
+  
   namespace vdqm {
-  	
-		namespace handler {
-	    /**
-	     * The BaseRequestHandler provides a set of useful functions for
-	     * concrete request instances.
-	     */
-	    class BaseRequestHandler : public castor::BaseObject {
-	
-	    	public:
-		      
-		      /**
-		       * Constructor
-		       */
-		      BaseRequestHandler() throw(castor::exception::Exception);
-		      
-		      /**
-		       * Destructor
-		       */
-					virtual ~BaseRequestHandler() throw();
-							
-							
-				protected:
-					//The IServices for vdqm
-					castor::Services* ptr_svcs;
-				  castor::vdqm::IVdqmSvc* ptr_IVdqmService;
-				
-					/**
-		       * Stores the IObject into the data base. Please edit this function and 
-		       * add here for your concrete Class instance your concrete Objects, 
-		       * which you want to have created.
-		       * @param fr the request
-		       * @param cuuid its uuid (for logging purposes only)
-		       */
-					virtual void handleRequest(castor::IObject* fr, Cuuid_t cuuid)
-	  				throw (castor::exception::Exception);
-	  				
-	  				
-					/**
-		       * Deletes the IObject in the data base. Please edit this function and 
-		       * add here for your concrete Class instance your concrete Objects, 
-		       * which you want to have deleted.
-		       * @param fr The Object, with the ID of the row, which should be deleted
-		       * @param cuuid its uuid (for logging purposes only)
-		       */
-					virtual void deleteRepresentation(castor::IObject* fr, Cuuid_t cuuid)
-	  				throw (castor::exception::Exception);
-	  				
-					/**
-		       * Updates the IObject representation in the data base. Please edit this function and 
-		       * add here for your concrete Class instance your concrete Objects, 
-		       * which you want to have deleted.
-		       * @param fr The Object, with the ID of the row, which should be deleted
-		       * @param cuuid its uuid (for logging purposes only)
-		       */
-					virtual void updateRepresentation(castor::IObject* fr, Cuuid_t cuuid)
-	  				throw (castor::exception::Exception);	  			
-	
-	    }; // class BaseRequestHandler
-		
-		} // end of namespace handler
-		
-  } // end of namespace vdqm
+    
+    namespace handler {
+      /**
+       * The BaseRequestHandler provides a set of useful functions for
+       * concrete request instances.
+       */
+      class BaseRequestHandler : public castor::BaseObject {
+  
+      public:
+        
+        /**
+         * Constructor
+         */
+        BaseRequestHandler() throw(castor::exception::Exception);
+        
+        /**
+         * Destructor
+         */
+        virtual ~BaseRequestHandler() throw();
+            
+            
+      protected:
+        castor::vdqm::IVdqmSvc* ptr_IVdqmService;
+        
+      }; // class BaseRequestHandler
+    
+    } // namespace handler
+    
+  } // namespace vdqm
 
-} // end of namespace castor
+} // namespace castor
 
 #endif //_BASEREQUESTHANDLER_HPP_

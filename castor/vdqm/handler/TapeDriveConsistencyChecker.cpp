@@ -26,6 +26,7 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/Tape.hpp"
+#include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
@@ -189,7 +190,8 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest()
 		castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM, VDQM_REMOVE_OLD_TAPE_REQUEST_FROM_DB, 1, param);
 
 		//Delete the tape request from the db and from the tapeDrive Object
-    deleteRepresentation(ptr_tapeDrive->runningTapeReq(), m_cuuid);
+    castor::vdqm::DatabaseHelper::remove(ptr_tapeDrive->runningTapeReq(),
+      m_cuuid);
     delete (ptr_tapeDrive->runningTapeReq());
     ptr_tapeDrive->setRunningTapeReq(NULL);
   }	

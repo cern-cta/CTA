@@ -38,6 +38,7 @@
 #include "castor/Services.hpp"
 #include "castor/BaseAddress.hpp"
 
+#include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
@@ -255,7 +256,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
 	  /*
 	   * Add the record to the volume queue
 	   */
-		handleRequest(newTapeReq, cuuid);
+		castor::vdqm::DatabaseHelper::store(newTapeReq, cuuid);
 		
 		/**
 		 * Now the newTapeReq has the id of its 
@@ -374,8 +375,8 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 			 * Update the data base. To avoid a deadlock, the tape drive has to be 
 			 * updated first!
 			 */
- 			updateRepresentation(tapeDrive, cuuid);
-			updateRepresentation(tapeReq, cuuid);
+ 			castor::vdqm::DatabaseHelper::update(tapeDrive, cuuid);
+			castor::vdqm::DatabaseHelper::update(tapeReq, cuuid);
 
 			delete tapeDrive;
 			tapeDrive=0;
@@ -390,7 +391,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 	  }
 	  else {
 	  	// Remove the TapeRequest from the db (queue)
-	  	deleteRepresentation(tapeReq, cuuid);
+	  	castor::vdqm::DatabaseHelper::remove(tapeReq, cuuid);
 	  
 			// "TapeRequest and its ClientIdentification removed" message
 		  castor::dlf::Param params[] =

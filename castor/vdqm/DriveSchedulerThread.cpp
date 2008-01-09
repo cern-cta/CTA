@@ -22,13 +22,17 @@
  * @author castor dev team
  *****************************************************************************/
 
+#include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DriveAndRequestPair.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
+#include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 
 
@@ -165,9 +169,8 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
     throw e;
   }
 
-/*
-  castor::vdqm::TapeDrive*   freeTapeDrive      = pair.tapeDrive();
-  castor::vdqm::TapeRequest* waitingTapeRequest = pair.request();;
+  castor::vdqm::TapeDrive*   freeTapeDrive      = pair->tapeDrive();
+  castor::vdqm::TapeRequest* waitingTapeRequest = pair->tapeRequest();
 
   if(freeTapeDrive->status()         != UNIT_UP || 
      freeTapeDrive->runningTapeReq() != NULL    ||
@@ -186,7 +189,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
   if(waitingTapeRequest->tapeDrive()       != NULL                &&
      waitingTapeRequest->tapeDrive()->id() != freeTapeDrive->id()   ) {
 
-    castor::exception::Internal x;
+    castor::exception::Internal e;
     
     e.getMessage()
       << "The selected TapeRequest seems to be handled already "
@@ -195,7 +198,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
                     
     throw e;
   }
-    
+
   // Updating the information for the data base
   freeTapeDrive->setStatus(UNIT_STARTING);
   freeTapeDrive->setJobID(0);
@@ -207,8 +210,8 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
   freeTapeDrive->setRunningTapeReq(waitingTapeRequest);
   
   // .. and of course we must also update the db!
-  updateRepresentation(freeTapeDrive, nullCuuid);
-  updateRepresentation(waitingTapeRequest, nullCuuid);  
+  castor::vdqm::DatabaseHelper::update(freeTapeDrive, nullCuuid);
+  castor::vdqm::DatabaseHelper::update(waitingTapeRequest, nullCuuid);  
   
   // Needed for the commit/rollback
   castor::BaseAddress ad;
@@ -216,7 +219,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
   ad.setCnvSvcType(castor::SVC_DBCNV);
   
   //  we do a commit to the db
-  svcs()->commit(&ad);
+  castor::BaseObject::services()->commit(&ad);
 
   // "Update of representation in DB" message
   castor::dlf::Param params[] = {
@@ -226,8 +229,6 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
     VDQM_UPDATE_REPRESENTATION_IN_DB, 3, params);  
 
-  
   // and we send the information to the RTCPD
-  threadAssign(freeTapeDrive);
-*/
+  //IMPORTANT!!!!!!!!!!! threadAssign(freeTapeDrive);
 }
