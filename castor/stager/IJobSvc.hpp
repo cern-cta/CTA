@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/09 10:32:29 $ $Author: itglp $
  *
  * This class provides stager methods related to job handling
  *
@@ -104,12 +104,6 @@ namespace castor {
        * sources remains empty.
        * @param subreq  the SubRequest to consider
        * @param fileSystem the selected FileSystem
-       * @param sources this is a list of DiskCopies that
-       * can be used as source of a Disk to Disk copy. This
-       * list is never empty when diskCopy has status
-       * DISKCOPY_DISK2DISKCOPY and always empty otherwise.
-       * Note that the DiskCopies returned in sources must be
-       * deallocated by the caller.
        * @param emptyFile whether the resulting diskCopy
        * deals with the recall of an empty file
        * @return the DiskCopy to use for the data access or
@@ -124,7 +118,6 @@ namespace castor {
       virtual castor::stager::DiskCopy* getUpdateStart
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem,
-       std::list<castor::stager::DiskCopyForRecall*>& sources,
        bool* emptyFile)
         throw (castor::exception::Exception) = 0;
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.9 $ $Release$ $Date: 2007/11/23 11:27:44 $ $Author: sponcec3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.10 $ $Release$ $Date: 2008/01/09 10:32:28 $ $Author: itglp $
  *
  *
  *
@@ -110,13 +110,6 @@ int Cstager_IJobSvc_requestToDo
  * @param jobSvc the IJobSvc used
  * @param subreq  the SubRequest to consider
  * @param fileSystem the selected FileSystem
- * @param sources this is a list of DiskCopies that
- * can be used as source of a Disk to Disk copy. This
- * list is never empty when diskCopy has status
- * DISKCOPY_DISK2DISKCOPY and always empty otherwise.
- * Note that the DiskCopies returned in sources must be
- * deallocated by the caller.
- * @param sourcesNb the length of the sources list
  * @param emptyFile 1 if the resulting diskCopy
  * deals with the recall of an empty file, 0 in all other cases
  * @param diskCopy the DiskCopy to use for the data access or
@@ -135,8 +128,6 @@ int Cstager_IJobSvc_getUpdateStart
 (struct Cstager_IJobSvc_t* jobSvc,
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,
- struct Cstager_DiskCopyForRecall_t*** sources,
- unsigned int* sourcesNb,
  int *emptyFile,
  struct Cstager_DiskCopy_t** diskCopy);
 

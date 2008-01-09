@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/01/09 10:32:29 $ $Author: itglp $
  *
  *
  *
@@ -147,10 +147,8 @@ class GetUpdateStartResponseHandler : public castor::client::IResponseHandler {
 public:
   GetUpdateStartResponseHandler
   (castor::stager::DiskCopy** diskCopy,
-   std::list<castor::stager::DiskCopyForRecall*>& sources,
    bool *emptyFile) :
     m_diskCopy(diskCopy),
-    m_sources(sources),
     m_emptyFile(emptyFile){}
   
   virtual void handleResponse(castor::rh::Response& r)
@@ -164,20 +162,12 @@ public:
     }
     *m_diskCopy = resp->diskCopy();
     *m_emptyFile = resp->emptyFile();
-    for (std::vector<castor::stager::DiskCopyForRecall*>::iterator it =
-           resp->sources().begin();
-         it != resp->sources().end();
-         it++) {
-      m_sources.push_back(*it);
-    }
   };
   virtual void terminate()
     throw (castor::exception::Exception) {};
 private:
   // Where to store the diskCopy
   castor::stager::DiskCopy** m_diskCopy;
-  // Where to store the sources
-  std::list<castor::stager::DiskCopyForRecall*>& m_sources;
   // Where to store the emptyFile flag
   bool* m_emptyFile;
 };
@@ -190,14 +180,13 @@ castor::stager::DiskCopy*
 castor::stager::RemoteJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
- std::list<castor::stager::DiskCopyForRecall*>& sources,
  bool* emptyFile)
   throw (castor::exception::Exception) {
   // placeholders for the result
   castor::stager::DiskCopy* result;
   // Build a response Handler
   GetUpdateStartResponseHandler rh
-    (&result, sources, emptyFile);
+    (&result, emptyFile);
   // Build the GetUpdateStartRequest
   castor::stager::GetUpdateStartRequest req;
   req.setSubreqId(subreq->id());

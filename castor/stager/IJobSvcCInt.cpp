@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/01/09 10:32:29 $ $Author: itglp $
  *
  *
  *
@@ -81,8 +81,6 @@ extern "C" {
   (struct Cstager_IJobSvc_t* jobSvc,
    castor::stager::SubRequest* subreq,
    castor::stager::FileSystem* fileSystem,
-   castor::stager::DiskCopyForRecall*** sources,
-   unsigned int* sourcesNb,
    int *emptyFile,
    castor::stager::DiskCopy** diskCopy) {
     if (!checkIJobSvc(jobSvc)) return -1;
@@ -90,18 +88,8 @@ extern "C" {
       bool ef;
       std::list<castor::stager::DiskCopyForRecall*> sourceslist;
       *diskCopy = jobSvc->jobSvc->getUpdateStart
-        (subreq, fileSystem, sourceslist, &ef);
+        (subreq, fileSystem, &ef);
       *emptyFile = ef ? 1 : 0;
-      *sourcesNb = sourceslist.size();
-      if (*sourcesNb > 0) {
-        *sources = (castor::stager::DiskCopyForRecall**)
-          malloc((*sourcesNb) * sizeof(struct Cstager_DiskCopyForRecall_t*));
-        std::list<castor::stager::DiskCopyForRecall*>::iterator it =
-          sourceslist.begin();
-        for (unsigned int i = 0; i < *sourcesNb; i++, it++) {
-          (*sources)[i] = *it;
-        }
-      }
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/01/09 10:32:31 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -109,12 +109,6 @@ namespace castor {
          * sources remains empty.
          * @param subreq  the SubRequest to consider
          * @param fileSystem the selected FileSystem
-         * @param sources this is a list of DiskCopies that
-         * can be used as source of a Disk to Disk copy. This
-         * list is never empty when diskCopy has status
-         * DISKCOPY_DISK2DISKCOPY and always empty otherwise.
-         * Note that the DiskCopies returned in sources must be
-         * deallocated by the caller.
          * @param emptyFile whether the resulting diskCopy
          * deals with the recall of an empty file
          * @return the DiskCopy to use for the data access or
@@ -129,7 +123,6 @@ namespace castor {
         virtual castor::stager::DiskCopy* getUpdateStart
         (castor::stager::SubRequest* subreq,
          castor::stager::FileSystem* fileSystem,
-         std::list<castor::stager::DiskCopyForRecall*>& sources,
          bool* emptyFile)
           throw (castor::exception::Exception);
 
@@ -150,32 +143,32 @@ namespace castor {
          castor::stager::FileSystem* fileSystem)
           throw (castor::exception::Exception);
 
-	/**
-	 * Handles the start of a StageDiskCopyReplicaRequest. It checks
-	 * that the source DiskCopy stills exists i.e. hasn't been 
-	 * garbage collected. Updates the filesystem of the destination
-	 * DiskCoy and verifies that the selected destination diskserver
-	 * and filesystem are valid for the given service class.
-	 * @param diskcopyId the id of the new DiskCopy
-	 * @param sourceDiskCopyId the id of the source diskCopy
-	 * @param destSvcClass the service class of the diskserver writing
-	 * the new castor file.
-	 * @param diskServer the name of the destination diskserver
-	 * @param fileSystem the file system mount point
-	 * Changes are commited
-	 * @return diskCopy information about the destination DiskCopy
-	 * @return sourceDiskCopy information about the source DiskCopy
-	 * @exception Exception in case of error
-	 */
-	virtual void disk2DiskCopyStart
-	(const u_signed64 diskCopyId,
-	 const u_signed64 sourceDiskCopyId,
-	 const std::string destSvcClass,
-	 const std::string diskServer,
-	 const std::string fileSystem,
-	 castor::stager::DiskCopyInfo* &diskCopy,
-	 castor::stager::DiskCopyInfo* &sourceDiskCopy)
-	  throw(castor::exception::Exception);
+        /**
+         * Handles the start of a StageDiskCopyReplicaRequest. It checks
+         * that the source DiskCopy stills exists i.e. hasn't been 
+         * garbage collected. Updates the filesystem of the destination
+         * DiskCoy and verifies that the selected destination diskserver
+         * and filesystem are valid for the given service class.
+         * @param diskcopyId the id of the new DiskCopy
+         * @param sourceDiskCopyId the id of the source diskCopy
+         * @param destSvcClass the service class of the diskserver writing
+         * the new castor file.
+         * @param diskServer the name of the destination diskserver
+         * @param fileSystem the file system mount point
+         * Changes are commited
+         * @return diskCopy information about the destination DiskCopy
+         * @return sourceDiskCopy information about the source DiskCopy
+         * @exception Exception in case of error
+         */
+        virtual void disk2DiskCopyStart
+        (const u_signed64 diskCopyId,
+         const u_signed64 sourceDiskCopyId,
+         const std::string destSvcClass,
+         const std::string diskServer,
+         const std::string fileSystem,
+         castor::stager::DiskCopyInfo* &diskCopy,
+         castor::stager::DiskCopyInfo* &sourceDiskCopy)
+          throw(castor::exception::Exception);
 
         /**
          * Updates database after successful completion of a
@@ -215,7 +208,7 @@ namespace castor {
          * castorFile.
          * @param subreq The SubRequest handling the file to prepare
          * @param fileSize The actual size of the castor file
-	 * @param timeStamp To know if the fileSize is still valid 
+         * @param timeStamp To know if the fileSize is still valid 
          * @exception Exception throws an Exception in case of error
          */
         virtual void prepareForMigration

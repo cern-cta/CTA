@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2008/01/09 10:32:30 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -93,7 +93,7 @@ static castor::SvcFactory<castor::db::ora::OraJobSvc>* s_factoryOraJobSvc =
 
 /// SQL statement for getUpdateStart
 const std::string castor::db::ora::OraJobSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8); END;";
+  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
@@ -208,7 +208,6 @@ castor::stager::DiskCopy*
 castor::db::ora::OraJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
- std::list<castor::stager::DiskCopyForRecall*>& sources,
  bool* emptyFile)
   throw (castor::exception::Exception) {
   *emptyFile = false;
@@ -224,11 +223,9 @@ castor::db::ora::OraJobSvc::getUpdateStart
       m_getUpdateStartStatement->registerOutParam
         (5, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
-        (6, oracle::occi::OCCICURSOR);
+        (6, oracle::occi::OCCIINT);
       m_getUpdateStartStatement->registerOutParam
         (7, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
-        (8, oracle::occi::OCCIINT);
     }
     // execute the statement and see whether we found something
     m_getUpdateStartStatement->setDouble(1, subreq->id());
@@ -265,34 +262,6 @@ castor::db::ora::OraJobSvc::getUpdateStart
       result->setStatus((enum castor::stager::DiskCopyStatusCodes) status);
     }
 
-    // A diskcopy was created in WAITDISK2DISKCOPY
-    // create a resulting DiskCopy
-    if (status == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
-      try {
-        oracle::occi::ResultSet *rs =
-          m_getUpdateStartStatement->getCursor(6);
-        // Run through the cursor
-        oracle::occi::ResultSet::Status status = rs->next();
-        while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-          castor::stager::DiskCopyForRecall* item =
-            new castor::stager::DiskCopyForRecall();
-          item->setId((u_signed64) rs->getDouble(1));
-          item->setPath(rs->getString(2));
-          item->setStatus((castor::stager::DiskCopyStatusCodes)rs->getInt(3));
-          item->setFsWeight(rs->getFloat(4));
-          item->setMountPoint(rs->getString(5));
-          item->setDiskServer(rs->getString(6));
-          sources.push_back(item);
-          status = rs->next();
-        }
-      } catch (oracle::occi::SQLException e) {
-        if (e.getErrorCode() != 24338) {
-          // if not "statement handle not executed"
-          // it's really wrong, else, it's normal
-          throw e;
-        }
-      }
-    }
     // return
     cnvSvc()->commit();
     return result;
