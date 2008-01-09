@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.593 $ $Date: 2008/01/08 18:25:34 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.594 $ $Date: 2008/01/09 12:57:26 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5073,37 +5073,33 @@ BEGIN
 END;
 
 /* start choosen stream */
-
-
 CREATE OR REPLACE PROCEDURE startChosenStreams
         (streamIds IN castor."cnumList",
 	initSize IN NUMBER) AS
 BEGIN	
-	
-	FOR i in streamIds.FIRST .. streamIds.LAST LOOP
-            	UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
-			WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
-		 		AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
-		 		AND id=streamIds(i);
+  FOR i in streamIds.FIRST .. streamIds.LAST LOOP
+    UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
+     WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
+       AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
+       AND id=streamIds(i);
 		 		
-		UPDATE Stream SET Stream.status=0 -- PENDING
-			WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
-		 		AND id=streamIds(i);
-	END LOOP;	
-	UPDATE Stream SET Stream.Status=6 WHERE Stream.Status IN (4,5,6);  -- CREATED WAITSPACE STOPPED (the one not changed as pending)
-	COMMIT;
+    UPDATE Stream SET Stream.status = 0 -- PENDING
+     WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
+       AND id=streamIds(i);
+  END LOOP;	
+  UPDATE Stream SET Stream.Status = 6 WHERE Stream.Status IN (4,5,6);  -- CREATED WAITSPACE STOPPED (the one not changed as pending)
+  COMMIT;
 END;
 
 /* stop chosen stream */
-
 CREATE OR REPLACE PROCEDURE stopChosenStreams
         (streamIds IN castor."cnumList") AS
 BEGIN	
-	FOR i in streamIds.FIRST .. streamIds.LAST LOOP		 		
-		UPDATE Stream SET Stream.status=6 -- PENDING
-			WHERE id=streamIds(i);
-	END LOOP;	
-	COMMIT;
+  FOR i in streamIds.FIRST .. streamIds.LAST LOOP
+    UPDATE Stream SET Stream.status = 6 -- PENDING
+     WHERE id = streamIds(i);
+  END LOOP;	
+  COMMIT;
 END;
 
 /* resurrect Candidates */
