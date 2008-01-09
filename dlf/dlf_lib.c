@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.26 2007/10/24 14:41:18 waldron Exp $
+ * $Id: dlf_lib.c,v 1.27 2008/01/09 12:47:04 waldron Exp $
  */
 
 /* headers */
@@ -405,16 +405,16 @@ int DLL_DECL dlf_writep(Cuuid_t reqid, int severity, int msg_no, struct Cns_file
 		param->next = NULL;
 	}
 
-	/* replace all occurrences of the new line '\n' character in all parameter strings
-	 *   - in parameter names we simply replace all '\n' and spaces ' ' with '_'
-	 */
+	/* replace all occurrences of the new line '\n' and '\t' character in all parameter strings */
 	for (param = message->plist; param != NULL; param = param->next) {
 
 		/* value */
 		while ((ptr = strchr(param->value, '\n')) != NULL) {
 			*ptr = ' ';
 		}
-
+		while ((ptr = strchr(param->value, '\t')) != NULL) {
+			*ptr = ' ';		  
+		}
 		/* name */
 		while ((ptr = strchr(param->name, '\n')) != NULL) {
 			*ptr = '_';
@@ -1262,7 +1262,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 
        	/* convert facility name to upper case */
 	if (strlen(facility) > (sizeof(api_facname) - 1)) {
-		snprintf(errptr, CA_MAXLINELEN, "dlf_init(): facility name exceeds %d characters in length", sizeof(api_facname) - 1);
+		snprintf(errptr, CA_MAXLINELEN, "dlf_init(): facility name exceeds %d characters in length", DLF_LEN_FACNAME + 1);
 		Cthread_mutex_unlock(&global_mutex);
 		return -1;
 	}
