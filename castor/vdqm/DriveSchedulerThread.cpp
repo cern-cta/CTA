@@ -149,5 +149,85 @@ castor::vdqm::IVdqmSvc *castor::vdqm::DriveSchedulerThread::getDbVdqmSvc()
 //-----------------------------------------------------------------------------
 void castor::vdqm::DriveSchedulerThread::allocateDrive(castor::IObject *param)
   throw(castor::exception::Exception) {
+
   std::cout << "castor::vdqm::DriveSchedulerThread::allocateDrive" << std::endl;
+
+  castor::vdqm::DriveAndRequestPair* pair =
+    dynamic_cast<castor::vdqm::DriveAndRequestPair*>(param);
+
+  // If the dynamic cast failed
+  if(pair == NULL) {
+    castor::exception::Internal e;
+
+    e.getMessage()
+      << "Failed to cast param to castor::vdqm::DriveAndRequestPair*";
+
+    throw e;
+  }
+
+/*
+  castor::vdqm::TapeDrive*   freeTapeDrive      = pair.tapeDrive();
+  castor::vdqm::TapeRequest* waitingTapeRequest = pair.request();;
+
+  if(freeTapeDrive->status()         != UNIT_UP || 
+     freeTapeDrive->runningTapeReq() != NULL    ||
+     freeTapeDrive->tape()           != NULL      ) {
+
+    castor::exception::Internal e;
+    
+    e.getMessage()
+      << "The selected TapeDrive from the db is not free or "
+      << "has still a running job!: id = "
+      << freeTapeDrive->id() << std::endl;
+                    
+    throw e;
+  }
+  
+  if(waitingTapeRequest->tapeDrive()       != NULL                &&
+     waitingTapeRequest->tapeDrive()->id() != freeTapeDrive->id()   ) {
+
+    castor::exception::Internal x;
+    
+    e.getMessage()
+      << "The selected TapeRequest seems to be handled already "
+      << "by another tapeDrive!: tapeRequestID = "
+      << waitingTapeRequest->id() << std::endl;
+                    
+    throw e;
+  }
+    
+  // Updating the information for the data base
+  freeTapeDrive->setStatus(UNIT_STARTING);
+  freeTapeDrive->setJobID(0);
+  freeTapeDrive->setModificationTime(time(NULL));
+  
+  waitingTapeRequest->setTapeDrive(freeTapeDrive);
+  waitingTapeRequest->setModificationTime(time(NULL));
+  
+  freeTapeDrive->setRunningTapeReq(waitingTapeRequest);
+  
+  // .. and of course we must also update the db!
+  updateRepresentation(freeTapeDrive, nullCuuid);
+  updateRepresentation(waitingTapeRequest, nullCuuid);  
+  
+  // Needed for the commit/rollback
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
+  
+  //  we do a commit to the db
+  svcs()->commit(&ad);
+
+  // "Update of representation in DB" message
+  castor::dlf::Param params[] = {
+     castor::dlf::Param("ID tapeDrive", freeTapeDrive->id()),
+     castor::dlf::Param("ID tapeRequest", waitingTapeRequest->id()),
+     castor::dlf::Param("tapeDrive status", "UNIT_STARTING")};
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE,
+    VDQM_UPDATE_REPRESENTATION_IN_DB, 3, params);  
+
+  
+  // and we send the information to the RTCPD
+  threadAssign(freeTapeDrive);
+*/
 }

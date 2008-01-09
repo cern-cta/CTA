@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.22 $ $Release$ $Date: 2008/01/08 14:27:43 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.23 $ $Release$ $Date: 2008/01/09 11:39:57 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -39,20 +39,21 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,../../shlib
 
-VDQMBIN_SRCS =  DriveSchedulerThread.cpp \
-                NewProtocolInterpreter.cpp \
-                OldProtocolInterpreter.cpp \
-                OldRequestFacade.cpp \
-		ProtocolFacade.cpp \
-                RequestHandlerThread.cpp \
-                RTCopyDConnection.cpp \
-                VdqmServer.cpp \
-                VdqmSocketHelper.cpp \
-                handler/BaseRequestHandler.cpp \
-                handler/TapeDriveConsistencyChecker.cpp \
-                handler/TapeDriveHandler.cpp \
-                handler/TapeDriveStatusHandler.cpp \
-                handler/TapeRequestHandler.cpp
+VDQMBIN_SRCS = DatabaseHelper.cpp \
+               DriveSchedulerThread.cpp \
+               NewProtocolInterpreter.cpp \
+               OldProtocolInterpreter.cpp \
+               OldRequestFacade.cpp \
+               ProtocolFacade.cpp \
+               RequestHandlerThread.cpp \
+               RTCopyDConnection.cpp \
+               VdqmServer.cpp \
+               VdqmSocketHelper.cpp \
+               handler/BaseRequestHandler.cpp \
+               handler/TapeDriveConsistencyChecker.cpp \
+               handler/TapeDriveHandler.cpp \
+               handler/TapeDriveStatusHandler.cpp \
+               handler/TapeRequestHandler.cpp
 
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.Osuf)
 
