@@ -227,17 +227,17 @@ void castor::monitoring::rmnode::MetricsThread::collectDiskServerMetrics()
 
 	// Create the sub-directories in the filesystem
 	for (int j = 0; j < 100; j++) {
-	  std::ostringstream path("");
-	  path << fsList[i] << "/" << j;
+	  char path[CA_MAXPATHLEN + 1];
+	  snprintf(path, CA_MAXPATHLEN + 1, "%s/%.2d", fsList[i].c_str(), j);
 
-	  int rv = mkdir(path.str().c_str(), 0700);
+	  int rv = mkdir(path, 0700);
 	  if ((rv < 0) && (errno != EEXIST)) {
 	    castor::exception::Exception e(errno);
-	    e.getMessage() << "Failed to create directory: " << path.str();
+	    e.getMessage() << "Failed to create directory: " << path;
 	    throw e;
 	  }
 
-	  rv = chown(path.str().c_str(), pw->pw_uid, pw->pw_gid);
+	  rv = chown(path, pw->pw_uid, pw->pw_gid);
 	  if (rv < 0) {
 	    castor::exception::Exception e(errno);
 	    e.getMessage() << "Unable to change directory ownersip on :"
