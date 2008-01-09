@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthClientSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/05 14:05:31 $ $Author: riojac3 $
+ * @(#)$RCSfile: AuthClientSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/09 17:50:06 $ $Author: waldron $
  *
- * defines a dedicated socket that handles most of the network
- * calls
+ * Defines a dedicated socket that handles most of the network calls
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -66,6 +65,7 @@ namespace castor {
        * @param port the port on which the socket should be opened on
        * remote host
        * @param host the host to connect to, given by its name
+       * @exception Exception in case of error
        */
       AuthClientSocket(const unsigned short port,
 		       const std::string host,
@@ -76,7 +76,8 @@ namespace castor {
        * Constructor building a socket on a given port of a given host
        * @param port the port on which the socket should be opened on
        * remote host
-       * @param host the host to connect to, given as an ip address
+       * @param ip the host to connect to, given as an ip address
+       * @exception Exception in case of error
        */
       AuthClientSocket(const unsigned short port,
 		       const unsigned long ip,
@@ -84,17 +85,18 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * destructor
+       * Destructor
        */
       ~AuthClientSocket() throw();
 
       /**
-       * connects the socket to the given address
+       * Connects the socket to the given address
        */
        virtual void connect()
 	 throw (castor::exception::Exception);
 
     protected:
+
       Csec_context_t m_security_context;
 
     };

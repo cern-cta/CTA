@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: UDPSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/04/26 12:32:47 $ $Author: waldron $
+ * @(#)$RCSfile: UDPSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/09 17:50:06 $ $Author: waldron $
  *
- * defines a dedicated socket that handles most of the network
- * calls
+ * Defines a dedicated socket that handles most of the network calls
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -47,6 +46,7 @@ namespace castor {
        * Constructor building a socket on a given local port
        * @param port the local port for this socket.
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
       UDPSocket(const unsigned short port,
                 const bool reusable)
@@ -56,7 +56,8 @@ namespace castor {
        * Constructor building a socket on a given port
        * in order to connect to a given host
        * @param port the port for this socket.
-       * @param port the host for this socket, given as machine name.
+       * @param host the host for this socket, given as machine name.
+       * @exception Exception in case of error
        */
       UDPSocket(const unsigned short port,
 		const std::string host)
@@ -66,7 +67,8 @@ namespace castor {
        * Constructor building a socket on a given port
        * in order to connect to a given host
        * @param port the port for this socket.
-       * @param port the host for this socket, given as ip address.
+       * @param ip the host for this socket, given as ip address.
+       * @exception Exception in case of error
        */
       UDPSocket(const unsigned short port,
 		const unsigned long ip)
@@ -78,6 +80,7 @@ namespace castor {
        * @param port the local port for this socket.
        * @param reusable whether the socket should be reusable
        * @param bind whether the socket should bind
+       * @exception Exception in case of error
        */
       UDPSocket(const unsigned short port,
                 const bool reusable,
@@ -87,7 +90,8 @@ namespace castor {
     protected:
 
       /**
-       * internal method to create the inner socket
+       * Internal method to create the inner socket
+       * @exception Exception in case of error
        */
       virtual void createSocket() throw (castor::exception::Exception);
 
@@ -98,6 +102,7 @@ namespace castor {
        * 4 bytes of the data sent
        * @param buf the data to send
        * @param n the length of buf
+       * @exception Exception in case of error
        */
       virtual void sendBuffer(const unsigned int magic,
                               const char* buf,
@@ -112,6 +117,7 @@ namespace castor {
        * Note that the deallocation of this buffer is the responsability
        * of the caller
        * @param n the length of the allocated buffer
+       * @exception Exception in case of error
        */
       virtual void readBuffer(const unsigned int magic,
                               char** buf,

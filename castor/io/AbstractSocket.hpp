@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractSocket.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/05 14:07:07 $ $Author: riojac3 $
+ * @(#)$RCSfile: AbstractSocket.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/09 17:50:05 $ $Author: waldron $
  *
- * defines a dedicated socket that handles most of the network
- * calls
+ * Defines a dedicated socket that handles most of the network calls
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -61,14 +60,17 @@ namespace castor {
        * the used port will be 0 and the socket will not be bound.
        * The bind method should be call independently
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
-      AbstractSocket(const bool reusable) throw (castor::exception::Exception);
+      AbstractSocket(const bool reusable) 
+	throw (castor::exception::Exception);
 
       /**
        * Constructor building a socket on a given local port
        * @param port the local port for this socket. Use 0 if
        * you want the system to allocate a port
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
       AbstractSocket(const unsigned short port,
                      const bool reusable)
@@ -80,6 +82,7 @@ namespace castor {
        * remote host
        * @param host the host to connect to, given by its name
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
       AbstractSocket(const unsigned short port,
                      const std::string host,
@@ -90,8 +93,9 @@ namespace castor {
        * Constructor building a socket on a given port of a given host
        * @param port the port on which the socket should be opened on
        * remote host
-       * @param host the host to connect to, given as an ip address
+       * @param ip the host to connect to, given as an ip address
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
       AbstractSocket(const unsigned short port,
                      const unsigned long ip,
@@ -99,13 +103,14 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * destructor
+       * Destructor
        */
       virtual ~AbstractSocket() throw();
 
       /**
        * Sends an object on the socket
        * @param obj the IObject to send
+       * @exception Exception in case of error
        */
       void sendObject(castor::IObject& obj)
         throw(castor::exception::Exception);
@@ -115,12 +120,13 @@ namespace castor {
        * Note that the deallocation of it is the responsability of the caller.
        * This is a blocking call.
        * @return the IObject read
+       * @exception Exception in case of error
        */
       virtual castor::IObject* readObject()
         throw(castor::exception::Exception);
 
       /**
-       * check whether there is something to read on the socket
+       * Check whether there is something to read on the socket
        * This is a non blocking call
        * @return whether data is available on the socket
        */
@@ -144,9 +150,25 @@ namespace castor {
        * Sets the SO_REUSEADDR option on the socket
        */
       void setReusable() throw (castor::exception::Exception);
+      
+      /**
+       * Set the timeout value in seconds for reading and writing data
+       * @param timeout the new timeout value
+       */
+      void setTimeout(const int timeout) {
+	m_timeout = timeout;
+      }
 
       /**
-       * closes the socket
+       * Sets the timeout value in seconds for establishing new connections
+       * @param timeout the new timeout value
+       */
+      void setConnTimeout(const int timeout) {
+	m_connTimeout = timeout;
+      }
+
+      /**
+       * Closes the socket
        */
       void close() throw ();
 
@@ -168,25 +190,25 @@ namespace castor {
     protected:
 
       /**
-       * internal method to create the inner socket
+       * Internal method to create the inner socket
        */
       virtual void createSocket() throw (castor::exception::Exception) = 0;
 
       /**
-       * builds an address for the local machine on the given port
+       * Builds an address for the local machine on the given port
        */
       struct sockaddr_in buildAddress(const unsigned short port)
         throw (castor::exception::Exception);
 
       /**
-       * builds an address for a remote machine on the given port
+       * Builds an address for a remote machine on the given port
        */
       struct sockaddr_in buildAddress(const unsigned short port,
                                       const std::string host)
         throw (castor::exception::Exception);
 
       /**
-       * builds an address for a remote machine on the given port
+       * Builds an address for a remote machine on the given port
        */
       struct sockaddr_in buildAddress(const unsigned short port,
                                       const unsigned long ip)
@@ -199,6 +221,7 @@ namespace castor {
        * 4 bytes of the data sent
        * @param buf the data to send
        * @param n the length of buf
+       * @exception Exception in case of error
        */
       virtual void sendBuffer(const unsigned int magic,
                               const char* buf,
@@ -213,6 +236,7 @@ namespace castor {
        * Note that the deallocation of this buffer is the responsability
        * of the caller
        * @param n the length of the allocated buffer
+       * @exception Exception in case of error
        */
       virtual void readBuffer(const unsigned int magic,
                               char** buf,
@@ -221,20 +245,20 @@ namespace castor {
 
     protected:
 
-      /**
-       * the underlying socket
-       */
+      /// The underlying socket
       int m_socket;
 
-      /**
-       * the socket address
-       */
+      /// The socket address
       struct sockaddr_in m_saddr;
 
-      /**
-       * Tells whether the socket's address is reusable
-       */
+      /// Flag to indicate whether the socket's address is reusable
       bool m_reusable;
+
+      /// The timeout value in seconds for reading and writing data
+      int m_timeout;
+
+      /// The timeout value in seconds for establishing connections
+      int m_connTimeout;
 
     };
 

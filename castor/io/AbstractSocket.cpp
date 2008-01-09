@@ -40,8 +40,11 @@
 // Local Includes
 #include "AbstractSocket.hpp"
 
-// definition of some constants
+// Definitions
 #define STG_CALLBACK_BACKLOG 2
+#define DEFAULT_CONNTIMEOUT  20
+#define DEFAULT_NETTIMEOUT   10
+
 
 //------------------------------------------------------------------------------
 // constructor
@@ -54,9 +57,12 @@ castor::io::AbstractSocket::AbstractSocket(int socket) throw () :
 //------------------------------------------------------------------------------
 castor::io::AbstractSocket::AbstractSocket(const bool reusable)
   throw (castor::exception::Exception) :
-  m_socket(-1), m_reusable(reusable) {
-    m_saddr = buildAddress(0);
-  }
+  m_socket(-1), 
+  m_reusable(reusable), 
+  m_timeout(DEFAULT_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_saddr = buildAddress(0);
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -64,9 +70,12 @@ castor::io::AbstractSocket::AbstractSocket(const bool reusable)
 castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
                                            const bool reusable)
   throw (castor::exception::Exception) :
-  m_socket(-1), m_reusable(reusable) {
-    m_saddr = buildAddress(port);
-  }
+  m_socket(-1), 
+  m_reusable(reusable),
+  m_timeout(DEFAULT_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_saddr = buildAddress(port);
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -75,9 +84,12 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
                                            const std::string host,
                                            const bool reusable)
   throw (castor::exception::Exception) :
-  m_socket(-1), m_reusable(reusable) {
-    m_saddr = buildAddress(port, host);
-  }
+  m_socket(-1), 
+  m_reusable(reusable),
+  m_timeout(DEFAULT_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_saddr = buildAddress(port, host);
+}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -86,9 +98,12 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
                                            const unsigned long ip,
                                            const bool reusable)
   throw (castor::exception::Exception) :
-  m_socket(-1), m_reusable(reusable) {
-    m_saddr = buildAddress(port, ip);
-  }
+  m_socket(-1), 
+  m_reusable(reusable),
+  m_timeout(DEFAULT_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_saddr = buildAddress(port, ip);
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -116,7 +131,6 @@ void castor::io::AbstractSocket::getPortIp(unsigned short& port,
   ip = ntohl(sout.sin_addr.s_addr);
 }
 
-
 //------------------------------------------------------------------------------
 // getPeerIp
 //------------------------------------------------------------------------------
@@ -143,8 +157,8 @@ void castor::io::AbstractSocket::setReusable()
   throw (castor::exception::Exception) {
   if(!m_reusable) return;
   int on = 1;
-  if (setsockopt (m_socket, SOL_SOCKET, SO_REUSEADDR,
-                  (char *)&on, sizeof(on)) < 0) {
+  if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR,
+		 (char *)&on, sizeof(on)) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to set socket to reusable";
     throw ex;
@@ -220,7 +234,6 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port)
   saddr.sin_family = AF_INET;
   return saddr;
 }
-
 
 //------------------------------------------------------------------------------
 // buildAddress

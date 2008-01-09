@@ -46,6 +46,7 @@
 #include "castor/exception/TooBig.hpp"
 #include "castor/io/UDPSocket.hpp"
 
+// Definitions
 #define MAX_UDP_DATAGRAM_LENGTH 1024
 
 //------------------------------------------------------------------------------
@@ -104,7 +105,7 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 void castor::io::UDPSocket::createSocket()
   throw (castor::exception::Exception) {
-  // creates the socket
+  // Creates the socket
   if ((m_socket = ::socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Can't create socket";
@@ -119,7 +120,7 @@ void castor::io::UDPSocket::sendBuffer(const unsigned int magic,
                                        const char* buf,
                                        const int n)
   throw (castor::exception::Exception) {
-  // create new buffer to send everything in one go
+  // Create new buffer to send everything in one go
   int size = n + 2 * sizeof(unsigned int);
   char* newBuf = new char[size];
   memcpy(newBuf, (char*)(&magic), sizeof(unsigned int));

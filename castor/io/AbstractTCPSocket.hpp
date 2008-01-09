@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AbstractTCPSocket.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/01/16 15:42:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: AbstractTCPSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/09 17:50:05 $ $Author: waldron $
  *
  * defines a dedicated socket that handles most of the network
  * calls
@@ -54,14 +54,17 @@ namespace castor {
        * the used port will be 0 and the socket will not be bound.
        * The bind method should be call independently
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
-      AbstractTCPSocket(const bool reusable) throw (castor::exception::Exception);
+      AbstractTCPSocket(const bool reusable) 
+	throw (castor::exception::Exception);
 
       /**
        * Constructor building a socket on a given local port
        * @param port the local port for this socket. Use 0 if
        * you want the system to allocate a port
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
       AbstractTCPSocket(const unsigned short port,
                         const bool reusable)
@@ -73,6 +76,7 @@ namespace castor {
        * remote host
        * @param host the host to connect to, given by its name
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
       AbstractTCPSocket(const unsigned short port,
                         const std::string host,
@@ -83,8 +87,9 @@ namespace castor {
        * Constructor building a socket on a given port of a given host
        * @param port the port on which the socket should be opened on
        * remote host
-       * @param host the host to connect to, given as an ip address
+       * @param ip the host to connect to, given as an ip address
        * @param reusable whether the socket should be reusable
+       * @exception Exception in case of error
        */
       AbstractTCPSocket(const unsigned short port,
                         const unsigned long ip,
@@ -105,6 +110,7 @@ namespace castor {
        * 4 bytes of the data sent
        * @param buf the data to send
        * @param n the length of buf
+       * @exception Exception in case of error
        */
       virtual void sendBuffer(const unsigned int magic,
                               const char* buf,
@@ -119,6 +125,7 @@ namespace castor {
        * Note that the deallocation of this buffer is the responsability
        * of the caller
        * @param n the length of the allocated buffer
+       * @exception Exception in case of error
        */
       virtual void readBuffer(const unsigned int magic,
                               char** buf,

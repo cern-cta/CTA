@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2007/12/05 14:05:31 $ $Author: riojac3 $
- *
- *
+ * @(#)$RCSfile: AuthClientSocket.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/01/09 17:50:05 $ $Author: waldron $
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -46,26 +44,24 @@
 // Local Includes
 #include "AuthClientSocket.hpp"
 
-//#include "Csec_api.h"
-
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::AuthClientSocket::AuthClientSocket(int socket) throw (castor::exception::Exception) :
+castor::io::AuthClientSocket::AuthClientSocket(int socket) 
+  throw (castor::exception::Exception) :
   ClientSocket(socket) {
  
-
- if (loader()== -1){
-     castor::exception::Exception ex(serrno);
-      ex.getMessage() << "dynamic library was not proprely loaded";
-     throw ex;
+  if (loader()== -1){
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "dynamic library was not proprely loaded";
+    throw ex;
   }
-
+  
   if (getClient_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()<<"The initialization of the security context failed";
-      throw ex;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()<<"The initialization of the security context failed";
+    throw ex;
   }
 }
 
@@ -76,20 +72,18 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const std::string host,
 					       int service_type)
   throw (castor::exception::Exception): ClientSocket(port, host) {
-
+  
   if (loader()== -1){
-     castor::exception::Exception ex(serrno);
-      ex.getMessage() << "dynamic library was not proprely loaded";
-     throw ex;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "dynamic library was not proprely loaded";
+    throw ex;
   }
-
+  
   if (getClient_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()<<"The initialization of the security context failed";
-      throw ex;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()<<"The initialization of the security context failed";
+    throw ex;
   }
-
-
 }
 
 //------------------------------------------------------------------------------
@@ -99,17 +93,17 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const unsigned long ip,
 					       int service_type)
   throw (castor::exception::Exception) : ClientSocket(port, ip) {
-
+  
   if (loader()==-1){
-     castor::exception::Exception ex(serrno);
-      ex.getMessage() << "dynamic library was not proprely loaded";
-     throw ex;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "dynamic library was not proprely loaded";
+    throw ex;
   }
-
+  
   if (getClient_initContext(&m_security_context,CSEC_SERVICE_TYPE_HOST ,NULL) < 0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()<<"The initialization of the security context failed";
-      throw ex;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()<<"The initialization of the security context failed";
+    throw ex;
   }
 }
 
@@ -117,14 +111,13 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 // destructor
 //------------------------------------------------------------------------------
 castor::io::AuthClientSocket::~AuthClientSocket() throw () {
- // Csec_clearContext(&m_security_context);
-
+  // Csec_clearContext(&m_security_context);
+  
   getClearContext(&m_security_context);
   if (m_socket >= 0) {
     ::close(m_socket);
   }
 }
-
 
 //------------------------------------------------------------------------------
 // connect
@@ -133,15 +126,11 @@ void castor::io::AuthClientSocket::connect()
   throw (castor::exception::Exception) {
   
   castor::io::ClientSocket::connect();
-
-
- if (getClient_establishContext(&m_security_context ,m_socket) < 0) {
-      close();
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()<<"The initialization of the security context failed";
-      throw ex;
-  }
-
   
+  if (getClient_establishContext(&m_security_context ,m_socket) < 0) {
+    close();
+    castor::exception::Exception ex(serrno);
+    ex.getMessage()<<"The initialization of the security context failed";
+    throw ex;
+  } 
 }
-

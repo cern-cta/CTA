@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ClientSocket.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/01/16 15:42:25 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ClientSocket.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/09 17:50:06 $ $Author: waldron $
  *
- * defines a dedicated socket that handles most of the network
- * calls
+ * Defines a dedicated socket that handles most of the network calls
  *
  * @author Benjamin Couturier
  *****************************************************************************/
@@ -77,7 +76,7 @@ namespace castor {
         throw (castor::exception::Exception);
 
       /**
-       * connects the socket to the given address
+       * Connects the socket to the given address
        */
        virtual void connect()
 	 throw (castor::exception::Exception);

@@ -45,6 +45,10 @@
 // Local Includes
 #include "AbstractTCPSocket.hpp"
 
+// Definitions
+#define MAX_NETDATA_SIZE 0xA00000 // 20MB
+
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -111,13 +115,15 @@ void castor::io::AbstractTCPSocket::sendBuffer(const unsigned int magic,
                                                const int n)
   throw (castor::exception::Exception) {
   // Sends the buffer with a header (magic number + size)
-  if (netwrite(m_socket,
-               (char*)(&magic),
-               sizeof(unsigned int)) != sizeof(unsigned int) ||
-      netwrite(m_socket,
-               (char*)(&n),
-               sizeof(unsigned int)) != sizeof(unsigned int) ||
-      netwrite(m_socket, (char *)buf, n) != n) {
+  if (netwrite_timeout(m_socket,
+		       (char*)(&magic),
+		       sizeof(unsigned int),
+		       m_timeout) != sizeof(unsigned int) ||
+      netwrite_timeout(m_socket,
+		       (char*)(&n),
+		       sizeof(unsigned int),
+		       m_timeout) != sizeof(unsigned int) ||
+      netwrite_timeout(m_socket, (char *)buf, n, m_timeout) != n) {
     castor::exception::Exception ex(serrno);
     ex.getMessage() << "Unable to send data";
     throw ex;
@@ -133,9 +139,10 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
   throw (castor::exception::Exception) {
   // First read the header
   unsigned int header[2];
-  int ret = netread(m_socket,
-                    (char*)&header,
-                    2*sizeof(unsigned int));
+  int ret = netread_timeout(m_socket,
+			    (char*)&header,
+			    2*sizeof(unsigned int),
+			    m_timeout);
   if (ret != 2*sizeof(unsigned int)) {
     if (0 == ret) {
       castor::exception::Internal ex;
@@ -160,31 +167,38 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
                     << std::hex << magic;
     throw ex;
   }
-  // Now read the data
+  // For security purposes we restrict the maximum possible length of the data
+  // returned
   n = header[1];
-  *buf = (char*) malloc(n);
-  ssize_t readBytes = 0;
-  while (readBytes < n) {
-#if !defined(_WIN32)
-    ssize_t nb = ::read(m_socket, (*buf)+readBytes, n - readBytes);
-#else
-    ssize_t nb = ::recv(m_socket, (*buf)+readBytes, n - readBytes, 0);
-#endif
-    if (nb == -1 || nb == 0) {
-      // nb == 0 on an EOF, which typically means that the client went away
-      if (errno == EAGAIN) {
-        continue;
-      } else {
-        break;
-      }
-    }
-    readBytes += nb;
-  }
-  if (readBytes < n) {
-    castor::exception::Exception ex(serrno);
-    ex.getMessage() << "Unable to receive all data. "
-                    << "Got " << readBytes << " bytes instead of "
-                    << n << ".";
+  if ((n > MAX_NETDATA_SIZE) || (n < 0)){
+    castor::exception::Exception ex(ESTMEM);
+    ex.getMessage() << "Message body is too long";
     throw ex;
+  }
+  *buf = (char*) malloc(n);
+  if (0 == *buf) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Failed to allocate memory for " << n << " bytes";
+    throw ex;
+  }
+
+  // Now read the data
+  ret = netread_timeout(m_socket, *buf, n, m_timeout);
+  if (ret != n) {
+    if (0 == ret) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Unable to receive message body\n"
+                      << "The connection was closed by remote end";
+      throw ex;
+    } else if (-1 == ret) {
+      castor::exception::Exception ex(serrno);
+      ex.getMessage() << "Unable to receive message body";
+      throw ex;
+    } else {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Received message body is too short : only "
+                      << ret << " bytes of " << n << " transferred";
+      throw ex;
+    }
   }
 }
