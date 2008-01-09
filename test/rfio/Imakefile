@@ -1,7 +1,7 @@
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.14 $ $Date: 2008/01/09 09:10:14 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.15 $ $Date: 2008/01/09 09:23:20 $ CERN IT-DS/HSM Jean-Philippe Baud Jean-Damien Durand
 COMM
 COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
-COMM   All rights reserved
+COMM  All rights reserved
 COMM
 
 COMM		Make CASTOR tests for "rfio" directory
