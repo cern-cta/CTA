@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.hpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunterThread.hpp,v $ $Author: waldron $
  *
  *
  *
@@ -30,12 +30,11 @@
 
 
 
-#include "castor/server/BaseDbThread.hpp"
+#include "castor/infoPolicy/MigrationPySvc.hpp"
 #include "castor/infoPolicy/CnsInfoMigrationPolicy.hpp"
 #include "castor/infoPolicy/IPolicySvc.hpp"
-#include "castor/infoPolicy/MigrationPySvc.hpp"
 #include "castor/infoPolicy/StreamPySvc.hpp"
-
+#include "castor/server/BaseDbThread.hpp"
 
 namespace castor {
 

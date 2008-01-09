@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: RecHandlerDaemon.cpp,v $ $Author: gtaur $
+* @(#)$RCSfile: RecHandlerDaemon.cpp,v $ $Author: waldron $
 *
 *
 *
@@ -25,17 +25,16 @@
 *****************************************************************************/
 
 // Include Files
+#include "castor/rtcopy/rechandler/RecHandlerThread.hpp"
+#include "castor/rtcopy/rechandler/RecHandlerDaemon.hpp"
 
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
 
 #include "castor/server/SignalThreadPool.hpp"
 
-#include "castor/rtcopy/rechandler/RecHandlerDaemon.hpp"
-#include "castor/rtcopy/rechandler/RecHandlerThread.hpp"
-#include "castor/infoPolicy/IPolicySvc.hpp"
+
 #include "castor/Services.hpp"
-#include "castor/infoPolicy/RecallPySvc.hpp"
 
 #include <Cgetopt.h>
 #include <u64subr.h>

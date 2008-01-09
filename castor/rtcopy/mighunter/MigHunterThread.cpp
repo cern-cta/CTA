@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
  *
  *
  *
@@ -25,6 +25,12 @@
  *****************************************************************************/
 
 #include "castor/rtcopy/mighunter/MigHunterThread.hpp"
+
+//#include "castor/infoPolicy/PySvc.hpp"
+#include "castor/infoPolicy/DbInfoMigrationPolicy.hpp"
+#include "castor/infoPolicy/DbInfoStreamPolicy.hpp"
+#include "castor/infoPolicy/DbInfoPolicy.hpp"
+#include "castor/infoPolicy/PolicyObj.hpp"
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -41,14 +47,6 @@
 #include <getconfent.h>
 #include <u64subr.h>
 
-#include "castor/infoPolicy/PySvc.hpp"
-#include "castor/infoPolicy/MigrationPySvc.hpp"
-#include "castor/infoPolicy/StreamPySvc.hpp"
-#include "castor/infoPolicy/DbInfoMigrationPolicy.hpp"
-#include "castor/infoPolicy/DbInfoStreamPolicy.hpp"
-#include "castor/infoPolicy/CnsInfoMigrationPolicy.hpp"
-#include "castor/infoPolicy/DbInfoPolicy.hpp"
-#include "castor/infoPolicy/PolicyObj.hpp"
 
 
   

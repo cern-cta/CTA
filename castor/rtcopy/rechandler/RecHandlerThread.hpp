@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: RecHandlerThread.hpp,v $ $Author: gtaur $
+* @(#)$RCSfile: RecHandlerThread.hpp,v $ $Author: waldron $
 *
 *
 *
@@ -27,10 +27,10 @@
 #ifndef RECHANDLERTHREAD_HPP
 #define RECHANDLERTHREAD_HPP 1
 
-#include "castor/server/BaseDbThread.hpp"
+// Include files
 #include "castor/infoPolicy/RecallPySvc.hpp"
 #include "castor/infoPolicy/IPolicySvc.hpp"
-
+#include "castor/server/BaseDbThread.hpp"
 
 namespace castor {
   

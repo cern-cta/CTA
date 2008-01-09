@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: MigHunterDaemon.cpp,v $ $Author: gtaur $
+* @(#)$RCSfile: MigHunterDaemon.cpp,v $ $Author: waldron $
 *
 *
 *
@@ -25,6 +25,9 @@
 *****************************************************************************/
 
 // Include Files
+#include "castor/rtcopy/mighunter/MigHunterThread.hpp"
+#include "castor/rtcopy/mighunter/MigHunterDaemon.hpp"
+
 #include <iostream>
 #include <string>
 #include "castor/exception/Exception.hpp"
@@ -40,12 +43,6 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 
-#include "castor/rtcopy/mighunter/MigHunterDaemon.hpp"
-#include "castor/rtcopy/mighunter/MigHunterThread.hpp"
-
-#include "castor/infoPolicy/IPolicySvc.hpp"
-#include "castor/infoPolicy/MigrationPySvc.hpp"
-#include "castor/infoPolicy/StreamPySvc.hpp"
 
 extern "C" {
   char* getconfent(const char *, const char *, int);
