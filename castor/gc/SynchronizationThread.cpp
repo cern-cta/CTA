@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/12/19 13:31:36 $ $Author: sponcec3 $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/09 12:26:25 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be deleted
  *
@@ -291,7 +291,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   for (int i = 0; i < nbFids; i++) {
     cfids[i] = fileIds[i];
   }
-  int rc = Cns_bulkExist(nameServer.c_str(), cfids, &nbFids);
+  int rc = Cns_bulkexist(nameServer.c_str(), cfids, &nbFids);
   if (rc != 0) {
     // NameServer error
     castor::dlf::Param params[] =

@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_server.h,v 1.11 2007/12/04 12:41:27 waldron Exp $
+ * $Id: Cns_server.h,v 1.12 2008/01/09 12:26:23 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.11 $ $Date: 2007/12/04 12:41:27 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_server.h,v $ $Revision: 1.12 $ $Date: 2008/01/09 12:26:23 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _CNS_SERVER_H
@@ -264,7 +264,7 @@ EXTERN_C int Cns_srv_getcomment _PROTO((int, char *, char *, struct Cns_srv_thre
 EXTERN_C int Cns_srv_getpath _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_getsegattrs _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_lastfseq _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
-EXTERN_C int Cns_srv_bulkExist _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
+EXTERN_C int Cns_srv_bulkexist _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_lchown _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_lstat _PROTO((int, char *, char *, struct Cns_srv_thread_info *));
 EXTERN_C int Cns_srv_mkdir _PROTO((int, char *, char *, struct Cns_srv_thread_info *));

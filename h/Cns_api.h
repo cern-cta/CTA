@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.8 2007/11/16 17:46:45 sponcec3 Exp $
+ * $Id: Cns_api.h,v 1.9 2008/01/09 12:26:23 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.8 $ $Date: 2007/11/16 17:46:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.9 $ $Date: 2008/01/09 12:26:23 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -300,7 +300,7 @@ EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listreplica _PROTO((const char *, 
 EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listreplicax _PROTO((const char *, const char *, const char *, int, Cns_list *));
 EXTERN_C int DLL_DECL Cns_lstat _PROTO((const char *, struct Cns_filestat *));
 EXTERN_C int DLL_DECL Cns_lastfseq _PROTO((const char *, int, struct Cns_segattrs *));
-EXTERN_C int DLL_DECL Cns_bulkExist _PROTO((const char*, u_signed64 *, int *));
+EXTERN_C int DLL_DECL Cns_bulkexist _PROTO((const char*, u_signed64 *, int *));
 EXTERN_C int DLL_DECL Cns_mkdir _PROTO((const char *, mode_t));
 EXTERN_C int DLL_DECL Cns_mkdirg _PROTO((const char *, const char *, mode_t));
 EXTERN_C int DLL_DECL Cns_modifyclass _PROTO((char *, int, char *, struct Cns_fileclass *));

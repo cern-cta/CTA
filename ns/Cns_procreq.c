@@ -2755,7 +2755,7 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
-int Cns_srv_bulkExist(magic, req_data, clienthost, thip)
+int Cns_srv_bulkexist(magic, req_data, clienthost, thip)
      int magic;
      char *req_data;
      char *clienthost;
@@ -2771,14 +2771,14 @@ int Cns_srv_bulkExist(magic, req_data, clienthost, thip)
   u_signed64 *fileIds;
   int nbFileIds, i, c;
   
-  strcpy(func, "Cns_srv_bulkExist");
+  strcpy(func, "Cns_srv_bulkexist");
 	
   /* Extract and log common request attributes */
   rbp = req_data;
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   get_client_actual_id(thip, &uid, &gid, &user);
-  nslogit(func, NS092, "bulkExist", user, uid, gid, clienthost);
+  nslogit(func, NS092, "bulkexist", user, uid, gid, clienthost);
 	
   /* Extract fileIds */
   unmarshall_LONG(rbp, nbFileIds);
