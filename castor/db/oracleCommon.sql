@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.594 $ $Date: 2008/01/09 12:57:26 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.595 $ $Date: 2008/01/09 14:15:18 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3168,6 +3168,7 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   nbRes INTEGER;
   dcsToRm "numList";
 BEGIN
+  ret := 0;
   -- Lock the access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
   -- or DiskCopies to be added
@@ -3183,6 +3184,15 @@ BEGIN
        AND DC.fileSystem = FileSystem.id
        AND FileSystem.diskPool = DP2SC.parent
        AND DP2SC.child = scId;
+    IF dcsToRm.COUNT = 0 THEN
+      -- We didn't find anything on this svcClass, fail and return
+      UPDATE SubRequest
+         SET status = 7,  -- FAILED
+             errorCode = 2,  -- ENOENT
+             errorMessage = 'File not found on this service class'
+       WHERE id = srId;
+      RETURN;
+    END IF;
     -- Check whether something else is left: if not, do as
     -- we are performing a stageRm everywhere
     SELECT count(*) INTO nbRes FROM DiskCopy
@@ -3200,9 +3210,8 @@ BEGIN
        AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
   END IF;
   
-  -- Now perform the stageRm. scId is used hereafter as flag
-  -- to determine whether to perform full cleanup or not
   IF scId = 0 THEN
+    -- full cleanup is to be performed, do all necessary checks beforehand
     DECLARE
       segId INTEGER;
       unusedIds "numList";
@@ -3218,7 +3227,6 @@ BEGIN
                errorCode = 16,  -- EBUSY
                errorMessage = 'The file is not yet migrated'
          WHERE id = srId;
-        ret := 0;
         RETURN;
       END IF;
       -- check if removal is possible for Disk2DiskCopy
@@ -3232,7 +3240,6 @@ BEGIN
                errorCode = 16,  -- EBUSY
                errorMessage = 'The file is being replicated'
          WHERE id = srId;
-        ret := 0;
         RETURN;
       END IF;
       -- Stop ongoing recalls if stageRm either everywhere or the only available diskcopy.
@@ -3259,7 +3266,6 @@ BEGIN
              errorCode = 16,  -- EBUSY
              errorMessage = 'The file is being recalled from tape'
        WHERE id = srId;
-      ret := 0;
       RETURN;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- Nothing running
