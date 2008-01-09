@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2008/01/08 10:42:01 $ $Author: sponcec3 $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2008/01/09 10:28:46 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -86,7 +86,6 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
   castor::stager::FileSystem *fs = 0;
   castor::stager::SubRequest *subreq = 0;
   castor::stager::DiskCopy *dc = 0;
-  std::list<castor::stager::DiskCopyForRecall*> sources;
   castor::stager::StartRequest *sReq;
   bool emptyFile;
   Cuuid_t suuid = nullCuuid;
@@ -136,21 +135,17 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
     if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
       // "Invoking getUpdateStart"
       castor::dlf::Param params[] = {
-	castor::dlf::Param(suuid)
+        castor::dlf::Param(suuid)
       };
       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS, 1, params);
-      dc = jobSvc->getUpdateStart(subreq, fs, sources, &emptyFile);
+      dc = jobSvc->getUpdateStart(subreq, fs, &emptyFile);
     } else {
       // "Invoking PutStart"
       castor::dlf::Param params[] = {
-	castor::dlf::Param(suuid)
+        castor::dlf::Param(suuid)
       };
       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS, 1, params);
       dc = jobSvc->putStart(subreq, fs);
-    }
-    // Fill DiskCopy with SubRequest
-    if (0 != dc) {
-      svcs->fillObj(&ad, dc, castor::OBJ_SubRequest);
     }
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] =
@@ -166,14 +161,6 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
   // Build the response
   if (!failed) {
     res.setDiskCopy(dc);
-    if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
-      for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
-             sources.begin();
-           it != sources.end();
-           it++) {
-        res.addSources(*it);
-      }
-    }
     res.setEmptyFile(emptyFile);
   }
   // Reply To Client
@@ -198,24 +185,7 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
     delete fs;
   }
   if (subreq) delete subreq;
-  if (dc) {
-    std::vector<castor::stager::SubRequest*> srs = dc->subRequests();
-    for (std::vector<castor::stager::SubRequest*>::iterator it =
-           srs.begin();
-         it != srs.end();
-         it++) {
-      delete *it;
-    }
-    delete dc;
-  }
-  if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
-    for (std::list<castor::stager::DiskCopyForRecall*>::iterator it =
-           sources.begin();
-         it != sources.end();
-         it++) {
-      delete *it;
-    }
-  }
+  if (dc) delete dc;
 }
 
 //-----------------------------------------------------------------------------
@@ -772,7 +742,7 @@ void castor::stager::dbService::JobSvcThread::process
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "GcSvcThread::process.2"),
+      {castor::dlf::Param("Function", "JobSvcThread::process.2"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
