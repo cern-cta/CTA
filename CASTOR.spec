@@ -113,7 +113,7 @@ done
 %if ! %has_globus
 echo "### Warning, no GLOBUS environment"
 echo "The following packages will NOT be built:"
-echo "castor-gridftp-dsi-int, castor-gridftp-dsi-ext"
+echo "castor-gridftp-dsi-int, castor-gridftp-dsi-ext, castor-gridftp-dsi-common"
 for this in BuildGridFTP; do
 	perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tNO/g" config/site.def
 done
