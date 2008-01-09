@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_server.h,v 1.4 2007/12/04 12:34:39 waldron Exp $
+ * $Id: vmgr_server.h,v 1.5 2008/01/09 12:32:19 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.4 $ $Date: 2007/12/04 12:34:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_server.h,v $ $Revision: 1.5 $ $Date: 2008/01/09 12:32:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_SERVER_H
@@ -42,6 +42,8 @@
 #ifdef CSEC
 #include "Csec_api.h"
 #endif 
+#include "vmgr_constants.h" 
+#include "vmgr.h" 
  
                         /* volume manager constants and macros */
 

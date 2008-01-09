@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_struct.h,v 1.2 2007/12/04 12:34:39 waldron Exp $
+ * $Id: vmgr_struct.h,v 1.3 2008/01/09 12:32:19 waldron Exp $
  */
 
 /*
@@ -8,13 +8,12 @@
  */
  
 /*
- * @(#)$RCSfile: vmgr_struct.h,v $ $Revision: 1.2 $ $Date: 2007/12/04 12:34:39 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr_struct.h,v $ $Revision: 1.3 $ $Date: 2008/01/09 12:32:19 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
  
 #ifndef _VMGR_STRUCT_H
 #define _VMGR_STRUCT_H
-#include "vmgr_constants.h"
-#include "vmgr.h"
+#include "Castor_limits.h"
 
                         /* structures common to volume manager client and server */
 
