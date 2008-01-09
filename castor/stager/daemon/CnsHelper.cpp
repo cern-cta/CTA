@@ -110,7 +110,7 @@ namespace castor{
            (((subReq->flags() & O_CREAT) == O_CREAT) && ((OBJ_StageUpdateRequest == type) || (OBJ_StagePrepareToUpdateRequest == type))))) {
            // creation is allowed on the above type of requests
 
-          /* using Cns_creatx and Cns_stat c functions, create the file and update Cnsfileid and Cnsfilestat structures */
+          // using Cns_creatx and Cns_stat c functions, create the file and update cnsFileid and cnsFilestat structures
           memset(&(cnsFileid), 0, sizeof(cnsFileid));
           serrno = 0;
           if ((0 != Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &(cnsFileid))) && (serrno != EEXIST)) {
@@ -135,21 +135,22 @@ namespace castor{
             std::string forcedFileClassName = svcClass->forcedFileClass()->name();
             Cns_unsetid();
             if(Cns_chclass(subReq->fileName().c_str(), 0, (char*)forcedFileClassName.c_str())) {
-              int tempserrno = serrno;
-              Cns_delete(subReq->fileName().c_str());
-              serrno = tempserrno;
-              
               castor::dlf::Param params[]={castor::dlf::Param("Function","StagerCnsHelper->checkFileOnNameServer.2")};
               castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
               
               castor::exception::Exception ex(serrno);
               ex.getMessage() << "Impossible to force file class for this file";
+              // before giving up we unlink the just created file
+              Cns_delete(subReq->fileName().c_str());
               throw ex;
             }
             Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
           }
           
+          // update cns structures
           Cns_statx(subReq->fileName().c_str(), &(cnsFileid), &(cnsFilestat));
+          // if no segments, reset filesize to 0
+          // to be done
         }
         else if(newFile) {
           // other requests cannot create non existing files
