@@ -1,12 +1,8 @@
-.\" @(#)$RCSfile: migHunterDaemon.man,v $ $Revision: 1.1 $ $Date: 2007/11/06 13:34:47 $ CERN IT/ADC Olof Barring
-.\" Copyright (C) 2005 by CERN/IT
-.\" All rights reserved
-.\"
-.TH MIGHUNTER 1 "$Date: 2007/11/06 13:34:47 $" CASTOR "RTCOPY Operator Commands"
+.TH MIGHUNTERDAEMON 1 "$Date: 2008/01/09 12:51:10 $" CASTOR "RTCOPY Operator Commands"
 .SH NAME
-MigHunter \- default migration candidate hunter
+migHunterDaemon \- default migration candidate hunter
 .SH SYNOPSIS
-.B MigHunter
+.B migHunterDaemon
 [
 .BI -C
 ]
@@ -27,7 +23,7 @@ MigHunter \- default migration candidate hunter
 .BI svcClass2 ...
 ]
 .SH DESCRIPTION
-.B MigHunter
+.B migHunterDaemon
 is the default stream creator and migration candidate hunter provided with the CASTOR
 stager.
 .SH OPTIONS
@@ -39,7 +35,7 @@ error messages are logged to stdout/stderr.
 .TP
 .BI \-C
 switch instructs the
-.B MigHunter
+.B migHunterDaemon
 when creating new streams to always clone an existing stream if it finds one associated
 with the service class. The stream cloning can give a load-balancing advantage when new
 streams are added to a service class. Be aware, however, that it is an heavy operation
@@ -61,9 +57,9 @@ specify the location of the file where all the policy functions are declared.
 
 e.g.:
 
-.B Policy MIGRATION /etc/castor/migrationPolicies.py
+.B Policy Migration /etc/castor/policies/migrationPolicies.py
 
-.B Policy STREAM  /etc/castor/streamPolicies.py
+.B Policy Stream  /etc/castor/policies/streamPolicies.py
 
 Then for each svcclass we specify in the database the function that we want to execute between the ones declared in the file.
 If no function is specified we act like the policy allows the operation.
@@ -72,12 +68,12 @@ If an error is reported by the function we act like a negative response from the
 
 .SH EXAMPLE
 .fi
-# MigHunter default
+# migHunterDaemon default
 .fi
-# MigHunter  -t 300 -v 100G alicemdc6
+# migHunterDaemon  -t 300 -v 100G alicemdc6
 
 .SH EXIT STATUS
-This program returns 0 if the operation was successful or >0 if the operation
+This program returns 0 if the operation was successful or > 0 if the operation
 failed.
 
 .SH AUTHOR
