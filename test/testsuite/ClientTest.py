@@ -1021,7 +1021,7 @@ class StagerRmCase(unittest.TestCase):
           time.sleep(10)
 	  buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
 	
-	cmd=["stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerSvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
+	cmd=["stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerDiskOnlySvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
 	UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvcP2",cmd,myScen)
 
         fi=open(localDir+"ClientRmDualSvcP2","r")
