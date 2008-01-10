@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.595 $ $Date: 2008/01/09 14:15:18 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.596 $ $Date: 2008/01/10 14:29:21 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3177,13 +3177,27 @@ BEGIN
   -- First select involved diskCopies
   scId := svcClassId;
   IF scId > 0 THEN
-    SELECT DC.id BULK COLLECT INTO dcsToRm
-      FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
-     WHERE DC.castorFile = cfId
-       AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
-       AND DC.fileSystem = FileSystem.id
-       AND FileSystem.diskPool = DP2SC.parent
-       AND DP2SC.child = scId;
+    SELECT id BULK COLLECT INTO dcsToRm FROM (
+      -- first physical diskcopies
+      SELECT DC.id
+        FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
+       WHERE DC.castorFile = cfId
+         AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+         AND DC.fileSystem = FileSystem.id
+         AND FileSystem.diskPool = DP2SC.parent
+         AND DP2SC.child = scId)
+      UNION ALL (
+      -- and then diskcopies resulting from PrepareToPut|Update requests
+      SELECT DC.id
+        FROM (SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
+              SELECT id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest,
+             SubRequest, DiskCopy DC
+       WHERE SubRequest.diskCopy = DC.id
+         AND PrepareRequest.id = SubRequest.request
+         AND PrepareRequest.svcClass = scId
+         AND DC.castorFile = cfId
+         AND DC.status IN (5, 11)  -- WAITFS, WAITFS_SCHEDULING
+      );
     IF dcsToRm.COUNT = 0 THEN
       -- We didn't find anything on this svcClass, fail and return
       UPDATE SubRequest
@@ -3197,8 +3211,8 @@ BEGIN
     -- we are performing a stageRm everywhere
     SELECT count(*) INTO nbRes FROM DiskCopy
      WHERE castorFile = cfId
-       AND status in (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
-       AND id not in (SELECT * FROM TABLE(dcsToRm));
+       AND status IN (0, 5, 6, 10, 11)  -- STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+       AND id NOT IN (SELECT * FROM TABLE(dcsToRm));
     IF nbRes = 0 THEN
       scId := 0;
     END IF;
