@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/01/09 10:32:30 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/01/10 14:32:26 $ $Author: itglp $
  *
  *
  *
@@ -121,6 +121,17 @@ namespace castor {
       virtual castor::stager::DiskCopy* getUpdateStart
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem,
+       bool* emptyFile)
+        throw (castor::exception::Exception);
+        
+      /**
+       * Same as above, with the old signature for backward compatibility.
+       * This method is DEPRECATED and should be removed at some stage
+       */
+      virtual castor::stager::DiskCopy* getUpdateStart
+      (castor::stager::SubRequest* subreq,
+       castor::stager::FileSystem* fileSystem,
+       std::list<castor::stager::DiskCopyForRecall*>& sources,
        bool* emptyFile)
         throw (castor::exception::Exception);
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2008/01/09 14:16:00 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/01/10 14:32:26 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -249,17 +249,13 @@ castor::db::ora::OraJobSvc::getUpdateStart
       return 0;
     }
     
-    unsigned int status =
-      m_getUpdateStartStatement->getInt(5);
     castor::stager::DiskCopy* result =
       new castor::stager::DiskCopy();
     result->setId(id);
     result->setPath(m_getUpdateStartStatement->getString(4));
-    if (98 == status) {
-      result->setStatus(castor::stager::DISKCOPY_WAITDISK2DISKCOPY);
+    result->setStatus((enum castor::stager::DiskCopyStatusCodes)m_getUpdateStartStatement->getInt(5));
+    if(result->status() == castor::stager::DISKCOPY_WAITDISK2DISKCOPY) {
       *emptyFile = true;
-    } else {
-      result->setStatus((enum castor::stager::DiskCopyStatusCodes) status);
     }
 
     // return
@@ -274,6 +270,20 @@ castor::db::ora::OraJobSvc::getUpdateStart
     throw ex;
   }
 }
+
+//------------------------------------------------------------------------------
+// getUpdateStart old signature (to be dropped)
+//------------------------------------------------------------------------------
+castor::stager::DiskCopy*
+castor::db::ora::OraJobSvc::getUpdateStart
+(castor::stager::SubRequest* subreq,
+ castor::stager::FileSystem* fileSystem,
+ std::list<castor::stager::DiskCopyForRecall*>& sources,
+ bool* emptyFile)
+  throw (castor::exception::Exception) {
+  return getUpdateStart(subreq, fileSystem, emptyFile);
+}
+
 
 //------------------------------------------------------------------------------
 // putStart

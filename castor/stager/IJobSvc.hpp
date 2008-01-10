@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/09 10:32:29 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvc.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/01/10 14:32:26 $ $Author: itglp $
  *
  * This class provides stager methods related to job handling
  *
@@ -118,6 +118,17 @@ namespace castor {
       virtual castor::stager::DiskCopy* getUpdateStart
       (castor::stager::SubRequest* subreq,
        castor::stager::FileSystem* fileSystem,
+       bool* emptyFile)
+        throw (castor::exception::Exception) = 0;
+
+      /**
+       * Same as above, with the old signature for backward compatibility.
+       * This method is DEPRECATED and should be removed at some stage
+       */
+      virtual castor::stager::DiskCopy* getUpdateStart
+      (castor::stager::SubRequest* subreq,
+       castor::stager::FileSystem* fileSystem,
+       std::list<castor::stager::DiskCopyForRecall*>& sources,
        bool* emptyFile)
         throw (castor::exception::Exception) = 0;
 

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/01/09 10:32:31 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/01/10 14:32:26 $ $Author: itglp $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -126,6 +126,17 @@ namespace castor {
          bool* emptyFile)
           throw (castor::exception::Exception);
 
+        /**
+         * Same as above, with the old signature for backward compatibility.
+         * This method is DEPRECATED and should be removed at some stage
+         */
+        virtual castor::stager::DiskCopy* getUpdateStart
+        (castor::stager::SubRequest* subreq,
+         castor::stager::FileSystem* fileSystem,
+         std::list<castor::stager::DiskCopyForRecall*>& sources,
+         bool* emptyFile)
+          throw (castor::exception::Exception);
+  
         /**
          * Handles the start of a Put job.
          * Links the DiskCopy associated to the SubRequest to

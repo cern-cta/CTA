@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/01/09 10:32:29 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/01/10 14:32:26 $ $Author: itglp $
  *
  *
  *
@@ -198,6 +198,19 @@ castor::stager::RemoteJobSvc::getUpdateStart
   client.sendRequest(&req, &rh);
   // return
   return result;
+}
+
+//------------------------------------------------------------------------------
+// getUpdateStart old signature (to be dropped)
+//------------------------------------------------------------------------------
+castor::stager::DiskCopy*
+castor::stager::RemoteJobSvc::getUpdateStart
+(castor::stager::SubRequest* subreq,
+ castor::stager::FileSystem* fileSystem,
+ std::list<castor::stager::DiskCopyForRecall*>& sources,
+ bool* emptyFile)
+  throw (castor::exception::Exception) {
+  return getUpdateStart(subreq, fileSystem, emptyFile);
 }
 
 //------------------------------------------------------------------------------
