@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.166 $ $Release$ $Date: 2007/09/27 13:32:41 $ $Author: obarring $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.167 $ $Release$ $Date: 2008/01/10 17:01:33 $ $Author: sponcec3 $
  *
  * 
  *
@@ -2701,7 +2701,7 @@ int rtcpcld_updcRecallFailed(
   struct C_Services_t **svcs = NULL;
   rtcpFileRequest_t *filereq;
   struct Cns_fileid *fileid;
-  int rc = 0, save_serrno;
+  int rc = 0, save_rc, save_serrno;
   file_list_t *fl = NULL;
   ID_TYPE key = 0;
 
@@ -2808,6 +2808,30 @@ int rtcpcld_updcRecallFailed(
 
   C_IAddress_delete(iAddr);
   
+  /*
+   * Remove local diskcopy if any
+   */
+  save_rc = rc;
+  save_serrno = serrno;
+  rc = rfio_unlink(filereq->file_path);
+  if (rc != 0) {
+    (void)dlf_write(
+                    (inChild == 0 ? mainUuid : childUuid),
+                    RTCPCLD_LOG_MSG(RTCPCLD_MSG_INTERNAL),
+                    (struct Cns_fileid *)fileid,
+                    RTCPCLD_NB_PARAMS+2,
+                    "REASON",
+                    DLF_MSG_PARAM_STR,
+                    "Removal of local file failed. May now be orphaned",
+                    "local file name",
+                    DLF_MSG_PARAM_STR,
+                    filereq->file_path,
+                    RTCPCLD_LOG_WHERE
+                    );    
+  }
+  rc = save_rc;
+  serrno = save_serrno;
+
   return(rc);
 }
 
