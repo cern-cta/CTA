@@ -35,9 +35,9 @@
 namespace castor {
 
   namespace vdqm {
-  	
-  	//Forward declaration
-  	class TapeDrive;
+    
+    // Forward declaration
+    class TapeRequest;
 
     /**
      * A dedicated socket class, able to deal with socket manipulation
@@ -60,7 +60,7 @@ namespace castor {
        * @param host the host to connect to, given by its name
        */
       RTCopyDConnection(const unsigned short port,
-             const std::string host)
+        const std::string host)
         throw (castor::exception::Exception);
 
       /**
@@ -70,7 +70,7 @@ namespace castor {
        * @param host the host to connect to, given as an ip address
        */
       RTCopyDConnection(const unsigned short port,
-             const unsigned long ip)
+        const unsigned long ip)
         throw (castor::exception::Exception);
 
 
@@ -84,19 +84,26 @@ namespace castor {
        * connects the socket to the given address
        */
        virtual void connect()
-				 throw (castor::exception::Exception);      
+         throw (castor::exception::Exception);      
       
       
       /**
-       * This function is used to inform the RT Copy daemon about an actual
-       * free tape, which can be dedidacet to a waiting TapeRequest. Please
-       * make sure, that you have already realized the connection to RTCP!
+       * This function asks the RT Copy daemon to start a job.
        * 
-       * @param tapeDrive The TapeDrive which can handle the TapeRequest. Please
-       * make sure, that the TapeRequest is already included in the TaepDrive!
+       * @param tapeRequestID
+       * @param clientID The client's identification information
+       * @param tapeDrive The tape drive to be used
        * @exception In case of errors 
        */
-      bool sendJobToRTCPD(const TapeDrive *tapeDrive) 
+      bool sendJobToRTCPD(
+        const u_signed64  tapeRequestID,
+        const std::string &clientUserName,
+        const std::string &clientMachine,
+        const int         clientPort,
+        const int         clientEuid,
+        const int         clientEgid,
+        const std::string &deviceGroupName,
+        const std::string &tapeDriveName)
         throw (castor::exception::Exception);    
         
       
@@ -110,7 +117,7 @@ namespace castor {
        * @exception In case of errors 
        */
       bool readRTCPAnswer()
-	     throw (castor::exception::Exception);    
+        throw (castor::exception::Exception);    
     };
 
   } // end of namespace vdqm

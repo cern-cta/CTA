@@ -29,7 +29,9 @@
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/stager/ClientIdentification.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/RTCopyDConnection.hpp"
@@ -199,13 +201,25 @@ castor::vdqm::IVdqmSvc *castor::vdqm::DriveSchedulerThread::getDbVdqmSvc()
 void castor::vdqm::DriveSchedulerThread::allocateDrive(
   castor::vdqm::TapeRequest* request) throw(castor::exception::Exception) {
 
+  // castor::db::ora::OraVdqmSvc::matchTape2TapeDrive() ensures:
+  //
+  //   The tape request is linked to a set of client indentification data
+  //   The tape request is linked to a tape drive
+  //
+  //   The tape drive of the tape request is linked to a device group name
+  //   The tape drive of the tape request is linked to a tape server
+
+  castor::stager::ClientIdentification *client    = request->client();
+  castor::vdqm::TapeDrive              *tapeDrive = request->tapeDrive();
+
+  castor::vdqm::DeviceGroupName *dgn        = tapeDrive->deviceGroupName();
+  castor::vdqm::TapeServer      *tapeServer = tapeDrive->tapeServer();
+
   std::cout << "castor::vdqm::DriveSchedulerThread::allocateDrive" << std::endl;
+
   
-  // castor::db::ora::OraVdqmSvc::matchTape2TapeDrive() ensures the tape
-  // request is a linked to a tape drive which is in turn linked to a tape
-  // server
-  RTCopyDConnection rtcpConnection(RTCOPY_PORT, 
-    request->tapeDrive()->tapeServer()->serverName());                                   
+  RTCopyDConnection rtcpConnection(RTCOPY_PORT, tapeServer->serverName());
+
   try {
     rtcpConnection.connect();
   } catch (castor::exception::Exception e) {
@@ -220,7 +234,10 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
   bool acknSucc = true;
 
   try {
-    acknSucc = rtcpConnection.sendJobToRTCPD(request->tapeDrive());
+    acknSucc = rtcpConnection.sendJobToRTCPD(tapeDrive->id(),
+      client->userName(), client->machine(), client->port(), client->euid(),
+      client->egid(), dgn->dgName(), tapeDrive->driveName()
+    );
   } catch (castor::exception::Exception e) {
     castor::exception::Internal ie;
 

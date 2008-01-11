@@ -26,9 +26,12 @@
 
 #include <rtcp_constants.h> /* RTCOPY_PORT  */
  
+#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/stager/ClientIdentification.hpp"
 #include "castor/stager/Tape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
+#include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
@@ -458,11 +461,38 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
                                       ptr_tapeDrive->tapeServer()->serverName());                                   
       rtcpConnection.connect();
       
-      if ( !rtcpConnection.sendJobToRTCPD(ptr_tapeDrive) ) {
+      // Extract client identification
+      const castor::stager::ClientIdentification *client =
+        newTapeRequest->client();
+      if(client == NULL) {
+        castor::exception::Internal ie;
+
+        ie.getMessage()
+          << "Tape request not linked to client identicication";
+
+        throw ie;
+      }
+
+      // Extract device group name
+      const castor::vdqm::DeviceGroupName *dgn =
+        ptr_tapeDrive->deviceGroupName();
+      if(dgn == NULL) {
+        castor::exception::Internal ie;
+
+        ie.getMessage()
+          << "Tape drive not linked to device group name";
+
+        throw ie;
+      }
+
+      if ( !rtcpConnection.sendJobToRTCPD(ptr_tapeDrive->id(),
+        client->userName(), client->machine(), client->port(), client->euid(),
+          client->egid(), dgn->dgName(), ptr_tapeDrive->driveName()) ) {
         castor::exception::Exception ex(EVQBADSTAT);
-        ex.getMessage() << "TapeDriveStatusHandler::handleUnitReleaseStatus(): "
-                        << "Received an error during sending information to RTCP" 
-                        << std::endl;      
+        ex.getMessage()
+          << "TapeDriveStatusHandler::handleUnitReleaseStatus(): "
+          << "Received an error during sending information to RTCP" 
+          << std::endl;      
         throw ex;
       }
       
