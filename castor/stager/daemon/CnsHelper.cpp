@@ -106,9 +106,12 @@ namespace castor{
         bool newFile = (0 != Cns_statx(subReq->fileName().c_str(), &(cnsFileid), &(cnsFilestat))) && (serrno == ENOENT);
         int type = subReq->request()->type();
         
-        if(newFile && ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type && ((subReq->modeBits() & W_OK) == W_OK)) ||
-           (((subReq->flags() & O_CREAT) == O_CREAT) && ((OBJ_StageUpdateRequest == type) || (OBJ_StagePrepareToUpdateRequest == type))))) {
-           // creation is allowed on the above type of requests
+        if(newFile && ((OBJ_StagePutRequest == type) || 
+                       (OBJ_StageUpdateRequest == type && (subReq->flags() & O_CREAT) == O_CREAT) ||
+                       (OBJ_StagePrepareToPutRequest == type && (subReq->modeBits() & 0222) != 0) ||
+                       (OBJ_StagePrepareToUpdateRequest == type && (subReq->flags() & O_CREAT) == O_CREAT && (subReq->modeBits() & 0222) != 0)
+                       )) {
+          // creation is allowed on the above type of requests
 
           // using Cns_creatx and Cns_stat c functions, create the file and update cnsFileid and cnsFilestat structures
           memset(&(cnsFileid), 0, sizeof(cnsFileid));
