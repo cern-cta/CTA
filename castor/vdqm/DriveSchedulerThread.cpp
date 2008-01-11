@@ -201,6 +201,9 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
 
   std::cout << "castor::vdqm::DriveSchedulerThread::allocateDrive" << std::endl;
   
+  // castor::db::ora::OraVdqmSvc::matchTape2TapeDrive() ensures the tape
+  // request is a linked to a tape drive which is in turn linked to a tape
+  // server
   RTCopyDConnection rtcpConnection(RTCOPY_PORT, 
     request->tapeDrive()->tapeServer()->serverName());                                   
   try {
@@ -209,7 +212,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
     castor::exception::Internal ie;
 
     ie.getMessage()
-      << "Failed to connect to RTCopyD: " << e.getMessage();
+      << "Failed to connect to RTCopyD: " << e.getMessage().str();
 
     throw ie;
   }
@@ -222,7 +225,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
     castor::exception::Internal ie;
 
     ie.getMessage()
-      << "Failed to send job to RTCPD: " << e.getMessage();
+      << "Failed to send job to RTCPD: " << e.getMessage().str();
 
     throw ie;
   }
