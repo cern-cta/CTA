@@ -130,7 +130,7 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsS
  */  
 /// SQL statement for function matchTape2TapeDrive
 const std::string castor::db::ora::OraVdqmSvc::s_matchTape2TapeDriveStatementString =
-  "BEGIN matchTape2TapeDrive(:1, :2); END;";        
+  "BEGIN matchTape2TapeDrive(:1); END;";        
   
 
 // -----------------------------------------------------------------------
