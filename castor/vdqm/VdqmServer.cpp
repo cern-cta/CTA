@@ -52,8 +52,8 @@
 int main(int argc, char *argv[]) {
 
   castor::vdqm::VdqmServer       server;
-  castor::server::BaseThreadPool *requestHandlerThreadPool  = NULL;
-  castor::server::BaseThreadPool *driveDedicationThreadPool = NULL;
+  castor::server::BaseThreadPool *requestHandlerThreadPool = NULL;
+  castor::server::BaseThreadPool *driveSchedulerThreadPool = NULL;
 
 
   //-----------------------
@@ -86,15 +86,17 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  requestHandlerThreadPool->setNbThreads(server.getRqstHandlerThreadNb());
+  requestHandlerThreadPool->setNbThreads(
+    server.getRequestHandlerThreadNumber());
 
-  driveDedicationThreadPool = server.getThreadPool('D');
-  if(driveDedicationThreadPool == NULL) {
+  driveSchedulerThreadPool = server.getThreadPool('D');
+  if(driveSchedulerThreadPool == NULL) {
     std::cerr << "Failed to get DriveSchedulerThreadPool" << std::endl;
     return 1;
   }
 
-  driveDedicationThreadPool->setNbThreads(server.getDedicationThreadNb());
+  driveSchedulerThreadPool->setNbThreads(
+    server.getDriveSchedulerThreadNumber());
 
   try {
 
@@ -127,8 +129,8 @@ int main(int argc, char *argv[]) {
 castor::vdqm::VdqmServer::VdqmServer()
   throw():
   castor::server::BaseDaemon("Vdqm"),
-  m_rqstHandlerThreadNumber(1),
-  m_dedicationThreadNumber(1)
+  m_requestHandlerThreadNumber(1),
+  m_driveSchedulerThreadNumber(1)
 {
   initDlf();
 }
@@ -227,12 +229,12 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
   throw() {
 
   static struct Coptions longopts[] = {
-    {"foreground"        , NO_ARGUMENT      , NULL, 'f'},
-    {"config"            , REQUIRED_ARGUMENT, NULL, 'c'},
-    {"help"              , NO_ARGUMENT      , NULL, 'h'},
-    {"rqstHandlerThreads", REQUIRED_ARGUMENT, NULL, 'n'},
-    {"dedicationThreads" , REQUIRED_ARGUMENT, NULL, 'd'},
-    {NULL                , 0                , NULL,  0 }
+    {"foreground"           , NO_ARGUMENT      , NULL, 'f'},
+    {"config"               , REQUIRED_ARGUMENT, NULL, 'c'},
+    {"help"                 , NO_ARGUMENT      , NULL, 'h'},
+    {"requestHandlerThreads", REQUIRED_ARGUMENT, NULL, 'n'},
+    {"driveSchedulerThreads", REQUIRED_ARGUMENT, NULL, 'd'},
+    {NULL                   , 0                , NULL,  0 }
   };
 
   Coptind = 1;
@@ -251,10 +253,17 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
       help(argv[0]);
       exit(0);
     case 'n':
-      m_rqstHandlerThreadNumber = atoi(Coptarg);
+      m_requestHandlerThreadNumber = atoi(Coptarg);
       break;
     case 'd':
-      m_dedicationThreadNumber = atoi(Coptarg);
+      m_driveSchedulerThreadNumber = atoi(Coptarg);
+
+      if(m_driveSchedulerThreadNumber != 1) {
+        std::cerr << "Error: More than one drive scheduler thread is not yet "
+          << "supported" << std::endl << std::endl;
+        exit(1);
+      }
+
       break;
     case '?':
       std::cerr << "Error: Unknown command-line option: " << (char)Coptopt
@@ -295,11 +304,11 @@ void castor::vdqm::VdqmServer::help(std::string programName)
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--foreground or -f             \tRemain in the Foreground\n"
-    "\t--config <config-file> or -c   \tConfiguration file\n"
-    "\t--help       or -h             \tPrint this help and exit\n"
-    "\t--rqstHandlerThreads or -n num \tRequest handler threads (default 1)\n"
-    "\t--dedicationThreads or -d num  \tDrive dedication threads (default 1)\n"
+    "\t--foreground            or -f     \tRemain in the Foreground\n"
+    "\t--config <config-file>  or -c     \tConfiguration file\n"
+    "\t--help                  or -h     \tPrint this help and exit\n"
+    "\t--requestHandlerThreads or -n num \tDefault 1\n"
+    "\t--driveSchedulerThreads or -d num \tDefault 1\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -315,18 +324,18 @@ int castor::vdqm::VdqmServer::getListenPort()
 
 
 //------------------------------------------------------------------------------
-// getRqstHandlerThreadNb
+// getRequestHandlerThreadNb
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getRqstHandlerThreadNb()
+int castor::vdqm::VdqmServer::getRequestHandlerThreadNumber()
 {
-  return m_rqstHandlerThreadNumber;
+  return m_requestHandlerThreadNumber;
 }
 
 
 //------------------------------------------------------------------------------
-// getDedicationThreadNb
+// getDriveSchedulerThreadNb
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getDedicationThreadNb()
+int castor::vdqm::VdqmServer::getDriveSchedulerThreadNumber()
 {
-  return m_dedicationThreadNumber;
+  return m_driveSchedulerThreadNumber;
 }

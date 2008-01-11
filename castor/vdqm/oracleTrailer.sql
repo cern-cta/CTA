@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/28 11:06:20 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/11 08:52:17 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -46,12 +46,11 @@ END castorVdqm;
  * Returns the relevant IDs if a couple was found, (0,0) otherwise.
  */  
 CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
- (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
+ (tapeRequestID OUT NUMBER) AS
   d2rCur castorVdqm.Drive2Req_Cur;
   d2r castorVdqm.Drive2Req;
   countDed INTEGER;
 BEGIN
-  tapeDriveID := 0;
   tapeRequestID := 0;
   
   -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
@@ -59,7 +58,8 @@ BEGIN
   SELECT TapeDrive.id, TapeRequest.id
     FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
    WHERE TapeDrive.status = 0  -- UNIT_UP
-     AND TapeDrive.runningTapeReq = 0  -- not associated with tapeReq
+     AND TapeDrive.runningTapeReq = 0  -- not associated with a tape request
+     AND TapeDrive.tape = 0 -- not associated with a tape
      AND TapeDrive.tapeServer = TapeServer.id 
      AND TapeServer.actingMode = 0  -- ACTIVE
      AND TapeRequest.tapeDrive = 0
@@ -87,8 +87,21 @@ BEGIN
      WHERE tapeDrive = d2r.tapeDrive
        AND getTime() BETWEEN startTime AND endTime;
     IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
+
+      UPDATE TapeDrive SET
+        status = 1, -- UNIT_STARTING = 1
+        jobID = 0,
+        modificationTime = getTime(),
+        runningTapeReq = d2r.tapeRequest
+        WHERE id = d2r.tapeDrive;
+
+      UPDATE TapeRequest SET
+        tapeDrive = d2r.tapeDrive,
+        modificationTime = getTime(),
+        WHERE id = d2r.tapeRequest;
+
       tapeRequestID := d2r.tapeRequest;
+
       EXIT;
     END IF;
 
@@ -108,8 +121,21 @@ BEGIN
        AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
        AND TapeRequest.client = ClientIdentification.id;
     IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
+
+      UPDATE TapeDrive SET
+        status = 1, -- UNIT_STARTING = 1
+        jobID = 0,
+        modificationTime = getTime(),
+        runningTapeReq = d2r.tapeRequest
+        WHERE id = d2r.tapeDrive;
+
+      UPDATE TapeRequest SET
+        tapeDrive = d2r.tapeDrive,
+        modificationTime = getTime(),
+        WHERE id = d2r.tapeRequest;
+
       tapeRequestID := d2r.tapeRequest;
+
       EXIT;
     END IF;
     -- else the tape drive is dedicated to other request(s) and we can't use it, go on

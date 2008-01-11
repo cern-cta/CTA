@@ -63,12 +63,12 @@ namespace castor {
       /**
        * Returns the number of threads in the request handler thread pool.
        */
-      int getRqstHandlerThreadNb();
+      int getRequestHandlerThreadNumber();
 
       /**
-       * Returns the number of threads in the drive dedication thread pool.
+       * Returns the number of threads in the drive scheduler thread pool.
        */
-      int getDedicationThreadNb();
+      int getDriveSchedulerThreadNumber();
       
 
     private:
@@ -76,12 +76,12 @@ namespace castor {
       /**
        * Number of request handler threads
        */
-      int m_rqstHandlerThreadNumber;
+      int m_requestHandlerThreadNumber;
 
       /**
-       * Number of drive dedication threads
+       * Number of drive scheduler threads
        */
-      int m_dedicationThreadNumber;
+      int m_driveSchedulerThreadNumber;
     
       /**
        * Initializes the DLF logging including the definition of the predefined

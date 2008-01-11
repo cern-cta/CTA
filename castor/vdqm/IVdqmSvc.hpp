@@ -41,7 +41,6 @@ namespace castor {
 
     // Forward declaration
     class DeviceGroupName;
-    class DriveAndRequestPair;
     class TapeAccessSpecification;
     class TapeRequest;
     class TapeDrive;
@@ -104,13 +103,11 @@ namespace castor {
          * if an request for a newer tape model arrives.<br>
          * Please notice that caller is responsible for deleting the object
          * returned.<br>
-         * This function is used by TapeRequestDedicationHandler.
          * 
-         * @return the matching tape drive and request or NULL if no match could
-         * be found
+         * @return a matched tape request or NULL if no match could be found
          * @exception in case of error
          */  
-       virtual castor::vdqm::DriveAndRequestPair *matchTape2TapeDrive()
+       virtual castor::vdqm::TapeRequest *matchTape2TapeDrive()
          throw (castor::exception::Exception) = 0;
 
           

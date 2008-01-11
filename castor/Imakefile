@@ -374,7 +374,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               vdqm/ErrorHistory.cpp \
               vdqm/TapeDrive.cpp \
               vdqm/DeviceGroupName.cpp \
-              vdqm/DriveAndRequestPair.cpp \
               vdqm/TapeAccessSpecification.cpp \
               vdqm/TapeDriveCompatibility.cpp \
               vdqm/TapeDriveDedication.cpp \

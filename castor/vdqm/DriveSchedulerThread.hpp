@@ -34,6 +34,8 @@ namespace castor {
 
     // Forward declarations
     class IVdqmSvc;
+    class TapeDrive;
+    class TapeRequest;
 
 
     /**
@@ -70,9 +72,10 @@ namespace castor {
     private:
 
       /**
-       * Allocates a free drive to a tape request.
+       * Allocates the already associated free drive of the specified tape
+       * request to the tape request.
        */
-      void allocateDrive(castor::IObject* param)
+      void allocateDrive(castor::vdqm::TapeRequest* request)
         throw(castor::exception::Exception);
 
       /**
