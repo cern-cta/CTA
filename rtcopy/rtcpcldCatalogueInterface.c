@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.167 $ $Release$ $Date: 2008/01/10 17:01:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: rtcpcldCatalogueInterface.c,v $ $Revision: 1.168 $ $Release$ $Date: 2008/01/11 12:40:47 $ $Author: gtaur $
  *
  * 
  *
@@ -608,7 +608,7 @@ int rtcpcld_getTapesToDo(
       Cstager_Tape_side(tpArray[i],&side);
       rc = rtcp_NewTapeList(&tape,&tl,mode);
       if ( rc == -1 ) break;
-      tl->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t *));
+      tl->dbRef = (RtcpDBRef_t *)calloc(1,sizeof(RtcpDBRef_t));
       if ( tl->dbRef == NULL ) {
         save_serrno = errno;
         LOG_SYSCALL_ERR("calloc()");
