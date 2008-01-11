@@ -1301,15 +1301,40 @@ castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::matchTape2TapeDrive()
       throw e;
     }  
     
-    // Get the foreign related objects
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeDrive);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);		
+    // Get the foreign related objects of the tape request
+    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
+    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);		
+    // Get the foreign related objects of the tape drive of the tape request
+    if(tapeRequest->tapeDrive() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape request is not linked to a tape drive";
+
+      throw ie;
+    }
+    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
+    if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape drive of tape request is not linked to a tape server";
+
+      throw ie;
+    }
     
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
       << "Unable to find a TapeRequest for id(TapeRequest) " 
+      << idTapeRequest << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to find a TapeRequest for id(TapeRequest) "
       << idTapeRequest << " :"
       << std::endl << e.getMessage();
     throw ex;
