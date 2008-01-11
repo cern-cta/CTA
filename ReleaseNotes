@@ -59,7 +59,7 @@
 
     - repack has been enhanced to take advantage of the files already staged on disk.
       These files will be reused and won't be recalled.
-    - the repack vizualization was improved. See Bug #29775 for more details.
+    - the repack visualization was improved. See Bug #29775 for more details.
     - checksums comparisons were added when the old segment is replaced by the new one
       in the nameserver. This allows to trap any corruption introduced during the repacking.
 
@@ -194,9 +194,9 @@
        - update castor.conf using the template giving in castor.conf.example
        - move the scheduling policy file on the scheduler machine :
            mv /etc/castor/policies.py /etc/castor/policies/scheduler.py
-       - move or create the policies that you need on the rtcpcld machine : /etc/castor/policies/stream.py, /etc/castor/policies/migration.py and /etc/castor/policies/recHandler.py
+       - move or create the policies that you need on the rtcpcld machine : /etc/castor/policies/stream.py, /etc/castor/policies/migration.py and /etc/castor/policies/rechandler.py
     - restart all daemons
-       - don't forget the new ones : stagerDaemon, recHandlerDAemon, migHunterDaemon
+       - don't forget the new ones : stagerDaemon, recHandlerDaemon (which is not mandatory if the recall policy is not used), migHunterDaemon 
 
 
 -----------
