@@ -1251,7 +1251,6 @@ castor::vdqm::TapeRequest*
 castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::matchTape2TapeDrive()
   throw (castor::exception::Exception) {
 
-  u_signed64                idTapeDrive   = 0;
   u_signed64                idTapeRequest = 0;
   castor::vdqm::TapeRequest *tapeRequest  = NULL;
   
@@ -1303,8 +1302,6 @@ castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::matchTape2TapeDrive()
     
     // Get the foreign related objects of the tape request
     cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
-    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);		
-    // Get the foreign related objects of the tape drive of the tape request
     if(tapeRequest->tapeDrive() == NULL) {
       castor::exception::Internal ie;
 
@@ -1313,6 +1310,17 @@ castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::matchTape2TapeDrive()
 
       throw ie;
     }
+    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+    if(tapeRequest->client() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape request is not linked to a set of client identification data";
+
+      throw ie;
+    }
+
+    // Get the foreign related objects of the tape drive of the tape request
     cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
     if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
       castor::exception::Internal ie;
