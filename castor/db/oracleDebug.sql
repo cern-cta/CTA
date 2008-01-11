@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.2 $ $Date: 2007/12/19 14:54:30 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.3 $ $Date: 2008/01/11 10:31:56 $ $Author: itglp $
  *
  * Some SQL code to ease support and debugging
  *
@@ -124,14 +124,15 @@ BEGIN
               FROM SubRequest,
                     (SELECT id, username, machine, svcClassName, 'Get' as type from StageGetRequest UNION ALL
                      SELECT id, username, machine, svcClassName, 'PGet' as type from StagePrepareToGetRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Put' as type  from StagePutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PPut' as type  from StagePrepareToPutRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Upd' as type  from StageUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PUpd' as type  from StagePrepareToUpdateRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'Repack' as type  from StageRepackRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'GetNext' as type  from StageGetNextRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'UpdNext' as type  from StageUpdateNextRequest UNION ALL
-                     SELECT id, username, machine, svcClassName, 'PutDone' as type  from StagePutDoneRequest) Request
+                     SELECT id, username, machine, svcClassName, 'Put' as type from StagePutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PPut' as type from StagePrepareToPutRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Upd' as type from StageUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PUpd' as type from StagePrepareToUpdateRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'Repack' as type from StageRepackRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'GetNext' as type from StageGetNextRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'UpdNext' as type from StageUpdateNextRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'PutDone' as type from StagePutDoneRequest UNION ALL
+                     SELECT id, username, machine, svcClassName, 'DCRepl' as type from StageDiskCopyReplicaRequest) Request
              WHERE castorfile = getCF(ref)
                AND Request.id = SubRequest.request) LOOP
      PIPE ROW(d);
