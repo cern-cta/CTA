@@ -1,4 +1,205 @@
 -----------
+- 2.1.6-5 -
+-----------
+
+  New Features and Changes
+  ------------------------
+  This part lists the changes since the first release of the 2.1.4 series, that is 2.1.4-5
+  Some fixes were backported to later releases of the 2.1.4 series, as mentioned.
+
+    Broad view and stager
+    ---------------------
+
+    - the central stager code was completely rewritten in order to be more modular and
+      more maintainable. The logging should also be much better.
+    - a synchronization of the disksevers with the nameserver has been introduced. It is
+      insured by the gcDaemon of each diskserver that is checking that all the files
+      present on the disk still exist in the nameserver. When not, the stager is informed
+      and the file is cleaned up.
+    - In order to nor accumulates files in STAGEOUT status, a timeout has been introduced
+      on the time spent in this status (defaults to 3 days). After this delay, either the
+      file will be dropped (if its disk size is still 0) or an automatic putDone will be issued
+    - the handling of disk to disk copies has been completely reviewed. Diskcopies are now
+      scheduled properly in LSF, both on the source and on the destination host. Additionally,
+      internal replication within a diskpool will now be executed in background and access
+      will be granted to the user to the old copy.
+    - disk checksums were introduced. This checksum is computed on the writin of the file
+      on the disk (only when RFIO v3 is used) and is checked for each subsequent read
+      (again only with RFIO v3). This also includes the migration, allowing for detection
+      of bad files before the migration takes place.
+    - the update and preapareForUpdate requests are now fully supported with RFIO (including
+      read only operations). For other protocols, the situation stays unchanged and updates
+      will be considered as always modifying the file.
+    - redundancy was added to the rmMasterDaemon so that it can "follow" the LSF master
+      if that ones goes from one failing machine to another one.
+    - the parsing of file names was improved to support properly mutiple '/'s as path separator
+
+    Migrations and recalls
+    ----------------------
+
+    - a python policy framework has been implemented that allow easy definition of policies
+      in python and efficient execution of them using precompilation.
+    - a stream policy policy has been introduced, using the python framework, that allows
+      to influence the number of streams that will be used for migrating data to tape depending
+      on the number of files and the amount of data to be migrated.
+    - the existing migration policy were adapted to the new python framework, unchanged.
+    - a recall policy was introduced that allows to decide whether a tape should be mounted
+      for recalls depending on the number of files to recall, the amount of data to be read
+      and the age of the oldest waiting recall on that tape
+
+    Security
+    --------
+
+    - strong authentication has been added to CASTOR on the client side, although the
+      insecure protocol is still available. Kerberos 5 and grid certificates are
+      supported.
+
+    Repack
+    ------
+
+    - repack has been enhanced to take advantage of the files already staged on disk.
+      These files will be reused and won't be recalled.
+    - the repack vizualization was improved. See Bug #29775 for more details.
+    - checksums comparisons were added when the old segment is replaced by the new one
+      in the nameserver. This allows to trap any corruption introduced during the repacking.
+
+    Miscellaneous
+    -------------
+
+    - SQL tools are now provided to facilitate the management tools for black and white lists.
+      This includes addPrivilege and removePrivilege methods and tries to keep both the black
+      and the whote list as clean as possible.
+    - the gridFTP plugins packaging has been improved with the creation of a third rpm called
+      castor-gridftp-dsi-common holding the common code and tools. This fixes the problem of
+      log rotation for concurrent installs of both the internal and external plugins.
+
+  Bug Fixes
+  ---------
+  - #20052 RFE to have thresholds for the number of migrators started
+  - #21431 RFE for recall policy
+  - #29786 Add support for CLOB in the CASTOR code generation
+  - #28994 Handling files "stuck" in STAGEOUT
+  - #20652 RFE for nsrm
+  - #28346 Wrong filesize with overlapping stagerUpdateRequest requests
+  - #29847 files in STAGEOUT and STAGED concurrently
+  - #30343 2 concurrent prepareToPut for a given file
+  - #6019  Disk Resident check sums
+  - #29711 Repack sometimes loses stage requests
+  - #29779 inconsistent behavior between stager_rm and nsrm
+  - #30391 daemons on castor should be stateless and redundant: rmMasterDaemon
+  - #30404 RFE: gc daemon should delete files which exist on disk and not in nameserver
+  - #31510 stop() function in /etc/init/d/rfiod kills too many process
+  - #32523 Accumulation of orphaned diskfiles after failed tape recalls
+  - #19413 diskpool with no filesystem should cause jobs for this diskpool to fail
+  - #27311 please ensure MAXREPLICANB is respected
+  - #27319 RFE Loadbalancing of VMGR pools with tapes in multiple libraries
+  - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in failing migrator
+  - #28962 reporting of bad label structure from tapes
+  - #29217 We forget disk to disk copies after recalls
+  - #29482 Missing cleanup of tapecopy+segment when GC'ing an INVALID diskcopy
+  - #29775 RFE: Repack2 message and error visualization
+  - #29776 RFE: checksum verification in Repack2
+  - #29805 [xrootd] dangling "vmstat" processes
+  - #30190 scheduling on server running xrootd
+  - #30228 MigHunter gets free(): invalid pointer ...
+  - #30346 RFE: stager_rm could be allowed to remove non-existing castor files
+  - #30383 No factory found for object type 3 after upgrade to CASTOR 2.1.4
+  - #30384 Prevent writing too many files when labeltype='al'
+  - #30559 RFE improvements in Repack when diskcopies are available
+  - #30825 diskcopies with status=null
+  - #30826 CHECKFSEQ check in migrator incorrectly rejects new tapes
+  - #30917 Timed out locate leaves zombie posovl processes behind
+  - #31055 ForcedFileClass: constraint and check
+  - #31684 RFE: Stager modification for repack
+  - #28010 regular shrink of tables in ORACLE
+  - #30852 add a -f (force option) to tplabel and do not overwrite labels by default
+  - #31246 NS, VMGR and CUPV should reconnect to their databases after disconnection
+  - #24106 Please replace multiple '/' on the file path with single '/'
+  - #26029 disk to disk copy scheduling
+  - #23218 File update/append does not update the size in nameserver
+  Already in 2.1.4-10:
+  - Fix bad processing after ENOENT in Cns_lastfseq() in the migrator
+  - Fix for unique constraint violation caused by -insert tape- in OraCommonSvc
+  - Fix in Repack to be able to start a new RepackSubrequest, even if there is a RepackSubrequest in Failed, Archived or Failed status, with the same files.
+  - Fix in Repack to start the different RepackSubrequests associated to a RepackRequest even if one of them is stopped.
+  Already in 2.1.4-9:
+  - #30392 Cleanup for STAGED files coming back after FS was disabled incomplete
+  - #30324 PutDones stuck waiting on failed puts
+  - #30275 Subrequests stuck in WAITSUBREQ after bkill
+  - #30223 rfiod does not write all data to disk upon rclose64_v3
+  - #30125 socket leak when BaseClient objects are reused
+  - Better SubRequest partitioning
+  - gridFTP v2 now uses a port range
+  - Improvements in gridFTP v2 packaging, especially around the handling of certificates.
+  - Fix for more tapepool associated to a single svcclass
+  Already in 2.1.4-8:
+  - #30125 socket leak when BaseClient objects are reused
+  - #30127 Failed transfers using root protocol
+  - gridFTP v2 packages are now build as part of the releases
+  Already in 2.1.4-7:
+  - #29133 Stagein file size problem
+  - #28705 Inconsistent increment of file counter in VMGR
+  - #29775 Repack2 message and error visualization (updated)
+  - Added recaller retry policies.
+  - Fixed the wrong mode being displayed for queued requests when using showqueues 
+    with the -x option.
+  - Numerous modifications to the PLSQL code of the stager database to improve the error
+    handling of recall failures observed during repack testing.
+  - Added support for retrying files which have failed to be repacked at the end of a 
+    repack run. The maximum number of attempts to make can be specified on the command 
+    line with the -m option of the repack command.
+  - Fixed the nameserver daemon on 64 bit operating systems. Prior to this fix any attempt
+    from a daemon to update the segments on a tape would fail.
+  Already in 2.1.4-6:
+  - #29815 jobs submitted in wrong svcClass by JobManager
+  - #20052 RFE to have thresholds for the number of migrators started (Experimental)
+  - Fixes to the recaller. In the 2.1.4-5 release a situation could occur whereby 
+    reading a set of files from the same tape could result in the mounting and 
+    dismounting of the tape after every read of a single file.
+  - Fixes to the stager so that StagePrepareToGet and StagePrepareToUpdate requests
+    are correctly scheduled.
+  - Added a second MIR check after a repair. The result will be logged and is to check 
+    whether it's possible to "see" the MIR repair (avoid waiting for the next mount). 
+    This info can then be used to deal with tapes where the SCSI repair commands 
+    succeeded, but the MIR is invalid on the next mount.
+
+  Upgrade from 2.1.4-*
+  --------------------
+    - you basically have to update to 2.1.4-10 and then follow the instructions for updating from 2.1.4-10.
+    - you can however avoid to update the RPMs
+
+  Upgrade from 2.1.4-10
+  ---------------------
+    - before upgrading the CASTOR 2 head nodes, one should first upgrade the nameserver
+       - this is actually mandatory if you want to have synchronization of diskservers with the nameserver
+       - it is a pure RPM upgrade, no DB update
+       - the 2.1.6 nameserver can be ran concurrently to an older one in case you have
+         DNS load balanced clusters of nameservers, allowing an upgrade with no service interruption
+    - make sure that no LSF jobs stay in the queue. bkill all the remaining ones
+    - stop all daemons and services (rhserver, stager, jobManager, rtcpclientd, cleaningDaemon, rmMasterDaemon, dlfserver, expertd, rmNodeDaemon, gcdaemon, LSF)
+    - optionally backup your stager DB (one never knows...)
+    - upgrade the stager database
+       - use script 2.1.4-10_to_2.1.6-5 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
+    - update DLF DB using script dlf_2.1.4_to_2.1.6-5
+       (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
+    - update the rpms on the different nodes. Some changes were made in the list of packages to install :
+       - the castor-gridftp-dsi-ext and castor-gridftp-dsi-int packages are now depending on castor-gridftp-dsi-common
+       - there are 2 new packages to be installed on the rtcpcld head node : castor-lib-policy and castor-rechandler-server.
+       - the mighunter package was renamed from castor-rtcopy-mighunter to castor-mighunter-server
+    - update your monitoring tools according to the daemon changes :
+       - the stager became stagerDaemon
+       - the MigHunter became migHunterDaemon
+       - a recHandlerDaemon was added
+    - update the CASTOR configuration files on all machines
+       - update castor.conf using the template giving in castor.conf.example
+       - move the scheduling policy file on the scheduler machine :
+           mv /etc/castor/policies.py /etc/castor/policies/scheduler.py
+       - move or create the policies that you need on the rtcpcld machine : /etc/castor/policies/stream.py, /etc/castor/policies/migration.py and /etc/castor/policies/recHandler.py
+    - restart all daemons
+       - don't forget the new ones : stagerDaemon, recHandlerDAemon, migHunterDaemon
+
+
+-----------
 - 2.1.5-2 -
 -----------
 
