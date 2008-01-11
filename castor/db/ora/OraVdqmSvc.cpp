@@ -1301,15 +1301,6 @@ castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::matchTape2TapeDrive()
     }  
     
     // Get the foreign related objects of the tape request
-    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
-    if(tapeRequest->tapeDrive() == NULL) {
-      castor::exception::Internal ie;
-
-      ie.getMessage()
-        << "Tape request is not linked to a tape drive";
-
-      throw ie;
-    }
     cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
     if(tapeRequest->client() == NULL) {
       castor::exception::Internal ie;
@@ -1319,8 +1310,27 @@ castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::matchTape2TapeDrive()
 
       throw ie;
     }
+    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
+    if(tapeRequest->tapeDrive() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape request is not linked to a tape drive";
+
+      throw ie;
+    }
 
     // Get the foreign related objects of the tape drive of the tape request
+    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(),
+      castor::OBJ_DeviceGroupName);
+    if(tapeRequest->tapeDrive()->deviceGroupName() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape drive of tape request is not linked to a device group name";
+
+      throw ie;
+    }
     cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
     if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
       castor::exception::Internal ie;
