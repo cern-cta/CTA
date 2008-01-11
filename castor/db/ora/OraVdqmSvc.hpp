@@ -41,18 +41,6 @@ typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
   
-  // Forward declaration
-/*
-  class stager::Tape;
-  class vdqm::DeviceGroupName;
-  class vdqm::DriveAndRequestPair;
-  class vdqm::TapeAccessSpecification;
-  class vdqm::TapeDriveCompatibility;
-  class vdqm::TapeRequest;
-  class vdqm::TapeDrive;
-  class vdqm::TapeServer;
-*/
-  
   namespace db {
     
     namespace ora {
@@ -248,7 +236,7 @@ namespace castor {
         /**
          * See documentation for castor::vdqm::IVdqmSvc
          */
-        virtual castor::vdqm::DriveAndRequestPair* matchTape2TapeDrive()
+        virtual castor::vdqm::TapeRequest* matchTape2TapeDrive()
           throw (castor::exception::Exception);            
   
         //------------ functions for TapeDriveRequestHandler ------------------
