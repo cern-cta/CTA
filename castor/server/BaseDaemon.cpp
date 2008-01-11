@@ -156,19 +156,24 @@ void castor::server::BaseDaemon::handleSignals()
           dlf_shutdown(1);
           exit(EXIT_SUCCESS);
           break;
-      
+        
         case CHILD_STOPPED:
         {
+          clog() << ERROR << "IMMEDIATE STOP [SIGCHLD]" << std::endl;
+          // A child got killed, we try to exit gracefully
+          waitAllThreads(true);
+          dlf_shutdown(10);
+          exit(EXIT_FAILURE);
+          // Another option would be to keep running, in such a case:
           // Reap dead processes to prevent defunct processes, we don't care about
           // the exit. However, in the future we may want to re-fork it!
-          pid_t pid = 0;
-          while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+          //pid_t pid = 0;
+          //while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
             // we log no message here because some threads call API 
-            // functions which fork and this results in an uncessary message!
-          }
-          break;
+            // functions which fork and this results in an unnecessary message!
+          //}
         }
-          
+        
         default:
           clog() << ERROR << "Signal caught but not handled (" << (-1*sigValue) << ") - IMMEDIATE STOP" << std::endl;
           dlf_shutdown(1);
