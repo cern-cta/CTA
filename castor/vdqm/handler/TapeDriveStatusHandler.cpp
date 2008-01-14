@@ -327,7 +327,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
    */
   tapeRequest = ptr_tapeDrive->runningTapeReq();
   if ( tapeRequest != NULL) {
-    castor::vdqm::DatabaseHelper::remove(tapeRequest, m_cuuid);
+    castor::vdqm::DatabaseHelper::deleteRepresentation(tapeRequest, m_cuuid);
     delete tapeRequest;
     tapeRequest = 0;
     ptr_tapeDrive->setRunningTapeReq(0);
@@ -498,7 +498,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
       
       
       //update the TapeRequest in the db
-      castor::vdqm::DatabaseHelper::update(newTapeRequest,
+      castor::vdqm::DatabaseHelper::updateRepresentation(newTapeRequest,
         m_cuuid);
     }
   } else {
@@ -551,7 +551,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus()
    */
   if ( tapeRequest != NULL ) {
     
-      castor::vdqm::DatabaseHelper::remove(tapeRequest,
+      castor::vdqm::DatabaseHelper::deleteRepresentation(tapeRequest,
         m_cuuid);
       delete tapeRequest;
       

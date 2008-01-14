@@ -56,7 +56,7 @@ namespace castor {
        * @param fr the request
        * @param cuuid its uuid (for logging purposes only)
        */
-      static void store(castor::IObject* fr, Cuuid_t cuuid)
+      static void storeRepresentation(castor::IObject* fr, Cuuid_t cuuid)
         throw (castor::exception::Exception);
 
       /**
@@ -66,7 +66,7 @@ namespace castor {
        * @param fr The Object, with the ID of the row, which should be deleted
        * @param cuuid its uuid (for logging purposes only)
        */
-      static void remove(castor::IObject* fr, Cuuid_t cuuid)
+      static void deleteRepresentation(castor::IObject* fr, Cuuid_t cuuid)
         throw (castor::exception::Exception);
         
       /**
@@ -76,7 +76,7 @@ namespace castor {
        * @param fr The Object, with the ID of the row, which should be deleted
        * @param cuuid its uuid (for logging purposes only)
        */
-      static void update(castor::IObject* fr, Cuuid_t cuuid)
+      static void updateRepresentation(castor::IObject* fr, Cuuid_t cuuid)
         throw (castor::exception::Exception);          
 
 

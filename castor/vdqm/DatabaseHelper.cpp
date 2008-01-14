@@ -51,7 +51,7 @@ castor::vdqm::DatabaseHelper::DatabaseHelper() {
 //------------------------------------------------------------------------------
 // store
 //------------------------------------------------------------------------------
-void castor::vdqm::DatabaseHelper::store(castor::IObject* fr,
+void castor::vdqm::DatabaseHelper::storeRepresentation(castor::IObject* fr,
   Cuuid_t cuuid) throw (castor::exception::Exception) {
   
   castor::Services* svcs = castor::BaseObject::services();
@@ -148,7 +148,7 @@ void castor::vdqm::DatabaseHelper::store(castor::IObject* fr,
 //------------------------------------------------------------------------------
 // remove
 //------------------------------------------------------------------------------
-void castor::vdqm::DatabaseHelper::remove(castor::IObject* fr,
+void castor::vdqm::DatabaseHelper::deleteRepresentation(castor::IObject* fr,
  Cuuid_t cuuid) throw (castor::exception::Exception) {
 
   castor::Services *svcs = castor::BaseObject::services();
@@ -178,7 +178,7 @@ void castor::vdqm::DatabaseHelper::remove(castor::IObject* fr,
 //------------------------------------------------------------------------------
 // update
 //------------------------------------------------------------------------------
-void castor::vdqm::DatabaseHelper::update(castor::IObject* fr,
+void castor::vdqm::DatabaseHelper::updateRepresentation(castor::IObject* fr,
   Cuuid_t cuuid) throw (castor::exception::Exception) {
 
   castor::Services *svcs = castor::BaseObject::services();

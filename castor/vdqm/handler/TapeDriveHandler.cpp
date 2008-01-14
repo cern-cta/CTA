@@ -210,7 +210,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
   /**
    * Now the last thing is to update the data base
    */
-  castor::vdqm::DatabaseHelper::update(tapeDrive, m_cuuid);
+  castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive, m_cuuid);
    
   /**
    * Log the actual "new" status.
@@ -286,7 +286,7 @@ void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive()
     }
     
     try {
-      castor::vdqm::DatabaseHelper::remove(tapeDrive, m_cuuid);
+      castor::vdqm::DatabaseHelper::deleteRepresentation(tapeDrive, m_cuuid);
     } 
     catch (castor::exception::Exception ex) {
       delete tapeDrive;
@@ -333,13 +333,14 @@ void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
       TapeRequest* runningTapeReq = (*it)->runningTapeReq();     
       
       if (runningTapeReq != 0) {
-        castor::vdqm::DatabaseHelper::remove(runningTapeReq, m_cuuid);
+        castor::vdqm::DatabaseHelper::deleteRepresentation(runningTapeReq,
+          m_cuuid);
         delete runningTapeReq;
         runningTapeReq = 0;
         (*it)->setRunningTapeReq(0);
       }
       
-      castor::vdqm::DatabaseHelper::remove(*it, m_cuuid);
+      castor::vdqm::DatabaseHelper::deleteRepresentation(*it, m_cuuid);
       delete *it;
     }
     
@@ -513,7 +514,7 @@ castor::vdqm::TapeDrive*
       /**
        * We don't want to commit now, because some changes can can still happen
        */
-      castor::vdqm::DatabaseHelper::store(tapeDrive, m_cuuid);
+      castor::vdqm::DatabaseHelper::storeRepresentation(tapeDrive, m_cuuid);
     }    
         
     return tapeDrive;
@@ -1151,7 +1152,7 @@ void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
   std::vector<castor::vdqm::TapeDriveCompatibility*> tapeDriveCompatibilityVector = 
       newTapeDrive->tapeDriveCompatibilities();
   for (i = 0; i < tapeDriveCompatibilityVector.size(); i++) {
-    castor::vdqm::DatabaseHelper::store(tapeDriveCompatibilityVector[i],
-      m_cuuid);
+    castor::vdqm::DatabaseHelper::storeRepresentation(
+      tapeDriveCompatibilityVector[i], m_cuuid);
   }  
 }
