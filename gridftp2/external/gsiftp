@@ -2,6 +2,7 @@
 # /etc/xinetd.d/gsiftp
 #
 # description: globus gridftp server with CASTOR dsi
+# for further reference: https://www.globus.org/toolkit/docs/development/4.1.3/data/gridftp/developer/gridftp-developer-config.html
 #              
 service gsiftp
 {
