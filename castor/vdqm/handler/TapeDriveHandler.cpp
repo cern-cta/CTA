@@ -307,6 +307,9 @@ void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive()
 void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
   TapeServer* tapeServer) 
   throw (castor::exception::Exception) {
+
+  TapeDrive* tapeDrive = NULL;
+
   
   if ( strcmp(ptr_driveRequest->reqhost, ptr_driveRequest->server) != 0 ) {
     castor::exception::Exception ex(EPERM);
@@ -329,19 +332,21 @@ void castor::vdqm::handler::TapeDriveHandler::deleteAllTapeDrvsFromSrv(
          it != tapeServer->tapeDrives().end();
          it++) 
     {
+      tapeDrive = *it;
+
       // The old TapeRequest. Normally it should not exist.
-      TapeRequest* runningTapeReq = (*it)->runningTapeReq();     
+      TapeRequest* runningTapeReq = tapeDrive->runningTapeReq();     
       
       if (runningTapeReq != 0) {
         castor::vdqm::DatabaseHelper::deleteRepresentation(runningTapeReq,
           m_cuuid);
         delete runningTapeReq;
         runningTapeReq = 0;
-        (*it)->setRunningTapeReq(0);
+        tapeDrive->setRunningTapeReq(0);
       }
       
-      castor::vdqm::DatabaseHelper::deleteRepresentation(*it, m_cuuid);
-      delete *it;
+      castor::vdqm::DatabaseHelper::deleteRepresentation(tapeDrive, m_cuuid);
+      delete tapeDrive;
     }
     
     tapeServer->tapeDrives().clear();
