@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: waldron $
+ * @(#)$RCSfile: MigHunterThread.cpp,v $ $Author: gtaur $
  *
  *
  *
@@ -124,9 +124,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 1, params2);
 	   }
 	   if (ret==-3){
-	     // Fatal error but  continue with this svcclass
-	     castor::dlf::Param params3[]={castor::dlf::Param("message", "Not data found error for create or update Stream")};
-	     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 1, params3);
+	     castor::dlf::Param params2[]={castor::dlf::Param("message", "nbDrives zero")};
+	     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 4, 1, params2);
 	   }
        }
          
@@ -185,10 +184,16 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	infoCandidate++;
       }
 
-      //attach the eligible tape copies
-
-       m_policySvc->attachTapeCopiesToStreams(eligibleCandidates);
-
+      try {
+	//attach the eligible tape copies
+	m_policySvc->attachTapeCopiesToStreams(eligibleCandidates);
+      }catch(castor::exception::Exception e){
+       castor::dlf::Param params[] =
+        {castor::dlf::Param("code", sstrerror(e.code())),
+         castor::dlf::Param("message", e.getMessage().str())};
+         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 11, 2, params);
+	 m_policySvc->resurrectTapeCopies(eligibleCandidates);
+      }
 
        // resurrect Tape copies not eligible
 
@@ -295,7 +300,9 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	  infoCandidateStream++;
 	}
 
-	u_signed64 initialSizeForStream =(u_signed64) initialSizeToTransfer/nbDrives;
+	u_signed64 initialSizeForStream =0;
+        if (nbDrives !=0)  
+	  initialSizeForStream = (u_signed64) initialSizeToTransfer/nbDrives;
 	initialSizeForStream= (initialSizeCeiling > 0 && initialSizeForStream>initialSizeCeiling)?initialSizeCeiling:initialSizeForStream;
      
 	m_policySvc->startChosenStreams(eligibleStreams,initialSizeForStream);

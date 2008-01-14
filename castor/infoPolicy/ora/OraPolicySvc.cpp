@@ -325,6 +325,8 @@ int castor::infoPolicy::ora::OraPolicySvc::createOrUpdateStream(std::string svcC
     // RTCPCLD_MSG_DATALIMIT
     if (retcode==2) return -2;    
     return 0; // everything fine 
+     if (retcode==3) return -3;    
+    return 0; // everything fine
 
 
   } catch (oracle::occi::SQLException e) {

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.599 $ $Date: 2008/01/14 10:28:36 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.600 $ $Date: 2008/01/14 12:50:23 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4984,7 +4984,7 @@ BEGIN
      GROUP BY Stream.id, Stream.status;
 END;
 
-/* createOrUpdateStreams */
+/* createOrUpdateStream */
 
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
@@ -5030,6 +5030,10 @@ BEGIN
   IF nbOldStream >=0 AND (doClone = 1 OR nbMigrationCandidate > 0) THEN
     -- stream creator
     SELECT SvcClass.nbDrives INTO nbDrives FROM SvcClass WHERE id = svcId;
+    IF nbDrives = 0 THEN
+    	retCode :=3 ; -- RESTORE NEEDED
+    	RETURN;
+    END IF;
     -- get the initialSizeToTransfer to associate to the stream
     IF initialSizeToTransfer/nbDrives > initialSizeCeiling THEN
       initSize := initialSizeCeiling;
