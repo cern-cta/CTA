@@ -122,7 +122,12 @@ void RecHandlerThread::run(void* par)
 	      {castor::dlf::Param("Tape", realInfo->vid())};
 	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params);
 
+	  } else {
+	     castor::dlf::Param params[] =
+	      {castor::dlf::Param("Tape", realInfo->vid())};
+	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 11, 1, params);
 	  }
+
 	} catch (castor::exception::Exception e) {
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("code", sstrerror(e.code())),
@@ -154,11 +159,8 @@ void RecHandlerThread::run(void* par)
       }
 
       // call the db to put the tape as pending for that svcclass
-      if (eligibleTapeIds.empty()){
-	 castor::dlf::Param params[] =
-	      {castor::dlf::Param("message", "No eligible tape to resurrect")};
-	    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 5, 1, params);
-	
+      if (!eligibleTapeIds.empty()){
+	 m_policySvc->resurrectTapes(eligibleTapeIds);
       }
 
       m_policySvc->resurrectTapes(eligibleTapeIds);

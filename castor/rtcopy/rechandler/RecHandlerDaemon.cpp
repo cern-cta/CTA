@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: RecHandlerDaemon.cpp,v $ $Author: waldron $
+* @(#)$RCSfile: RecHandlerDaemon.cpp,v $ $Author: gtaur $
 *
 *
 *
@@ -162,6 +162,7 @@ castor::rtcopy::rechandler::RecHandlerDaemon::RecHandlerDaemon() : castor::serve
     { 8, "No Policy file available"},
     { 9, "Error in loading the policy file"},
     { 10, "Error in the executing the policy script"},
+    { 11, "Recall not allowed"},
     {-1, ""}};
   
  dlfInit(messages);
