@@ -1004,7 +1004,7 @@ class StagerRmCase(unittest.TestCase):
         fi=open(localDir+"ClientRmSvc2","r")
         buffOut=fi.read()
         fi.close()        
-        assert buffOut.rfind("INVALID") != -1, "stager_rm doesn't work with svc class option -S"
+        assert buffOut.rfind("STAGEOUT") != -1, "stager_rm doesn't work with svc class option -S"
 
     def rmDualSvcClass(self):
         cmd=["STAGE_SVCCLASS="+ stagerDiskOnlySvcClass+" rfcp "+inputFile+" "+dirCastor+"fileClientRmDualSvc"+ticket,"stager_get -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass]
