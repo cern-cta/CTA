@@ -480,12 +480,6 @@ namespace castor {
         /// SQL statement object for function selectTapePool
         oracle::occi::Statement *m_selectTapePoolStatement;
 
-        /// SQL statement for function lockCastorFile
-        static const std::string s_lockCastorFileStatementString;
-
-        /// SQL statement object for function lockCastorFile
-        oracle::occi::Statement *m_lockCastorFileStatement;
-
       }; // end of class OraStagerSvc
 
     } // end of namespace ora

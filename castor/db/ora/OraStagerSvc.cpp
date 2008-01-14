@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.231 $ $Release$ $Date: 2008/01/14 17:44:51 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.232 $ $Release$ $Date: 2008/01/14 17:47:29 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -184,8 +184,7 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_getCFByNameStatement(0),
   m_setFileGCWeightStatement(0),
   m_selectDiskPoolStatement(0),
-  m_selectTapePoolStatement(0),
-  m_lockCastorFileStatement(0) {
+  m_selectTapePoolStatement(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -234,7 +233,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_setFileGCWeightStatement) deleteStatement(m_setFileGCWeightStatement);
     if (m_selectDiskPoolStatement) deleteStatement(m_selectDiskPoolStatement);
     if (m_selectTapePoolStatement) deleteStatement(m_selectTapePoolStatement);
-    if (m_lockCastorFileStatement) deleteStatement(m_lockCastorFileStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_subRequestToDoStatement = 0;
@@ -254,7 +252,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_setFileGCWeightStatement = 0;
   m_selectDiskPoolStatement = 0;
   m_selectTapePoolStatement = 0;
-  m_lockCastorFileStatement = 0;
 }
 
 //------------------------------------------------------------------------------
