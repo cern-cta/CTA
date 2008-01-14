@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.601 $ $Date: 2008/01/14 17:24:18 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.602 $ $Date: 2008/01/14 17:47:55 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4805,7 +4805,9 @@ BEGIN
        AND FileSystem.diskserver = DiskServer.id;
   
     -- Provide the job manager with a potential list of hosts where the
-    -- destination disk2disk copy transfer could run.
+    -- destination disk2disk copy transfer could run. This is all the diskservers
+    -- in the service class excluding the source and diskservers where a diskcopy
+    -- of this file already resides
     OPEN askedHosts
     FOR SELECT DISTINCT(DiskServer.name)
           FROM DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
@@ -4813,7 +4815,13 @@ BEGIN
            AND FileSystem.diskPool = DiskPool2SvcClass.parent
            AND DiskPool2SvcClass.child = SvcClass.id
            AND SvcClass.name = reqSvcClass
-           AND FileSystem.diskserver <> dsId;
+           AND FileSystem.diskserver <> dsId
+           AND FileSystem.diskserver NOT IN
+             (SELECT DiskServer.id
+                FROM DiskServer, FileSystem, DiskCopy
+               WHERE FileSystem.diskServer = DiskServer.id
+                 AND DiskCopy.fileSystem = FileSystem.id
+                 AND DiskCopy.castorFile = cfFileId);
   END IF;
 END;
 
