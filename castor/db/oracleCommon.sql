@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.600 $ $Date: 2008/01/14 12:50:23 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.601 $ $Date: 2008/01/14 17:24:18 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -241,7 +241,7 @@ ALTER TABLE StageDiskCopyReplicaRequest MODIFY euid DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY egid DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY mask DEFAULT 0;
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY pid DEFAULT 0;
-ALTER TABLE StageDiskCopyReplicaRequest MODIFY machine DEFAULT 'localhost.domain.com';
+ALTER TABLE StageDiskCopyReplicaRequest MODIFY machine DEFAULT 'stager';
 
 COMMIT;
 
@@ -1766,7 +1766,7 @@ BEGIN
     SELECT COUNT(DiskCopy.id) INTO nbDCs
       FROM DiskCopy
      WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.status IN (5, 11);  -- WAITFS, WAITFS_SCHEDULING
+       AND DiskCopy.status = 5;  -- WAITFS
     IF nbDCs = 1 THEN
       result := 5;  -- DISKCOPY_WAITFS, try recreation
       RETURN;
@@ -2289,7 +2289,8 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
          reuid OUT INTEGER, regid OUT INTEGER) AS
   cfid INTEGER;
   fid INTEGER;
-  dcId INTEGER;
+  dcIds "numList";
+  dcIdInReq INTEGER;
   nh VARCHAR2(2048);
   fileSize INTEGER;
   srSvcClass INTEGER;
@@ -2298,62 +2299,69 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
 BEGIN
   -- Get data
   SELECT euid, egid, svcClass, upd, diskCopy
-    INTO reuid, regid, srSvcClass, isUpd, dcId
+    INTO reuid, regid, srSvcClass, isUpd, dcIdInReq
     FROM SubRequest,
         (SELECT id, euid, egid, svcClass, 0 as upd from StageGetRequest UNION ALL
          SELECT id, euid, egid, svcClass, 1 as upd from StageUpdateRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   -- Take a lock on the CastorFile. Associated with triggers,
-  -- this guarantee we are the only ones dealing with its copies
+  -- this guarantees we are the only ones dealing with its copies
   SELECT CastorFile.fileSize, CastorFile.id
     INTO fileSize, cfId
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.id = srId FOR UPDATE;
   -- Try to find local DiskCopy
-  dci := 0;
-  SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ DiskCopy.id, DiskCopy.path, DiskCopy.status
-    INTO dci, rpath, rstatus
+  SELECT /*+ INDEX(DISKCOPY I_DISKCOPY_CASTORFILE) */ id BULK COLLECT INTO dcIds
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
      AND DiskCopy.filesystem = fileSystemId
      AND DiskCopy.status IN (0, 6, 10); -- STAGED, STAGEOUT, CANBEMIGR
-  -- No wait, so we are settled and we'll use the local copy.
-  -- Let's update the SubRequest and set the link with the DiskCopy
-  UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
-  -- In case of an update, if the protocol used does not support
-  -- updates properly (via firstByteWritten call), we should
-  -- call firstByteWritten now and consider that the file is being
-  -- modified.
-  IF isUpd = 1 THEN
-    handleProtoNoUpd(srId, proto);
+  IF dcIds.COUNT > 0 THEN
+    -- We found it, so we are settled and we'll use the local copy.
+    -- It might happen that we have more than one, because LSF may have
+    -- scheduled a replication on a fileSystem which already had a previous diskcopy.
+    -- We don't care and we randomly take the first one.
+    SELECT id, path, status
+      INTO dci, rpath, rstatus
+      FROM DiskCopy
+     WHERE id = dcIds(1);
+    -- Let's update the SubRequest and set the link with the DiskCopy
+    UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
+    -- In case of an update, if the protocol used does not support
+    -- updates properly (via firstByteWritten call), we should
+    -- call firstByteWritten now and consider that the file is being
+    -- modified.
+    IF isUpd = 1 THEN
+      handleProtoNoUpd(srId, proto);
+    END IF;
+  ELSE
+    -- No disk copy found on selected FileSystem. This can happen in 3 cases :
+    --  + either a diskcopy was available and got disabled before this job
+    --    was scheduled. Bad luck, we restart from scratch
+    --  + or we are an update creating a file and there is a diskcopy in WAITFS
+    --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
+    --  + or we are recalling a 0-size file
+    -- So we first check the update hypothesis
+    IF isUpd = 1 AND dcIdInReq IS NOT NULL THEN
+      DECLARE
+        stat NUMBER;
+      BEGIN
+        SELECT status INTO stat FROM DiskCopy WHERE id = dcIdInReq;
+        IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
+          -- it is an update creating a file, let's call putStart
+          putStart(srId, fileSystemId, dci, rstatus, rpath);
+          RETURN;
+        END IF;
+      END;
+    END IF;
+    -- Now we check the 0-size file hypothesis
+    -- XXX this is currently broken, to be fixed later
+    -- It was not an update creating a file, so we restart
+    UPDATE SubRequest SET status = 1 WHERE id = srId;
+    dci := 0;
+    rpath := '';
   END IF;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem. This can happen in 3 cases :
-  --  + either a diskcopy was available and got disabled before this job
-  --    was scheduled. Bad luck, we restart from scratch
-  --  + or we are an update creating a file and there is a diskcopy in WAITFS
-  --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
-  --  + or we are recalling a 0-size file
-  -- So we first check the update hypothesis
-  IF isUpd = 1 AND dcId IS NOT NULL THEN
-    DECLARE
-      stat NUMBER;
-    BEGIN
-      SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
-      IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
-        -- it is an update creating a file, let's call putStart
-        putStart(srId, fileSystemId, dci, rstatus, rpath);
-        RETURN;
-      END IF;
-    END;
-  END IF;
-  -- Now we check the 0-size file hypothesis
-  -- XXX this is currently broken, to be fixed later
-  -- It was not an update creating a file, so we restart
-  UPDATE SubRequest SET status = 1 WHERE id = srId;
-  dci := 0;
-  rpath := '';
 END;
 
 
@@ -2775,7 +2783,7 @@ BEGIN
              SET status = 5, parent = srParent  -- WAITSUBREQ
            WHERE id = srId;
         EXCEPTION WHEN NO_DATA_FOUND THEN
-          -- we didn't find that request, it probably failed, so we override the status 11
+          -- we didn't find that request: let's assume it failed, we override the status 11
           rstatus := 5;  -- WAITFS
         END;
       ELSE
@@ -4725,8 +4733,8 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         reqType OUT INTEGER, reqEuid OUT INTEGER, reqEgid OUT INTEGER,
                         reqUsername OUT VARCHAR2, srOpenFlags OUT VARCHAR2, clientIp OUT INTEGER,
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
-			reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
-			askedHosts OUT castor.DiskServerList_Cur, clientSecure OUT INTEGER) AS
+                        reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
+                        askedHosts OUT castor.DiskServerList_Cur, clientSecure OUT INTEGER) AS
   dsId INTEGER;                   
 BEGIN
   -- Get the next subrequest to be scheduled.
