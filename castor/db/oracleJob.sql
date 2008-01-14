@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.597 $ $Date: 2008/01/11 12:41:57 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.598 $ $Date: 2008/01/14 09:50:04 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5076,19 +5076,23 @@ BEGIN
 END;
 
 /* attach tapecopy to stream */
+
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
 (tapeCopyIds IN castor."cnumList",
  tapePoolIds IN castor."cnumList")
 AS
   tpId NUMBER; -- used in the loop
-  tcId NUMBER; -- used in the loop
   streamId NUMBER; -- stream attached to the tapepool
 BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
     FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i)) LOOP
+      BEGIN 
+      	SELECT parent into tpId FROM stream2tapecopy WHERE parent = streamId.id AND child = tapeCopyIds(i);
       -- attach the tape copy to all the stream which are relate to the tapepool specified 
-      INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+      	INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
+      END;
     END LOOP;
   END LOOP;
 END;
