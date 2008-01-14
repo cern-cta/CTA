@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.230 $ $Release$ $Date: 2008/01/14 08:30:22 $ $Author: gtaur $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.231 $ $Release$ $Date: 2008/01/14 17:44:51 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -162,10 +162,6 @@ const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString
 /// SQL statement for selectTapePool
 const std::string castor::db::ora::OraStagerSvc::s_selectTapePoolStatementString =
   "SELECT id FROM TapePool WHERE name = :1";
-
-/// SQL statement for lockCastorFile
-const std::string castor::db::ora::OraStagerSvc::s_lockCastorFileStatementString =
-  "SELECT id FROM CastorFile WHERE id = :1 FOR UPDATE";
 
 //------------------------------------------------------------------------------
 // OraStagerSvc
@@ -1221,24 +1217,6 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     castor::exception::Exception e(serrno);
     e.getMessage() << "No valid tape copy found";
     throw e;
-  }
-
-  // take a lock on the castorfile
-  // Check whether the statements are ok
-  if (0 == m_lockCastorFileStatement) {
-    m_lockCastorFileStatement =
-      createStatement(s_lockCastorFileStatementString);
-  }
-  try {
-    m_lockCastorFileStatement->setDouble(1, castorFile->id());
-    m_lockCastorFileStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "createTapeCopySegmentsForRecall : "
-      << "unable to take lock on the CastorFile.";
-    throw ex;
   }
 
   // DB address
