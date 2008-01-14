@@ -10,57 +10,57 @@
     Broad view and stager
     ---------------------
 
-    - the central stager code was completely rewritten in order to be more modular and
+    - The central stager code was completely rewritten in order to be more modular and
       more maintainable. The logging should also be much better.
-    - a synchronization of the disksevers with the nameserver has been introduced. It is
+    - A synchronization of the disksevers with the nameserver has been introduced. It is
       insured by the gcDaemon of each diskserver that is checking that all the files
       present on the disk still exist in the nameserver. When not, the stager is informed
       and the file is cleaned up.
     - In order to nor accumulates files in STAGEOUT status, a timeout has been introduced
       on the time spent in this status (defaults to 3 days). After this delay, either the
       file will be dropped (if its disk size is still 0) or an automatic putDone will be issued
-    - the handling of disk to disk copies has been completely reviewed. Diskcopies are now
+    - The handling of disk to disk copies has been completely reviewed. Diskcopies are now
       scheduled properly in LSF, both on the source and on the destination host. Additionally,
       internal replication within a diskpool will now be executed in background and access
       will be granted to the user to the old copy.
-    - disk checksums were introduced. This checksum is computed on the writin of the file
+    - Disk checksums were introduced. This checksum is computed on the writing of the file
       on the disk (only when RFIO v3 is used) and is checked for each subsequent read
       (again only with RFIO v3). This also includes the migration, allowing for detection
       of bad files before the migration takes place.
-    - the update and preapareForUpdate requests are now fully supported with RFIO (including
+    - The update and preapareForUpdate requests are now fully supported with RFIO (including
       read only operations). For other protocols, the situation stays unchanged and updates
       will be considered as always modifying the file.
-    - redundancy was added to the rmMasterDaemon so that it can "follow" the LSF master
+    - Redundancy was added to the rmMasterDaemon so that it can "follow" the LSF master
       if that ones goes from one failing machine to another one.
-    - the parsing of file names was improved to support properly mutiple '/'s as path separator
+    - The parsing of file names was improved to support properly multiple '/'s as path separator
 
     Migrations and recalls
     ----------------------
 
-    - a python policy framework has been implemented that allow easy definition of policies
+    - A python policy framework has been implemented that allow easy definition of policies
       in python and efficient execution of them using precompilation.
-    - a stream policy policy has been introduced, using the python framework, that allows
+    - A stream policy policy has been introduced, using the python framework, that allows
       to influence the number of streams that will be used for migrating data to tape depending
       on the number of files and the amount of data to be migrated.
-    - the existing migration policy were adapted to the new python framework, unchanged.
-    - a recall policy was introduced that allows to decide whether a tape should be mounted
+    - The existing migration policy were adapted to the new python framework, unchanged.
+    - A recall policy was introduced that allows to decide whether a tape should be mounted
       for recalls depending on the number of files to recall, the amount of data to be read
       and the age of the oldest waiting recall on that tape
 
     Security
     --------
 
-    - strong authentication has been added to CASTOR on the client side, although the
+    - Strong authentication has been added to CASTOR on the client side, although the
       insecure protocol is still available. Kerberos 5 and grid certificates are
       supported.
 
     Repack
     ------
 
-    - repack has been enhanced to take advantage of the files already staged on disk.
+    - Repack has been enhanced to take advantage of the files already staged on disk.
       These files will be reused and won't be recalled.
-    - the repack visualization was improved. See Bug #29775 for more details.
-    - checksums comparisons were added when the old segment is replaced by the new one
+    - The repack visualization was improved. See Bug #29775 for more details.
+    - Checksums comparisons were added when the old segment is replaced by the new one
       in the nameserver. This allows to trap any corruption introduced during the repacking.
 
     Miscellaneous
@@ -69,7 +69,7 @@
     - SQL tools are now provided to facilitate the management tools for black and white lists.
       This includes addPrivilege and removePrivilege methods and tries to keep both the black
       and the whote list as clean as possible.
-    - the gridFTP plugins packaging has been improved with the creation of a third rpm called
+    - The gridFTP plugins packaging has been improved with the creation of a third rpm called
       castor-gridftp-dsi-common holding the common code and tools. This fixes the problem of
       log rotation for concurrent installs of both the internal and external plugins.
 
@@ -165,38 +165,44 @@
 
   Upgrade from 2.1.4-*
   --------------------
-    - you basically have to update to 2.1.4-10 and then follow the instructions for updating from 2.1.4-10.
-    - you can however avoid to update the RPMs
+    - You basically have to update to 2.1.4-10 and then follow the instructions for updating from 2.1.4-10.
+    - You can however avoid to update the RPMs
 
   Upgrade from 2.1.4-10
   ---------------------
-    - before upgrading the CASTOR 2 head nodes, one should first upgrade the nameserver
-       - this is actually mandatory if you want to have synchronization of diskservers with the nameserver
-       - it is a pure RPM upgrade, no DB update
-       - the 2.1.6 nameserver can be ran concurrently to an older one in case you have
+    - Before upgrading the CASTOR 2 head nodes, one should first upgrade the nameserver
+       - This is actually mandatory if you want to have synchronization of diskservers with the nameserver
+       - It is a pure RPM upgrade, no DB update
+       - The 2.1.6 nameserver can be ran concurrently to an older one in case you have
          DNS load balanced clusters of nameservers, allowing an upgrade with no service interruption
-    - make sure that no LSF jobs stay in the queue. bkill all the remaining ones
-    - stop all daemons and services (rhserver, stager, jobManager, rtcpclientd, cleaningDaemon, rmMasterDaemon, dlfserver, expertd, rmNodeDaemon, gcdaemon, LSF)
-    - optionally backup your stager DB (one never knows...)
-    - upgrade the stager database
-       - use script 2.1.4-10_to_2.1.6-5 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
-    - update DLF DB using script dlf_2.1.4_to_2.1.6-5
-       (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
-    - update the rpms on the different nodes. Some changes were made in the list of packages to install :
-       - the castor-gridftp-dsi-ext and castor-gridftp-dsi-int packages are now depending on castor-gridftp-dsi-common
-       - there are 2 new packages to be installed on the rtcpcld head node : castor-lib-policy and castor-rechandler-server.
-       - the mighunter package was renamed from castor-rtcopy-mighunter to castor-mighunter-server
-    - update your monitoring tools according to the daemon changes :
-       - the stager became stagerDaemon
-       - the MigHunter became migHunterDaemon
-       - a recHandlerDaemon was added
-    - update the CASTOR configuration files on all machines
-       - update castor.conf using the template giving in castor.conf.example
-       - move the scheduling policy file on the scheduler machine :
+    - Make sure that no LSF jobs stay in the queue. bkill all the remaining ones
+    - Update the configuration of LSF
+       - Modify the ego.cluster file and add a diskcopy resource to all diskservers.
+       - Modify the ego.shared file and add the entry:
+           diskcopy   Boolean ()       ()          (Disk Copy Resource, implies RFIO)
+       - Add 'PARALLEL_SCHED_BY_SLOT = y' to the parameters section of the lsb.params file
+       - Verify that the schmod_parallel module is enabled in lsb.modules
+    - Stop all daemons and services (rhserver, stager, jobManager, rtcpclientd, cleaningDaemon, rmMasterDaemon, dlfserver, expertd, rmNodeDaemon, gcdaemon, LSF)
+    - Optionally backup your stager DB (one never knows...)
+    - Upgrade the stager database
+       - Use script 2.1.4-10_to_2.1.6-5 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
+    - Update DLF DB using script dlf_2.1.4_to_2.1.6-5
+       - (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
+    - Update the rpms on the different nodes. Some changes were made in the list of packages to install :
+       - The castor-gridftp-dsi-ext and castor-gridftp-dsi-int packages are now depending on castor-gridftp-dsi-common
+       - There are 2 new packages to be installed on the rtcpcld head node : castor-lib-policy and castor-rechandler-server.
+       - The mighunter package was renamed from castor-rtcopy-mighunter to castor-mighunter-server
+    - Update your monitoring tools according to the daemon changes :
+       - The stager became stagerDaemon
+       - The MigHunter became migHunterDaemon
+       - A recHandlerDaemon was added
+    - Update the CASTOR configuration files on all machines
+       - Update castor.conf using the template giving in castor.conf.example
+       - Move the scheduling policy file on the scheduler machine :
            mv /etc/castor/policies.py /etc/castor/policies/scheduler.py
-       - move or create the policies that you need on the rtcpcld machine : /etc/castor/policies/stream.py, /etc/castor/policies/migration.py and /etc/castor/policies/rechandler.py
-    - restart all daemons
-       - don't forget the new ones : stagerDaemon, recHandlerDaemon (which is not mandatory if the recall policy is not used), migHunterDaemon 
+       - Move or create the policies that you need on the rtcpcld machine : /etc/castor/policies/stream.py, /etc/castor/policies/migration.py and /etc/castor/policies/rechandler.py
+    - Restart all daemons
+       - Don't forget the new ones : stagerDaemon, recHandlerDaemon (which is not mandatory if the recall policy is not used), migHunterDaemon 
 
 
 -----------
