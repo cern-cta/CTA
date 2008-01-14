@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/01/09 14:15:59 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2008/01/14 17:49:44 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -403,11 +403,6 @@ void castor::db::ora::OraGCSvc::filesDeleted
         return;
       }
 
-      // If the error buffer from the name server is empty use sstrerror
-      if (!strcmp((char *)errBuf, "")) {
-	strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
-      }
-
       // Second thing, we need a buffer to store the castor
       // file names.
       // XXX LIMITATION ON A STRING LENGTH
@@ -424,6 +419,9 @@ void castor::db::ora::OraGCSvc::filesDeleted
         std::string nsHost = rs->getString(2);
         // and first of all, get the file name
         if (0 != Cns_getpath((char*)nsHost.c_str(), fileid, castorFileName)) {
+	  if (!strcmp((char *)errBuf, "")) {
+	    strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+	  }
           clog() << ERROR
                  << "Error caught when calling Cns_getpath in filesDeleted "
                  << "for fileid " << fileid << " and nsHost "
@@ -433,6 +431,9 @@ void castor::db::ora::OraGCSvc::filesDeleted
                  << std::endl;
         } else {
           if (0 != Cns_unlink(castorFileName)) {
+	    if (strcmp((char *)errBuf, "")) {
+	      strncpy((char *)errBuf, sstrerror(serrno), errBufLen);  
+	    }
             clog() << ERROR
                    << "Error caught when unlinking "
                    << castorFileName << " (fileid "
