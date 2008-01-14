@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/01/09 14:16:47 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/14 17:54:22 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -347,7 +347,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
 
   // Both GET requests and DiskCopy replication requests require a set of hosts
   // to be explicitly defined for the job to run.
-  m_job.askedHosts = (char **)malloc(request->numAskedHosts() + 1 * sizeof(char *));
+  m_job.askedHosts = (char **)malloc(request->numAskedHosts() * sizeof(char *));
   m_job.numAskedHosts = 0;
   if (m_job.askedHosts == NULL) {
 
