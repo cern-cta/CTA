@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.229 $ $Release$ $Date: 2008/01/09 14:16:00 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.230 $ $Release$ $Date: 2008/01/14 08:30:22 $ $Author: gtaur $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1285,6 +1285,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
       case castor::stager::TAPE_FINISHED:
       case castor::stager::TAPE_FAILED:
       case castor::stager::TAPE_UNKNOWN:
+      case castor::stager::TAPE_WAITPOLICY:
         if (recallerPolicyStr.empty())
           tape->setStatus(castor::stager::TAPE_PENDING);
         else
