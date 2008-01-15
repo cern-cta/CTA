@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.605 $ $Date: 2008/01/15 12:05:34 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.606 $ $Date: 2008/01/15 13:50:03 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2096,8 +2096,9 @@ CREATE OR REPLACE PROCEDURE processPutDoneRequest
   cfId NUMBER;
   fs NUMBER;
   nbDCs INTEGER;
+  putSubReq NUMBER;
 BEGIN
-  -- Get the svcclass and the castorFile for this subrequest
+  -- Get the svcClass and the castorFile for this subrequest
   SELECT Req.svcclass, SubRequest.castorfile
     INTO svcClassId, cfId
     FROM SubRequest, StagePutDoneRequest Req
@@ -2108,55 +2109,53 @@ BEGIN
     FROM CastorFile 
    WHERE CastorFile.id = cfId FOR UPDATE;
   
-  -- Try to see whether we have available DiskCopies.
-  -- Here we look on all FileSystems regardless the status
-  -- so that a putDone on a disabled one goes through as there's
-  -- no real IO activity involved.
-  SELECT COUNT(DiskCopy.id) INTO nbDCs
-    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-   WHERE DiskCopy.castorfile = cfId
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = svcClassId
-     AND FileSystem.diskserver = DiskServer.id
-     AND DiskCopy.status = 6;  -- STAGEOUT
-  IF nbDCs > 0 THEN
-    -- Check that there is no put going on
-    -- If any, we'll wait on one of them
-    DECLARE
-      putSubReq NUMBER;
-    BEGIN
-      -- Try to find a running put
-      SELECT subrequest.id INTO putSubReq
-        FROM SubRequest, Id2Type
-       WHERE SubRequest.castorfile = cfId
-         AND SubRequest.request = Id2Type.id
-         AND Id2Type.type IN (40, 44)  -- Put, Update
-         AND SubRequest.status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
-         AND ROWNUM < 2;
-      -- we've found one, putDone will have to wait
-      UPDATE SubRequest
-         SET parent = putSubReq,
-             status = 5, -- WAITSUBREQ
-             lastModificationTime = getTime()
-       WHERE id = rsubreqId;
-      result := -1;  -- no go, request in wait
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- no put waiting, we can continue
+  -- Check whether there is a Put|Update going on
+  -- If any, we'll wait on one of them
+  BEGIN
+    SELECT subrequest.id INTO putSubReq
+      FROM SubRequest, Id2Type
+     WHERE SubRequest.castorfile = cfId
+       AND SubRequest.request = Id2Type.id
+       AND Id2Type.type IN (40, 44)  -- Put, Update
+       AND SubRequest.status IN (0, 1, 2, 3, 6, 13, 14) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED, BEINGSCHED
+       AND ROWNUM < 2;
+    -- we've found one, we wait
+    UPDATE SubRequest
+       SET parent = putSubReq,
+           status = 5, -- WAITSUBREQ
+           lastModificationTime = getTime()
+     WHERE id = rsubreqId;
+    result := -1;  -- no go, request in wait
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- No put waiting, look now for available DiskCopies.
+    -- Here we look on all FileSystems in our svcClass
+    -- regardless their status, accepting Disabled ones
+    -- as there's no real IO activity involved. However the
+    -- risk is that the file might not come back and it's lost!
+    SELECT COUNT(DiskCopy.id) INTO nbDCs
+      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+     WHERE DiskCopy.castorfile = cfId
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskpool = DiskPool2SvcClass.parent
+       AND DiskPool2SvcClass.child = svcClassId
+       AND FileSystem.diskserver = DiskServer.id
+       AND DiskCopy.status = 6;  -- STAGEOUT
+    IF nbDCs > 0 THEN
+      -- we have it
       result := 1;
       putDoneFunc(cfId, fs, 2);   -- context = PutDone
-    END;
-  ELSE
-    -- This is a PutDone without a put (otherwise we would have found
-    -- a DiskCopy on a FileSystem), so we fail the subrequest.
-    UPDATE SubRequest SET
-      status = 7,
-      errorCode = 1,  -- EPERM
-      errorMessage = 'putDone without a put, or wrong service class'
-    WHERE id = rsubReqId;
-    result := 0;  -- no go
-    COMMIT;
-  END IF;
+    ELSE
+      -- This is a PutDone without a put (otherwise we would have found
+      -- a DiskCopy on a FileSystem), so we fail the subrequest.
+      UPDATE SubRequest SET
+        status = 7,
+        errorCode = 1,  -- EPERM
+        errorMessage = 'putDone without a put, or wrong service class'
+      WHERE id = rsubReqId;
+      result := 0;  -- no go
+      COMMIT;
+    END IF;
+  END;
 END;
 
 
