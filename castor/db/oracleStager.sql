@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.602 $ $Date: 2008/01/14 17:47:55 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.603 $ $Date: 2008/01/15 10:11:42 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3024,6 +3024,7 @@ END;
 
 
 /* PL/SQL method implementing segmentsForTape */
+
 CREATE OR REPLACE PROCEDURE segmentsForTape (tapeId IN INTEGER, segments
 OUT castor.Segment_Cur) AS
   segs "numList";
@@ -3046,7 +3047,7 @@ BEGIN
        WHERE id = segs(j);
   END IF;
 
-  OPEN segments FOR SELECT * FROM Segment
+  OPEN segments FOR SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, id, tape, copy, status FROM Segment
                      where id in (select * from table(segs));
 END;
 
@@ -3088,7 +3089,7 @@ END;
 CREATE OR REPLACE PROCEDURE failedSegments
 (segments OUT castor.Segment_Cur) AS
 BEGIN
-  OPEN segments FOR SELECT * FROM Segment
+  OPEN segments FOR SELECT fseq, offset, bytes_in, bytes_out, host_bytes, segmCksumAlgorithm, segmCksum, errMsgTxt, errorCode, severity, blockId0, blockId1, blockId2, blockId3, creationTime, id, tape, copy, status FROM Segment
                      WHERE Segment.status = 6; -- SEGMENT_FAILED
 END;
 

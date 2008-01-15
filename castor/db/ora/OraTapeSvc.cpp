@@ -316,8 +316,9 @@ castor::db::ora::OraTapeSvc::segmentsForTape
       item->setBlockId1(rs->getInt(12));
       item->setBlockId2(rs->getInt(13));
       item->setBlockId3(rs->getInt(14));
-      item->setId((u_signed64)rs->getDouble(15));
-      item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(18));
+      item->setCreationTime((u_signed64)rs->getDouble(15));
+      item->setId((u_signed64)rs->getDouble(16));
+      item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(19));
       result.push_back(item);
       status = rs->next();
     }
@@ -871,8 +872,9 @@ castor::db::ora::OraTapeSvc::failedSegments ()
       item->setBlockId1(rs->getInt(12));
       item->setBlockId2(rs->getInt(13));
       item->setBlockId3(rs->getInt(14));
-      item->setId((u_signed64)rs->getDouble(15));
-      item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(18));
+      item->setCreationTime(rs->getInt(15));
+      item->setId((u_signed64)rs->getDouble(16));
+      item->setStatus((enum castor::stager::SegmentStatusCodes)rs->getInt(19));
       result.push_back(item);
       status = rs->next();
     }
