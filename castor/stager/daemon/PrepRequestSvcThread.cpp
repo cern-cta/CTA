@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: PrepRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
+* @(#)$RCSfile: PrepRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/15 17:41:37 $ $Author: itglp $
 *
 * Service thread for handling Prepare (prestage) requests
 *
@@ -30,18 +30,11 @@
 #include "castor/stager/daemon/RequestHandler.hpp"
 #include "castor/stager/daemon/JobRequestHandler.hpp"
 #include "castor/stager/daemon/PrepRequestSvcThread.hpp"
-#include "castor/stager/daemon/PrepRequestSvcThread.hpp"
 
-#include "castor/stager/daemon/GetHandler.hpp"
 #include "castor/stager/daemon/RepackHandler.hpp"
 #include "castor/stager/daemon/PrepareToGetHandler.hpp"
 #include "castor/stager/daemon/PrepareToPutHandler.hpp"
-#include "castor/stager/daemon/PutHandler.hpp"
-#include "castor/stager/daemon/PutDoneHandler.hpp"
 #include "castor/stager/daemon/PrepareToUpdateHandler.hpp"
-#include "castor/stager/daemon/UpdateHandler.hpp"
-#include "castor/stager/daemon/RmHandler.hpp"
-#include "castor/stager/daemon/SetGCHandler.hpp"
 
 #include "castor/BaseObject.hpp"
 #include "castor/PortsConfig.hpp"

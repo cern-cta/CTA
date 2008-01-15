@@ -35,20 +35,20 @@ namespace castor{
       class CnsHelper;
       class SetFileGCWeight;
 
-      class SetGCHandler : public virtual RequestHandler{
+      class SetGCWeightHandler : public virtual RequestHandler{
 
      
       public:
 	/* constructor */
-	SetGCHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+	SetGCWeightHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
 	/* destructor */
-	~SetGCHandler() throw();
+	~SetGCWeightHandler() throw();
 
 	/* SetFileGCWeight handle implementation */
 	void handle() throw(castor::exception::Exception);
 
      
-      }; //end SetGCHandler class
+      }; //end SetGCWeightHandler class
 
 
     }//end namespace daemon

@@ -49,7 +49,7 @@ DBSERVICEDAEMONBIN_SRCS = \
 	ReplyHelper.cpp \
 	RequestHelper.cpp \
 	RmHandler.cpp \
-	SetGCHandler.cpp \
+	SetGCWeightHandler.cpp \
 	UpdateHandler.cpp \
 	RequestHandler.cpp \
 	BaseRequestSvcThread.cpp \

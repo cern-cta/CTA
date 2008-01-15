@@ -4,7 +4,7 @@
 /* it always needs to reply to the client                                                           */
 /***************************************************************************************************/
 
-#include "castor/stager/daemon/SetGCHandler.hpp"
+#include "castor/stager/daemon/SetGCWeightHandler.hpp"
 
 #include "castor/stager/daemon/RequestHelper.hpp"
 #include "castor/stager/daemon/CnsHelper.hpp"
@@ -40,13 +40,13 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      SetGCHandler::SetGCHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception)
+      SetGCWeightHandler::SetGCWeightHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_SetFileGCWeight;
       }
       
-      void SetGCHandler::handle() throw(castor::exception::Exception)
+      void SetGCWeightHandler::handle() throw(castor::exception::Exception)
       {
         
         ReplyHelper* stgReplyHelper=NULL;
@@ -84,7 +84,7 @@ namespace castor{
       
       
       
-      SetGCHandler::~SetGCHandler() throw()
+      SetGCWeightHandler::~SetGCWeightHandler() throw()
       {
       }
       

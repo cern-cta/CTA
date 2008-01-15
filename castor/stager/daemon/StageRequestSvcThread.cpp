@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 17:37:11 $ $Author: itglp $
+* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/15 17:41:37 $ $Author: itglp $
 *
 * Service thread for handling stager specific requests
 *
@@ -31,16 +31,9 @@
 #include "castor/stager/daemon/JobRequestHandler.hpp"
 #include "castor/stager/daemon/StageRequestSvcThread.hpp"
 
-#include "castor/stager/daemon/GetHandler.hpp"
-#include "castor/stager/daemon/RepackHandler.hpp"
-#include "castor/stager/daemon/PrepareToGetHandler.hpp"
-#include "castor/stager/daemon/PrepareToPutHandler.hpp"
-#include "castor/stager/daemon/PutHandler.hpp"
 #include "castor/stager/daemon/PutDoneHandler.hpp"
-#include "castor/stager/daemon/PrepareToUpdateHandler.hpp"
-#include "castor/stager/daemon/UpdateHandler.hpp"
 #include "castor/stager/daemon/RmHandler.hpp"
-#include "castor/stager/daemon/SetGCHandler.hpp"
+#include "castor/stager/daemon/SetGCWeightHandler.hpp"
 
 #include "castor/BaseObject.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -112,7 +105,7 @@ void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* sub
       break;
       
       case OBJ_SetFileGCWeight:
-      stgRequestHandler = new SetGCHandler(stgRequestHelper);
+      stgRequestHandler = new SetGCWeightHandler(stgRequestHelper);
       break;
       
       default:

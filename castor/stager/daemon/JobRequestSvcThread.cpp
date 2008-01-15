@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: JobRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
+* @(#)$RCSfile: JobRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/15 17:41:37 $ $Author: itglp $
 *
 * Service thread for handling Job oriented requests
 *
@@ -35,7 +35,6 @@
 #include "castor/stager/daemon/PutHandler.hpp"
 #include "castor/stager/daemon/UpdateHandler.hpp"
 
-#include "castor/stager/daemon/JobRequestSvcThread.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/PortsConfig.hpp"
 #include "castor/server/BaseServer.hpp"
