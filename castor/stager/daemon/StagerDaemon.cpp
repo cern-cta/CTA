@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/01/15 17:37:11 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2008/01/15 18:00:33 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]){
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /****************************************************************************************/
 castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::Exception)
-  : castor::server::BaseDaemon("") {
+  : castor::server::BaseDaemon("Stager") {
 	
   castor::dlf::Message stagerDlfMessages[]={
     
