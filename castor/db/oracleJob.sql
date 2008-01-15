@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.604 $ $Date: 2008/01/15 10:47:56 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.605 $ $Date: 2008/01/15 12:05:34 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -672,15 +672,20 @@ END;
 /* PL/SQL method to make a SubRequest wait on another one, linked to the given DiskCopy */
 CREATE OR REPLACE PROCEDURE makeSubRequestWait(srId IN INTEGER, dci IN INTEGER) AS
 BEGIN
-  -- all wait on the original one
+  -- all wait on the original one; also prevent to wait on a PrepareToPut, for the
+  -- case when Updates and Puts come after a PrepareToPut and they need to wait on
+  -- the first Update|Put to complete.
+  -- Cf. recreateCastorFile and the DiskCopy statuses 5 and 11
   UPDATE SubRequest
      SET parent = (SELECT SubRequest.id
-                     FROM SubRequest, DiskCopy
+                     FROM SubRequest, DiskCopy, Id2Type
                     WHERE SubRequest.diskCopy = DiskCopy.id
                       AND DiskCopy.id = dci
+                      AND SubRequest.request = Id2Type.id
+                      AND Id2Type.type <> 37  -- OBJ_PrepareToPut
                       AND SubRequest.parent = 0
                       AND DiskCopy.status IN (1, 2, 5, 6, 11) -- WAITDISK2DISKCOPY, WAITTAPERECALL, WAITFS, STAGEOUT, WAITFS_SCHEDULING
-                      AND SubRequest.status IN (0, 1, 2, 4, 5, 6)), -- START, RESTART, RETRY, WAIT*, READY
+                      AND SubRequest.status IN (0, 1, 2, 4, 13, 14, 6)), -- START, RESTART, RETRY, WAITTAPERECALL, WAITFORSCHED, BEINGSCHED, READY
         status = 5, -- WAITSUBREQ
         lastModificationTime = getTime()
   WHERE SubRequest.id = srId;
@@ -1945,6 +1950,7 @@ BEGIN
    WHERE castorFile = cfId AND status = 0;  -- DISKCOPY_STAGED
 END;
 
+
 /* PL/SQL method implementing processPrepareRequest */
 /* the result output is a DiskCopy status for STAGED or RECALL,
    -1 for user failure, -2 for subrequest put in WAITSUBREQ */
@@ -2994,7 +3000,7 @@ END;
 /* PL/SQL method implementing resetStream */
 CREATE OR REPLACE PROCEDURE resetStream (sid IN INTEGER) AS
   nbRes NUMBER;
-  unused NUMBER
+  unused NUMBER;
 BEGIN
   BEGIN
     -- First lock the stream
