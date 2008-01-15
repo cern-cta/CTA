@@ -2,7 +2,7 @@
 /* helper class for the c methods and structures related with the cns_api */
 /*************************************************************************/
 
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/FileClass.hpp"
 
@@ -23,7 +23,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include "castor/exception/Exception.hpp"
 
@@ -45,7 +45,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       
       StagerCnsHelper::StagerCnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception){
@@ -174,6 +174,6 @@ namespace castor{
         return newFile;
       }
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespce castor

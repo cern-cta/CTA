@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2007/12/14 16:45:45 $ $Author: itglp $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
  *
  * Service thread for garbage collection related requests
  *
@@ -48,20 +48,20 @@
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
-#include "castor/stager/dbService/GcSvcThread.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/GcSvcThread.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::GcSvcThread::GcSvcThread() throw () :
+castor::stager::daemon::GcSvcThread::GcSvcThread() throw () :
   BaseRequestSvcThread("GCSvc", "DbGCSvc", castor::SVC_DBGCSVC) {}
 
 
 //-----------------------------------------------------------------------------
 // handleFilesDeletedOrFailed
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::GcSvcThread::handleFilesDeletedOrFailed
+void castor::stager::daemon::GcSvcThread::handleFilesDeletedOrFailed
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -127,7 +127,7 @@ void castor::stager::dbService::GcSvcThread::handleFilesDeletedOrFailed
 //-----------------------------------------------------------------------------
 // handleFiles2Delete
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::GcSvcThread::handleFiles2Delete
+void castor::stager::daemon::GcSvcThread::handleFiles2Delete
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -197,7 +197,7 @@ void castor::stager::dbService::GcSvcThread::handleFiles2Delete
 //-----------------------------------------------------------------------------
 // handleNsFilesDeleted
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::GcSvcThread::handleNsFilesDeleted
+void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -273,7 +273,7 @@ void castor::stager::dbService::GcSvcThread::handleNsFilesDeleted
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::GcSvcThread::process
+void castor::stager::daemon::GcSvcThread::process
 (castor::IObject *param) throw() {
   // Useful variables
   castor::stager::Request* req = 0;
@@ -331,15 +331,15 @@ void castor::stager::dbService::GcSvcThread::process
   switch (req->type()) {
   case castor::OBJ_FilesDeleted:
   case castor::OBJ_FilesDeletionFailed:
-    castor::stager::dbService::GcSvcThread::handleFilesDeletedOrFailed
+    castor::stager::daemon::GcSvcThread::handleFilesDeletedOrFailed
       (req, client, svcs, gcSvc, ad, uuid);
     break;
   case castor::OBJ_Files2Delete:
-    castor::stager::dbService::GcSvcThread::handleFiles2Delete
+    castor::stager::daemon::GcSvcThread::handleFiles2Delete
       (req, client, svcs, gcSvc, ad, uuid);
     break;
   case castor::OBJ_NsFilesDeleted:
-    castor::stager::dbService::GcSvcThread::handleNsFilesDeleted
+    castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
       (req, client, svcs, gcSvc, ad, uuid);
     break;
   default:

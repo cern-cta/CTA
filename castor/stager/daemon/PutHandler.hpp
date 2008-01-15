@@ -8,12 +8,12 @@
 
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
 
 
 #include "stager_uuid.h"
@@ -40,7 +40,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
 
       class StagerRequestHelper;
       class StagerCnsHelper;
@@ -65,7 +65,7 @@ namespace castor{
       }; // end StagerPutHandler class
 
 
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
 

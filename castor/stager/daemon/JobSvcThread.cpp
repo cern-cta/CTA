@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2008/01/09 10:28:46 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -62,20 +62,20 @@
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/Disk2DiskCopyStartResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
-#include "castor/stager/dbService/JobSvcThread.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/JobSvcThread.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::JobSvcThread::JobSvcThread() throw () :
+castor::stager::daemon::JobSvcThread::JobSvcThread() throw () :
   BaseRequestSvcThread("JobSvc", "DbJobSvc", castor::SVC_DBJOBSVC) {}
 
 
 //-----------------------------------------------------------------------------
 // handleStartRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handleStartRequest
+void castor::stager::daemon::JobSvcThread::handleStartRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -191,7 +191,7 @@ void castor::stager::dbService::JobSvcThread::handleStartRequest
 //-----------------------------------------------------------------------------
 // handleDisk2DiskCopyStartRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyStartRequest
+void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -281,7 +281,7 @@ void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyStartRequest
 //-----------------------------------------------------------------------------
 // handleDisk2DiskCopyDoneRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
+void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -339,7 +339,7 @@ void castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
 //-----------------------------------------------------------------------------
 // handleMoverCloseRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
+void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -430,7 +430,7 @@ void castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
 //-----------------------------------------------------------------------------
 // handleGetUpdateDoneRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
+void castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -478,7 +478,7 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
 //-----------------------------------------------------------------------------
 // handleGetUpdateFailedRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
+void castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -526,7 +526,7 @@ void castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
 //-----------------------------------------------------------------------------
 // handlePutFailedRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
+void castor::stager::daemon::JobSvcThread::handlePutFailedRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -574,7 +574,7 @@ void castor::stager::dbService::JobSvcThread::handlePutFailedRequest
 //-----------------------------------------------------------------------------
 // handleFirstByteWrittenRequest
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::handleFirstByteWrittenRequest
+void castor::stager::daemon::JobSvcThread::handleFirstByteWrittenRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -623,7 +623,7 @@ void castor::stager::dbService::JobSvcThread::handleFirstByteWrittenRequest
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobSvcThread::process
+void castor::stager::daemon::JobSvcThread::process
 (castor::IObject *param) throw() {
   // Useful variables
   castor::stager::Request* req = 0;
@@ -681,35 +681,35 @@ void castor::stager::dbService::JobSvcThread::process
   switch (req->type()) {
   case castor::OBJ_GetUpdateStartRequest:
   case castor::OBJ_PutStartRequest:
-    castor::stager::dbService::JobSvcThread::handleStartRequest
+    castor::stager::daemon::JobSvcThread::handleStartRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_Disk2DiskCopyStartRequest:
-    castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyStartRequest
+    castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_Disk2DiskCopyDoneRequest:
-    castor::stager::dbService::JobSvcThread::handleDisk2DiskCopyDoneRequest
+    castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_MoverCloseRequest:
-    castor::stager::dbService::JobSvcThread::handleMoverCloseRequest
+    castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_GetUpdateDone:
-    castor::stager::dbService::JobSvcThread::handleGetUpdateDoneRequest
+    castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_GetUpdateFailed:
-    castor::stager::dbService::JobSvcThread::handleGetUpdateFailedRequest
+    castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_PutFailed:
-    castor::stager::dbService::JobSvcThread::handlePutFailedRequest
+    castor::stager::daemon::JobSvcThread::handlePutFailedRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   case castor::OBJ_FirstByteWritten:
-    castor::stager::dbService::JobSvcThread::handleFirstByteWrittenRequest
+    castor::stager::daemon::JobSvcThread::handleFirstByteWrittenRequest
       (req, client, svcs, jobSvc, ad, uuid);
     break;
   default:

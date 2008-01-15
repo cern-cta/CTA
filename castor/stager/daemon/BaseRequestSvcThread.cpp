@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/08 17:19:59 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/dbService/BaseRequestSvcThread.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/BaseRequestSvcThread.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
@@ -45,13 +45,13 @@
 //-----------------------------------------------------------------------------
 // select
 //-----------------------------------------------------------------------------
-castor::IObject* castor::stager::dbService::BaseRequestSvcThread::select() throw() {
+castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() {
   try {
     castor::IService* svc =
-      castor::BaseObject::services()->service(m_dbServiceName, m_dbServiceType);
+      castor::BaseObject::services()->service(m_daemonName, m_daemonType);
     // we have already initialized the services in the main, so we know the pointer is valid
     castor::IObject* req = 0;
-    if(m_dbServiceType == castor::SVC_DBSTAGERSVC) {
+    if(m_daemonType == castor::SVC_DBSTAGERSVC) {
       castor::stager::IStagerSvc* stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
       req = stgSvc->subRequestToDo(m_name);
     }
@@ -66,7 +66,7 @@ castor::IObject* castor::stager::dbService::BaseRequestSvcThread::select() throw
       {castor::dlf::Param("Function", "BaseRequestSvcThread::select"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::dbService::STAGER_SERVICES_EXCEPTION, 3, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::daemon::STAGER_SERVICES_EXCEPTION, 3, params);
     return 0;
   }
 }
@@ -75,9 +75,9 @@ castor::IObject* castor::stager::dbService::BaseRequestSvcThread::select() throw
 //-----------------------------------------------------------------------------
 // handleException
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::BaseRequestSvcThread::handleException(
+void castor::stager::daemon::BaseRequestSvcThread::handleException(
   StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw() {
-  if(stgRequestHelper == 0 || stgRequestHelper->dbService == 0 || stgRequestHelper->subrequest == 0) {
+  if(stgRequestHelper == 0 || stgRequestHelper->daemon == 0 || stgRequestHelper->subrequest == 0) {
     // exception thrown before being able to do anything with the db
     // we can't do much here...
     return;        
@@ -98,7 +98,7 @@ void castor::stager::dbService::BaseRequestSvcThread::handleException(
     // just try to update the db
     try {
       stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
-      stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+      stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
     }
     catch (castor::exception::Exception ignored) {}
   }

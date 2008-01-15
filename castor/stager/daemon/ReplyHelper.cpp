@@ -7,8 +7,8 @@
 /****************************************************************************************************************/
 
 
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
 
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
@@ -32,7 +32,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       
       StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception)
@@ -65,7 +65,7 @@ namespace castor{
       {
         if(stgRequestHelper->fileRequest) {
           if(stgRequestHelper->fileRequest->client() == 0) {
-            stgRequestHelper->dbService->fillObj(stgRequestHelper->baseAddr, stgRequestHelper->fileRequest, castor::OBJ_IClient, false);
+            stgRequestHelper->daemon->fillObj(stgRequestHelper->baseAddr, stgRequestHelper->fileRequest, castor::OBJ_IClient, false);
           }
         }
         else {
@@ -123,7 +123,7 @@ namespace castor{
       
       
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
 

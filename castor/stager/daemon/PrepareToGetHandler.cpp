@@ -4,13 +4,13 @@
 /*******************************************************************************************/
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
 #include "StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -28,7 +28,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -40,7 +40,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
@@ -125,7 +125,7 @@ namespace castor{
         }catch(castor::exception::Exception e){
           
           /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
-          /* we don t execute: dbService->updateRep ..*/
+          /* we don t execute: daemon->updateRep ..*/
           if(stgReplyHelper != NULL) delete stgReplyHelper;
           
           castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),

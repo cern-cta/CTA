@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: JobRequestSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/14 18:39:42 $ $Author: itglp $
+* @(#)$RCSfile: JobRequestSvcThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
 *
 * Service thread for handling Job oriented requests
 *
@@ -27,7 +27,7 @@
 #ifndef STAGER_DAEMON_JOBREQUESTSVCTHREAD_HPP
 #define STAGER_DAEMON_JOBREQUESTSVCTHREAD_HPP 1
 
-#include "castor/stager/dbService/BaseRequestSvcThread.hpp"
+#include "castor/stager/daemon/BaseRequestSvcThread.hpp"
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
@@ -37,7 +37,7 @@ namespace castor {
 
   namespace stager {
 
-    namespace dbService {
+    namespace daemon {
       
       class JobRequestSvcThread : public BaseRequestSvcThread {
         
@@ -52,7 +52,7 @@ namespace castor {
         unsigned m_jobManagerPort;
       };
       
-    }// end namespace dbService
+    }// end namespace daemon
     
   } // end namespace stager
   

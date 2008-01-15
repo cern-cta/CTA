@@ -10,7 +10,7 @@
 #ifndef STAGER_REQUEST_HELPER_HPP
 #define STAGER_REQUEST_HELPER_HPP 1
 
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
 
 #include "castor/IObject.hpp"
 #include "castor/stager/IStagerSvc.hpp"
@@ -45,7 +45,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include <vector>
 #include <iostream>
@@ -55,7 +55,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
 
       
       class castor::stager::IStagerSvc;
@@ -67,7 +67,7 @@ namespace castor{
       class castor::stager::SvcClass;
       class castor::stager::CastorFile;
       class castor::stager::FileClass;
-      class castor::stager::dbService::StagerCnsHelper;
+      class castor::stager::daemon::StagerCnsHelper;
     
       
 
@@ -79,7 +79,7 @@ namespace castor{
 	  	
 	/* services needed: database and stager services*/
 	castor::stager::IStagerSvc* stagerService;
-	castor::db::DbCnvSvc* dbService;
+	castor::db::DbCnvSvc* daemon;
     
 
 	/* BaseAddress */
@@ -148,7 +148,7 @@ namespace castor{
 	/*******************************************************************************************************************************************/
 	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
 	/*****************************************************************************************************************************************/
-  void getCastorFileFromSvcClass(castor::stager::dbService::StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+  void getCastorFileFromSvcClass(castor::stager::daemon::StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
        
 
 	/************************************************************************************/
@@ -177,7 +177,7 @@ namespace castor{
 	
 
       }; //end StagerRequestHelper class
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
 

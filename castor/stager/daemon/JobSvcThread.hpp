@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -32,14 +32,14 @@
 #include "castor/Services.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/stager/dbService/BaseRequestSvcThread.hpp"
+#include "castor/stager/daemon/BaseRequestSvcThread.hpp"
 #include "castor/stager/IJobSvc.hpp"
 
 namespace castor {
 
   namespace stager {
 
-    namespace dbService {
+    namespace daemon {
 
       class JobSvcThread : public virtual BaseRequestSvcThread {
 
@@ -195,7 +195,7 @@ namespace castor {
 
       };
 
-    } // end namespace dbService
+    } // end namespace daemon
 
   } // end namespace stager
 

@@ -4,13 +4,13 @@
 
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerPutHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerPutHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -29,7 +29,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -40,7 +40,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       StagerPutHandler::StagerPutHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
@@ -103,7 +103,7 @@ namespace castor{
               stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
               // we don't need to do anything, the request will be restarted
               // however we have to commit the transaction
-              stgRequestHelper->dbService->commit();
+              stgRequestHelper->daemon->commit();
             }
             else {
               // schedule the put
@@ -115,7 +115,7 @@ namespace castor{
               
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
               
               // we have to notify the jobManager
               m_notifyJobManager = true;
@@ -138,7 +138,7 @@ namespace castor{
       
       
       
-    }// end dbService namespace
+    }// end daemon namespace
   }// end stager namespace
 }//end castor namespace 
 

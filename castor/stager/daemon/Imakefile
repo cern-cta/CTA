@@ -1,5 +1,5 @@
 #
-#           castor/stager/dbService/Imakefile
+#           castor/stager/daemon/Imakefile
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -19,7 +19,7 @@
 #
 # @(#)Imakefile,v 1.2 $Release$ 2005/03/15 23:24:32 bcouturi
 #
-# Make Castor stagerDBService daemon
+# Make Castor stager daemon
 #
 # @author Castor Dev team, castor-dev@cern.ch
 #

@@ -27,7 +27,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -40,7 +40,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       class StagerCnsHelper : public virtual castor::BaseObject{
         
@@ -83,7 +83,7 @@ namespace castor{
           throw(castor::exception::Exception);
         
       }; // end StagerCnsHelper class
-    }//end namespace dbService
+    }//end namespace daemon
   }// end namespace stager
 }// end namespace castor
 

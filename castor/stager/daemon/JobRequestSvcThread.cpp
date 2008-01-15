@@ -17,25 +17,25 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: JobRequestSvcThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
+* @(#)$RCSfile: JobRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
 *
 * Service thread for handling Job oriented requests
 *
 * @author castor dev team
 *****************************************************************************/
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/JobRequestSvcThread.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestSvcThread.hpp"
 
-#include "castor/stager/dbService/StagerGetHandler.hpp"
-#include "castor/stager/dbService/StagerPutHandler.hpp"
-#include "castor/stager/dbService/StagerUpdateHandler.hpp"
+#include "castor/stager/daemon/StagerGetHandler.hpp"
+#include "castor/stager/daemon/StagerPutHandler.hpp"
+#include "castor/stager/daemon/StagerUpdateHandler.hpp"
 
-#include "castor/stager/dbService/JobRequestSvcThread.hpp"
+#include "castor/stager/daemon/JobRequestSvcThread.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/PortsConfig.hpp"
 #include "castor/server/BaseServer.hpp"
@@ -82,7 +82,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::JobRequestSvcThread::JobRequestSvcThread() throw (castor::exception::Exception) :
+castor::stager::daemon::JobRequestSvcThread::JobRequestSvcThread() throw (castor::exception::Exception) :
   BaseRequestSvcThread("JobReqSvc", "DbStagerSvc", castor::SVC_DBSTAGERSVC)
 {
   m_jobManagerHost = castor::PortsConfig::getInstance()->getHostName(castor::CASTOR_JOBMANAGER);
@@ -92,7 +92,7 @@ castor::stager::dbService::JobRequestSvcThread::JobRequestSvcThread() throw (cas
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::JobRequestSvcThread::process(castor::IObject* subRequestToProcess) throw () {
+void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* subRequestToProcess) throw () {
  
   StagerRequestHelper* stgRequestHelper = NULL;
   StagerJobRequestHandler* stgRequestHandler = NULL;

@@ -4,10 +4,10 @@
 /****************************************************************************************************/
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
@@ -36,7 +36,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       /********************************************************************/
       /* function to perform the common flow for all the Stager__Handler */
@@ -88,6 +88,6 @@ namespace castor{
         stgCnsHelper = 0;
       }
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor

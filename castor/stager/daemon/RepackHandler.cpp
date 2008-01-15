@@ -3,11 +3,11 @@
 /* It inherits from the StagerJobRequestHandler and it needs to reply to the client         */
 /*******************************************************************************************/
 
-#include "castor/stager/dbService/StagerRepackHandler.hpp"
+#include "castor/stager/daemon/StagerRepackHandler.hpp"
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper) throw (castor::exception::Exception) :
         StagerPrepareToGetHandler(stgRequestHelper)
@@ -54,6 +54,6 @@ namespace castor{
         return result;
       }
     
-  }//end namespace dbService
+  }//end namespace daemon
  }//end namespace stager
 }//end namespace castor

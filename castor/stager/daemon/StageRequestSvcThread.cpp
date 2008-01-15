@@ -17,30 +17,30 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/12/14 16:45:47 $ $Author: itglp $
+* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
 *
 * Service thread for handling stager specific requests
 *
 * @author castor dev team
 *****************************************************************************/
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StageRequestSvcThread.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StageRequestSvcThread.hpp"
 
-#include "castor/stager/dbService/StagerGetHandler.hpp"
-#include "castor/stager/dbService/StagerRepackHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToPutHandler.hpp"
-#include "castor/stager/dbService/StagerPutHandler.hpp"
-#include "castor/stager/dbService/StagerPutDoneHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToUpdateHandler.hpp"
-#include "castor/stager/dbService/StagerUpdateHandler.hpp"
-#include "castor/stager/dbService/StagerRmHandler.hpp"
-#include "castor/stager/dbService/StagerSetGCHandler.hpp"
+#include "castor/stager/daemon/StagerGetHandler.hpp"
+#include "castor/stager/daemon/StagerRepackHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToPutHandler.hpp"
+#include "castor/stager/daemon/StagerPutHandler.hpp"
+#include "castor/stager/daemon/StagerPutDoneHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToUpdateHandler.hpp"
+#include "castor/stager/daemon/StagerUpdateHandler.hpp"
+#include "castor/stager/daemon/StagerRmHandler.hpp"
+#include "castor/stager/daemon/StagerSetGCHandler.hpp"
 
 #include "castor/BaseObject.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -86,13 +86,13 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::StageRequestSvcThread::StageRequestSvcThread() throw()
+castor::stager::daemon::StageRequestSvcThread::StageRequestSvcThread() throw()
   : BaseRequestSvcThread("StageReqSvc", "DbStagerSvc", castor::SVC_DBSTAGERSVC) {}
       
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::StageRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
+void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
  
   StagerRequestHelper* stgRequestHelper= NULL;
   StagerRequestHandler* stgRequestHandler = NULL;

@@ -8,12 +8,12 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{   
+    namespace daemon{   
 
       enum StgDlfMessages{
 	
 	/***************************************/
-	/* StagerMainDaemon: To DLF_LVL_DEBUG */
+	/* StagerDaemon: To DLF_LVL_DEBUG */
 	/*************************************/
      
 	STAGER_DAEMON_START= 1, /* Stager Daemon started" */
@@ -141,7 +141,7 @@ namespace castor{
         STAGER_JOBSVC_DELWWR= 148 /* "File was removed by another user while being modified" */
 
       };
-    }// end namespace dbService
+    }// end namespace daemon
   }// end namespace stager
 }// end namespace castor
 

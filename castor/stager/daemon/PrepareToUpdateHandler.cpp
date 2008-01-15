@@ -7,14 +7,14 @@
 
 
 
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToUpdateHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToPutHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToUpdateHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToPutHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -32,7 +32,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -44,7 +44,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       StagerPrepareToUpdateHandler::StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception) :
         StagerUpdateHandler(stgRequestHelper)
@@ -75,7 +75,7 @@ namespace castor{
       
       
       
-    }// end dbService namespace
+    }// end daemon namespace
   }// end stager namespace
 }//end castor namespace 
 

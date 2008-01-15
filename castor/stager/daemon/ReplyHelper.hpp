@@ -9,7 +9,7 @@
 #ifndef STAGER_REPLY_HELPER_HPP
 #define STAGER_REPLY_HELPER_HPP 1
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/FileRequest.hpp"
@@ -33,7 +33,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       
       /* forward declaration */
@@ -72,7 +72,7 @@ namespace castor{
       }; // end StagerReplyHelper  
       
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
 

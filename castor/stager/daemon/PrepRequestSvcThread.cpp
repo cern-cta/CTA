@@ -17,31 +17,31 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: PrepRequestSvcThread.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
+* @(#)$RCSfile: PrepRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
 *
 * Service thread for handling Prepare (prestage) requests
 *
 * @author castor dev team
 *****************************************************************************/
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/PrepRequestSvcThread.hpp"
-#include "castor/stager/dbService/PrepRequestSvcThread.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/PrepRequestSvcThread.hpp"
+#include "castor/stager/daemon/PrepRequestSvcThread.hpp"
 
-#include "castor/stager/dbService/StagerGetHandler.hpp"
-#include "castor/stager/dbService/StagerRepackHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToPutHandler.hpp"
-#include "castor/stager/dbService/StagerPutHandler.hpp"
-#include "castor/stager/dbService/StagerPutDoneHandler.hpp"
-#include "castor/stager/dbService/StagerPrepareToUpdateHandler.hpp"
-#include "castor/stager/dbService/StagerUpdateHandler.hpp"
-#include "castor/stager/dbService/StagerRmHandler.hpp"
-#include "castor/stager/dbService/StagerSetGCHandler.hpp"
+#include "castor/stager/daemon/StagerGetHandler.hpp"
+#include "castor/stager/daemon/StagerRepackHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToPutHandler.hpp"
+#include "castor/stager/daemon/StagerPutHandler.hpp"
+#include "castor/stager/daemon/StagerPutDoneHandler.hpp"
+#include "castor/stager/daemon/StagerPrepareToUpdateHandler.hpp"
+#include "castor/stager/daemon/StagerUpdateHandler.hpp"
+#include "castor/stager/daemon/StagerRmHandler.hpp"
+#include "castor/stager/daemon/StagerSetGCHandler.hpp"
 
 #include "castor/BaseObject.hpp"
 #include "castor/PortsConfig.hpp"
@@ -87,7 +87,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::PrepRequestSvcThread::PrepRequestSvcThread() throw(castor::exception::Exception) :
+castor::stager::daemon::PrepRequestSvcThread::PrepRequestSvcThread() throw(castor::exception::Exception) :
   BaseRequestSvcThread("PrepReqSvc", "DbStagerSvc", castor::SVC_DBSTAGERSVC)
 {
   m_jobManagerHost = castor::PortsConfig::getInstance()->getHostName(castor::CASTOR_JOBMANAGER);
@@ -97,7 +97,7 @@ castor::stager::dbService::PrepRequestSvcThread::PrepRequestSvcThread() throw(ca
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::PrepRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
+void castor::stager::daemon::PrepRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
   
   StagerRequestHelper* stgRequestHelper= NULL;
   StagerJobRequestHandler* stgRequestHandler = NULL;

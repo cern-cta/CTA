@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.65 $ $Release$ $Date: 2007/12/14 16:45:46 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -61,8 +61,8 @@
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/FileQryResponse.hpp"
 #include "castor/query/IQuerySvc.hpp"
-#include "castor/stager/dbService/QueryRequestSvcThread.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/QueryRequestSvcThread.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 #include "stager_client_api.h"
 #include "Cns_api.h"
 #include "u64subr.h"
@@ -71,14 +71,14 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::QueryRequestSvcThread::QueryRequestSvcThread()
+castor::stager::daemon::QueryRequestSvcThread::QueryRequestSvcThread()
   throw () :
   BaseRequestSvcThread("QueryReqSvc", "DbQuerySvc", castor::SVC_DBQUERYSVC) {}
 
 //-----------------------------------------------------------------------------
 // setFileResponseStatus
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::QueryRequestSvcThread::setFileResponseStatus
+void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
 (castor::rh::FileQryResponse* fr,
  castor::stager::DiskCopyInfo* dc,
  bool& foundDiskCopy) throw() {
@@ -150,7 +150,7 @@ void castor::stager::dbService::QueryRequestSvcThread::setFileResponseStatus
 // handleFileQueryRequestByFileName
 //-----------------------------------------------------------------------------
 void
-castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByFileName
+castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
 (castor::query::IQuerySvc* qrySvc,
  castor::IClient *client,
  std::string& fileName,
@@ -228,7 +228,7 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByFileNa
 // handleFileQueryRequestByFileId
 //-----------------------------------------------------------------------------
 void
-castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByFileId
+castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
 (castor::query::IQuerySvc* qrySvc,
  castor::IClient *client,
  std::string &fid,
@@ -277,7 +277,7 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByFileId
 // handleFileQueryRequestByRequest
 //-----------------------------------------------------------------------------
 void
-castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByRequest
+castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
 (castor::query::IQuerySvc* qrySvc,
  castor::IClient *client,
  castor::stager::RequestQueryType reqType,
@@ -363,7 +363,7 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequestByReques
 // handleFileQueryRequest
 //-----------------------------------------------------------------------------
 void
-castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest
+castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -525,7 +525,7 @@ castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest
 //-----------------------------------------------------------------------------
 // handleDiskPoolQuery
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::QueryRequestSvcThread::handleDiskPoolQuery
+void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 (castor::stager::Request* req,
  castor::IClient *client,
  castor::Services* svcs,
@@ -603,7 +603,7 @@ void castor::stager::dbService::QueryRequestSvcThread::handleDiskPoolQuery
 //-----------------------------------------------------------------------------
 // handleVersionQuery
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::QueryRequestSvcThread::handleVersionQuery
+void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
 (castor::stager::Request* req, castor::IClient *client)
   throw (castor::exception::Exception) {
   try {
@@ -627,7 +627,7 @@ void castor::stager::dbService::QueryRequestSvcThread::handleVersionQuery
 //-----------------------------------------------------------------------------
 // cleanup
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::QueryRequestSvcThread::cleanup
+void castor::stager::daemon::QueryRequestSvcThread::cleanup
 (castor::stager::Request* req, castor::IService *svc) throw() {
   if (0 != req) {
     castor::stager::SvcClass *svcClass = req->svcClass();
@@ -642,7 +642,7 @@ void castor::stager::dbService::QueryRequestSvcThread::cleanup
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::QueryRequestSvcThread::process
+void castor::stager::daemon::QueryRequestSvcThread::process
 (castor::IObject *param) throw() {
   // Useful variables
   castor::stager::Request* req = 0;
@@ -741,23 +741,23 @@ void castor::stager::dbService::QueryRequestSvcThread::process
   // We call the adequate method
   switch (req->type()) {
   case castor::OBJ_StageFileQueryRequest:
-    castor::stager::dbService::QueryRequestSvcThread::handleFileQueryRequest
+    castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
       (req, client, svcs, qrySvc, ad, uuid);
     break;
   case castor::OBJ_StageFindRequestRequest:
-    //castor::stager::dbService::QueryRequestSvcThread::handle_findRequestRequest
+    //castor::stager::daemon::QueryRequestSvcThread::handle_findRequestRequest
     //  (req, client, svcs, qrySvc, ad, uuid);
     break;
   case castor::OBJ_StageRequestQueryRequest:
-    //castor::stager::dbService::QueryRequestSvcThread::handle_requestQueryRequest
+    //castor::stager::daemon::QueryRequestSvcThread::handle_requestQueryRequest
     //  (req, client, svcs, qrySvc, ad, uuid);
     break;
   case castor::OBJ_DiskPoolQuery:
-    castor::stager::dbService::QueryRequestSvcThread::handleDiskPoolQuery
+    castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
       (req, client, svcs, qrySvc, ad, uuid);
     break;
   case castor::OBJ_VersionQuery:
-    castor::stager::dbService::QueryRequestSvcThread::handleVersionQuery
+    castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
       (req, client);
     break;
   default:

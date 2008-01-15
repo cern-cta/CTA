@@ -2,12 +2,12 @@
 /* base class for the 7 job handlers(Get,PrepareToGet,Update,PrepareToUpdate,Put,PrepareToPut,Repack) */
 /*****************************************************************************************************/
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
 
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
@@ -56,7 +56,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       /****************************************************************************************/
       /* job oriented block                                                                  */
@@ -73,6 +73,6 @@ namespace castor{
         stgRequestHelper->getCastorFileFromSvcClass(stgCnsHelper);
       }
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespce castor

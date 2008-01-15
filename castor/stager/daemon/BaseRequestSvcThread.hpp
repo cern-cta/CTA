@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/12/14 16:45:45 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -36,21 +36,21 @@
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/server/SelectProcessThread.hpp"
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
 
 
 namespace castor {
   namespace stager{
-    namespace dbService {
+    namespace daemon {
       
       class BaseRequestSvcThread : public castor::server::SelectProcessThread {
         
       public: 
 
-        BaseRequestSvcThread(std::string name, std::string dbServiceName, int dbServiceType) throw() :
+        BaseRequestSvcThread(std::string name, std::string daemonName, int daemonType) throw() :
           SelectProcessThread(), m_name(name), 
-          m_dbServiceName(dbServiceName), m_dbServiceType(dbServiceType) {};
+          m_daemonName(daemonName), m_daemonType(daemonType) {};
         virtual ~BaseRequestSvcThread() throw() {};
         
         /***************************************************************************/
@@ -62,14 +62,14 @@ namespace castor {
         
       protected:
         std::string m_name;
-        std::string m_dbServiceName;
-        int m_dbServiceType;
+        std::string m_daemonName;
+        int m_daemonType;
         
         int typeRequest;
 
       };// end class BaseRequestSvcThread
       
-    }// end dbService
+    }// end daemon
   } // end namespace stager
 }//end namespace castor
 

@@ -6,9 +6,9 @@
 #ifndef STAGER_REQUEST_HANDLER_HPP
 #define STAGER_REQUEST_HANDLER_HPP 1
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
@@ -28,7 +28,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
 
       class StagerRequestHelper;
       class StagerCnsHelper;
@@ -52,7 +52,7 @@ namespace castor{
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;
 
-	castor::stager::dbService::StagerCnsHelper* getStgCnsHelper(){
+	castor::stager::daemon::StagerCnsHelper* getStgCnsHelper(){
 	  return(this->stgCnsHelper);
 	    }
 	

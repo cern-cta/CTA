@@ -3,9 +3,9 @@
 /* StagerPutDoneHandler: Constructor and implementation of the PutDone request's handle        */
 /******************************************************************************************** */
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 
 
 #include "castor/Services.hpp"
@@ -14,9 +14,9 @@
 #include "castor/stager/IJobSvc.hpp"
 
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerPutDoneHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerPutDoneHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -35,7 +35,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -53,7 +53,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {     	
@@ -116,7 +116,7 @@ namespace castor{
       
       
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
 

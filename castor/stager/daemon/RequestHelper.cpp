@@ -7,7 +7,7 @@
 /* **********************************************************************************************************/
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
 
 
 #include "castor/BaseAddress.hpp"
@@ -45,7 +45,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -61,7 +61,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       
       /* constructor-> return the request type, called on the different thread (job, pre, stg) */
@@ -79,7 +79,7 @@ namespace castor{
           
           svc = castor::BaseObject::services()->
             service("DbCnvSvc", castor::SVC_DBCNV);
-          dbService = dynamic_cast<castor::db::DbCnvSvc*>(svc);
+          daemon = dynamic_cast<castor::db::DbCnvSvc*>(svc);
           
           this->baseAddr = new castor::BaseAddress;
           svcClass = 0;
@@ -91,7 +91,7 @@ namespace castor{
           this->subrequest=subRequestToProcess;
           this->default_protocol = "rfio";
           
-          dbService->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false); 
+          daemon->fillObj(baseAddr, subrequest, castor::OBJ_FileRequest, false); 
           this->fileRequest=subrequest->request();
           
           typeRequest = fileRequest->type();
@@ -222,7 +222,7 @@ namespace castor{
             /* update on subrequest */
             subrequest->setSubreqId(subrequest_uuid_as_string);
             /* update it in DB */
-            dbService->updateRep(baseAddr, subrequest, false);	
+            daemon->updateRep(baseAddr, subrequest, false);	
           }
         }
         else {
@@ -254,7 +254,7 @@ namespace castor{
         }
         
         if(svcClass->hasDiskOnlyBehavior()) {   // for later use  
-          dbService->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
+          daemon->fillObj(baseAddr, svcClass, castor::OBJ_FileClass, false);
         }
       } 
       
@@ -265,11 +265,11 @@ namespace castor{
       void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
         
         /* update request on DB */
-        dbService->updateRep(baseAddr, fileRequest, false);    
+        daemon->updateRep(baseAddr, fileRequest, false);    
         fileRequest->setSvcClass(svcClass);
         
         /* fill the svcClass object using the request as a key  */
-        dbService->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
+        daemon->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
         
       }
       
@@ -299,8 +299,8 @@ namespace castor{
           castorFile->setFileClass(fileClass);
           
           // create links in db and in memory
-          dbService->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
-          dbService->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
+          daemon->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
+          daemon->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, false);
         }
         catch(castor::exception::Exception e){
           logToDlf(DLF_LVL_ERROR, STAGER_CASTORFILE_EXCEPTION, &(stgCnsHelper->cnsFileid));
@@ -378,6 +378,6 @@ namespace castor{
       
       
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor

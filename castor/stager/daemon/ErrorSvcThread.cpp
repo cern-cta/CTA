@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2007/11/21 08:23:30 $ $Author: waldron $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
  *
  * Service thread for dealing with requests that failed
  *
@@ -45,18 +45,18 @@
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
-#include "castor/stager/dbService/ErrorSvcThread.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/ErrorSvcThread.hpp"
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::dbService::ErrorSvcThread::ErrorSvcThread() throw () {}
+castor::stager::daemon::ErrorSvcThread::ErrorSvcThread() throw () {}
 
 //-----------------------------------------------------------------------------
 // select
 //-----------------------------------------------------------------------------
-castor::IObject* castor::stager::dbService::ErrorSvcThread::select()
+castor::IObject* castor::stager::daemon::ErrorSvcThread::select()
   throw() {
   try {
     // get the StagerSvc. Note that we cannot cache it since we
@@ -89,7 +89,7 @@ castor::IObject* castor::stager::dbService::ErrorSvcThread::select()
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::dbService::ErrorSvcThread::process
+void castor::stager::daemon::ErrorSvcThread::process
 (castor::IObject *param) throw() {
   // Useful variables
   castor::stager::Request* req = 0;

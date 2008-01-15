@@ -4,11 +4,11 @@
 /* it always needs to reply to the client                                                           */
 /***************************************************************************************************/
 
-#include "castor/stager/dbService/StagerSetGCHandler.hpp"
+#include "castor/stager/daemon/StagerSetGCHandler.hpp"
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 
 #include "stager_constants.h"
 #include "castor/stager/SetFileGCWeight.hpp"
@@ -26,7 +26,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -38,7 +38,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       StagerSetGCHandler::StagerSetGCHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {
@@ -88,6 +88,6 @@ namespace castor{
       {
       }
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor

@@ -7,13 +7,13 @@
 #define STAGER_REPACK_HANDLER_HPP 1
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
 
       class StagerRequestHelper;
       class StagerCnsHelper;
@@ -29,7 +29,7 @@ namespace castor{
       }; // end StagerRepackHandler class
 
 
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
 

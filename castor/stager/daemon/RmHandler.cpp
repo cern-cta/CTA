@@ -5,13 +5,13 @@
 /* it always needs to reply to the client                                        */
 /********************************************************************************/
 
-#include "castor/stager/dbService/StagerRmHandler.hpp"
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerRmHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 
 
 
@@ -32,7 +32,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -43,7 +43,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       
       
@@ -148,6 +148,6 @@ namespace castor{
         }
       }
       
-    }//end dbService
+    }//end daemon
   }//end stager
 }//end castor

@@ -3,13 +3,13 @@
 /***********************************************************************************/
 
 
-#include "castor/stager/dbService/StagerRequestHelper.hpp"
-#include "castor/stager/dbService/StagerCnsHelper.hpp"
-#include "castor/stager/dbService/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/StagerReplyHelper.hpp"
 
-#include "castor/stager/dbService/StagerRequestHandler.hpp"
-#include "castor/stager/dbService/StagerJobRequestHandler.hpp"
-#include "castor/stager/dbService/StagerGetHandler.hpp"
+#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/StagerGetHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -30,7 +30,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/StagerDlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -41,7 +41,7 @@
 
 namespace castor{
   namespace stager{
-    namespace dbService{
+    namespace daemon{
       
       StagerGetHandler::StagerGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw (castor::exception::Exception)
       {
@@ -109,7 +109,7 @@ namespace castor{
               
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-              stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
               
               // and we notify the jobManager
               m_notifyJobManager = true;
@@ -131,7 +131,7 @@ namespace castor{
                 stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
                 stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
                 try {
-                  stgRequestHelper->dbService->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+                  stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
                 }
                 catch (castor::exception::Exception e) {
                   // should never happen, we forward any exception and we delete the object to avoid a memory leak
@@ -265,6 +265,6 @@ namespace castor{
       StagerGetHandler::~StagerGetHandler()throw(){        
       }
       
-    }//end namespace dbService
+    }//end namespace daemon
   }//end namespace stager
 }//end namespace castor
