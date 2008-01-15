@@ -2,14 +2,14 @@
 /* helper class containing the objects and methods which interact to performe the response to the client             */
 /* it is needed to provide:                                                                                         */
 /*     - a common place where its objects can communicate                                                          */
-/* it is always used by: StagerPrepareToGet,Repack, PrepareToPut, PrepareToUpdate, Rm, SetFileGCWeight, PutDone   */
+/* it is always used by: PrepareToGet,Repack, PrepareToPut, PrepareToUpdate, Rm, SetFileGCWeight, PutDone   */
 /* just in case of error, by all the handlers                                                                    */
 /****************************************************************************************************************/
 
 #ifndef STAGER_REPLY_HELPER_HPP
 #define STAGER_REPLY_HELPER_HPP 1
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/FileRequest.hpp"
@@ -39,11 +39,11 @@ namespace castor{
       /* forward declaration */
       class castor::rh::IOResponse;       
       class castor::replier::RequestReplier;
-      class StagerRequestHelper;
+      class RequestHelper;
       
       
       
-      class StagerReplyHelper : public virtual castor::BaseObject{
+      class ReplyHelper : public virtual castor::BaseObject{
         
         public:
         
@@ -51,25 +51,25 @@ namespace castor{
         castor::replier::RequestReplier *requestReplier;
         
         /* constructor  */
-        StagerReplyHelper() throw(castor::exception::Exception);
+        ReplyHelper() throw(castor::exception::Exception);
         /* destructor */
-        ~StagerReplyHelper() throw();
+        ~ReplyHelper() throw();
         
         
         
         /****************************************************************************/
         /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
         /**************************************************************************/
-        void setAndSendIoResponse(StagerRequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
+        void setAndSendIoResponse(RequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception);
         
         
         /*********************************************************************************************/
         /* check if there is any subrequest left and send the endResponse to client if it is needed */
         /*******************************************************************************************/
-        void endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        void endReplyToClient(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
         
         
-      }; // end StagerReplyHelper  
+      }; // end ReplyHelper  
       
       
     }//end namespace daemon

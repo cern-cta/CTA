@@ -4,11 +4,11 @@
 #ifndef STAGER_JOB_REQUEST_HANDLER_HPP
 #define STAGER_JOB_REQUEST_HANDLER_HPP 1
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -38,11 +38,11 @@ namespace castor{
     namespace daemon{
       
       
-      class StagerJobRequestHandler : public virtual StagerRequestHandler{
+      class JobRequestHandler : public virtual RequestHandler{
         
       public:
-        StagerJobRequestHandler() throw() : m_notifyJobManager(false) {};
-        virtual ~StagerJobRequestHandler() throw() {};
+        JobRequestHandler() throw() : m_notifyJobManager(false) {};
+        virtual ~JobRequestHandler() throw() {};
         
         /* main function which must be implemented on each handler */
         virtual void handle() throw(castor::exception::Exception) = 0;
@@ -74,7 +74,7 @@ namespace castor{
         
         bool m_notifyJobManager;
         
-      }; //end class StagerJobRequestHandler
+      }; //end class JobRequestHandler
       
       
       

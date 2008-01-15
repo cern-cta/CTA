@@ -1,5 +1,5 @@
 /******************************************************************************************************/
-/* StagerPrepareToPutHandler: Constructor and implementation of the PrepareToUpdaterequest's handler */
+/* PrepareToPutHandler: Constructor and implementation of the PrepareToUpdaterequest's handler */
 /****************************************************************************************************/
 
 #ifndef STAGER_PREPARE_TO_UPDATE_HANDLER_HPP
@@ -8,11 +8,11 @@
 
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerUpdateHandler.hpp"
+#include "castor/stager/daemon/UpdateHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -40,17 +40,17 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
 
 
-      class StagerPrepareToUpdateHandler : public virtual StagerUpdateHandler {
+      class PrepareToUpdateHandler : public virtual UpdateHandler {
 	
       public:
         /* constructor */
-        StagerPrepareToUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        PrepareToUpdateHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
         /* destructor */
-        ~StagerPrepareToUpdateHandler() throw() {};
+        ~PrepareToUpdateHandler() throw() {};
         
         /* PrepareToUpdate request handler */
         void handle() throw(castor::exception::Exception);

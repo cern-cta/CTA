@@ -1,6 +1,6 @@
 /*******************************************************************************************************/
 /* handler for the SetFileGCWeight request, simply call to the stagerService->setFileGCWeight()       */
-/* since it isn't job oriented, it inherits from the StagerRequestHandler                            */
+/* since it isn't job oriented, it inherits from the RequestHandler                            */
 /* it always needs to reply to the client                                                           */
 /***************************************************************************************************/
 
@@ -8,11 +8,11 @@
 #ifndef STAGER_SET_GC_HANDLER_HPP
 #define STAGER_SET_GC_HANDLER_HPP 1
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
 #include "u64subr.h"
 
@@ -31,24 +31,24 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
       class SetFileGCWeight;
 
-      class StagerSetGCHandler : public virtual StagerRequestHandler{
+      class SetGCHandler : public virtual RequestHandler{
 
      
       public:
 	/* constructor */
-	StagerSetGCHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+	SetGCHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
 	/* destructor */
-	~StagerSetGCHandler() throw();
+	~SetGCHandler() throw();
 
 	/* SetFileGCWeight handle implementation */
 	void handle() throw(castor::exception::Exception);
 
      
-      }; //end StagerSetGCHandler class
+      }; //end SetGCHandler class
 
 
     }//end namespace daemon

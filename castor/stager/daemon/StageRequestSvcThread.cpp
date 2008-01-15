@@ -17,30 +17,30 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
+* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 17:37:11 $ $Author: itglp $
 *
 * Service thread for handling stager specific requests
 *
 * @author castor dev team
 *****************************************************************************/
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 #include "castor/stager/daemon/StageRequestSvcThread.hpp"
 
-#include "castor/stager/daemon/StagerGetHandler.hpp"
-#include "castor/stager/daemon/StagerRepackHandler.hpp"
-#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
-#include "castor/stager/daemon/StagerPrepareToPutHandler.hpp"
-#include "castor/stager/daemon/StagerPutHandler.hpp"
-#include "castor/stager/daemon/StagerPutDoneHandler.hpp"
-#include "castor/stager/daemon/StagerPrepareToUpdateHandler.hpp"
-#include "castor/stager/daemon/StagerUpdateHandler.hpp"
-#include "castor/stager/daemon/StagerRmHandler.hpp"
-#include "castor/stager/daemon/StagerSetGCHandler.hpp"
+#include "castor/stager/daemon/GetHandler.hpp"
+#include "castor/stager/daemon/RepackHandler.hpp"
+#include "castor/stager/daemon/PrepareToGetHandler.hpp"
+#include "castor/stager/daemon/PrepareToPutHandler.hpp"
+#include "castor/stager/daemon/PutHandler.hpp"
+#include "castor/stager/daemon/PutDoneHandler.hpp"
+#include "castor/stager/daemon/PrepareToUpdateHandler.hpp"
+#include "castor/stager/daemon/UpdateHandler.hpp"
+#include "castor/stager/daemon/RmHandler.hpp"
+#include "castor/stager/daemon/SetGCHandler.hpp"
 
 #include "castor/BaseObject.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -94,25 +94,25 @@ castor::stager::daemon::StageRequestSvcThread::StageRequestSvcThread() throw()
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* subRequestToProcess) throw() {
  
-  StagerRequestHelper* stgRequestHelper= NULL;
-  StagerRequestHandler* stgRequestHandler = NULL;
+  RequestHelper* stgRequestHelper= NULL;
+  RequestHandler* stgRequestHandler = NULL;
   
   try {         
     int typeRequest=0;
-    stgRequestHelper = new StagerRequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
+    stgRequestHelper = new RequestHelper(dynamic_cast<castor::stager::SubRequest*>(subRequestToProcess), typeRequest);
     
     switch(typeRequest){
       
       case OBJ_StagePutDoneRequest:
-      stgRequestHandler = new StagerPutDoneHandler(stgRequestHelper);
+      stgRequestHandler = new PutDoneHandler(stgRequestHelper);
       break;
       
       case OBJ_StageRmRequest:
-      stgRequestHandler = new StagerRmHandler(stgRequestHelper);
+      stgRequestHandler = new RmHandler(stgRequestHelper);
       break;
       
       case OBJ_SetFileGCWeight:
-      stgRequestHandler = new StagerSetGCHandler(stgRequestHelper);
+      stgRequestHandler = new SetGCHandler(stgRequestHelper);
       break;
       
       default:

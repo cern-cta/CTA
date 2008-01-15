@@ -1,6 +1,6 @@
 /************************************************************************************************************/
-/* StagerUpdateHandler: Contructor and implementation of the Update request handler                        */
-/* Since it is jobOriented, it uses the mostly part of the StagerJobRequestHandler class                  */
+/* UpdateHandler: Contructor and implementation of the Update request handler                        */
+/* Since it is jobOriented, it uses the mostly part of the JobRequestHandler class                  */
 /* Depending if the file exist, it can follow the huge flow (scheduled, as Get) or a small one (as Put)  */
 /* We dont  need to reply to the client (just in case of error )                                        */
 /*******************************************************************************************************/
@@ -8,15 +8,15 @@
 
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
-#include "castor/stager/daemon/StagerUpdateHandler.hpp"
-#include "castor/stager/daemon/StagerPutHandler.hpp"
-#include "castor/stager/daemon/StagerGetHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/UpdateHandler.hpp"
+#include "castor/stager/daemon/PutHandler.hpp"
+#include "castor/stager/daemon/GetHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -34,7 +34,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -48,7 +48,7 @@ namespace castor{
     namespace daemon{
       
       /* constructor */
-      StagerUpdateHandler::StagerUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
+      UpdateHandler::UpdateHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_StageUpdateRequest;     
@@ -57,14 +57,14 @@ namespace castor{
       
       
       /* only handler which overwrite the preprocess part due to the specific behavior related with the fileExist */
-      void StagerUpdateHandler::preHandle() throw(castor::exception::Exception)
+      void UpdateHandler::preHandle() throw(castor::exception::Exception)
       {
         
         /* get the uuid request string version and check if it is valid */
         stgRequestHelper->setRequestUuid();
         
-        /* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
-        this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+        /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
+        this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
         
         /* set the username and groupname needed to print them on the log */
         stgRequestHelper->setUsernameAndGroupname();
@@ -96,18 +96,18 @@ namespace castor{
       /************************************/
       /* handler for the update request  */
       /**********************************/
-      void StagerUpdateHandler::handle() throw(castor::exception::Exception)
+      void UpdateHandler::handle() throw(castor::exception::Exception)
       {
         stgRequestHelper->logToDlf(DLF_LVL_DEBUG, STAGER_UPDATE, &(stgCnsHelper->cnsFileid));
         
-        StagerRequestHandler* h = 0;
+        RequestHandler* h = 0;
         if(recreate) {
           // delegate to Put
-          h = new StagerPutHandler(stgRequestHelper, stgCnsHelper);
+          h = new PutHandler(stgRequestHelper, stgCnsHelper);
         }
         else {
           // delegate to Get
-          h = new StagerGetHandler(stgRequestHelper, stgCnsHelper);
+          h = new GetHandler(stgRequestHelper, stgCnsHelper);
         }      
         h->handle();   // may throw exception, just forward it - logging is done in the callee
         delete h;
@@ -116,7 +116,7 @@ namespace castor{
       
       
       /* destructor */
-      StagerUpdateHandler::~StagerUpdateHandler() throw()
+      UpdateHandler::~UpdateHandler() throw()
       {
       }
       

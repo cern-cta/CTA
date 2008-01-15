@@ -1,32 +1,32 @@
 /**********************************************************************************************/
-/* StagerRepackHandler: Constructor and implementation of the repack subrequest's handler */
-/* It inherits from the StagerJobRequestHandler and it needs to reply to the client         */
+/* RepackHandler: Constructor and implementation of the repack subrequest's handler */
+/* It inherits from the JobRequestHandler and it needs to reply to the client         */
 /*******************************************************************************************/
 
 #ifndef STAGER_REPACK_HANDLER_HPP
 #define STAGER_REPACK_HANDLER_HPP 1
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/PrepareToGetHandler.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor{
   namespace stager{
     namespace daemon{
 
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
 
-      class StagerRepackHandler : public virtual StagerPrepareToGetHandler{
+      class RepackHandler : public virtual PrepareToGetHandler{
 
       public:
         /* constructor */
-        StagerRepackHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        RepackHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
         
         virtual bool switchDiskCopiesForJob() throw (castor::exception::Exception);
 
-      }; // end StagerRepackHandler class
+      }; // end RepackHandler class
 
 
     }//end namespace daemon

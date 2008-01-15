@@ -1,11 +1,11 @@
 
 /************************************************************************************************/
-/* StagerPutDoneHandler: Constructor and implementation of the PutDone request's handle        */
+/* PutDoneHandler: Constructor and implementation of the PutDone request's handle        */
 /******************************************************************************************** */
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
 
 #include "castor/Services.hpp"
@@ -14,9 +14,9 @@
 #include "castor/stager/IJobSvc.hpp"
 
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
-#include "castor/stager/daemon/StagerPutDoneHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/PutDoneHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -35,7 +35,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -55,7 +55,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      StagerPutDoneHandler::StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
+      PutDoneHandler::PutDoneHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {     	
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_StagePutDoneRequest;
@@ -64,9 +64,9 @@ namespace castor{
       }
       
       
-      void StagerPutDoneHandler::handle() throw(castor::exception::Exception)
+      void PutDoneHandler::handle() throw(castor::exception::Exception)
       {
-        StagerReplyHelper* stgReplyHelper= NULL;
+        ReplyHelper* stgReplyHelper= NULL;
         try{
           
           /**************************************************************************/
@@ -90,7 +90,7 @@ namespace castor{
             case 1:   // ok
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
             
-            stgReplyHelper = new StagerReplyHelper();
+            stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             delete stgReplyHelper;

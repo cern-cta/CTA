@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
  *
  * Service thread for dealing with requests that failed
  *
@@ -45,7 +45,7 @@
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/ErrorSvcThread.hpp"
 
 //-----------------------------------------------------------------------------
@@ -59,13 +59,13 @@ castor::stager::daemon::ErrorSvcThread::ErrorSvcThread() throw () {}
 castor::IObject* castor::stager::daemon::ErrorSvcThread::select()
   throw() {
   try {
-    // get the StagerSvc. Note that we cannot cache it since we
+    // get the Svc. Note that we cannot cache it since we
     // would not be thread safe
     castor::Services *svcs = castor::BaseObject::services();
     castor::IService *svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
     castor::stager::IStagerSvc *stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
     if (0 == stgSvc) {
-      // "Could not get StagerSvc"
+      // "Could not get Svc"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "ErrorSvcThread::select")};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_ERRSVC_GETSVC, 1, params);
@@ -104,13 +104,13 @@ void castor::stager::daemon::ErrorSvcThread::process
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
   try {
-    // get the StagerSvc. Note that we cannot cache it since we
+    // get the Svc. Note that we cannot cache it since we
     // would not be thread safe
     svcs = castor::BaseObject::services();
     castor::IService* svc = svcs->service("DbStagerSvc", castor::SVC_DBSTAGERSVC);
     stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
     if (0 == stgSvc) {
-      // "Could not get StagerSvc"
+      // "Could not get Svc"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Function", "ErrorSvcThread::process")};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_GETSVC, 1, params);

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/stager/daemon/StagerMainDaemon.cpp
+ *                castor/stager/daemon/StagerDaemon.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2008/01/08 10:42:02 $ $Author: sponcec3 $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/01/15 17:37:11 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -36,25 +36,24 @@
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/PortsConfig.hpp"
-#include "castor/server/BaseDaemon.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 
-#include "castor/stager/dbService/StagerMainDaemon.hpp"
-#include "castor/stager/dbService/JobRequestSvcThread.hpp"
-#include "castor/stager/dbService/PrepRequestSvcThread.hpp"
-#include "castor/stager/dbService/StageRequestSvcThread.hpp"
-#include "castor/stager/dbService/QueryRequestSvcThread.hpp"
-#include "castor/stager/dbService/ErrorSvcThread.hpp"
-#include "castor/stager/dbService/JobSvcThread.hpp"
-#include "castor/stager/dbService/GcSvcThread.hpp"
+#include "castor/stager/daemon/StagerDaemon.hpp"
+#include "castor/stager/daemon/JobRequestSvcThread.hpp"
+#include "castor/stager/daemon/PrepRequestSvcThread.hpp"
+#include "castor/stager/daemon/StageRequestSvcThread.hpp"
+#include "castor/stager/daemon/QueryRequestSvcThread.hpp"
+#include "castor/stager/daemon/ErrorSvcThread.hpp"
+#include "castor/stager/daemon/JobSvcThread.hpp"
+#include "castor/stager/daemon/GcSvcThread.hpp"
 
-#include "castor/stager/dbService/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 
 int main(int argc, char* argv[]){
   try{
 
-    castor::stager::dbService::StagerMainDaemon stagerDaemon;
+    castor::stager::daemon::StagerDaemon stagerDaemon;
     
     castor::stager::IStagerSvc* stgService =
       dynamic_cast<castor::stager::IStagerSvc*>(
@@ -70,32 +69,32 @@ int main(int argc, char* argv[]){
     /*******************************/
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("JobRequestSvcThread", 
-        new castor::stager::dbService::JobRequestSvcThread()));
+        new castor::stager::daemon::JobRequestSvcThread()));
     
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("PrepRequestSvcThread", 
-        new castor::stager::dbService::PrepRequestSvcThread()));
+        new castor::stager::daemon::PrepRequestSvcThread()));
 
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("StageRequestSvcThread", 
-        new castor::stager::dbService::StageRequestSvcThread()));
+        new castor::stager::daemon::StageRequestSvcThread()));
      
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("QueryRequestSvcThread", 
-        new castor::stager::dbService::QueryRequestSvcThread()));
+        new castor::stager::daemon::QueryRequestSvcThread()));
      
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("ErrorSvcThread", 
-        new castor::stager::dbService::ErrorSvcThread()));
+        new castor::stager::daemon::ErrorSvcThread()));
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("jobSvcThread", 
-        new castor::stager::dbService::JobSvcThread()));
+        new castor::stager::daemon::JobSvcThread()));
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("GcSvcThread", 
-        new castor::stager::dbService::GcSvcThread()));
+        new castor::stager::daemon::GcSvcThread()));
 
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
@@ -117,11 +116,11 @@ int main(int argc, char* argv[]){
 	      << sstrerror(e.code()) << std::endl
 	      << e.getMessage().str() << std::endl;
 
-    // "Exception caught when starting Stager"
+    // "Exception caught when starting "
     castor::dlf::Param params[] =
       {castor::dlf::Param("Code", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::dbService::STAGER_DAEMON_EXCEPTION, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::daemon::STAGER_DAEMON_EXCEPTION, 2, params);
   } catch (...) {
     std::cerr << "Caught general exception!" << std::endl;
   }
@@ -133,24 +132,24 @@ int main(int argc, char* argv[]){
 /******************************************************************************************/
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /****************************************************************************************/
-castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw (castor::exception::Exception)
-  : castor::server::BaseDaemon("Stager") {
+castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::Exception)
+  : castor::server::BaseDaemon("") {
 	
   castor::dlf::Message stagerDlfMessages[]={
     
     /***************************************/
-    /* StagerMainDaemon: To DLF_LVL_DEBUG */
+    /* StagerDaemon: To DLF_LVL_DEBUG */
     /*************************************/
     
-    { STAGER_DAEMON_START, "Stager Daemon started"},
-    { STAGER_DAEMON_EXECUTION, "Stager Daemon execution"},
-    { STAGER_DAEMON_ERROR_CONFIG, "Stager Daemon configuration error"},
-    { STAGER_DAEMON_EXCEPTION, "Exception caught when starting Stager"},
+    { STAGER_DAEMON_START, " StagerDaemon started"},
+    { STAGER_DAEMON_EXECUTION, " StagerDaemon execution"},
+    { STAGER_DAEMON_ERROR_CONFIG, " StagerDaemon configuration error"},
+    { STAGER_DAEMON_EXCEPTION, "Exception caught when starting "},
     { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
     { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
     
     /*******************************************************************************************************/
-    /* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
+    /* Constants related with the DBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
     /*****************************************************************************************************/
     /* JobRequestSvcThread */
     { STAGER_JOBREQSVC_CREATION, "Created new JobRequestSvc Thread"},
@@ -232,7 +231,7 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw (castor::e
     
     /************/
     /* ErrorSvc */
-    { STAGER_ERRSVC_GETSVC,  "Could not get StagerSvc"},
+    { STAGER_ERRSVC_GETSVC,  "Could not get Svc"},
     { STAGER_ERRSVC_EXCEPT,  "Unexpected exception caught"},
     { STAGER_ERRSVC_NOREQ,   "No request associated with subrequest ! Cannot answer !"},
     { STAGER_ERRSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
@@ -268,7 +267,7 @@ castor::stager::dbService::StagerMainDaemon::StagerMainDaemon() throw (castor::e
 /*************************************************************/
 /* help method for the configuration (from the command line) */
 /*************************************************************/
-void castor::stager::dbService::StagerMainDaemon::help(std::string programName)
+void castor::stager::daemon::StagerDaemon::help(std::string programName)
 {
   std::cout << "Usage: " << programName << " [options]\n"
     "\n"
@@ -276,7 +275,7 @@ void castor::stager::dbService::StagerMainDaemon::help(std::string programName)
     "\n"
     "\t--Jthreads    or -J {integer >= 0}  \tNumber of threads for the Job requests service\n"
     "\t--Pthreads    or -P {integer >= 0}  \tNumber of threads for the Prepare requests service\n"
-    "\t--Sthreads    or -S {integer >= 0}  \tNumber of threads for the Stager requests service\n"
+    "\t--Sthreads    or -S {integer >= 0}  \tNumber of threads for the Stage requests service\n"
     "\t--Qthreads    or -Q {integer >= 0}  \tNumber of threads for the Query requests service\n"
     "\t--Ethreads    or -E {integer >= 0}  \tNumber of threads for the Error service\n"
     "\t--jthreads    or -j {integer >= 0}  \tNumber of threads for the Job service\n"

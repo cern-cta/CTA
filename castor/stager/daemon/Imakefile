@@ -36,22 +36,22 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS) -DORACDBC=1
 
 LIBS = -lshift -lcastorCnvs -lcastorClient
 DBSERVICEDAEMONBIN_SRCS = \
-	StagerCnsHelper.cpp \
-	StagerGetHandler.cpp \
-	StagerJobRequestHandler.cpp \
-	StagerMainDaemon.cpp \
-	StagerPrepareToGetHandler.cpp \
-	StagerPrepareToPutHandler.cpp \
-	StagerPrepareToUpdateHandler.cpp \
-	StagerPutDoneHandler.cpp \
-	StagerPutHandler.cpp \
-	StagerRepackHandler.cpp \
-	StagerReplyHelper.cpp \
-	StagerRequestHelper.cpp \
-	StagerRmHandler.cpp \
-	StagerSetGCHandler.cpp \
-	StagerUpdateHandler.cpp \
-	StagerRequestHandler.cpp \
+	CnsHelper.cpp \
+	GetHandler.cpp \
+	JobRequestHandler.cpp \
+	StagerDaemon.cpp \
+	PrepareToGetHandler.cpp \
+	PrepareToPutHandler.cpp \
+	PrepareToUpdateHandler.cpp \
+	PutDoneHandler.cpp \
+	PutHandler.cpp \
+	RepackHandler.cpp \
+	ReplyHelper.cpp \
+	RequestHelper.cpp \
+	RmHandler.cpp \
+	SetGCHandler.cpp \
+	UpdateHandler.cpp \
+	RequestHandler.cpp \
 	BaseRequestSvcThread.cpp \
 	PrepRequestSvcThread.cpp \
 	StageRequestSvcThread.cpp \
@@ -101,7 +101,7 @@ install.man: $(MANDIR) $(MANPAGES)
 exportman: $(EXPORTMANPAGES)
 
 clean:
-	@echo Stager in CurDir
+	@echo  in CurDir
 	-@RemoveFiles(FilesToClean)
 
 clobber:	clean

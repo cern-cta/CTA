@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.66 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2008/01/15 17:37:11 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -62,7 +62,7 @@
 #include "castor/rh/FileQryResponse.hpp"
 #include "castor/query/IQuerySvc.hpp"
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 #include "stager_client_api.h"
 #include "Cns_api.h"
 #include "u64subr.h"

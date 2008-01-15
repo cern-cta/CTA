@@ -1,14 +1,14 @@
 /*******************************************************************************************************/
 /* handler for the SetFileGCWeight request, simply call to the stagerService->setFileGCWeight()       */
-/* since it isn't job oriented, it inherits from the StagerRequestHandler                            */
+/* since it isn't job oriented, it inherits from the RequestHandler                            */
 /* it always needs to reply to the client                                                           */
 /***************************************************************************************************/
 
-#include "castor/stager/daemon/StagerSetGCHandler.hpp"
+#include "castor/stager/daemon/SetGCHandler.hpp"
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
 #include "stager_constants.h"
 #include "castor/stager/SetFileGCWeight.hpp"
@@ -26,7 +26,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -40,16 +40,16 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      StagerSetGCHandler::StagerSetGCHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception)
+      SetGCHandler::SetGCHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_SetFileGCWeight;
       }
       
-      void StagerSetGCHandler::handle() throw(castor::exception::Exception)
+      void SetGCHandler::handle() throw(castor::exception::Exception)
       {
         
-        StagerReplyHelper* stgReplyHelper=NULL;
+        ReplyHelper* stgReplyHelper=NULL;
         try{
           
           stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_SETGC, &(stgCnsHelper->cnsFileid));
@@ -62,7 +62,7 @@ namespace castor{
           
           stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
           
-          stgReplyHelper = new StagerReplyHelper();
+          stgReplyHelper = new ReplyHelper();
           stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
           stgReplyHelper->endReplyToClient(stgRequestHelper);
           delete stgReplyHelper;
@@ -84,7 +84,7 @@ namespace castor{
       
       
       
-      StagerSetGCHandler::~StagerSetGCHandler() throw()
+      SetGCHandler::~SetGCHandler() throw()
       {
       }
       

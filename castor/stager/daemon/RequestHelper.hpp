@@ -2,7 +2,7 @@
 /* Helper class containing the objects and methods which interact to performe the processing of the request      */
 /* it is needed to provide:                                                                                     */
 /*     - a common place where its objects can communicate                                                      */
-/*     - a way to pass the set of objects from the main flow (StagerDBService thread) to the specific handler */
+/*     - a way to pass the set of objects from the main flow (DBService thread) to the specific handler */
 /* It is an attribute for all the request handlers                                                           */
 /* **********************************************************************************************************/
 
@@ -10,7 +10,7 @@
 #ifndef STAGER_REQUEST_HELPER_HPP
 #define STAGER_REQUEST_HELPER_HPP 1
 
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
 
 #include "castor/IObject.hpp"
 #include "castor/stager/IStagerSvc.hpp"
@@ -45,7 +45,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include <vector>
 #include <iostream>
@@ -67,11 +67,11 @@ namespace castor{
       class castor::stager::SvcClass;
       class castor::stager::CastorFile;
       class castor::stager::FileClass;
-      class castor::stager::daemon::StagerCnsHelper;
+      class castor::stager::daemon::CnsHelper;
     
       
 
-      class StagerRequestHelper : public virtual castor::BaseObject{
+      class RequestHelper : public virtual castor::BaseObject{
 
 
 
@@ -111,10 +111,10 @@ namespace castor{
 
 	/****************************************************/
 	/*  called on the different thread (job, pre, stg) */
-	StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception);
+	RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception);
 
 	/* destructor */
-	~StagerRequestHelper() throw();
+	~RequestHelper() throw();
 
 
 	/****************************************************************************************/
@@ -146,9 +146,9 @@ namespace castor{
 
 
 	/*******************************************************************************************************************************************/
-	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
+	/*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in Request.jobOriented()*/
 	/*****************************************************************************************************************************************/
-  void getCastorFileFromSvcClass(castor::stager::daemon::StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception);
+  void getCastorFileFromSvcClass(castor::stager::daemon::CnsHelper* stgCnsHelper) throw(castor::exception::Exception);
        
 
 	/************************************************************************************/
@@ -170,13 +170,13 @@ namespace castor{
   /**
    * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)
    * @param level the DLF logging level
-   * @param messageNb the message number as defined in StagerDlfMessages.hpp
+   * @param messageNb the message number as defined in DlfMessages.hpp
    * @param fid the fileId structure if needed
    */
   void logToDlf(int level, int messageNb, Cns_fileid* fid = 0) throw();
 	
 
-      }; //end StagerRequestHelper class
+      }; //end RequestHelper class
     }//end namespace daemon
   }//end namespace stager
 }//end namespace castor

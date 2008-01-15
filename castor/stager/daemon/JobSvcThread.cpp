@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.52 $ $Release$ $Date: 2008/01/15 14:50:46 $ $Author: itglp $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.53 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
  *
  * Service thread for job related requests
  *
@@ -62,7 +62,7 @@
 #include "castor/rh/GetUpdateStartResponse.hpp"
 #include "castor/rh/Disk2DiskCopyStartResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/JobSvcThread.hpp"
 
 //-----------------------------------------------------------------------------

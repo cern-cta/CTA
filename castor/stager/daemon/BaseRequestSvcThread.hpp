@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -36,8 +36,8 @@
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/server/SelectProcessThread.hpp"
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
 
 
 namespace castor {
@@ -58,7 +58,7 @@ namespace castor {
         /*************************************************************************/
         virtual castor::IObject* select() throw();
         
-        void handleException(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw();
+        void handleException(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw();
         
       protected:
         std::string m_name;

@@ -1,16 +1,16 @@
 /**************************************************************************************************/
-/* StagerPrepareToPutHandler: Constructor and implementation of the PrepareToPut request handler */
+/* PrepareToPutHandler: Constructor and implementation of the PrepareToPut request handler */
 /************************************************************************************************/
 
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
-#include "castor/stager/daemon/StagerPrepareToPutHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/PrepareToPutHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -28,7 +28,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -43,7 +43,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      StagerPrepareToPutHandler::StagerPrepareToPutHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
+      PrepareToPutHandler::PrepareToPutHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
@@ -53,7 +53,7 @@ namespace castor{
       /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
-      void StagerPrepareToPutHandler::handlerSettings() throw(castor::exception::Exception)
+      void PrepareToPutHandler::handlerSettings() throw(castor::exception::Exception)
       {	
         /* for the moment, there isnt needed to set it */
       }
@@ -64,9 +64,9 @@ namespace castor{
       /****************************************************************************************/
       /* handler for the PrepareToPut request  */
       /****************************************************************************************/
-      void StagerPrepareToPutHandler::handle() throw(castor::exception::Exception)
+      void PrepareToPutHandler::handle() throw(castor::exception::Exception)
       {
-        StagerReplyHelper* stgReplyHelper=NULL;
+        ReplyHelper* stgReplyHelper=NULL;
         try{
           
           /**************************************************************************/
@@ -93,7 +93,7 @@ namespace castor{
             stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
             
             /* we are gonna replyToClient so we dont  updateRep on DB explicitly */
-            stgReplyHelper = new StagerReplyHelper();
+            stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No Error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             
@@ -120,7 +120,7 @@ namespace castor{
       
       
       
-      StagerPrepareToPutHandler::~StagerPrepareToPutHandler()throw(){
+      PrepareToPutHandler::~PrepareToPutHandler()throw(){
       }
       
       

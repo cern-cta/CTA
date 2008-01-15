@@ -1,5 +1,5 @@
 /****************************************************************************************************************************/
-/* handler for the Update subrequest, since it is jobOriented, it uses the mostly part of the StagerJobRequestHandler class*/
+/* handler for the Update subrequest, since it is jobOriented, it uses the mostly part of the JobRequestHandler class*/
 /* depending if the file exist, it can follow the huge flow (jobOriented, as Get) or a small one                          */
 /*************************************************************************************************************************/
 
@@ -8,12 +8,12 @@
 #define STAGER_UPDATE_HANDLER_HPP 1
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 
 
 #include "stager_uuid.h"
@@ -42,10 +42,10 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
       
-      class StagerUpdateHandler : public virtual StagerJobRequestHandler{
+      class UpdateHandler : public virtual JobRequestHandler{
         
       protected:
         
@@ -54,9 +54,9 @@ namespace castor{
       public:
       
         /* constructor */
-        StagerUpdateHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+        UpdateHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
         /* destructor */
-        ~StagerUpdateHandler() throw();
+        ~UpdateHandler() throw();
         
         /* set the internal attribute "toRecreateCastorFile depending on fileExist" */
         /* which determines the real flow of the handler */
@@ -66,7 +66,7 @@ namespace castor{
         void handle() throw(castor::exception::Exception);
         
         
-      }; //end StagerUpdateHandler class
+      }; //end UpdateHandler class
       
       
     }//end namespace daemon

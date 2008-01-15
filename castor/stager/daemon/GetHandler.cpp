@@ -1,15 +1,15 @@
 /*************************************************************************************/
-/* StagerGetHandler: Constructor and implementation of the get subrequest's handler */
+/* GetHandler: Constructor and implementation of the get subrequest's handler */
 /***********************************************************************************/
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
-#include "castor/stager/daemon/StagerGetHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/GetHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -30,7 +30,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -43,7 +43,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      StagerGetHandler::StagerGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw (castor::exception::Exception)
+      GetHandler::GetHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper) throw (castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
@@ -54,7 +54,7 @@ namespace castor{
       /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
-      void StagerGetHandler::handlerSettings() throw(castor::exception::Exception)
+      void GetHandler::handlerSettings() throw(castor::exception::Exception)
       {	
         this->maxReplicaNb = stgRequestHelper->svcClass->maxReplicaNb();	
         this->replicationPolicy = stgRequestHelper->svcClass->replicationPolicy();
@@ -70,7 +70,7 @@ namespace castor{
       /*     switch(getDiskCopyForJob):         */                                     
       /*        case 0,1: (staged) jobManager  */
       /* to be overwriten in Repack, PrepareToGetHandler, PrepareToUpdateHandler  */
-      bool StagerGetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
+      bool GetHandler::switchDiskCopiesForJob() throw(castor::exception::Exception)
       {
         int result = stgRequestHelper->stagerService->getDiskCopiesForJob(stgRequestHelper->subrequest, sources);
         
@@ -169,7 +169,7 @@ namespace castor{
       /****************************************************************************************/
       /* handler for the get subrequest method */
       /****************************************************************************************/
-      void StagerGetHandler::handle() throw (castor::exception::Exception)
+      void GetHandler::handle() throw (castor::exception::Exception)
       {
         try{
           handlerSettings();
@@ -197,7 +197,7 @@ namespace castor{
       /* - maxReplicaNb */
       /* - replicationPolicy (call to the expert system) */
       /**********************************************************************************/
-      void StagerGetHandler::processReplica() throw(castor::exception::Exception)
+      void GetHandler::processReplica() throw(castor::exception::Exception)
       {
         bool replicate = true;
         
@@ -229,7 +229,7 @@ namespace castor{
       /***************************************************************************************************************************/
       /* if the replicationPolicy exists, ask the expert system to get maxReplicaNb for this file                                */
       /**************************************************************************************************************************/
-      int StagerGetHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
+      int GetHandler::checkReplicationPolicy() throw(castor::exception::Exception)/* changes coming from the latest stager_db_service.cpp */
       {
         const std::string filename = stgRequestHelper->subrequest->fileName();
         std::string expQuestion=replicationPolicy + " " + filename;
@@ -262,7 +262,7 @@ namespace castor{
       }
       
        
-      StagerGetHandler::~StagerGetHandler()throw(){        
+      GetHandler::~GetHandler()throw(){        
       }
       
     }//end namespace daemon

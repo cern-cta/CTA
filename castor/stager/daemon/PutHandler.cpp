@@ -1,16 +1,16 @@
 /****************************************************************************/
-/* StagerPutHandler: Constructor and implementation of Put request handler */
+/* PutHandler: Constructor and implementation of Put request handler */
 /**************************************************************************/
 
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
-#include "castor/stager/daemon/StagerPutHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/PutHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -29,7 +29,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -42,7 +42,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      StagerPutHandler::StagerPutHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
+      PutHandler::PutHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
@@ -52,7 +52,7 @@ namespace castor{
       /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
-      void StagerPutHandler::handlerSettings() throw(castor::exception::Exception)
+      void PutHandler::handlerSettings() throw(castor::exception::Exception)
       {	
         /* we don't care about: maxReplicaNb, replicationPolicy, hostlist */
         
@@ -78,7 +78,7 @@ namespace castor{
       /*********************************/
       /* handler for the Put request  */
       /*******************************/
-      void StagerPutHandler::handle() throw(castor::exception::Exception)
+      void PutHandler::handle() throw(castor::exception::Exception)
       {
         castor::stager::DiskCopyForRecall* dc = 0;
         try{
@@ -134,7 +134,7 @@ namespace castor{
           if(dc) delete dc;
           throw(e);
         }
-      }/* end StagerPutHandler::handle()*/
+      }/* end PutHandler::handle()*/
       
       
       

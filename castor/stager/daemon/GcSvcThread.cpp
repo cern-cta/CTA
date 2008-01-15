@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
  *
  * Service thread for garbage collection related requests
  *
@@ -48,7 +48,7 @@
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/BasicResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 #include "castor/stager/daemon/GcSvcThread.hpp"
 
 //-----------------------------------------------------------------------------

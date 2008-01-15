@@ -2,12 +2,12 @@
 /* Helper class containing the objects and methods which interact to performe the processing of the request      */
 /* it is needed to provide:                                                                                     */
 /*     - a common place where its objects can communicate                                                      */
-/*     - a way to pass the set of objects from the main flow (StagerDBService thread) to the specific handler */
+/*     - a way to pass the set of objects from the main flow (DBService thread) to the specific handler */
 /* It is an attribute for all the request handlers                                                           */
 /* **********************************************************************************************************/
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
 
 
 #include "castor/BaseAddress.hpp"
@@ -45,7 +45,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -65,7 +65,7 @@ namespace castor{
       
       
       /* constructor-> return the request type, called on the different thread (job, pre, stg) */
-      StagerRequestHelper::StagerRequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception){	
+      RequestHelper::RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception){	
         
         try{
           // for monitoring purposes
@@ -98,7 +98,7 @@ namespace castor{
         }
         catch(castor::exception::Exception e){
           // should never happen: the db service is initialized in the main as well
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","StagerRequestHelper constructor")};
+          castor::dlf::Param params[]={	castor::dlf::Param("Function","RequestHelper constructor")};
           
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_SERVICES_EXCEPTION, 1 ,params);	    	  
           e.getMessage()<< "Error on the Database";
@@ -108,7 +108,7 @@ namespace castor{
       
       
       /* destructor */
-      StagerRequestHelper::~StagerRequestHelper() throw()
+      RequestHelper::~RequestHelper() throw()
       {
         if(fileRequest && subrequest) {
           // Calculate statistics
@@ -147,7 +147,7 @@ namespace castor{
       /************************************************************************************/
       /* set the username and groupname string versions using id2name c function  */
       /**********************************************************************************/
-      void StagerRequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception){
+      void RequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception){
         struct passwd *this_passwd = 0;
         struct group *this_gr = 0;
         try{
@@ -174,7 +174,7 @@ namespace castor{
           groupname = this_gr->gr_name;
         }catch(castor::exception::Exception e){
           castor::dlf::Param params[]={ castor::dlf::Param("fileName",subrequest->fileName()),
-            castor::dlf::Param("Function", "StagerRequestHelper->setUsernameAndGroupname")
+            castor::dlf::Param("Function", "RequestHelper->setUsernameAndGroupname")
           };
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 2 ,params);	    
           
@@ -188,7 +188,7 @@ namespace castor{
       /*****************************************/
       /* get request uuid needed to log on dlf */
       /*****************************************/
-      void StagerRequestHelper::setRequestUuid() throw(castor::exception::Exception)
+      void RequestHelper::setRequestUuid() throw(castor::exception::Exception)
       {
         if(!fileRequest->reqId().empty()){
           /*convert to the Cuuid_t version and copy in our thread safe variable */
@@ -208,7 +208,7 @@ namespace castor{
       /* and copy to the thread-safe variables (subrequestUuid and requestUuid)               */
       /***************************************************************************************/
       /* get or create subrequest uuid */
-      void StagerRequestHelper::setSubrequestUuid() throw(castor::exception::Exception)
+      void RequestHelper::setSubrequestUuid() throw(castor::exception::Exception)
       {
         char subrequest_uuid_as_string[CUUID_STRING_LEN+1];	
         subrequestUuid = nullCuuid;
@@ -236,7 +236,7 @@ namespace castor{
       /* get svClass by selecting with stagerService                                         */
       /* (using the svcClassName:getting from request OR defaultName (!!update on request)) */
       /*************************************************************************************/
-      void StagerRequestHelper::getSvcClass() throw(castor::exception::Exception){
+      void RequestHelper::getSvcClass() throw(castor::exception::Exception){
         this->svcClassName=fileRequest->svcClassName(); 
         
         if(this->svcClassName.empty()){  /* we set the default svcClassName */
@@ -262,7 +262,7 @@ namespace castor{
       /*******************************************************************************/
       /* update request in DB, create and fill request->svcClass link on DB         */ 
       /*****************************************************************************/
-      void StagerRequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
+      void RequestHelper::linkRequestToSvcClassOnDB() throw(castor::exception::Exception){
         
         /* update request on DB */
         daemon->updateRep(baseAddr, fileRequest, false);    
@@ -275,9 +275,9 @@ namespace castor{
       
       
       /*******************************************************************************************************************************************/
-      /*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in StagerRequest.jobOriented()*/
+      /*  link the castorFile to the ServiceClass( selecting with stagerService using cnsFilestat.name) ): called in Request.jobOriented()*/
       /*****************************************************************************************************************************************/      
-      void StagerRequestHelper::getCastorFileFromSvcClass(StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
+      void RequestHelper::getCastorFileFromSvcClass(CnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
         try{
           // get the fileClass by name
@@ -316,7 +316,7 @@ namespace castor{
       /* check if the user (euid,egid) has the ritght permission for the request's type                   */
       /* note that we don' t check the permissions for SetFileGCWeight and PutDone request (true)        */
       /**************************************************************************************************/
-      void StagerRequestHelper::checkFilePermission(bool fileCreated) throw(castor::exception::Exception)
+      void RequestHelper::checkFilePermission(bool fileCreated) throw(castor::exception::Exception)
       {
         try{
           std::string filename = this->subrequest->fileName();
@@ -358,7 +358,7 @@ namespace castor{
       }
       
             
-      void StagerRequestHelper::logToDlf(int level, int messageNb, Cns_fileid* fid) throw()
+      void RequestHelper::logToDlf(int level, int messageNb, Cns_fileid* fid) throw()
       {
         castor::dlf::Param params[] = {
           castor::dlf::Param(subrequestUuid),

@@ -1,17 +1,17 @@
 
 /************************************************************************************/
 /* handler for the Rm subrequest, simply call to the stagerService->stageRm()      */
-/* since it isn' t job oriented, it inherits from the StagerRequestHandler        */
+/* since it isn' t job oriented, it inherits from the RequestHandler        */
 /* it always needs to reply to the client                                        */
 /********************************************************************************/
 
-#include "castor/stager/daemon/StagerRmHandler.hpp"
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RmHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
 
 
@@ -32,7 +32,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -48,22 +48,22 @@ namespace castor{
       
       
       /* constructor */
-      StagerRmHandler::StagerRmHandler(StagerRequestHelper* stgRequestHelper) throw() :
-      StagerRequestHandler()
+      RmHandler::RmHandler(RequestHelper* stgRequestHelper) throw() :
+      RequestHandler()
       {
         this->stgRequestHelper = stgRequestHelper;
         this->typeRequest = OBJ_StageRmRequest;
       }
       
       
-      void StagerRmHandler::preHandle() throw(castor::exception::Exception)
+      void RmHandler::preHandle() throw(castor::exception::Exception)
       {
         
         /* get the uuid request string version and check if it is valid */
         stgRequestHelper->setRequestUuid();
         
-        /* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
-        this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+        /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
+        this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
         
         
         /* set the username and groupname needed to print them on the log */
@@ -80,7 +80,7 @@ namespace castor{
       }
         
       
-      void StagerRmHandler::handle() throw(castor::exception::Exception)
+      void RmHandler::handle() throw(castor::exception::Exception)
       {
         // check the existence of the file. Don't stop if ENOENT
         try {
@@ -117,7 +117,7 @@ namespace castor{
           svcClassId = stgRequestHelper->svcClass->id();
         }
           
-        StagerReplyHelper* stgReplyHelper=NULL;
+        ReplyHelper* stgReplyHelper=NULL;
         try{
           // try to perform the stageRm; internally, the method checks for non existing files
           if(stgRequestHelper->stagerService->stageRm(stgRequestHelper->subrequest,
@@ -125,7 +125,7 @@ namespace castor{
             
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
             
-            stgReplyHelper = new StagerReplyHelper();	  
+            stgReplyHelper = new ReplyHelper();	  
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             delete stgReplyHelper;

@@ -1,6 +1,6 @@
 /**********************************************************************************************/
-/* StagerPrepareToGetHandler: Constructor and implementation of the get subrequest's handler */
-/* It inherits from the StagerJobRequestHandler and it needs to reply to the client         */
+/* PrepareToGetHandler: Constructor and implementation of the get subrequest's handler */
+/* It inherits from the JobRequestHandler and it needs to reply to the client         */
 /*******************************************************************************************/
 
 
@@ -9,12 +9,12 @@
 
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 
 
 #include "stager_uuid.h"
@@ -47,18 +47,18 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
       
-      class StagerPrepareToGetHandler : public virtual StagerJobRequestHandler{
+      class PrepareToGetHandler : public virtual JobRequestHandler{
 
 	
       public:
 
 	/* constructor */
-	StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
+	PrepareToGetHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
 	/* destructor */
-	~StagerPrepareToGetHandler() throw();
+	~PrepareToGetHandler() throw();
 
 	void handlerSettings() throw(castor::exception::Exception);
 
@@ -75,7 +75,7 @@ namespace castor{
 	/* PrepareToGet request handler */
         void handle() throw(castor::exception::Exception);
 
-      }; //end StagerPrepareToGetHandler class
+      }; //end PrepareToGetHandler class
 
 
     }//end namespace daemon

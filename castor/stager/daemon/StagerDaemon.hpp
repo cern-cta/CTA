@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/stager/daemon/StagerMainDaemon.hpp
+ *                castor/stager/daemon/StagerDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/10/18 16:48:52 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/01/15 17:37:11 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -42,21 +42,21 @@ namespace castor{
   
   namespace stager{
     
-    namespace dbService{
+    namespace daemon{
 
-      class StagerMainDaemon : public castor::server::BaseDaemon {
+      class StagerDaemon : public castor::server::BaseDaemon {
 
       public:
         /*** constructor ***/
-        StagerMainDaemon() throw (castor::exception::Exception);
+        StagerDaemon() throw (castor::exception::Exception);
         /*** destructor ***/
-        virtual ~StagerMainDaemon() throw() {};
+        virtual ~StagerDaemon() throw() {};
       
         void help(std::string programName);
 
-      }; /* end class StagerMainDaemon */
+      }; /* end class StagerDaemon */
 
-    }//end namespace dbService
+    }//end namespace daemon
 
   }//end namespace stager
 

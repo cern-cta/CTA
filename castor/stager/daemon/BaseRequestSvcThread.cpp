@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/15 14:50:45 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/daemon/BaseRequestSvcThread.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
@@ -76,7 +76,7 @@ castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() 
 // handleException
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::BaseRequestSvcThread::handleException(
-  StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw() {
+  RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw() {
   if(stgRequestHelper == 0 || stgRequestHelper->daemon == 0 || stgRequestHelper->subrequest == 0) {
     // exception thrown before being able to do anything with the db
     // we can't do much here...
@@ -87,7 +87,7 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
   if(stgRequestHelper->fileRequest != NULL) {
     try {
       // inform the client about the error
-      StagerReplyHelper *stgReplyHelper = new StagerReplyHelper();
+      ReplyHelper *stgReplyHelper = new ReplyHelper();
       stgReplyHelper->setAndSendIoResponse(stgRequestHelper, (stgCnsHelper ? &(stgCnsHelper->cnsFileid) : 0), errorCode, errorMessage);
       stgReplyHelper->endReplyToClient(stgRequestHelper);
       delete stgReplyHelper;

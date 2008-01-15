@@ -1,6 +1,6 @@
 
 /*************************************************************************************/
-/* StagerGetHandler: Constructor and implementation of the get subrequest's handler */
+/* GetHandler: Constructor and implementation of the get subrequest's handler */
 /***********************************************************************************/
 
 #ifndef STAGER_GET_HANDLER_HPP
@@ -9,12 +9,12 @@
 
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 
 
 #include "stager_uuid.h"
@@ -47,18 +47,18 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
       
-      class StagerGetHandler : public virtual StagerJobRequestHandler{
+      class GetHandler : public virtual JobRequestHandler{
         
         
       public:
 
         /* constructor */
-        StagerGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
+        GetHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
         /* destructor */
-        ~StagerGetHandler() throw();
+        ~GetHandler() throw();
         
         void handlerSettings() throw(castor::exception::Exception);
         
@@ -84,7 +84,7 @@ namespace castor{
         /// list of available diskcopies for the request to be scheduled        
         std::list<castor::stager::DiskCopyForRecall *> sources;
                 
-      }; // end StagerGetHandler class
+      }; // end GetHandler class
       
       
     }//end namespace daemon

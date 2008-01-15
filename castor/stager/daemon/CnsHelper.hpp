@@ -27,7 +27,7 @@
 #include "dlf_api.h"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -42,7 +42,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      class StagerCnsHelper : public virtual castor::BaseObject{
+      class CnsHelper : public virtual castor::BaseObject{
         
       private:
       
@@ -57,8 +57,8 @@ namespace castor{
         uid_t euid;/* stgRequestHelper->fileRequest->euid() */ 
         uid_t egid;/* stgRequestHelper->fileRequest->egid() */
         
-        StagerCnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception);
-        ~StagerCnsHelper() throw();
+        CnsHelper(Cuuid_t requestUuid) throw(castor::exception::Exception);
+        ~CnsHelper() throw();
         
         
         /****************************************************************************************/
@@ -82,7 +82,7 @@ namespace castor{
         bool checkFileOnNameServer(castor::stager::SubRequest* subReq, castor::stager::SvcClass* svcClass)
           throw(castor::exception::Exception);
         
-      }; // end StagerCnsHelper class
+      }; // end CnsHelper class
     }//end namespace daemon
   }// end namespace stager
 }// end namespace castor

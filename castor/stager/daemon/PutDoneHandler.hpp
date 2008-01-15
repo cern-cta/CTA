@@ -1,5 +1,5 @@
 /*************************************************************************************************/
-/* StagerPutDoneHandler: Constructor and implementation of the PutDone request's handle */
+/* PutDoneHandler: Constructor and implementation of the PutDone request's handle */
 /* basically it is a calll to the jobService->prepareForMigration()       */
 /***********************************************************************************************/
 
@@ -8,12 +8,12 @@
 #define STAGER_PUT_DONE_HANDLER_HPP 1
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -47,16 +47,16 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
 
-      class StagerPutDoneHandler : public virtual StagerJobRequestHandler{
+      class PutDoneHandler : public virtual JobRequestHandler{
 	
       public:
 	/* constructor */
-	StagerPutDoneHandler(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception);
+	PutDoneHandler(RequestHelper* stgRequestHelper) throw(castor::exception::Exception);
 	/* destructor */
-	~StagerPutDoneHandler() throw() {};
+	~PutDoneHandler() throw() {};
 
 	/* putDone request handler */
 	void handle() throw(castor::exception::Exception);
@@ -64,7 +64,7 @@ namespace castor{
 	
       	
 	
-      }; //end StagerPutDoneHandler class
+      }; //end PutDoneHandler class
 
     }//end daemon 
   }//end stager

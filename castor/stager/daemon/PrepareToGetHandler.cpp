@@ -1,16 +1,16 @@
 /**********************************************************************************************/
-/* StagerPrepareToGetHandler: Constructor and implementation of the get subrequest's handler */
-/* It inherits from the StagerJobRequestHandler and it needs to reply to the client         */
+/* PrepareToGetHandler: Constructor and implementation of the get subrequest's handler */
+/* It inherits from the JobRequestHandler and it needs to reply to the client         */
 /*******************************************************************************************/
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
-#include "castor/stager/daemon/StagerPrepareToGetHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
+#include "castor/stager/daemon/PrepareToGetHandler.hpp"
 
 #include "stager_uuid.h"
 #include "stager_constants.h"
@@ -28,7 +28,7 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Message.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
 
 
 #include "serrno.h"
@@ -42,7 +42,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      StagerPrepareToGetHandler::StagerPrepareToGetHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper) throw(castor::exception::Exception)
+      PrepareToGetHandler::PrepareToGetHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
         this->stgRequestHelper = stgRequestHelper;
         this->stgCnsHelper = stgCnsHelper;
@@ -52,14 +52,14 @@ namespace castor{
       /*******************************************************************/
       /* function to set the handler's attributes according to its type */
       /*****************************************************************/
-      void StagerPrepareToGetHandler::handlerSettings() throw(castor::exception::Exception)
+      void PrepareToGetHandler::handlerSettings() throw(castor::exception::Exception)
       {	
         this->maxReplicaNb= this->stgRequestHelper->svcClass->maxReplicaNb();
         this->replicationPolicy = this->stgRequestHelper->svcClass->replicationPolicy();
       }
 
       
-      bool StagerPrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
+      bool PrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
         bool result = false;
         switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)) {
@@ -101,10 +101,10 @@ namespace castor{
       
       
       
-      void StagerPrepareToGetHandler::handle() throw(castor::exception::Exception)
+      void PrepareToGetHandler::handle() throw(castor::exception::Exception)
       {
         
-        StagerReplyHelper* stgReplyHelper=NULL;
+        ReplyHelper* stgReplyHelper=NULL;
         try{
           handlerSettings();
           
@@ -114,7 +114,7 @@ namespace castor{
           /* depending on the value returned by getDiskCopiesForJob */
           /* if needed, we update the subrequestStatus internally  */
           if(switchDiskCopiesForJob()) {
-            stgReplyHelper = new StagerReplyHelper();
+            stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             
@@ -141,7 +141,7 @@ namespace castor{
       
       /***********************************************************************/
       /*    destructor                                                      */
-      StagerPrepareToGetHandler::~StagerPrepareToGetHandler() throw()
+      PrepareToGetHandler::~PrepareToGetHandler() throw()
       {
         
       }

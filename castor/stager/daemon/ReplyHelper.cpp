@@ -2,13 +2,13 @@
 /* helper class containing the objects and methods which interact to performe the response to the client             */
 /* it is needed to provide:                                                                                         */
 /*     - a common place where its objects can communicate                                                          */
-/* it is always used by: StagerPrepareToGet, Repack, PrepareToPut, PrepareToUpdate, Rm, SetFileGCWeight, PutDone  */
+/* it is always used by: PrepareToGet, Repack, PrepareToPut, PrepareToUpdate, Rm, SetFileGCWeight, PutDone  */
 /* just in case of error, by all the handlers                                                                    */
 /****************************************************************************************************************/
 
 
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
 
 #include "castor/rh/IOResponse.hpp"
 #include "castor/replier/RequestReplier.hpp"
@@ -35,7 +35,7 @@ namespace castor{
     namespace daemon{
       
       
-      StagerReplyHelper::StagerReplyHelper() throw(castor::exception::Exception)
+      ReplyHelper::ReplyHelper() throw(castor::exception::Exception)
       {
         try{
           this->ioResponse = new castor::rh::IOResponse;
@@ -52,7 +52,7 @@ namespace castor{
       }
       
       
-      StagerReplyHelper::~StagerReplyHelper() throw()
+      ReplyHelper::~ReplyHelper() throw()
       {
         if(ioResponse) delete ioResponse;
       }
@@ -61,7 +61,7 @@ namespace castor{
       /****************************************************************************/
       /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
       /**************************************************************************/
-      void StagerReplyHelper::setAndSendIoResponse(StagerRequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
+      void ReplyHelper::setAndSendIoResponse(RequestHelper* stgRequestHelper, Cns_fileid* cnsFileid, int errorCode, std::string errorMessage) throw(castor::exception::Exception)
       {
         if(stgRequestHelper->fileRequest) {
           if(stgRequestHelper->fileRequest->client() == 0) {
@@ -85,7 +85,7 @@ namespace castor{
             castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
             castor::dlf::Param("UserName",stgRequestHelper->username),
             castor::dlf::Param("GroupName", stgRequestHelper->groupname),
-            castor::dlf::Param("Function", "StagerReplyHelper.setAndSendIoResponse")
+            castor::dlf::Param("Function", "ReplyHelper.setAndSendIoResponse")
           };
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
         }
@@ -113,7 +113,7 @@ namespace castor{
       /*********************************************************************************************/
       /* check if there is any subrequest left and send the endResponse to client if it is needed */
       /*******************************************************************************************/
-      void StagerReplyHelper::endReplyToClient(StagerRequestHelper* stgRequestHelper) throw(castor::exception::Exception){
+      void ReplyHelper::endReplyToClient(RequestHelper* stgRequestHelper) throw(castor::exception::Exception){
         /* to update the subrequest on DB */
         bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
         if(!requestLeft && stgRequestHelper->fileRequest != 0) {

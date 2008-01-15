@@ -1,5 +1,5 @@
 /*************************************************************************************/
-/* StagerGetHandler: Constructor and implementation of the get subrequest's handler */
+/* GetHandler: Constructor and implementation of the get subrequest's handler */
 /***********************************************************************************/
 
 #ifndef STAGER_PUT_HANDLER_HPP
@@ -8,12 +8,12 @@
 
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 
 
 #include "stager_uuid.h"
@@ -42,17 +42,17 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      class StagerRequestHelper;
-      class StagerCnsHelper;
+      class RequestHelper;
+      class CnsHelper;
 
-      class StagerPutHandler : public virtual StagerJobRequestHandler{
+      class PutHandler : public virtual JobRequestHandler{
 
 	
       public:
 	/* constructor */
-	StagerPutHandler(StagerRequestHelper* stgRequestHelper, StagerCnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
+	PutHandler(RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper = 0) throw(castor::exception::Exception);
 	/* destructor */
-	~StagerPutHandler() throw() {};
+	~PutHandler() throw() {};
 	
 	void handlerSettings() throw(castor::exception::Exception);
 
@@ -62,7 +62,7 @@ namespace castor{
 
 	
 	
-      }; // end StagerPutHandler class
+      }; // end PutHandler class
 
 
     }//end namespace daemon

@@ -1,21 +1,21 @@
 /**********************************************************************************************/
-/* StagerRepackHandler: Constructor and implementation of the repack subrequest's handler */
-/* It inherits from the StagerJobRequestHandler and it needs to reply to the client         */
+/* RepackHandler: Constructor and implementation of the repack subrequest's handler */
+/* It inherits from the JobRequestHandler and it needs to reply to the client         */
 /*******************************************************************************************/
 
-#include "castor/stager/daemon/StagerRepackHandler.hpp"
+#include "castor/stager/daemon/RepackHandler.hpp"
 
 namespace castor{
   namespace stager{
     namespace daemon{
       
-      StagerRepackHandler::StagerRepackHandler(StagerRequestHelper* stgRequestHelper) throw (castor::exception::Exception) :
-        StagerPrepareToGetHandler(stgRequestHelper)
+      RepackHandler::RepackHandler(RequestHelper* stgRequestHelper) throw (castor::exception::Exception) :
+        PrepareToGetHandler(stgRequestHelper)
       {
         this->typeRequest = OBJ_StageRepackRequest;	
       }
       
-      bool StagerRepackHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
+      bool RepackHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
         bool result = false;
         switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)) {

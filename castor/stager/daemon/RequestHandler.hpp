@@ -1,14 +1,14 @@
 /*******************************************************************************************************/
-/* Base class for StagerJobRequestHandler and all the fileRequest handlers                            */
+/* Base class for JobRequestHandler and all the fileRequest handlers                            */
 /* Basically: handle() as METHOD  and  (stgRequestHelper,stgCnsHelper,stgReplyHelper)  as ATTRIBUTES */
 /****************************************************************************************************/
 
 #ifndef STAGER_REQUEST_HANDLER_HPP
 #define STAGER_REQUEST_HANDLER_HPP 1
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
@@ -30,17 +30,17 @@ namespace castor{
   namespace stager{
     namespace daemon{
 
-      class StagerRequestHelper;
-      class StagerCnsHelper;
-      class StagerReplyHelper;
+      class RequestHelper;
+      class CnsHelper;
+      class ReplyHelper;
 
-      class StagerRequestHandler : public virtual castor::BaseObject{
+      class RequestHandler : public virtual castor::BaseObject{
 
 
       public:
 
-        StagerRequestHandler() throw() : BaseObject() {};
-	      virtual ~StagerRequestHandler() throw();
+        RequestHandler() throw() : BaseObject() {};
+	      virtual ~RequestHandler() throw();
 	
 	
 	/* to perfom the common flow for all the subrequest types but StageRm, StageUpdate, StagePrepareToUpdate */
@@ -52,17 +52,17 @@ namespace castor{
 	/* main function for the specific request handler */
 	virtual void handle() throw (castor::exception::Exception) = 0;
 
-	castor::stager::daemon::StagerCnsHelper* getStgCnsHelper(){
+	castor::stager::daemon::CnsHelper* getStgCnsHelper(){
 	  return(this->stgCnsHelper);
 	    }
 	
       protected:
-	StagerRequestHelper *stgRequestHelper;	
-	StagerCnsHelper *stgCnsHelper;
+	RequestHelper *stgRequestHelper;	
+	CnsHelper *stgCnsHelper;
 
 	int typeRequest;
 
-      };/* end StagerRequestHandler class */
+      };/* end RequestHandler class */
 
     }
   }

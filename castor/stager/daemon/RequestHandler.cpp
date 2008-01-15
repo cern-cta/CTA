@@ -1,13 +1,13 @@
 /*******************************************************************************************************/
-/* Base class for StagerJobRequestHandler and all the fileRequest handlers                            */
+/* Base class for JobRequestHandler and all the fileRequest handlers                            */
 /* Basically: handle() as METHOD  and  (stgRequestHelper,stgCnsHelper,stgReplyHelper)  as ATTRIBUTES */
 /****************************************************************************************************/
 
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
@@ -39,19 +39,19 @@ namespace castor{
     namespace daemon{
       
       /********************************************************************/
-      /* function to perform the common flow for all the Stager__Handler */
+      /* function to perform the common flow for all the __Handler */
       /* basically, calls to the helpers to create the objects and   */
       /* overwriten in RmHandler, UpdateHandler, PrepareToUpdateHandler */
       /* to make the necessary links on DB */
       /************************************/
-      void StagerRequestHandler::preHandle() throw(castor::exception::Exception)
+      void RequestHandler::preHandle() throw(castor::exception::Exception)
       {
         
         /* get the uuid request string version and check if it is valid */
         stgRequestHelper->setRequestUuid();
         
-        /* we create the StagerCnsHelper inside and we pass the requestUuid needed for logging */
-        this->stgCnsHelper = new StagerCnsHelper(stgRequestHelper->requestUuid);
+        /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
+        this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
         
         /* set the username and groupname needed to print them on the log */
         stgRequestHelper->setUsernameAndGroupname();
@@ -80,9 +80,9 @@ namespace castor{
       
       
       /*******************************************************/
-      /* since the StagerCnsHelper is created in this class */
+      /* since the CnsHelper is created in this class */
       /* it will be deleted in its destructor */
-      StagerRequestHandler:: ~StagerRequestHandler() throw(){
+      RequestHandler:: ~RequestHandler() throw(){
         if(stgCnsHelper)
           delete stgCnsHelper;
         stgCnsHelper = 0;

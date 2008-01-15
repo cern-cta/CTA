@@ -1,5 +1,5 @@
 /*********************************************************************************/
-/* File including the constants to represent the DLF Messages for the new Stager*/
+/* File including the constants to represent the DLF Messages for the new */
 /*******************************************************************************/
 
 #ifndef STAGER_DLF_MESSAGES_HPP
@@ -13,21 +13,21 @@ namespace castor{
       enum StgDlfMessages{
 	
 	/***************************************/
-	/* StagerDaemon: To DLF_LVL_DEBUG */
+	/* Daemon: To DLF_LVL_DEBUG */
 	/*************************************/
      
-	STAGER_DAEMON_START= 1, /* Stager Daemon started" */
-	STAGER_DAEMON_EXECUTION= 2, /* "Stager Daemon execution" */
-	STAGER_DAEMON_ERROR_CONFIG= 3, /* "Stager Daemon configuration error" */
-	STAGER_DAEMON_EXCEPTION= 4, /* "Stager Daemon Exception" */
-	STAGER_DAEMON_POOLCREATION= 7, /* "Stager Daemon Pool creation" */
+	STAGER_DAEMON_START= 1, /*  Daemon started" */
+	STAGER_DAEMON_EXECUTION= 2, /* " Daemon execution" */
+	STAGER_DAEMON_ERROR_CONFIG= 3, /* " Daemon configuration error" */
+	STAGER_DAEMON_EXCEPTION= 4, /* " Daemon Exception" */
+	STAGER_DAEMON_POOLCREATION= 7, /* " Daemon Pool creation" */
 	
 	
 	STAGER_CONFIGURATION= 8, /* "Got wrong configuration, using default" */ /* DLF_LVL_USAGE */
 	STAGER_CONFIGURATION_ERROR= 9, /* "Impossible to get (right) configuration" */ /* DLF_LVL_ERROR */
 	
 	/*******************************************************************************************************/
-	/* Constants related with the StagerDBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
+	/* Constants related with the DBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
 	/*****************************************************************************************************/
 	/* mainly for DLF_LVL_DEBUG */
 	/***************************/     
@@ -114,7 +114,7 @@ namespace castor{
 
 	/************/
 	/* ErrorSvc */
-	STAGER_ERRSVC_GETSVC= 121, /* "Could not get StagerSvc" */
+	STAGER_ERRSVC_GETSVC= 121, /* "Could not get Svc" */
 	STAGER_ERRSVC_EXCEPT= 122, /* "Unexpected exception caught" */
 	STAGER_ERRSVC_NOREQ= 123, /* "No request associated with subrequest ! Cannot answer !" */
 	STAGER_ERRSVC_NOCLI= 124, /* "No client associated with request ! Cannot answer !" */

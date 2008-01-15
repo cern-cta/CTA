@@ -2,12 +2,12 @@
 /* base class for the 7 job handlers(Get,PrepareToGet,Update,PrepareToUpdate,Put,PrepareToPut,Repack) */
 /*****************************************************************************************************/
 
-#include "castor/stager/daemon/StagerRequestHelper.hpp"
-#include "castor/stager/daemon/StagerCnsHelper.hpp"
-#include "castor/stager/daemon/StagerReplyHelper.hpp"
-#include "castor/stager/daemon/StagerDlfMessages.hpp"
-#include "castor/stager/daemon/StagerRequestHandler.hpp"
-#include "castor/stager/daemon/StagerJobRequestHandler.hpp"
+#include "castor/stager/daemon/RequestHelper.hpp"
+#include "castor/stager/daemon/CnsHelper.hpp"
+#include "castor/stager/daemon/ReplyHelper.hpp"
+#include "castor/stager/daemon/DlfMessages.hpp"
+#include "castor/stager/daemon/RequestHandler.hpp"
+#include "castor/stager/daemon/JobRequestHandler.hpp"
 
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/Services.hpp"
@@ -61,7 +61,7 @@ namespace castor{
       /****************************************************************************************/
       /* job oriented block                                                                  */
       /**************************************************************************************/
-      void StagerJobRequestHandler::jobOriented() throw(castor::exception::Exception)
+      void JobRequestHandler::jobOriented() throw(castor::exception::Exception)
       {
         memset(&(stgCnsHelper->cnsFileclass), 0, sizeof(stgCnsHelper->cnsFileclass));
         Cns_queryclass(stgCnsHelper->cnsFileid.server, stgCnsHelper->cnsFilestat.fileclass, NULL, &(stgCnsHelper->cnsFileclass));
