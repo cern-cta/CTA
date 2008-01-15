@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.22 $ $Release$ $Date: 2007/09/10 10:32:55 $ $Author: obarring $
+ * @(#)$RCSfile: TapeErrorHandler.c,v $ $Revision: 1.23 $ $Release$ $Date: 2008/01/15 10:17:25 $ $Author: gtaur $
  *
  * 
  *
@@ -264,6 +264,7 @@ static int doRecallRetry(
   enum Cstager_TapeStatusCodes_t tapeStatus;
   struct Cstager_Segment_t *newSegment = NULL;
   unsigned char blockid[4];
+  u_signed64 creationTime;
   u_signed64 offset;
   int rc, fseq;
   ID_TYPE key;
@@ -314,6 +315,12 @@ static int doRecallRetry(
   Cstager_Segment_setBlockId2(newSegment,blockid[2]);
   Cstager_Segment_blockId3(segment,&blockid[3]);
   Cstager_Segment_setBlockId3(newSegment,blockid[3]);
+  
+  /* creation time of the old one */
+
+  Cstager_Segment_creationTime(segment,&creationTime);
+  Cstager_Segment_setCreationTime(newSegment,creationTime);
+  
 
   Cstager_Segment_offset(segment,&offset);
   Cstager_Segment_setOffset(newSegment,offset);
