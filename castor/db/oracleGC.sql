@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.603 $ $Date: 2008/01/15 10:11:42 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.604 $ $Date: 2008/01/15 10:47:56 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -569,9 +569,9 @@ CREATE OR REPLACE TRIGGER tr_TapeCopy_CastorFile
 BEFORE INSERT OR UPDATE OF castorFile ON TapeCopy
 FOR EACH ROW WHEN (new.castorFile > 0)
 DECLARE
-  unused CastorFile%ROWTYPE;
+  unused NUMBER;
 BEGIN
-  SELECT * INTO unused FROM CastorFile
+  SELECT id INTO unused FROM CastorFile
    WHERE id = :new.castorFile FOR UPDATE;
 END;
 
@@ -584,9 +584,9 @@ CREATE OR REPLACE TRIGGER tr_DiskCopy_CastorFile
 BEFORE INSERT OR UPDATE OF castorFile ON DiskCopy
 FOR EACH ROW WHEN (new.castorFile > 0)
 DECLARE
-  unused CastorFile%ROWTYPE;
+  unused NUMBER;
 BEGIN
-  SELECT * INTO unused FROM CastorFile
+  SELECT id INTO unused FROM CastorFile
    WHERE id = :new.castorFile FOR UPDATE;
 END;
 
@@ -2022,9 +2022,9 @@ BEGIN
         EXCEPTION WHEN NO_DATA_FOUND THEN
            -- the file is being written/migrated, fail the request
            UPDATE SubRequest
-             SET errorCode = 16,  -- EBUSY
-                 errorMessage = 'File is currently being written or migrated'
-           WHERE id = srId;
+              SET errorCode = 16,  -- EBUSY
+                  errorMessage = 'File is currently being written or migrated'
+            WHERE id = srId;
            COMMIT;
            result := -1;  -- user error
          END;
@@ -2994,11 +2994,11 @@ END;
 /* PL/SQL method implementing resetStream */
 CREATE OR REPLACE PROCEDURE resetStream (sid IN INTEGER) AS
   nbRes NUMBER;
-  unused Stream%ROWTYPE;
+  unused NUMBER
 BEGIN
   BEGIN
     -- First lock the stream
-    SELECT * INTO unused from Stream where id = sid FOR UPDATE;
+    SELECT id INTO unused FROM Stream WHERE id = sid FOR UPDATE;
     -- Selecting any column with hint FIRST_ROW and relying
     -- on the exception mechanism in case nothing is found is
     -- far better than issuing a SELECT count(*) because ORACLE
