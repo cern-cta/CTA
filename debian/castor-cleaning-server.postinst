@@ -1,4 +1,4 @@
-CASTOR_SERVICE=stager
+CASTOR_SERVICE=cleaning
 export CASTOR_SERVICE
 [ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-[ $? -ne 0 ] && exit $?
+exit $?

@@ -22,7 +22,7 @@ for m in ['BUILD', 'RPMS', 'SOURCES', 'SPECS', 'SRPMS', 'RPMS/i386', 'RPMS/x86_6
 
 # build RPMs
 print 'Building RPMs for ' + targetOs + '/' + targetArch + ' ...'
-nbRpms = 58
+nbRpms = 59
 if targetOs == 'SLC3':
     oraPath = '/afs/cern.ch/project/oracle/@sys/10201'
 else:
@@ -38,7 +38,7 @@ if rpmOutput.find('Wrote:') == -1:
     rpmLog.close()
     print 'The RPM build failed, output in ' + workDir + '/castorBuildOutput. Exiting'
     sys.exit(2)
-# No build the nostk version of the castor-tape-server RPM
+# Now build the nostk version of the castor-tape-server RPM
 cmd2 = "CASTOR_NOSTK=YES " + basecmd + "' -tb " + tarball
 rpmOutput2 = os.popen4(cmd2)[1].read()
 if rpmOutput2.find('Wrote:') == -1:
