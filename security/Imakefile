@@ -1,0 +1,266 @@
+COMM
+COMM  Copyright (C) 2003-2005 by CERN/IT/ADC/CA
+COMM  All rights reserved
+COMM
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.17 $ $Date: 2008/01/16 15:37:28 $ CERN IT/ADC/CA  Ben Couturier
+ 
+COMM    Make CASTOR Security package
+
+COMM######################### FLAGS ##############################
+
+#include <Project.tmpl>
+
+
+INCLUDES = FileName(..,h)
+LIB = InstallLibDir
+
+#if UseKRB5
+#define KRB5Mech KRB5
+#if UseHeimdalKrb5
+#define SecAuthMechKRB5    -DKRB5 -DHEIMDAL
+#else
+#define SecAuthMechKRB5    -DKRB5 
+#endif
+#define SecIncludeDirKRB5 $(shell Krb5Config gssapi --cflags)
+#define SecLibsKRB5 $(shell Krb5Config gssapi --libs)
+#else
+#define KRB5Mech
+#endif
+
+#if UseGSI
+GLOBUS_LOCATION=GlobusLocation
+#if UseVOMS
+VOMS_LOCATION=VomsLocation
+#endif
+GLOBUS_FLAVOUR_NONPTHR=GlobusFlavour
+VOMS_FLAVOUR_NONPTHR=GlobusFlavour
+#if defined(__STDC__)
+GLOBUS_FLAVOUR=GlobusFlavour##pthr
+VOMS_FLAVOUR=GlobusFlavour##pthr
+#else
+GLOBUS_FLAVOUR=GlobusFlavour/**/pthr
+VOMS_FLAVOUR=GlobusFlavour/**/pthr
+#endif
+#if UseVOMS
+VOMS_INCLUDE=-I$(VOMS_LOCATION)/include/glite/security/voms -DUSE_VOMS
+VOMS_LIB_NONPTHR=-L$(VOMS_LOCATION)/lib -lvomsc
+VOMS_LIB_PTHR=-L$(VOMS_LOCATION)/lib -lvomsc_$(VOMS_FLAVOUR)
+#endif
+#define GSIMech GSI
+#define SecAuthMechGSI       -DGSI
+#define SecIncludeDirGSI -I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOUR_NONPTHR) $(VOMS_INCLUDE) 
+#define SecLibsGSI -L$(GLOBUS_LOCATION)/lib -lglobus_gssapi_gsi_$(GLOBUS_FLAVOUR_NONPTHR) -lglobus_gss_assist_$(GLOBUS_FLAVOUR_NONPTHR) $(VOMS_LIB_NONPTHR)
+#define SecIncludeDirGSIpthr -I$(GLOBUS_LOCATION)/include/$(GLOBUS_FLAVOUR) $(VOMS_INCLUDE)
+#define SecLibsGSIpthr -L$(GLOBUS_LOCATION)/lib -lglobus_gssapi_gsi_$(GLOBUS_FLAVOUR) -lglobus_gss_assist_$(GLOBUS_FLAVOUR)  $(VOMS_LIB_PTHR)
+#else
+#define GSIMech
+#endif
+
+#if UseKRB4
+#define KRB4Mech KRB4
+#define SecIncludeDirKRB4 $(shell Krb4Config  --cflags)
+#define SecLibsKRB4 $(shell Krb4Config  --libs)
+#else
+#define KRB4Mech
+#endif
+
+#define IDMech ID
+
+#define CSEC_Mechlist KRB5Mech GSIMech KRB4Mech IDMech
+
+SECLIB = LibraryTargetName(security)
+SECLIB_UTIL_OBJS = Csec_errmsg.Osuf Csec_apiinit.Osuf Csec_common.Osuf
+SECLIB_OBJS = Csec_api_loader.Osuf Csec_protocol_policy.Osuf Csec_api.Osuf $(SECLIB_UTIL_OBJS)
+
+#if SecMakeStaticLibrary
+SECLIB_STATIC_OBJS =  Csec_static_loader.Osuf Csec_plugin_ID.Osuf 
+#if UseKRB5
+SECLIB_GSS_OBJS = Csec_plugin_KRB5.Osuf Csec_plugin_KRB5_mapper.Osuf
+#else
+#if UseGSI
+SECLIB_GSS_OBJS = Csec_plugin_GSI.Osuf Csec_plugin_GSI_mapper.Osuf Csec_plugin_GSI_pthr.Osuf Csec_plugin_GSI_pthr_mapper.Osuf
+#else
+#if UseKRB4
+SECLIB_KRB4_OBJS = Csec_plugin_KRB4.Osuf
+#endif
+#endif
+#endif
+SECLIB_OBJS = Csec_protocol_policy.Osuf Csec_api.Osuf  $(SECLIB_UTIL_OBJS) $(SECLIB_STATIC_OBJS) $(SECLIB_GSS_OBJS) $(SECLIB_KRB4_OBJS)
+#endif
+
+CSEC_MECHLIST=CSEC_Mechlist
+CFLAGS = $(DFLAGS) $(MTCCFLAGS) -g -DCSEC_DEFAULT_MECHS="\"$(CSEC_MECHLIST)\"" -I$(INCLUDES) 
+LDFLAGS =  SecLibs
+
+MANPAGES = $(LIBMANDIR)/Csec_api.$(LIBMANSUFFIX) 
+
+#if ! SecMakeStaticLibrary
+PLUGGINS = SharedLibraryTargetName(Csec_plugin_ID)
+IPLUGGINS = FileName($(LIB),SharedLibraryTargetName(Csec_plugin_ID))
+EPLUGGINS = FileName($(EXPORTLIB),SharedLibraryTargetName(Csec_plugin_ID))
+#if UseGSI
+PLUGGINS += SharedLibraryTargetName(Csec_plugin_GSI)
+PLUGGINS += SharedLibraryTargetName(Csec_plugin_GSI_thread)
+IPLUGGINS += FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI))
+IPLUGGINS += FileName($(LIB),SharedLibraryTargetName(Csec_plugin_GSI_thread))
+EPLUGGINS += FileName($(EXPORTLIB),SharedLibraryTargetName(Csec_plugin_GSI))
+EPLUGGINS += FileName($(EXPORTLIB),SharedLibraryTargetName(Csec_plugin_GSI_thread))
+#endif
+#if UseKRB5
+PLUGGINS += SharedLibraryTargetName(Csec_plugin_KRB5)
+IPLUGGINS += FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB5))
+EPLUGGINS += FileName($(EXPORTLIB),SharedLibraryTargetName(Csec_plugin_KRB5))
+#endif
+#if UseKRB4
+PLUGGINS += SharedLibraryTargetName(Csec_plugin_KRB4)
+IPLUGGINS += FileName($(LIB),SharedLibraryTargetName(Csec_plugin_KRB4))
+EPLUGGINS += FileName($(EXPORTLIB),SharedLibraryTargetName(Csec_plugin_KRB4))
+#endif
+#endif
+
+all: $(SECLIB) $(PLUGGINS)
+
+#if  SecMakeStaticLibrary
+
+NormalLibraryTarget(security,$(SECLIB_OBJS))
+
+#if UseGSI
+Csec_static_loader.Osuf: Csec_static_loader.c
+	$(CC) $(CFLAGS) SecAuthMechGSI -o $@ -c Csec_static_loader.c
+Csec_plugin_GSI.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_GSI_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS_mapper.c
+
+Csec_plugin_GSI_pthr.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) SecAuthMechGSI -Dwith_pthr_suffix SecIncludeDirGSIpthr	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_GSI_pthr_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) SecAuthMechGSI -Dwith_pthr_suffix SecIncludeDirGSIpthr	-o $@ -c Csec_plugin_GSS_mapper.c
+#else
+#if UseKRB5
+Csec_static_loader.Osuf: Csec_static_loader.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5	-o $@ -c Csec_static_loader.c
+Csec_plugin_KRB5.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_KRB5_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS_mapper.c
+#else
+#if UseKRB4
+Csec_static_loader.Osuf: Csec_static_loader.c
+	$(CC) $(CFLAGS) SecIncludeDirKRB4	-o $@ -c Csec_static_loader.c
+Csec_plugin_KRB4.Osuf: Csec_plugin_KRB4.c 
+	$(CC) $(CFLAGS) SecIncludeDirKRB4	-o $@ -c Csec_plugin_KRB4.c
+#endif
+#endif
+#endif
+#else
+
+NormalLibraryTarget(security,$(SECLIB_OBJS))
+
+Csec_api_loader.Osuf: Csec_api_loader.c
+	$(CC) $(CFLAGS) -c -o Csec_api_loader.Osuf Csec_api_loader.c
+
+#if UseGSI
+SharedLibraryTargetName(Csec_plugin_GSI_thread): Csec_plugin_GSI_pthr.Osuf Csec_plugin_GSI_pthr_mapper.Osuf
+	ld  $(SHLIBLDFLAGS) -o $@ Csec_plugin_GSI_pthr.Osuf Csec_plugin_GSI_pthr_mapper.Osuf SecLibsGSIpthr -lc -lpthread -ldl
+	ln -s $@ $@.$(MAJOR_CASTOR_VERSION)
+	ln -s $@.$(MAJOR_CASTOR_VERSION) $@.$(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION)
+
+SharedLibraryTargetName(Csec_plugin_GSI): Csec_plugin_GSI.Osuf Csec_plugin_GSI_mapper.Osuf
+	ld  $(SHLIBLDFLAGS) -o $@ Csec_plugin_GSI.Osuf Csec_plugin_GSI_mapper.Osuf SecLibsGSI -lc -lpthread -ldl
+	ln -s $@ $@.$(MAJOR_CASTOR_VERSION)
+	ln -s $@.$(MAJOR_CASTOR_VERSION) $@.$(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION)
+
+Csec_plugin_GSI.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_GSI_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) SecAuthMechGSI SecIncludeDirGSI	-o $@ -c Csec_plugin_GSS_mapper.c
+
+Csec_plugin_GSI_pthr.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_GSI_pthr_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) -Dwith_pthr_suffix SecAuthMechGSI SecIncludeDirGSIpthr	-o $@ -c Csec_plugin_GSS_mapper.c
+#endif
+
+#if UseKRB5
+SharedLibraryTargetName(Csec_plugin_KRB5): Csec_plugin_KRB5.Osuf Csec_plugin_KRB5_mapper.Osuf
+	ld  $(SHLIBLDFLAGS) -o $@ Csec_plugin_KRB5.Osuf Csec_plugin_KRB5_mapper.Osuf SecLibsKRB5 -lc -lpthread -ldl
+	ln -s $@ $@.$(MAJOR_CASTOR_VERSION)
+	ln -s $@.$(MAJOR_CASTOR_VERSION) $@.$(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION)
+
+Csec_plugin_KRB5.Osuf: Csec_plugin_GSS.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS.c
+
+Csec_plugin_KRB5_mapper.Osuf:  Csec_plugin_GSS_mapper.c
+	$(CC) $(CFLAGS) SecAuthMechKRB5 SecIncludeDirKRB5	-o $@ -c Csec_plugin_GSS_mapper.c
+#endif
+
+#if UseKRB4
+SharedLibraryTargetName(Csec_plugin_KRB4): Csec_plugin_KRB4.Osuf
+	ld  $(SHLIBLDFLAGS) -o $@ Csec_plugin_KRB4.Osuf SecLibsKRB4 -lc -lpthread -ldl
+
+Csec_plugin_KRB4.Osuf: Csec_plugin_KRB4.c 
+	$(CC) $(CFLAGS) SecIncludeDirKRB4	-o $@ -c Csec_plugin_KRB4.c
+#endif
+
+SharedLibraryTargetName(Csec_plugin_ID): Csec_plugin_ID.Osuf
+	ld  $(SHLIBLDFLAGS) -o $@ Csec_plugin_ID.Osuf -lc -lpthread -ldl
+	ln -s $@ $@.$(MAJOR_CASTOR_VERSION)
+	ln -s $@.$(MAJOR_CASTOR_VERSION) $@.$(MAJOR_CASTOR_VERSION).$(MINOR_CASTOR_VERSION)
+
+Csec_plugin_ID.Osuf: Csec_plugin_ID.c
+	$(CC) $(CFLAGS) -o $@ -c Csec_plugin_ID.c
+
+#endif
+
+install: $(LIB) $(IPLUGGINS)
+
+MakeDir($(LIB),root,bin,0755)
+
+
+InstallSharedLibrary(Csec_plugin_ID,2.1,4.8,$(LIB))
+InstallSharedLibrary(Csec_plugin_GSI,2.1,4.8,$(LIB))
+InstallSharedLibrary(Csec_plugin_GSI_thread,2.1,4.8,$(LIB))
+InstallSharedLibrary(Csec_plugin_KRB5,2.1,4.8,$(LIB))
+InstallSharedLibrary(Csec_plugin_KRB4,2.1,4.8,$(LIB))
+
+MakeDir($(LIBMANDIR),root,bin,0755)
+
+install.man: $(LIBMANDIR) $(MANPAGES)
+
+COMM FILTERMANPAGE(Csec_api,Csec_api,$(LIBMANDIR),$(LIBMANSUFFIX))
+
+export: $(EPLUGGINS)
+
+exportman:
+
+exportshr:
+
+COMM###################### CLEANING RULES ########################
+ 
+clean:
+	-@RemoveFiles(FilesToClean) lib*.dylib lib*.so.[0-9] lib*.so.[0-9].[0-9].[0-9]
+ 
+clobber:        clean
+	-@RemoveFiles($(CLIENT))
+ 
+#if _WIN32
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend -Y$(INCLUDES) *.c 2> /dev/null
+#endif
+
+Makefiles:
+ 
+FORCE:
+
+COMM###################### DEPENDENCIES ##########################
+
+COMM DO NOT DELETE THIS LINE -- make  depend  depends  on  it.
