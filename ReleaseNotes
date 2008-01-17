@@ -194,6 +194,7 @@
        - The castor-gridftp-dsi-ext and castor-gridftp-dsi-int packages are now depending on castor-gridftp-dsi-common
        - There are 2 new packages to be installed on the rtcpcld head node : castor-lib-policy and castor-rechandler-server.
        - The mighunter package was renamed from castor-rtcopy-mighunter to castor-mighunter-server
+       - The cleaningDaemon is now in its own package called castor-cleaning-server
     - Update your monitoring tools according to the daemon changes :
        - The stager became stagerDaemon
        - The MigHunter became migHunterDaemon
