@@ -124,15 +124,16 @@ void castor::vdqm::DriveSchedulerThread::process(castor::IObject *param)
   castor::BaseAddress ad;
   ad.setCnvSvcName("DbCnvSvc");
   ad.setCnvSvcType(castor::SVC_DBCNV);
+    
+  // Commit to the db
+  // TBD: The whole commit state change persistency logic is not correct
+  castor::BaseObject::services()->commit(&ad);
 
   // Allocate the drive
   try
   {
 
     allocateDrive(request);
-    
-    //  Commit to the db
-    castor::BaseObject::services()->commit(&ad);
 
     // "Update of representation in DB" message
     castor::dlf::Param params[] = {
