@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.606 $ $Date: 2008/01/15 13:50:03 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.607 $ $Date: 2008/01/17 10:00:29 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1943,6 +1943,14 @@ BEGIN
   
   -- create the required number of tapecopies for the files
   internalPutDoneFunc(cfId, fsId, 0, nbTC);
+  -- set svcClass in the CastorFile for the migration
+  UPDATE CastorFile SET svcClass = 
+    (SELECT R.svcClass 
+       FROM StageRepackRequest R, SubRequest
+      WHERE SubRequest.request = R.id
+        AND SubRequest.id = srId)
+   WHERE id = cfId;
+   
   -- update remaining STAGED diskcopies to CANBEMIGR too
   -- we may have them as result of disk2disk copies, and so far
   -- we only dealt with dcId
