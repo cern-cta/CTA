@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/01/17 09:19:57 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.39 $ $Release$ $Date: 2008/01/17 14:11:19 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -146,7 +146,7 @@ RepackClient::~RepackClient() throw()
 //------------------------------------------------------------------------------
 bool RepackClient::parseInput(int argc, char** argv)
 {
-  const char* cmdParams = "o:a:AS:sR:V:P:r:hx:m:e:";
+  const char* cmdParams = "o:aA:S:sR:V:P:r:hx:m:e:";
   if (argc == 1){
     return false;
   }
@@ -582,7 +582,9 @@ void RepackClient::printTapeDetail(RepackSubRequest *tape){
   statuslist[SUBREQUEST_ARCHIVED] = "ARCHIVED";
   statuslist[SUBREQUEST_TOBESTAGED] = "TOBESTAGED";
   statuslist[SUBREQUEST_RESTART] = "RESTART";
-  statuslist[SUBREQUEST_FAILED] = "FAILED";
+  statuslist[SUBREQUEST_FAILED] = "FAILED"; 
+  statuslist[SUBREQUEST_TOBEREMOVED] = "DELETING";  
+
 
   u64tostru(tape->xsize(), buf, 0);
   printTime(&current_time);

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackWorker.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/01/17 14:11:19 $ $Author: gtaur $
  *
  *
  *
@@ -296,7 +296,7 @@ void RepackWorker::archiveSubRequests(RepackRequest* rreq) throw (castor::except
      result=m_databasehelper->getAllSubRequestsVid((*tape)->vid());
      tapeToBeArchived = result->begin();
      while ( tapeToBeArchived != result->end() ){
-       if ((*tapeToBeArchived)->status() == SUBREQUEST_DONE){
+       if ((*tapeToBeArchived)->status() == SUBREQUEST_DONE || (*tapeToBeArchived)->status() == SUBREQUEST_FAILED){
          m_databasehelper->archive((*tapeToBeArchived)->vid());
      
 	 // For the result
@@ -408,7 +408,6 @@ void RepackWorker::removeRequest(RepackRequest* rreq) throw (castor::exception::
         tmp->setStatus(SUBREQUEST_READYFORCLEANUP);
       else
         tmp->setStatus(SUBREQUEST_TOBEREMOVED);
-
       m_databasehelper->updateSubRequest(tmp,false,cuuid);
       freeRepackObj(tmp);
       //m_databasehelper->unlock();
