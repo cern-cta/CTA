@@ -111,12 +111,14 @@
   - #30917 Timed out locate leaves zombie posovl processes behind
   - #31055 ForcedFileClass: constraint and check
   - #31684 RFE: Stager modification for repack
+  - #31683 Repack long delay to submit requests
   - #28010 regular shrink of tables in ORACLE
   - #30852 add a -f (force option) to tplabel and do not overwrite labels by default
   - #31246 NS, VMGR and CUPV should reconnect to their databases after disconnection
   - #24106 Please replace multiple '/' on the file path with single '/'
   - #26029 disk to disk copy scheduling
   - #23218 File update/append does not update the size in nameserver
+  - #21821 stuck file in case of nbStreams = 0
   Already in 2.1.4-10:
   - Fix bad processing after ENOENT in Cns_lastfseq() in the migrator
   - Fix for unique constraint violation caused by -insert tape- in OraCommonSvc
