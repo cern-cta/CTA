@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.39 $ $Date: 2007/10/10 08:05:59 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.40 $ $Date: 2008/01/17 14:06:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -311,12 +311,6 @@ unload_loop:
 #endif
 		sleep (UCHECKI);
 	if (tapefd >= 0) {
-		if (devinfo->lddtype == 0)		/* STK */
-			lddisplay (tapefd, dvn, 0x20, "", "", 0);
-		else if (devinfo->lddtype == 1)		/* IBM */
-			lddisplay (tapefd, dvn, 0x20, "", "", 1);
-		else if (strstr (devtype, "/VB"))	/* Vision Box */
-			lddisplay (tapefd, dvn, 0x80, "", "", 2);
 		if ((c = chkdriveready (tapefd)) < 0) {
 			configdown (drive);
 		} else if (c > 0) {

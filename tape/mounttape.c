@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.60 $ $Date: 2007/11/20 15:14:10 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.61 $ $Date: 2008/01/17 14:06:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -98,7 +98,6 @@ char	**argv;
 #if DUXV4
 	char *msgaddr;
 #endif
-        char msg1[9];
 #if linux
 	struct mtop mtop;
 #endif
@@ -319,18 +318,6 @@ char	**argv;
 	if (*loader != 'm')
 		needrbtmnt = 1;
 
-	/* build LED display message for 3480 compatible drives */
-
-	strcpy (msg1, vid);
-	if (mode == WRITE_DISABLE)
-		strcat (msg1, " .");
-	if (devinfo->lddtype == 0)		/* STK */
-		lddisplay (-1, path, 0x40, msg1, "", 0);
-	else if (devinfo->lddtype == 1)		/* IBM */
-		lddisplay (-1, path, 0x40, msg1, "", 1);
-	else if (strstr (devtype, "/VB"))	/* Vision Box */
-		lddisplay (-1, path, 0x18, msg1, "", 2);
-
 	while (1) {
 
                 sprintf (msg, TP020, vid, labels[lblcode], rings, drive, hostname, 	 
@@ -485,15 +472,7 @@ remount_loop:
 		}
 
 		/* tape is ready */
-
-		if (devinfo->lddtype == 0)
-			lddisplay (tapefd, path, 0x20, msg1, "", 0);
-		else if (devinfo->lddtype == 1)
-			lddisplay (tapefd, path, 0x20, msg1, "", 1);
-		else if (strstr (devtype, "/VB"))
-			lddisplay (tapefd, path, 0x80, msg1, "", 2);
-
-
+                
 		/* check if the volume is write protected */
 
 		if (tpmode != mode && tpmode == WRITE_DISABLE && *loader != 'm') {
@@ -512,12 +491,7 @@ remount_loop:
 		if (tpmode != mode && *loader == 'm') {
 			if ((c = unldtape (tapefd, path)))
 				goto reply;
-			if (devinfo->lddtype == 0)
-				lddisplay (tapefd, path, 0x50, msg1, "wrng rng", 0);
-			else if (devinfo->lddtype == 1)
-				lddisplay (tapefd, path, 0x50, msg1, "wrng rng", 1);
-			else if (strstr (devtype, "/VB"))
-				lddisplay (tapefd, path, 0x1A, msg1, "wrong ring", 2);
+
 			close (tapefd);
 			why = "wrong ring status";
 #if SACCT
@@ -648,12 +622,6 @@ remount_loop:
 				c = n;
 				goto reply;
 			}
-		if (devinfo->lddtype == 0)
-			lddisplay (tapefd, path, 0x50, msg1, "wrng vsn", 0);
-		else if (devinfo->lddtype == 1)
-			lddisplay (tapefd, path, 0x50, msg1, "wrng vsn", 1);
-		else if (strstr (devtype, "/VB"))
-			lddisplay (tapefd, path, 0x1A, msg1, "wrong vsn", 2);
 		close (tapefd);
 		why = "wrong vsn";
 #if SACCT
