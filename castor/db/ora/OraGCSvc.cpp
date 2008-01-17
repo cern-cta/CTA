@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2008/01/14 17:49:44 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2008/01/17 10:53:55 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -431,7 +431,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
                  << std::endl;
         } else {
           if (0 != Cns_unlink(castorFileName)) {
-	    if (strcmp((char *)errBuf, "")) {
+	    if (!strcmp((char *)errBuf, "")) {
 	      strncpy((char *)errBuf, sstrerror(serrno), errBufLen);  
 	    }
             clog() << ERROR

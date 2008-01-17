@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.232 $ $Release$ $Date: 2008/01/14 17:47:29 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.233 $ $Release$ $Date: 2008/01/17 10:53:55 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1147,8 +1147,12 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   if (Cns_setid(euid,egid) != 0) {
     castor::exception::Internal ex;
     ex.getMessage()
-      << "createTapeCopySegmentsForRecall : Cns_setid failed : "
-      << *cns_error_buffer == 0 ? sstrerror(serrno) : cns_error_buffer;
+      << "createTapeCopySegmentsForRecall : Cns_setid failed : ";
+    if (!strcmp(cns_error_buffer, "")) {
+      ex.getMessage() << sstrerror(serrno);
+    } else {
+      ex.getMessage() << cns_error_buffer;
+    }
     throw ex;
   }
   // Get segments for castorFile
