@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackClient.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/01/17 09:19:57 $ $Author: gtaur $
  *
  * The Repack Client.
  * Creates a RepackRequest and send it to the Repack server, specified in the 
@@ -96,8 +96,8 @@ namespace castor {
  namespace repack {
 
 
-  const char* HOST_ENV_ALT = "REPACK_HOST_ALT";
-  const char* HOST_ENV = "REPACK_HOST";
+	 const char* HOST_ENV_ALT = "REPACK_HOST_ALT";
+	 const char* HOST_ENV = "REPACK_HOST";
   const char* PORT_ENV_ALT = "REPACK_PORT_ALT";
   const char* PORT_ENV = "REPACK_PORT";
   const char* CATEGORY_CONF = "REPACK";
@@ -511,7 +511,7 @@ void RepackClient::handleResponse(RepackAck* ack) {
           printTapeDetail((*tape));
           tape++;
         }
-	std::cout << "=====================================================================================================================" << std::endl;
+	std::cout << "=======================================================================================================================" << std::endl;
         break;
       }
     case GET_STATUS:

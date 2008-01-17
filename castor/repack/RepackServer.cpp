@@ -30,7 +30,7 @@
 
 // hardcoded schema version of the Repack database
 
-const std::string REPACKSCHEMAVERSION = "2_1_5_0";
+const std::string REPACKSCHEMAVERSION = "2_1_6_0";
 
 
 //------------------------------------------------------------------------------

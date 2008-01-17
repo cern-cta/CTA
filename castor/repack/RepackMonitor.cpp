@@ -195,7 +195,7 @@ void RepackMonitor::updateTape(RepackSubRequest *sreq)
   }catch (castor::exception::Exception ex){
     castor::dlf::Param params[] =
     {castor::dlf::Param("Error Message", ex.getMessage().str() )};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 1, params);
     while ( fr.size() ) delete fr.at(0);
     return;
   }
