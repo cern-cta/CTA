@@ -58,7 +58,7 @@ workDir = os.tempnam('/tmp', 'CastorRelease')
 print "Checking out code into " + workDir
 os.mkdir(workDir)
 os.chdir(workDir)
-runCommand('cvs -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
+runCommand('cvs -Q -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
            'Error while checking out source code')
 
 # Create the tar ball
@@ -108,7 +108,7 @@ for o in outputs:
 # make a fresh checkout in the internal release space for easy debugging using AFS
 print "Creating a fresh checkout in the internal release space"
 os.chdir(intReleaseDir)
-runCommand('cvs -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
+runCommand('cvs -Q -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
            'Error while checking out release into internal release space')
 
 # and builf the doxygen documentation in it
