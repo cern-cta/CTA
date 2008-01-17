@@ -257,6 +257,12 @@ Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface, cas
 Description: castor (Cern Advanced STORage system)
  Stager server
 
+Package: castor-cleaning-server
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, logrotate, castor-db-interface, castor-scriptlets
+Description: castor (Cern Advanced STORage system)
+ Cleaning daemon
+
 Package: castor-sysconfig
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
