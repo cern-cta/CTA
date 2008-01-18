@@ -158,7 +158,7 @@ exportman:
 
 exportshr: 
 
-libshift.sl libshift.so: $(LIBRARIES0) DepSharedLibraryTargetName($(COMMONCPPDIR),castorClient)
+libshift.sl libshift.so: $(LIBRARIES0) libcastorClient.so
 	@echo " making $@ in `pwd`"
 	@-rm -rf tmplibshift.so
 	@mkdir tmplibshift.so

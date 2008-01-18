@@ -8,7 +8,7 @@ COMM    Make HSM admin tools.
 
 #include <Project.tmpl>
 
-INCLUDES = FileName(..,h)
+INCLUDES = FileName(..,h) -I FileName(..,job)
 INCLUDES_CPP = FileName(..,/)
 
 #if UseTms
@@ -129,7 +129,8 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(printSvcClass) \
 	 ProgramTargetName(c2probe) \
 	 ProgramTargetName(adler32) \
-	 ProgramTargetName(nsGetPath)
+	 ProgramTargetName(nsGetPath) \
+	 ProgramTargetName(rfcpupd)
 
 #if BuildVDQMCpp
 MANPAGES += $(MANDIR)/vdqmDBInit.$(MANSUFFIX)
@@ -231,6 +232,18 @@ NormalProgramTarget(nsGetPath,nsGetPath.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB2),$(LIBS2) $(CKSUMLIB))
 NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB2),-pthread $(LIBS2))
 
+RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" $(FOLLOWLINKS) \
+	  -DDOMAINNAME=\"$(DOMAINNAME)\" -DLOGFILE=\"$(LOGFILE)\" \
+	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
+
+rfcpupd.c: ../rfio/rfcp.c
+	sed 's/| *O_TRUNC//' $< > $@
+
+rfcpupd.Osuf: rfcpupd.c
+	$(CC) $(DEBUG) -I$(INCLUDES) $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
+
+NormalProgramTarget(rfcpupd,rfcpupd.Osuf,DepSharedLibraryTargetName(shlib,shift), $(LIBS))
+
 #if BuildVDQMCpp
 NormalProgramTarget(vdqmDBInit,vdqmDBInit.Osuf,$(DEPLIB2),$(LIBS2))
 #endif
@@ -319,6 +332,8 @@ IEXPORT(dedicateTapeDrive,$(EXPORTBIN),755);
 InstallProgram(listDedications,$(BIN),root,bin,755)
 IEXPORT(listDedications,$(EXPORTBIN),755);
 
+InstallProgram(rfcpupd,$(BIN),root,bin,755)
+IEXPORT(rfcpupd,$(EXPORTBIN),755);
 
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
@@ -387,7 +402,7 @@ exportshr:
 COMM###################### CLEANING RULES ########################
 
 clean:
-	-@RemoveFiles(FilesToClean)
+	-@RemoveFiles(FilesToClean) rfcpupd.c
 
 clobber:        clean
 	-@RemoveFiles($(PROGS_TO_CLEAN))

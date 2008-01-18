@@ -64,6 +64,10 @@
 #define BuildVolumeMgrLibrary YES
 #endif
 #endif
+#if !BuildRfioClient
+#undef BuildRfioClient
+#define BuildRfioClient YES
+#endif
 #endif
 
 /* ------- */
