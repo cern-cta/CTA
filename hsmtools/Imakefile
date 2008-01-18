@@ -55,6 +55,8 @@ CKSUMLIB = -lz
 
 COMM######################### FLAGS ##############################
 
+DOMAINNAME= DomainName
+
 DFLAGS = -D$(TMS) -g -pthread
 
 CPPFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
