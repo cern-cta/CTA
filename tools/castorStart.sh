@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# File		$Id: castorStart.sh,v 1.5 2007/08/07 15:27:33 waldron Exp $
+# File		$Id: castorStart.sh,v 1.6 2008/01/18 16:47:54 itglp Exp $
 #
 # Purpose	Start up CASTOR DAEMONS 
 #
@@ -15,7 +15,7 @@
 #
 
 # global vars:
-DAEMONS="dlfserver jobManager rmMasterDaemon stager rtcpclientd expertd rhserver"
+DAEMONS="dlfserver jobManager rmMasterDaemon stagerDaemon rtcpclientd rhserver"
 CONFIGFILE="/etc/castor/castor.conf"
 PID=''
 
