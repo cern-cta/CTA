@@ -210,7 +210,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_6_5');
+INSERT INTO CastorVersion VALUES ('-', '2_1_6_6');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -341,7 +341,7 @@ INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.606  Date: 2008/01/15 13:50:03  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.607  Date: 2008/01/17 10:00:29  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2333,6 +2333,14 @@ BEGIN
   
   -- create the required number of tapecopies for the files
   internalPutDoneFunc(cfId, fsId, 0, nbTC);
+  -- set svcClass in the CastorFile for the migration
+  UPDATE CastorFile SET svcClass = 
+    (SELECT R.svcClass 
+       FROM StageRepackRequest R, SubRequest
+      WHERE SubRequest.request = R.id
+        AND SubRequest.id = srId)
+   WHERE id = cfId;
+   
   -- update remaining STAGED diskcopies to CANBEMIGR too
   -- we may have them as result of disk2disk copies, and so far
   -- we only dealt with dcId
