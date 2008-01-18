@@ -32,6 +32,7 @@ namespace castor{
           case DISKCOPY_STAGED:   
             // the repack migration has been already started, just log it and answer the client
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_REPACK_MIGRATION, &(stgCnsHelper->cnsFileid));
+            stgRequestHelper->subrequest->setStatus(SUBREQUEST_REPACK);
             result = true;
             break;
           
