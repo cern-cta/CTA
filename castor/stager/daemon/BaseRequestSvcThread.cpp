@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/01/18 17:57:28 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -82,7 +82,7 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
     // we can't do much here...
     return;        
   }
-  stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED);
+  stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
 
   if(stgRequestHelper->fileRequest != NULL) {
     try {
@@ -97,7 +97,6 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
     // if we didn't get the fileRequest, we probably got a serious failure, and we can't answer the client
     // just try to update the db
     try {
-      stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
       stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
     }
     catch (castor::exception::Exception ignored) {}
