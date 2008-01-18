@@ -1,5 +1,5 @@
 -----------
-- 2.1.6-5 -
+- 2.1.6-6 -
 -----------
 
   New Features and Changes
@@ -187,9 +187,9 @@
     - Stop all daemons and services (rhserver, stager, jobManager, rtcpclientd, cleaningDaemon, rmMasterDaemon, dlfserver, expertd, rmNodeDaemon, gcdaemon, LSF)
     - Optionally backup your stager DB (one never knows...)
     - Upgrade the stager database
-       - Use script 2.1.4-10_to_2.1.6-5 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
-    - Update DLF DB using script dlf_2.1.4_to_2.1.6-5
-       - (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-5/upgrades)
+       - Use script 2.1.4-10_to_2.1.6-6 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-6/upgrades)
+    - Update DLF DB using script dlf_2.1.4_to_2.1.6-6
+       - (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-6/upgrades)
     - Update the rpms on the different nodes. Some changes were made in the list of packages to install :
        - The castor-gridftp-dsi-ext and castor-gridftp-dsi-int packages are now depending on castor-gridftp-dsi-common
        - There are 2 new packages to be installed on the rtcpcld head node : castor-lib-policy and castor-rechandler-server.
