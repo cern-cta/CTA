@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/11 09:33:36 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/18 10:04:13 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -97,7 +97,7 @@ BEGIN
 
       UPDATE TapeRequest SET
         tapeDrive = d2r.tapeDrive,
-        modificationTime = getTime(),
+        modificationTime = getTime()
         WHERE id = d2r.tapeRequest;
 
       tapeRequestID := d2r.tapeRequest;
