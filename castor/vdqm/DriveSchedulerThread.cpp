@@ -39,6 +39,7 @@
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/handler/TapeRequestDedicationHandler.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -54,6 +55,41 @@ castor::vdqm::DriveSchedulerThread::DriveSchedulerThread()
 //-----------------------------------------------------------------------------
 castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
   throw () {
+}
+
+
+//------------------------------------------------------------------------------
+// startDriveSchedulerThreads
+//------------------------------------------------------------------------------
+void castor::vdqm::DriveSchedulerThread::startOLDDriveSchedulerThreads()
+  throw(castor::exception::Exception)
+{
+  // "Start tape to tape drive dedication thread" message
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 61);
+
+  // The Singleton with the main loop to dedicate a
+  // tape to a tape drive.
+  castor::vdqm::handler::TapeRequestDedicationHandler
+    *tapeRequestDedicationHandler;
+
+  try {
+    // Create thread, which dedicates the tapes to the tape drives
+    tapeRequestDedicationHandler =
+      castor::vdqm::handler::TapeRequestDedicationHandler::Instance(1);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Unable to initialize TapeRequestDedicationHandler thread: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
+
+  // This function ends only, if the stop() function is beeing called.
+  tapeRequestDedicationHandler->run();
+
+  delete tapeRequestDedicationHandler;
 }
 
 
@@ -84,7 +120,7 @@ castor::IObject* castor::vdqm::DriveSchedulerThread::select()
 
   try
   {
-    obj = vdqmSvc->matchTape2TapeDrive();
+    obj = vdqmSvc->NEWmatchTape2TapeDrive();
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function", "DriveSchedulerThread::select"),
@@ -235,7 +271,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
   bool acknSucc = true;
 
   try {
-    acknSucc = rtcpConnection.sendJobToRTCPD(tapeDrive->id(),
+    acknSucc = rtcpConnection.NEWsendJobToRTCPD(tapeDrive->id(),
       client->userName(), client->machine(), client->port(), client->euid(),
       client->egid(), dgn->dgName(), tapeDrive->driveName()
     );

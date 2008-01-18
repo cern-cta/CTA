@@ -37,6 +37,7 @@ namespace castor {
   namespace vdqm {
     
     // Forward declaration
+    class TapeDrive;
     class TapeRequest;
 
     /**
@@ -95,7 +96,7 @@ namespace castor {
        * @param tapeDrive The tape drive to be used
        * @exception In case of errors 
        */
-      bool sendJobToRTCPD(
+      bool NEWsendJobToRTCPD(
         const u_signed64  tapeRequestID,
         const std::string &clientUserName,
         const std::string &clientMachine,
@@ -104,6 +105,18 @@ namespace castor {
         const int         clientEgid,
         const std::string &deviceGroupName,
         const std::string &tapeDriveName)
+        throw (castor::exception::Exception);    
+
+      /**
+       * This function is used to inform the RT Copy daemon about an actual
+       * free tape, which can be dedidacet to a waiting TapeRequest. Please
+       * make sure, that you have already realized the connection to RTCP!
+       * 
+       * @param tapeDrive The TapeDrive which can handle the TapeRequest. Please
+       * make sure, that the TapeRequest is already included in the TaepDrive!
+       * @exception In case of errors 
+       */
+      bool OLDsendJobToRTCPD(const TapeDrive *tapeDrive) 
         throw (castor::exception::Exception);    
         
       

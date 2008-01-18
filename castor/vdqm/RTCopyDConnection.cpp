@@ -36,6 +36,7 @@
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
+#include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
 
@@ -109,9 +110,9 @@ void castor::vdqm::RTCopyDConnection::connect()
 
 
 //------------------------------------------------------------------------------
-// sendJobToRTCP
+// NEWsendJobToRTCP
 //------------------------------------------------------------------------------
-bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(
+bool castor::vdqm::RTCopyDConnection::NEWsendJobToRTCPD(
   const u_signed64  tapeRequestID,
   const std::string &clientUserName,
   const std::string &clientMachine,
@@ -180,6 +181,120 @@ bool castor::vdqm::RTCopyDConnection::sendJobToRTCPD(
   DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmDrvReq.drive));
 
   stringValue = (char *)clientUserName.c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmVolReq.client_name));
+
+  len += 3*LONGSIZE;
+
+  /**
+   * After marshalling we can send the informations to RTCP
+   */
+  rc = netwrite_timeout(m_socket, buf, len, VDQM_TIMEOUT);
+
+  if (rc == -1) {
+    serrno = SECOMERR;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "RTCopyDConnection::sendJobToRTCP(): "
+                    << "netwrite(REQ): "
+                    << neterror() << std::endl;
+    throw ex;
+  }
+  else if (rc == 0) {
+    serrno = SECONNDROP;
+    castor::exception::Exception ex(serrno);
+    ex.getMessage() << "RTCopyDConnection::sendJobToRTCP(): "
+                    << "netwrite(REQ): connection dropped" << std::endl;
+    throw ex;
+  }
+
+
+  acknSucc = readRTCPAnswer();
+
+  return acknSucc;
+}
+
+
+//------------------------------------------------------------------------------
+// OLDsendJobToRTCP
+//------------------------------------------------------------------------------
+bool castor::vdqm::RTCopyDConnection::OLDsendJobToRTCPD(
+  const TapeDrive *tapeDrive) throw (castor::exception::Exception) {
+
+  bool acknSucc = true; // The return value
+
+  newVdqmDrvReq_t vdqmDrvReq;
+  newVdqmVolReq_t vdqmVolReq;
+
+  const TapeRequest* tapeRequest;
+  const castor::stager::ClientIdentification* clientData;
+
+  char buf[VDQM_MSGBUFSIZ];
+  int len, rc, magic, reqtype;
+  char* p;
+
+  unsigned int castValue;
+  int intValue;
+  char* stringValue;
+
+
+  if (tapeDrive == NULL || tapeDrive->runningTapeReq() == NULL) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() << "RTCopyDConnection::sendJobToRTCP(): "
+                    << "One of the arguments is NULL" << std::endl;
+
+    throw ex;
+  }
+
+  tapeRequest = tapeDrive->runningTapeReq();
+  clientData = tapeRequest->client();
+
+  magic = RTCOPY_MAGIC_OLD0;
+  reqtype = VDQM_CLIENTINFO;
+
+  /**
+   * Let's count the length of the message for the header.
+   * Please notice: Normally the ID is a 64Bit number!!
+   * But for historical reasons, we will do a downcast of the
+   * id, which is then still unique, because a tapeRequest has
+   * a very short lifetime, compared to the number of new IDs
+   */
+  len = 4*LONGSIZE + clientData->userName().length() +
+    clientData->machine().length()  +
+    tapeDrive->deviceGroupName()->dgName().length()  +
+    tapeDrive->driveName().length()  + 4;
+
+  p = buf;
+
+  DO_MARSHALL(LONG, p, magic, SendTo);
+  DO_MARSHALL(LONG, p, reqtype, SendTo);
+  DO_MARSHALL(LONG, p, len, SendTo);
+
+  /**
+   * We must do a downcast because of the old Protocol.
+   * Of course we do later the same in case of a comparison
+   */
+  castValue = (unsigned int)tapeRequest->id();
+  DO_MARSHALL(LONG, p, castValue, SendTo);
+
+  intValue = clientData->port();
+  DO_MARSHALL(LONG, p, intValue, SendTo);
+
+  intValue = clientData->euid();
+  DO_MARSHALL(LONG, p, intValue, SendTo);
+
+  intValue = clientData->egid();
+  DO_MARSHALL(LONG, p, intValue, SendTo);
+
+  stringValue = (char *)clientData->machine().c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmVolReq.client_host));
+
+  stringValue = (char *)tapeDrive->deviceGroupName()->dgName().c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmDrvReq.dgn));
+
+  stringValue = (char *)tapeDrive->driveName().c_str();
+  DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmDrvReq.drive));
+
+  stringValue = (char *)clientData->userName().c_str();
   DO_MARSHALL_STRING(p, stringValue, SendTo, sizeof(vdqmVolReq.client_name));
 
   len += 3*LONGSIZE;

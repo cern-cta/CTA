@@ -35,8 +35,9 @@
 #define VDQMSERV
 
 #include <net.h>
-#include <vdqm_constants.h>	//e.g. Magic Number of old vdqm protocol
+#include <vdqm_constants.h>  //e.g. Magic Number of old vdqm protocol
 
+#include "castor/exception/Internal.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]) {
 
     server.start();
 
-  } catch (castor::exception::Exception e) {
+  } catch (castor::exception::Exception &e) {
     std::cerr << "Failed to start VDQM server : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;

@@ -485,7 +485,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         throw ie;
       }
 
-      if ( !rtcpConnection.sendJobToRTCPD(ptr_tapeDrive->id(),
+      if ( !rtcpConnection.NEWsendJobToRTCPD(ptr_tapeDrive->id(),
         client->userName(), client->machine(), client->port(), client->euid(),
           client->egid(), dgn->dgName(), ptr_tapeDrive->driveName()) ) {
         castor::exception::Exception ex(EVQBADSTAT);

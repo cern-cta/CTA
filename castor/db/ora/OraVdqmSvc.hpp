@@ -236,8 +236,17 @@ namespace castor {
         /**
          * See documentation for castor::vdqm::IVdqmSvc
          */
-        virtual castor::vdqm::TapeRequest* matchTape2TapeDrive()
+        virtual castor::vdqm::TapeRequest* NEWmatchTape2TapeDrive()
           throw (castor::exception::Exception);            
+
+        /**
+         * See documentation for castor::vdqm::IVdqmSvc
+         */
+        virtual void OLDmatchTape2TapeDrive(
+          castor::vdqm::TapeDrive** freeTapeDrive, 
+          castor::vdqm::TapeRequest** waitingTapeRequest) 
+          throw (castor::exception::Exception);            
+
   
         //------------ functions for TapeDriveRequestHandler ------------------
   
@@ -393,10 +402,16 @@ namespace castor {
         oracle::occi::Statement *m_selectTapeDriveQueueStatement;
   
         /// SQL statement for function matchTape2TapeDrive
-        static const std::string s_matchTape2TapeDriveStatementString;
+        static const std::string s_NEWmatchTape2TapeDriveStatementString;
+  
+        /// SQL statement for function matchTape2TapeDrive
+        static const std::string s_OLDmatchTape2TapeDriveStatementString;
   
         /// SQL statement object for function matchTape2TapeDrive
-        oracle::occi::Statement *m_matchTape2TapeDriveStatement;
+        oracle::occi::Statement *m_NEWmatchTape2TapeDriveStatement;
+  
+        /// SQL statement object for function matchTape2TapeDrive
+        oracle::occi::Statement *m_OLDmatchTape2TapeDriveStatement;
   
         /// SQL statement for function selectCompatibilitiesForDriveModel
         static const std::string
