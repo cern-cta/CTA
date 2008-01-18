@@ -79,8 +79,9 @@ namespace castor{
 	  	
 	/* services needed: database and stager services*/
 	castor::stager::IStagerSvc* stagerService;
-	castor::db::DbCnvSvc* daemon;
-    
+	castor::db::DbCnvSvc* dbSvc;
+  
+  struct Cns_fileid* cnsFileId;
 
 	/* BaseAddress */
 	castor::BaseAddress* baseAddr;

@@ -109,7 +109,7 @@ namespace castor{
               
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-              stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
               
               // and we notify the jobManager
               m_notifyJobManager = true;
@@ -131,7 +131,7 @@ namespace castor{
                 stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
                 stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
                 try {
-                  stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+                  stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
                 }
                 catch (castor::exception::Exception e) {
                   // should never happen, we forward any exception and we delete the object to avoid a memory leak

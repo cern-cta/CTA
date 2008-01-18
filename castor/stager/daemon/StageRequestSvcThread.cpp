@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/15 17:41:37 $ $Author: itglp $
+* @(#)$RCSfile: StageRequestSvcThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
 *
 * Service thread for handling stager specific requests
 *
@@ -119,8 +119,8 @@ void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* sub
     stgRequestHandler->preHandle();
     stgRequestHandler->handle();
     
-    delete stgRequestHandler;
     delete stgRequestHelper;
+    delete stgRequestHandler;
    
   }
   catch(castor::exception::Exception ex){
@@ -128,7 +128,7 @@ void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* sub
     handleException(stgRequestHelper, (stgRequestHandler ? stgRequestHandler->getStgCnsHelper() : 0), ex.code(), ex.getMessage().str());
     
     /* we delete our objects */
-    if(stgRequestHandler) delete stgRequestHandler;
     if(stgRequestHelper) delete stgRequestHelper;
+    if(stgRequestHandler) delete stgRequestHandler;
   }
 }

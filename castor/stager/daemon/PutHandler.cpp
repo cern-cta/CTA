@@ -103,7 +103,7 @@ namespace castor{
               stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
               // we don't need to do anything, the request will be restarted
               // however we have to commit the transaction
-              stgRequestHelper->daemon->commit();
+              stgRequestHelper->dbSvc->commit();
             }
             else {
               // schedule the put
@@ -115,7 +115,7 @@ namespace castor{
               
               stgRequestHelper->subrequest->setStatus(SUBREQUEST_READYFORSCHED);
               stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);	      
-              stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+              stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
               
               // we have to notify the jobManager
               m_notifyJobManager = true;

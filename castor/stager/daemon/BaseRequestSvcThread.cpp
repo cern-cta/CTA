@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
+ * @(#)$RCSfile: BaseRequestSvcThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
  *
  * Base service thread for handling stager requests
  *
@@ -48,10 +48,10 @@
 castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() {
   try {
     castor::IService* svc =
-      castor::BaseObject::services()->service(m_daemonName, m_daemonType);
+      castor::BaseObject::services()->service(m_dbSvcName, m_dbSvcType);
     // we have already initialized the services in the main, so we know the pointer is valid
     castor::IObject* req = 0;
-    if(m_daemonType == castor::SVC_DBSTAGERSVC) {
+    if(m_dbSvcType == castor::SVC_DBSTAGERSVC) {
       castor::stager::IStagerSvc* stgSvc = dynamic_cast<castor::stager::IStagerSvc*>(svc);
       req = stgSvc->subRequestToDo(m_name);
     }
@@ -77,7 +77,7 @@ castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() 
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::BaseRequestSvcThread::handleException(
   RequestHelper* stgRequestHelper, CnsHelper* stgCnsHelper, int errorCode, std::string errorMessage) throw() {
-  if(stgRequestHelper == 0 || stgRequestHelper->daemon == 0 || stgRequestHelper->subrequest == 0) {
+  if(stgRequestHelper == 0 || stgRequestHelper->dbSvc == 0 || stgRequestHelper->subrequest == 0) {
     // exception thrown before being able to do anything with the db
     // we can't do much here...
     return;        
@@ -98,7 +98,7 @@ void castor::stager::daemon::BaseRequestSvcThread::handleException(
     // just try to update the db
     try {
       stgRequestHelper->subrequest->setStatus(SUBREQUEST_FAILED_FINISHED);
-      stgRequestHelper->daemon->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
+      stgRequestHelper->dbSvc->updateRep(stgRequestHelper->baseAddr, stgRequestHelper->subrequest, true);
     }
     catch (castor::exception::Exception ignored) {}
   }

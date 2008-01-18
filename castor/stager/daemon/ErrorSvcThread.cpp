@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/stager/daemon/ErrorRequestSvcThread.cpp
+ *                castor/stager/daemon/ErrorSvcThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
  *
  * Service thread for dealing with requests that failed
  *

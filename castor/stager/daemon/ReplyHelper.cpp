@@ -65,7 +65,7 @@ namespace castor{
       {
         if(stgRequestHelper->fileRequest) {
           if(stgRequestHelper->fileRequest->client() == 0) {
-            stgRequestHelper->daemon->fillObj(stgRequestHelper->baseAddr, stgRequestHelper->fileRequest, castor::OBJ_IClient, false);
+            stgRequestHelper->dbSvc->fillObj(stgRequestHelper->baseAddr, stgRequestHelper->fileRequest, castor::OBJ_IClient, false);
           }
         }
         else {

@@ -125,7 +125,7 @@ namespace castor{
         }catch(castor::exception::Exception e){
           
           /* since if an error happens we are gonna reply to the client(and internally, update subreq on DB)*/
-          /* we don t execute: daemon->updateRep ..*/
+          /* we don t execute: dbSvc->updateRep ..*/
           if(stgReplyHelper != NULL) delete stgReplyHelper;
           
           castor::dlf::Param params[]={castor::dlf::Param("Error Code",sstrerror(e.code())),
