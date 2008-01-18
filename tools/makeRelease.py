@@ -111,7 +111,41 @@ os.chdir(intReleaseDir)
 runCommand('cvs -Q -d :kserver:isscvs.cern.ch:2000/local/reps/castor co -r ' + version + ' CASTOR2',
            'Error while checking out release into internal release space')
 
-# and builf the doxygen documentation in it
+# create a 'fast' testsuite directory
+print "creating a fast testsuite..."
+os.chdir(intReleaseDir)
+os.mkdir('fastTestSuite')
+os.chdir('fastTestSuite')
+targets = [ ('CLIENT', 'PUT'),
+            ('CLIENT', 'GET'),
+            ('CLIENT', 'UPD'),
+            ('CLIENT', 'PUTDONE'),
+            ('CLIENT', 'RM'),
+            ('CLIENT', 'EXTRAQRY'),
+            ('CLIENT', 'DISKONLY'),
+            ('CLIENT', 'EXTRATEST'),
+            ('RFIO', 'BASIC_RFCP'),
+            ('ROOT', 'RFIO'),
+            ('ROOT', 'CASTOR') ]
+s = open('../CASTOR2/test/testsuite/CASTORTESTCONFIG').read()
+for t in targets:
+    r = re.compile(t[0]+'(\s+)'+t[1]+'(\s+)NO')
+    m = r.search(s)
+    s = s.replace(m.group(0), t[0]+m.group(1)+t[1]+m.group(2)+'YES')
+f = open('CASTORTESTCONFIG', 'w')
+f.write(s)
+f.close()
+files = ['CastorTestSuite.py',
+         'ClientTest.py',
+         'RfioTest.py',
+         'RootTest.py',
+         'TapeTest.py',
+         'UtilityForCastorTest.py']
+for f in files:
+    cmd = 'cp ../CASTOR2/test/testsuite/' + f + ' .'
+    runCommand(cmd, 'Error while creating fast testsuite')
+
+# and build the doxygen documentation in it
 print "Building doxygen documentation"
 os.chdir(intReleaseDir + os.sep + 'CASTOR2')
 runCommand('make -f Makefile.ini Makefiles',
