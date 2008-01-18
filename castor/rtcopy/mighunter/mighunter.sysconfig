@@ -4,8 +4,27 @@
 #   -V dataVolume  dataVolume in byte to use as threashold
 #   svcclass1 svcclass2 ... list of svcclass to take into account
 #
-# Options ot pass to the recHandlerDaemon
+# Options ot pass to the migHunterDaemon
 #MIGHUNTER_OPTIONS=
 
 # Should we run with another limit on the core file size than the default?
 #DAEMON_COREFILE_LIMIT=unlimited
+
+#
+# should MigHUnter run?
+# any string but "YES" will equivalent to "NO"
+#
+MIGHUNTER_RUN="YES"
+OPTIONS="-t 300"
+#
+# should we run with another limit on the number of file descriptors than the default?
+# any string will be passed to ulimit -n
+#ULIMIT_N=4096
+#
+
+## What Service Classes should MigHunter'ised ?
+## Default is all of them unless you give an explicit list below
+## For each service class you can overwrite defaults providing a
+## file /etc/sysconfig/MigHunter.<svcclass>
+#
+SVCCLASSES=`listSvcClass`
