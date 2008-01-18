@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.607 $ $Date: 2008/01/17 10:00:29 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.608 $ $Date: 2008/01/18 16:19:20 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1918,11 +1918,12 @@ BEGIN
   UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT 
    WHERE id = dcId RETURNING fileSystem INTO fsId;
   -- how many do we have to create ?
+  -- select subrequest in status 3 in case of repack with staged diskcopy
   SELECT count(StageRepackRequest.repackVid) INTO nbTC
     FROM SubRequest, StageRepackRequest 
    WHERE subrequest.castorfile = cfId
      AND SubRequest.request = StageRepackRequest.id
-     AND SubRequest.status IN (4, 5, 6);  -- SUBREQUEST_WAITTAPERECALL, WAITSUBREQ, READY
+     AND SubRequest.status IN (3, 4, 5, 6);  -- SUBREQUEST_WAITSCHED, WAITTAPERECALL, WAITSUBREQ, READY
   SELECT nbCopies INTO nbTCInFC
     FROM FileClass, CastorFile
    WHERE CastorFile.id = cfId
@@ -5125,7 +5126,7 @@ BEGIN
       BEGIN 
       	INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      	NULL;
+      	UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
       END;
     END LOOP;
   END LOOP;
