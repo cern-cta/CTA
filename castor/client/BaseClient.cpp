@@ -325,20 +325,28 @@ castor::io::ServerSocket* castor::client::BaseClient::waitForCallBack()
       stop = true;
     }
   }
+  unsigned short port;
+  unsigned long ip;
+  castor::io::ServerSocket* socket = m_callbackSocket->accept();    // at this stage this won't block
+  socket->getPeerIp(port, ip);
+  std::ostringstream ipToStr;
+  ipToStr << ((ip & 0xFF000000) >> 24) << "." << ((ip & 0x00FF0000) >> 16) << "."
+    << ((ip & 0x0000FF00) >> 8) << "." << ((ip & 0x000000FF));
 #if !defined(_WIN32)
   clock_t endTime = times(&buf);
 #else
   clock_t endTime = clock();
 #endif
-  stage_trace(3, "%s CBK %.2f s before callback was received", 
+  stage_trace(3, "%s CBK %.2f s before callback from %s was received", 
               requestId().c_str(),
 #if !defined(_WIN32)
-              ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)) );
+              ((float)(endTime - startTime)) / ((float)sysconf(_SC_CLK_TCK)),
 #else
-              ((float)(endTime - startTime)) / CLOCKS_PER_SEC );
+              ((float)(endTime - startTime)) / CLOCKS_PER_SEC,
 #endif
+              ipToStr.str().c_str());
 
-  return m_callbackSocket->accept();
+  return socket;
 }
 
 //------------------------------------------------------------------------------
@@ -635,7 +643,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
   req->setMachine(castor::System::getHostName());
   if (m_rhHost == "") {
     castor::exception::Exception e(errno);
-    e.getMessage() << "Could not get rh host name"
+    e.getMessage() << "Could not get RH host name"
                    <<  strerror(errno);
     throw e;
   }
@@ -677,7 +685,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::pollAnswersFromStager
 (castor::stager::Request* req, castor::client::IResponseHandler* rh)
-  throw (castor::exception::Exception)
+throw (castor::exception::Exception)
 {
   if ( req == NULL || req->client() == NULL ){
     castor::exception::Internal ex;
@@ -717,50 +725,50 @@ void castor::client::BaseClient::pollAnswersFromStager
         IObject* obj = socket->readObject();
         try {
           if (OBJ_EndResponse == obj->type() ) {
-	    
-	    // cast response into Response*
-	    castor::rh::Response* endRes = dynamic_cast<castor::rh::Response*>(obj);
-	    if (0 == endRes) {
-	      castor::exception::Communication e(requestId(), SEINTERNAL);
-	      e.getMessage() << "Receive bad response type :"
-                             << obj->type();
-	      delete obj;
-	      delete socket;
-	      throw e;
-	    }
-	    
-	    if (0 != endRes->reqAssociated().length() && endRes->reqAssociated() != requestId()){
-	      // it was not the Response of this  Request and it is a new converter
-	      delete obj;
-	      continue;
-	    }
-	    
-	    // terminate response handler
-	    rh->terminate();
-	    stop = true;
-	    
-          } else {
+            
             // cast response into Response*
-            castor::rh::Response* res =
-              dynamic_cast<castor::rh::Response*>(obj);
-            if (0 == res) {
+            castor::rh::Response* endRes = dynamic_cast<castor::rh::Response*>(obj);
+            if (0 == endRes) {
               castor::exception::Communication e(requestId(), SEINTERNAL);
               e.getMessage() << "Receive bad response type :"
-                             << obj->type();
+              << obj->type();
               delete obj;
               delete socket;
               throw e;
             }
-	    
+            
+            if (0 != endRes->reqAssociated().length() && endRes->reqAssociated() != requestId()){
+              // it was not the Response of this  Request and it is a new converter
+              delete obj;
+              continue;
+            }
+            
+            // terminate response handler
+            rh->terminate();
+            stop = true;
+            
+          } else {
+            // cast response into Response*
+            castor::rh::Response* res =
+            dynamic_cast<castor::rh::Response*>(obj);
+            if (0 == res) {
+              castor::exception::Communication e(requestId(), SEINTERNAL);
+              e.getMessage() << "Receive bad response type :"
+              << obj->type();
+              delete obj;
+              delete socket;
+              throw e;
+            }
+            
             if (0 != res->reqAssociated().length() && res->reqAssociated() != requestId()){ 
-	      // I'm using a new convertr and it was not the Response of this Request
-	      delete obj;
-	      continue;
-	    }  
+              // I'm using a new convertr and it was not the Response of this Request
+              delete obj;
+              continue;
+            }  
             // Print the request
             rh->handleResponse(*res);
           }
-	  
+          
           delete obj;
         } catch (castor::exception::Exception e) {
           if (0 != obj) delete obj;
