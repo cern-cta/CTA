@@ -55,7 +55,42 @@ castor::vdqm::handler::TapeRequestDedicationHandler*
  */
 unsigned const int
   castor::vdqm::handler::TapeRequestDedicationHandler::m_sleepTime = 2;
+
    
+//------------------------------------------------------------------------------
+// startDriveSchedulerThreads
+//------------------------------------------------------------------------------
+void castor::vdqm::handler::TapeRequestDedicationHandler::
+  startOLDDriveSchedulerThreads() throw(castor::exception::Exception)
+{
+  // "Start tape to tape drive dedication thread" message
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 61);
+
+  // The Singleton with the main loop to dedicate a
+  // tape to a tape drive.
+  castor::vdqm::handler::TapeRequestDedicationHandler
+    *tapeRequestDedicationHandler;
+
+  try {
+    // Create thread, which dedicates the tapes to the tape drives
+    tapeRequestDedicationHandler =
+      castor::vdqm::handler::TapeRequestDedicationHandler::Instance(1);
+  } catch (castor::exception::Exception &ex) {
+    castor::exception::Internal ie;
+
+    ie.getMessage()
+      << "Unable to initialize TapeRequestDedicationHandler thread: "
+      << ex.getMessage().str();
+
+    throw ie;
+  }
+
+  // This function ends only, if the stop() function is beeing called.
+  tapeRequestDedicationHandler->run();
+
+  delete tapeRequestDedicationHandler;
+}
+
    
 //------------------------------------------------------------------------------
 // Instance

@@ -72,12 +72,6 @@ namespace castor {
     private:
 
       /**
-       * Contains the old VDQM2 code which starts the old tape dedication
-       * (drive scheduling) threads.
-       */
-      void startOLDDriveSchedulerThreads() throw(castor::exception::Exception);
-
-      /**
        * Allocates the already associated free drive of the specified tape
        * request to the tape request.
        */

@@ -58,47 +58,17 @@ castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
 }
 
 
-//------------------------------------------------------------------------------
-// startDriveSchedulerThreads
-//------------------------------------------------------------------------------
-void castor::vdqm::DriveSchedulerThread::startOLDDriveSchedulerThreads()
-  throw(castor::exception::Exception)
-{
-  // "Start tape to tape drive dedication thread" message
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 61);
-
-  // The Singleton with the main loop to dedicate a
-  // tape to a tape drive.
-  castor::vdqm::handler::TapeRequestDedicationHandler
-    *tapeRequestDedicationHandler;
-
-  try {
-    // Create thread, which dedicates the tapes to the tape drives
-    tapeRequestDedicationHandler =
-      castor::vdqm::handler::TapeRequestDedicationHandler::Instance(1);
-  } catch (castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
-
-    ie.getMessage()
-      << "Unable to initialize TapeRequestDedicationHandler thread: "
-      << ex.getMessage().str();
-
-    throw ie;
-  }
-
-  // This function ends only, if the stop() function is beeing called.
-  tapeRequestDedicationHandler->run();
-
-  delete tapeRequestDedicationHandler;
-}
-
-
 //-----------------------------------------------------------------------------
 // select
 //-----------------------------------------------------------------------------
 castor::IObject* castor::vdqm::DriveSchedulerThread::select()
   throw() {
 
+  // Temporarily use OLD code which never returns
+  castor::vdqm::handler::TapeRequestDedicationHandler::
+    startOLDDriveSchedulerThreads();
+
+/*
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
   castor::IObject        *obj     = NULL;
 
@@ -134,6 +104,7 @@ castor::IObject* castor::vdqm::DriveSchedulerThread::select()
   }
 
   return obj;
+*/
 }
 
 
