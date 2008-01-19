@@ -31,6 +31,7 @@
 
 #include <vdqm_constants.h>  //e.g. Magic Number of old vdqm protocol
  
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/newVdqm.h" //Needed for the client_connection
 #include "castor/vdqm/OldRequestFacade.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
@@ -164,6 +165,10 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     
     return;
   }
+
+  std::cout << "Received message: ";
+  castor::vdqm::DevTools::printVdqmRequestType(std::cout, reqtype);
+  std::cout << std::endl;
   
   /**
    * Initialization of the OldRequestFacade, which 

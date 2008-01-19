@@ -1,11 +1,11 @@
-#include "castor/vdqm/VdqmDevTools.hpp"
+#include "castor/vdqm/DevTools.hpp"
 #include "h/vdqm_constants.h"
 
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmDevTools::VdqmDevTools() throw() {
+castor::vdqm::DevTools::DevTools() throw() {
   // Do nothing
 }
 
@@ -13,7 +13,7 @@ castor::vdqm::VdqmDevTools::VdqmDevTools() throw() {
 //------------------------------------------------------------------------------
 // printVdqmRequestType
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmDevTools::printVdqmRequestType(std::ostream &os,
+void castor::vdqm::DevTools::printVdqmRequestType(std::ostream &os,
   const int type) throw() {
 
   switch(type) {

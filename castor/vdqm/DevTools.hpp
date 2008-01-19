@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      VdqmDevTools.hpp
+ *                      DevTools.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -36,7 +36,7 @@ namespace castor {
     /**
      * Collection of static methods to faciliate the development of the VDQM.
      */
-    class VdqmDevTools {
+    class DevTools {
     public:
 
       /**
@@ -49,12 +49,11 @@ namespace castor {
     private:
 
       /**
-       * Private constructor to prevent the instantiation of VdqmDevTool
-       * objects.
+       * Private constructor to prevent the instantiation of DevTool objects.
        */
-      VdqmDevTools() throw();
+      DevTools() throw();
 
-    }; // class VdqmDevTools
+    }; // class DevTools
 
   } // namespace vdqm
 

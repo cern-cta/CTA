@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.24 $ $Release$ $Date: 2008/01/18 17:47:13 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.25 $ $Release$ $Date: 2008/01/19 18:18:14 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -40,6 +40,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 LIBS = -lshift -lcastorCnvs -Wl,-rpath-link,../../shlib
 
 VDQMBIN_SRCS = DatabaseHelper.cpp \
+               DevTools.cpp \
                DriveSchedulerThread.cpp \
                NewProtocolInterpreter.cpp \
                OldProtocolInterpreter.cpp \
@@ -47,7 +48,6 @@ VDQMBIN_SRCS = DatabaseHelper.cpp \
                ProtocolFacade.cpp \
                RequestHandlerThread.cpp \
                RTCopyDConnection.cpp \
-               VdqmDevTools.cpp \
                VdqmServer.cpp \
                VdqmSocketHelper.cpp \
                handler/BaseRequestHandler.cpp \
