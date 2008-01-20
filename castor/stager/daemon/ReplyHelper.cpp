@@ -91,7 +91,7 @@ namespace castor{
         }
         
         ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
-        ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
+        ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED_FINISHED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
         ioResponse->setId(stgRequestHelper->subrequest->id());
         
         /* errorCode = exception.code() */
