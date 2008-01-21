@@ -122,6 +122,77 @@ BEGIN
 	COMMIT;
 END; 
 
+-- Cleanup of requests without subrequests, left over since pre-2.1.3 versions
+CREATE TABLE ReqCleaning
+    ( ID NUMBER NOT NULL ENABLE,
+      TYPE NUMBER(*,0) NOT NULL ENABLE
+    )
+ PCTFREE 0 TABLESPACE STAGER_DATA;
+ 
+/* PL/SQL method to delete a group of requests */
+CREATE OR REPLACE PROCEDURE deleteOrphanRequests
+  (tab IN VARCHAR2, typ IN VARCHAR2, cleanTab IN VARCHAR2) AS
+  totalCount NUMBER;
+BEGIN
+  -- select requests with no subrequests
+  EXECUTE IMMEDIATE  
+   'BEGIN
+     DELETE FROM '||cleanTab||';
+     INSERT into '||cleanTab||' 
+      (SELECT r.id, '||typ||' type from '||tab||' r, subrequest 
+        WHERE subrequest.request(+) = r.id 
+          AND subrequest.id is null);
+    END;';
+  SELECT count(*) INTO totalCount FROM ReqCleaning;
+  INSERT INTO CleanupLogTable VALUES
+    (12, 'Cleaning '||tab||' requests with no subRequests - '||TO_CHAR(totalCount)||' entries', getTime());
+  COMMIT;
+  
+  -- delete client id2type
+  bulkDelete(
+    'SELECT client FROM '||tab||', '||cleanTab||'
+       WHERE '||tab||'.id = '||cleanTab||'.id;',
+    'Id2Type');
+  -- delete client itself
+  bulkDelete(
+    'SELECT client FROM '||tab||', '||cleanTab||'
+       WHERE '||tab||'.id = '||cleanTab||'.id;',
+    'Client');
+  -- delete request id2type
+  bulkDelete(
+    'SELECT id FROM '||cleanTab||' WHERE type = '||typ||';',
+    'Id2Type');
+  -- delete request itself
+  bulkDelete(
+    'SELECT id FROM '||cleanTab||' WHERE type = '||typ||';',
+    tab);
+  COMMIT;
+END;
+
+BEGIN
+  -- Delete Request + Clients 
+    ---- Get ----
+  deleteOrphanRequests('StageGetRequest', '35', 'ReqCleaning');
+    ---- Put ----
+  deleteOrphanRequests('StagePutRequest', '40', 'ReqCleaning');
+    ---- Update ----
+  deleteOrphanRequests('StageUpdateRequest', '44', 'ReqCleaning');
+    ---- Rm ----
+  deleteOrphanRequests('StageRmRequest', '42', 'ReqCleaning');
+    ---- PutDone ----
+  deleteOrphanRequests('StagePutDoneRequest', '39', 'ReqCleaning');
+    ---- SetFileGCWeight ----
+  deleteOrphanRequests('SetFileGCWeight', '95', 'ReqCleaning');
+    ---- PrepareToGet -----
+  deleteOrphanRequests('StagePrepareToGetRequest', '36', 'ReqCleaning');
+    ---- PrepareToPut ----
+  deleteOrphanRequests('StagePrepareToPutRequest', '37', 'ReqCleaning');
+END;
+
+DROP TABLE ReqCleaning;
+DROP PROCEDURE deleteOrphanRequests;
+
+
 -- Optional steps follow
 INSERT INTO CleanupLogTable VALUES (16, 'Shrinking tables', getTime());
 COMMIT;
