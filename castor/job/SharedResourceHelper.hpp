@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SharedResourceHelper.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 14:54:54 $ $Author: waldron $
+ * @(#)$RCSfile: SharedResourceHelper.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/21 07:34:54 $ $Author: waldron $
  *
  * Helper used to download the resource file associated with a job
  *
@@ -96,6 +96,14 @@ namespace castor {
        */
       unsigned int retryAttempts() const {
 	return m_retryAttempts;
+      }
+      
+      /**
+       * Returns the retry interval in seconds between retry attempts.
+       * @return the value of m_retryInterval
+       */
+      unsigned int retryInterval() const {
+	return m_retryInterval;
       }
       
       /**

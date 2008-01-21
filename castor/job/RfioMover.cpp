@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 14:54:54 $ $Author: waldron $
+ * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/21 07:34:54 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -73,7 +73,7 @@ castor::job::RfioMover::~RfioMover() throw() {
 //-----------------------------------------------------------------------------
 void castor::job::RfioMover::source()
   throw(castor::exception::Exception) {
-  exit(0);
+
 }
 
 

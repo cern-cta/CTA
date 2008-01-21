@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/09 14:16:35 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/21 07:34:55 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -185,7 +185,6 @@ void castor::job::diskcopy::MainThread::parseCommandLine
   Coptions_t longopts[] = {
     
     // Defaults
-    { "foreground", NO_ARGUMENT,       NULL, 'f' },
     { "config",     REQUIRED_ARGUMENT, NULL, 'c' },
     { "help",       NO_ARGUMENT,       NULL, 'h' },
 
@@ -213,9 +212,8 @@ void castor::job::diskcopy::MainThread::parseCommandLine
 
   // Parse command line arguments
   char c;
-  while ((c = Cgetopt_long(argc, argv, "fc:hr:s:F:H:D:X:S:R:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "c:hr:s:F:H:D:X:S:R:", longopts, NULL)) != -1) {
     switch (c) {
-    case 'f':
     case 'c':
     case 'h':
       break;
@@ -276,7 +274,6 @@ void castor::job::diskcopy::MainThread::help(std::string programName) {
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--foreground            or -f  \tRemain in the foreground\n"
     "\t--config <config-file>  or -c  \tConfiguration file\n"
     "\t--help                  or -h  \tPrint this help and exit\n"
     "\t--request <uuid>        or -r  \tThe request uuid\n"
@@ -300,6 +297,14 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   // Download the resource file
   std::string content("");
   try {
+    // "Downloading resource file"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("ResourceFile", m_resourceFile),
+       castor::dlf::Param("MaxAttempts", m_resHelper->retryAttempts()),
+       castor::dlf::Param("RetryInterval", m_resHelper->retryInterval()),
+       castor::dlf::Param(m_subRequestId)};
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_DEBUG, 35, 4, params, &m_fileId);
+
     m_resHelper->setUrl(m_resourceFile);
     content = m_resHelper->download(false);
   } catch (castor::exception::Exception e) {
@@ -368,8 +373,28 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   }
 
   if (hostname != diskserver) {
+    // "Starting source end of mover"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("JobId", getenv("LSB_JOBID") != NULL ? getenv("LSB_JOBID") : "Unknown"),
+       castor::dlf::Param(m_subRequestId)};
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_DEBUG, 33, 2, params, &m_fileId);
+
     m_mover->source();
-    return;
+
+    // Calculate statistics
+    timeval tv;
+    gettimeofday(&tv, NULL);
+    signed64 elapsedTime =
+      (((tv.tv_sec * 1000000) + tv.tv_usec) - m_startTime);
+
+    // "Source end of mover terminated"
+    castor::dlf::Param params2[] =
+      {castor::dlf::Param("ElapsedTime", elapsedTime  * 0.000001),
+       castor::dlf::Param(m_subRequestId)};
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_DEBUG, 34, 2, params2, &m_fileId);
+ 
+    dlf_shutdown(5);
+    exit(0);
   }
 
   // "DiskCopyTransfer started"
@@ -401,10 +426,9 @@ void castor::job::diskcopy::MainThread::run(void *param) {
     castor::dlf::Param params[] =
       {castor::dlf::Param("Type", sstrerror(e.code())),
        castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Diskserver", diskserver),
-       castor::dlf::Param("Filesystem", filesystem),			  
+       castor::dlf::Param("SourceDiskCopy", m_sourceDiskCopyId),
        castor::dlf::Param(m_subRequestId)};
-    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 26, 5, params, &m_fileId);
+    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 26, 4, params, &m_fileId);
     _exit(0, EXIT_FAILURE);
   } catch (...) {
 

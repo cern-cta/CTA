@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 14:54:55 $ $Author: waldron $
+ * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/21 07:34:55 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -42,10 +42,21 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("MainThread",
-	new castor::job::diskcopy::MainThread(argc, argv), 0));
+    	new castor::job::diskcopy::MainThread(argc, argv), 0));
     daemon.getThreadPool('M')->setNbThreads(1);
 
+    // Redirect the standard file descriptors to /dev/null
+    if ((freopen("/dev/null", "r", stdin)  == NULL) ||
+        (freopen("/dev/null", "w", stdout) == NULL) ||
+        (freopen("/dev/null", "w", stderr) == NULL)) {
+      castor::exception::Exception ex(errno);
+      ex.getMessage() << "Failed to redirect standard file descriptors to "
+		      << "/dev/null" << std::endl;
+      throw ex;
+    }
+
     // Start daemon
+    daemon.setForeground(true);
     daemon.parseCommandLine(argc, argv);
     daemon.start();
     return 0;
@@ -102,6 +113,9 @@ castor::job::diskcopy::DiskCopyTransfer::DiskCopyTransfer():
     { 30, "Exception caught trying to finalize disk2disk copy transfer, transfer failed" },
     { 31, "Failed to remotely execute disk2DiskCopyDone" },
     { 32, "The content of the resource file is invalid" },
+    { 33, "Starting source end of mover" },
+    { 34, "Source end of mover terminated" },
+    { 35, "Downloading resource file" },
     { 39, "DiskCopy Transfer successful" },
     
     // Exit
