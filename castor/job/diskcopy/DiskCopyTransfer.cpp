@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/21 07:34:55 $ $Author: waldron $
+ * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/21 15:16:45 $ $Author: itglp $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -57,7 +57,6 @@ int main(int argc, char *argv[]) {
 
     // Start daemon
     daemon.setForeground(true);
-    daemon.parseCommandLine(argc, argv);
     daemon.start();
     return 0;
     
