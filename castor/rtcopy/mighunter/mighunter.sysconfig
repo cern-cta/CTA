@@ -1,30 +1,17 @@
 # Arguments for the mighunter
 #   -f             keep process in the foreground, do not fork
+#   -C             clone tapecopies from existing to new streams
 #   -t timeSec     time between two checks
-#   -V dataVolume  dataVolume in byte to use as threashold
+#   -v dataVolume  dataVolume in bytes to use as threshold
 #   svcclass1 svcclass2 ... list of svcclass to take into account
 #
-# Options ot pass to the migHunterDaemon
-#MIGHUNTER_OPTIONS=
+# Options to pass to the migHunterDaemon
+MIGHUNTER_OPTIONS="-t 300"
 
 # Should we run with another limit on the core file size than the default?
 #DAEMON_COREFILE_LIMIT=unlimited
 
-#
-# should MigHUnter run?
-# any string but "YES" will equivalent to "NO"
-#
-MIGHUNTER_RUN="YES"
-OPTIONS="-t 300"
-#
-# should we run with another limit on the number of file descriptors than the default?
-# any string will be passed to ulimit -n
-#ULIMIT_N=4096
-#
-
-## What Service Classes should MigHunter'ised ?
-## Default is all of them unless you give an explicit list below
-## For each service class you can overwrite defaults providing a
-## file /etc/sysconfig/MigHunter.<svcclass>
-#
+# What service classes should the migHunterDaemon run for. For each service
+# class you can overwrite the defaults using a dedicate sysconfig file
+# for the service class. e.g. /etc/sysconfig/mighunter.<svcclass>
 SVCCLASSES=`listSvcClass`

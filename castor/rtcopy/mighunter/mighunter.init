@@ -19,9 +19,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.2 $ $Release$ $Date: 2007/12/10 15:49:39 $ $Author: sponcec3 $
+# @(#)$RCSfile: mighunter.init,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/21 07:41:57 $ $Author: waldron $
 #
-# chkconfig: 345 70 35
+# chkconfig: 345 73 32
 # description: MigHunterDaemon Initialisation Script
 #
 # @author castor dev team
@@ -32,79 +32,98 @@
 
 # Variables
 prog="migHunterDaemon"
+sysconfigfile="mighunter"
 RETVAL=0
 
 # Source sysconfig files
 if [ -f /etc/sysconfig/castor ]; then
-	. /etc/sysconfig/castor
+        . /etc/sysconfig/castor
 fi
-if [ -f /etc/sysconfig/$prog ]; then
-	. /etc/sysconfig/$prog
+if [ -f /etc/sysconfig/$sysconfigfile ]; then
+        . /etc/sysconfig/$sysconfigfile
 fi
 
 start() {
-	# Run daemon
-	echo -n $"Starting $prog: "
+        # Run daemon
+        echo -n $"Starting mighunter: "
 
-	daemon /usr/bin/$prog $MIGHUNTER_OPTIONS
+        # Check for service classes
+        if [ -z "${SVCCLASSES}" ]; then
+                echo -n $"No service classes defined"
+                failure && echo && exit
+        fi
+        echo
 
-	# Write the pid to a file.
-	RETVAL=$?
-	if [ $RETVAL -eq 0 ]; then
-		pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
-		rm -f /var/run/$prog.pid
-		if [ -n "$pid" ]; then
-		        echo $pid > /var/run/$prog.pid
-			RETVAL=0
-		else
-			RETVAL=1
-		fi
-	fi
+        # Start mighunters
+        for i in ${SVCCLASSES}; do
 
-	[ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
-	echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
-	return $RETVAL
+                # Load appropriate sysconfig file for service class
+                if [ -f /etc/sysconfig/$sysconfigfile.$i ]; then
+                        . /etc/sysconfig/$sysconfigfile.$i
+                else
+                        # Load default
+                        if [ -f /etc/sysconfig/$sysconfigfile ]; then
+                                . /etc/sysconfig/$sysconfigfile
+                        fi
+                fi
+                echo -n $"Starting mighunter for svcclass: $i"
+
+                # Checking to see if the migHunterDaemon is already running
+                pid=`ps -eo pid,ppid,comm,cmd | egrep " 1 $prog.*$i\$" | awk '{print $1}' | xargs`
+                if [ -n "$pid" ]; then
+                        echo -n $" - already started"
+                        failure
+                        echo
+                else
+                        daemon /usr/bin/$prog $MIGHUNTER_OPTIONS $i
+
+                        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+                        echo
+                        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+                fi
+        done
+
+        return $RETVAL
 }
 
 stop() {
-	echo -n $"Stopping $prog: "
-	killproc $prog
-	
-	RETVAL=$?
-	echo
-	[ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
-	[ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
-	return $RETVAL	
+        echo -n $"Stopping mighunter: "
+        killproc $prog
+        
+        RETVAL=$?
+        echo
+        [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
+        [ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
+        return $RETVAL
 }
 
 restart() {
-	stop
+        stop
         start 
 }
 
 # See how we were called
 case "$1" in
-	
-	start)
-		start
-		;;
-	stop)
-		stop
-		;;
-	status)
-		status $prog
-		RETVAL=$?
-		;;
-	restart)
-		restart
-		;;
-	condrestart)
-		[ -f /var/lock/subsys/$prog ] && restart || :
-		;;
-	*)
-		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
-		exit 1
+        
+        start)
+                start
+                ;;
+        stop)
+                stop
+                ;;
+        status)
+                status $prog
+                RETVAL=$?
+                ;;
+        restart)
+                restart
+                ;;
+        condrestart)
+                [ -f /var/lock/subsys/$prog ] && restart || :
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+                exit 1
 esac
 
 exit $RETVAL
