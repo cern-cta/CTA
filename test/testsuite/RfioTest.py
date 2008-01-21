@@ -1,14 +1,11 @@
 import unittest
-import UtilityForCastorTest
 import os
 import sys
 import time
 import threading
 import re
-
-# castorParameters
-
-(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
+import UtilityForCastorTest
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
 
 # parameters
 
@@ -48,7 +45,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
 			global castorDir
 		        os.system("rfmkdir "+castorDir)
 			
-			f=open("./CASTORTESTCONFIG","r")
+			f=open(configFile,"r")
 			configFileInfo=f.read()
 			f.close
 

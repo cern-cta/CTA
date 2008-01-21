@@ -3,6 +3,8 @@ import sys
 import unittest
 import string
 
+import UtilityForCastorTest
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
 import ClientTest
 import RfioTest
 import RootTest
@@ -71,8 +73,8 @@ listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'ROOT':rootTest,'TAPE':tapeTest,
 
 
 #################### opening the file with the list of tests wanted  ################################
-
-f=open("./CASTORTESTCONFIG","r")
+print "Using configuration file " + configFile
+f=open(configFile,"r")
 configFileInfo=f.read()
 f.close
 

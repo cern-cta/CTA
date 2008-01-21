@@ -4,6 +4,59 @@ import sys
 import time
 import getopt
 
+#########################
+# get castor parameters #
+#########################
+
+# parse command line
+myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":""}
+optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:')
+optionCmdLine=optionCmdLine[0]
+for elemLine in optionCmdLine:
+	if elemLine !=[]:
+		myArg[elemLine[0]]=elemLine[1]
+# check for the right configFile
+if myArg["-c"] != "":
+	# note : that is a global variable
+	configFile=myArg["-c"]
+else:
+	configFile = "./CASTORTESTCONFIG"
+# Parse config file content
+f=open(configFile)
+configFileInfo=f.read()
+f.close
+index= configFileInfo.find("*** Generic parameters ***")
+configFileInfo=configFileInfo[index:]
+index=configFileInfo.find("***")
+if index != -1:
+	index=index-1
+	configFileInfo=configFileInfo[:index]
+stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
+stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
+stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
+stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
+stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
+stagerDiskOnlySvcClass=(configFileInfo[configFileInfo.find("DISKONLY_SVCCLASS"):]).split()[1]
+stagerForcedFileClass=(configFileInfo[configFileInfo.find("FORCED_FILECLASS"):]).split()[1]
+# Overwrite with command line values when needed
+if myArg["-s"] !="":
+	stagerHost=myArg["-s"]
+if myArg["-p"] != "":
+	stagerPort=myArg["-p"]
+if myArg["-d"] != "":
+	stagerSvcClass=myArg["-d"]
+if myArg["-v"] != "":
+	if myArg["-v"] == "2":
+		stagerVersion="yes"
+	else:
+		stagerVersion="no"
+if myArg["-e"] != "":
+	stagerExtraSvcClass=myArg["-e"]
+
+
+####################
+# Useful functions #
+####################
 
 def getListOfFiles(myDir):
         tmpList=os.popen4("nsls "+myDir)[1].read().split("\n")
@@ -14,9 +67,8 @@ def getListOfFiles(myDir):
             defList.append(myDir+file)
 	return defList
 
-
 def getTimeOut():
-    f=open("./CASTORTESTCONFIG","r")
+    f=open(configFile,"r")
     configFileInfo=f.read()
     f.close
     index= configFileInfo.find("*** Generic parameters ***")
@@ -193,59 +245,6 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                             if envVar[1] == -1:
                                 myScen+="unsetenv "+envVar[0]+";"        
 	return myScen
-
-
-def getCastorParameters(myArg):
-	try:
-            f=open("./CASTORTESTCONFIG")
-            configFileInfo=f.read()
-            f.close
-            index= configFileInfo.find("*** Generic parameters ***")
-            configFileInfo=configFileInfo[index:]
-            index=configFileInfo.find("***")
-            if index != -1:
-                index=index-1
-                configFileInfo=configFileInfo[:index]
-            
-            stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
-            stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
-            stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
-            stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
-	    stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
-	    stagerDiskOnlySvcClass=(configFileInfo[configFileInfo.find("DISKONLY_SVCCLASS"):]).split()[1]	
-	    stagerForcedFileClass=(configFileInfo[configFileInfo.find("FORCED_FILECLASS"):]).split()[1]	
-        except IOError:
-            return (0,0,0,0)
-
-	myArg={"-s":"","-p":"","-d":"","-e":"","-v":""}
-	try:
-		optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:')
-		optionCmdLine=optionCmdLine[0]
-	except getopt.GetoptError:
-	    return (0,0,0,0)
-		
-    
-        for elemLine in optionCmdLine:
-		if elemLine !=[]:
-			myArg[elemLine[0]]=elemLine[1]
-
-	if myArg["-s"] !="":
-		stagerHost=myArg["-s"]
-	if myArg["-p"] != "":
-		stagerPort=myArg["-p"]
-	if myArg["-d"] != "":
-		stagerSvcClass=myArg["-d"]
-	if myArg["-v"] != "":
-		if myArg["-v"] == "2":
-			stagerVersion="yes"
-		else:
-			stagerVersion="no"
-			
-	if myArg["-e"] != "":
-		stagerExtraSvcClass=myArg["-e"]
-
-	return (stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass)
-
 
 # to test if the request handler and the stager are responding and the rfcp working
  

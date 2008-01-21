@@ -5,18 +5,14 @@ import re
 import sys
 import time
 import threading
-
-# castor parameters
-
-(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
+import UtilityForCastorTest
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
 
 # parameters
-
 ticket= UtilityForCastorTest.getTicket()
 myScen=""
 
 # files and directories
-
 inputFile="" 
 localDir=""
 myCastor=UtilityForCastorTest.prepareCastorString()
@@ -42,7 +38,7 @@ class PreRequisitesCase(unittest.TestCase):
 
         try:
 
-          f=open("./CASTORTESTCONFIG","r")
+          f=open(configFile,"r")
           configFileInfo=f.read()
           f.close
   

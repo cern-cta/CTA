@@ -1,11 +1,12 @@
 import unittest
-import UtilityForCastorTest
 import os
 import sys
 import time
 from threading import Thread
 import signal
 import thread
+import UtilityForCastorTest
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
 
 endThread=0
 # global variable to avoid the join, due to thread limitation in handling signals
@@ -16,10 +17,6 @@ def handlerKeyInt(signum, frame):
     raise KeyboardInterrupt, "Keyboard interrupt"
 
     
-# castor parameters
-
-(stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass)= UtilityForCastorTest.getCastorParameters(sys.argv[1:])
-
 ticket="" 
 dirCastor=""
 inputFile=""
@@ -150,7 +147,7 @@ class PreRequisitesCase(unittest.TestCase):
         global myScen
         myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
         try:
-            f=open("./CASTORTESTCONFIG","r")
+            f=open(configFile,"r")
             configFileInfo=f.read()
             f.close
         except IOError:
