@@ -40,6 +40,7 @@
 #include <common.h>
 
 // Local Includes
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/VdqmSocketHelper.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
 
@@ -113,6 +114,8 @@ void castor::vdqm::VdqmSocketHelper::vdqmNetwrite(const int socket,
   throw (castor::exception::Exception) {
   int rc;
 
+  castor::vdqm::DevTools::printMessage(std::cout, true, socket, hdrbuf);
+
   rc = netwrite_timeout(socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
   switch (rc) {
   case -1:
@@ -166,4 +169,6 @@ void castor::vdqm::VdqmSocketHelper::vdqmNetread(const int socket, void* hdrbuf)
       throw ex;
     }
   }
+
+  castor::vdqm::DevTools::printMessage(std::cout, false, socket, hdrbuf);
 }

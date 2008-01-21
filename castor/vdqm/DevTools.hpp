@@ -26,7 +26,10 @@
 #ifndef CASTOR_VDQM_VDQMDEBUGTOOLS_HPP
 #define CASTOR_VDQM_VDQMDEBUGTOOLS_HPP 1
 
+#include <stdint.h>
 #include <iostream>
+
+#include "castor/exception/Exception.hpp"
 
 
 namespace castor {
@@ -40,11 +43,32 @@ namespace castor {
     public:
 
       /**
-       * Prints the specified VDQM request type using the specified output
-       * stream.
+       * Prints the string form of specified IP (in host byte order) using the
+       * specified output stream.
        */
-      static void printVdqmRequestType(std::ostream &os, const int type)
+      static void printIp(std::ostream &os, const unsigned long ip) throw();
+
+      /**
+       * Prints the string form of specified magic number using the specified
+       * output stream.
+       */
+      static void printMagic(std::ostream &os, const uint32_t magic) throw();
+
+      /**
+       * Prints the string form of the specified VDQM request type using the
+       * specified output stream.
+       */
+      static void printVdqmRequestType(std::ostream &os, const uint32_t type)
         throw();
+
+      /**
+       * Prints the magic number, request type, peer IP and peer port of the
+       * specified message using the specified output stream.  The boolean
+       * msgWasSent should be set to true if the message was sent or to false
+       * the message was received.
+       */
+      static void printMessage(std::ostream &os, const bool messageWasSent,
+        const int socket, void* hdrbuf) throw (castor::exception::Exception);
     
     private:
 

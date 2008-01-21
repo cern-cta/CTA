@@ -171,13 +171,13 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 
   ptr_serverSocket->getPeerIp(peerPort, peerIp);
   std::cout << "Received: ";
+  castor::vdqm::DevTools::printMagic(std::cout, magicNumber);
+  std::cout << " ";
   castor::vdqm::DevTools::printVdqmRequestType(std::cout, reqtype);
-  std::cout << " from: "
-    << ((peerIp >> 24) & 0x000000FF) << "."
-    << ((peerIp >> 16) & 0x000000FF) << "."
-    << ((peerIp >>  8) & 0x000000FF) << "."
-    << ( peerIp        & 0x000000FF)
-    << ":" << peerPort << std::endl;
+  std::cout << " from: ";
+  castor::vdqm::DevTools::printIp(std::cout, peerIp);
+  std::cout << ":" << peerPort;
+  std::cout << std::endl;
   
   /**
    * Initialization of the OldRequestFacade, which 
