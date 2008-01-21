@@ -166,9 +166,18 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     return;
   }
 
-  std::cout << "Received message: ";
+  unsigned short peerPort;
+  unsigned long  peerIp;
+
+  ptr_serverSocket->getPeerIp(peerPort, peerIp);
+  std::cout << "Received: ";
   castor::vdqm::DevTools::printVdqmRequestType(std::cout, reqtype);
-  std::cout << std::endl;
+  std::cout << " from: "
+    << ((peerIp >> 24) & 0x000000FF) << "."
+    << ((peerIp >> 16) & 0x000000FF) << "."
+    << ((peerIp >>  8) & 0x000000FF) << "."
+    << ( peerIp        & 0x000000FF)
+    << ":" << peerPort << std::endl;
   
   /**
    * Initialization of the OldRequestFacade, which 
