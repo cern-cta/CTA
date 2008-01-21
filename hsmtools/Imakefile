@@ -177,8 +177,8 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(c2probe)) \
 	 FileName($(BIN),ProgramTargetName(adler32)) \
 	 FileName($(BIN),ProgramTargetName(springCleaning)) \
-	 FileName($(BIN),ProgramTargetName(checkreplicas))
-
+	 FileName($(BIN),ProgramTargetName(checkreplicas)) \
+	 FileName($(BIN),ProgramTargetName(rfcpupd))
 
 #if BuildVDQMCpp
 IPROGS += FileName($(BIN),ProgramTargetName(vdqmDBInit))
