@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/14 17:54:22 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/01/21 07:36:26 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -52,7 +52,8 @@ castor::jobmanager::SubmissionProcess::SubmissionProcess
   m_reverseUidLookup(reverseUidLookup), 
   m_sharedLSFResource(sharedLSFResource),
   m_submitRetryAttempts(DEFAULT_RETRY_ATTEMPTS),
-  m_submitRetryInterval(DEFAULT_RETRY_INTERVAL) {}
+  m_submitRetryInterval(DEFAULT_RETRY_INTERVAL),
+  m_parallelScheduling(true) {}
 
 
 //-----------------------------------------------------------------------------
@@ -121,6 +122,20 @@ void castor::jobmanager::SubmissionProcess::init()
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Default", m_submitRetryInterval)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 41, 1, params);
+    }
+  }
+
+  // Should the JobManager submit StageDiskCopyReplicaRequest's as parallel
+  // jobs into LSF?
+  value = getconfent("JobManager", "EnableParallelScheduling", 0);
+  if (value) {
+    if (!strcasecmp(value, "no")) {
+      m_parallelScheduling = false;
+    } else if (strcasecmp(value, "yes")) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Invalid option for EnableParallelScheduling: " << value
+		     << " - must be 'yes' or 'no'" << std::endl;
+      throw e;
     }
   }
 }
@@ -321,7 +336,8 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // destination. Note: PARALLEL_SCHED_BY_SLOT=y must be defined in the lsf.conf
   // file for this too work correctly. If not defined, LSF will schedule based
   // on the number of processors available not slots!!
-  if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
+  if ((request->requestType() == OBJ_StageDiskCopyReplicaRequest) &&
+      (m_parallelScheduling)) {
     m_job.numProcessors    = 2;
     m_job.maxNumProcessors = 2;
   } else {
@@ -337,7 +353,16 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // class and protocol required for the job to run.
   char resReq[CA_MAXLINELEN + 1];
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-    strncpy(resReq, "span[ptile=1] diskcopy", CA_MAXLINELEN + 1);
+    if (m_parallelScheduling) {
+      strncpy(resReq, "span[ptile=1] diskcopy", CA_MAXLINELEN + 1);
+    } else {
+      snprintf(resReq, CA_MAXLINELEN + 1, "%s:diskcopy", 
+	       request->svcClass().c_str());
+
+      // As we don't scheduling the source this becomes essentially a PUT
+      // request i.e. no forced filesystem
+      request->setRequestedFileSystems("");
+    }
   } else {
     snprintf(resReq, CA_MAXLINELEN + 1, "%s:%s", request->svcClass().c_str(),
 	     request->protocol().c_str());
@@ -347,21 +372,23 @@ void castor::jobmanager::SubmissionProcess::submitJob
 
   // Both GET requests and DiskCopy replication requests require a set of hosts
   // to be explicitly defined for the job to run.
-  m_job.askedHosts = (char **)malloc(request->numAskedHosts() * sizeof(char *));
   m_job.numAskedHosts = 0;
-  if (m_job.askedHosts == NULL) {
-
-    // "Memory allocation failure, job submission cancelled"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Error", strerror(errno)),
-       castor::dlf::Param(m_subRequestId)};
-    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 53, 2, params, &m_fileId); 
-    terminateRequest(request, SEINTERNAL);
-    return;
-  }
+  if (request->numAskedHosts() &&
+      !((request->requestType() == OBJ_StageDiskCopyReplicaRequest) &&
+	(!m_parallelScheduling))) {
+    m_job.askedHosts = (char **)malloc(request->numAskedHosts() * sizeof(char *));
+    if (m_job.askedHosts == NULL) {
+      
+      // "Memory allocation failure, job submission cancelled"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Error", strerror(errno)),
+	 castor::dlf::Param(m_subRequestId)};
+      castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 53, 2, params, &m_fileId); 
+      terminateRequest(request, SEINTERNAL);
+      return;
+    }
   
-  // Update the asked host list.
-  if (request->numAskedHosts()) {
+    // Update the asked host list.
     std::istringstream iss(request->askedHosts());
     std::string host;
     while (std::getline(iss, host, ' ')) {
@@ -394,7 +421,10 @@ void castor::jobmanager::SubmissionProcess::submitJob
   char command[CA_MAXLINELEN + 1];
   std::ostringstream cmd;
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-    cmd << "lsgrun -p -m \"$LSB_HOSTS\" /usr/bin/diskCopyTransfer"
+    if (m_parallelScheduling) {
+      cmd << "lsgrun -p -m \"$LSB_HOSTS\" ";
+    }
+    cmd << "/usr/bin/diskCopyTransfer"
 	<< " -r " << request->reqId()
 	<< " -s " << request->subReqId()
 	<< " -F " << request->fileId()
