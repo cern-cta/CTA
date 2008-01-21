@@ -84,7 +84,7 @@ ntuple->Fill(1,2,3);
 ntuple->Fill(4,5,6);
 f->Write();
 """
-        cmd=["echo '"+fileContent+"' | "+rootbin,"nsls -l "+dirCastor+"fileRoot"+self.protocol+ticket]
+        cmd=["echo '"+fileContent+"' | "+rootbin, "sleep 2", "nsls -l "+dirCastor+"fileRoot"+self.protocol+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"RootWrite."+self.protocol,cmd,myScen)
         message = "root with "+self.protocol+" protocol does not work for writing"
 
@@ -93,7 +93,7 @@ f->Write();
         fi.close()
         assert buffOut.rfind("Error:") == -1, message
 
-        fi=open(localDir+"RootWrite."+self.protocol+"1","r")
+        fi=open(localDir+"RootWrite."+self.protocol+"2","r")
         buffOut=fi.read().split()[4]
         fi.close()
         assert buffOut.isdigit() == 1, message
