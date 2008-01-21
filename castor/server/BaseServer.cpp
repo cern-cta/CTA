@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2008/01/17 10:55:41 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/01/21 07:37:56 $ $Author: waldron $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -110,7 +110,6 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 
     // run the program in a new session
     setsid();
-    setpgrp();
     
     // redirect the standard file descriptors to /dev/null
     if ((freopen("/dev/null", "r", stdin)  == NULL) ||
