@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.608 $ $Date: 2008/01/18 16:19:20 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.609 $ $Date: 2008/01/21 17:54:08 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -812,7 +812,7 @@ BEGIN
 END;
 
 
-/* PL/SQL method to delete a group of requests from  */
+/* PL/SQL method to delete a group of requests */
 CREATE OR REPLACE PROCEDURE deleteRequests
   (tab IN VARCHAR2, typ IN VARCHAR2, cleanTab IN VARCHAR2) AS
 BEGIN
@@ -2037,7 +2037,8 @@ BEGIN
         EXCEPTION WHEN NO_DATA_FOUND THEN
            -- the file is being written/migrated, fail the request
            UPDATE SubRequest
-              SET errorCode = 16,  -- EBUSY
+              SET status = 7,  -- FAILED
+                  errorCode = 16,  -- EBUSY
                   errorMessage = 'File is currently being written or migrated'
             WHERE id = srId;
            COMMIT;
