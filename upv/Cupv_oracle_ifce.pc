@@ -50,7 +50,7 @@ struct sqlca *sqlca;
       sqlca->sqlcode == -12170 || sqlca->sqlcode == -12541 || 
       sqlca->sqlcode == -1012  || sqlca->sqlcode == -1003  || 
       sqlca->sqlcode == -12571 || sqlca->sqlcode == -25408 || 
-      sqlca->sqlcode == -1033) {
+      sqlca->sqlcode == -1033  || sqlca->sqlcode == -1089) {
     Cupvlogit (func, "Trying to reconnect\n");
     Cupv_closedb (dbfd);
     if (Cupv_opendb (dbfd) < 0)

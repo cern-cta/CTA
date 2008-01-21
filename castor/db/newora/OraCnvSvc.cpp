@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.37 $ $Release$ $Date: 2007/12/20 10:36:33 $ $Author: itglp $
+ * @(#)$RCSfile: OraCnvSvc.cpp,v $ $Revision: 1.38 $ $Release$ $Date: 2008/01/21 10:21:01 $ $Author: waldron $
  *
  * The conversion service to Oracle
  *
@@ -361,8 +361,9 @@ void castor::db::ora::OraCnvSvc::handleException(std::exception& e) {
     
     int errcode = ((oracle::occi::SQLException&)e).getErrorCode();
     if (errcode == 28 || errcode == 3113 || errcode == 3114 || errcode == 32102
-        || errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
-        || errcode == 1003 || errcode == 12571 || errcode == 25408 || errcode == 1033) {  
+	|| errcode == 3135 || errcode == 12170 || errcode == 12541 || errcode == 1012
+	|| errcode == 1003 || errcode == 12571 || errcode == 25408 || errcode == 1033
+	|| errcode == 1089) {  
       // here we lost the connection due to an Oracle restart or network glitch
       // and this is the current list of errors acknowledged as a lost connection.
       // Notes:
