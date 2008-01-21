@@ -43,7 +43,7 @@
 // Definitions
 #define STG_CALLBACK_BACKLOG 2
 #define DEFAULT_CONNTIMEOUT  20
-#define DEFAULT_NETTIMEOUT   10
+#define DEFAULT_NETTIMEOUT   20
 
 
 //------------------------------------------------------------------------------
