@@ -834,7 +834,12 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 
   }
 
+  clog() << VERBOSE << SETW func
+         << "Unlocking m_clientQueue" << std::endl;
+  Cthread_mutex_unlock(&m_clientQueue); // I release the lock here because it is used only to manage the queue
+
   // Now notifying the replierThread
+
   int val = 1;
   int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
   if (rc != sizeof(val)) {
@@ -850,11 +855,6 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
              << std::endl;
     }
   }
-
-  // Exiting...
-  clog() << VERBOSE << SETW func
-         << "Unlocking m_clientQueue" << std::endl;
-  Cthread_mutex_unlock(&m_clientQueue);
 }
 
 
