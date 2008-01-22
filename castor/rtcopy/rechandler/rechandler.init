@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rechandler.init,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/11 15:26:45 $ $Author: sponcec3 $
+# @(#)$RCSfile: rechandler.init,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/22 14:31:00 $ $Author: waldron $
 #
 # chkconfig: 345 70 35
 # description: RecHandlerDaemon Initialisation Script
@@ -51,7 +51,7 @@ start() {
 	# Write the pid to a file.
 	RETVAL=$?
 	if [ $RETVAL -eq 0 ]; then
-		pid=`ps -eo pid,ppid,command | egrep " 1 $prog\$" | awk '{print $1}'`
+		pid=`ps -eo pid,ppid,command | egrep " 1 $prog.*" | awk '{print $1}'`
 		rm -f /var/run/$prog.pid
 		if [ -n "$pid" ]; then
 		        echo $pid > /var/run/$prog.pid
