@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.609 $ $Date: 2008/01/21 17:54:08 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.610 $ $Date: 2008/01/22 15:43:14 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5078,12 +5078,14 @@ BEGIN
       LOOP   
         -- get the tape pool with less stream
         BEGIN        	   
-          SELECT id INTO tpId FROM TapePool 
-           WHERE id NOT IN (SELECT tapepool FROM Stream) AND ROWNUM <2;
+          SELECT TapePool.id INTO tpId FROM TapePool,SvcClass2TapePool  
+           WHERE TapePool.id NOT IN (SELECT TapePool FROM Stream) AND TapePool.id= SvcClass2TapePool.child
+	       AND  SvcClass2TapePool.parent=svcId AND ROWNUM <2;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- at least one stream foreach tapepool
-          SELECT tapepool INTO tpId 
-            FROM (SELECT tapepool, count(*) AS c FROM Stream GROUP BY tapepool ORDER BY c ASC)
+           SELECT tapepool INTO tpId 
+            FROM (SELECT tapepool, count(*) AS c FROM Stream WHERE tapepool IN
+	    (SELECT SvcClass2TapePool.child FROM SvcClass2TapePool WHERE SvcClass2TapePool.parent=svcId) GROUP BY tapepool ORDER BY c ASC)
            WHERE ROWNUM < 2;  	         
 	END;
 	           
@@ -5109,7 +5111,7 @@ BEGIN
       END LOOP;
     END IF;
   END IF;
-END;
+
 
 /* attach tapecopy to stream */
 
