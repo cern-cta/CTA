@@ -64,11 +64,14 @@ namespace castor {
       /**
        * Prints the magic number, request type, peer IP and peer port of the
        * specified message using the specified output stream.  The boolean
-       * msgWasSent should be set to true if the message was sent or to false
-       * the message was received.
+       * msgWasSent should be set to true if the message was sent, or to false
+       * the message was received.  The boolean messageInNetworkByteOrder
+       * should be set to true if the contents of the message is in network
+       * byte order, or to false if the contents is in host byte order.
        */
       static void printMessage(std::ostream &os, const bool messageWasSent,
-        const int socket, void* hdrbuf) throw (castor::exception::Exception);
+        const bool messageInNetworkByteOrder, const int socket, void* hdrbuf)
+        throw (castor::exception::Exception);
     
     private:
 

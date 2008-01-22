@@ -104,36 +104,43 @@ void castor::vdqm::DevTools::printVdqmRequestType(std::ostream &os,
 // printMessag
 //------------------------------------------------------------------------------
 void castor::vdqm::DevTools::printMessage(std::ostream &os,
-  const bool messageWasSent, const int socket, void* hdrbuf)
-  throw (castor::exception::Exception)
+  const bool messageWasSent, const bool messageInNetworkByteOrder,
+  const int socket, void* hdrbuf) throw (castor::exception::Exception)
 {
-  uint32_t magic   = ntohl(*((uint32_t *)hdrbuf));
-  uint32_t reqtype = ntohl(*(((uint32_t *)hdrbuf) + 1));
-  unsigned int soutlen = sizeof(struct sockaddr_in);
+  uint32_t           magic   = 0;
+  uint32_t           reqtype = 0;
+  unsigned int       soutlen = sizeof(struct sockaddr_in);
   struct sockaddr_in sout;
-  if (getpeername(socket, (struct sockaddr*)&sout, &soutlen) < 0) {
+  unsigned short     peerPort = 0;
+  unsigned long      peerIp   = 0;
+
+  if(messageInNetworkByteOrder) {
+    magic   = ntohl(*((uint32_t *)hdrbuf));
+    reqtype = ntohl(*(((uint32_t *)hdrbuf) + 1));
+  } else {
+    magic   = *((uint32_t *)hdrbuf);
+    reqtype = *(((uint32_t *)hdrbuf) + 1);
+  }
+
+  if(getpeername(socket, (struct sockaddr*)&sout, &soutlen) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to get peer name";
     throw ex;
   }
-  // extract port and ip
-  unsigned short peerPort = ntohs(sout.sin_port);
-  unsigned long  peerIp   = ntohl(sout.sin_addr.s_addr);
+
+  peerPort = ntohs(sout.sin_port);
+  peerIp   = ntohl(sout.sin_addr.s_addr);
 
   if(messageWasSent) {
-    std::cout << "Sent    : ";
+    std::cout << "Sent     to   : ";
   } else {
-    std::cout << "Received: ";
-  }
-  castor::vdqm::DevTools::printMagic(std::cout, magic);
-  std::cout << " ";
-  castor::vdqm::DevTools::printVdqmRequestType(std::cout, reqtype);
-  if(messageWasSent) {
-    std::cout << " to ";
-  } else {
-    std::cout << " from ";
+    std::cout << "Received from : ";
   }
   castor::vdqm::DevTools::printIp(std::cout, peerIp);
   std::cout << ":" << peerPort;
+  std::cout << " : ";
+  castor::vdqm::DevTools::printMagic(std::cout, magic);
+  std::cout << " ";
+  castor::vdqm::DevTools::printVdqmRequestType(std::cout, reqtype);
   std::cout << std::endl;
 }
