@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.610 $ $Date: 2008/01/22 15:43:14 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.611 $ $Date: 2008/01/22 16:56:03 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5049,13 +5049,13 @@ BEGIN
     WHEN NO_DATA_FOUND THEN
     -- RTCPCLD_MSG_NOTPPOOLS
     -- restore candidate 
-    retCode := 1;
+    retCode := -1;
     RETURN;
   END; 
     
   IF nbOldStream <= 0 AND initialSizeToTransfer < volumeThreashold THEN
     -- restore WAITINSTREAM to TOBEMIGRATED, not enough data
-    retCode :=2 ; -- RTCPCLD_MSG_DATALIMIT
+    retCode :=-2 ; -- RTCPCLD_MSG_DATALIMIT
     RETURN;
   END IF;
     
@@ -5063,7 +5063,7 @@ BEGIN
     -- stream creator
     SELECT SvcClass.nbDrives INTO nbDrives FROM SvcClass WHERE id = svcId;
     IF nbDrives = 0 THEN
-    	retCode :=3 ; -- RESTORE NEEDED
+    	retCode :=-3 ; -- RESTORE NEEDED
     	RETURN;
     END IF;
     -- get the initialSizeToTransfer to associate to the stream
@@ -5111,6 +5111,7 @@ BEGIN
       END LOOP;
     END IF;
   END IF;
+END;
 
 
 /* attach tapecopy to stream */

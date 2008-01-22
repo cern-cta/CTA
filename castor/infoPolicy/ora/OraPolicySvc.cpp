@@ -320,12 +320,12 @@ int castor::infoPolicy::ora::OraPolicySvc::createOrUpdateStream(std::string svcC
     m_createOrUpdateStreamStatement->executeUpdate();
     int retcode= m_createOrUpdateStreamStatement->getInt(7);
     
-    //RTCPCLD_MSG_NOTPPOOLS
-    if (retcode==1) return -1;
-    // RTCPCLD_MSG_DATALIMIT
-    if (retcode==2) return -2;     
-    if (retcode==3) return -3;    
-     return 0; // everything fine
+    // retcode used to have logged the proper error message 
+    // retcode=-1 RTCPCLD_MSG_NOTPPOOLS
+    // retcode=-2 RTCPCLD_MSG_DATALIMIT
+    // retcode=-3 Fatal Error 
+    
+    return retcode;
 
 
   } catch (oracle::occi::SQLException e) {
@@ -335,11 +335,7 @@ int castor::infoPolicy::ora::OraPolicySvc::createOrUpdateStream(std::string svcC
     if (buffer){free(buffer);buffer=0;}
 
     handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in createOrUpdateStream."
-      << std::endl << e.what();
-    throw ex;
+    return -1;
   }
 }
 
