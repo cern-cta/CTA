@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.42 $ $Release$ $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/01/22 16:54:57 $ $Author: gtaur $
  *
  *
  *
@@ -398,7 +398,7 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   *reqId = client.createClientAndSend(req);
   
 
-  /** 2. we need to store the recieved cuuid from the request replier and save it
+  /** 2. we need to store the received cuuid from the request replier and save it
       in case the pollAnswersFromStager fails */
   rsreq->setCuuid(*reqId);
   rsreq->setSubmitTime(time(NULL));
@@ -514,12 +514,8 @@ void  RepackFileStager::sendRepackRemoveRequest( RepackSubRequest*sreq)throw(cas
   std::vector<castor::rh::Response *>respvec;
   castor::client::VectorResponseHandler rh(&respvec);
 
-  //  client.setAuthorizationId(sreq->repackrequest()->userId(), sreq->repackrequest()->groupId());
+  client.setAuthorizationId(sreq->repackrequest()->userId(), sreq->repackrequest()->groupId());
 
-  uid_t stageUid = 14029; // stage 
-  gid_t stGid = 1474; //  st
-
-  client.setAuthorizationId(stageUid,stGid);
   client.sendRequest(&req,&rh); 
 
   /** we ignore the results from the stager */
