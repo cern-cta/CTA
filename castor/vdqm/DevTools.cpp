@@ -111,6 +111,8 @@ void castor::vdqm::DevTools::printMessage(std::ostream &os,
   uint32_t           reqtype = 0;
   unsigned int       soutlen = sizeof(struct sockaddr_in);
   struct sockaddr_in sout;
+  unsigned short     localPort = 0;
+  unsigned long      localIp   = 0;
   unsigned short     peerPort = 0;
   unsigned long      peerIp   = 0;
 
@@ -122,6 +124,15 @@ void castor::vdqm::DevTools::printMessage(std::ostream &os,
     reqtype = *(((uint32_t *)hdrbuf) + 1);
   }
 
+  if(getsockname(socket, (struct sockaddr*)&sout, &soutlen) < 0) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Unable to get local name";
+    throw ex;
+  }
+
+  localPort = ntohs(sout.sin_port);
+  localIp   = ntohl(sout.sin_addr.s_addr);
+
   if(getpeername(socket, (struct sockaddr*)&sout, &soutlen) < 0) {
     castor::exception::Exception ex(errno);
     ex.getMessage() << "Unable to get peer name";
@@ -132,13 +143,23 @@ void castor::vdqm::DevTools::printMessage(std::ostream &os,
   peerIp   = ntohl(sout.sin_addr.s_addr);
 
   if(messageWasSent) {
-    std::cout << "Sent     to   : ";
+    std::cout << "Tx ";
+    castor::vdqm::DevTools::printIp(std::cout, localIp);
+    std::cout << ":" << localPort;
+    std::cout << "->";
+    castor::vdqm::DevTools::printIp(std::cout, peerIp);
+    std::cout << ":" << peerPort;
   } else {
-    std::cout << "Received from : ";
+    std::cout << "Rx ";
+    castor::vdqm::DevTools::printIp(std::cout, peerIp);
+    std::cout << ":" << peerPort;
+    std::cout << "->";
+    castor::vdqm::DevTools::printIp(std::cout, localIp);
+    std::cout << ":" << localPort;
   }
-  castor::vdqm::DevTools::printIp(std::cout, peerIp);
-  std::cout << ":" << peerPort;
-  std::cout << " : ";
+
+  std::cout << " ";
+
   castor::vdqm::DevTools::printMagic(std::cout, magic);
   std::cout << " ";
   castor::vdqm::DevTools::printVdqmRequestType(std::cout, reqtype);

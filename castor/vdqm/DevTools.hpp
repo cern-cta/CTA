@@ -23,8 +23,8 @@
  * @author Castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_VDQMDEBUGTOOLS_HPP
-#define CASTOR_VDQM_VDQMDEBUGTOOLS_HPP 1
+#ifndef CASTOR_VDQM_DEVTOOLS_HPP
+#define CASTOR_VDQM_DEVTOOLS_HPP 1
 
 #include <stdint.h>
 #include <iostream>
@@ -43,31 +43,45 @@ namespace castor {
     public:
 
       /**
-       * Prints the string form of specified IP (in host byte order) using the
-       * specified output stream.
+       * Prints the string form of specified IP using the specified output
+       * stream.
+       *
+       * @param os the output stream.
+       * @param ip the IP address in host byte order.
        */
       static void printIp(std::ostream &os, const unsigned long ip) throw();
 
       /**
        * Prints the string form of specified magic number using the specified
        * output stream.
+       *
+       * @param os the output stream.
+       * @param magic the magic number on host byte order.
        */
       static void printMagic(std::ostream &os, const uint32_t magic) throw();
 
       /**
        * Prints the string form of the specified VDQM request type using the
        * specified output stream.
+       *
+       * @param os the output stream.
+       * @param type the request type in host byte order.
        */
       static void printVdqmRequestType(std::ostream &os, const uint32_t type)
         throw();
 
       /**
-       * Prints the magic number, request type, peer IP and peer port of the
-       * specified message using the specified output stream.  The boolean
-       * msgWasSent should be set to true if the message was sent, or to false
-       * the message was received.  The boolean messageInNetworkByteOrder
-       * should be set to true if the contents of the message is in network
-       * byte order, or to false if the contents is in host byte order.
+       * Prints the magic number, request type, and IP information of the
+       * specified message using the specified output stream.
+       *
+       * @param os the output stream.
+       * @param messageWasSent should be set to true if the message was sent,
+       * or to false the message was received.
+       * @param messageInNetworkByteOrder should be set to true if the contents
+       * of  the message is in network byte order, or to false if the contents
+       * is in host byte order.
+       * @param socket the socket used to send or receive the message.
+       * @param hdrbuf the header buffer.
        */
       static void printMessage(std::ostream &os, const bool messageWasSent,
         const bool messageInNetworkByteOrder, const int socket, void* hdrbuf)
@@ -87,4 +101,4 @@ namespace castor {
 } // namespace castor
 
 
-#endif // CASTOR_VDQM_VDQMDEBUGTOOLS_HPP
+#endif // CASTOR_VDQM_DEVTOOLS_HPP
