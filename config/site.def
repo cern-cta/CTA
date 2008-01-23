@@ -33,7 +33,7 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #endif
 */
 
-#define AdminHosts "castor tms-2 lxcastor sure01 sure02 castoradm1 castoradm2 castoradm3 castorsrv1 castorsrv2 castorsrv3 castorsrv4 castorsrv5 castorsrv6 castorsrv7 castorsrv8 castorsrv9"
+#define AdminHosts "castor tms-2 lxcastor sure01 sure02 castoradm1 castoradm2 castoradm3 castorsrv1 castorsrv2 castorsrv3 castorsrv4 castorsrv5 castorsrv6 castorsrv7 castorsrv8 castorsrv9 castorsrv101 castorsrv102 castorsrv103 castorsrv201 castorsrv202 castorsrv203"
 #if defined(_WIN32)
 #define AuthorizedHosts	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\rtcopy.hosts
 #else
