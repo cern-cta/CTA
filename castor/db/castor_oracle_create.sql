@@ -210,7 +210,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_6_6');
+INSERT INTO CastorVersion VALUES ('-', '2_1_6_7');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -341,7 +341,7 @@ INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.607  Date: 2008/01/17 10:00:29  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.612  Date: 2008/01/23 11:26:07  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1153,7 +1153,7 @@ BEGIN
 END;
 
 
-/* PL/SQL method to delete a group of requests from  */
+/* PL/SQL method to delete a group of requests */
 CREATE OR REPLACE PROCEDURE deleteRequests
   (tab IN VARCHAR2, typ IN VARCHAR2, cleanTab IN VARCHAR2) AS
 BEGIN
@@ -2259,11 +2259,12 @@ BEGIN
   UPDATE DiskCopy SET status = 6  -- DISKCOPY_STAGEOUT 
    WHERE id = dcId RETURNING fileSystem INTO fsId;
   -- how many do we have to create ?
+  -- select subrequest in status 3 in case of repack with staged diskcopy
   SELECT count(StageRepackRequest.repackVid) INTO nbTC
     FROM SubRequest, StageRepackRequest 
    WHERE subrequest.castorfile = cfId
      AND SubRequest.request = StageRepackRequest.id
-     AND SubRequest.status IN (4, 5, 6);  -- SUBREQUEST_WAITTAPERECALL, WAITSUBREQ, READY
+     AND SubRequest.status IN (3, 4, 5, 6);  -- SUBREQUEST_WAITSCHED, WAITTAPERECALL, WAITSUBREQ, READY
   SELECT nbCopies INTO nbTCInFC
     FROM FileClass, CastorFile
    WHERE CastorFile.id = cfId
@@ -2301,7 +2302,7 @@ END;
 
 
 /* PL/SQL method implementing processPrepareRequest */
-/* the result output is a DiskCopy status for STAGED or RECALL,
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
    -1 for user failure, -2 for subrequest put in WAITSUBREQ */
 CREATE OR REPLACE PROCEDURE processPrepareRequest
         (srId IN INTEGER, result OUT INTEGER) AS
@@ -2377,7 +2378,8 @@ BEGIN
         EXCEPTION WHEN NO_DATA_FOUND THEN
            -- the file is being written/migrated, fail the request
            UPDATE SubRequest
-              SET errorCode = 16,  -- EBUSY
+              SET status = 7,  -- FAILED
+                  errorCode = 16,  -- EBUSY
                   errorMessage = 'File is currently being written or migrated'
             WHERE id = srId;
            COMMIT;
@@ -2397,7 +2399,7 @@ BEGIN
       result := -2;  -- Repack waits on the disk to disk copy
     ELSE
       createDiskCopyReplicaRequest(0, srcDcId, svcClassId);
-      result := 0;  -- DISKCOPY_STAGED, don't wait
+      result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
     END IF;
   ELSIF srcDcId = 0 THEN  -- recall
     BEGIN
@@ -5388,13 +5390,13 @@ BEGIN
     WHEN NO_DATA_FOUND THEN
     -- RTCPCLD_MSG_NOTPPOOLS
     -- restore candidate 
-    retCode := 1;
+    retCode := -1;
     RETURN;
   END; 
     
   IF nbOldStream <= 0 AND initialSizeToTransfer < volumeThreashold THEN
     -- restore WAITINSTREAM to TOBEMIGRATED, not enough data
-    retCode :=2 ; -- RTCPCLD_MSG_DATALIMIT
+    retCode :=-2 ; -- RTCPCLD_MSG_DATALIMIT
     RETURN;
   END IF;
     
@@ -5402,7 +5404,7 @@ BEGIN
     -- stream creator
     SELECT SvcClass.nbDrives INTO nbDrives FROM SvcClass WHERE id = svcId;
     IF nbDrives = 0 THEN
-    	retCode :=3 ; -- RESTORE NEEDED
+    	retCode :=-3 ; -- RESTORE NEEDED
     	RETURN;
     END IF;
     -- get the initialSizeToTransfer to associate to the stream
@@ -5417,12 +5419,14 @@ BEGIN
       LOOP   
         -- get the tape pool with less stream
         BEGIN        	   
-          SELECT id INTO tpId FROM TapePool 
-           WHERE id NOT IN (SELECT tapepool FROM Stream) AND ROWNUM <2;
+          SELECT TapePool.id INTO tpId FROM TapePool,SvcClass2TapePool  
+           WHERE TapePool.id NOT IN (SELECT TapePool FROM Stream) AND TapePool.id= SvcClass2TapePool.child
+	       AND  SvcClass2TapePool.parent=svcId AND ROWNUM <2;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- at least one stream foreach tapepool
-          SELECT tapepool INTO tpId 
-            FROM (SELECT tapepool, count(*) AS c FROM Stream GROUP BY tapepool ORDER BY c ASC)
+           SELECT tapepool INTO tpId 
+            FROM (SELECT tapepool, count(*) AS c FROM Stream WHERE tapepool IN
+	    (SELECT SvcClass2TapePool.child FROM SvcClass2TapePool WHERE SvcClass2TapePool.parent=svcId) GROUP BY tapepool ORDER BY c ASC)
            WHERE ROWNUM < 2;  	         
 	END;
 	           
@@ -5450,6 +5454,7 @@ BEGIN
   END IF;
 END;
 
+
 /* attach tapecopy to stream */
 
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
@@ -5466,7 +5471,7 @@ BEGIN
       BEGIN 
       	INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      	NULL;
+      	UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
       END;
     END LOOP;
   END LOOP;
@@ -5875,7 +5880,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
 END castorBW;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.3  Date: 2008/01/11 10:31:56  Author: itglp 
+ * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.4  Date: 2008/01/23 11:36:01  Author: itglp 
  *
  * Some SQL code to ease support and debugging
  *
@@ -5894,6 +5899,7 @@ CREATE OR REPLACE PACKAGE castor_debug AS
   TYPE RequestDebug_typ IS RECORD (
     creationtime DATE,
     SubReqId NUMBER,
+    SubReqParentId NUMBER,
     Status NUMBER,
     username VARCHAR2(2048),
     machine VARCHAR2(2048),
@@ -5994,7 +6000,7 @@ END;
 CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castor_debug.RequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime,
-                   SubRequest.id as SubReqId, SubRequest.Status,
+                   SubRequest.id as SubReqId, SubRequest.parent as SubReqParentId, SubRequest.Status,
                    username, machine, svcClassName, Request.id as ReqId, Request.type as ReqType
               FROM SubRequest,
                     (SELECT id, username, machine, svcClassName, 'Get' as type from StageGetRequest UNION ALL
