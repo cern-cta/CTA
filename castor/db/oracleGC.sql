@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.611 $ $Date: 2008/01/22 16:56:03 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.612 $ $Date: 2008/01/23 11:26:07 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1961,7 +1961,7 @@ END;
 
 
 /* PL/SQL method implementing processPrepareRequest */
-/* the result output is a DiskCopy status for STAGED or RECALL,
+/* the result output is a DiskCopy status for STAGED, DISK2DISKCOPY or RECALL,
    -1 for user failure, -2 for subrequest put in WAITSUBREQ */
 CREATE OR REPLACE PROCEDURE processPrepareRequest
         (srId IN INTEGER, result OUT INTEGER) AS
@@ -2058,7 +2058,7 @@ BEGIN
       result := -2;  -- Repack waits on the disk to disk copy
     ELSE
       createDiskCopyReplicaRequest(0, srcDcId, svcClassId);
-      result := 0;  -- DISKCOPY_STAGED, don't wait
+      result := 1;  -- DISKCOPY_WAITDISK2DISKCOPY, for logging purposes
     END IF;
   ELSIF srcDcId = 0 THEN  -- recall
     BEGIN
