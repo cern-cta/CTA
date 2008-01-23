@@ -122,7 +122,7 @@ namespace castor{
             castor::dlf::Param("userName", username),
             castor::dlf::Param("groupName", groupname),
             castor::dlf::Param("svcClass", svcClassName),
-            castor::dlf::Param("processingTime", procTime  * 0.000001)
+            castor::dlf::Param("processingTime", procTime * 0.000001)
           };
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_MONITORING, STAGER_REQ_PROCESSED, 7, params, 0);
         }
