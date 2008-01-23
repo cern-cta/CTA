@@ -128,8 +128,7 @@ namespace castor{
             stgReplyHelper = new ReplyHelper();	  
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
-            delete stgReplyHelper;
-
+            if (stgReplyHelper != NULL) { delete stgReplyHelper; stgReplyHelper=NULL;} 
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
           }
           else {  // user error, log it
@@ -137,7 +136,10 @@ namespace castor{
           }
         }
         catch(castor::exception::Exception e){
-          if(stgReplyHelper != NULL) delete stgReplyHelper;	 
+          if(stgReplyHelper != NULL) { 
+	    delete stgReplyHelper;
+	    stgReplyHelper=NULL;
+	  }
           castor::dlf::Param params[]={
             castor::dlf::Param("Error Code",sstrerror(e.code())),
             castor::dlf::Param("Error Message",e.getMessage().str())
