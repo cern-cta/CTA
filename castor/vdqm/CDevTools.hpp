@@ -23,19 +23,47 @@
  * @author Castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_CDEVTOOLS_H
-#define CASTOR_VDQM_CDEVTOOLS_H 1
-
+#ifndef CASTOR_VDQM_CDEVTOOLS_HPP
+#define CASTOR_VDQM_CDEVTOOLS_HPP 1
 
 #include <stdint.h>
 
+
 /**
- * Prints to standard out the specified IP address and port.
+ * Prints to standard out the string form of the specified IP address and port.
  *
  * @param ip the IP address in host byte order.
- * @param port the IP port in host byte order.
+ * @param port the IP port number in host byte order.
  */
-void printIpAndPort(const uint32_t ip, const int port);
+void vdqmCDevToolsPrintIpAndPort(const uint32_t ip, const int port);
+
+/**
+ * Returns the string form of the specified CASTOR-message magic-number.
+ *
+ * @param magic the CASTOR-message magic-number.
+ */
+const char *castorMagicNb2Str(const uint32_t magic);
+
+/**
+ * Returns the string form of the specified RTCP-message request-type.
+ *
+ * @param type the RTCP-message request-type.
+ */
+const char *rtcpReqTypeToStr(const uint32_t type);
+
+/**
+ * Returns the string form of the specified VDQM-message request-type.
+ *
+ * @param type the VDQM-message request-type.
+ */
+const char *vdqmReqTypeToStr(const uint32_t type);
+
+/**
+ * Returns the string form of the specified CASTOR-message request-type.
+ *
+ * @param type the CASTOR-message request-type.
+ */
+const char *castorReqTypeToStr(const uint32_t magic, const uint32_t type);
 
 /**
  * Prints to standard out the magic number, request type, and IP information of
@@ -49,7 +77,7 @@ void printIpAndPort(const uint32_t ip, const int port);
  * @param socket the socket used to send or receive the message.
  * @param hdrbuf the header buffer.
  */
-void printMessage(const int messageWasSent, const int messageInNetworkByteOrder,
-  const int socket, void* hdrbuf);
+void printCastorMessage(const int messageWasSent,
+  const int messageInNetworkByteOrder, const int socket, void* hdrbuf);
 
-#endif // CASTOR_VDQM_CDEVTOOLS_H
+#endif // CASTOR_VDQM_CDEVTOOLS_HPP

@@ -52,25 +52,6 @@ namespace castor {
       static void printIp(std::ostream &os, const unsigned long ip) throw();
 
       /**
-       * Prints the string form of specified magic number using the specified
-       * output stream.
-       *
-       * @param os the output stream.
-       * @param magic the magic number on host byte order.
-       */
-      static void printMagic(std::ostream &os, const uint32_t magic) throw();
-
-      /**
-       * Prints the string form of the specified VDQM request type using the
-       * specified output stream.
-       *
-       * @param os the output stream.
-       * @param type the request type in host byte order.
-       */
-      static void printVdqmRequestType(std::ostream &os, const uint32_t type)
-        throw();
-
-      /**
        * Prints the magic number, request type, and IP information of the
        * specified message using the specified output stream.
        *

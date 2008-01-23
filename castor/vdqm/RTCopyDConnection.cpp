@@ -32,6 +32,7 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/ClientIdentification.hpp"
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/RTCopyDConnection.hpp"
@@ -189,6 +190,7 @@ bool castor::vdqm::RTCopyDConnection::NEWsendJobToRTCPD(
    * After marshalling we can send the informations to RTCP
    */
   rc = netwrite_timeout(m_socket, buf, len, VDQM_TIMEOUT);
+  castor::vdqm::DevTools::printMessage(std::cout, true, true, m_socket, buf);
 
   if (rc == -1) {
     serrno = SECOMERR;
@@ -303,6 +305,7 @@ bool castor::vdqm::RTCopyDConnection::OLDsendJobToRTCPD(
    * After marshalling we can send the informations to RTCP
    */
   rc = netwrite_timeout(m_socket, buf, len, VDQM_TIMEOUT);
+  castor::vdqm::DevTools::printMessage(std::cout, true, true, m_socket, buf);
 
   if (rc == -1) {
     serrno = SECOMERR;
@@ -339,6 +342,8 @@ bool castor::vdqm::RTCopyDConnection::readRTCPAnswer()
   char* p;
 
   rc = netread_timeout(m_socket, buffer, LONGSIZE*3, VDQM_TIMEOUT);
+  castor::vdqm::DevTools::printMessage(std::cout, false, true, m_socket,
+    buffer);
 
   switch (rc) {
   case -1:
