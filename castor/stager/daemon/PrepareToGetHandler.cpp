@@ -61,32 +61,37 @@ namespace castor{
       
       bool PrepareToGetHandler::switchDiskCopiesForJob() throw (castor::exception::Exception)
       {
-        bool result = false;
-        switch(stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest)) {
+        bool reply = false;
+        int result = stgRequestHelper->stagerService->processPrepareRequest(stgRequestHelper->subrequest);
+        switch(result) {
           case -2:
             stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_WAITSUBREQ, &(stgCnsHelper->cnsFileid));
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_WAITSUBREQ);
-            result = true;
+            reply = true;
             break;
           
           case -1:
             stgRequestHelper->logToDlf(DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, &(stgCnsHelper->cnsFileid));
             break;
           
-          case DISKCOPY_STAGED:   // nothing to do
+          case DISKCOPY_STAGED:             // nothing to do, just log it
+          case DISKCOPY_WAITDISK2DISKCOPY:
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
             stgRequestHelper->subrequest->setGetNextStatus(GETNEXTSTATUS_FILESTAGED);
-            stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
+            if(result == DISKCOPY_STAGED)
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_ARCHIVE_SUBREQ, &(stgCnsHelper->cnsFileid));
+            else
+              stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_PREPARETOGET_DISK2DISKCOPY, &(stgCnsHelper->cnsFileid));
             
             /* we archive the subrequest */
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
-            result = true;
+            reply = true;
             break;
           
           case DISKCOPY_WAITTAPERECALL:   // trigger a recall
             // answer client only if success
-            result = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
-            if(result) {
+            reply = stgRequestHelper->stagerService->createRecallCandidate(stgRequestHelper->subrequest, stgRequestHelper->svcClass);
+            if(reply) {
               stgRequestHelper->logToDlf(DLF_LVL_SYSTEM, STAGER_TAPE_RECALL, &(stgCnsHelper->cnsFileid));
             }
             else {
@@ -96,7 +101,7 @@ namespace castor{
             }
             break;
         }
-        return result;
+        return reply;
       }
       
       
