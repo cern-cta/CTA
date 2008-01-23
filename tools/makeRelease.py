@@ -26,7 +26,7 @@ def runCommand(cmd, errorMessage):
 def findUpdates(d):
     res = []
     # take all relevant update scripts (DLF included if needed)
-    updRegExp = re.compile('(\w*_)?\d+.\d+.\d+-\d+_to_' + fullVersion + '.sql(plus)?')
+    updRegExp = re.compile('(\w*_)?\d+.\d+.\d+(-\d+|)_to_' + fullVersion + '.sql(plus)?')
     for f in os.listdir(d):
         if updRegExp.match(f):
             res.append(f)
