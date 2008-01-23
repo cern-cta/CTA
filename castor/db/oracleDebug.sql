@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.3 $ $Date: 2008/01/11 10:31:56 $ $Author: itglp $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.4 $ $Date: 2008/01/23 11:36:01 $ $Author: itglp $
  *
  * Some SQL code to ease support and debugging
  *
@@ -19,6 +19,7 @@ CREATE OR REPLACE PACKAGE castor_debug AS
   TYPE RequestDebug_typ IS RECORD (
     creationtime DATE,
     SubReqId NUMBER,
+    SubReqParentId NUMBER,
     Status NUMBER,
     username VARCHAR2(2048),
     machine VARCHAR2(2048),
@@ -119,7 +120,7 @@ END;
 CREATE OR REPLACE FUNCTION getRs(ref number) RETURN castor_debug.RequestDebug PIPELINED AS
 BEGIN
   FOR d IN (SELECT to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationtime as creationtime,
-                   SubRequest.id as SubReqId, SubRequest.Status,
+                   SubRequest.id as SubReqId, SubRequest.parent as SubReqParentId, SubRequest.Status,
                    username, machine, svcClassName, Request.id as ReqId, Request.type as ReqType
               FROM SubRequest,
                     (SELECT id, username, machine, svcClassName, 'Get' as type from StageGetRequest UNION ALL
