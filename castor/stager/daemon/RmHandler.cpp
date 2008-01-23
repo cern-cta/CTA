@@ -64,8 +64,7 @@ namespace castor{
         
         /* we create the CnsHelper inside and we pass the requestUuid needed for logging */
         this->stgCnsHelper = new CnsHelper(stgRequestHelper->requestUuid);
-        
-        
+                
         /* set the username and groupname needed to print them on the log */
         stgRequestHelper->setUsernameAndGroupname();
         
@@ -126,9 +125,10 @@ namespace castor{
             stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
             
             stgReplyHelper = new ReplyHelper();	  
-            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0,  "No error");
+            stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
-            if (stgReplyHelper != NULL) { delete stgReplyHelper; stgReplyHelper=NULL;} 
+            delete stgReplyHelper; 
+	    stgReplyHelper = NULL;
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
           }
           else {  // user error, log it
@@ -138,14 +138,12 @@ namespace castor{
         catch(castor::exception::Exception e){
           if(stgReplyHelper != NULL) { 
 	    delete stgReplyHelper;
-	    stgReplyHelper=NULL;
+	    stgReplyHelper = NULL;
 	  }
-          castor::dlf::Param params[]={
+          castor::dlf::Param params[] = {
             castor::dlf::Param("Error Code",sstrerror(e.code())),
-            castor::dlf::Param("Error Message",e.getMessage().str())
-          };
-          
-          castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(stgCnsHelper->cnsFileid));
+            castor::dlf::Param("Error Message",e.getMessage().str())};
+	  castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(stgCnsHelper->cnsFileid));
           throw(e);
         }
       }
