@@ -66,6 +66,7 @@ namespace castor{
           stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
           stgReplyHelper->endReplyToClient(stgRequestHelper);
           delete stgReplyHelper;
+          stgReplyHelper = 0;
           
           stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());	 
         }catch(castor::exception::Exception e){
