@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/09 12:26:25 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/23 10:20:04 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be deleted
  *
@@ -35,6 +35,7 @@
 #include "getconfent.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -69,6 +70,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
 
   // Endless loop
   for (;;) {
+
     // get the synchronization interval and chunk size
     // these may have changed since last iteration
     readConfigFile(&syncInterval, &chunkSize);
@@ -88,6 +90,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
     // Loop over the fileSystems starting in a random place
     int fsIt = (int) (nbFs * (rand() / (RAND_MAX + 1.0)));
     for (int i = 0; i < nbFs; i++) {
+
       // list the filesystem directories in random order
       std::vector<std::string> directories;
       DIR *dirs = opendir(fs[fsIt]);
@@ -101,13 +104,19 @@ void castor::gc::SynchronizationThread::run(void *param) {
       }
       struct dirent *dir;
       while ((dir = readdir(dirs))) {
-        if (dir->d_type == DT_DIR) {
-          int offset = (int) ((1 + directories.size()) *
-                              (rand() / (RAND_MAX + 1.0)));
-          directories.insert
-	    (directories.begin() + offset,
-	     (std::string(fs[fsIt])+dir->d_name).c_str());
-        }
+	struct stat file;
+	std::ostringstream filepath;
+	filepath << fs[fsIt] << dir->d_name;
+	if (stat(filepath.str().c_str(), &file) < 0) {
+	  continue;
+	} else if (!(file.st_mode & S_IFDIR)) {
+	  continue;  /* not a file */
+	}
+	int offset = (int) ((1 + directories.size()) *
+			    (rand() / (RAND_MAX + 1.0)));
+	directories.insert
+	  (directories.begin() + offset,
+	   filepath.str().c_str());
       }
       closedir(dirs);
       // Loop over the directories
@@ -132,7 +141,13 @@ void castor::gc::SynchronizationThread::run(void *param) {
         std::map<std::string, std::map<u_signed64, std::string> > paths;
         while ((file = readdir(files))) {
           // ignore non regular files
-          if (file->d_type != DT_REG) continue;
+	  struct stat filebuf;
+	  std::string filepath (*it+"/"+file->d_name);
+	  if (stat(filepath.c_str(), &filebuf) < 0) {
+	    continue;
+	  } else if (!(filebuf.st_mode & S_IFREG)) {
+	    continue;  /* not a file */
+	  }
           try {
             std::pair<std::string, u_signed64> fid =
               fileIdFromFileName(file->d_name);
@@ -173,8 +188,11 @@ void castor::gc::SynchronizationThread::run(void *param) {
         }
         closedir(files);
       }
+      free(fs[fsIt]);
       fsIt = (fsIt + 1) % nbFs;
     }
+    free(fs);
+    sleep(syncInterval);
   }
 }
 
@@ -284,7 +302,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   if (0 == cfids) {
     // "Malloc failure"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "synchronizeFiles"),
+      {castor::dlf::Param("Function", "synchronizeFiles"),
        castor::dlf::Param("ErrorMessage", strerror(errno)) };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 29, 2, params);
   }  
@@ -295,9 +313,10 @@ void castor::gc::SynchronizationThread::synchronizeFiles
   if (rc != 0) {
     // NameServer error
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "synchronizeFiles"),
+      {castor::dlf::Param("NameServer", nameServer),
+       castor::dlf::Param("Function", "synchronizeFiles"),
        castor::dlf::Param("ErrorMessage", sstrerror(serrno)) };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 32, 2, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 32, 3, params);
     return;
   }
   // Stop here if we have no deleted files
@@ -342,7 +361,7 @@ void castor::gc::SynchronizationThread::synchronizeFiles
     fid.fileid = *it;
     // "Deleting local file that was not in nameserver neither in stager catalog"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("fileName", paths.find(*it)->second)};
+      {castor::dlf::Param("FileName", paths.find(*it)->second)};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 27, 1, params, &fid);
     if (unlink(paths.find(*it)->second.c_str()) < 0) {
       // "Deletion of orphan local file failed"
