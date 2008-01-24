@@ -166,8 +166,10 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
     return;
   }
 
+#ifdef PRINT_NETWORK_MESSAGES
   castor::vdqm::DevTools::printMessage(std::cout, false, false,
     ptr_serverSocket->socket(), &header);
+#endif
   
   /**
    * Initialization of the OldRequestFacade, which 

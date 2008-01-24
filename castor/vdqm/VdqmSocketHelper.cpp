@@ -114,7 +114,9 @@ void castor::vdqm::VdqmSocketHelper::vdqmNetwrite(const int socket,
   throw (castor::exception::Exception) {
   int rc;
 
+#ifdef PRINT_NETWORK_MESSAGES
   castor::vdqm::DevTools::printMessage(std::cout, true, true, socket, hdrbuf);
+#endif
 
   rc = netwrite_timeout(socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
   switch (rc) {
@@ -149,6 +151,9 @@ void castor::vdqm::VdqmSocketHelper::vdqmNetread(const int socket, void* hdrbuf)
   int rc;
 
   rc = netread_timeout(socket, hdrbuf, VDQM_HDRBUFSIZ, VDQM_TIMEOUT);
+#ifdef PRINT_NETWORK_MESSAGES
+  castor::vdqm::DevTools::printMessage(std::cout, false, true, socket, hdrbuf);
+#endif
   switch (rc) {
   case -1:
     {
@@ -169,6 +174,4 @@ void castor::vdqm::VdqmSocketHelper::vdqmNetread(const int socket, void* hdrbuf)
       throw ex;
     }
   }
-
-  castor::vdqm::DevTools::printMessage(std::cout, false, true, socket, hdrbuf);
 }
