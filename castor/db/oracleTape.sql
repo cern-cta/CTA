@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.612 $ $Date: 2008/01/23 11:26:07 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.613 $ $Date: 2008/01/24 08:54:16 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4100,7 +4100,7 @@ BEGIN
              UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
              DC.path, CastorFile.fileSize,
              CASE WHEN DC.id IS NULL THEN
-                 (SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
+                 nvl((SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
                     FROM SubRequest,
                         (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
                          SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -4108,7 +4108,8 @@ BEGIN
                          SELECT id, svcClass FROM StageRepackRequest UNION ALL
                          SELECT id, svcClass FROM StageGetRequest) Req
                           WHERE SubRequest.CastorFile = CastorFile.id
-                            AND request = Req.id)
+                            AND Subrequest.status in (0,3)
+                            AND request = Req.id), -1)
                   ELSE DC.status END as status,
              DC.machine, DC.mountPoint,
              CastorFile.nbaccesses, CastorFile.lastKnownFileName
