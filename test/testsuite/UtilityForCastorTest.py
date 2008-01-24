@@ -8,51 +8,78 @@ import getopt
 # get castor parameters #
 #########################
 
-# parse command line
-myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":""}
-optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:')
-optionCmdLine=optionCmdLine[0]
-for elemLine in optionCmdLine:
-	if elemLine !=[]:
-		myArg[elemLine[0]]=elemLine[1]
-# check for the right configFile
-if myArg["-c"] != "":
-	# note : that is a global variable
-	configFile=myArg["-c"]
-else:
-	configFile = "./CASTORTESTCONFIG"
-# Parse config file content
-f=open(configFile)
-configFileInfo=f.read()
-f.close
-index= configFileInfo.find("*** Generic parameters ***")
-configFileInfo=configFileInfo[index:]
-index=configFileInfo.find("***")
-if index != -1:
-	index=index-1
-	configFileInfo=configFileInfo[:index]
-stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
-stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
-stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
-stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
-stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
-stagerDiskOnlySvcClass=(configFileInfo[configFileInfo.find("DISKONLY_SVCCLASS"):]).split()[1]
-stagerForcedFileClass=(configFileInfo[configFileInfo.find("FORCED_FILECLASS"):]).split()[1]
-# Overwrite with command line values when needed
-if myArg["-s"] !="":
-	stagerHost=myArg["-s"]
-if myArg["-p"] != "":
-	stagerPort=myArg["-p"]
-if myArg["-d"] != "":
-	stagerSvcClass=myArg["-d"]
-if myArg["-v"] != "":
-	if myArg["-v"] == "2":
-		stagerVersion="yes"
-	else:
-		stagerVersion="no"
-if myArg["-e"] != "":
-	stagerExtraSvcClass=myArg["-e"]
+class configuration:
+        """ a singleton, initializing global parameters on loading """
+        def gatherParameters(self):
+                # parse command line
+                myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":""}
+                optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:')
+                optionCmdLine=optionCmdLine[0]
+                for elemLine in optionCmdLine:
+                        if elemLine !=[]:
+                                myArg[elemLine[0]]=elemLine[1]
+                # check for the right configFile
+                if myArg["-c"] != "":
+                        # note : that is a global variable
+                        self.configFile=myArg["-c"]
+                else:
+                        self.configFile = "./CASTORTESTCONFIG"
+                # Parse config file content
+                f=open(self.configFile)
+                configFileInfo=f.read()
+                f.close
+                index= configFileInfo.find("*** Generic parameters ***")
+                configFileInfo=configFileInfo[index:]
+                index=configFileInfo.find("***")
+                if index != -1:
+                        index=index-1
+                        configFileInfo=configFileInfo[:index]
+                self.stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
+                self.stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
+                self.stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
+                self.stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
+                self.stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
+                self.stagerDiskOnlySvcClass=(configFileInfo[configFileInfo.find("DISKONLY_SVCCLASS"):]).split()[1]
+                self.stagerForcedFileClass=(configFileInfo[configFileInfo.find("FORCED_FILECLASS"):]).split()[1]
+                # Overwrite with command line values when needed
+                if myArg["-s"] !="":
+                        self.stagerHost=myArg["-s"]
+                if myArg["-p"] != "":
+                        self.stagerPort=myArg["-p"]
+                if myArg["-d"] != "":
+                        self.stagerSvcClass=myArg["-d"]
+                if myArg["-v"] != "":
+                        if myArg["-v"] == "2":
+                                self.stagerVersion="yes"
+                        else:
+                                self.stagerVersion="no"
+                if myArg["-e"] != "":
+                        self.stagerExtraSvcClass=myArg["-e"]
+        isInitialized = False
+        def __init__(self):
+                global stagerHost, stagerPort, stagerSvcClass, stagerVersion, stagerExtraSvcClass, stagerDiskOnlySvcClass, stagerForcedFileClass, configFile
+                # gather parameters if needed
+                if not self.isInitialized:
+                        self.isInitialized = True
+                        self.gatherParameters()
+                        print 'Configuration file used is "'+ self.configFile + '", leading to :'
+                        print "        stagerHost : ", self.stagerHost
+                        print "        stagerSvcClass : ", self.stagerSvcClass
+                        print "        stagerExtraSvcClass : ", self.stagerExtraSvcClass
+                        print "        stagerDiskOnlySvcClass : ", self.stagerDiskOnlySvcClass
+                        print "        stagerForcedFileClass : ", self.stagerForcedFileClass
+                # expose them in global variables
+                stagerHost = self.stagerHost
+                stagerPort = self.stagerPort
+                stagerSvcClass = self.stagerSvcClass
+                stagerVersion = self.stagerVersion
+                stagerExtraSvcClass = self.stagerExtraSvcClass
+                stagerDiskOnlySvcClass = self.stagerDiskOnlySvcClass
+                stagerForcedFileClass = self.stagerForcedFileClass
+                configFile = self.configFile
 
+# force to initialize the configuration
+configuration()
 
 ####################
 # Useful functions #

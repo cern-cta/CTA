@@ -73,7 +73,6 @@ listOfTest={'CLIENT':clientTest,'RFIO':rfioTest,'ROOT':rootTest,'TAPE':tapeTest,
 
 
 #################### opening the file with the list of tests wanted  ################################
-print "Using configuration file " + configFile
 f=open(configFile,"r")
 configFileInfo=f.read()
 f.close
