@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.67 $ $Release$ $Date: 2008/01/15 17:37:11 $ $Author: itglp $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.68 $ $Release$ $Date: 2008/01/24 12:48:46 $ $Author: itglp $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -373,151 +373,141 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
   throw (castor::exception::Exception) {
   // Useful Variables
   castor::stager::StageFileQueryRequest *uReq;
-  try {
-    // get the StageFileQueryRequest
-    // cannot return 0 since we check the type before calling this method
-    uReq = dynamic_cast<castor::stager::StageFileQueryRequest*> (req);
-    // Iterating on the parameters to reply to each qry
-    std::vector<castor::stager::QueryParameter*> params =
-      uReq->parameters();
-    // Log an error in case of empty query
-    if (0 ==  uReq->parameters().size()) {
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_FQNOPAR);
-    }
-    for(std::vector<QueryParameter*>::iterator it = params.begin();
-        it != params.end();
-        ++it) {
-      castor::stager::RequestQueryType ptype = (*it)->queryType();
-      std::string pval = (*it)->value();
-      try {
-        std::string fid, nshost, reqidtag;
-        bool queryOk = false;
-        switch(ptype) {
-        case REQUESTQUERYTYPE_FILEID:
-          {
-            std::string::size_type idx = pval.find('@');
-            if (idx == std::string::npos) {
-              fid = pval;
-              nshost = '%';
-            } else {
-              fid = pval.substr(0, idx);
-              nshost = pval.substr(idx + 1);
-            }
-            queryOk = true;
+  // get the StageFileQueryRequest
+  // cannot return 0 since we check the type before calling this method
+  uReq = dynamic_cast<castor::stager::StageFileQueryRequest*> (req);
+  // Iterating on the parameters to reply to each qry
+  std::vector<castor::stager::QueryParameter*> params =
+    uReq->parameters();
+  // Log an error in case of empty query
+  if (0 ==  uReq->parameters().size()) {
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_FQNOPAR);
+  }
+  for(std::vector<QueryParameter*>::iterator it = params.begin();
+      it != params.end();
+      ++it) {
+    castor::stager::RequestQueryType ptype = (*it)->queryType();
+    std::string pval = (*it)->value();
+    try {
+      std::string fid, nshost, reqidtag;
+      bool queryOk = false;
+      switch(ptype) {
+      case REQUESTQUERYTYPE_FILEID:
+        {
+          std::string::size_type idx = pval.find('@');
+          if (idx == std::string::npos) {
+            fid = pval;
+            nshost = '%';
+          } else {
+            fid = pval.substr(0, idx);
+            nshost = pval.substr(idx + 1);
           }
-          break;
-        case REQUESTQUERYTYPE_FILENAME:
-        case REQUESTQUERYTYPE_REQID:
-        case REQUESTQUERYTYPE_USERTAG:
-        case REQUESTQUERYTYPE_REQID_GETNEXT:
-        case REQUESTQUERYTYPE_USERTAG_GETNEXT:
           queryOk = true;
-          break;
         }
-        if (!queryOk) {
-          castor::exception::Exception e(serrno);
-          e.getMessage() << "Could not parse parameter: "
-                         << ptype << "/"
-                         << pval;
-          throw e;
-        }
-        // Verify whether we are querying a directory (if not regexp)
-        if(ptype == REQUESTQUERYTYPE_FILEID ||
-           (ptype == REQUESTQUERYTYPE_FILENAME && 0 != pval.compare(0, 7, "regexp:"))) {
-          // Get PATH for queries by fileId
-          if(ptype == REQUESTQUERYTYPE_FILEID) {
-            char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
-            if (Cns_getpath((char*)nshost.c_str(),
-                            strtou64(fid.c_str()), cfn) < 0) {
-              castor::exception::Exception e(serrno);
-              e.getMessage() << "fileid " << fid;
-              throw e;
-            }
-            pval = cfn;
-          }
-          struct Cns_filestat Cnsfilestat;
-          if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
+        break;
+      case REQUESTQUERYTYPE_FILENAME:
+      case REQUESTQUERYTYPE_REQID:
+      case REQUESTQUERYTYPE_USERTAG:
+      case REQUESTQUERYTYPE_REQID_GETNEXT:
+      case REQUESTQUERYTYPE_USERTAG_GETNEXT:
+        queryOk = true;
+        break;
+      }
+      if (!queryOk) {
+        castor::exception::Exception e(EINVAL);
+        e.getMessage() << "Could not parse parameter: "
+                       << ptype << "/"
+                       << pval;
+        throw e;
+      }
+      // Verify whether we are querying a directory (if not regexp)
+      if(ptype == REQUESTQUERYTYPE_FILEID ||
+         (ptype == REQUESTQUERYTYPE_FILENAME && 0 != pval.compare(0, 7, "regexp:"))) {
+        // Get PATH for queries by fileId
+        if(ptype == REQUESTQUERYTYPE_FILEID) {
+          char cfn[CA_MAXPATHLEN+1];     // XXX unchecked string length in Cns_getpath() call
+          if (Cns_getpath((char*)nshost.c_str(),
+                          strtou64(fid.c_str()), cfn) < 0) {
             castor::exception::Exception e(serrno);
-            e.getMessage() << "file " << pval;
+            e.getMessage() << "fileid " << fid;
             throw e;
           }
-          if((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
-            // it is a directory, query for the content (don't perform a query by ID)
-            ptype = REQUESTQUERYTYPE_FILENAME;
-            if(pval[pval.length()-1] != '/')
-              pval = pval + "/";
-          }
+          pval = cfn;
         }
-        // Get the SvcClass associated to the request
-        u_signed64 svcClassId = 0;
-        castor::stager::SvcClass* svcClass = uReq->svcClass();
-        if (0 != svcClass) {
-          svcClassId = svcClass->id();
+        struct Cns_filestat Cnsfilestat;
+        if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
+          castor::exception::Exception e(serrno);
+          e.getMessage() << "file " << pval;
+          throw e;
         }
-        // call the proper handling request
-        if(ptype == REQUESTQUERYTYPE_FILENAME) {
-          handleFileQueryRequestByFileName(qrySvc,
-                                           client,
-                                           pval,
-                                           svcClassId,
-                                           req->reqId(),
-                                           uuid);
-        } else if (ptype == REQUESTQUERYTYPE_FILEID) {
-          handleFileQueryRequestByFileId(qrySvc,
+        if((Cnsfilestat.filemode & S_IFDIR) == S_IFDIR) {
+          // it is a directory, query for the content (don't perform a query by ID)
+          ptype = REQUESTQUERYTYPE_FILENAME;
+          if(pval[pval.length()-1] != '/')
+            pval = pval + "/";
+        }
+      }
+      // Get the SvcClass associated to the request
+      u_signed64 svcClassId = 0;
+      castor::stager::SvcClass* svcClass = uReq->svcClass();
+      if (0 != svcClass) {
+        svcClassId = svcClass->id();
+      }
+      // call the proper handling request
+      if(ptype == REQUESTQUERYTYPE_FILENAME) {
+        handleFileQueryRequestByFileName(qrySvc,
                                          client,
-                                         fid,
-                                         nshost,
+                                         pval,
                                          svcClassId,
                                          req->reqId(),
                                          uuid);
-        } else {
-          handleFileQueryRequestByRequest(qrySvc,
-                                          client,
-                                          ptype,
-                                          pval,
-                                          svcClassId,
-                                          req->reqId(),
-                                          uuid);
-        }
-      } catch (castor::exception::Exception e) {
-        // In case the file did not exist, we don't consider
-        // it as an error from the server point of view
-        castor::dlf::Param params[] =
-          {castor::dlf::Param("Function", "QueryRequestSvcThread::handleFileQueryRequest"),
-           castor::dlf::Param("Code", e.code()),
-           castor::dlf::Param("Message", e.getMessage().str())};
-        castor::dlf::dlf_writep(uuid,
-                                e.code() == ENOENT ? DLF_LVL_USER_ERROR : DLF_LVL_ERROR,
-				e.code() == ENOENT ? STAGER_USER_NONFILE : STAGER_QRYSVC_UNKREQ, 3, params);
-        // Send the exception to the client
-        castor::rh::FileQryResponse res;
-        res.setReqAssociated(req->reqId());
-        res.setStatus(10000); // Dummy status code for non existing files
-        res.setFileName(pval);
-        res.setErrorCode(e.code());
-        res.setErrorMessage(e.getMessage().str());
-        // Reply To Client
-        castor::replier::RequestReplier::getInstance()->
-          sendResponse(client, &res);
-      } // End catch
-    } // End loop on all diskcopies
-  } catch (castor::exception::Exception e) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleFileQueryRequest"),
-       castor::dlf::Param("Code", e.code()),
-       castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 3, params);
-    // try/catch this as well ?
-    // Send the exception to the client
-    castor::rh::FileQryResponse res;
-    res.setReqAssociated(req->reqId());
-    res.setStatus(10000); // Dummy status code for non existing files
-    res.setErrorCode(e.code());
-    res.setErrorMessage(e.getMessage().str());
-    // Reply To Client
-    castor::replier::RequestReplier::getInstance()->
-      sendResponse(client, &res);
-  }
+      } else if (ptype == REQUESTQUERYTYPE_FILEID) {
+        handleFileQueryRequestByFileId(qrySvc,
+                                       client,
+                                       fid,
+                                       nshost,
+                                       svcClassId,
+                                       req->reqId(),
+                                       uuid);
+      } else {
+        handleFileQueryRequestByRequest(qrySvc,
+                                        client,
+                                        ptype,
+                                        pval,
+                                        svcClassId,
+                                        req->reqId(),
+                                        uuid);
+      }
+    } catch (castor::exception::Exception e) {
+      // In case the file and/or the request did not exist, we don't consider
+      // it as an error from the server point of view
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("Function", "QueryRequestSvcThread::handleFileQueryRequest"),
+         castor::dlf::Param("Code", e.code()),
+         castor::dlf::Param("Message", e.getMessage().str())};
+      switch(e.code()) {
+        case ENOENT:     
+          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 3, params);
+          break;
+        case EINVAL:
+          castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_INVARG, 3, params);
+          break;
+        default:
+          castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
+          break;
+      }
+      // Send the exception to the client
+      castor::rh::FileQryResponse res;
+      res.setReqAssociated(req->reqId());
+      res.setStatus(10000); // Dummy status code for non existing files
+      res.setFileName(pval);
+      res.setErrorCode(e.code());
+      res.setErrorMessage(e.getMessage().str());
+      // Reply To Client
+      castor::replier::RequestReplier::getInstance()->
+        sendResponse(client, &res);
+    } // End catch
+  } // End loop on all diskcopies
   castor::replier::RequestReplier::getInstance()->
     sendEndResponse(client, req->reqId());
 }
@@ -585,7 +575,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
       {castor::dlf::Param("Function", "QueryRequestSvcThread::handleDiskPoolQuery"),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_EXCEPT, 3, params);
     // try/catch this as well ?
     // Send the exception to the client
     castor::query::DiskPoolQueryResponse res;
@@ -606,22 +596,14 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
 void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
 (castor::stager::Request* req, castor::IClient *client)
   throw (castor::exception::Exception) {
-  try {
-    castor::query::VersionResponse result;
-    result.setMajorVersion(MAJORVERSION);
-    result.setMinorVersion(MINORVERSION);
-    result.setMajorRelease(MAJORRELEASE);
-    result.setMinorRelease(MINORRELEASE);
-    castor::replier::RequestReplier *rr =
-      castor::replier::RequestReplier::getInstance();
-    rr->sendResponse(client, &result, true);
-  } catch (castor::exception::Exception e) {
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Function", "QueryRequestSvcThread::handleVersionQuery"),
-       castor::dlf::Param("Code", e.code()),
-       castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 3, params);
-  }
+  castor::query::VersionResponse result;
+  result.setMajorVersion(MAJORVERSION);
+  result.setMinorVersion(MINORVERSION);
+  result.setMajorRelease(MAJORRELEASE);
+  result.setMinorRelease(MINORRELEASE);
+  castor::replier::RequestReplier *rr =
+    castor::replier::RequestReplier::getInstance();
+  rr->sendResponse(client, &result, true);
 }
 
 //-----------------------------------------------------------------------------
@@ -737,39 +719,37 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     cleanup(req, qrySvc);
     return;
   }
-
-  // We call the adequate method
-  switch (req->type()) {
-  case castor::OBJ_StageFileQueryRequest:
-    castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
-      (req, client, svcs, qrySvc, ad, uuid);
-    break;
-  case castor::OBJ_StageFindRequestRequest:
-    //castor::stager::daemon::QueryRequestSvcThread::handle_findRequestRequest
-    //  (req, client, svcs, qrySvc, ad, uuid);
-    break;
-  case castor::OBJ_StageRequestQueryRequest:
-    //castor::stager::daemon::QueryRequestSvcThread::handle_requestQueryRequest
-    //  (req, client, svcs, qrySvc, ad, uuid);
-    break;
-  case castor::OBJ_DiskPoolQuery:
-    castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
-      (req, client, svcs, qrySvc, ad, uuid);
-    break;
-  case castor::OBJ_VersionQuery:
-    castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
-      (req, client);
-    break;
-  default:
-    // "Unknown Request type"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("type", req->type())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_QRYSVC_UNKREQ, 1, params);
-    cleanup(req, qrySvc);
-    return;
-  }
-
+  
   try {
+    // We call the adequate method
+    switch (req->type()) {
+    case castor::OBJ_StageFileQueryRequest:
+      castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
+        (req, client, svcs, qrySvc, ad, uuid);
+      break;
+    case castor::OBJ_StageFindRequestRequest:
+      //castor::stager::daemon::QueryRequestSvcThread::handle_findRequestRequest
+      //  (req, client, svcs, qrySvc, ad, uuid);
+      break;
+    case castor::OBJ_StageRequestQueryRequest:
+      //castor::stager::daemon::QueryRequestSvcThread::handle_requestQueryRequest
+      //  (req, client, svcs, qrySvc, ad, uuid);
+      break;
+    case castor::OBJ_DiskPoolQuery:
+      castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
+        (req, client, svcs, qrySvc, ad, uuid);
+      break;
+    case castor::OBJ_VersionQuery:
+      castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
+        (req, client);
+      break;
+    default:
+      // "Unknown Request type"
+      castor::dlf::Param params[] =
+        {castor::dlf::Param("type", req->type())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_UNKREQ, 1, params);
+    }
+  
     // Delete Request From the database
     svcs->deleteRep(&ad, req, true);
   } catch (castor::exception::Exception e) {

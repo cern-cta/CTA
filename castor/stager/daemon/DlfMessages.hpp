@@ -90,15 +90,16 @@ namespace castor{
 	
 	/*******************/
 	/* QueryRequestSvc */
-	STAGER_QRYSVC_GETSVC= 91, /* Could not get QuerySvc" */
-	STAGER_QRYSVC_EXCEPT= 92, /*Unexpected exception caught" */
-	STAGER_QRYSVC_NOCLI= 93, /* "No client associated with request ! Cannot answer !" */
-	STAGER_QRYSVC_INVSC= 94, /* "Invalid ServiceClass name" */
-	STAGER_QRYSVC_UNKREQ=95, /*Unknown Request type" */
-	STAGER_QRYSVC_FQNOPAR= 96, /* "StageFileQueryRequest has no parameters" */
-	STAGER_QRYSVC_FQUERY= 97, /* "Processing File Query by fileName" */
-	STAGER_QRYSVC_IQUERY= 98, /* "Processing File Query by fileId" */
-	STAGER_QRYSVC_RQUERY= 99, /* "Processing File Query by Request" */
+	STAGER_QRYSVC_GETSVC = 91, /* Could not get QuerySvc" */
+	STAGER_QRYSVC_EXCEPT = 92, /*Unexpected exception caught" */
+	STAGER_QRYSVC_NOCLI = 93, /* "No client associated with request ! Cannot answer !" */
+	STAGER_QRYSVC_INVSC = 94, /* "Invalid ServiceClass name" */
+	STAGER_QRYSVC_UNKREQ = 95, /* Unknown request type */
+	STAGER_QRYSVC_INVARG = 96, /* Invalid argument */
+	STAGER_QRYSVC_FQNOPAR = 97, /* "StageFileQueryRequest has no parameters" */
+	STAGER_QRYSVC_FQUERY = 98, /* "Processing File Query by fileName" */
+	STAGER_QRYSVC_IQUERY = 99, /* "Processing File Query by fileId" */
+	STAGER_QRYSVC_RQUERY = 100, /* "Processing File Query by Request" */
 	
 	/*********/
 	/* GcSvc */
@@ -138,8 +139,8 @@ namespace castor{
 	STAGER_JOBSVC_NOCLI= 144, /* "No client associated with request ! Cannot answer !" */
 	STAGER_JOBSVC_UNKREQ= 145, /* "Unknown Request type" */
 	STAGER_JOBSVC_D2DCS= 146, /* Invoking disk2DiskCopyStart" */
-        STAGER_JOBSVC_1STBWR= 147, /* "Invoking firstByteWritten"*/
-        STAGER_JOBSVC_DELWWR= 148 /* "File was removed by another user while being modified" */
+  STAGER_JOBSVC_1STBWR= 147, /* "Invoking firstByteWritten"*/
+  STAGER_JOBSVC_DELWWR= 148 /* "File was removed by another user while being modified" */
 
       };
     }// end namespace daemon

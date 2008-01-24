@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2008/01/23 11:27:10 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2008/01/24 12:48:46 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -212,7 +212,8 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_QRYSVC_EXCEPT, "Unexpected exception caught"},
     { STAGER_QRYSVC_NOCLI,  "No client associated with request ! Cannot answer !"},
     { STAGER_QRYSVC_INVSC,  "Invalid ServiceClass name"},
-    { STAGER_QRYSVC_UNKREQ, "Unknown Request type"},
+    { STAGER_QRYSVC_UNKREQ, "Unknown request type"},
+    { STAGER_QRYSVC_INVARG, "Invalid argument"},
     { STAGER_QRYSVC_FQNOPAR,"StageFileQueryRequest has no parameters"},
     { STAGER_QRYSVC_FQUERY ,"Processing File Query by fileName"},
     { STAGER_QRYSVC_IQUERY ,"Processing File Query by fileId"},
