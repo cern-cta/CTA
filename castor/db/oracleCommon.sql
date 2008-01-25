@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.615 $ $Date: 2008/01/25 15:02:11 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.616 $ $Date: 2008/01/25 15:30:16 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3185,11 +3185,16 @@ CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
   dcsToRm "numList";
 BEGIN
   ret := 0;
-  -- Lock the access to the CastorFile
-  -- This, together with triggers will avoid new TapeCopies
-  -- or DiskCopies to be added
-  SELECT id INTO cfId FROM CastorFile
-   WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+  BEGIN
+    -- Lock the access to the CastorFile
+    -- This, together with triggers will avoid new TapeCopies
+    -- or DiskCopies to be added
+    SELECT id INTO cfId FROM CastorFile
+     WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Nothing to be done, this file does not exist in the stager catalog
+    NULL;
+  END;
   -- First select involved diskCopies
   scId := svcClassId;
   IF scId > 0 THEN
