@@ -18,7 +18,7 @@ inputFile=""
 localDir=""
 rootbin=""
 rootsys=""
-dirCastor=outputDir+"tmpClientTest"+ticket+"/"
+dirCastor=outputDir+"/tmpClientTest"+ticket+"/"
 
 
 class PreRequisitesCase(unittest.TestCase):

@@ -15,7 +15,7 @@ myScen=""
 # files and directories
 inputFile="" 
 localDir=""
-dirCastor=outputDir+"tmpClientTest"+ticket+"/"
+dirCastor=outputDir+"/tmpClientTest"+ticket+"/"
 
 def makeBigFile(fileStart):
     size=0

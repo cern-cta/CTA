@@ -139,7 +139,7 @@ class PreRequisitesCase(unittest.TestCase):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
         global ticket,dirCastor,myScen,localDir,inputFile,recallDir
         ticket=UtilityForCastorTest.getTicket()
-        dirCastor=outputDir+"tmpTapeTest"+ticket+"/"
+        dirCastor=outputDir+"/tmpTapeTest"+ticket+"/"
         myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
         params = UtilityForCastorTest.parseConfigFile(configFile, "Tape")
         localDir=params["LOG_DIR"]
