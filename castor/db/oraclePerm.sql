@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.613 $ $Date: 2008/01/24 08:54:16 $ $Author: gtaur $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.614 $ $Date: 2008/01/25 13:49:13 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4824,21 +4824,28 @@ BEGIN
     -- Provide the job manager with a potential list of hosts where the
     -- destination disk2disk copy transfer could run. This is all the diskservers
     -- in the service class excluding the source and diskservers where a diskcopy
-    -- of this file already resides
+    -- of this file already resides. We restrict the number of returned 
+    -- diskservers because of LSF limitations
     OPEN askedHosts
-    FOR SELECT DISTINCT(DiskServer.name)
+    FOR
+      SELECT * FROM (
+	SELECT DISTINCT(DiskServer.name)
           FROM DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.diskPool = DiskPool2SvcClass.parent
            AND DiskPool2SvcClass.child = SvcClass.id
            AND SvcClass.name = reqSvcClass
+           AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+           AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
            AND FileSystem.diskserver <> dsId
            AND FileSystem.diskserver NOT IN
              (SELECT DiskServer.id
                 FROM DiskServer, FileSystem, DiskCopy
                WHERE FileSystem.diskServer = DiskServer.id
                  AND DiskCopy.fileSystem = FileSystem.id
-                 AND DiskCopy.castorFile = cfFileId);
+                 AND DiskCopy.castorFile = cfFileId)
+           ORDER BY dbms_random.value
+      ) WHERE rownum < 20;
   END IF;
 END;
 
