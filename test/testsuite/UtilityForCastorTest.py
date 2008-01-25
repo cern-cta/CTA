@@ -36,7 +36,7 @@ def parseConfigFile(configFile, section):
         if l.strip() != "":
             g = regexp.match(l)
             if g != None:
-                res[g.group(1)] = g.group(2)
+                res[g.group(1)] = g.group(2).strip()
     return res
 
 #########################
