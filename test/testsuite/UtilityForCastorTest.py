@@ -4,6 +4,21 @@ import sys
 import time
 import getopt
 
+def logUser():
+    
+#function to find the right directory on castor 
+    myUid= os.geteuid()
+   
+    strUid=0   
+    fin=open("/etc/passwd",'r')
+    for line in fin:
+        elem=line.split(":")
+        if elem[2] == str(myUid):
+            strUid=elem[0]
+            fin.close()
+            return strUid
+    return 0
+
 #########################
 # get castor parameters #
 #########################
@@ -12,11 +27,11 @@ class configuration:
         """ a singleton, initializing global parameters on loading """
         def gatherParameters(self):
                 # parse command line
-                myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":""}
-                optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:')
-                optionCmdLine=optionCmdLine[0]
+		myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":"","-q":"False","-o":""}
+                optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:qo:')
+                optionCmdLine = optionCmdLine[0]
                 for elemLine in optionCmdLine:
-                        if elemLine !=[]:
+                        if elemLine != []:
                                 myArg[elemLine[0]]=elemLine[1]
                 # check for the right configFile
                 if myArg["-c"] != "":
@@ -41,6 +56,11 @@ class configuration:
                 self.stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
                 self.stagerDiskOnlySvcClass=(configFileInfo[configFileInfo.find("DISKONLY_SVCCLASS"):]).split()[1]
                 self.stagerForcedFileClass=(configFileInfo[configFileInfo.find("FORCED_FILECLASS"):]).split()[1]
+		if (configFileInfo[configFileInfo.find("QUIET_MODE"):]).split()[1].lower() == "true":
+			self.quietMode = True
+		else:	
+			self.quietMode = False		
+		self.outputDir = (configFileInfo[configFileInfo.find("OUTPUT_DIR"):]).split()[1]
                 # Overwrite with command line values when needed
                 if myArg["-s"] !="":
                         self.stagerHost=myArg["-s"]
@@ -55,19 +75,30 @@ class configuration:
                                 self.stagerVersion="no"
                 if myArg["-e"] != "":
                         self.stagerExtraSvcClass=myArg["-e"]
+                if myArg["-q"] == "":
+                        self.quietMode=True
+                if myArg["-o"] != "":
+                        self.outputDir=myArg["-o"]
+		else:
+			if self.outputDir == "":
+				userId=logUser()
+				if userId != -1:
+					self.outputDir = "/castor/cern.ch/user/"+userId[0]+"/"+userId+"/"
         isInitialized = False
         def __init__(self):
-                global stagerHost, stagerPort, stagerSvcClass, stagerVersion, stagerExtraSvcClass, stagerDiskOnlySvcClass, stagerForcedFileClass, configFile
+                global stagerHost, stagerPort, stagerSvcClass, stagerVersion, stagerExtraSvcClass, stagerDiskOnlySvcClass, stagerForcedFileClass, configFile, quietMode, outputDir
                 # gather parameters if needed
                 if not self.isInitialized:
                         self.isInitialized = True
                         self.gatherParameters()
-                        print 'Configuration file used is "'+ self.configFile + '", leading to :'
-                        print "        stagerHost : ", self.stagerHost
-                        print "        stagerSvcClass : ", self.stagerSvcClass
-                        print "        stagerExtraSvcClass : ", self.stagerExtraSvcClass
-                        print "        stagerDiskOnlySvcClass : ", self.stagerDiskOnlySvcClass
-                        print "        stagerForcedFileClass : ", self.stagerForcedFileClass
+			if not self.quietMode:
+				print 'Configuration file used is "'+ self.configFile + '", leading to :'
+				print "        stagerHost : ", self.stagerHost
+				print "        output directory : ", self.outputDir				
+				print "        stagerSvcClass : ", self.stagerSvcClass
+				print "        stagerExtraSvcClass : ", self.stagerExtraSvcClass
+				print "        stagerDiskOnlySvcClass : ", self.stagerDiskOnlySvcClass
+				print "        stagerForcedFileClass : ", self.stagerForcedFileClass
                 # expose them in global variables
                 stagerHost = self.stagerHost
                 stagerPort = self.stagerPort
@@ -77,6 +108,8 @@ class configuration:
                 stagerDiskOnlySvcClass = self.stagerDiskOnlySvcClass
                 stagerForcedFileClass = self.stagerForcedFileClass
                 configFile = self.configFile
+                quietMode = self.quietMode
+                outputDir = self.outputDir
 
 # force to initialize the configuration
 configuration()
@@ -158,21 +191,6 @@ def runOnShell(cmdS,scen=None):
         t.cancel()
     return buff  
     
-def logUser():
-    
-#function to find the right directory on castor 
-    myUid= os.geteuid()
-   
-    strUid=0   
-    fin=open("/etc/passwd",'r')
-    for line in fin:
-        elem=line.split(":")
-        if elem[2] == str(myUid):
-            strUid=elem[0]
-            fin.close()
-            return strUid
-    return 0
-
 def logGroup():
     #function to find the right directory on castor 
     myGid= os.getegid()
@@ -189,19 +207,10 @@ def logGroup():
     return 0
 
 
-# prepare string for castor file
-
-def prepareCastorString():
-    userId=logUser()
-    if userId==-1:
-	     return -1
-    return "/castor/cern.ch/user/"+userId[0]+"/"+userId+"/"
-	    
 # check if the user of the program is a castor user
 
 def checkUser():
-    myCmd=prepareCastorString()
-    myCmd="nsls "+myCmd
+    myCmd="nsls " + outputDir
     ret=os.popen(myCmd).read()
     userId=logUser()
     if ret.find("No such file or directory") != -1:

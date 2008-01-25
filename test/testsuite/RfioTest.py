@@ -5,7 +5,7 @@ import time
 import threading
 import re
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
 
 # parameters
 
@@ -26,7 +26,7 @@ caseScen=""
 inputFile=""
 localDir="" 
 remoteDir=""
-castorDir=(UtilityForCastorTest.prepareCastorString())+"tmpRfioTest"+ticket+"/"
+castorDir=outputDir+"tmpRfioTest"+ticket+"/"
 inputStressFiles=""
 
 

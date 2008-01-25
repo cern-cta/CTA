@@ -6,7 +6,7 @@ import sys
 import time
 import threading
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
 
 # parameters
 ticket= UtilityForCastorTest.getTicket()
@@ -15,8 +15,7 @@ myScen=""
 # files and directories
 inputFile="" 
 localDir=""
-myCastor=UtilityForCastorTest.prepareCastorString()
-dirCastor=myCastor+"tmpClientTest"+ticket+"/"
+dirCastor=outputDir+"tmpClientTest"+ticket+"/"
 
 def makeBigFile(fileStart):
     size=0

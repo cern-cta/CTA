@@ -6,7 +6,7 @@ from threading import Thread
 import signal
 import thread
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
 
 endThread=0
 # global variable to avoid the join, due to thread limitation in handling signals
@@ -26,7 +26,6 @@ myScen=""
 myTag=""
 numFiles=""
 filesToBeRecalled=""
-myCastor=""
 
 def getFilesToRecall(maxNum=None):
     tmpList=os.popen("nsls "+recallDir).read().split("\n")
@@ -140,10 +139,8 @@ class PreRequisitesCase(unittest.TestCase):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have a valid castor directory"
         global ticket
         ticket=UtilityForCastorTest.getTicket()
-        global myCastor
-        myCastor=UtilityForCastorTest.prepareCastorString()
         global dirCastor
-        dirCastor=myCastor+"tmpTapeTest"+ticket+"/"
+        dirCastor=outputDir+"tmpTapeTest"+ticket+"/"
         global myScen
         myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
         try:

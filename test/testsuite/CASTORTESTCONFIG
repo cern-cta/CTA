@@ -41,6 +41,7 @@ EXTRA_SVCCLASS    default
 TIMEOUT           400
 DISKONLY_SVCCLASS default
 FORCED_FILECLASS  temp
+QUIET_MODE        False
 
 *** Rfio test specific parameters ***
 
