@@ -22,34 +22,34 @@ class ClientSuite(unittest.TestSuite):
     def setUp(self):
         print "ciao"
     def __init__(self):    
-	unittest.TestSuite.__init__(self)
+        unittest.TestSuite.__init__(self)
 
 class RfioSuite(unittest.TestSuite):
     def __init__(self):    
-	unittest.TestSuite.__init__(self)
+        unittest.TestSuite.__init__(self)
 
 class RootSuite(unittest.TestSuite):
     def __init__(self):    
-	unittest.TestSuite.__init__(self)
+        unittest.TestSuite.__init__(self)
 
 class TapeSuite(unittest.TestSuite):
     def __init__(self):    
-	unittest.TestSuite.__init__(self)
+        unittest.TestSuite.__init__(self)
 
 class DlfSuite(unittest.TestSuite):
     def __init__(self):    
-	unittest.TestSuite.__init__(self)
+        unittest.TestSuite.__init__(self)
 
 class CommonSuite(unittest.TestSuite):
     def __init__(self):    
-	unittest.TestSuite.__init__(self)
-	
+        unittest.TestSuite.__init__(self)
+        
 class CoreSuite(unittest.TestSuite):
     def __init__(self):    
-	unittest.TestSuite.__init__(self)		
+        unittest.TestSuite.__init__(self)                
 
 #####  allCastorSuites is a dictonary with a test suite for each module ###########
-	
+        
 allCastorSuites= {'CLIENT':ClientSuite(),'RFIO':RfioSuite(),'ROOT':RootSuite(),'TAPE':TapeSuite(),'DLF':DlfSuite(),'COMMON':CommonSuite(),'CORE':CoreSuite()}
 
 ################ for each module all the possible test suites included #######################
@@ -97,7 +97,7 @@ for mySuite in newSuites:
              
     newCases=mySuite.splitlines()         
     for myCase in newCases:
-       	if myCase.find("YES") != -1:
+               if myCase.find("YES") != -1:
             elem=myCase.split()
             testToAdd=(listOfTest[elem[0]])[elem[1]]
             if testToAdd != 0:
@@ -108,14 +108,14 @@ for mySuite in newSuites:
 
 class CastorGlobalSuite(unittest.TestSuite):
     def __init__(self):    
-	unittest.TestSuite.__init__(self)
+        unittest.TestSuite.__init__(self)
 
 
 try:
     myGlobalSuite=CastorGlobalSuite()
     for differentSuite in allCastorSuites:
-	myGlobalSuite.addTest(allCastorSuites[differentSuite])
-		
+        myGlobalSuite.addTest(allCastorSuites[differentSuite])
+
     runner=unittest.TextTestRunner(verbosity=2)
     runner.run(myGlobalSuite)
     os._exit(0)
