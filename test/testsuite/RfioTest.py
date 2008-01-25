@@ -26,7 +26,7 @@ caseScen=""
 inputFile=""
 localDir="" 
 remoteDir=""
-castorDir=outputDir+"tmpRfioTest"+ticket+"/"
+castorDir=outputDir+"/tmpRfioTest"+ticket+"/"
 inputStressFiles=""
 
 
@@ -47,7 +47,7 @@ class RfioPreRequisitesCase(unittest.TestCase):
                         params = UtilityForCastorTest.parseConfigFile(configFile, "Rfio")
                         inputFile = params["INPUT_FILE"]
 			inputStressFiles = params["STRESS_INPUT_DIR"]
-                        localDir = params["LOG_DIR"]
+                        localDir = params["LOG_DIR"]+ticket+"/"
 			stageMap = params["USE_STAGEMAP"]
 			castorConf = params["USE_CASTOR_CONF"]
 			castorEnv = params["USE_CASTOR_ENV"]

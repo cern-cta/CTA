@@ -202,7 +202,7 @@ def checkUser():
     ret=os.popen(myCmd).read()
     if ret.find("No such file or directory") != -1:
         return -1
-    return userId
+    return 0
  
 #different scenarium for env
 def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
