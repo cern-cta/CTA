@@ -173,6 +173,7 @@ mkdir -p ${RPM_BUILD_ROOT}/var/spool/upv
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/vdqm
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/scheduler
 mkdir -p ${RPM_BUILD_ROOT}/var/spool/vmgr
+mkdir -p ${RPM_BUILD_ROOT}/var/log
 mkdir -p ${RPM_BUILD_ROOT}/var/lib/castor
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/db
 mkdir -p ${RPM_BUILD_ROOT}/var/www/html/dlf/js
