@@ -30,7 +30,7 @@ def parseConfigFile(configFile, section):
         configFileInfo=configFileInfo[:index]
     lines = configFileInfo.split("\n")[1:]
     res = {}
-    regexp = re.compile("^([a-zA-Z_]+)[ \t]+(.*)$")
+    regexp = re.compile("^([a-zA-Z_0-9]+)[ \t]+(.*)$")
     for l in lines:
         if l.find("***") != -1: break
         if l.strip() != "":
@@ -75,12 +75,12 @@ class configuration:
                 if params.has_key("STAGE_HOST"): self.stagerHost=params["STAGE_HOST"]
                 if params.has_key("STAGE_PORT"): self.stagerPort=params["STAGE_PORT"]
                 if params.has_key("STAGE_SVCCLASS"): self.stagerSvcClass=params["STAGE_SVCCLASS"]
-                if params.has_key("CASTOR_V2"): self.stagerVersion=params["CASTOR_V2"]
+                if params.has_key("CASTOR_V2"): self.stagerVersion=params["CASTOR_V2"].lower()
                 if params.has_key("TIMEOUT"): self.timeOut=int(params["TIMEOUT"])
                 if params.has_key("EXTRA_SVCCLASS"): self.stagerExtraSvcClass=params["EXTRA_SVCCLASS"]        
                 if params.has_key("DISKONLY_SVCCLASS"): self.stagerDiskOnlySvcClass=params["DISKONLY_SVCCLASS"]
                 if params.has_key("FORCED_FILECLASS"): self.stagerForcedFileClass=params["FORCED_FILECLASS"]
-                if params.has_key("QUIET_MODE") and params["QUIET_MODE"].lower() == "true":self.quietMode = True
+                if params.has_key("QUIET_MODE") and params["QUIET_MODE"].lower() == "yes":self.quietMode = True
                 if params.has_key("OUTPUT_DIR"): self.outputDir = params["OUTPUT_DIR"]
                 # Overwrite with command line values when needed
                 if myArg["-s"] !="":
