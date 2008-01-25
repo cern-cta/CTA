@@ -5,6 +5,19 @@ import time
 import getopt
 import re
 
+def logUser():
+    #function to find the right directory on castor 
+    myUid= os.geteuid()
+    strUid=0   
+    fin=open("/etc/passwd",'r')
+    for line in fin:
+        elem=line.split(":")
+        if elem[2] == str(myUid):
+            strUid=elem[0]
+            fin.close()
+            return strUid
+    return 0
+
 def parseConfigFile(configFile, section):
     f=open(configFile,"r")
     configFileInfo=f.read()
