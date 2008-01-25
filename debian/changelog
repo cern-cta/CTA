@@ -1,3 +1,9 @@
+castor (2.1.6-8) unstable; urgency=low
+
+  * CASTOR 2.1.6-8 release
+
+-- Dennis Waldron <dennis.waldron@cern.ch>  Fri, 25 January 2008 16:00:00 +0100
+
 castor (2.1.6-7) unstable; urgency=low
 
   * Eighth internal release of CASTOR 2.1.6
