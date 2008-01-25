@@ -97,7 +97,7 @@ for mySuite in newSuites:
              
     newCases=mySuite.splitlines()         
     for myCase in newCases:
-               if myCase.find("YES") != -1:
+        if myCase.find("YES") != -1:
             elem=myCase.split()
             testToAdd=(listOfTest[elem[0]])[elem[1]]
             if testToAdd != 0:

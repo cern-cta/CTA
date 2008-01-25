@@ -5,7 +5,7 @@ import time
 import threading
 import re
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile
 
 # parameters
 
@@ -40,17 +40,17 @@ inputStressFiles=""
 
 class RfioPreRequisitesCase(unittest.TestCase):
         def mainScenariumSetUp(self):
-                assert (UtilityForCastorTest.checkUser != -1), "you don't have a valid castor directory"
+		assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
                 try:
                         # get needed params
                         global castorDir, inputFile, inputStressTest, localDir, stageMap, castorConf, castorEnv
-                        params = UtilityForCastorTest.configuration.parseConfigFile("Rfio")
+                        params = UtilityForCastorTest.parseConfigFile(configFile, "Rfio")
                         inputFile = params["INPUT_FILE"]
-                         inputStressFiles = params["STRESS_INPUT_DIR"]
+			inputStressFiles = params["STRESS_INPUT_DIR"]
                         localDir = params["LOG_DIR"]
-                         stageMap = params["USE_STAGEMAP"]
-                         castorConf = params["USE_CASTOR_CONF"]
-                         castorEnv = params["USE_CASTOR_ENV"]
+			stageMap = params["USE_STAGEMAP"]
+			castorConf = params["USE_CASTOR_CONF"]
+			castorEnv = params["USE_CASTOR_ENV"]
 
                         os.system("rfmkdir "+castorDir)
                         os.system("mkdir "+localDir)

@@ -5,20 +5,26 @@ import time
 import getopt
 import re
 
-def logUser():
-    
-#function to find the right directory on castor 
-    myUid= os.geteuid()
-   
-    strUid=0   
-    fin=open("/etc/passwd",'r')
-    for line in fin:
-        elem=line.split(":")
-        if elem[2] == str(myUid):
-            strUid=elem[0]
-            fin.close()
-            return strUid
-    return 0
+def parseConfigFile(configFile, section):
+    f=open(configFile,"r")
+    configFileInfo=f.read()
+    f.close
+    index= configFileInfo.find("*** " + section)
+    configFileInfo=configFileInfo[index:]
+    index=configFileInfo.find("***")
+    if index != -1:
+        index=index-1
+        configFileInfo=configFileInfo[:index]
+    lines = configFileInfo.split("\n")[1:]
+    res = {}
+    regexp = re.compile("^([a-zA-Z_]+)[ \t]+(.*)$")
+    for l in lines:
+        if l.find("***") != -1: break
+        if l.strip() != "":
+            g = regexp.match(l)
+            if g != None:
+                res[g.group(1)] = g.group(2)
+    return res
 
 #########################
 # get castor parameters #
@@ -26,26 +32,6 @@ def logUser():
 
 class configuration:
         """ a singleton, initializing global parameters on loading """
-        def parseConfigFile(self, section):
-                f=open(self.configFile,"r")
-                configFileInfo=f.read()
-                f.close
-                index= configFileInfo.find("*** " + section)
-                configFileInfo=configFileInfo[index:]
-                index=configFileInfo.find("***")
-                if index != -1:
-                        index=index-1
-                        configFileInfo=configFileInfo[:index]
-                lines = configFileInfo.split("\n")[1:]
-                res = {}
-                regexp = re.compile("^([a-zA-Z_]+)[ \t]+(.*)$")
-                for l in lines:
-                        if l.find("***") != -1: break
-                        if l.strip() != "":
-                                g = regexp.match(l)
-                                if g != None:
-                                        res[g.group(1)] = g.group(2)
-                return res
         def gatherParameters(self):
                 # parse command line
                 myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":"","-q":"False","-o":""}
@@ -72,7 +58,7 @@ class configuration:
                 self.quietMode = False
                 self.outputDir = ""
                 # Parse config file content
-                params = self.parseConfigFile("Generic")
+                params = parseConfigFile(self.configFile, "Generic")
                 if params.has_key("STAGE_HOST"): self.stagerHost=params["STAGE_HOST"]
                 if params.has_key("STAGE_PORT"): self.stagerPort=params["STAGE_PORT"]
                 if params.has_key("STAGE_SVCCLASS"): self.stagerSvcClass=params["STAGE_SVCCLASS"]
@@ -101,14 +87,9 @@ class configuration:
                         self.quietMode=True
                 if myArg["-o"] != "":
                         self.outputDir=myArg["-o"]
-                else:
-                        if self.outputDir == "":
-                                userId=logUser()
-                                if userId != -1:
-                                        self.outputDir = "/castor/cern.ch/user/"+userId[0]+"/"+userId+"/"
         isInitialized = False
         def __init__(self):
-                global stagerHost, stagerPort, stagerSvcClass, stagerVersion, stagerExtraSvcClass, stagerDiskOnlySvcClass, stagerForcedFileClass, configFile, quietMode, outputDir
+                global stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
                 # gather parameters if needed
                 if not self.isInitialized:
                         self.isInitialized = True
@@ -135,7 +116,7 @@ class configuration:
                 outputDir = self.outputDir
 
 # force to initialize the configuration
-configuration()
+config = configuration()
 
 ####################
 # Useful functions #
@@ -216,19 +197,14 @@ def logGroup():
 
 
 # check if the user of the program is a castor user
-
 def checkUser():
     myCmd="nsls " + outputDir
     ret=os.popen(myCmd).read()
-    userId=logUser()
     if ret.find("No such file or directory") != -1:
-        print "You are "+userId+" and you are not a Castor user. Go away!"
         return -1
     return userId
-
  
 #different scenarium for env
-
 def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
         myShell=os.popen('ls -l /bin/sh').read()
         myScen=""

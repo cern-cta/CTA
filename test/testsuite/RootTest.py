@@ -5,7 +5,7 @@ import sys
 import time
 import threading
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile
 
 # parameters
 
@@ -23,11 +23,10 @@ dirCastor=outputDir+"tmpClientTest"+ticket+"/"
 
 class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
-        assert (UtilityForCastorTest.checkUser() != -1), "you don't have a valid castor directory"
-
+        assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
         try:
             global localDir,rootbin,rootsys,inputFile,myScen
-            params = UtilityForCastorTest.configuration.parseConfigFile("Root")
+            params = UtilityForCastorTest.parseConfigFile(configFile, "Root")
             localDir = params["LOG_DIR"]
             localDir = localDir+ticket+"/"
             os.system("mkdir "+localDir)

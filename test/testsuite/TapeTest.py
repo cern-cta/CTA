@@ -6,7 +6,7 @@ from threading import Thread
 import signal
 import thread
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir,configFile
 
 endThread=0
 # global variable to avoid the join, due to thread limitation in handling signals
@@ -136,12 +136,12 @@ class MigratingThread(Thread):
        
 class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
-        assert (UtilityForCastorTest.checkUser() != -1), "you don't have a valid castor directory"
+        assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
         global ticket,dirCastor,myScen,localDir,inputFile,recallDir
         ticket=UtilityForCastorTest.getTicket()
         dirCastor=outputDir+"tmpTapeTest"+ticket+"/"
         myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
-        params = UtilityForCastorTest.configuration.parseConfigFile("Tape")
+        params = UtilityForCastorTest.parseConfigFile(configFile, "Tape")
         localDir=params["LOG_DIR"]
         localDir=localDir+ticket+"/"
         os.system("mkdir "+localDir)
