@@ -210,6 +210,9 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   throw (castor::exception::Exception) {
   std::string requestId;
 
+  // the service class has been previously resolved, attach it to the request
+  request.setSvcClassName(m_rhSvcClass);
+
   // Tracing the submit time
   char timestr[64];
   castor::io::ClientSocket* s;
@@ -242,6 +245,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
     castor::exception::InvalidArgument e; // XXX To be changed
     e.getMessage() << "No Acknowledgement from the Server";
     delete ack;
+    delete s;
     throw e;
   }
   requestId = ack->requestId();
@@ -250,6 +254,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
     castor::exception::Exception e(ack->errorCode()); // XXX To be changed
     e.getMessage() << ack->errorMessage();
     delete ack;
+    delete s;
     throw e;
   }
   delete ack;
@@ -265,7 +270,7 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
 #else
               ((float)(endTime - startTime)) / CLOCKS_PER_SEC );
 #endif
-
+  delete s;
   return requestId;
 }
 
@@ -476,8 +481,6 @@ void castor::client::BaseClient::setOption
     setRhPort(0);
     setRhSvcClass("");
   }
-  // now the service class has been resolved, attach it to the request
-  req->setSvcClassName(m_rhSvcClass);
 }       
 
 //------------------------------------------------------------------------------
