@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.614 $ $Date: 2008/01/25 13:49:13 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.615 $ $Date: 2008/01/25 15:02:11 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -767,29 +767,7 @@ BEGIN
   END IF;
 
   -- Check that we don't have too many requests for this file in the DB
-  SELECT COUNT(request) INTO nb FROM SubRequest WHERE castorFile = cfId AND status IN (9, 11);
-  IF nb > 100 THEN
-    -- keep the most recents and drop the rest
-    FOR sr IN
-      (SELECT id, request FROM
-         (SELECT /*+INDEX(SR I_SubRequest_CastorFile) */ SR.id, SR.request FROM SubRequest SR
-           WHERE SR.castorFile = cfId AND SR.status IN (9, 11)
-           ORDER BY SR.creationTime ASC)
-       WHERE ROWNUM < nb-100) LOOP
-      SELECT COUNT(*) INTO nbReqs 
-        FROM SubRequest 
-       WHERE request = sr.request AND status NOT IN (9, 11);
-      IF nbReqs = 0 THEN
-        -- the subreq we're going to drop belongs to a request, which only contains
-        -- completed subrequests, so it's safe to completely drop it
-        deleteRequest(sr.request);
-      ELSE
-        -- the request contains other subreqs, keep it and drop only this subreq
-        DELETE FROM SubRequest WHERE id = sr.id;
-        DELETE FROM Id2Type WHERE id = sr.id;
-      END IF;
-    END LOOP;
-  END IF;
+  -- XXX dropped for the time being as it introduced deadlocks with itself and with selectFiles2Delete!
 END;
 
 
@@ -851,7 +829,7 @@ BEGIN
      'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
        WHERE SubRequest.request = '||cleanTab||'.id;',
      'SubRequest');
-  -- Delete Request + Clients. Other types are deleted at archive time
+  -- Delete Request + Clients
     ---- Get ----
   deleteRequests('StageGetRequest', '35', cleanTab);
     ---- Put ----
@@ -866,6 +844,10 @@ BEGIN
   deleteRequests('StagePrepareToPutRequest', '37', cleanTab);
     ---- PrepareToUpdate ----
   deleteRequests('StagePrepareToUpdateRequest', '38', cleanTab);
+    ---- PutDone ----
+  deleteRequests('StagePutDoneRequest', '39', cleanTab);
+    ---- Rm ----
+  deleteRequests('StageRmRequest', '42', cleanTab);
     ---- Repack ----
   deleteRequests('StageRepackRequest', '119', cleanTab);
     ---- DiskCopyReplica ----
@@ -1523,7 +1505,7 @@ CREATE OR REPLACE PROCEDURE streamsToDo(res OUT castor.Stream_Cur) AS
 BEGIN
   SELECT UNIQUE Stream.id BULK COLLECT INTO streams
     FROM Stream, NbTapeCopiesInFS, FileSystem, DiskServer
-   WHERE Stream.status = 0 --PENDING
+   WHERE Stream.status = 0 -- PENDING
      AND NbTapeCopiesInFS.stream = Stream.id
      AND NbTapeCopiesInFS.NbTapeCopies > 0
      AND FileSystem.id = NbTapeCopiesInFS.FS
@@ -1571,6 +1553,15 @@ BEGIN
          AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
          AND DiskServer.id = FileSystem.diskserver
          AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskCopy.id NOT IN (
+           -- don't select source diskcopies which already failed more than 10 times
+           SELECT sourceDiskCopyId FROM (
+             SELECT count(*) c, R.sourceDiskCopyId 
+               FROM StageDiskCopyReplicaRequest R, SubRequest
+              WHERE SubRequest.request = R.id
+                AND SubRequest.status = 9 -- FAILED
+              GROUP BY sourceDiskCopyId)
+           WHERE c >= 10)
          ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
                                  FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
