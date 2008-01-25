@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.32 $ $Release$ $Date: 2008/01/17 10:53:55 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.33 $ $Release$ $Date: 2008/01/25 15:05:20 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -71,6 +71,7 @@
 #include "castor/stager/DiskCopyStatusCodes.hpp"
 #include "castor/BaseAddress.hpp"
 #include "occi.h"
+#include <errno.h>
 #include "Cglobals.h"
 #include <Cuuid.h>
 #include <string>
@@ -419,16 +420,18 @@ void castor::db::ora::OraGCSvc::filesDeleted
         std::string nsHost = rs->getString(2);
         // and first of all, get the file name
         if (0 != Cns_getpath((char*)nsHost.c_str(), fileid, castorFileName)) {
-	  if (!strcmp((char *)errBuf, "")) {
-	    strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+	  if (serrno != ENOENT) {
+	    if (!strcmp((char *)errBuf, "")) {
+	      strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
+	    }
+	    clog() << ERROR
+		   << "Error caught when calling Cns_getpath in filesDeleted "
+		   << "for fileid " << fileid << " and nsHost "
+		   << nsHost << " : " << (char*)errBuf
+		   << ". This file won't be "
+		   << "deleted from name server while it should have been."
+		   << std::endl;
 	  }
-          clog() << ERROR
-                 << "Error caught when calling Cns_getpath in filesDeleted "
-                 << "for fileid " << fileid << " and nsHost "
-                 << nsHost << " : " << (char*)errBuf
-                 << ". This file won't be "
-                 << "deleted from name server while it should have been."
-                 << std::endl;
         } else {
           if (0 != Cns_unlink(castorFileName)) {
 	    if (!strcmp((char *)errBuf, "")) {
