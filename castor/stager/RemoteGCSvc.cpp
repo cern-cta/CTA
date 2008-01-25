@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/12/14 16:56:19 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/25 15:02:32 $ $Author: waldron $
  *
  *
  *
@@ -292,8 +292,7 @@ void castor::stager::RemoteGCSvc::filesDeleted
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteGCClientTimeout());
   client.setOption(NULL, &req);
-  client.sendRequest(&req, &rh);
- 
+  client.sendRequest(&req, &rh); 
   // no need to cleanup files since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
 }
@@ -352,7 +351,7 @@ public:
       dynamic_cast<castor::stager::NsFilesDeletedResponse*>(&r);
     if (0 == resp) {
       castor::exception::Internal e;
-      e.getMessage() << "Could not cast response into FIdResponse";
+      e.getMessage() << "Could not cast response into NsFilesDeletedResponse";
       throw e;
     }
     for (std::vector<castor::stager::GCFile*>::iterator
@@ -405,8 +404,9 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
   } catch (castor::exception::Exception e) {
     // Exception caught in RemoteGCSvc::nsFilesDeleted
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 0, 1, params);
+      {castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Error", strerror(errno))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 0, 2, params);
   }
   // no need to cleanup fileIds since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !
