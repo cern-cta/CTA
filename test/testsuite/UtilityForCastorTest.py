@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import getopt
+import re
 
 def logUser():
     
@@ -25,9 +26,29 @@ def logUser():
 
 class configuration:
         """ a singleton, initializing global parameters on loading """
+        def parseConfigFile(self, section):
+                f=open(self.configFile,"r")
+                configFileInfo=f.read()
+                f.close
+                index= configFileInfo.find("*** " + section)
+                configFileInfo=configFileInfo[index:]
+                index=configFileInfo.find("***")
+                if index != -1:
+                        index=index-1
+                        configFileInfo=configFileInfo[:index]
+                lines = configFileInfo.split("\n")[1:]
+                res = {}
+                regexp = re.compile("^([a-zA-Z_]+)[ \t]+(.*)$")
+                for l in lines:
+                        if l.find("***") != -1: break
+                        if l.strip() != "":
+                                g = regexp.match(l)
+                                if g != None:
+                                        res[g.group(1)] = g.group(2)
+                return res
         def gatherParameters(self):
                 # parse command line
-		myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":"","-q":"False","-o":""}
+                myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":"","-q":"False","-o":""}
                 optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:qo:')
                 optionCmdLine = optionCmdLine[0]
                 for elemLine in optionCmdLine:
@@ -39,28 +60,29 @@ class configuration:
                         self.configFile=myArg["-c"]
                 else:
                         self.configFile = "./CASTORTESTCONFIG"
+                # Default values
+                self.stagerHost=""
+                self.stagerPort=""
+                self.stagerSvcClass=""
+                self.stagerVersion=""
+                self.timeOut=0
+                self.stagerExtraSvcClass=""
+                self.stagerDiskOnlySvcClass=""
+                self.stagerForcedFileClass=""
+                self.quietMode = False
+                self.outputDir = ""
                 # Parse config file content
-                f=open(self.configFile)
-                configFileInfo=f.read()
-                f.close
-                index= configFileInfo.find("*** Generic parameters ***")
-                configFileInfo=configFileInfo[index:]
-                index=configFileInfo.find("***")
-                if index != -1:
-                        index=index-1
-                        configFileInfo=configFileInfo[:index]
-                self.stagerHost=(configFileInfo[configFileInfo.find("STAGE_HOST"):]).split()[1]
-                self.stagerPort=(configFileInfo[configFileInfo.find("STAGE_PORT"):]).split()[1]
-                self.stagerSvcClass=(configFileInfo[configFileInfo.find("STAGE_SVCCLASS"):]).split()[1]
-                self.stagerVersion=(configFileInfo[configFileInfo.find("CASTOR_V2"):]).split()[1]
-                self.stagerExtraSvcClass=(configFileInfo[configFileInfo.find("EXTRA_SVCCLASS"):]).split()[1]	
-                self.stagerDiskOnlySvcClass=(configFileInfo[configFileInfo.find("DISKONLY_SVCCLASS"):]).split()[1]
-                self.stagerForcedFileClass=(configFileInfo[configFileInfo.find("FORCED_FILECLASS"):]).split()[1]
-		if (configFileInfo[configFileInfo.find("QUIET_MODE"):]).split()[1].lower() == "true":
-			self.quietMode = True
-		else:	
-			self.quietMode = False		
-		self.outputDir = (configFileInfo[configFileInfo.find("OUTPUT_DIR"):]).split()[1]
+                params = self.parseConfigFile("Generic")
+                if params.has_key("STAGE_HOST"): self.stagerHost=params["STAGE_HOST"]
+                if params.has_key("STAGE_PORT"): self.stagerPort=params["STAGE_PORT"]
+                if params.has_key("STAGE_SVCCLASS"): self.stagerSvcClass=params["STAGE_SVCCLASS"]
+                if params.has_key("CASTOR_V2"): self.stagerVersion=params["CASTOR_V2"]
+                if params.has_key("TIMEOUT"): self.timeOut=int(params["TIMEOUT"])
+                if params.has_key("EXTRA_SVCCLASS"): self.stagerExtraSvcClass=params["EXTRA_SVCCLASS"]        
+                if params.has_key("DISKONLY_SVCCLASS"): self.stagerDiskOnlySvcClass=params["DISKONLY_SVCCLASS"]
+                if params.has_key("FORCED_FILECLASS"): self.stagerForcedFileClass=params["FORCED_FILECLASS"]
+                if params.has_key("QUIET_MODE") and params["QUIET_MODE"].lower() == "true":self.quietMode = True
+                if params.has_key("OUTPUT_DIR"): self.outputDir = params["OUTPUT_DIR"]
                 # Overwrite with command line values when needed
                 if myArg["-s"] !="":
                         self.stagerHost=myArg["-s"]
@@ -79,11 +101,11 @@ class configuration:
                         self.quietMode=True
                 if myArg["-o"] != "":
                         self.outputDir=myArg["-o"]
-		else:
-			if self.outputDir == "":
-				userId=logUser()
-				if userId != -1:
-					self.outputDir = "/castor/cern.ch/user/"+userId[0]+"/"+userId+"/"
+                else:
+                        if self.outputDir == "":
+                                userId=logUser()
+                                if userId != -1:
+                                        self.outputDir = "/castor/cern.ch/user/"+userId[0]+"/"+userId+"/"
         isInitialized = False
         def __init__(self):
                 global stagerHost, stagerPort, stagerSvcClass, stagerVersion, stagerExtraSvcClass, stagerDiskOnlySvcClass, stagerForcedFileClass, configFile, quietMode, outputDir
@@ -91,19 +113,20 @@ class configuration:
                 if not self.isInitialized:
                         self.isInitialized = True
                         self.gatherParameters()
-			if not self.quietMode:
-				print 'Configuration file used is "'+ self.configFile + '", leading to :'
-				print "        stagerHost : ", self.stagerHost
-				print "        output directory : ", self.outputDir				
-				print "        stagerSvcClass : ", self.stagerSvcClass
-				print "        stagerExtraSvcClass : ", self.stagerExtraSvcClass
-				print "        stagerDiskOnlySvcClass : ", self.stagerDiskOnlySvcClass
-				print "        stagerForcedFileClass : ", self.stagerForcedFileClass
+                        if not self.quietMode:
+                                print 'Configuration file used is "'+ self.configFile + '", leading to :'
+                                print "        stagerHost : ", self.stagerHost
+                                print "        output directory : ", self.outputDir                                
+                                print "        stagerSvcClass : ", self.stagerSvcClass
+                                print "        stagerExtraSvcClass : ", self.stagerExtraSvcClass
+                                print "        stagerDiskOnlySvcClass : ", self.stagerDiskOnlySvcClass
+                                print "        stagerForcedFileClass : ", self.stagerForcedFileClass
                 # expose them in global variables
                 stagerHost = self.stagerHost
                 stagerPort = self.stagerPort
                 stagerSvcClass = self.stagerSvcClass
                 stagerVersion = self.stagerVersion
+                stagerTimeOut = self.timeOut
                 stagerExtraSvcClass = self.stagerExtraSvcClass
                 stagerDiskOnlySvcClass = self.stagerDiskOnlySvcClass
                 stagerForcedFileClass = self.stagerForcedFileClass
@@ -121,24 +144,11 @@ configuration()
 def getListOfFiles(myDir):
         tmpList=os.popen4("nsls "+myDir)[1].read().split("\n")
         defList=[]
-	if tmpList[0].find("No such file or directory"):
-		return []
+        if tmpList[0].find("No such file or directory"):
+                return []
         for file in tmpList:
             defList.append(myDir+file)
-	return defList
-
-def getTimeOut():
-    f=open(configFile,"r")
-    configFileInfo=f.read()
-    f.close
-    index= configFileInfo.find("*** Generic parameters ***")
-    configFileInfo=configFileInfo[index:]
-    index=configFileInfo.find("***")
-    if index != -1:
-        index=index-1
-        configFileInfo=configFileInfo[:index]
-    timeOutVal=configFileInfo[configFileInfo.find("TIMEOUT"):].split()[1]
-    return int(timeOutVal)
+        return defList
 
 def getTicket():
     newTime=time.gmtime()
@@ -163,8 +173,7 @@ def timeOut(myCmd):
 def saveOnFile(namefile,cmdS,scen=None):
     count=0
     for singleCmd in cmdS:
-        myTime=getTimeOut()
-        t=threading.Timer(myTime,timeOut,[singleCmd])
+        t=threading.Timer(stagerTimeOut,timeOut,[singleCmd])
         t.start()
         if count == 0:
             fin=open(namefile,"wb")
@@ -182,8 +191,7 @@ def saveOnFile(namefile,cmdS,scen=None):
 def runOnShell(cmdS,scen=None):
     buff=[]
     for singleCmd in cmdS:
-        myTime=getTimeOut()
-        t=threading.Timer(myTime,timeOut,[singleCmd])
+        t=threading.Timer(stagerTimeOut,timeOut,[singleCmd])
         t.start()
         if scen != None:
             singleCmd=scen+singleCmd
@@ -223,16 +231,16 @@ def checkUser():
 
 def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
         myShell=os.popen('ls -l /bin/sh').read()
-	myScen=""
-	if myShell.find("bash") != -1:
-		if host !=-1:
-			myScen+="export STAGE_HOST="+host+";"
-		if port !=-1:
-			myScen+="export STAGE_PORT="+port+";"	
-		if serviceClass !=-1:
-			myScen+="export STAGE_SVCCLASS="+serviceClass+";"
-		if version !=-1:
-			myScen+="export RFIO_USE_CASTOR_V2="+version+";"
+        myScen=""
+        if myShell.find("bash") != -1:
+                if host !=-1:
+                        myScen+="export STAGE_HOST="+host+";"
+                if port !=-1:
+                        myScen+="export STAGE_PORT="+port+";"        
+                if serviceClass !=-1:
+                        myScen+="export STAGE_SVCCLASS="+serviceClass+";"
+                if version !=-1:
+                        myScen+="export RFIO_USE_CASTOR_V2="+version+";"
                 if opt != None:
                     for envVar in opt:
                         if envVar[1] != -1:
@@ -240,28 +248,28 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
 
                 if useEnv == None or useEnv == "no":
                     if host == -1:
-			myScen+="unset STAGE_HOST;"
+                        myScen+="unset STAGE_HOST;"
                     if port ==-1:
-			myScen+="unset STAGE_PORT;"	
+                        myScen+="unset STAGE_PORT;"        
                     if serviceClass ==-1:
-			myScen+="unset STAGE_SVCCLASS;"
+                        myScen+="unset STAGE_SVCCLASS;"
                     if version ==-1:
-			myScen+="unset RFIO_USE_CASTOR_V2;"
+                        myScen+="unset RFIO_USE_CASTOR_V2;"
                     if opt != None:
                         for envVar in opt:
                             if envVar[1] == -1:
                                 myScen+="unset "+envVar[0]+";"
                 return myScen
 
-	if myShell.find("tcsh") != -1:
-	        if host !=-1:
-			myScen+="setenv STAGE_HOST "+host+";"
-		if port !=-1:
-			myScen+="setenv  STAGE_PORT  "+port+";"
-		if serviceClass !=-1:
-			myScen+="setenv  STAGE_SVCCLASS "+serviceClass+";"
-	        if version !=-1:
-			myScen+="setenv RFIO_USE_CASTOR_V2 "+version+";"
+        if myShell.find("tcsh") != -1:
+                if host !=-1:
+                        myScen+="setenv STAGE_HOST "+host+";"
+                if port !=-1:
+                        myScen+="setenv  STAGE_PORT  "+port+";"
+                if serviceClass !=-1:
+                        myScen+="setenv  STAGE_SVCCLASS "+serviceClass+";"
+                if version !=-1:
+                        myScen+="setenv RFIO_USE_CASTOR_V2 "+version+";"
                 if opt != None:
                     for envVar in opt:
                         if envVar[1] != -1:
@@ -271,7 +279,7 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                     if host == -1:
                         myScen+="unsetenv STAGE_HOST;"
                     if port == -1:
-                        myScen+="unsetenv STAGE_PORT;"	
+                        myScen+="unsetenv STAGE_PORT;"        
                     if serviceClass == -1:
                         myScen+="unsetenv STAGE_SVCCLASS;"
                     if version == -1:
@@ -280,7 +288,7 @@ def createScenarium(host,port,serviceClass,version,useEnv=None,opt=None):
                         for envVar in opt:
                             if envVar[1] == -1:
                                 myScen+="unsetenv "+envVar[0]+";"        
-	return myScen
+        return myScen
 
 # to test if the request handler and the stager are responding and the rfcp working
  
@@ -295,8 +303,8 @@ def testCastorBasicFunctionality(inputFile,castorFile,localOut,scenario):
         if outBuff.rfind("Internal error")!= -1:
             return [-1, "the stager gives Internal errors"]
         
-	cmd=["rfcp "+inputFile+" "+castorFile+"RfioFine1","rfcp "+castorFile+"RfioFine1  "+castorFile+"RfioFine2","rfcp "+castorFile+"RfioFine1  "+localOut+"fileRfioFineCopy","rfcp "+castorFile+"RfioFine2  "+localOut+"fileRfioFine2Copy","diff "+inputFile+" "+localOut+"fileRfioFineCopy","diff "+inputFile+" "+localOut+"fileRfioFine2Copy"]
-		
+        cmd=["rfcp "+inputFile+" "+castorFile+"RfioFine1","rfcp "+castorFile+"RfioFine1  "+castorFile+"RfioFine2","rfcp "+castorFile+"RfioFine1  "+localOut+"fileRfioFineCopy","rfcp "+castorFile+"RfioFine2  "+localOut+"fileRfioFine2Copy","diff "+inputFile+" "+localOut+"fileRfioFineCopy","diff "+inputFile+" "+localOut+"fileRfioFine2Copy"]
+
         saveOnFile(localOut+"RfioFine",cmd,scenario)
         if os.stat(localOut+"fileRfioFineCopy")[6] == 0:
             return [-1,"Rfcp doesn't work"]

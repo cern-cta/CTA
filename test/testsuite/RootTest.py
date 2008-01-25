@@ -5,7 +5,7 @@ import sys
 import time
 import threading
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir
 
 # parameters
 
@@ -26,40 +26,21 @@ class PreRequisitesCase(unittest.TestCase):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have a valid castor directory"
 
         try:
-
-          f=open(configFile,"r")
-          configFileInfo=f.read()
-          f.close
-  
-          index= configFileInfo.find("*** Root test specific parameters ***")
-          configFileInfo=configFileInfo[index:]
-          index=configFileInfo.find("***")
-          if index != -1:
-              index=index-1
-              configFileInfo=configFileInfo[:index]
-  
-          global localDir
-          localDir=(configFileInfo[configFileInfo.find("LOG_DIR"):]).split()[1]
-          localDir=localDir+ticket+"/"
-          os.system("mkdir "+localDir)
-  
-          global rootbin, rootsys
-          rootsys=(configFileInfo[configFileInfo.find("ROOTSYS"):]).split()[1]
-          rootbin=rootsys+"/bin/root -b -l"
-
-          global inputFile
-          inputFile=(configFileInfo[configFileInfo.find("INPUT_FILE"):]).split()[1]
-          
-          global myScen
-          myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
-          myShell=os.popen('ls -l /bin/sh').read()
-          if myShell.find("bash") != -1:
-              myScen="export ROOTSYS="+rootsys+";"+myScen
-          if myShell.find("tcsh") != -1:
-              myScen="setenv ROOTSYS "+rootsys+";"+myScen
-
-          UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
-                
+            global localDir,rootbin,rootsys,inputFile,myScen
+            params = UtilityForCastorTest.configuration.parseConfigFile("Root")
+            localDir = params["LOG_DIR"]
+            localDir = localDir+ticket+"/"
+            os.system("mkdir "+localDir)
+            rootsys = params["ROOTSYS"]
+            rootbin = rootsys+"/bin/root -b -l"
+            inputFile = params["INPUT_FILE"]
+            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
+            myShell=os.popen('ls -l /bin/sh').read()
+            if myShell.find("bash") != -1:
+                myScen="export ROOTSYS="+rootsys+";"+myScen
+            if myShell.find("tcsh") != -1:
+                myScen="setenv ROOTSYS "+rootsys+";"+myScen
+                UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
         except IOError:
           assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
     

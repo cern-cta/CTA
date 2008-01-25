@@ -6,7 +6,7 @@ import sys
 import time
 import threading
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir
 
 # parameters
 ticket= UtilityForCastorTest.getTicket()
@@ -34,37 +34,19 @@ def makeBigFile(fileStart):
 class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have a valid castor directory"
-
         try:
-
-          f=open(configFile,"r")
-          configFileInfo=f.read()
-          f.close
-  
-          index= configFileInfo.find("*** Client test specific parameters ***")
-          configFileInfo=configFileInfo[index:]
-          index=configFileInfo.find("***")
-          if index != -1:
-              index=index-1
-              configFileInfo=configFileInfo[:index]
-  
-          global localDir
-          localDir=(configFileInfo[configFileInfo.find("LOG_DIR"):]).split()[1]
-          localDir=localDir+ticket+"/"
-          os.system("mkdir "+localDir)
-  
-          global inputFile
-          inputFile=(configFileInfo[configFileInfo.find("INPUT_FILE"):]).split()[1]
-          
-          global myScen
-          myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
-          UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
-                
+            global localDir, inputFile, myScen
+            params = UtilityForCastorTest.configuration.parseConfigFile("Client")
+            localDir = params["LOG_DIR"]
+            localDir=localDir+ticket+"/"
+            os.system("mkdir "+localDir)
+            inputFile = params["INPUT_FILE"]
+            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
+            UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
         except IOError:
-          assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
-    
+            assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
     def stagerRfioFine(self):
-        [ret,out]=UtilityForCastorTest.testCastorBasicFunctionality(inputFile,dirCastor+"ClientPreReq"+ticket,localDir,myScen)
+        [ret,out] = UtilityForCastorTest.testCastorBasicFunctionality(inputFile,dirCastor+"ClientPreReq"+ticket,localDir,myScen)
         assert ret==0, out
     
 class StagerPutCase(unittest.TestCase):
@@ -1011,18 +993,18 @@ class StagerRmCase(unittest.TestCase):
         fi.close()
         assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_get doesn't work with svc class option -S"
         
-	buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
-	while buffOut[0].find("CANBEMIGR") == -1 and buffOut[0].find("STAGED") == -1:
+        buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
+        while buffOut[0].find("CANBEMIGR") == -1 and buffOut[0].find("STAGED") == -1:
           time.sleep(10)
-	  buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
-	
-	cmd=["stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerDiskOnlySvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
-	UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvcP2",cmd,myScen)
+          buffOut=UtilityForCastorTest.runOnShell(["stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass],myScen)
+        
+        cmd=["stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerDiskOnlySvcClass,"stager_qry -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_rm -M "+dirCastor+"fileClientRmDualSvc"+ticket+" -S "+stagerExtraSvcClass,"stager_qry -M "+dirCastor+"fileClientGetDualSvc"+ticket+" -S '*'"]
+        UtilityForCastorTest.saveOnFile(localDir+"ClientRmDualSvcP2",cmd,myScen)
 
         fi=open(localDir+"ClientRmDualSvcP2","r")
         buffOut=fi.read()
         fi.close()
-	assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
+        assert buffOut.rfind("SUBREQUEST_READY") != -1, "stager_rm doesn't work with svc class option -S"
 
         fi=open(localDir+"ClientRmDualSvcP21","r")
         buffOut=fi.read()

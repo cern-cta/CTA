@@ -6,7 +6,7 @@ from threading import Thread
 import signal
 import thread
 import UtilityForCastorTest
-from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
+from UtilityForCastorTest import stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,quietMode,outputDir
 
 endThread=0
 # global variable to avoid the join, due to thread limitation in handling signals
@@ -118,7 +118,7 @@ class MigratingThread(Thread):
                if qryOut[0].find("INVALID")!=-1 or  qryOut[0].find("No such file or directory")!=-1:
                    migratedFailed=migratedFailed+1
                    self.listFile[i]= -1
-			
+                        
                else:
                    if qryOut[0].find("STAGED")!=-1:
                        self.listFile[i]= -1
@@ -137,38 +137,21 @@ class MigratingThread(Thread):
 class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have a valid castor directory"
-        global ticket
+        global ticket,dirCastor,myScen,localDir,inputFile,recallDir
         ticket=UtilityForCastorTest.getTicket()
-        global dirCastor
         dirCastor=outputDir+"tmpTapeTest"+ticket+"/"
-        global myScen
         myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion)
-        try:
-            f=open(configFile,"r")
-            configFileInfo=f.read()
-            f.close
-        except IOError:
-            assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
-                        
-        index= configFileInfo.find("*** Tape test specific parameters ***")
-        configFileInfo=configFileInfo[index:]
-        index=configFileInfo.find("***")
-        if index != -1:
-            index=index-1
-            configFileInfo=configFileInfo[:index]
-        global localDir
-        localDir=(configFileInfo[configFileInfo.find("LOG_DIR"):]).split()[1]
+        params = UtilityForCastorTest.configuration.parseConfigFile("Tape")
+        localDir=params["LOG_DIR"]
         localDir=localDir+ticket+"/"
         os.system("mkdir "+localDir)
-        global inputFile
-        inputFile=(configFileInfo[configFileInfo.find("INPUT_FILE"):]).split()[1]
-        global recallDir
-        recallDir=(configFileInfo[configFileInfo.find("INPUT_CASTOR_DIR"):]).split()[1]
+        inputFile = params["INPUT_FILE"]
+        recallDir = params["INPUT_CASTOR_DIR"]
         UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
         
     def stagerRfioFine(self):
-		[ret,out]=UtilityForCastorTest.testCastorBasicFunctionality(inputFile,dirCastor+"TapePreReq"+ticket,localDir,myScen)
-		assert ret==0, out
+                [ret,out]=UtilityForCastorTest.testCastorBasicFunctionality(inputFile,dirCastor+"TapePreReq"+ticket,localDir,myScen)
+                assert ret==0, out
                 
 
 class TapeBasicMigrationCase(unittest.TestCase):
@@ -192,7 +175,7 @@ class TapeBasicMigrationCase(unittest.TestCase):
             endThread = 0
              
             assert migration.response.find("All files have been migrated correctly") != -1, "Problems in migrating files: "+migration.response
-	
+        
         def completeMigration(self):
             global endThread
             endThread=0
@@ -218,7 +201,7 @@ class TapeBasicMigrationCase(unittest.TestCase):
             endThread = 0
             
             assert migration.response.find("All files have been migrated correctly") != -1, "Problems in migrating files: "+migration.response
-	
+        
 class TapeBasicRecallCase(unittest.TestCase):
     def simpleRecall(self):
         global endThread
@@ -230,7 +213,7 @@ class TapeBasicRecallCase(unittest.TestCase):
             time.sleep(60)
         endThread=0 
         
-	assert recalling.response.find("All files have been retrieved correctly") != -1,"Problems in recalling files"
+        assert recalling.response.find("All files have been retrieved correctly") != -1,"Problems in recalling files"
            
 class TapeBasicMigrationAndRecallCase(unittest.TestCase):
     def simpleMigrationAndRecall(self):
@@ -369,7 +352,7 @@ class  TapeMigrationAndRecallStressCase(TapeStressCase,TapeBasicMigrationAndReca
 
 class TapeTapeOnlyCase(unittest.TestCase):
     pass
-	
+        
 casesPreTape=("mainScenarium","stagerRfioFine")
 casesMigration=("simpleMigration","completeMigration")
 casesRecall="simpleRecall"
@@ -457,4 +440,4 @@ class TapeStressCastorSuite(unittest.TestSuite):
 class TapeTapeOnlySuite(unittest.TestSuite):
     def __init__(self):
         unittest.TestSuite.__init__(self,map(TapeTapeOnlyCase,casesTapeOnly))
-	
+        
