@@ -50,7 +50,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AbstractSocket::AbstractSocket(int socket) throw () :
-  m_socket(socket) {}
+  m_socket(socket),
+  m_timeout(DEFAULT_NETTIMEOUT),
+  m_connTimeout(DEFAULT_CONNTIMEOUT) {}
 
 //------------------------------------------------------------------------------
 // constructor
