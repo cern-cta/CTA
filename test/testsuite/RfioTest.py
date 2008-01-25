@@ -48,9 +48,9 @@ class RfioPreRequisitesCase(unittest.TestCase):
                         inputFile = params["INPUT_FILE"]
 			inputStressFiles = params["STRESS_INPUT_DIR"]
                         localDir = params["LOG_DIR"]+ticket+"/"
-			stageMap = params["USE_STAGEMAP"]
-			castorConf = params["USE_CASTOR_CONF"]
-			castorEnv = params["USE_CASTOR_ENV"]
+			stageMap = params["USE_STAGEMAP"].lower()
+			castorConf = params["USE_CASTOR_CONF"].lower()
+			castorEnv = params["USE_CASTOR_ENV"].lower()
 
                         os.system("rfmkdir "+castorDir)
                         os.system("mkdir "+localDir)
