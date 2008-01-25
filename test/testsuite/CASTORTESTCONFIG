@@ -33,16 +33,16 @@ CORE            TEST       NO
 
 *** Generic parameters ***
 
-STAGE_HOST        c2ppsrh
+STAGE_HOST        castoritdc
 STAGE_PORT        9002
-STAGE_SVCCLASS    default
+STAGE_SVCCLASS    itdc
 CASTOR_V2         yes 
 EXTRA_SVCCLASS    default
 TIMEOUT           400
-DISKONLY_SVCCLASS default
+DISKONLY_SVCCLASS diskonly
 FORCED_FILECLASS  temp
 # OUTPUT_DIR default to the user's home directory in CASTOR
-#OUTPUT_DIR        /castor/cern.ch/...
+OUTPUT_DIR        /castor/cern.ch/c3/testsuite
 QUIET_MODE        False
 
 *** Rfio test specific parameters ***
