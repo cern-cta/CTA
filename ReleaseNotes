@@ -1,5 +1,5 @@
 -----------
-- 2.1.6-7 -
+- 2.1.6-8 -
 -----------
 
   New Features and Changes
@@ -84,24 +84,17 @@
   - #29847 files in STAGEOUT and STAGED concurrently
   - #30343 2 concurrent prepareToPut for a given file
   - #6019  Disk Resident check sums
-  - #29711 Repack sometimes loses stage requests
   - #29779 inconsistent behavior between stager_rm and nsrm
   - #30391 daemons on castor should be stateless and redundant: rmMasterDaemon
   - #30404 RFE: gc daemon should delete files which exist on disk and not in nameserver
   - #31510 stop() function in /etc/init/d/rfiod kills too many process
   - #32523 Accumulation of orphaned diskfiles after failed tape recalls
   - #19413 diskpool with no filesystem should cause jobs for this diskpool to fail
-  - #27311 please ensure MAXREPLICANB is respected
   - #27319 RFE Loadbalancing of VMGR pools with tapes in multiple libraries
-  - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in failing migrator
   - #28962 reporting of bad label structure from tapes
   - #29217 We forget disk to disk copies after recalls
-  - #29482 Missing cleanup of tapecopy+segment when GC'ing an INVALID diskcopy
   - #29775 RFE: Repack2 message and error visualization
   - #29776 RFE: checksum verification in Repack2
-  - #29805 [xrootd] dangling "vmstat" processes
-  - #30190 scheduling on server running xrootd
-  - #30228 MigHunter gets free(): invalid pointer ...
   - #30346 RFE: stager_rm could be allowed to remove non-existing castor files
   - #30383 No factory found for object type 3 after upgrade to CASTOR 2.1.4
   - #30384 Prevent writing too many files when labeltype='al'
@@ -120,6 +113,7 @@
   - #23218 File update/append does not update the size in nameserver
   - #21821 stuck file in case of nbStreams = 0
   Already in 2.1.4-10:
+  - #30228 MigHunter gets free(): invalid pointer ...
   - Fix bad processing after ENOENT in Cns_lastfseq() in the migrator
   - Fix for unique constraint violation caused by -insert tape- in OraCommonSvc
   - Fix in Repack to be able to start a new RepackSubrequest, even if there is a RepackSubrequest in Failed, Archived or Failed status, with the same files.
@@ -142,6 +136,7 @@
   - #29133 Stagein file size problem
   - #28705 Inconsistent increment of file counter in VMGR
   - #29775 Repack2 message and error visualization (updated)
+  - #29711 Repack sometimes loses stage requests
   - Added recaller retry policies.
   - Fixed the wrong mode being displayed for queued requests when using showqueues 
     with the -x option.
@@ -153,8 +148,11 @@
   - Fixed the nameserver daemon on 64 bit operating systems. Prior to this fix any attempt
     from a daemon to update the segments on a tape would fail.
   Already in 2.1.4-6:
+  - #27311 please ensure MAXREPLICANB is respected
+  - #29482 Missing cleanup of tapecopy+segment when GC'ing an INVALID diskcopy
   - #29815 jobs submitted in wrong svcClass by JobManager
   - #20052 RFE to have thresholds for the number of migrators started (Experimental)
+  - #28685 Possible file loss due to inconsistent vmgr_updatetape and Cns_setsegattr calls in failing migrator
   - Fixes to the recaller. In the 2.1.4-5 release a situation could occur whereby 
     reading a set of files from the same tape could result in the mounting and 
     dismounting of the tape after every read of a single file.
@@ -187,9 +185,9 @@
     - Stop all daemons and services (rhserver, stager, jobManager, rtcpclientd, cleaningDaemon, rmMasterDaemon, dlfserver, expertd, rmNodeDaemon, gcdaemon, LSF)
     - Optionally backup your stager DB (one never knows...)
     - Upgrade the stager database
-       - Use script 2.1.4-10_to_2.1.6-7 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-7/upgrades)
-    - Update DLF DB using script dlf_2.1.4_to_2.1.6-7
-       - (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-7/upgrades)
+       - Use script 2.1.4-10_to_2.1.6-8 (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-8/upgrades)
+    - Update DLF DB using script dlf_2.1.4_to_2.1.6-8
+       - (http://castor.web.cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.6-8/upgrades)
     - Update the rpms on the different nodes. Some changes were made in the list of packages to install :
        - The castor-gridftp-dsi-ext and castor-gridftp-dsi-int packages are now depending on castor-gridftp-dsi-common
        - There are 2 new packages to be installed on the rtcpcld head node : castor-lib-policy and castor-rechandler-server.
