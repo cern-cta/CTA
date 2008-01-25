@@ -210,7 +210,7 @@ ALTER TABLE TapeDrive2TapeDriveComp
   ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_6_7');
+INSERT INTO CastorVersion VALUES ('-', '2_1_6_8');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -341,7 +341,7 @@ INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.612  Date: 2008/01/23 11:26:07  Author: itglp 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.615  Date: 2008/01/25 15:02:11  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1130,29 +1130,7 @@ BEGIN
   END IF;
 
   -- Check that we don't have too many requests for this file in the DB
-  SELECT COUNT(request) INTO nb FROM SubRequest WHERE castorFile = cfId AND status IN (9, 11);
-  IF nb > 100 THEN
-    -- keep the most recents and drop the rest
-    FOR sr IN
-      (SELECT id, request FROM
-         (SELECT /*+INDEX(SR I_SubRequest_CastorFile) */ SR.id, SR.request FROM SubRequest SR
-           WHERE SR.castorFile = cfId AND SR.status IN (9, 11)
-           ORDER BY SR.creationTime ASC)
-       WHERE ROWNUM < nb-100) LOOP
-      SELECT COUNT(*) INTO nbReqs 
-        FROM SubRequest 
-       WHERE request = sr.request AND status NOT IN (9, 11);
-      IF nbReqs = 0 THEN
-        -- the subreq we're going to drop belongs to a request, which only contains
-        -- completed subrequests, so it's safe to completely drop it
-        deleteRequest(sr.request);
-      ELSE
-        -- the request contains other subreqs, keep it and drop only this subreq
-        DELETE FROM SubRequest WHERE id = sr.id;
-        DELETE FROM Id2Type WHERE id = sr.id;
-      END IF;
-    END LOOP;
-  END IF;
+  -- XXX dropped for the time being as it introduced deadlocks with itself and with selectFiles2Delete!
 END;
 /
 
@@ -1217,7 +1195,7 @@ BEGIN
      'SELECT SubRequest.id FROM SubRequest, '||cleanTab||'
        WHERE SubRequest.request = '||cleanTab||'.id;',
      'SubRequest');
-  -- Delete Request + Clients. Other types are deleted at archive time
+  -- Delete Request + Clients
     ---- Get ----
   deleteRequests('StageGetRequest', '35', cleanTab);
     ---- Put ----
@@ -1232,6 +1210,10 @@ BEGIN
   deleteRequests('StagePrepareToPutRequest', '37', cleanTab);
     ---- PrepareToUpdate ----
   deleteRequests('StagePrepareToUpdateRequest', '38', cleanTab);
+    ---- PutDone ----
+  deleteRequests('StagePutDoneRequest', '39', cleanTab);
+    ---- Rm ----
+  deleteRequests('StageRmRequest', '42', cleanTab);
     ---- Repack ----
   deleteRequests('StageRepackRequest', '119', cleanTab);
     ---- DiskCopyReplica ----
@@ -1906,7 +1888,7 @@ CREATE OR REPLACE PROCEDURE streamsToDo(res OUT castor.Stream_Cur) AS
 BEGIN
   SELECT UNIQUE Stream.id BULK COLLECT INTO streams
     FROM Stream, NbTapeCopiesInFS, FileSystem, DiskServer
-   WHERE Stream.status = 0 --PENDING
+   WHERE Stream.status = 0 -- PENDING
      AND NbTapeCopiesInFS.stream = Stream.id
      AND NbTapeCopiesInFS.NbTapeCopies > 0
      AND FileSystem.id = NbTapeCopiesInFS.FS
@@ -1955,6 +1937,15 @@ BEGIN
          AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
          AND DiskServer.id = FileSystem.diskserver
          AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
+         AND DiskCopy.id NOT IN (
+           -- don't select source diskcopies which already failed more than 10 times
+           SELECT sourceDiskCopyId FROM (
+             SELECT count(*) c, R.sourceDiskCopyId 
+               FROM StageDiskCopyReplicaRequest R, SubRequest
+              WHERE SubRequest.request = R.id
+                AND SubRequest.status = 9 -- FAILED
+              GROUP BY sourceDiskCopyId)
+           WHERE c >= 10)
          ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
                                  FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
@@ -4532,7 +4523,7 @@ BEGIN
              UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id as dcId,
              DC.path, CastorFile.fileSize,
              CASE WHEN DC.id IS NULL THEN
-                 (SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
+                 nvl((SELECT UNIQUE decode(SubRequest.status, 0,2, 3,2, -1)
                     FROM SubRequest,
                         (SELECT id, svcClass FROM StagePrepareToGetRequest UNION ALL
                          SELECT id, svcClass FROM StagePrepareToPutRequest UNION ALL
@@ -4540,7 +4531,8 @@ BEGIN
                          SELECT id, svcClass FROM StageRepackRequest UNION ALL
                          SELECT id, svcClass FROM StageGetRequest) Req
                           WHERE SubRequest.CastorFile = CastorFile.id
-                            AND request = Req.id)
+                            AND Subrequest.status in (0,3)
+                            AND request = Req.id), -1)
                   ELSE DC.status END as status,
              DC.machine, DC.mountPoint,
              CastorFile.nbaccesses, CastorFile.lastKnownFileName
@@ -5270,21 +5262,28 @@ BEGIN
     -- Provide the job manager with a potential list of hosts where the
     -- destination disk2disk copy transfer could run. This is all the diskservers
     -- in the service class excluding the source and diskservers where a diskcopy
-    -- of this file already resides
+    -- of this file already resides. We restrict the number of returned 
+    -- diskservers because of LSF limitations
     OPEN askedHosts
-    FOR SELECT DISTINCT(DiskServer.name)
+    FOR
+      SELECT * FROM (
+	SELECT DISTINCT(DiskServer.name)
           FROM DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
          WHERE FileSystem.diskServer = DiskServer.id
            AND FileSystem.diskPool = DiskPool2SvcClass.parent
            AND DiskPool2SvcClass.child = SvcClass.id
            AND SvcClass.name = reqSvcClass
+           AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
+           AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
            AND FileSystem.diskserver <> dsId
            AND FileSystem.diskserver NOT IN
              (SELECT DiskServer.id
                 FROM DiskServer, FileSystem, DiskCopy
                WHERE FileSystem.diskServer = DiskServer.id
                  AND DiskCopy.fileSystem = FileSystem.id
-                 AND DiskCopy.castorFile = cfFileId);
+                 AND DiskCopy.castorFile = cfFileId)
+           ORDER BY dbms_random.value
+      ) WHERE rownum < 20;
   END IF;
 END;
 /
