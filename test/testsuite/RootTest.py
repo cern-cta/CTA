@@ -14,7 +14,6 @@ myScen=""
 
 # files and directories
 
-inputFile="" 
 localDir=""
 rootbin=""
 rootsys=""
@@ -25,7 +24,7 @@ class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
         try:
-            global localDir,rootbin,rootsys,inputFile,myScen
+            global localDir,rootbin,rootsys,myScen
             params = UtilityForCastorTest.parseConfigFile(configFile, "Root")
             localDir = params["LOG_DIR"]
             localDir = localDir+ticket+"/"
@@ -35,7 +34,6 @@ class PreRequisitesCase(unittest.TestCase):
             else:
                 rootsys = params["ROOTSYS"]
             rootbin = rootsys+"/bin/root -b -l"
-            inputFile = params["INPUT_FILE"]
             myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
             myShell=os.popen('ls -l /bin/sh').read()
             if myShell.find("bash") != -1:
