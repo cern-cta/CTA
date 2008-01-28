@@ -33,6 +33,7 @@ CORE            TEST       NO
 
 *** Generic parameters ***
 
+# note that STAGE_HOST can be overwritten by the -h flag on the command line
 STAGE_HOST        castoritdc
 STAGE_PORT        9002
 STAGE_SVCCLASS    itdc

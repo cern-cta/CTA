@@ -47,8 +47,8 @@ class configuration:
         """ a singleton, initializing global parameters on loading """
         def gatherParameters(self):
                 # parse command line
-                myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":"","-q":"False","-o":""}
-                optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:qo:')
+                myArg={"-s":"","-p":"","-d":"","-e":"","-v":"","-c":"","-q":"False","-o":"","-h":""}
+                optionCmdLine = getopt.getopt(sys.argv[1:],'s:d:e:v:p:c:qo:h:')
                 optionCmdLine = optionCmdLine[0]
                 for elemLine in optionCmdLine:
                         if elemLine != []:
@@ -100,6 +100,8 @@ class configuration:
                         self.quietMode=True
                 if myArg["-o"] != "":
                         self.outputDir=myArg["-o"]
+                if myArg["-h"] != "":
+                        self.stagerHost=myArg["-h"]
         isInitialized = False
         def __init__(self):
                 global stagerHost,stagerPort,stagerSvcClass,stagerVersion,stagerTimeOut,stagerExtraSvcClass,stagerDiskOnlySvcClass,stagerForcedFileClass,configFile,quietMode,outputDir
