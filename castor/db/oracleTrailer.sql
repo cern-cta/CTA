@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.616 $ $Date: 2008/01/25 15:30:16 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.617 $ $Date: 2008/01/28 14:17:32 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4033,7 +4033,8 @@ BEGIN
              WHERE row_movement = 'ENABLED'
                AND table_name NOT IN (
                  SELECT table_name FROM user_indexes
-                  WHERE index_type LIKE 'FUNCTION-BASED%'))
+                  WHERE index_type LIKE 'FUNCTION-BASED%')
+               AND temporary = 'N')
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' SHRINK SPACE CASCADE';
   END LOOP;
