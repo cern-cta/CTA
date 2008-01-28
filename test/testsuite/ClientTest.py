@@ -30,6 +30,11 @@ def makeBigFile(fileStart):
     fout.close()
     return "/tmp/bigFile"+ticket
 
+def checkSvcClass(output, svcClass):
+    if output.find("Using "+svcClass) != -1 or output.find("Opt SVCCLASS="+svcClass) != -1:
+        return True
+    else:
+        return False
 
 class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
@@ -142,25 +147,25 @@ class StagerPutCase(unittest.TestCase):
         fi=open(localDir+"ClientPutSvc","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.rfind("Using "+stagerSvcClass) != -1, "stager_put doesn't work with svc class option -S"
+        assert checkSvcClass(buffOut, stagerSvcClass), "stager_put doesn't work with svc class option -S"
         
         
         fi=open(localDir+"ClientPutSvc1","r")
         outBuf=fi.read()
         fi.close()
-        assert outBuf.find("Using "+stagerExtraSvcClass) != -1, "stager_qry doesn't work with svc class option -S"
+        assert checkSvcClass(outBuf, stagerExtraSvcClass), "stager_qry doesn't work with svc class option -S"
         assert outBuf.find("No such file") != -1, "stager_qry doesn't work after a simple put"
         
         fi=open(localDir+"ClientPutSvc2","r")
         buffOut=fi.read()
         fi.close()
-        assert outBuf.find("Using "+stagerExtraSvcClass) != -1, "stager_qry doesn't work with svc class option -S"
+        assert checkSvcClass(outBuf, stagerExtraSvcClass), "stager_qry doesn't work with svc class option -S"
 
 
         fi=open(localDir+"ClientPutSvc3","r")
         buffOut=fi.read()
         fi.close()
-        assert outBuf.find("Using "+stagerExtraSvcClass) != -1, "stager_qry doesn't work with svc class option -S"
+        assert checkSvcClass(outBuf, stagerExtraSvcClass), "stager_qry doesn't work with svc class option -S"
         assert buffOut.rfind("STAGEOUT") != -1, "stager_qry doesn't work with svc class option -S"
     
         
@@ -358,13 +363,13 @@ class StagerGetCase(unittest.TestCase):
         buffOut=fi.read()
         fi.close()        
         assert buffOut.rfind("No such file") != -1, "stager_get doesn't work with svc class option -S"
-        assert buffOut.rfind("Using "+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
+        assert checkSvcClass(buffOut, stagerExtraSvcClass), "stager_get doesn't work with svc class option -S"
         
         fi=open(localDir+"ClientGetSvc3","r")
         buffOut=fi.read()
         fi.close()        
         assert buffOut.rfind("File is being written to in another SvcClass") != -1, "stager_get doesn't work with svc class option -S"
-        assert buffOut.rfind("Using "+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
+        assert checkSvcClass(buffOut, stagerExtraSvcClass), "stager_get doesn't work with svc class option -S"
 
         fi=open(localDir+"ClientGetSvc5","r")
         buffOut=fi.read()
@@ -375,13 +380,13 @@ class StagerGetCase(unittest.TestCase):
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("File is being (re)created right now") != -1, "stager_get doesn't work with svc class option -S"
-        assert buffOut.rfind("Using "+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
+        assert checkSvcClass(buffOut, stagerExtraSvcClass), "stager_get doesn't work with svc class option -S"
         
         fi=open(localDir+"ClientGetSvc8","r")
         buffOut=fi.read()
         fi.close()
         assert buffOut.find("No such file") != -1, "stager_get doesn't work with svc class option -S"
-        assert buffOut.rfind("Using "+stagerSvcClass) != -1, "stager_get doesn't work with svc class option -S"
+        assert checkSvcClass(buffOut, stagerSvcClass), "stager_get doesn't work with svc class option -S"
         
     def getR(self):        
         cmd=["stager_put -M "+dirCastor+"fileClientGetR"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientGetR"+ticket,"stager_get -M "+dirCastor+"fileClientGetR"+ticket+" -r","stager_qry -M "+dirCastor+"fileClientGetR"+ticket]
@@ -424,7 +429,7 @@ class StagerGetCase(unittest.TestCase):
         buffOut=fi.read()
         fi.close()        
         assert buffOut.rfind("SUBREQUEST_FAILED 16 File is being written to in another SvcClass") != -1, "stager_get on a STAGEOUT file in another SvcClass did not work as expected"
-        assert buffOut.rfind("Using "+stagerExtraSvcClass) != -1, "stager_get doesn't work with svc class option -S"
+        assert checkSvcClass(buffOut, stagerExtraSvcClass), "stager_get doesn't work with svc class option -S"
 
 class StagerUpdCase(unittest.TestCase):
     def pupdExistingFile(self):
@@ -976,7 +981,7 @@ class StagerRmCase(unittest.TestCase):
         fi=open(localDir+"ClientRmSvc1","r")
         buffOut=fi.read()
         fi.close()        
-        assert buffOut.rfind("Using "+stagerExtraSvcClass) != -1, "stager_rm doesn't work with svc class option -S"
+        assert checkSvcClass(buffOut, stagerExtraSvcClass), "stager_rm doesn't work with svc class option -S"
         
         fi=open(localDir+"ClientRmSvc2","r")
         buffOut=fi.read()
