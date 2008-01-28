@@ -73,6 +73,7 @@ castor::IObject* castor::vdqm::DriveSchedulerThread::select()
       << e.getMessage().str() << std::endl;
     exit(1);
   }
+  return NULL;
 
 /*
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
