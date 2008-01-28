@@ -18,7 +18,7 @@ inputFile=""
 localDir=""
 rootbin=""
 rootsys=""
-dirCastor=outputDir+"/tmpClientTest"+ticket+"/"
+dirCastor=outputDir+"/tmpRootTest"+ticket+"/"
 
 
 class PreRequisitesCase(unittest.TestCase):
@@ -60,7 +60,7 @@ ntuple->Fill(1,2,3);
 ntuple->Fill(4,5,6);
 f->Write();
 """
-        cmd=["echo '"+fileContent+"' | "+rootbin, "sleep 2", "nsls -l "+dirCastor+"fileRoot"+self.protocol+ticket]
+        cmd=["echo '"+fileContent+"' | "+rootbin, "sleep 5", "nsls -l "+dirCastor+"fileRoot"+self.protocol+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"RootWrite."+self.protocol,cmd,myScen)
         message = "root with "+self.protocol+" protocol does not work for writing"
 
