@@ -65,8 +65,14 @@ castor::IObject* castor::vdqm::DriveSchedulerThread::select()
   throw() {
 
   // Temporarily use OLD code which never returns
-  castor::vdqm::handler::TapeRequestDedicationHandler::
-    startOLDDriveSchedulerThreads();
+  try {
+    castor::vdqm::handler::TapeRequestDedicationHandler::
+      startOLDDriveSchedulerThreads();
+  } catch(castor::exception::Exception &e) {
+    std::cerr << "Failed to start old drive scheduler code: "
+      << e.getMessage().str() << std::endl;
+    exit(1);
+  }
 
 /*
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
