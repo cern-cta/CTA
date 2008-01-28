@@ -39,7 +39,7 @@ class PreRequisitesCase(unittest.TestCase):
                 myScen="export ROOTSYS="+rootsys+";"+myScen
             if myShell.find("tcsh") != -1:
                 myScen="setenv ROOTSYS "+rootsys+";"+myScen
-                UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
+            UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
         except IOError:
           assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
     
