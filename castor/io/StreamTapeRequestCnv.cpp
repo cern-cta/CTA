@@ -39,13 +39,13 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/ClientIdentification.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
 
 //------------------------------------------------------------------------------
@@ -168,7 +168,7 @@ castor::IObject* castor::io::StreamTapeRequestCnv::unmarshalObject(castor::io::b
     dynamic_cast<castor::vdqm::TapeRequest*>(object);
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
+  obj->setTape(dynamic_cast<castor::vdqm::VdqmTape*>(objTape));
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objTapeAccessSpecification = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setTapeAccessSpecification(dynamic_cast<castor::vdqm::TapeAccessSpecification*>(objTapeAccessSpecification));
@@ -183,7 +183,7 @@ castor::IObject* castor::io::StreamTapeRequestCnv::unmarshalObject(castor::io::b
   obj->setDeviceGroupName(dynamic_cast<castor::vdqm::DeviceGroupName*>(objDeviceGroupName));
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objClient = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setClient(dynamic_cast<castor::stager::ClientIdentification*>(objClient));
+  obj->setClient(dynamic_cast<castor::vdqm::ClientIdentification*>(objClient));
   return object;
 }
 

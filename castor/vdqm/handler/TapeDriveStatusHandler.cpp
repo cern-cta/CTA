@@ -28,8 +28,8 @@
  
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/stager/ClientIdentification.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/newVdqm.h"
@@ -152,7 +152,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
     
   TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
   TapeServer* tapeServer = ptr_tapeDrive->tapeServer();
-  castor::stager::Tape* mountedTape = NULL;  
+  castor::vdqm::VdqmTape* mountedTape = NULL;  
   /*
    * A mount volume request. The unit must first have been assigned.
    */
@@ -271,7 +271,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus() 
   throw (castor::exception::Exception) {
   
-  castor::stager::Tape* tape = ptr_tapeDrive->tape();
+  castor::vdqm::VdqmTape* tape = ptr_tapeDrive->tape();
   delete tape;
   tape = 0;
   
@@ -319,7 +319,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
   
   TapeRequest* tapeRequest = NULL;
   TapeRequest* newTapeRequest = NULL; // is needed, if there is another request for the same tape
-  castor::stager::Tape* tape = NULL;
+  castor::vdqm::VdqmTape* tape = NULL;
           
   
   /*
@@ -462,7 +462,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
       rtcpConnection.connect();
       
       // Extract client identification
-      const castor::stager::ClientIdentification *client =
+      const castor::vdqm::ClientIdentification *client =
         newTapeRequest->client();
       if(client == NULL) {
         castor::exception::Internal ie;

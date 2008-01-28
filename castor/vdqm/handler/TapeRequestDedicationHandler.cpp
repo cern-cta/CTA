@@ -32,7 +32,7 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/Services.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -157,7 +157,7 @@ void castor::vdqm::handler::TapeRequestDedicationHandler::run() {
 //        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, VDQM_NO_FREE_DRIVE_OR_NO_TAPE_REQUEST_IN_DB);
         
         castor::BaseAddress ad;
-         ad.setCnvSvcName("DbCnvSvc");
+        ad.setCnvSvcName("DbCnvSvc");
         ad.setCnvSvcType(castor::SVC_DBCNV);
         svcs()->rollback(&ad);
         

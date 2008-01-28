@@ -29,8 +29,9 @@
 
 // Include Files
 #include <string>
+#include <vector>
 
-#include "castor/stager/ICommonSvc.hpp"
+#include "castor/IService.hpp"
 
 // Forward declaration
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
@@ -46,11 +47,12 @@ namespace castor {
     class TapeDrive;
     class TapeServer;
     class TapeDriveCompatibility;
+    class VdqmTape;
 
     /**
      * This class provides methods to deal with the VDQM service
      */
-    class IVdqmSvc : public virtual castor::stager::ICommonSvc {
+    class IVdqmSvc : public virtual castor::IService {
 
       public:
                 
@@ -235,6 +237,26 @@ namespace castor {
 //---------------- functions for TapeDriveStatusHandler ------------------------
 
         /**
+         * Retrieves a tape from the database based on its vid,
+         * side and tpmode. If no tape is found, creates one.
+         * Note that this method creates a lock on the row of the
+         * given tape and does not release it. It is the
+         * responsability of the caller to commit the transaction.
+         * The caller is also responsible for the deletion of the
+         * allocated object
+         * @param vid the vid of the tape
+         * @param side the side of the tape
+         * @param tpmode the tpmode of the tape
+         * @return the tape. the return value can never be 0
+         * @exception Exception in case of error (no tape found,
+         * several tapes found, DB problem, etc...)
+         */
+        virtual castor::vdqm::VdqmTape* selectTape(const std::string vid,
+                                                   const int side,
+                                                   const int tpmode)
+          throw (castor::exception::Exception) = 0;
+
+        /**
          * Check whether another request is currently
          * using the specified tape vid. Note that the tape can still
          * be mounted on a drive if not in use by another request.
@@ -271,7 +293,7 @@ namespace castor {
          * DB problem, etc...)  
          * @return The found TapeDrive             
          */  
-        virtual castor::stager::Tape* selectTapeByVid(
+        virtual castor::vdqm::VdqmTape* selectTapeByVid(
           const std::string vid)
           throw (castor::exception::Exception) = 0;
           

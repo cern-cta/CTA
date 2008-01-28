@@ -33,7 +33,6 @@
 #include "castor/vdqm/TapeDriveStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
-struct Cstager_Tape_t;
 struct Cvdqm_DeviceGroupName_t;
 struct Cvdqm_ErrorHistory_t;
 struct Cvdqm_TapeDriveCompatibility_t;
@@ -41,6 +40,7 @@ struct Cvdqm_TapeDriveDedication_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
+struct Cvdqm_VdqmTape_t;
 
 /* --------------------------------------------------------------------------
   This defines a C interface to the following class
@@ -224,12 +224,12 @@ int Cvdqm_TapeDrive_setId(struct Cvdqm_TapeDrive_t* instance, u_signed64 new_var
 /**
  * Get the value of tape
  */
-int Cvdqm_TapeDrive_tape(struct Cvdqm_TapeDrive_t* instance, struct Cstager_Tape_t** var);
+int Cvdqm_TapeDrive_tape(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_VdqmTape_t** var);
 
 /**
  * Set the value of tape
  */
-int Cvdqm_TapeDrive_setTape(struct Cvdqm_TapeDrive_t* instance, struct Cstager_Tape_t* new_var);
+int Cvdqm_TapeDrive_setTape(struct Cvdqm_TapeDrive_t* instance, struct Cvdqm_VdqmTape_t* new_var);
 
 /**
  * Get the value of runningTapeReq

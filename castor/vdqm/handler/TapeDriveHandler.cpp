@@ -35,8 +35,8 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/stager/ClientIdentification.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
@@ -539,12 +539,12 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   }
 
   castor::vdqm::TapeRequest* runningTapeReq;
-  castor::stager::Tape* tape;
+  castor::vdqm::VdqmTape* tape;
   castor::vdqm::TapeServer* tapeServer;
   castor::vdqm::DeviceGroupName* devGrpName;
   
 
-//  castor::stager::ClientIdentification* client;
+//  castor::vdqm::ClientIdentification* client;
 
   switch ( tapeDrive->status() ) {
     case UNIT_UP:
@@ -596,7 +596,7 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   if ( NULL != runningTapeReq ) {
     ptr_driveRequest->VolReqID = (unsigned int)runningTapeReq->id();
     
-    castor::stager::ClientIdentification* client = runningTapeReq->client();
+    castor::vdqm::ClientIdentification* client = runningTapeReq->client();
     strcpy(ptr_driveRequest->reqhost, client->machine().c_str());
     
     client = 0;
@@ -869,7 +869,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
         ptr_driveRequest->TotalMB = (*it)->totalMB();
         strcpy(ptr_driveRequest->reqhost, (*it)->tapeServer()->serverName().c_str());
         
-        castor::stager::Tape* tape = (*it)->tape();
+        castor::vdqm::VdqmTape* tape = (*it)->tape();
         if ( tape != NULL ) {
           strcpy(ptr_driveRequest->volid, tape->vid().c_str());
           
@@ -945,7 +945,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
             (*it)->setRunningTapeReq(0);
           }
           
-          castor::stager::Tape* tape = (*it)->tape();
+          castor::vdqm::VdqmTape* tape = (*it)->tape();
           if ( tape != NULL ) {
             delete tape;
             tape = 0;

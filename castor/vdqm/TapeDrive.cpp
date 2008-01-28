@@ -30,7 +30,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
-#include "castor/stager/Tape.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -39,6 +38,7 @@
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>

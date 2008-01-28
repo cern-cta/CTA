@@ -102,7 +102,7 @@ namespace castor {
     OBJ_GCFileList = 82,
     OBJ_FilesDeletionFailed = 83,
 
-    /* The vdqm objects */
+    /* The vdqm objects (to be moved to a different range) */
     OBJ_TapeRequest = 84,
     OBJ_ClientIdentification = 85,
     OBJ_TapeServer = 86,
@@ -177,8 +177,8 @@ namespace castor {
     OBJ_ThreadNotification = 146,
     OBJ_FirstByteWritten = 147,
 
-    /* 20/12/07 S. Murray: Non auto-generated type used by the VDQM2 */
-    OBJ_DriveAndRequestPair = 148
+    /* VDQM objects to be moved to a different range */
+    OBJ_VdqmTape = 148
   };
 
   /**

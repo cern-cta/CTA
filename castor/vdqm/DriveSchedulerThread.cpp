@@ -29,7 +29,7 @@
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/stager/ClientIdentification.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
@@ -217,7 +217,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
   //   The tape drive of the tape request is linked to a device group name
   //   The tape drive of the tape request is linked to a tape server
 
-  castor::stager::ClientIdentification *client    = request->client();
+  castor::vdqm::ClientIdentification *client    = request->client();
   castor::vdqm::TapeDrive              *tapeDrive = request->tapeDrive();
 
   castor::vdqm::DeviceGroupName *dgn        = tapeDrive->deviceGroupName();

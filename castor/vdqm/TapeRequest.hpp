@@ -40,22 +40,15 @@ namespace castor {
   // Forward declarations
   class ObjectSet;
 
-  // Forward declarations
-  namespace stager {
-
-    // Forward declarations
-    class Tape;
-    class ClientIdentification;
-
-  } /* end of namespace stager */
-
   namespace vdqm {
 
     // Forward declarations
+    class VdqmTape;
     class TapeServer;
     class TapeDrive;
     class TapeAccessSpecification;
     class DeviceGroupName;
+    class ClientIdentification;
 
     /**
      * class TapeRequest
@@ -187,7 +180,7 @@ namespace castor {
        * Get the value of m_tape
        * @return the value of m_tape
        */
-      castor::stager::Tape* tape() const {
+      VdqmTape* tape() const {
         return m_tape;
       }
 
@@ -195,7 +188,7 @@ namespace castor {
        * Set the value of m_tape
        * @param new_var the new value of m_tape
        */
-      void setTape(castor::stager::Tape* new_var) {
+      void setTape(VdqmTape* new_var) {
         m_tape = new_var;
       }
 
@@ -267,7 +260,7 @@ namespace castor {
        * Get the value of m_client
        * @return the value of m_client
        */
-      castor::stager::ClientIdentification* client() const {
+      ClientIdentification* client() const {
         return m_client;
       }
 
@@ -275,7 +268,7 @@ namespace castor {
        * Set the value of m_client
        * @param new_var the new value of m_client
        */
-      void setClient(castor::stager::ClientIdentification* new_var) {
+      void setClient(ClientIdentification* new_var) {
         m_client = new_var;
       }
 
@@ -292,7 +285,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      castor::stager::Tape* m_tape;
+      VdqmTape* m_tape;
 
       TapeAccessSpecification* m_tapeAccessSpecification;
 
@@ -302,7 +295,7 @@ namespace castor {
 
       DeviceGroupName* m_deviceGroupName;
 
-      castor::stager::ClientIdentification* m_client;
+      ClientIdentification* m_client;
 
     }; /* end of class TapeRequest */
 

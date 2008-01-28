@@ -41,7 +41,7 @@
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
 
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
  
 //Local Includes
 #include "BaseRequestHandler.hpp"

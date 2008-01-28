@@ -25,7 +25,6 @@
  *****************************************************************************/
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/stager/Tape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -33,6 +32,7 @@
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/handler/TapeDriveConsistencyChecker.hpp"
 
 #include <net.h>
@@ -246,7 +246,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
 void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency() 
 	throw (castor::exception::Exception) {
   
-  castor::stager::Tape* tape = ptr_tapeDrive->tape();
+  castor::vdqm::VdqmTape* tape = ptr_tapeDrive->tape();
  	TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
   
   /*

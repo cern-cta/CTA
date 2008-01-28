@@ -31,7 +31,7 @@
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"

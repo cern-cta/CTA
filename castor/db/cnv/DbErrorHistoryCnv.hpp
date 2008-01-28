@@ -179,11 +179,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Fill the database with objects of type Tape refered by a given object.
+         * Fill the database with objects of type VdqmTape refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillRepTape(castor::vdqm::ErrorHistory* obj)
+        virtual void fillRepVdqmTape(castor::vdqm::ErrorHistory* obj)
           throw (castor::exception::Exception);
 
         /**
@@ -207,11 +207,11 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieve from the database objects of type Tape refered by a given object.
+         * Retrieve from the database objects of type VdqmTape refered by a given object.
          * @param obj the original object
          * @exception Exception throws an Exception in case of error
          */
-        virtual void fillObjTape(castor::vdqm::ErrorHistory* obj)
+        virtual void fillObjVdqmTape(castor::vdqm::ErrorHistory* obj)
           throw (castor::exception::Exception);
 
       private:
@@ -265,16 +265,16 @@ namespace castor {
         castor::db::IDbStatement *m_updateTapeDriveStatement;
 
         /// SQL checkExist statement for member tape
-        static const std::string s_checkTapeExistStatementString;
+        static const std::string s_checkVdqmTapeExistStatementString;
 
         /// SQL checkExist statement object for member tape
-        castor::db::IDbStatement *m_checkTapeExistStatement;
+        castor::db::IDbStatement *m_checkVdqmTapeExistStatement;
 
         /// SQL update statement for member tape
-        static const std::string s_updateTapeStatementString;
+        static const std::string s_updateVdqmTapeStatementString;
 
         /// SQL update statement object for member tape
-        castor::db::IDbStatement *m_updateTapeStatement;
+        castor::db::IDbStatement *m_updateVdqmTapeStatement;
 
       }; // end of class DbErrorHistoryCnv
 

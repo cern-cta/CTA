@@ -39,13 +39,13 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/ClientIdentification.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -81,11 +81,11 @@ const std::string castor::db::cnv::DbTapeRequestCnv::s_deleteTypeStatementString
 "DELETE FROM Id2Type WHERE id = :1";
 
 /// SQL existence statement for member tape
-const std::string castor::db::cnv::DbTapeRequestCnv::s_checkTapeExistStatementString =
-"SELECT id FROM Tape WHERE id = :1";
+const std::string castor::db::cnv::DbTapeRequestCnv::s_checkVdqmTapeExistStatementString =
+"SELECT id FROM VdqmTape WHERE id = :1";
 
 /// SQL update statement for member tape
-const std::string castor::db::cnv::DbTapeRequestCnv::s_updateTapeStatementString =
+const std::string castor::db::cnv::DbTapeRequestCnv::s_updateVdqmTapeStatementString =
 "UPDATE TapeRequest SET tape = :1 WHERE id = :2";
 
 /// SQL existence statement for member tapeAccessSpecification
@@ -151,8 +151,8 @@ castor::db::cnv::DbTapeRequestCnv::DbTapeRequestCnv(castor::ICnvSvc* cnvSvc) :
   m_updateStatement(0),
   m_storeTypeStatement(0),
   m_deleteTypeStatement(0),
-  m_checkTapeExistStatement(0),
-  m_updateTapeStatement(0),
+  m_checkVdqmTapeExistStatement(0),
+  m_updateVdqmTapeStatement(0),
   m_checkTapeAccessSpecificationExistStatement(0),
   m_updateTapeAccessSpecificationStatement(0),
   m_checkTapeServerExistStatement(0),
@@ -187,8 +187,8 @@ void castor::db::cnv::DbTapeRequestCnv::reset() throw() {
     if(m_updateStatement) delete m_updateStatement;
     if(m_storeTypeStatement) delete m_storeTypeStatement;
     if(m_deleteTypeStatement) delete m_deleteTypeStatement;
-    if(m_checkTapeExistStatement) delete m_checkTapeExistStatement;
-    if(m_updateTapeStatement) delete m_updateTapeStatement;
+    if(m_checkVdqmTapeExistStatement) delete m_checkVdqmTapeExistStatement;
+    if(m_updateVdqmTapeStatement) delete m_updateVdqmTapeStatement;
     if(m_checkTapeAccessSpecificationExistStatement) delete m_checkTapeAccessSpecificationExistStatement;
     if(m_updateTapeAccessSpecificationStatement) delete m_updateTapeAccessSpecificationStatement;
     if(m_checkTapeServerExistStatement) delete m_checkTapeServerExistStatement;
@@ -210,8 +210,8 @@ void castor::db::cnv::DbTapeRequestCnv::reset() throw() {
   m_updateStatement = 0;
   m_storeTypeStatement = 0;
   m_deleteTypeStatement = 0;
-  m_checkTapeExistStatement = 0;
-  m_updateTapeStatement = 0;
+  m_checkVdqmTapeExistStatement = 0;
+  m_updateVdqmTapeStatement = 0;
   m_checkTapeAccessSpecificationExistStatement = 0;
   m_updateTapeAccessSpecificationStatement = 0;
   m_checkTapeServerExistStatement = 0;
@@ -253,8 +253,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillRep(castor::IAddress* address,
     dynamic_cast<castor::vdqm::TapeRequest*>(object);
   try {
     switch (type) {
-    case castor::OBJ_Tape :
-      fillRepTape(obj);
+    case castor::OBJ_VdqmTape :
+      fillRepVdqmTape(obj);
       break;
     case castor::OBJ_TapeAccessSpecification :
       fillRepTapeAccessSpecification(obj);
@@ -290,18 +290,18 @@ void castor::db::cnv::DbTapeRequestCnv::fillRep(castor::IAddress* address,
 }
 
 //------------------------------------------------------------------------------
-// fillRepTape
+// fillRepVdqmTape
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeRequestCnv::fillRepTape(castor::vdqm::TapeRequest* obj)
+void castor::db::cnv::DbTapeRequestCnv::fillRepVdqmTape(castor::vdqm::TapeRequest* obj)
   throw (castor::exception::Exception) {
   if (0 != obj->tape()) {
-    // Check checkTapeExist statement
-    if (0 == m_checkTapeExistStatement) {
-      m_checkTapeExistStatement = createStatement(s_checkTapeExistStatementString);
+    // Check checkVdqmTapeExist statement
+    if (0 == m_checkVdqmTapeExistStatement) {
+      m_checkVdqmTapeExistStatement = createStatement(s_checkVdqmTapeExistStatementString);
     }
     // retrieve the object from the database
-    m_checkTapeExistStatement->setUInt64(1, obj->tape()->id());
-    castor::db::IDbResultSet *rset = m_checkTapeExistStatement->executeQuery();
+    m_checkVdqmTapeExistStatement->setUInt64(1, obj->tape()->id());
+    castor::db::IDbResultSet *rset = m_checkVdqmTapeExistStatement->executeQuery();
     if (!rset->next()) {
       castor::BaseAddress ad;
       ad.setCnvSvcName("DbCnvSvc");
@@ -312,13 +312,13 @@ void castor::db::cnv::DbTapeRequestCnv::fillRepTape(castor::vdqm::TapeRequest* o
     delete rset;
   }
   // Check update statement
-  if (0 == m_updateTapeStatement) {
-    m_updateTapeStatement = createStatement(s_updateTapeStatementString);
+  if (0 == m_updateVdqmTapeStatement) {
+    m_updateVdqmTapeStatement = createStatement(s_updateVdqmTapeStatementString);
   }
   // Update local object
-  m_updateTapeStatement->setUInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
-  m_updateTapeStatement->setUInt64(2, obj->id());
-  m_updateTapeStatement->execute();
+  m_updateVdqmTapeStatement->setUInt64(1, 0 == obj->tape() ? 0 : obj->tape()->id());
+  m_updateVdqmTapeStatement->setUInt64(2, obj->id());
+  m_updateVdqmTapeStatement->execute();
 }
 
 //------------------------------------------------------------------------------
@@ -522,8 +522,8 @@ void castor::db::cnv::DbTapeRequestCnv::fillObj(castor::IAddress* address,
   castor::vdqm::TapeRequest* obj = 
     dynamic_cast<castor::vdqm::TapeRequest*>(object);
   switch (type) {
-  case castor::OBJ_Tape :
-    fillObjTape(obj);
+  case castor::OBJ_VdqmTape :
+    fillObjVdqmTape(obj);
     break;
   case castor::OBJ_TapeAccessSpecification :
     fillObjTapeAccessSpecification(obj);
@@ -552,9 +552,9 @@ void castor::db::cnv::DbTapeRequestCnv::fillObj(castor::IAddress* address,
   }
 }
 //------------------------------------------------------------------------------
-// fillObjTape
+// fillObjVdqmTape
 //------------------------------------------------------------------------------
-void castor::db::cnv::DbTapeRequestCnv::fillObjTape(castor::vdqm::TapeRequest* obj)
+void castor::db::cnv::DbTapeRequestCnv::fillObjVdqmTape(castor::vdqm::TapeRequest* obj)
   throw (castor::exception::Exception) {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
@@ -581,7 +581,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTape(castor::vdqm::TapeRequest* o
   if (0 != tapeId) {
     if (0 == obj->tape()) {
       obj->setTape
-        (dynamic_cast<castor::stager::Tape*>
+        (dynamic_cast<castor::vdqm::VdqmTape*>
          (cnvSvc()->getObjFromId(tapeId)));
     } else {
       cnvSvc()->updateObj(obj->tape());
@@ -773,7 +773,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjClientIdentification(castor::vdqm
   if (0 != clientId) {
     if (0 == obj->client()) {
       obj->setClient
-        (dynamic_cast<castor::stager::ClientIdentification*>
+        (dynamic_cast<castor::vdqm::ClientIdentification*>
          (cnvSvc()->getObjFromId(clientId)));
     } else {
       cnvSvc()->updateObj(obj->client());
@@ -807,7 +807,7 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->priority());
     m_insertStatement->setUInt64(2, obj->modificationTime());
     m_insertStatement->setInt(3, time(0));
-    m_insertStatement->setUInt64(4, (type == OBJ_Tape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(4, (type == OBJ_VdqmTape && obj->tape() != 0) ? obj->tape()->id() : 0);
     m_insertStatement->setUInt64(5, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
     m_insertStatement->setUInt64(6, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
     m_insertStatement->setUInt64(7, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);

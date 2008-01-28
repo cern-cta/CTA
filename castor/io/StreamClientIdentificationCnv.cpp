@@ -39,7 +39,7 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/ClientIdentification.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
 #include "osdep.h"
 #include <string>
 
@@ -65,7 +65,7 @@ castor::io::StreamClientIdentificationCnv::~StreamClientIdentificationCnv() thro
 // ObjType
 //------------------------------------------------------------------------------
 const unsigned int castor::io::StreamClientIdentificationCnv::ObjType() {
-  return castor::stager::ClientIdentification::TYPE();
+  return castor::vdqm::ClientIdentification::TYPE();
 }
 
 //------------------------------------------------------------------------------
@@ -83,8 +83,8 @@ void castor::io::StreamClientIdentificationCnv::createRep(castor::IAddress* addr
                                                           bool autocommit,
                                                           unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::ClientIdentification* obj = 
-    dynamic_cast<castor::stager::ClientIdentification*>(object);
+  castor::vdqm::ClientIdentification* obj = 
+    dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   ad->stream() << obj->type();
@@ -105,7 +105,7 @@ castor::IObject* castor::io::StreamClientIdentificationCnv::createObj(castor::IA
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
-  castor::stager::ClientIdentification* object = new castor::stager::ClientIdentification();
+  castor::vdqm::ClientIdentification* object = new castor::vdqm::ClientIdentification();
   // Now retrieve and set members
   std::string machine;
   ad->stream() >> machine;
@@ -138,8 +138,8 @@ void castor::io::StreamClientIdentificationCnv::marshalObject(castor::IObject* o
                                                               castor::io::StreamAddress* address,
                                                               castor::ObjectSet& alreadyDone)
   throw (castor::exception::Exception) {
-  castor::stager::ClientIdentification* obj = 
-    dynamic_cast<castor::stager::ClientIdentification*>(object);
+  castor::vdqm::ClientIdentification* obj = 
+    dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   if (0 == obj) {
     // Case of a null pointer
     address->stream() << castor::OBJ_Ptr << ((unsigned int)0);

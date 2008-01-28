@@ -39,7 +39,6 @@
 #include "castor/io/StreamAddress.hpp"
 #include "castor/io/StreamBaseCnv.hpp"
 #include "castor/io/StreamCnvSvc.hpp"
-#include "castor/stager/Tape.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -48,6 +47,7 @@
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
 #include <string>
 #include <vector>
@@ -216,7 +216,7 @@ castor::IObject* castor::io::StreamTapeDriveCnv::unmarshalObject(castor::io::bin
     dynamic_cast<castor::vdqm::TapeDrive*>(object);
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objTape = cnvSvc()->unmarshalObject(ad, newlyCreated);
-  obj->setTape(dynamic_cast<castor::stager::Tape*>(objTape));
+  obj->setTape(dynamic_cast<castor::vdqm::VdqmTape*>(objTape));
   ad.setObjType(castor::OBJ_INVALID);
   castor::IObject* objRunningTapeReq = cnvSvc()->unmarshalObject(ad, newlyCreated);
   obj->setRunningTapeReq(dynamic_cast<castor::vdqm::TapeRequest*>(objRunningTapeReq));

@@ -26,6 +26,7 @@
 #define _BASEREQUESTHANDLER_HPP_
 
 #include "castor/BaseObject.hpp"
+#include "castor/Constants.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 
 #include "errno.h"

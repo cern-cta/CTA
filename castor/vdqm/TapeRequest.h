@@ -32,13 +32,13 @@
 /* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
-struct Cstager_ClientIdentification_t;
-struct Cstager_Tape_t;
+struct Cvdqm_ClientIdentification_t;
 struct Cvdqm_DeviceGroupName_t;
 struct Cvdqm_TapeAccessSpecification_t;
 struct Cvdqm_TapeDrive_t;
 struct Cvdqm_TapeRequest_t;
 struct Cvdqm_TapeServer_t;
+struct Cvdqm_VdqmTape_t;
 
 /* --------------------------------------------------------------------------
   This defines a C interface to the following class
@@ -142,12 +142,12 @@ int Cvdqm_TapeRequest_setId(struct Cvdqm_TapeRequest_t* instance, u_signed64 new
 /**
  * Get the value of tape
  */
-int Cvdqm_TapeRequest_tape(struct Cvdqm_TapeRequest_t* instance, struct Cstager_Tape_t** var);
+int Cvdqm_TapeRequest_tape(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_VdqmTape_t** var);
 
 /**
  * Set the value of tape
  */
-int Cvdqm_TapeRequest_setTape(struct Cvdqm_TapeRequest_t* instance, struct Cstager_Tape_t* new_var);
+int Cvdqm_TapeRequest_setTape(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_VdqmTape_t* new_var);
 
 /**
  * Get the value of tapeAccessSpecification
@@ -192,11 +192,11 @@ int Cvdqm_TapeRequest_setDeviceGroupName(struct Cvdqm_TapeRequest_t* instance, s
 /**
  * Get the value of client
  */
-int Cvdqm_TapeRequest_client(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t** var);
+int Cvdqm_TapeRequest_client(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ClientIdentification_t** var);
 
 /**
  * Set the value of client
  */
-int Cvdqm_TapeRequest_setClient(struct Cvdqm_TapeRequest_t* instance, struct Cstager_ClientIdentification_t* new_var);
+int Cvdqm_TapeRequest_setClient(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_ClientIdentification_t* new_var);
 
 #endif /* CASTOR_VDQM_TAPEREQUEST_H */

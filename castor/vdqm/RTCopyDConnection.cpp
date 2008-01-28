@@ -31,7 +31,7 @@
 #include <rtcp_constants.h> /* Definition of RTCOPY_MAGIC   */
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/stager/ClientIdentification.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/newVdqm.h"
@@ -229,7 +229,7 @@ bool castor::vdqm::RTCopyDConnection::OLDsendJobToRTCPD(
   newVdqmVolReq_t vdqmVolReq;
 
   const TapeRequest* tapeRequest;
-  const castor::stager::ClientIdentification* clientData;
+  const castor::vdqm::ClientIdentification* clientData;
 
   char buf[VDQM_MSGBUFSIZ];
   int len, rc, magic, reqtype;

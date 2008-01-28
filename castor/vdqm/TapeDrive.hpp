@@ -42,17 +42,10 @@ namespace castor {
   // Forward declarations
   class ObjectSet;
 
-  // Forward declarations
-  namespace stager {
-
-    // Forward declarations
-    class Tape;
-
-  } /* end of namespace stager */
-
   namespace vdqm {
 
     // Forward declarations
+    class VdqmTape;
     class TapeServer;
     class TapeRequest;
     class TapeDriveDedication;
@@ -306,7 +299,7 @@ namespace castor {
        * Get the value of m_tape
        * @return the value of m_tape
        */
-      castor::stager::Tape* tape() const {
+      VdqmTape* tape() const {
         return m_tape;
       }
 
@@ -314,7 +307,7 @@ namespace castor {
        * Set the value of m_tape
        * @param new_var the new value of m_tape
        */
-      void setTape(castor::stager::Tape* new_var) {
+      void setTape(VdqmTape* new_var) {
         m_tape = new_var;
       }
 
@@ -506,7 +499,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      castor::stager::Tape* m_tape;
+      VdqmTape* m_tape;
 
       TapeRequest* m_runningTapeReq;
 

@@ -30,8 +30,8 @@
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/stager/ClientIdentification.hpp"
-#include "castor/stager/Tape.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
@@ -89,8 +89,8 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
   
   //The db related informations
   TapeRequest *newTapeReq = NULL;
-  castor::stager::ClientIdentification *clientData = NULL;
-  castor::stager::Tape *tape = NULL;
+  castor::vdqm::ClientIdentification *clientData = NULL;
+  castor::vdqm::VdqmTape *tape = NULL;
   
   struct vmgr_tape_info tape_info; // used to get information about the tape
   
@@ -142,7 +142,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
      newTapeReq->setPriority(VDQM_PRIORITY_NORMAL);
      
      //The client related informations
-     clientData = new castor::stager::ClientIdentification();
+     clientData = new castor::vdqm::ClientIdentification();
      clientData->setMachine(volumeRequest->client_host);
      clientData->setUserName(volumeRequest->client_name);
      clientData->setPort(volumeRequest->client_port);

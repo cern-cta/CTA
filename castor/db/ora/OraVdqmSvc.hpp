@@ -27,14 +27,12 @@
 
 // Include File
 #include "castor/vdqm/IVdqmSvc.hpp"
-#ifdef ORACDBC
-#include "castor/db/newora/OraCommonSvc.hpp"
-#else
-#include "castor/db/ora/OraCommonSvc.hpp"
-#endif
+#include "castor/BaseSvc.hpp"
+#include "castor/db/DbBaseObj.hpp"
 
 #include <string>
 #include <vector>
+#include "occi.h"
 
 
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
@@ -48,7 +46,8 @@ namespace castor {
       /**
        * Implementation of the IVdqmSvc for Oracle
        */
-      class OraVdqmSvc : public OraCommonSvc,
+      class OraVdqmSvc : public BaseSvc,
+                         public DbBaseObj,
                          public virtual castor::vdqm::IVdqmSvc {
   
       public:
@@ -268,8 +267,28 @@ namespace castor {
          castor::vdqm::TapeServer* tapeServer)
           throw (castor::exception::Exception);      
   
-        //------------ functions for TapeDriveStatusHandler --u----------------
+        //------------ functions for TapeDriveStatusHandler ------------------
   
+        /**
+         * Retrieves a tape from the database based on its vid,
+         * side and tpmode. If no tape is found, creates one.
+         * Note that this method creates a lock on the row of the
+         * given tape and does not release it. It is the
+         * responsability of the caller to commit the transaction.
+         * The caller is also responsible for the deletion of the
+         * allocated object
+         * @param vid the vid of the tape
+         * @param side the side of the tape
+         * @param tpmode the tpmode of the tape
+         * @return the tape. the return value can never be 0
+         * @exception Exception in case of error (no tape found,
+         * several tapes found, DB problem, etc...)
+         */
+        virtual castor::vdqm::VdqmTape* selectTape(const std::string vid,
+                                                   const int side,
+                                                   const int tpmode)
+          throw (castor::exception::Exception);
+
         /**
          * Check whether another request is currently
          * using the specified tape vid. Note that the tape can still
@@ -305,7 +324,7 @@ namespace castor {
          * found, DB problem, etc...)  
          * @return The found TapeDrive             
          */  
-        virtual castor::stager::Tape* selectTapeByVid(const std::string vid)
+        virtual castor::vdqm::VdqmTape* selectTapeByVid(const std::string vid)
           throw (castor::exception::Exception);
   
         /**
@@ -323,6 +342,12 @@ namespace castor {
   
       private:
   
+        /// SQL statement for function selectTape
+        static const std::string s_selectTapeStatementString;
+
+        /// SQL statement object for function selectTape
+        oracle::occi::Statement *m_selectTapeStatement;
+        
         /// SQL statement for function getTapeServer
         static const std::string s_selectTapeServerStatementString;
   
@@ -433,6 +458,33 @@ namespace castor {
         /// SQL statement object for function selectTapeRequest
         oracle::occi::Statement *m_selectTapeRequestStatement;
 
+      private:
+
+        /**
+         * XXX to be removed when all statements are converted using
+         * the generic db API.
+         * Helper method to handle exceptions - see OraCnvSvc
+         * @param e an Oracle exception
+         */
+        void handleException(oracle::occi::SQLException& e);
+        
+        /**
+         * XXX to be removed when all statements are converted using
+         * the generic db API.
+         * helper method to create Oracle statement
+         */
+        virtual oracle::occi::Statement* createStatement(const std::string& stmtString)
+          throw (castor::exception::Exception);
+          
+        /**
+         * XXX to be removed when all statements are converted using
+         * the generic db API.
+         * helper method to delete Oracle statement
+         */
+        virtual void deleteStatement(oracle::occi::Statement* stmt)
+          throw (castor::exception::Exception);
+        
+      
       }; // class OraVdqmSvc
 
     } // namespace ora

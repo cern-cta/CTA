@@ -249,7 +249,6 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
 	      server/ThreadNotification.cpp \
               stager/CastorFile.cpp \
               stager/CastorFileCInt.cpp \
-              stager/ClientIdentification.cpp \
               stager/DiskCopy.cpp \
               stager/DiskCopyCInt.cpp \
               stager/DiskCopyInfo.cpp \
@@ -371,6 +370,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/TapeStatusCodes.cpp \
               stager/TapeCopyStatusCodes.cpp \
               stager/TapeVid.cpp \
+	      vdqm/ClientIdentification.cpp \
               vdqm/ErrorHistory.cpp \
               vdqm/TapeDrive.cpp \
               vdqm/DeviceGroupName.cpp \
@@ -381,6 +381,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               vdqm/TapeRequest.cpp \
               vdqm/TapeServer.cpp \
               vdqm/TapeServerStatusCodes.cpp \
+	      vdqm/VdqmTape.cpp \
+	      vdqm/TapeStatusCodes.cpp \
               exception/BadVersion.cpp \
               exception/Busy.cpp \
               exception/Exception.cpp \

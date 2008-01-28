@@ -38,7 +38,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/stager/ClientIdentification.hpp"
+#include "castor/vdqm/ClientIdentification.hpp"
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -119,7 +119,7 @@ void castor::db::cnv::DbClientIdentificationCnv::reset() throw() {
 // ObjType
 //------------------------------------------------------------------------------
 const unsigned int castor::db::cnv::DbClientIdentificationCnv::ObjType() {
-  return castor::stager::ClientIdentification::TYPE();
+  return castor::vdqm::ClientIdentification::TYPE();
 }
 
 //------------------------------------------------------------------------------
@@ -137,8 +137,8 @@ void castor::db::cnv::DbClientIdentificationCnv::fillRep(castor::IAddress* addre
                                                          unsigned int type,
                                                          bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::ClientIdentification* obj = 
-    dynamic_cast<castor::stager::ClientIdentification*>(object);
+  castor::vdqm::ClientIdentification* obj = 
+    dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   try {
     switch (type) {
     default :
@@ -167,8 +167,8 @@ void castor::db::cnv::DbClientIdentificationCnv::fillObj(castor::IAddress* addre
                                                          unsigned int type,
                                                          bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::ClientIdentification* obj = 
-    dynamic_cast<castor::stager::ClientIdentification*>(object);
+  castor::vdqm::ClientIdentification* obj = 
+    dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   switch (type) {
   default :
     castor::exception::InvalidArgument ex;
@@ -189,8 +189,8 @@ void castor::db::cnv::DbClientIdentificationCnv::createRep(castor::IAddress* add
                                                            bool autocommit,
                                                            unsigned int type)
   throw (castor::exception::Exception) {
-  castor::stager::ClientIdentification* obj = 
-    dynamic_cast<castor::stager::ClientIdentification*>(object);
+  castor::vdqm::ClientIdentification* obj = 
+    dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   if (0 != obj->id()) return;
@@ -246,8 +246,8 @@ void castor::db::cnv::DbClientIdentificationCnv::updateRep(castor::IAddress* add
                                                            castor::IObject* object,
                                                            bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::ClientIdentification* obj = 
-    dynamic_cast<castor::stager::ClientIdentification*>(object);
+  castor::vdqm::ClientIdentification* obj = 
+    dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -288,8 +288,8 @@ void castor::db::cnv::DbClientIdentificationCnv::deleteRep(castor::IAddress* add
                                                            castor::IObject* object,
                                                            bool autocommit)
   throw (castor::exception::Exception) {
-  castor::stager::ClientIdentification* obj = 
-    dynamic_cast<castor::stager::ClientIdentification*>(object);
+  castor::vdqm::ClientIdentification* obj = 
+    dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   // check whether something needs to be done
   if (0 == obj) return;
   try {
@@ -343,7 +343,7 @@ castor::IObject* castor::db::cnv::DbClientIdentificationCnv::createObj(castor::I
       throw ex;
     }
     // create the new Object
-    castor::stager::ClientIdentification* object = new castor::stager::ClientIdentification();
+    castor::vdqm::ClientIdentification* object = new castor::vdqm::ClientIdentification();
     // Now retrieve and set members
     object->setMachine(rset->getString(1));
     object->setUserName(rset->getString(2));
@@ -387,8 +387,8 @@ void castor::db::cnv::DbClientIdentificationCnv::updateObj(castor::IObject* obj)
       throw ex;
     }
     // Now retrieve and set members
-    castor::stager::ClientIdentification* object = 
-      dynamic_cast<castor::stager::ClientIdentification*>(obj);
+    castor::vdqm::ClientIdentification* object = 
+      dynamic_cast<castor::vdqm::ClientIdentification*>(obj);
     object->setMachine(rset->getString(1));
     object->setUserName(rset->getString(2));
     object->setPort(rset->getInt(3));

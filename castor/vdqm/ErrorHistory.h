@@ -32,9 +32,9 @@
 /* Include Files and Forward declarations for the C world */
 #include "osdep.h"
 struct C_IObject_t;
-struct Cstager_Tape_t;
 struct Cvdqm_ErrorHistory_t;
 struct Cvdqm_TapeDrive_t;
+struct Cvdqm_VdqmTape_t;
 
 /* --------------------------------------------------------------------------
   This defines a C interface to the following class
@@ -140,11 +140,11 @@ int Cvdqm_ErrorHistory_setTapeDrive(struct Cvdqm_ErrorHistory_t* instance, struc
 /**
  * Get the value of tape
  */
-int Cvdqm_ErrorHistory_tape(struct Cvdqm_ErrorHistory_t* instance, struct Cstager_Tape_t** var);
+int Cvdqm_ErrorHistory_tape(struct Cvdqm_ErrorHistory_t* instance, struct Cvdqm_VdqmTape_t** var);
 
 /**
  * Set the value of tape
  */
-int Cvdqm_ErrorHistory_setTape(struct Cvdqm_ErrorHistory_t* instance, struct Cstager_Tape_t* new_var);
+int Cvdqm_ErrorHistory_setTape(struct Cvdqm_ErrorHistory_t* instance, struct Cvdqm_VdqmTape_t* new_var);
 
 #endif /* CASTOR_VDQM_ERRORHISTORY_H */
