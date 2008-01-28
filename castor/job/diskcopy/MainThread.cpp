@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/21 07:34:55 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/28 14:42:16 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -413,7 +413,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   castor::stager::DiskCopyInfo *sourceDiskCopy = 0;
   try {
     m_jobSvc->disk2DiskCopyStart(m_diskCopyId, 
-				 m_sourceDiskCopyId, 
+				 m_sourceDiskCopyId,
 				 m_svcClass, 
 				 diskserver, 
 				 filesystem, 
@@ -429,7 +429,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("SourceDiskCopy", m_sourceDiskCopyId),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 26, 4, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    _exit(m_diskCopyId, EXIT_FAILURE);
   } catch (...) {
 
     // "Failed to remotely execute disk2DiskCopyStart"
@@ -437,7 +437,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 27, 2, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    _exit(m_diskCopyId, EXIT_FAILURE);
   }   
 
   // "Starting destination end of mover"
@@ -479,7 +479,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 30, 3, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    _exit(m_diskCopyId, EXIT_FAILURE);
   } catch (...) {
 
     // "Failed to remotely execute disk2DiskCopyDone"
@@ -487,7 +487,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 31, 2, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    _exit(m_diskCopyId, EXIT_FAILURE);
   }
 
   // Calculate statistics
