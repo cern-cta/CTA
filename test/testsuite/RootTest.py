@@ -30,7 +30,10 @@ class PreRequisitesCase(unittest.TestCase):
             localDir = params["LOG_DIR"]
             localDir = localDir+ticket+"/"
             os.system("mkdir "+localDir)
-            rootsys = params["ROOTSYS"]
+            if os.environ.has_key("ROOTSYS"):
+                rootsys = os.environ["ROOTSYS"]
+            else:
+                rootsys = params["ROOTSYS"]
             rootbin = rootsys+"/bin/root -b -l"
             inputFile = params["INPUT_FILE"]
             myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
