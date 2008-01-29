@@ -60,7 +60,7 @@ static castor::SvcFactory<castor::db::ora::OraVdqmSvc>* s_factoryOraVdqmSvc =
 //------------------------------------------------------------------------------
 /// SQL statement for selectTape
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeStatementString =
-  "SELECT id FROM Tape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
+  "SELECT id FROM VdqmTape WHERE vid = :1 AND side = :2 AND tpmode = :3 FOR UPDATE";
 
 /// SQL statement for function getTapeServer
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeServerStatementString =
@@ -84,15 +84,15 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveStatementString 
   
 /// SQL statement for function existTapeDriveWithTapeInUse
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeInUseStatementString =
-  "SELECT td.id FROM TapeDrive td, TapeRequest tr, Tape WHERE td.runningTapeReq = tr.id AND tr.tape = Tape.id AND Tape.vid = :1";
+  "SELECT td.id FROM TapeDrive td, TapeRequest tr, VdqmTape WHERE td.runningTapeReq = tr.id AND tr.tape = VdqmTape.id AND VdqmTape.vid = :1";
   
 /// SQL statement for function existTapeDriveWithTapeMounted
 const std::string castor::db::ora::OraVdqmSvc::s_existTapeDriveWithTapeMountedStatementString =
-  "SELECT td.id FROM TapeDrive td, Tape WHERE td.tape = Tape.id AND Tape.vid = :1";
+  "SELECT td.id FROM TapeDrive td, VdqmTape WHERE td.tape = VdqmTape.id AND VdqmTape.vid = :1";
   
 /// SQL statement for function selectTapeByVid
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeByVidStatementString =
-  "SELECT id FROM Tape WHERE vid = :1";      
+  "SELECT id FROM VdqmTape WHERE vid = :1";      
   
 /// SQL statement for function selectTapeReqForMountedTape
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeReqForMountedTapeStatementString =
