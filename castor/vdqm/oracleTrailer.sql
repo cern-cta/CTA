@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/18 17:47:14 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.6 $ $Release$ $Date: 2008/01/29 15:37:59 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -94,17 +94,17 @@ BEGIN
 
     -- We must check if the request matches the dedications for this tape drive
     SELECT count(*) INTO countDed
-      FROM TapeDriveDedication tdd, Tape, TapeRequest, ClientIdentification, 
-           TapeAccessSpecification, TapeDrive
+      FROM TapeDriveDedication tdd, VdqmTape, TapeRequest,
+           ClientIdentification, TapeAccessSpecification, TapeDrive
      WHERE tdd.tapeDrive = d2r.tapeDrive
        AND getTime() BETWEEN startTime AND endTime
        AND tdd.clientHost(+) = ClientIdentification.machine
        AND tdd.euid(+) = ClientIdentification.euid
        AND tdd.egid(+) = ClientIdentification.egid
-       AND tdd.vid(+) = Tape.vid
+       AND tdd.vid(+) = VdqmTape.vid
        AND tdd.accessMode(+) = TapeAccessSpecification.accessMode
        AND TapeRequest.id = d2r.tapeRequest
-       AND TapeRequest.tape = Tape.id
+       AND TapeRequest.tape = VdqmTape.id
        AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
        AND TapeRequest.client = ClientIdentification.id;
     IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
@@ -190,17 +190,17 @@ BEGIN
 
     -- We must check if the request matches the dedications for this tape drive
     SELECT count(*) INTO countDed
-      FROM TapeDriveDedication tdd, Tape, TapeRequest, ClientIdentification, 
-           TapeAccessSpecification, TapeDrive
+      FROM TapeDriveDedication tdd, VdqmTape, TapeRequest,
+           ClientIdentification, TapeAccessSpecification, TapeDrive
      WHERE tdd.tapeDrive = d2r.tapeDrive
        AND getTime() BETWEEN startTime AND endTime
        AND tdd.clientHost(+) = ClientIdentification.machine
        AND tdd.euid(+) = ClientIdentification.euid
        AND tdd.egid(+) = ClientIdentification.egid
-       AND tdd.vid(+) = Tape.vid
+       AND tdd.vid(+) = VdqmTape.vid
        AND tdd.accessMode(+) = TapeAccessSpecification.accessMode
        AND TapeRequest.id = d2r.tapeRequest
-       AND TapeRequest.tape = Tape.id
+       AND TapeRequest.tape = VdqmTape.id
        AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
        AND TapeRequest.client = ClientIdentification.id;
     IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
@@ -286,17 +286,17 @@ BEGIN
 
     -- We must check if the request matches the dedications for this tape drive
     SELECT count(*) INTO countDed
-      FROM TapeDriveDedication tdd, Tape, TapeRequest, ClientIdentification, 
-           TapeAccessSpecification, TapeDrive
+      FROM TapeDriveDedication tdd, VdqmTape, TapeRequest,
+           ClientIdentification, TapeAccessSpecification, TapeDrive
      WHERE tdd.tapeDrive = d2r.tapeDrive
        AND getTime() BETWEEN startTime AND endTime
        AND tdd.clientHost(+) = ClientIdentification.machine
        AND tdd.euid(+) = ClientIdentification.euid
        AND tdd.egid(+) = ClientIdentification.egid
-       AND tdd.vid(+) = Tape.vid
+       AND tdd.vid(+) = VdqmTape.vid
        AND tdd.accessMode(+) = TapeAccessSpecification.accessMode
        AND TapeRequest.id = d2r.tapeRequest
-       AND TapeRequest.tape = Tape.id
+       AND TapeRequest.tape = VdqmTape.id
        AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
        AND TapeRequest.client = ClientIdentification.id;
     IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
