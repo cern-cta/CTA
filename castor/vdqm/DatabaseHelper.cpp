@@ -73,7 +73,7 @@ void castor::vdqm::DatabaseHelper::storeRepresentation(castor::IObject* fr,
       svcs->createRep(&ad, (IObject *)tapeRequest->client(), false);
       svcs->fillRep(&ad, fr, OBJ_ClientIdentification, false);
       
-      svcs->fillRep(&ad, fr, OBJ_Tape, false);
+      svcs->fillRep(&ad, fr, OBJ_VdqmTape, false);
       svcs->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
       svcs->fillRep(&ad, fr, OBJ_TapeAccessSpecification, false);
       svcs->fillRep(&ad, fr, OBJ_TapeDrive, false);
@@ -90,7 +90,7 @@ void castor::vdqm::DatabaseHelper::storeRepresentation(castor::IObject* fr,
       svcs->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
       
       if ( 0 != tapeDrive->tape() )
-        svcs->fillRep(&ad, fr, OBJ_Tape, false);
+        svcs->fillRep(&ad, fr, OBJ_VdqmTape, false);
   
       svcs->fillRep(&ad, fr, OBJ_TapeServer, false);      
       
@@ -110,7 +110,7 @@ void castor::vdqm::DatabaseHelper::storeRepresentation(castor::IObject* fr,
       dynamic_cast<castor::vdqm::ErrorHistory*>(fr);
     
     if (0 != errorHistory) {
-      svcs->fillRep(&ad, fr, OBJ_Tape, false);
+      svcs->fillRep(&ad, fr, OBJ_VdqmTape, false);
       svcs->fillRep(&ad, fr, OBJ_TapeDrive, false);
     }    
   } catch (castor::exception::Exception e) {
@@ -212,7 +212,7 @@ void castor::vdqm::DatabaseHelper::updateRepresentation(castor::IObject* fr,
 //      svcs->fillRep(&ad, fr, OBJ_DeviceGroupName, false);
 
 
-       svcs->fillRep(&ad, fr, OBJ_Tape, false);
+       svcs->fillRep(&ad, fr, OBJ_VdqmTape, false);
 
   
       svcs->updateRep(&ad, (IObject *)tapeDrive->tapeServer(), false);      
