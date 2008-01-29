@@ -49,7 +49,6 @@
 #include "castor/vdqm/VdqmServer.hpp"
 
 // Hardcoded schema version of the VDQM database
-
 const std::string VDQMSCHEMAVERSION = "2_1_6_0";
 
 
@@ -105,7 +104,11 @@ int main(int argc, char *argv[]) {
   driveSchedulerThreadPool->setNbThreads(
     server.getDriveSchedulerThreadNumber());
 
+
+  //---------------------------------------------------------------------------
   // Tell the DB service the VDQM schema version and DB connection details file
+  //---------------------------------------------------------------------------
+
   castor::IService* s =
     castor::BaseObject::sharedServices()->service("DbParamsSvc",
     castor::SVC_DBPARAMSSVC);
@@ -117,6 +120,7 @@ int main(int argc, char *argv[]) {
   }
   params->setSchemaVersion(VDQMSCHEMAVERSION);
   params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
+
 
   try {
 
