@@ -26,7 +26,7 @@ LIBS = -no_so -L../shlib -lshift -so_archive
 LIBS = -L../shlib -lshift
 #else
 #if linux
-LIBS = -L../shlib -lshift $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
+LIBS = -L../shlib -lshift -lcastorCnvs $(ADNSLIB) -lnsl -Wl,-rpath-link,../shlib
 #else
 #if sgi
 LIBS = -L../shlib -lshift
@@ -57,7 +57,7 @@ COMM######################### FLAGS ##############################
 
 DOMAINNAME= DomainName
 
-DFLAGS = -D$(TMS) -g -pthread
+DFLAGS = -DORAVDQMCONFIGFILE=\"/etc/castor/ORAVDQMCONFIG\" -D$(TMS) -g -pthread
 
 CPPFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)
 CFLAGS =        -I$(INCLUDES) -I$(INCLUDES_CPP) $(DFLAGS)

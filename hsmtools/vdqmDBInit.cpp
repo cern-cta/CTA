@@ -24,25 +24,24 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
+#include <Cgetopt.h>
+#include <Ctape_constants.h> // For WRITE_ENABLE WRITE_DISABLE
 #include <iostream>
-#include <castor/BaseObject.hpp>
-#include <castor/Services.hpp>
 #include <castor/BaseAddress.hpp>
+#include <castor/BaseObject.hpp>
 #include <castor/Constants.h>
 #include <castor/ICnvSvc.hpp>
 #include <castor/IService.hpp>
-#include <Cgetopt.h>
-
-// Includes for VMGR
-#include <sys/types.h>
-#include "vmgr_api.h"
-
-// for WRITE_ENABLE WRITE_DISABLE
-#include <Ctape_constants.h>
-
-#include <castor/vdqm/IVdqmSvc.hpp>
+#include <castor/Services.hpp>
+#include <castor/db/DbParamsSvc.hpp>
 #include <castor/vdqm/DeviceGroupName.hpp>
+#include <castor/vdqm/IVdqmSvc.hpp>
 #include <castor/vdqm/TapeAccessSpecification.hpp>
+#include <h/vmgr_api.h> // For VMGR
+#include <sys/types.h> // For VMGR
+
+// Hardcoded schema version of the VDQM database
+const std::string VDQMSCHEMAVERSION = "2_1_6_0";
 
 int help_flag =0;
 
@@ -260,6 +259,19 @@ int main(int argc, char *argv[]) {
       usage(progName);
       return 0;
     }    
+
+    // Tell the DB service the VDQM schema version and DB connection details
+    // file
+    castor::IService* s =
+      castor::BaseObject::sharedServices()->service("DbParamsSvc",
+      castor::SVC_DBPARAMSSVC);
+    castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+    if(params == 0) {
+      std::cerr << "Could not instantiate the parameters service" << std::endl;
+      exit(1);
+    }
+    params->setSchemaVersion(VDQMSCHEMAVERSION);
+    params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
     // Initializing the log
     castor::BaseObject::initLog("VdqmDbInit", castor::SVC_NOMSG);
