@@ -37,6 +37,8 @@
 #include <net.h>
 #include <vdqm_constants.h>  //e.g. Magic Number of old vdqm protocol
 
+#include "castor/Services.hpp"
+#include "castor/db/DbParamsSvc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
@@ -45,6 +47,10 @@
 #include "castor/vdqm/RequestHandlerThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
+
+// Hardcoded schema version of the VDQM database
+
+const std::string VDQMSCHEMAVERSION = "2_1_6_0";
 
 
 //------------------------------------------------------------------------------
@@ -98,6 +104,19 @@ int main(int argc, char *argv[]) {
 
   driveSchedulerThreadPool->setNbThreads(
     server.getDriveSchedulerThreadNumber());
+
+  // Tell the DB service the VDQM schema version and DB connection details file
+  castor::IService* s =
+    castor::BaseObject::sharedServices()->service("DbParamsSvc",
+    castor::SVC_DBPARAMSSVC);
+  castor::db::DbParamsSvc* params = dynamic_cast<castor::db::DbParamsSvc*>(s);
+  if(params == 0) {
+    castor::exception::Internal e;
+    e.getMessage() << "Could not instantiate the parameters service";
+    throw e;
+  }
+  params->setSchemaVersion(VDQMSCHEMAVERSION);
+  params->setDbAccessConfFile(ORAVDQMCONFIGFILE);
 
   try {
 
