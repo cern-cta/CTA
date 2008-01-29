@@ -679,7 +679,7 @@ castor::vdqm::TapeDrive*
     //Now we get the foreign related objects
 
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);  
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_VdqmTape);  
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);  
     
     tapeDrive->setTapeServer(tapeServer);
@@ -690,7 +690,7 @@ castor::vdqm::TapeDrive*
     castor::vdqm::TapeRequest* tapeRequest = tapeDrive->runningTapeReq();
     if (tapeRequest != NULL) {
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
-        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_Tape);
+        cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_VdqmTape);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_DeviceGroupName);
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeAccessSpecification);        
         cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeServer);
@@ -924,7 +924,7 @@ castor::vdqm::TapeRequest*
     //Now we get the foreign related objects
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_ClientIdentification);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_VdqmTape);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeAccessSpecification);    
 
@@ -1164,7 +1164,7 @@ std::vector<castor::vdqm::TapeRequest*>*
         cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_DeviceGroupName);
         cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeAccessSpecification);
         cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeServer);
-        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_Tape);
+        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_VdqmTape);
         cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeDrive);
         cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_ClientIdentification);
         
@@ -1280,7 +1280,7 @@ std::vector<castor::vdqm::TapeDrive*>*
         // Get the foreign related objects
         cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_DeviceGroupName);
         cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeServer);
-        cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_Tape);
+        cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_VdqmTape);
         cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeRequest);
         cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeDriveCompatibility);
         
@@ -1565,7 +1565,7 @@ void castor::db::ora::OraVdqmSvc::OLDmatchTape2TapeDrive (
     // Get the foreign related objects
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_Tape);    
+    cnvSvc()->fillObj(&ad, obj, castor::OBJ_VdqmTape);    
     cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);    
     
     
