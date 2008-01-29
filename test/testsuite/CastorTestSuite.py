@@ -116,7 +116,7 @@ try:
     for differentSuite in allCastorSuites:
         myGlobalSuite.addTest(allCastorSuites[differentSuite])
 
-    runner=unittest.TextTestRunner(verbosity=2)
+    runner=unittest.TextTestRunner(stream=sys.stdout,verbosity=2)
     runner.run(myGlobalSuite)
     os._exit(0)
 except KeyboardInterrupt:
