@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2008/01/24 12:48:46 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2008/01/29 18:31:53 $ $Author: itglp $
  *
  * Main stager daemon
  *
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
      
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("ErrorSvcThread", 
-        new castor::stager::daemon::ErrorSvcThread()));
+        new castor::stager::daemon::ErrorSvcThread(), 2));   // those threads poll the db every 2 secs.
 
     stagerDaemon.addThreadPool(
       new castor::server::SignalThreadPool("jobSvcThread", 
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('P')->setNbThreads(6);
     stagerDaemon.getThreadPool('S')->setNbThreads(3);
     stagerDaemon.getThreadPool('Q')->setNbThreads(10);
-    stagerDaemon.getThreadPool('E')->setNbThreads(6);
+    stagerDaemon.getThreadPool('E')->setNbThreads(3);
     stagerDaemon.getThreadPool('j')->setNbThreads(10);
     stagerDaemon.getThreadPool('G')->setNbThreads(6);
     
