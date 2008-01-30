@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.622 $ $Date: 2008/01/30 15:50:45 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.623 $ $Date: 2008/01/30 18:42:47 $ $Author: waldron $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4740,7 +4740,7 @@ BEGIN
   -- In both cases, restart requests waiting on the failed one
   IF res IS NOT NULL THEN
     UPDATE SubRequest
-       SET status = 1,      -- SUBREQUEST_RESTART
+       SET status = 1, -- SUBREQUEST_RESTART
            parent = 0
      WHERE parent = res AND status = 5;
   END IF;
@@ -4757,7 +4757,8 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
                         askedHosts OUT castor.DiskServerList_Cur, clientSecure OUT INTEGER) AS
-  dsId INTEGER;                   
+  dsId INTEGER;
+  nuId INTEGER;                   
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest 
@@ -4778,7 +4779,7 @@ BEGIN
            WHERE id = Client.id) clientType, Client.secure
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType,  clientSecure
+         clientVersion, clientType, clientSecure
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, 
                  'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
@@ -4819,13 +4820,25 @@ BEGIN
     -- Set the requested filesystem for the job to the mountpoint of the 
     -- source disk copy. The scheduler plugin needs this information to correctly
     -- schedule access to the filesystem.
-    SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
-      INTO srRfs, dsId
-      FROM DiskServer, FileSystem, DiskCopy
-     WHERE DiskCopy.id = reqSourceDiskCopyId
-       AND DiskCopy.filesystem = FileSystem.id
-       AND FileSystem.diskserver = DiskServer.id;
-  
+    BEGIN 
+      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
+        INTO srRfs, dsId
+        FROM DiskServer, FileSystem, DiskCopy
+       WHERE DiskCopy.id = reqSourceDiskCopyId
+         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+         AND DiskCopy.filesystem = FileSystem.id
+         AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+         AND FileSystem.diskserver = DiskServer.id
+         AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- The source diskcopy has been removed before the jobManager could enter
+      -- the job into LSF. Under this circumstance fail the diskcopy transfer.
+      -- This will restart the subrequest and trigger a tape recall if possible
+      disk2DiskCopyFailed(reqDestDiskCopyId, nuId);
+      COMMIT;
+      RAISE;
+    END;
+
     -- Provide the job manager with a potential list of hosts where the
     -- destination disk2disk copy transfer could run. This is all the diskservers
     -- in the service class excluding the source and diskservers where a diskcopy
