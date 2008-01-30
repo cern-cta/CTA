@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.619 $ $Date: 2008/01/30 10:47:23 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.620 $ $Date: 2008/01/30 13:32:39 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3201,7 +3201,7 @@ BEGIN
      WHERE fileId = fid AND nsHost = nh FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Nothing to be done, this file does not exist in the stager catalog
-    NULL;
+    RETURN;
   END;
   -- First select involved diskCopies
   scId := svcClassId;
