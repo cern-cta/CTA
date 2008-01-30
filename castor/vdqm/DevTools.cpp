@@ -90,3 +90,31 @@ void castor::vdqm::DevTools::printMessage(std::ostream &os,
 
   std::cout << std::endl;
 }
+
+
+//------------------------------------------------------------------------------
+// printTapeDriveStatusBitset
+//------------------------------------------------------------------------------
+void castor::vdqm::DevTools::printTapeDriveStatusBitset(std::ostream &os,
+  const int bitset) {
+
+  os << "Drive status bitset: ";
+
+  if(bitset & VDQM_TPD_STARTED)   os << "+TPD_STARTED";
+  if(bitset & VDQM_FORCE_UNMOUNT) os << "+FORCE_UNMOUNT";
+  if(bitset & VDQM_UNIT_QUERY)    os << "+UNIT_QUERY";
+  if(bitset & VDQM_UNIT_MBCOUNT)  os << "+UNIT_MBCOUNT";
+  if(bitset & VDQM_UNIT_ERROR)    os << "+UNIT_ERROR";
+  if(bitset & VDQM_UNIT_UNKNOWN)  os << "+UNIT_UNKNOWN";
+  if(bitset & VDQM_VOL_UNMOUNT)   os << "+VOL_UNMOUNT";
+  if(bitset & VDQM_VOL_MOUNT)     os << "+VOL_MOUNT";
+  if(bitset & VDQM_UNIT_FREE)     os << "+UNIT_FREE";
+  if(bitset & VDQM_UNIT_BUSY)     os << "+UNIT_BUSY";
+  if(bitset & VDQM_UNIT_RELEASE)  os << "+UNIT_RELEASE";
+  if(bitset & VDQM_UNIT_ASSIGN)   os << "+UNIT_ASSIGN";
+  if(bitset & VDQM_UNIT_WAITDOWN) os << "+UNIT_WAITDOWN";
+  if(bitset & VDQM_UNIT_DOWN)     os << "+UNIT_DOWN";
+  if(bitset & VDQM_UNIT_UP)       os << "+UNIT_UP";
+
+  os << std::endl;
+}

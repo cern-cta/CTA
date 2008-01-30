@@ -67,6 +67,18 @@ namespace castor {
       static void printMessage(std::ostream &os, const bool messageWasSent,
         const bool messageInNetworkByteOrder, const int socket, void* hdrbuf)
         throw (castor::exception::Exception);
+
+      /**
+       * Prints the string form of the specified tape drive status bitset using
+       * the specified output stream.
+       *
+       * @param bitset the status of a tape drive specified as a bitset.  This
+       * is the bitset used by the VDQM messages and is not an internal tape
+       * drive status value of the VDQM2
+       */
+      static void printTapeDriveStatusBitset(std::ostream &os,
+        const int bitset);
+
     
     private:
 

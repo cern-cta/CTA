@@ -23,23 +23,17 @@
  *
  * @author Matthias Braeger
  *****************************************************************************/
-#include <net.h>
-#include <vdqm_constants.h>
-#include <vector>
 
-// Includes for VMGR
-#include <sys/types.h>
-#include "vmgr_api.h"
-// for WRITE_ENABLE WRITE_DISABLE
-#include <Ctape_constants.h>
+#include <net.h>
+#include <sys/types.h> // For VMGR
+#include <vector>
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
-#include "castor/vdqm/VdqmTape.hpp"
-
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
+#include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/ErrorHistory.hpp"
 #include "castor/vdqm/newVdqm.h"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
@@ -50,9 +44,13 @@
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/handler/TapeDriveHandler.hpp"
 #include "castor/vdqm/handler/TapeDriveConsistencyChecker.hpp" // Friend
 #include "castor/vdqm/handler/TapeDriveStatusHandler.hpp" // Friend
+#include "h/Ctape_constants.h" // For WRITE_ENABLE WRITE_DISABLE
+#include "h/vdqm_constants.h"
+#include "h/vmgr_api.h" // For VMGR
 
 
 //------------------------------------------------------------------------------
@@ -90,6 +88,11 @@ castor::vdqm::handler::TapeDriveHandler::~TapeDriveHandler() throw() {
 void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest() 
   throw (castor::exception::Exception) {
     
+#ifdef PRINT_NETWORK_MESSAGES
+  castor::vdqm::DevTools::printTapeDriveStatusBitset(std::cout,
+    ptr_driveRequest->status);
+#endif
+
   castor::vdqm::TapeServer* tapeServer = NULL;
   castor::vdqm::TapeDrive* tapeDrive = NULL;
   
