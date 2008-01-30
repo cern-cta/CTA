@@ -64,6 +64,7 @@ castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
 castor::IObject* castor::vdqm::DriveSchedulerThread::select()
   throw() {
 
+/*
   // Temporarily use OLD code which never returns
   try {
     castor::vdqm::handler::TapeRequestDedicationHandler::
@@ -74,8 +75,8 @@ castor::IObject* castor::vdqm::DriveSchedulerThread::select()
     exit(1);
   }
   return NULL;
+*/
 
-/*
   castor::vdqm::IVdqmSvc *vdqmSvc = NULL;
   castor::IObject        *obj     = NULL;
 
@@ -111,7 +112,6 @@ castor::IObject* castor::vdqm::DriveSchedulerThread::select()
   }
 
   return obj;
-*/
 }
 
 
@@ -229,8 +229,6 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
 
   castor::vdqm::DeviceGroupName *dgn        = tapeDrive->deviceGroupName();
   castor::vdqm::TapeServer      *tapeServer = tapeDrive->tapeServer();
-
-  std::cout << "castor::vdqm::DriveSchedulerThread::allocateDrive" << std::endl;
 
   
   RTCopyDConnection rtcpConnection(RTCOPY_PORT, tapeServer->serverName());
