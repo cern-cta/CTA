@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.617 $ $Date: 2008/01/28 14:17:32 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.618 $ $Date: 2008/01/30 10:37:58 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3137,11 +3137,14 @@ END;
 
 /* PL/SQL method implementing stageForcedRm */
 CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
-                                           nh IN VARCHAR2) AS
+                                           nh IN VARCHAR2,
+                                           result OUT NUMBER) AS
   cfId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
 BEGIN
+  -- by default, we are successful
+  result := 1;
   -- Lock the access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
   -- or DiskCopies to be added
@@ -3152,6 +3155,11 @@ BEGIN
     FROM DiskCopy
    WHERE castorFile = cfId
      AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+  -- If nothing found, report ENOENT
+  IF dcsToRm.COUNT = 0 THEN
+    result := 0;
+    RETURN;
+  END IF;
   -- Stop ongoing recalls
   deleteTapeCopies(cfId);
   -- mark all get/put requests for those diskcopies
@@ -4901,7 +4909,7 @@ BEGIN
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsh;
-      stageForcedRm(fileIds(fid), nsh);
+      stageForcedRm(fileIds(fid), nsh, unused);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list
