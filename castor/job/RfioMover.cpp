@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/21 07:34:54 $ $Author: waldron $
+ * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/30 18:52:52 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -264,9 +264,13 @@ void castor::job::RfioMover::copyFile()
 	throw e;
       } 
     } else if (n < 0) {
-      // Here we encountered a read error. We simply break and allow the
-      // cleanup to run.
-      break;
+      // Here we encountered a read error, so we remove the file and throw
+      // an exception
+      cleanupFile(true, true);
+      castor::exception::Exception e(SEINTERNAL);
+      e.getMessage() << "Failed to rfio_read from source: "
+		     << m_inputFile << " : " << rfio_serror() << std::endl;
+      throw e;
     }		  
   } while ((m_fileSize != m_totalBytes) && (n > 0));
   free(copyBuffer);
