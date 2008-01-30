@@ -1,3 +1,28 @@
+castor (2.1.6-9) unstable; urgency=low
+
+  * CASTOR2/castor/client/BaseClient.cpp:
+  * CASTOR2/castor/client/BaseClient.hpp:
+  * CASTOR2/castor/repack/RepackFileStager.cpp:
+  * CASTOR2/castor/repack/RepackMonitor.cpp:
+    [2008-01-30,gtaur] added tunable acktimeout
+  * CASTOR2/castor/db/newora/OraCnvSvc.cpp:
+    [r1.39,2008-01-28,itglp] Replaced tabs
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+    [r1.235,2008-01-30,sponcec3] Fixed typo and improved error message
+    [r1.234,2008-01-30,sponcec3] Fixed bug in stageForcedRm leading to not answering the client in all cases
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.621,2008-01-30,gtaur] tuning fix
+    [r1.620,2008-01-30,sponcec3] Fixed missing return
+    [r1.619,2008-01-30,gtaur] tuning for inputForMigrationgPolicy
+    [r1.618,2008-01-30,sponcec3] Fixed bug in stageForcedRm leading to not answering the client in all cases
+    [r1.617,2008-01-28,waldron] Ignore temporary tables in tableShrink procedure
+  * CASTOR2/castor/job/diskcopy/MainThread.cpp:
+    [r 1.5,2008-01-28,waldron] In case of failures explicitly call the disk2DiskCopyFailed procedure. Normally this is done automatically by the stager for example when disk2DiskCopyStart fails. However, there are some cases when disk2DiskCopyStart is successful but the response transmitted to the client through the request replier times out or fails. In this case the diskcopy is left in WAITDISK2DISKCOPY. To reduce the likelihood and impact of this inconsistency in the future we explicitly call the disk2DiskCopyFailed procedure in the hope that it goes through
+  * CASTOR2/castor/stager/daemon/StagerDaemon.cpp:
+    [r1.47,2008-01-29,itglp] Changed sleeping time for the error svc thread pool
+
+-- Sebastien Ponce <sebastien.ponce@cern.ch>  Wed, 30 January 2008 15:30:00 +0100
+
 castor (2.1.6-8) unstable; urgency=low
 
   * CASTOR 2.1.6-8 release
@@ -14,13 +39,13 @@ castor (2.1.6-6) unstable; urgency=low
 
   * Seventh internal release of CASTOR 2.1.6
 
--- Sebastien Ponce <sebastien.ponce@cern.ch>  Wed, 18 January 2008 17:03:00 +0100
+-- Sebastien Ponce <sebastien.ponce@cern.ch>  Fri, 18 January 2008 17:03:00 +0100
 
 castor (2.1.6-5) unstable; urgency=low
 
   * Sixth internal release of CASTOR 2.1.6
 
--- Sebastien Ponce <sebastien.ponce@cern.ch>  Wed, 17 January 2008 10:30:00 +0100
+-- Sebastien Ponce <sebastien.ponce@cern.ch>  Thu, 17 January 2008 10:30:00 +0100
 
 castor (2.1.6-4) unstable; urgency=low
 
