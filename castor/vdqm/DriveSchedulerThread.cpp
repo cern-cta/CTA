@@ -225,7 +225,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
   //   The tape drive of the tape request is linked to a tape server
 
   castor::vdqm::ClientIdentification *client    = request->client();
-  castor::vdqm::TapeDrive              *tapeDrive = request->tapeDrive();
+  castor::vdqm::TapeDrive            *tapeDrive = request->tapeDrive();
 
   castor::vdqm::DeviceGroupName *dgn        = tapeDrive->deviceGroupName();
   castor::vdqm::TapeServer      *tapeServer = tapeDrive->tapeServer();
@@ -247,7 +247,7 @@ void castor::vdqm::DriveSchedulerThread::allocateDrive(
   bool acknSucc = true;
 
   try {
-    acknSucc = rtcpConnection.NEWsendJobToRTCPD(tapeDrive->id(),
+    acknSucc = rtcpConnection.NEWsendJobToRTCPD(request->id(),
       client->userName(), client->machine(), client->port(), client->euid(),
       client->egid(), dgn->dgName(), tapeDrive->driveName()
     );
