@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.5 $ $Date: 2008/01/30 13:32:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleDebug.sql,v $ $Revision: 1.6 $ $Date: 2008/01/30 13:33:51 $ $Author: sponcec3 $
  *
  * Some SQL code to ease support and debugging
  *
@@ -39,14 +39,6 @@ CREATE OR REPLACE PACKAGE castor_debug AS
     nbStreams NUMBER,
     SegErr VARCHAR2(2048));
   TYPE TapeCopyDebug IS TABLE OF TapeCopyDebug_typ;
-  TYPE NumDistrib_typ IS RECORD (
-    _count NUMBER,
-    _value NUMBER);
-  TYPE NumDistrib IS TABLE OF NumDistrib_typ;
-  TYPE StrDistrib_typ IS RECORD (
-    _count NUMBER,
-    _value VARCHAR(2048));
-  TYPE StrDistrib IS TABLE OF StrDistrib_typ;
 END;
 
 
@@ -147,11 +139,3 @@ BEGIN
      PIPE ROW(d);
   END LOOP;
 END;
-
-/* Displays the distribution of data for a given table
- * according to a given column
- */
-CREATE OR REPLACE FUNCTION showDisTrib(tab VARCHAR2(2048), col VARCHAR2(2048)) RETURN castor_debug.NumDistrib PIPELINED AS
-  EXECUTE IMMEDIATE
-  'SELECT count(*), '||col||' FROM '||tab||' GROUP BY '||col;
-BEGIN
