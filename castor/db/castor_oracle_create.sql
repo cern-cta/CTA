@@ -4,9 +4,6 @@ CREATE TABLE BaseAddress (objType NUMBER, cnvSvcName VARCHAR2(2048), cnvSvcType 
 /* SQL statements for type Client */
 CREATE TABLE Client (ipAddress NUMBER, port NUMBER, version NUMBER, secure NUMBER, id INTEGER CONSTRAINT I_Client_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type ClientIdentification */
-CREATE TABLE ClientIdentification (machine VARCHAR2(2048), userName VARCHAR2(2048), port NUMBER, euid NUMBER, egid NUMBER, magic NUMBER, id INTEGER CONSTRAINT I_ClientIdentification_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for type Disk2DiskCopyDoneRequest */
 CREATE TABLE Disk2DiskCopyDoneRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, id INTEGER CONSTRAINT I_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -163,33 +160,6 @@ CREATE TABLE FirstByteWritten (flags INTEGER, userName VARCHAR2(2048), euid NUMB
 /* SQL statements for type StageGetRequest */
 CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type TapeAccessSpecification */
-CREATE TABLE TapeAccessSpecification (accessMode NUMBER, density VARCHAR2(2048), tapeModel VARCHAR2(2048), id INTEGER CONSTRAINT I_TapeAccessSpecification_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type TapeServer */
-CREATE TABLE TapeServer (serverName VARCHAR2(2048), id INTEGER CONSTRAINT I_TapeServer_Id PRIMARY KEY, actingMode INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type TapeRequest */
-CREATE TABLE TapeRequest (priority NUMBER, modificationTime INTEGER, creationTime INTEGER, id INTEGER CONSTRAINT I_TapeRequest_Id PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type TapeDrive */
-CREATE TABLE TapeDrive (jobID NUMBER, modificationTime INTEGER, resettime INTEGER, usecount NUMBER, errcount NUMBER, transferredMB NUMBER, totalMB INTEGER, driveName VARCHAR2(2048), tapeAccessMode NUMBER, id INTEGER CONSTRAINT I_TapeDrive_Id PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-CREATE TABLE TapeDrive2TapeDriveComp (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
-CREATE INDEX I_TapeDrive2TapeDriveComp_C on TapeDrive2TapeDriveComp (child);
-CREATE INDEX I_TapeDrive2TapeDriveComp_P on TapeDrive2TapeDriveComp (parent);
-
-/* SQL statements for type ErrorHistory */
-CREATE TABLE ErrorHistory (errorMessage VARCHAR2(2048), timeStamp INTEGER, id INTEGER CONSTRAINT I_ErrorHistory_Id PRIMARY KEY, tapeDrive INTEGER, tape INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type TapeDriveDedication */
-CREATE TABLE TapeDriveDedication (clientHost VARCHAR2(2048), euid NUMBER, egid NUMBER, vid VARCHAR2(2048), accessMode NUMBER, startTime INTEGER, endTime INTEGER, reason VARCHAR2(2048), id INTEGER CONSTRAINT I_TapeDriveDedication_Id PRIMARY KEY, tapeDrive INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type TapeDriveCompatibility */
-CREATE TABLE TapeDriveCompatibility (tapeDriveModel VARCHAR2(2048), priorityLevel NUMBER, id INTEGER CONSTRAINT I_TapeDriveCompatibility_Id PRIMARY KEY, tapeAccessSpecification INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type DeviceGroupName */
-CREATE TABLE DeviceGroupName (dgName VARCHAR2(2048), libraryName VARCHAR2(2048), id INTEGER CONSTRAINT I_DeviceGroupName_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for type DiskPoolQuery */
 CREATE TABLE DiskPoolQuery (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskPoolName VARCHAR2(2048), id INTEGER CONSTRAINT I_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
@@ -205,9 +175,6 @@ ALTER TABLE DiskPool2SvcClass
 ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_P FOREIGN KEY (Parent) REFERENCES Stream (id)
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
-ALTER TABLE TapeDrive2TapeDriveComp
-  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_P FOREIGN KEY (Parent) REFERENCES TapeDrive (id)
-  ADD CONSTRAINT fk_TapeDrive2TapeDriveComp_C FOREIGN KEY (Child) REFERENCES TapeDriveCompatibility (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
 INSERT INTO CastorVersion VALUES ('-', '2_1_6_8');
@@ -341,7 +308,7 @@ INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.616  Date: 2008/01/25 15:30:16  Author: sponcec3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.620  Date: 2008/01/30 13:32:39  Author: sponcec3 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3478,11 +3445,14 @@ END;
 
 /* PL/SQL method implementing stageForcedRm */
 CREATE OR REPLACE PROCEDURE stageForcedRm (fid IN INTEGER,
-                                           nh IN VARCHAR2) AS
+                                           nh IN VARCHAR2,
+                                           result OUT NUMBER) AS
   cfId INTEGER;
   nbRes INTEGER;
   dcsToRm "numList";
 BEGIN
+  -- by default, we are successful
+  result := 1;
   -- Lock the access to the CastorFile
   -- This, together with triggers will avoid new TapeCopies
   -- or DiskCopies to be added
@@ -3493,6 +3463,11 @@ BEGIN
     FROM DiskCopy
    WHERE castorFile = cfId
      AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+  -- If nothing found, report ENOENT
+  IF dcsToRm.COUNT = 0 THEN
+    result := 0;
+    RETURN;
+  END IF;
   -- Stop ongoing recalls
   deleteTapeCopies(cfId);
   -- mark all get/put requests for those diskcopies
@@ -3534,7 +3509,7 @@ BEGIN
      WHERE fileId = fid AND nsHost = nh FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Nothing to be done, this file does not exist in the stager catalog
-    NULL;
+    RETURN;
   END;
   -- First select involved diskCopies
   scId := svcClassId;
@@ -4374,7 +4349,8 @@ BEGIN
              WHERE row_movement = 'ENABLED'
                AND table_name NOT IN (
                  SELECT table_name FROM user_indexes
-                  WHERE index_type LIKE 'FUNCTION-BASED%'))
+                  WHERE index_type LIKE 'FUNCTION-BASED%')
+               AND temporary = 'N')
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' SHRINK SPACE CASCADE';
   END LOOP;
@@ -5241,7 +5217,7 @@ BEGIN
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsh;
-      stageForcedRm(fileIds(fid), nsh);
+      stageForcedRm(fileIds(fid), nsh, unused);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this file was dropped from nameServer AND stager
       -- and still exists on disk. We put it into the list
@@ -5282,6 +5258,7 @@ END;
 /** Functions for the MigHunterDaemon **/
 
 /* Get input for python migration policy */
+
 CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
  policyName OUT VARCHAR2,
@@ -5291,33 +5268,32 @@ CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 BEGIN
   -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
   -- we look first for repack condidates for this svcclass
-  SELECT TapeCopy.id BULK COLLECT INTO tcIds
-    FROM TapeCopy, SubRequest, StageRepackRequest, SvcClass
-   WHERE StageRepackRequest.svcclass = SvcClass.id
-     AND SvcClass.name= svcclassName 
-     AND SubRequest.request = StageRepackRequest.id
-     AND SubRequest.status = 12  --SUBREQUEST_REPACK
-     AND TapeCopy.castorfile = SubRequest.castorfile
-     AND TapeCopy.status IN (0, 1)  -- CREATED / TOBEMIGRATED
-     FOR UPDATE;
+  -- we update atomically WAITINSTREAMS
+   UPDATE TapeCopy A set status=2
+    WHERE status IN (0, 1) AND
+    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest, SvcClass
+   		WHERE StageRepackRequest.svcclass = SvcClass.id
+     			AND SvcClass.name= svcclassName 
+     			AND SubRequest.request = StageRepackRequest.id
+     			AND SubRequest.status = 12  --SUBREQUEST_REPACK
+     			AND A.castorfile = SubRequest.castorfile
+     ) RETURNING A.id-- CREATED / TOBEMIGRATED
+     BULK COLLECT INTO tcIds;
+     COMMIT;
   -- if we didn't find anything, we look 
   -- the usual svcclass from castorfile table.
+  -- we update atomically WAITINSTREAMS
   IF tcIds.count = 0 THEN
-    SELECT TapeCopy.id BULK COLLECT INTO tcIds 
-      FROM TapeCopy, CastorFile, svcclass 
-     WHERE TapeCopy.castorFile = CastorFile.id 
-       AND CastorFile.svcClass = SvcClass.id
-       AND SvcClass.name = svcclassName 
-       AND TapeCopy.status IN (0, 1) -- CREATED / TOBEMIGRATED
-       FOR UPDATE;
+    UPDATE TapeCopy A set status=2  
+     WHERE status IN (0, 1) AND
+      EXISTS ( SELECT 'x' FROM  CastorFile, svcclass 
+     	WHERE A.castorFile = CastorFile.id 
+          AND CastorFile.svcClass = SvcClass.id
+          AND SvcClass.name = svcclassName 
+      ) RETURNING A.id -- CREATED / TOBEMIGRATED
+       BULK COLLECT INTO tcIds;
+       COMMIT;
   END IF;
-  -- atomically update the status to WAITINSTREAMS (we got a lock
-  -- above with the FOR UPDATE clause)
-  UPDATE TapeCopy
-     SET status = 2   -- WAITINSTREAMS
-   WHERE id MEMBER OF tcIds;
-  -- release the lock
-  COMMIT;
   -- return for Policy
   SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
     FROM SvcClass 
@@ -5330,6 +5306,7 @@ BEGIN
      WHERE CastorFile.id = TapeCopy.castorfile 
        AND TapeCopy.id MEMBER OF tcIds;
 END;
+
 
 /* Get input for python Stream Policy */
 
@@ -5884,7 +5861,7 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
 END castorBW;
 /*******************************************************************
  *
- * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.4  Date: 2008/01/23 11:36:01  Author: itglp 
+ * @(#)RCSfile: oracleDebug.sql,v  Revision: 1.6  Date: 2008/01/30 13:33:51  Author: sponcec3 
  *
  * Some SQL code to ease support and debugging
  *
