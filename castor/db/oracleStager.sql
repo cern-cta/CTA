@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.621 $ $Date: 2008/01/30 14:19:53 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.622 $ $Date: 2008/01/30 15:50:45 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3516,7 +3516,7 @@ BEGIN
       INSERT INTO OutOfDateStageOutDropped VALUES (cf.fileId, cf.nsHost);
     ELSE
       -- here we issue a putDone
-      putDoneFunc(cf.id, cf.fileSystem, 2); -- context 2 : real putDone
+      putDoneFunc(cf.id, cf.fileSize, 2); -- context 2 : real putDone
       INSERT INTO OutOfDateStageOutPutDone VALUES (cf.fileId, cf.nsHost);
     END IF;
   END LOOP;
