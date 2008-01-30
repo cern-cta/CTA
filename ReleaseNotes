@@ -1,4 +1,24 @@
 -----------
+- 2.1.6-9 -
+-----------
+
+  Fixes
+  -----
+  - made the client timeout tunable so that repack can have longer timeouts
+  - Fixed bug in stageForcedRm leading to not answering the client in all cases
+  - tuning for inputForMigrationgPolicy
+  - Ignore temporary tables in tableShrink procedure
+  - Changed sleeping time for the error svc thread pool
+  - In case of failures explicitly call the disk2DiskCopyFailed procedure in order to avoid accumulation of WAITDISK2DISKCOPY in case of timeouts.
+
+  Upgrade from 2.1.6-8
+  ---------------------
+  - Stop all daemons on the head nodes
+  - Apply the SQL upgrade script to the stager DB
+  - Upgrade all head nodes
+  - Restart all daemons
+
+-----------
 - 2.1.6-8 -
 -----------
 
