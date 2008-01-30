@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.234 $ $Release$ $Date: 2008/01/30 10:37:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.235 $ $Release$ $Date: 2008/01/30 13:32:11 $ $Author: sponcec3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -939,7 +939,7 @@ int castor::db::ora::OraStagerSvc::stageRm
       m_stageRmStatement->setAutoCommit(true);
       m_stageForcedRmStatement =
         createStatement(s_stageForcedRmStatementString);
-      m_stageRmStatement->registerOutParam
+      m_stageForcedRmStatement->registerOutParam
         (3, oracle::occi::OCCIINT);
       m_stageForcedRmStatement->setAutoCommit(true);
       m_getCFByNameStatement =
@@ -1001,7 +1001,7 @@ int castor::db::ora::OraStagerSvc::stageRm
         if (0 == m_stageForcedRmStatement->getInt(3)) {
           subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
           subreq->setErrorCode(ENOENT);
-          subreq->setErrorMessage("File not in disk cache");
+          subreq->setErrorMessage("File not found in disk cache");
           cnvSvc()->updateRep(&ad, subreq, true);
           return 0;
         }
