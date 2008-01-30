@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.618 $ $Date: 2008/01/30 10:37:58 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.619 $ $Date: 2008/01/30 10:47:23 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4950,6 +4950,7 @@ END;
 /** Functions for the MigHunterDaemon **/
 
 /* Get input for python migration policy */
+
 CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
  policyName OUT VARCHAR2,
@@ -4959,33 +4960,32 @@ CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 BEGIN
   -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
   -- we look first for repack condidates for this svcclass
-  SELECT TapeCopy.id BULK COLLECT INTO tcIds
-    FROM TapeCopy, SubRequest, StageRepackRequest, SvcClass
-   WHERE StageRepackRequest.svcclass = SvcClass.id
-     AND SvcClass.name= svcclassName 
-     AND SubRequest.request = StageRepackRequest.id
-     AND SubRequest.status = 12  --SUBREQUEST_REPACK
-     AND TapeCopy.castorfile = SubRequest.castorfile
-     AND TapeCopy.status IN (0, 1)  -- CREATED / TOBEMIGRATED
-     FOR UPDATE;
+  -- we update atomically WAITINSTREAMS
+   UPDATE TapeCopy A set status=2
+    WHERE status IN (0, 1) AND
+    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest, SvcClass
+   		WHERE StageRepackRequest.svcclass = SvcClass.id
+     			AND SvcClass.name= svcclassName 
+     			AND SubRequest.request = StageRepackRequest.id
+     			AND SubRequest.status = 12  --SUBREQUEST_REPACK
+     			AND A.castorfile = SubRequest.castorfile
+     ) RETURNING A.id-- CREATED / TOBEMIGRATED
+     BULK COLLECT INTO tcIds;
+     COMMIT;
   -- if we didn't find anything, we look 
   -- the usual svcclass from castorfile table.
+  -- we update atomically WAITINSTREAMS
   IF tcIds.count = 0 THEN
-    SELECT TapeCopy.id BULK COLLECT INTO tcIds 
-      FROM TapeCopy, CastorFile, svcclass 
-     WHERE TapeCopy.castorFile = CastorFile.id 
-       AND CastorFile.svcClass = SvcClass.id
-       AND SvcClass.name = svcclassName 
-       AND TapeCopy.status IN (0, 1) -- CREATED / TOBEMIGRATED
-       FOR UPDATE;
+    UPDATE TapeCopy A set status=2  
+     WHERE status IN (0, 1) AND
+      EXISTS ( SELECT 'x' FROM  CastorFile, svcclass 
+     	WHERE A.castorFile = CastorFile.id 
+          AND CastorFile.svcClass = SvcClass.id
+          AND SvcClass.name = svcclassName 
+      ) RETURNING A.id -- CREATED / TOBEMIGRATED
+       BULK COLLECT INTO tcIds;
+       COMMIT;
   END IF;
-  -- atomically update the status to WAITINSTREAMS (we got a lock
-  -- above with the FOR UPDATE clause)
-  UPDATE TapeCopy
-     SET status = 2   -- WAITINSTREAMS
-   WHERE id MEMBER OF tcIds;
-  -- release the lock
-  COMMIT;
   -- return for Policy
   SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
     FROM SvcClass 
@@ -4998,6 +4998,7 @@ BEGIN
      WHERE CastorFile.id = TapeCopy.castorfile 
        AND TapeCopy.id MEMBER OF tcIds;
 END;
+
 
 /* Get input for python Stream Policy */
 
