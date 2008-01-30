@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.620 $ $Date: 2008/01/30 13:32:39 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.621 $ $Date: 2008/01/30 14:19:53 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4996,7 +4996,7 @@ BEGIN
            CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize 
       FROM Tapecopy,CastorFile
      WHERE CastorFile.id = TapeCopy.castorfile 
-       AND TapeCopy.id MEMBER OF tcIds;
+       AND TapeCopy.id in (SELECT * FROM table(tcIds)); 
 END;
 
 
