@@ -55,6 +55,13 @@ namespace castor {
        * Prints the magic number, request type, and IP information of the
        * specified message using the specified output stream.
        *
+       * WARNING
+       * This method relies on the buffer pointed to by hdrbuf containing at
+       * lease the magic number, request type and len of the message.  This
+       * message also relies on the buffer containing a complete message
+       * (header + body) in the case of a VDQM_CLIENTINFO message being sent to
+       * rtcpd.
+       *
        * @param os the output stream.
        * @param messageWasSent should be set to true if the message was sent,
        * or to false the message was received.
