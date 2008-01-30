@@ -213,7 +213,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
      * Tell the client about the error
      */
     try {
-      if (reqtype != VDQM_PING) {
+      if (reqtype == VDQM_PING) {
         //This is Protocol specific, because normally it receives the positive
         // queue position number back.
         oldProtInterpreter->sendAcknPing(-e.code());
