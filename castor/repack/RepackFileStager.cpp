@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.43 $ $Release$ $Date: 2008/01/22 16:54:57 $ $Author: gtaur $
+ * @(#)$RCSfile: RepackFileStager.cpp,v $ $Revision: 1.44 $ $Release$ $Date: 2008/01/30 10:49:20 $ $Author: gtaur $
  *
  *
  *
@@ -274,6 +274,14 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
     }catch (castor::exception::InvalidArgument inval){
      // we don't handle this error, since, we ignore it. It means that the request id
      // is not known by the stager.
+     castor::dlf::Param params[] =
+      {castor::dlf::Param("Module", "RepackFileStager" ),
+       castor::dlf::Param("Error Message", inval.getMessage().str())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 2, params);
+      sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
+      m_dbhelper->updateSubRequest(sreq,false, cuuid);
+      delete faked;
+      return;      
     }catch (castor::exception::Exception ex){
       // any other error (communication, whatever..) we set the SubRequest to FAILED */
       castor::dlf::Param params[] =
@@ -281,7 +289,7 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
        castor::dlf::Param("Error Message", ex.getMessage().str() ),
        castor::dlf::Param("Responses", fr.size() )};
       castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 41, 3, params);
-      sreq->setStatus(SUBREQUEST_FAILED);
+      sreq->setStatus(SUBREQUEST_READYFORCLEANUP);
       m_dbhelper->updateSubRequest(sreq,false, cuuid);
       delete faked;
       return;
@@ -321,14 +329,25 @@ void RepackFileStager::restartRepack(RepackSubRequest* sreq) throw (castor::exce
       m_dbhelper->updateSubRequest(sreq,false,cuuid);
     }
     
-    /** Both checks obove returned no candidates-> fine, we're done */
+    /** Both checks above returned no candidates-> fine, we're done */
     if ( !faked->repacksegment().size() )
       sreq->setStatus(SUBREQUEST_DONE);
     else {
       sreq->setFilesMigrating(0);
 
       /** Here we send the stager request */
-      stageFiles(faked);
+
+      try {
+	stageFiles(faked);
+      }  catch (castor::exception::Exception ex){
+	  castor::dlf::Param params[] =
+	  {castor::dlf::Param("Standard Message", sstrerror(ex.code())),
+	   castor::dlf::Param("Precise Message", ex.getMessage().str()),
+	   castor::dlf::Param("VID", sreq->vid())
+	  };
+	  castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 21, 3, params);
+          return;
+      }
 
       sreq->setCuuid(faked->cuuid());
       sreq->setStatus(faked->status());
@@ -387,7 +406,8 @@ int RepackFileStager::sendStagerRepackRequest(  RepackSubRequest* rsreq,
   Cuuid_t cuuid = stringtoCuuid(rsreq->cuuid());
 
   /** Uses a BaseClient to handle the request */
-  castor::client::BaseClient client(stage_getClientTimeout());
+  castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
+  // line against the time out
   client.setOption(opts, req);
 
   client.setAuthorizationId(rsreq->repackrequest()->userId(), rsreq->repackrequest()->groupId());
@@ -506,8 +526,10 @@ void  RepackFileStager::sendRepackRemoveRequest( RepackSubRequest*sreq)throw(cas
   opts.stage_port = 0; 
   opts.stage_version = 0;
 
-  castor::client::BaseClient client(stage_getClientTimeout());
+  castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
+
   /* set the service class information from repackrequest */
+  
   getStageOpts(&opts, sreq);
   client.setOption(&opts, &req);
 

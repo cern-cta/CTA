@@ -123,7 +123,7 @@ void RepackMonitor::getStats(RepackSubRequest* sreq,
 {
   
   // Uses a BaseClient to handle the request
-  castor::client::BaseClient client(stage_getClientTimeout());
+  castor::client::BaseClient client(stage_getClientTimeout(),stage_getClientTimeout());
   std::vector<castor::rh::Response*>respvec;
   castor::client::VectorResponseHandler rh(&respvec);
   castor::stager::StageFileQueryRequest req;

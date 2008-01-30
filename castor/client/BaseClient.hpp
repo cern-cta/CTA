@@ -92,7 +92,7 @@ namespace castor {
       /**
        * constructor
        */
-      BaseClient(int acceptTimeout = 2592000) throw();
+      BaseClient(int acceptTimeout = 2592000, int ackTimeout=-1) throw();
 
       /**
        * destructor
@@ -244,6 +244,7 @@ namespace castor {
 
       /// Timeout for the accept
       int m_acceptTimeout;
+      int m_ackTimeout;
 
       /// Authorization ID parameters
       bool m_hasAuthorizationId;
