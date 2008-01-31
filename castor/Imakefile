@@ -379,6 +379,7 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               vdqm/TapeDriveDedication.cpp \
               vdqm/TapeDriveStatusCodes.cpp \
               vdqm/TapeRequest.cpp \
+	      vdqm/TapeRequestStatusCodes.cpp \
               vdqm/TapeServer.cpp \
               vdqm/TapeServerStatusCodes.cpp \
 	      vdqm/VdqmTape.cpp \
