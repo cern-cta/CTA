@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.625 $ $Date: 2008/01/31 14:48:47 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.626 $ $Date: 2008/01/31 15:00:45 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3200,7 +3200,13 @@ BEGIN
     SELECT id INTO cfId FROM CastorFile
      WHERE fileId = fid AND nsHost = nh FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Nothing to be done, this file does not exist in the stager catalog
+    -- This file does not exist in the stager catalog
+    -- so we just fail the request
+    UPDATE SubRequest
+       SET status = 7,  -- FAILED
+           errorCode = 2,  -- ENOENT
+           errorMessage = 'File not found on disk cache'
+     WHERE id = srId;
     RETURN;
   END;
   -- First select involved diskCopies

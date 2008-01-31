@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.235 $ $Release$ $Date: 2008/01/30 13:32:11 $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.236 $ $Release$ $Date: 2008/01/31 15:00:46 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1001,11 +1001,10 @@ int castor::db::ora::OraStagerSvc::stageRm
         if (0 == m_stageForcedRmStatement->getInt(3)) {
           subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
           subreq->setErrorCode(ENOENT);
-          subreq->setErrorMessage("File not found in disk cache");
           cnvSvc()->updateRep(&ad, subreq, true);
           return 0;
         }
-        // Return the return code given by the procedure
+        // Otherwise the removal was successful
         return 1;
       }
       else {
