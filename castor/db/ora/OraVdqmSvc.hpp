@@ -230,25 +230,12 @@ namespace castor {
         virtual castor::vdqm::TapeRequest* selectTapeRequest(const int VolReqID)
           throw (castor::exception::Exception);                         
   
-        //------------ function for TapeRequestDedicationHandler --------------
-  
         /**
-         * See documentation for castor::vdqm::IVdqmSvc
+         * See castor::vdqm::IVdqmSvc documentation.
          */
-        virtual castor::vdqm::TapeRequest* NEWmatchTape2TapeDrive()
+        virtual bool allocateDrive()
           throw (castor::exception::Exception);            
 
-        /**
-         * See documentation for castor::vdqm::IVdqmSvc
-         */
-        virtual void OLDmatchTape2TapeDrive(
-          castor::vdqm::TapeDrive** freeTapeDrive, 
-          castor::vdqm::TapeRequest** waitingTapeRequest) 
-          throw (castor::exception::Exception);            
-
-  
-        //------------ functions for TapeDriveRequestHandler ------------------
-  
         /**
          * Retrieves a tapeDrive from the database based on its struct 
          * representation. If no tapedrive is found, a Null pointer will 
@@ -427,16 +414,10 @@ namespace castor {
         oracle::occi::Statement *m_selectTapeDriveQueueStatement;
   
         /// SQL statement for function matchTape2TapeDrive
-        static const std::string s_NEWmatchTape2TapeDriveStatementString;
-  
-        /// SQL statement for function matchTape2TapeDrive
-        static const std::string s_OLDmatchTape2TapeDriveStatementString;
+        static const std::string s_allocateDriveStatementString;
   
         /// SQL statement object for function matchTape2TapeDrive
-        oracle::occi::Statement *m_NEWmatchTape2TapeDriveStatement;
-  
-        /// SQL statement object for function matchTape2TapeDrive
-        oracle::occi::Statement *m_OLDmatchTape2TapeDriveStatement;
+        oracle::occi::Statement *m_allocateDriveStatement;
   
         /// SQL statement for function selectCompatibilitiesForDriveModel
         static const std::string

@@ -137,23 +137,9 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsS
  * the new way) and by the modification time.
  */  
 /// SQL statement for function matchTape2TapeDrive
-const std::string castor::db::ora::OraVdqmSvc::s_NEWmatchTape2TapeDriveStatementString =
-  "BEGIN NEWmatchTape2TapeDrive(:1); END;";        
+const std::string castor::db::ora::OraVdqmSvc::s_allocateDriveStatementString =
+  "BEGIN allocateDrive(:1); END;";        
 
-/**
- * This is the main select statement to dedicate a tape to a tape drive.
- * It respects the old and of course the new way to select a tape for a 
- * tape drive.
- * The old way is to look, if the tapeDrive and the tapeRequest have the same
- * dgn.
- * The new way is to look if the TapeAccessSpecification can be served by a 
- * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
- * the new way) and by the modification time.
- */  
-/// SQL statement for function matchTape2TapeDrive
-const std::string castor::db::ora::OraVdqmSvc::s_OLDmatchTape2TapeDriveStatementString =
-  "BEGIN OLDmatchTape2TapeDrive(:1, :2); END;";        
-  
 
 // -----------------------------------------------------------------------
 // OraVdqmSvc
@@ -174,8 +160,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectDeviceGroupNameStatement(0),
   m_selectTapeRequestQueueStatement(0),
   m_selectTapeDriveQueueStatement(0),
-  m_NEWmatchTape2TapeDriveStatement(0),
-  m_OLDmatchTape2TapeDriveStatement(0),
+  m_allocateDriveStatement(0),
   m_selectCompatibilitiesForDriveModelStatement(0),
   m_selectTapeAccessSpecificationsStatement(0),
   m_selectTapeRequestStatement(0) {
@@ -225,8 +210,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_selectTapeRequestQueueStatement) deleteStatement(m_selectTapeRequestQueueStatement);
     if (m_selectTapeRequestStatement) deleteStatement(m_selectTapeRequestStatement);
     if (m_selectTapeDriveQueueStatement) deleteStatement(m_selectTapeDriveQueueStatement);
-    if (m_NEWmatchTape2TapeDriveStatement) deleteStatement(m_NEWmatchTape2TapeDriveStatement);
-    if (m_OLDmatchTape2TapeDriveStatement) deleteStatement(m_OLDmatchTape2TapeDriveStatement);
+    if (m_allocateDriveStatement) deleteStatement(m_allocateDriveStatement);
     if (m_selectCompatibilitiesForDriveModelStatement) deleteStatement(m_selectCompatibilitiesForDriveModelStatement);
     if (m_selectTapeAccessSpecificationsStatement) deleteStatement(m_selectTapeAccessSpecificationsStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -247,8 +231,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeRequestQueueStatement = 0;
   m_selectTapeDriveQueueStatement = 0;
   m_selectTapeRequestStatement = 0;
-  m_NEWmatchTape2TapeDriveStatement = 0;
-  m_OLDmatchTape2TapeDriveStatement = 0;
+  m_allocateDriveStatement = 0;
   m_selectCompatibilitiesForDriveModelStatement = 0;
   m_selectTapeAccessSpecificationsStatement = 0;
 }
@@ -1378,34 +1361,28 @@ castor::vdqm::TapeRequest*
 
 
 // -----------------------------------------------------------------------
-// matchTape2TapeDrive
+// allocateDrive
 // -----------------------------------------------------------------------
-castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::NEWmatchTape2TapeDrive()
+bool castor::db::ora::OraVdqmSvc::allocateDrive()
   throw (castor::exception::Exception) {
 
-  u_signed64                idTapeRequest = 0;
-  castor::vdqm::TapeRequest *tapeRequest  = NULL;
+  u_signed64 aDriveWasAllocated = 0; // 0 = FALSE and 1 = TRUE
   
 
   // Check whether the statements are ok
-  if (0 == m_NEWmatchTape2TapeDriveStatement) {
-    m_NEWmatchTape2TapeDriveStatement =
-      createStatement(s_NEWmatchTape2TapeDriveStatementString);
+  if (0 == m_allocateDriveStatement) {
+    m_allocateDriveStatement =
+      createStatement(s_allocateDriveStatementString);
     
-    m_NEWmatchTape2TapeDriveStatement->registerOutParam
+    m_allocateDriveStatement->registerOutParam
         (1, oracle::occi::OCCIDOUBLE);
   }
   
   // Execute statement and get result
   try {
-    m_NEWmatchTape2TapeDriveStatement->executeUpdate();
+    m_allocateDriveStatement->executeUpdate();
     
-    idTapeRequest = (u_signed64)m_NEWmatchTape2TapeDriveStatement->getDouble(1);
-    
-    if (idTapeRequest == 0 ) {
-      // We found nothing, so return NULL
-      return NULL;      
-    }
+    aDriveWasAllocated = (u_signed64)m_allocateDriveStatement->getDouble(1);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1415,198 +1392,7 @@ castor::vdqm::TapeRequest* castor::db::ora::OraVdqmSvc::NEWmatchTape2TapeDrive()
     throw ex;
   }
   
-  // Now get the two Objects from their id's
-  try {
-    castor::BaseAddress ad;
-    ad.setTarget(idTapeRequest);
-    ad.setCnvSvcName("DbCnvSvc");
-    ad.setCnvSvcType(castor::SVC_DBCNV);
-    
-    castor::IObject* obj = cnvSvc()->createObj(&ad);
-    tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
-    if (0 == tapeRequest) {
-      castor::exception::Internal e;
-      e.getMessage() << "createObj returned unexpected type "
-                     << obj->type() << " for id " << idTapeRequest;
-      delete obj;
-      throw e;
-    }  
-    
-    // Get the foreign related objects of the tape request
-    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
-    if(tapeRequest->client() == NULL) {
-      castor::exception::Internal ie;
-
-      ie.getMessage()
-        << "Tape request is not linked to a set of client identification data";
-
-      throw ie;
-    }
-    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
-    if(tapeRequest->tapeDrive() == NULL) {
-      castor::exception::Internal ie;
-
-      ie.getMessage()
-        << "Tape request is not linked to a tape drive";
-
-      throw ie;
-    }
-
-    // Get the foreign related objects of the tape drive of the tape request
-    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(),
-      castor::OBJ_DeviceGroupName);
-    if(tapeRequest->tapeDrive()->deviceGroupName() == NULL) {
-      castor::exception::Internal ie;
-
-      ie.getMessage()
-        << "Tape drive of tape request is not linked to a device group name";
-
-      throw ie;
-    }
-    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
-    if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
-      castor::exception::Internal ie;
-
-      ie.getMessage()
-        << "Tape drive of tape request is not linked to a tape server";
-
-      throw ie;
-    }
-    
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to find a TapeRequest for id(TapeRequest) " 
-      << idTapeRequest << " :"
-      << std::endl << e.getMessage();
-    throw ex;
-  } catch(castor::exception::Exception &e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to find a TapeRequest for id(TapeRequest) "
-      << idTapeRequest << " :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-
-  return tapeRequest;
-}
-
-
-// -----------------------------------------------------------------------
-// matchTape2TapeDrive
-// -----------------------------------------------------------------------
-void castor::db::ora::OraVdqmSvc::OLDmatchTape2TapeDrive (
-  castor::vdqm::TapeDrive** freeTapeDrive, 
-  castor::vdqm::TapeRequest** waitingTapeRequest)
-  throw (castor::exception::Exception) {
-  
-  u_signed64 idTapeDrive, idTapeRequest;
-  
-  castor::vdqm::TapeDrive* tapeDrive = NULL;
-  castor::vdqm::TapeRequest* tapeRequest = NULL;
-
-  // Check whether the statements are ok
-  if (0 == m_OLDmatchTape2TapeDriveStatement) {
-    m_OLDmatchTape2TapeDriveStatement =
-      createStatement(s_OLDmatchTape2TapeDriveStatementString);
-    
-    m_OLDmatchTape2TapeDriveStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
-    m_OLDmatchTape2TapeDriveStatement->registerOutParam
-        (2, oracle::occi::OCCIDOUBLE);
-  }
-  
-  // Execute statement and get result
-  try {
-    m_OLDmatchTape2TapeDriveStatement->executeUpdate();
-    
-    // If we reach this point, then we selected successfully
-    // a TapeDrive + TapeRequest and their id's are in rset
-    idTapeDrive = (u_signed64)m_OLDmatchTape2TapeDriveStatement->getDouble(1);
-    idTapeRequest = (u_signed64)m_OLDmatchTape2TapeDriveStatement->getDouble(2);
-    
-    if ( idTapeDrive == 0 || idTapeRequest == 0 ) {
-      // we found nothing, so let's just return two NULL Pointers
-      
-      *freeTapeDrive = NULL;      
-      *waitingTapeRequest = NULL;
-      
-      return;      
-    }
-    
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to find a TapeRequest for a free TapeDrive: "
-      << std::endl << e.getMessage();
-    throw ex;
-  }
-  
-  // Now get the the two Objects from their id's
-  try {
-    castor::BaseAddress ad;
-    ad.setTarget(idTapeDrive);
-    ad.setCnvSvcName("DbCnvSvc");
-    ad.setCnvSvcType(castor::SVC_DBCNV);
-    
-    castor::IObject* obj = cnvSvc()->createObj(&ad);
-    tapeDrive = dynamic_cast<castor::vdqm::TapeDrive*> (obj);
-    if (0 == tapeDrive) {
-      castor::exception::Internal e;
-      e.getMessage() << "createObj return unexpected type "
-                     << obj->type() << " for id " << idTapeDrive;
-      delete obj;
-      throw e;
-    }
-    
-    // Get the foreign related objects
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_DeviceGroupName);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeRequest);
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_VdqmTape);    
-    cnvSvc()->fillObj(&ad, obj, castor::OBJ_TapeServer);    
-    
-    
-    castor::BaseAddress ad2;
-    ad2.setTarget(idTapeRequest);
-    ad2.setCnvSvcName("DbCnvSvc");
-    ad2.setCnvSvcType(castor::SVC_DBCNV);
-    
-    obj = cnvSvc()->createObj(&ad2);
-    tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
-    if (0 == tapeRequest) {
-      castor::exception::Internal e;
-      e.getMessage() << "createObj return unexpected type "
-                     << obj->type() << " for id " << idTapeRequest;
-      delete obj;
-      delete tapeDrive;
-      throw e;
-    }  
-    
-    // Get the foreign related objects
-    cnvSvc()->fillObj(&ad2, obj, castor::OBJ_TapeDrive);
-    cnvSvc()->fillObj(&ad2, obj, castor::OBJ_ClientIdentification);    
-    
-    /**
-     * If we are here, everything went fine and we found a new 
-     * tape <--> tape drive couple 
-     */    
-    *freeTapeDrive = tapeDrive;
-    *waitingTapeRequest = tapeRequest;      
-    
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to find a TapeRequest or a TapeDrive for id(TapeDrive) " 
-      << idTapeDrive  
-      << " or for id(TapeRequest) "
-      << idTapeRequest << " :"
-      << std::endl << e.getMessage();
-    throw ex;
-  }
+  return aDriveWasAllocated;
 }
 
 
