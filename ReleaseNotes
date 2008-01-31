@@ -10,6 +10,8 @@
   - Ignore temporary tables in tableShrink procedure
   - Changed sleeping time for the error svc thread pool
   - In case of failures explicitly call the disk2DiskCopyFailed procedure in order to avoid accumulation of WAITDISK2DISKCOPY in case of timeouts.
+  - After a disk to disk copy, make sure that the size of the replica is equal in size to the original file. This allows to detect transfer failures.
+  - Fixed resurrectCandidates to avoid to resurrect candidates that are actually already attached to a stream.
 
   Upgrade from 2.1.6-8
   ---------------------
