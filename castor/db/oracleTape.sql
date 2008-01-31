@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.623 $ $Date: 2008/01/30 18:42:47 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.624 $ $Date: 2008/01/31 08:08:38 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5148,6 +5148,7 @@ CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
  tapePoolIds IN castor."cnumList")
 AS
   streamId NUMBER; -- stream attached to the tapepool
+  counter NUMBER := 0;
 BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
@@ -5156,11 +5157,17 @@ BEGIN
       PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
       BEGIN 
       	INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
+        counter := counter + 1;
+        IF counter = 100 THEN
+          counter := 0;
+          COMMIT;
+        END IF;
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
       	UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
       END;
     END LOOP;
   END LOOP;
+  COMMIT;
 END;
 
 /* start choosen stream */
@@ -5197,9 +5204,14 @@ END;
 CREATE OR REPLACE PROCEDURE resurrectCandidates
 (migrationCandidates IN castor."cnumList") -- all candidate before applying the policy
 AS
+  unused "numList";
 BEGIN
   FOR i IN migrationCandidates.FIRST .. migrationCandidates.LAST LOOP
-    UPDATE TapeCopy SET status = 1 WHERE status = 2 AND id = migrationCandidates(i);
+    SELECT child BULK COLLECT INTO unused FROM Stream2TapeCopy WHERE child = migrationCandidates(i);
+    IF unused.COUNT = 0 THEN
+      -- We only delete id the tapecopy is not attached to any stream
+      UPDATE TapeCopy SET status = 1 WHERE status = 2 AND id = migrationCandidates(i);
+    END IF;
   END LOOP;
   COMMIT;
 END;
