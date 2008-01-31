@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.624 $ $Date: 2008/01/31 08:08:38 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.625 $ $Date: 2008/01/31 14:48:47 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -5185,7 +5185,6 @@ BEGIN
      WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
        AND id=streamIds(i);
   END LOOP;	
-  UPDATE Stream SET Stream.Status = 6 WHERE Stream.Status IN (4,5,6);  -- CREATED WAITSPACE STOPPED (the one not changed as pending)
   COMMIT;
 END;
 
