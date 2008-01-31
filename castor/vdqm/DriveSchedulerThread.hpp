@@ -25,7 +25,7 @@
 #ifndef CASTOR_VDQM_DRIVESCHEDULERTHREAD_HPP
 #define CASTOR_VDQM_DRIVESCHEDULERTHREAD_HPP 1
 
-#include "castor/server/SelectProcessThread.hpp"
+#include "castor/server/BaseDbThread.hpp"
 
 
 namespace castor {
@@ -39,10 +39,10 @@ namespace castor {
 
 
     /**
-     * Allocates free tape drives to tape requests.
+     * Allocates free tape drives to waiting tape requests.
      */
     class DriveSchedulerThread :
-    public virtual castor::server::SelectProcessThread {
+    public virtual castor::server::BaseDbThread {
 
     public:
 
@@ -57,26 +57,12 @@ namespace castor {
       ~DriveSchedulerThread() throw();
 
       /**
-       * Performs the select query
+       * Run the tape drive scheduling algorithm.
        */
-      virtual castor::IObject* select() throw();
-
-      /**
-       * Processes the results of the select.
-       *
-       * @param param The IObject returned by select
-       */
-      virtual void process(castor::IObject* param) throw();
+      virtual void run(void *param);
 
 
     private:
-
-      /**
-       * Allocates the already associated free drive of the specified tape
-       * request to the tape request.
-       */
-      void allocateDrive(castor::vdqm::TapeRequest* request)
-        throw(castor::exception::Exception);
 
       /**
        * Returns a pointer to the DbVdqmSvc or throws an exception if it cannot.

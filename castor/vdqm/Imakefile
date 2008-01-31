@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.28 $ $Release$ $Date: 2008/01/31 12:48:59 $ $Author: murrayc3 $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.29 $ $Release$ $Date: 2008/01/31 18:08:59 $ $Author: murrayc3 $
 #
 # Make Castor vdqm library
 #
@@ -56,7 +56,6 @@ VDQMBIN_SRCS = CDevTools.cpp \
                handler/TapeDriveConsistencyChecker.cpp \
                handler/TapeDriveHandler.cpp \
                handler/TapeDriveStatusHandler.cpp \
-               handler/TapeRequestDedicationHandler.cpp \
                handler/TapeRequestHandler.cpp
 
 VDQMBIN_OBJS = $(VDQMBIN_SRCS:.cpp=.Osuf)

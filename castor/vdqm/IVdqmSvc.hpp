@@ -96,41 +96,22 @@ namespace castor {
         virtual int getQueuePosition(const TapeRequest *tapeRequest)
           throw (castor::exception::Exception) = 0;
         
-        
         /**
-         * Looks for the best fitting tape drive. If it is for example an
-         * older tape, it will first look if an older drive is free, before
-         * it chooses a newer one. This strategy should avoid, that the newer
-         * drive, which are able to deal with several tape models, are blocked
-         * if an request for a newer tape model arrives.<br>
-         * Please notice that caller is responsible for deleting the object
-         * returned.<br>
+         * Tries to allocate in the database a free tape drive to a pending
+         * request.
+         *
+         * The scheduling algorithm looks for the best fitting tape drive. For
+         * example if the tape is relatively old, then the algorithm will
+         * favour an older drive over a newer one in order to help keep the
+         * newer drives free for newer tapes.
          * 
-         * @return a matched tape request or NULL if no match could be found
+         * @return true if a free tape drive was allocated to a pending
+         * request, else false
          * @exception in case of error
          */  
-       virtual castor::vdqm::TapeRequest *NEWmatchTape2TapeDrive()
+       virtual bool allocateDrive()
          throw (castor::exception::Exception) = 0;
 
-        /**
-         * Looks for the best fitting tape drive. If it is for example an
-         * older tape, it will first look if an older drive is free, before
-         * it chooses a newer one. This strategy should avoid, that the newer
-         * drive, which are able to deal with several tape models, are blocked
-         * if an request for a newer tape model arrives.<br>
-         * Please notice that caller is responsible for deleting the object.<br>
-         * This function is used by TapeRequestDedicationHandler.
-         * 
-         * @parameter freeTapeDrive An address poointer to a free tape which 
-         * is found in the db
-         * @parameter waitingTapeRequest An address pointer to a waiting 
-         * TapeRequest, which is the best choice for the selected tapeDrive
-         * @exception in case of error
-         */  
-       virtual void OLDmatchTape2TapeDrive(
-         TapeDrive** freeTapeDrive, TapeRequest** waitingTapeRequest) 
-        throw (castor::exception::Exception) = 0;
-          
         /**
          * Looks, wether the specific tape access exist in the db. If not the
          * return value is NULL.
@@ -138,7 +119,8 @@ namespace castor {
          * @parameter accessMode the access mode for the tape
          * @parameter density its tape density
          * @parameter tapeModel the model of the requested tape
-         * @return the reference in the db or NULL if it is not a right specification
+         * @return the reference in the db or NULL if it is not a right
+         * specification
          * @exception in case of error
          */  
         virtual TapeAccessSpecification* selectTapeAccessSpecification(
