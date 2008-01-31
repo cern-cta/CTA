@@ -44,6 +44,7 @@
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
+#include "castor/vdqm/TapeRequestStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
@@ -97,6 +98,7 @@ void castor::io::StreamTapeRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->modificationTime();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->id();
+  ad->stream() << obj->status();
 }
 
 //------------------------------------------------------------------------------
@@ -121,6 +123,9 @@ castor::IObject* castor::io::StreamTapeRequestCnv::createObj(castor::IAddress* a
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
+  int status;
+  ad->stream() >> status;
+  object->setStatus((castor::vdqm::TapeRequestStatusCodes)status);
   return object;
 }
 

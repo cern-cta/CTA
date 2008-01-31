@@ -30,6 +30,7 @@
 #define CASTOR_VDQM_TAPEREQUEST_H
 
 /* Include Files and Forward declarations for the C world */
+#include "castor/vdqm/TapeRequestStatusCodes.h"
 #include "osdep.h"
 struct C_IObject_t;
 struct Cvdqm_ClientIdentification_t;
@@ -188,6 +189,16 @@ int Cvdqm_TapeRequest_deviceGroupName(struct Cvdqm_TapeRequest_t* instance, stru
  * Set the value of deviceGroupName
  */
 int Cvdqm_TapeRequest_setDeviceGroupName(struct Cvdqm_TapeRequest_t* instance, struct Cvdqm_DeviceGroupName_t* new_var);
+
+/**
+ * Get the value of status
+ */
+int Cvdqm_TapeRequest_status(struct Cvdqm_TapeRequest_t* instance, enum Cvdqm_TapeRequestStatusCodes_t* var);
+
+/**
+ * Set the value of status
+ */
+int Cvdqm_TapeRequest_setStatus(struct Cvdqm_TapeRequest_t* instance, enum Cvdqm_TapeRequestStatusCodes_t new_var);
 
 /**
  * Get the value of client

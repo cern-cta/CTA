@@ -47,15 +47,14 @@ namespace castor {
       TAPE_MOUNTED = 4, //Tape is mounted on drive
       TAPE_FINISHED = 5, //Processing of this tape is over
       TAPE_FAILED = 6, //Request failed
-      TAPE_UNKNOWN = 7, //Unknown status code
-      TAPE_WAITPOLICY = 8
+      TAPE_UNKNOWN = 7 //Unknown status code
     }; /* end of enum TapeStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the TapeStatusCodes enum
      */
-    extern const char* TapeStatusCodesStrings[9];
+    extern const char* TapeStatusCodesStrings[8];
 
 #ifdef __cplusplus
   } /* end of namespace vdqm */

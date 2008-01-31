@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.6 $ $Release$ $Date: 2008/01/29 15:37:59 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.7 $ $Release$ $Date: 2008/01/31 17:24:13 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -45,96 +45,13 @@ END castorVdqm;
  * if any dedication exists and has to be applied.
  * Returns the relevant IDs if a couple was found, (0,0) otherwise.
  */  
-CREATE OR REPLACE PROCEDURE matchTape2TapeDrive
- (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
+CREATE OR REPLACE PROCEDURE allocateDrive
+ (ret OUT NUMBER) AS
   d2rCur castorVdqm.Drive2Req_Cur;
   d2r castorVdqm.Drive2Req;
   countDed INTEGER;
 BEGIN
-  tapeDriveID := 0;
-  tapeRequestID := 0;
-  
-  -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
-  OPEN d2rCur FOR
-  SELECT TapeDrive.id, TapeRequest.id
-    FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
-   WHERE TapeDrive.status = 0  -- UNIT_UP
-     AND TapeDrive.runningTapeReq = 0  -- not associated with tapeReq
-     AND TapeDrive.tapeServer = TapeServer.id 
-     AND TapeServer.actingMode = 0  -- ACTIVE
-     AND TapeRequest.tapeDrive = 0
-     AND (TapeRequest.requestedSrv = TapeServer.id OR TapeRequest.requestedSrv = 0)
-     AND TapeDrive2TapeDriveComp.parent = TapeDrive.id 
-     AND TapeDrive2TapeDriveComp.child = TapeDriveCompatibility.id 
-     AND TapeDriveCompatibility.tapeAccessSpecification = TapeRequest.tapeAccessSpecification
-     AND TapeDrive.deviceGroupName = TapeRequest.deviceGroupName
-     /*
-     AND TapeDrive.deviceGroupName = tapeDriveDgn.id 
-     AND TapeRequest.deviceGroupName = tapeRequestDgn.id 
-     AND tapeDriveDgn.libraryName = tapeRequestDgn.libraryName 
-         -- in case we want to match by libraryName only
-     */
-     ORDER BY TapeDriveCompatibility.priorityLevel ASC, 
-              TapeRequest.modificationTime ASC;
-
-  LOOP
-    -- For each candidate couple, verify that the dedications (if any) are met
-    FETCH d2rCur INTO d2r;
-    EXIT WHEN d2rCur%NOTFOUND;
-
-    SELECT count(*) INTO countDed
-      FROM TapeDriveDedication
-     WHERE tapeDrive = d2r.tapeDrive
-       AND getTime() BETWEEN startTime AND endTime;
-    IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
-      tapeRequestID := d2r.tapeRequest;
-      EXIT;
-    END IF;
-
-    -- We must check if the request matches the dedications for this tape drive
-    SELECT count(*) INTO countDed
-      FROM TapeDriveDedication tdd, VdqmTape, TapeRequest,
-           ClientIdentification, TapeAccessSpecification, TapeDrive
-     WHERE tdd.tapeDrive = d2r.tapeDrive
-       AND getTime() BETWEEN startTime AND endTime
-       AND tdd.clientHost(+) = ClientIdentification.machine
-       AND tdd.euid(+) = ClientIdentification.euid
-       AND tdd.egid(+) = ClientIdentification.egid
-       AND tdd.vid(+) = VdqmTape.vid
-       AND tdd.accessMode(+) = TapeAccessSpecification.accessMode
-       AND TapeRequest.id = d2r.tapeRequest
-       AND TapeRequest.tape = VdqmTape.id
-       AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
-       AND TapeRequest.client = ClientIdentification.id;
-    IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
-      tapeRequestID := d2r.tapeRequest;
-      EXIT;
-    END IF;
-    -- else the tape drive is dedicated to other request(s) and we can't use it, go on
-  END LOOP;
-  -- if the loop has been fully completed without assignment,
-  -- no free tape drive has been found. 
-  CLOSE d2rCur;
-END;
-
-
-/**
- * PL/SQL method to dedicate a tape to a tape drive.
- * First it checks the preconditions that a tapeDrive must meet in order to be
- * assigned. The couples (drive,requests) are then orderd by the priorityLevel 
- * and by the modification time and processed one by one to verify
- * if any dedication exists and has to be applied.
- * Returns the relevant IDs if a couple was found, (0,0) otherwise.
- */  
-CREATE OR REPLACE PROCEDURE NEWmatchTape2TapeDrive
- (tapeRequestID OUT NUMBER) AS
-  d2rCur castorVdqm.Drive2Req_Cur;
-  d2r castorVdqm.Drive2Req;
-  countDed INTEGER;
-BEGIN
-  tapeRequestID := 0;
+  ret := 0;
   
   -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
   OPEN d2rCur FOR
@@ -170,22 +87,20 @@ BEGIN
      WHERE tapeDrive = d2r.tapeDrive
        AND getTime() BETWEEN startTime AND endTime;
     IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
-
       UPDATE TapeDrive SET
         status = 1, -- UNIT_STARTING = 1
         jobID = 0,
         modificationTime = getTime(),
         runningTapeReq = d2r.tapeRequest
         WHERE id = d2r.tapeDrive;
-
       UPDATE TapeRequest SET
+        status = 1, -- MATCHED
         tapeDrive = d2r.tapeDrive,
         modificationTime = getTime()
         WHERE id = d2r.tapeRequest;
-
-      tapeRequestID := d2r.tapeRequest;
-
-      EXIT;
+      ret := 1;
+      CLOSE d2rCur;
+      RETURN;
     END IF;
 
     -- We must check if the request matches the dedications for this tape drive
@@ -204,22 +119,20 @@ BEGIN
        AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
        AND TapeRequest.client = ClientIdentification.id;
     IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
-
       UPDATE TapeDrive SET
         status = 1, -- UNIT_STARTING = 1
         jobID = 0,
         modificationTime = getTime(),
         runningTapeReq = d2r.tapeRequest
         WHERE id = d2r.tapeDrive;
-
       UPDATE TapeRequest SET
+        status = 1, -- MATCHED
         tapeDrive = d2r.tapeDrive,
         modificationTime = getTime()
         WHERE id = d2r.tapeRequest;
-
-      tapeRequestID := d2r.tapeRequest;
-
-      EXIT;
+      ret := 1;
+      CLOSE d2rCur;
+      RETURN;
     END IF;
     -- else the tape drive is dedicated to other request(s) and we can't use it, go on
   END LOOP;
@@ -230,85 +143,30 @@ END;
 
 
 /**
- * PL/SQL method to dedicate a tape to a tape drive.
- * First it checks the preconditions that a tapeDrive must meet in order to be
- * assigned. The couples (drive,requests) are then orderd by the priorityLevel 
- * and by the modification time and processed one by one to verify
- * if any dedication exists and has to be applied.
- * Returns the relevant IDs if a couple was found, (0,0) otherwise.
- */  
-CREATE OR REPLACE PROCEDURE OLDmatchTape2TapeDrive
- (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
-  d2rCur castorVdqm.Drive2Req_Cur;
-  d2r castorVdqm.Drive2Req;
-  countDed INTEGER;
+ * PL/SQL method to get a new matched request to be submitted to rtcpd
+ */
+CREATE OR REPLACE PROCEDURE requestToSubmit(tapeReqId OUT NUMBER) AS
+LockError EXCEPTION;
+PRAGMA EXCEPTION_INIT (LockError, -54);
+CURSOR c IS
+   SELECT id
+     FROM TapeRequest
+    WHERE status = 1  -- MATCHED
+    FOR UPDATE SKIP LOCKED;
 BEGIN
-  tapeDriveID := 0;
-  tapeRequestID := 0;
-  
-  -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
-  OPEN d2rCur FOR
-  SELECT TapeDrive.id, TapeRequest.id
-    FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
-   WHERE TapeDrive.status = 0  -- UNIT_UP
-     AND TapeDrive.runningTapeReq = 0  -- not associated with tapeReq
-     AND TapeDrive.tapeServer = TapeServer.id 
-     AND TapeServer.actingMode = 0  -- ACTIVE
-     AND TapeRequest.tapeDrive = 0
-     AND (TapeRequest.requestedSrv = TapeServer.id OR TapeRequest.requestedSrv = 0)
-     AND TapeDrive2TapeDriveComp.parent = TapeDrive.id 
-     AND TapeDrive2TapeDriveComp.child = TapeDriveCompatibility.id 
-     AND TapeDriveCompatibility.tapeAccessSpecification = TapeRequest.tapeAccessSpecification
-     AND TapeDrive.deviceGroupName = TapeRequest.deviceGroupName
-     /*
-     AND TapeDrive.deviceGroupName = tapeDriveDgn.id 
-     AND TapeRequest.deviceGroupName = tapeRequestDgn.id 
-     AND tapeDriveDgn.libraryName = tapeRequestDgn.libraryName 
-         -- in case we want to match by libraryName only
-     */
-     ORDER BY TapeDriveCompatibility.priorityLevel ASC, 
-              TapeRequest.modificationTime ASC;
-
-  LOOP
-    -- For each candidate couple, verify that the dedications (if any) are met
-    FETCH d2rCur INTO d2r;
-    EXIT WHEN d2rCur%NOTFOUND;
-
-    SELECT count(*) INTO countDed
-      FROM TapeDriveDedication
-     WHERE tapeDrive = d2r.tapeDrive
-       AND getTime() BETWEEN startTime AND endTime;
-    IF countDed = 0 THEN    -- no dedications valid for this TapeDrive
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
-      tapeRequestID := d2r.tapeRequest;
-      EXIT;
-    END IF;
-
-    -- We must check if the request matches the dedications for this tape drive
-    SELECT count(*) INTO countDed
-      FROM TapeDriveDedication tdd, VdqmTape, TapeRequest,
-           ClientIdentification, TapeAccessSpecification, TapeDrive
-     WHERE tdd.tapeDrive = d2r.tapeDrive
-       AND getTime() BETWEEN startTime AND endTime
-       AND tdd.clientHost(+) = ClientIdentification.machine
-       AND tdd.euid(+) = ClientIdentification.euid
-       AND tdd.egid(+) = ClientIdentification.egid
-       AND tdd.vid(+) = VdqmTape.vid
-       AND tdd.accessMode(+) = TapeAccessSpecification.accessMode
-       AND TapeRequest.id = d2r.tapeRequest
-       AND TapeRequest.tape = VdqmTape.id
-       AND TapeRequest.tapeAccessSpecification = TapeAccessSpecification.id
-       AND TapeRequest.client = ClientIdentification.id;
-    IF countDed > 0 THEN  -- there's a matching dedication for at least a criterium
-      tapeDriveID := d2r.tapeDrive;   -- fine, we can assign it
-      tapeRequestID := d2r.tapeRequest;
-      EXIT;
-    END IF;
-    -- else the tape drive is dedicated to other request(s) and we can't use it, go on
-  END LOOP;
-  -- if the loop has been fully completed without assignment,
-  -- no free tape drive has been found. 
-  CLOSE d2rCur;
+  tapeReqId := 0;
+  OPEN c;
+  FETCH c INTO tapeReqId;
+  UPDATE TapeRequest SET status = 2 WHERE id = tapeReqId;  -- BEINGSUBMITTED
+  CLOSE c;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- just return reqId = 0, nothing to do
+  NULL;
+WHEN LockError THEN
+  -- We have observed ORA-00054 errors (resource busy and acquire with NOWAIT) even with
+  -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
+  -- what to do, another thread will pick up the request so we don't do anything.
+  NULL;
 END;
 
 

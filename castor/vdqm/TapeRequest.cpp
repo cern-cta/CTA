@@ -35,6 +35,7 @@
 #include "castor/vdqm/TapeAccessSpecification.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
+#include "castor/vdqm/TapeRequestStatusCodes.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
@@ -54,6 +55,7 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_requestedSrv(0),
   m_tapeDrive(0),
   m_deviceGroupName(0),
+  m_status(TapeRequestStatusCodes(0)),
   m_client(0) {
 }
 
@@ -118,6 +120,7 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   } else {
     stream << indent << "  null" << std::endl;
   }
+  stream << indent << "status : " << TapeRequestStatusCodesStrings[m_status] << std::endl;
   stream << indent << "Client : " << std::endl;
   if (0 != m_client) {
     m_client->print(stream, indent + "  ", alreadyPrinted);

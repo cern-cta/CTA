@@ -31,6 +31,7 @@
 
 // Include Files
 #include "castor/IObject.hpp"
+#include "castor/vdqm/TapeRequestStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -257,6 +258,22 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_status
+       * @return the value of m_status
+       */
+      TapeRequestStatusCodes status() const {
+        return m_status;
+      }
+
+      /**
+       * Set the value of m_status
+       * @param new_var the new value of m_status
+       */
+      void setStatus(TapeRequestStatusCodes new_var) {
+        m_status = new_var;
+      }
+
+      /**
        * Get the value of m_client
        * @return the value of m_client
        */
@@ -294,6 +311,8 @@ namespace castor {
       TapeDrive* m_tapeDrive;
 
       DeviceGroupName* m_deviceGroupName;
+
+      TapeRequestStatusCodes m_status;
 
       ClientIdentification* m_client;
 
