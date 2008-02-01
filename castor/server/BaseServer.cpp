@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/01/21 07:37:56 $ $Author: waldron $
+ * @(#)$RCSfile: BaseServer.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2008/02/01 11:21:33 $ $Author: itglp $
  *
  * A base multithreaded server for simple listening servers
  *
@@ -153,7 +153,7 @@ void castor::server::BaseServer::start() throw (castor::exception::Exception)
   if (m_foreground) {
     std::cout << "Starting " << m_serverName << std::endl;
   }
-
+  
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
     tp->second->init();
