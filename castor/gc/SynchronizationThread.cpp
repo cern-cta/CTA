@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/01 11:01:07 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/02/01 11:07:08 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be deleted
  *
@@ -47,7 +47,7 @@
 // Definitions
 #define DEFAULT_GCINTERVAL 300
 #define DEFAULT_SYNCINTERVAL 10
-#define DEFAULT_CHUNKSIZE 1000
+#define DEFAULT_CHUNKSIZE 300
 
 
 //-----------------------------------------------------------------------------
