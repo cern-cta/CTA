@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2007/08/16 14:28:40 $ $Author: sponcec3 $
+ * @(#)$RCSfile: ListenerThreadPool.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/01 11:20:27 $ $Author: itglp $
  *
  * Abstract class defining a listener thread pool
  *
@@ -111,6 +111,9 @@ namespace castor {
      * @param param user parameter passed to thread->run().
      */
     virtual void threadAssign(void* param);
+
+    /// The socket used to accept connections
+    castor::io::AbstractSocket* m_sock;
     
     /// TCP port to listen for
     int m_port;
@@ -118,9 +121,6 @@ namespace castor {
     /// flag to decide whether the listener loop has to run in a separate thread
     bool m_spawnListener;
     
-    /// The socket used to accept connections
-    castor::io::AbstractSocket* m_sock;
-
   private:
 
     /// Thread entrypoint made friend to access private fields.

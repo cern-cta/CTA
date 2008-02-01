@@ -111,12 +111,14 @@ void castor::server::BaseDaemon::addNotifierThreadPool(int port)
 {
   if(m_threadPools['_'] != 0) delete m_threadPools['_'];   // sanity check
     
-  // This is a pool for internal use and we don't use addThreadPool
+  // This is a pool for internal use, we don't use addThreadPool
   // so to not change the command line parsing behavior
   m_threadPools['_'] =
     new castor::server::UDPListenerThreadPool("_NotifierThread",
       new castor::server::NotifierThread(this), port);
-  m_threadPools['_']->setNbThreads(1);
+  
+  // we run the notifier in the same thread of the listening one
+  m_threadPools['_']->setNbThreads(0);
 }
 
 
@@ -159,19 +161,18 @@ void castor::server::BaseDaemon::handleSignals()
         
         case CHILD_STOPPED:
         {
-          clog() << ERROR << "IMMEDIATE STOP [SIGCHLD]" << std::endl;
-          // A child got killed, we try to exit gracefully
-          waitAllThreads(true);
-          dlf_shutdown(10);
-          exit(EXIT_FAILURE);
-          // Another option would be to keep running, in such a case:
+          clog() << ERROR << "CHILD STOPPED [SIGCHLD]" << std::endl;
           // Reap dead processes to prevent defunct processes, we don't care about
           // the exit. However, in the future we may want to re-fork it!
-          //pid_t pid = 0;
-          //while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
+          pid_t pid = 0;
+          while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
             // we log no message here because some threads call API 
             // functions which fork and this results in an unnecessary message!
-          //}
+          }
+          // XXX for now we exit, to be reviewed
+          waitAllThreads(false);
+          dlf_shutdown(1);
+          exit(EXIT_FAILURE);
         }
         
         default:
@@ -276,6 +277,7 @@ void* castor::server::_signalThread_run(void* arg)
           break;
 	 
         case SIGPIPE:
+          // ignore
           break;
 
         default:
