@@ -88,7 +88,15 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
     return;
   }
 
+  // Needed for the commit/rollback
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
+
   if(aDriveWasAllocated) {
+    // Commit to the db
+    castor::BaseObject::services()->commit(&ad);
+
     // castor::server::BaseServer::sendNotification('localhost', port, 'X');
   }
 }
