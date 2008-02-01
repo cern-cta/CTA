@@ -1,3 +1,39 @@
+castor (2.1.6-10) unstable; urgency=low
+	
+  * CASTOR2/castor/db/ora/OraStagerSvc.cpp:
+    [r1.236,2008-01-31,itglp] Another fix for stageRm
+  * CASTOR2/castor/db/oracleTrailer.sql:
+    [r1.627,2008-02-01,itglp] When archiving, keep PutDone, Rm and DCReplica requests
+  * CASTOR2/castor/gc/SynchronizationThread.cpp:
+    [r 1.7,2008-02-01,waldron] Changed the default synchronisation chunk size to 300 to fix nameserver communication errors. Sending more the 300 fileids results in a message size that the nameserver cannot handle and therefore terminates the connection to the client. To be changed for 2.1.7
+    [r 1.6,2008-02-01,waldron] Fixed segmentation fault when trying to extract the fileid from a file on disk. Also stop the synchronisation thread from scanning directories outside of the normally castor ones. I.e. only number directories between 00 and 99
+  * CASTOR2/castor/job/RfioMover.cpp:
+    [r 1.4,2008-02-01,waldron] Fixed random writing of zero sized files during replication
+    [r 1.3,2008-01-30,waldron] Throw an exception in case an rfio_read error happens. Prior to this modification we would accept the number of bytes transferred up to the point of the read error and consider the transfer as successful. I.e. only a partial file was transferred but considered ok. Now we make sure that the size of the replica is equal in size to the original file
+  * CASTOR2/castor/job/diskcopy/MainThread.cpp:
+    [r 1.6,2008-02-01,waldron] Reset the default values for the DiskCopy/RetryAttempts and DiskCopy/RetryInterval options when an invalid argument is given in castor.conf
+  * CASTOR2/castor/rh/RHThread.cpp:
+    [r1.17,2008-02-01,waldron] Enable notification for new request types
+  * CASTOR2/castor/server/BaseDaemon.cpp:
+    [r1.27,2008-02-01,itglp] Fixed UDP notification by not using a Cpool but rather by executing the
+    [r1.27,2008-02-01,itglp] notification on the same listening thread
+  * CASTOR2/castor/server/BaseServer.cpp:
+    [r1.31,2008-02-01,itglp] Formatting change
+  * CASTOR2/castor/server/ListenerThreadPool.cpp:
+    [r1.14,2008-02-01,itglp] Fixed UDP notification by not using a Cpool but rather by executing the
+    [r1.14,2008-02-01,itglp] notification on the same listening thread
+  * CASTOR2/castor/server/ListenerThreadPool.hpp:
+    [r1.12,2008-02-01,itglp] Fixed UDP notification by not using a Cpool but rather by executing the
+    [r1.12,2008-02-01,itglp] notification on the same listening thread
+  * CASTOR2/castor/server/NotifierThread.cpp:
+    [r 1.3,2008-02-01,itglp] Notification logic extracted in its own method, so it can be reused
+  * CASTOR2/castor/server/NotifierThread.hpp:
+    [r 1.2,2008-02-01,itglp] Notification logic extracted in its own method, so it can be reused
+  * CASTOR2/debian/castor.conf:
+    [r1.102,2008-02-01,waldron] Changed the GC CHUNKSIZE default
+
+-- Dennis Waldron <dennis.waldron@cern.ch>  Fri, 01 February 2008 16:00:00 +0100
+
 castor (2.1.6-9) unstable; urgency=low
 
   * CASTOR2/castor/client/BaseClient.cpp:
