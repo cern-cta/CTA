@@ -1382,7 +1382,7 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive()
       createStatement(s_allocateDriveStatementString);
     
     m_allocateDriveStatement->registerOutParam
-        (1, oracle::occi::OCCINUMBER);
+        (1, oracle::occi::OCCIINT);
 
     m_allocateDriveStatement->setAutoCommit(true);
   }
