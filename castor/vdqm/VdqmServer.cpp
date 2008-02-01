@@ -45,6 +45,7 @@
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
+#include "castor/vdqm/RTCPJobSubmitterThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
 
@@ -80,6 +81,10 @@ int main(int argc, char *argv[]) {
   server.addThreadPool(
     new castor::server::SignalThreadPool("DriveSchedulerThreadPool",
       new castor::vdqm::DriveSchedulerThread()));
+
+  server.addThreadPool(
+    new castor::server::SignalThreadPool("RTCPJobSubmitterThreadPool",
+      new castor::vdqm::RTCPJobSubmitterThread()));
 
 
   //----------------------------------------------
