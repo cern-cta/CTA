@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/26 13:17:23 $ $Author: waldron $
+* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/01 11:21:09 $ $Author: itglp $
 *
 * A thread to handle notifications to wake up workers in a pool
 *
@@ -39,23 +39,33 @@ castor::server::NotifierThread::NotifierThread(castor::server::BaseDaemon* owner
 // run
 //------------------------------------------------------------------------------
 void castor::server::NotifierThread::run(void* param) {
+  // get the object
+  castor::server::ThreadNotification* notif =
+    (castor::server::ThreadNotification*)param;
+  
+  // do the actual job
+  doNotify(notif->tpName(), notif->nbThreads());
+  
+  delete notif;
+}
+    
+//------------------------------------------------------------------------------
+// doNotify
+//------------------------------------------------------------------------------
+void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw () {
   castor::server::SignalThreadPool* pool = 0; 
   try {
-    // get the object
-    castor::server::ThreadNotification* notif =
-      (castor::server::ThreadNotification*)param;
-
-    // we have received a notification, first resolve the pool
+    // first resolve the pool
     pool = dynamic_cast<castor::server::SignalThreadPool*>
-      (m_owner->getThreadPool(notif->tpName()));
+      (m_owner->getThreadPool(tpName));
     if(pool == 0)
-      // only SignalThreadPool are valid
+      // only SignalThreadPool's are valid
       return;
-    
-    // then signal the condition variable: we are friend of the SignalThreadPool
+
+    // signal the condition variable: we are friend of the SignalThreadPool
     pool->m_poolMutex->lock();
     
-    pool->m_notified += notif->nbThreads();
+    pool->m_notified += nbThreads;
     
     // We make sure that 0 <= m_notified <= nbThreadInactive
     if(pool->m_notified < 0) {
