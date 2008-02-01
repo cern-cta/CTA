@@ -112,6 +112,15 @@ namespace castor {
        virtual bool allocateDrive()
          throw (castor::exception::Exception) = 0;
 
+       /**
+        * Returns a matched "tape drive / tape request" pair if one exists,
+        * else NULL.
+        *
+        * @exception in case of error
+        */
+       virtual castor::vdqm::TapeRequest *requestToSubmit()
+         throw (castor::exception::Exception) = 0;
+
         /**
          * Looks, wether the specific tape access exist in the db. If not the
          * return value is NULL.

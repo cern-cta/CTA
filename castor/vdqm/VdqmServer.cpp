@@ -59,8 +59,9 @@ const std::string VDQMSCHEMAVERSION = "2_1_6_0";
 int main(int argc, char *argv[]) {
 
   castor::vdqm::VdqmServer       server;
-  castor::server::BaseThreadPool *requestHandlerThreadPool = NULL;
-  castor::server::BaseThreadPool *driveSchedulerThreadPool = NULL;
+  castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;
+  castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;
+  castor::server::BaseThreadPool *rtcpJobSubmitterThreadPool = NULL;
 
 
   //-----------------------
@@ -83,7 +84,7 @@ int main(int argc, char *argv[]) {
       new castor::vdqm::DriveSchedulerThread()));
 
   server.addThreadPool(
-    new castor::server::SignalThreadPool("RTCPJobSubmitterThreadPool",
+    new castor::server::SignalThreadPool("JobSubmitterThreadPool",
       new castor::vdqm::RTCPJobSubmitterThread()));
 
 
@@ -106,8 +107,17 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  driveSchedulerThreadPool->setNbThreads(
-    server.getDriveSchedulerThreadNumber());
+  // Only one thread should run the drive scheduler algorithm
+  driveSchedulerThreadPool->setNbThreads(1);
+
+  rtcpJobSubmitterThreadPool = server.getThreadPool('J');
+  if(rtcpJobSubmitterThreadPool == NULL) {
+    std::cerr << "Failed to get JobSubmitterThreadPool" << std::endl;
+    return 1;
+  }
+
+  rtcpJobSubmitterThreadPool->setNbThreads(
+    server.getRTCPJobSubmitterThreadNumber());
 
 
   //---------------------------------------------------------------------------
@@ -159,7 +169,7 @@ castor::vdqm::VdqmServer::VdqmServer()
   throw():
   castor::server::BaseDaemon("Vdqm"),
   m_requestHandlerThreadNumber(1),
-  m_driveSchedulerThreadNumber(1)
+  m_RTCPJobSubmitterThreadNumber(1)
 {
   initDlf();
 }
@@ -258,19 +268,19 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
   throw() {
 
   static struct Coptions longopts[] = {
-    {"foreground"           , NO_ARGUMENT      , NULL, 'f'},
-    {"config"               , REQUIRED_ARGUMENT, NULL, 'c'},
-    {"help"                 , NO_ARGUMENT      , NULL, 'h'},
-    {"requestHandlerThreads", REQUIRED_ARGUMENT, NULL, 'n'},
-    {"driveSchedulerThreads", REQUIRED_ARGUMENT, NULL, 'd'},
-    {NULL                   , 0                , NULL,  0 }
+    {"foreground"             , NO_ARGUMENT      , NULL, 'f'},
+    {"config"                 , REQUIRED_ARGUMENT, NULL, 'c'},
+    {"help"                   , NO_ARGUMENT      , NULL, 'h'},
+    {"requestHandlerThreads"  , REQUIRED_ARGUMENT, NULL, 'r'},
+    {"rtcpJobSubmitterThreads", REQUIRED_ARGUMENT, NULL, 'j'},
+    {NULL                     , 0                , NULL,  0 }
   };
 
   Coptind = 1;
   Copterr = 0;
 
   char c;
-  while ((c = Cgetopt_long (argc, argv, "fn:d:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long (argc, argv, "fc:hr:j:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -281,33 +291,40 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
     case 'h':
       help(argv[0]);
       exit(0);
-    case 'n':
+    case 'r':
       m_requestHandlerThreadNumber = atoi(Coptarg);
       break;
-    case 'd':
-      m_driveSchedulerThreadNumber = atoi(Coptarg);
-
-      if(m_driveSchedulerThreadNumber != 1) {
-        std::cerr << "Error: More than one drive scheduler thread is not yet "
-          << "supported" << std::endl << std::endl;
-        exit(1);
-      }
-
+    case 'j':
+      m_RTCPJobSubmitterThreadNumber = atoi(Coptarg);
       break;
     case '?':
-      std::cerr << "Error: Unknown command-line option: " << (char)Coptopt
+      std::cerr
+        << std::endl
+        << "Error: Unknown command-line option: " << (char)Coptopt
+        << std::endl << std::endl;
+      help(argv[0]);
+      exit(1);
+    case ':':
+      std::cerr
+        << std::endl
+        << "Error: An option is missing a parameter"
         << std::endl << std::endl;
       help(argv[0]);
       exit(1);
     default:
-      std::cerr << "Internal error: Unknown return value from Cgetopt_long"
+      std::cerr 
+        << std::endl
+        << "Internal error: Cgetopt_long returned the following unknown value: "
+        << "0x" << std::hex << (int)c << std::dec
         << std::endl << std::endl;
       exit(1);
     }
   }
 
   if(Coptind > argc) {
-    std::cerr << "Internal error.  Invalid value for Coptind: " << Coptind
+    std::cerr
+      << std::endl
+      << "Internal error.  Invalid value for Coptind: " << Coptind
       << std::endl;
     exit(1);
   }
@@ -316,10 +333,13 @@ void castor::vdqm::VdqmServer::parseCommandLine(int argc, char *argv[])
   // not been parsed as it could indicate that a valid option never got parsed
   if(Coptind < argc)
   {
-      std::cerr << "Error:  Unexpected command-line argument: "
-        << argv[Coptind] << std::endl << std::endl;
-      help(argv[0]);
-      exit(1);
+    std::cerr
+      << std::endl
+      << "Error:  Unexpected command-line argument: "
+      << argv[Coptind]
+      << std::endl << std::endl;
+    help(argv[0]);
+    exit(1);
   }
 }
 
@@ -333,11 +353,11 @@ void castor::vdqm::VdqmServer::help(std::string programName)
     "\n"
     "where options can be:\n"
     "\n"
-    "\t--foreground            or -f     \tRemain in the Foreground\n"
-    "\t--config <config-file>  or -c     \tConfiguration file\n"
-    "\t--help                  or -h     \tPrint this help and exit\n"
-    "\t--requestHandlerThreads or -n num \tDefault 1\n"
-    "\t--driveSchedulerThreads or -d num \tDefault 1\n"
+    "\t--foreground              or -f     \tRemain in the Foreground\n"
+    "\t--config <config-file>    or -c     \tConfiguration file\n"
+    "\t--help                    or -h     \tPrint this help and exit\n"
+    "\t--requestHandlerThreads   or -r num \tDefault 1\n"
+    "\t--RTCPJobSubmitterThreads or -j num \tDefault 1\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -353,7 +373,7 @@ int castor::vdqm::VdqmServer::getListenPort()
 
 
 //------------------------------------------------------------------------------
-// getRequestHandlerThreadNb
+// getRequestHandlerThreadNumber
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getRequestHandlerThreadNumber()
 {
@@ -362,9 +382,9 @@ int castor::vdqm::VdqmServer::getRequestHandlerThreadNumber()
 
 
 //------------------------------------------------------------------------------
-// getDriveSchedulerThreadNb
+// getRTCPJobSubmitterThreadNumber
 //------------------------------------------------------------------------------
-int castor::vdqm::VdqmServer::getDriveSchedulerThreadNumber()
+int castor::vdqm::VdqmServer::getRTCPJobSubmitterThreadNumber()
 {
-  return m_driveSchedulerThreadNumber;
+  return m_RTCPJobSubmitterThreadNumber;
 }

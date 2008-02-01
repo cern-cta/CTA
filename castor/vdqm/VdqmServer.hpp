@@ -66,22 +66,23 @@ namespace castor {
       int getRequestHandlerThreadNumber();
 
       /**
-       * Returns the number of threads in the drive scheduler thread pool.
+       * Returns the number of threads in the remote tape copy job submitter
+       * thread pool.
        */
-      int getDriveSchedulerThreadNumber();
+      int getRTCPJobSubmitterThreadNumber();
       
 
     private:
 
       /**
-       * Number of request handler threads
+       * Number of request handler threads.
        */
       int m_requestHandlerThreadNumber;
 
       /**
-       * Number of drive scheduler threads
+       * Number of remote tape copy job submitter threads.
        */
-      int m_driveSchedulerThreadNumber;
+      int m_RTCPJobSubmitterThreadNumber;
     
       /**
        * Initializes the DLF logging including the definition of the predefined
@@ -90,7 +91,8 @@ namespace castor {
       void initDlf() throw();
 
       /**
-       * Prints out the online help
+       * Prints out the command-line usage message for the VDQM server
+       * application.
        */
       void help(std::string programName) throw();
     
