@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/28 14:42:16 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/01 12:45:35 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -116,7 +116,8 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
   int attempts = DEFAULT_RETRY_ATTEMPTS;
   if (value) {
     attempts = std::strtol(value, 0, 10);
-    if (attempts < 1) {
+    if (attempts <= 1) {
+      attempts = DEFAULT_RETRY_ATTEMPTS;
 
       // "Invalid DiskCopy/RetryInterval option, using default"
       castor::dlf::Param params[] =
@@ -132,8 +133,9 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
   int interval = DEFAULT_RETRY_INTERVAL;
   if (value) {
     interval = std::strtol(value, 0, 10);
-    if (interval < 1) {
-      
+    if (interval <= 1) {
+      interval = DEFAULT_RETRY_INTERVAL;
+
       // "Invalid DiskCopy/RetryAttempts option, using default"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Default", interval),
