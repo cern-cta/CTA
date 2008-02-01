@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/30 18:52:52 $ $Author: waldron $
+ * @(#)$RCSfile: RfioMover.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/01 12:47:58 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -211,7 +211,7 @@ void castor::job::RfioMover::copyFile()
 		     << std::endl;
       throw e;      
     }
-  } 
+  }
 
   // Allocate memory for the buffer area where data from the source will be
   // read into.
@@ -230,13 +230,14 @@ void castor::job::RfioMover::copyFile()
     // with deletion of the output file.
     if (m_shutdown) {
       cleanupFile(true, true);
+      free(copyBuffer);
       castor::exception::Exception e(EINTR);
       e.getMessage() << "Acknowledging shutdown request in mover" << std::endl;
       throw e;
     }
 
     // By definition totalsize is always positive
-    if ((signed)(m_fileSize - m_totalBytes) < bufsize) {
+    if ((m_fileSize - m_totalBytes) < (u_signed64)bufsize) {
       bufsize = m_fileSize - m_totalBytes;
     }
 
@@ -258,6 +259,7 @@ void castor::job::RfioMover::copyFile()
       // Writing failed ?
       if (m < 0) {
 	cleanupFile(true, true);
+	free(copyBuffer);
 	castor::exception::Exception e(SEINTERNAL);
 	e.getMessage() << "Failed to rfio_write on destination: "
 		       << m_outputFile << " : " << rfio_serror() << std::endl;
@@ -267,6 +269,7 @@ void castor::job::RfioMover::copyFile()
       // Here we encountered a read error, so we remove the file and throw
       // an exception
       cleanupFile(true, true);
+      free(copyBuffer);
       castor::exception::Exception e(SEINTERNAL);
       e.getMessage() << "Failed to rfio_read from source: "
 		     << m_inputFile << " : " << rfio_serror() << std::endl;
