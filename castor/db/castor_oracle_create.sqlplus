@@ -177,7 +177,7 @@ ALTER TABLE Stream2TapeCopy
   ADD CONSTRAINT fk_Stream2TapeCopy_C FOREIGN KEY (Child) REFERENCES TapeCopy (id);
 
 CREATE TABLE CastorVersion (schemaVersion VARCHAR2(20), release VARCHAR2(20));
-INSERT INTO CastorVersion VALUES ('-', '2_1_6_8');
+INSERT INTO CastorVersion VALUES ('-', '2_1_6_10');
 
 /* Fill Type2Obj metatable */
 CREATE TABLE Type2Obj (type INTEGER PRIMARY KEY NOT NULL, object VARCHAR2(100) NOT NULL, svcHandler VARCHAR2(100));
@@ -305,10 +305,11 @@ INSERT INTO Type2Obj (type, object) VALUES (144, 'Disk2DiskCopyStartRequest');
 INSERT INTO Type2Obj (type, object) VALUES (145, 'Disk2DiskCopyStartResponse');
 INSERT INTO Type2Obj (type, object) VALUES (146, 'ThreadNotification');
 INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
+INSERT INTO Type2Obj (type, object) VALUES (148, 'VdqmTape');
 
 /*******************************************************************
  *
- * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.620  Date: 2008/01/30 13:32:39  Author: sponcec3 
+ * @(#)RCSfile: oracleTrailer.sql,v  Revision: 1.627  Date: 2008/02/01 13:03:08  Author: itglp 
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -1089,7 +1090,7 @@ BEGIN
   IF nb = 0 THEN
     -- all subrequests have finished: archive or delete depending on the request type
     SELECT type INTO rtype FROM Id2Type WHERE id = rId;
-    IF rtype IN (39, 42, 51, 95, 133) THEN   -- PutDone, Rm, Release, SetFileGCWeight, DiskCopyReplica
+    IF rtype IN (51, 95) THEN   -- Release, SetFileGCWeight
       deleteRequest(rId);
     ELSE
       UPDATE SubRequest SET status = 11 WHERE request = rId;  -- ARCHIVED 
@@ -3580,7 +3581,13 @@ BEGIN
     SELECT id INTO cfId FROM CastorFile
      WHERE fileId = fid AND nsHost = nh FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Nothing to be done, this file does not exist in the stager catalog
+    -- This file does not exist in the stager catalog
+    -- so we just fail the request
+    UPDATE SubRequest
+       SET status = 7,  -- FAILED
+           errorCode = 2,  -- ENOENT
+           errorMessage = 'File not found on disk cache'
+     WHERE id = srId;
     RETURN;
   END;
   -- First select involved diskCopies
@@ -3902,7 +3909,7 @@ BEGIN
       INSERT INTO OutOfDateStageOutDropped VALUES (cf.fileId, cf.nsHost);
     ELSE
       -- here we issue a putDone
-      putDoneFunc(cf.id, cf.fileSystem, 2); -- context 2 : real putDone
+      putDoneFunc(cf.id, cf.fileSize, 2); -- context 2 : real putDone
       INSERT INTO OutOfDateStageOutPutDone VALUES (cf.fileId, cf.nsHost);
     END IF;
   END LOOP;
@@ -5153,7 +5160,7 @@ BEGIN
   -- In both cases, restart requests waiting on the failed one
   IF res IS NOT NULL THEN
     UPDATE SubRequest
-       SET status = 1,      -- SUBREQUEST_RESTART
+       SET status = 1, -- SUBREQUEST_RESTART
            parent = 0
      WHERE parent = res AND status = 5;
   END IF;
@@ -5171,7 +5178,8 @@ PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCHAR2, srProtocol OU
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
                         askedHosts OUT castor.DiskServerList_Cur, clientSecure OUT INTEGER) AS
-  dsId INTEGER;                   
+  dsId INTEGER;
+  nuId INTEGER;                   
 BEGIN
   -- Get the next subrequest to be scheduled.
   UPDATE SubRequest 
@@ -5192,7 +5200,7 @@ BEGIN
            WHERE id = Client.id) clientType, Client.secure
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType,  clientSecure
+         clientVersion, clientType, clientSecure
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, 
                  'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
@@ -5233,13 +5241,25 @@ BEGIN
     -- Set the requested filesystem for the job to the mountpoint of the 
     -- source disk copy. The scheduler plugin needs this information to correctly
     -- schedule access to the filesystem.
-    SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
-      INTO srRfs, dsId
-      FROM DiskServer, FileSystem, DiskCopy
-     WHERE DiskCopy.id = reqSourceDiskCopyId
-       AND DiskCopy.filesystem = FileSystem.id
-       AND FileSystem.diskserver = DiskServer.id;
-  
+    BEGIN 
+      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
+        INTO srRfs, dsId
+        FROM DiskServer, FileSystem, DiskCopy
+       WHERE DiskCopy.id = reqSourceDiskCopyId
+         AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
+         AND DiskCopy.filesystem = FileSystem.id
+         AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
+         AND FileSystem.diskserver = DiskServer.id
+         AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- The source diskcopy has been removed before the jobManager could enter
+      -- the job into LSF. Under this circumstance fail the diskcopy transfer.
+      -- This will restart the subrequest and trigger a tape recall if possible
+      disk2DiskCopyFailed(reqDestDiskCopyId, nuId);
+      COMMIT;
+      RAISE;
+    END;
+
     -- Provide the job manager with a potential list of hosts where the
     -- destination disk2disk copy transfer could run. This is all the diskservers
     -- in the service class excluding the source and diskservers where a diskcopy
@@ -5414,7 +5434,7 @@ BEGIN
            CastorFile.nsHost, CastorFile.fileid, CastorFile.filesize 
       FROM Tapecopy,CastorFile
      WHERE CastorFile.id = TapeCopy.castorfile 
-       AND TapeCopy.id MEMBER OF tcIds;
+       AND TapeCopy.id in (SELECT * FROM table(tcIds)); 
 END;
 /
 
@@ -5556,6 +5576,7 @@ CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
  tapePoolIds IN castor."cnumList")
 AS
   streamId NUMBER; -- stream attached to the tapepool
+  counter NUMBER := 0;
 BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
@@ -5564,11 +5585,17 @@ BEGIN
       PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
       BEGIN 
       	INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
+        counter := counter + 1;
+        IF counter = 100 THEN
+          counter := 0;
+          COMMIT;
+        END IF;
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
       	UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
       END;
     END LOOP;
   END LOOP;
+  COMMIT;
 END;
 /
 
@@ -5587,7 +5614,6 @@ BEGIN
      WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
        AND id=streamIds(i);
   END LOOP;	
-  UPDATE Stream SET Stream.Status = 6 WHERE Stream.Status IN (4,5,6);  -- CREATED WAITSPACE STOPPED (the one not changed as pending)
   COMMIT;
 END;
 /
@@ -5608,9 +5634,14 @@ END;
 CREATE OR REPLACE PROCEDURE resurrectCandidates
 (migrationCandidates IN castor."cnumList") -- all candidate before applying the policy
 AS
+  unused "numList";
 BEGIN
   FOR i IN migrationCandidates.FIRST .. migrationCandidates.LAST LOOP
-    UPDATE TapeCopy SET status = 1 WHERE status = 2 AND id = migrationCandidates(i);
+    SELECT child BULK COLLECT INTO unused FROM Stream2TapeCopy WHERE child = migrationCandidates(i);
+    IF unused.COUNT = 0 THEN
+      -- We only delete id the tapecopy is not attached to any stream
+      UPDATE TapeCopy SET status = 1 WHERE status = 2 AND id = migrationCandidates(i);
+    END IF;
   END LOOP;
   COMMIT;
 END;

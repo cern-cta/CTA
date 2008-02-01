@@ -295,7 +295,7 @@ ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostid UNIQUE (nshostid) ENABLE;
 ALTER TABLE dlf_nshost_map ADD CONSTRAINT i_nshostname UNIQUE (nshostname) ENABLE;
 
 /* version number */
-INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_6_8');
+INSERT INTO dlf_version VALUES ('2_1_2_0', '2_1_6_10');
 
 /* initialise severities */
 INSERT INTO dlf_severities (sev_no, sev_name) VALUES ('1', 'Emergency');
