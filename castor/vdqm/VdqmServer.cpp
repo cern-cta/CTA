@@ -87,6 +87,8 @@ int main(int argc, char *argv[]) {
     new castor::server::SignalThreadPool("JobSubmitterThreadPool",
       new castor::vdqm::RTCPJobSubmitterThread()));
 
+  server.addNotifierThreadPool(server.getListenPort());
+
 
   //----------------------------------------------
   // Set the number of threads in each thread pool

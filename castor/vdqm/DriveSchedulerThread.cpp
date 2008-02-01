@@ -22,16 +22,18 @@
  * @author castor dev team
  *****************************************************************************/
 
-#include <rtcp_constants.h>
 
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/server/BaseServer.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
+#include "h/rtcp_constants.h"
+#include "h/vdqm_constants.h"
 
 
 //-----------------------------------------------------------------------------
@@ -51,7 +53,7 @@ castor::vdqm::DriveSchedulerThread::~DriveSchedulerThread()
 
 
 //-----------------------------------------------------------------------------
-// select
+// run
 //-----------------------------------------------------------------------------
 void castor::vdqm::DriveSchedulerThread::run(void *param) {
 
@@ -88,16 +90,8 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
     return;
   }
 
-  // Needed for the commit/rollback
-  castor::BaseAddress ad;
-  ad.setCnvSvcName("DbCnvSvc");
-  ad.setCnvSvcType(castor::SVC_DBCNV);
-
   if(aDriveWasAllocated) {
-    // Commit to the db
-    castor::BaseObject::services()->commit(&ad);
-
-    // castor::server::BaseServer::sendNotification('localhost', port, 'X');
+    castor::server::BaseServer::sendNotification("localhost", VDQM_PORT, 'J');
   }
 }
 

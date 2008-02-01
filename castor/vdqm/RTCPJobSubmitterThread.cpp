@@ -85,7 +85,7 @@ castor::IObject* castor::vdqm::RTCPJobSubmitterThread::select()
 
   try
   {
-//  obj = vdqmSvc->getMatchedTapeRequest();
+    obj = vdqmSvc->requestToSubmit();
   } catch (castor::exception::Exception e) {
     castor::dlf::Param params[] = {
       castor::dlf::Param("Function",
@@ -132,6 +132,10 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     // Submit the remote tape copy job to RTCPD
     submitJobToRTCPD(request);
 
+    // if everything ok, update status
+    request->setStatus(castor::vdqm::REQUEST_SUBMITTED);
+    services()->updateRep(&ad, request, true);
+
   } catch(castor::exception::Exception &e) {
 
     castor::dlf::Param params[] = {
@@ -142,20 +146,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
 
-    try
-    {
-      // Rollback
-      castor::BaseObject::services()->rollback(&ad);
-    } catch(castor::exception::Exception &e) {
-      castor::dlf::Param params[] = {
-        castor::dlf::Param("Function", "RTCPJobSubmitterThread::process"),
-        castor::dlf::Param("Message",
-          "Failed to rollback database transaction"),
-        castor::dlf::Param("Code", e.code())
-      };
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-        VDQM_EXCEPTION_IGNORED, 3, params);
-      }
+    // TO BE DONE - Do something with the DB, such as update status to FAILED
   }
 
   // Clean up
