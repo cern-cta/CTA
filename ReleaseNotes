@@ -1,3 +1,20 @@
+------------
+- 2.1.6-10 -
+------------
+
+  Fixes
+  -----
+  - Fixed the 'communication errors' between nameserver and gcDaemon when trying to synchronise the diskserver contents with the nameserver.
+  - Fixed segmentation fault in gcDaemon when trying to extract the fileid from a file on disk which does not conform to the castor naming conventions.
+  - Fixed random writing of zero sized files during replication
+  - Fixed UDP notification problems between headnode daemons leading to poor response times.
+
+  Upgrade from 2.1.6-9
+  ---------------------
+  - Apply the SQL upgrade script to the stager, dlf and repack databases
+  - Upgrade all head nodes and diskservers
+  - No restart is necessary
+
 -----------
 - 2.1.6-9 -
 -----------
