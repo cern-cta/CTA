@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2007/12/05 14:49:30 $ $Author: riojac3 $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/02/01 13:00:27 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -302,10 +302,11 @@ void castor::rh::RHThread::handleRequest
     // StagerRequest Service
     castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'S', nbSubReqs);
     break;
-  case OBJ_StageFileQueryRequest :
-  case OBJ_StageFindRequestRequest :
-  case OBJ_StageRequestQueryRequest :
-  case OBJ_DiskPoolQuery :
+  case OBJ_StageFileQueryRequest:
+  case OBJ_StageFindRequestRequest:
+  case OBJ_StageRequestQueryRequest:
+  case OBJ_DiskPoolQuery:
+  case OBJ_VersionQuery:
     // QueryRequest Service
     castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'Q', nbSubReqs);
     break;
@@ -313,17 +314,19 @@ void castor::rh::RHThread::handleRequest
   case OBJ_Disk2DiskCopyDoneRequest:
   case OBJ_Disk2DiskCopyStartRequest:
   case OBJ_MoverCloseRequest:
-  case OBJ_PutStartRequest :
-  case OBJ_GetUpdateDone :
-  case OBJ_GetUpdateFailed :
-  case OBJ_PutFailed :
-  case OBJ_PutDoneStart :
+  case OBJ_PutStartRequest:
+  case OBJ_GetUpdateDone:
+  case OBJ_GetUpdateFailed:
+  case OBJ_PutFailed:
+  case OBJ_PutDoneStart:
+  case OBJ_FirstByteWritten:
     // Job Service
     castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'j', 1);
     break;
   case OBJ_Files2Delete:
   case OBJ_FilesDeleted:
   case OBJ_FilesDeletionFailed:
+  case OBJ_NsFilesDeleted:
     // Garbage Collector Service
     castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'G', 1);
     break;
