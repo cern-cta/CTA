@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.626 $ $Date: 2008/01/31 15:00:45 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.627 $ $Date: 2008/02/01 13:03:08 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -759,7 +759,7 @@ BEGIN
   IF nb = 0 THEN
     -- all subrequests have finished: archive or delete depending on the request type
     SELECT type INTO rtype FROM Id2Type WHERE id = rId;
-    IF rtype IN (39, 42, 51, 95, 133) THEN   -- PutDone, Rm, Release, SetFileGCWeight, DiskCopyReplica
+    IF rtype IN (51, 95) THEN   -- Release, SetFileGCWeight
       deleteRequest(rId);
     ELSE
       UPDATE SubRequest SET status = 11 WHERE request = rId;  -- ARCHIVED 
