@@ -1383,6 +1383,8 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive()
     
     m_allocateDriveStatement->registerOutParam
         (1, oracle::occi::OCCINUMBER);
+
+    m_allocateDriveStatement->setAutoCommit(true);
   }
   
   // Execute statement and get result
@@ -1420,7 +1422,10 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
 
     m_requestToSubmitStatement->registerOutParam
         (1, oracle::occi::OCCIDOUBLE);
+
+    m_requestToSubmitStatement->setAutoCommit(true);
   }
+
 
   // Execute statement and get result
   try {
@@ -1441,79 +1446,65 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
     throw ex;
   }
 
-  // Get the objects from their ID's
-  try {
-    castor::BaseAddress ad;
-    ad.setTarget(idTapeRequest);
-    ad.setCnvSvcName("DbCnvSvc");
-    ad.setCnvSvcType(castor::SVC_DBCNV);
+  // Needed to get the create objects from the database IDs
+  castor::BaseAddress ad;
+  ad.setTarget(idTapeRequest);
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
 
-    castor::IObject* obj = cnvSvc()->createObj(&ad);
-    tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
-    if (0 == tapeRequest) {
-      castor::exception::Internal e;
-      e.getMessage() << "createObj returned unexpected type "
+  // Create the tape request object
+  castor::IObject* obj = cnvSvc()->createObj(&ad);
+  tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
+  if (0 == tapeRequest) {
+    castor::exception::Internal e;
+    e.getMessage() << "createObj returned unexpected type "
                      << obj->type() << " for id " << idTapeRequest;
-      delete obj;
-      throw e;
-    }
+    delete obj;
+    throw e;
+  }
 
-    // Get the foreign related objects of the tape request
-    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
-    if(tapeRequest->client() == NULL) {
-      castor::exception::Internal ie;
+  // Create the foreign related objects of the tape request
+  cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+  if(tapeRequest->client() == NULL) {
+    castor::exception::Internal ie;
 
-      ie.getMessage()
-        << "Tape request is not linked to a set of client identification data";
+    ie.getMessage()
+      << "Tape request is not linked to a set of client identification data";
 
+    delete tapeRequest;
+    throw ie;
+  }
+  cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
+  if(tapeRequest->tapeDrive() == NULL) {
+    castor::exception::Internal ie;
+
+    ie.getMessage() << "Tape request is not linked to a tape drive";
+
+    delete tapeRequest;
       throw ie;
-    }
-    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
-    if(tapeRequest->tapeDrive() == NULL) {
-      castor::exception::Internal ie;
+  }
 
-      ie.getMessage()
-        << "Tape request is not linked to a tape drive";
+  // Get the foreign related objects of the tape drive of the tape request
+  cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(),
+    castor::OBJ_DeviceGroupName);
+  if(tapeRequest->tapeDrive()->deviceGroupName() == NULL) {
+    castor::exception::Internal ie;
 
-      throw ie;
-    }
+    ie.getMessage()
+      << "Tape drive of tape request is not linked to a device group name";
 
-    // Get the foreign related objects of the tape drive of the tape request
-    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(),
-      castor::OBJ_DeviceGroupName);
-    if(tapeRequest->tapeDrive()->deviceGroupName() == NULL) {
-      castor::exception::Internal ie;
+    delete tapeRequest;
+    throw ie;
+  }
+  cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
+  if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
+    castor::exception::Internal ie;
 
-      ie.getMessage()
-        << "Tape drive of tape request is not linked to a device group name";
+    ie.getMessage()
+      << "Tape drive of tape request is not linked to a tape server";
 
-      throw ie;
-    }
-    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
-    if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
-      castor::exception::Internal ie;
-
-      ie.getMessage()
-        << "Tape drive of tape request is not linked to a tape server";
-
-      throw ie;
-    }
-
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to find a TapeRequest for id(TapeRequest) "
-      << idTapeRequest << " :"
-      << std::endl << e.getMessage();
-    throw ex;
-  } catch(castor::exception::Exception &e) {
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Unable to find a TapeRequest for id(TapeRequest) "
-      << idTapeRequest << " :"
-      << std::endl << e.getMessage();
-    throw ex;
+    delete tapeRequest;
+    throw ie;
   }
 
   return tapeRequest;
