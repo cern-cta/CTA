@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/01/23 10:20:04 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/01 11:01:07 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be deleted
  *
@@ -90,7 +90,6 @@ void castor::gc::SynchronizationThread::run(void *param) {
     // Loop over the fileSystems starting in a random place
     int fsIt = (int) (nbFs * (rand() / (RAND_MAX + 1.0)));
     for (int i = 0; i < nbFs; i++) {
-
       // list the filesystem directories in random order
       std::vector<std::string> directories;
       DIR *dirs = opendir(fs[fsIt]);
@@ -110,8 +109,13 @@ void castor::gc::SynchronizationThread::run(void *param) {
 	if (stat(filepath.str().c_str(), &file) < 0) {
 	  continue;
 	} else if (!(file.st_mode & S_IFDIR)) {
-	  continue;  /* not a file */
-	}
+	  continue;  // not a directory
+	} else if (!strcmp(dir->d_name, ".") || !strcmp(dir->d_name, "..")) {
+	  continue;
+	} else if (strspn(dir->d_name, "0123456789") != strlen(dir->d_name) 
+		   || (strlen(dir->d_name) != 2)) {
+	  continue;  // not a numbered directory name between 00 and 99
+	} 
 	int offset = (int) ((1 + directories.size()) *
 			    (rand() / (RAND_MAX + 1.0)));
 	directories.insert
@@ -124,6 +128,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
              directories.begin();
            it != directories.end();
            it++) {
+
         // Loop over files inside a directory
         DIR *files = opendir(it->c_str());
         if (0 == files) {
@@ -146,7 +151,7 @@ void castor::gc::SynchronizationThread::run(void *param) {
 	  if (stat(filepath.c_str(), &filebuf) < 0) {
 	    continue;
 	  } else if (!(filebuf.st_mode & S_IFREG)) {
-	    continue;  /* not a file */
+	    continue;  // not a file
 	  }
           try {
             std::pair<std::string, u_signed64> fid =
@@ -278,7 +283,7 @@ castor::gc::SynchronizationThread::fileIdFromFileName
   char* p = index(fileName, '@');
   char* q = index(fileName, '.');
   int len = q - p - 1;
-  if (len == 0) {
+  if (len <= 0) {
     castor::exception::Internal e;
     e.getMessage() << "Unable to parse fileName : '"
                    << fileName << "'";
