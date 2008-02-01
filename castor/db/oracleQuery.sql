@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.627 $ $Date: 2008/02/01 13:03:08 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.628 $ $Date: 2008/02/01 14:30:27 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -3476,10 +3476,10 @@ BEGIN
     FROM DiskCopy
    WHERE (status = 4 OR (status = 7 AND fileSystem = 0))
      AND creationTime < getTime() - timeOut;
-  SELECT UNIQUE castorFile
+  SELECT /*+ INDEX(DC I_DiskCopy_ID) */ UNIQUE castorFile
     BULK COLLECT INTO cfIds
-    FROM DiskCopy
-   WHERE id IN (SELECT * FROM TABLE(dcIds));
+    FROM DiskCopy DC
+   WHERE id IN (SELECT /*+ cardinality(ids 5) */ * FROM TABLE(dcIds) ids);
   -- drop the DiskCopies
   DELETE FROM Id2Type WHERE id IN (SELECT * FROM TABLE(dcIds));
   DELETE FROM DiskCopy WHERE id IN (SELECT * FROM TABLE(dcIds));
