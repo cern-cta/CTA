@@ -136,9 +136,13 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationsS
  * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
  * the new way) and by the modification time.
  */  
-/// SQL statement for function matchTape2TapeDrive
+/// SQL statement for function allocateDrive
 const std::string castor::db::ora::OraVdqmSvc::s_allocateDriveStatementString =
-  "BEGIN allocateDrive(:1); END;";        
+  "BEGIN allocateDrive(:1); END;";
+
+/// SQL statement for function requestToSubmit
+const std::string castor::db::ora::OraVdqmSvc::s_requestToSubmitStatementString
+  = "BEGIN requestToSubmit(:1); END;";
 
 
 // -----------------------------------------------------------------------
@@ -161,6 +165,7 @@ castor::db::ora::OraVdqmSvc::OraVdqmSvc(const std::string name) :
   m_selectTapeRequestQueueStatement(0),
   m_selectTapeDriveQueueStatement(0),
   m_allocateDriveStatement(0),
+  m_requestToSubmitStatement(0),
   m_selectCompatibilitiesForDriveModelStatement(0),
   m_selectTapeAccessSpecificationsStatement(0),
   m_selectTapeRequestStatement(0) {
@@ -211,6 +216,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
     if (m_selectTapeRequestStatement) deleteStatement(m_selectTapeRequestStatement);
     if (m_selectTapeDriveQueueStatement) deleteStatement(m_selectTapeDriveQueueStatement);
     if (m_allocateDriveStatement) deleteStatement(m_allocateDriveStatement);
+    if (m_requestToSubmitStatement) deleteStatement(m_requestToSubmitStatement);
     if (m_selectCompatibilitiesForDriveModelStatement) deleteStatement(m_selectCompatibilitiesForDriveModelStatement);
     if (m_selectTapeAccessSpecificationsStatement) deleteStatement(m_selectTapeAccessSpecificationsStatement);
   } catch (oracle::occi::SQLException e) {};
@@ -232,6 +238,7 @@ void castor::db::ora::OraVdqmSvc::reset() throw() {
   m_selectTapeDriveQueueStatement = 0;
   m_selectTapeRequestStatement = 0;
   m_allocateDriveStatement = 0;
+  m_requestToSubmitStatement = 0;
   m_selectCompatibilitiesForDriveModelStatement = 0;
   m_selectTapeAccessSpecificationsStatement = 0;
 }
@@ -1366,7 +1373,7 @@ castor::vdqm::TapeRequest*
 bool castor::db::ora::OraVdqmSvc::allocateDrive()
   throw (castor::exception::Exception) {
 
-  u_signed64 aDriveWasAllocated = 0; // 0 = FALSE and 1 = TRUE
+  int aDriveWasAllocated = 0; // 0 = FALSE and 1 = TRUE
   
 
   // Check whether the statements are ok
@@ -1375,14 +1382,14 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive()
       createStatement(s_allocateDriveStatementString);
     
     m_allocateDriveStatement->registerOutParam
-        (1, oracle::occi::OCCIDOUBLE);
+        (1, oracle::occi::OCCINUMBER);
   }
   
   // Execute statement and get result
   try {
     m_allocateDriveStatement->executeUpdate();
     
-    aDriveWasAllocated = (u_signed64)m_allocateDriveStatement->getDouble(1);
+    aDriveWasAllocated = m_allocateDriveStatement->getInt(1);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1392,7 +1399,124 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive()
     throw ex;
   }
   
-  return aDriveWasAllocated;
+  return aDriveWasAllocated == 1;
+}
+
+
+// -----------------------------------------------------------------------
+// requestToSubmit
+// -----------------------------------------------------------------------
+castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
+  throw (castor::exception::Exception) {
+
+  u_signed64                idTapeRequest = 0;
+  castor::vdqm::TapeRequest *tapeRequest  = NULL;
+
+
+  // Check whether the statements are ok
+  if (0 == m_requestToSubmitStatement) {
+    m_requestToSubmitStatement =
+      createStatement(s_requestToSubmitStatementString);
+
+    m_requestToSubmitStatement->registerOutParam
+        (1, oracle::occi::OCCIDOUBLE);
+  }
+
+  // Execute statement and get result
+  try {
+    m_requestToSubmitStatement->executeUpdate();
+
+    idTapeRequest = (u_signed64)m_requestToSubmitStatement->getDouble(1);
+
+    if (idTapeRequest == 0 ) {
+      // We found nothing, so return NULL
+      return NULL;
+    }
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to find a TapeRequest for a free TapeDrive: "
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+
+  // Get the objects from their ID's
+  try {
+    castor::BaseAddress ad;
+    ad.setTarget(idTapeRequest);
+    ad.setCnvSvcName("DbCnvSvc");
+    ad.setCnvSvcType(castor::SVC_DBCNV);
+
+    castor::IObject* obj = cnvSvc()->createObj(&ad);
+    tapeRequest = dynamic_cast<castor::vdqm::TapeRequest*> (obj);
+    if (0 == tapeRequest) {
+      castor::exception::Internal e;
+      e.getMessage() << "createObj returned unexpected type "
+                     << obj->type() << " for id " << idTapeRequest;
+      delete obj;
+      throw e;
+    }
+
+    // Get the foreign related objects of the tape request
+    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_ClientIdentification);
+    if(tapeRequest->client() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape request is not linked to a set of client identification data";
+
+      throw ie;
+    }
+    cnvSvc()->fillObj(&ad, tapeRequest, castor::OBJ_TapeDrive);
+    if(tapeRequest->tapeDrive() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape request is not linked to a tape drive";
+
+      throw ie;
+    }
+
+    // Get the foreign related objects of the tape drive of the tape request
+    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(),
+      castor::OBJ_DeviceGroupName);
+    if(tapeRequest->tapeDrive()->deviceGroupName() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape drive of tape request is not linked to a device group name";
+
+      throw ie;
+    }
+    cnvSvc()->fillObj(&ad, tapeRequest->tapeDrive(), castor::OBJ_TapeServer);
+    if(tapeRequest->tapeDrive()->tapeServer() == NULL) {
+      castor::exception::Internal ie;
+
+      ie.getMessage()
+        << "Tape drive of tape request is not linked to a tape server";
+
+      throw ie;
+    }
+
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to find a TapeRequest for id(TapeRequest) "
+      << idTapeRequest << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Unable to find a TapeRequest for id(TapeRequest) "
+      << idTapeRequest << " :"
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+
+  return tapeRequest;
 }
 
 

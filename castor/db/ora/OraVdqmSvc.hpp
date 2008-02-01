@@ -235,6 +235,12 @@ namespace castor {
          */
         virtual bool allocateDrive()
           throw (castor::exception::Exception);            
+  
+        /**
+         * See castor::vdqm::IVdqmSvc documentation.
+         */
+        virtual castor::vdqm::TapeRequest *requestToSubmit()
+          throw (castor::exception::Exception);            
 
         /**
          * Retrieves a tapeDrive from the database based on its struct 
@@ -413,11 +419,17 @@ namespace castor {
         /// SQL statement object for function selectTapeDriveQueue
         oracle::occi::Statement *m_selectTapeDriveQueueStatement;
   
-        /// SQL statement for function matchTape2TapeDrive
+        /// SQL statement for function allocateDrive
         static const std::string s_allocateDriveStatementString;
   
-        /// SQL statement object for function matchTape2TapeDrive
+        /// SQL statement object for function allocateDrive
         oracle::occi::Statement *m_allocateDriveStatement;
+  
+        /// SQL statement for function requestToSubmit
+        static const std::string s_requestToSubmitStatementString;
+  
+        /// SQL statement object for function requestToSubmit
+        oracle::occi::Statement *m_requestToSubmitStatement;
   
         /// SQL statement for function selectCompatibilitiesForDriveModel
         static const std::string
@@ -454,7 +466,8 @@ namespace castor {
          * the generic db API.
          * helper method to create Oracle statement
          */
-        virtual oracle::occi::Statement* createStatement(const std::string& stmtString)
+        virtual oracle::occi::Statement*
+          createStatement(const std::string& stmtString)
           throw (castor::exception::Exception);
           
         /**
