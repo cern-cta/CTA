@@ -498,24 +498,19 @@ throw (castor::exception::Exception) {
 void castor::vdqm::OldProtocolInterpreter::sendAcknPing(int queuePosition)
 throw (castor::exception::Exception) {
   
-  int reqtype;
+  int magic = VDQM_MAGIC;
+  int reqtype = VDQM_PING;
   char hdrbuf[VDQM_HDRBUFSIZ];
-  int magic, len;
   char *p;
     
   magic = VDQM_MAGIC;
-  len = queuePosition;
   reqtype = VDQM_PING;
 
   p = hdrbuf;
   DO_MARSHALL(LONG,p,magic,SendTo);
   DO_MARSHALL(LONG,p,reqtype,SendTo);
-  DO_MARSHALL(LONG,p,len,SendTo);
+  DO_MARSHALL(LONG,p,queuePosition,SendTo);
     
-  magic = VDQM_MAGIC;
-  len = 0;
-  p = hdrbuf;
-  
   //Send buffer to client
   VdqmSocketHelper::vdqmNetwrite(ptr_serverSocket->socket(), hdrbuf);
 }
