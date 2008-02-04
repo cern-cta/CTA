@@ -160,6 +160,42 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_errorCode
+       * [s]errno in case of failure
+       * @return the value of m_errorCode
+       */
+      int errorCode() const {
+        return m_errorCode;
+      }
+
+      /**
+       * Set the value of m_errorCode
+       * [s]errno in case of failure
+       * @param new_var the new value of m_errorCode
+       */
+      void setErrorCode(int new_var) {
+        m_errorCode = new_var;
+      }
+
+      /**
+       * Get the value of m_errorMessage
+       * Error message in case of failure
+       * @return the value of m_errorMessage
+       */
+      std::string errorMessage() const {
+        return m_errorMessage;
+      }
+
+      /**
+       * Set the value of m_errorMessage
+       * Error message in case of failure
+       * @param new_var the new value of m_errorMessage
+       */
+      void setErrorMessage(std::string new_var) {
+        m_errorMessage = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -298,6 +334,12 @@ namespace castor {
 
       /// The time, when the tape request is beeing created
       u_signed64 m_creationTime;
+
+      /// [s]errno in case of failure
+      int m_errorCode;
+
+      /// Error message in case of failure
+      std::string m_errorMessage;
 
       /// The id of this object
       u_signed64 m_id;

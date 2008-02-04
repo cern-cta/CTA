@@ -59,7 +59,7 @@ static castor::CnvFactory<castor::db::cnv::DbTapeRequestCnv>* s_factoryDbTapeReq
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbTapeRequestCnv::s_insertStatementString =
-"INSERT INTO TapeRequest (priority, modificationTime, creationTime, id, tape, tapeAccessSpecification, requestedSrv, tapeDrive, deviceGroupName, status, client) VALUES (:1,:2,:3,ids_seq.nextval,:4,:5,:6,:7,:8,:9,:10) RETURNING id INTO :11";
+"INSERT INTO TapeRequest (priority, modificationTime, creationTime, errorCode, errorMessage, id, tape, tapeAccessSpecification, requestedSrv, tapeDrive, deviceGroupName, status, client) VALUES (:1,:2,:3,:4,:5,ids_seq.nextval,:6,:7,:8,:9,:10,:11,:12) RETURNING id INTO :13";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbTapeRequestCnv::s_deleteStatementString =
@@ -67,11 +67,11 @@ const std::string castor::db::cnv::DbTapeRequestCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbTapeRequestCnv::s_selectStatementString =
-"SELECT priority, modificationTime, creationTime, id, tape, tapeAccessSpecification, requestedSrv, tapeDrive, deviceGroupName, status, client FROM TapeRequest WHERE id = :1";
+"SELECT priority, modificationTime, creationTime, errorCode, errorMessage, id, tape, tapeAccessSpecification, requestedSrv, tapeDrive, deviceGroupName, status, client FROM TapeRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbTapeRequestCnv::s_updateStatementString =
-"UPDATE TapeRequest SET priority = :1, modificationTime = :2, status = :3 WHERE id = :4";
+"UPDATE TapeRequest SET priority = :1, modificationTime = :2, errorCode = :3, errorMessage = :4, status = :5 WHERE id = :6";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbTapeRequestCnv::s_storeTypeStatementString =
@@ -569,7 +569,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjVdqmTape(castor::vdqm::TapeReques
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeId = rset->getInt64(5);
+  u_signed64 tapeId = rset->getInt64(7);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -607,7 +607,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeAccessSpecification(castor::v
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeAccessSpecificationId = rset->getInt64(6);
+  u_signed64 tapeAccessSpecificationId = rset->getInt64(8);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -645,7 +645,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeServer(castor::vdqm::TapeRequ
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 requestedSrvId = rset->getInt64(7);
+  u_signed64 requestedSrvId = rset->getInt64(9);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -683,7 +683,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjTapeDrive(castor::vdqm::TapeReque
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 tapeDriveId = rset->getInt64(8);
+  u_signed64 tapeDriveId = rset->getInt64(10);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -723,7 +723,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjDeviceGroupName(castor::vdqm::Tap
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 deviceGroupNameId = rset->getInt64(9);
+  u_signed64 deviceGroupNameId = rset->getInt64(11);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -761,7 +761,7 @@ void castor::db::cnv::DbTapeRequestCnv::fillObjClientIdentification(castor::vdqm
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = rset->getInt64(11);
+  u_signed64 clientId = rset->getInt64(13);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -799,7 +799,7 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(11, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(13, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_storeTypeStatement) {
       m_storeTypeStatement = createStatement(s_storeTypeStatementString);
@@ -808,15 +808,17 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(1, obj->priority());
     m_insertStatement->setUInt64(2, obj->modificationTime());
     m_insertStatement->setInt(3, time(0));
-    m_insertStatement->setUInt64(4, (type == OBJ_VdqmTape && obj->tape() != 0) ? obj->tape()->id() : 0);
-    m_insertStatement->setUInt64(5, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
-    m_insertStatement->setUInt64(6, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
-    m_insertStatement->setUInt64(7, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
-    m_insertStatement->setUInt64(8, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
-    m_insertStatement->setInt(9, (int)obj->status());
-    m_insertStatement->setUInt64(10, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setInt(4, obj->errorCode());
+    m_insertStatement->setString(5, obj->errorMessage());
+    m_insertStatement->setUInt64(6, (type == OBJ_VdqmTape && obj->tape() != 0) ? obj->tape()->id() : 0);
+    m_insertStatement->setUInt64(7, (type == OBJ_TapeAccessSpecification && obj->tapeAccessSpecification() != 0) ? obj->tapeAccessSpecification()->id() : 0);
+    m_insertStatement->setUInt64(8, (type == OBJ_TapeServer && obj->requestedSrv() != 0) ? obj->requestedSrv()->id() : 0);
+    m_insertStatement->setUInt64(9, (type == OBJ_TapeDrive && obj->tapeDrive() != 0) ? obj->tapeDrive()->id() : 0);
+    m_insertStatement->setUInt64(10, (type == OBJ_DeviceGroupName && obj->deviceGroupName() != 0) ? obj->deviceGroupName()->id() : 0);
+    m_insertStatement->setInt(11, (int)obj->status());
+    m_insertStatement->setUInt64(12, (type == OBJ_ClientIdentification && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(11));
+    obj->setId(m_insertStatement->getUInt64(13));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -836,6 +838,8 @@ void castor::db::cnv::DbTapeRequestCnv::createRep(castor::IAddress* address,
                     << "  priority : " << obj->priority() << std::endl
                     << "  modificationTime : " << obj->modificationTime() << std::endl
                     << "  creationTime : " << obj->creationTime() << std::endl
+                    << "  errorCode : " << obj->errorCode() << std::endl
+                    << "  errorMessage : " << obj->errorMessage() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  tape : " << obj->tape() << std::endl
                     << "  tapeAccessSpecification : " << obj->tapeAccessSpecification() << std::endl
@@ -867,8 +871,10 @@ void castor::db::cnv::DbTapeRequestCnv::updateRep(castor::IAddress* address,
     // Update the current object
     m_updateStatement->setInt(1, obj->priority());
     m_updateStatement->setUInt64(2, obj->modificationTime());
-    m_updateStatement->setInt(3, (int)obj->status());
-    m_updateStatement->setUInt64(4, obj->id());
+    m_updateStatement->setInt(3, obj->errorCode());
+    m_updateStatement->setString(4, obj->errorMessage());
+    m_updateStatement->setInt(5, (int)obj->status());
+    m_updateStatement->setUInt64(6, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -957,8 +963,10 @@ castor::IObject* castor::db::cnv::DbTapeRequestCnv::createObj(castor::IAddress* 
     object->setPriority(rset->getInt(1));
     object->setModificationTime(rset->getUInt64(2));
     object->setCreationTime(rset->getUInt64(3));
-    object->setId(rset->getUInt64(4));
-    object->setStatus((enum castor::vdqm::TapeRequestStatusCodes)rset->getInt(10));
+    object->setErrorCode(rset->getInt(4));
+    object->setErrorMessage(rset->getString(5));
+    object->setId(rset->getUInt64(6));
+    object->setStatus((enum castor::vdqm::TapeRequestStatusCodes)rset->getInt(12));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -999,8 +1007,10 @@ void castor::db::cnv::DbTapeRequestCnv::updateObj(castor::IObject* obj)
     object->setPriority(rset->getInt(1));
     object->setModificationTime(rset->getUInt64(2));
     object->setCreationTime(rset->getUInt64(3));
-    object->setId(rset->getUInt64(4));
-    object->setStatus((enum castor::vdqm::TapeRequestStatusCodes)rset->getInt(10));
+    object->setErrorCode(rset->getInt(4));
+    object->setErrorMessage(rset->getString(5));
+    object->setId(rset->getUInt64(6));
+    object->setStatus((enum castor::vdqm::TapeRequestStatusCodes)rset->getInt(12));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

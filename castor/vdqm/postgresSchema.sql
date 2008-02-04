@@ -5,7 +5,7 @@ CREATE TABLE TapeAccessSpecification (accessMode INT4, density VARCHAR(2048), ta
 CREATE TABLE TapeServer (serverName VARCHAR(2048), id INT8 CONSTRAINT I_TapeServer_Id PRIMARY KEY, actingMode INTEGER);
 
 /* SQL statements for type TapeRequest */
-CREATE TABLE TapeRequest (priority INT4, modificationTime INT8, creationTime INT8, id INT8 CONSTRAINT I_TapeRequest_Id PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, client INTEGER);
+CREATE TABLE TapeRequest (priority INT4, modificationTime INT8, creationTime INT8, errorCode INT4, errorMessage VARCHAR(2048), id INT8 CONSTRAINT I_TapeRequest_Id PRIMARY KEY, tape INTEGER, tapeAccessSpecification INTEGER, requestedSrv INTEGER, tapeDrive INTEGER, deviceGroupName INTEGER, status INTEGER, client INTEGER);
 
 /* SQL statements for type TapeDrive */
 CREATE TABLE TapeDrive (jobID INT4, modificationTime INT8, resettime INT8, usecount INT4, errcount INT4, transferredMB INT4, totalMB INT8, driveName VARCHAR(2048), tapeAccessMode INT4, id INT8 CONSTRAINT I_TapeDrive_Id PRIMARY KEY, tape INTEGER, runningTapeReq INTEGER, deviceGroupName INTEGER, status INTEGER, tapeServer INTEGER);

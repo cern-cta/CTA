@@ -48,6 +48,7 @@
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "osdep.h"
+#include <string>
 
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
@@ -97,6 +98,8 @@ void castor::io::StreamTapeRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->priority();
   ad->stream() << obj->modificationTime();
   ad->stream() << obj->creationTime();
+  ad->stream() << obj->errorCode();
+  ad->stream() << obj->errorMessage();
   ad->stream() << obj->id();
   ad->stream() << obj->status();
 }
@@ -120,6 +123,12 @@ castor::IObject* castor::io::StreamTapeRequestCnv::createObj(castor::IAddress* a
   u_signed64 creationTime;
   ad->stream() >> creationTime;
   object->setCreationTime(creationTime);
+  int errorCode;
+  ad->stream() >> errorCode;
+  object->setErrorCode(errorCode);
+  std::string errorMessage;
+  ad->stream() >> errorMessage;
+  object->setErrorMessage(errorMessage);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

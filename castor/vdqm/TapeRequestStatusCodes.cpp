@@ -32,10 +32,11 @@
 //------------------------------------------------------------------------------
 // TapeRequestStatusCodesStrings
 //------------------------------------------------------------------------------
-const char* castor::vdqm::TapeRequestStatusCodesStrings[4] = {
+const char* castor::vdqm::TapeRequestStatusCodesStrings[5] = {
   "REQUEST_PENDING",
   "REQUEST_MATCHED",
   "REQUEST_BEINGSUBMITTED",
-  "REQUEST_SUBMITTED"
+  "REQUEST_SUBMITTED",
+  "REQUEST_FAILED"
 };
 

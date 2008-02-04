@@ -129,6 +129,30 @@ int Cvdqm_TapeRequest_creationTime(struct Cvdqm_TapeRequest_t* instance, u_signe
 int Cvdqm_TapeRequest_setCreationTime(struct Cvdqm_TapeRequest_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of errorCode
+ * [s]errno in case of failure
+ */
+int Cvdqm_TapeRequest_errorCode(struct Cvdqm_TapeRequest_t* instance, int* var);
+
+/**
+ * Set the value of errorCode
+ * [s]errno in case of failure
+ */
+int Cvdqm_TapeRequest_setErrorCode(struct Cvdqm_TapeRequest_t* instance, int new_var);
+
+/**
+ * Get the value of errorMessage
+ * Error message in case of failure
+ */
+int Cvdqm_TapeRequest_errorMessage(struct Cvdqm_TapeRequest_t* instance, const char** var);
+
+/**
+ * Set the value of errorMessage
+ * Error message in case of failure
+ */
+int Cvdqm_TapeRequest_setErrorMessage(struct Cvdqm_TapeRequest_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

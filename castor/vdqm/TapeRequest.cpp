@@ -49,6 +49,8 @@ castor::vdqm::TapeRequest::TapeRequest() throw() :
   m_priority(0),
   m_modificationTime(0),
   m_creationTime(0),
+  m_errorCode(0),
+  m_errorMessage(""),
   m_id(0),
   m_tape(0),
   m_tapeAccessSpecification(0),
@@ -88,6 +90,8 @@ void castor::vdqm::TapeRequest::print(std::ostream& stream,
   stream << indent << "priority : " << m_priority << std::endl;
   stream << indent << "modificationTime : " << m_modificationTime << std::endl;
   stream << indent << "creationTime : " << m_creationTime << std::endl;
+  stream << indent << "errorCode : " << m_errorCode << std::endl;
+  stream << indent << "errorMessage : " << m_errorMessage << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   stream << indent << "Tape : " << std::endl;

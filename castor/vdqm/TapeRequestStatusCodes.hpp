@@ -42,14 +42,15 @@ namespace castor {
       REQUEST_PENDING = 0, //Request has been inserted in db
       REQUEST_MATCHED = 1, //A match with a free drive has been found for this request
       REQUEST_BEINGSUBMITTED = 2, //The request has been picked up by a submitter thread and it's being submitted to rtcpd
-      REQUEST_SUBMITTED = 3 //The request was submitted to rtcpd. From now on, the drive is handling this request
+      REQUEST_SUBMITTED = 3, //The request was submitted to rtcpd. From now on, the drive is handling this request
+      REQUEST_FAILED = 4 //Request failed, errorCode and errorMessage are filled accordingly
     }; /* end of enum TapeRequestStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the TapeRequestStatusCodes enum
      */
-    extern const char* TapeRequestStatusCodesStrings[4];
+    extern const char* TapeRequestStatusCodesStrings[5];
 
 #ifdef __cplusplus
   } /* end of namespace vdqm */
