@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.628 $ $Date: 2008/02/01 14:30:27 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.629 $ $Date: 2008/02/05 11:12:50 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -100,6 +100,7 @@ CREATE INDEX I_DiskCopy_Castorfile on DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem on DiskCopy (fileSystem);
 CREATE INDEX I_DiskCopy_Status on DiskCopy (status);
 CREATE INDEX I_DiskCopy_FS_Status_10 on DiskCopy (fileSystem,decode(status,10,status,NULL));
+CREATE INDEX I_DiskCopy_GC on DiskCopy (fileSystem,creationTime+gcWeight);
 
 CREATE INDEX I_TapeCopy_Castorfile on TapeCopy (castorFile);
 CREATE INDEX I_TapeCopy_Status on TapeCopy (status);
@@ -1848,11 +1849,15 @@ BEGIN
   -- if no tape copy or 0 length file, no migration
   -- so we go directly to status STAGED
   IF nbTC = 0 OR fs = 0 THEN
-    UPDATE DiskCopy SET status = 0 -- STAGED
+    UPDATE DiskCopy
+       SET status = 0, -- STAGED
+           creationTime = getTime()    -- for the GC, effective lifetime of this diskcopy starts now
      WHERE castorFile = cfId AND status = 6; -- STAGEOUT
   ELSE
     -- update the DiskCopy status to CANBEMIGR
-    UPDATE DiskCopy SET status = 10 -- CANBEMIGR
+    UPDATE DiskCopy 
+       SET status = 10, -- CANBEMIGR
+           creationTime = getTime()    -- for the GC, effective lifetime of this diskcopy starts now
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
      RETURNING id INTO dcId;
     -- Create TapeCopies
@@ -2226,7 +2231,9 @@ BEGIN
      WHERE castorFile  = cfId
        AND status IN (0, 10);
     -- except the one we are dealing with that goes to STAGEOUT
-    UPDATE DiskCopy SET status = 6 -- STAGEOUT
+    UPDATE DiskCopy 
+       SET status = 6, -- STAGEOUT
+           gcWeight = 0     -- reset any previous value for the GC
      WHERE id = dcid;
     -- Suppress all Tapecopies (avoid migration of previous version of the file)
     deleteTapeCopies(cfId);
@@ -2302,6 +2309,7 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   srSvcClass INTEGER;
   proto VARCHAR2(2048);
   isUpd NUMBER;
+  wAccess NUMBER;
 BEGIN
   -- Get data
   SELECT euid, egid, svcClass, upd, diskCopy
@@ -2328,10 +2336,16 @@ BEGIN
     -- It might happen that we have more than one, because LSF may have
     -- scheduled a replication on a fileSystem which already had a previous diskcopy.
     -- We don't care and we randomly take the first one.
-    SELECT id, path, status
-      INTO dci, rpath, rstatus
-      FROM DiskCopy
-     WHERE id = dcIds(1);
+    wAccess := 1;   -- XXX to be replaced by:
+    --SELECT weigthAccess INTO wAccess 
+    --  FROM SvcClass, DiskPool2SvcClass D2S, FileSystem
+    -- WHERE FileSystem.id = fileSystemId
+    --   AND FileSystem.diskPool = D2S.parent
+    --   AND D2S.child = SvcClass.id;
+    UPDATE DiskCopy
+       SET gcWeight = gcWeight + wAccess*86400
+     WHERE id = dcIds(1)
+    RETURNING id, path, status INTO dci, rpath, rstatus;
     -- Let's update the SubRequest and set the link with the DiskCopy
     UPDATE SubRequest SET DiskCopy = dci WHERE id = srId RETURNING protocol INTO proto;
     -- In case of an update, if the protocol used does not support
@@ -2478,6 +2492,8 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   proto VARCHAR2(2048);
   reqId NUMBER;
   svcClassId NUMBER;
+  srcScId NUMBER;
+  wRepl INTEGER;
 BEGIN
   -- try to get the source status
   SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
@@ -2500,22 +2516,37 @@ BEGIN
     RETURN;
   END IF;
   -- otherwise, we can validate the new diskcopy
-  UPDATE DiskCopy
-     SET status = srcStatus
-   WHERE id = dcId
-  RETURNING CastorFile, FileSystem INTO cfId, fsId;
-  -- update SubRequest
+  -- update SubRequest and get data
   UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request INTO srId, proto, reqId;
-  -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
-  -- DRAINING filesystem to INVALID.
   SELECT maxReplicaNb, SvcClass.id INTO maxRepl, svcClassId
     FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
+  SELECT child INTO srcScId   -- get the source svcclass
+    FROM DiskPool2SvcClass D2S, FileSystem, DiskCopy
+   WHERE DiskCopy.id = srcDcId
+     AND DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskPool = D2S.parent;
+  IF srcScId = svcClassId THEN
+    wRepl := 5;   -- days XXX to be replaced with:
+    --SELECT weightReplication INTO wRepl FROM SvcClass WHERE id = svcClassId;
+  ELSE
+    wRepl := 0;   -- no aging for disk2disk copy across svcclasses
+  END IF;
+  
+  -- update status and gcWeight: a replica starts with some aging
+  UPDATE DiskCopy
+     SET status = srcStatus,
+         creationTime = getTime(),   -- for the GC, effective lifetime of this diskcopy starts now
+         gcWeight = gcWeight - wRepl*86400
+   WHERE id = dcId
+  RETURNING castorFile, fileSystem INTO cfId, fsId;
+  -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
+  -- DRAINING filesystem to INVALID.
   SELECT count(*) into repl 
     FROM DiskCopy, FileSystem, DiskPool2SvcClass DP2SC
    WHERE castorFile = cfId
@@ -2540,12 +2571,12 @@ BEGIN
   
   -- archive the diskCopy replica request
   archiveSubReq(srId);
+  -- update filesystem status
+  updateFsFileClosed(fsId);
   -- Wake up waiting subrequests
   UPDATE SubRequest SET status = 1,  -- SUBREQUEST_RESTART
          lastModificationTime = getTime(), parent = 0
    WHERE parent = srId;
-  -- update filesystem status
-  updateFsFileClosed(fsId);
 END;
 
 
@@ -2566,11 +2597,7 @@ BEGIN
     srId := 0;
     RETURN;
   END;
-  -- If the DiskCopy is STAGED then this is not a failure
-  IF dcStatus = 0 THEN
-    RETURN;
-  END IF;
-  -- Delete the DiskCopy, Since it can not be the only one, don't try to delete
+  -- Delete the DiskCopy, Since it can be not the only one, don't try to delete
   -- the Castorfile
   DELETE FROM Id2Type WHERE Id = dcId;
   DELETE FROM DiskCopy WHERE Id = dcId;
@@ -2579,7 +2606,7 @@ BEGIN
      SET status = 9, -- SUBREQUEST_FAILED_FINISHED
          lastModificationTime = getTime()
    WHERE diskCopy = dcId 
-     AND status IN (6, 14) -- SUBREQUEST_STAGEOUT, SUBREQUEST_BEINGSHCED
+     AND status IN (6, 14) -- SUBREQUEST_READY, SUBREQUEST_BEINGSHCED
    RETURNING id INTO srId;
   -- Wake up other subrequests waiting on it
   UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
@@ -2948,7 +2975,10 @@ BEGIN
   IF reqType = 119 THEN      -- OBJ_StageRepackRequest
     startRepackMigration(subRequestId, cfId, dci);
   ELSE
-    UPDATE DiskCopy SET status = 0 WHERE id = dci;  -- DISKCOPY_STAGED
+    UPDATE DiskCopy
+       SET status = 0,  -- DISKCOPY_STAGED
+           creationTime = getTime()    -- for the GC, effective lifetime of this diskcopy starts now
+     WHERE id = dci;
     -- restart this subrequest if it's not a repack one
     UPDATE SubRequest
        SET status = 1, lastModificationTime = getTime(), parent = 0  -- SUBREQUEST_RESTART
@@ -3129,7 +3159,7 @@ BEGIN
     ret := 2;
     RETURN;
   END IF;
-  -- set DiskCopies to GCCANDIDATE
+  -- set DiskCopies to INVALID
   UPDATE DiskCopy SET status = 7 -- INVALID
    WHERE castorFile = cfId AND status = 0; -- STAGED
   ret := 0;
@@ -3852,128 +3882,40 @@ END;
 CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
   toBeFreed INTEGER;
   freed INTEGER := 0;
-  dpID INTEGER;
-  policies castorGC.policiesList;
-  --cursors castor.castorGC.GCItem_CurTable;
-  cur castorGC.GCItem_Cur;
-  cur1 castorGC.GCItem_Cur;
-  cur2 castorGC.GCItem_Cur;
-  cur3 castorGC.GCItem_Cur;
-  nextItems castorGC.GCItem_Table := castorGC.GCItem_Table();
-  bestCandidate INTEGER;
-  bestValue NUMBER;
+  deltaFree INTEGER;
 BEGIN
-  -- List policies to be applied
-  SELECT UNIQUE svcClass.gcPolicy
-         BULK COLLECT INTO policies
-    FROM SvcClass, DiskPool2SvcClass, FileSystem
-   WHERE FileSystem.id = fsId
-     AND DiskPool2SvcClass.Parent = FileSystem.diskPool
-     AND SvcClass.Id = DiskPool2SvcClass.Child
-     AND length(SvcClass.gcPolicy) IS NOT NULL; -- strange way ORACLE has to deal with empty strings...
-  IF policies.COUNT = 0 THEN
-    -- no policy defined, nothing to do
-    RETURN;
-  END IF;
-
-  -- Now get the DiskPool and the maxFree space we want to achieve
-  SELECT diskPool, maxFreeSpace * totalSize - free - spaceToBeFreed
-    INTO dpId, toBeFreed
+  -- get the amount of space to liberate
+  SELECT maxFreeSpace * totalSize - free
+    INTO toBeFreed
     FROM FileSystem
-   WHERE FileSystem.id = fsId
-     FOR UPDATE;
+   WHERE FileSystem.id = fsId;
   -- Don't do anything if toBeFreed <= 0
   IF toBeFreed <= 0 THEN
     COMMIT;
     RETURN;
   END IF;
-  UPDATE FileSystem
-     SET spaceToBeFreed = spaceToBeFreed + toBeFreed
-   WHERE FileSystem.id = fsId;
-  -- release the filesystem lock so that other threads can go on
-  COMMIT;
-
-  -- Get candidates for each policy
-  nextItems.EXTEND(policies.COUNT);
-  bestCandidate := -1;
-  bestValue := 100000000000;
-  IF policies.COUNT > 0 THEN
-    EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST)||'(:2, :3); END;'
-      USING OUT cur1, IN fsId, IN toBeFreed;
-    FETCH cur1 INTO nextItems(1);
-    IF policies.COUNT > 1 THEN
-      EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+1)||'(:2, :3); END;'
-        USING OUT cur2, IN fsId, IN toBeFreed;
-      FETCH cur2 INTO nextItems(2);
-      IF policies.COUNT > 2 THEN
-        EXECUTE IMMEDIATE 'BEGIN :1 := '||policies(policies.FIRST+2)||'(:2, :3); END;'
-          USING OUT cur3, IN fsId, IN toBeFreed;
-        FETCH cur3 INTO nextItems(3);
-      END IF;    
-    END IF;    
-  END IF;    
-  FOR i IN policies.FIRST .. policies.LAST LOOP
-    -- maximum 3 policies allowed
-    IF i > policies.FIRST+2 THEN EXIT; END IF;
-    IF nextItems(i).utility < bestValue THEN
-      bestCandidate := i;
-      bestValue := nextItems(i).utility;
+  -- Loop on file deletions
+  FOR dc IN (SELECT id, castorfile FROM DiskCopy
+              WHERE fileSystem = fsId
+                AND status = 0  -- STAGED
+                AND NOT EXISTS (
+                    SELECT 'x' FROM SubRequest 
+                     WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
+                       AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+                ORDER BY creationTime + gcWeight ASC) LOOP
+    -- Mark the DiskCopy
+    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
+     WHERE id = dc.id;
+    -- Update toBeFreed
+    SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
+    freed := freed + deltaFree;
+    -- Shall we continue ?
+    IF toBeFreed <= freed THEN
+      EXIT;
     END IF;
   END LOOP;
-  
-  IF bestCandidate <> -1 THEN
-    -- Now extract the diskcopies that will be garbaged and
-    -- mark them GCCandidate
-    LOOP
-      -- Mark the DiskCopy
-      UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
-       WHERE id = nextItems(bestCandidate).dcId;
-      -- Update toBeFreed
-      freed := freed + nextItems(bestCandidate).fileSize;
-      -- Shall we continue ?
-      IF toBeFreed > freed THEN
-        IF 1 = bestCandidate THEN
-          cur := cur1;
-        ELSIF 2 = bestCandidate THEN
-          cur := cur2;
-        ELSE
-          cur := cur3;
-        END IF;
-        FETCH cur INTO nextItems(bestCandidate);
-        EXIT WHEN cur%NOTFOUND;
-        -- find next candidate
-        bestValue := 100000000000;
-        FOR i IN nextItems.FIRST .. nextItems.LAST LOOP
-          IF nextItems(i).utility < bestValue THEN
-            bestCandidate := i;
-            bestValue := nextItems(i).utility;
-          END IF;
-        END LOOP;
-      ELSE
-        -- enough space freed
-        EXIT;
-      END IF;
-    END LOOP;
-  END IF;
-
-  -- Update Filesystem toBeFreed space to the exact value
-  UPDATE FileSystem
-     SET spaceToBeFreed = spaceToBeFreed + freed - toBeFreed
-   WHERE FileSystem.id = fsId;
-  -- Close cursors
-  IF policies.COUNT > 0 THEN
-    CLOSE cur1;
-    IF policies.COUNT > 1 THEN
-      CLOSE cur2;
-      IF policies.COUNT > 2 THEN
-        CLOSE cur3;
-      END IF;
-    END IF;
-  END IF;
-  -- commit everything
   COMMIT;
 END;
-
 
 /*
  * Runs Garbage collection of invalid DiskCopies on the given FileSystem
@@ -4719,7 +4661,7 @@ BEGIN
     UPDATE SubRequest 
        SET status = 9, lastModificationTime = getTime()
      WHERE id = srId     
-       AND status IN (6, 14) -- SUBREQUEST_STAGEOUT, SUBREQUEST_BEINGSHCED
+       AND status IN (6, 14) -- SUBREQUEST_READY, SUBREQUEST_BEINGSHCED
     RETURNING id INTO res;
 
   -- For StageDiskCopyReplicaRequests call disk2DiskCopyFailed. We don't restart
@@ -4731,7 +4673,7 @@ BEGIN
   ELSE
     -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
     -- status. We only concern ourselves in the termination of a job waiting to
-    -- start i.e. in a SUBREQUEST_STAGEOUT status. Requests in other statuses are
+    -- start i.e. in a SUBREQUEST_READY status. Requests in other statuses are
     -- left unaltered!
     res := 0;
     UPDATE SubRequest
@@ -4739,7 +4681,7 @@ BEGIN
            errorCode = srErrorCode,
            lastModificationTime = getTime()
      WHERE id = srId
-       AND status IN (6, 14) -- SUBREQUEST_STAGEOUT, SUBREQUEST_BEINGSCHED
+       AND status IN (6, 14) -- SUBREQUEST_READY, SUBREQUEST_BEINGSCHED
     RETURNING id INTO res;
   END IF;
 
