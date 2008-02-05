@@ -1362,15 +1362,15 @@ void rtcpd_BroadcastException() {
   if ( databufs != NULL ) {
     for (i=0;i<nb_bufs;i++) {
       if ( databufs != NULL && databufs[i] != NULL ) {
+        (void)Cthread_mutex_lock_ext(databufs[i]->lock);
+        (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
+        (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
         rtcp_log(LOG_DEBUG,
                  "rtcpd_BroadcastException() broadcast to databuf[%d]\n",i);
         tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
                          "func"         , TL_MSG_PARAM_STR, "rtcpd_BroadcastException",
                          "Message"      , TL_MSG_PARAM_STR, "broadcast to databuf",
                          "databuf index", TL_MSG_PARAM_INT, i );        
-        (void)Cthread_mutex_lock_ext(databufs[i]->lock);
-        (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
-        (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
       }
     }
   }
