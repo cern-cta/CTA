@@ -341,8 +341,6 @@ globus_l_gfs_file_net_read_cb(
 	
 	CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
         
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started \n",func);
-	
 	globus_mutex_lock(&CASTOR2int_handle->mutex);
 	{
 		if(eof)	CASTOR2int_handle->done = GLOBUS_TRUE;
@@ -358,7 +356,6 @@ globus_l_gfs_file_net_read_cb(
 				CASTOR2int_handle->done = GLOBUS_TRUE;
 			}
 			else {
-				globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: write %ld byte to fd %d \n",func,nbytes,CASTOR2int_handle->fd);
 				bytes_written = write(CASTOR2int_handle->fd, buffer, nbytes);
 				if(bytes_written < nbytes) {
 					if(bytes_written >= 0) errno = ENOSPC;
@@ -378,7 +375,6 @@ globus_l_gfs_file_net_read_cb(
 		     }
 	}
 	globus_mutex_unlock(&CASTOR2int_handle->mutex);
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished\n",func);
 }
  
    
@@ -393,11 +389,8 @@ globus_l_gfs_CASTOR2int_read_from_net(
 	
 	GlobusGFSName(globus_l_gfs_CASTOR2int_read_from_net);
 	
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started\n",func);
-
 	/* in the read case tis number will vary */
 	globus_gridftp_server_get_optimal_concurrency(CASTOR2int_handle->op, &CASTOR2int_handle->optimal_count);
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: optimal concurrency: %u \n",func,CASTOR2int_handle->optimal_count);
 	
 	while(CASTOR2int_handle->outstanding < CASTOR2int_handle->optimal_count) {
 		buffer=globus_malloc(CASTOR2int_handle->block_size);
@@ -411,7 +404,6 @@ globus_l_gfs_CASTOR2int_read_from_net(
 			}
 			return;
 		}
-		globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: allocated %ld bytes \n",func,CASTOR2int_handle->block_size);
 		result= globus_gridftp_server_register_read(
 				CASTOR2int_handle->op,
 				buffer,
@@ -420,7 +412,7 @@ globus_l_gfs_CASTOR2int_read_from_net(
 				CASTOR2int_handle);
 		
 		if(result != GLOBUS_SUCCESS)  {
-			globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: register read has finished with a bad result \n",func);
+			globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: register read has finished with a bad result \n",func);
 			globus_free(buffer);
 			CASTOR2int_handle->cached_res = result;
 			CASTOR2int_handle->done = GLOBUS_TRUE;
@@ -432,7 +424,6 @@ globus_l_gfs_CASTOR2int_read_from_net(
 		}
 		CASTOR2int_handle->outstanding++;
 	}
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished\n",func);
 }
    
 static
@@ -603,8 +594,6 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 
 	GlobusGFSName(globus_l_gfs_CASTOR2int_send_next_to_client);
         
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started \n",func);
-	
 	if (CASTOR2int_handle->blk_length == 0) {
 		/* check the next range to read */
 		globus_gridftp_server_get_read_range(
@@ -620,7 +609,6 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 			return CASTOR2int_handle->done;
 		}
 	}
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: offset:  %ld \n",func,CASTOR2int_handle->blk_offset);
 	
 	if(CASTOR2int_handle->blk_length == -1 ||	CASTOR2int_handle->blk_length > CASTOR2int_handle->block_size) read_length = CASTOR2int_handle->block_size;
 	else read_length = CASTOR2int_handle->blk_length;
@@ -645,7 +633,6 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		if (CASTOR2int_handle->outstanding == 0) globus_gridftp_server_finished_transfer(CASTOR2int_handle->op, CASTOR2int_handle->cached_res);
 		return CASTOR2int_handle->done;
 	}
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: allocated %ld bytes \n",func,read_length);
 	
 	nbread = read(CASTOR2int_handle->fd, buffer, read_length);
 	if(nbread == 0) { /* eof */
@@ -656,9 +643,8 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		CASTOR2int_handle->done = GLOBUS_TRUE;
 		if (CASTOR2int_handle->outstanding == 0) { 
 			globus_gridftp_server_finished_transfer(CASTOR2int_handle->op, CASTOR2int_handle->cached_res);
-			globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished transfer\n",func);
 		}
-		globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished (eof)\n",func);
+		globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished (eof)\n",func);
 		return CASTOR2int_handle->done;
 	}
 	if(nbread < 0) { /* error */
@@ -669,9 +655,8 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		CASTOR2int_handle->done = GLOBUS_TRUE;
 		if (CASTOR2int_handle->outstanding == 0) { 
 			globus_gridftp_server_finished_transfer(CASTOR2int_handle->op, CASTOR2int_handle->cached_res);
-			globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished transfer\n",func);
 		}
-		globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished (error)\n",func);
+		globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: finished (error)\n",func);
 		return CASTOR2int_handle->done;
 
 	}
@@ -681,7 +666,6 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 		CASTOR2int_handle->optimal_count--;
 	}
 	read_length = nbread;
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: read %ld bytes\n",func,read_length);
 	
 	if(CASTOR2int_handle->blk_length != -1) CASTOR2int_handle->blk_length -= read_length;
 	
@@ -702,7 +686,6 @@ globus_l_gfs_CASTOR2int_send_next_to_client(
 	}
 	
 	CASTOR2int_handle->outstanding++;
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished\n",func);
 	return GLOBUS_FALSE;
 }	
 
@@ -720,12 +703,10 @@ globus_l_gfs_net_write_cb(
 	char * 					func="globus_l_gfs_net_write_cb";
 
 	CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started \n",func);
 	
 	globus_free(buffer); 
 	globus_mutex_lock(&CASTOR2int_handle->mutex);
 	{
-                globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: (outstanding: %u)\n",func,CASTOR2int_handle->outstanding);
 		CASTOR2int_handle->outstanding--;
 		if(result != GLOBUS_SUCCESS) {
 			CASTOR2int_handle->cached_res = result;
@@ -734,13 +715,11 @@ globus_l_gfs_net_write_cb(
 		if(!CASTOR2int_handle->done)  globus_l_gfs_CASTOR2int_send_next_to_client(CASTOR2int_handle);
 		else if (CASTOR2int_handle->outstanding == 0) {
 			close(CASTOR2int_handle->fd);
-			globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished transfer\n",func);
+			globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished transfer\n",func);
 			globus_gridftp_server_finished_transfer(op, CASTOR2int_handle->cached_res);
 		}
 	}
 	globus_mutex_unlock(&CASTOR2int_handle->mutex);
-	globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished\n",func);
-
 }
 
 
