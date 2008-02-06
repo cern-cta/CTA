@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Release$ $Date: 2007/11/28 10:14:42 $ $Author: waldron $
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Release$ $Date: 2008/02/06 16:10:54 $ $Author: dhsmith $
 #
 # Make Castor Oracle library for CDBC API
 #
@@ -39,7 +39,7 @@ ifeq ("${GLOBUS_LOCATION}x","x")
 endif
 
 INCLUDES = -I FileName(FileName(..,..),h) -I$(GLOBUS_LOCATION)/include/$(FLAVOR)
-CFLAGS = $(DEBUG) $(INCLUDES) $(MOPTION) -fPIC
+CFLAGS = $(DEBUG) $(MTCCFLAGS) $(INCLUDES) $(MOPTION) -fPIC
 LDFLAGS  = -L$(GLOBUS_LOCATION)/lib $(MOPTION) -L ../../shlib -shared
 LIBDIR = InstallLibDir
 
