@@ -392,7 +392,7 @@ globus_l_gfs_CASTOR2ext_command(
     pathname--;
 	
     /* TODO rfio setAuth here ? */  
-    status=-1; ops="";
+    status=0; ops="";
     switch(cmd_info->command)
        {
        case GLOBUS_GFS_CMD_MKD:
@@ -435,14 +435,20 @@ globus_l_gfs_CASTOR2ext_command(
        case GLOBUS_GFS_CMD_RNFR:
 	       ops="rnfr";
 	       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: GLOBUS_GFS_CMD_RNFR \n",func);
+	       serrno = SEOPNOTSUP;
+	       status = -1;
 	       break;	       
        case GLOBUS_GFS_CMD_SITE_DSI:
 	       ops="site_dsi";
 	       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: GLOBUS_GFS_CMD_SITE_DSI \n",func);
+	       serrno = SEOPNOTSUP;
+	       status = -1;
 	       break;	       
        case GLOBUS_GFS_CMD_CKSM:
 	       ops="cksm";
 	       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: GLOBUS_GFS_CMD_CKSM \n",func);
+	       serrno = SEOPNOTSUP;
+	       status = -1;
 	       break;
        case GLOBUS_GFS_CMD_SITE_CHMOD:
 	       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: GLOBUS_GFS_CMD_SITE_CHMOD: %s (%o)\n",func,pathname,cmd_info->chmod_mode);
@@ -450,6 +456,8 @@ globus_l_gfs_CASTOR2ext_command(
 	       status = rfio_chmod(pathname, cmd_info->chmod_mode);
 	       break;
        default:
+	       serrno = SEOPNOTSUP;
+	       status = -1;
 	       break;
        }
 	if(status!=0) {
