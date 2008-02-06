@@ -111,6 +111,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 
   castor::vdqm::TapeRequest* request =
     dynamic_cast<castor::vdqm::TapeRequest*>(param);
+  bool driveUnlinked = false;
 
   // If the dynamic cast failed
   if(request == NULL) {
@@ -122,19 +123,16 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     throw e;
   }
 
-  // Needed for the commit/rollback
-  castor::BaseAddress ad;
-  ad.setCnvSvcName("DbCnvSvc");
-  ad.setCnvSvcType(castor::SVC_DBCNV);
+  // Get a handle to the associated tape drive
+  castor::vdqm::TapeDrive* drive = request->tapeDrive();
     
   try {
 
     // Submit the remote tape copy job to RTCPD
     submitJobToRTCPD(request);
 
-    // if everything ok, update status
+    // Everything is OK, so update the status of the request
     request->setStatus(castor::vdqm::REQUEST_SUBMITTED);
-    services()->updateRep(&ad, request, true);
 
   } catch(castor::exception::Exception &e) {
 
@@ -146,11 +144,61 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
 
-    // TO BE DONE - Do something with the DB, such as update status to FAILED
+    // Un-link the associated tape drive
+    request->setTapeDrive(0);
+    drive->setRunningTapeReq(0);
+    driveUnlinked = true;
+
+    // Free the associated tape drive
+    drive->setStatus(UNIT_UP);
+
+    // Set the status of the request to pending
+    request->setStatus(castor::vdqm::REQUEST_PENDING);
+
+    // Update the modficiation times of the request and associated tape drive.
+    // In the case of the request, this will move the request to the end of the
+    // queue as the oldest requests are serviced first.
+    request->setModificationTime(time(NULL));
+    drive->setModificationTime(time(NULL));
   }
 
-  // Clean up
-  delete request;
+  // Needed to commit the changes
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
+
+  try {
+
+    // Update the attributes of the request and drive in the DB
+    services()->updateRep(&ad, request, true);
+    services()->updateRep(&ad, drive, true);
+
+    // If the associated drive was un-linked from the request then update
+    // the DB
+    if(driveUnlinked) {
+      services()->fillRep(&ad, request, OBJ_TapeDrive, true);
+      services()->fillRep(&ad, drive, OBJ_TapeRequest, true);
+    }
+
+    // Commit the changes in the DB
+    svcs()->commit(&ad);
+
+    // Clean up
+    delete request;
+    if(driveUnlinked) {  // If we un-linked the associated tape drive
+      delete drive;
+    }
+
+  } catch(castor::exception::Exception &e) {
+
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("Function", "RTCPJobSubmitterThread::process"),
+      castor::dlf::Param("Message", e.getMessage().str()),
+      castor::dlf::Param("Code", e.code())
+    };
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
+      VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
+  }
 }
 
 
