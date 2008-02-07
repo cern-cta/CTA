@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.630 $ $Date: 2008/02/07 15:06:20 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.631 $ $Date: 2008/02/07 15:28:33 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -343,7 +343,7 @@ END;
 /* compute the impact of a file's size in its gcweight */
 CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
 BEGIN
-  RETURN 1073741824/(s+1);  -- 1GB/fileize
+  RETURN 1073741824/(s+1)*86400;  -- 1GB/fileize
 END;
 
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
