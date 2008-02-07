@@ -495,10 +495,14 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   
     if ( result != NULL && result->size() > 0 ) {
       //If we are here, then we got a result which we can send to the client
-      for(std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
-          it != result->end();
-          it++) {
+      for(
+        std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
+        it != result->end(); it++) {
             
+        if(*it == NULL) {
+          std::cout << "Found a NULL TapeRequest before catch" << std::endl;
+        }
+
         volumeRequest->VolReqID = (unsigned int)(*it)->id();
         
         TapeDrive* tapeDrive = (*it)->tapeDrive();
@@ -554,11 +558,12 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
         castor::dlf::Param param[] =
           {castor::dlf::Param("message", "TapeRequest info"),
            castor::dlf::Param("TapeRequest ID", volumeRequest->VolReqID)};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_SEND_SHOWQUEUES_INFO, 2, param);
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_SEND_SHOWQUEUES_INFO,
+          2, param);
         
         //Send informations to the client
-        oldProtInterpreter->sendToOldClient(
-                    header, volumeRequest, driveRequest);
+        oldProtInterpreter->sendToOldClient(header, volumeRequest,
+          driveRequest);
       }
     }
   } catch (castor::exception::Exception ex) {
@@ -567,6 +572,10 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
       for(
         std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
         it != result->end(); it++) {
+            
+        if(*it == NULL) {
+          std::cout << "Found a NULL TapeRequest after catch" << std::endl;
+        }
 
         if(*it != NULL) {
           TapeDrive* tapeDrive = (*it)->tapeDrive();
