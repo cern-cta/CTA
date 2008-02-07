@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.40 $ $Date: 2008/01/17 14:06:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.41 $ $Date: 2008/02/07 14:16:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -131,6 +131,15 @@ char	**argv;
                             "vid"     , TL_MSG_PARAM_STR  , vid,
                             "rlsflags", TL_MSG_PARAM_INT  , rlsflags,
                             "TPVID"   , TL_MSG_PARAM_TPVID, vid );
+
+        if (rlsflags & TPRLS_DELAY) {
+                int slp = 60;
+                if (p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRY_DELAY", 0)) {
+                        slp = atoi(p)>0?atoi(p):60;
+                }                
+                tplogit (func, "release delayed for %d seconds\n", slp);
+                sleep(slp);
+        }
 
 #if SONYRAW
 	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)

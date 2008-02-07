@@ -1,5 +1,5 @@
 /*
- * $Id: Ctape_constants.h,v 1.3 2007/11/20 15:14:58 wiebalck Exp $
+ * $Id: Ctape_constants.h,v 1.4 2008/02/07 14:16:26 wiebalck Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Ctape_constants.h,v $ $Revision: 1.3 $ $Date: 2007/11/20 15:14:58 $ CERN IT-PDP/DM Jean-Philippe Baud - Benjamin Couturier
+ * @(#)$RCSfile: Ctape_constants.h,v $ $Revision: 1.4 $ $Date: 2008/02/07 14:16:26 $ CERN IT-PDP/DM Jean-Philippe Baud - Benjamin Couturier
  */
 
 #ifndef _CTAPE_CONSTANTS_H
@@ -73,6 +73,8 @@
 #define TPRLS_NOUNLOAD	8	/* release resource but do not unload drive */
 #define TPRLS_UNLOAD   16	/* release resource and always unload drive */
 #define TPRLS_NOWAIT   32	/* do not wait for the release to complete */
+#define TPRLS_DELAY    64   /* wait delay (from 'TAPE CRASHED_RLS_HANDLING_DELAY')
+                               seconds before doing anything */
 
 			/* options for tape utilities */
 

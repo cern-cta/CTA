@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.11 2007/09/25 08:53:56 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.12 2008/02/07 14:16:26 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.11 $ $Date: 2007/09/25 08:53:56 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.12 $ $Date: 2008/02/07 14:16:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -250,6 +250,7 @@ struct main_args *main_args;
 
 	while (1) {
 		check_child_exit();
+
 		if (FD_ISSET (s, &readfd)) {
 #ifdef CSEC
 		        char *mech, *clientid;
@@ -363,105 +364,105 @@ struct main_args *main_args;
 			}
 		}
 
-                /* look for jobs that died */
+        /* look for jobs that died */
 		if (((tm = time (0)) - lasttime) >= CLNREQI) {
 			clean4jobdied();  
 			lasttime = tm;
 		}
 #if VDQM                
-                /* 
-                ** Confirm to VDQM if drives are free 
-                */
-                if ((((tm = time (0)) - lasttime_vdqm_update) >= vdqmchkintvl)) {               
+        /* 
+        ** Confirm to VDQM if drives are free 
+        */
+        if ((((tm = time (0)) - lasttime_vdqm_update) >= vdqmchkintvl)) {               
 
-                        int i;
-                        struct tptab *tunp = tptabp;  
+            int i;
+            struct tptab *tunp = tptabp;  
                         
-                        /* 
-                           Placing the config check into the outer IF avoids to
-                           open the config file every CHECKI (i.e. 10) seconds, but 
-                           preserves the capability to do config changes w/o tpdaemon 
-                           restart. However, changes to the config file to take effect 
-                           can take as long as (old) vdqmchkintvl seconds. 
-                        */
-                        p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE", 0 );
-                        if ((NULL != p) && (0 == strcasecmp( p, "YES" ))) {
+            /* 
+               Placing the config check into the outer IF avoids to
+               open the config file every CHECKI (i.e. 10) seconds, but 
+               preserves the capability to do config changes w/o tpdaemon 
+               restart. However, changes to the config file to take effect 
+               can take as long as (old) vdqmchkintvl seconds. 
+            */
+            p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE", 0 );
+            if ((NULL != p) && (0 == strcasecmp( p, "YES" ))) {
                                                                                 
-                                p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE_INTVL", 0 );
-                                if (NULL != p) {
-                                        vdqmchkintvl = atoi(p);
-                                        if (vdqmchkintvl < 0) {
-                                                vdqmchkintvl = VDQMCHKINTVLDFT;   
-                                        }
-                                } else {
-                                        vdqmchkintvl = VDQMCHKINTVLDFT;  
-                                }
-
-                                for (i = 0; i < nbtpdrives; i++) {
-
-                                        /* 
-                                           If the drive has been unassigned since the last check and 
-                                           tpdaemon thinks the drive is idle ... 
-                                        */
-                                        int drvidle = tpdrvidle(tunp);
-                                        if (drvidle && (tunp->unasn_time > lasttime_vdqm_update)) {
-                                        
-                                                /*  
-                                                    ... but VDQM does not ... 
-                                                */
-                                                int vdqmstate;
-                                                vdqmstate = vdqmdrvstate(tunp);
-                                                if ( (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_ASSIGN)) ||                      /* RUNNING */
-                                                     (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN)) ) {  /* RELEASE */
-
-                                                        /* 
-                                                           ... update VDQM. We explicitely do not check (vdqmstate == UP|FREE) here, since
-                                                          VDQM changes the state to UP|BUSY before contacting tpdaemon. The latter should 
-                                                          not reset the state to UP|FREE in that case. 
-                                                        */
-                                                        int vdqm_rc;
-                                                        int vdqm_status = VDQM_UNIT_UP;
-                                                        tplogit (func, "calling vdqm_UnitStatus to confirm drive (%s) FREE\n", tunp->drive);
-                                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
-                                                                            "func"   , TL_MSG_PARAM_STR, func,
-                                                                            "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus to confirm drive FREE",
-                                                                            "Drive"  , TL_MSG_PARAM_STR, tunp->drive );
-
-                                                        vdqm_rc = vdqm_UnitStatus (NULL, NULL, tunp->dgn, NULL, tunp->drive,
-                                                                                   &vdqm_status, NULL, 0);
-
-                                                        tplogit (func, "vdqm_UnitStatus returned %s\n",
-                                                                 vdqm_rc ? sstrerror(serrno) : "ok");
-                                                        tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc?104:110, 3,
-                                                                            "func",    TL_MSG_PARAM_STR, func, 
-                                                                            "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
-                                                                            "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok");
-                                                } else {
-                                                
-                                                        tplogit (func, "no VDQM update required: states not inconsistent (drive %s, vdqmstate 0x%x)\n",
-                                                                 tunp->drive, vdqmstate );
-                                                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
-                                                                            "func"     , TL_MSG_PARAM_STR, func,
-                                                                            "Message"  , TL_MSG_PARAM_STR, "no VDQM update required, states consistent",
-                                                                            "vdqmstate", TL_MSG_PARAM_INT, vdqmstate,
-                                                                            "Drive"    , TL_MSG_PARAM_STR, tunp->drive );
-                                                }
-                                        
-                                        } else {
-                                        
-                                                tplogit (func, "no VDQM update required: drive %s %s\n", 
-                                                         tunp->drive, drvidle ? "recently checked/set" : "not FREE" );
-                                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
-                                                                    "func"             , TL_MSG_PARAM_STR, func,
-                                                                    "Message"          , TL_MSG_PARAM_STR, "no VDQM update required",
-                                                                    "Reason"           , TL_MSG_PARAM_STR, drvidle ? "recently checked/set" : "drive not FREE",
-                                                                    "Drive"            , TL_MSG_PARAM_STR, tunp->drive );
-                                        }
-                                        tunp++;                                
-                                }
-                                lasttime_vdqm_update = tm;
-                        }
+                p = getconfent( "TAPE", "CONFIRM_DRIVE_FREE_INTVL", 0 );
+                if (NULL != p) {
+                    vdqmchkintvl = atoi(p);
+                    if (vdqmchkintvl < 0) {
+                        vdqmchkintvl = VDQMCHKINTVLDFT;   
+                    }
+                } else {
+                    vdqmchkintvl = VDQMCHKINTVLDFT;  
                 }
+
+                for (i = 0; i < nbtpdrives; i++) {
+
+                    /* 
+                       If the drive has been unassigned since the last check and 
+                       tpdaemon thinks the drive is idle ... 
+                    */
+                    int drvidle = tpdrvidle(tunp);
+                    if (drvidle && (tunp->unasn_time > lasttime_vdqm_update)) {
+                                        
+                        /*  
+                            ... but VDQM does not ... 
+                        */
+                        int vdqmstate;
+                        vdqmstate = vdqmdrvstate(tunp);
+                        if ( (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_ASSIGN)) ||                      /* RUNNING */
+                             (vdqmstate == (VDQM_UNIT_UP|VDQM_UNIT_BUSY|VDQM_UNIT_RELEASE|VDQM_UNIT_UNKNOWN)) ) {  /* RELEASE */
+
+                            /* 
+                               ... update VDQM. We explicitely do not check (vdqmstate == UP|FREE) here, since
+                               VDQM changes the state to UP|BUSY before contacting tpdaemon. The latter should 
+                               not reset the state to UP|FREE in that case. 
+                            */
+                            int vdqm_rc;
+                            int vdqm_status = VDQM_UNIT_UP;
+                            tplogit (func, "calling vdqm_UnitStatus to confirm drive (%s) FREE\n", tunp->drive);
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 3,
+                                                "func"   , TL_MSG_PARAM_STR, func,
+                                                "Message", TL_MSG_PARAM_STR, "calling vdqm_UnitStatus to confirm drive FREE",
+                                                "Drive"  , TL_MSG_PARAM_STR, tunp->drive );
+
+                            vdqm_rc = vdqm_UnitStatus (NULL, NULL, tunp->dgn, NULL, tunp->drive,
+                                                       &vdqm_status, NULL, 0);
+
+                            tplogit (func, "vdqm_UnitStatus returned %s\n",
+                                     vdqm_rc ? sstrerror(serrno) : "ok");
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, vdqm_rc?104:110, 3,
+                                                "func",    TL_MSG_PARAM_STR, func, 
+                                                "Message", TL_MSG_PARAM_STR, "vdqm_UnitStatus returned",
+                                                "Error",   TL_MSG_PARAM_STR, vdqm_rc ? sstrerror(serrno) : "ok");
+                        } else {
+                                                
+                            tplogit (func, "no VDQM update required: states not inconsistent (drive %s, vdqmstate 0x%x)\n",
+                                     tunp->drive, vdqmstate );
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
+                                                "func"     , TL_MSG_PARAM_STR, func,
+                                                "Message"  , TL_MSG_PARAM_STR, "no VDQM update required, states consistent",
+                                                "vdqmstate", TL_MSG_PARAM_INT, vdqmstate,
+                                                "Drive"    , TL_MSG_PARAM_STR, tunp->drive );
+                        }
+                                        
+                    } else {
+                                        
+                        tplogit (func, "no VDQM update required: drive %s %s\n", 
+                                 tunp->drive, drvidle ? "recently checked/set" : "not FREE" );
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
+                                            "func"             , TL_MSG_PARAM_STR, func,
+                                            "Message"          , TL_MSG_PARAM_STR, "no VDQM update required",
+                                            "Reason"           , TL_MSG_PARAM_STR, drvidle ? "recently checked/set" : "drive not FREE",
+                                            "Drive"            , TL_MSG_PARAM_STR, tunp->drive );
+                    }
+                    tunp++;                                
+                }
+                lasttime_vdqm_update = tm;
+            }
+        }
 #endif
 #ifdef MONITOR
 		/* Sending the Monitoring packet */
@@ -489,6 +490,7 @@ char **argv;
 
 	main_args.argc = argc;
 	main_args.argv = argv;
+
 	if ((maxfds = Cinitdaemon ("tpdaemon", wait4child)) < 0)
 		exit (1);
 	exit (tpd_main (&main_args));
@@ -1132,8 +1134,8 @@ reply:
 }
 
 void procfrdrvreq(req_data, clienthost)
-char *req_data;
-char *clienthost;
+     char *req_data;
+     char *clienthost;
 {
 	int found;
 	gid_t gid;
@@ -1155,12 +1157,12 @@ char *clienthost;
 	RESETID(uid,gid);
 
 	tplogit (func, TP056, "free drive", uid, gid, clienthost);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 76, 5,
-                            "func",       TL_MSG_PARAM_STR, func,
-                            "Message",    TL_MSG_PARAM_STR, "free drive",
-                            "UID",        TL_MSG_PARAM_UID, uid,
-                            "GID",        TL_MSG_PARAM_GID, gid,
-                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
+    tl_tpdaemon.tl_log( &tl_tpdaemon, 76, 5,
+                        "func",       TL_MSG_PARAM_STR, func,
+                        "Message",    TL_MSG_PARAM_STR, "free drive",
+                        "UID",        TL_MSG_PARAM_UID, uid,
+                        "GID",        TL_MSG_PARAM_GID, gid,
+                        "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
 	unmarshall_LONG (rbp, jid);
 	unmarshall_WORD (rbp, rlsflags);
 	unmarshall_WORD (rbp, rls_rpfd);
@@ -1171,45 +1173,51 @@ char *clienthost;
 		if (jid == rrtp->jid) break;
 		rrtp = rrtp->next;
 	}
-
-	for (j = 0; j < nbdgp; j++) {
-		if (strcmp (rrtp->dg[j].name, tunp->dgn) == 0) break;
-	}
-	rrtp->dg[j].used--;	/* decrement usage count */
-	tpdrrt.dg[j].used--;	/* decrement global usage count */
-	if ((rlsflags & TPRLS_KEEP_RSV) == 0 || tunp->asn == -2) {
-		rrtp->dg[j].rsvd--;	/* decrement user reservation for dev group */
-		rrtp->totrsvd--;	/* decrement global user reservation */
-	}
-	rrtp->unldcnt--;		/* decrement number of unloads in progress */
-	tunp->asn = 0;		/* unassign drive */
-	tunp->asn_time = 0;
+    if (rrtp) { /* could be a replayed release */
+        for (j = 0; j < nbdgp; j++) {
+            if (strcmp (rrtp->dg[j].name, tunp->dgn) == 0) break;
+        }
+        rrtp->dg[j].used--;	/* decrement usage count */
+    }
+    if (j>=0 && j<nbdgp) {
+        tpdrrt.dg[j].used--;	/* decrement global usage count */
+    }
+    if (rrtp) {
+        if ((rlsflags & TPRLS_KEEP_RSV) == 0 || tunp->asn == -2) {
+            rrtp->dg[j].rsvd--;	/* decrement user reservation for dev group */
+            rrtp->totrsvd--;	/* decrement global user reservation */
+        }        
+        rrtp->unldcnt--;		/* decrement number of unloads in progress */
+    }
+    if (tunp) {
+        tunp->asn = 0;		/* unassign drive */
+        tunp->asn_time = 0;
         tunp->unasn_time = time(0);
-	free (tunp->filp);	/* release tape file description */
-	tunp->filp = 0;
-	if ((rlsflags & TPRLS_NOUNLOAD) == 0) {
-		tunp->vid[0] = '\0';
-		tunp->vsn[0] = '\0';
-	}
-	tunp->tobemounted = 0;
-
+        free (tunp->filp);	/* release tape file description */
+        tunp->filp = 0;
+        if ((rlsflags & TPRLS_NOUNLOAD) == 0) {
+            tunp->vid[0] = '\0';
+            tunp->vsn[0] = '\0';
+        }
+        tunp->tobemounted = 0;
 #if SACCT
-	tapeacct (TPFREE, tunp->uid, tunp->gid, tunp->jid,
-		tunp->dgn, tunp->drive, "", 0, 0);
+        tapeacct (TPFREE, tunp->uid, tunp->gid, tunp->jid,
+                  tunp->dgn, tunp->drive, "", 0, 0);
 #endif
-
-	if (tunp->up <= 0) {
-		(void) confdrive (tunp, -1, CONF_DOWN, -tunp->up);
-		tunp->up = 0;
-	}
-
-	if (rrtp->totrsvd <= 0) {	/* no more reserved devices, free entry */
-		(rrtp->prev)->next = rrtp->next;
-		if (rrtp->next) (rrtp->next)->prev = rrtp->prev;
-		free (rrtp->dg);
-		free (rrtp);
-		nbjobs--;
-	}
+        if (tunp->up <= 0) {
+            (void) confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+            tunp->up = 0;
+        }
+    }
+    if (rrtp) {
+        if (rrtp->totrsvd <= 0) {	/* no more reserved devices, free entry */
+            (rrtp->prev)->next = rrtp->next;
+            if (rrtp->next) (rrtp->next)->prev = rrtp->prev;
+            free (rrtp->dg);
+            free (rrtp);
+            nbjobs--;
+        }
+    }
 	found = 0;
 	rqp = rlsqp;
 	while (rqp) {
@@ -1645,6 +1653,10 @@ char *clienthost;
 
 	tunp->mntovly_pid = fork ();
 	pid = tunp->mntovly_pid;
+        
+        /* reset the rls retry counter */
+        tunp->rlsrtryctr = 0;
+
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 4,
@@ -2621,6 +2633,7 @@ int rlsflags;
         tl_tpdaemon.tl_fork_prepare( &tl_tpdaemon ); 
 
 	pid = fork ();
+    tunp->rlsovly_pid = pid;
 	if (pid < 0) {
 		usrmsg (func, TP002, "fork", strerror(errno));
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 3,
@@ -2707,19 +2720,20 @@ void wait4child()
 void check_child_exit()
 {
 	int i;
-	int pid;
+	int pid, jid;
 	struct confq *rqp;
 	int status;
 	struct tptab *tunp;
+    struct tprrt *rrtp;
 
 	while ((pid = waitpid (-1, &status, WNOHANG)) > 0) {
-		tplogit (func, "process %d exiting with status %x\n",
-		    pid, status & 0xFFFF);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "Process exiting",
-                                    "PID",     TL_MSG_PARAM_INT, pid,
-                                    "Status",  TL_MSG_PARAM_INT, status & 0xFFFF );                        
+        tplogit (func, "process %d exiting with status %x\n",
+                 pid, status & 0xFFFF);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 108, 4,
+                            "func",    TL_MSG_PARAM_STR, func,
+                            "Message", TL_MSG_PARAM_STR, "Process exiting",
+                            "PID",     TL_MSG_PARAM_INT, pid,
+                            "Status",  TL_MSG_PARAM_INT, status & 0xFFFF );                        
 
 		/* is it a mountape or a posittape process? */
 
@@ -2767,6 +2781,117 @@ void check_child_exit()
 			}
 			rqp = rqp->next;
 		}
+
+        /* is it a rlstape process? */
+
+        tunp = tptabp;
+		for (i = 0; i < nbtpdrives; i++) {
+            int j, c;
+            char *p;
+			if (tunp->rlsovly_pid == pid) {
+                tunp->rlsovly_pid = 0;
+                if (status) {
+                    tplogit (func, "rlstape process %d found dead (jid %d)\n", pid, tunp->jid);
+
+                    p = getconfent( "TAPE", "CRASHED_RLS_HANDLING", 0 );
+                    if (NULL != p) {                                                
+
+                        if (0 == strcasecmp( p, "RETRY" )) { 
+
+                            /* 
+                            **  retry the release or ...
+                            */
+                            
+                            int maxRetries =  3;
+                            if (p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRIES", 0)) {
+                                maxRetries = atoi(p)>0?atoi(p):3;
+                            }     
+
+                            /* pretend this is the first release attempt
+                               and the drive is still assigned         */
+                            tunp->asn = 1;
+
+                            rrtp = tpdrrt.next;
+                            while (rrtp) {
+                                if (jid == rrtp->jid) break;
+                                rrtp = rrtp->next;
+                            }
+                            if (tunp->rlsrtryctr < maxRetries) {
+                                tplogit (func, "retry the release, attempt: %d\n", tunp->rlsrtryctr+1);
+                                c = reldrive (tunp, "cleanup", -1, TPRLS_UNLOAD|TPRLS_DELAY);
+                                if ((c == 0) && rrtp) rrtp->unldcnt++;
+                                tunp->rlsrtryctr++;
+                                tplogit (func, "reldrive returned %d\n", c);
+                            } else {
+                                tplogit (func, "rlstape crashed, release failed, configure the drive down\n");
+                                for (j = 0; j < nbdgp; j++) {
+                                    if (strcmp (tunp->dgn, tpdrrt.dg[j].name) == 0) break;
+                                }                                
+                                tunp->asn = 0;
+                                tunp->asn_time = 0;
+                                tunp->unasn_time = time(0);
+                                tunp->filp = 0;
+                                tunp->vid[0] = '\0';
+                                tunp->vsn[0] = '\0';
+                                tunp->tobemounted = 0;
+                                tpdrrt.dg[j].rsvd--;
+                                        
+                                /* reset the rls retry counter */
+                                tunp->rlsrtryctr = 0;
+
+                                c = confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+                                tunp->up = 0;
+                                tplogit (func, "confdrive returned: %d\n", c);
+                            }
+
+                        } else if (0 == strcasecmp( p, "DOWN" )) {
+
+                            /* 
+                            **  ... put the drive down or ...
+                            */
+
+                            tplogit (func, "rlstape crashed, configure the drive down\n");
+                            for (j = 0; j < nbdgp; j++) {
+                                if (strcmp (tunp->dgn, tpdrrt.dg[j].name) == 0) break;
+                            }                                
+                            tunp->asn = 0;
+                            tunp->asn_time = 0;
+                            tunp->unasn_time = time(0);
+                            tunp->filp = 0;
+                            tunp->vid[0] = '\0';
+                            tunp->vsn[0] = '\0';
+                            tunp->tobemounted = 0;
+                            tpdrrt.dg[j].rsvd--;
+                                                        
+                            /* reset the rls retry counter */
+                            tunp->rlsrtryctr = 0;
+                                                        
+                            c = confdrive (tunp, -1, CONF_DOWN, -tunp->up);
+                            tunp->up = 0;
+                            tplogit (func, "confdrive returned: %d\n", c);
+
+                        } else {
+
+                            /* 
+                            **  ... do nothing at all.
+                            */
+
+                            tplogit (func, "rlstape crashed, no action defined\n"); 
+                        }
+
+                    } else {
+                                                
+                        tplogit (func, "rlstape crashed, CRASHED_RLS_HANDLING not defined\n"); 
+                    }
+
+                } else {
+
+                    tplogit (func, "rlstape process %d exited normally (jid %d)\n", pid, tunp->jid); 
+                }
+			}
+			tunp++;
+		}
+		if (i < nbtpdrives) continue;                
 	}
 }
 #endif
@@ -2779,15 +2904,15 @@ void check_child_exit()
 */
 static int tpdrvidle( struct tptab *tunp ) {
 
-        int free = 0;
+    int free = 0;
 
-        /* drive is not assigned, but up */
-        if ((0 == tunp->asn) && (1 == tunp->up)) {
+    /* drive is not assigned, but up */
+    if ((0 == tunp->asn) && (1 == tunp->up)) {
                 
-                free = 1;
-        }
+        free = 1;
+    }
 
-        return free;
+    return free;
 }
 
 /*

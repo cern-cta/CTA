@@ -326,6 +326,8 @@ struct tptab {		/* tape drive table */
 	int	jid;		/* process group id or session id */
 
 	int	mntovly_pid;	/* pid of mounttape overlay */
+	int	rlsovly_pid;	/* pid of rlstape overlay */
+	int	rlsrtryctr;	/* retry counter in case of replayed releases */
 
 	char	vid[CA_MAXVIDLEN+1];
 	char	vsn[CA_MAXVSNLEN+1];
