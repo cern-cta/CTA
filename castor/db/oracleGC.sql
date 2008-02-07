@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.629 $ $Date: 2008/02/05 11:12:50 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.630 $ $Date: 2008/02/07 15:06:20 $ $Author: sponcec3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -338,6 +338,12 @@ BEGIN
   SELECT lower(regexp_replace(sys_guid(), '(.{8})(.{4})(.{4})(.{4})(.{12})', '\1-\2-\3-\4-\5'))
     INTO ret FROM Dual;
   RETURN ret;
+END;
+
+/* compute the impact of a file's size in its gcweight */
+CREATE OR REPLACE FUNCTION size2gcweight(s NUMBER) RETURN NUMBER IS
+BEGIN
+  RETURN 1073741824/(s+1);  -- 1GB/fileize
 END;
 
 /* PL/SQL method deleting tapecopies (and segments) of a castorfile */
@@ -1699,8 +1705,8 @@ BEGIN
   
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
-  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationtime)
-    VALUES (rpath, destDcId, 0, cfId, 1, gettime());  -- WAITDISK2DISKCOPY  
+  INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationtime, gcWeight)
+    VALUES (rpath, destDcId, 0, cfId, 1, gettime(), size2gcweight(CF.fileSize));  -- WAITDISK2DISKCOPY  
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
   COMMIT;
 END;
@@ -1844,20 +1850,21 @@ CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
                                                  nbTC IN INTEGER) AS
   tcId INTEGER;
   dcId INTEGER;
-
 BEGIN
   -- if no tape copy or 0 length file, no migration
   -- so we go directly to status STAGED
   IF nbTC = 0 OR fs = 0 THEN
     UPDATE DiskCopy
        SET status = 0, -- STAGED
-           creationTime = getTime()    -- for the GC, effective lifetime of this diskcopy starts now
+           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           gcWeight = size2gcweight(fs)
      WHERE castorFile = cfId AND status = 6; -- STAGEOUT
   ELSE
     -- update the DiskCopy status to CANBEMIGR
     UPDATE DiskCopy 
        SET status = 10, -- CANBEMIGR
-           creationTime = getTime()    -- for the GC, effective lifetime of this diskcopy starts now
+           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           gcWeight = size2gcweight(fs)
      WHERE castorFile = cfId AND status = 6 -- STAGEOUT
      RETURNING id INTO dcId;
     -- Create TapeCopies
@@ -2532,7 +2539,7 @@ BEGIN
      AND DiskCopy.fileSystem = FileSystem.id
      AND FileSystem.diskPool = D2S.parent;
   IF srcScId = svcClassId THEN
-    wRepl := 5;   -- days XXX to be replaced with:
+    wRepl := 0;   -- days XXX to be replaced with:
     --SELECT weightReplication INTO wRepl FROM SvcClass WHERE id = svcClassId;
   ELSE
     wRepl := 0;   -- no aging for disk2disk copy across svcclasses
@@ -2775,8 +2782,8 @@ BEGIN
     SELECT fileId, nsHost INTO fid, nh FROM CastorFile WHERE id = cfId;
     SELECT ids_seq.nextval INTO dcId FROM DUAL;
     buildPathFromFileId(fid, nh, dcId, rpath);
-    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime)
-         VALUES (rpath, dcId, 0, cfId, 5, getTime()); -- status WAITFS
+    INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, gcWeight)
+         VALUES (rpath, dcId, 0, cfId, 5, getTime(), 0); -- status WAITFS
     rstatus := 5; -- WAITFS
     rmountPoint := '';
     rdiskServer := '';
@@ -2948,9 +2955,10 @@ CREATE OR REPLACE PROCEDURE fileRecalled(tapecopyId IN INTEGER) AS
   reqType NUMBER;
   cfId NUMBER;
   fsId NUMBER;
+  fs NUMBER;
 BEGIN
-  SELECT SubRequest.id, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem
-    INTO subRequestId, dci, cfid, fsId
+  SELECT SubRequest.id, DiskCopy.id, CastorFile.id, DiskCopy.fileSystem, Castorfile.FileSize
+    INTO subRequestId, dci, cfid, fsId, fs
     FROM TapeCopy, SubRequest, DiskCopy, CastorFile
    WHERE TapeCopy.id = tapecopyId
      AND CastorFile.id = TapeCopy.castorFile
@@ -2977,7 +2985,8 @@ BEGIN
   ELSE
     UPDATE DiskCopy
        SET status = 0,  -- DISKCOPY_STAGED
-           creationTime = getTime()    -- for the GC, effective lifetime of this diskcopy starts now
+           creationTime = getTime(),    -- for the GC, effective lifetime of this diskcopy starts now
+           gcWeight = size2gcweight(fs)
      WHERE id = dci;
     -- restart this subrequest if it's not a repack one
     UPDATE SubRequest
@@ -3813,66 +3822,6 @@ BEGIN
     DELETE FROM Id2Type WHERE id = dcId;
     deleteCastorFile(cfId);
   END;
-END;
-
-
-/*
- * GC policy that mimic the old GC :
- * a mix of oldest first and biggest first
- */
-CREATE OR REPLACE FUNCTION defaultGCPolicy
-(fsId INTEGER, garbageSize INTEGER)
-  RETURN castorGC.GCItem_Cur AS
-  result castorGC.GCItem_Cur;
-BEGIN
-  OPEN result FOR
-    SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
-           getTime() - CF.lastAccessTime + greatest(0,86400*ln((CF.fileSize+1)/1024))
-           - nvl(DC.gcWeight, 0)   -- optional weight used by SRM2 for advisory pinning
-      FROM DiskCopy DC, CastorFile CF
-     WHERE CF.id = DC.castorFile
-       AND DC.fileSystem = fsId
-       AND DC.status = 0  -- STAGED
-       AND NOT EXISTS (
-         SELECT 'x' FROM SubRequest 
-          WHERE DC.status = 0 AND diskcopy = DC.id 
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-    ORDER BY 3 DESC;
-  RETURN result;
-END;
-
-
-/*
- * GC policy that mimic the old GC and takes into account
- * the number of accesses to the file. Namely we garbage
- * collect the oldest and biggest file that had the less
- * accesses but not 0, as a file having 0 accesses will
- * probably be read soon !
- */
-CREATE OR REPLACE FUNCTION nopinGCPolicy
-(fsId INTEGER, garbageSize INTEGER)
-  RETURN castorGC.GCItem_Cur AS
-  result castorGC.GCItem_Cur;
-BEGIN
-  OPEN result FOR
-    SELECT /*+ INDEX(CF) INDEX(DC) */ DC.id, CF.fileSize,
-           getTime() - CF.LastAccessTime -- oldest first
-           + GREATEST(0,86400*LN((CF.fileSize+1)/1024)) -- biggest first
-           + CASE CF.nbAccesses
-               WHEN 0 THEN 86400 -- non accessed last
-               ELSE 20000 * CF.nbAccesses -- most accessed last
-             END
-           - nvl(DC.gcWeight, 0)   -- optional weight used by SRM2 for advisory pinning
-      FROM DiskCopy DC, CastorFile CF
-     WHERE CF.id = DC.castorFile
-       AND DC.fileSystem = fsId
-       AND DC.status = 0 -- STAGED
-       AND NOT EXISTS (
-         SELECT 'x' FROM SubRequest 
-          WHERE DC.status = 0 AND diskcopy = DC.id 
-            AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-     ORDER BY 3 DESC;
-  RETURN result;
 END;
 
 
