@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.631 $ $Date: 2008/02/07 15:28:33 $ $Author: sponcec3 $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.632 $ $Date: 2008/02/08 10:52:34 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -789,7 +789,8 @@ BEGIN
     OPEN s;
     LOOP
       FETCH s BULK COLLECT INTO ids LIMIT 10000;
-      DELETE FROM '||tab||' WHERE id in (SELECT * FROM TABLE(ids));
+      FORALL i IN ids.FIRST..ids.LAST
+        DELETE FROM '||tab||' WHERE id = ids(i);
       COMMIT;
       EXIT WHEN s%NOTFOUND;
     END LOOP;
@@ -3086,8 +3087,7 @@ BEGIN
   IF segs.COUNT > 0 THEN
      UPDATE Tape SET status = 4 -- MOUNTED
        WHERE id = tapeId;
-    FORALL j in segs.FIRST..segs.LAST -- bulk update with the forall..
---much faster
+     FORALL j in segs.FIRST..segs.LAST -- bulk update with the forall..
        UPDATE Segment set status = 7 -- SELECTED
        WHERE id = segs(j);
   END IF;
@@ -3436,18 +3436,16 @@ BEGIN
        FOR UPDATE;
 END;
 
-
 /* PL/SQL method implementing updateFiles2Delete */
 CREATE OR REPLACE PROCEDURE updateFiles2Delete
 (dcIds IN castor."cnumList") AS
 BEGIN
-  FOR i in dcIds.FIRST .. dcIds.LAST LOOP
+  FORALL i in dcIds.FIRST .. dcIds.LAST
     UPDATE DiskCopy
        set status = 9, -- BEING_DELETED
            creationTime = getTime()
            -- note that this is an over-use of the field, but it's needed in selectFiles2Delete
      WHERE id = dcIds(i);
-  END LOOP;
 END;
 
 
@@ -3840,7 +3838,6 @@ BEGIN
    WHERE FileSystem.id = fsId;
   -- Don't do anything if toBeFreed <= 0
   IF toBeFreed <= 0 THEN
-    COMMIT;
     RETURN;
   END IF;
   -- Loop on file deletions
@@ -3850,7 +3847,7 @@ BEGIN
                 AND NOT EXISTS (
                     SELECT 'x' FROM SubRequest 
                      WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
-                       AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14))   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+                       AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))   -- All but FINISHED, FAILED*, ARCHIVED
                 ORDER BY creationTime + gcWeight ASC) LOOP
     -- Mark the DiskCopy
     UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
@@ -3870,38 +3867,18 @@ END;
  * Runs Garbage collection of invalid DiskCopies on the given FileSystem
  */
 CREATE OR REPLACE PROCEDURE garbageCollectInvalidDC(fsId INTEGER) AS
-  sumSize NUMBER;
-  free NUMBER;
-  minFree NUMBER;
-  dcIds "numList";
-  fileSizes "numList";
 BEGIN
   -- GC the INVALID unused diskCopies on this filesystem
-  SELECT DC.id, CF.fileSize
-    BULK COLLECT INTO dcIds, fileSizes
-    FROM DiskCopy DC, CastorFile CF
-   WHERE DC.castorFile = CF.id
-     AND DC.fileSystem = fsId
-     AND DC.status = 7  -- INVALID
+  UPDATE DiskCopy
+     SET status = 8  -- GCCANDIDATE
+   WHERE fileSystem = fsId
+     AND status = 7  -- INVALID
      AND NOT EXISTS (
        SELECT 'x' FROM SubRequest
-        WHERE SubRequest.diskcopy = DC.id
-          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14));  -- All but FINISHED, FAILED_FINISHED, ARCHIVED
-
-  IF dcIds.COUNT > 0 THEN
-    UPDATE DiskCopy SET status = 8  -- GCCANDIDATE
-     WHERE id in (SELECT * FROM Table(dcIds));
-    -- compute and update the filesystem's freed space
-    sumSize := 0;
-    FOR i in fileSizes.FIRST .. fileSizes.LAST LOOP
-      sumSize := sumSize + fileSizes(i);
-    END LOOP;
-    UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed + sumSize
-     WHERE id = fsId;
-    -- commit the cleanup of this filesystem 
-    COMMIT;
-  END IF;
+        WHERE SubRequest.diskcopy = DiskCopy.id
+          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14));  -- All but FINISHED, FAILED*, ARCHIVED
+  -- commit the cleanup of this filesystem 
+  COMMIT;
 END;
 
 
