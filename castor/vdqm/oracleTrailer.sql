@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.7 $ $Release$ $Date: 2008/01/31 17:24:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.8 $ $Release$ $Date: 2008/02/11 14:56:31 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -55,19 +55,26 @@ BEGIN
   
   -- Check all preconditions a tape drive must meet in order to be used by pending tape requests
   OPEN d2rCur FOR
-  SELECT TapeDrive.id, TapeRequest.id
-    FROM TapeDrive, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
-   WHERE TapeDrive.status = 0  -- UNIT_UP
-     AND TapeDrive.runningTapeReq = 0  -- not associated with a tape request
-     AND TapeDrive.tape = 0 -- not associated with a tape
-     AND TapeDrive.tapeServer = TapeServer.id 
+  SELECT FreeTD.id, TapeRequest.id
+    FROM TapeDrive FreeTD, TapeRequest, TapeDrive2TapeDriveComp, TapeDriveCompatibility, TapeServer
+   WHERE FreeTD.status = 0  -- UNIT_UP
+     AND FreeTD.runningTapeReq = 0  -- not associated with a tape request
+     AND FreeTD.tape = 0 -- not associated with a tape
+     AND FreeTD.tapeServer = TapeServer.id 
      AND TapeServer.actingMode = 0  -- ACTIVE
      AND TapeRequest.tapeDrive = 0
      AND (TapeRequest.requestedSrv = TapeServer.id OR TapeRequest.requestedSrv = 0)
-     AND TapeDrive2TapeDriveComp.parent = TapeDrive.id 
+     AND TapeDrive2TapeDriveComp.parent = FreeTD.id 
      AND TapeDrive2TapeDriveComp.child = TapeDriveCompatibility.id 
      AND TapeDriveCompatibility.tapeAccessSpecification = TapeRequest.tapeAccessSpecification
-     AND TapeDrive.deviceGroupName = TapeRequest.deviceGroupName
+     AND FreeTD.deviceGroupName = TapeRequest.deviceGroupName
+     AND NOT EXISTS (
+       -- we explicitly exclude requests whose tape has already been assigned to a drive;
+       -- those requests will be considered upon drive release (cf. TapeDriveStatusHandler)
+       SELECT 'x'
+         FROM TapeDrive UsedTD
+        WHERE UsedTD.tape = TapeRequest.tape
+       )
      /*
      AND TapeDrive.deviceGroupName = tapeDriveDgn.id 
      AND TapeRequest.deviceGroupName = tapeRequestDgn.id 
@@ -167,6 +174,37 @@ WHEN LockError THEN
   -- the SKIP LOCKED clause. This is a workaround to ignore the error until we understand
   -- what to do, another thread will pick up the request so we don't do anything.
   NULL;
+END;
+
+
+/**
+ * PL/SQL method to check and reuse a tape allocation, that is a tape-tape drive match
+ */
+CREATE OR REPLACE PROCEDURE reuseTapeAllocation(tapeId IN NUMBER, tapeDriveId IN NUMBER, ret OUT NUMBER) AS
+  trId NUMBER;
+BEGIN
+  trId := 0;
+  UPDATE TapeRequest
+     SET status = 1,  -- MATCHED
+         tapeDrive = tapeDriveId,
+         modificationTime = getTime()
+   WHERE tapeDrive = 0
+     AND status = 0  -- PENDING
+     AND tape = tapeId
+     AND ROWNUM < 2
+  RETURNING id INTO trId;
+  IF trId > 0 THEN
+    UPDATE TapeDrive
+       SET status = 1, -- UNIT_STARTING
+           jobID = 0,
+           runningTapeReq = trId,
+           modificationTime = getTime()
+     WHERE id = tapeDriveId;
+    ret := 1;   -- a match has been found
+  ELSE
+    -- no request found, we'll unmount
+    ret := 0;
+  END IF;
 END;
 
 
