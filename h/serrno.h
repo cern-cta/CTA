@@ -279,7 +279,8 @@
 #define ESTJOBTIMEDOUT	ESTBASEOFF+20	/* Job timed out while waiting to be scheduled */
 #define ESTSCHEDERR     ESTBASEOFF+21   /* Scheduler error */
 #define ESTSVCCLASSNOFS ESTBASEOFF+22   /* No filesystems available in service class */
-#define ESTMAXERR       ESTBASEOFF+22
+#define ESTNOSEGFOUND   ESTBASEOFF+23   /* No tape segment found */
+#define ESTMAXERR       ESTBASEOFF+23
 
 /*
  *------------------------------------------------------------------------

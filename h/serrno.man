@@ -566,6 +566,9 @@ The following error values are returned only by the stager package:
 .TP
 .B ESTSVCCLASSNOFS
 (1722) No filesystems available in service class
+.TP
+.B ESTNOSEGFOUND
+(1723) No tape segment found
 
 .SH SYSREQ ERRORS
 The following error value is returned only by the sysreq package:
