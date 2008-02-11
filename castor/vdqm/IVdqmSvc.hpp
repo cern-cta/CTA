@@ -79,7 +79,6 @@ namespace castor {
          * must have exactly the same associations!
          * 
          * @return true, if the request does not exist.
-         * @exception in case of error
          */
         virtual bool checkTapeRequest(const TapeRequest *newTapeRequest)
           throw (castor::exception::Exception) = 0;
@@ -91,7 +90,6 @@ namespace castor {
          * @return The row number, 
          *         0 : The request is handled at the moment from a TapeDrive, 
          *         -1: if there is no entry for it.
-         * @exception in case of error
          */  
         virtual int getQueuePosition(const TapeRequest *tapeRequest)
           throw (castor::exception::Exception) = 0;
@@ -107,16 +105,32 @@ namespace castor {
          * 
          * @return true if a free tape drive was allocated to a pending
          * request, else false
-         * @exception in case of error
          */  
        virtual bool allocateDrive()
          throw (castor::exception::Exception) = 0;
 
        /**
+        * Tries to re-use a tape allocation, that is a tape-tape drive match.
+        *
+        * This method is to be called when a tape is released.  The method will
+        * try to match a pending tape request with the drive in which the tape
+        * is still mounted.  This method does not conflict the allocateDrive()
+        * method because the allocateDriveMethod() does not match pending
+        * tape requests whose tapes are busy, and this method can only match
+        * tape requests whose tapes are busy.
+        *
+        * @param The ID of the tape which has been released
+        * @param The ID of the tape drive in which the tape is still mounted
+        * @return true if the tape drive was allocated to a pending request,
+        * else false
+        */
+       virtual bool reuseTapeAllocation(const u_signed64 tapeId,
+         const u_signed64 driveId)
+         throw (castor::exception::Exception) = 0;
+
+       /**
         * Returns a matched "tape drive / tape request" pair if one exists,
         * else NULL.
-        *
-        * @exception in case of error
         */
        virtual castor::vdqm::TapeRequest *requestToSubmit()
          throw (castor::exception::Exception) = 0;
@@ -130,7 +144,6 @@ namespace castor {
          * @parameter tapeModel the model of the requested tape
          * @return the reference in the db or NULL if it is not a right
          * specification
-         * @exception in case of error
          */  
         virtual TapeAccessSpecification* selectTapeAccessSpecification(
           const int accessMode,
@@ -146,7 +159,6 @@ namespace castor {
          * Please notice that caller is responsible for deleting the object.
          * @parameter dgName The dgn which the client has sent to vdqm
          * @return the requested DeviceGroupName, or NULL if it does not exists
-         * @exception in case of error
          */  
         virtual DeviceGroupName* selectDeviceGroupName(
           const std::string dgName) 
@@ -199,7 +211,6 @@ namespace castor {
          * 
          * @param VolReqID The id, which has been sent by RTCPCopyD
          * @return The tape request and its ClientIdentification, or NULL
-         * @exception in case of error
          */
         virtual TapeRequest* selectTapeRequest(const int VolReqID) 
           throw (castor::exception::Exception) = 0;                                       

@@ -235,6 +235,13 @@ namespace castor {
          */
         virtual bool allocateDrive()
           throw (castor::exception::Exception);            
+
+        /**
+         * See castor::vdqm::IVdqmSvc documentation.
+         */
+        virtual bool reuseTapeAllocation(const u_signed64 tapeId,
+          const u_signed64 driveId)
+          throw (castor::exception::Exception);
   
         /**
          * See castor::vdqm::IVdqmSvc documentation.
@@ -424,6 +431,12 @@ namespace castor {
   
         /// SQL statement object for function allocateDrive
         oracle::occi::Statement *m_allocateDriveStatement;
+  
+        /// SQL statement for function reuseTapeAllocation
+        static const std::string s_reuseTapeAllocationStatementString;
+  
+        /// SQL statement object for function reuseTapeAllocation
+        oracle::occi::Statement *m_reuseTapeAllocationStatement;
   
         /// SQL statement for function requestToSubmit
         static const std::string s_requestToSubmitStatementString;
