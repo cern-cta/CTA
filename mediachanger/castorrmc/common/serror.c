@@ -269,6 +269,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
    "Job timed out while waiting to be scheduled",
    "Scheduler error",
    "No filesystems available in service class",
+   "No tape segment found",
    "BAD ERROR NUMBER"
   };
 
