@@ -239,8 +239,9 @@ namespace castor {
         /**
          * See castor::vdqm::IVdqmSvc documentation.
          */
-        virtual bool reuseTapeAllocation(const u_signed64 tapeId,
-          const u_signed64 driveId)
+        virtual u_signed64 reuseTapeAllocation(
+          const castor::vdqm::VdqmTape *tape,
+          const castor::vdqm::TapeDrive *drive)
           throw (castor::exception::Exception);
   
         /**

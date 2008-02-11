@@ -1415,11 +1415,12 @@ bool castor::db::ora::OraVdqmSvc::allocateDrive()
 // -----------------------------------------------------------------------
 // reuseTapeAllocation
 // -----------------------------------------------------------------------
-bool castor::db::ora::OraVdqmSvc::reuseTapeAllocation(const u_signed64 tapeId,
-  const u_signed64 driveId) throw (castor::exception::Exception) {
+u_signed64 castor::db::ora::OraVdqmSvc::reuseTapeAllocation(
+  const castor::vdqm::VdqmTape *tape, const castor::vdqm::TapeDrive *drive)
+  throw (castor::exception::Exception) {
 
-  int allocationWasReused = 0; // 0 = FALSE and 1 = TRUE
-  
+  u_signed64 requestId = 0;
+
 
   // Check whether the statements are ok
   if (0 == m_reuseTapeAllocationStatement) {
@@ -1427,19 +1428,19 @@ bool castor::db::ora::OraVdqmSvc::reuseTapeAllocation(const u_signed64 tapeId,
       createStatement(s_reuseTapeAllocationStatementString);
     
     m_reuseTapeAllocationStatement->registerOutParam
-        (3, oracle::occi::OCCIINT);
+        (3, oracle::occi::OCCIDOUBLE);
 
     m_reuseTapeAllocationStatement->setAutoCommit(true);
   }
 
-  m_reuseTapeAllocationStatement->setDouble(1, tapeId);
-  m_reuseTapeAllocationStatement->setDouble(2, driveId);
+  m_reuseTapeAllocationStatement->setDouble(1, tape->id());
+  m_reuseTapeAllocationStatement->setDouble(2, drive->id());
   
   // Execute statement and get result
   try {
     m_reuseTapeAllocationStatement->executeUpdate();
     
-    allocationWasReused = m_reuseTapeAllocationStatement->getInt(3);
+    requestId = (u_signed64)m_reuseTapeAllocationStatement->getDouble(3);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1449,7 +1450,7 @@ bool castor::db::ora::OraVdqmSvc::reuseTapeAllocation(const u_signed64 tapeId,
     throw ex;
   }
   
-  return allocationWasReused == 1;
+  return requestId;
 }
 
 
