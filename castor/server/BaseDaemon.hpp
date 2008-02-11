@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2007/11/20 15:31:11 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/02/11 16:04:07 $ $Author: itglp $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -35,6 +35,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/server/Mutex.hpp"
+#include "castor/server/NotifierThread.hpp"
 
 
 namespace castor {
@@ -43,6 +44,7 @@ namespace castor {
 
   // Forward declaration
   class BaseServer;
+  class NotifierThread;
 
   ///  handled signals - see the signal handler thread
   const int RESTART_GRACEFULLY = 1;
@@ -74,6 +76,12 @@ namespace castor {
      * @param port the UDP port where to listen
      */
     void addNotifierThreadPool(int port);
+    
+    /**
+     * If created, returns a pointer to the notifier thread.
+     * @return the NotifierThread instance, NULL if not created
+     */
+    NotifierThread* getNotifier();
 
     /**
      * Starts the thread pools in detached mode.
