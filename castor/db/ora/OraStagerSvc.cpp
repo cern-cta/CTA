@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.236 $ $Release$ $Date: 2008/01/31 15:00:46 $ $Author: itglp $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.237 $ $Release$ $Date: 2008/02/11 09:45:18 $ $Author: murrayc3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -1224,7 +1224,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     if (nsSegmentAttrs != NULL ) free(nsSegmentAttrs); 
     // No valid tape copy found. Here it means that we
     // really lost a file on tape!
-    castor::exception::Exception e(serrno);
+    castor::exception::SegmentNotAccessible e;
     e.getMessage() << "No valid tape copy found";
     throw e;
   }
