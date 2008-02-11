@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.632 $ $Date: 2008/02/08 10:52:34 $ $Author: itglp $
+ * @(#)$RCSfile: oracleQuery.sql,v $ $Revision: 1.633 $ $Date: 2008/02/11 09:17:42 $ $Author: itglp $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -2836,6 +2836,9 @@ BEGIN
       END IF;
     END;
   END IF; 
+  -- reset filesize to 0: we are truncating the file
+  UPDATE CastorFile SET fileSize = 0
+   WHERE id = cfId;
   -- link SubRequest and DiskCopy
   UPDATE SubRequest SET diskCopy = dcId,
                         lastModificationTime = getTime()                        
