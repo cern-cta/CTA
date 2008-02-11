@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotifierThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/02/01 11:21:09 $ $Author: itglp $
+ * @(#)$RCSfile: NotifierThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/11 16:02:43 $ $Author: itglp $
  *
  * A thread to handle notifications to wake up workers in a pool
  *
@@ -78,7 +78,7 @@ namespace castor {
      * Performs the notification by signalling the appropriate 
      * condition variable
      */
-    void doNotify(char tpName, int nbThreads) throw ();
+    void doNotify(char tpName, int nbThreads = 1) throw ();
 
   private:
 
