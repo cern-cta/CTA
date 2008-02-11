@@ -91,6 +91,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
   }
 
   if(aDriveWasAllocated) {
+    // Notiify the RTCP job submitter threads
     ((castor::server::BaseDaemon*)param)->getNotifier()->doNotify('J');
   }
 }

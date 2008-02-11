@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.8 $ $Release$ $Date: 2008/02/11 14:56:31 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/11 18:54:25 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -178,12 +178,12 @@ END;
 
 
 /**
- * PL/SQL method to check and reuse a tape allocation, that is a tape-tape drive match
+ * PL/SQL method to check and reuse a tape allocation, that is a tape-tape
+ * drive match
  */
-CREATE OR REPLACE PROCEDURE reuseTapeAllocation(tapeId IN NUMBER, tapeDriveId IN NUMBER, ret OUT NUMBER) AS
-  trId NUMBER;
+CREATE OR REPLACE PROCEDURE reuseTapeAllocation(tapeId IN NUMBER, tapeDriveId IN NUMBER, tapeReqId OUT NUMBER) AS
 BEGIN
-  trId := 0;
+  tapeReqId := 0;
   UPDATE TapeRequest
      SET status = 1,  -- MATCHED
          tapeDrive = tapeDriveId,
@@ -192,18 +192,14 @@ BEGIN
      AND status = 0  -- PENDING
      AND tape = tapeId
      AND ROWNUM < 2
-  RETURNING id INTO trId;
-  IF trId > 0 THEN
+  RETURNING id INTO tapeReqId;
+  IF tapeReqId > 0 THEN -- If a tape request was found
     UPDATE TapeDrive
        SET status = 1, -- UNIT_STARTING
            jobID = 0,
-           runningTapeReq = trId,
+           runningTapeReq = tapeReqId,
            modificationTime = getTime()
      WHERE id = tapeDriveId;
-    ret := 1;   -- a match has been found
-  ELSE
-    -- no request found, we'll unmount
-    ret := 0;
   END IF;
 END;
 

@@ -32,105 +32,105 @@
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
 namespace castor {
-	//Forward declaration
+  //Forward declaration
 
   namespace vdqm {
 
-		//Forward declaration
-		class TapeDrive;
+    //Forward declaration
+    class TapeDrive;
 
-		namespace handler {
-	    /**
-	     * The TapeDriveStatusHandler is only used by the TapeDriveHandler
-	     * class. It handles the status, which has been send from the tdaemon
-	     * to keep the db up to date.
-		   * Note that this class is not used outside of this namespace!
-	     */
-	    class TapeDriveStatusHandler : public BaseRequestHandler {
-				
-				/**
-				 * Like a real friend, TapeDriveHandler will respect the privacy 
-				 * wishes of this class ;-)
-				 */
-				friend class TapeDriveHandler;
-	
-				public:
-				
-				  /**
-				   * Entry point for handling the status, which has been send from
-				   * the tpdaemon to vdqm.
-				   * 
-				   * @exception In case of error
-				   */
-					void handleOldStatus() throw (castor::exception::Exception);
-	
-	
-				protected:
-	
-		      /**
-		       * Constructor
-		       * 
-		       * @param tapeDrive The tape Drive, which needs a consistency check
-					 * @param driveRequest The TapeDriveRequest from the old protocol
-					 * @param cuuid The unique id of the request. Needed for dlf
-					 * @exception In case of error
-		       */
-					TapeDriveStatusHandler(castor::vdqm::TapeDrive* tapeDrive, 
-													 newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
-													 throw(castor::exception::Exception);
-					
-		      /**
-		       * Destructor
-		       */
-					virtual ~TapeDriveStatusHandler() throw();
-					
-						
-				private:
-					// Private variables
-					castor::vdqm::TapeDrive* ptr_tapeDrive;
-					newVdqmDrvReq_t* ptr_driveRequest;
-					Cuuid_t m_cuuid;
-					
-					
-				  /**
-				   * This function is only used internally from handleOldStatus() to 
-				   * handle the case that a VDQM_VOL_MOUNT request is beeing sent from
-				   * the client.
-				   * 
-				   * @exception In case of error
-				   */
-					void handleVolMountStatus() throw (castor::exception::Exception);
-					
-				  /**
-				   * This function is only used internally from handleOldStatus() to 
-				   * handle the case that a VDQM_VOL_UNMOUNT request is beeing sent from
-				   * the client.
-				   * 
-				   * @exception In case of error
-				   */
-					void handleVolUnmountStatus() throw (castor::exception::Exception);
-					
-				  /**
-				   * This function is only used internally from handleOldStatus() to 
-				   * handle the case that a VDQM_UNIT_RELEASE request is beeing sent 
-				   * from the client.
-				   * 
-				   * @exception In case of error
-				   */
-					void handleUnitReleaseStatus() throw (castor::exception::Exception);										
-					
-				  /**
-				   * This function is only used internally from handleOldStatus() to 
-				   * handle the case that a VDQM_UNIT_FREE request is beeing sent 
-				   * from the client. It switches the TapeDrive to UNIT_UP status.
-				   * 
-				   * @exception In case of error
-				   */
-					void handleUnitFreeStatus() throw (castor::exception::Exception);					
-												
-	    }; // class TapeDriveStatusHandler
+    namespace handler {
+      /**
+       * The TapeDriveStatusHandler is only used by the TapeDriveHandler
+       * class. It handles the status, which has been send from the tdaemon
+       * to keep the db up to date.
+       * Note that this class is not used outside of this namespace!
+       */
+      class TapeDriveStatusHandler : public BaseRequestHandler {
+        
+        /**
+         * Like a real friend, TapeDriveHandler will respect the privacy 
+         * wishes of this class ;-)
+         */
+        friend class TapeDriveHandler;
+  
+        public:
+        
+          /**
+           * Entry point for handling the status, which has been send from
+           * the tpdaemon to vdqm.
+           * 
+           * @exception In case of error
+           */
+          void handleOldStatus() throw (castor::exception::Exception);
+  
+  
+        protected:
+  
+          /**
+           * Constructor
+           * 
+           * @param tapeDrive The tape Drive, which needs a consistency check
+           * @param driveRequest The TapeDriveRequest from the old protocol
+           * @param cuuid The unique id of the request. Needed for dlf
+           * @exception In case of error
+           */
+          TapeDriveStatusHandler(castor::vdqm::TapeDrive* tapeDrive, 
+                           newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
+                           throw(castor::exception::Exception);
+          
+          /**
+           * Destructor
+           */
+          virtual ~TapeDriveStatusHandler() throw();
+          
+            
+        private:
+          // Private variables
+          castor::vdqm::TapeDrive* ptr_tapeDrive;
+          newVdqmDrvReq_t* ptr_driveRequest;
+          Cuuid_t m_cuuid;
+          
+          
+          /**
+           * This function is only used internally from handleOldStatus() to 
+           * handle the case that a VDQM_VOL_MOUNT request is beeing sent from
+           * the client.
+           * 
+           * @exception In case of error
+           */
+          void handleVolMountStatus() throw (castor::exception::Exception);
+          
+          /**
+           * This function is only used internally from handleOldStatus() to 
+           * handle the case that a VDQM_VOL_UNMOUNT request is beeing sent from
+           * the client.
+           * 
+           * @exception In case of error
+           */
+          void handleVolUnmountStatus() throw (castor::exception::Exception);
+          
+          /**
+           * This function is only used internally from handleOldStatus() to 
+           * handle the case that a VDQM_UNIT_RELEASE request is beeing sent 
+           * from the client.
+           * 
+           * @exception In case of error
+           */
+          void handleUnitReleaseStatus() throw (castor::exception::Exception);                    
+          
+          /**
+           * This function is only used internally from handleOldStatus() to 
+           * handle the case that a VDQM_UNIT_FREE request is beeing sent 
+           * from the client. It switches the TapeDrive to UNIT_UP status.
+           * 
+           * @exception In case of error
+           */
+          void handleUnitFreeStatus() throw (castor::exception::Exception);          
+                        
+      }; // class TapeDriveStatusHandler
     
-  	} // end of namespace handler
+    } // end of namespace handler
 
   } // end of namespace vdqm
 
