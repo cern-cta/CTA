@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.633 $ $Date: 2008/02/11 09:17:42 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.634 $ $Date: 2008/02/11 10:52:49 $ $Author: gtaur $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -4848,14 +4848,17 @@ CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
  dbInfo OUT castor.DbMigrationInfo_Cur) AS
  tcIds "numList";
 BEGIN
+  -- return for Policy
+  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
+    FROM SvcClass 
+   WHERE SvcClass.name = svcClassName;
   -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
   -- we look first for repack condidates for this svcclass
   -- we update atomically WAITINSTREAMS
    UPDATE TapeCopy A set status=2
     WHERE status IN (0, 1) AND
-    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest, SvcClass
-   		WHERE StageRepackRequest.svcclass = SvcClass.id
-     			AND SvcClass.name= svcclassName 
+    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
+   		WHERE StageRepackRequest.svcclass = svcId
      			AND SubRequest.request = StageRepackRequest.id
      			AND SubRequest.status = 12  --SUBREQUEST_REPACK
      			AND A.castorfile = SubRequest.castorfile
@@ -4868,18 +4871,15 @@ BEGIN
   IF tcIds.count = 0 THEN
     UPDATE TapeCopy A set status=2  
      WHERE status IN (0, 1) AND
-      EXISTS ( SELECT 'x' FROM  CastorFile, svcclass 
+      EXISTS ( SELECT 'x' FROM  CastorFile
      	WHERE A.castorFile = CastorFile.id 
-          AND CastorFile.svcClass = SvcClass.id
-          AND SvcClass.name = svcclassName 
-      ) RETURNING A.id -- CREATED / TOBEMIGRATED
+          AND CastorFile.svcClass = svcId
+      ) AND NOT EXISTS (SELECT 'x' FROM CastorFile,Subrequest,StageRepackRequest WHERE A.castorfile=CastorFile.id
+	 AND Castorfile.id=Subrequest.castorfile AND Subrequest.request=stagerepackrequest.id AND Subrequest.status=12
+        ) RETURNING A.id -- CREATED / TOBEMIGRATED
        BULK COLLECT INTO tcIds;
        COMMIT;
   END IF;
-  -- return for Policy
-  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
-    FROM SvcClass 
-   WHERE SvcClass.name = svcClassName;
   -- return the full resultset
   OPEN dbInfo FOR
     SELECT TapeCopy.id, TapeCopy.copyNb, CastorFile.lastknownfilename, 
@@ -4888,7 +4888,6 @@ BEGIN
      WHERE CastorFile.id = TapeCopy.castorfile 
        AND TapeCopy.id in (SELECT * FROM table(tcIds)); 
 END;
-
 
 /* Get input for python Stream Policy */
 
