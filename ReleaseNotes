@@ -9,6 +9,12 @@
   - Fixed random writing of zero sized files during replication
   - Fixed UDP notification problems between headnode daemons leading to poor response times.
 
+  Hotfixes for 2.1.6-10
+  ---------------------
+
+  - 2.1.6-10-1: Optimization of the gc
+  - 2.1.6-10-2: Set the size of the recreated file initialy to 0.While there were no diskcopy, the cleaning daemon was doing a putdone on failed recreated files. 
+
   Upgrade from 2.1.6-9
   ---------------------
   - Apply the SQL upgrade script to the stager, dlf and repack databases
