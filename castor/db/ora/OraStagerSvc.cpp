@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.237 $ $Release$ $Date: 2008/02/11 09:45:18 $ $Author: murrayc3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.238 $ $Release$ $Date: 2008/02/11 10:38:51 $ $Author: murrayc3 $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -61,6 +61,7 @@
 #include "castor/exception/Busy.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/exception/NoSegmentFound.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/exception/SegmentNotAccessible.hpp"
 #include "castor/stager/TapeStatusCodes.hpp"
@@ -665,7 +666,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       
       return 1;
   }
-  catch (castor::exception::SegmentNotAccessible e) {
+  catch (castor::exception::NoSegmentFound &e) {
     // File has no segments. In such a case, we rollback and
     // set the subrequest to failed.
     try{
@@ -676,7 +677,6 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       }
       subreq->setStatus(castor::stager::SUBREQUEST_FAILED);
       subreq->setErrorCode(e.code());
-      subreq->setErrorMessage("No valid tape copy found");
       cnvSvc()->updateRep(&ad, subreq, true);
       return 0;
     }
@@ -1183,8 +1183,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   }
   if(nbNsSegments == 0) {
     // This file has no copy on tape. This is considered user error
-    castor::exception::SegmentNotAccessible e;
-    e.getMessage() << "No valid tape copy found";
+    castor::exception::NoSegmentFound e;
     throw e;
   }
     
@@ -1225,7 +1224,6 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     // No valid tape copy found. Here it means that we
     // really lost a file on tape!
     castor::exception::SegmentNotAccessible e;
-    e.getMessage() << "No valid tape copy found";
     throw e;
   }
 
