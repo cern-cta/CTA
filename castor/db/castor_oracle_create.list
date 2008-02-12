@@ -1,3 +1,9 @@
 fillType2Obj.sql
-oracleTrailer.sql
+oracleCommon.sql
+oraclePerm.sql
+oracleStager.sql
+oracleScheduler.sql
+oracleQuery.sql
+oracleTape.sql
+oracleGC.sql
 oracleDebug.sql
