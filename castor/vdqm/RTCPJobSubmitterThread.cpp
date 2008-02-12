@@ -170,18 +170,18 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
   try {
 
     // Update the attributes of the request and drive in the DB
-    services()->updateRep(&ad, request, true);
-    services()->updateRep(&ad, drive, true);
+    services()->updateRep(&ad, request, false);
+    services()->updateRep(&ad, drive, false);
 
     // If the associated drive was un-linked from the request then update
     // the DB
     if(driveUnlinked) {
-      services()->fillRep(&ad, request, OBJ_TapeDrive, true);
-      services()->fillRep(&ad, drive, OBJ_TapeRequest, true);
+      services()->fillRep(&ad, request, OBJ_TapeDrive, false);
+      services()->fillRep(&ad, drive, OBJ_TapeRequest, false);
     }
 
     // Commit the changes in the DB
-    svcs()->commit(&ad);
+    services()->commit(&ad);
 
     // Clean up
     delete request;
