@@ -65,7 +65,10 @@ namespace castor{
       
       
       /* constructor-> return the request type, called on the different thread (job, pre, stg) */
-      RequestHelper::RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest) throw(castor::exception::Exception){	
+      RequestHelper::RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest)
+        throw(castor::exception::Exception) :
+        stagerService(0), dbSvc(0), cnsFileId(0), baseAddr(0),
+        subrequest(0), fileRequest(0), svcClass(0), castorFile(0) {
         
         try{
           // for monitoring purposes
@@ -279,15 +282,15 @@ namespace castor{
       /*****************************************************************************************************************************************/      
       void RequestHelper::getCastorFileFromSvcClass(CnsHelper* stgCnsHelper) throw(castor::exception::Exception)
       {
+        // get the fileClass by name
+        castor::stager::FileClass* fileClass = stagerService->selectFileClass(stgCnsHelper->cnsFileclass.name);
+        if(fileClass == 0) {
+          logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
+          castor::exception::Internal ex;
+          ex.getMessage() << "No fileclass " << stgCnsHelper->cnsFileclass.name << " in DB";
+          throw ex;
+        }
         try{
-          // get the fileClass by name
-          castor::stager::FileClass* fileClass = stagerService->selectFileClass(stgCnsHelper->cnsFileclass.name);
-          if(fileClass == 0) {
-            logToDlf(DLF_LVL_USER_ERROR, STAGER_SVCCLASS_EXCEPTION);
-            castor::exception::Internal ex;
-            ex.getMessage() << "No fileclass " << stgCnsHelper->cnsFileclass.name << " in DB";
-            throw ex;
-          }
           u_signed64 fileClassId = fileClass->id();
           u_signed64 svcClassId = svcClass->id();
           cnsFileId = &(stgCnsHelper->cnsFileid);
