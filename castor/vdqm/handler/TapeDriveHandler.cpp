@@ -206,14 +206,23 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
    * If we have passed the consistency checker, then everything looks fine and 
    * we are ready to handle the status from the tpdaemon.
    */
-  TapeDriveStatusHandler statusHandler(tapeDrive, ptr_driveRequest, m_cuuid);
+  // newRequestId will get a valid request ID (value > 0) if there is
+  // another request for the same tape
+  u_signed64 newRequestId;
+  TapeDriveStatusHandler statusHandler(tapeDrive, ptr_driveRequest, m_cuuid,
+    &newRequestId);
   statusHandler.handleOldStatus();
 
 
   /**
-   * Now the last thing is to update the data base
+   * Now the last thing is to update the data base if neccessary.
+   * Note that if an allocation was reused then the database has already been
+   * updated and must not be updated again as this would cause a race condition
+   * with the RTCPJobSubmitter threads.
    */
-  castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive, m_cuuid);
+  if(newRequestId == 0) {
+    castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive, m_cuuid);
+  }
    
   /**
    * Log the actual "new" status.

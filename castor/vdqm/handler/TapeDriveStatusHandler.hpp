@@ -73,11 +73,18 @@ namespace castor {
            * @param tapeDrive The tape Drive, which needs a consistency check
            * @param driveRequest The TapeDriveRequest from the old protocol
            * @param cuuid The unique id of the request. Needed for dlf
+           * @param newRequestId If a tape drive to tape allocation could be
+           * reused, then this parameter will be set to the ID of the request
+           * that reused the allocation, else 0.  Note that if an allocation
+           * was reused then the database has already been updated and must
+           * not be updated again as this would cause a race condition with
+           * the RTCPJobSubmitter threads.
            * @exception In case of error
            */
           TapeDriveStatusHandler(castor::vdqm::TapeDrive* tapeDrive, 
-                           newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid) 
-                           throw(castor::exception::Exception);
+            newVdqmDrvReq_t* driveRequest, Cuuid_t cuuid,
+            u_signed64* newRequestId) 
+            throw(castor::exception::Exception);
           
           /**
            * Destructor
@@ -90,6 +97,7 @@ namespace castor {
           castor::vdqm::TapeDrive* ptr_tapeDrive;
           newVdqmDrvReq_t* ptr_driveRequest;
           Cuuid_t m_cuuid;
+          u_signed64* ptr_newRequestId;
           
           
           /**

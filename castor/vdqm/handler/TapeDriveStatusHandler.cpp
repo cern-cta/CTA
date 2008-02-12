@@ -51,11 +51,15 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveStatusHandler::TapeDriveStatusHandler(
-  castor::vdqm::TapeDrive* tapeDrive, 
-  newVdqmDrvReq_t* driveRequest, 
-  Cuuid_t cuuid) throw(castor::exception::Exception) {
+  castor::vdqm::TapeDrive* tapeDrive, newVdqmDrvReq_t* driveRequest, 
+  Cuuid_t cuuid, u_signed64* newRequestId) throw(castor::exception::Exception) {
     
   m_cuuid = cuuid;
+  ptr_newRequestId = newRequestId;
+
+  // ptr_newRequestId will get a valid request ID (value > 0) if there is
+  // another request for the same tape
+  *ptr_newRequestId = 0;
   
   if ( tapeDrive == NULL || driveRequest == NULL ) {
     castor::exception::InvalidArgument ex;
@@ -318,12 +322,9 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
 void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus() 
   throw (castor::exception::Exception) {
   
-  TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
-  // newRequestId is used if there is another request for the same tape
-  u_signed64 newRequestId = 0;
-  castor::vdqm::VdqmTape* tape = ptr_tapeDrive->tape();
-          
-  
+  TapeRequest*            tapeRequest = ptr_tapeDrive->runningTapeReq();
+  castor::vdqm::VdqmTape* tape        = ptr_tapeDrive->tape();
+
   // Reset request
   if ( tapeRequest != NULL) {
     castor::vdqm::DatabaseHelper::deleteRepresentation(tapeRequest, m_cuuid);
@@ -384,16 +385,16 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         VDQM_DRIVE_STATUS_UNKNOWN_FORCE_UNMOUNT);
     } else {
       // Try to reuse the tape allocation
-      newRequestId = ptr_IVdqmService->reuseTapeAllocation(tape, ptr_tapeDrive);
+      *ptr_newRequestId = ptr_IVdqmService->reuseTapeAllocation(tape, ptr_tapeDrive);
 
       // If the tape allocation was reused
-      if ( newRequestId > 0) {
+      if ( *ptr_newRequestId > 0) {
         castor::dlf::Param params[] = {
           castor::dlf::Param("driveName", ptr_tapeDrive->driveName()),
           castor::dlf::Param("serverName",
             ptr_tapeDrive->tapeServer()->serverName()),
           castor::dlf::Param("tape vid", tape->vid()),
-          castor::dlf::Param("tapeRequest ID", newRequestId)}; 
+          castor::dlf::Param("tapeRequest ID", *ptr_newRequestId)}; 
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
 
@@ -416,7 +417,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
     if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ||
          ptr_tapeDrive->status() == FORCED_UNMOUNT ||
          (ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) ||
-         newRequestId == 0) {
+         *ptr_newRequestId == 0) {
 
       // No, there wasn't any other job for that volume. Tell the
       // drive to unmount the volume. Put unit in WAIT_FOR_UNMOUNT status
