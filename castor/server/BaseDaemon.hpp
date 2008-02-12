@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/02/11 16:04:07 $ $Author: itglp $
+ * @(#)$RCSfile: BaseDaemon.hpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/12 13:10:30 $ $Author: itglp $
  *
  * A base multithreaded daemon supporting signal handling
  * Credits to Jean-Damien Durand for the original C code
@@ -77,12 +77,6 @@ namespace castor {
      */
     void addNotifierThreadPool(int port);
     
-    /**
-     * If created, returns a pointer to the notifier thread.
-     * @return the NotifierThread instance, NULL if not created
-     */
-    NotifierThread* getNotifier();
-
     /**
      * Starts the thread pools in detached mode.
      * Then starts also the signal thread (one per daemon) and waits

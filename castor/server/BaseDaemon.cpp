@@ -114,23 +114,12 @@ void castor::server::BaseDaemon::addNotifierThreadPool(int port)
   // so to not change the command line parsing behavior
   m_threadPools['_'] =
     new castor::server::UDPListenerThreadPool("_NotifierThread",
-      new castor::server::NotifierThread(this), port);
+      castor::server::NotifierThread::getInstance(this), port);
   
   // we run the notifier in the same thread as the listening one
   m_threadPools['_']->setNbThreads(0);
 }
 
-//------------------------------------------------------------------------------
-// getNotifier
-//------------------------------------------------------------------------------
-castor::server::NotifierThread* castor::server::BaseDaemon::getNotifier()
-{
-  BaseThreadPool* tp = m_threadPools['_'];
-  if(tp != 0)
-    return dynamic_cast<castor::server::NotifierThread*>(tp->getThread());
-  else
-    return 0;
-}
 
 //------------------------------------------------------------------------------
 // handleSignals
