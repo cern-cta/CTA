@@ -397,7 +397,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
 
-        // Notiify the RTCP job submitter threads
+        // Notify the RTCP job submitter threads
         castor::server::BaseServer::sendNotification("localhost", VDQM_PORT,
           'J');
 
@@ -416,7 +416,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
     if ( ptr_tapeDrive->status() == STATUS_UNKNOWN ||
          ptr_tapeDrive->status() == FORCED_UNMOUNT ||
          (ptr_driveRequest->status & VDQM_FORCE_UNMOUNT) ||
-         newRequestId > 0) {
+         newRequestId == 0) {
 
       // No, there wasn't any other job for that volume. Tell the
       // drive to unmount the volume. Put unit in WAIT_FOR_UNMOUNT status
