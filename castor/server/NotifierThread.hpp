@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: NotifierThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/11 16:02:43 $ $Author: itglp $
+ * @(#)$RCSfile: NotifierThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/12 13:09:43 $ $Author: itglp $
  *
  * A thread to handle notifications to wake up workers in a pool
  *
@@ -43,22 +43,20 @@ namespace castor {
 
   /**
    * Notification thread for internal daemon notifications.
+   * This class is a singleton.
    */
   class NotifierThread : public virtual IThread {
 
   public:
+  
+    /**
+     * static method to instantiate the singleton
+     * @param owner the daemon controlling this thread: if not provided,
+     * the singleton is not instantiated. See also BaseDaemon.addNotifierThread().
+     * @return pointer to the instance if instantiated.
+     */
+    static NotifierThread* getInstance(castor::server::BaseDaemon* owner = 0);
 
-    /**
-     * Initializes a notification thread.
-     * @param owner the daemon which controls this thread
-     */
-    NotifierThread(castor::server::BaseDaemon* owner);
-    
-    /**
-     * standard destructor
-     */
-    virtual ~NotifierThread() throw() {};
-    
     /**
      * No initialization is needed for the notification thread.
      */
@@ -82,8 +80,22 @@ namespace castor {
 
   private:
 
+    /**
+     * Initializes a notification thread.
+     * @param owner the daemon which controls this thread
+     */
+    NotifierThread(castor::server::BaseDaemon* owner);
+    
+    /**
+     * standard destructor
+     */
+    virtual ~NotifierThread() throw() {};
+
     /// the daemon which controls this notification thread
     BaseDaemon* m_owner;
+    
+    /// the static pointer to the singleton instance of this class
+    static NotifierThread* s_Instance;
     
   };
 

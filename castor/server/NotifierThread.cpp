@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/01 11:21:09 $ $Author: itglp $
+* @(#)$RCSfile: NotifierThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/12 13:09:43 $ $Author: itglp $
 *
 * A thread to handle notifications to wake up workers in a pool
 *
@@ -28,6 +28,24 @@
 #include "castor/server/NotifierThread.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/server/SignalThreadPool.hpp"
+
+// Initialization of the singleton
+castor::server::NotifierThread* castor::server::NotifierThread::s_Instance(0);
+
+//------------------------------------------------------------------------------
+// getInstance
+//------------------------------------------------------------------------------
+castor::server::NotifierThread* castor::server::NotifierThread::getInstance
+  (castor::server::BaseDaemon* owner) {
+  if (0 == s_Instance && 0 != owner) {
+    // The singleton is created only when the owner parameter is supplied;
+    // otherwise, getInstance(0) may return 0.
+    // Note that we are not protecting the instantiation with a mutex
+    // because this class is instantiated before spawning any thread
+    s_Instance = new castor::server::NotifierThread(owner);
+  }
+  return s_Instance;
+}
 
 //------------------------------------------------------------------------------
 // constructor
