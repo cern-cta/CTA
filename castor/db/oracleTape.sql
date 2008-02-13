@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.635 $ $Date: 2008/02/12 16:04:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.636 $ $Date: 2008/02/13 16:12:05 $ $Author: murrayc3 $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -126,6 +126,7 @@ CREATE OR REPLACE PROCEDURE bestTapeCopyForStream(streamId IN INTEGER,
   lastButOneFSUsed NUMBER;
   findNewFS NUMBER := 1;
   nbMigrators NUMBER := 0;
+  unused NUMBER := 0;
 BEGIN
   -- First try to see whether we should resuse the same filesystem as last time
   SELECT lastFileSystemChange, lastFileSystemUsed, lastButOneFileSystemUsed
@@ -239,6 +240,18 @@ BEGIN
   -- update status of selected tapecopy and stream
   UPDATE TapeCopy SET status = 3 -- SELECTED
    WHERE id = tapeCopyId;
+  -- get locks on all the stream we will handle in order to avoid a
+  -- deadlock with the attachTapeCopiesToStreams procedure
+  --
+  -- the deadlock would occur with updates to the NbTapeCopiesInFS
+  -- table performed by the tr_stream2tapecopy_delete trigger triggered
+  -- by the "DELETE FROM Stream2TapeCopy" statement below
+  SELECT 1
+    INTO unused
+    FROM Stream
+    WHERE id IN (SELECT parent FROM Stream2TapeCopy WHERE child = tapeCopyId)
+    ORDER BY id
+    FOR UPDATE; 
   UPDATE Stream
      SET status = 3, -- RUNNING
          lastFileSystemUsed = fileSystemId, lastButOneFileSystemUsed = lastFileSystemUsed
@@ -893,7 +906,13 @@ AS
 BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
-    FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i)) LOOP
+    -- get locks on all the streams we will handle in order to avoid a
+    -- deadlock with the bestTapeCopyForStream procedure
+    --
+    -- the deadlock would occur with updates to the NbTapeCopiesInFS
+    -- table performed by the tr_stream2tapecopy_insert trigger triggered
+    -- by the "INSERT INTO Stream2TapeCopy" statement below
+    FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i) ORDER BY id FOR UPDATE) LOOP
       DECLARE CONSTRAINT_VIOLATED EXCEPTION;
       PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
       BEGIN 
