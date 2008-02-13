@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.41 $ $Date: 2008/02/07 14:16:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.42 $ $Date: 2008/02/13 09:43:07 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -124,22 +124,28 @@ char	**argv;
         vsnretry = 0;
 
 	tplogit (func, "rls dvn=<%s>, vid=<%s>, rlsflags=%d\n", dvn, vid, rlsflags);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
-                            "func"    , TL_MSG_PARAM_STR  , func,
-                            "Message" , TL_MSG_PARAM_STR  , "rls",
-                            "dvn"     , TL_MSG_PARAM_STR  , dvn,
-                            "vid"     , TL_MSG_PARAM_STR  , vid,
-                            "rlsflags", TL_MSG_PARAM_INT  , rlsflags,
-                            "TPVID"   , TL_MSG_PARAM_TPVID, vid );
+    tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 6,
+                        "func"    , TL_MSG_PARAM_STR  , func,
+                        "Message" , TL_MSG_PARAM_STR  , "rls",
+                        "dvn"     , TL_MSG_PARAM_STR  , dvn,
+                        "vid"     , TL_MSG_PARAM_STR  , vid,
+                        "rlsflags", TL_MSG_PARAM_INT  , rlsflags,
+                        "TPVID"   , TL_MSG_PARAM_TPVID, vid );
 
-        if (rlsflags & TPRLS_DELAY) {
-                int slp = 60;
-                if (p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRY_DELAY", 0)) {
-                        slp = atoi(p)>0?atoi(p):60;
-                }                
-                tplogit (func, "release delayed for %d seconds\n", slp);
-                sleep(slp);
-        }
+    if (rlsflags & TPRLS_DELAY) {
+        int slp = 60;
+        if ((p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRY_DELAY", 0))) {
+            slp = atoi(p)>0?atoi(p):60;
+        }                
+        tplogit (func, "release delayed for %d seconds\n", slp);
+        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 5,
+                            "func"    , TL_MSG_PARAM_STR  , func,
+                            "Message" , TL_MSG_PARAM_STR  , "release delayed",
+                            "seconds" , TL_MSG_PARAM_INT  , slp,
+                            "vid"     , TL_MSG_PARAM_STR  , vid,
+                            "TPVID"   , TL_MSG_PARAM_TPVID, vid );
+        sleep(slp);
+    }
 
 #if SONYRAW
 	if (strcmp (devtype, "DIR1") == 0 && den == SRAW)

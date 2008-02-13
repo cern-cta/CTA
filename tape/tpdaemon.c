@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.12 2008/02/07 14:16:26 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.13 2008/02/13 09:43:07 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.12 $ $Date: 2008/02/07 14:16:26 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.13 $ $Date: 2008/02/13 09:43:07 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -115,6 +115,8 @@ void procrsltreq( char*, char* );
 void procrsvreq( char*, char* );
 void procrstatreq( char*, char* );
 
+char *getconfent();
+
 #if VDQM
 static int tpdrvidle( struct tptab* );
 static int vdqmdrvstate( struct tptab* );
@@ -127,7 +129,6 @@ struct main_args *main_args;
 	char *clienthost;
 	struct sockaddr_in from;
 	int fromlen = sizeof(from);
-	char *getconfent();
 	struct hostent *hp;
 	int magic;
 	int msglen;
@@ -2791,8 +2792,16 @@ void check_child_exit()
 			if (tunp->rlsovly_pid == pid) {
                 tunp->rlsovly_pid = 0;
                 if (status) {
-                    tplogit (func, "rlstape process %d found dead (jid %d)\n", pid, tunp->jid);
-
+                    if (tunp) {
+                        tplogit (func, "rlstape process %d found dead (jid %d)\n", pid, tunp->jid);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 6,
+                                            "func"   , TL_MSG_PARAM_STR  , func,
+                                            "Message", TL_MSG_PARAM_STR  , "rlstape process found dead",
+                                            "pid"    , TL_MSG_PARAM_INT  , pid,
+                                            "jid"    , TL_MSG_PARAM_INT  , tunp->jid,
+                                            "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                            "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
+                    }
                     p = getconfent( "TAPE", "CRASHED_RLS_HANDLING", 0 );
                     if (NULL != p) {                                                
 
@@ -2803,7 +2812,7 @@ void check_child_exit()
                             */
                             
                             int maxRetries =  3;
-                            if (p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRIES", 0)) {
+                            if ((p = getconfent ("TAPE", "CRASHED_RLS_HANDLING_RETRIES", 0))) {
                                 maxRetries = atoi(p)>0?atoi(p):3;
                             }     
 
@@ -2817,13 +2826,35 @@ void check_child_exit()
                                 rrtp = rrtp->next;
                             }
                             if (tunp->rlsrtryctr < maxRetries) {
+
                                 tplogit (func, "retry the release, attempt: %d\n", tunp->rlsrtryctr+1);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 5,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "Message", TL_MSG_PARAM_STR  , "retry the release",
+                                                    "attempt", TL_MSG_PARAM_INT  , tunp->rlsrtryctr+1,
+                                                    "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                                    "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
+                                
                                 c = reldrive (tunp, "cleanup", -1, TPRLS_UNLOAD|TPRLS_DELAY);
                                 if ((c == 0) && rrtp) rrtp->unldcnt++;
                                 tunp->rlsrtryctr++;
                                 tplogit (func, "reldrive returned %d\n", c);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 5,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "Message", TL_MSG_PARAM_STR  , "reldrive returned",
+                                                    "rc"     , TL_MSG_PARAM_INT  , c,
+                                                    "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                                    "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
+
                             } else {
+
                                 tplogit (func, "rlstape crashed, release failed, configure the drive down\n");
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "Message", TL_MSG_PARAM_STR  , "rlstape crashed, release failed, configure the drive down",
+                                                    "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                                    "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
+
                                 for (j = 0; j < nbdgp; j++) {
                                     if (strcmp (tunp->dgn, tpdrrt.dg[j].name) == 0) break;
                                 }                                
@@ -2842,6 +2873,9 @@ void check_child_exit()
                                 c = confdrive (tunp, -1, CONF_DOWN, -tunp->up);
                                 tunp->up = 0;
                                 tplogit (func, "confdrive returned: %d\n", c);
+                                tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                    "func"   , TL_MSG_PARAM_STR  , func,
+                                                    "Message", TL_MSG_PARAM_STR  , "rlstape crashed, release failed, configure the drive down" );
                             }
 
                         } else if (0 == strcasecmp( p, "DOWN" )) {
@@ -2851,6 +2885,12 @@ void check_child_exit()
                             */
 
                             tplogit (func, "rlstape crashed, configure the drive down\n");
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 4,
+                                                "func"   , TL_MSG_PARAM_STR  , func,
+                                                "Message", TL_MSG_PARAM_STR  , "rlstape crashed, configure the drive down",
+                                                "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                                "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
+
                             for (j = 0; j < nbdgp; j++) {
                                 if (strcmp (tunp->dgn, tpdrrt.dg[j].name) == 0) break;
                             }                                
@@ -2869,6 +2909,9 @@ void check_child_exit()
                             c = confdrive (tunp, -1, CONF_DOWN, -tunp->up);
                             tunp->up = 0;
                             tplogit (func, "confdrive returned: %d\n", c);
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 2,
+                                                "func"   , TL_MSG_PARAM_STR  , func,
+                                                "Message", TL_MSG_PARAM_STR  , "rlstape crashed, release failed, configure the drive down" );
 
                         } else {
 
@@ -2877,16 +2920,29 @@ void check_child_exit()
                             */
 
                             tplogit (func, "rlstape crashed, no action defined\n"); 
+                            tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                                "func"   , TL_MSG_PARAM_STR  , func,
+                                                "Message", TL_MSG_PARAM_STR  , "rlstape crashed, no action defined" );
                         }
 
                     } else {
                                                 
                         tplogit (func, "rlstape crashed, CRASHED_RLS_HANDLING not defined\n"); 
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 103, 2,
+                                            "func"   , TL_MSG_PARAM_STR  , func,
+                                            "Message", TL_MSG_PARAM_STR  , "rlstape crashed, CRASHED_RLS_HANDLING not defined" );
                     }
 
                 } else {
-
+                    
                     tplogit (func, "rlstape process %d exited normally (jid %d)\n", pid, tunp->jid); 
+                    tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 6,
+                                        "func"   , TL_MSG_PARAM_STR  , func,
+                                        "Message", TL_MSG_PARAM_STR  , "rlstape exited normally",
+                                        "pid"    , TL_MSG_PARAM_INT  , pid,
+                                        "jid"    , TL_MSG_PARAM_INT  , tunp->jid,
+                                        "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
+                                        "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
                 }
 			}
 			tunp++;
