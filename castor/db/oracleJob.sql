@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.635 $ $Date: 2008/02/12 16:04:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.636 $ $Date: 2008/02/13 17:26:39 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -329,9 +329,6 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srcStatus INTEGER;
   proto VARCHAR2(2048);
   reqId NUMBER;
-  svcClassId NUMBER;
-  srcScId NUMBER;
-  wRepl INTEGER;
 BEGIN
   -- try to get the source status
   SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
@@ -359,28 +356,16 @@ BEGIN
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request INTO srId, proto, reqId;
-  SELECT maxReplicaNb, SvcClass.id INTO maxRepl, svcClassId
+  SELECT maxReplicaNb INTO maxRepl
     FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
      AND Req.svcClass = SvcClass.id;
-  SELECT child INTO srcScId   -- get the source svcclass
-    FROM DiskPool2SvcClass D2S, FileSystem, DiskCopy
-   WHERE DiskCopy.id = srcDcId
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskPool = D2S.parent;
-  IF srcScId = svcClassId THEN
-    wRepl := 0;   -- days XXX to be replaced with:
-    --SELECT weightReplication INTO wRepl FROM SvcClass WHERE id = svcClassId;
-  ELSE
-    wRepl := 0;   -- no aging for disk2disk copy across svcclasses
-  END IF;
   
   -- update status and gcWeight: a replica starts with some aging
   UPDATE DiskCopy
      SET status = srcStatus,
-         creationTime = getTime(),   -- for the GC, effective lifetime of this diskcopy starts now
-         gcWeight = gcWeight - wRepl*86400
+         creationTime = getTime()   -- for the GC, effective lifetime of this diskcopy starts now
    WHERE id = dcId
   RETURNING castorFile, fileSystem INTO cfId, fsId;
   -- If the maxReplicaNb is exceeded, update one of the diskcopies in a 
