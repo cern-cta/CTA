@@ -217,8 +217,8 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
   /**
    * Now the last thing is to update the data base if neccessary.
    * Note that if an allocation was reused then the database has already been
-   * updated and must not be updated again as this would cause a race condition
-   * with the RTCPJobSubmitter threads.
+   * updated via a PL/SQL procedure which did not keep tapeDrive in sync,
+   * therefore in this case an update using tapeDrive should not be performed.
    */
   if(newRequestId == 0) {
     castor::vdqm::DatabaseHelper::updateRepresentation(tapeDrive, m_cuuid);

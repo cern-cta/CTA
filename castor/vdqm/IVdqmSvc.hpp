@@ -117,7 +117,8 @@ namespace castor {
         * is still mounted.  This method does not conflict with allocateDrive()
         * because the allocateDrive() does not match pending tape requests
         * whose tapes are busy, and this method can only match tape requests
-        * whose tapes are busy.
+        * whose tapes are busy.  Please note that this method does not commit
+        * the changes to the DB."
         *
         * @param The tape which has been released
         * @param The tape drive in which the tape is still mounted

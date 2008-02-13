@@ -28,7 +28,7 @@
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
@@ -92,7 +92,7 @@ void castor::vdqm::DriveSchedulerThread::run(void *param) {
 
   if(aDriveWasAllocated) {
     // Notiify the RTCP job submitter threads
-    castor::server::BaseServer::sendNotification("localhost", VDQM_PORT, 'J');
+    castor::server::NotifierThread::getInstance()->doNotify('J');
   }
 }
 

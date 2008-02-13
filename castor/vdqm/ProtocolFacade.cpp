@@ -31,6 +31,7 @@
 
 #include <vdqm_constants.h>  //e.g. Magic Number of old vdqm protocol
  
+#include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/newVdqm.h" //Needed for the client_connection
 #include "castor/vdqm/OldRequestFacade.hpp"
@@ -90,7 +91,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
   switch (magicNumber) {
     case VDQM_MAGIC:
       //Request has MagicNumber from old VDQM Protocol
-      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_REQUEST_HAS_OLD_PROTOCOL_MAGIC_NB );
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_REQUEST_HAS_OLD_PROTOCOL_MAGIC_NB );
       
       try {
         handleOldVdqmRequest(magicNumber);
@@ -259,9 +260,12 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
        */
       if ( rc  == VDQM_COMMIT) {
         svcs()->commit(&ad);
+
+        // Notify the RTCP job submitter threads of possible work to be done
+        castor::server::NotifierThread::getInstance()->doNotify('J');
         
         // "Request stored in DB" message
-        castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_REQUEST_STORED_IN_DB);        
+        castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_REQUEST_STORED_IN_DB);        
       }
       else {
         // "Client didn't send a VDQM_COMMIT => Rollback of request in db"

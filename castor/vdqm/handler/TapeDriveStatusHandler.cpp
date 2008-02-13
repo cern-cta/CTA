@@ -28,7 +28,6 @@
  
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/server/BaseServer.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
@@ -397,10 +396,6 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
           castor::dlf::Param("tapeRequest ID", *ptr_newRequestId)}; 
         castor::dlf::dlf_writep(m_cuuid, DLF_LVL_SYSTEM,
           VDQM_FOUND_QUEUED_TAPE_REQUEST_FOR_MOUNTED_TAPE, 4, params);
-
-        // Notify the RTCP job submitter threads
-        castor::server::BaseServer::sendNotification("localhost", VDQM_PORT,
-          'J');
 
       // Else the tape allocation could not be reused
       } else {

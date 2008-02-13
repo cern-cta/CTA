@@ -24,7 +24,7 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/ServerSocket.hpp"
-#include "castor/server/BaseServer.hpp"
+#include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
 #include "castor/vdqm/RequestHandlerThread.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
@@ -70,7 +70,7 @@ void castor::vdqm::RequestHandlerThread::run(void *param)
     handleRequest(&cuuid, sock);
 
     // Maybe the scheduler has some work to do
-    castor::server::BaseServer::sendNotification("localhost", VDQM_PORT, 'D');
+    castor::server::NotifierThread::getInstance()->doNotify('D');
 
   } catch(castor::exception::Exception &e) {
 
@@ -119,7 +119,7 @@ void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t *cuuid,
     castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
     castor::dlf::Param("Port", port)
   };
-  castor::dlf::dlf_writep(*cuuid, DLF_LVL_SYSTEM, VDQM_NEW_REQUEST_ARRIVAL,
+  castor::dlf::dlf_writep(*cuuid, DLF_LVL_DEBUG, VDQM_NEW_REQUEST_ARRIVAL,
     2, params);
 
   try {

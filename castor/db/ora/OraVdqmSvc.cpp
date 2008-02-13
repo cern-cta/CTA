@@ -1430,7 +1430,7 @@ u_signed64 castor::db::ora::OraVdqmSvc::reuseTapeAllocation(
     m_reuseTapeAllocationStatement->registerOutParam
         (3, oracle::occi::OCCIDOUBLE);
 
-    m_reuseTapeAllocationStatement->setAutoCommit(true);
+    m_reuseTapeAllocationStatement->setAutoCommit(false);
   }
 
   m_reuseTapeAllocationStatement->setDouble(1, tape->id());
