@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.635 $ $Date: 2008/02/12 16:04:51 $ $Author: itglp $
+ * @(#)$RCSfile: oraclePerm.sql,v $ $Revision: 1.636 $ $Date: 2008/02/13 11:42:20 $ $Author: itglp $
  *
  * PL/SQL code for permission and B/W list handling
  *
@@ -58,7 +58,7 @@ END;
   */
 CREATE OR REPLACE PACKAGE castorBW AS
   TYPE Privilege IS RECORD (
-    svcCLass NUMBER,
+    svcClass VARCHAR2(2048),
     euid NUMBER,
     egid NUMBER,
     reqType NUMBER);
@@ -181,11 +181,13 @@ CREATE OR REPLACE PACKAGE BODY castorBW AS
     unused Privilege;
   BEGIN
     IF contains(P1, P2) THEN
-      IF P1.euid = P2.euid OR P1.egid = P2.egid OR P1.svcClass = P2.svcClass OR P1.reqType = P2.reqType THEN
+      IF P1.euid = P2.euid AND P1.egid = P2.egid AND P1.svcClass = P2.svcClass AND P1.reqType = P2.reqType THEN
         raise_application_error(-20109, 'Empty privilege');
       ELSE
         raise_application_error(-20108, 'Invalid privilege intersection');
       END IF;
+    ELSIF contains(P2, P1) THEN
+      raise_application_error(-20109, 'Empty privilege');
     ELSE
       BEGIN
         unused := intersection(P1, P2);
