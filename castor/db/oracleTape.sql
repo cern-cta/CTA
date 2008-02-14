@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.636 $ $Date: 2008/02/13 16:12:05 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.637 $ $Date: 2008/02/14 18:01:16 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -32,7 +32,7 @@ END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is linked to a Stream */
-CREATE OR REPLACE TRIGGER tr_stream2tapecopy_insert
+CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Insert
 AFTER INSERT ON STREAM2TAPECOPY
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
@@ -54,7 +54,7 @@ END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
    whenever a TapeCopy is unlinked from a Stream */
-CREATE OR REPLACE TRIGGER tr_stream2tapecopy_delete
+CREATE OR REPLACE TRIGGER tr_Stream2TapeCopy_Delete
 BEFORE DELETE ON STREAM2TAPECOPY
 REFERENCING NEW AS NEW OLD AS OLD
 FOR EACH ROW
@@ -70,6 +70,118 @@ BEGIN
                    AND TapeCopy.id = :old.child
                    AND DiskCopy.status = 10) -- CANBEMIGR
      AND Stream = :old.parent;
+END;
+
+/************************************************/
+/* Triggers to keep NbTapeCopiesInFS consistent */
+/************************************************/
+
+/* Used to create a row INTO NbTapeCopiesInFS whenever a new
+   FileSystem is created */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Insert
+BEFORE INSERT ON FileSystem
+FOR EACH ROW
+BEGIN
+  FOR item in (SELECT id FROM Stream) LOOP
+    INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (:new.id, item.id, 0);
+  END LOOP;
+END;
+
+/* Used to delete rows IN NbTapeCopiesInFS whenever a
+   FileSystem is deleted */
+CREATE OR REPLACE TRIGGER tr_FileSystem_Delete
+BEFORE DELETE ON FileSystem
+FOR EACH ROW
+BEGIN
+  DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
+END;
+
+/* Updates the count of tapecopies in NbTapeCopiesInFS
+   whenever a DiskCopy has been replicated and the new one
+   is put into CANBEMIGR status from the
+   WAITDISK2DISKCOPY status */
+CREATE OR REPLACE TRIGGER tr_DiskCopy_Update
+AFTER UPDATE of status ON DiskCopy
+FOR EACH ROW
+WHEN (old.status = 1 AND -- WAITDISK2DISKCOPY
+      new.status = 10) -- CANBEMIGR
+BEGIN
+-- added this lock because of severaval copies of different file systems 
+--  from different streams which can cause deadlock
+  LOCK TABLE  NbTapeCopiesInFS IN ROW SHARE MODE;
+  UPDATE NbTapeCopiesInFS SET NbTapeCopies = NbTapeCopies + 1
+   WHERE FS = :new.fileSystem
+     AND Stream IN (SELECT Stream2TapeCopy.parent
+                      FROM Stream2TapeCopy, TapeCopy
+                     WHERE TapeCopy.castorFile = :new.castorFile
+                       AND Stream2TapeCopy.child = TapeCopy.id
+                       AND TapeCopy.status = 2); -- WAITINSTREAMS
+END;
+
+
+/* PL/SQL method to update FileSystem weight for new streams */
+CREATE OR REPLACE PROCEDURE updateFsFileOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbReadWriteStreams = nbReadWriteStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
+                        free = free - fileSize   -- just an evaluation, monitoring will update it
+   WHERE id = fs;
+END;
+
+CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
+END;
+
+CREATE OR REPLACE PROCEDURE updateFsRecallerOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbRecallerStreams = nbRecallerStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbRecallerStreams = nbRecallerStreams + 1,
+                        free = free - fileSize   -- just an evaluation, monitoring will update it
+   WHERE id = fs;
+END;
+
+/* PL/SQL method to update FileSystem nb of streams when files are closed */
+CREATE OR REPLACE PROCEDURE updateFsFileClosed(fs IN INTEGER) AS
+  ds INTEGER;
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
+  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) WHERE id = ds;
+  /* now we can safely go */
+  UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
+  WHERE id = fs;
+END;
+
+
+/* Used to create a row INTO LockTable whenever a new
+   DiskServer is created */
+CREATE OR REPLACE TRIGGER tr_DiskServer_Insert
+BEFORE INSERT ON DiskServer
+FOR EACH ROW
+BEGIN
+  INSERT INTO LockTable (DiskServerId, TheLock) VALUES (:new.id, 0);
+END;
+
+
+/* Used to delete rows IN LockTable whenever a
+   DiskServer is deleted */
+CREATE OR REPLACE TRIGGER tr_DiskServer_Delete
+BEFORE DELETE ON DiskServer
+FOR EACH ROW
+BEGIN
+  DELETE FROM LockTable WHERE DiskServerId = :old.id;
 END;
 
 
