@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.635 $ $Date: 2008/02/12 16:04:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.636 $ $Date: 2008/02/14 17:55:13 $ $Author: itglp $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -198,7 +198,7 @@ CREATE GLOBAL TEMPORARY TABLE OutOfDateRecallDropped
 
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE removePrivilegeTmpTable
-  (svcCLass NUMBER,
+  (svcClass VARCHAR2(2048),
    euid NUMBER,
    egid NUMBER,
    reqType NUMBER)
