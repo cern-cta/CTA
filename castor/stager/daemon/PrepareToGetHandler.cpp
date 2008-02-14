@@ -118,7 +118,7 @@ namespace castor{
           
           /* depending on the value returned by getDiskCopiesForJob */
           /* if needed, we update the subrequestStatus internally  */
-          if(switchDiskCopiesForJob()) {
+          if(switchDiskCopiesForJob() && stgRequestHelper->subrequest->answered() == 0) {
             stgReplyHelper = new ReplyHelper();
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
