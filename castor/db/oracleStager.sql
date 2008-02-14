@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.635 $ $Date: 2008/02/12 16:04:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.636 $ $Date: 2008/02/14 13:34:58 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -1512,6 +1512,8 @@ BEGIN
 END;
 
 /* PL/SQL method implementing stageRm */
+
+
 CREATE OR REPLACE PROCEDURE stageRm (srId IN INTEGER,
                                      fid IN INTEGER,
                                      nh IN VARCHAR2,
@@ -1547,7 +1549,7 @@ BEGIN
       SELECT DC.id
         FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC
        WHERE DC.castorFile = cfId
-         AND DC.status IN (0, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR
+         AND DC.status IN (0, 1, 2, 6, 10)  -- STAGED, STAGEOUT, CANBEMIGR, WAITDISK2DISK, WAITTAPERECALL
          AND DC.fileSystem = FileSystem.id
          AND FileSystem.diskPool = DP2SC.parent
          AND DP2SC.child = scId)
@@ -1576,7 +1578,7 @@ BEGIN
     -- we are performing a stageRm everywhere
     SELECT count(*) INTO nbRes FROM DiskCopy
      WHERE castorFile = cfId
-       AND status IN (0, 5, 6, 10, 11)  -- STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
+       AND status IN (0, 1, 2, 5, 6, 10, 11)  -- WAITDISK2DISK, WAITTAPERECALL, STAGED, STAGEOUT, CANBEMIGR, WAITFS, WAITFS_SCHEDULING
        AND id NOT IN (SELECT * FROM TABLE(dcsToRm));
     IF nbRes = 0 THEN
       scId := 0;
@@ -1586,7 +1588,7 @@ BEGIN
     SELECT id BULK COLLECT INTO dcsToRm
       FROM DiskCopy
      WHERE castorFile = cfId
-       AND status IN (0, 5, 6, 10, 11);  -- STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
+       AND status IN (0, 1,2, 5, 6, 10, 11);  -- WAITDISK2DISK, WAITTAPERECALL, STAGED, WAITFS, STAGEOUT, CANBEMIGR, WAITFS_SCHEDULING
   END IF;
   
   IF scId = 0 THEN
@@ -1686,6 +1688,11 @@ BEGIN
    WHERE id IN (SELECT * FROM TABLE(dcsToRm));
   ret := 1;  -- ok
 END;
+
+
+
+
+
 
 
 /* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
