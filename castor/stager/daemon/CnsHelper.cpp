@@ -80,7 +80,7 @@ namespace castor{
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Impossible to set the user on the Name Server";
+          ex.getMessage()<<"Cannot set the user on the Name Server";
           throw ex;
         }
         
@@ -89,7 +89,7 @@ namespace castor{
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Impossible to set the mask on the Name Server";
+          ex.getMessage()<<"Cannot set the mask on the Name Server";
           throw ex;
         }
       }
@@ -99,29 +99,49 @@ namespace castor{
       /* create the file if it is needed/possible */
       /**************************************************************************************************************/
       bool CnsHelper::checkFileOnNameServer(castor::stager::SubRequest* subReq, castor::stager::SvcClass* svcClass)
-        throw(castor::exception::Exception){
-        
-        /* check if the required file exists */
-        memset(&(cnsFileid), '\0', sizeof(cnsFileid)); /* reset cnsFileid structure  */
-        bool newFile = (0 != Cns_statx(subReq->fileName().c_str(), &(cnsFileid), &(cnsFilestat))) && (serrno == ENOENT);
+        throw(castor::exception::Exception) {
         int type = subReq->request()->type();
         
-        if(newFile && ((OBJ_StagePutRequest == type) || 
-                       (OBJ_StageUpdateRequest == type && (subReq->flags() & O_CREAT) == O_CREAT) ||
-                       (OBJ_StagePrepareToPutRequest == type && (subReq->modeBits() & 0222) != 0) ||
-                       (OBJ_StagePrepareToUpdateRequest == type && (subReq->flags() & O_CREAT) == O_CREAT && (subReq->modeBits() & 0222) != 0)
-                       )) {
-          // creation is allowed on the above type of requests
-
-          // using Cns_creatx and Cns_stat c functions, create the file and update cnsFileid and cnsFilestat structures
+        // check if the required file exists
+        memset(&(cnsFileid), '\0', sizeof(cnsFileid));
+        bool newFile = (0 != Cns_statx(subReq->fileName().c_str(), &cnsFileid, &cnsFilestat)) && (serrno == ENOENT);
+        
+        // deny any request on a directory
+        if(!newFile && (cnsFilestat.filemode & S_IFDIR) == S_IFDIR) {
+          serrno = EISDIR;
+          castor::exception::Exception ex(serrno);
+          ex.getMessage() << "Cannot perform this request on a directory";
+          throw ex;
+        }
+        
+        // check if the request is allowed to create the file
+        if(((OBJ_StagePutRequest == type) || 
+            (OBJ_StageUpdateRequest == type && (subReq->flags() & O_CREAT) == O_CREAT) ||
+            (OBJ_StagePrepareToPutRequest == type && (subReq->modeBits() & 0222) != 0) ||
+            (OBJ_StagePrepareToUpdateRequest == type && (subReq->flags() & O_CREAT) == O_CREAT && (subReq->modeBits() & 0222) != 0)
+            )) {   // (re)creation is allowed
+          if(!newFile && ((OBJ_StagePutRequest == type) || (OBJ_StagePrepareToPutRequest == type))) {
+            // if no segments, we recreate, otherwise it's better to keep original segments
+            struct Cns_segattrs *nsSegmentAttrs = 0;
+            int nbNsSegments = 0;
+            serrno = 0;
+            int rc = Cns_getsegattrs(0, &cnsFileid, &nbNsSegments, &nsSegmentAttrs);
+            if (rc != -1 && nbNsSegments == 0) {
+              // This file has no copy on tape, so we force recreation
+              newFile = true;
+            }
+            free(nsSegmentAttrs);
+          }
+          
+          // create the file and update cnsFileid and cnsFilestat structures
           memset(&(cnsFileid), 0, sizeof(cnsFileid));
           serrno = 0;
-          if ((0 != Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &(cnsFileid))) && (serrno != EEXIST)) {
+          if(newFile && (0 != Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &cnsFileid)) && (serrno != EEXIST)) {
             castor::dlf::Param params[]={castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.1")};
             castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
             
             castor::exception::Exception ex(serrno);
-            ex.getMessage() << "Impossible to create the file";
+            ex.getMessage() << "Cannot (re)create the file";
             throw ex;
           }
           else if(serrno == EEXIST) {
@@ -133,8 +153,8 @@ namespace castor{
             newFile = false;
           }
 
-          /* in case of Disk1 pool, we want to force the fileClass of the file */
-          if(svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
+          // in case of Disk1 pool, force the fileClass of the file
+          if(newFile && svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
             std::string forcedFileClassName = svcClass->forcedFileClass()->name();
             Cns_unsetid();
             if(Cns_chclass(subReq->fileName().c_str(), 0, (char*)forcedFileClassName.c_str())) {
@@ -142,7 +162,7 @@ namespace castor{
               castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
               
               castor::exception::Exception ex(serrno);
-              ex.getMessage() << "Impossible to force file class for this file";
+              ex.getMessage() << "Cannot force file class for this file";
               // before giving up we unlink the just created file
               Cns_delete(subReq->fileName().c_str());
               throw ex;
@@ -151,24 +171,24 @@ namespace castor{
           }
           
           // update cns structures
-          Cns_statx(subReq->fileName().c_str(), &(cnsFileid), &(cnsFilestat));
-          // if no segments, reset filesize to 0
-          // to be done
+          Cns_statx(subReq->fileName().c_str(), &cnsFileid, &cnsFilestat);
         }
-        else if(newFile) {
-          // other requests cannot create non existing files
-          castor::dlf::Param params[]={ castor::dlf::Param("Function", "CnsHelper->checkFileOnNameServer.3")};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 1, params);
-          
-          if(OBJ_StagePrepareToPutRequest == type || OBJ_StagePrepareToUpdateRequest == type) {
-            // this should never happen: PrepareToPut was called with readonly mode. Let's provide a custom error message
-            castor::exception::Exception ex(EINVAL);
-            ex.getMessage() << "Cannot PrepareToPut a non-writable file";
-            throw ex;
-          }
-          else {
-            castor::exception::Exception ex(ENOENT);
-            throw ex;
+        else {
+          // other requests go through only on existing files
+          if(newFile) {
+            castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 0);
+            
+            if(OBJ_StagePrepareToPutRequest == type || OBJ_StagePrepareToUpdateRequest == type) {
+              // this should never happen: PrepareToPut was called with readonly mode. Let's provide a custom error message
+              castor::exception::Exception ex(EINVAL);
+              ex.getMessage() << "Cannot PrepareToPut a non-writable file";
+              throw ex;
+            }
+            else {
+              // we just answer with the standard error message
+              castor::exception::Exception ex(ENOENT);
+              throw ex;
+            }
           }
         }
         return newFile;
