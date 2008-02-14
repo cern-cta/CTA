@@ -66,13 +66,9 @@ int *need_user_check) {
 int rfio_handle_firstwrite(void *ctx) {
   struct internal_context *internal_context = (struct internal_context *) ctx;
   if (internal_context != NULL) {
+
     // In case of an update, we should call firstByteWritten
-    if (!((internal_context->flags == O_RDONLY) ||
-          (internal_context->flags == (O_TRUNC|O_RDONLY)) ||
-          (internal_context->flags == (O_CREAT|O_RDONLY)) ||      // Get case
-          (internal_context->flags == (O_LARGEFILE|O_RDONLY)) ||
-          (internal_context->flags == (O_LARGEFILE|O_TRUNC|O_RDONLY)) ||
-          (internal_context->flags == (O_LARGEFILE|O_CREAT|O_RDONLY)))
+    if (!((internal_context->flags & O_ACCMODE) == O_RDONLY) // Get case
       &&
         !(((internal_context->flags & O_TRUNC) == O_TRUNC) &&     // put Case
           ((internal_context->flags & O_CREAT) == O_CREAT))) {
