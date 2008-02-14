@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/02/01 13:00:27 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/02/14 17:33:59 $ $Author: itglp $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -308,7 +308,7 @@ void castor::rh::RHThread::handleRequest
   case OBJ_DiskPoolQuery:
   case OBJ_VersionQuery:
     // QueryRequest Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'Q', nbSubReqs);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'Q');
     break;
   case OBJ_GetUpdateStartRequest:
   case OBJ_Disk2DiskCopyDoneRequest:
@@ -321,14 +321,14 @@ void castor::rh::RHThread::handleRequest
   case OBJ_PutDoneStart:
   case OBJ_FirstByteWritten:
     // Job Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'j', 1);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'j');
     break;
   case OBJ_Files2Delete:
   case OBJ_FilesDeleted:
   case OBJ_FilesDeletionFailed:
   case OBJ_NsFilesDeleted:
     // Garbage Collector Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'G', 1);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'G');
     break;
   default:
     // We should not go this way, this would not be optimal
