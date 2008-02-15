@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.61 $ $Date: 2008/01/17 14:06:27 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: mounttape.c,v $ $Revision: 1.62 $ $Date: 2008/02/15 14:51:09 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -975,8 +975,11 @@ reply:
                             "func" , TL_MSG_PARAM_STR  , func,
                             "vid"  , TL_MSG_PARAM_STR  , vid,
                             "TPVID", TL_MSG_PARAM_TPVID, vid );
-
-        tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
+        if (!c) {
+                /* tl_exit has been called in clenaup() already,
+                   double free leads to crash */
+                tl_tpdaemon.tl_exit( &tl_tpdaemon, 0 );        
+        }
 	exit (0);
 }
 
