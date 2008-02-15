@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.7 2007/08/01 13:59:14 wiebalck Exp $
+** $Id: tplogger.c,v 1.8 2008/02/15 13:50:02 wiebalck Exp $
 */
 
 #include <string.h>
@@ -339,7 +339,7 @@ int tl_fork_parent_dlf( struct tplogger_s *self ) {
  * Exit the DLF implementation.
  *
  * @param self : reference to the tplogger struct
- * @param init : exit switch
+ * @param exit : exit switch
  *  exit == 0  --> DLF standard exit
  *
  * @returns    : 0 on success
