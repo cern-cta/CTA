@@ -1,0 +1,3 @@
+#! /bin/sh
+/bin/chown stage:st /var/log/gridftp.log
+
