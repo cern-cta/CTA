@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.636 $ $Date: 2008/02/13 17:26:39 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.637 $ $Date: 2008/02/15 10:50:07 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -73,7 +73,7 @@ BEGIN
   -- only when needed, that is STAGEOUT case
   IF stat = 6 THEN -- STAGEOUT
     BEGIN
-      -- do we are other ongoing requests ?
+      -- do we have other ongoing requests ?
       SELECT count(*) INTO unused FROM SubRequest WHERE diskCopy = dcId AND id != srId;
       IF (unused > 0) THEN
         -- do we have a prepareTo Request ? There can be only a single one
@@ -329,6 +329,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyDone
   srcStatus INTEGER;
   proto VARCHAR2(2048);
   reqId NUMBER;
+  svcClassId NUMBER;
 BEGIN
   -- try to get the source status
   SELECT status INTO srcStatus FROM DiskCopy WHERE id = srcDcId;
@@ -356,7 +357,7 @@ BEGIN
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
    WHERE diskCopy = dcId RETURNING id, protocol, request INTO srId, proto, reqId;
-  SELECT maxReplicaNb INTO maxRepl
+  SELECT SvcClass.id, maxReplicaNb INTO svcClassId, maxRepl
     FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
