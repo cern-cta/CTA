@@ -239,7 +239,7 @@ RFIOFLAGS=-DNOMORERFIO=\"$(NOMORERFIO)\" $(FOLLOWLINKS) \
 	  -DRFIO_ALRM=\"$(RFIO_ALRM)\" $(CNS_ROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP)
 
 rfcpupd.c: ../rfio/rfcp.c
-	sed 's/| *O_TRUNC//' $< > $@
+	sed 's/| *O_TRUNC//' $< | sed 's/O_RDONLY/O_RDWR/' > $@
 
 rfcpupd.Osuf: rfcpupd.c
 	$(CC) $(DEBUG) -I$(INCLUDES) $(MTCCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -c -o $@ $<
