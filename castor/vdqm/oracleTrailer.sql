@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/11 18:54:25 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.10 $ $Release$ $Date: 2008/02/18 15:23:10 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -38,6 +38,7 @@ END castorVdqm;
 
 
 /**
+ * COMMENTED OUT
  * PL/SQL method to dedicate a tape to a tape drive.
  * First it checks the preconditions that a tapeDrive must meet in order to be
  * assigned. The couples (drive,requests) are then orderd by the priorityLevel 
@@ -45,6 +46,7 @@ END castorVdqm;
  * if any dedication exists and has to be applied.
  * Returns the relevant IDs if a couple was found, (0,0) otherwise.
  */  
+/*
 CREATE OR REPLACE PROCEDURE allocateDrive
  (ret OUT NUMBER) AS
   d2rCur castorVdqm.Drive2Req_Cur;
@@ -75,12 +77,10 @@ BEGIN
          FROM TapeDrive UsedTD
         WHERE UsedTD.tape = TapeRequest.tape
        )
-     /*
-     AND TapeDrive.deviceGroupName = tapeDriveDgn.id 
-     AND TapeRequest.deviceGroupName = tapeRequestDgn.id 
-     AND tapeDriveDgn.libraryName = tapeRequestDgn.libraryName 
+     -- AND TapeDrive.deviceGroupName = tapeDriveDgn.id 
+     -- AND TapeRequest.deviceGroupName = tapeRequestDgn.id 
+     -- AND tapeDriveDgn.libraryName = tapeRequestDgn.libraryName 
          -- in case we want to match by libraryName only
-     */
      ORDER BY TapeDriveCompatibility.priorityLevel ASC, 
               TapeRequest.modificationTime ASC;
 
@@ -146,6 +146,75 @@ BEGIN
   -- if the loop has been fully completed without assignment,
   -- no free tape drive has been found. 
   CLOSE d2rCur;
+END;
+*/
+
+
+CREATE OR REPLACE
+PROCEDURE allocateDrive
+ (ret OUT NUMBER) AS
+ tapeDriveID   NUMBER := 0;
+ tapeRequestID NUMBER := 0;
+BEGIN
+  ret := 0;
+
+  SELECT
+    TapeDrive.id, TapeRequest.id
+  INTO
+    tapeDriveID, tapeRequestID
+  FROM
+    TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn,
+    DeviceGroupName tapeRequestDgn
+  WHERE
+        TapeDrive.status=0 -- UNIT_UP
+    AND TapeDrive.runningTapeReq=0
+    AND TapeDrive.tapeServer=TapeServer.id
+    AND NOT EXISTS (
+      -- Exclude a request if its tape is already in a drive, such a request
+      -- will be considered upon the release of the drive in question
+      -- (cf. TapeDriveStatusHandler)
+      SELECT
+        'x'
+      FROM
+        TapeDrive TapeDrive2
+      WHERE
+        TapeDrive2.tape = TapeRequest.tape
+    )
+    AND TapeServer.actingMode=0 -- ACTIVE
+    AND TapeRequest.tapeDrive IS NULL
+    AND (
+         TapeRequest.requestedSrv=TapeDrive.tapeServer
+      OR TapeRequest.requestedSrv=0
+    )
+    AND TapeDrive.deviceGroupName=TapeRequest.deviceGroupName
+    AND rownum < 2
+  ORDER BY
+    TapeRequest.modificationTime ASC;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      tapeDriveID   := 0;
+      tapeRequestID := 0;
+  
+  -- If there is a free drive which can be allocated to a pending request
+  IF tapeDriveID != 0 AND tapeRequestID != 0 THEN
+
+    UPDATE TapeDrive SET
+      status = 1, -- UNIT_STARTING
+      jobID = 0,
+      modificationTime = getTime(),
+      runningTapeReq = tapeRequestID
+    WHERE
+      id = TapeDriveID;
+
+    UPDATE TapeRequest SET
+      status = 1, -- MATCHED
+      tapeDrive = tapeDriveID,
+      modificationTime = getTime()
+    WHERE
+      id = TapeRequestID;
+
+    RET := 1;
+  END IF;
 END;
 
 
