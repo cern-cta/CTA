@@ -56,6 +56,18 @@ int *need_user_check) {
     } else {
       log(LOG_ERR, "rfio_handle_open : calloc error (%s)\n", strerror(errno));
     }
+    
+    struct stat64 statbuf;
+    if(stat64(internal_context->pfn,&statbuf) < 0) {
+      /* local file does not exist: here we assume that it's going to be created,
+         and this is equivalent to a write operation regardless the mode bits.
+         So we set one_byte_at_least to 1 */
+      internal_context->one_byte_at_least = 1;
+    }
+    else {
+      internal_context->one_byte_at_least = 0;
+    }
+
     *ctx = (void *)internal_context;
   }
   
@@ -67,11 +79,9 @@ int rfio_handle_firstwrite(void *ctx) {
   struct internal_context *internal_context = (struct internal_context *) ctx;
   if (internal_context != NULL) {
 
-    // In case of an update, we should call firstByteWritten
-    if (!((internal_context->flags & O_ACCMODE) == O_RDONLY) // Get case
-      &&
-        !(((internal_context->flags & O_TRUNC) == O_TRUNC) &&     // put Case
-          ((internal_context->flags & O_CREAT) == O_CREAT))) {
+    /* In case of an update, we should call firstByteWritten, so we ignore pure Get and Put cases */
+    if (!((internal_context->flags & O_ACCMODE) == O_RDONLY)  /* Get case (should actually never happen!) */
+      && !((internal_context->flags & O_TRUNC) == O_TRUNC)) {   /* Put case */
       struct Cstager_IJobSvc_t **jobSvc;
       struct C_Services_t **dbService;
       C_BaseObject_initLog("rfio", SVC_STDMSG);
@@ -110,15 +120,15 @@ int close_status) {
     if (stager_getRemJobAndDbSvc(&jobSvc,&dbService) == 0) {
       char tmpbuf[21];
       
-      if (((internal_context->flags & O_WRONLY) == O_WRONLY) ||
-      ((internal_context->flags & O_RDWR)) == O_RDWR) {
+      if (((internal_context->flags & O_TRUNC) == O_TRUNC) ||
+          (internal_context->one_byte_at_least)) {   /* see also comment in rfio_handle_open */
         /* This is a write */
         struct stat64 statbuf;
         int rcstat;
         
         if (stat64(internal_context->pfn,&statbuf) == 0) {
           struct Cstager_SubRequest_t *subrequest;
-          /* File still exist - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
+          /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
           if (Cstager_SubRequest_create(&subrequest) == 0) {
             if (Cstager_SubRequest_setId(subrequest,internal_context->subrequest_id) == 0) {
               log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
