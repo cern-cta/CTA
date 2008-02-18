@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.4 $ $Release$ $Date: 2007/12/06 14:46:23 $ $Author: itglp $
+ * @(#)$RCSfile: stager_setFileGCWeight.c,v $ $Revision: 1.5 $ $Release$ $Date: 2008/02/18 11:49:00 $ $Author: itglp $
  *
  * command line for stager_setFileGCWeight
  *
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
   }
 
   /* Setting the error buffer */
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
   /* Performing the actual call */
   rc = stage_setFileGCWeight(reqs,

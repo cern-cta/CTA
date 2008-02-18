@@ -1,5 +1,5 @@
 /*
- * $Id: stager_qry.c,v 1.25 2007/05/29 08:41:50 waldron Exp $
+ * $Id: stager_qry.c,v 1.26 2008/02/18 11:49:00 itglp Exp $
  */
 
 /*
@@ -199,7 +199,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   }
 #endif
   /* Setting the error buffer */
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
   /* Getting env and default arguments */
   getDefaultForGlobal(&args.opts.stage_host,&args.opts.stage_port,&args.opts.service_class,&args.opts.stage_version);
@@ -265,13 +265,13 @@ void handleDiskPoolQuery(int argc, char *argv[], int nbArgs) {
   }
 
   /* Setting the error buffer */
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
   /* Getting env and default arguments */
   getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class,&opts.stage_version);
 
   /* Setting the error buffer */
-  stage_seterrbuf(errbuf, sizeof(errbuf));
+  stager_seterrbuf(errbuf, sizeof(errbuf));
 
   /* Actual call to stage_diskpoolquery */
   if (NULL == diskPool) {

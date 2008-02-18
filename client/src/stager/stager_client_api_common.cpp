@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.32 2007/12/07 11:40:53 sponcec3 Exp $
+ * $Id: stager_client_api_common.cpp,v 1.33 2008/02/18 11:49:00 itglp Exp $
  */
 
 /*
@@ -368,14 +368,14 @@ void DLL_DECL castor::client::setClientAuthorizationId
 
 int DLL_DECL setDefaultOption(struct stage_options* opts) {
 
-	if (!opts){
+  if (!opts){
     opts=(struct stage_options*)malloc(sizeof(struct stage_options));
-		opts->stage_host=DEFAULT_HOST;
-		opts->stage_port =DEFAULT_PORT2;
-		opts->service_class =DEFAULT_SVCCLASS;
-		return -1;
-	}
-	if (!opts->stage_host){opts->stage_host=DEFAULT_HOST;}
+    opts->stage_host=DEFAULT_HOST;
+    opts->stage_port =DEFAULT_PORT2;
+    opts->service_class =DEFAULT_SVCCLASS;
+    return -1;
+  }
+  if (!opts->stage_host){opts->stage_host=DEFAULT_HOST;}
   if (!opts->stage_port){ opts->stage_port =DEFAULT_PORT2;}
   if (!opts->service_class){ opts->service_class =DEFAULT_SVCCLASS;}
   return 0;

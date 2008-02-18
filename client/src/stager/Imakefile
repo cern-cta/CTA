@@ -51,15 +51,6 @@ EMANPAGES_STAGER = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),stager_get.$(M
 GLOBLIB += -ldl
 #endif
 
-OBSOLETE_OBJS = \
-		buildupath.Osuf \
-		send2stgd_api.Osuf \
-		send2stgd_compat.Osuf \
-		stage_api.Osuf \
-		stage_errmsg.Osuf \
-		stage_updc.Osuf \
-		stage_util.Osuf
-
 STAGERLIB_OBJS = \
 		stager_client_api_common.Osuf \
 		stager_client_commandline.Osuf \
@@ -71,7 +62,9 @@ STAGERLIB_OBJS = \
 		stager_client_api_rm.Osuf \
 		stager_client_api_setFileGCWeight.Osuf \
 		stager_client_api_next.Osuf \
-		stager_client_api_version.Osuf
+		stager_client_api_version.Osuf \
+		stager_errmsg.Osuf \
+		stager_mapper.Osuf
 
 PROGS_STAGERCLIENT=ProgramTargetName(stager_get) ProgramTargetName(stager_update) ProgramTargetName(stager_put) ProgramTargetName(stager_qry) \
         ProgramTargetName(stager_putdone) ProgramTargetName(stager_rm) ProgramTargetName(stager_setFileGCWeight) ProgramTargetName(castor) ProgramTargetName(newacct)
