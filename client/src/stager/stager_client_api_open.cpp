@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_open.cpp,v 1.9 2007/02/21 09:46:22 sponcec3 Exp $
+ * $Id: stager_client_api_open.cpp,v 1.10 2008/02/18 11:47:49 itglp Exp $
  */
 
 /*
@@ -44,12 +44,7 @@ EXTERN_C int DLL_DECL stage_open(const char *userTag,
                                  char **requestId,
                                  struct stage_options* opts) {
   
-  if ((flags == O_RDONLY) ||
-      (flags == (O_TRUNC|O_RDONLY)) ||
-      (flags == (O_CREAT|O_RDONLY)) ||
-      (flags == (O_LARGEFILE|O_RDONLY)) ||
-      (flags == (O_LARGEFILE|O_TRUNC|O_RDONLY)) ||
-      (flags == (O_LARGEFILE|O_CREAT|O_RDONLY))) {
+  if ((flags & O_ACCMODE) == O_RDONLY) {
     /* Always use stage_get for read-only mode */
     return stage_get(userTag, 
                      protocol, 
