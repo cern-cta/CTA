@@ -246,7 +246,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
      */
     if (reqHandled && reqtype != VDQM_PING) {
       //Sending reply to client
-      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_SEND_REPLY_TO_CLIENT);
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_SEND_REPLY_TO_CLIENT);
       
       oldProtInterpreter->sendAcknCommit();
       oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
