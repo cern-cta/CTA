@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.29 $ $Release$ $Date: 2007/12/14 18:42:15 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/02/19 09:40:04 $ $Author: itglp $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -89,10 +89,6 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileClassStatementStrin
 const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementString =
   "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
 
-/// SQL statement for selectTapePool
-const std::string castor::db::ora::OraCommonSvc::s_selectTapePoolIdStatementString =
-  "SELECT id FROM TapePool WHERE name = :1 AND ROWNUM<2";
-
 
 // -----------------------------------------------------------------------
 // OraCommonSvc
@@ -103,8 +99,7 @@ castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   m_selectTapeStatement(0),
   m_selectSvcClassStatement(0),
   m_selectFileClassStatement(0),
-  m_selectFileSystemStatement(0),
-  m_selectTapePoolIdStatement(0) {
+  m_selectFileSystemStatement(0) {
 }
 
 // -----------------------------------------------------------------------
@@ -140,7 +135,6 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
     if (m_selectSvcClassStatement) deleteStatement(m_selectSvcClassStatement);
     if (m_selectFileClassStatement) deleteStatement(m_selectFileClassStatement);
     if (m_selectFileSystemStatement) deleteStatement(m_selectFileSystemStatement);
-    if (m_selectTapePoolIdStatement) deleteStatement(m_selectTapePoolIdStatement);
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
   m_requestToDoStatement = 0;
@@ -148,7 +142,6 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   m_selectSvcClassStatement = 0;
   m_selectFileClassStatement = 0;
   m_selectFileSystemStatement = 0;
-  m_selectTapePoolIdStatement = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -221,10 +214,6 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
     m_selectTapeStatement = createStatement(s_selectTapeStatementString);
   }
   
-  if (0 == m_selectTapePoolIdStatement){
-    m_selectTapePoolIdStatement = createStatement(s_selectTapePoolIdStatementString);
-  }
-
   // Execute statement and get result
   unsigned long id;
   try {
@@ -269,14 +258,14 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
             throw ex;
           }
         } else {
-	  m_selectTapeStatement->closeResultSet(rset);
-	  // Else, "standard" error, throw exception
-	  castor::exception::Internal ex;
-	  ex.getMessage()
-	    << "Exception while inserting new tape in the DB :"
-	    << std::endl << e.getMessage().str();
-	  throw ex;
-	}
+          m_selectTapeStatement->closeResultSet(rset);
+          // Else, "standard" error, throw exception
+          castor::exception::Internal ex;
+          ex.getMessage()
+            << "Exception while inserting new tape in the DB :"
+            << std::endl << e.getMessage().str();
+          throw ex;
+        }
       }
     }
     // If we reach this point, then we selected successfully
