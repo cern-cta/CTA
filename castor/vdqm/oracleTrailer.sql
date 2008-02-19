@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.11 $ $Release$ $Date: 2008/02/19 14:50:16 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/19 15:22:20 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -379,7 +379,7 @@ as
 (
   select
     TAPEDRIVE2TAPEDRIVECOMP.PARENT as TAPEDRIVE,
-    max(TAPEDRIVECOMPATIBILITY.TAPEDRIVEMODEL) as MODEL
+    max(TAPEDRIVECOMPATIBILITY.TAPEDRIVEMODEL) as DRIVEMODEL
   from
     TAPEDRIVE2TAPEDRIVECOMP
   inner join
@@ -394,7 +394,7 @@ select
   TAPEDRIVE.MODIFICATIONTIME, TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
   TAPEDRIVE.ERRCOUNT, TAPEDRIVE.TRANSFERREDMB, TAPEDRIVE.TAPEACCESSMODE,
   TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
-  DEVICEGROUPNAME.DGNAME, TAPEDRIVE2MODEL.MODEL
+  DEVICEGROUPNAME.DGNAME, TAPEDRIVE2MODEL.DRIVEMODEL
 from
   TAPEDRIVE
 left outer join
