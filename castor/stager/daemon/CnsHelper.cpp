@@ -102,6 +102,14 @@ namespace castor{
         throw(castor::exception::Exception) {
         int type = subReq->request()->type();
         
+       // check if the filename is valid (it has to start with /)
+
+	if (subReq->fileName().at(0)!='/'){
+	  castor::exception::Exception ex(EINVAL);
+            ex.getMessage() << "Invalid file path";
+            throw ex;	
+	}
+        
         // check if the required file exists
         memset(&(cnsFileid), '\0', sizeof(cnsFileid));
         bool newFile = (0 != Cns_statx(subReq->fileName().c_str(), &cnsFileid, &cnsFilestat)) && (serrno == ENOENT);
