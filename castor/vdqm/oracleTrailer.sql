@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.10 $ $Release$ $Date: 2008/02/18 15:23:10 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.11 $ $Release$ $Date: 2008/02/19 14:50:16 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -366,3 +366,50 @@ BEGIN
   END IF;
 END;
 
+
+/*
+ * View used for generating the list of drives when replying to the showqueues
+ * command
+ */
+create or replace view
+  TAPEDRIVESHOWQUEUES_VIEW
+as with
+  TAPEDRIVE2MODEL
+as
+(
+  select
+    TAPEDRIVE2TAPEDRIVECOMP.PARENT as TAPEDRIVE,
+    max(TAPEDRIVECOMPATIBILITY.TAPEDRIVEMODEL) as MODEL
+  from
+    TAPEDRIVE2TAPEDRIVECOMP
+  inner join
+    TAPEDRIVECOMPATIBILITY
+  on
+    TAPEDRIVE2TAPEDRIVECOMP.CHILD = TAPEDRIVECOMPATIBILITY.ID
+  group by
+    parent
+)
+select
+  TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
+  TAPEDRIVE.MODIFICATIONTIME, TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
+  TAPEDRIVE.ERRCOUNT, TAPEDRIVE.TRANSFERREDMB, TAPEDRIVE.TAPEACCESSMODE,
+  TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
+  DEVICEGROUPNAME.DGNAME, TAPEDRIVE2MODEL.MODEL
+from
+  TAPEDRIVE
+left outer join
+  TAPESERVER
+on
+  TAPEDRIVE.TAPESERVER = TAPESERVER.ID
+left outer join
+  VDQMTAPE
+on
+  TAPEDRIVE.TAPE = VDQMTAPE.ID
+left outer join
+  DEVICEGROUPNAME
+on
+  TAPEDRIVE.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
+inner join
+  TAPEDRIVE2MODEL
+on
+  TAPEDRIVE.ID = TAPEDRIVE2MODEL.TAPEDRIVE;
