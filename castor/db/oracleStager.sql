@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.637 $ $Date: 2008/02/14 18:01:16 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.638 $ $Date: 2008/02/19 10:19:46 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -71,18 +71,18 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DiskServerName IS RECORD (diskServer VARCHAR(2048));
   TYPE DiskServerList_Cur IS REF CURSOR RETURN DiskServerName;
   TYPE SchedulerResourceLine IS RECORD (
-	diskServerName VARCHAR(2048),
-	diskServerStatus INTEGER,
-	diskServerAdminStatus INTEGER,
-	fileSystemMountPoint VARCHAR(2048),
-	fileSystemStatus INTEGER,
-	fileSystemAdminStatus INTEGER,
-	fileSystemDiskPoolName VARCHAR(2048),
-	fileSystemSvcClassName VARCHAR(2048));
+    diskServerName VARCHAR(2048),
+    diskServerStatus INTEGER,
+    diskServerAdminStatus INTEGER,
+    fileSystemMountPoint VARCHAR(2048),
+    fileSystemStatus INTEGER,
+    fileSystemAdminStatus INTEGER,
+    fileSystemDiskPoolName VARCHAR(2048),
+    fileSystemSvcClassName VARCHAR(2048));
   TYPE SchedulerResources_Cur IS REF CURSOR RETURN SchedulerResourceLine;	
   TYPE FileEntry IS RECORD (
-        fileid INTEGER,
-        nshost VARCHAR2(2048));
+    fileid INTEGER,
+    nshost VARCHAR2(2048));
   TYPE FileEntry_Cur IS REF CURSOR RETURN FileEntry;
   TYPE DbMigrationInfo IS RECORD (
     id NUMBER,
@@ -445,15 +445,14 @@ BEGIN
          AND FileSystem.status IN (0, 1) -- PRODUCTION, DRAINING
          AND DiskServer.id = FileSystem.diskserver
          AND DiskServer.status IN (0, 1) -- PRODUCTION, DRAINING
-         AND DiskCopy.id NOT IN (
+         AND NOT EXISTS (
            -- don't select source diskcopies which already failed more than 10 times
-           SELECT sourceDiskCopyId FROM (
-             SELECT count(*) c, R.sourceDiskCopyId 
-               FROM StageDiskCopyReplicaRequest R, SubRequest
-              WHERE SubRequest.request = R.id
-                AND SubRequest.status = 9 -- FAILED
-              GROUP BY sourceDiskCopyId)
-           WHERE c >= 10)
+           SELECT 'x'
+             FROM StageDiskCopyReplicaRequest R, SubRequest
+            WHERE SubRequest.request = R.id
+              AND R.sourceDiskCopyId = DiskCopy.id
+              AND SubRequest.status = 9 -- FAILED
+           HAVING COUNT(*) >= 10)
          ORDER BY FileSystemRate(FileSystem.readRate, FileSystem.writeRate, FileSystem.nbReadStreams,
                                  FileSystem.nbWriteStreams, FileSystem.nbReadWriteStreams,
                                  FileSystem.nbMigratorStreams, FileSystem.nbRecallerStreams) DESC
@@ -1573,11 +1572,6 @@ BEGIN
    WHERE id IN (SELECT * FROM TABLE(dcsToRm));
   ret := 1;  -- ok
 END;
-
-
-
-
-
 
 
 /* PL/SQL procedure which is executed whenever a files has been written to tape by the migrator to
