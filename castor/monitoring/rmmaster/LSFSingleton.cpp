@@ -34,7 +34,7 @@
 // Space declaration for the static LSFSingleton instance
 //-----------------------------------------------------------------------------
 castor::monitoring::rmmaster::LSFSingleton *
-  castor::monitoring::rmmaster::LSFSingleton::s_instance(0);
+ castor::monitoring::rmmaster::LSFSingleton::s_instance(0);
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -96,7 +96,7 @@ std::string castor::monitoring::rmmaster::LSFSingleton::getLSFMasterName()
     } else {
       Cthread_mutex_unlock(&m_masterName);
       castor::exception::Exception e(SEINTERNAL);
-      e.getMessage() << lsberrno ? lsb_sysmsg() : "no message";
+      e.getMessage() << lsb_sysmsg();
       throw e;
     }
     m_lastUpdate = time(NULL);
@@ -104,6 +104,7 @@ std::string castor::monitoring::rmmaster::LSFSingleton::getLSFMasterName()
 
   // Return the result
   std::string result(buf);
+  free(buf);
   m_masterName = result;
   Cthread_mutex_unlock(&m_masterName);
 
