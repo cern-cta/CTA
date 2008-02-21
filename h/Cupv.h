@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv.h,v 1.2 2002/06/07 16:04:20 bcouturi Exp $
+ * $Id: Cupv.h,v 1.3 2008/02/21 18:26:42 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cupv.h,v $ $Revision: 1.2 $ $Date: 2002/06/07 16:04:20 $ CERN IT-PDP/DM Ben Couturier
+ * @(#)$RCSfile: Cupv.h,v $ $Revision: 1.3 $ $Date: 2008/02/21 18:26:42 $ CERN IT-PDP/DM Ben Couturier
  */
 
 #ifndef _CUPV_H
@@ -36,7 +36,7 @@
 #define CUPV_LIST	 2
 #define CUPV_MODIFY	 3
 #define CUPV_CHECK	 4
-#define CUPV_SHUTDOWN	 5
+#define CUPV_SHUTDOWN	 5 /* deprecated */
 #define CUPV_ENDLIST	 6
 
 			/* UPV reply types */
