@@ -25,10 +25,10 @@
 #ifndef _ORAVDQMSVC_HPP_
 #define _ORAVDQMSVC_HPP_
 
-// Include File
-#include "castor/vdqm/IVdqmSvc.hpp"
 #include "castor/BaseSvc.hpp"
 #include "castor/db/DbBaseObj.hpp"
+#include "castor/vdqm/IVdqmSvc.hpp"
+#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 
 #include <string>
 #include <vector>
@@ -171,24 +171,12 @@ namespace castor {
          const std::string requestedSrv)
           throw (castor::exception::Exception);        
   
-  
         /**
-         * Returns all the tape drives with their connected objects from 
-         * foreign tables with the specified dgn an server. If you don't want
-         * to specify one of the arguments, just give an empty string 
-         * instead.
-         * Please notice: The caller is responsible for the deletion of the
-         * allocated objects!
-         * @param driveRequest The old struct, which represents the tapeDrive
-         * @exception Exception in case of error (several tapes drive found, 
-         * DB problem, etc...)
-         * @return a list of files. 
-         * Note that the returned vector should be deallocated
-         * by the caller as well as its content
+         * See the documentation for castor::vdqm::IVdqmSvc.
          */
-        virtual std::vector<castor::vdqm::TapeDrive*>* selectTapeDriveQueue
-        (const std::string dgn, 
-         const std::string requestedSrv)
+        virtual std::vector<newVdqmDrvReq_t>*
+          selectTapeDriveQueue(const std::string dgn,
+          const std::string requestedSrv)
           throw (castor::exception::Exception);     
   
         /**
@@ -491,8 +479,18 @@ namespace castor {
          */
         virtual void deleteStatement(oracle::occi::Statement* stmt)
           throw (castor::exception::Exception);
-        
-      
+
+        /**
+         * Translates the new status of a Tape drive into the old status
+         * representation.
+         *
+         * @param newStatusCode The status value of the new Protocol
+         * @return The translation into the old status
+         * @exception In case of error
+         */
+        int translateNewStatus(castor::vdqm::TapeDriveStatusCodes newStatusCode)
+          throw (castor::exception::Exception);
+
       }; // class OraVdqmSvc
 
     } // namespace ora

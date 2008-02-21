@@ -188,20 +188,22 @@ namespace castor {
           
           
         /**
-         * Returns all the tape drives with their connected objects from 
-         * foreign tables with the specified dgn an server. If you don't want
-         * to specify one of the arguments, just give an empty string 
-         * instead.
+         * Returns the tape drives queue with the specified dgn and server.
+         * If you don't want to specify one of the arguments, just give an
+         * empty string instead.
          * Please notice: The caller is responsible for the deletion of the
-         * allocated objects!
-         * @param driveRequest The old struct, which represents the tapeDrive
-         * @exception Exception in case of error (several tapes drive found, 
-         * DB problem, etc...)
-         * @return a list of files. 
-         * Note that the returned vector should be deallocated
-         * by the caller as well as its content
+         * allocated vector!
+         * @param dgn The device group name to be used to restrict the queue
+         * of drives returned.  If the list should not be restricted by device
+         * group name then set this parameter to be an empty string.
+         * @param requestedSrv The server name to be used to restrict the queue
+         * of tape drives returned.  If the list should not be restricted by
+         * server name then set this parameter to be an empty string.
+         * @return vector of VDQM drive request messages to be used to send the
+         * queue of tape drives to the showqueues comman-line application.
+         * Note that the returned vector should be deallocated by the caller.
          */
-        virtual std::vector<TapeDrive*>* selectTapeDriveQueue(
+        virtual std::vector<newVdqmDrvReq_t>* selectTapeDriveQueue(
           const std::string dgn, 
           const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;    

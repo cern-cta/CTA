@@ -833,7 +833,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   throw (castor::exception::Exception) {
 
   // The result of the search in the database.
-  std::vector<castor::vdqm::TapeDrive*>* result = 0;
+  std::vector<newVdqmDrvReq_t>* vdqmDrvReqs = 0;
   
   std::string dgn, server;
     
@@ -844,219 +844,55 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   if ( *(ptr_driveRequest->server) != '\0' ) server = ptr_driveRequest->server;
 
   try {
-    /**
-     * With this function call we get the requested queue out of the db.
-     * The result depends on the parameters. If the paramters are not specified,
-     * then we get all tapeRequests back.
-     */
-    result = ptr_IVdqmService->selectTapeDriveQueue(dgn, server);
+    // This method call retrieves the drive queue from the database.  The
+    // result depends on the parameters. If the paramters are not specified,
+    // then information about all tape drives is returned.
+    vdqmDrvReqs = ptr_IVdqmService->selectTapeDriveQueue(dgn, server);
 
-    if ( result != NULL && result->size() > 0 ) {
-      //If we are here, then we got a result which we can send to the client
-      for(std::vector<castor::vdqm::TapeDrive*>::iterator it = result->begin();
-          it != result->end();
-          it++) {
-        
-        ptr_driveRequest->status = translateNewStatus((*it)->status());
-        ptr_driveRequest->DrvReqID = (*it)->id();
-      
-        TapeRequest* tapeRequest = (*it)->runningTapeReq();
-        if ( tapeRequest != NULL ) {
-          ptr_driveRequest->VolReqID = (unsigned int)tapeRequest->id();
-          
-          delete tapeRequest;
-          tapeRequest = 0;
-          (*it)->setRunningTapeReq(0);
-        } 
-        else 
-          ptr_driveRequest->VolReqID = 0;
-        
-        ptr_driveRequest->jobID = (*it)->jobID();
-        ptr_driveRequest->recvtime = (int)(*it)->modificationTime();
-        ptr_driveRequest->resettime = (int)(*it)->resettime();
-        ptr_driveRequest->usecount = (*it)->usecount();
-        ptr_driveRequest->errcount = (*it)->errcount();
-        ptr_driveRequest->MBtransf = (*it)->transferredMB();
-        ptr_driveRequest->mode = (*it)->tapeAccessMode();
-        ptr_driveRequest->TotalMB = (*it)->totalMB();
-        strcpy(ptr_driveRequest->reqhost, (*it)->tapeServer()->serverName().c_str());
-        
-        castor::vdqm::VdqmTape* tape = (*it)->tape();
-        if ( tape != NULL ) {
-          strcpy(ptr_driveRequest->volid, tape->vid().c_str());
-          
-          delete tape;
-          tape = 0;
-          (*it)->setTape(0);
-        }
-        else 
-          strcpy(ptr_driveRequest->volid, "");
-        
-  
-        strcpy(ptr_driveRequest->server, (*it)->tapeServer()->serverName().c_str());
-        strcpy(ptr_driveRequest->drive, (*it)->driveName().c_str());
-        strcpy(ptr_driveRequest->dgn, (*it)->deviceGroupName()->dgName().c_str());
-        
-        /**
-         * TODO: Here, we can give infomation about occured errors, which will
-         * be stored in the future in ErrorHistory. At the moment we leave it 
-         * empty, because we don't care about the old dedicate string.
-         */
-        strcpy(ptr_driveRequest->errorHistory, "");
-        
-        std::vector<TapeDriveCompatibility*> tapeDriveCompatibilities
-          = (*it)->tapeDriveCompatibilities();
-        if ((&tapeDriveCompatibilities) != NULL &&
-            tapeDriveCompatibilities.size() > 0) {
-                    
-          strcpy(ptr_driveRequest->tapeDriveModel, 
-                 tapeDriveCompatibilities[0]->tapeDriveModel().c_str());
-                 
-          for(std::vector<TapeDriveCompatibility*>::iterator it2 = tapeDriveCompatibilities.begin();
-              it2 != tapeDriveCompatibilities.end();
-              it2++) {
-              delete (*it2);
-          }
-        }
-        else
-          strcpy(ptr_driveRequest->tapeDriveModel, "");        
-            
-        
-        //free memory
-        castor::vdqm::TapeServer* tapeServer = (*it)->tapeServer();
-        delete (*it)->deviceGroupName();
-        (*it)->setDeviceGroupName(0);
-        delete (*it);
-        delete tapeServer;
-        tapeServer = 0;
-        (*it) = 0;
-        
+    // If there is a result to send to the client
+    if (vdqmDrvReqs != NULL && vdqmDrvReqs->size() > 0 ) {
+      for(std::vector<newVdqmDrvReq_t>::iterator it = vdqmDrvReqs->begin();
+        it != vdqmDrvReqs->end(); it++) {
         
         //"Send information for showqueues command" message
-        castor::dlf::Param param[] =
-          {castor::dlf::Param("message", "TapeDrive info"),
-           castor::dlf::Param("TapeDrive ID", ptr_driveRequest->DrvReqID)};
-        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG, VDQM_SEND_SHOWQUEUES_INFO, 2, param);
+        castor::dlf::Param param[] = {
+          castor::dlf::Param("message", "TapeDrive info"),
+          castor::dlf::Param("TapeDrive ID", it->DrvReqID)};
+        castor::dlf::dlf_writep(m_cuuid, DLF_LVL_DEBUG,
+          VDQM_SEND_SHOWQUEUES_INFO, 2, param);
         
         //Send informations to the client
         oldProtInterpreter->sendToOldClient(
-          ptr_header, volumeRequest, ptr_driveRequest);
+          ptr_header, volumeRequest, &(*it));
       }
     }
   } catch (castor::exception::Exception ex) {  
-    //free memory
-    if ( result != NULL ) {
-      for(std::vector<castor::vdqm::TapeDrive*>::iterator it = result->begin();
-            it != result->end();
-            it++) {
-        if ( (*it) != NULL ) {
-          TapeRequest* tapeRequest = (*it)->runningTapeReq();
-          if ( tapeRequest != NULL ) {
-            delete tapeRequest;
-            tapeRequest = 0;
-            (*it)->setRunningTapeReq(0);
-          }
-          
-          castor::vdqm::VdqmTape* tape = (*it)->tape();
-          if ( tape != NULL ) {
-            delete tape;
-            tape = 0;
-            (*it)->setTape(0);
-          }
-          
-          std::vector<TapeDriveCompatibility*> tapeDriveCompatibilities
-            = (*it)->tapeDriveCompatibilities();
-          if ((&tapeDriveCompatibilities) != NULL &&
-              tapeDriveCompatibilities.size() > 0) {
-            for(std::vector<TapeDriveCompatibility*>::iterator it2 = tapeDriveCompatibilities.begin();
-                it2 != tapeDriveCompatibilities.end();
-                it2++) {
-                delete (*it2);
-            }
-          }
-          
-          castor::vdqm::TapeServer* tapeServer = (*it)->tapeServer();        
-          delete (*it)->deviceGroupName();
-          (*it)->setDeviceGroupName(0);
-          delete (*it);
-          delete tapeServer;
-          tapeServer = 0;
-          (*it) = 0;
-        }
-      }
-      
-      // deletion of the vector
-      delete result;
-      result = 0;
+    // Clean up the memory
+    if(vdqmDrvReqs != NULL) {
+      delete vdqmDrvReqs;
     }
-    /**
-     * To inform the client about the end of the queue, we send again a 
-     * ptr_driveRequest with the VolReqID = -1
-     */
+
+    // To inform the client about the end of the queue, we send again a 
+    // ptr_driveRequest with the VolReqID = -1
     ptr_driveRequest->DrvReqID = -1;
   
-    oldProtInterpreter->sendToOldClient(ptr_header, volumeRequest, ptr_driveRequest);
+    oldProtInterpreter->sendToOldClient(ptr_header, volumeRequest,
+      ptr_driveRequest);
           
     throw ex;
   }
   
-  // deletion of the vector
-  delete result;
-  result = 0;
+  // Clean up the memory
+  if(vdqmDrvReqs != NULL) {
+    delete vdqmDrvReqs;
+  }
   
-  /**
-   * To inform the client about the end of the queue, we send again a 
-   * ptr_driveRequest with the VolReqID = -1
-   */
+  // To inform the client about the end of the queue, we send again a 
+  // ptr_driveRequest with the VolReqID = -1
   ptr_driveRequest->DrvReqID = -1;
   
-  oldProtInterpreter->sendToOldClient(ptr_header, volumeRequest, ptr_driveRequest);
-}
-
-
-//------------------------------------------------------------------------------
-// translateNewStatus
-//------------------------------------------------------------------------------
-int castor::vdqm::handler::TapeDriveHandler::translateNewStatus(
-  castor::vdqm::TapeDriveStatusCodes newStatusCode) 
-  throw (castor::exception::Exception) {
-  
-  int oldStatus = 0;
-  
-  switch (newStatusCode) {
-    case UNIT_UP:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_FREE;
-        break;
-    case UNIT_STARTING:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
-        break;
-    case UNIT_ASSIGNED:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
-        break;
-    case VOL_MOUNTED:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
-        break;
-    case FORCED_UNMOUNT:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | 
-                     VDQM_FORCE_UNMOUNT | VDQM_UNIT_UNKNOWN;
-        break;
-    case UNIT_DOWN:
-        oldStatus = VDQM_UNIT_DOWN;
-        break;
-    case WAIT_FOR_UNMOUNT:
-        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE | 
-                     VDQM_UNIT_UNKNOWN;
-        break;
-    case STATUS_UNKNOWN:
-        oldStatus = VDQM_UNIT_UNKNOWN;
-        break;    
-    default:
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "The tapeDrive is in a wrong status" << std::endl;
-        throw ex;                                        
-  }  
-  
-  return oldStatus;
+  oldProtInterpreter->sendToOldClient(ptr_header, volumeRequest,
+    ptr_driveRequest);
 }
 
 

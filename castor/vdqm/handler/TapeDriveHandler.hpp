@@ -27,10 +27,10 @@
 #ifndef _TAPEDRIVEHANDLER_HPP_
 #define _TAPEDRIVEHANDLER_HPP_
 
-#include "BaseRequestHandler.hpp"
 #include "castor/vdqm/TapeDriveStatusCodes.hpp"
+#include "castor/vdqm/handler/BaseRequestHandler.hpp"
 
-typedef struct newVdqmHdr newVdqmHdr_t;
+typedef struct newVdqmHdr    newVdqmHdr_t;
 typedef struct newVdqmVolReq newVdqmVolReq_t;
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
 
@@ -94,7 +94,8 @@ namespace castor {
          * them back to the client via the OldProtocolInterpreter interface.
          *
          * @param volumeRequest The TapeRequest in the old protocol
-         * @param oldProtInterpreter The interface to send the queue to the client
+         * @param oldProtInterpreter The interface to send the queue to the
+         * client
          * @param cuuid The unique id of the request. Needed for dlf 
          * @exception In case of error
          */
@@ -121,9 +122,9 @@ namespace castor {
   
         /**
          * Handles the communication with the data base to get the TapeDrive.
-         * If there is no entry in the db, a new TapeDrive Object will be created.
-         * Please notice, that this object is not stored in the db. This happens
-         * at the very end of newTapeDriveRequest()
+         * If there is no entry in the db, a new TapeDrive Object will be
+         * created.  Please notice, that this object is not stored in the db.
+         * This happens at the very end of newTapeDriveRequest()
          * 
          * @param tapeServer The tape server, to which the drive belong to.
          * @exception In case of error
@@ -142,7 +143,6 @@ namespace castor {
         void copyTapeDriveInformations(TapeDrive* tapeDrive)
           throw (castor::exception::Exception);  
         
-        
         /**
          * Creates a log messages for the old and new status code. If the 
          * value of the old status is 0, the function just prints the new 
@@ -156,26 +156,12 @@ namespace castor {
                         const int newActStatus)
           throw (castor::exception::Exception);
           
-          
         /**
          * Deletes the the tape Server and all inner objects of the 
          * tapeDrive. Please notice, that the tapeDrive itself is not
          * deleted.
          */
         void freeMemory(TapeDrive* tapeDrive, TapeServer* tapeServer);                    
-        
-        
-        /**
-         * Translates the new status of a Tape drive into the old status
-         * representation.
-         * 
-         * @param newStatusCode The status value of the new Protocol
-         * @return The translation into the old status
-         * @exception In case of error
-         */  
-        int translateNewStatus(TapeDriveStatusCodes newStatusCode)
-          throw (castor::exception::Exception);
-          
         /**
          * Connects the new tape drive with the TapeDriveCompatibility objects.
          * If there are now rows for this model inside the table, it starts

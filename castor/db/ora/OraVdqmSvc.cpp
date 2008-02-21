@@ -22,15 +22,15 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#include "castor/IFactory.hpp"
-#include "castor/SvcFactory.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
+#include "castor/IFactory.hpp"
+#include "castor/SvcFactory.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/db/newora/OraCnvSvc.hpp"
 #include "castor/db/newora/OraStatement.hpp"
-
 #include "castor/db/ora/OraVdqmSvc.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
@@ -38,15 +38,15 @@
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
-#include "castor/vdqm/TapeDriveStatusCodes.hpp"
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeServer.hpp"
 #include "castor/vdqm/newVdqm.h"
+#include "h/vdqm_constants.h"
 
 #include "occi.h"
 #include <Cuuid.h>
-#include <vdqm_constants.h>
 #include <net.h>
+#include <string.h>
 
 
 // -----------------------------------------------------------------------
@@ -110,9 +110,25 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementS
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
   "BEGIN selectTapeRequestQueue(:1, :2, :3); END;";
   
+/*
 /// SQL statement for function selectTapeDriveQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
   "BEGIN selectTapeDriveQueue(:1, :2, :3); END;";
+*/
+
+/// SQL statement for function selectTapeDriveQueue
+const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
+  "SELECT"
+  "  STATUS, ID, RUNNINGTAPEREQ, JOBID, MODIFICATIONTIME, RESETTIME, USECOUNT,"
+  "  ERRCOUNT, TRANSFERREDMB, TAPEACCESSMODE, TOTALMB, SERVERNAME, VID,"
+  "  DRIVENAME, DGNAME, DRIVEMODEL "
+  "FROM"
+  "  TAPEDRIVESHOWQUEUES_VIEW "
+  "WHERE"
+  "      (:1 IS NULL OR :2 = DGNAME)"
+  "  AND (:3 IS NULL OR :4 = SERVERNAME) "
+  "ORDER BY"
+  "  DRIVENAME ASC";
   
 /// SQL statement for function selectDeviceGroupName
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestStatementString =
@@ -1191,116 +1207,165 @@ std::vector<castor::vdqm::TapeRequest*>*
 // -----------------------------------------------------------------------
 // selectTapeDriveQueue
 // -----------------------------------------------------------------------
-std::vector<castor::vdqm::TapeDrive*>* 
-  castor::db::ora::OraVdqmSvc::selectTapeDriveQueue (
-  const std::string dgn, 
-  const std::string requestedSrv)
-  throw (castor::exception::Exception) {
+std::vector<newVdqmDrvReq_t>*
+  castor::db::ora::OraVdqmSvc::selectTapeDriveQueue(const std::string dgn,
+  const std::string requestedSrv) throw (castor::exception::Exception) {
 
-  u_signed64 idTapeDrive = 0;
-  castor::vdqm::TapeDrive* tmpTapeDrive = NULL;
-  
   // Check whether the statements are ok
   if (0 == m_selectTapeDriveQueueStatement) {
     m_selectTapeDriveQueueStatement = 
       createStatement(s_selectTapeDriveQueueStatementString);
-    
-    m_selectTapeDriveQueueStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
   }
-  
-  // Execute statement and get result
+
+  // Set the query statements parameters
   try {
     m_selectTapeDriveQueueStatement->setString(1, dgn);
     m_selectTapeDriveQueueStatement->setString(2, requestedSrv);
-    unsigned int nb = m_selectTapeDriveQueueStatement->executeUpdate();
-    
-    if (0 == nb) {
-      //Result is empty, so we return a Null pointer
-      return NULL;
-    }    
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "OraVdqmSvc::selectTapeRequestQueue(): "
-      << "Unable to find TapeDrives for queue: "
+      << "Failed to set the parameters of selectTapeDriveQueueStatement:"
       << std::endl << e.getMessage();
+
     throw ex;
-  }  
-  
-  
-  // Now get the the Objects from their id's
-  try {
-    // create result
-    std::vector<castor::vdqm::TapeDrive*>* result =
-      new std::vector<castor::vdqm::TapeDrive*>;
-      
-    // Run through the cursor
+  }
+ 
+  // Execute statement and get result
+  try
+  {
+    m_selectTapeDriveQueueStatement->setString(1, dgn);
+    m_selectTapeDriveQueueStatement->setString(2, dgn);
+    m_selectTapeDriveQueueStatement->setString(3, requestedSrv);
+    m_selectTapeDriveQueueStatement->setString(4, requestedSrv);
+
     oracle::occi::ResultSet *rs =
-      m_selectTapeDriveQueueStatement->getCursor(3);
-    
-    oracle::occi::ResultSet::Status status = rs->next();
-    
-    
-    /**
-     * For each id, we create a TapeDrive object and the needed linked objects
-     * from the other tables.
-     */
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      
-      // Fill result
-      idTapeDrive = (u_signed64)rs->getDouble(10); // 10 = Col number of ID
-      
-      if ( idTapeDrive > 0 ) {
-        castor::BaseAddress ad;
-        ad.setTarget(idTapeDrive);
-        ad.setCnvSvcName("DbCnvSvc");
-        ad.setCnvSvcType(castor::SVC_DBCNV);
-        
-        tmpTapeDrive = new castor::vdqm::TapeDrive();
-        
-        tmpTapeDrive->setId(idTapeDrive);
-        tmpTapeDrive->setJobID(rs->getInt(1));
-        tmpTapeDrive->setModificationTime((u_signed64)rs->getDouble(2));
-        tmpTapeDrive->setResettime((u_signed64)rs->getDouble(3));
-        tmpTapeDrive->setUsecount(rs->getInt(4));
-        tmpTapeDrive->setErrcount(rs->getInt(5));
-        tmpTapeDrive->setTransferredMB(rs->getInt(6));
-        tmpTapeDrive->setTotalMB((u_signed64)rs->getDouble(7));        
-        tmpTapeDrive->setDriveName(rs->getString(8));
-        tmpTapeDrive->setTapeAccessMode(rs->getInt(9));
-        //Status of the TapeDrive
-        tmpTapeDrive->setStatus(
-          (castor::vdqm::TapeDriveStatusCodes)rs->getInt(14));
-        
-        // Get the foreign related objects
-        cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_DeviceGroupName);
-        cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeServer);
-        cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_VdqmTape);
-        cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeRequest);
-        cnvSvc()->fillObj(&ad, tmpTapeDrive, castor::OBJ_TapeDriveCompatibility);
-        
-        
-        result->push_back(tmpTapeDrive);
-        status = rs->next();
-        
-        tmpTapeDrive = 0;
-        idTapeDrive = 0;        
-      }
+      m_selectTapeDriveQueueStatement->executeQuery();
+
+    // The result of the search in the database.
+    std::vector<newVdqmDrvReq_t>* vdqmDrvReqs =
+      new std::vector<newVdqmDrvReq_t>;
+
+    newVdqmDrvReq_t vdqmDrvReq;
+
+    while(rs->next())
+    {
+      vdqmDrvReq.status    =
+        translateNewStatus((castor::vdqm::TapeDriveStatusCodes)rs->getInt(1));
+      vdqmDrvReq.DrvReqID  = rs->getInt(2);
+      vdqmDrvReq.VolReqID  = rs->getInt(3);
+      vdqmDrvReq.jobID     = rs->getInt(4);
+      vdqmDrvReq.recvtime  = rs->getInt(5);
+      vdqmDrvReq.resettime = rs->getInt(6);
+      vdqmDrvReq.usecount  = rs->getInt(7);
+      vdqmDrvReq.errcount  = rs->getInt(8);
+      vdqmDrvReq.MBtransf  = rs->getInt(9);
+      vdqmDrvReq.mode      = rs->getInt(10);
+      vdqmDrvReq.TotalMB   = (u_signed64)rs->getDouble(11);
+
+      strncpy(vdqmDrvReq.reqhost, rs->getString(12).c_str(),
+        sizeof(vdqmDrvReq.reqhost));
+      // Null-terminate in case source string is longer than destination
+      vdqmDrvReq.reqhost[sizeof(vdqmDrvReq.reqhost) - 1] = '\0';
+
+      strncpy(vdqmDrvReq.volid, rs->getString(13).c_str(),
+        sizeof(vdqmDrvReq.volid));
+      // Null-terminate in case source string is longer than destination
+      vdqmDrvReq.volid[sizeof(vdqmDrvReq.volid) - 1] = '\0';
+
+      strncpy(vdqmDrvReq.server, vdqmDrvReq.reqhost,
+        sizeof(vdqmDrvReq.server));
+      // Null-terminate in case source string is longer than destination
+      vdqmDrvReq.server[sizeof(vdqmDrvReq.server) - 1] = '\0';
+
+      strncpy(vdqmDrvReq.drive, rs->getString(14).c_str(),
+        sizeof(vdqmDrvReq.drive));
+      // Null-terminate in case source string is longer than destination
+      vdqmDrvReq.drive[sizeof(vdqmDrvReq.drive) - 1] = '\0';
+
+      strncpy(vdqmDrvReq.dgn, rs->getString(15).c_str(),
+        sizeof(vdqmDrvReq.dgn));
+      // Null-terminate in case source string is longer than destination
+      vdqmDrvReq.dgn[sizeof(vdqmDrvReq.dgn) - 1] = '\0';
+
+      // TODO: Here, we can give infomation about occured errors, which will
+      // be stored in the future in ErrorHistory. At the moment we leave it 
+      // empty, because we don't care about the old dedicate string.
+      vdqmDrvReq.errorHistory[0] = '\0';
+
+      strncpy(vdqmDrvReq.tapeDriveModel, rs->getString(16).c_str(),
+        sizeof(vdqmDrvReq.tapeDriveModel));
+      // Null-terminate in case source string is longer than destination
+      vdqmDrvReq.tapeDriveModel[sizeof(vdqmDrvReq.tapeDriveModel) - 1] = '\0';
+
+      vdqmDrvReqs->push_back(vdqmDrvReq);
     }
-    
-    return result;    
-  } catch (oracle::occi::SQLException e) {
+
+    return vdqmDrvReqs;
+
+  } catch(oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to find a TapeDrive for id "
-      << idTapeDrive << " :"
+      << "Failed to query tape drive queue:"
       << std::endl << e.getMessage();
-      
+
     throw ex;
-  }  
+
+  } catch(castor::exception::Exception &e) {
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Failed to query tape drive queue:"
+      << std::endl << e.getMessage().str();
+
+    throw ex;
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// translateNewStatus
+//------------------------------------------------------------------------------
+int castor::db::ora::OraVdqmSvc::translateNewStatus(
+  castor::vdqm::TapeDriveStatusCodes newStatusCode)
+  throw (castor::exception::Exception) {
+
+  int oldStatus = 0;
+
+  switch (newStatusCode) {
+    case castor::vdqm::UNIT_UP:
+        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_FREE;
+        break;
+    case castor::vdqm::UNIT_STARTING:
+        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY;
+        break;
+    case castor::vdqm::UNIT_ASSIGNED:
+        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_ASSIGN | VDQM_UNIT_BUSY;
+        break;
+    case castor::vdqm::VOL_MOUNTED:
+        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_ASSIGN;
+        break;
+    case castor::vdqm::FORCED_UNMOUNT:
+        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
+                     VDQM_FORCE_UNMOUNT | VDQM_UNIT_UNKNOWN;
+        break;
+    case castor::vdqm::UNIT_DOWN:
+        oldStatus = VDQM_UNIT_DOWN;
+        break;
+    case castor::vdqm::WAIT_FOR_UNMOUNT:
+        oldStatus = VDQM_UNIT_UP | VDQM_UNIT_BUSY | VDQM_UNIT_RELEASE |
+                     VDQM_UNIT_UNKNOWN;
+        break;
+    case castor::vdqm::STATUS_UNKNOWN:
+        oldStatus = VDQM_UNIT_UNKNOWN;
+        break;
+    default:
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() << "The tapeDrive is in a wrong status" << std::endl;
+        throw ex;
+  }
+
+  return oldStatus;
 }
 
 
