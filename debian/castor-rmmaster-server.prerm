@@ -1,8 +1,0 @@
-#! /bin/sh
-#
-# $Id: castor-rmmaster-server.prerm,v 1.6 2007/08/07 14:58:38 waldron Exp $
-#
-CASTOR_SERVICE=rmMasterDaemon
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
-exit $?

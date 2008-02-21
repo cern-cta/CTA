@@ -1,8 +1,0 @@
-#! /bin/sh
-#
-# $Id: castor-rh-server.prerm,v 1.4 2005/08/08 16:51:22 jdurand Exp $
-#
-CASTOR_SERVICE=rhserver
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.prerm ] && /usr/sbin/castor-service.prerm ${1+"$@"}
-exit $?
