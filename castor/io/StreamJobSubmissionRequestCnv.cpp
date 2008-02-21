@@ -112,6 +112,7 @@ void castor::io::StreamJobSubmissionRequestCnv::createRep(castor::IAddress* addr
   ad->stream() << obj->numAskedHosts();
   ad->stream() << obj->destDiskCopyId();
   ad->stream() << obj->clientSecure();
+  ad->stream() << obj->sourceSvcClass();
   ad->stream() << obj->id();
 }
 
@@ -197,6 +198,9 @@ castor::IObject* castor::io::StreamJobSubmissionRequestCnv::createObj(castor::IA
   int clientSecure;
   ad->stream() >> clientSecure;
   object->setClientSecure(clientSecure);
+  std::string sourceSvcClass;
+  ad->stream() >> sourceSvcClass;
+  object->setSourceSvcClass(sourceSvcClass);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

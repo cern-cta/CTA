@@ -533,6 +533,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_sourceSvcClass
+       * The service class name of the source diskcopy
+       * @return the value of m_sourceSvcClass
+       */
+      std::string sourceSvcClass() const {
+        return m_sourceSvcClass;
+      }
+
+      /**
+       * Set the value of m_sourceSvcClass
+       * The service class name of the source diskcopy
+       * @param new_var the new value of m_sourceSvcClass
+       */
+      void setSourceSvcClass(std::string new_var) {
+        m_sourceSvcClass = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -623,6 +641,9 @@ namespace castor {
 
       /// The clientSecure specifies if the Client runs in secure mode
       int m_clientSecure;
+
+      /// The service class name of the source diskcopy
+      std::string m_sourceSvcClass;
 
       /// The id of this object
       u_signed64 m_id;
