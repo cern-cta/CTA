@@ -375,6 +375,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_fileId
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_fileId(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_setFileId
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_setFileId(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_nsHost
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_nsHost(castor::stager::Disk2DiskCopyDoneRequest* instance, const char** var) {
+    *var = instance->nsHost().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_Disk2DiskCopyDoneRequest_setNsHost
+  //----------------------------------------------------------------------------
+  int Cstager_Disk2DiskCopyDoneRequest_setNsHost(castor::stager::Disk2DiskCopyDoneRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_Disk2DiskCopyDoneRequest_id
   //----------------------------------------------------------------------------
   int Cstager_Disk2DiskCopyDoneRequest_id(castor::stager::Disk2DiskCopyDoneRequest* instance, u_signed64* var) {

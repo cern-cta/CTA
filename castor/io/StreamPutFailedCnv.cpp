@@ -103,6 +103,8 @@ void castor::io::StreamPutFailedCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
   ad->stream() << obj->subReqId();
+  ad->stream() << obj->fileId();
+  ad->stream() << obj->nsHost();
   ad->stream() << obj->id();
 }
 
@@ -155,6 +157,12 @@ castor::IObject* castor::io::StreamPutFailedCnv::createObj(castor::IAddress* add
   u_signed64 subReqId;
   ad->stream() >> subReqId;
   object->setSubReqId(subReqId);
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  std::string nsHost;
+  ad->stream() >> nsHost;
+  object->setNsHost(nsHost);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

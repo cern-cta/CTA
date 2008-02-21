@@ -138,6 +138,38 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_fileId
+       * @return the value of m_fileId
+       */
+      u_signed64 fileId() const {
+        return m_fileId;
+      }
+
+      /**
+       * Set the value of m_fileId
+       * @param new_var the new value of m_fileId
+       */
+      void setFileId(u_signed64 new_var) {
+        m_fileId = new_var;
+      }
+
+      /**
+       * Get the value of m_nsHost
+       * @return the value of m_nsHost
+       */
+      std::string nsHost() const {
+        return m_nsHost;
+      }
+
+      /**
+       * Set the value of m_nsHost
+       * @param new_var the new value of m_nsHost
+       */
+      void setNsHost(std::string new_var) {
+        m_nsHost = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -162,6 +194,10 @@ namespace castor {
 
       /// The id of the source diskcopy
       u_signed64 m_sourceDiskCopyId;
+
+      u_signed64 m_fileId;
+
+      std::string m_nsHost;
 
       /// The id of this object
       u_signed64 m_id;

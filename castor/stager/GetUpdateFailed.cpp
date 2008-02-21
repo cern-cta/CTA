@@ -42,6 +42,8 @@
 castor::stager::GetUpdateFailed::GetUpdateFailed() throw() :
   Request(),
   m_subReqId(0),
+  m_fileId(0),
+  m_nsHost(""),
   m_id(0) {
 }
 
@@ -67,6 +69,8 @@ void castor::stager::GetUpdateFailed::print(std::ostream& stream,
   this->Request::print(stream, indent, alreadyPrinted);
   // Output of all members
   stream << indent << "subReqId : " << m_subReqId << std::endl;
+  stream << indent << "fileId : " << m_fileId << std::endl;
+  stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }

@@ -279,6 +279,26 @@ int Cstager_GetUpdateDone_subReqId(struct Cstager_GetUpdateDone_t* instance, u_s
 int Cstager_GetUpdateDone_setSubReqId(struct Cstager_GetUpdateDone_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of fileId
+ */
+int Cstager_GetUpdateDone_fileId(struct Cstager_GetUpdateDone_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ */
+int Cstager_GetUpdateDone_setFileId(struct Cstager_GetUpdateDone_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ */
+int Cstager_GetUpdateDone_nsHost(struct Cstager_GetUpdateDone_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ */
+int Cstager_GetUpdateDone_setNsHost(struct Cstager_GetUpdateDone_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

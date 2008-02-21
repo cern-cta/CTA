@@ -33,6 +33,7 @@
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
+struct C_strin_t;
 struct Cstager_MoverCloseRequest_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
@@ -300,6 +301,26 @@ int Cstager_MoverCloseRequest_timeStamp(struct Cstager_MoverCloseRequest_t* inst
  * Set the value of timeStamp
  */
 int Cstager_MoverCloseRequest_setTimeStamp(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of fileId
+ */
+int Cstager_MoverCloseRequest_fileId(struct Cstager_MoverCloseRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ */
+int Cstager_MoverCloseRequest_setFileId(struct Cstager_MoverCloseRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ */
+int Cstager_MoverCloseRequest_nsHost(struct Cstager_MoverCloseRequest_t* instance, struct C_strin_t* var);
+
+/**
+ * Set the value of nsHost
+ */
+int Cstager_MoverCloseRequest_setNsHost(struct Cstager_MoverCloseRequest_t* instance, struct C_strin_t new_var);
 
 /**
  * Get the value of id

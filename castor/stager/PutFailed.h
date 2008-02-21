@@ -278,6 +278,26 @@ int Cstager_PutFailed_subReqId(struct Cstager_PutFailed_t* instance, u_signed64*
 int Cstager_PutFailed_setSubReqId(struct Cstager_PutFailed_t* instance, u_signed64 new_var);
 
 /**
+ * Get the value of fileId
+ */
+int Cstager_PutFailed_fileId(struct Cstager_PutFailed_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ */
+int Cstager_PutFailed_setFileId(struct Cstager_PutFailed_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ */
+int Cstager_PutFailed_nsHost(struct Cstager_PutFailed_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ */
+int Cstager_PutFailed_setNsHost(struct Cstager_PutFailed_t* instance, const char* new_var);
+
+/**
  * Get the value of id
  * The id of this object
  */

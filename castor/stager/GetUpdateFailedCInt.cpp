@@ -359,6 +359,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_GetUpdateFailed_fileId
+  //----------------------------------------------------------------------------
+  int Cstager_GetUpdateFailed_fileId(castor::stager::GetUpdateFailed* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GetUpdateFailed_setFileId
+  //----------------------------------------------------------------------------
+  int Cstager_GetUpdateFailed_setFileId(castor::stager::GetUpdateFailed* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GetUpdateFailed_nsHost
+  //----------------------------------------------------------------------------
+  int Cstager_GetUpdateFailed_nsHost(castor::stager::GetUpdateFailed* instance, const char** var) {
+    *var = instance->nsHost().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_GetUpdateFailed_setNsHost
+  //----------------------------------------------------------------------------
+  int Cstager_GetUpdateFailed_setNsHost(castor::stager::GetUpdateFailed* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_GetUpdateFailed_id
   //----------------------------------------------------------------------------
   int Cstager_GetUpdateFailed_id(castor::stager::GetUpdateFailed* instance, u_signed64* var) {

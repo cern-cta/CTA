@@ -105,6 +105,8 @@ void castor::io::StreamGetUpdateStartRequestCnv::createRep(castor::IAddress* add
   ad->stream() << obj->reqId();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
+  ad->stream() << obj->fileId();
+  ad->stream() << obj->nsHost();
   ad->stream() << obj->id();
 }
 
@@ -163,6 +165,12 @@ castor::IObject* castor::io::StreamGetUpdateStartRequestCnv::createObj(castor::I
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  std::string nsHost;
+  ad->stream() >> nsHost;
+  object->setNsHost(nsHost);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);
