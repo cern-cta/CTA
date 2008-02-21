@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/19 15:22:20 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 14:17:32 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -333,36 +333,6 @@ BEGIN
             AND TapeServer.serverName = server
             AND TapeServer.id = TapeRequest.requestedSrv
 			ORDER BY TapeRequest.modificationTime ASC;
-  END IF;
-END;
-
-
-/*
- * PL/SQL method implementing the select from tapedrive queue
- */
-CREATE OR REPLACE PROCEDURE selectTapeDriveQueue
- (dgn IN VARCHAR2, server IN VARCHAR2, tapeDrives OUT castorVdqm.TapeDrive_Cur) AS
-BEGIN
-  IF dgn IS NULL AND server IS NULL THEN
-    OPEN tapeDrives FOR SELECT * FROM TapeDrive
-		  ORDER BY TapeDrive.driveName ASC;
-  ELSIF dgn IS NULL THEN
-    OPEN tapeDrives FOR SELECT TapeDrive.* FROM TapeDrive, TapeServer
-      WHERE TapeServer.serverName = server
-            AND TapeServer.id = TapeDrive.tapeServer
-			ORDER BY TapeDrive.driveName ASC;
-  ELSIF server IS NULL THEN
-    OPEN tapeDrives FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeDrive.deviceGroupName
-			ORDER BY TapeDrive.driveName ASC;
-  ELSE 
-    OPEN tapeDrives FOR SELECT TapeDrive.* FROM TapeDrive, DeviceGroupName, TapeServer
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeDrive.deviceGroupName
-            AND TapeServer.serverName = server
-            AND TapeServer.id = TapeDrive.tapeServer
-			ORDER BY TapeDrive.driveName ASC;
   END IF;
 END;
 
