@@ -1,7 +1,2 @@
-#! /bin/sh
-#
-# $Id: castor-job.postinst,v 1.3 2006/02/07 08:40:23 itglp Exp $
-#
-
-chown stage.st /var/spool/job
-chmod 777 /var/spool/job
+/bin/chown stage:st /var/spool/job
+/bin/chmod 777 /var/spool/job

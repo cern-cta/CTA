@@ -1,8 +1,2 @@
-#! /bin/sh
-#
-# $Id: castor-rmnode-server.postinst,v 1.8 2007/04/02 14:26:30 sponcec3 Exp $
-#
-CASTOR_SERVICE=rmNodeDaemon
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-exit $?
+/sbin/chkconfig --add rmNodeDaemon
+/sbin/service rmNodeDaemon condrestart > /dev/null 2>&1 || :

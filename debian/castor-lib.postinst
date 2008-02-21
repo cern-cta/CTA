@@ -1,5 +1,4 @@
-#
-## IP tables modification to allow the castor client to open ports
+# IP tables modification to allow the castor client to open ports
 if [ -e /etc/sysconfig/iptables ]; then
   if ! /bin/grep -q 'controlled by CASTOR-client RPM' /etc/sysconfig/iptables; then
     /bin/cat <<EOFiptable |\
@@ -9,6 +8,6 @@ if [ -e /etc/sysconfig/iptables ]; then
 -A RH-Firewall-1-INPUT -m state --state NEW -m tcp -p tcp --dport 30000:30100 -j ACCEPT
 # end of CASTOR-client RPM modifications
 EOFiptable
-    /sbin/service iptables condrestart 
+    /sbin/service iptables condrestart > /dev/null 2>&1 || :
   fi
 fi

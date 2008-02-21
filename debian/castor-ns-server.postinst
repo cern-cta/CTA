@@ -1,8 +1,2 @@
-#! /bin/sh
-#
-# $Id: castor-ns-server.postinst,v 1.7 2005/08/08 16:51:22 jdurand Exp $
-#
-CASTOR_SERVICE=nsdaemon
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-exit $?
+/sbin/chkconfig --add nsdaemon
+/sbin/service nsdaemon condrestart > /dev/null 2>&1 || :

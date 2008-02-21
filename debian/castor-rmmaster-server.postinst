@@ -1,8 +1,2 @@
-#! /bin/sh
-#
-# $Id: castor-rmmaster-server.postinst,v 1.9 2007/08/07 14:58:38 waldron Exp $
-#
-CASTOR_SERVICE=rmMasterDaemon
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-exit $?
+/sbin/chkconfig --add rmMasterDaemon
+/sbin/service rmMasterDaemon condrestart > /dev/null 2>&1 || :

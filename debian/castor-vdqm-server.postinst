@@ -1,8 +1,2 @@
-#! /bin/sh
-#
-# $Id: castor-vdqm-server.postinst,v 1.8 2005/09/28 17:24:43 jdurand Exp $
-#
-CASTOR_SERVICE=vdqmserv
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-exit $?
+/sbin/chkconfig --add vdqmserv
+/sbin/service vdqmserv condrestart > /dev/null 2>&1 || :

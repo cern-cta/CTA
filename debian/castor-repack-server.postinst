@@ -1,5 +1,2 @@
-#! /bin/sh
-CASTOR_SERVICE=repackserver
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-exit $?
+/sbin/chkconfig --add repackserver
+/sbin/service repackserver condrestart > /dev/null 2>&1 || :

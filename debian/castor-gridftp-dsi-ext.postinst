@@ -1,5 +1,4 @@
-#! /bin/sh
 if [ "`grep gsiftp /etc/services`" = "" ]; then 
-  echo "gsiftp          2811/tcp # gridftp server port" >>/etc/services
+    echo "gsiftp          2811/tcp # gridftp server port" >> /etc/services
 fi
-service xinetd condrestart
+/sbin/service xinetd condrestart > /dev/null 2>&1 || :

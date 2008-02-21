@@ -1,4 +1,2 @@
-CASTOR_SERVICE=cleaning
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-exit $?
+/sbin/chkconfig --add cleaning
+/sbin/service cleaning condrestart > /dev/null 2>&1 || :

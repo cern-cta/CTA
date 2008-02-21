@@ -1,4 +1,2 @@
-CASTOR_SERVICE=stager
-export CASTOR_SERVICE
-[ -x /usr/sbin/castor-service.postinst ] && /usr/sbin/castor-service.postinst ${1+"$@"}
-[ $? -ne 0 ] && exit $?
+/sbin/chkconfig --add stager
+/sbin/service stager condrestart > /dev/null 2>&1 || :
