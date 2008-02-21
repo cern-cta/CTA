@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.5 $ $Date: 2001/12/03 07:31:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrdaemon.man,v $ $Revision: 1.6 $ $Date: 2008/02/21 17:11:29 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRDAEMON 1 "$Date: 2001/12/03 07:31:41 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRDAEMON 1 "$Date: 2008/02/21 17:11:29 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrdaemon \- start the volume manager
 .SH SYNOPSIS
@@ -124,7 +124,5 @@ Here is a small log:
 01/27 14:58:24  2237,0 vmgr_srv_modifytape: VMG98 - modifytape Y31001
 01/27 14:58:24  2237,0 vmgr_srv_modifytape: returns 0
 .fi
-.SH SEE ALSO
-.B vmgrshutdown(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
