@@ -46,14 +46,15 @@ namespace castor {
       STREAM_RUNNING = 3,
       STREAM_WAITSPACE = 4,
       STREAM_CREATED = 5,
-      STREAM_STOPPED = 6
+      STREAM_STOPPED = 6,
+      STREAM_WAITPOLICY = 7
     }; /* end of enum StreamStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the StreamStatusCodes enum
      */
-    extern const char* StreamStatusCodesStrings[7];
+    extern const char* StreamStatusCodesStrings[8];
 
 #ifdef __cplusplus
   } /* end of namespace stager */
