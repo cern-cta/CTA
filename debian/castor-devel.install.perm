@@ -5,11 +5,6 @@
 %attr(0644,root,bin) usr/include/shift/Cglobals.h
 %attr(0644,root,bin) usr/include/shift/Cgrp.h
 %attr(0644,root,bin) usr/include/shift/Cinit.h
-%attr(0644,root,bin) usr/include/shift/Cmonit_api.h
-%attr(0644,root,bin) usr/include/shift/Cmonit_constants.h
-%attr(0644,root,bin) usr/include/shift/Cmonit_structs.h
-%attr(0644,root,bin) usr/include/shift/Cmonitd.h
-%attr(0644,root,bin) usr/include/shift/Cmonitd_lock.h
 %attr(0644,root,bin) usr/include/shift/Cmutex.h
 %attr(0644,root,bin) usr/include/shift/Cnetdb.h
 %attr(0644,root,bin) usr/include/shift/Cns.h
@@ -59,7 +54,6 @@
 %attr(0644,root,bin) usr/include/shift/log.h
 %attr(0644,root,bin) usr/include/shift/marshall.h
 %attr(0644,root,bin) usr/include/shift/md5.h
-%attr(0644,root,bin) usr/include/shift/msg.h
 %attr(0644,root,bin) usr/include/shift/net.h
 %attr(0644,root,bin) usr/include/shift/osdep.h
 %attr(0644,root,bin) usr/include/shift/patchlevel.h
