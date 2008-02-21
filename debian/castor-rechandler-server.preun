@@ -1,0 +1,4 @@
+if [ "$1" = 0 ]; then
+    /sbin/service rechandler stop > /dev/null 2>&1 || :
+    /sbin/chkconfig --del rechandler
+fi
