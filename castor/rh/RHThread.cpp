@@ -17,13 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/02/14 17:33:59 $ $Author: itglp $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/02/21 16:00:30 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-// Include Files
-
+// Include files
 #include "castor/rh/RHThread.hpp"
 #include "castor/IObject.hpp"
 #include "castor/Constants.hpp"
@@ -36,22 +35,20 @@
 #include "castor/PortsConfig.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/server/ThreadNotification.hpp"
-
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
 #include "castor/stager/QryRequest.hpp"
 #include "castor/stager/GCFileList.hpp"
 #include "castor/rh/Client.hpp"
-
 #include "castor/io/biniostream.h"
-
 #include "castor/rh/Server.hpp"
 #include "castor/MessageAck.hpp"
 
 #include <iostream>
 #include <errno.h>
-#include <sys/times.h>
+#include <sys/time.h>
 #include <unistd.h>
+
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -65,56 +62,66 @@ throw (castor::exception::Exception) :
     getNotifPort(castor::CASTOR_STAGER);
 }
 
+
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
 void castor::rh::RHThread::run(void* param) {
   MessageAck ack;
   ack.setStatus(true);
-
-  // clock the time to process this request
-  struct tms buf;
-  clock_t startTime = times(&buf);
-
+  
+  // Record the start time for statistical purposes
+  timeval tv;
+  gettimeofday(&tv, NULL);
+  signed64 startTime = ((tv.tv_sec * 1000000) + tv.tv_usec);
+  
   // We know it's a ServerSocket
   castor::io::ServerSocket* sock = (castor::io::ServerSocket*) param;
   castor::stager::Request* fr = 0;
-
+  
   // Retrieve info on the client
   unsigned short port;
   unsigned long ip;
   try {
     sock->getPeerIp(port, ip);
   } catch(castor::exception::Exception e) {
-    // "Exception caught : ignored" message
+    // "Exception caught : ignored"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 5, 2, params);
   }
-  // "New Request Arrival" message
+  
+  // Give a uuid to the request
+  Cuuid_t cuuid = nullCuuid;
+  Cuuid_create(&cuuid);
+  char uuid[CUUID_STRING_LEN+1];
+  uuid[CUUID_STRING_LEN] = 0;
+  Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
+  
+  // "New Request Arrival"
   castor::dlf::Param peerParams[] =
     {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
      castor::dlf::Param("Port", port)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1, 2, peerParams);
-
-  // get the incoming request
+  castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 1, 2, peerParams);
+  
+  // Get the incoming request
   try {
     castor::IObject* obj = sock->readObject();
     fr = dynamic_cast<castor::stager::Request*>(obj);
     if (0 == fr) {
       delete obj;
-      // "Invalid Request" message
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 6);
+      // "Invalid Request"
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 6);
       ack.setStatus(false);
       ack.setErrorCode(EINVAL);
       ack.setErrorMessage("Invalid Request object sent to server.");
     }
   } catch (castor::exception::Exception e) {
-    // "Unable to read Request from socket" message
+    // "Unable to read Request from socket"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 7, 1, params);
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 7, 1, params);
     ack.setStatus(false);
     ack.setErrorCode(EINVAL);
     std::ostringstream stst;
@@ -122,32 +129,31 @@ void castor::rh::RHThread::run(void* param) {
          << std::endl << e.getMessage().str();
     ack.setErrorMessage(stst.str());
   }
-
-  //if the request comes from a secure connection then set Client values in Request object.
-  bool secure=false;
-  castor::io::AuthServerSocket* authSock = dynamic_cast<castor::io::AuthServerSocket*>(sock);
-  if(authSock != 0) {
+  
+  // If the request comes from a secure connection then set Client values in 
+  // the Request object.
+  bool secure = false;
+  castor::io::AuthServerSocket* authSock = 
+    dynamic_cast<castor::io::AuthServerSocket*>(sock);
+  if (authSock != 0) {
     fr->setEuid(authSock->getClientEuid());
     fr->setEgid(authSock->getClientEgid());
-    secure=true;
+    secure = true;
   }
-
-  // placeholder for the request uuid if any
-  Cuuid_t cuuid = nullCuuid;
+  
+  castor::BaseAddress ad;
+  ad.setCnvSvcName("DbCnvSvc");
+  ad.setCnvSvcType(castor::SVC_DBCNV);
+  
+  // Process request body
+  unsigned int nbThreads = 0;
   if (ack.status()) {
     try {
-      // gives a Cuuid to the request
-      // XXX Interface to Cuuid has to be improved !
-      // XXX its length has currently to be hardcoded
-      // XXX wherever you use it !!!
-      Cuuid_create(&cuuid);
-      char uuid[CUUID_STRING_LEN+1];
-      uuid[CUUID_STRING_LEN] = 0;
-      Cuuid2string(uuid, CUUID_STRING_LEN+1, &cuuid);
       fr->setReqId(uuid);
-      // "Processing Request" message
+      
+      // "Processing Request"
       castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, 8);
-
+      
       // Complete its client field
       castor::rh::Client *client =
         dynamic_cast<castor::rh::Client *>(fr->client());
@@ -161,12 +167,12 @@ void castor::rh::RHThread::run(void* param) {
       if (secure){
         client->setSecure(1);
       }
-
-      // handle the request. Pass the ip:port for logging purposes
-      handleRequest(fr, cuuid, ip, port);
+     
+      // Handle the request
+      nbThreads = handleRequest(fr, ad, cuuid);
       ack.setRequestId(uuid);
       ack.setStatus(true);
-      
+
     } catch (castor::exception::PermissionDenied e) {
       // "Permission Denied"
       castor::dlf::Param params[] =
@@ -178,7 +184,7 @@ void castor::rh::RHThread::run(void* param) {
       ack.setErrorCode(e.code());
       ack.setErrorMessage(e.getMessage().str());      
     } catch (castor::exception::Exception e) {
-      // "Exception caught" message
+      // "Exception caught"
       castor::dlf::Param params[] =
         {castor::dlf::Param("Standard Message", sstrerror(e.code())),
          castor::dlf::Param("Precise Message", e.getMessage().str())};
@@ -188,64 +194,108 @@ void castor::rh::RHThread::run(void* param) {
       ack.setErrorMessage(e.getMessage().str());
     } 
   }
-
-  // the process is over, don't include the time to send the ack
-  clock_t endTime = times(&buf);
+  
+  // Send acknowledgement. If we fail, rollback the database transaction
+  // otherwise commit the request to be processed by the stager
   try {
     sock->sendObject(ack);
+    svcs()->commit(&ad);
+    sendNotification(fr, cuuid, nbThreads);
+    
+    // If possible convert the request type to a string
+    std::ostringstream iss;
+    if ((fr->type() > 0) && 
+        ((unsigned int)fr->type() < castor::ObjectsIdsNb)) {
+      iss << castor::ObjectsIdStrings[fr->type()]; 
+    } else {
+      iss << fr->type();
+    }
+
+    // "Request stored in DB"
     castor::dlf::Param params[] =
+      {castor::dlf::Param("ID", fr->id())};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 1, params);
+
+    // Calculate elapsed time
+    timeval tv;
+    gettimeofday(&tv, NULL);
+    signed64 elapsedTime =
+      (((tv.tv_sec * 1000000) + tv.tv_usec) - startTime);
+
+    // "Reply sent to client"
+    castor::dlf::Param params2[] =
       {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
        castor::dlf::Param("Port", port),
-       castor::dlf::Param("ProcTime",    // processing time in ms
-         (int)((endTime - startTime) * 1000.0 / (float)sysconf(_SC_CLK_TCK)))};
-    // "Reply sent to client" message
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 3, params);
+       castor::dlf::Param("Type", iss.str()),
+       castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 4, params2);
+
   } catch (castor::exception::Exception e) {
-    // "Unable to send Ack to client" message
+    // "Unable to send Ack to client"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Standard Message", sstrerror(e.code())),
        castor::dlf::Param("Precise Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 11, 2, params);
+    
+    // Rollback transaction
+    try {
+      if (ack.status()) {
+	svcs()->rollback(&ad);
+      }
+    } catch (castor::exception::Exception e) {
+      // "Exception caught : failed to rollback transaction"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("Standard Message", sstrerror(e.code())),
+	 castor::dlf::Param("Precise Message", e.getMessage().str())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_ERROR, 15, 2, params);
+    }
   }
-
+  
   delete fr;
   delete sock;
 }
 
+
 //------------------------------------------------------------------------------
 // handleRequest
 //------------------------------------------------------------------------------
-void castor::rh::RHThread::handleRequest
-(castor::stager::Request* fr, Cuuid_t cuuid, unsigned long peerIP, unsigned short peerPort)
+unsigned int castor::rh::RHThread::handleRequest
+(castor::stager::Request* fr, 
+ castor::BaseAddress ad,
+ Cuuid_t cuuid)
   throw (castor::exception::Exception) {
-  // Checks access rights
+
+  // Check access rights
   if (m_useAccessLists) {
     castor::rh::IRHSvc* m_rhSvc = 0;
-    castor::IService* svc = castor::BaseObject::services()->service("DbRhSvc", castor::SVC_DBRHSVC);
+    castor::IService* svc = 
+      castor::BaseObject::services()->service("DbRhSvc", castor::SVC_DBRHSVC);
     m_rhSvc = dynamic_cast<castor::rh::IRHSvc*>(svc);
     if (0 == m_rhSvc) {
       castor::exception::Internal ex;
       ex.getMessage() << "Couldn't load the request handler service, check the castor.conf for DynamicLib entries" << std::endl;
       throw ex;
     }
-    m_rhSvc->checkPermission(fr->svcClassName(), fr->euid(), fr->egid(), fr->type());
+    m_rhSvc->checkPermission
+      (fr->svcClassName(), fr->euid(), fr->egid(), fr->type());
   }
+
   // Number of subrequests (when applicable)
   unsigned int nbSubReqs = 1;
-  // Stores it into DB
-  castor::BaseAddress ad;
-  ad.setCnvSvcName("DbCnvSvc");
-  ad.setCnvSvcType(castor::SVC_DBCNV);
+
+  // Store request into the DB
   try {
     svcs()->createRep(&ad, fr, false);
+
     // Store files for file requests
     castor::stager::FileRequest* filreq =
       dynamic_cast<castor::stager::FileRequest*>(fr);
     if (0 != filreq) {
       svcs()->fillRep(&ad, fr, OBJ_SubRequest, false);
-      // and get number of subrequests
+      // And get number of subrequests
       nbSubReqs = filreq->subRequests().size();
     }
+
     // Store client for requests
     castor::stager::Request* req =
       dynamic_cast<castor::stager::Request*>(fr);
@@ -253,33 +303,34 @@ void castor::rh::RHThread::handleRequest
       svcs()->createRep(&ad, req->client(), false);
       svcs()->fillRep(&ad, fr, OBJ_IClient, false);
     }
+
     // Store parameters for query requests
     castor::stager::QryRequest* qryReq =
       dynamic_cast<castor::stager::QryRequest*>(fr);
     if (0 != qryReq) {
       svcs()->fillRep(&ad, qryReq, OBJ_QueryParameter, false);
     }
+
     // Store deletedFiles for fileList
     castor::stager::GCFileList* fdReq =
       dynamic_cast<castor::stager::GCFileList*>(fr);
     if (0 != fdReq) {
       svcs()->fillRep(&ad, fdReq, OBJ_GCFile, false);
     }
-    svcs()->commit(&ad);
-    
-    // "Request stored in DB" message
-    // here we attach all data for monitoring/tracking purposes
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("IP", castor::dlf::IPAddress(peerIP)),
-       castor::dlf::Param("Port", peerPort),
-       castor::dlf::Param("DBKey", fr->id()),
-       castor::dlf::Param("Type", fr->type())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 4, params);
-
   } catch (castor::exception::Exception e) {
     svcs()->rollback(&ad);
     throw e;
   }
+
+  return nbSubReqs;
+}
+
+
+//------------------------------------------------------------------------------
+// sendNotification
+//------------------------------------------------------------------------------
+void castor::rh::RHThread::sendNotification
+(castor::stager::Request* fr, Cuuid_t cuuid, unsigned int nbThreads) {
 
   // Send an UDP message to the right stager service
   switch (fr->type()) {
@@ -287,20 +338,20 @@ void castor::rh::RHThread::handleRequest
   case OBJ_StagePutRequest:
   case OBJ_StageUpdateRequest:
     // JobRequest Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'J', nbSubReqs);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'J', nbThreads);
     break;
   case OBJ_StagePrepareToPutRequest:
   case OBJ_StagePrepareToGetRequest:
   case OBJ_StageRepackRequest:
   case OBJ_StagePrepareToUpdateRequest:
     // PrepareRequest Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'P', nbSubReqs);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'P', nbThreads);
     break;
   case OBJ_StageRmRequest:
   case OBJ_StagePutDoneRequest:
   case OBJ_SetFileGCWeight:
     // StagerRequest Service
-    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'S', nbSubReqs);
+    castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'S', nbThreads);
     break;
   case OBJ_StageFileQueryRequest:
   case OBJ_StageFindRequestRequest:
@@ -340,3 +391,5 @@ void castor::rh::RHThread::handleRequest
     // XXX to be seen if needed.
   }
 }
+
+
