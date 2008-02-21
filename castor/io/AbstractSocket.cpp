@@ -42,8 +42,8 @@
 
 // Definitions
 #define STG_CALLBACK_BACKLOG 2
-#define DEFAULT_CONNTIMEOUT  20
-#define DEFAULT_NETTIMEOUT   20
+#define DEFAULT_SOCKET_CONNTIMEOUT  20
+#define DEFAULT_SOCKET_NETTIMEOUT   20
 
 
 //------------------------------------------------------------------------------
@@ -51,8 +51,8 @@
 //------------------------------------------------------------------------------
 castor::io::AbstractSocket::AbstractSocket(int socket) throw () :
   m_socket(socket),
-  m_timeout(DEFAULT_NETTIMEOUT),
-  m_connTimeout(DEFAULT_CONNTIMEOUT) {}
+  m_timeout(DEFAULT_SOCKET_NETTIMEOUT),
+  m_connTimeout(DEFAULT_SOCKET_CONNTIMEOUT) {}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -61,8 +61,8 @@ castor::io::AbstractSocket::AbstractSocket(const bool reusable)
   throw (castor::exception::Exception) :
   m_socket(-1), 
   m_reusable(reusable), 
-  m_timeout(DEFAULT_NETTIMEOUT), 
-  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_SOCKET_CONNTIMEOUT) {
   m_saddr = buildAddress(0);
 }
 
@@ -74,8 +74,8 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
   throw (castor::exception::Exception) :
   m_socket(-1), 
   m_reusable(reusable),
-  m_timeout(DEFAULT_NETTIMEOUT), 
-  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_SOCKET_CONNTIMEOUT) {
   m_saddr = buildAddress(port);
 }
 
@@ -88,8 +88,8 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
   throw (castor::exception::Exception) :
   m_socket(-1), 
   m_reusable(reusable),
-  m_timeout(DEFAULT_NETTIMEOUT), 
-  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_SOCKET_CONNTIMEOUT) {
   m_saddr = buildAddress(port, host);
 }
 
@@ -102,8 +102,8 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
   throw (castor::exception::Exception) :
   m_socket(-1), 
   m_reusable(reusable),
-  m_timeout(DEFAULT_NETTIMEOUT), 
-  m_connTimeout(DEFAULT_CONNTIMEOUT) {
+  m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
+  m_connTimeout(DEFAULT_SOCKET_CONNTIMEOUT) {
   m_saddr = buildAddress(port, ip);
 }
 
