@@ -1,2 +1,0 @@
-%attr(0755,root,bin) etc/init.d/Cmonitd
-%attr(0750,root,root) usr/bin/Cmonitd
