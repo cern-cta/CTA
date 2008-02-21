@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.14 $ $Release$ $Date: 2008/02/21 14:21:23 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.15 $ $Release$ $Date: 2008/02/21 14:29:29 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -401,11 +401,11 @@ as select
   CLIENTIDENTIFICATION.EGID as CLIENTEGID,
   TAPEACCESSSPECIFICATION.ACCESSMODE,
   TAPEREQUEST.MODIFICATIONTIME,
-  CLIENTIDENTIFICATION.MACHINE,
+  CLIENTIDENTIFICATION.MACHINE AS CLIENTMACHINE,
   VDQMTAPE.VID,
   TAPESERVER.SERVERNAME as TAPESERVER,
   DEVICEGROUPNAME.DGNAME,
-  CLIENTIDENTIFICATION.USERNAME
+  CLIENTIDENTIFICATION.USERNAME as CLIENTUSERNAME
 from
   TAPEREQUEST
 left outer join
