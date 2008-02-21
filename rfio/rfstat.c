@@ -1,5 +1,5 @@
 /*
- * $Id: rfstat.c,v 1.10 2006/04/28 16:24:46 gtaur Exp $
+ * $Id: rfstat.c,v 1.11 2008/02/21 17:22:26 waldron Exp $
  */
 
 /*
@@ -7,14 +7,11 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.10 $ $Date: 2006/04/28 16:24:46 $ CERN/IT/PDP/DM fhe";
-#endif /* not lint */
-
 #include <rfio_api.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <time.h>
 #include <pwd.h>
 #include <grp.h>
@@ -24,11 +21,6 @@ static char sccsid[] = "@(#)$RCSfile: rfstat.c,v $ $Revision: 1.10 $ $Date: 2006
 #endif
 #include <u64subr.h>
 
-
-static char *ftype="dbclps-";
-static char *perm="rwx-";
-static char *setid="ssx";
-static char *stickynox="ST";
 
 void report_mode(mode)
 unsigned int mode;
@@ -109,8 +101,6 @@ unsigned int mode;
 	if (mode & S_IXOTH) letters[9]='x';
 	if (mode&S_ISVTX) letters[9]='t';
 
-
-
 	fprintf(stdout,"Protection      : %s (%o)\n",letters,mode);
 }
 
@@ -147,7 +137,7 @@ struct stat64    *buf;
 	fprintf(stdout,"Last stat. mod. : %s",ctime(&buf->st_ctime));
 }
 
-main(argc,argv)
+int main(argc,argv)
 int     argc;
 char    **argv;
 {
@@ -155,9 +145,6 @@ char    **argv;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
-        
-        
-
 	if (argc != 2)  {
 		fprintf(stderr,"usage: %s <file_path>\n",argv[0]);
 		exit(1);
@@ -165,11 +152,9 @@ char    **argv;
 #if defined(_WIN32)
 	if (WSAStartup (MAKEWORD (2, 0), &wsadata)) {
 		fprintf (stderr, "WSAStartup unsuccessful\n");
-		exit (2);
+		exit(2);
 	}
 #endif
-	
-
 	if (rfio_stat64(argv[1],&buf) < 0) {
 		rfio_perror(argv[1]);
 #if defined(_WIN32)

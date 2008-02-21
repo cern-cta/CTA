@@ -1,9 +1,10 @@
 /* RFIO O_DIRECT memory aligned buffer support */
 /* 2006/12/08 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
 
-/* $Id: rfio_alignedbuf.c,v 1.2 2006/12/08 14:31:53 fuji Exp $ */
+/* $Id: rfio_alignedbuf.c,v 1.3 2008/02/21 17:22:26 waldron Exp $ */
 
 #include <unistd.h>		/* getpagesize() */
+#include <stdlib.h>
 #include "log.h"
 #include "rfio_alignedbuf.h"
 
@@ -49,17 +50,17 @@ static void
 *a_map_add(void *u, void *a)
 {
 	a_map *p, *q;
-	if ( p = (a_map*)malloc(sizeof(a_map)) ) {
+	if ( (p = (a_map*)malloc(sizeof(a_map))) ) {
 		p->unaligned = u;
 		p->aligned = a;
 		p->next = NULL;
 
 		log(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
-		if (q = a_map_find_unaligned(a)) {
+		if ((q = a_map_find_unaligned(a))) {
 			log(LOG_ERR,"%s: mapping already exists!\n", __func__);
 			return a;
 		}
-		if (q = _a_map_get_tail()) {
+		if ((q = _a_map_get_tail())) {
 			q->next = p;
 			log(ALIGNEDBUF_LOG_LEVEL, "tail q=%p\n", q);
 		} else {

@@ -7,10 +7,6 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Felix Hassine, Olof Barring, Jean-Damien Durand";
-#endif /* not lint */
-
 #include <signal.h>
 #include <fcntl.h>
 #define RFIO_KERNEL 1
@@ -31,7 +27,9 @@ static char sccsid[] = "@(#)rfcp.c,v 1.61 2004/03/02 16:18:33 CERN/IT/DS/HSM Fel
 #ifndef _WIN32
 #include <unistd.h>
 #endif
+#include "Cglobals.h"
 #include "Castor_limits.h"
+#include "stager_client_commandline.h"
 
 #ifndef TRANSFER_UNIT
 #define TRANSFER_UNIT   131072 
@@ -1258,9 +1256,8 @@ int copyfile_stager(input,output,mode,input_size,input_is_hpss)
 {
         struct stage_io_fileresp *response;
         struct stage_io_fileresp *putResponse;
-	char *requestId, *url;
+	char *url;
 	int rc;
-	char tmpbuf[21];
         int* auxVal;
         char ** auxPoint;
         struct stage_options opts;

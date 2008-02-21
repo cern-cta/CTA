@@ -7,21 +7,19 @@
 * All rights reserved
 */
 
-#ifndef lint
-static char sccsid[] = "@(#)rfio_callhandlers.c,v 1.6 2005/07/21 09:13:07 CERN IT-ADC/CA Benjamin Couturier";
-#endif /* not lint */
-
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include "rfio.h"
 #include "u64subr.h"
 #include "log.h"
 #include "castor/BaseObject.h"
 #include "castor/Constants.h"
+#include "castor/stager/SubRequest.h"
 #include "RemoteJobSvc.h"
 
 struct internal_context {
@@ -124,7 +122,6 @@ int close_status) {
           (internal_context->one_byte_at_least)) {   /* see also comment in rfio_handle_open */
         /* This is a write */
         struct stat64 statbuf;
-        int rcstat;
         
         if (stat64(internal_context->pfn,&statbuf) == 0) {
           struct Cstager_SubRequest_t *subrequest;

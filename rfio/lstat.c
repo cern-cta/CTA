@@ -1,5 +1,5 @@
 /*
- * $Id: lstat.c,v 1.17 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: lstat.c,v 1.18 2008/02/21 17:22:26 waldron Exp $
  */
 
 /*
@@ -34,7 +34,7 @@ struct stat *statbuf;           	/* status buffer 		*/
 	(void) stat64tostat(&statb64, statbuf);
    return (lstatus);
 #else
-   register int    s;           /* socket descriptor 		*/
+   register int    s = 0;       /* socket descriptor 		*/
    char     buf[BUFSIZ];      	/* General input/output buffer  */
    int	    len;
    char     *host, *filename;

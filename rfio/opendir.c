@@ -1,5 +1,5 @@
 /*
- * $Id: opendir.c,v 1.20 2007/09/28 15:04:32 sponcec3 Exp $
+ * $Id: opendir.c,v 1.21 2008/02/21 17:22:26 waldron Exp $
  */
 
 /*
@@ -116,7 +116,6 @@ char  	*vmstr ;
    struct sockaddr_in      to;
    socklen_t               tolen;
    struct  hostent *hp;
-   extern void rfio_dirsetup_ext();
    char     rfio_buf[BUFSIZ] ;
 
    INIT_TRACE("RFIO_TRACE");

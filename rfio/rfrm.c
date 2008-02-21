@@ -1,16 +1,11 @@
 /*
- * $Id: rfrm.c,v 1.19 2006/08/14 17:35:20 gtaur Exp $
+ * $Id: rfrm.c,v 1.20 2008/02/21 17:22:26 waldron Exp $
  */
 
 /*
  * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
-
-
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.19 $ $Date: 2006/08/14 17:35:20 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
 
 /*
  * Remove remote file
@@ -27,6 +22,7 @@ static char sccsid[] = "@(#)$RCSfile: rfrm.c,v $ $Revision: 1.19 $ $Date: 2006/0
 #endif
 #define RFIO_KERNEL 1
 #include <rfio.h>
+#include "getconfent.h"
 
 struct dirstack {
   char *dir;
@@ -34,15 +30,14 @@ struct dirstack {
 };
 
 static char *ckpath();
-char *getconfent();
 static int rm_recursive(); 
 
 char *cmd;
-main(argc, argv) 
+int main(argc, argv) 
 int argc;
 char *argv[];
 {
-  int i, c, status;
+  int c, status;
   extern char * optarg ; 
   extern int    optind ;
   char *path,*root_path;
@@ -199,7 +194,6 @@ int *yesno;
   int ask_yesno = 1;
   int empty = 1;
   char* hostname,*pathname;
-  int rc;
   int ret;
   
   if ( !rfio_lstat64(path,&st) ) {

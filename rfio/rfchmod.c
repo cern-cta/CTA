@@ -1,5 +1,5 @@
 /*
- * $Id: rfchmod.c,v 1.3 2006/04/28 16:24:46 gtaur Exp $
+ * $Id: rfchmod.c,v 1.4 2008/02/21 17:22:26 waldron Exp $
  */
 
 /*
@@ -7,25 +7,23 @@
  * All rights reserved
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfchmod.c,v $ $Revision: 1.3 $ $Date: 2006/04/28 16:24:46 $ IN2P3 CC Philippe Gaillardon";
-#endif /* not lint */
-
 /*
  * Change mode of a file
  */
 #include <string.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <getopt.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #endif /* _WIN32 */
 #include <rfio_api.h>
-
+#include "getconfent.h"
 
 static char *ckpath();
-char *getconfent();
 
 static char *cmdid;         /* Command Id                     */
 
@@ -39,17 +37,13 @@ int main(argc, argv)
 int argc;
 char *argv[];
 {
-  extern char * optarg ; 
-  extern int    optind ;
-  int      recursive = 0;
-  char     *path,*root_path,*p;
-  int      rc;
+  extern int optind;
+  char     *path;
   int      exit_rc = 0;
   int      c;
   mode_t mode = 0777;
   long int lmode = 0;       /* For conversion, then casting to mode  IN2P3*/
   char     *endprt;             /* For conversion                        IN2P3*/
-  struct   stat st;
   
 #if defined(_WIN32)
   WSADATA wsadata;

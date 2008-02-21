@@ -1,16 +1,12 @@
 /*
- * $Id: rfdir.c,v 1.17 2006/04/30 15:08:27 gtaur Exp $
+ * $Id: rfdir.c,v 1.18 2008/02/21 17:22:26 waldron Exp $
  */
 
 /*
  * Copyright (C) 1998-2002 by CERN/IT/PDP/DM
  * All rights reserved
  */
- 
-#ifndef lint
-static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.17 $ $Date: 2006/04/30 15:08:27 $ CERN/IT/PDP/DM Olof Barring";
-#endif /* not lint */
- 
+
 /*
  * List remote directory or file. Gives an ls -al type output
  */
@@ -36,6 +32,7 @@ static char sccsid[] = "@(#)$RCSfile: rfdir.c,v $ $Revision: 1.17 $ $Date: 2006/
 #include <Castor_limits.h>
 #define PATH_MAX CA_MAXPATHLEN + 1 /* == 1024 == PATH_MAX on IRIX */
 #endif
+#include "getconfent.h"
 
 time_t current_time;
 char ftype[8];
@@ -47,9 +44,10 @@ struct dirstack {
   struct dirstack *prev;
 };
 
-static int  exit_rc = 0;
+int list_dir(char*,int,int);
+
+static int exit_rc = 0;
 static char *ckpath();
-char *getconfent();
 
 int main(argc, argv) 
 int argc;
@@ -60,23 +58,19 @@ char *argv[];
   struct stat64 st;
   char *dir;
   int rc,i;
-  struct dirent *de;
   char modestr[11];
-  char owner[20];
   char t_creat[14];
   struct passwd *pw;
   struct group *grp;
   struct tm *t_tm;
   char uidstr[30];
   char gidstr[30];
-  char path[PATH_MAX];
   int recursively = 0;
   int multiple = 0;
   char tmpbuf[21];
 #if defined(_WIN32)
   WSADATA wsadata;
 #endif
-
 
   strcpy(ftype,"pcdb-ls");
   ftype_v[0] = S_IFIFO; ftype_v[1] = S_IFCHR; ftype_v[2] = S_IFDIR; 
@@ -203,7 +197,6 @@ int recursively,multiple;
   int rc,i,fd;
   struct dirent *de;
   char modestr[11];
-  char owner[20];
   char t_creat[14];
   struct passwd *pw;
   struct group *grp;
