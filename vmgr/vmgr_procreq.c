@@ -24,7 +24,6 @@
 #include "vmgr.h"
 #include "vmgr_server.h"
 
-extern int being_shutdown;
 extern char localhost[CA_MAXHOSTNAMELEN+1];
 
 #define RESETID(UID,GID) resetid(&UID, &GID, thip);
@@ -2377,37 +2376,6 @@ struct vmgr_srv_thread_info *thip;
 		    vmgr_update_tag_entry (&thip->dbfd, &rec_addr, &tag_entry))
 			RETURN (serrno);
 	}
-	RETURN (0);
-}
-
-/*	vmgr_srv_shutdown - shutdown the volume manager */
-
-int vmgr_srv_shutdown(magic, req_data, clienthost, thip)
-int magic;
-char *req_data;
-char *clienthost;
-struct vmgr_srv_thread_info *thip;
-{
-	int force = 0;
-	char func[18];
-	gid_t gid;
-	char *rbp;
-	uid_t uid;
-
-	strcpy (func, "vmgr_srv_shutdown");
-	rbp = req_data;
-	unmarshall_LONG (rbp, uid);
-	unmarshall_LONG (rbp, gid);
-
-	RESETID(uid, gid);
-
-	vmgrlogit (func, VMG92, "shutdown", uid, gid, clienthost);
-	unmarshall_WORD (rbp, force);
-
-	if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-		RETURN (serrno);
-
-	being_shutdown = force + 1;
 	RETURN (0);
 }
 

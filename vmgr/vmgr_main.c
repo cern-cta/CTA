@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_main.c,v 1.8 2007/12/04 12:34:38 waldron Exp $
+ * $Id: vmgr_main.c,v 1.9 2008/02/21 17:15:01 waldron Exp $
  *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
@@ -37,13 +37,25 @@
 /* prototypes */
 int vmgr_init_dbpkg();
 
-int being_shutdown;
+int being_shutdown = 0;
 char vmgrconfigfile[CA_MAXPATHLEN+1];
 char func[16];
 int jid;
 char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
 struct vmgr_srv_thread_info vmgr_srv_thread_info[VMGR_NBTHREADS];
+
+void vmgr_signal_handler(int sig)
+{
+	strcpy (func, "vmgr_serv");
+	if (sig == SIGINT) {
+		vmgrlogit(func, "Caught SIGINT, immediate stop\n");
+		exit(0);
+	} else if (sig == SIGTERM) {
+		vmgrlogit (func, "Caught SIGTERM, shutting down\n");
+		being_shutdown = 1;
+	}
+}
 
 int vmgr_main(main_args)
 struct main_args *main_args;
@@ -110,6 +122,8 @@ struct main_args *main_args;
 	signal (SIGPIPE,SIG_IGN);
 	signal (SIGXFSZ,SIG_IGN);
 #endif
+	signal (SIGTERM,vmgr_signal_handler);
+	signal (SIGINT,vmgr_signal_handler);
 
 	/* open request socket */
 
@@ -351,16 +365,18 @@ struct vmgr_srv_thread_info *thip;
 			sendrep (thip->s, VMGR_RC, c);
 			return;
 		}
-		if (req_type != VMGR_SHUTDOWN) {
+		if (!being_shutdown) {
 			if (vmgr_opendb (&thip->dbfd) < 0) {
 				c = serrno;
 				sendrep (thip->s, MSG_ERR, "db open error: %d\n", c);
 				sendrep (thip->s, VMGR_RC, c);
 				return;
 			}
+			vmgrlogit (func, "database connection established\n");
 			thip->db_open_done = 1;
 		}
 	}
+
 	switch (req_type) {
 	case VMGR_DELTAPE:
 		c = vmgr_srv_deletetape (magic, req_data, clienthost, thip);
@@ -379,9 +395,6 @@ struct vmgr_srv_thread_info *thip;
 		break;
 	case VMGR_UPDTAPE:
 		c = vmgr_srv_updatetape (magic, req_data, clienthost, thip);
-		break;
-	case VMGR_SHUTDOWN:
-		c = vmgr_srv_shutdown (magic, req_data, clienthost, thip);
 		break;
 	case VMGR_DELMODEL:
 		c = vmgr_srv_deletemodel (magic, req_data, clienthost, thip);
@@ -475,34 +488,34 @@ void *arg;
 	char *username;
 	Csec_server_reinitContext(&(thip->sec_ctx), CSEC_SERVICE_TYPE_CENTRAL, NULL);
 	if (Csec_server_establishContext(&(thip->sec_ctx),thip->s) < 0) {
-	  vmgrlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
-	  netclose (thip->s);
-	  thip->s = -1;
-	  return (NULL);
+		vmgrlogit(func, "Could not establish context: %s !\n", Csec_getErrorMessage());
+		netclose (thip->s);
+		thip->s = -1;
+		return (NULL);
 	}
 	/* Connection could be done from another castor service */
 	if ((c = Csec_server_isClientAService(&(thip->sec_ctx))) >= 0) {
-	  vmgrlogit(func, "CSEC: Client is castor service type: %d\n", c);
-	  thip->Csec_service_type = c;
+		vmgrlogit(func, "CSEC: Client is castor service type: %d\n", c);
+		thip->Csec_service_type = c;
 	}
 	else {
-	  if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username, &(thip->Csec_uid), &(thip->Csec_gid)) == 0) {
-	    vmgrlogit(func, "CSEC: Client is %s (%d/%d)\n",
-		      username,
-		      thip->Csec_uid,
-		      thip->Csec_gid);
-	    thip->Csec_service_type = -1;
-	  }
-	  else {
-	    vmgrlogit(func, "CSEC: Can't get client username\n");
-	    netclose (thip->s);
-	    thip->s = -1;
-	    return (NULL);
-	  }
+		if (Csec_server_mapClientToLocalUser(&(thip->sec_ctx), &username, &(thip->Csec_uid), &(thip->Csec_gid)) == 0) {
+			vmgrlogit(func, "CSEC: Client is %s (%d/%d)\n",
+				  username,
+				  thip->Csec_uid,
+				  thip->Csec_gid);
+			thip->Csec_service_type = -1;
+		}
+		else {
+			vmgrlogit(func, "CSEC: Can't get client username\n");
+			netclose (thip->s);
+			thip->s = -1;
+			return (NULL);
+		}
 	}
-
+	
 #endif
-
+	
 	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0)
 		procreq (magic, req_type, req_data, clienthost, thip);
 	else if (c > 0)
