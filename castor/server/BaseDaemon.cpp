@@ -160,18 +160,26 @@ void castor::server::BaseDaemon::handleSignals()
         
         case CHILD_STOPPED:
         {
-          clog() << ERROR << "CHILD STOPPED [SIGCHLD]" << std::endl;
-          // Reap dead processes to prevent defunct processes, we don't care about
-          // the exit. However, in the future we may want to re-fork it!
+          // Reap dead processes to prevent defunct processes
           pid_t pid = 0;
-          while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
-            // we log no message here because some threads call API 
-            // functions which fork and this results in an unnecessary message!
-          }
-          // XXX for now we exit, to be reviewed
-          waitAllThreads(false);
-          dlf_shutdown(1);
-          exit(EXIT_FAILURE);
+	  int status;
+	  while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+	    if (WIFEXITED(status)) {
+	      if (WEXITSTATUS(status) == 0) {
+		clog() << DEBUG << "CHILD STOPPED [SIGCHLD] - " << pid 
+		       << " terminated normally" << std::endl;
+	      } else {
+		clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
+		       << " terminated unexpectedly, exit code " 
+		       << WTERMSIG(status) << std::endl;
+	      }
+	    } else if (WIFSIGNALED(status)) {
+	      clog() << ERROR << "CHILD STOPPED [SIGCHLD] - " << pid 
+		     << " exited with signal " 
+		     << WTERMSIG(status) << std::endl;
+	    }
+	  }
+	  break;
         }
         
         default:
