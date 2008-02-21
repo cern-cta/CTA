@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2007/12/19 16:36:49 $ $Author: gtaur $
+ * @(#)$RCSfile: OraPolicySvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/21 07:54:02 $ $Author: gtaur $
  *
  * Implementation of the ITapeSvc for Oracle
  *
@@ -130,6 +130,17 @@ namespace castor {
 
 	virtual void resurrectTapeCopies(std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception);
 
+	/**
+	 * invalidate tape copies 
+	 */
+
+	virtual void invalidateTapeCopies(std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception);
+
+	/** 
+	 * migHunterCleanUp
+	 */
+	virtual void   castor::infoPolicy::ora::OraPolicySvc::migHunterCleanUp(std::string svcClassName) throw (castor::exception::Exception); 
+
       private:
 
         /// SQL statement for inputForMigrationPolicy 
@@ -181,7 +192,13 @@ namespace castor {
         /// SQL statement object for resurrectCandidatesNameStatementString
 	oracle::occi::Statement *m_resurrectCandidatesStatement;
 
- /// SQL statement select TapepoolsName
+	/// SQL statement invalidate tapecopies
+        static const std::string s_invalidateTapeCopiesStatementString;
+
+        /// SQL statement object for invalidateTapeCopiesStatementString
+	oracle::occi::Statement *m_invalidateTapeCopiesStatement;
+
+	/// SQL statement select TapepoolsName
         static const std::string s_selectTapePoolNamesStatementString;
 
         /// SQL statement object for TapePoolsNameStatementString
@@ -192,6 +209,12 @@ namespace castor {
 
         /// SQL statement object attach tape copies to Stream
 	oracle::occi::Statement *m_attachTapeCopiesToStreamsStatement;
+	
+	/// SQL statement migHunterCleanUp
+        static const std::string s_migHunterCleanUpStatementString;
+
+        /// SQL statement object clean up the db at the startup
+	oracle::occi::Statement *m_migHunterCleanUpStatement;
 	
       }; // end of class OraPolicySvc
 

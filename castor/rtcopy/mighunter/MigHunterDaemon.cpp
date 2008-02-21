@@ -17,7 +17,7 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-* @(#)$RCSfile: MigHunterDaemon.cpp,v $ $Author: waldron $
+* @(#)$RCSfile: MigHunterDaemon.cpp,v $ $Author: gtaur $
 *
 *
 *
@@ -52,7 +52,7 @@ extern "C" {
 // default values
 
 #define MIN_BYTE_VOLUME   1     // bytes
-#define SLEEP_TIME        48   // seconds 
+#define SLEEP_TIME        7200  // seconds (2 hours) 
 
 
 //------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]){
     } else {
        castor::dlf::Param params[] =
 	  {castor::dlf::Param("message","No policy for migration in castor.conf")};
-       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 13, 1, params);
+       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 12, 1, params);
 
     }
 
@@ -96,8 +96,8 @@ int main(int argc, char* argv[]){
       streamPolicyName=ps;
     } else {
       castor::dlf::Param params[] =
-	  {castor::dlf::Param("message","No policy for migration in castor.conf")};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 13, 1, params);
+	  {castor::dlf::Param("message","No policy for stream  in castor.conf")};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ALERT, 12, 1, params);
 
     }
 
@@ -126,6 +126,14 @@ int main(int argc, char* argv[]){
     bool doClone=newMigHunter.doClone();
     std::vector<std::string> listSvcClass=newMigHunter.listSvcClass();
 
+
+    // clean up the database
+    std::vector<std::string>::iterator svcClassName=listSvcClass.begin();
+    while(svcClassName != listSvcClass.end()){
+      mySvc->migHunterCleanUp(*svcClassName);
+      svcClassName++;
+    }
+
     newMigHunter.addThreadPool(
       new castor::server::SignalThreadPool("MigHunterThread", new castor::rtcopy::mighunter::MigHunterThread(mySvc,listSvcClass,minByteVolume,doClone,migrSvc,strSvc), sleepTime));
     newMigHunter.getThreadPool('M')->setNbThreads(1);
@@ -153,7 +161,7 @@ int main(int argc, char* argv[]){
 
 castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::BaseDaemon("Mighunter") 
 {
-    m_timeSleep=SLEEP_TIME;
+    m_timeSleep= SLEEP_TIME;
     m_byteVolume= MIN_BYTE_VOLUME;
     m_doClone=false;
 
@@ -167,17 +175,15 @@ castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::
    {2, "Service shutdown"},  
    {3, "No migration candidate found"},
    {4, "Error in creating or updating stream"},
-   {5, "Migration allowed for file"},
-   {6, "Migration not allowed for file"},
-   {7, "No eligible stream found for the service class"},
-   {8, "Streams allowed to start"},
-   {9, "Streams not allowed to start"},
-   {10,"Error retrieving the file stat from the nameserver"},
-   {11 ,"Fatal Error"},
-   {12,"Policy called"},
-   {13, "No Policy file available"},
-   {14,"Error in loading the policy file"},
-   {15,"Error in executing the policy script"},
+   {5, "Executing the policy for migration"},
+   {6,"Error retrieving the file stat from the nameserver"},
+   {7, "Summary of migration policy results"},
+   {8, "Error in attaching tapecopy to stream"},
+   {9, "No eligible stream found for the service class"},
+   {10, "Executing stream policy"},
+   {11, "Summary of stream policy result"},
+   {12, "No Policy file available"},
+   {13,"Error in executing the policy script"},
    {-1, ""}
   };
   dlfInit(messages);
@@ -214,7 +220,7 @@ void castor::rtcopy::mighunter::MigHunterDaemon::parseCommandLine(int argc, char
       exit(0);
     }
   }
-  
+
   for (int i=Coptind; i<argc; i++ ) {
    m_listSvcClass.push_back(argv[i]);
   }
@@ -226,6 +232,6 @@ void castor::rtcopy::mighunter::MigHunterDaemon::usage(){
             << "[options] svcClass1 svcClass2 svcClass3 ...\n"
             << "-C  : clone tapecopies from existing to new streams (very slow!)\n"
             << "-f     : to run in foreground\n"
-            << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default=300\n"
+            << "-t sleepTime(seconds)  : sleep time (in seconds) between two checks. Default= 7200 \n"
             << "-v volume(bytes)       : data volume threshold below migration will not start\n"<<std::endl; 
 }

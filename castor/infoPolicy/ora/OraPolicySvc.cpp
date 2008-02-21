@@ -98,11 +98,18 @@ const std::string castor::infoPolicy::ora::OraPolicySvc::s_stopChosenStreamsStat
 const std::string castor::infoPolicy::ora::OraPolicySvc::s_resurrectCandidatesStatementString = 
   "BEGIN  resurrectCandidates(:1);END;";
 
+/// SQL invalidate tapecopies
+const std::string castor::infoPolicy::ora::OraPolicySvc::s_invalidateTapeCopiesStatementString = 
+"BEGIN  invalidateTapeCopies(:1);END;";
 
 /// SQL select tapepoolnames
-
  const std::string castor::infoPolicy::ora::OraPolicySvc::s_selectTapePoolNamesStatementString =
  "SELECT TapePool.name, TapePool.id FROM TapePool,SvcClass2TapePool WHERE TapePool.id= SvcClass2TapePool.child AND SvcClass2TapePool.parent=:1";
+
+/// MigHunter Db Clean up
+
+const std::string castor::infoPolicy::ora::OraPolicySvc::s_migHunterCleanUpStatementString = 
+  "BEGIN migHunterCleanUp(:1); END;";
 
 
 //// DATABASE FOR RECHANDLER
@@ -134,8 +141,10 @@ castor::infoPolicy::ora::OraPolicySvc::OraPolicySvc(const std::string name) :
   m_inputForRecallPolicyStatement(0),
   m_resurrectTapesStatement(0),
   m_resurrectCandidatesStatement(0),
+  m_invalidateTapeCopiesStatement(0),
   m_selectTapePoolNamesStatement(0),
-  m_attachTapeCopiesToStreamsStatement(0){
+  m_attachTapeCopiesToStreamsStatement(0),
+  m_migHunterCleanUpStatement(0){
 }
 
 // -----------------------------------------------------------------------
@@ -178,6 +187,7 @@ void castor::infoPolicy::ora::OraPolicySvc::reset() throw() {
     if (m_resurrectCandidatesStatement) deleteStatement(m_resurrectCandidatesStatement);
     if (m_attachTapeCopiesToStreamsStatement) deleteStatement(m_attachTapeCopiesToStreamsStatement); 
     if ( m_selectTapePoolNamesStatement )deleteStatement(m_selectTapePoolNamesStatement);
+    if ( m_migHunterCleanUpStatement )deleteStatement(m_migHunterCleanUpStatement);
 
   } catch (oracle::occi::SQLException e) {};
   // Now reset all pointers to 0
@@ -192,6 +202,7 @@ void castor::infoPolicy::ora::OraPolicySvc::reset() throw() {
   m_resurrectCandidatesStatement=0;
   m_attachTapeCopiesToStreamsStatement=0;
   m_selectTapePoolNamesStatement=0;
+  m_migHunterCleanUpStatement=0;
 }
 
 
@@ -727,9 +738,85 @@ void   castor::infoPolicy::ora::OraPolicySvc::resurrectTapeCopies(std::vector<Po
 	handleException(e);
 	castor::exception::Internal ex;
 	ex.getMessage()
-	  << "Error caught in resurrectTapes."
+	  << "Error caught in resurrectTapeCopies."
 	  << std::endl << e.what();
 	throw ex;
       }
 
 }
+
+//---------------------------------------------------------------------
+//    invalidateTapeCopies 
+//---------------------------------------------------------------------
+
+
+void   castor::infoPolicy::ora::OraPolicySvc::invalidateTapeCopies(std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception) {
+  unsigned char (*buffer)[21] = 0;
+  ub2 *lens =0;
+  try{
+   if (0 == m_invalidateTapeCopiesStatement) {
+	m_invalidateTapeCopiesStatement  =
+	  createStatement(s_invalidateTapeCopiesStatementString);
+	m_createOrUpdateStreamStatement->setAutoCommit(true);
+
+      }
+     
+      //  DataBuffer needed operations
+
+    unsigned int nb = tapeCopiesInfo.size();
+
+    if (nb!=0){
+	buffer=(unsigned char(*)[21]) calloc((nb) * 21, sizeof(unsigned char));
+	lens=(ub2 *)malloc (sizeof(ub2)*nb);
+	for (unsigned int i = 0; i < nb; i++) {
+	  oracle::occi::Number n = (double)(dynamic_cast<castor::infoPolicy::DbInfoMigrationPolicy*>(tapeCopiesInfo.at(i)->dbInfoPolicy()[0])->tapeCopyId());
+	  oracle::occi::Bytes b = n.toBytes();
+	  b.getBytes(buffer[i],b.length());
+	  lens[i] = b.length();
+	}
+	ub4 unused = nb;
+	m_invalidateTapeCopiesStatement->setDataBufferArray(1, buffer, oracle::occi::OCCI_SQLT_NUM,nb, &unused, 21, lens);
+        m_invalidateTapeCopiesStatement->executeUpdate();
+    }
+   } catch(oracle::occi::SQLException e) {
+	handleException(e);
+	castor::exception::Internal ex;
+	ex.getMessage()
+	  << "Error caught in invalidate tape copies."
+	  << std::endl << e.what();
+	throw ex;
+      }
+
+}
+
+//---------------------------------------------------------------------
+//    migHunterCleanUp
+//---------------------------------------------------------------------
+
+void   castor::infoPolicy::ora::OraPolicySvc::migHunterCleanUp(std::string svcClassName) throw (castor::exception::Exception) {
+  try {
+    // Check whether the statements are ok
+    if (0 == m_migHunterCleanUpStatement) {
+      m_migHunterCleanUpStatement  =
+        createStatement(s_migHunterCleanUpStatementString);       
+
+      m_migHunterCleanUpStatement->setAutoCommit(true);
+    }
+    // execute the statement and see whether we found something
+     
+
+    m_migHunterCleanUpStatement->setString(1, svcClassName);
+    
+    m_migHunterCleanUpStatement->executeUpdate();
+
+  } catch (oracle::occi::SQLException e) {
+
+    handleException(e);
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in migHunterCleanUp"
+      << std::endl << e.what();
+    throw ex;
+  }
+}
+

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IPolicySvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/12/19 16:36:49 $ $Author: gtaur $
+ * @(#)$RCSfile: IPolicySvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/21 07:54:01 $ $Author: gtaur $
  *
  * This class provides methods related to tape handling
  *
@@ -109,6 +109,17 @@ namespace castor {
 
 	virtual void resurrectTapeCopies(std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception)=0;
 
+      /** 
+       * invalidate tapecopies
+       */
+
+        virtual void invalidateTapeCopies(std::vector<PolicyObj*> tapeCopiesInfo) throw (castor::exception::Exception)=0;
+
+      /** 
+       * migHunterCleanUp
+       */
+
+        virtual void migHunterCleanUp(std::string svcClassName) throw (castor::exception::Exception)=0;
 
     }; // end of class IPolicySvc
 
