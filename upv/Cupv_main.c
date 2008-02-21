@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_main.c,v 1.7 2007/12/04 12:38:41 waldron Exp $
+ * $Id: Cupv_main.c,v 1.8 2008/02/21 17:14:24 waldron Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
@@ -35,7 +35,7 @@
 #include "Csec_api.h"
 #endif
 
-int being_shutdown;
+int being_shutdown = 0;
 int always_reply_yes = 0;
 
 char cupvconfigfile[CA_MAXPATHLEN+1];
@@ -43,6 +43,18 @@ char func[16];
 int jid;
 int maxfds;
 struct Cupv_srv_thread_info cupv_srv_thread_info[CUPV_NBTHREADS];
+
+void Cupv_signal_handler(int sig)
+{
+	strcpy (func, "Cupv_serv");
+	if (sig == SIGINT) {
+		Cupvlogit(func, "Caught SIGINT, immediate stop\n");
+		exit(0);
+	} else if (sig == SIGTERM) {
+		Cupvlogit (func, "Caught SIGTERM, shutting down\n");
+		being_shutdown = 1;
+	}
+}
 
 int Cupv_main(main_args)
 struct main_args *main_args;
@@ -98,8 +110,10 @@ struct main_args *main_args;
 	FD_ZERO (&readfd);
 #if ! defined(_WIN32)
 	signal (SIGPIPE,SIG_IGN);
-    signal (SIGXFSZ, SIG_IGN);
+	signal (SIGXFSZ, SIG_IGN);
 #endif
+	signal (SIGTERM,Cupv_signal_handler);
+	signal (SIGINT,Cupv_signal_handler);
     
 	/* open request socket */
 
@@ -346,6 +360,7 @@ struct Cupv_srv_thread_info *thip;
 			sendrep (thip->s, CUPV_RC, c);
 			return;
 		}
+		Cupvlogit (func, "database connection established\n");
 		thip->db_open_done = 1;
 	}
 
@@ -362,9 +377,6 @@ struct Cupv_srv_thread_info *thip;
 		break;
 	case CUPV_CHECK:
 	        c = Cupv_srv_check (magic, req_data, clienthost, thip);
-		break;
-	case CUPV_SHUTDOWN:
-		c = Cupv_srv_shutdown (magic, req_data, clienthost, thip);
 		break;
 	case CUPV_LIST:
 		c = proclistreq (magic, req_type, req_data, clienthost, thip);
