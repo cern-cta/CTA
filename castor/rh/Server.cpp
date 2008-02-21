@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.59 $ $Release$ $Date: 2007/12/06 09:28:14 $ $Author: riojac3 $
+ * @(#)$RCSfile: Server.cpp,v $ $Revision: 1.60 $ $Release$ $Date: 2008/02/21 15:46:29 $ $Author: waldron $
  *
  * @author Giuseppe Lo Presti
  *****************************************************************************/
@@ -53,7 +53,6 @@ const char *castor::rh::CASTOR_SEC_ENV = "CASTOR_SEC";
 const char *castor::rh::CASTOR_SEC_CONF = "SEC";
 
 
-
 //------------------------------------------------------------------------------
 // main method
 //------------------------------------------------------------------------------
@@ -69,26 +68,25 @@ int main(int argc, char *argv[]) {
     char* securemode; 
     bool security =false;
     
-    // check if the secure mode has been enable
-     if ((securemode = getenv (castor::rh::CASTOR_SEC_ENV)) != 0 
+    // Check if the secure mode has been enable
+    if ((securemode = getenv (castor::rh::CASTOR_SEC_ENV)) != 0 
         || (securemode = getconfent((char *)castor::rh::CATEGORY_CONF,
-		(char *)castor::rh::CASTOR_SEC_CONF,0)) != 0){
-        security= true;	 
-        //get the secure port from the envirment or configuration file
-        if ((secsport = getenv (castor::rh::PORT_SEC_ENV)) != 0 
-        || (secsport = getconfent((char *)castor::rh::CATEGORY_CONF,
-                               (char *)castor::rh::PORT_SEC_CONF,0)) != 0) {
-          secport = castor::System::porttoi(secsport);
-        }  
+				    (char *)castor::rh::CASTOR_SEC_CONF,0)) != 0){
+      security= true;	 
+      // Get the secure port from the envirment or configuration file
+      if ((secsport = getenv (castor::rh::PORT_SEC_ENV)) != 0 
+	  || (secsport = getconfent((char *)castor::rh::CATEGORY_CONF,
+				    (char *)castor::rh::PORT_SEC_CONF,0)) != 0) {
+	secport = castor::System::porttoi(secsport);
+      }  
     }
     
-    //Get unsecure port
+    // Get unsecure port
     if ((sport = getenv (castor::rh::PORT_ENV)) != 0 
         || (sport = getconfent((char *)castor::rh::CATEGORY_CONF,
                                (char *)castor::rh::PORT_CONF,0)) != 0) {
       port = castor::System::porttoi(sport);
     }
-
     
     // See whether access lists should be used
     bool accessLists = false;
@@ -98,32 +96,31 @@ int main(int argc, char *argv[]) {
                                       (char *)castor::rh::ACCESSLISTS_CONF,0)) != 0) {
       accessLists = (strcasecmp(saccessLists, "YES") == 0);
     }
-
+    
     // Start daemon
     server.addThreadPool
       (new castor::server::TCPListenerThreadPool
        ("RH", new castor::rh::RHThread(accessLists), port));
     
     if (security){
-      server.addThreadPool(new castor::server::AuthListenerThreadPool
-        ("SecRH", new castor::rh::RHThread(accessLists), secport));    
+      server.addThreadPool
+	(new castor::server::AuthListenerThreadPool
+	 ("SecRH", new castor::rh::RHThread(accessLists), secport));    
     }
     
     // parse the command line (note that this may overwrite the port we are listening to)
     server.parseCommandLine(argc, argv);
     // start the server
     server.start();
-
- 
-   } catch (castor::exception::Exception e) {
+    
+  } catch (castor::exception::Exception e) {
     std::cerr << "Caught castor exception : "
               << sstrerror(e.code()) << std::endl
               << e.getMessage().str() << std::endl;
   } catch (...) {
     std::cerr << "Caught general exception!" << std::endl;
   }
-
-  dlf_shutdown(1);
+  
   return 0;
 }
 
@@ -136,21 +133,22 @@ castor::rh::Server::Server() :
 
   // Initializes the DLF logging
   castor::dlf::Message messages[] =
-    {{ 1, "New Request Arrival"},
-     { 2, "Could not get Conversion Service for Database"},
-     { 3, "Could not get Conversion Service for Streaming"},
-     { 4, "Exception caught : server is stopping"},
-     { 5, "Exception caught : ignored"},
-     { 6, "Invalid Request"},
-     { 7, "Unable to read Request from socket"},
-     { 8, "Processing Request"},
-     { 9, "Exception caught"},
-     {10, "Reply sent to client"},
-     {11, "Unable to send Ack to client"},
-     {12, "Request stored in DB"},
-     {13, "Waked up all services at once"},
-     {14, "Permission Denied"},
-     {-1, ""}};
+    {{  1, "New Request Arrival" },
+     {  2, "Could not get Conversion Service for Database" },
+     {  3, "Could not get Conversion Service for Streaming" },
+     {  4, "Exception caught : server is stopping" },
+     {  5, "Exception caught : ignored" },
+     {  6, "Invalid Request" },
+     {  7, "Unable to read Request from socket" },
+     {  8, "Processing Request" },
+     {  9, "Exception caught" },
+     { 10, "Reply sent to client" },
+     { 11, "Unable to send Ack to client" },
+     { 12, "Request stored in DB" },
+     { 13, "Waked up all services at once" },
+     { 14, "Permission Denied" },
+     { 15, "Exception caught : failed to rollback transaction" },
+     { -1, "" }};
   dlfInit(messages);
   
   try {
