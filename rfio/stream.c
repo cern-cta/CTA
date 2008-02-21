@@ -229,8 +229,8 @@ char  	*vmstr ;
 #endif /* CLIENTLOG */
 
    /*
-	 * The file is local.
-	 */
+    * The file is local.
+    */
    if ( ! (parserc = rfio_parse(filepath,&host,&filename)) ) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
@@ -241,7 +241,7 @@ char  	*vmstr ;
                 filename);
           END_TRACE();
           rfio_errno = 0;
-          return(rfio_HsmIf_open(filename,flags,mode,0));
+          return(rfio_HsmIf_open(filename,flags,mode,0,1));
       }
       status= open(filename, flags, mode) ;
       END_TRACE() ; 
@@ -270,8 +270,8 @@ char  	*vmstr ;
    rfio_setup_ext_v3(rfp,(int)uid,(int)gid,passwd) ;
    TRACE(2, "rfio", "RFIO descriptor allocated at 0x%X", rfp);
    /*
-	 * Connecting server.
-	 */
+    * Connecting server.
+    */
    rfp->s = rfio_connect(host,&rt);
    if (rfp->s < 0)      {
       save_errno = errno;
@@ -303,8 +303,8 @@ char  	*vmstr ;
    }
 		
    /*
-	 * Remote file table is not large enough.
-	 */
+    * Remote file table is not large enough.
+    */
    if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
       (void) free(rfp);
@@ -324,7 +324,7 @@ char  	*vmstr ;
    rfp->first_read = 1;
    rfp->byte_read_from_network = 0;
 
-	/* Set the keepalive option on socket */
+   /* Set the keepalive option on socket */
    yes = 1;
    if (setsockopt(rfp->s,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
       TRACE(2,"rfio","setsockopt keepalive on ctrl: %s",strerror(errno));
@@ -349,8 +349,8 @@ char  	*vmstr ;
 #endif /* !(defined(__osf__) && defined(__alpha) && defined(DUXV4)) */
 
    /*
-	 * Allocate, if necessary, an I/O buffer.
-	 */
+    * Allocate, if necessary, an I/O buffer.
+    */
    rfp->_iobuf.hsize= 3*LONGSIZE + WORDSIZE ;
    if ( rfioreadopt(RFIO_READOPT) & RFIO_READBUF ) {
       rfp->_iobuf.dsize = bufsize - rfp->_iobuf.hsize;
@@ -367,8 +367,8 @@ char  	*vmstr ;
       return -1 ;
    }
    /*
-	 * Building and sending request.
-	 */
+    * Building and sending request.
+    */
    /* if ((account = getacct()) == NULL) */ account = "";
    TRACE(2,"rfio","rfio_open: uid %d gid %d umask %o ftype %d, mode %d, flags %d",
 	 rfp->uid,rfp->gid,rfp->umask,rfp->ftype,mode,flags) ;
@@ -510,8 +510,8 @@ char  	*vmstr ;
    rfio_logop(rfp->s,filename,host,flags);
 #endif
    /*
-	 * The file is open, update rfp->fp
-	 */
+    * The file is open, update rfp->fp
+    */
 #if defined(hpux)
    rfp->fp.__fileL = rfp->s;
 #else
@@ -1395,16 +1395,15 @@ int     flags;
    
    /*BC End parse the node name to check whether it contains the port*/
 
-
-/*
- * Should we use an alternate name ?
- */
-
-/*
- * Under some circumstances (heavy load, use of inetd) the server fails
- * to accept a connection. A simple retry mechanism is therefore
- * implemented here.
- */
+   /*
+    * Should we use an alternate name ?
+    */
+   
+   /*
+    * Under some circumstances (heavy load, use of inetd) the server fails
+    * to accept a connection. A simple retry mechanism is therefore
+    * implemented here.
+    */
    if ( rfioreadopt(RFIO_NETRETRYOPT) != RFIO_NOTIME2RETRY ) {
       if ((p = getconfent("RFIO", "CONRETRY", 0)) != NULL)        {
 	 if ((crtycnt = atoi(p)) <= 0)     {
@@ -1419,11 +1418,11 @@ int     flags;
       }
    }
    crtycnts = crtycnt ;
-/*
- * When the NOMORERFIO file exists, or if NOMORERFIO.host file exists,
- * the RFIO service is suspended. By default it will retry for ever every
- * DEFRETRYINT seconds.
- */
+   /*
+    * When the NOMORERFIO file exists, or if NOMORERFIO.host file exists,
+    * the RFIO service is suspended. By default it will retry for ever every
+    * DEFRETRYINT seconds.
+    */
    if ((p=getconfent("RFIO", "RETRY", 0)) == NULL) {
       retrycnt=DEFRETRYCNT;
    }
@@ -1532,8 +1531,8 @@ int     flags;
    max_rcvbuf = setsock_ceiling;
    max_sndbuf = setsock_ceiling;
 
-/* A bit ugly but this is the only solution because the posix
-   flag O_ACCMODE is not defined under NT with MS C++ compiler */
+   /* A bit ugly but this is the only solution because the posix
+      flag O_ACCMODE is not defined under NT with MS C++ compiler */
 #if defined(_WIN32)
 #ifndef O_ACCMODE
 #define O_ACCMODE 3
@@ -1583,11 +1582,11 @@ int     flags;
 	 if (crtycnt-- > 0)       {
 	    if (crtyint) sleep(crtyint);
 	    syslog(LOG_ALERT, "rfio: dataconnect: %d retrying to connect %s", getpid(), cp);
-/*
- * connect() returns "Invalid argument when called twice,
- * so socket needs to be closed and recreated first
- */
-
+	    /*
+	     * connect() returns "Invalid argument when called twice,
+	     * so socket needs to be closed and recreated first
+	     */
+	    
 	    (void) close(s);
 	    crtyattmpt ++ ;
 	    goto conretry;

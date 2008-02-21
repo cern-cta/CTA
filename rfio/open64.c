@@ -1,5 +1,5 @@
 /*
- * $Id: open64.c,v 1.11 2007/12/07 13:54:33 sponcec3 Exp $
+ * $Id: open64.c,v 1.12 2008/02/21 17:27:41 waldron Exp $
  */
 
 /*
@@ -139,7 +139,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    off64_t offset;      /* Open offset length           */
    char    rfio_buf[BUFSIZ];
 
-   // Avoiding Valgrind error messages about uninitialized data
+   /* Avoiding Valgrind error messages about uninitialized data */
    memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
@@ -175,7 +175,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
                 filename);
           END_TRACE();
           rfio_errno = 0;
-          return(rfio_HsmIf_open(filename,flags,mode,1));
+          return(rfio_HsmIf_open(filename,flags,mode,1,0));
       }
       TRACE(1,"rfio","rfio_open64_ext: %s is a local path",
             filename);

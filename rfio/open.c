@@ -1,5 +1,5 @@
 /*
- * $Id: open.c,v 1.30 2007/12/07 13:26:07 sponcec3 Exp $
+ * $Id: open.c,v 1.31 2008/02/21 17:27:41 waldron Exp $
  */
 
 /*
@@ -28,7 +28,7 @@
 
 RFILE  *rfilefdt[MAXRFD];        /* File descriptors tables             */
 
-// Forward declarations
+/* Forward declarations */
 int rfio_open_v2(char*, int, int);
 
 
@@ -258,7 +258,7 @@ char  	*vmstr ;
    int n_index, parserc;
    char     rfio_buf[BUFSIZ];
 
-   // Avoiding Valgrind error messages about uninitialized data
+   /* Avoiding Valgrind error messages about uninitialized data */
    memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
@@ -299,8 +299,8 @@ char  	*vmstr ;
 #endif /* CLIENTLOG */
 
    /*
-	 * The file is local.
-	 */
+    * The file is local.
+    */
    if ( ! (parserc = rfio_parse(filepath,&host,&filename)) ) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
@@ -311,7 +311,7 @@ char  	*vmstr ;
                 filename);
           END_TRACE();
           rfio_errno = 0;
-          return(rfio_HsmIf_open(filename,flags,mode,0));
+          return(rfio_HsmIf_open(filename,flags,mode,0,0));
       }
       status= open(filename, flags, mode) ;
       if ( status < 0 ) serrno = 0;
@@ -329,8 +329,8 @@ char  	*vmstr ;
    }
 
    /*
-	 * Allocate and initialize a remote file descriptor.
-	 */
+    * Allocate and initialize a remote file descriptor.
+    */
    if ((rfp = (RFILE *)malloc(sizeof(RFILE))) == NULL)        {
       TRACE(2, "rfio", "rfio_open: malloc(): ERROR occured (errno=%d)", errno);
       END_TRACE();
@@ -339,8 +339,8 @@ char  	*vmstr ;
    rfio_setup_ext(rfp,(int)uid,(int)gid,passwd) ;
    TRACE(2, "rfio", "RFIO descriptor allocated at 0x%X", rfp);
    /*
-	 * Connecting server.
-	 */
+    * Connecting server.
+    */
    rfp->s = rfio_connect(host,&rt);
    if (rfp->s < 0)      {
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
@@ -368,8 +368,8 @@ char  	*vmstr ;
    }
 		
    /*
-	 * Remote file table is not large enough.
-	 */
+    * Remote file table is not large enough.
+    */
    if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
       TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
       (void) free(rfp);
@@ -379,7 +379,7 @@ char  	*vmstr ;
    }
    rfilefdt[rfp_index]=rfp;
 
-	/* Set version3 to false since we are running version 2 here */
+   /* Set version3 to false since we are running version 2 here */
    rfilefdt[rfp_index]->version3 = 0;
 
    bufsize= DEFIOBUFSIZE ;
@@ -408,8 +408,8 @@ char  	*vmstr ;
    }
 
    /*
-	 * Allocate, if necessary, an I/O buffer.
-	 */
+    * Allocate, if necessary, an I/O buffer.
+    */
    rfp->_iobuf.hsize= 3*LONGSIZE + WORDSIZE ;
    if ( rfioreadopt(RFIO_READOPT) & RFIO_READBUF ) {
 
@@ -430,9 +430,9 @@ char  	*vmstr ;
       END_TRACE();
       return -1 ;
    }
-        /*
-	 * Building and sending request.
-	 */
+   /*
+    * Building and sending request.
+    */
    /* if ((account = getacct()) == NULL) */ account = "";
    TRACE(2,"rfio","rfio_open: uid %d gid %d umask %o ftype %d, mode %d, flags %d",
 	 rfp->uid,rfp->gid,rfp->umask,rfp->ftype,mode,flags) ;
@@ -469,8 +469,8 @@ char  	*vmstr ;
       return -1 ;
    }
    /*
-	 * Getting status and current offset.
-	 */
+    * Getting status and current offset.
+    */
    TRACE(1, "rfio", "rfio_open: reading %d bytes",rfp->_iobuf.hsize) ;
    if (netread_timeout(rfp->s,rfio_buf,rfp->_iobuf.hsize, RFIO_CTRL_TIMEOUT) != rfp->_iobuf.hsize ) {
       TRACE(2, "rfio", "rfio_open: read(): ERROR occured (errno=%d)", errno);
@@ -506,8 +506,8 @@ char  	*vmstr ;
    rfio_logop(rfp->s,filename,host,flags);
 #endif
    /*
-	 * The file is open, update rfp->fp
-	 */
+    * The file is open, update rfp->fp
+    */
 #if defined(hpux)
    rfp->fp.__fileL = rfp->s;
 #else

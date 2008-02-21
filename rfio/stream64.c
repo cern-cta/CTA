@@ -1,5 +1,5 @@
 /*
- * $Id: stream64.c,v 1.10 2007/12/07 13:54:33 sponcec3 Exp $
+ * $Id: stream64.c,v 1.11 2008/02/21 17:27:41 waldron Exp $
  */
 
 /*
@@ -171,7 +171,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
    int   rfp_index, parserc;
    char  tmpbuf[21];
 
-   // Avoiding Valgrind error messages about uninitialized data
+   /* Avoiding Valgrind error messages about uninitialized data */
    memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
@@ -184,8 +184,8 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
 #endif /* CLIENTLOG */
 
    /*
-	 * The file is local.
-	 */
+    * The file is local.
+    */
    if ( ! (parserc = rfio_parse(filepath,&host,&filename)) ) {
       /* if not a remote file, must be local or HSM  */
       if ( host != NULL ) {
@@ -196,7 +196,7 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
                 filename);
           END_TRACE();
           rfio_errno = 0;
-          return(rfio_HsmIf_open(filename,flags,mode,1));
+          return(rfio_HsmIf_open(filename,flags,mode,1,1));
       }
       status= open64(filename, flags, mode) ;
       END_TRACE() ;
@@ -324,8 +324,8 @@ char 	* reqhost; /* In case of a Non-mapped I/O with uid & gid
       return -1 ;
    }
    /*
-	 * Building and sending request.
-	 */
+    * Building and sending request.
+    */
    /* if ((account = getacct()) == NULL) */ account = "";
    TRACE(2,"rfio","rfio_open64_ext_v3: uid %d gid %d umask %o ftype %d, mode 0%o, flags 0%o",
 	 rfp->uid,rfp->gid,rfp->umask,rfp->ftype,mode,flags) ;
@@ -534,7 +534,7 @@ int     ctrl_sock, size;
    char      tmpbuf[21];
    int data_sock;
 
-   // Avoiding Valgrind error messages about uninitialized data
+   /* Avoiding Valgrind error messages about uninitialized data */
    memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
@@ -778,13 +778,13 @@ int     ctrl_sock, size;
 {
    int status ;	/* Return code of called func	*/
    int HsmType, save_errno, written_to;
-   char   * p ; 	/* Pointer to buffer		*/
+   char   * p ; /* Pointer to buffer		*/
    fd_set fdvar;
    struct timeval t;
    char     rfio_buf[BUFSIZ];
    int ctrl_sock_index;
 
-   // Avoiding Valgrind error messages about uninitialized data
+   /* Avoiding Valgrind error messages about uninitialized data */
    memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
@@ -895,7 +895,7 @@ int     ctrl_sock, size;
       int n;
       char rqstbuf[BUFSIZ];
 
-      // Avoiding Valgrind error messages about uninitialized data
+      /* Avoiding Valgrind error messages about uninitialized data */
       memset(rqstbuf, 0, BUFSIZ);
 
       /* Something received on the control socket */
@@ -966,7 +966,7 @@ int     s;
    int      eod = 0;            /* Close received on data socket*/
    int      save_errno;
 
-   // Avoiding Valgrind error messages about uninitialized data
+   /* Avoiding Valgrind error messages about uninitialized data */
    memset(rfio_buf, 0, BUFSIZ);
 
    INIT_TRACE("RFIO_TRACE");
