@@ -149,12 +149,14 @@ void DLL_DECL BaseClient_util_time(time_t then, char *timestr) {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::client::BaseClient::BaseClient(int acceptTimeout, int ackTimeout) throw() :
+castor::client::BaseClient::BaseClient
+(int acceptTimeout, int transferTimeout) throw() :
   BaseObject(), m_rhPort(-1), m_callbackSocket(0), m_requestId(""),
-  m_acceptTimeout(acceptTimeout), m_ackTimeout (ackTimeout) ,m_hasAuthorizationId(false),
-  m_authUid(0), m_authGid(0), m_hasSecAuthorization(false) {
+  m_acceptTimeout(acceptTimeout), m_transferTimeout(transferTimeout),
+  m_hasAuthorizationId(false), m_authUid(0), m_authGid(0), 
+  m_hasSecAuthorization(false) {
   setAuthorization();
-  }
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -234,11 +236,11 @@ std::string castor::client::BaseClient::internalSendRequest(castor::stager::Requ
   } else {
      s = new castor::io::ClientSocket(m_rhPort, m_rhHost);
   }
-
-  if ( m_ackTimeout > 0) {
-    s->setTimeout(m_ackTimeout);
+  // sent the timeout for the socket, if not defined DEFAULT_NETTIMEOUT will
+  // be used
+  if (m_transferTimeout > 0) {
+    s->setTimeout(m_transferTimeout);
   }
-
   s->connect();
   // sends the request
   s->sendObject(request);

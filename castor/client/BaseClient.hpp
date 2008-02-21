@@ -91,8 +91,13 @@ namespace castor {
 
       /**
        * constructor
+       * @param acceptTimeout The amount of time in seconds that the client
+       * will wait for a callback
+       * @param transferTimeout The amount of time in seconds that the
+       * client will allow to transfer data between the recipient and itself
        */
-      BaseClient(int acceptTimeout = 2592000, int ackTimeout=-1) throw();
+      BaseClient(int acceptTimeout = 2592000, int transferTimeout = -1) 
+	throw();
 
       /**
        * destructor
@@ -244,7 +249,7 @@ namespace castor {
 
       /// Timeout for the accept
       int m_acceptTimeout;
-      int m_ackTimeout;
+      int m_transferTimeout;
 
       /// Authorization ID parameters
       bool m_hasAuthorizationId;
