@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/01 12:45:35 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/02/21 16:05:28 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -87,7 +87,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
        castor::dlf::Param("Groupname", STAGERSUPERGROUP),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 20, 5, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   }
 
   // Initialize the remote job service
@@ -99,7 +99,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
     castor::dlf::Param params[] =
       {castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 10, 1, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   }
   m_jobSvc = dynamic_cast<castor::stager::IJobSvc *>(orasvc);
   if (m_jobSvc == 0) {
@@ -107,7 +107,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
     castor::dlf::Param params[] =
       {castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 11, 1, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   }
 
   // Determine the number of times that the shared resource helper should try
@@ -116,7 +116,9 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
   int attempts = DEFAULT_RETRY_ATTEMPTS;
   if (value) {
     attempts = std::strtol(value, 0, 10);
-    if (attempts <= 1) {
+    if (attempts == 0) {
+      attempts = 1;
+    } else if (attempts < 0) {
       attempts = DEFAULT_RETRY_ATTEMPTS;
 
       // "Invalid DiskCopy/RetryInterval option, using default"
@@ -133,10 +135,10 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
   int interval = DEFAULT_RETRY_INTERVAL;
   if (value) {
     interval = std::strtol(value, 0, 10);
-    if (interval <= 1) {
+    if (interval < 1) {
       interval = DEFAULT_RETRY_INTERVAL;
 
-      // "Invalid DiskCopy/RetryAttempts option, using default"
+      // "Invalid DiskCopy/RetryAttempts option, value too small. Using default"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Default", interval),
 	 castor::dlf::Param(m_subRequestId)};
@@ -155,7 +157,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
        castor::dlf::Param("Protocol", m_protocol),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 14, 3, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);    
+    terminate(0, EXIT_FAILURE);    
   }
 
   // Initialize the shared resource helper
@@ -170,7 +172,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 15, 3, params, &m_fileId);
-    _exit(0, EXIT_FAILURE);
+    terminate(0, EXIT_FAILURE);
   }
 }
 
@@ -246,7 +248,7 @@ void castor::job::diskcopy::MainThread::parseCommandLine
       break;
     default:
       help(argv[0]);
-      _exit(0, USERR);
+      terminate(0, USERR);
     }
   }
   
@@ -335,7 +337,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
 	 castor::dlf::Param(m_subRequestId)};
       castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 23, 3, params, &m_fileId);
     }
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   }
 
   // If the diskserver name from the resource file is the same as the 
@@ -357,7 +359,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
     // source ends will try and fail the disk2disk copy transfer. The first one
     // to be processed by the stager will succeed the second will throw an 
     // Oracle exception. (nothing can be done about this!)
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   }
 
   try {
@@ -371,7 +373,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 24, 3, params, &m_fileId);
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   }
 
   if (hostname != diskserver) {
@@ -431,7 +433,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("SourceDiskCopy", m_sourceDiskCopyId),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 26, 4, params, &m_fileId);
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   } catch (...) {
 
     // "Failed to remotely execute disk2DiskCopyStart"
@@ -439,7 +441,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 27, 2, params, &m_fileId);
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   }   
 
   // "Starting destination end of mover"
@@ -465,7 +467,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("Protocol", m_protocol),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 29, 4, params, &m_fileId);
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   } 
 
   // Transfer successful. Note: we don't need to call disk2DiskCopyFailed if
@@ -481,7 +483,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 30, 3, params, &m_fileId);
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   } catch (...) {
 
     // "Failed to remotely execute disk2DiskCopyDone"
@@ -489,7 +491,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
       {castor::dlf::Param("Message", "General exception caught"),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 31, 2, params, &m_fileId);
-    _exit(m_diskCopyId, EXIT_FAILURE);
+    terminate(m_diskCopyId, EXIT_FAILURE);
   }
 
   // Calculate statistics
@@ -507,7 +509,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
 			diskCopy->svcClass()),
      castor::dlf::Param(m_subRequestId)};
   castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 39, 4, params2, &m_fileId);
-  _exit(0, EXIT_SUCCESS);
+  terminate(0, EXIT_SUCCESS);
 }
 
 
@@ -582,9 +584,9 @@ void castor::job::diskcopy::MainThread::changeUidGid
 
 
 //-----------------------------------------------------------------------------
-// _Exit
+// terminate
 //-----------------------------------------------------------------------------
-void castor::job::diskcopy::MainThread::_exit
+void castor::job::diskcopy::MainThread::terminate
 (u_signed64 diskCopyId, int status) {
 
   // Everything ok ?

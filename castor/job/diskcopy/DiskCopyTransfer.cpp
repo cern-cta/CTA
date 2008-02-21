@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/01/21 15:25:16 $ $Author: waldron $
+ * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/02/21 16:05:28 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -49,10 +49,10 @@ int main(int argc, char *argv[]) {
     if ((freopen("/dev/null", "r", stdin)  == NULL) ||
         (freopen("/dev/null", "w", stdout) == NULL) ||
         (freopen("/dev/null", "w", stderr) == NULL)) {
-      castor::exception::Exception ex(errno);
-      ex.getMessage() << "Failed to redirect standard file descriptors to "
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to redirect standard file descriptors to "
 		      << "/dev/null" << std::endl;
-      throw ex;
+      throw e;
     }
 
     // Start daemon
@@ -94,7 +94,7 @@ castor::job::diskcopy::DiskCopyTransfer::DiskCopyTransfer():
     // Constructor
     { 10, "Unable to get RemoteJobSvc, transfer terminated" },
     { 11, "Could not convert newly retrieved service into IJobSvc" },
-    { 12, "Invalid DiskCopy/RetryInterval option, using default" },
+    { 12, "Invalid DiskCopy/RetryInterval option, value too small. Using default" },
     { 13, "Invalid DiskCopy/RetryAttempts option, using default" },
     { 14, "Failed to initialize mover" },
     { 15, "Failed to create sharedResource helper" },

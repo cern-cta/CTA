@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/26 14:54:55 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/02/21 16:05:28 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -110,7 +110,7 @@ namespace castor {
 	 * @param diskCopyId id of the destination disk copy to be created
 	 * @param status the return code for exit;
 	 */
-	virtual void _exit(u_signed64 diskCopyId, int status);
+	virtual void terminate(u_signed64 diskCopyId, int status);
 
       protected:
 
