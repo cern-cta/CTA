@@ -17,9 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2007/12/05 14:49:30 $ $Author: riojac3 $
- *
- *
+ * @(#)$RCSfile: RHThread.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/02/21 15:51:11 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -29,6 +27,7 @@
 
 #include "castor/server/IThread.hpp"
 #include "castor/stager/Request.hpp"
+#include "castor/BaseAddress.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/io/AuthServerSocket.hpp"
@@ -48,13 +47,13 @@ namespace castor {
     public:
 
       /**
-       * constructor
+       * Constructor
        * @param useAccessLists whether to use access lists
        */
       RHThread(bool useAccessLists) throw (castor::exception::Exception);
-      
+
       /**
-       * default destructor
+       * Default destructor
        */
       ~RHThread() throw() {};
 
@@ -64,39 +63,53 @@ namespace castor {
        */
       virtual void run(void *param);
       
-      /// not needed
+      /// Not implemented
       virtual void init() {};
 
-      /// not needed
+      /// Not implemented
       virtual void stop() {};
       
     private:
       
       /**
-       * handles an incoming request
+       * Handles an incoming request
        * @param fr the request
-       * @param cuuid its uuid (for logging purposes only)
-       * @param peerIP, peerPort IP and port of the client (again for logging)
+       * @param ad database conversion service
+       * @param cuuid the uuid of the request (for logging purposes)
+       * @throw Exception in case of error
+       * @return the number of subrequests involved
        */
-      void handleRequest(castor::stager::Request* fr, Cuuid_t cuuid, 
-      			 unsigned long peerIP, unsigned short peerPort)
+      unsigned int handleRequest(castor::stager::Request* fr, 
+				 castor::BaseAddress ad,
+				 Cuuid_t cuuid)
         throw (castor::exception::Exception);
-
+      
+      /**
+       * Send a notification to stager to wake up one of its thread pools
+       * to process the request
+       * @param fr the request
+       * @param cuuid the uuid of the request (for logging purposes)
+       * @param nbThreads the number of threads to wake up on the stager
+       */
+      void sendNotification(castor::stager::Request* fr,
+			    Cuuid_t cuuid,
+			    unsigned int nbThreads);
+      
     private:
-
-      /// whether to use access lists
+      
+      /// Whether to use access lists
       bool m_useAccessLists;
       
-      /// stager host
+      /// Stager host
       std::string m_stagerHost;
       
-      /// stager notify port
+      /// Stager notify port
       unsigned m_stagerPort;
 
     }; // class RHThread
-
+    
   } // end of namespace rh
-
+  
 } // end of namespace castor
 
 #endif // RH_RHTHREAD_HPP
