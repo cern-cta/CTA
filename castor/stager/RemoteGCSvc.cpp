@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/25 15:02:32 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/21 17:31:21 $ $Author: mmartins $
  *
  *
  *
@@ -42,6 +42,8 @@
 #include "castor/stager/FilesDeleted.hpp"
 #include "castor/stager/NsFilesDeleted.hpp"
 #include "castor/stager/NsFilesDeletedResponse.hpp"
+#include "castor/stager/StgFilesDeleted.hpp"
+#include "castor/stager/StgFilesDeletedResponse.hpp"
 #include "castor/stager/FilesDeletionFailed.hpp"
 #include "castor/stager/GetUpdateDone.hpp"
 #include "castor/stager/GetUpdateFailed.hpp"
@@ -62,6 +64,7 @@
 #include "castor/exception/Internal.hpp"
 #include <errno.h>
 #include <list>
+#include <vector>
 
 EXTERN_C char DLL_DECL *getconfent _PROTO((char *, char *, int));
 
@@ -403,6 +406,105 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
     client.sendRequest(&req, &rh);
   } catch (castor::exception::Exception e) {
     // Exception caught in RemoteGCSvc::nsFilesDeleted
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Error", strerror(errno))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 0, 2, params);
+  }
+  // no need to cleanup fileIds since the ownership of its content
+  // was transmitted to req and the deletion of req will delete it !
+  return result;
+}
+
+
+
+
+
+
+// -----------------------------------------------------------------------
+// StgFilesDeletedResponseHandler
+// -----------------------------------------------------------------------
+/**
+ * A dedicated little response handler for the stgFilesDeleted
+ * requests
+ */
+class StgFilesDeletedResponseHandler : public castor::client::IResponseHandler {
+public:
+  StgFilesDeletedResponseHandler
+  (std::vector<u_signed64>* result) :
+    m_result(result) {}
+
+  virtual void handleResponse(castor::rh::Response& r)
+    throw (castor::exception::Exception) {
+    if (0 != r.errorCode()) {
+      castor::exception::Exception e(r.errorCode());
+      e.getMessage() << r.errorMessage();
+      throw e;
+    }
+    castor::stager::StgFilesDeletedResponse *resp =
+      dynamic_cast<castor::stager::StgFilesDeletedResponse*>(&r);
+    if (0 == resp) {
+      castor::exception::Internal e;
+      e.getMessage() << "Could not cast response into StgFilesDeletedResponse";
+      throw e;
+    }
+    for (std::vector<castor::stager::GCFile*>::iterator
+           it = resp->orphanFileIds().begin();
+         it != resp->orphanFileIds().end();
+         it++) {
+      // we are pushing fileids here, despite the function name
+      // This is a bad object reuse, I apologize...
+      m_result->push_back((*it)->diskCopyId());
+    }
+    // we clear the response
+    resp->orphanFileIds().clear();
+  };
+  virtual void terminate()
+    throw (castor::exception::Exception) {};
+private:
+  // where to store the list of files not found
+  std::vector<u_signed64>* m_result;
+};
+
+
+
+
+
+
+
+
+
+
+
+// -----------------------------------------------------------------------
+// stgFilesDeleted
+// -----------------------------------------------------------------------
+std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
+(std::vector<u_signed64> &diskCopyIds) throw() {
+  // Build the stgFilesDeleted Request
+  castor::stager::StgFilesDeleted req;
+  int i = 0;
+  for (std::vector<u_signed64>::iterator it = diskCopyIds.begin();
+       it != diskCopyIds.end();
+       it++) {
+    castor::stager::GCFile* file = new castor::stager::GCFile;
+    file->setDiskCopyId(*it);
+    file->setRequest(&req);
+    // Here the owner ship of files[i] is transmitted to req !
+    req.files().push_back(file);
+    i++;
+  }
+  // Prepare a result vector
+  std::vector<u_signed64> result;
+  try {
+    // Build a response Handler
+    StgFilesDeletedResponseHandler rh(&result);
+    // Uses a BaseClient to handle the request
+    castor::client::BaseClient client(getRemoteGCClientTimeout());
+    client.setOption(NULL, &req);
+    client.sendRequest(&req, &rh);
+  } catch (castor::exception::Exception e) {
+   
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Error", strerror(errno))};

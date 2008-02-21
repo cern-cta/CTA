@@ -146,7 +146,7 @@ namespace castor {
        * Get the list of GCFile* objects held by m_orphanFilesVector
        * @return list of GCFile* objects held by m_orphanFilesVector
        */
-      std::vector<GCFile*>& orphanFiles() {
+      std::vector<GCFile*>& orphanFileIds() {
         return m_orphanFilesVector;
       }
 
