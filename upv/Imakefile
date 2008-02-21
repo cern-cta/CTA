@@ -116,8 +116,7 @@ MANPAGES = $(LIBMANDIR)/Cupv_add.$(LIBMANSUFFIX) \
 	   $(MANDIR)/Cupvdelete.$(MANSUFFIX) \
 	   $(MANDIR)/Cupvlist.$(MANSUFFIX) \
 	   $(MANDIR)/Cupvdaemon.$(MANSUFFIX) \
-	   $(MANDIR)/Cupvmodify.$(MANSUFFIX) \
-	   $(MANDIR)/Cupvshutdown.$(MANSUFFIX)
+	   $(MANDIR)/Cupvmodify.$(MANSUFFIX)
 
 EXPORTMANPAGES = $(EXPORTMAN)/man3/Cupv_add.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cupv_check.$(LIBMANSUFFIX) \
@@ -129,8 +128,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cupv_add.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/Cupvdelete.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/Cupvlist.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/Cupvdaemon.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvmodify.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/Cupvshutdown.$(MANSUFFIX)
+	   $(EXPORTMAN)/man1/Cupvmodify.$(MANSUFFIX)
 
 #if BuildCupvLibrary
 UPVLIBTARGET = LibraryTargetName(upv)
@@ -140,21 +138,18 @@ CLIENT = ProgramTargetName(Cupvadd) \
 	 ProgramTargetName(Cupvmodify) \
 	 ProgramTargetName(Cupvcheck) \
 	 ProgramTargetName(Cupvdelete) \
-	 ProgramTargetName(Cupvlist) \
-	 ProgramTargetName(Cupvshutdown)
+	 ProgramTargetName(Cupvlist)
 
 IPROGS_C = FileName($(BIN),ProgramTargetName(Cupvadd)) \
 	   FileName($(BIN),ProgramTargetName(Cupvmodify)) \
 	   FileName($(BIN),ProgramTargetName(Cupvcheck)) \
 	   FileName($(BIN),ProgramTargetName(Cupvdelete)) \
-	   FileName($(BIN),ProgramTargetName(Cupvlist)) \
-	   FileName($(BIN),ProgramTargetName(Cupvshutdown))	
+	   FileName($(BIN),ProgramTargetName(Cupvlist))	
 EPROGS_C = $(EXPORTBIN)/Cupvadd \
 	   $(EXPORTBIN)/Cupvmodify \
 	   $(EXPORTBIN)/Cupvdelete \
 	   $(EXPORTBIN)/Cupvcheck \
-	   $(EXPORTBIN)/Cupvlist \
-	   $(EXPORTBIN)/Cupvshutdown
+	   $(EXPORTBIN)/Cupvlist
 #endif
 
 #if BuildCupvDaemon
@@ -206,7 +201,6 @@ NormalProgramTarget(Cupvmodify, Cupvmodify.Osuf, LibraryTargetName(upv) $(DEPLIB
 NormalProgramTarget(Cupvcheck, Cupvcheck.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
 NormalProgramTarget(Cupvdelete, Cupvdelete.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
 NormalProgramTarget(Cupvlist, Cupvlist.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
-NormalProgramTarget(Cupvshutdown, Cupvshutdown.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
 
 NormalLibraryTarget(upv,$(CUPVLIB_OBJS))
 
@@ -246,9 +240,6 @@ IEXPORT(Cupvdelete,$(EXPORTBIN),755);
 InstallProgram(Cupvlist,$(BIN),root,bin,755)
 IEXPORT(Cupvlist,$(EXPORTBIN),755);
 
-InstallProgram(Cupvshutdown,$(BIN),root,bin,755)
-IEXPORT(Cupvshutdown,$(EXPORTBIN),755);
-
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
 
@@ -271,7 +262,6 @@ IMANPAGE(Cupvdelete, $(MANDIR),$(MANSUFFIX))
 IMANPAGE(Cupvlist, $(MANDIR),$(MANSUFFIX))
 IMANPAGE(Cupvdaemon, $(MANDIR),$(MANSUFFIX))
 IMANPAGE(Cupvmodify, $(MANDIR),$(MANSUFFIX))
-IMANPAGE(Cupvshutdown, $(MANDIR),$(MANSUFFIX))
 
 EMANPAGE(Cupv_add, $(EXPORTMAN)/man$(LIBMANSUFFIX),$(LIBMANSUFFIX))
 EMANPAGE(Cupv_check, $(EXPORTMAN)/man$(LIBMANSUFFIX),$(LIBMANSUFFIX))
@@ -284,7 +274,6 @@ EMANPAGE(Cupvdelete, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
 EMANPAGE(Cupvlist, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
 EMANPAGE(Cupvdaemon, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
 EMANPAGE(Cupvmodify, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
-EMANPAGE(Cupvshutdown, $(EXPORTMAN)/man$(MANSUFFIX),$(MANSUFFIX))
 
 export: $(EPROGS_C) $(EPROGS_D)
 
