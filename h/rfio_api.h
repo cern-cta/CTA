@@ -1,5 +1,5 @@
 /*
- * $RCSfile: rfio_api.h,v $ $Revision: 1.44 $ $Date: 2007/12/07 13:26:07 $ CERN IT-PDP/DM Olof Barring
+ * $RCSfile: rfio_api.h,v $ $Revision: 1.45 $ $Date: 2008/02/21 17:28:08 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -286,7 +286,7 @@ EXTERN_C int DLL_DECL rfio_HsmIf_creat _PROTO((const char *, mode_t));
 EXTERN_C char DLL_DECL *rfio_HsmIf_getcwd _PROTO((char *, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_getipath _PROTO((int, char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_mkdir _PROTO((const char *, mode_t));
-EXTERN_C int DLL_DECL rfio_HsmIf_open _PROTO((const char *, int, mode_t, int));
+EXTERN_C int DLL_DECL rfio_HsmIf_open _PROTO((const char *, int, mode_t, int, int));
 EXTERN_C int DLL_DECL rfio_HsmIf_open_limbysz _PROTO((const char *, int, mode_t, U_HYPER, int));
 EXTERN_C DIR DLL_DECL *rfio_HsmIf_opendir _PROTO((const char *));
 EXTERN_C int DLL_DECL rfio_HsmIf_read _PROTO((int, void *, int));
