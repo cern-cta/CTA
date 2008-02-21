@@ -62,11 +62,6 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),Cdlopen_api.h) \
 	 FileName($(DESTDIRCASTOR),Cgrp.h) \
 	 FileName($(DESTDIRCASTOR),Cinit.h) \
-	 FileName($(DESTDIRCASTOR),Cmonit_api.h) \
-	 FileName($(DESTDIRCASTOR),Cmonit_constants.h) \
-	 FileName($(DESTDIRCASTOR),Cmonit_structs.h) \
-	 FileName($(DESTDIRCASTOR),Cmonitd.h) \
-	 FileName($(DESTDIRCASTOR),Cmonitd_lock.h) \
 	 FileName($(DESTDIRCASTOR),Cmutex.h) \
 	 FileName($(DESTDIRCASTOR),Csec.h) \
 	 FileName($(DESTDIRCASTOR),Csec_api.h) \
@@ -91,7 +86,6 @@ ICOMMON_H = \
 	 FileName($(DESTDIRCASTOR),expert_daemon.h) \
 	 FileName($(DESTDIRCASTOR),getconfent.h) \
 	 FileName($(DESTDIRCASTOR),md5.h) \
-	 FileName($(DESTDIRCASTOR),msg.h) \
 	 FileName($(DESTDIRCASTOR),rmc.h) \
 	 FileName($(DESTDIRCASTOR),rmc_api.h) \
 	 FileName($(DESTDIRCASTOR),rmc_constants.h) \
@@ -149,11 +143,6 @@ ECOMMON_H = \
 	 $(EXPORTH)/Cdlopen_api.h \
 	 $(EXPORTH)/Cgrp.h \
 	 $(EXPORTH)/Cinit.h \
-	 $(EXPORTH)/Cmonit_api.h \
-	 $(EXPORTH)/Cmonit_constants.h \
-	 $(EXPORTH)/Cmonit_structs.h \
-	 $(EXPORTH)/Cmonitd.h \
-	 $(EXPORTH)/Cmonitd_lock.h \
 	 $(EXPORTH)/Cmutex.h \
 	 $(EXPORTH)/Csec.h \
 	 $(EXPORTH)/Csec_api.h \
@@ -178,7 +167,6 @@ ECOMMON_H = \
 	 $(EXPORTH)/expert_daemon.h \
 	 $(EXPORTH)/getconfent.h \
 	 $(EXPORTH)/md5.h \
-	 $(EXPORTH)/msg.h \
 	 $(EXPORTH)/rmc.h \
 	 $(EXPORTH)/rmc_api.h \
 	 $(EXPORTH)/rmc_constants.h \
@@ -376,21 +364,6 @@ IEXPORT(Cgrp.h,$(EXPORTH),644)
 InstallNonExecFile(Cinit.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cinit.h,$(EXPORTH),644)
 
-InstallNonExecFile(Cmonit_api.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Cmonit_api.h,$(EXPORTH),644)
-
-InstallNonExecFile(Cmonit_constants.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Cmonit_constants.h,$(EXPORTH),644)
-
-InstallNonExecFile(Cmonit_structs.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Cmonit_structs.h,$(EXPORTH),644)
-
-InstallNonExecFile(Cmonitd.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Cmonitd.h,$(EXPORTH),644)
-
-InstallNonExecFile(Cmonitd_lock.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(Cmonitd_lock.h,$(EXPORTH),644)
-
 InstallNonExecFile(Cmutex.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(Cmutex.h,$(EXPORTH),644)
 
@@ -543,9 +516,6 @@ IEXPORT(marshall.h,$(EXPORTH),644)
 
 InstallNonExecFile(md5.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(md5.h,$(EXPORTH),644)
-
-InstallNonExecFile(msg.h,$(DESTDIRCASTOR),root,bin,644)
-IEXPORT(msg.h,$(EXPORTH),644)
 
 InstallNonExecFile(net.h,$(DESTDIRCASTOR),root,bin,644)
 IEXPORT(net.h,$(EXPORTH),644)

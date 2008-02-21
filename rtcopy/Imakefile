@@ -143,12 +143,6 @@ RTCPFLAG=-DRTCP_SERVER
 RTCPFLAG=
 #endif
 
-#if BuildMonitorLibrary
-MONITORFLAG=-DMONITOR
-#else
-MONITORFLAG=
-#endif
-
 CPFILES = rtcpc_CheckReq.c rtcpc_log.c rtcpc_SendRecv.c rtcpc_CallVMGR.c
 
 #if BuildSecurity
@@ -165,7 +159,7 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DNS_ROOT=\"$(NS_ROOT)\" \
 	 $(ACCTON) $(SONYRFLG) $(CONFIGFILE) $(RTCOPYERRLIST) $(TPCONFIG) \
 	 $(RTCPFLAG) $(VMGRFLG) $(VDQMFLG) $(CTAPEFLG) $(ACCTFLAG) \
-	 $(ACCTFILE)  $(MONITORFLAG) $(RTCPCLDFLAGS)
+	 $(ACCTFILE) $(RTCPCLDFLAGS)
 
 CFLAGS = $(CCOPTIM) -I$(INCLUDES) -I$(INCLUDES_CPP) $(THREADFLAGS) $(DFLAGS) $(SECURITYFLAG)
 
@@ -238,10 +232,6 @@ MANPAGES_C += FileName($(MANDIR),rtcpclientd.$(MANSUFFIX)) FileName($(MANDIR),rt
 EMANPAGES_C += FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpclientd.$(MANSUFFIX))) FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpcldCleanupDB.$(MANSUFFIX)))
 #endif
 
-#if BuildMonitorLibrary
-RTCPD_MONITORCLIENT = Cmonit_rtcopyclient.Osuf
-#endif 
-
 RTCPD_OBJS =	rtcpd.Osuf $(VMGRSERV) rtcp_CheckReq.Osuf \
 		rtcp_Listen.Osuf rtcp_SendRecv.Osuf rtcp_log.Osuf \
 		rtcpd_ClientListen.Osuf rtcpd_Ctape.Osuf rtcpd_Disk.Osuf \
@@ -249,8 +239,7 @@ RTCPD_OBJS =	rtcpd.Osuf $(VMGRSERV) rtcp_CheckReq.Osuf \
 		rtcpd_TapeIO.Osuf rtcpd_stageupdc.Osuf rtcp_InitNW.Osuf \
 		rtcpd_ConvertData.Osuf rtcpd_SHIFTClients.Osuf \
 		rtcpc_BuildReq.Osuf rtcpapi.Osuf rtcp_RetvalSHIFT.Osuf \
-		rtcpd_tpdump.Osuf Ctape_dummies.Osuf  $(RTCPD_MONITORCLIENT) \
-		rtcp_accounting.Osuf		
+		rtcpd_tpdump.Osuf Ctape_dummies.Osuf rtcp_accounting.Osuf		
 
 RTCPLIB_OBJS =	rtcpc_SendRecv.Osuf rtcp_InitNW.Osuf rtcpc_log.Osuf \
 		$(VMGRLIB) rtcp_Listen.Osuf rtcpapi.Osuf \

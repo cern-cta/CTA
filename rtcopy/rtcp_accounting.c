@@ -211,19 +211,6 @@ int rtcp_WriteAccountRecord(rtcpClientInfo_t *client,
         exitcode = UNERR;
     }
 
-#ifdef MONITOR
-
-    rtcp_log(LOG_DEBUG, "MONITOR - Before rtcopy status sent\n");
-
-    Cmonit_send_rtcopy_status(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
-                    stager_reqID,charcom,ifce,tapereq->vid,
-                    KBytes,retry_nb,exitcode,client->clienthost,disksrv,
-                    fseq,errmsgtxt, tapereq->unit);
-
-    rtcp_log(LOG_DEBUG, "MONITOR - After rtcopy status sent\n");
-
-#endif
-
     rc = rtcp_wacct(subtype,(uid_t)client->uid,(gid_t)client->gid,jobID,
                     stager_reqID,charcom,ifce,tapereq->vid,
                     KBytes,retry_nb,exitcode,client->clienthost,disksrv,

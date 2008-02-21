@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1993-2001 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.4 $ $Date: 2007/11/28 10:14:43 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.5 $ $Date: 2008/02/21 18:22:40 $ CERN IT-PDP/DM Jean-Philippe Baud Jean-Damien Durand
 
 COMM 	Make stage daemon programs. 
 
@@ -126,10 +126,6 @@ STAGERSUPERGROUP = -DSTAGERSUPERGROUP=\"$(STAGERSUPERGROUP0)\"
 
 COMM######################### FLAGS ##############################
 
-#if BuildMonitorClient
-MONITORFLAG=-DMONITOR
-#endif
-
 DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DLOGFILE=\"$(SPOOL)/log\" \
 	 -DMIGLOGFILE=\"$(SPOOL)/mig_log\" \
@@ -142,8 +138,7 @@ DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DNOMORESTAGE=\"$(NOMORESTAGE)\" \
 	 -DNOMOREMIGR=\"$(NOMOREMIGR)\" \
 	 -D$(TMS) -D$(VMGR) $(ACCTFLAG) $(ACCTFILE) \
-	 $(CDBFLAG) $(NSROOT) $(NSHOSTPFX) $(NSHOST) $(NFSROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP) $(HPSSFLAGS)  $(MONITORFLAG)
-
+	 $(CDBFLAG) $(NSROOT) $(NSHOSTPFX) $(NSHOST) $(NFSROOT) $(STAGERSUPERUSER) $(STAGERSUPERGROUP) $(HPSSFLAGS)
 
 #if !defined(_WIN32)
 DEBUG  = -g
@@ -521,20 +516,16 @@ NormalProgramTarget(stageshutdown, \
 
 NormalProgramTarget(stagestat,stagestat.Osuf,$(GLOBLIB),$(LIBS) $(MATHLIB))
 
-#if BuildMonitorClient 
-STAGE_MONITORCLIENT = Cmonit_stageclient.Osuf
-#endif 
-
 NormalProgramTarget(stgdaemon, \
  stgdaemon.Osuf packfseq.Osuf poolmgr.Osuf procalloc.Osuf procclr.Osuf \
  $(DBOBJS_STGD) \
  procio.Osuf procping.Osuf procqry.Osuf procupd.Osuf procfilchg.Osuf sendrep.Osuf stglogit.Osuf \
-	$(STAGE_MONITORCLIENT) $(STAGEACCT),\
+	$(STAGEACCT),\
  $(GLOBLIB),$(LIBS) $(MATHLIB))
 
 NormalProgramTarget(cleaner,cleaner.Osuf stglogit.Osuf,$(GLOBLIB),$(LIBS))
 
-cpdskdsk:	cpdskdsk.sh
+cpdskdsk: cpdskdsk.sh
 	sed -e s!CPSHELL!$(CPSHELL)! cpdskdsk.sh | sed -e s!BINDIR!$(BIN)! > cpdskdsk
 	chmod 755 cpdskdsk
 

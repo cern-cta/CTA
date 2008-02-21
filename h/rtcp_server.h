@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.4 $ $Date: 2007/04/19 15:18:19 $ CERN IT/ADC Olof Barring
+ * @(#)$RCSfile: rtcp_server.h,v $ $Revision: 1.5 $ $Date: 2008/02/21 18:25:27 $ CERN IT/ADC Olof Barring
  */
 
 /*
@@ -276,36 +276,5 @@ int  DLL_DECL  stage_updc_filcp _PROTO((char *, int, int, char *, u_signed64, in
 int  DLL_DECL  stage_updc_tppos _PROTO((char *, int, int, int, char *, char *, int, int, char *, char *));
 */
 #endif /* CTAPE_DUMMIES */
-
-#ifdef MONITOR
-
-#define CMONIT_FTRANSFER_SENDMSG_PERIOD 3 /* In seconds */
-
-
-EXTERN_C int DLL_DECL Cmonit_send_transfer_info _PROTO((int, 
-							u_signed64, 
-							u_signed64,
-							u_signed64, 
-							int, int));
-
-EXTERN_C int DLL_DECL Cmonit_send_rtcopy_status _PROTO ((int,
-							 uid_t,
-							 gid_t,
-							 int,
-							 int,
-							 char,
-							 char  *,
-							 char  *,
-							 int,
-							 int,
-							 int,
-							 char  *,
-							 char  *,
-							 int,
-							 char  *,
-							 char *));
-
-
-#endif /* MONITOR */
 
 #endif /* RTCP_SERVER_H */

@@ -352,13 +352,7 @@ struct devlblinfo {
 	char	uhl1[81];	/* UHL1 label */
 };
 
-#ifdef MONITOR
 
-/* Prototype for Monitoring method, from Cmonit_tape_client.c */
-EXTERN_C int DLL_DECL Cmonit_send_tape_status _PROTO((struct tptab *, 
-						      int));
-
-#endif
 EXTERN_C int DLL_DECL getlabelinfo _PROTO((char *, struct devlblinfo  **));
 EXTERN_C int DLL_DECL setlabelinfo _PROTO((char *, int, int, char *, char *, char *, char *));
 EXTERN_C int DLL_DECL initlabelroutines _PROTO((int));

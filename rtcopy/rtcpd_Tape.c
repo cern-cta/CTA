@@ -76,14 +76,6 @@ extern int AbortFlag;
 static int last_block_done = 0;
 static int WaitToJoin = FALSE;
 
-#ifdef MONITOR /* Added for Monitoring */
-time_t lasttime_monitor_msg_sent=0;
-u_signed64 last_qty_sent = 0;
-int nb_files = 0;
-int current_file = 0;
-long clktck;
-#endif
-
 /*
  * Signal to disk IO thread that file has been positioned (tape read with
  * stager only).
@@ -545,25 +537,6 @@ static int MemoryToTape(int tape_fd, int *indxp, int *firstblk,
                 else if ( rc > 0 ) filereq->nbrecs++;
             }
 
-#ifdef MONITOR  /* Monitoring Code */
- 
-            {
-                int forceSend;
-      
-                if (file == NULL || filereq == NULL) {
-                    rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
-                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
-                                     "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
-                                     "Message", TL_MSG_PARAM_STR, "MONITOR - file or filereq is NULL" );
-                } else {
-                    forceSend = (file->tapebytes_sofar == 0) || (file->tapebytes_sofar ==  filereq->bytes_in);
-                    rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
-                }
-            }
-
-#endif /* End Monitoring Code */
-      
-
             TP_SIZE(rc);
             j++;
         } /* End of for (j=...) */
@@ -1016,23 +989,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                     databufs[i]->nbrecs++;
                 }
 
-#ifdef MONITOR  /* Monitoring Code */
-                {
-                    int forceSend;
-
-                    if (file == NULL || filereq == NULL) {
-                        rtcp_log(LOG_ERR, "MONITOR - file or filereq is NULL\n");
-                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
-                                         "func"   , TL_MSG_PARAM_STR, "TapeToMemory",
-                                         "Message", TL_MSG_PARAM_STR, "MONITOR - file or filereq is NULL" );                        
-                    } else {
-                        forceSend = (file->tapebytes_sofar == 0) || 
-                                    (file->tapebytes_sofar ==  filereq->bytes_in);
-                        rtcpd_sendMonitoring(file->tapebytes_sofar, filereq->bytes_in, forceSend);
-                    }
-                }
-#endif          /* End of Monitoring Code */
-
                 TP_SIZE(rc);
             } /* End of for (j=...) */
             /*  
@@ -1372,11 +1328,6 @@ void *tapeIOthread(void *arg) {
     int save_rc;
     extern char *u64tostr _PROTO((u_signed64, char *, int));
 
-
-#ifdef MONITOR
-    clktck = sysconf(_SC_CLK_TCK); 
-#endif
-
     if ( arg == NULL ) {
         rtcp_log(LOG_ERR,"tapeIOthread() received NULL argument\n");
         tl_rtcpd.tl_log( &tl_rtcpd, 3, 2, 
@@ -1521,19 +1472,7 @@ void *tapeIOthread(void *arg) {
             CHECK_PROC_ERR(nexttape,NULL,"rtcpd_Mount() error");
         }
 	
-#ifdef MONITOR /* Monitoring - Loop to count the number of files in the request */
-        nb_files = 0;
-        last_qty_sent = 0;
         CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
-            nb_files++;
-        } CLIST_ITERATE_END(nexttape->file,nextfile);
-        current_file = 0;
-#endif /* End Monitoring */
-
-        CLIST_ITERATE_BEGIN(nexttape->file,nextfile) {
-#ifdef MONITOR
-            current_file++;
-#endif  /* MONITOR */
  
             mode = nexttape->tapereq.mode;
             /*
@@ -1771,14 +1710,6 @@ void *tapeIOthread(void *arg) {
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 if ( rc >= 0 ) tape_fd = rc;
                 CHECK_PROC_ERR(NULL,nextfile,"topen() error");
-
-#ifdef MONITOR
-                /* Reinit time counter for monitor */
-                {
-                    struct tms tmp_tms;
-                    lasttime_monitor_msg_sent = times(&tmp_tms);
-                }
-#endif
 
                 if ( nexttape->tapereq.mode == WRITE_ENABLE ) {
                     rc = MemoryToTape(tape_fd,&indxp,&firstblk,&diskIOfinished,
@@ -2099,48 +2030,3 @@ int rtcpd_WaitTapeIO(int *status) {
     }
     return(rc);
 }
-
-
-#ifdef MONITOR
-/*
- * Method added for monitoring purpose.
- * It uses the Cmonit_api to send a UDP message to the monitoring daemon
- */
-int rtcpd_sendMonitoring(u_signed64 transfered, u_signed64 total, int forceSend) {
-  
-  pid_t pid;
-  struct tms tmp_tms;
-  clock_t tm = times(&tmp_tms);			       
-
- 
-
-  if ( forceSend ||  
-       (tm - lasttime_monitor_msg_sent) >  (CMONIT_FTRANSFER_SENDMSG_PERIOD * clktck)) {
-
-    /* Getting the JID, that is the pid of the process. 
-       Under linux this is trickier as every thread has its pid */
-
-#if defined(linux)
-    pid = getpgrp();
-#else
-    pid = getpid();
-#endif
-
-    if ((tm - lasttime_monitor_msg_sent) != 0) {
-
-      Cmonit_send_transfer_info(pid, transfered, total, (transfered - last_qty_sent) * clktck
-				/ (tm - lasttime_monitor_msg_sent), current_file, nb_files);
-    } else {
- 
-      rtcp_log(LOG_DEBUG, "MONITOR - Denominator is 0, no message sent\n");
-      tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
-                       "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitTapeIO",
-                       "Message", TL_MSG_PARAM_STR, "MONITOR - Denominator is 0, no message sent" );
-    }
-
-    lasttime_monitor_msg_sent = tm;
-    last_qty_sent = transfered;
-  }
-  return(0);
-} 
-#endif
