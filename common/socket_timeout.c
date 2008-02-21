@@ -52,6 +52,7 @@ typedef void    Sigfunc();
 int      _net_readable(int, int);
 int      _net_writable(int, int);
 int      _net_connectable(SOCKET, int);
+int      _net_isclosed(int);
 #ifndef _WIN32
 Sigfunc *_netsignal(int, Sigfunc *);
 #endif
@@ -59,6 +60,7 @@ Sigfunc *_netsignal(int, Sigfunc *);
 int      _net_readable();
 int      _net_writable();
 int      _net_connectable();
+int      _net_isclosed();
 #ifndef _WIN32
 Sigfunc *_netsignal();
 #endif
@@ -159,8 +161,8 @@ ssize_t DLL_DECL netread_timeout(fd, vptr, n, timeout)
 	size_t nleft;                /* Bytes to read */
 	ssize_t nread = 0;           /* Bytes yet read */
 	ssize_t flag = 0;            /* != 0 means error */
-	char  *ptr   = NULL;         /* Temp. pointer */
-	int     select_status = 0;
+	char  *ptr = NULL;           /* Temp. pointer */
+	int select_status = 0;
 #ifndef _WIN32
 	Sigfunc *sigpipe;            /* Old SIGPIPE handler */
 #endif
@@ -265,7 +267,7 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 #ifndef _WIN32
 	Sigfunc *sigpipe;            /* Old SIGPIPE handler */
 #endif
-	int     select_status = 0;
+	int select_status = 0;
 	time_t time_start;
 	int time_elapsed;
 
@@ -294,6 +296,12 @@ ssize_t DLL_DECL netwrite_timeout(fd, vptr, n, timeout)
 	time_elapsed = 0;
 
 	while (nleft > 0) {
+
+	  	/* Check if the client has closed its connection */
+		if (_net_isclosed(fd)) {
+			flag = -1;
+			break;
+		}
 
 		if ((select_status = _net_writable(fd, timeout - time_elapsed)) <= 0) {
 			if (select_status == 0) {
@@ -371,6 +379,54 @@ Sigfunc *_netsignal(signo, func)
 	}
 	return(oact.sa_handler);
 }
+#endif
+
+#ifdef USE_POLL_INSTEAD_OF_SELECT
+int _net_isclosed(fd)
+     int fd;
+{
+	struct pollfd pollit;
+	
+	pollit.fd = fd;
+	pollit.events = POLLIN;
+	pollit.revents = 0;
+	
+	char buf[1];
+	
+	/* Will return > 0 if the descriptor is closed */
+	if (poll(&pollit,1,10) > 0) {
+		if (recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
+			serrno = SECONNDROP;
+			return 1;
+		}
+	}
+	return 0;
+}
+#else
+int _net_isclosed(fd)
+	int fd;
+{
+	fd_set         rset;
+	struct timeval tv;
+	
+	FD_ZERO(&rset);
+	FD_SET(fd,&rset);
+	
+	tv.tv_sec = timeout;
+	tv.tv_usec = 10 * 1000;
+
+	char buf[1];
+	
+	/* Will return > 0 if the descriptor is closed */
+	if (select(fd + 1, NULL, &rset, NULL, &tv) > 0) {
+		if (recv(fd, buf, sizeof(buf), MSG_PEEK | MSG_DONTWAIT) == 0) {
+			serrno = errno;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 #endif
 
 #ifdef USE_POLL_INSTEAD_OF_SELECT
