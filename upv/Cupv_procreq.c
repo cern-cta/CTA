@@ -24,7 +24,6 @@
 #include "Cupv.h"
 #include "Cupv_server.h"
 
-extern int being_shutdown;
 extern int always_reply_yes;
 
 #define RESETID(UID,GID) resetid(&UID, &GID, thip);
@@ -418,8 +417,11 @@ int Cupv_srv_list(magic, req_data, clienthost, thip, endlist, dblistptr)
 	marshall_WORD (sbp, eol); 
 	p = outbuf; 
 	marshall_WORD (p, nbentries);		/* update nbentries in reply */
-	sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf); 
-	RETURN (0); 
+
+	if (sendrep(thip->s, MSG_DATA, sbp - outbuf, outbuf) < 0) {
+		RETURN (serrno);
+	}
+	RETURN (0);
 }
 
 /*      Cupv_srv_check - Check privileges */
@@ -490,36 +492,4 @@ int Cupv_srv_check(magic, req_data, clienthost, thip)
 	} else {
 		RETURN (EACCES);
 	}
-}
-
-/*	Cupv_srv_shutdown - shutdown the volume manager */
-
-int Cupv_srv_shutdown(magic, req_data, clienthost, thip)
-int magic;
-char *req_data;
-char *clienthost;
-struct Cupv_srv_thread_info *thip;
-{
-	int force = 0;
-	char func[18];
-	gid_t gid;
-	char *rbp;
-	uid_t uid;
-
-	strcpy (func, "Cupv_srv_shutdown");
-	rbp = req_data;
-	unmarshall_LONG (rbp, uid);
-	unmarshall_LONG (rbp, gid);
-
-	RESETID(uid, gid);
-
-	Cupvlogit (func, CUP92, "shutdown", uid, gid, clienthost);
-	unmarshall_WORD (rbp, force);
-
-	if (check_server_perm(uid, gid, clienthost, thip) != 0) {
-		RETURN (EPERM);
-	}
-	
-	being_shutdown = force + 1;
-	RETURN (0);
 }
