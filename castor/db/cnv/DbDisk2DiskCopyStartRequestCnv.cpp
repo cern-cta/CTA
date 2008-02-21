@@ -54,7 +54,7 @@ static castor::CnvFactory<castor::db::cnv::DbDisk2DiskCopyStartRequestCnv>* s_fa
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::s_insertStatementString =
-"INSERT INTO Disk2DiskCopyStartRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, destSvcClass, diskServer, mountPoint, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,ids_seq.nextval,:18,:19) RETURNING id INTO :20";
+"INSERT INTO Disk2DiskCopyStartRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, destSvcClass, diskServer, mountPoint, fileId, nsHost, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,:16,:17,:18,:19,ids_seq.nextval,:20,:21) RETURNING id INTO :22";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::s_deleteStatementString =
@@ -62,11 +62,11 @@ const std::string castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::s_deleteState
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, destSvcClass, diskServer, mountPoint, id, svcClass, client FROM Disk2DiskCopyStartRequest WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, diskCopyId, sourceDiskCopyId, destSvcClass, diskServer, mountPoint, fileId, nsHost, id, svcClass, client FROM Disk2DiskCopyStartRequest WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::s_updateStatementString =
-"UPDATE Disk2DiskCopyStartRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, diskCopyId = :12, sourceDiskCopyId = :13, destSvcClass = :14, diskServer = :15, mountPoint = :16 WHERE id = :17";
+"UPDATE Disk2DiskCopyStartRequest SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, diskCopyId = :12, sourceDiskCopyId = :13, destSvcClass = :14, diskServer = :15, mountPoint = :16, fileId = :17, nsHost = :18 WHERE id = :19";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::s_storeTypeStatementString =
@@ -288,7 +288,7 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::fillObjSvcClass(castor::st
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(19);
+  u_signed64 svcClassId = rset->getInt64(21);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -326,7 +326,7 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::fillObjIClient(castor::sta
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = rset->getInt64(20);
+  u_signed64 clientId = rset->getInt64(22);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -364,7 +364,7 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::createRep(castor::IAddress
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(20, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(22, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -390,10 +390,12 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::createRep(castor::IAddress
     m_insertStatement->setString(15, obj->destSvcClass());
     m_insertStatement->setString(16, obj->diskServer());
     m_insertStatement->setString(17, obj->mountPoint());
-    m_insertStatement->setUInt64(18, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setUInt64(19, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setUInt64(18, obj->fileId());
+    m_insertStatement->setString(19, obj->nsHost());
+    m_insertStatement->setUInt64(20, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(21, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(20));
+    obj->setId(m_insertStatement->getUInt64(22));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -430,6 +432,8 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::createRep(castor::IAddress
                     << "  destSvcClass : " << obj->destSvcClass() << std::endl
                     << "  diskServer : " << obj->diskServer() << std::endl
                     << "  mountPoint : " << obj->mountPoint() << std::endl
+                    << "  fileId : " << obj->fileId() << std::endl
+                    << "  nsHost : " << obj->nsHost() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -470,7 +474,9 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::updateRep(castor::IAddress
     m_updateStatement->setString(14, obj->destSvcClass());
     m_updateStatement->setString(15, obj->diskServer());
     m_updateStatement->setString(16, obj->mountPoint());
-    m_updateStatement->setUInt64(17, obj->id());
+    m_updateStatement->setUInt64(17, obj->fileId());
+    m_updateStatement->setString(18, obj->nsHost());
+    m_updateStatement->setUInt64(19, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -573,7 +579,9 @@ castor::IObject* castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::createObj(cast
     object->setDestSvcClass(rset->getString(15));
     object->setDiskServer(rset->getString(16));
     object->setMountPoint(rset->getString(17));
-    object->setId(rset->getUInt64(18));
+    object->setFileId(rset->getUInt64(18));
+    object->setNsHost(rset->getString(19));
+    object->setId(rset->getUInt64(20));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -628,7 +636,9 @@ void castor::db::cnv::DbDisk2DiskCopyStartRequestCnv::updateObj(castor::IObject*
     object->setDestSvcClass(rset->getString(15));
     object->setDiskServer(rset->getString(16));
     object->setMountPoint(rset->getString(17));
-    object->setId(rset->getUInt64(18));
+    object->setFileId(rset->getUInt64(18));
+    object->setNsHost(rset->getString(19));
+    object->setId(rset->getUInt64(20));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback

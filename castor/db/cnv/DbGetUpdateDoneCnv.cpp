@@ -54,7 +54,7 @@ static castor::CnvFactory<castor::db::cnv::DbGetUpdateDoneCnv>* s_factoryDbGetUp
 //------------------------------------------------------------------------------
 /// SQL statement for request insertion
 const std::string castor::db::cnv::DbGetUpdateDoneCnv::s_insertStatementString =
-"INSERT INTO GetUpdateDone (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,ids_seq.nextval,:14,:15) RETURNING id INTO :16";
+"INSERT INTO GetUpdateDone (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client) VALUES (:1,:2,:3,:4,:5,:6,:7,:8,:9,:10,:11,:12,:13,:14,:15,ids_seq.nextval,:16,:17) RETURNING id INTO :18";
 
 /// SQL statement for request deletion
 const std::string castor::db::cnv::DbGetUpdateDoneCnv::s_deleteStatementString =
@@ -62,11 +62,11 @@ const std::string castor::db::cnv::DbGetUpdateDoneCnv::s_deleteStatementString =
 
 /// SQL statement for request selection
 const std::string castor::db::cnv::DbGetUpdateDoneCnv::s_selectStatementString =
-"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, id, svcClass, client FROM GetUpdateDone WHERE id = :1";
+"SELECT flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client FROM GetUpdateDone WHERE id = :1";
 
 /// SQL statement for request update
 const std::string castor::db::cnv::DbGetUpdateDoneCnv::s_updateStatementString =
-"UPDATE GetUpdateDone SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, subReqId = :12 WHERE id = :13";
+"UPDATE GetUpdateDone SET flags = :1, userName = :2, euid = :3, egid = :4, mask = :5, pid = :6, machine = :7, svcClassName = :8, userTag = :9, reqId = :10, lastModificationTime = :11, subReqId = :12, fileId = :13, nsHost = :14 WHERE id = :15";
 
 /// SQL statement for type storage
 const std::string castor::db::cnv::DbGetUpdateDoneCnv::s_storeTypeStatementString =
@@ -288,7 +288,7 @@ void castor::db::cnv::DbGetUpdateDoneCnv::fillObjSvcClass(castor::stager::GetUpd
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 svcClassId = rset->getInt64(15);
+  u_signed64 svcClassId = rset->getInt64(17);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -326,7 +326,7 @@ void castor::db::cnv::DbGetUpdateDoneCnv::fillObjIClient(castor::stager::GetUpda
     ex.getMessage() << "No object found for id :" << obj->id();
     throw ex;
   }
-  u_signed64 clientId = rset->getInt64(16);
+  u_signed64 clientId = rset->getInt64(18);
   // Close ResultSet
   delete rset;
   // Check whether something should be deleted
@@ -364,7 +364,7 @@ void castor::db::cnv::DbGetUpdateDoneCnv::createRep(castor::IAddress* address,
     // Check whether the statements are ok
     if (0 == m_insertStatement) {
       m_insertStatement = createStatement(s_insertStatementString);
-      m_insertStatement->registerOutParam(16, castor::db::DBTYPE_UINT64);
+      m_insertStatement->registerOutParam(18, castor::db::DBTYPE_UINT64);
     }
     if (0 == m_insertNewReqStatement) {
       m_insertNewReqStatement = createStatement(s_insertNewReqStatementString);
@@ -386,10 +386,12 @@ void castor::db::cnv::DbGetUpdateDoneCnv::createRep(castor::IAddress* address,
     m_insertStatement->setInt(11, time(0));
     m_insertStatement->setInt(12, time(0));
     m_insertStatement->setUInt64(13, obj->subReqId());
-    m_insertStatement->setUInt64(14, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
-    m_insertStatement->setUInt64(15, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
+    m_insertStatement->setUInt64(14, obj->fileId());
+    m_insertStatement->setString(15, obj->nsHost());
+    m_insertStatement->setUInt64(16, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
+    m_insertStatement->setUInt64(17, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
-    obj->setId(m_insertStatement->getUInt64(16));
+    obj->setId(m_insertStatement->getUInt64(18));
     m_storeTypeStatement->setUInt64(1, obj->id());
     m_storeTypeStatement->setUInt64(2, obj->type());
     m_storeTypeStatement->execute();
@@ -422,6 +424,8 @@ void castor::db::cnv::DbGetUpdateDoneCnv::createRep(castor::IAddress* address,
                     << "  creationTime : " << obj->creationTime() << std::endl
                     << "  lastModificationTime : " << obj->lastModificationTime() << std::endl
                     << "  subReqId : " << obj->subReqId() << std::endl
+                    << "  fileId : " << obj->fileId() << std::endl
+                    << "  nsHost : " << obj->nsHost() << std::endl
                     << "  id : " << obj->id() << std::endl
                     << "  svcClass : " << obj->svcClass() << std::endl
                     << "  client : " << obj->client() << std::endl;
@@ -458,7 +462,9 @@ void castor::db::cnv::DbGetUpdateDoneCnv::updateRep(castor::IAddress* address,
     m_updateStatement->setString(10, obj->reqId());
     m_updateStatement->setInt(11, time(0));
     m_updateStatement->setUInt64(12, obj->subReqId());
-    m_updateStatement->setUInt64(13, obj->id());
+    m_updateStatement->setUInt64(13, obj->fileId());
+    m_updateStatement->setString(14, obj->nsHost());
+    m_updateStatement->setUInt64(15, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
       cnvSvc()->commit();
@@ -557,7 +563,9 @@ castor::IObject* castor::db::cnv::DbGetUpdateDoneCnv::createObj(castor::IAddress
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
     object->setSubReqId(rset->getUInt64(13));
-    object->setId(rset->getUInt64(14));
+    object->setFileId(rset->getUInt64(14));
+    object->setNsHost(rset->getString(15));
+    object->setId(rset->getUInt64(16));
     delete rset;
     return object;
   } catch (castor::exception::SQLError e) {
@@ -608,7 +616,9 @@ void castor::db::cnv::DbGetUpdateDoneCnv::updateObj(castor::IObject* obj)
     object->setCreationTime(rset->getUInt64(11));
     object->setLastModificationTime(rset->getUInt64(12));
     object->setSubReqId(rset->getUInt64(13));
-    object->setId(rset->getUInt64(14));
+    object->setFileId(rset->getUInt64(14));
+    object->setNsHost(rset->getString(15));
+    object->setId(rset->getUInt64(16));
     delete rset;
   } catch (castor::exception::SQLError e) {
     // Always try to rollback
