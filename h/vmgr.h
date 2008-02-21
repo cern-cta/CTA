@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr.h,v 1.1 2005/03/17 10:12:16 obarring Exp $
+ * $Id: vmgr.h,v 1.2 2008/02/21 18:26:55 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vmgr.h,v $ $Revision: 1.1 $ $Date: 2005/03/17 10:12:16 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: vmgr.h,v $ $Revision: 1.2 $ $Date: 2008/02/21 18:26:55 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _VMGR_H
@@ -38,7 +38,7 @@
 #define VMGR_MODTAPE	 3
 #define VMGR_QRYTAPE	 4
 #define VMGR_UPDTAPE	 5
-#define VMGR_SHUTDOWN	 6
+#define VMGR_SHUTDOWN	 6 /* deprecated */
 #define VMGR_DELMODEL	 7
 #define VMGR_ENTMODEL	 8
 #define VMGR_MODMODEL	 9
