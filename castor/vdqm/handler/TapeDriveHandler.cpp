@@ -833,26 +833,24 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   throw (castor::exception::Exception) {
 
   // The result of the search in the database.
-  std::vector<newVdqmDrvReq_t>* vdqmDrvReqs = 0;
+  std::vector<newVdqmDrvReq_t>* drvReqs = 0;
   
-  std::string dgn, server;
-    
-  dgn = "";
-  server = "";
+  std::string dgn    = "";
+  std::string server = "";
 
-  if ( *(ptr_driveRequest->dgn) != '\0' ) dgn = ptr_driveRequest->dgn;
+  if ( *(ptr_driveRequest->dgn)    != '\0' ) dgn    = ptr_driveRequest->dgn;
   if ( *(ptr_driveRequest->server) != '\0' ) server = ptr_driveRequest->server;
 
   try {
     // This method call retrieves the drive queue from the database.  The
     // result depends on the parameters. If the paramters are not specified,
     // then information about all tape drives is returned.
-    vdqmDrvReqs = ptr_IVdqmService->selectTapeDriveQueue(dgn, server);
+    drvReqs = ptr_IVdqmService->selectTapeDriveQueue(dgn, server);
 
     // If there is a result to send to the client
-    if (vdqmDrvReqs != NULL && vdqmDrvReqs->size() > 0 ) {
-      for(std::vector<newVdqmDrvReq_t>::iterator it = vdqmDrvReqs->begin();
-        it != vdqmDrvReqs->end(); it++) {
+    if (drvReqs != NULL && drvReqs->size() > 0 ) {
+      for(std::vector<newVdqmDrvReq_t>::iterator it = drvReqs->begin();
+        it != drvReqs->end(); it++) {
         
         //"Send information for showqueues command" message
         castor::dlf::Param param[] = {
@@ -862,37 +860,34 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
           VDQM_SEND_SHOWQUEUES_INFO, 2, param);
         
         //Send informations to the client
-        oldProtInterpreter->sendToOldClient(
-          ptr_header, volumeRequest, &(*it));
+        oldProtInterpreter->sendToOldClient(ptr_header, NULL, &(*it));
       }
     }
   } catch (castor::exception::Exception ex) {  
     // Clean up the memory
-    if(vdqmDrvReqs != NULL) {
-      delete vdqmDrvReqs;
+    if(drvReqs != NULL) {
+      delete drvReqs;
     }
 
     // To inform the client about the end of the queue, we send again a 
     // ptr_driveRequest with the VolReqID = -1
     ptr_driveRequest->DrvReqID = -1;
   
-    oldProtInterpreter->sendToOldClient(ptr_header, volumeRequest,
-      ptr_driveRequest);
+    oldProtInterpreter->sendToOldClient(ptr_header, NULL, ptr_driveRequest);
           
     throw ex;
   }
   
   // Clean up the memory
-  if(vdqmDrvReqs != NULL) {
-    delete vdqmDrvReqs;
+  if(drvReqs != NULL) {
+    delete drvReqs;
   }
   
   // To inform the client about the end of the queue, we send again a 
   // ptr_driveRequest with the VolReqID = -1
   ptr_driveRequest->DrvReqID = -1;
   
-  oldProtInterpreter->sendToOldClient(ptr_header, volumeRequest,
-    ptr_driveRequest);
+  oldProtInterpreter->sendToOldClient(ptr_header, NULL, ptr_driveRequest);
 }
 
 

@@ -106,15 +106,36 @@ const std::string castor::db::ora::OraVdqmSvc::s_selectTapeAccessSpecificationSt
 const std::string castor::db::ora::OraVdqmSvc::s_selectDeviceGroupNameStatementString =
   "SELECT id FROM DeviceGroupName WHERE dgName = :1";
   
+/*
 /// SQL statement for function selectTapeRequestQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
   "BEGIN selectTapeRequestQueue(:1, :2, :3); END;";
-  
-/*
-/// SQL statement for function selectTapeDriveQueue
-const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
-  "BEGIN selectTapeDriveQueue(:1, :2, :3); END;";
 */
+  
+/// SQL statement for function selectTapeRequestQueue
+const std::string castor::db::ora::OraVdqmSvc::s_selectTapeRequestQueueStatementString =
+  "SELECT"
+  "  ID,"
+  "  DRIVENAME,"
+  "  TAPEDRIVEID,"
+  "  PRIORITY,"
+  "  CLIENTPORT,"
+  "  CLIENTEUID,"
+  "  CLIENTEGID,"
+  "  ACCESSMODE,"
+  "  MODIFICATIONTIME,"
+  "  CLIENTMACHINE,"
+  "  VID,"
+  "  TAPESERVER,"
+  "  DGNAME,"
+  "  CLIENTUSERNAME "
+  "FROM"
+  "  TAPEREQUESTSSHOWQUEUES_VIEW "
+  "WHERE"
+  "      (:1 IS NULL OR :2 = DGNAME)"
+  "  AND (:3 IS NULL OR :4 = TAPESERVER) "
+  "ORDER BY"
+  "  MODIFICATIONTIME";
 
 /// SQL statement for function selectTapeDriveQueue
 const std::string castor::db::ora::OraVdqmSvc::s_selectTapeDriveQueueStatementString =
@@ -1100,107 +1121,96 @@ castor::vdqm::DeviceGroupName*
 // -----------------------------------------------------------------------
 // selectTapeRequestQueue
 // -----------------------------------------------------------------------
-std::vector<castor::vdqm::TapeRequest*>* 
-  castor::db::ora::OraVdqmSvc::selectTapeRequestQueue (
-  const std::string dgn, 
-  const std::string requestedSrv)
-  throw (castor::exception::Exception) {
+std::vector<newVdqmVolReq_t>*
+  castor::db::ora::OraVdqmSvc::selectTapeRequestQueue(const std::string dgn, 
+  const std::string requestedSrv) throw (castor::exception::Exception) {
 
-  u_signed64 idTapeRequest = 0;
-  castor::vdqm::TapeRequest* tmpTapeRequest = NULL;
-  
   // Check whether the statements are ok
   if (0 == m_selectTapeRequestQueueStatement) {
-    m_selectTapeRequestQueueStatement = 
+    m_selectTapeRequestQueueStatement =
       createStatement(s_selectTapeRequestQueueStatementString);
-    
-    m_selectTapeRequestQueueStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
   }
-  
-  // Execute statement and get result
+
+  // Set the query statements parameters
   try {
     m_selectTapeRequestQueueStatement->setString(1, dgn);
-    m_selectTapeRequestQueueStatement->setString(2, requestedSrv);
-    unsigned int nb = m_selectTapeRequestQueueStatement->executeUpdate();
-    
-    if (0 == nb) {
-      //Result is empty, so we return a Null pointer
-      return NULL;
-    }    
+    m_selectTapeRequestQueueStatement->setString(2, dgn);
+    m_selectTapeRequestQueueStatement->setString(3, requestedSrv);
+    m_selectTapeRequestQueueStatement->setString(4, requestedSrv);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "OraVdqmSvc::selectTapeRequestQueue(): "
-      << "Unable to find TapeRequests for queue: "
+      << "Failed to set the parameters of selectTapeRequestQueueStatement:"
       << std::endl << e.getMessage();
+
     throw ex;
-  }  
-  
-  
-  // Now get the the Objects from their id's
-  try {
-    // create result
-    std::vector<castor::vdqm::TapeRequest*>* result =
-      new std::vector<castor::vdqm::TapeRequest*>;
-      
-    // Run through the cursor
+  }
+
+  // Execute statement and get result
+  try
+  {
     oracle::occi::ResultSet *rs =
-      m_selectTapeRequestQueueStatement->getCursor(3);
-    oracle::occi::ResultSet::Status status = rs->next();
-    
-    
-    /**
-     * For each id, we create a TapeRequest object and the needed linked objects
-     * from the other tables.
-     */
-    while(status == oracle::occi::ResultSet::DATA_AVAILABLE) {
-      
-      // Fill result
-      idTapeRequest = (u_signed64)rs->getDouble(4); // 4 = Col number of ID
-      
-      if ( idTapeRequest != 0 ) {
-        castor::BaseAddress ad;
-        ad.setTarget(idTapeRequest);
-        ad.setCnvSvcName("DbCnvSvc");
-        ad.setCnvSvcType(castor::SVC_DBCNV);
-        
-        tmpTapeRequest = new castor::vdqm::TapeRequest();
-          
-        tmpTapeRequest->setId(idTapeRequest);
-        tmpTapeRequest->setPriority(rs->getInt(1));
-        tmpTapeRequest->setModificationTime((u_signed64)rs->getDouble(2));
-        
-        
-        // Get the foreign related objects
-        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_DeviceGroupName);
-        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeAccessSpecification);
-        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeServer);
-        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_VdqmTape);
-        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_TapeDrive);
-        cnvSvc()->fillObj(&ad, tmpTapeRequest, castor::OBJ_ClientIdentification);
-        
-        
-        result->push_back(tmpTapeRequest);
-        status = rs->next();
-        
-        tmpTapeRequest = 0;
-         idTapeRequest = 0;
-      }
+      m_selectTapeRequestQueueStatement->executeQuery();
+
+    // The result of the search in the database.
+    std::vector<newVdqmVolReq_t>* volReqs = new std::vector<newVdqmVolReq_t>;
+
+    newVdqmVolReq_t volReq;
+
+    while(rs->next())
+    {
+std::cout << "BOO!" << std::endl;
+      volReq.VolReqID = rs->getInt(1);
+
+      strncpy(volReq.drive, rs->getString(2).c_str(), sizeof(volReq.drive));
+      // Null-terminate in case source string is longer than destination
+      volReq.drive[sizeof(volReq.drive) - 1] = '\0';
+
+      volReq.DrvReqID    = rs->getInt(3);
+      volReq.priority    = rs->getInt(4);
+      volReq.client_port = rs->getInt(5);
+      volReq.clientUID   = rs->getInt(6);
+      volReq.clientGID   = rs->getInt(7);
+      volReq.mode        = rs->getInt(8);
+      volReq.recvtime    = rs->getInt(9);
+
+      strncpy(volReq.client_host, rs->getString(10).c_str(),
+        sizeof(volReq.client_host));
+      // Null-terminate in case source string is longer than destination
+      volReq.client_host[sizeof(volReq.client_host) - 1] = '\0';
+
+      strncpy(volReq.volid, rs->getString(11).c_str(), sizeof(volReq.volid));
+      // Null-terminate in case source string is longer than destination
+      volReq.volid[sizeof(volReq.volid) - 1] = '\0';
+
+      strncpy(volReq.server, rs->getString(12).c_str(), sizeof(volReq.server));
+      // Null-terminate in case source string is longer than destination
+      volReq.server[sizeof(volReq.server) - 1] = '\0';
+
+      strncpy(volReq.dgn, rs->getString(13).c_str(), sizeof(volReq.dgn));
+      // Null-terminate in case source string is longer than destination
+      volReq.dgn[sizeof(volReq.dgn) - 1] = '\0';
+
+      strncpy(volReq.client_name, rs->getString(14).c_str(),
+        sizeof(volReq.client_name));
+      // Null-terminate in case source string is longer than destination
+      volReq.client_name[sizeof(volReq.client_name) - 1] = '\0';
+
+      volReqs->push_back(volReq);
     }
-    
-    return result;    
-  } catch (oracle::occi::SQLException e) {
+
+    return volReqs;
+
+  } catch(oracle::occi::SQLException &e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Unable to find a TapeRequest for id "
-      << idTapeRequest << " :"
+      << "Failed to query tape drive queue:"
       << std::endl << e.getMessage();
-      
-      throw ex;
-  }  
+
+    throw ex;
+  }
 }
 
 
@@ -1220,7 +1230,9 @@ std::vector<newVdqmDrvReq_t>*
   // Set the query statements parameters
   try {
     m_selectTapeDriveQueueStatement->setString(1, dgn);
-    m_selectTapeDriveQueueStatement->setString(2, requestedSrv);
+    m_selectTapeDriveQueueStatement->setString(2, dgn);
+    m_selectTapeDriveQueueStatement->setString(3, requestedSrv);
+    m_selectTapeDriveQueueStatement->setString(4, requestedSrv);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -1234,74 +1246,63 @@ std::vector<newVdqmDrvReq_t>*
   // Execute statement and get result
   try
   {
-    m_selectTapeDriveQueueStatement->setString(1, dgn);
-    m_selectTapeDriveQueueStatement->setString(2, dgn);
-    m_selectTapeDriveQueueStatement->setString(3, requestedSrv);
-    m_selectTapeDriveQueueStatement->setString(4, requestedSrv);
-
     oracle::occi::ResultSet *rs =
       m_selectTapeDriveQueueStatement->executeQuery();
 
     // The result of the search in the database.
-    std::vector<newVdqmDrvReq_t>* vdqmDrvReqs =
-      new std::vector<newVdqmDrvReq_t>;
+    std::vector<newVdqmDrvReq_t>* drvReqs = new std::vector<newVdqmDrvReq_t>;
 
-    newVdqmDrvReq_t vdqmDrvReq;
+    newVdqmDrvReq_t drvReq;
 
     while(rs->next())
     {
-      vdqmDrvReq.status    =
+      drvReq.status    =
         translateNewStatus((castor::vdqm::TapeDriveStatusCodes)rs->getInt(1));
-      vdqmDrvReq.DrvReqID  = rs->getInt(2);
-      vdqmDrvReq.VolReqID  = rs->getInt(3);
-      vdqmDrvReq.jobID     = rs->getInt(4);
-      vdqmDrvReq.recvtime  = rs->getInt(5);
-      vdqmDrvReq.resettime = rs->getInt(6);
-      vdqmDrvReq.usecount  = rs->getInt(7);
-      vdqmDrvReq.errcount  = rs->getInt(8);
-      vdqmDrvReq.MBtransf  = rs->getInt(9);
-      vdqmDrvReq.mode      = rs->getInt(10);
-      vdqmDrvReq.TotalMB   = (u_signed64)rs->getDouble(11);
+      drvReq.DrvReqID  = rs->getInt(2);
+      drvReq.VolReqID  = rs->getInt(3);
+      drvReq.jobID     = rs->getInt(4);
+      drvReq.recvtime  = rs->getInt(5);
+      drvReq.resettime = rs->getInt(6);
+      drvReq.usecount  = rs->getInt(7);
+      drvReq.errcount  = rs->getInt(8);
+      drvReq.MBtransf  = rs->getInt(9);
+      drvReq.mode      = rs->getInt(10);
+      drvReq.TotalMB   = (u_signed64)rs->getDouble(11);
 
-      strncpy(vdqmDrvReq.reqhost, rs->getString(12).c_str(),
-        sizeof(vdqmDrvReq.reqhost));
+      strncpy(drvReq.reqhost, rs->getString(12).c_str(),sizeof(drvReq.reqhost));
       // Null-terminate in case source string is longer than destination
-      vdqmDrvReq.reqhost[sizeof(vdqmDrvReq.reqhost) - 1] = '\0';
+      drvReq.reqhost[sizeof(drvReq.reqhost) - 1] = '\0';
 
-      strncpy(vdqmDrvReq.volid, rs->getString(13).c_str(),
-        sizeof(vdqmDrvReq.volid));
+      strncpy(drvReq.volid, rs->getString(13).c_str(), sizeof(drvReq.volid));
       // Null-terminate in case source string is longer than destination
-      vdqmDrvReq.volid[sizeof(vdqmDrvReq.volid) - 1] = '\0';
+      drvReq.volid[sizeof(drvReq.volid) - 1] = '\0';
 
-      strncpy(vdqmDrvReq.server, vdqmDrvReq.reqhost,
-        sizeof(vdqmDrvReq.server));
+      strncpy(drvReq.server, drvReq.reqhost, sizeof(drvReq.server));
       // Null-terminate in case source string is longer than destination
-      vdqmDrvReq.server[sizeof(vdqmDrvReq.server) - 1] = '\0';
+      drvReq.server[sizeof(drvReq.server) - 1] = '\0';
 
-      strncpy(vdqmDrvReq.drive, rs->getString(14).c_str(),
-        sizeof(vdqmDrvReq.drive));
+      strncpy(drvReq.drive, rs->getString(14).c_str(), sizeof(drvReq.drive));
       // Null-terminate in case source string is longer than destination
-      vdqmDrvReq.drive[sizeof(vdqmDrvReq.drive) - 1] = '\0';
+      drvReq.drive[sizeof(drvReq.drive) - 1] = '\0';
 
-      strncpy(vdqmDrvReq.dgn, rs->getString(15).c_str(),
-        sizeof(vdqmDrvReq.dgn));
+      strncpy(drvReq.dgn, rs->getString(15).c_str(), sizeof(drvReq.dgn));
       // Null-terminate in case source string is longer than destination
-      vdqmDrvReq.dgn[sizeof(vdqmDrvReq.dgn) - 1] = '\0';
+      drvReq.dgn[sizeof(drvReq.dgn) - 1] = '\0';
 
       // TODO: Here, we can give infomation about occured errors, which will
       // be stored in the future in ErrorHistory. At the moment we leave it 
       // empty, because we don't care about the old dedicate string.
-      vdqmDrvReq.errorHistory[0] = '\0';
+      drvReq.errorHistory[0] = '\0';
 
-      strncpy(vdqmDrvReq.tapeDriveModel, rs->getString(16).c_str(),
-        sizeof(vdqmDrvReq.tapeDriveModel));
+      strncpy(drvReq.tapeDriveModel, rs->getString(16).c_str(),
+        sizeof(drvReq.tapeDriveModel));
       // Null-terminate in case source string is longer than destination
-      vdqmDrvReq.tapeDriveModel[sizeof(vdqmDrvReq.tapeDriveModel) - 1] = '\0';
+      drvReq.tapeDriveModel[sizeof(drvReq.tapeDriveModel) - 1] = '\0';
 
-      vdqmDrvReqs->push_back(vdqmDrvReq);
+      drvReqs->push_back(drvReq);
     }
 
-    return vdqmDrvReqs;
+    return drvReqs;
 
   } catch(oracle::occi::SQLException &e) {
     handleException(e);

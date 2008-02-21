@@ -35,6 +35,7 @@
 
 // Forward declaration
 typedef struct newVdqmDrvReq newVdqmDrvReq_t;
+typedef struct newVdqmVolReq newVdqmVolReq_t;
 
 namespace castor {
 
@@ -73,7 +74,6 @@ namespace castor {
           bool withTapeDrive)
           throw (castor::exception::Exception) = 0;
           
-          
         /**
          * Checks, if there is already an entry for that tapeRequest. The entry
          * must have exactly the same associations!
@@ -82,7 +82,6 @@ namespace castor {
          */
         virtual bool checkTapeRequest(const TapeRequest *newTapeRequest)
           throw (castor::exception::Exception) = 0;
-        
         
         /**
          * Returns the queue position of the tape request.
@@ -153,7 +152,6 @@ namespace castor {
           const std::string tapeModel) 
           throw (castor::exception::Exception) = 0;
           
-          
         /**
          * Looks, if the specified dgName exists in the database. 
          * If it is the case, it will return the object. If not, a new entry
@@ -166,32 +164,31 @@ namespace castor {
           const std::string dgName) 
           throw (castor::exception::Exception) = 0;
           
-          
         /**
-         * Returns all the tapeRequests with their connected objects from 
-         * foreign tables with the specified dgn an server. If you don't want
-         * to specify one of the arguments, just give an empty string 
-         * instead.
-         * Please notice: The caller is responsible for the deletion of the
-         * allocated objects!
-         * @param driveRequest The old struct, which represents the tapeDrive
-         * @exception Exception in case of error (several tapes drive found, 
-         * DB problem, etc...)
-         * @return a list of files. 
-         * Note that the returned vector should be deallocated
-         * by the caller as well as its content
+         * Returns the tape requests queue with the specified dgn an server.
+         * If you don't want to specify one of the arguments, just give an
+         * empty string instead.
+         * Please note: The caller is responsible for the deletion of the
+         * allocated vector!
+         * @param dgn The device group name to be used to restrict the queue
+         * of requests returned.  If the list should not be restricted by device
+         * group name then set this parameter to be an empty string.
+         * @param requestedSrv The server name to be used to restrict the queue
+         * of tape requests returned.  If the list should not be restricted by
+         * server name then set this parameter to be an empty string.
+         * @return vector of messages to be used to send the queue of tape
+         * requests to the showqueues comman-line application.
+         * Note that the returned vector should be deallocated by the caller.
          */
-        virtual std::vector<TapeRequest*>* selectTapeRequestQueue(
-          const std::string dgn, 
-          const std::string requestedSrv)
+        virtual std::vector<newVdqmVolReq_t>* selectTapeRequestQueue(
+          const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;   
-          
           
         /**
          * Returns the tape drives queue with the specified dgn and server.
          * If you don't want to specify one of the arguments, just give an
          * empty string instead.
-         * Please notice: The caller is responsible for the deletion of the
+         * Please note: The caller is responsible for the deletion of the
          * allocated vector!
          * @param dgn The device group name to be used to restrict the queue
          * of drives returned.  If the list should not be restricted by device
@@ -199,16 +196,14 @@ namespace castor {
          * @param requestedSrv The server name to be used to restrict the queue
          * of tape drives returned.  If the list should not be restricted by
          * server name then set this parameter to be an empty string.
-         * @return vector of VDQM drive request messages to be used to send the
-         * queue of tape drives to the showqueues comman-line application.
+         * @return vector of messages to be used to send the queue of tape
+         * drives to the showqueues comman-line application.
          * Note that the returned vector should be deallocated by the caller.
          */
         virtual std::vector<newVdqmDrvReq_t>* selectTapeDriveQueue(
-          const std::string dgn, 
-          const std::string requestedSrv)
+          const std::string dgn, const std::string requestedSrv)
           throw (castor::exception::Exception) = 0;    
                                        
-
         /**
          * Manages the casting of VolReqID, to find also tape requests, which
          * have an id bigger than 32 bit.

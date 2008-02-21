@@ -475,157 +475,59 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   throw (castor::exception::Exception) {
 
   // The result of the search in the database.
-  std::vector<castor::vdqm::TapeRequest*>* result = 0;
+  std::vector<newVdqmVolReq_t>* volReqs = 0;
   
-  std::string dgn, server;
+  std::string dgn    = "";
+  std::string server = "";
     
-  dgn = "";
-  server = "";
-
-  if ( *(volumeRequest->dgn) != '\0' ) dgn = volumeRequest->dgn;
+  if ( *(volumeRequest->dgn)    != '\0' ) dgn    = volumeRequest->dgn;
   if ( *(volumeRequest->server) != '\0' ) server = volumeRequest->server;
 
   try {
-    /**
-     * With this function call we get the requested queue out of the db.
-     * The result depends on the parameters. If the paramters are not specified,
-     * then we get all tapeRequests back.
-     */
-    result = ptr_IVdqmService->selectTapeRequestQueue(dgn, server);
+    // This method call retirves the request queue from the datase. The
+    // result depends on the parameters. If the paramters are not specified,
+    // then information about all oft the requests is returned.
+    volReqs = ptr_IVdqmService->selectTapeRequestQueue(dgn, server);
   
-    if ( result != NULL && result->size() > 0 ) {
-      //If we are here, then we got a result which we can send to the client
-      for(
-        std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
-        it != result->end(); it++) {
-            
-        if(*it == NULL) {
-          std::cout << "Found a NULL TapeRequest before catch" << std::endl;
-        }
-
-        volumeRequest->VolReqID = (unsigned int)(*it)->id();
-        
-        TapeDrive* tapeDrive = (*it)->tapeDrive();
-        if ( tapeDrive != NULL ) {
-          strcpy(volumeRequest->drive, tapeDrive->driveName().c_str());
-          volumeRequest->DrvReqID = (unsigned int)tapeDrive->id();
-          
-          delete tapeDrive;
-          tapeDrive = 0;
-          (*it)->setTapeDrive(0);
-        } 
-        else { 
-          strcpy(volumeRequest->drive, "");
-          volumeRequest->DrvReqID = 0;
-        }
-        
-        volumeRequest->priority = (*it)->priority();
-        volumeRequest->client_port = (*it)->client()->port();
-        volumeRequest->clientUID = (*it)->client()->euid();
-        volumeRequest->clientGID = (*it)->client()->egid();
-        volumeRequest->mode = (*it)->tapeAccessSpecification()->accessMode();
-        volumeRequest->recvtime = (int)(*it)->modificationTime();
-        strcpy(volumeRequest->client_host, (*it)->client()->machine().c_str());
-        strcpy(volumeRequest->volid, (*it)->tape()->vid().c_str());
-        
-        TapeServer* requestedSrv = (*it)->requestedSrv();
-        if ( requestedSrv != NULL ) {
-          strcpy(volumeRequest->server, requestedSrv->serverName().c_str());
-         
-          delete requestedSrv;
-          requestedSrv = 0;
-          (*it)->setRequestedSrv(0);
-        }
-        else 
-          strcpy(volumeRequest->server, "");
-            
-        
-        strcpy(volumeRequest->dgn, (*it)->deviceGroupName()->dgName().c_str());
-        strcpy(volumeRequest->client_name, (*it)->client()->userName().c_str());
-            
-        
-        //free memory
-        delete (*it)->tape();
-        (*it)->setTape(0);
-        delete (*it)->deviceGroupName();
-        (*it)->setDeviceGroupName(0);
-        delete (*it)->tapeAccessSpecification();
-        (*it)->setTapeAccessSpecification(0);
-        delete (*it);
-        (*it) = 0;
-        
+    // If there is a result to send to the client
+    if (volReqs != NULL && volReqs->size() > 0 ) {
+      for(std::vector<newVdqmVolReq_t>::iterator it = volReqs->begin();
+        it != volReqs->end(); it++) {
+std::cout << "BOO!" << std::endl;
         //"Send information for showqueues command" message
-        castor::dlf::Param param[] =
-          {castor::dlf::Param("message", "TapeRequest info"),
-           castor::dlf::Param("TapeRequest ID", volumeRequest->VolReqID)};
-        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_SEND_SHOWQUEUES_INFO,
-          2, param);
+        castor::dlf::Param param[] = {
+          castor::dlf::Param("message", "TapeRequest info"),
+          castor::dlf::Param("TapeRequest ID", it->VolReqID)};
+        castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
+          VDQM_SEND_SHOWQUEUES_INFO, 2, param);
         
         //Send informations to the client
-        oldProtInterpreter->sendToOldClient(header, volumeRequest,
-          driveRequest);
+        oldProtInterpreter->sendToOldClient(header, &(*it), NULL);
       }
     }
   } catch (castor::exception::Exception ex) {
-    if ( result != NULL ) {
-      //free memory
-      for(
-        std::vector<castor::vdqm::TapeRequest*>::iterator it = result->begin();
-        it != result->end(); it++) {
-            
-        if(*it == NULL) {
-          std::cout << "Found a NULL TapeRequest after catch" << std::endl;
-        }
-
-        if(*it != NULL) {
-          TapeDrive* tapeDrive = (*it)->tapeDrive();
-          if ( tapeDrive != NULL ) {
-            delete tapeDrive;
-            tapeDrive = 0;
-            (*it)->setTapeDrive(0);
-          }
-        
-          TapeServer* requestedSrv = (*it)->requestedSrv();
-          if ( requestedSrv != NULL ) {
-            delete requestedSrv;
-            requestedSrv = 0;
-            (*it)->setRequestedSrv(0);
-          }
-        
-          delete (*it)->tape();
-          (*it)->setTape(0);
-          delete (*it)->deviceGroupName();
-          (*it)->setDeviceGroupName(0);
-          delete (*it)->tapeAccessSpecification();
-          (*it)->setTapeAccessSpecification(0);
-          delete (*it);
-          (*it) = 0;             
-        }
-      }
-      
-      // deletion of the vector
-      delete result;
+    // Clean up the memory
+    if(volReqs != NULL) {
+      delete volReqs;
     }
 
-    /**
-     * To inform the client about the end of the queue, we send again a 
-     * volumeRequest with the VolReqID = -1
-     */
+    // To inform the client about the end of the queue, we send again a 
+    // volumeRequest with the VolReqID = -1
     volumeRequest->VolReqID = -1;
     
-    oldProtInterpreter->sendToOldClient(header, volumeRequest, driveRequest);
+    oldProtInterpreter->sendToOldClient(header, volumeRequest, NULL);
     
     throw ex;
   }
-  
-  // deletion of the vector
-  delete result;  
 
-  /**
-   * To inform the client about the end of the queue, we send again a 
-   * volumeRequest with the VolReqID = -1
-   */
+  // Clean up the memory
+  if(volReqs != NULL) {
+    delete volReqs;
+  }
+
+  // To inform the client about the end of the queue, we send again a 
+  // volumeRequest with the VolReqID = -1
   volumeRequest->VolReqID = -1;
   
-  oldProtInterpreter->sendToOldClient(header, volumeRequest, driveRequest);
+  oldProtInterpreter->sendToOldClient(header, volumeRequest, NULL);
 }
