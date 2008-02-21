@@ -531,7 +531,6 @@ globus_l_gfs_rfio_net_read_cb(
 	globus_off_t                        start_offset;
 	globus_l_gfs_CASTOR2ext_handle_t *     CASTOR2ext_handle;
 	globus_size_t                       bytes_written;
-	char *				    func = "globus_l_gfs_rfio_net_read_cb";
 	
 	CASTOR2ext_handle = (globus_l_gfs_CASTOR2ext_handle_t *) user_arg;
         
