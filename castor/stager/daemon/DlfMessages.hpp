@@ -67,8 +67,8 @@ namespace castor{
 	STAGER_WAITSUBREQ = 53, /* Request moved to Wait" */
 	STAGER_REPACK_MIGRATION = 54, /* Starting Repack Migration" */
 	STAGER_GET_REPLICATION = 55, /* Triggering internal DiskCopy replication */
-  STAGER_PREPARETOGET_DISK2DISKCOPY = 56,  /* Triggering DiskCopy replication */
-  STAGER_TAPE_RECALL = 57, /* Triggering Tape Recall" */
+	STAGER_PREPARETOGET_DISK2DISKCOPY = 56,  /* Triggering DiskCopy replication */
+	STAGER_TAPE_RECALL = 57, /* Triggering Tape Recall" */
 	STAGER_CASTORFILE_RECREATION = 58, /*Recreating CastorFile" */
 	STAGER_RECREATION_IMPOSSIBLE = 59, /* "Impossible to recreate CastorFile" "*/
 	STAGER_SCHEDULINGJOB = 60, /* Diskcopy available, scheduling job */
@@ -112,14 +112,16 @@ namespace castor{
 	STAGER_GCSVC_SELF2DEL= 117, /* "Invoking selectFiles2Delete" */
 	STAGER_GCSVC_FSEL4DEL= 118, /* "File selected for deletion" */
 	STAGER_GCSVC_NSFILDEL= 119, /* "Invoking nsFilesDeleted" */
-	STAGER_GCSVC_FNSDEL= 120, /* "File deleted since it disappeared from nameServer" */
+	STAGER_GCSVC_STGFILDEL= 120, /* "Invoking stgFilesDeleted" */
+	STAGER_GCSVC_FNSDEL= 121, /* "File deleted since it disappeared from nameServer" */
+	STAGER_GCSVC_FSTGDEL= 122 , /* "File to be unlinked since it dissapeared from the stager" */
 
 	/************/
 	/* ErrorSvc */
-	STAGER_ERRSVC_GETSVC= 121, /* "Could not get Svc" */
-	STAGER_ERRSVC_EXCEPT= 122, /* "Unexpected exception caught" */
-	STAGER_ERRSVC_NOREQ= 123, /* "No request associated with subrequest ! Cannot answer !" */
-	STAGER_ERRSVC_NOCLI= 124, /* "No client associated with request ! Cannot answer !" */
+	STAGER_ERRSVC_GETSVC= 125, /* "Could not get Svc" */
+	STAGER_ERRSVC_EXCEPT= 126, /* "Unexpected exception caught" */
+	STAGER_ERRSVC_NOREQ= 127, /* "No request associated with subrequest ! Cannot answer !" */
+	STAGER_ERRSVC_NOCLI= 128, /* "No client associated with request ! Cannot answer !" */
 	
 	/**********/
 	/* JobSvc */
