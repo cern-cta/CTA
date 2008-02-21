@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/02/21 16:00:30 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/02/21 17:46:22 $ $Author: mmartins $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -378,6 +378,7 @@ void castor::rh::RHThread::sendNotification
   case OBJ_FilesDeleted:
   case OBJ_FilesDeletionFailed:
   case OBJ_NsFilesDeleted:
+  case OBJ_StgFilesDeleted:
     // Garbage Collector Service
     castor::server::BaseServer::sendNotification(m_stagerHost, m_stagerPort, 'G');
     break;
