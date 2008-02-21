@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.1 $ $Date: 2003/11/04 12:31:29 $ CERN IT-PDP/DM Jean-Damien Durand
+.\" @(#)$RCSfile: Cupvdaemon.man,v $ $Revision: 1.2 $ $Date: 2008/02/21 17:11:47 $ CERN IT-PDP/DM Jean-Damien Durand
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CUPVDAEMON 1 "$Date: 2003/11/04 12:31:29 $" CASTOR "Cupv Administrator Commands"
+.TH CUPVDAEMON 1 "$Date: 2008/02/21 17:11:47 $" CASTOR "Cupv Administrator Commands"
 .SH NAME
 Cupvdaemon \- start the user privilege validation daemon
 .SH SYNOPSIS
@@ -95,8 +95,5 @@ instance identified by 'server'.
 configuration file
 .TP
 .B /usr/spool/upv/log
-.SH EXAMPLES
-.SH SEE ALSO
-.B Cupvshutdown(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
