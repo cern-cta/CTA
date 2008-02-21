@@ -493,7 +493,7 @@ void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
     if (volReqs != NULL && volReqs->size() > 0 ) {
       for(std::vector<newVdqmVolReq_t>::iterator it = volReqs->begin();
         it != volReqs->end(); it++) {
-std::cout << "BOO!" << std::endl;
+
         //"Send information for showqueues command" message
         castor::dlf::Param param[] = {
           castor::dlf::Param("message", "TapeRequest info"),
@@ -516,7 +516,7 @@ std::cout << "BOO!" << std::endl;
     volumeRequest->VolReqID = -1;
     
     oldProtInterpreter->sendToOldClient(header, volumeRequest, NULL);
-    
+
     throw ex;
   }
 

@@ -988,10 +988,6 @@ castor::vdqm::TapeAccessSpecification*
    const std::string tapeModel)
   throw (castor::exception::Exception) {
     
-//  std::cout << "accessMode: " << accessMode << std::endl;
-//  std::cout << "density: " << density << std::endl;
-//  std::cout << "tapeModel: " << tapeModel << std::endl;    
-
   // Check whether the statements are ok
   if (0 == m_selectTapeAccessSpecificationStatement) {
     m_selectTapeAccessSpecificationStatement = 
@@ -1160,7 +1156,6 @@ std::vector<newVdqmVolReq_t>*
 
     while(rs->next())
     {
-std::cout << "BOO!" << std::endl;
       volReq.VolReqID = rs->getInt(1);
 
       strncpy(volReq.drive, rs->getString(2).c_str(), sizeof(volReq.drive));
