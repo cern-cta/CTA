@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 14:17:32 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.14 $ $Release$ $Date: 2008/02/21 14:21:23 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -383,3 +383,52 @@ inner join
   TAPEDRIVE2MODEL
 on
   TAPEDRIVE.ID = TAPEDRIVE2MODEL.TAPEDRIVE;
+
+
+/*
+ * View used for generating the list of requests when replying to the
+ * showqueues command
+ */
+create or replace view
+  TAPEREQUESTSSHOWQUEUES_VIEW
+as select
+  TAPEREQUEST.ID,
+  TAPEDRIVE.DRIVENAME,
+  TAPEDRIVE.ID as TAPEDRIVEID,
+  TAPEREQUEST.PRIORITY,
+  CLIENTIDENTIFICATION.PORT as CLIENTPORT,
+  CLIENTIDENTIFICATION.EUID as CLIENTEUID,
+  CLIENTIDENTIFICATION.EGID as CLIENTEGID,
+  TAPEACCESSSPECIFICATION.ACCESSMODE,
+  TAPEREQUEST.MODIFICATIONTIME,
+  CLIENTIDENTIFICATION.MACHINE,
+  VDQMTAPE.VID,
+  TAPESERVER.SERVERNAME as TAPESERVER,
+  DEVICEGROUPNAME.DGNAME,
+  CLIENTIDENTIFICATION.USERNAME
+from
+  TAPEREQUEST
+left outer join
+  TAPEDRIVE
+on
+  TAPEREQUEST.TAPEDRIVE = TAPEDRIVE.ID
+left outer join
+  CLIENTIDENTIFICATION
+on
+  TAPEREQUEST.CLIENT = CLIENTIDENTIFICATION.ID
+inner join
+  TAPEACCESSSPECIFICATION
+on
+  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
+left outer join
+  VDQMTAPE
+on
+  TAPEREQUEST.TAPE = VDQMTAPE.ID
+left outer join
+  TAPESERVER
+on
+  TAPEREQUEST.REQUESTEDSRV = TAPESERVER.ID
+left outer join
+  DEVICEGROUPNAME
+on
+  TAPEREQUEST.DEVICEGROUPNAME = DEVICEGROUPNAME.ID;
