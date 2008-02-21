@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.637 $ $Date: 2008/02/15 10:50:07 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.638 $ $Date: 2008/02/21 17:03:23 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -356,8 +356,10 @@ BEGIN
   UPDATE SubRequest set status = 6, -- SUBREQUEST_READY
                         getNextStatus = 1, -- GETNEXTSTATUS_FILESTAGED
                         lastModificationTime = getTime()
-   WHERE diskCopy = dcId RETURNING id, protocol, request INTO srId, proto, reqId;
-  SELECT SvcClass.id, maxReplicaNb INTO svcClassId, maxRepl
+   WHERE diskCopy = dcId RETURNING id, protocol, request 
+    INTO srId, proto, reqId;
+  SELECT SvcClass.id, maxReplicaNb 
+    INTO svcClassId, maxRepl
     FROM SvcClass, StageDiskCopyReplicaRequest Req, SubRequest
    WHERE SubRequest.id = srId
      AND SubRequest.request = Req.id
@@ -408,22 +410,18 @@ END;
 CREATE OR REPLACE PROCEDURE disk2DiskCopyFailed
 (dcId IN INTEGER, srId OUT INTEGER) AS
   fsId INTEGER;
-  dcStatus INTEGER;
 BEGIN
-  -- Check that the DiskCopy still exists this could be an attempt from the
-  -- jobManager to fail the request for the second time i.e. multiple daemons
-  -- managing the jobs
-  BEGIN
-    SELECT status, filesystem INTO dcStatus, fsId FROM DiskCopy
-     WHERE id = dcId;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Set the diskcopy status to INVALID so that it will be garbage collected
+  -- at a later date.
+  fsId := 0;
+  UPDATE DiskCopy SET status = 7 -- INVALID
+   WHERE status = 1 -- WAITDISK2DISKCOPY
+     AND id = dcId
+   RETURNING fileSystem INTO fsId;
+  IF fsId = 0 THEN
     srId := 0;
     RETURN;
-  END;
-  -- Delete the DiskCopy, Since it can be not the only one, don't try to delete
-  -- the Castorfile
-  DELETE FROM Id2Type WHERE Id = dcId;
-  DELETE FROM DiskCopy WHERE Id = dcId;
+  END IF;
   -- Fail the corresponding subrequest
   UPDATE SubRequest 
      SET status = 9, -- SUBREQUEST_FAILED_FINISHED
@@ -440,6 +438,33 @@ BEGIN
   IF fsId > 0 THEN
     updateFsFileClosed(fsId);
   END IF;
+END;
+
+
+/* PL/SQL method implementing disk2DiskCopyCheck */
+CREATE OR REPLACE PROCEDURE disk2DiskCopyCheck
+(srSubReqId IN VARCHAR2, res OUT INTEGER) AS
+  dcId INTEGER;
+BEGIN
+  -- The disk2DiskCopyCheck method is called by the jobManager when a disk2disk
+  -- copy replication request exits the LSF queue. Its primary goal is to make
+  -- sure that the diskcopy behind a replication request has not been left
+  -- in WAITDISK2DISKCOPY. If it is, then this is an indication of a scheduling
+  -- error in LSF.
+  -- Note: this is to fix a bug in the parallel scheduling in LSF whereby a job
+  -- starts but actually does nothing!!!
+  BEGIN
+    SELECT SubRequest.diskcopy INTO dcId
+      FROM SubRequest, DiskCopy
+     WHERE SubRequest.diskCopy = DiskCopy.id
+       AND SubRequest.subReqId = srSubReqId
+       AND DiskCopy.status = 1; -- WAITDISK2DISKCOPY
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    res := 0;
+    RETURN;
+  END;
+  -- Attempt to fail the diskcopy replication request on behalf of the failed job
+  disk2DiskCopyFailed(dcId, res);
 END;
 
 
@@ -707,7 +732,7 @@ CREATE OR REPLACE PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCH
                         reqUsername OUT VARCHAR2, srOpenFlags OUT VARCHAR2, clientIp OUT INTEGER,
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
-                        askedHosts OUT castor.DiskServerList_Cur, clientSecure OUT INTEGER) AS
+                        clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2) AS
   dsId INTEGER;
   nuId INTEGER;                   
 BEGIN
@@ -772,15 +797,19 @@ BEGIN
     -- source disk copy. The scheduler plugin needs this information to correctly
     -- schedule access to the filesystem.
     BEGIN 
-      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), DiskServer.id
-        INTO srRfs, dsId
-        FROM DiskServer, FileSystem, DiskCopy
+      SELECT CONCAT(CONCAT(DiskServer.name, ':'), FileSystem.mountpoint), 
+             DiskServer.id, SvcClass.name
+        INTO srRfs, dsId, reqSourceSvcClass
+        FROM DiskServer, FileSystem, DiskCopy, DiskPool2SvcClass, DiskPool, SvcClass
        WHERE DiskCopy.id = reqSourceDiskCopyId
          AND DiskCopy.status IN (0, 10) -- STAGED, CANBEMIGR
          AND DiskCopy.filesystem = FileSystem.id
          AND FileSystem.status IN (0, 1)  -- PRODUCTION, DRAINING
          AND FileSystem.diskserver = DiskServer.id
-         AND DiskServer.status IN (0, 1); -- PRODUCTION, DRAINING
+         AND DiskServer.status IN (0, 1)  -- PRODUCTION, DRAINING
+         AND FileSystem.diskPool = DiskPool2SvcClass.parent
+         AND DiskPool2SvcClass.child = SvcClass.id
+         AND DiskPool2SvcClass.parent = DiskPool.id;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- The source diskcopy has been removed before the jobManager could enter
       -- the job into LSF. Under this circumstance fail the diskcopy transfer.
@@ -789,31 +818,5 @@ BEGIN
       COMMIT;
       RAISE;
     END;
-
-    -- Provide the job manager with a potential list of hosts where the
-    -- destination disk2disk copy transfer could run. This is all the diskservers
-    -- in the service class excluding the source and diskservers where a diskcopy
-    -- of this file already resides. We restrict the number of returned 
-    -- diskservers because of LSF limitations
-    OPEN askedHosts
-    FOR
-      SELECT * FROM (
-        SELECT DISTINCT(DiskServer.name)
-          FROM DiskServer, FileSystem, DiskPool2SvcClass, SvcClass
-         WHERE FileSystem.diskServer = DiskServer.id
-           AND FileSystem.diskPool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = SvcClass.id
-           AND SvcClass.name = reqSvcClass
-           AND FileSystem.status = 0 -- FILESYSTEM_PRODUCTION
-           AND DiskServer.status = 0 -- DISKSERVER_PRODUCTION
-           AND FileSystem.diskserver <> dsId
-           AND FileSystem.diskserver NOT IN
-             (SELECT DiskServer.id
-                FROM DiskServer, FileSystem, DiskCopy
-               WHERE FileSystem.diskServer = DiskServer.id
-                 AND DiskCopy.fileSystem = FileSystem.id
-                 AND DiskCopy.castorFile = cfFileId)
-           ORDER BY dbms_random.value
-      ) WHERE rownum < 20;
   END IF;
 END;
