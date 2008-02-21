@@ -1,5 +1,5 @@
 /*
- * $Id: site.Win32.def,v 1.6 2007/09/14 14:58:31 waldron Exp $
+ * $Id: site.Win32.def,v 1.7 2008/02/21 19:07:31 waldron Exp $
  */
 /*
  * Copyright (C) 1993-2003 by CERN/IT/ADC/CA
@@ -7,7 +7,7 @@
  */
 
 /*
- * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.6 $ $Date: 2007/09/14 14:58:31 $ CERN IT-PDP/DM   Jean-Philippe Baud
+ * @(#)$RCSfile: site.Win32.def,v $ $Revision: 1.7 $ $Date: 2008/02/21 19:07:31 $ CERN IT-PDP/DM   Jean-Philippe Baud
  */
 /* Platform is normally guessed from the CPP predefined symbols
    But you may define special flags, for example
@@ -305,7 +305,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseScheduler	NO
 #define UseExpert	NO
 #define UseMaui	NO
-#define UseCastorOnGlobalFileSystem	NO
 
 /* 
  * The following flag enables rfio client interface

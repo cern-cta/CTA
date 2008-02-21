@@ -105,14 +105,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #else
 #define MappingFile	/etc/castor/ext.users
 #endif
-#define MonitorHost	"castormon"
-#define MonitorSpool	/var/spool/monitor
-#if defined(_WIN32)
-#define MsgdaemonAuthHosts	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\msg.hosts
-#else
-#define MsgdaemonAuthHosts /etc/castor/msg.hosts
-#endif
-#define MsgdaemonHost	"castormsg"
 #define NfsRoot	/shift
 #if defined(_WIN32)
 #define NsConfigFile	%%SystemRoot%%\\system32\\drivers\\etc\\castor\\NSCONFIG
@@ -229,12 +221,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define	BuildCupvLibrary	NO
 #define BuildExamples		NO
 #define BuildHsmTools		NO
-#define BuildMonitorClient	NO
-#define BuildMonitorServer	NO
-#define BuildMonitorLibrary	NO
-#define BuildMsgClient		NO
-#define BuildMsgServer		NO
-#define BuildMsgLibrary		NO
 #define BuildNameServerClient	NO
 #define BuildNameServerDaemon	NO
 #define BuildNameServerLibrary	NO
@@ -316,7 +302,6 @@ correctly identified by CPP flags (tested on SuSE SLES9)
 #define UseScheduler    	YES
 #define UseExpert		YES
 #define UseMaui			NO
-#define UseCastorOnGlobalFileSystem	NO
 
 /* 
  * The following flag enables rfio client interface
