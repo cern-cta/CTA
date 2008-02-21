@@ -70,40 +70,6 @@
 #endif
 #endif
 
-/* ------- */
-/* MONITOR */
-/* ------- */
-#if BuildMonitorClient
-#if !BuildMonitorLibrary
-#undef BuildMonitorLibrary
-#define BuildMonitorLibrary YES
-#endif
-#endif
-#if BuildMonitorServer
-#if !BuildMonitorLibrary
-#undef BuildMonitorLibrary
-#define BuildMonitorLibrary YES
-#endif
-#if !BuildMonitorLibrary
-#undef BuildMonitorLibrary
-#define BuildMonitorLibrary YES
-#endif
-#if !BuildStageLibrary
-#undef BuildStageLibrary
-#define BuildStageLibrary YES
-#endif
-#endif
-
-/* --- */
-/* MSG */
-/* --- */
-#if BuildMsgClient || BuildMsgServer
-#if !BuildMsgLibrary
-#undef BuildMsgLibrary
-#define BuildMsgLibrary YES
-#endif
-#endif
-
 /* -- */
 /* NS */
 /* -- */
@@ -332,10 +298,6 @@
 #undef BuildTapeLibrary
 #define BuildTapeLibrary YES
 #endif
-#if BuildMsgLibrary != YES
-#undef BuildMsgLibrary
-#define BuildMsgLibrary	YES
-#endif
 #if BuildRmcLibrary != YES
 #undef BuildRmcLibrary
 #define BuildRmcLibrary	YES
@@ -364,10 +326,6 @@
 #if !BuildTapeLibrary
 #undef BuildTapeLibrary
 #define BuildTapeLibrary YES
-#endif
-#if BuildMsgLibrary != YES
-#undef BuildMsgLibrary
-#define BuildMsgLibrary	YES
 #endif
 #if UseVmgr
 #if !BuildVolumeMgrLibrary
@@ -686,12 +644,6 @@ UPVDIR = upv
 #endif
 #if BuildHsmTools
 HSMTOOLSDIR = hsmtools
-#endif
-#if BuildMonitorClient || BuildMonitorServer || BuildMonitorLibrary
-MONITORDIR = monitor
-#endif
-#if BuildMsgClient || BuildMsgServer || BuildMsgLibrary
-MSGDIR = msg
 #endif
 #if BuildNameServerClient || BuildNameServerDaemon || BuildNameServerLibrary
 NSDIR = ns
