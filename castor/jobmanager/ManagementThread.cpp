@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/01/09 14:16:47 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/21 16:21:01 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a 
  * PENDING status for too long 
@@ -348,10 +348,27 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	   castor::dlf::Param(subRequestId)};
 	castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 26, 4, params, &fileId); 
       }
-    } else {
-      // Although we have the capacity to detect an abnormally exiting job
-      // we don't respond to such a condition and rely on the mover to
-      // perform the correct cleanup.
+    } else if (requestType == castor::OBJ_StageDiskCopyReplicaRequest) {
+      // For diskcopy replication requests check that the diskcopy is no longer
+      // in WAITDISK2DISKCOPY. This can happen when the mover fails to cleanup
+      // after an error
+      try {
+	if (m_jobManagerService->disk2DiskCopyCheck(job->submit.jobName)) {
+	  // "Restarting failed scheduling of a disk2disk copy replication 
+	  // request"
+	  castor::dlf::Param params[] =
+	    {castor::dlf::Param("JobId", (int)job->jobId),
+	     castor::dlf::Param(subRequestId)};
+	  castor::dlf::dlf_writep(requestId, DLF_LVL_WARNING, 35, 2, params, &fileId); 
+	}
+      } catch (castor::exception::Exception e) {
+	// "Exception caught in trying to call disk2DiskCopyCheck"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("Type", sstrerror(e.code())),
+	   castor::dlf::Param("Message", e.getMessage().str()),
+	   castor::dlf::Param(subRequestId)};
+	castor::dlf::dlf_writep(requestId, DLF_LVL_ERROR, 36, 3, params, &fileId);
+      }
     }
     return;
   }
@@ -427,8 +444,15 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	DiskServerResource *ds = (*it).second;
 	for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
 	  FileSystemResource *fs = ds->fileSystems()[i];
-	  if ((ds->status() == castor::stager::DISKSERVER_DISABLED) ||
-	      (fs->status() == castor::stager::FILESYSTEM_DISABLED)) {
+	  if (fs->mountPoint() != fileSystem) {
+	    continue;
+	  } else if (ds->status() == castor::stager::DISKSERVER_DISABLED) {
+	    disabled++;
+	  } else if (requestType == OBJ_StageDiskCopyReplicaRequest) {
+	    if (fs->status() == castor::stager::FILESYSTEM_DISABLED) {
+	      disabled++;
+	    }
+	  } else if (fs->status() != castor::stager::FILESYSTEM_PRODUCTION) {
 	    disabled++;
 	  }
 	}
@@ -439,7 +463,8 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     if (disabled == rfs.size()) {
       if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTNOTAVAIL)) {
 	if (requestType != OBJ_StageDiskCopyReplicaRequest) {
-	  // "Job terminated, all requested filesystems are DISABLED"
+	  // "Job terminated, all requested filesystems are DRAINING or 
+	  // DISABLED"
 	  castor::dlf::Param params[] =
 	    {castor::dlf::Param("JobId", (int)job->jobId),
 	     castor::dlf::Param("Username", job->user),
@@ -472,8 +497,8 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
       queue = "default";
     }
 
-    // If we don't find any filesystems belonging to the svclass in DRAINING
-    // or PRODUCTION fail the request
+    // If we don't find any filesystems belonging to the svclass in PRODUCTION
+    // fail the request
     bool terminateJob = true;
     for (std::map<std::string, 
 	   castor::jobmanager::DiskServerResource *>::const_iterator it =
@@ -483,8 +508,8 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
       DiskServerResource *ds = (*it).second;
       for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
 	FileSystemResource *fs = ds->fileSystems()[i];
-	if ((ds->status() != castor::stager::DISKSERVER_DISABLED) &&
-	    (fs->status() != castor::stager::FILESYSTEM_DISABLED) &&
+	if ((ds->status() == castor::stager::DISKSERVER_PRODUCTION) &&
+	    (fs->status() == castor::stager::FILESYSTEM_PRODUCTION) &&
 	    (fs->svcClassName() == queue)) {
 	  terminateJob = false;
 	  break;
@@ -494,8 +519,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
     
     if (terminateJob) {
       if (terminateRequest(job->jobId, requestId, subRequestId, fileId, ESTSVCCLASSNOFS)) {
-	// "Job terminated, diskpool/svcclass has no filesystems in DRAINING 
-	// or PRODUCTION"
+	// "Job terminated, svcclass has no filesystems in PRODUCTION"
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("JobId", (int)job->jobId),
 	   castor::dlf::Param("Username", job->user),
@@ -507,13 +531,6 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
       return;
     }
   }
-
-  // TODO, We should really check here to make sure that possible destination
-  // hosts of a StageDiskCopyReplicaRequest are still valid i.e still belong
-  // to the correct svcclass and haven't changed after job submission. If a
-  // change occured we should attempt to bmodify the jobs submission parameters
-  // so that the job can still be processed. For now we allow the job
-  // to run on the wrong execution host and fail the job there.
 }
 
 
