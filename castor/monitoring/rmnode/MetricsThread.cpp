@@ -304,10 +304,8 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
   dirent *entry_proc = 0;
   while ((entry_proc = readdir(dir_proc))) {
     std::ostringstream path("");
-    std::istringstream i(entry_proc->d_name);
-    u_signed64 x = 0;
-    if (!(i >> x)) {
-      continue;            // not a process, i.e not a digit
+    if (strspn(entry_proc->d_name, "0123456789") != strlen(entry_proc->d_name)) {
+      continue;            // not a process, i.e not a number
     }
 
     // Open the processes file descriptor listing. The 'fd' directory can only be
@@ -322,15 +320,14 @@ void castor::monitoring::rmnode::MetricsThread::collectFileSystemMetrics
 
     dirent *entry_fd = 0;
     while ((entry_fd = readdir(dir_fd))) {
-      std::istringstream fd(entry_fd->d_name);
-      if (!(fd >> x)) {
+      if (strspn(entry_fd->d_name, "0123456789") != strlen(entry_fd->d_name)) {
 	continue;          // not a file descriptor
       }
 
       // The fd directory contains a list of symlinks to a given resource. We
       // need to resolve these first before processing further.
       std::ostringstream fdpath("");
-      fdpath << path.str() << "/" << fd.str();
+      fdpath << path.str() << "/" << entry_fd->d_name;
       struct stat statbuf;
       if (lstat(fdpath.str().c_str(), &statbuf) != 0) {
 	continue;
