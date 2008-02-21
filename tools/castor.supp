@@ -24,6 +24,11 @@
   obj:*/libnnz10.so*
 }
 {
+  Oracle's library, Invalid read of size 8 in nnz10
+  Memcheck:Addr8
+  obj:*libnnz10.so
+}
+{
    Oracle's call to times
    Memcheck:Param
    times(buf)
