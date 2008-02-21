@@ -188,6 +188,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               io/StreamStageUpdateRequestCnv.cpp \
 	      io/StreamStageRepackRequestCnv.cpp \
 	      io/StreamThreadNotificationCnv.cpp \
+	      io/StreamStgFilesDeletedCnv.cpp \
+	      io/StreamStgFilesDeletedResponseCnv.cpp \
               io/StreamAbortResponseCnv.cpp \
               io/StreamFileQryResponseCnv.cpp \
               io/StreamFindReqResponseCnv.cpp \
@@ -276,6 +278,8 @@ STGLIB_SRCS0 = IAddressCInt.cpp \
               stager/FilesDeleted.cpp \
               stager/NsFilesDeleted.cpp \
               stager/NsFilesDeletedResponse.cpp \
+	      stager/StgFilesDeleted.cpp \
+	      stager/StgFilesDeletedResponse.cpp \
               stager/FilesDeletionFailed.cpp \
               stager/FirstByteWritten.cpp \
               stager/GetUpdateDone.cpp \
