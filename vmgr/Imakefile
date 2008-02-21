@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.7 $ $Date: 2007/11/28 10:14:44 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2008/02/21 17:09:20 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM    Make volume manager programs.
 
@@ -166,8 +166,7 @@ MANPAGES = $(LIBMANDIR)/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(MANDIR)/vmgrmodifylibrary.$(MANSUFFIX) \
 	   $(MANDIR)/vmgrmodifypool.$(MANSUFFIX) \
 	   $(MANDIR)/vmgrmodifytape.$(MANSUFFIX) \
-	   $(MANDIR)/vmgrsettag.$(MANSUFFIX) \
-	   $(MANDIR)/vmgrshutdown.$(MANSUFFIX)
+	   $(MANDIR)/vmgrsettag.$(MANSUFFIX)
 EXPORTMANPAGES = $(EXPORTMAN)/man3/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_deletedgnmap.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/vmgr_deletelibrary.$(LIBMANSUFFIX) \
@@ -227,8 +226,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/vmgr_deletedenmap.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrmodifylibrary.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrmodifypool.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/vmgrmodifytape.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/vmgrsettag.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/vmgrshutdown.$(MANSUFFIX)
+	   $(EXPORTMAN)/man1/vmgrsettag.$(MANSUFFIX)
 
 #if BuildVolumeMgrLibrary
 VMGRLIBTARGET=LibraryTargetName(vmgr)
@@ -258,8 +256,7 @@ CLIENT = ProgramTargetName(vmgrdeletedenmap) \
 	 ProgramTargetName(vmgrmodifylibrary) \
 	 ProgramTargetName(vmgrmodifypool) \
 	 ProgramTargetName(vmgrmodifytape) \
-	 ProgramTargetName(vmgrsettag) \
-	 ProgramTargetName(vmgrshutdown)
+	 ProgramTargetName(vmgrsettag)
 IPROGS_C = FileName($(BIN),ProgramTargetName(vmgrdeletedenmap)) \
 	   FileName($(BIN),ProgramTargetName(vmgrdeletedgnmap)) \
 	   FileName($(BIN),ProgramTargetName(vmgrdeletelibrary)) \
@@ -283,8 +280,7 @@ IPROGS_C = FileName($(BIN),ProgramTargetName(vmgrdeletedenmap)) \
 	   FileName($(BIN),ProgramTargetName(vmgrmodifylibrary)) \
 	   FileName($(BIN),ProgramTargetName(vmgrmodifypool)) \
 	   FileName($(BIN),ProgramTargetName(vmgrmodifytape)) \
-	   FileName($(BIN),ProgramTargetName(vmgrsettag)) \
-	   FileName($(BIN),ProgramTargetName(vmgrshutdown))
+	   FileName($(BIN),ProgramTargetName(vmgrsettag))
 EPROGS_C = $(EXPORTBIN)/vmgrdeletedenmap \
 	   $(EXPORTBIN)/vmgrdeletedgnmap \
 	   $(EXPORTBIN)/vmgrdeletelibrary \
@@ -308,8 +304,7 @@ EPROGS_C = $(EXPORTBIN)/vmgrdeletedenmap \
 	   $(EXPORTBIN)/vmgrmodifylibrary \
 	   $(EXPORTBIN)/vmgrmodifypool \
 	   $(EXPORTBIN)/vmgrmodifytape \
-	   $(EXPORTBIN)/vmgrsettag \
-	   $(EXPORTBIN)/vmgrshutdown
+	   $(EXPORTBIN)/vmgrsettag
 #endif
 #if BuildVolumeMgrDaemon
 PROGS_D = ProgramTargetName(vmgrdaemon)
@@ -383,7 +378,6 @@ NormalProgramTarget(vmgrdeletemodel,vmgrdeletemodel.Osuf,LibraryTargetName(vmgr)
 NormalProgramTarget(vmgrdeletepool,vmgrdeletepool.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrdeletetape,vmgrdeletetape.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrdeltag,vmgrdeltag.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
-NormalProgramTarget(vmgrshutdown,vmgrshutdown.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrenterdenmap,vmgrenterdenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrenterdgnmap,vmgrenterdgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrenterlibrary,vmgrenterlibrary.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
@@ -497,9 +491,6 @@ IEXPORT(vmgrmodifytape,$(EXPORTBIN),755);
 InstallProgram(vmgrsettag,$(BIN),root,bin,755)
 IEXPORT(vmgrsettag,$(EXPORTBIN),755);
 
-InstallProgram(vmgrshutdown,$(BIN),root,bin,755)
-IEXPORT(vmgrshutdown,$(EXPORTBIN),755);
-
 MakeDir($(BIN),root,bin,0755)
 MakeDir($(SPOOL),root,bin,0755)
 
@@ -571,7 +562,6 @@ IMANPAGE(vmgrmodifylibrary,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrmodifypool,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrmodifytape,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(vmgrsettag,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(vmgrshutdown,$(MANDIR),$(MANSUFFIX))
 EMANPAGE(vmgr_deletedenmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_deletedgnmap,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(vmgr_deletelibrary,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -632,7 +622,6 @@ EMANPAGE(vmgrmodifylibrary,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrmodifypool,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrmodifytape,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(vmgrsettag,$(EXPORTMAN)/man1,$(MANSUFFIX))
-EMANPAGE(vmgrshutdown,$(EXPORTMAN)/man1,$(MANSUFFIX))
 
 export: $(EPROGS_C) $(EPROGS_D)
 
