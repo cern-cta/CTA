@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.38 $ $Release$ $Date: 2007/12/07 13:26:07 $ $Author: sponcec3 $
+ * @(#)$RCSfile: stager_client_api.h,v $ $Revision: 1.39 $ $Release$ $Date: 2008/02/21 17:29:10 $ $Author: waldron $
  *
  * the client API to the castor stager
  *
@@ -25,11 +25,11 @@
  *****************************************************************************/
 
 /** @file $RCSfile: stager_client_api.h,v $
- * @version $Revision: 1.38 $
- * @date $Date: 2007/12/07 13:26:07 $
+ * @version $Revision: 1.39 $
+ * @date $Date: 2008/02/21 17:29:10 $
  */
 /** @mainpage CASTOR New Stager API Proposal
- * $RCSfile: stager_client_api.h,v $ $Revision: 1.38 $
+ * $RCSfile: stager_client_api.h,v $ $Revision: 1.39 $
  *
  * @section intro Introduction
  * The new API for the CASTOR stager has been based on the requirements for the 
@@ -1563,6 +1563,7 @@ FREE_STRUCT_LIST_DECL(findrequest_resp)
  **********************************************************/
 
 #define MOVER_PROTOCOL_RFIO "rfio"
+#define MOVER_PROTOCOL_RFIOV3 "rfio3"
 #define MOVER_PROTOCOL_ROOT "root"
 #define MOVER_PROTOCOL_XROOT "xroot"
 #define MOVER_PROTOCOL_GSIFTP "gsiftp"
