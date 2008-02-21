@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/01/15 17:37:10 $ $Author: itglp $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/02/21 17:22:56 $ $Author: mmartins $
  *
  * Service thread for garbage collection related requests
  *
@@ -44,6 +44,8 @@
 #include "castor/stager/Files2Delete.hpp"
 #include "castor/stager/NsFilesDeleted.hpp"
 #include "castor/stager/NsFilesDeletedResponse.hpp"
+#include "castor/stager/StgFilesDeleted.hpp"
+#include "castor/stager/StgFilesDeletedResponse.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/BasicResponse.hpp"
@@ -270,6 +272,86 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
   }
 }
 
+
+
+
+//-----------------------------------------------------------------------------
+// handleStgFilesDeleted
+// the main difference with the NameServer part
+// is that we dont need information about the nsHost
+//-----------------------------------------------------------------------------
+void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
+(castor::stager::Request* req,
+ castor::IClient *client,
+ castor::Services* svcs,
+ castor::stager::IGCSvc* gcSvc,
+ castor::BaseAddress &ad,
+ Cuuid_t uuid) throw() {
+  // Useful Variables
+  castor::stager::StgFilesDeleted *uReq;
+  std::vector<u_signed64> orphanDiskCopies;
+  castor::stager::StgFilesDeletedResponse res;
+  try {
+    // get the StgFilesDeleted request
+    // cannot return 0 since we check the type before calling this method
+    uReq = dynamic_cast<castor::stager::StgFilesDeleted*> (req);
+    // Fills it with files to be deleted
+    svcs->fillObj(&ad, req, castor::OBJ_GCFile);
+    // collect input copyIds
+    std::vector<u_signed64> diskCopies;
+    for (std::vector<castor::stager::GCFile*>::const_iterator it =
+           uReq->files().begin();
+         it != uReq->files().end();
+         it++) {
+      diskCopies.push_back((*it)->diskCopyId());
+    }
+    // "Invoking stgFilesDeleted"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("nbFiles", uReq->files().size())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_STGFILDEL, 1, params);
+    orphanDiskCopies = gcSvc->stgFilesDeleted(diskCopies);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "GcSvcThread::handleStgFilesDeleted"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+    res.setErrorCode(e.code());
+    res.setErrorMessage(e.getMessage().str());
+  }
+  Cns_fileid fileId;
+  strncpy(fileId.server, "noNsHost", CA_MAXHOSTNAMELEN+1);
+  for(std::vector<u_signed64>::iterator it =
+	orphanDiskCopies.begin();
+      it != orphanDiskCopies.end();
+      it++) {
+    // Here we transfer the ownership of the GCFiles
+    // to res. Thus we will not reallocate them
+    castor::stager::GCFile *gf = new castor::stager::GCFile();
+    gf->setDiskCopyId(*it);
+    res.addOrphanFiles(gf);
+    // "File to be unlinked since it disappeared from stager"
+    fileId.fileid = *it;
+    castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FSTGDEL, 0, 0, &fileId);
+  }
+  // Reply To Client
+  try {
+    castor::replier::RequestReplier *rr =
+      castor::replier::RequestReplier::getInstance();
+    res.setReqAssociated(req->reqId());
+    rr->sendResponse(client, &res, true);
+  } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("Function", "GcSvcThread::handleStgFilesDeleted.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
+  }
+}
+
+
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
@@ -340,6 +422,10 @@ void castor::stager::daemon::GcSvcThread::process
     break;
   case castor::OBJ_NsFilesDeleted:
     castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
+      (req, client, svcs, gcSvc, ad, uuid);
+    break;
+  case castor::OBJ_StgFilesDeleted:
+    castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
       (req, client, svcs, gcSvc, ad, uuid);
     break;
   default:

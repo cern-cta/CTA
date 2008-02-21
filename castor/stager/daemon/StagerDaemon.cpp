@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.47 $ $Release$ $Date: 2008/01/29 18:31:53 $ $Author: itglp $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2008/02/21 17:22:56 $ $Author: mmartins $
  *
  * Main stager daemon
  *
@@ -230,6 +230,8 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_GCSVC_SELF2DEL,"Invoking selectFiles2Delete"},
     { STAGER_GCSVC_FSEL4DEL,"File selected for deletion"},
     { STAGER_GCSVC_NSFILDEL,"Invoking nsFilesDeleted"},
+    { STAGER_GCSVC_STGFILDEL, "Invoking stgFilesDeleted"},
+    { STAGER_GCSVC_FSTGDEL, "File to be unlinked since it dissapeared from the stager"},
     
     /************/
     /* ErrorSvc */
