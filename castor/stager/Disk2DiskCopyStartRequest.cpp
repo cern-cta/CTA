@@ -46,6 +46,8 @@ castor::stager::Disk2DiskCopyStartRequest::Disk2DiskCopyStartRequest() throw() :
   m_destSvcClass(""),
   m_diskServer(""),
   m_mountPoint(""),
+  m_fileId(0),
+  m_nsHost(""),
   m_id(0) {
 }
 
@@ -75,6 +77,8 @@ void castor::stager::Disk2DiskCopyStartRequest::print(std::ostream& stream,
   stream << indent << "destSvcClass : " << m_destSvcClass << std::endl;
   stream << indent << "diskServer : " << m_diskServer << std::endl;
   stream << indent << "mountPoint : " << m_mountPoint << std::endl;
+  stream << indent << "fileId : " << m_fileId << std::endl;
+  stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
