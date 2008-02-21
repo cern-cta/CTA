@@ -1,5 +1,5 @@
 /*
- * $Id: close.c,v 1.5 2007/12/07 13:26:07 sponcec3 Exp $
+ * $Id: close.c,v 1.6 2008/02/21 17:24:57 waldron Exp $
  */
 
 /*
@@ -16,9 +16,6 @@
 
 #include <stdlib.h>            /* malloc prototype */
 
-#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
-#include "rfio_lcastorfdt.h"
-#endif
 
 // Forward declarations
 int rfio_close_v2(int s);
@@ -31,10 +28,6 @@ int     s;
 {
   int      s_index;
   int rc;
-#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
-  int internal_fd= -1;
-  int internal_index;
-#endif
 
   /* Remote file ? */
   if ((s_index = rfio_rfilefdt_findentry(s,FINDRFILE_WITHOUT_SCAN)) != -1) {
@@ -48,17 +41,6 @@ int     s;
     rc = rfio_close_v2(s);
   }
 
-#if defined(CASTOR_ON_GLOBAL_FILESYSTEM)
-  /* Was that file associated with an internal file descriptor ? */
-  if ((internal_index = rfio_lcastorfdt_findentry(s,&internal_fd,FINDLCASTOR_WITH_SCAN)) >= 0) {
-    if (internal_fd >= 0) {
-      /* yes: close this fd as well */
-      rfio_close(internal_fd);
-      /* and clean the table */
-      rfio_lcastorfdt_freeentry(internal_index);
-    }
-  }
-#endif
   return(rc);
 }
 
