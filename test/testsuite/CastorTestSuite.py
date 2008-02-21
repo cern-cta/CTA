@@ -19,8 +19,6 @@ import TapeTest
 
 
 class ClientSuite(unittest.TestSuite):
-    def setUp(self):
-        print "ciao"
     def __init__(self):    
         unittest.TestSuite.__init__(self)
 
@@ -58,7 +56,7 @@ clientTest={'PREREQ': ClientTest.StagerPreClientSuite(),'PUT':ClientTest.StagerP
 
 rfioTest={'PREREQ':RfioTest.RfioPreRequisitesSuite(),'BASIC_RFCP':RfioTest.RfioRfcpSimpleSuite(),'BASIC_OTHERCMD':RfioTest.RfioOtherCmdSimpleSuite(),'CASTOR_RFCP':RfioTest.RfioRfcpEnvSuite() ,'CASTOR_RFCP_NEW_TURL': RfioTest.RfioRfcpNewTurlSuite(),'CASTOR_OTHERCMD':RfioTest.RfioOtherCmdEnvSuite() ,'CASTOR_OTHERCMD_NEW_TURL': RfioTest.RfioOtherCmdNewTurlSuite(),'API': RfioTest.RfioApiSuite(), 'STRESS':RfioTest.RfioApiSuite()}
 
-rootTest={'PREREQ':RootTest.RootPreRequisitesSuite(),'RFIO':RootTest.RootRFIOSuite(),'CASTOR':RootTest.RootCastorSuite()}
+rootTest={'PREREQ':RootTest.RootPreRequisitesSuite(),'RFIO':RootTest.RootRfioNewTurlSuite(),'CASTOR':RootTest.RootCastorNewTurlSuite()}
 
 tapeTest={'PREREQ':TapeTest.TapePreSuite(),'MIGRATION':TapeTest.TapeMigrationSuite(),'RECALL':TapeTest.TapeRecallSuite(),'MIGRATION_AND_RECALL':TapeTest.TapeMigrationAndRecallSuite(), 'STRESS_CASTOR':TapeTest.TapeStressCastorSuite(),'TAPE_ONLY':TapeTest.TapeTapeOnlySuite()}
 

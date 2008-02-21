@@ -60,7 +60,7 @@ STRESS_INPUT_DIR  /tmp/dir
 *** Root test specific parameters ***
 
 # ROOTSYS will only be used if not already defined in the environment
-ROOTSYS           /afs/cern.ch/sw/lcg/external/root/head/slc3_ia32_gcc323/root
+ROOTSYS	/afs/cern.ch/sw/lcg/external/root/5.18.00/slc4_ia32_gcc34/root
 LOG_DIR           /tmp/tmpRoot
 
 *** Client test specific parameters ***

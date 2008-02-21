@@ -219,7 +219,7 @@ class StagerPutDoneCase(unittest.TestCase):
         fi=open(localDir+"ClientPutDoneAndRfcp3","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after a putDone with rfcp"
+        assert buffOut.find("CANBEMIGR") != -1 or buffOut.find("STAGED") != -1, "stager_qry doesn't work after a putDone with rfcp"
         
     def putDoneManyFiles(self):
 
@@ -274,7 +274,7 @@ class StagerPutDoneCase(unittest.TestCase):
         fi=open(localDir+"ClientPutDoneRBis1","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.find("CANBEMIGR") != -1, "stager_putdone doesn't work after a putDone -r"
+        assert buffOut.find("CANBEMIGR") != -1 or  buffOut.find("STAGED") != -1, "stager_putdone doesn't work after a putDone -r"
     
 class StagerGetCase(unittest.TestCase):
         
@@ -306,7 +306,7 @@ class StagerGetCase(unittest.TestCase):
         fi=open(localDir+"ClientGetAndRfcp6","r")
         buffOut=fi.read()
         fi.close()
-        assert buffOut.find("CANBEMIGR") != -1, "stager_qry doesn't work after a put, rfcp and putDone"
+        assert buffOut.find("CANBEMIGR") != -1 or  buffOut.find("STAGED"), "stager_qry doesn't work after a put, rfcp and putDone"
         
         
     def getManyFiles(self):
@@ -945,15 +945,19 @@ class StagerRmCase(unittest.TestCase):
         fi.close()
         assert buffOut.find("SUBREQUEST_READY") != -1, "stager_rm doesn't work after put and rfcp"
 
-        cmd=["stager_put -M "+dirCastor+"fileClientRmRfcpBis"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientRmRfcpBis"+ticket,"stager_putdone -M "+dirCastor+"fileClientRmRfcpBis"+ticket,"stager_rm -M "+dirCastor+"fileClientRmRfcpBis"+ticket]
+        cmd=["stager_put -M "+dirCastor+"fileClientRmRfcpBis"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientRmRfcpBis"+ticket,"stager_putdone -M "+dirCastor+"fileClientRmRfcpBis"+ticket,"stager_qry -M "+dirCastor+"fileClientRmRfcpBis"+ticket,"stager_rm -M "+dirCastor+"fileClientRmRfcpBis"+ticket]
 
         UtilityForCastorTest.saveOnFile(localDir+"ClientRmAndRfcpBis",cmd,myScen)
 
         fi=open(localDir+"ClientRmAndRfcpBis3","r")
         buffOut=fi.read()
         fi.close()
+
+        fi=open(localDir+"ClientRmAndRfcpBis4","r")
+        buffOut2=fi.read()
+        fi.close()
         
-        assert buffOut.find("SUBREQUEST_FAILED") != -1, "stager_rm doesn't work after put, rfcp and putdone"
+        assert (buffOut2.find("SUBREQUEST_FAILED") != -1 and  buffOut.find("CANBEMIGR") != -1) or (buffOut2.find("SUBREQUEST_READY") != -1 and  buffOut.find("STAGED") != -1), "stager_rm doesn't work after put, rfcp and putdone"
         # not migrated yet ....  
         
     def rmManyFiles(self):
