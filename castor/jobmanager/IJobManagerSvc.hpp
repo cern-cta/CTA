@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/26 15:19:56 $ $Author: waldron $
+ * @(#)$RCSfile: IJobManagerSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/21 16:10:56 $ $Author: waldron $
  *
  * This class provides methods for managing jobs
  *
@@ -91,7 +91,19 @@ namespace castor {
       <std::string, castor::jobmanager::DiskServerResource *>*
       getSchedulerResources()
 	throw(castor::exception::Exception) = 0;
-	
+      
+      /**
+       * This method is called when a StageDiskCopyReplicaRequest exits the
+       * LSF queue. It is designed to check that the status of the diskcopy
+       * is no longer in WAITDISK2DISKCOPY. If it is, disk2DiskCopyFailed
+       * will be called on behalf of the job.
+       * @param subReqId The SubRequest id to check
+       * @exception Exception in case of error
+       */
+      virtual bool disk2DiskCopyCheck
+      (const std::string subReqId)
+	throw(castor::exception::Exception)= 0;
+
     };
 
   } // End of namespace jobmanager

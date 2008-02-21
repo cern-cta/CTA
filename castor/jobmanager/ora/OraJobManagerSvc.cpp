@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2007/11/27 17:04:47 $ $Author: riojac3 $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/02/21 16:10:57 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -62,7 +62,11 @@ const std::string castor::jobmanager::ora::OraJobManagerSvc::s_updateSchedulerJo
 
 /// SQL statement for function getSchedulerResources
 const std::string castor::jobmanager::ora::OraJobManagerSvc::s_getSchedulerResourcesString =
-   "BEGIN getSchedulerResources(:1); END;";
+  "BEGIN getSchedulerResources(:1); END;";
+
+/// SQL statement for function disk2DiskCopyCheck
+const std::string castor::jobmanager::ora::OraJobManagerSvc::s_disk2DiskCopyCheckString =
+  "BEGIN disk2DiskCopyCheck(:1, :2); END;";
 
 
 //-----------------------------------------------------------------------------
@@ -74,7 +78,8 @@ castor::jobmanager::ora::OraJobManagerSvc::OraJobManagerSvc
   m_failSchedulerJobStatement(0),
   m_jobToScheduleStatement(0),
   m_updateSchedulerJobStatement(0),
-  m_getSchedulerResourcesStatement(0) {}
+  m_getSchedulerResourcesStatement(0),
+  m_disk2DiskCopyCheckStatement(0) {}
 
 
 //-----------------------------------------------------------------------------
@@ -117,6 +122,8 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
       deleteStatement(m_updateSchedulerJobStatement);
     if (m_getSchedulerResourcesStatement)
       deleteStatement(m_getSchedulerResourcesStatement);
+    if (m_disk2DiskCopyCheckStatement)
+      deleteStatement(m_disk2DiskCopyCheckStatement);
   } catch (oracle::occi::SQLException e) {
     // Do nothing
   }
@@ -126,6 +133,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
   m_jobToScheduleStatement         = 0;
   m_updateSchedulerJobStatement    = 0;
   m_getSchedulerResourcesStatement = 0;
+  m_disk2DiskCopyCheckStatement    = 0;
 }
 
 
@@ -219,10 +227,10 @@ castor::jobmanager::JobSubmissionRequest
 	(19, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->registerOutParam
 	(20, oracle::occi::OCCIDOUBLE);
+       m_jobToScheduleStatement->registerOutParam
+	(21, oracle::occi::OCCIINT);
       m_jobToScheduleStatement->registerOutParam
-	(21, oracle::occi::OCCICURSOR);
-      m_jobToScheduleStatement->registerOutParam
-	(22, oracle::occi::OCCIINT);
+	(22, oracle::occi::OCCISTRING, 2048);
       m_jobToScheduleStatement->setAutoCommit(true);
     }
     
@@ -298,17 +306,14 @@ castor::jobmanager::JobSubmissionRequest
       }
     }
 
-    // Get the list of diskservers where the job could potentially run.
-    if (result->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-      oracle::occi::ResultSet *rs = m_jobToScheduleStatement->getCursor(21);
-      while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
-	result->setAskedHosts(result->askedHosts().append(rs->getString(1) + " "));
-	result->setNumAskedHosts(result->numAskedHosts() + 1);
-      }
-    }
-
-    result->setClientSecure(m_jobToScheduleStatement->getInt(22));
+    // Append the host group to the list of required hosts.
+    result->setAskedHosts
+      (result->askedHosts().append(result->svcClass() + "Group"));
+    result->setNumAskedHosts(result->numAskedHosts() + 1);
     
+    result->setClientSecure(m_jobToScheduleStatement->getInt(21));
+    result->setSourceSvcClass(m_jobToScheduleStatement->getString(22));
+
     // For statistical purposes
     timeval tv;
     gettimeofday(&tv, NULL);
@@ -438,4 +443,45 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
       << std::endl << e.getMessage();
     throw ex;
   }
+}
+
+
+//-----------------------------------------------------------------------------
+// disk2DiskCopyCheck
+//-----------------------------------------------------------------------------
+bool castor::jobmanager::ora::OraJobManagerSvc::disk2DiskCopyCheck
+(const std::string subReqId)
+  throw(castor::exception::Exception) {
+
+  // Initialize statements
+  try {
+    if (m_disk2DiskCopyCheckStatement == NULL) {
+      m_disk2DiskCopyCheckStatement = createStatement(s_disk2DiskCopyCheckString);
+      m_disk2DiskCopyCheckStatement->registerOutParam
+	(2, oracle::occi::OCCIDOUBLE);
+      m_disk2DiskCopyCheckStatement->setAutoCommit(true);
+    }
+    
+    // Prepare and execute the statement
+    m_disk2DiskCopyCheckStatement->setString(1, subReqId);
+    m_disk2DiskCopyCheckStatement->executeUpdate();
+    
+    // Return the result of the output parameter, this is an indicator to
+    // notify the callee as to whether or not the disk2disk copy failed
+    if (m_disk2DiskCopyCheckStatement->getDouble(2) > 0) {
+      return true;
+    } 
+  } catch (oracle::occi::SQLException e) {
+    handleException(e);
+    // Ignore ORA-01403: no data found
+    if (e.getErrorCode() == 1403) {
+      return false;
+    }
+    castor::exception::Internal ex;
+    ex.getMessage()
+      << "Error caught in disk2DiskCopyCheck."
+      << std::endl << e.getMessage();
+    throw ex;
+  }
+  return false;
 }

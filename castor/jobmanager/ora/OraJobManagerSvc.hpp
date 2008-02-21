@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2007/11/26 15:19:56 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/21 16:10:57 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -123,6 +123,18 @@ namespace castor {
 	getSchedulerResources()
 	  throw(castor::exception::Exception);
 
+	/**
+	 * This method is called when a StageDiskCopyReplicaRequest exits the
+	 * LSF queue. It is designed to check that the status of the diskcopy
+	 * is no longer in WAITDISK2DISKCOPY. If it is, disk2DiskCopyFailed
+	 * will be called on behalf of the job.
+	 * @param subReqId The SubRequest id to check
+	 * @exception Exception in case of error
+	 */
+	virtual bool disk2DiskCopyCheck
+	(const std::string subReqId)
+	  throw(castor::exception::Exception);
+
       private:
 
 	/// SQL statement for function failSchedulerJob
@@ -148,6 +160,12 @@ namespace castor {
 
 	/// SQL statement object for getSchedulerResources
 	oracle::occi::Statement *m_getSchedulerResourcesStatement;
+
+	/// SQL statement for function disk2DiskCopyCheck
+	static const std::string s_disk2DiskCopyCheckString;
+
+	/// SQL statement object for disk2DiskCopyCheck
+	oracle::occi::Statement *m_disk2DiskCopyCheckStatement;
 
       };
 
