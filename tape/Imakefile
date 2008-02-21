@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.10 $ $Date: 2008/01/08 10:23:53 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.11 $ $Date: 2008/02/21 17:50:39 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM 	Make tape daemon programs. 
 
@@ -96,20 +96,14 @@ LIBS+= -ldl
 
 COMM######################### FLAGS ##############################
 
-#if BuildMonitorLibrary
-MONITORFLAG=-DMONITOR
-#else
-MONITORFLAG=
-#endif
-
 DFLAGS = -DBIN=\"$(BIN)\" \
 	 -DLOGFILE=\"$(SPOOL)/log\" \
 	 -DSTAGERSUPERUSER=\"$(STAGERSUPERUSER)\" \
 	 -DTPCONFIG=\"$(TPCONFIG)\" \
 	 -D$(TMS) $(PCTAFLAG) $(ADSTARFLG) $(ACCTFLAG) $(ACCTFILE) \
-	 $(CONFIGFILE) $(SONYRFLG) $(CDKFLG) $(DMSCFLG) $(VDQMFLG) $(VMGRFLG) $(MONITORFLAG)
+	 $(CONFIGFILE) $(SONYRFLG) $(CDKFLG) $(DMSCFLG) $(VDQMFLG) $(VMGRFLG) 
 
-CFLAGS =	-I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(CDKINC) $(DMSCINC) $(SECURITYFLAG)
+CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(CDKINC) $(DMSCINC) $(SECURITYFLAG)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
 
@@ -198,10 +192,6 @@ PROGS_Z = ProgramTargetName(tpusage)
 IPROGS_Z = FileName($(BIN),ProgramTargetName(tpusage))
 EPROGS_Z = $(EXPORTBIN)/tpusage
 #endif
-#if BuildMonitorLibrary
-TAPE_MONITORCLIENT = Cmonit_tapeclient.Osuf
-#endif
-
 
 CONFDRIVE_OBJS	=	confdrive.Osuf \
 			sendrep.Osuf \
@@ -214,7 +204,6 @@ MOUNTTAPE_OBJS	=	mounttape.Osuf \
 			getdrvstatus.Osuf \
 			inquiry.Osuf \
 			lddisplay.Osuf \
-			omsg.Osuf \
 			rbtsubr.Osuf \
 			readlbl.Osuf \
 			rwndtape.Osuf \
@@ -241,7 +230,6 @@ POSOVL_OBJS	=	posovl.Osuf \
 			getdrvstatus.Osuf \
 			inquiry.Osuf \
 			locate.Osuf \
-			omsg.Osuf \
 			posittape.Osuf \
 			readlbl.Osuf \
 			rwndtape.Osuf \
@@ -256,7 +244,6 @@ POSOVL_OBJS	=	posovl.Osuf \
 RLSTAPE_OBJS	=	rlstape.Osuf \
 			getdrvstatus.Osuf \
 			lddisplay.Osuf \
-			omsg.Osuf \
 			rbtsubr.Osuf \
 			send2tpd.Osuf \
 			sendscsicmd.Osuf \
@@ -274,7 +261,6 @@ TPDAEMON_OBJS	=	tpdaemon.Osuf \
 			cvtden.Osuf \
 			sendrep.Osuf \
 			tplogit.Osuf \
-			$(TAPE_MONITORCLIENT) \
 			usrmsg.Osuf
 TPLIB_OBJS	=	Ctape_config.Osuf \
 			Ctape_devinfo.Osuf \

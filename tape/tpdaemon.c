@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.13 2008/02/13 09:43:07 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.14 2008/02/21 17:50:39 waldron Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.13 $ $Date: 2008/02/13 09:43:07 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.14 $ $Date: 2008/02/21 17:50:39 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -43,9 +43,6 @@
 #include "sacct.h"
 #endif
 #include "serrno.h"
-#ifdef MONITOR
-#include "Cmonit_api.h"
-#endif
 #ifdef CSEC
 #include "Csec_api.h"
 #endif 
@@ -339,13 +336,6 @@ struct main_args *main_args;
 				else
                                         clienthost = hp->h_name ;
 				procreq (req_type, req_data, clienthost);
-				
-#ifdef MONITOR
-				/* Sending the monitoring information */
-				Cmonit_send_tape_status(tptabp, nbtpdrives); 
-				lasttime_monitor_msg_sent = time(0);
-#endif
-
 			} else {
 				netclose (rqfd);
 				if (l > 0) {
@@ -365,7 +355,7 @@ struct main_args *main_args;
 			}
 		}
 
-        /* look for jobs that died */
+		/* look for jobs that died */
 		if (((tm = time (0)) - lasttime) >= CLNREQI) {
 			clean4jobdied();  
 			lasttime = tm;
@@ -464,14 +454,6 @@ struct main_args *main_args;
                 lasttime_vdqm_update = tm;
             }
         }
-#endif
-#ifdef MONITOR
-		/* Sending the Monitoring packet */
-		if ( (tm - lasttime_monitor_msg_sent) > CMONIT_TAPE_SENDMSG_PERIOD ) {
-		  /*  tplogit(func, "Sending monitoring packet\n"); */
-		  Cmonit_send_tape_status(tptabp, nbtpdrives); 
-		  lasttime_monitor_msg_sent = tm;
-		}
 #endif
 		memcpy (&readfd, &readmask, sizeof(readmask));
 		timeval.tv_sec = CHECKI;	/* must set each time for linux */
@@ -2742,11 +2724,6 @@ void check_child_exit()
 		for (i = 0; i < nbtpdrives; i++) {
 			if (tunp->mntovly_pid == pid) {
 				tunp->mntovly_pid = 0;
-
-#ifdef MONITOR
-				/* Sending the monitoring information */
-				Cmonit_send_tape_status(tptabp, nbtpdrives); 
-#endif 				
 				break;
 			}
 			tunp++;
@@ -2767,12 +2744,7 @@ void check_child_exit()
 					if (status == 0) {	/* successful config */
 						tunp->up = rqp->status;
 						tpdrrt.dg[i].rsvd++;
-					}
-					
-#ifdef MONITOR
-					/* Sending the monitoring information */
-					Cmonit_send_tape_status(tptabp, nbtpdrives); 
-#endif		  
+					} 
 				}
 				if (rqp->prev) (rqp->prev)->next = rqp->next;
 				else confqp = rqp->next;
