@@ -45,7 +45,7 @@ castor::stager::MoverCloseRequest::MoverCloseRequest() throw() :
   m_fileSize(0),
   m_timeStamp(0),
   m_fileId(0),
-  m_nsHost(AIE : strin),
+  m_nsHost(""),
   m_id(0) {
 }
 

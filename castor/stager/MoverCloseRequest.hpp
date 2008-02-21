@@ -172,7 +172,7 @@ namespace castor {
        * Get the value of m_nsHost
        * @return the value of m_nsHost
        */
-      strin nsHost() const {
+      std::string nsHost() const {
         return m_nsHost;
       }
 
@@ -180,7 +180,7 @@ namespace castor {
        * Set the value of m_nsHost
        * @param new_var the new value of m_nsHost
        */
-      void setNsHost(strin new_var) {
+      void setNsHost(std::string new_var) {
         m_nsHost = new_var;
       }
 
@@ -214,7 +214,7 @@ namespace castor {
 
       u_signed64 m_fileId;
 
-      strin m_nsHost;
+      std::string m_nsHost;
 
       /// The id of this object
       u_signed64 m_id;

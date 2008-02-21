@@ -168,7 +168,7 @@ castor::IObject* castor::io::StreamMoverCloseRequestCnv::createObj(castor::IAddr
   u_signed64 fileId;
   ad->stream() >> fileId;
   object->setFileId(fileId);
-  strin nsHost;
+  std::string nsHost;
   ad->stream() >> nsHost;
   object->setNsHost(nsHost);
   u_signed64 id;

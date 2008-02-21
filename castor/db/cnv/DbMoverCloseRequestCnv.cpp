@@ -389,7 +389,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::createRep(castor::IAddress* addres
     m_insertStatement->setUInt64(14, obj->fileSize());
     m_insertStatement->setUInt64(15, obj->timeStamp());
     m_insertStatement->setUInt64(16, obj->fileId());
-    m_insertStatement->setStrin(17, obj->nsHost());
+    m_insertStatement->setString(17, obj->nsHost());
     m_insertStatement->setUInt64(18, (type == OBJ_SvcClass && obj->svcClass() != 0) ? obj->svcClass()->id() : 0);
     m_insertStatement->setUInt64(19, (type == OBJ_IClient && obj->client() != 0) ? obj->client()->id() : 0);
     m_insertStatement->execute();
@@ -469,7 +469,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::updateRep(castor::IAddress* addres
     m_updateStatement->setUInt64(13, obj->fileSize());
     m_updateStatement->setUInt64(14, obj->timeStamp());
     m_updateStatement->setUInt64(15, obj->fileId());
-    m_updateStatement->setStrin(16, obj->nsHost());
+    m_updateStatement->setString(16, obj->nsHost());
     m_updateStatement->setUInt64(17, obj->id());
     m_updateStatement->execute();
     if (autocommit) {
@@ -572,7 +572,7 @@ castor::IObject* castor::db::cnv::DbMoverCloseRequestCnv::createObj(castor::IAdd
     object->setFileSize(rset->getUInt64(14));
     object->setTimeStamp(rset->getUInt64(15));
     object->setFileId(rset->getUInt64(16));
-    object->setNsHost(rset->getStrin(17));
+    object->setNsHost(rset->getString(17));
     object->setId(rset->getUInt64(18));
     delete rset;
     return object;
@@ -627,7 +627,7 @@ void castor::db::cnv::DbMoverCloseRequestCnv::updateObj(castor::IObject* obj)
     object->setFileSize(rset->getUInt64(14));
     object->setTimeStamp(rset->getUInt64(15));
     object->setFileId(rset->getUInt64(16));
-    object->setNsHost(rset->getStrin(17));
+    object->setNsHost(rset->getString(17));
     object->setId(rset->getUInt64(18));
     delete rset;
   } catch (castor::exception::SQLError e) {

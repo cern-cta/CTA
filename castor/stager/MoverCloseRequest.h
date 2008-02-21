@@ -33,7 +33,6 @@
 #include "osdep.h"
 struct C_IClient_t;
 struct C_IObject_t;
-struct C_strin_t;
 struct Cstager_MoverCloseRequest_t;
 struct Cstager_Request_t;
 struct Cstager_SvcClass_t;
@@ -315,12 +314,12 @@ int Cstager_MoverCloseRequest_setFileId(struct Cstager_MoverCloseRequest_t* inst
 /**
  * Get the value of nsHost
  */
-int Cstager_MoverCloseRequest_nsHost(struct Cstager_MoverCloseRequest_t* instance, struct C_strin_t* var);
+int Cstager_MoverCloseRequest_nsHost(struct Cstager_MoverCloseRequest_t* instance, const char** var);
 
 /**
  * Set the value of nsHost
  */
-int Cstager_MoverCloseRequest_setNsHost(struct Cstager_MoverCloseRequest_t* instance, struct C_strin_t new_var);
+int Cstager_MoverCloseRequest_setNsHost(struct Cstager_MoverCloseRequest_t* instance, const char* new_var);
 
 /**
  * Get the value of id

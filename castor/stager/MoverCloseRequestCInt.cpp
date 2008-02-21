@@ -409,16 +409,17 @@ extern "C" {
   //----------------------------------------------------------------------------
   // Cstager_MoverCloseRequest_nsHost
   //----------------------------------------------------------------------------
-  int Cstager_MoverCloseRequest_nsHost(castor::stager::MoverCloseRequest* instance, strin* var) {
-    *var = instance->nsHost();
+  int Cstager_MoverCloseRequest_nsHost(castor::stager::MoverCloseRequest* instance, const char** var) {
+    *var = instance->nsHost().c_str();
     return 0;
   }
 
   //----------------------------------------------------------------------------
   // Cstager_MoverCloseRequest_setNsHost
   //----------------------------------------------------------------------------
-  int Cstager_MoverCloseRequest_setNsHost(castor::stager::MoverCloseRequest* instance, strin new_var) {
-    instance->setNsHost(new_var);
+  int Cstager_MoverCloseRequest_setNsHost(castor::stager::MoverCloseRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
     return 0;
   }
 
