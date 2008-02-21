@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/19 14:07:54 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/21 15:23:17 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -103,11 +103,11 @@ namespace castor {
       /// The process id of the child processes
       int *m_childPid;
       
-      /// The set of pipes to the children, to be used with select
-      fd_set m_pipes;
+      /// The set of pipes to the children for writing, to be used with select
+      fd_set m_writePipes;
       
-      /// The highest numbered file descriptor
-      int m_highFd;
+      /// The highest numbered writing file descriptor
+      int m_writeHighFd;
       
       /// Is the pool able to dispatch ?
       bool m_stopped;

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2007/08/13 15:37:53 $ $Author: waldron $
+ * @(#)$RCSfile: ForkedProcessPool.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 15:23:17 $ $Author: waldron $
  *
  * A pool of forked processes
  *
@@ -47,11 +47,12 @@ static bool _childStop = false;
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::ForkedProcessPool::ForkedProcessPool(const std::string poolName,
-                                 castor::server::IThread* thread) :
-  BaseThreadPool(poolName, thread), m_highFd(0), m_stopped(true)
-{
-  FD_ZERO(&m_pipes);
+castor::server::ForkedProcessPool::ForkedProcessPool
+(const std::string poolName, castor::server::IThread* thread) :
+  BaseThreadPool(poolName, thread), 
+  m_writeHighFd(0),
+  m_stopped(true) {
+  FD_ZERO(&m_writePipes);
 }
 
 //------------------------------------------------------------------------------
@@ -92,7 +93,8 @@ bool castor::server::ForkedProcessPool::shutdown() throw()
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
-void castor::server::ForkedProcessPool::init() throw (castor::exception::Exception)
+void castor::server::ForkedProcessPool::init() 
+  throw (castor::exception::Exception)
 {
   // don't do anything if nbThreads = 0
   if(m_nbThreads == 0) {
@@ -139,10 +141,10 @@ void castor::server::ForkedProcessPool::init() throw (castor::exception::Excepti
       m_childPipe.push_back(ps);
       ps->closeRead();
       int fd = ps->getFdWrite();
-      FD_SET(fd, &m_pipes);
-      if (fd > m_highFd) {
-      	m_highFd = fd;
-      } 
+      FD_SET(fd, &m_writePipes);
+      if (fd > m_writeHighFd) {
+	m_writeHighFd = fd;
+      }
     }
   }
 }
@@ -150,7 +152,8 @@ void castor::server::ForkedProcessPool::init() throw (castor::exception::Excepti
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ForkedProcessPool::run() throw (castor::exception::Exception)
+void castor::server::ForkedProcessPool::run() 
+  throw (castor::exception::Exception)
 {
   // we already forked all processes, so not much to do here
   // open dispatch
@@ -170,23 +173,22 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
   if (m_stopped) {
     return;
   }
-  // look for an idle process
-  // this is blocking in case all children are busy
-  fd_set querypipes = m_pipes;
+  // look for an idle process this is blocking in case all children are busy
+  fd_set writepipes = m_writePipes;
   timeval timeout;
   int rc = 0;
   do {
-    querypipes = m_pipes;
+    writepipes = m_writePipes;
     timeout.tv_sec  = 1;
     timeout.tv_usec = 0;
-    rc = select(m_highFd + 1, NULL, &querypipes, NULL, &timeout);
+    rc = select(m_writeHighFd + 1, NULL, &writepipes, NULL, &timeout);
     if ((rc == 0) && (m_stopped)) {
       castor::exception::Internal e;
       e.getMessage() << "ForkedProcessPool: shutdown detected";
       throw e;
     }
   }
-  while(rc == 0 || (rc == -1 && errno == EINTR));
+  while (rc == 0 || (rc == -1 && errno == EINTR));
   if (rc < 0) {
     serrno = (errno == 0 ? SEINTERNAL : errno);
     castor::exception::Exception e(serrno);
@@ -195,8 +197,8 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
   }
 
   // get the idle child
-  for(int child = 0; child < m_nbThreads; child++) {
-    if(FD_ISSET(m_childPipe[child]->getFdWrite(), &querypipes)) {
+  for (int child = 0; child < m_nbThreads; child++) {
+    if (FD_ISSET(m_childPipe[child]->getFdWrite(), &writepipes)) {
       // dispatch the object to the child (this can throw exceptions)
       m_childPipe[child]->sendObject(obj);
       break;
