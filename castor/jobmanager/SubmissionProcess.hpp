@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/01/21 07:36:26 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/21 16:32:33 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -136,12 +136,6 @@ namespace castor {
 
       /// The reply from lsb_submit
       submitReply m_jobReply;
-
-      /**
-       * Should the job manager submit parallel jobs or normal jobs for
-       * StageDiskCopyReplication requests?
-       */
-      bool m_parallelScheduling;
 
     };
 

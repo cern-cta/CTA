@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/01/21 07:36:26 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 16:32:33 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -52,8 +52,7 @@ castor::jobmanager::SubmissionProcess::SubmissionProcess
   m_reverseUidLookup(reverseUidLookup), 
   m_sharedLSFResource(sharedLSFResource),
   m_submitRetryAttempts(DEFAULT_RETRY_ATTEMPTS),
-  m_submitRetryInterval(DEFAULT_RETRY_INTERVAL),
-  m_parallelScheduling(true) {}
+  m_submitRetryInterval(DEFAULT_RETRY_INTERVAL) {}
 
 
 //-----------------------------------------------------------------------------
@@ -96,15 +95,17 @@ void castor::jobmanager::SubmissionProcess::init()
   unsigned int attempts, interval;
   if (value) {
     attempts = std::strtol(value, 0, 10);
-    if (attempts >= 1) {
-      m_submitRetryAttempts = attempts;
-    } else {
+    if (attempts == 0) {
+      attempts = 1;
+    } else if (attempts < 0) {
+      attempts = DEFAULT_RETRY_ATTEMPTS;
 
       // "Invalid JobManager/SubmitRetryAttempts option, using default"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", m_submitRetryAttempts)};
+	{castor::dlf::Param("Default", attempts)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 40, 1, params);
-    }
+    } 
+    m_submitRetryAttempts = attempts;
   }
   
   // Extract the value of the SubmitRetryInterval from the castor.conf config
@@ -114,29 +115,16 @@ void castor::jobmanager::SubmissionProcess::init()
   value = getconfent("JobManager", "SubmitRetryInterval", 0);
   if (value) {
     interval = std::strtol(value, 0, 10);
-    if (interval >= 1) {
-      m_submitRetryInterval = interval;
-    } else {
-      
-      // "Invalid JobManager/SubmitRetryInterval option, using default"
+    if (interval < 1) {
+      interval = DEFAULT_RETRY_INTERVAL;
+
+      // "Invalid JobManager/SubmitRetryInterval option, value too small. 
+      // Using default"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("Default", m_submitRetryInterval)};
+	{castor::dlf::Param("Default", interval)};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 41, 1, params);
     }
-  }
-
-  // Should the JobManager submit StageDiskCopyReplicaRequest's as parallel
-  // jobs into LSF?
-  value = getconfent("JobManager", "EnableParallelScheduling", 0);
-  if (value) {
-    if (!strcasecmp(value, "no")) {
-      m_parallelScheduling = false;
-    } else if (strcasecmp(value, "yes")) {
-      castor::exception::Exception e(EINVAL);
-      e.getMessage() << "Invalid option for EnableParallelScheduling: " << value
-		     << " - must be 'yes' or 'no'" << std::endl;
-      throw e;
-    }
+    m_submitRetryInterval = interval;
   }
 }
 
@@ -183,11 +171,9 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
     passwd *pwd = getpwuid(request->euid());
     if (pwd == NULL) {
       errorCode = SEUSERUNKN;  // Unknown user
-    }
-    else if (strcmp(request->username().c_str(), pwd->pw_name)) {
+    } else if (strcmp(request->username().c_str(), pwd->pw_name)) {
       errorCode = ESTUSER;     // Invalid user
-    }
-    else if ((gid_t)request->egid() != pwd->pw_gid) {
+    } else if ((gid_t)request->egid() != pwd->pw_gid) {
       errorCode = ESTGROUP;    // Invalid user group
     }
   }
@@ -218,22 +204,6 @@ void castor::jobmanager::SubmissionProcess::run(void *param) {
       {castor::dlf::Param("Username", request->username()), 
        castor::dlf::Param("SvcClass", request->svcClass())};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 51, 2, params, &m_fileId);
-    terminateRequest(request, SEINTERNAL);
-    return;
-  }
-
-  // If this is a StageDiskCopyReplicaRequest the hosts that could run the job
-  // i.e the destination hosts need to be explicitally defined in order for the
-  // parallel job to work correctly. If the request has no destination hosts, 
-  // then the job cannot be scheduled!
-  if ((request->requestType() == OBJ_StageDiskCopyReplicaRequest) &&
-      (request->numAskedHosts() < 2)) {
-
-    // "Cannot submit job into LSF, target service class has no diskservers"
-    castor::dlf::Param params[] = 
-      {castor::dlf::Param("Username", request->username()),
-       castor::dlf::Param("SvcClass", request->svcClass())};
-    castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 52, 2, params, &m_fileId);
     terminateRequest(request, SEINTERNAL);
     return;
   }
@@ -336,8 +306,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // destination. Note: PARALLEL_SCHED_BY_SLOT=y must be defined in the lsf.conf
   // file for this too work correctly. If not defined, LSF will schedule based
   // on the number of processors available not slots!!
-  if ((request->requestType() == OBJ_StageDiskCopyReplicaRequest) &&
-      (m_parallelScheduling)) {
+  if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
     m_job.numProcessors    = 2;
     m_job.maxNumProcessors = 2;
   } else {
@@ -349,23 +318,13 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // depending on the type of request. For StageDiskCopyReplicaRequests we
   // specify a 'diskcopy' resource which allows us to use resource counters
   // in LSF to restrict the number of DiskCopy replication requests at the host
-  // and queue level inside LSF directly. For other requests its the service 
-  // class and protocol required for the job to run.
+  // and queue level inside LSF directly. For other requests its the protocol
+  // the job requires
   char resReq[CA_MAXLINELEN + 1];
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-    if (m_parallelScheduling) {
-      strncpy(resReq, "span[ptile=1] diskcopy", CA_MAXLINELEN + 1);
-    } else {
-      snprintf(resReq, CA_MAXLINELEN + 1, "%s:diskcopy", 
-	       request->svcClass().c_str());
-
-      // As we don't scheduling the source this becomes essentially a PUT
-      // request i.e. no forced filesystem
-      request->setRequestedFileSystems("");
-    }
+    strncpy(resReq, "span[ptile=1] diskcopy", CA_MAXLINELEN + 1);
   } else {
-    snprintf(resReq, CA_MAXLINELEN + 1, "%s:%s", request->svcClass().c_str(),
-	     request->protocol().c_str());
+    snprintf(resReq, CA_MAXLINELEN + 1, "%s", request->protocol().c_str());
   }
   resReq[CA_MAXLINELEN + 1] = '\0';
   m_job.resReq = resReq;
@@ -373,9 +332,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
   // Both GET requests and DiskCopy replication requests require a set of hosts
   // to be explicitly defined for the job to run.
   m_job.numAskedHosts = 0;
-  if (request->numAskedHosts() &&
-      !((request->requestType() == OBJ_StageDiskCopyReplicaRequest) &&
-	(!m_parallelScheduling))) {
+  if (request->numAskedHosts()) {
     m_job.askedHosts = (char **)malloc(request->numAskedHosts() * sizeof(char *));
     if (m_job.askedHosts == NULL) {
       
@@ -386,12 +343,15 @@ void castor::jobmanager::SubmissionProcess::submitJob
       castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 53, 2, params, &m_fileId); 
       terminateRequest(request, SEINTERNAL);
       return;
-    }
-  
+    }  
+    
     // Update the asked host list.
     std::istringstream iss(request->askedHosts());
     std::string host;
     while (std::getline(iss, host, ' ')) {
+      castor::dlf::Param params[] = {
+	castor::dlf::Param("Host", host)};
+      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 99, 1, params);
       m_job.askedHosts[m_job.numAskedHosts] = strdup(host.c_str());
       m_job.numAskedHosts++;
     }
@@ -405,14 +365,15 @@ void castor::jobmanager::SubmissionProcess::submitJob
   std::ostringstream oss;
   oss << "SIZE="         << request->xsize()                << ";"
       << "RFS="          << request->requestedFileSystems() << ";"
-      << "RFEATURES="    << request->svcClass()             << ":"
-                         << request->protocol()             << ";"
+      << "PROTOCOL="     << request->protocol()             << ";"
+      << "SVCCLASS="     << request->svcClass()             << ";"
       << "REQUESTID="    << request->reqId()                << ";"
       << "SUBREQUESTID=" << request->subReqId()             << ";"
-      << "DIRECTION="    << request->openFlags()            << ";"
+      << "OPENFLAGS="    << request->openFlags()            << ";"
       << "FILEID="       << request->fileId()               << ";"
       << "NSHOST="       << request->nsHost()               << ";"
-      << "TYPE="         << request->requestType();
+      << "TYPE="         << request->requestType()          << ";"
+      << "SRCSVCCLASS="  << request->sourceSvcClass();
   strncpy(extSched, oss.str().c_str(), CA_MAXLINELEN + 1);
   extSched[CA_MAXLINELEN + 1] = '\0';
   m_job.extsched = extSched;
@@ -421,10 +382,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
   char command[CA_MAXLINELEN + 1];
   std::ostringstream cmd;
   if (request->requestType() == OBJ_StageDiskCopyReplicaRequest) {
-    if (m_parallelScheduling) {
-      cmd << "lsgrun -p -m \"$LSB_HOSTS\" ";
-    }
-    cmd << "/usr/bin/diskCopyTransfer"
+    cmd << "lsgrun -p -m \"$LSB_HOSTS\" /usr/bin/diskCopyTransfer"
 	<< " -r " << request->reqId()
 	<< " -s " << request->subReqId()
 	<< " -F " << request->fileId()
@@ -440,7 +398,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
         // The subrequest is also the jobs name in LSF
 	<< request->reqId()                                       << " "
 	<< request->subReqId()                                    << " "
-	<< "\"" << resReq                                         << "\" "
+	<< "\"" << request->protocol()                            << "\" "
 	<< "\"" << request->id() << "@" << request->requestType() << "\" "
 	<< "\"" << m_sharedLSFResource                            << "\" "
       
@@ -508,8 +466,9 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	 castor::dlf::Param("BadHosts", 
            m_jobReply.badReqIndx >= m_job.numAskedHosts ? "None" : 
 	   m_job.askedHosts[m_jobReply.badReqIndx]),
+	 castor::dlf::Param("ResReq", m_job.resReq),
 	 castor::dlf::Param(m_subRequestId)};
-      castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 48, 3, params, &m_fileId);
+      castor::dlf::dlf_writep(m_requestId, DLF_LVL_ERROR, 48, 4, params, &m_fileId);
       
       // Try and give a meaningful message
       terminateRequest(request, ESTSCHEDERR);

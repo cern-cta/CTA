@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/01/09 14:16:47 $ $Author: waldron $
+ * @(#)$RCSfile: JobManagerDaemon.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 16:32:33 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -235,13 +235,15 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 29, "Failed to execute failSchedulerJob procedure" },
      { 30, "Exception caught in trying to get scheduler resources, continuing anyway" },
      { 31, "Failed to execute getSchedulerResources procedure, continuing anyway" },
-     { 32, "Job terminated, all requested filesystems are DISABLED" },
+     { 32, "Job terminated, all requested filesystems are DRAINING or DISABLED" },
      { 33, "Job terminated, source filesystem for disk2disk copy is DISABLED, restarting SubRequest" },
-     { 34, "Job terminated, diskpool/svcclass has no filesystems in DRAINING or PRODUCTION" },
+     { 34, "Job terminated, svcclass has no filesystems in PRODUCTION" },
+     { 35, "Restarting failed scheduling of a disk2disk copy replication request" },
+     { 36, "Exception caught in trying to call disk2DiskCopyCheck" },
 
      // Submission
      { 40, "Invalid JobManager/SubmitRetryAttempts option, using default" },
-     { 41, "Invalid JobManager/SubmitRetryInterval option, using default" },
+     { 41, "Invalid JobManager/SubmitRetryInterval option, value too small. Using default" },
      { 42, "Reverse UID lookup failure. User credentials are invalid, job will not be scheduled" },
      { 43, "Failed to change real and effective user id of process using setreuid, job cannot be submitted into the scheduler as user root " },
      { 44, "Failed to reset the real and effective user id back to root. Terminating further processing through this worker process" },
@@ -252,7 +254,6 @@ castor::jobmanager::JobManagerDaemon::JobManagerDaemon():
      { 49, "Exception caught trying to submit a job into LSF" },
      { 50, "Failed to execute lsfSubmit in SubmissionProcess::run" },
      { 51, "Cannot submit job into LSF, svcclass/queue name is a reserved word" },
-     { 52, "Cannot submit job into LSF, target service class has no diskservers" },
      { 53, "Memory allocation failure, job submission cancelled" },
      { 54, "Invalid diskCopySource syntax, job submission cancelled" },
 
