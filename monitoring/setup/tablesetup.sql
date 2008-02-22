@@ -369,4 +369,19 @@ GRANT INSERT ON castor_stager.monitoring_MetaRecallRunning TO castor_read;
 
 GRANT EXECUTE ON castor_stager.Proc_MetaRecallRunning TO castor_read;
 
+CREATE TABLE monitoring_OldStageInFiles (
+  runtime 		DATE NOT NULL,
+  svcclass     		VARCHAR2(2048),
+  creationtime 		NUMBER,
+  mntpoint     		VARCHAR2(2048),
+  lastknownfilename 	VARCHAR2(2048),
+  name 			VARCHAR2(2048),
+  path 			VARCHAR2(2048)
+);
 
+GRANT SELECT ON castor_stager.monitoring_OldStageInFiles TO castor_read;
+GRANT INSERT ON castor_stager.monitoring_OldStageInFiles TO castor_read;
+
+@ ../procedures/oldstageinfiles.sql
+
+GRANT EXECUTE ON castor_stager.Proc_OldStageInFiles TO castor_read;

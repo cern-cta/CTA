@@ -100,3 +100,9 @@ dbms_scheduler.drop_job(
   );
 END;
 /    
+BEGIN
+dbms_scheduler.drop_job(
+  job_name => 'task_OldStageInFiles'
+  );
+END;
+/

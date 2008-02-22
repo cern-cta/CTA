@@ -240,3 +240,17 @@ dbms_scheduler.create_job(
   comments => 'Produce list of files in stager in diskcopy state 6 -STAGEOUT- older than 10 days');
 END;
 /
+
+BEGIN
+dbms_scheduler.create_job(
+  job_name => 'task_OldStageInFiles',
+  job_type => 'PLSQL_BLOCK',
+  job_action => 'BEGIN
+        castor_stager.Proc_OldStageInFiles();
+  END;',
+  start_date => sysdate,
+  repeat_interval => 'FREQ=DAILY',
+  enabled => TRUE,
+  comments => 'Produces a list of files in the stager which are in WAITTAPERECALL and are older then 48 hours');
+END;
+/

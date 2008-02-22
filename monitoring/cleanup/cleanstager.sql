@@ -17,6 +17,7 @@ drop table monitoring_VeryOldFiles;
 drop table monitoring_MetaMigPending;
 drop table monitoring_MetaMigSelected;
 drop table monitoring_MetaRecallRunning;
+drop table monitoring_OldStageInFiles;
 
 drop procedure Proc_migstall;
 drop procedure Proc_recallstall;
@@ -34,3 +35,4 @@ drop procedure Proc_FILEMONITORING;
 drop procedure Proc_OLDFILES;
 drop procedure Proc_MetaMigPending;
 drop procedure Proc_MetaMigSelected;
+drop procedure Proc_OldStageInFiles;
