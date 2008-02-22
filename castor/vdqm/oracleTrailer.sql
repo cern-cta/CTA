@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.15 $ $Release$ $Date: 2008/02/21 14:29:29 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.16 $ $Release$ $Date: 2008/02/22 09:57:04 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -192,8 +192,10 @@ BEGIN
     TapeRequest.modificationTime ASC;
   EXCEPTION
     WHEN NO_DATA_FOUND THEN
-      tapeDriveID   := 0;
-      tapeRequestID := 0;
+      BEGIN
+        tapeDriveID   := 0;
+        tapeRequestID := 0;
+      END;
   
   -- If there is a free drive which can be allocated to a pending request
   IF tapeDriveID != 0 AND tapeRequestID != 0 THEN
