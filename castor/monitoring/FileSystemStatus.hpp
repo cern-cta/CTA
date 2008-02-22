@@ -27,19 +27,34 @@
 #ifndef MONITORING_FILESYSTEMSTATUS_HPP
 #define MONITORING_FILESYSTEMSTATUS_HPP 1
 
+// Include files
+#include <map>
 #include <iostream>
 #include "osdep.h"
 #include "castor/stager/FileSystemStatusCodes.hpp"
+#include "castor/monitoring/FileSystemRating.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
+#include "castor/sharedMemory/Allocator.hpp"
+#include "castor/monitoring/SharedMemoryString.hpp"
+#include "castor/monitoring/ClusterStatusBlockKey.hpp"
+
 
 namespace castor {
 
   namespace monitoring {
 
     /*
-     * Describes the status of one machine
+     * Describes the status of one filesystem
+     * Enforces usage of an external memory allocator for the Filesystem list
      */
-    class FileSystemStatus {
+    class FileSystemStatus :
+      public std::map<castor::monitoring::SharedMemoryString,
+                      castor::monitoring::FileSystemRating,
+                      std::less<castor::monitoring::SharedMemoryString>,
+                      castor::sharedMemory::Allocator
+                      <std::pair<castor::monitoring::SharedMemoryString,
+                                 castor::monitoring::FileSystemRating>,
+                       castor::monitoring::ClusterStatusBlockKey> > {
 
     public:
 
@@ -53,16 +68,20 @@ namespace castor {
        */
       void print(std::ostream& out,
 		 const std::string& indentation = "",
-		 const bool showDeltas = false) const
+		 const bool showAll = false) const
         throw();
 
     public:
 
       /// Accessor to space
-      u_signed64 space() const { return m_space; }
+      u_signed64 space() const {
+	return m_space;
+      }
 
       /// Accessor to space
-      void setSpace(u_signed64 space) { m_space = space; }
+      void setSpace(u_signed64 new_var) {
+	m_space = new_var;
+      }
 
       /// Accessor to minFreeSpace
       float minFreeSpace() const {
@@ -100,8 +119,8 @@ namespace castor {
       }
 
       /// Accessor to status
-      void setStatus(castor::stager::FileSystemStatusCodes status) {
-        m_status = status;
+      void setStatus(castor::stager::FileSystemStatusCodes new_var) {
+        m_status = new_var;
       }
 
       /// Accessor to adminStatus
@@ -110,89 +129,124 @@ namespace castor {
       }
 
       /// Accessor to adminStatus
-      void setAdminStatus(castor::monitoring::AdminStatusCodes adminStatus) {
-        m_adminStatus = adminStatus;
+      void setAdminStatus(castor::monitoring::AdminStatusCodes new_var) {
+        m_adminStatus = new_var;
       }
 
       /// Accessor to readRate
-      u_signed64 readRate() const { return m_readRate; }
+      u_signed64 readRate() const {
+	return m_readRate;
+      }
 
       /// Accessor to readRate
-      void setReadRate(u_signed64 readRate) { m_readRate = readRate; }
+      void setReadRate(u_signed64 new_var) {
+	m_readRate = new_var;
+      }
 
       /// Accessor to deltaReadRate
-      signed64 deltaReadRate() const { return m_deltaReadRate; }
+      signed64 deltaReadRate() const {
+	return m_deltaReadRate;
+      }
 
       /// Accessor to deltaReadRate
-      void setDeltaReadRate(signed64 deltaReadRate) {
-	m_deltaReadRate = deltaReadRate;
+      void setDeltaReadRate(signed64 new_var) {
+	m_deltaReadRate = new_var;
       }
 
       /// Accessor to writeRate
-      u_signed64 writeRate() const { return m_writeRate; }
+      u_signed64 writeRate() const {
+	return m_writeRate;
+      }
 
       /// Accessor to writeRate
-      void setWriteRate(u_signed64 writeRate) { m_writeRate = writeRate; }
+      void setWriteRate(u_signed64 new_var) {
+	m_writeRate = new_var;
+      }
 
       /// Accessor to deltaWriteRate
-      signed64 deltaWriteRate() const { return m_deltaWriteRate; }
+      signed64 deltaWriteRate() const {
+	return m_deltaWriteRate;
+      }
 
       /// Accessor to deltaWriteRate
-      void setDeltaWriteRate(signed64 deltaWriteRate) {
-	m_deltaWriteRate = deltaWriteRate;
+      void setDeltaWriteRate(signed64 new_var) {
+	m_deltaWriteRate = new_var;
       }
 
       /// Accessor to nbReadStreams
-      unsigned int nbReadStreams() const { return m_nbReadStreams; }
+      unsigned int nbReadStreams() const {
+	return m_nbReadStreams;
+      }
 
       /// Accessor to nbReadStreams
-      void setNbReadStreams(unsigned int nbReadStreams) { m_nbReadStreams = nbReadStreams; }
+      void setNbReadStreams(unsigned int new_var) {
+	m_nbReadStreams = new_var;
+      }
 
       /// Accessor to deltaNbReadStreams
-      int deltaNbReadStreams() const { return m_deltaNbReadStreams; }
+      int deltaNbReadStreams() const {
+	return m_deltaNbReadStreams;
+      }
 
       /// Accessor to deltaNbReadStreams
-      void setDeltaNbReadStreams(int deltaNbReadStreams) {
-	m_deltaNbReadStreams = deltaNbReadStreams;
+      void setDeltaNbReadStreams(int new_var) {
+	m_deltaNbReadStreams = new_var;
       }
 
       /// Accessor to nbWriteStreams
-      unsigned int nbWriteStreams() const { return m_nbWriteStreams; }
+      unsigned int nbWriteStreams() const {
+	return m_nbWriteStreams;
+      }
 
       /// Accessor to nbWriteStreams
-      void setNbWriteStreams(unsigned int nbWriteStreams) { m_nbWriteStreams = nbWriteStreams; }
+      void setNbWriteStreams(unsigned int new_var) {
+	m_nbWriteStreams = new_var;
+      }
 
       /// Accessor to deltaNbWriteStreams
-      int deltaNbWriteStreams() const { return m_deltaNbWriteStreams; }
+      int deltaNbWriteStreams() const {
+	return m_deltaNbWriteStreams;
+      }
 
       /// Accessor to deltaNbWriteStreams
-      void setDeltaNbWriteStreams(int deltaNbWriteStreams) {
-	m_deltaNbWriteStreams = deltaNbWriteStreams;
+      void setDeltaNbWriteStreams(int new_var) {
+	m_deltaNbWriteStreams = new_var;
       }
 
       /// Accessor to nbReadWriteStreams
-      unsigned int nbReadWriteStreams() const { return m_nbReadWriteStreams; }
+      unsigned int nbReadWriteStreams() const {
+	return m_nbReadWriteStreams;
+      }
 
       /// Accessor to nbReadWriteStreams
-      void setNbReadWriteStreams(unsigned int nbReadWriteStreams) {
-	m_nbReadWriteStreams = nbReadWriteStreams;
+      void setNbReadWriteStreams(unsigned int new_var) {
+	m_nbReadWriteStreams = new_var;
       }
 
       /// Accessor to deltaNbReadWriteStreams
-      int deltaNbReadWriteStreams() const { return m_deltaNbReadWriteStreams; }
+      int deltaNbReadWriteStreams() const {
+	return m_deltaNbReadWriteStreams;
+      }
 
       /// Accessor to deltaNbReadWriteStreams
-      void setDeltaNbReadWriteStreams(int deltaNbReadWriteStreams)
-      { m_deltaNbReadWriteStreams = deltaNbReadWriteStreams; }
+      void setDeltaNbReadWriteStreams(int new_var) {
+	m_deltaNbReadWriteStreams = new_var;
+      }
 
       /// Accessor to nbMigratorStreams
-      unsigned int nbMigratorStreams() const { return m_nbMigratorStreams; }
+      unsigned int nbMigratorStreams() const {
+	return m_nbMigratorStreams;
+      }
 
       /// Accessor to nbMigratorStreams
-      void setNbMigratorStreams(unsigned int nbMigratorStreams) { m_nbMigratorStreams = nbMigratorStreams; }
+      void setNbMigratorStreams(unsigned int new_var) {
+	m_nbMigratorStreams = new_var;
+      }
 
       /// Accessor to deltaNbMigratorStreams
-      int deltaNbMigratorStreams() const { return m_deltaNbMigratorStreams; }
+      int deltaNbMigratorStreams() const {
+	return m_deltaNbMigratorStreams;
+      }
 
       /// Accessor to deltaNbMigratorStreams
       void setDeltaNbMigratorStreams(int deltaNbMigratorStreams) {
@@ -200,67 +254,112 @@ namespace castor {
       }
 
       /// Accessor to nbRecallerStreams
-      unsigned int nbRecallerStreams() const { return m_nbRecallerStreams; }
+      unsigned int nbRecallerStreams() const {
+	return m_nbRecallerStreams;
+      }
 
       /// Accessor to nbRecallerStreams
-      void setNbRecallerStreams(unsigned int nbRecallerStreams) { m_nbRecallerStreams = nbRecallerStreams; }
+      void setNbRecallerStreams(unsigned int new_var) {
+	m_nbRecallerStreams = new_var;
+      }
 
       /// Accessor to deltaNbRecallerStreams
-      int deltaNbRecallerStreams() const { return m_deltaNbRecallerStreams; }
+      int deltaNbRecallerStreams() const {
+	return m_deltaNbRecallerStreams;
+      }
 
       /// Accessor to deltaNbRecallerStreams
-      void setDeltaNbRecallerStreams(int deltaNbRecallerStreams) {
-	m_deltaNbRecallerStreams = deltaNbRecallerStreams;
+      void setDeltaNbRecallerStreams(int new_var) {
+	m_deltaNbRecallerStreams = new_var;
       }
 
       /// Accessor to free space
-      u_signed64 freeSpace() const { return m_freeSpace; }
+      u_signed64 freeSpace() const {
+	return m_freeSpace;
+      }
 
       /// Accessor to free space
-      void setFreeSpace(u_signed64 freeSpace) { m_freeSpace = freeSpace; }
+      void setFreeSpace(u_signed64 freeSpace) {
+	m_freeSpace = freeSpace;
+      }
 
       /// Accessor to deltaFreeSpace
-      signed64 deltaFreeSpace() const { return m_deltaFreeSpace; }
+      signed64 deltaFreeSpace() const {
+	return m_deltaFreeSpace;
+      }
 
       /// Accessor to deltaFreeSpace
-      void setDeltaFreeSpace(signed64 deltaFreeSpace) {
-	m_deltaFreeSpace = deltaFreeSpace;
+      void setDeltaFreeSpace(signed64 new_var) {
+	m_deltaFreeSpace = new_var;
       }
 
-      /// Accessor to lastStateupdate
-      void setLastStateUpdate (u_signed64 lastStateUpdate) {
-        m_lastStateUpdate = lastStateUpdate;
+      /// Accessor to lastStateUpdate
+      void setLastStateUpdate(u_signed64 new_var) {
+        m_lastStateUpdate = new_var;
       }
 
-      /// Accessor to lastStateupdate
-      u_signed64 lastStateUpdate () { return m_lastStateUpdate; }
-
-      /// Accessor to lastMetricsupdate
-      void setLastMetricsUpdate (u_signed64 lastMetricsUpdate) {
-        m_lastMetricsUpdate = lastMetricsUpdate;
+      /// Accessor to lastStateUpdate
+      u_signed64 lastStateUpdate() {
+	return m_lastStateUpdate;
       }
 
-      /// Accessor to lastMetricsupdate
-      u_signed64 lastMetricsUpdate () { return m_lastMetricsUpdate; }
+      /// Accessor to lastMetricsUpdate
+      void setLastMetricsUpdate(u_signed64 new_var) {
+        m_lastMetricsUpdate = new_var;
+      }
+
+      /// Accessor to lastMetricsUpdate
+      u_signed64 lastMetricsUpdate() {
+	return m_lastMetricsUpdate;
+      }
+
+      /// Accessor to lastRatingUpdate
+      void setLastRatingUpdate(u_signed64 new_var) {
+	m_lastRatingUpdate = new_var;
+      }
+
+      /// Accessor to lastRatingUpdate
+      u_signed64 lastRatingUpdate() const {
+	return m_lastRatingUpdate;
+      }      
+
+      /// Accessor to lastRatingError
+      void setLastRatingError(u_signed64 new_var) {
+	m_lastRatingError = new_var;
+      }
+
+      /// Accessor to lastRatingError
+      u_signed64 lastRatingError() const {
+	return m_lastRatingError;
+      } 
 
     private:
 
-      /// total space
+      /// Total space
       u_signed64 m_space;
 
-      /// The fraction of free space under which the garbage collector will run. This number must be < 1
+      /**
+       * The fraction of free space under which the garbage collector will
+       * run. This number must be < 1
+       */
       float m_minFreeSpace;
 
-      /// The fraction of free space that the garbage collector is targeting when liberating space. This number must be < 1
+      /**
+       * The fraction of free space that the garbage collector is targeting 
+       * when liberating space. This number must be < 1
+       */
       float m_maxFreeSpace;
 
-      /// The fraction of free space under which we stop scheduling write jobs on the filesystem. This number must be < 1
+      /**
+       * The fraction of free space under which we stop scheduling write jobs
+       * on the filesystem. This number must be < 1
+       */
       float m_minAllowedFreeSpace;
 
-      /// status
+      /// Status
       castor::stager::FileSystemStatusCodes m_status;
 
-      /// admin status
+      /// Admin status
       castor::monitoring::AdminStatusCodes m_adminStatus;
 
       /// The number of bytes read per second
@@ -305,22 +404,28 @@ namespace castor {
       /// Delta on the number of recaller streams
       int m_deltaNbRecallerStreams;
 
-      /// available space
+      /// Available space
       u_signed64 m_freeSpace;
 
       /// Delta on the available space
       signed64 m_deltaFreeSpace;
 
-      /// Last state update (second since EPOCH)
+      /// Last state update (seconds since EPOCH)
       u_signed64 m_lastStateUpdate;
 
-      /// Last metrics update (second since EPOCH)
+      /// Last metrics update (seconds since EPOCH)
       u_signed64 m_lastMetricsUpdate;
 
-    }; // end FileSystemStatus
+      /// Last rating update (seconds since EPOCH)
+      u_signed64 m_lastRatingUpdate;
 
-  } // end monitoring
+      /// The last time a rating error occured (seconds since EPOCH)
+      u_signed64 m_lastRatingError;
 
-} // end castor
+    }; /* end of class FileSystemStatus */
+
+  } /* end of namespace monitoring */
+
+} /* end of namespace castor */
 
 #endif // MONITORING_FILESYSTEMSTATUS_HPP

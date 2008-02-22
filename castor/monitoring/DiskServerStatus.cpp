@@ -24,34 +24,49 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
+// Include files
 #include "castor/monitoring/DiskServerStatus.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "u64subr.h"
 #include <iostream>
 #include <iomanip>
 
-// -----------------------------------------------------------------------
-// Constructor
-// -----------------------------------------------------------------------
-castor::monitoring::DiskServerStatus::DiskServerStatus() :
-  m_ram(0), m_memory(0),
-  m_swap(0), m_status(castor::stager::DISKSERVER_DISABLED),
-  m_adminStatus(ADMIN_FORCE), m_freeRam(0),
-  m_freeMemory(0), m_freeSwap(0),
-  m_lastStateUpdate(0), m_lastMetricsUpdate(0),
-  m_readRate(0), m_deltaReadRate(0),
-  m_writeRate(0), m_deltaWriteRate(0),
-  m_nbReadStreams(0), m_deltaNbReadStreams(0),
-  m_nbWriteStreams(0), m_deltaNbWriteStreams(0),
-  m_nbReadWriteStreams(0), m_deltaNbReadWriteStreams(0),
-  m_nbMigratorStreams(0), m_deltaNbMigratorStreams(0),
-  m_nbRecallerStreams(0), m_deltaNbRecallerStreams(0) { }
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Constructor
+//-----------------------------------------------------------------------------
+castor::monitoring::DiskServerStatus::DiskServerStatus() :
+  m_ram(0),
+  m_memory(0),
+  m_swap(0),
+  m_status(castor::stager::DISKSERVER_DISABLED),
+  m_adminStatus(ADMIN_FORCE),
+  m_freeRam(0),
+  m_freeMemory(0),
+  m_freeSwap(0),
+  m_lastStateUpdate(0),
+  m_lastMetricsUpdate(0),
+  m_readRate(0),
+  m_deltaReadRate(0),
+  m_writeRate(0),
+  m_deltaWriteRate(0),
+  m_nbReadStreams(0),
+  m_deltaNbReadStreams(0),
+  m_nbWriteStreams(0),
+  m_deltaNbWriteStreams(0),
+  m_nbReadWriteStreams(0),
+  m_deltaNbReadWriteStreams(0),
+  m_nbMigratorStreams(0),
+  m_deltaNbMigratorStreams(0),
+  m_nbRecallerStreams(0),
+  m_deltaNbRecallerStreams(0) { }
+
+
+//-----------------------------------------------------------------------------
 // print
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 void castor::monitoring::DiskServerStatus::print
-(std::ostream& out, const std::string& indentation, const bool showDeltas) const
+(std::ostream& out, const std::string& indentation, const bool showAll) const
   throw() {
   char ramBuf[21];
   char memoryBuf[21];
@@ -66,7 +81,7 @@ void castor::monitoring::DiskServerStatus::print
   u64tostru(m_freeMemory, freeMemoryBuf, 0);
   u64tostru(m_freeSwap, freeSwapBuf, 0);
 
-  if (showDeltas) {
+  if (showAll) {
     out << indentation << std::setw(24)
 	<< "ram" << ": " << ramBuf << "\n"
 	<< indentation << std::setw(24)
@@ -157,7 +172,7 @@ void castor::monitoring::DiskServerStatus::print
 	<< "nbRecallerStreams" << ": " << m_nbRecallerStreams
 	<< std::endl;
   }
-    if (0 == size()) {
+  if (0 == size()) {
     out << indentation << "No filesystems registered"
         << std::endl;
   } else {
@@ -165,7 +180,7 @@ void castor::monitoring::DiskServerStatus::print
     for (const_iterator it = begin(); it != end(); it++) {
       out << fsIndent << std::setw(24)
           << "mountPoint" << ": " << it->first << "\n";
-      it->second.print(out, fsIndent, showDeltas);
+      it->second.print(out, fsIndent, showAll);
     }
   }
 }

@@ -27,6 +27,7 @@
 #ifndef MONITORING_DISKSERVERSTATUS_HPP
 #define MONITORING_DISKSERVERSTATUS_HPP 1
 
+// Include files
 #include "castor/monitoring/FileSystemStatus.hpp"
 #include "castor/stager/DiskServerStatusCode.hpp"
 #include "castor/monitoring/AdminStatusCodes.hpp"
@@ -34,6 +35,7 @@
 #include "castor/monitoring/SharedMemoryString.hpp"
 #include "castor/monitoring/ClusterStatusBlockKey.hpp"
 #include <map>
+
 
 namespace castor {
 
@@ -64,40 +66,54 @@ namespace castor {
        */
       void print(std::ostream& out,
 		 const std::string& indentation = "",
-		 const bool showDeltas = true) const
+		 const bool showAll = true) const
         throw();
 
     public:
 
       /// Accessor to ram
-      void setRam(u_signed64 ram) { m_ram = ram; }
+      void setRam(u_signed64 new_var) {
+	m_ram = new_var;
+      }
 
       /// Accessor to ram
-      u_signed64 ram() const { return m_ram; }
+      u_signed64 ram() const {
+	return m_ram;
+      }
 
       /// Accessor to memory
-      void setMemory(u_signed64 memory) { m_memory = memory; }
+      void setMemory(u_signed64 new_var) {
+	m_memory = new_var;
+      }
 
       /// Accessor to memory
-      u_signed64 memory() const { return m_memory; }
+      u_signed64 memory() const {
+	return m_memory;
+      }
 
       /// Accessor to swap
-      void setSwap(u_signed64 swap) { m_swap = swap; }
+      void setSwap(u_signed64 new_var) {
+	m_swap = new_var;
+      }
 
       /// Accessor to swap
-      u_signed64 swap() const { return m_swap; }
-
-      /// Accessor to status
-      void setStatus(castor::stager::DiskServerStatusCode status) {
-        m_status = status;
+      u_signed64 swap() const {
+	return m_swap;
       }
 
       /// Accessor to status
-      castor::stager::DiskServerStatusCode status() const { return m_status; }
+      void setStatus(castor::stager::DiskServerStatusCode new_var) {
+        m_status = new_var;
+      }
+
+      /// Accessor to status
+      castor::stager::DiskServerStatusCode status() const {
+	return m_status;
+      }
 
       /// Accessor to adminStatus
-      void setAdminStatus(castor::monitoring::AdminStatusCodes adminStatus) {
-        m_adminStatus = adminStatus;
+      void setAdminStatus(castor::monitoring::AdminStatusCodes new_var) {
+        m_adminStatus = new_var;
       }
 
       /// Accessor to adminStatus
@@ -106,136 +122,193 @@ namespace castor {
       }
 
       /// Accessor to freeRam
-      void setFreeRam(u_signed64 freeRam) { m_freeRam = freeRam; }
+      void setFreeRam(u_signed64 new_var) {
+	m_freeRam = new_var;
+      }
 
       /// Accessor to freeRam
-      u_signed64 freeRam()const { return m_freeRam; }
+      u_signed64 freeRam() const {
+	return m_freeRam;
+      }
 
       /// Accessor to freeMemory
-      void setFreeMemory(u_signed64 freeMemory) { m_freeMemory = freeMemory; }
+      void setFreeMemory(u_signed64 new_var) {
+	m_freeMemory = new_var;
+      }
 
       /// Accessor to freeMemory
-      u_signed64 freeMemory()const { return m_freeMemory; }
+      u_signed64 freeMemory() const {
+	return m_freeMemory;
+      }
 
       /// Accessor to freeSwap
-      void setFreeSwap(u_signed64 freeSwap) { m_freeSwap = freeSwap; }
+      void setFreeSwap(u_signed64 new_var) {
+	m_freeSwap = new_var;
+      }
 
       /// Accessor to freeSwap
-      u_signed64 freeSwap()const { return m_freeSwap; }
-
-      /// Accessor to lastStateUpdate
-      void setLastStateUpdate(u_signed64 lastStateUpdate) {
-        m_lastStateUpdate = lastStateUpdate;
+      u_signed64 freeSwap() const {
+	return m_freeSwap;
       }
 
       /// Accessor to lastStateUpdate
-      u_signed64 lastStateUpdate() const { return m_lastStateUpdate; }
+      void setLastStateUpdate(u_signed64 new_var) {
+        m_lastStateUpdate = new_var;
+      }
 
-      /// Accessor to lastMetricsUpdate
-      void setLastMetricsUpdate(u_signed64 lastMetricsUpdate) {
-        m_lastMetricsUpdate = lastMetricsUpdate;
+      /// Accessor to lastStateUpdate
+      u_signed64 lastStateUpdate() const {
+	return m_lastStateUpdate;
       }
 
       /// Accessor to lastMetricsUpdate
-      u_signed64 lastMetricsUpdate() const { return m_lastMetricsUpdate; }
+      void setLastMetricsUpdate(u_signed64 new_var) {
+        m_lastMetricsUpdate = new_var;
+      }
+
+      /// Accessor to lastMetricsUpdate
+      u_signed64 lastMetricsUpdate() const {
+	return m_lastMetricsUpdate;
+      }
 
       /// Accessor to readRate
-      u_signed64 readRate() const { return m_readRate; }
+      u_signed64 readRate() const {
+	return m_readRate;
+      }
 
       /// Accessor to readRate
-      void setReadRate(u_signed64 readRate) { m_readRate = readRate; }
+      void setReadRate(u_signed64 new_var) {
+	m_readRate = new_var;
+      }
 
       /// Accessor to deltaReadRate
-      signed64 deltaReadRate() const { return m_deltaReadRate; }
+      signed64 deltaReadRate() const {
+	return m_deltaReadRate;
+      }
 
       /// Accessor to deltaReadRate
-      void setDeltaReadRate(signed64 deltaReadRate) {
-	m_deltaReadRate = deltaReadRate;
+      void setDeltaReadRate(signed64 new_var) {
+	m_deltaReadRate = new_var;
       }
 
       /// Accessor to writeRate
-      u_signed64 writeRate() const { return m_writeRate; }
+      u_signed64 writeRate() const {
+	return m_writeRate;
+      }
 
       /// Accessor to writeRate
-      void setWriteRate(u_signed64 writeRate) { m_writeRate = writeRate; }
+      void setWriteRate(u_signed64 new_var) {
+	m_writeRate = new_var;
+      }
 
       /// Accessor to deltaWriteRate
-      signed64 deltaWriteRate() const { return m_deltaWriteRate; }
+      signed64 deltaWriteRate() const {
+	return m_deltaWriteRate;
+      }
 
       /// Accessor to deltaWriteRate
-      void setDeltaWriteRate(signed64 deltaWriteRate) {
-	m_deltaWriteRate = deltaWriteRate;
+      void setDeltaWriteRate(signed64 new_var) {
+	m_deltaWriteRate = new_var;
       }
 
       /// Accessor to nbReadStreams
-      unsigned int nbReadStreams() const { return m_nbReadStreams; }
+      unsigned int nbReadStreams() const {
+	return m_nbReadStreams;
+      }
 
       /// Accessor to nbReadStreams
-      void setNbReadStreams(unsigned int nbReadStreams) { m_nbReadStreams = nbReadStreams; }
+      void setNbReadStreams(unsigned int new_var) {
+	m_nbReadStreams = new_var;
+      }
 
       /// Accessor to deltaNbReadStreams
-      int deltaNbReadStreams() const { return m_deltaNbReadStreams; }
+      int deltaNbReadStreams() const {
+	return m_deltaNbReadStreams;
+      }
 
       /// Accessor to deltaNbReadStreams
-      void setDeltaNbReadStreams(int deltaNbReadStreams) {
-	m_deltaNbReadStreams = deltaNbReadStreams;
+      void setDeltaNbReadStreams(int new_var) {
+	m_deltaNbReadStreams = new_var;
       }
 
       /// Accessor to nbWriteStreams
-      unsigned int nbWriteStreams() const { return m_nbWriteStreams; }
+      unsigned int nbWriteStreams() const {
+	return m_nbWriteStreams;
+      }
 
       /// Accessor to nbWriteStreams
-      void setNbWriteStreams(unsigned int nbWriteStreams) { m_nbWriteStreams = nbWriteStreams; }
+      void setNbWriteStreams(unsigned int new_var) {
+	m_nbWriteStreams = new_var;
+      }
 
       /// Accessor to deltaNbWriteStreams
-      int deltaNbWriteStreams() const { return m_deltaNbWriteStreams; }
+      int deltaNbWriteStreams() const {
+	return m_deltaNbWriteStreams;
+      }
 
       /// Accessor to deltaNbWriteStreams
-      void setDeltaNbWriteStreams(int deltaNbWriteStreams) {
-	m_deltaNbWriteStreams = deltaNbWriteStreams;
+      void setDeltaNbWriteStreams(int new_var) {
+	m_deltaNbWriteStreams = new_var;
       }
 
       /// Accessor to nbReadWriteStreams
-      unsigned int nbReadWriteStreams() const { return m_nbReadWriteStreams; }
+      unsigned int nbReadWriteStreams() const {
+	return m_nbReadWriteStreams;
+      }
 
       /// Accessor to nbReadWriteStreams
-      void setNbReadWriteStreams(unsigned int nbReadWriteStreams) {
-	m_nbReadWriteStreams = nbReadWriteStreams;
+      void setNbReadWriteStreams(unsigned int new_var) {
+	m_nbReadWriteStreams = new_var;
       }
 
       /// Accessor to deltaNbReadWriteStreams
-      int deltaNbReadWriteStreams() const { return m_deltaNbReadWriteStreams; }
+      int deltaNbReadWriteStreams() const {
+	return m_deltaNbReadWriteStreams;
+      }
 
       /// Accessor to deltaNbReadWriteStreams
-      void setDeltaNbReadWriteStreams(int deltaNbReadWriteStreams)
-      { m_deltaNbReadWriteStreams = deltaNbReadWriteStreams; }
+      void setDeltaNbReadWriteStreams(int new_var) {
+	m_deltaNbReadWriteStreams = new_var;
+      }
 
       /// Accessor to nbMigratorStreams
-      unsigned int nbMigratorStreams() const { return m_nbMigratorStreams; }
+      unsigned int nbMigratorStreams() const {
+	return m_nbMigratorStreams;
+      }
 
       /// Accessor to nbMigratorStreams
-      void setNbMigratorStreams(unsigned int nbMigratorStreams) { m_nbMigratorStreams = nbMigratorStreams; }
+      void setNbMigratorStreams(unsigned int new_var) {
+	m_nbMigratorStreams = new_var;
+      }
 
       /// Accessor to deltaNbMigratorStreams
-      int deltaNbMigratorStreams() const { return m_deltaNbMigratorStreams; }
+      int deltaNbMigratorStreams() const {
+	return m_deltaNbMigratorStreams;
+      }
 
       /// Accessor to deltaNbMigratorStreams
-      void setDeltaNbMigratorStreams(int deltaNbMigratorStreams) {
-	m_deltaNbMigratorStreams = deltaNbMigratorStreams;
+      void setDeltaNbMigratorStreams(int new_var) {
+	m_deltaNbMigratorStreams = new_var;
       }
 
       /// Accessor to nbRecallerStreams
-      unsigned int nbRecallerStreams() const { return m_nbRecallerStreams; }
+      unsigned int nbRecallerStreams() const {
+	return m_nbRecallerStreams;
+      }
 
       /// Accessor to nbRecallerStreams
-      void setNbRecallerStreams(unsigned int nbRecallerStreams) { m_nbRecallerStreams = nbRecallerStreams; }
+      void setNbRecallerStreams(unsigned int new_var) {
+	m_nbRecallerStreams = new_var;
+      }
 
       /// Accessor to deltaNbRecallerStreams
-      int deltaNbRecallerStreams() const { return m_deltaNbRecallerStreams; }
+      int deltaNbRecallerStreams() const {
+	return m_deltaNbRecallerStreams;
+      }
 
       /// Accessor to deltaNbRecallerStreams
-      void setDeltaNbRecallerStreams(int deltaNbRecallerStreams) {
-	m_deltaNbRecallerStreams = deltaNbRecallerStreams;
+      void setDeltaNbRecallerStreams(int new_var) {
+	m_deltaNbRecallerStreams = new_var;
       }
 
     private:
@@ -249,10 +322,10 @@ namespace castor {
       /// Total swap (in bytes)
       u_signed64 m_swap;
 
-      /// status
+      /// Status
       castor::stager::DiskServerStatusCode m_status;
 
-      /// admin status
+      /// Admin status
       castor::monitoring::AdminStatusCodes m_adminStatus;
 
       /// Free ram (in bytes)
@@ -312,10 +385,10 @@ namespace castor {
       /// Delta on the number of recaller streams, aggregated over all filesystems
       int m_deltaNbRecallerStreams;
 
-    }; // end DiskServerStatus
+    }; /* end of class DiskServerStatus */
 
-  } // end monitoring
+  } /* end of namespace monitoring */
 
-} // end castor
+} /* end of namespace castor */
 
 #endif // MONITORING_DISKSERVERSTATUS_HPP

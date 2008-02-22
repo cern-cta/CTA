@@ -80,8 +80,8 @@ void castor::monitoring::ClusterStatus::print
       out << std::setw(20);
       out << "name" << ": ";
       out << it->first << "\n";
-      bool showDeltas = true;
-      it->second.print(out, dsIndent, showDeltas);
+      bool showAll = true;
+      it->second.print(out, dsIndent, showAll);
     }
   }
 }

@@ -34,7 +34,7 @@
 
 void help(std::string programName) {
   std::cout << "Usage: " << programName
-            << " [-h,--help] [-n,--node diskServerName] [-d,--deltas]"
+            << " [-h,--help] [-n,--node diskServerName] [-a,--all] [-d,--deleted]"
             << std::endl;
 }
 
@@ -43,29 +43,29 @@ int main(int argc, char** argv) {
     // Parse command line
     Coptind = 1; /* Required */
     Coptions_t longopts[] = {
-      { "help",   NO_ARGUMENT,       NULL, 'h' },
-      { "all",    NO_ARGUMENT,       NULL, 'a' },
-      { "node",   REQUIRED_ARGUMENT, NULL, 'n' },
-      { "deltas", NO_ARGUMENT,       NULL, 'd' },
+      { "help", NO_ARGUMENT, NULL, 'h' },
+      { "all",  NO_ARGUMENT, NULL, 'a' },
+      { "node", REQUIRED_ARGUMENT, NULL, 'n' },
+      { "deleted", NO_ARGUMENT, NULL, 'd' },
       { 0, 0, 0, 0}
     };
     char c;
     char* node = 0;
-    int all = 0;
-    bool showDeltas = false;
+    bool showAll = false;
+    bool showDeleted = false;
     while ((c = Cgetopt_long(argc, argv, "han:d", longopts, NULL)) != -1) {
       switch (c) {
       case 'n':
         node = strdup(Coptarg);
         break;
       case 'a':
-	all = 1;
+	showAll = true;
 	break;
       case 'h':
         help(argv[0]);
         exit(0);
       case 'd':
-	showDeltas = true;
+	showDeleted = true;
 	break;
       default:
 	std::cerr << "Unknown option \n";
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
       exit(-1);
     }
     // Get shared memory object
-    bool create = false;
+    bool create = true;
     castor::monitoring::ClusterStatus* cs =
       castor::monitoring::ClusterStatus::getClusterStatus(create);
     if(cs == 0) {
@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 
     // Handle case of empty list
     if (cs->begin() == cs->end()) {
-      std::cout << "No diskserver registered" << std::endl;
+      std::cout << "No diskservers registered" << std::endl;
       return 0;
     }
 
@@ -107,9 +107,9 @@ int main(int argc, char** argv) {
 	}
       }
 
-      // Don't display all information if diskserver is deleted
+      // Only display deleted diskservers if instructed too
       if (it->second.adminStatus() == castor::monitoring::ADMIN_DELETED) {
-	if (all) {
+	if (showDeleted) {
 	  std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";
 	  std::cout << dsIndent << std::setw(24)
 		    << "status" << ": "
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
 	}
       } else {
 	std::cout << dsIndent << std::setw(24) << "name" << ": " << it->first << "\n";
-	it->second.print(std::cout, dsIndent, showDeltas);
+	it->second.print(std::cout, dsIndent, showAll);
       }
       found++;
     }
