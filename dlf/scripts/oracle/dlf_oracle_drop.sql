@@ -41,8 +41,7 @@ BEGIN
   -- Drop tablespaces
   FOR rec IN (SELECT tablespace_name
                 FROM user_tablespaces
-               WHERE tablespace_name LIKE CONCAT('DLF_%_', v_current_user)
-                 AND tablespace_name NOT IN ('DLF_DATA', 'DLF_IDX', 'DLF_INDX'))
+               WHERE tablespace_name LIKE CONCAT('DLF_%_', v_current_user))
   LOOP
     EXECUTE IMMEDIATE 'ALTER TABLESPACE '||rec.tablespace_name||' OFFLINE';
     EXECUTE IMMEDIATE 'DROP TABLESPACE '||rec.tablespace_name||'
