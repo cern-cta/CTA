@@ -1,0 +1,92 @@
+#
+#                      castor/scheduler/Imakefile
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: Imakefile,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/22 08:57:52 $ $Author: waldron $
+#
+# Makefile for the CASTOR2 LSF External Plugin
+#
+# @author Dennis Waldron
+
+#include <Project.tmpl>
+
+#if !defined(_WIN32)
+#if linux
+DEBUG = -g -O0
+#else
+DEBUG = -g
+#endif
+#endif
+
+#ifdef _WIN32
+EXTSHARED = dll
+#else
+EXTSHARED = so
+#endif
+
+CASTOR_HOME = ../..
+INCLUDES = -I FileName(FileName(..,..),h) -I FileName(..,..)
+CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
+
+LIBS = -lshift -lbat -llsf -llsbstream -lcastorMonitor -lm -L../../shlib -Wl,-rpath-link,../../shlib
+DEPLIB = DepSharedLibraryTargetName(FileName(..,shlib),shift) \
+         DepSharedLibraryTargetName(FileName(..,shlib),castorMonitor)
+LIBDIR = InstallLibDir
+
+SCHMOD_SHMEM_SRCS = schmod_shmem.cpp HandlerData.cpp
+SCHMOD_SHMEM_OBJS = $(SCHMOD_SHMEM_SRC:.pp=.Osuf)
+
+SCHMOD_PYTHON_SRCS = schmod_python.cpp HandlerData.cpp Python.cpp
+SCHMOD_PYTHON_OBJS = $(SCHMOD_PYTHON_SRC:.pp=.Osuf)
+
+all: schmod_shmem.$(EXTSHARED) schmod_python.$(EXTSHARED)
+
+schmod_shmem.$(EXTSHARED): $(SCHMOD_SHMEM_OBJS)
+	$(CXX) -shared $(CPPFLAGS) -o schmod_shmem.$(EXTSHARED) $(SCHMOD_SHMEM_SRCS) $(LIBS)
+
+schmod_python.$(EXTSHARED): $(SCHMOD_PYTHON_OBJS)
+	$(CXX) -shared $(CPPFLAGS) -o schmod_python.$(EXTSHARED) $(SCHMOD_PYTHON_SRCS) $(LIBS) $(PYTHONLIBS) $(PYTHONINC)
+
+Makefiles:
+
+#if defined(_WIN32)
+depend:
+	@echo Not supported on this platform
+#else
+depend:
+	makedepend $(INCLUDES) $(SCHMOD_SHMEM_SRCS) $(SCHMOD_PYTHON_SRCS) *.cpp 2> /dev/null
+#endif
+
+install: FileName($(LIBDIR),ProgramTargetName(schmod_shmem.$(EXTSHARED))) FileName($(LIBDIR),ProgramTargetName(schmod_python.$(EXTSHARED)))
+
+export: install
+
+exportman:
+
+exportshr:
+InstallTarget(schmod_shmem.$(EXTSHARED),root,bin,0755,$(LIBDIR))
+InstallTarget(schmod_python.$(EXTSHARED),root,bin,0755,$(LIBDIR))
+
+clean:
+	-@RemoveFiles(FilesToClean $(SCHMOD_SHMEM_OBJS) $(SCHMOD_PYTHON_OBJS))
+
+clobber: clean
+	-@RemoveFiles(ProgramTargetName(schmod_shmem.$(EXTSHARED)))
+	-@RemoveFiles(ProgramTargetName(schmod_python.$(EXTSHARED)))
+
+FORCE:
