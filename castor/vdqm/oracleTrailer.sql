@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.16 $ $Release$ $Date: 2008/02/22 09:57:04 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.17 $ $Release$ $Date: 2008/02/22 12:53:01 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -35,6 +35,139 @@ CREATE OR REPLACE PACKAGE castorVdqm AS
 	TYPE TapeDrive_Cur IS REF CURSOR RETURN TapeDrive%ROWTYPE;
 	TYPE TapeRequest_Cur IS REF CURSOR RETURN TapeRequest%ROWTYPE;
 END castorVdqm;
+
+
+/**
+ * This view shows candidate "free tape drive to pending tape request"
+ * allocations.
+ */
+CREATE OR REPLACE VIEW CANDIDATEDRIVEALLOCATIONS_VIEW
+AS SELECT
+  TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID
+FROM
+  TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn,
+  DeviceGroupName tapeRequestDgn
+WHERE
+      TapeDrive.status=0 -- UNIT_UP
+  AND TapeDrive.runningTapeReq=0
+  AND TapeDrive.tapeServer=TapeServer.id
+  AND NOT EXISTS (
+    -- Exclude a request if its tape is already in a drive, such a request
+    -- will be considered upon the release of the drive in question
+    -- (cf. TapeDriveStatusHandler)
+    SELECT
+      'x'
+    FROM
+      TapeDrive TapeDrive2
+    WHERE
+      TapeDrive2.tape = TapeRequest.tape
+  )
+  AND TapeServer.actingMode=0 -- ACTIVE
+  AND TapeRequest.tapeDrive IS NULL
+  AND (
+       TapeRequest.requestedSrv=TapeDrive.tapeServer
+    OR TapeRequest.requestedSrv=0
+  )
+  AND TapeDrive.deviceGroupName=TapeRequest.deviceGroupName
+ORDER BY
+  TapeRequest.modificationTime ASC;
+
+
+/**
+ * View used for generating the list of requests when replying to the
+ * showqueues command
+ */
+create or replace view
+  TAPEREQUESTSSHOWQUEUES_VIEW
+as select
+  TAPEREQUEST.ID,
+  TAPEDRIVE.DRIVENAME,
+  TAPEDRIVE.ID as TAPEDRIVEID,
+  TAPEREQUEST.PRIORITY,
+  CLIENTIDENTIFICATION.PORT as CLIENTPORT,
+  CLIENTIDENTIFICATION.EUID as CLIENTEUID,
+  CLIENTIDENTIFICATION.EGID as CLIENTEGID,
+  TAPEACCESSSPECIFICATION.ACCESSMODE,
+  TAPEREQUEST.MODIFICATIONTIME,
+  CLIENTIDENTIFICATION.MACHINE AS CLIENTMACHINE,
+  VDQMTAPE.VID,
+  TAPESERVER.SERVERNAME as TAPESERVER,
+  DEVICEGROUPNAME.DGNAME,
+  CLIENTIDENTIFICATION.USERNAME as CLIENTUSERNAME
+from
+  TAPEREQUEST
+left outer join
+  TAPEDRIVE
+on
+  TAPEREQUEST.TAPEDRIVE = TAPEDRIVE.ID
+left outer join
+  CLIENTIDENTIFICATION
+on
+  TAPEREQUEST.CLIENT = CLIENTIDENTIFICATION.ID
+inner join
+  TAPEACCESSSPECIFICATION
+on
+  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
+left outer join
+  VDQMTAPE
+on
+  TAPEREQUEST.TAPE = VDQMTAPE.ID
+left outer join
+  TAPESERVER
+on
+  TAPEREQUEST.REQUESTEDSRV = TAPESERVER.ID
+left outer join
+  DEVICEGROUPNAME
+on
+  TAPEREQUEST.DEVICEGROUPNAME = DEVICEGROUPNAME.ID;
+
+
+/**
+ * View used for generating the list of drives when replying to the showqueues
+ * command
+ */
+create or replace view
+  TAPEDRIVESHOWQUEUES_VIEW
+as with
+  TAPEDRIVE2MODEL
+as
+(
+  select
+    TAPEDRIVE2TAPEDRIVECOMP.PARENT as TAPEDRIVE,
+    max(TAPEDRIVECOMPATIBILITY.TAPEDRIVEMODEL) as DRIVEMODEL
+  from
+    TAPEDRIVE2TAPEDRIVECOMP
+  inner join
+    TAPEDRIVECOMPATIBILITY
+  on
+    TAPEDRIVE2TAPEDRIVECOMP.CHILD = TAPEDRIVECOMPATIBILITY.ID
+  group by
+    parent
+)
+select
+  TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
+  TAPEDRIVE.MODIFICATIONTIME, TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
+  TAPEDRIVE.ERRCOUNT, TAPEDRIVE.TRANSFERREDMB, TAPEDRIVE.TAPEACCESSMODE,
+  TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
+  DEVICEGROUPNAME.DGNAME, TAPEDRIVE2MODEL.DRIVEMODEL
+from
+  TAPEDRIVE
+left outer join
+  TAPESERVER
+on
+  TAPEDRIVE.TAPESERVER = TAPESERVER.ID
+left outer join
+  VDQMTAPE
+on
+  TAPEDRIVE.TAPE = VDQMTAPE.ID
+left outer join
+  DEVICEGROUPNAME
+on
+  TAPEDRIVE.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
+inner join
+  TAPEDRIVE2MODEL
+on
+  TAPEDRIVE.ID = TAPEDRIVE2MODEL.TAPEDRIVE;
 
 
 /**
@@ -150,73 +283,56 @@ END;
 */
 
 
+/**
+ * PL/SQL procedure which tries to allocate a free tape drive to a pending tape
+ * request.
+ *
+ * This method returns the ID of the corresponding tape request if the method
+ * successfully allocates a drive, else 0.
+ */
 CREATE OR REPLACE
 PROCEDURE allocateDrive
  (ret OUT NUMBER) AS
- tapeDriveID   NUMBER := 0;
- tapeRequestID NUMBER := 0;
+ tapeDriveID_var   NUMBER := 0;
+ tapeRequestID_var NUMBER := 0;
 BEGIN
   ret := 0;
 
   SELECT
-    TapeDrive.id, TapeRequest.id
+    tapeDriveID,
+    tapeRequestID
   INTO
-    tapeDriveID, tapeRequestID
+    tapeDriveID_var, tapeRequestID_var
   FROM
-    TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn,
-    DeviceGroupName tapeRequestDgn
+    CANDIDATEDRIVEALLOCATIONS_VIEW
   WHERE
-        TapeDrive.status=0 -- UNIT_UP
-    AND TapeDrive.runningTapeReq=0
-    AND TapeDrive.tapeServer=TapeServer.id
-    AND NOT EXISTS (
-      -- Exclude a request if its tape is already in a drive, such a request
-      -- will be considered upon the release of the drive in question
-      -- (cf. TapeDriveStatusHandler)
-      SELECT
-        'x'
-      FROM
-        TapeDrive TapeDrive2
-      WHERE
-        TapeDrive2.tape = TapeRequest.tape
-    )
-    AND TapeServer.actingMode=0 -- ACTIVE
-    AND TapeRequest.tapeDrive IS NULL
-    AND (
-         TapeRequest.requestedSrv=TapeDrive.tapeServer
-      OR TapeRequest.requestedSrv=0
-    )
-    AND TapeDrive.deviceGroupName=TapeRequest.deviceGroupName
-    AND rownum < 2
-  ORDER BY
-    TapeRequest.modificationTime ASC;
-  EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-      BEGIN
-        tapeDriveID   := 0;
-        tapeRequestID := 0;
-      END;
-  
+    rownum < 2;
+
   -- If there is a free drive which can be allocated to a pending request
-  IF tapeDriveID != 0 AND tapeRequestID != 0 THEN
+  IF tapeDriveID_var != 0 AND tapeRequestID_var != 0 THEN
 
     UPDATE TapeDrive SET
-      status = 1, -- UNIT_STARTING
-      jobID = 0,
+      status           = 1, -- UNIT_STARTING
+      jobID            = 0,
       modificationTime = getTime(),
-      runningTapeReq = tapeRequestID
+      runningTapeReq   = tapeRequestID_var
     WHERE
-      id = TapeDriveID;
+      id = tapeDriveID_var;
 
     UPDATE TapeRequest SET
-      status = 1, -- MATCHED
-      tapeDrive = tapeDriveID,
+      status           = 1, -- MATCHED
+      tapeDrive        = tapeDriveID_var,
       modificationTime = getTime()
     WHERE
-      id = TapeRequestID;
+      id = tapeRequestID_var;
 
     RET := 1;
   END IF;
+
+EXCEPTION
+  -- Do nothing if there was no free tape drive which could be allocated to a
+  -- pending request
+  WHEN NO_DATA_FOUND THEN NULL;
 END;
 
 
@@ -252,7 +368,8 @@ END;
  * PL/SQL method to check and reuse a tape allocation, that is a tape-tape
  * drive match
  */
-CREATE OR REPLACE PROCEDURE reuseTapeAllocation(tapeId IN NUMBER, tapeDriveId IN NUMBER, tapeReqId OUT NUMBER) AS
+CREATE OR REPLACE PROCEDURE reuseTapeAllocation(tapeId IN NUMBER,
+  tapeDriveId IN NUMBER, tapeReqId OUT NUMBER) AS
 BEGIN
   tapeReqId := 0;
   UPDATE TapeRequest
@@ -273,164 +390,3 @@ BEGIN
      WHERE id = tapeDriveId;
   END IF;
 END;
-
-
-/**
- * This is the main select statement to dedicate a tape to a tape drive.
- * It respects the old and of course the new way to select a tape for a 
- * tape drive.
- * The old way is to look, if the tapeDrive and the tapeRequest have the same
- * dgn.
- * The new way is to look if the TapeAccessSpecification can be served by a 
- * specific tapeDrive. The tape Request are then orderd by the priorityLevel (for 
- * the new way) and by the modification time.
- * Returns 1 if a couple was found, 0 otherwise.
- *
-CREATE PROCEDURE matchTape2TapeDrive
- (tapeDriveID OUT NUMBER, tapeRequestID OUT NUMBER) AS
-BEGIN
-  SELECT TapeDrive.id, TapeRequest.id INTO tapeDriveID, tapeRequestID
-    FROM TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn, DeviceGroupName tapeRequestDgn
-    WHERE TapeDrive.status=0
-          AND TapeDrive.runningTapeReq=0
-          AND TapeDrive.tapeServer=TapeServer.id
-          AND TapeRequest.tape NOT IN (SELECT tape FROM TapeDrive WHERE status!=0)
-          AND TapeServer.actingMode=0
-          AND TapeRequest.tapeDrive IS NULL
-          AND (TapeRequest.requestedSrv=TapeDrive.tapeServer OR TapeRequest.requestedSrv=0)
-          AND (TapeDrive.deviceGroupName=TapeRequest.deviceGroupName)
-          AND rownum < 2
-          ORDER BY TapeRequest.modificationTime ASC; 
-  EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-    tapeDriveID := 0;
-    tapeRequestID := 0;
-END;
-*/
-
-
-/*
- * PL/SQL method implementing the select from tapereq queue
- */
-CREATE OR REPLACE PROCEDURE selectTapeRequestQueue
- (dgn IN VARCHAR2, server IN VARCHAR2, tapeRequests OUT castorVdqm.TapeRequest_Cur) AS
-BEGIN
-  IF dgn IS NULL AND server IS NULL THEN
-    OPEN tapeRequests FOR SELECT * FROM TapeRequest
-		  ORDER BY TapeRequest.modificationTime ASC;
-  ELSIF dgn IS NULL THEN
-    OPEN tapeRequests FOR SELECT TapeRequest.* FROM TapeRequest, TapeServer
-      WHERE TapeServer.serverName = server
-            AND TapeServer.id = TapeRequest.requestedSrv
-			ORDER BY TapeRequest.modificationTime ASC;
-  ELSIF server IS NULL THEN
-    OPEN tapeRequests FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeRequest.deviceGroupName
-			ORDER BY TapeRequest.modificationTime ASC;
-  ELSE 
-    OPEN tapeRequests FOR SELECT TapeRequest.* FROM TapeRequest, DeviceGroupName, TapeServer
-      WHERE DeviceGroupName.dgName = dgn
-            AND DeviceGroupName.id = TapeRequest.deviceGroupName
-            AND TapeServer.serverName = server
-            AND TapeServer.id = TapeRequest.requestedSrv
-			ORDER BY TapeRequest.modificationTime ASC;
-  END IF;
-END;
-
-
-/*
- * View used for generating the list of drives when replying to the showqueues
- * command
- */
-create or replace view
-  TAPEDRIVESHOWQUEUES_VIEW
-as with
-  TAPEDRIVE2MODEL
-as
-(
-  select
-    TAPEDRIVE2TAPEDRIVECOMP.PARENT as TAPEDRIVE,
-    max(TAPEDRIVECOMPATIBILITY.TAPEDRIVEMODEL) as DRIVEMODEL
-  from
-    TAPEDRIVE2TAPEDRIVECOMP
-  inner join
-    TAPEDRIVECOMPATIBILITY
-  on
-    TAPEDRIVE2TAPEDRIVECOMP.CHILD = TAPEDRIVECOMPATIBILITY.ID
-  group by
-    parent
-)
-select
-  TAPEDRIVE.STATUS, TAPEDRIVE.ID, TAPEDRIVE.RUNNINGTAPEREQ, TAPEDRIVE.JOBID,
-  TAPEDRIVE.MODIFICATIONTIME, TAPEDRIVE.RESETTIME, TAPEDRIVE.USECOUNT,
-  TAPEDRIVE.ERRCOUNT, TAPEDRIVE.TRANSFERREDMB, TAPEDRIVE.TAPEACCESSMODE,
-  TAPEDRIVE.TOTALMB, TAPESERVER.SERVERNAME, VDQMTAPE.VID, TAPEDRIVE.DRIVENAME,
-  DEVICEGROUPNAME.DGNAME, TAPEDRIVE2MODEL.DRIVEMODEL
-from
-  TAPEDRIVE
-left outer join
-  TAPESERVER
-on
-  TAPEDRIVE.TAPESERVER = TAPESERVER.ID
-left outer join
-  VDQMTAPE
-on
-  TAPEDRIVE.TAPE = VDQMTAPE.ID
-left outer join
-  DEVICEGROUPNAME
-on
-  TAPEDRIVE.DEVICEGROUPNAME = DEVICEGROUPNAME.ID
-inner join
-  TAPEDRIVE2MODEL
-on
-  TAPEDRIVE.ID = TAPEDRIVE2MODEL.TAPEDRIVE;
-
-
-/*
- * View used for generating the list of requests when replying to the
- * showqueues command
- */
-create or replace view
-  TAPEREQUESTSSHOWQUEUES_VIEW
-as select
-  TAPEREQUEST.ID,
-  TAPEDRIVE.DRIVENAME,
-  TAPEDRIVE.ID as TAPEDRIVEID,
-  TAPEREQUEST.PRIORITY,
-  CLIENTIDENTIFICATION.PORT as CLIENTPORT,
-  CLIENTIDENTIFICATION.EUID as CLIENTEUID,
-  CLIENTIDENTIFICATION.EGID as CLIENTEGID,
-  TAPEACCESSSPECIFICATION.ACCESSMODE,
-  TAPEREQUEST.MODIFICATIONTIME,
-  CLIENTIDENTIFICATION.MACHINE AS CLIENTMACHINE,
-  VDQMTAPE.VID,
-  TAPESERVER.SERVERNAME as TAPESERVER,
-  DEVICEGROUPNAME.DGNAME,
-  CLIENTIDENTIFICATION.USERNAME as CLIENTUSERNAME
-from
-  TAPEREQUEST
-left outer join
-  TAPEDRIVE
-on
-  TAPEREQUEST.TAPEDRIVE = TAPEDRIVE.ID
-left outer join
-  CLIENTIDENTIFICATION
-on
-  TAPEREQUEST.CLIENT = CLIENTIDENTIFICATION.ID
-inner join
-  TAPEACCESSSPECIFICATION
-on
-  TAPEREQUEST.TAPEACCESSSPECIFICATION = TAPEACCESSSPECIFICATION.ID
-left outer join
-  VDQMTAPE
-on
-  TAPEREQUEST.TAPE = VDQMTAPE.ID
-left outer join
-  TAPESERVER
-on
-  TAPEREQUEST.REQUESTEDSRV = TAPESERVER.ID
-left outer join
-  DEVICEGROUPNAME
-on
-  TAPEREQUEST.DEVICEGROUPNAME = DEVICEGROUPNAME.ID;
