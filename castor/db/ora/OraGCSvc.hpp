@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.8 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -131,6 +131,16 @@ namespace castor {
         (std::vector<u_signed64> &fileIds,
          std::string nsHost) throw();
 
+	/**
+         * Handles a set of files that were deleted from
+         * the stager
+         * @param fileIds the set of files, given by fileids
+         * @param nsHost the nameserver in which they reside
+         * @return the list of fileIds that were not found in the stager
+         */
+        virtual std::vector<u_signed64> stgFilesDeleted
+        (std::vector<u_signed64> &diskCopyIds) throw();
+
       private:
 
         /// SQL statement for function selectFiles2Delete (select part)
@@ -168,6 +178,12 @@ namespace castor {
 
         /// SQL statement object for function nsFilesDeleted
         oracle::occi::Statement *m_nsFilesDeletedStatement;
+
+	/// SQL statement object for function stgFilesDeleted
+        oracle::occi::Statement *m_stgFilesDeletedStatement;
+
+	/// SQL statement for function stgFilesDeleted
+	static const std::string s_stgFilesDeletedStatementString;
 
       }; // end of class OraGCSvc
 

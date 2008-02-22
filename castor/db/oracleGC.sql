@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.635 $ $Date: 2008/02/12 16:04:51 $ $Author: itglp $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.636 $ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -479,6 +479,28 @@ BEGIN
   -- return orphan ones
   OPEN orphans FOR SELECT * FROM NsFilesDeletedOrphans;
 END;
+
+
+
+
+/* PL/SQL method implementing stgFilesDeletedProc
+ */
+CREATE OR REPLACE PROCEDURE stgFilesDeletedProc
+(diskCopyIds IN castor."cnumList",
+ stgOrphans OUT castor.IdRecord_Cur) AS
+  unused NUMBER;
+BEGIN
+  INSERT INTO StgDeletedOrphans VALUES(diskCopyIds);
+  OPEN stgOrphans FOR
+	SELECT tmpDiskCopyId FROM StgDeletedOrphans
+         WHERE NOT EXIST(
+		SELECT id FROM DiskCopy 
+		 WHERE id = tmpDiskCopyId);
+END;	
+
+
+
+
 
 
 /*

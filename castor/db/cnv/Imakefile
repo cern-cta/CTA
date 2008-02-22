@@ -87,6 +87,7 @@ CNVSLIB_SRCS = DbBaseAddressCnv.cpp \
      DbStageRmRequestCnv.cpp \
      DbStageUpdateNextRequestCnv.cpp \
      DbStageUpdateRequestCnv.cpp \
+     DbStgFilesDeletedCnv.cpp \
      DbStreamCnv.cpp \
      DbSubRequestCnv.cpp \
      DbSvcClassCnv.cpp \

@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.636 $ $Date: 2008/02/14 17:55:13 $ $Author: itglp $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.637 $ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -171,6 +171,14 @@ CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
   (fileid NUMBER)
   ON COMMIT DELETE ROWS;
 
+
+/* Global temporary table to handle output of the stgFilesDeletedProc procedure */
+CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
+  (diskCopyId NUMBER)
+  ON COMMIT DELETE ROWS;
+
+
+
 /* Global temporary tables for the cleanup procedures */
 CREATE GLOBAL TEMPORARY TABLE ArchivedRequestCleaning
   (id NUMBER NOT NULL ENABLE, type NUMBER NOT NULL ENABLE)
@@ -234,7 +242,7 @@ UPDATE Type2Obj SET svcHandler = 'PrepReqSvc' WHERE type in (36, 37, 38, 119);
 UPDATE Type2Obj SET svcHandler = 'StageReqSvc' WHERE type in (39, 42, 95);
 UPDATE Type2Obj SET svcHandler = 'QueryReqSvc' WHERE type in (33, 34, 41, 103, 131);
 UPDATE Type2Obj SET svcHandler = 'JobSvc' WHERE type in (60, 64, 65, 67, 78, 79, 80, 93, 144, 147);
-UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type in (73, 74, 83, 142);
+UPDATE Type2Obj SET svcHandler = 'GCSvc' WHERE type in (73, 74, 83, 142, 149);
 
 /* Set default values for the StageDiskCopyReplicaRequest table */
 ALTER TABLE StageDiskCopyReplicaRequest MODIFY flags DEFAULT 0;
