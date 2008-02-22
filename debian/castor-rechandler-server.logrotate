@@ -1,8 +1,3 @@
-#
-# $Id: castor-rechandler-server.logrotate,v 1.1 2007/11/29 14:20:01 gtaur Exp $
-#
-# @(#)$RCSfile: castor-rechandler-server.logrotate,v $ $Revision: 1.1 $ $Date: 2007/11/29 14:20:01 $ CERN/IT/ADC/CA Jean-Damien Durand
-#
 /var/log/rechandler /var/spool/rechandler/log {
     compress
     daily

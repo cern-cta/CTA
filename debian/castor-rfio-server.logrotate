@@ -1,8 +1,3 @@
-#
-# $Id: castor-rfio-server.logrotate,v 1.3 2006/09/29 08:08:06 jveldik Exp $
-#
-# @(#)$RCSfile: castor-rfio-server.logrotate,v $ $Revision: 1.3 $ $Date: 2006/09/29 08:08:06 $ CERN/IT/ADC/CA Jean-Damien Durand
-#
 /var/log/rfiod /var/spool/rfio/rfiod.log {
     compress
     daily

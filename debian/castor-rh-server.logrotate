@@ -1,8 +1,3 @@
-#
-# $Id: castor-rh-server.logrotate,v 1.3 2006/09/29 08:08:06 jveldik Exp $
-#
-# @(#)$RCSfile: castor-rh-server.logrotate,v $ $Revision: 1.3 $ $Date: 2006/09/29 08:08:06 $ CERN/IT/ADC/CA Jean-Damien Durand
-#
 /var/log/rhserver /var/spool/rhserver/log {
     compress
     daily

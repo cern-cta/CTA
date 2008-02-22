@@ -1,4 +1,4 @@
-/var/spool/repack/log {
+/var/log/repack /var/spool/repack/log {
     compress
     daily
     missingok

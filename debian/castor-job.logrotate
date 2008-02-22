@@ -1,8 +1,3 @@
-#
-# $Id: castor-job.logrotate,v 1.4 2007/11/26 14:59:05 waldron Exp $
-#
-# @(#)$RCSfile: castor-job.logrotate,v $ $Revision: 1.4 $ $Date: 2007/11/26 14:59:05 $ CERN/IT/ADC/CA Jean-Damien Durand
-#
 /var/log/job /var/spool/job/log /var/log/diskcopy /var/spool/job/diskcopy {
     compress
     daily

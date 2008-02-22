@@ -1,7 +1,4 @@
-#
-# $Id: castor-rmmaster-server.logrotate,v 1.4 2007/04/02 14:26:30 sponcec3 Exp $
-#
-/var/log/rmmaster /var/spool/rmmaster/log /var/spool/rmmaster/monitoring.log {
+/var/log/rmmaster /var/spool/rmmaster/log {
     compress
     daily
     missingok
