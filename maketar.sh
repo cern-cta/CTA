@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.70 2007/12/07 17:28:23 sponcec3 Exp $
+# $Id: maketar.sh,v 1.71 2008/02/22 07:23:21 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -66,7 +66,7 @@ echo "### INFO ### Customizing build directory"
 #
 ## Force build rules to YES for a lot of things
 #
-for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon BuildMonitorClient BuildMonitorLibrary BuildMonitorServer BuildMsgClient BuildMsgLibrary BuildMsgServer BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildGridFTP HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB4 UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc; do
+for this in Accounting BuildCastorClientCPPLibrary BuildCleaning BuildCommands BuildCommon BuildCupvClient BuildCupvDaemon BuildCupvLibrary BuildDlfDaemon BuildDlfLibrary BuildDlfWeb BuildExpertClient BuildExpertDaemon BuildExpertLibrary BuildGCCpp BuildHsmTools BuildJob BuildJobManagerCpp BuildInfoPolicyLibrary BuildMigHunterDaemon BuildRecHandlerDaemon BuildNameServerClient BuildNameServerDaemon BuildNameServerLibrary BuildOraCpp BuildRHCpp BuildRfioClient BuildRfioLibrary BuildRfioServer BuildRmMasterCpp BuildRmNodeCpp BuildRmcLibrary BuildRmcServer BuildRtcopyClient BuildRtcopyLibrary BuildRtcopyServer BuildRtcpclientd BuildRtstat BuildSchedPlugin BuildSecureCns BuildSecureCupv BuildSecureRfio BuildSecureRtcopy BuildSecureStage BuildSecureTape BuildSecureVdqm BuildSecureVmgr BuildStageClient BuildStageClientOld BuildStageDaemonCpp BuildStageLibrary BuildTapeClient BuildTapeDaemon BuildTapeLibrary BuildTpusage BuildVdqmClient BuildVdqmLibrary BuildVdqmServer BuildVolumeMgrClient BuildVolumeMgrDaemon BuildVolumeMgrLibrary BuildVDQMCpp BuildRepack BuildGridFTP HasCDK HasNroff UseCupv UseExpert UseGSI UseKRB4 UseKRB5 UseLsf UseOracle UseScheduler UseVmgr UseXFSPrealloc; do
     perl -pi -e "s/$this(?: |\t)+.*(YES|NO)/$this\tYES/g" config/site.def
 done
 
@@ -272,7 +272,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
 	echo "%attr(0755,root,bin) /etc/init.d/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.logrotate" ]; then
-	echo "%attr(0644,root,root) /etc/logrotate.d/$package" >> CASTOR.spec
+	echo "%config(noreplace) /etc/logrotate.d/$package" >> CASTOR.spec
     fi
     if [ -s "debian/$package.manpages" ]; then
 	for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
@@ -345,48 +345,47 @@ for this in `grep Package: debian/control | awk '{print $NF}'` castor-tape-serve
         #
 	if [ -s "debian/$package.postinst" ]; then
 	    echo "%post -n $actualPackage" >> CASTOR.spec
-	    echo "if [ \$1 -ge 1 ]; then" >> CASTOR.spec
-	    cat debian/$package.postinst | sed 's/\${1+\"$@"}/configure/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
-	    echo "/bin/true" >> CASTOR.spec
-	    echo "fi" >> CASTOR.spec
+	    cat debian/$package.postinst >> CASTOR.spec
 	    # Force ldconfig for packages with a shared library
 	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-monitor" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-policy" ] && echo "/sbin/ldconfig" >> CASTOR.spec
 	else
 	    # Force ldconfig for packages with a shared library
 	    [ "$package" = "castor-lib" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-oracle" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-mysql" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-monitor" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-policy" ] && echo "%post -n $package -p /sbin/ldconfig" >> CASTOR.spec
 	fi
         #
         ## Get %preun section
         #
-	if [ -s "debian/$package.prerm" ]; then
+	if [ -s "debian/$package.preun" ]; then
 	    echo "%preun -n $actualPackage" >> CASTOR.spec
-	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
-	    cat debian/$package.prerm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
-	    echo "/bin/true" >> CASTOR.spec
-	    echo "fi" >> CASTOR.spec
+	    cat debian/$package.preun >> CASTOR.spec
 	fi
         #
         ## Get %postun section
         #
-	if [ -s "debian/$package.postrm" ]; then
+	if [ -s "debian/$package.postun" ]; then
 	    echo "%postun -n $actualPackage" >> CASTOR.spec
-	    echo "if [ \$1 -eq 0 ]; then" >> CASTOR.spec
-	    cat debian/$package.postrm | sed 's/\${1+\"$@"}/remove/g' | grep -v /bin/sh | grep -v exit >> CASTOR.spec
-	    echo "/bin/true" >> CASTOR.spec
-	    echo "fi" >> CASTOR.spec
+	    cat debian/$package.postun >> CASTOR.spec
 	    # Force ldconfig for packages with a shared library
 	    [ "$package" = "castor-lib" ] && echo "/sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-oracle" ] && echo "/sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-mysql" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-monitor" ] && echo "/sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-policy" ] && echo "/sbin/ldconfig" >> CASTOR.spec
 	else
 	    # Force ldconfig for packages with a shared library
 	    [ "$package" = "castor-lib" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-oracle" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
 	    [ "$package" = "castor-lib-mysql" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-monitor" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
+	    [ "$package" = "castor-lib-policy" ] && echo "%postun -n $package -p /sbin/ldconfig" >> CASTOR.spec
 	fi
     fi
     if_has_oracle $this
