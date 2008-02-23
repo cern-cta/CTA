@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.17 $ $Release$ $Date: 2008/02/22 12:53:01 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.18 $ $Release$ $Date: 2008/02/23 21:58:26 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -45,16 +45,23 @@ CREATE OR REPLACE VIEW CANDIDATEDRIVEALLOCATIONS_VIEW
 AS SELECT
   TapeDrive.id as tapeDriveID, TapeRequest.id as tapeRequestID
 FROM
-  TapeDrive, TapeRequest, TapeServer, DeviceGroupName tapeDriveDgn,
-  DeviceGroupName tapeRequestDgn
+  TapeRequest
+INNER JOIN
+  TapeDrive
+ON
+  TapeRequest.deviceGroupName = TapeDrive.deviceGroupName
+INNER JOIN
+  TapeServer
+ON
+     TapeRequest.requestedSrv = TapeServer.id
+  OR TapeRequest.requestedSrv = 0
 WHERE
       TapeDrive.status=0 -- UNIT_UP
   AND TapeDrive.runningTapeReq=0
-  AND TapeDrive.tapeServer=TapeServer.id
+  -- Exclude a request if its tape is already in a drive, such a request
+  -- will be considered upon the release of the drive in question
+  -- (cf. TapeDriveStatusHandler)
   AND NOT EXISTS (
-    -- Exclude a request if its tape is already in a drive, such a request
-    -- will be considered upon the release of the drive in question
-    -- (cf. TapeDriveStatusHandler)
     SELECT
       'x'
     FROM
@@ -63,12 +70,7 @@ WHERE
       TapeDrive2.tape = TapeRequest.tape
   )
   AND TapeServer.actingMode=0 -- ACTIVE
-  AND TapeRequest.tapeDrive IS NULL
-  AND (
-       TapeRequest.requestedSrv=TapeDrive.tapeServer
-    OR TapeRequest.requestedSrv=0
-  )
-  AND TapeDrive.deviceGroupName=TapeRequest.deviceGroupName
+  AND TapeRequest.tapeDrive=0
 ORDER BY
   TapeRequest.modificationTime ASC;
 
