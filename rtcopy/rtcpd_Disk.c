@@ -2448,7 +2448,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
             tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
                              "func"                    , TL_MSG_PARAM_STR, "rtcpd_StartDiskIO",
                              "number of reserved buffs", TL_MSG_PARAM_INT, proc_cntl.nb_reserved_bufs,
-                             "next number of buffs    ", TL_MSG_PARAM_INT, next_nb_bufs );
+                             "next number of buffs"    , TL_MSG_PARAM_INT, next_nb_bufs );
             proc_cntl.nb_reserved_bufs += next_nb_bufs;
             rtcp_log(LOG_DEBUG,"rtcpd_StartDiskIO() new number of reserved buffs %d\n",
                 proc_cntl.nb_reserved_bufs);
