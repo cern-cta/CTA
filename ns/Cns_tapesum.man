@@ -1,0 +1,70 @@
+.\" @(#)$RCSfile: Cns_tapesum.man,v $ $Revision: 1.1 $ $Date: 2008/02/26 17:58:07 $ CERN IT-DM/SMD
+.\" Copyright (C) 2003 by CERN
+.\" All rights reserved
+.\"
+.TH CNS_tapesum 3 "$Date: 2008/02/26 17:58:07 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_tapesum \- returns the total size and number of files on a volume
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int *Cns_tapesum (char *" vid ,
+.BI "u_signed64 *" count ,
+.BI "u_signed64 *" size ,
+.BI "int " deleted )
+.SH DESCRIPTION
+.B Cns_tapesum
+returns the total size in bytes and the number of files on a volume
+.TP
+.I vid
+is the visual identifier of the volume.
+.TP
+.I count
+specifies the address of a buffer to receive the count of the number of files on the volume
+.TP
+.I size
+specifies the address of a buffer to receive the total size of all files on the volume
+.TP
+.I deleted
+flag to indicate whether or not logically deleted files should by counted in the summarized information. 1 = yes, 0 = no
+.RE
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the
+operation failed. In the latter case, 
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The referenced volume does not exist anymore.
+.TP
+.B ENOMEM
+Memory could not be allocated for the output buffer.
+.TP
+.B EFAULT
+.I vid 
+is a null pointer.
+.TP
+.B EINVAL
+The length of
+.I vid
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

@@ -1,0 +1,23 @@
+.\" @(#)$RCSfile: nsping.man,v $ $Revision: 1.1 $ $Date: 2008/02/26 17:58:07 $ CERN IT-GD/ITR Jean-Philippe Baud
+.\" Copyright (C) 2007 by CERN/IT/GD/ITR
+.\" All rights reserved
+.\"
+.TH NSPING 1 "$Date: 2008/02/26 17:58:07 $" CASTOR "Cns Administrator Commands"
+.SH NAME
+nsping \- check if name server is alive and print its version number
+.SH SYNOPSIS
+.B nsping
+[
+.BI -h " name_server"
+]
+.SH DESCRIPTION
+.B nsping
+checks if the name server is alive and prints its version number.
+.SH OPTIONS
+.TP
+.BI -h " name_server"
+specify the name server hostname.
+This can also be set thru the CNS_HOST environment variable.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.

@@ -1,0 +1,30 @@
+.\" @(#)$RCSfile: nsgetpath.man,v $ $Revision: 1.1 $ $Date: 2008/02/26 17:58:07 $ CERN Castor Dev team
+.\" Copyright (C) 2003  CERN
+.\" All rights reserved
+.\"
+.TH NSGETPATH 1 "$Date: 2008/02/26 17:58:07 $" CASTOR "Cns User Commands"
+.SH NAME
+nsgetpath \- get file path from fileid
+.SH SYNOPSIS
+.B nsgetpath
+.RB cnsserver
+.RB [ fileid | "-x hex" ]
+.SH DESCRIPTION
+.B nsgetpath
+gets the name of the castorfile given by its fileid and the name
+server where it resides.
+
+.SH EXAMPLES
+.BI #\ nsgetpath\ cnsuser\ 183591842
+.fi
+/castor/cern.ch/c3/itdc/notape/47eb6a9a-7cd5-439f-b156-0a953098b1ca
+
+.BI #\ nsgetpath\ cnsuser\ -x\ AF163A2
+.fi
+/castor/cern.ch/c3/itdc/notape/47eb6a9a-7cd5-439f-b156-0a953098b1ca
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation failed.
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
+
