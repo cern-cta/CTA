@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.11 $ $Release$ $Date: 2007/11/16 14:05:59 $ $Author: waldron $
+# @(#)$RCSfile: rhserver.init,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/26 17:54:57 $ $Author: waldron $
 #
 # chkconfig: 345 63 52
 # description: Request Handler Initialisation Script
@@ -37,10 +37,10 @@ RETVAL=0
 
 # Source sysconfig files
 if [ -f /etc/sysconfig/castor ]; then
-	. /etc/sysconfig/castor
+        . /etc/sysconfig/castor
 fi
 if [ -f /etc/sysconfig/$prog ]; then
-	. /etc/sysconfig/$prog
+        . /etc/sysconfig/$prog
 fi
 
 # Get rhservers private port for internal use only
@@ -65,20 +65,20 @@ start() {
 
         # Start daemons
         if [ "$type" == "public" -o ! -n "$type" ]; then
-	        echo
+                echo
                 echo -n $"Starting rhserver on public port: "
                 execute "public"
         fi
 
-       	if [ "$type" == "private" ]; then
-		if [ "$port" == "" ]; then
-		        echo -n $"no private port defined"
-			failure && echo && exit
-		fi
-	fi
+               if [ "$type" == "private" ]; then
+                if [ "$port" == "" ]; then
+                            echo -n $"no private port defined"
+                        failure && echo && exit
+                fi
+        fi
 
         if [ "$type" == "private" -o "$type" == "" -a "$port" != "" ]; then
-	        echo
+                echo
                 echo -n $"Starting rhserver on private port: "
                 execute "private"
         fi
@@ -92,15 +92,15 @@ execute() {
 
         # Check if daemon is already running
         if [ -e /var/lock/subsys/$prog.$1 ]; then
-	        if [ "$1" == "public" ]; then
-		        pid=`pgrep -f "$prog\$" | xargs`
-		else
-                        pid=`pgrep -f "$prog $port\$" | xargs`	
-		fi
+                if [ "$1" == "public" ]; then
+                        pid=`pgrep -f "$prog\$" | xargs`
+                else
+                        pid=`pgrep -f "$prog $port\$" | xargs`        
+                fi
                 if [ -n "$pid" ]; then
-                        echo -n $"already running"
+                            echo -n $"already running"
                         failure
-                        echo
+                            echo
                         return 1
                 fi
         fi
@@ -124,31 +124,31 @@ stop() {
         local pid
     
         RETVAL=0
-	echo -n $"Stopping $prog $1: "
-	if [ "$type" == "private" ]; then
-	        if [ "$port" == "" ]; then
-		        echo -n $"no private port defined"
-			failure && echo && return 2
-		fi
-	fi
+        echo -n $"Stopping $prog $1: "
+        if [ "$type" == "private" ]; then
+                if [ "$port" == "" ]; then
+                            echo -n $"no private port defined"
+                        failure && echo && return 2
+                fi
+        fi
         if [ "$1" == "public" ]; then
                 pid=`pgrep -f "$prog\$" | xargs`
         else
-                pid=`pgrep -f "$prog $port\$" | xargs`	
+                pid=`pgrep -f "$prog $port\$" | xargs`        
         fi
 
-	# Attempt to stop the process with a TERM first then a KILL
+        # Attempt to stop the process with a TERM first then a KILL
         if [ -n "$pid" ]; then
                 kill -TERM $pid >/dev/null 2>&1
                 usleep 100000
                 if [ "$1" == "public" ]; then
                         pid=`pgrep -f "$prog\$" | xargs`
                 else
-                        pid=`pgrep -f "$prog $port\$" | xargs`	
+                        pid=`pgrep -f "$prog $port\$" | xargs`        
                 fi
                 if [ -n "$pid" ]; then
                         kill -KILL $pid >/dev/null 2>&1
-	        fi
+                fi
                 success $"$prog $1 shutdown"
         else
                 failure $"$base startup"
@@ -180,7 +180,7 @@ status() {
         if [ "$1" == "public" ]; then
                 pid=`pgrep -f "$prog\$" | xargs`
         else
-                pid=`pgrep -f "$prog $port\$" | xargs`	
+                pid=`pgrep -f "$prog $port\$" | xargs`        
         fi
         if [ -n "$pid" ]; then
                 echo $"$prog $1 (pid $pid) is running..."
@@ -191,9 +191,9 @@ status() {
         if [ -f /var/run/$prog.$1.pid ]; then
                 read pid < /var/run/$prog.$1.pid
                 if [ -n "$pid" ]; then
-                        echo $"$prog $1: dead but pid file exists"
+                            echo $"$prog $1: dead but pid file exists"
                         return 1
-                fi	
+                fi        
         fi
 
         # See if /var/lock/subsys/$prog.$1  exists
@@ -242,7 +242,7 @@ case "$1" in
                 ;;
         *)
                 echo $"Usage: $0 {start|stop|status|restart|condrestart} [public|private]"
-                exit 1	
+                exit 1        
 esac
 
 exit $RETVAL

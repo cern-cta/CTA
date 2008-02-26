@@ -19,7 +19,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
-# @(#)$RCSfile: rmMasterDaemon.init,v $ $Revision: 1.8 $ $Release$ $Date: 2007/11/26 13:23:17 $ $Author: waldron $
+# @(#)$RCSfile: rmMasterDaemon.init,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/26 17:54:57 $ $Author: waldron $
 #
 # chkconfig: 345 74 31
 # description: Resource Monitoring Server Daemon Initialisation Script
@@ -36,75 +36,75 @@ RETVAL=0
 
 # Source sysconfig files
 if [ -f /etc/sysconfig/castor ]; then
-	. /etc/sysconfig/castor
+        . /etc/sysconfig/castor
 fi
 if [ -f /etc/sysconfig/$prog ]; then
-	. /etc/sysconfig/$prog
+        . /etc/sysconfig/$prog
 fi
 
 start() {
-	# Run daemon
-	echo -n $"Starting $prog: "
+        # Run daemon
+        echo -n $"Starting $prog: "
 
-	daemon /usr/bin/$prog $RMMASTERDAEMON_OPTIONS
-	
-	# Write the pid to a file.
-	RETVAL=$?
-	if [ $RETVAL -eq 0 ]; then
-		pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
-		rm -f /var/run/$prog.pid
-		if [ -n "$pid" ]; then
-		        echo $pid > /var/run/$prog.pid
-			RETVAL=0
-		else
-			RETVAL=1
-		fi
-	fi
+        daemon /usr/bin/$prog $RMMASTERDAEMON_OPTIONS
+        
+        # Write the pid to a file.
+        RETVAL=$?
+        if [ $RETVAL -eq 0 ]; then
+                pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
+                rm -f /var/run/$prog.pid
+                if [ -n "$pid" ]; then
+                            echo $pid > /var/run/$prog.pid
+                        RETVAL=0
+                else
+                        RETVAL=1
+                fi
+        fi
 
-	[ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
-	echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
-	return $RETVAL
+        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+        echo
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+        return $RETVAL
 }
 
 stop() {
-	echo -n $"Stopping $prog: "
-	killproc $prog
-	
-	RETVAL=$?
-	echo
-	[ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
-	[ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
-	return $RETVAL	
+        echo -n $"Stopping $prog: "
+        killproc $prog
+        
+        RETVAL=$?
+        echo
+        [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
+        [ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
+        return $RETVAL
 }
 
 restart() {
-	stop
+        stop
         start 
 }
 
 # See how we were called
 case "$1" in
-	
-	start)
-		start
-		;;
-	stop)
-		stop
-		;;
-	status)
-		status $prog
-		RETVAL=$?
-		;;
-	restart)
-		restart
-		;;
-	condrestart)
-		[ -f /var/lock/subsys/$prog ] && restart || :
-		;;
-	*)
-		echo $"Usage: $0 {start|stop|status|restart|condrestart}"
-		exit 1
+        
+        start)
+                start
+                ;;
+        stop)
+                stop
+                ;;
+        status)
+                status $prog
+                RETVAL=$?
+                ;;
+        restart)
+                restart
+                ;;
+        condrestart)
+                [ -f /var/lock/subsys/$prog ] && restart || :
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+                exit 1
 esac
 
 exit $RETVAL

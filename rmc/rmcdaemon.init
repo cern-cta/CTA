@@ -1,249 +1,110 @@
-#!/bin/sh
+#! /bin/sh
 #
-# rmcdaemon         Start/Stop rmcdaemon.
+#/******************************************************************************
+#                      rmcdaemon.init
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.4 $ $Release$ $Date: 2008/02/26 17:54:57 $ $Author: waldron $
 #
 # chkconfig: 345 71 34
 # description: RMC server daemon
 #
-# $Id: rmcdaemon.init,v 1.3 2005/11/30 09:14:52 jdurand Exp $
-#
-# @(#)$RCSfile: rmcdaemon.init,v $ $Revision: 1.3 $ $Date: 2005/11/30 09:14:52 $ CERN/IT/ADC/CA Jean-Damien Durand
-#
+# @author castor dev team
+#*****************************************************************************/
 
-sysname=`uname -s`
+# Source function library.
+. /etc/rc.d/init.d/functions
 
-# source function library
-if [ -r /etc/rc.d/init.d/functions ]; then
-	. /etc/rc.d/init.d/functions
-	DAEMON=daemon
-	FAILURE=failure
-	ECHO_FAILURE=failure
-	SUCCESS=success
-	ECHO_SUCCESS=echo_success
-	ECHO_END=echo
-	if [ $sysname = "Linux" ]; then
-		ECHOOPT=-n
-	fi
-else
-	DAEMON=
-	FAILURE=
-	ECHO_FAILURE=
-	SUCCESS=
-	ECHO_SUCCESS=
-	ECHOOPT=
-	ECHO_END=
-fi
-
-RETVAL=0
+# Variables
 prog="rmcdaemon"
-PIDFILE=/var/run/rmcdaemon.pid
-PIDDIR=/var/run
-SUBSYS=/var/lock/subsys/rmcdaemon
-SUBSYSDIR=/var/lock/subsys
-[ -z "$SILENTSTOP" ] && SILENTSTOP=0
-if [ -z "$MYPGID" ]; then
-    MYPGID=$PPID
-    export MYPGID
-fi
-MYPID=$$
-RMCDAEMON=/usr/bin/rmcdaemon
-OPTIONS=""
-SYSCONFIGRMCDAEMON=/etc/sysconfig/rmcdaemon
+RETVAL=0
 
-#
-## Blindly attempt to create useful directories
-#
-[ ! -d $PIDDIR ] && mkdir -p $PIDDIR >& /dev/null
-[ ! -d $SUBSYSDIR ] && mkdir -p $SUBSYSDIR >& /dev/null
-
-if [ $sysname = "HP-UX" ]; then
-	export UNIX95=1
+# Source sysconfig files
+if [ -f /etc/sysconfig/castor ]; then
+        . /etc/sysconfig/castor
 fi
-if [ $sysname = "SunOS" ]; then
-	format4comm="fname"
-else
-	format4comm="comm"
+if [ -f /etc/sysconfig/$prog ]; then
+        . /etc/sysconfig/$prog
 fi
 
-#
-## Unless sysconfig says no the default is to run the server
-#
-RUN_RMCDAEMON=yes
+start() {
+        # Run daemon
+        echo -n $"Starting $prog: "
 
-case "$1" in
-  start)
-	echo $ECHOOPT "Starting $prog: "
-    if [ $sysname = "Linux" -a `whoami` = "root" ]; then
-        netstat -ap | egrep '\*:5014|\*:rmc' | grep LISTEN | egrep "\/rmcdaemon *\$" > /dev/null
-    else
-        netstat -a  | egrep '\*:5014|\*:rmc' | egrep 'LISTEN *$' > /dev/null
-    fi
-	# ps -eo ppid,$format4comm | egrep '^[ \t]+1 rmcdaemon' > /dev/null
-	if [ $? -eq 0 ]; then
-		echo $ECHOOPT "rmcdaemon already started: "
-		[ -n "$FAILURE" ] && $FAILURE "rmcdaemon already started: "
-		RETVAL=1
-	else
-        if [ -r $SYSCONFIGRMCDAEMON ]; then
-            #
-            ## Source the configuration
-            #
-            . $SYSCONFIGRMCDAEMON
-            if [ "${RUN_RMCDAEMON}" != "yes" ]; then
-                echo $ECHOOPT "$SYSCONFIGRMCDAEMON says NO: "
-                [ -n "$FAILURE" ] && $FAILURE "$SYSCONFIGRMCDAEMON says NO: "
-                RETVAL=1
-            fi
-            if [ -n "${ULIMIT_N}" ]; then
-                ulimit -n ${ULIMIT_N}
-            fi
-        fi
-        if [ $RETVAL -eq 0 -a -z "${OPTIONS}" ]; then
-            #
-            ## We require a parameter, to be in the sysconfig file
-            #
-            echo $ECHOOPT "No option (should be a device name): "
-            [ -n "$FAILURE" ] && $FAILURE "No option (should be a device name): "
-            RETVAL=1
-        fi
-        if [ $RETVAL -eq 0 ]; then
-            #
-            ## Because we might generate a core file
-            ## We explicitely chdir in the workdir
-            #
-	    cd /var/spool/rmc
-            $DAEMON $RMCDAEMON $OPTIONS
-            if [ $? -eq 0 ]; then
-                [ -d $SUBSYSDIR ] && touch $SUBSYS
-                if [ -d $PIDDIR ]; then
-                    pid=`ps -eo pid,ppid,$format4comm | egrep " 1 rmcdaemon\$" | awk '{print $1}'`
-                    # The point of $PIDFILE is that it kills only
-                    # the master daemon.
-                    rm -f $PIDFILE
-		    if [ -n "$pid" ]; then
-			echo $pid > $PIDFILE
-			RETVAL=0
-		    else
-			echo $ECHOOPT "rmcdaemon not started: "
-			[ -n "$FAILURE" ] && $FAILURE "rmcdaemon not started: "
-			RETVAL=1
-		    fi
-                else
-                  RETVAL=0
-		fi
-            else
-                echo $ECHOOPT "rmcdaemon not started: "
-                [ -n "$FAILURE" ] && $FAILURE "rmcdaemon not started: "
-                RETVAL=1
-            fi
-        fi
-	fi
-	$ECHO_END
-	;;
-  stop)
-	if [ -f $PIDFILE ]; then
-		[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
-        if [ $SILENTSTOP -eq 0 ]; then
-            kill -9 `cat $PIDFILE`
-        else
-            kill -9 `cat $PIDFILE` >& /dev/null
-        fi
+        daemon /usr/bin/$prog $RMCDAEMON_OPTIONS
+
+        # Write the pid to a file.
         RETVAL=$?
         if [ $RETVAL -eq 0 ]; then
-            rm -f $PIDFILE
+                pid=`ps -eo pid,ppid,comm | egrep " 1 $prog\$" | awk '{print $1}'`
+                rm -f /var/run/$prog.pid
+                if [ -n "$pid" ]; then
+                        echo $pid > /var/run/$prog.pid
+                        RETVAL=0
+                else
+                        RETVAL=1
+                fi
         fi
-	else
-		# rmcdaemon might have been started by hand
-		pid=`ps -eo pid,ppid,$format4comm | egrep " 1 rmcdaemon\$" | awk '{print $1}'`
-		if [ -n "$pid" ]; then
-			[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "Stopping $prog: "
-            if [ $SILENTSTOP -eq 0 ]; then
-                kill -9 $pid
-            else
-                kill -9 $pid >& /dev/null
-            fi
-			RETVAL=$?
-            #
-            ## Kill any other instance of rmcdaemon
-            #
-		else
-			[ $SILENTSTOP -eq 0 ] && echo $ECHOOPT "rmcdaemon already stopped: "
-			[ $SILENTSTOP -eq 0 -a -n "$FAILURE" ] && $FAILURE "rmcdaemon already stopped: "
- 			RETVAL=1
-		fi
-	fi
-	if [ $SILENTSTOP -eq 0 -a $sysname = "Linux" ]; then
-		if [ $RETVAL -eq 0 ]; then
- 			$ECHO_SUCCESS
-		else
- 			$ECHO_FAILURE
-		fi
-	fi
-	[ -d $SUBSYSDIR ] && rm -f $SUBSYS
-	[ $SILENTSTOP -eq 0 -a -n "$ECHO_END" ] && $ECHO_END
-    #
-    ## Basically: if SILENTSTOP is not 0 when we never print something
-    ## But if the stop is successful... One might want to see stop: OK
-    ## anyway ?
-    #
-	if [ $SILENTSTOP -ne 0 -a $RETVAL -eq 0 ]; then
-        echo $ECHOOPT "Stopping $prog: "
-        [ $sysname = "Linux" ] && $ECHO_SUCCESS
-        [ -n "$ECHO_END" ] && $ECHO_END
-    fi
-	;;
-  restart)
-	$0 stop
-	if [ $? -eq 0 -o $SILENTSTOP -eq 0 ]; then
-		$0 start
-		RETVAL=$?
-	else
-        #
-        ## It is legal to return zero it if was
-        ## a conditional restart
-        #
-        if [ $SILENTSTOP -eq 0 ]; then
-            RETVAL=1
-        else
-            RETVAL=0
-        fi
-	fi
-	;;
-  condrestart)
-	SILENTSTOP=1
-    export SILENTSTOP
-	$0 restart
-    RETVAL=$?
-	;;
-  status)
-	pid=`ps -eo pid,ppid,$format4comm | egrep " 1 rmcdaemon\$" | awk '{print $1}' | head -1`
-	if [ -n "$pid" ]; then
-		echo $ECHOOPT "rmcdaemon (pid $pid) is running..."
-		$ECHO_SUCCESS
-		$ECHO_END
-	else
-		if [ -f $PIDFILE ]; then
-			pid=`head -1 $PIDFILE`
-			if [ "$pid" != "" ] ; then
-				echo $ECHOOPT "rmcdaemon dead but pid file exists"
-				$ECHO_FAILURE
-				$ECHO_END
-			fi
-		else
-			if [ -f $SUBSYS ]; then
-				echo $ECHOOPT "rmcdaemon dead but subsys ($SUBSYS) locked"
-			else
-				echo $ECHOOPT "rmcdaemon is stopped"
-			fi
-			$ECHO_FAILURE
-			$ECHO_END
-		fi
-	fi
-	;;
-  *)
-	echo "Usage: $0 {start|stop|status|restart|condrestart}"
-	RETVAL=1
-	;;
+        
+        [ $RETVAL -eq 0 ] && success $"$base startup" || failure $"$base startup"
+        echo
+        [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+        return $RETVAL
+}
+
+stop() {
+        echo -n $"Stopping $prog: "
+        killproc $prog
+        
+        RETVAL=$?
+        echo
+        [ -f /var/lock/subsys/$prog ] && rm -f /var/lock/subsys/$prog
+        [ -f /var/run/$prog.pid ] && rm -f /var/run/$prog.pid
+        return $RETVAL
+}
+
+restart() {
+        stop
+        start 
+}
+
+# See how we were called
+case "$1" in
+        
+        start)
+                start
+                ;;
+        stop)
+                stop
+                ;;
+        status)
+                status $prog
+                RETVAL=$?
+                ;;
+        restart)
+                restart
+                ;;
+        condrestart)
+                [ -f /var/lock/subsys/$prog ] && restart || :
+                ;;
+        *)
+                echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+                exit 1
 esac
 
 exit $RETVAL
