@@ -17,26 +17,53 @@
 #include "Cns.h"
 #include "Cns_api.h"
 #include "serrno.h"
-extern	char	*getenv();
+
+extern	char *getenv();
+
+int isyes()
+{
+	int c;
+	int fchar;
+
+	fchar = c = getchar();
+	while (c != '\n' && c != EOF)
+		c = getchar();
+	return (fchar == 'y');
+}
+
 int main(argc, argv)
 int argc;
 char **argv;
 {
+	int c;
 	char newpath[CA_MAXPATHLEN+1];
 	char oldpath[CA_MAXPATHLEN+1];
 	int errflg = 0;
+	int fflag = 0;
 	char *p;
 	char *path;
+	struct Cns_filestat statbuf;
 #if defined(_WIN32)
 	WSADATA wsadata;
 #endif
-
-	if (argc != 3) {
-		fprintf (stderr,
-		    "usage: %s oldname newname...\n", argv[0]);
+	while ((c = getopt (argc, argv, "f")) != EOF) {
+		switch (c) {
+		case 'f':
+			fflag++;
+			break;
+		case '?':
+			errflg++;
+			break;
+		default:
+			break;
+		}
+	}
+	if (errflg || (argc - optind) >= 3) {
+		fprintf (stderr, "usage: %s [-f] oldname newname\n", argv[0]);
 		exit (USERR);
 	}
-	path = argv[1];
+
+	path = argv[optind];
 	if (*path != '/' && strstr (path, ":/") == NULL) {
 		if ((p = getenv (CNS_HOME_ENV)) == NULL ||
 		    strlen (p) + strlen (path) + 1 > CA_MAXPATHLEN) {
@@ -52,7 +79,7 @@ char **argv;
 		} else
 			strcpy (oldpath, path);
 	}
-	path = argv[2];
+	path = argv[optind + 1];
 	if (*path != '/' && strstr (path, ":/") == NULL) {
 		if ((p = getenv (CNS_HOME_ENV)) == NULL ||
 		    strlen (p) + strlen (path) + 1 > CA_MAXPATHLEN) {
@@ -76,9 +103,17 @@ char **argv;
 		exit (SYERR);
 	}
 #endif
+	if (! fflag && Cns_lstat(newpath, &statbuf) == 0) {
+		if (isatty(fileno(stdin))) {
+			printf("%s: overwrite %s? ", argv[0], newpath);
+			if (! isyes())
+				exit(0);
+		}
+	}
+
 	if (Cns_rename (oldpath, newpath) < 0) {
 		fprintf (stderr, "cannot rename to %s: %s\n", path,
-		    sstrerror(serrno));
+			 sstrerror(serrno));
 #if defined(_WIN32)
 		WSACleanup();
 #endif
