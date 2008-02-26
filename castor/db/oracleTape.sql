@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.638 $ $Date: 2008/02/21 07:54:02 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.639 $ $Date: 2008/02/26 16:12:46 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -76,8 +76,8 @@ END;
 /* Triggers to keep NbTapeCopiesInFS consistent */
 /************************************************/
 
-/* Used to create a row INTO NbTapeCopiesInFS whenever a new
-   FileSystem is created */
+/* Used to create a row in NbTapeCopiesInFS and FileSystemsToCheck 
+   whenever a new FileSystem is created */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Insert
 BEFORE INSERT ON FileSystem
 FOR EACH ROW
@@ -85,15 +85,17 @@ BEGIN
   FOR item in (SELECT id FROM Stream) LOOP
     INSERT INTO NbTapeCopiesInFS (FS, Stream, NbTapeCopies) VALUES (:new.id, item.id, 0);
   END LOOP;
+  INSERT INTO FileSystemsToCheck (FileSystem, ToBeChecked) VALUES (:new.id, 0);
 END;
 
-/* Used to delete rows IN NbTapeCopiesInFS whenever a
-   FileSystem is deleted */
+/* Used to delete rows in NbTapeCopiesInFS and FileSystemsToCheck 
+   whenever a FileSystem is deleted */
 CREATE OR REPLACE TRIGGER tr_FileSystem_Delete
 BEFORE DELETE ON FileSystem
 FOR EACH ROW
 BEGIN
   DELETE FROM NbTapeCopiesInFS WHERE FS = :old.id;
+  DELETE FROM FileSystemsToCheck WHERE FileSystem = :old.id;
 END;
 
 /* Updates the count of tapecopies in NbTapeCopiesInFS
