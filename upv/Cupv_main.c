@@ -1,5 +1,5 @@
 /*
- * $Id: Cupv_main.c,v 1.8 2008/02/21 17:14:24 waldron Exp $
+ * $Id: Cupv_main.c,v 1.9 2008/02/26 16:31:47 waldron Exp $
  *
  * Copyright (C) 1999-2002 by CERN IT-DS/HSM
  * All rights reserved
@@ -31,6 +31,7 @@
 #include "Cregexp.h"
 #include "Cgetopt.h"
 #include "Cdomainname.h"
+#include "patchlevel.h"
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
@@ -78,7 +79,7 @@ struct main_args *main_args;
 
 	jid = getpid();
 	strcpy (func, "Cupv_serv");
-	Cupvlogit (func, "Cupvdaemon V1.1 started\n");
+	Cupvlogit (func, "started (%d.%d.%d-%d)\n", MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
 
 	/* set the location of the upv login file */
 	cupvconfigfile[0] = '\0';
