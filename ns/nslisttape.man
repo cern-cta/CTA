@@ -1,38 +1,59 @@
-.\" @(#)$RCSfile: nslisttape.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nslisttape.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:32:05 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLISTTAPE 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns User Commands"
+.TH NSLISTTAPE 1 "$Date: 2008/02/26 18:32:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nslisttape \- list the file segments residing on a volume
 .SH SYNOPSIS
 .B nslisttape
 [
+.B -iH
+] [
 .B -h
 .I name_server
+] [
+.B --display_side
+] [
+.B --checksum
+] [
+.B --summarize
+] [
+.B -f 
+.I fseq
 ]
 .B -V
 .I vid
-[
-.B --display_side
-] [
-.B --ds
-] [
-.B --checksum
-]
 .SH DESCRIPTION
 .B nslisttape
-lists the file segments residing on a volume.
+lists the file segments residing on a volume with the possibility of filtering the results by file sequence number and summarizing the overall data.
+.SH OPTIONS
 .TP
-.I vid
+.BI -h " name_server"
+specify the name server hostname.
+This can also be set thru the CNS_HOST environment variable.
+.TP
+.BI -V " vid"
 specifies the visual identifier for the volume.
 .TP
-.BR --display_side " or " --ds
+.BI --display_side " or " --ds
 print the vid followed by a slash followed by the media side number.
 This option is useful for multi-sided media like DVD.
 .TP
-.BR --checksum
-Display the tape segments checksum.
+.BI --checksum
+display the tape segments checksum.
+.TP
+.BI -i
+print the file uniqueid in front of each entry.
+.TP
+.BI -H
+print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024
+.TP
+.BI -s " or " --summarize
+display only the total number of files and the total size of all files on the volume.
+.TP
+.BI -f " fseq"
+restrict the output to the given file sequence number. 
 .LP
 The list gives the file segment status, the copy number, the file segment
 number, the tape visual identifier, the file sequence number on tape,

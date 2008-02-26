@@ -21,7 +21,7 @@
 #include "serrno.h"
 
 struct Cns_direntape DLL_DECL *
-Cns_listtape(char *server, char *vid, int flags, Cns_list *listp)
+Cns_listtape(char *server, char *vid, int flags, Cns_list *listp, int fseq)
 {
 	int bov = 0;
 	int c;
@@ -37,11 +37,13 @@ Cns_listtape(char *server, char *vid, int flags, Cns_list *listp)
 	char *sbp;
 	char sendbuf[REQBUFSZ];
 	uid_t uid;
- 
+	struct Cns_api_thread_info *thip;
+	
 	strcpy (func, "Cns_listtape");
+	if (Cns_apiinit (&thip))
+		return (NULL);
 	Cns_getid(&uid, &gid);
         
-#
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Cns_errmsg (func, NS053);
@@ -82,7 +84,7 @@ Cns_listtape(char *server, char *vid, int flags, Cns_list *listp)
 		/* Build request header */
 
 		sbp = sendbuf;
-		marshall_LONG (sbp, CNS_MAGIC4);
+		marshall_LONG (sbp, CNS_MAGIC5);
 		if (flags == CNS_LIST_END) {
 			marshall_LONG (sbp, CNS_ENDLIST);
 		} else {
@@ -99,13 +101,14 @@ Cns_listtape(char *server, char *vid, int flags, Cns_list *listp)
 		marshall_WORD (sbp, direntsz);
 		marshall_STRING (sbp, vid);
 		marshall_WORD (sbp, bov);
+		marshall_LONG (sbp, fseq);
 
 		msglen = sbp - sendbuf;
 		marshall_LONG (q, msglen);	/* update length field */
 
-		while ((c = send2nsd (&listp->fd, server, sendbuf, msglen,
-		    repbuf, sizeof(repbuf))) && serrno == ENSNACT)
-			sleep (RETRYI);
+		c = send2nsd (&listp->fd, server, sendbuf, msglen, 
+			      repbuf, sizeof(repbuf));
+
 		if (c < 0)
 			return (NULL);
 		if (flags == CNS_LIST_END) {
