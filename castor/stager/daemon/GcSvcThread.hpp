@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/21 17:22:56 $ $Author: mmartins $
+ * @(#)$RCSfile: GcSvcThread.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/02/26 16:25:36 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -113,7 +113,7 @@ namespace castor {
 				  Cuuid_t uuid) throw();
 
 
-	  /**
+	/**
          * Handles a StgFilesDelete request and replies to client.
          * @param req the request to handle
          * @param client the client where to send the response
@@ -123,13 +123,12 @@ namespace castor {
          * @param uuid the uuid of the request, for logging purposes
          */
         void handleStgFilesDeleted(castor::stager::Request* req,
-				  castor::IClient *client,
-				  castor::Services* svcs,
-				  castor::stager::IGCSvc* gcSvc,
-				  castor::BaseAddress &ad,
-				  Cuuid_t uuid) throw();
-
-
+				   castor::IClient *client,
+				   castor::Services* svcs,
+				   castor::stager::IGCSvc* gcSvc,
+				   castor::BaseAddress &ad,
+				   Cuuid_t uuid) throw();
+	
       };
       
     } // end namespace daemon
