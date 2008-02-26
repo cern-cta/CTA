@@ -122,6 +122,7 @@ MANPAGES = $(LIBMANDIR)/Cns_aborttrans.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_modifyclass.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_opendir.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_opendirg.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_ping.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_queryclass.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_readdir.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_readdirc.$(LIBMANSUFFIX) \
@@ -150,6 +151,7 @@ MANPAGES = $(LIBMANDIR)/Cns_aborttrans.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_statg.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_statr.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_symlink.$(LIBMANSUFFIX) \
+           $(LIBMANDIR)/Cns_tapesum.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_umask.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_undelete.$(LIBMANSUFFIX) \
            $(LIBMANDIR)/Cns_updateseg_checksum.$(LIBMANSUFFIX) \
@@ -163,12 +165,14 @@ MANPAGES = $(LIBMANDIR)/Cns_aborttrans.$(LIBMANSUFFIX) \
            $(MANDIR)/nsenterclass.$(MANSUFFIX) \
            $(MANDIR)/nsfind.$(MANSUFFIX) \
            $(MANDIR)/nsgetacl.$(MANSUFFIX) \
+           $(MANDIR)/nsgetpath.$(MANSUFFIX) \
            $(MANDIR)/nslistclass.$(MANSUFFIX) \
            $(MANDIR)/nslisttape.$(MANSUFFIX) \
            $(MANDIR)/nsln.$(MANSUFFIX) \
            $(MANDIR)/nsls.$(MANSUFFIX) \
            $(MANDIR)/nsmkdir.$(MANSUFFIX) \
            $(MANDIR)/nsmodifyclass.$(MANSUFFIX) \
+           $(MANDIR)/nsping.$(MANSUFFIX) \
            $(MANDIR)/nsrename.$(MANSUFFIX) \
            $(MANDIR)/nssetchecksum.$(MANSUFFIX) \
            $(MANDIR)/nsrm.$(MANSUFFIX) \
@@ -207,6 +211,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_modifyclass.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_opendir.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_opendirg.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_ping.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_queryclass.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_readdir.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_readdirc.$(LIBMANSUFFIX) \
@@ -231,6 +236,7 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_statg.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_statr.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_symlink.$(LIBMANSUFFIX) \
+	   $(EXPORTMAN)/man3/Cns_tapesum.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_umask.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_undelete.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man3/Cns_unlink.$(LIBMANSUFFIX) \
@@ -245,18 +251,19 @@ EXPORTMANPAGES = $(EXPORTMAN)/man3/Cns_aborttrans.$(LIBMANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsenterclass.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsfind.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsgetacl.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/nsgetpath.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nslistclass.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nslisttape.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsln.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsls.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsmkdir.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsmodifyclass.$(MANSUFFIX) \
+	   $(EXPORTMAN)/man1/nsping.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsrename.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nsrm.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetchecksum.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetacl.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nssetcomment.$(MANSUFFIX) \
-	   $(EXPORTMAN)/man1/nsshutdown.$(MANSUFFIX) \
 	   $(EXPORTMAN)/man1/nstouch.$(MANSUFFIX)
 
 #if BuildNameServerLibrary
@@ -273,18 +280,19 @@ CLIENT = LibraryTargetName(ns) \
 	 ProgramTargetName(nsenterclass) \
 	 ProgramTargetName(nsfind) \
 	 ProgramTargetName(nsgetacl) \
+	 ProgramTargetName(nsgetpath) \
 	 ProgramTargetName(nslistclass) \
 	 ProgramTargetName(nslisttape) \
 	 ProgramTargetName(nsln) \
 	 ProgramTargetName(nsls) \
 	 ProgramTargetName(nsmkdir) \
 	 ProgramTargetName(nsmodifyclass) \
+	 ProgramTargetName(nsping) \
 	 ProgramTargetName(nsrename) \
 	 ProgramTargetName(nsrm) \
 	 ProgramTargetName(nssetchecksum) \
 	 ProgramTargetName(nssetacl) \
 	 ProgramTargetName(nssetcomment) \
-	 ProgramTargetName(nsshutdown) \
 	 ProgramTargetName(nstouch)
 IPROGS_C = FileName($(BIN),ProgramTargetName(nschclass)) \
 	   FileName($(BIN),ProgramTargetName(nschmod)) \
@@ -294,18 +302,19 @@ IPROGS_C = FileName($(BIN),ProgramTargetName(nschclass)) \
 	   FileName($(BIN),ProgramTargetName(nsenterclass)) \
 	   FileName($(BIN),ProgramTargetName(nsfind)) \
 	   FileName($(BIN),ProgramTargetName(nsgetacl)) \
+	   FileName($(BIN),ProgramTargetName(nsgetpath)) \
 	   FileName($(BIN),ProgramTargetName(nslistclass)) \
 	   FileName($(BIN),ProgramTargetName(nslisttape)) \
 	   FileName($(BIN),ProgramTargetName(nsln)) \
 	   FileName($(BIN),ProgramTargetName(nsls)) \
 	   FileName($(BIN),ProgramTargetName(nsmkdir)) \
 	   FileName($(BIN),ProgramTargetName(nsmodifyclass)) \
+	   FileName($(BIN),ProgramTargetName(nsping)) \
 	   FileName($(BIN),ProgramTargetName(nsrename)) \
 	   FileName($(BIN),ProgramTargetName(nsrm)) \
 	   FileName($(BIN),ProgramTargetName(nssetchecksum)) \
 	   FileName($(BIN),ProgramTargetName(nssetacl)) \
 	   FileName($(BIN),ProgramTargetName(nssetcomment)) \
-	   FileName($(BIN),ProgramTargetName(nsshutdown)) \
 	   FileName($(BIN),ProgramTargetName(nstouch))
 EPROGS_C = $(EXPORTBIN)/nschclass \
 	   $(EXPORTBIN)/nschmod \
@@ -315,18 +324,19 @@ EPROGS_C = $(EXPORTBIN)/nschclass \
 	   $(EXPORTBIN)/nsenterclass \
 	   $(EXPORTBIN)/nsfind \
 	   $(EXPORTBIN)/nsgetacl \
+	   $(EXPORTBIN)/nsgetpath \
 	   $(EXPORTBIN)/nslistclass \
 	   $(EXPORTBIN)/nslisttape \
 	   $(EXPORTBIN)/nsln \
 	   $(EXPORTBIN)/nsls \
 	   $(EXPORTBIN)/nsmkdir \
 	   $(EXPORTBIN)/nsmodifyclass \
+	   $(EXPORTBIN)/nsping \
 	   $(EXPORTBIN)/nsrename \
 	   $(EXPORTBIN)/nsrm \
 	   $(EXPORTBIN)/nssetchecksum \
 	   $(EXPORTBIN)/nssetacl \
 	   $(EXPORTBIN)/nssetcomment \
-	   $(EXPORTBIN)/nsshutdown \
 	   $(EXPORTBIN)/nstouch
 #endif
 
@@ -382,6 +392,7 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_mkdir.Osuf \
                         Cns_modifyclass.Osuf \
                         Cns_opendir.Osuf \
+                        Cns_ping.Osuf \
                         Cns_queryclass.Osuf \
                         Cns_readdir.Osuf \
                         Cns_readdirc.Osuf \
@@ -409,6 +420,7 @@ NSLIB_OBJS	=	Cns_aborttrans.Osuf \
                         Cns_starttrans.Osuf \
                         Cns_stat.Osuf \
                         Cns_symlink.Osuf \
+                        Cns_tapesum.Osuf \
                         Cns_umask.Osuf \
                         Cns_undelete.Osuf \
                         Cns_unlink.Osuf \
@@ -437,18 +449,19 @@ NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEP
 NormalProgramTarget(nsenterclass,nsenterclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsfind,nsfind.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsgetacl,nsgetacl.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsgetpath,nsgetpath.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nslistclass,nslistclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nslisttape,nslisttape.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
 NormalProgramTarget(nsln,nsln.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsls,nsls.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsmkdir,nsmkdir.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsmodifyclass,nsmodifyclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
+NormalProgramTarget(nsping,nsping.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsrename,nsrename.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsrm,nsrm.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nssetchecksum,nssetchecksum.Osuf,LibraryTargetName(ns) $(DEPLIB), $(LIBS))
 NormalProgramTarget(nssetacl,nssetacl.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nssetcomment,nssetcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
-NormalProgramTarget(nsshutdown,nsshutdown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nstouch,nstouch.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 
 NormalLibraryTarget(ns,$(NSLIB_OBJS))
@@ -494,6 +507,9 @@ IEXPORT(nsfind,$(EXPORTBIN),755);
 InstallProgram(nsgetacl,$(BIN),root,bin,755)
 IEXPORT(nsgetacl,$(EXPORTBIN),755);
 
+InstallProgram(nsgetpath,$(BIN),root,bin,755)
+IEXPORT(nsgetpath,$(EXPORTBIN),755);
+
 InstallProgram(nslistclass,$(BIN),root,bin,755)
 IEXPORT(nslistclass,$(EXPORTBIN),755);
 
@@ -512,6 +528,9 @@ IEXPORT(nsmkdir,$(EXPORTBIN),755);
 InstallProgram(nsmodifyclass,$(BIN),root,bin,755)
 IEXPORT(nsmodifyclass,$(EXPORTBIN),755);
 
+InstallProgram(nsping,$(BIN),root,bin,755)
+IEXPORT(nsping,$(EXPORTBIN),755);
+
 InstallProgram(nsrename,$(BIN),root,bin,755)
 IEXPORT(nsrename,$(EXPORTBIN),755);
 
@@ -526,9 +545,6 @@ IEXPORT(nssetacl,$(EXPORTBIN),755);
 
 InstallProgram(nssetcomment,$(BIN),root,bin,755)
 IEXPORT(nssetcomment,$(EXPORTBIN),755);
-
-InstallProgram(nsshutdown,$(BIN),root,bin,755)
-IEXPORT(nsshutdown,$(EXPORTBIN),755);
 
 InstallProgram(nstouch,$(BIN),root,bin,755)
 IEXPORT(nstouch,$(EXPORTBIN),755);
@@ -545,7 +561,6 @@ install.man: $(MANDIR) $(MANPAGES)
 MakeDir($(MANDIR),root,bin,0755)
 
 IMANPAGE(nsdaemon,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(nsshutdown,$(MANDIR),$(MANSUFFIX))
 
 IMANPAGE(Cns_aborttrans,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_access,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -581,6 +596,7 @@ IMANPAGE(Cns_mkdirg,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_modifyclass,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_opendir,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_opendirg,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_ping,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_queryclass,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_readdir,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_readdirc,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -608,6 +624,7 @@ IMANPAGE(Cns_stat,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_statg,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_statr,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_symlink,$(LIBMANDIR),$(LIBMANSUFFIX))
+IMANPAGE(Cns_tapesum,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_umask,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_undelete,$(LIBMANDIR),$(LIBMANSUFFIX))
 IMANPAGE(Cns_unlink,$(LIBMANDIR),$(LIBMANSUFFIX))
@@ -621,12 +638,14 @@ IMANPAGE(nsdeleteclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsenterclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsfind,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsgetacl,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nsgetpath,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nslistclass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nslisttape,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsln,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsls,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsmkdir,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsmodifyclass,$(MANDIR),$(MANSUFFIX))
+IMANPAGE(nsping,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsrename,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nsrm,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(nssetchecksum,$(MANDIR),$(MANSUFFIX))
@@ -665,6 +684,7 @@ EMANPAGE(Cns_mkdirg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_modifyclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_opendir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_opendirg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_ping,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_queryclass,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_readdir,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_readdirc,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -689,6 +709,7 @@ EMANPAGE(Cns_stat,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_statg,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_statr,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_symlink,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
+EMANPAGE(Cns_tapesum,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_umask,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_undelete,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
 EMANPAGE(Cns_unlink,$(EXPORTMAN)/man3,$(LIBMANSUFFIX))
@@ -703,18 +724,19 @@ EMANPAGE(nsdeleteclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsenterclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsfind,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsgetacl,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(nsgetpath,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nslistclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nslisttape,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsln,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsls,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsmkdir,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsmodifyclass,$(EXPORTMAN)/man1,$(MANSUFFIX))
+EMANPAGE(nsping,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsrename,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nsrm,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nssetchecksum,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nssetacl,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nssetcomment,$(EXPORTMAN)/man1,$(MANSUFFIX))
-EMANPAGE(nsshutdown,$(EXPORTMAN)/man1,$(MANSUFFIX))
 EMANPAGE(nstouch,$(EXPORTMAN)/man1,$(MANSUFFIX))
 
 export: $(EPROGS_C) $(EPROGS_D)
