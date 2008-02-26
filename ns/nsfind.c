@@ -39,6 +39,7 @@ u_signed64 fileid;
 int lsflag;
 char mtimeflg;
 int mtimeval;
+int typeval;
 time_t current_time;
 
 
@@ -109,6 +110,15 @@ char **argv;
 				i++;
 				if ((expstruct = Cregexp_comp (argv[i])) == NULL)
 					errflg++;
+			} else if (strcmp (argv[i], "-type") == 0) { 
+				if (i >= argc - 1) { 
+					errflg++; 
+					continue; 
+				} 
+				i++; 
+				typeval = *argv[i] == 'd' ? S_IFDIR : 
+					*argv[i] == 'f' ? S_IFREG : 
+					*argv[i] == 'l' ? S_IFLNK : 0; 
 			} else
 				errflg++;
 		}
@@ -166,7 +176,7 @@ struct Cns_filestat *statbuf;
 	char modestr[11];
 	struct passwd *pw;
 	static gid_t sav_gid = -1;
-	static char sav_gidstr[7];
+	static char sav_gidstr[9];
 	time_t ltime;
 	static uid_t sav_uid = -1;
 	static char sav_uidstr[CA_MAXUSRNAMELEN+1];
@@ -222,7 +232,7 @@ struct Cns_filestat *statbuf;
 			if ((gr = getgrgid (sav_gid)))
 				strcpy (sav_gidstr, gr->gr_name);
 			else
-				sprintf (sav_gidstr, "%-6u", sav_gid);
+				sprintf (sav_gidstr, "%-8u", sav_gid);
 		}
 		ltime = statbuf->mtime;
 		tm = localtime (&ltime);
@@ -231,7 +241,7 @@ struct Cns_filestat *statbuf;
 			strftime (timestr, 13, "%b %d  %Y", tm);
 		else
 			strftime (timestr, 13, "%b %d %H:%M", tm);
-		printf ("%s %3d %-8.8s %-6.6s %s %s ",
+		printf ("%s %3d %-8.8s %-8.8s %s %s ",
 		    modestr, statbuf->nlink, sav_uidstr, sav_gidstr,
 	    u64tostr (statbuf->filesize, tmpbuf, 20), timestr);
 	}
@@ -296,6 +306,7 @@ int procpath (char *dir)
 					continue;
 		}
 		if (fileid && dxp->fileid != fileid) continue;
+		if (typeval && (dxp->filemode & S_IFMT) != typeval) continue;
 		if (expstruct && Cregexp_exec (expstruct, dxp->d_name)) continue;
 		if (mtimeflg) {
 			if (mtimeflg == '-') {
