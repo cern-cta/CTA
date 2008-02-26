@@ -54,7 +54,7 @@ Cns_errmsg(char *func, char *msg, ...)
 	if (thip->errbufp) {
 		if (strlen (prtbuf) < thip->errbuflen) {
 			strcpy (thip->errbufp, prtbuf);
-		} else {
+		} else if (thip->errbuflen > 2) {
 			strncpy (thip->errbufp, prtbuf, thip->errbuflen - 2);
 			thip->errbufp[thip->errbuflen-2] = '\n';
 			thip->errbufp[thip->errbuflen-1] = '\0';
