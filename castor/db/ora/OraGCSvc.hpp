@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/02/26 14:38:35 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -116,7 +116,7 @@ namespace castor {
          */
         virtual void filesDeletionFailed
         (std::vector<u_signed64*>& diskCopyIds)
-          throw (castor::exception::Exception);
+	  throw (castor::exception::Exception);
 
         /**
          * Handles a set of files that were deleted from
@@ -132,15 +132,13 @@ namespace castor {
          std::string nsHost) throw();
 
 	/**
-         * Handles a set of files that were deleted from
-         * the stager
-         * @param fileIds the set of files, given by fileids
-         * @param nsHost the nameserver in which they reside
-         * @return the list of fileIds that were not found in the stager
-         */
-        virtual std::vector<u_signed64> stgFilesDeleted
-        (std::vector<u_signed64> &diskCopyIds) throw();
-
+	 * Find the files which are not anymore in the Stager
+	 * @param diskCopyIds a list of diskcopy ids to be checked
+	 * @return the list of diskcopy ids that were not found in the stager
+	 */
+	virtual std::vector<u_signed64> stgFilesDeleted
+	(std::vector<u_signed64> &diskCopyIds) throw();
+	
       private:
 
         /// SQL statement for function selectFiles2Delete (select part)
@@ -180,11 +178,11 @@ namespace castor {
         oracle::occi::Statement *m_nsFilesDeletedStatement;
 
 	/// SQL statement object for function stgFilesDeleted
-        oracle::occi::Statement *m_stgFilesDeletedStatement;
-
+	oracle::occi::Statement *m_stgFilesDeletedStatement;
+	
 	/// SQL statement for function stgFilesDeleted
 	static const std::string s_stgFilesDeletedStatementString;
-
+	
       }; // end of class OraGCSvc
 
     } // end of namespace ora

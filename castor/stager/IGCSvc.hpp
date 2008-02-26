@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/02/21 17:31:21 $ $Author: mmartins $
+ * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/26 14:39:24 $ $Author: waldron $
  *
  * This class provides stager methods related to Garbage Collection
  *
@@ -108,16 +108,14 @@ namespace castor {
       (std::vector<u_signed64> &fileIds,
        std::string nsHost) throw() = 0;
 
-       /**
+      /**
        * Find the files which are not anymore in the Stager
-       * but on the nameserver, filesystem
-       * @param fileIds the set of files, given by fileids
-       * @param nsHost the nameserver in which they reside
-       * @return the list of fileIds that were not found in the stager
+       * @param diskCopyIds a list of diskcopy ids to be checked
+       * @return the list of diskcopy ids that were not found in the stager
        */
       virtual std::vector<u_signed64> stgFilesDeleted
       (std::vector<u_signed64> &diskCopyIds) throw() = 0;
-
+      
     }; // end of class IGCSvc
 
   } // end of namespace stager

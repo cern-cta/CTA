@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/02/21 17:31:21 $ $Author: mmartins $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/26 14:39:24 $ $Author: waldron $
  *
  *
  *
@@ -416,11 +416,6 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
   return result;
 }
 
-
-
-
-
-
 // -----------------------------------------------------------------------
 // StgFilesDeletedResponseHandler
 // -----------------------------------------------------------------------
@@ -465,16 +460,6 @@ private:
   // where to store the list of files not found
   std::vector<u_signed64>* m_result;
 };
-
-
-
-
-
-
-
-
-
-
 
 // -----------------------------------------------------------------------
 // stgFilesDeleted
