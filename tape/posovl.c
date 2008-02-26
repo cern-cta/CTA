@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.31 $ $Date: 2007/11/01 14:34:53 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.32 $ $Date: 2008/02/26 13:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -102,7 +102,12 @@ char	**argv;
 
 	ENTRY (posovl);
 
-        tl_init_handle( &tl_tpdaemon, "dlf" );
+        p = getconfent ("TAPE", "TPLOGGER", 0);
+        if (0 == strcasecmp(p, "SYSLOG")) {
+                tl_init_handle( &tl_tpdaemon, "syslog" ); 
+        } else {
+                tl_init_handle( &tl_tpdaemon, "dlf" );  
+        }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
 	drive = argv[1];

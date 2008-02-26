@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.42 $ $Date: 2008/02/13 09:43:07 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rlstape.c,v $ $Revision: 1.43 $ $Date: 2008/02/26 13:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -96,9 +96,14 @@ char	**argv;
 
 	ENTRY (rlstape);
 
-        tl_init_handle( &tl_tpdaemon, "dlf" );
+        p = getconfent ("TAPE", "TPLOGGER", 0);
+        if (0 == strcasecmp(p, "SYSLOG")) {
+                tl_init_handle( &tl_tpdaemon, "syslog" ); 
+        } else {
+                tl_init_handle( &tl_tpdaemon, "dlf" );  
+        }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
-
+ 
 	drive = argv[1];
 	vid = argv[2];
 	dvn = argv[3];

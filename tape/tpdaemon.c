@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.14 2008/02/21 17:50:39 waldron Exp $
+ * $Id: tpdaemon.c,v 1.15 2008/02/26 13:40:46 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.14 $ $Date: 2008/02/21 17:50:39 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.15 $ $Date: 2008/02/26 13:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -149,8 +149,13 @@ struct main_args *main_args;
 #ifdef CSEC
 	Csec_context_t sec_ctx;
 #endif
-        /* initialize tplogging to DLF */ 
-        tl_init_handle( &tl_tpdaemon, "dlf" );
+        /* initialize tplogger */ 
+        p = getconfent ("TAPE", "TPLOGGER", 0);
+        if (0 == strcasecmp(p, "SYSLOG")) {
+                tl_init_handle( &tl_tpdaemon, "syslog" ); 
+        } else {
+                tl_init_handle( &tl_tpdaemon, "dlf" );  
+        }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
 	strcpy (func, "tpdaemon");
@@ -159,7 +164,6 @@ struct main_args *main_args;
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 2,
                             "func",    TL_MSG_PARAM_STR, func,
                             "Message", TL_MSG_PARAM_STR, "tpdaemon has started." );
-
 #if SACCT
 	tapeacct (TPDSTART, 0, 0, jid, "", "", "", 0, 0);
 #endif
@@ -1674,6 +1678,14 @@ char *clienthost;
 		sprintf (arg_side, "%d", side);
 
 		tplogit (func, "execing mounttape, pid=%d\n", getpid());
+                
+                tplogit (func, "mounttape %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s %s\n",
+                         tunp->drive, vid, tunp->cdevp->dvn, arg_rpfd, arg_uid, arg_gid, 
+                         rrtp->user, tunp->acctname, arg_jid, arg_ux, tunp->dgn,
+                         tunp->devtype, tunp->dvrname, tunp->loader, arg_mode, arg_lbl,
+                         vsn, tunp->filp->path, arg_den, arg_prelabel,
+                         arg_vdqmid, arg_tpmounted, arg_side, clienthost, NULL); 
+
                 /* tl_log msg wouldn't be seen in the DB due to the execlp() */
 
 		execlp (progfullpath, "mounttape", tunp->drive, vid, 
@@ -2908,13 +2920,11 @@ void check_child_exit()
                 } else {
                     
                     tplogit (func, "rlstape process %d exited normally (jid %d)\n", pid, tunp->jid); 
-                    tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 6,
+                    tl_tpdaemon.tl_log( &tl_tpdaemon, 110, 4,
                                         "func"   , TL_MSG_PARAM_STR  , func,
                                         "Message", TL_MSG_PARAM_STR  , "rlstape exited normally",
                                         "pid"    , TL_MSG_PARAM_INT  , pid,
-                                        "jid"    , TL_MSG_PARAM_INT  , tunp->jid,
-                                        "vid"    , TL_MSG_PARAM_STR  , tunp->vid,
-                                        "TPVID"  , TL_MSG_PARAM_TPVID, tunp->vid );
+                                        "jid"    , TL_MSG_PARAM_INT  , tunp->jid );
                 }
 			}
 			tunp++;
