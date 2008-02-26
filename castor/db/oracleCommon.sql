@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.637 $ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.638 $ $Date: 2008/02/26 16:11:24 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -9,7 +9,7 @@
  *******************************************************************/
 
 /* A small table used to cross check code and DB versions */
-UPDATE CastorVersion SET schemaVersion = '2_1_6_0';
+UPDATE CastorVersion SET schemaVersion = '2_1_7_0';
 
 /* Sequence for indices */
 CREATE SEQUENCE ids_seq CACHE 300;
@@ -293,6 +293,15 @@ CREATE INDEX I_NbTapeCopiesInFS_Stream on NbTapeCopiesInFS(Stream);
  * is locked before the DiskServer. Thus this table..... */
 CREATE TABLE LockTable (DiskServerId NUMBER PRIMARY KEY, TheLock NUMBER);
 INSERT INTO LockTable SELECT id, id FROM DiskServer;
+
+
+/*********************************************************************/
+/* FileSystemsToCheck used to optimise the processing of filesystems */
+/* when they change status                                           */
+/*********************************************************************/
+
+CREATE TABLE FileSystemsToCheck (FileSystem NUMBER PRIMARY KEY, ToBeChecked NUMBER);
+INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
 
 /*********************/
