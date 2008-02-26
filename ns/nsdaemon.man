@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nsdaemon.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsdaemon.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:27:34 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSDAEMON 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns Administrator Commands"
+.TH NSDAEMON 1 "$Date: 2008/02/26 18:27:34 $" CASTOR "Cns Administrator Commands"
 .SH NAME
 nsdaemon \- start the name server
 .SH SYNOPSIS
@@ -149,7 +149,5 @@ Here is a small log:
 09/13 14:37:18  6089 Cns_srv_stat: NS098 - stat /castor
 09/13 14:37:18  6089 Cns_srv_stat: returns 0
 .fi
-.SH SEE ALSO
-.B nsshutdown(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
