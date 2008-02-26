@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_api.h,v 1.3 2007/01/31 08:45:06 wiebalck Exp $
+** $Id: tplogger_api.h,v 1.4 2008/02/26 13:27:27 wiebalck Exp $
 */
 
 
@@ -154,6 +154,8 @@ EXTERN_C int DLL_DECL tplogger_nb_messages _PROTO(( tplogger_t *self ));
 /*
 ** DLF prototypes of the tplogger interface
 */
+#define MAX_SYSLOG_MSG_LEN 1024
+
 EXTERN_C int DLL_DECL tl_init_dlf         _PROTO(( tplogger_t *self, int init ));
 
 EXTERN_C int DLL_DECL tl_exit_dlf         _PROTO(( tplogger_t *self, int exit ));
@@ -171,6 +173,28 @@ EXTERN_C int DLL_DECL tl_fork_prepare_dlf _PROTO(( tplogger_t *self ));
 EXTERN_C int DLL_DECL tl_fork_child_dlf   _PROTO(( tplogger_t *self ));
 
 EXTERN_C int DLL_DECL tl_fork_parent_dlf  _PROTO(( tplogger_t *self ));
+
+
+/*
+** syslog prototypes of the tplogger interface
+*/
+EXTERN_C int DLL_DECL tl_init_syslog         _PROTO(( tplogger_t *self, int init ));
+
+EXTERN_C int DLL_DECL tl_exit_syslog         _PROTO(( tplogger_t *self, int exit ));
+
+EXTERN_C int DLL_DECL tl_log_syslog          _PROTO(( tplogger_t *self, unsigned short msg_no, int num_params, ... ));
+
+EXTERN_C int DLL_DECL tl_llog_syslog         _PROTO(( tplogger_t *self, int sev, unsigned short msg_no, int num_params, ... ));
+
+EXTERN_C int DLL_DECL tl_get_lvl_syslog      _PROTO(( tplogger_t *self, unsigned short msg_no ));
+
+EXTERN_C int DLL_DECL tl_set_lvl_syslog      _PROTO(( tplogger_t *self, unsigned short msg_no, int lvl ));
+
+EXTERN_C int DLL_DECL tl_fork_prepare_syslog _PROTO(( tplogger_t *self ));
+
+EXTERN_C int DLL_DECL tl_fork_child_syslog   _PROTO(( tplogger_t *self ));
+
+EXTERN_C int DLL_DECL tl_fork_parent_syslog  _PROTO(( tplogger_t *self ));
 
 
 /*

@@ -19,13 +19,15 @@
 
 
 /*
-** $Id: tplogger.c,v 1.8 2008/02/15 13:50:02 wiebalck Exp $
+** $Id: tplogger.c,v 1.9 2008/02/26 13:27:27 wiebalck Exp $
 */
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <syslog.h>
+#include <ctype.h>
 
 #include "Cthread_api.h"
 #include "tplogger_api.h"
@@ -577,7 +579,9 @@ int DLL_DECL tl_llog_dlf( tplogger_t *self, int lvl, unsigned short msg_no, int 
 				plist[i].par.par_string = strdup( string );
 			}
 		}
-		else if( plist[i].type == DLF_MSG_PARAM_INT ) {
+		else if( (plist[i].type == DLF_MSG_PARAM_INT)  ||
+			 (plist[i].type == DLF_MSG_PARAM_UID) || 
+			 (plist[i].type == DLF_MSG_PARAM_GID) ) {
 			plist[i].par.par_int = va_arg(ap, int);
 		}
 		else if( plist[i].type == DLF_MSG_PARAM_INT64 ) {
@@ -708,6 +712,270 @@ int DLL_DECL tl_set_lvl_dlf( tplogger_t *self, unsigned short msg_no, int lvl ) 
 */
 
 
+/*
+**   syslog implementation of the tplogger interface 
+*/
+
+int DLL_DECL tl_init_syslog( tplogger_t *self, int init ) {
+
+        int err = 0;
+
+        if( NULL == self ) {
+
+                err = -1;
+                goto err_out;
+        }
+
+        switch( init ) {
+
+        case 0:
+                self->tl_name = strdup( "tpdaemon" );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon );
+                openlog("tpdaemon", LOG_PID, LOG_LOCAL0);
+                break;
+
+        case 1:
+                self->tl_name = strdup( "rtcpd" );
+                tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
+                openlog("rtcpd", LOG_PID, LOG_LOCAL0);
+                break;
+
+        default:
+                break;
+        }
+
+ err_out:
+        return err;
+}
+
+
+int DLL_DECL tl_exit_syslog( tplogger_t *self, int exit ) {
+
+        int err = 0;
+
+        if( NULL == self ) {
+                
+                err = -1;
+                goto err_out;
+        }        
+        closelog();
+        free( self->tl_name );
+        
+ err_out:
+        return err;
+}
+
+/**
+ * Map the tplogger log levels to the syslogd priorities.
+ *
+ * @param lvl : the log level to convert
+ *
+ * @returns   : the syslogd priority 
+ */
+static int loglevel_2_syslogpriority(int lvl) {
+
+        int prio;
+        
+        switch (lvl) {
+
+        case TL_LVL_EMERGENCY:
+                prio = LOG_EMERG;
+                break;
+        case TL_LVL_ALERT:
+                prio = LOG_ALERT;
+                break;
+        case TL_LVL_ERROR:
+                prio = LOG_ERR;
+                break;
+        case TL_LVL_WARNING:
+                prio = LOG_WARNING;
+                break;
+        case TL_LVL_AUTH:
+        case TL_LVL_SECURITY:
+        case TL_LVL_USAGE:
+                prio = LOG_CRIT;
+                break;
+        case TL_LVL_IMPORTANT:
+                prio = LOG_NOTICE;
+                break;                
+        case TL_LVL_SYSTEM:
+        case TL_LVL_MONITORING:
+                prio = LOG_INFO;
+                break;
+        case TL_LVL_DEBUG:
+                prio = LOG_DEBUG;
+                break;
+        default:
+                prio = LOG_ERR;
+        }
+        return prio;
+}
+
+static int convert2upper(char *str) {
+        
+        int i;
+        
+        if (NULL == str) {
+                return -1;
+        }
+
+        for (i=0; i<strlen(str); i++) {
+                str[i] = (char)toupper((int)str[i]);
+        }
+
+        return 0;
+}
+
+/**
+ * Log a message using the syslog implementation. 
+ *
+ * @param self       : reference to the tplogger struct
+ * @param msg_no     : the message number
+ * @param num_params : the number of parameters in the variadic part
+ *
+ * @returns    : 0 on success
+ *               a value < 0 on failure
+ */
+int DLL_DECL tl_log_syslog( tplogger_t *self, unsigned short msg_no, int num_params, ... ) {
+
+        int err = 0, i, ndx = -1, prio, strndx, type;
+	va_list ap;
+        char    msg[MAX_SYSLOG_MSG_LEN];
+        char   *name, *string;
+        int     par_int;
+        double  par_double;
+        U_HYPER par_u64;
+        Cuuid_t par_uuid;
+
+        if( NULL == self ) {
+                
+                err = -1;
+                goto err_out;
+        }
+        
+        /* translate number to index */
+        for (i=0; i<self->tl_msg_entries; i++) {
+                if (self->tl_msg[i].tm_no == msg_no) {
+                        ndx = i;
+                        break;
+                }
+        }
+        
+        /* check if message found */
+        if (-1 == ndx) {
+                syslog(LOG_ERR, "Did not find message %d!", msg_no);
+                err = -2;
+                goto err_out;
+        } 
+
+        /* convert the log level to a syslog priority */
+        prio = loglevel_2_syslogpriority(self->tl_msg[ndx].tm_lvl);
+
+        /* insert the message */
+        strndx = snprintf(msg, MAX_SYSLOG_MSG_LEN, "\"TYPE\"=\"%s\", ", self->tl_msg[ndx].tm_txt);
+
+        /* translate the variable argument list to a string */
+       	va_start(ap, num_params);
+	for( i = 0; i<num_params; i++ ) {
+
+                /* get the name */
+		name = va_arg(ap, char *);                
+		if (name == NULL) {
+                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\"=", "(nil)");
+		} else {
+                        char *name2 = strdup(name);
+                        if (!convert2upper(name2)) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\"=", name2);
+                        } else {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\"=", name);
+                        }
+                        free(name2);
+		}
+
+                /* process type */
+                type = va_arg(ap, int );
+		if ((type == TL_MSG_PARAM_TPVID) || (type == TL_MSG_PARAM_STR)) {
+			string = va_arg(ap, char *);
+			if (string == NULL) {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\", ", "(nil)");   
+			} else {
+                                strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\", ", string);
+			}
+
+		} else if ((type == TL_MSG_PARAM_INT) || 
+                           (type == TL_MSG_PARAM_UID) || 
+                           (type == TL_MSG_PARAM_GID)) {
+                        par_int = va_arg(ap, int);
+                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%d\", ", par_int);
+
+		} else if (type == TL_MSG_PARAM_INT64) {
+                        par_u64 = va_arg(ap, HYPER);
+                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%lld\", ", par_u64);
+
+		} else if (type == TL_MSG_PARAM_DOUBLE) {
+                        par_double = va_arg(ap, double);
+                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%f\", ", par_double);
+
+		} else if (type == TL_MSG_PARAM_UUID) {
+                        char tmp[CUUID_STRING_LEN];
+                        par_uuid = va_arg(ap, Cuuid_t);
+                        Cuuid2string(tmp, CUUID_STRING_LEN, &par_uuid);
+                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%s\", ", tmp);
+
+		} else if (type == TL_MSG_PARAM_FLOAT) {
+                        par_double = va_arg(ap, double);
+                        strndx += snprintf(msg + strndx, MAX_SYSLOG_MSG_LEN, "\"%f\", ", par_double);
+
+		} else {
+
+			break;
+		}
+	}
+	va_end(ap);
+
+        /* remove the trailing comma */
+        msg[strlen(msg)-2] = '\0';
+
+        syslog(prio, "%s", msg);
+        
+ err_out:
+        return err;
+}
+
+int DLL_DECL tl_llog_syslog( tplogger_t *self, int sev, unsigned short msg_no, int num_params, ... ) {
+
+        return -1;
+}
+
+int DLL_DECL tl_get_lvl_syslog( tplogger_t *self, unsigned short msg_no ) {
+
+        return -1;
+}
+
+int DLL_DECL tl_set_lvl_syslog( tplogger_t *self, unsigned short msg_no, int lvl ) {
+
+        return -1;
+}
+
+int DLL_DECL tl_fork_prepare_syslog( tplogger_t *self ) {
+
+        return -1;
+}
+
+int DLL_DECL tl_fork_child_syslog( tplogger_t *self ) {
+
+        return -1;
+}
+
+int DLL_DECL tl_fork_parent_syslog( tplogger_t *self ) {
+
+        return -1;
+}
+
+/*
+** END Syslog implementation of the tplogger interface 
+*/
+
 
 /*
 **   Stdio implementation of the tplogger interface 
@@ -733,17 +1001,17 @@ int DLL_DECL tl_init_stdio( tplogger_t *self, int init ) {
                 goto err_out;
         }
 
-        self->tl_name = strdup( "stdio" );
-
         switch( init ) {
 
         case 0:
+                self->tl_name = strdup( "tpdaemon" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_tpdaemon );
                 /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
                 break;
 
         case 1:
+                self->tl_name = strdup( "rtcpd" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
                 /* tl_set_msg_tbl_dlf( self, tplogger_messages ); */
 
@@ -862,7 +1130,19 @@ int tl_init_handle( tplogger_t *self, const char *type ) {
                 self->tl_fork_child   = tl_fork_child_dlf; 
                 self->tl_fork_parent  = tl_fork_parent_dlf; 
                 self->tl_exit         = tl_exit_dlf;                
-                
+
+        } else if( 0 == strcmp( type, "syslog") ) {
+
+                self->tl_init         = tl_init_syslog;
+                self->tl_log          = tl_log_syslog;
+                self->tl_llog         = tl_llog_syslog;
+                self->tl_get_lvl      = tl_get_lvl_syslog;
+                self->tl_set_lvl      = tl_set_lvl_syslog;
+                self->tl_fork_prepare = tl_fork_prepare_syslog; 
+                self->tl_fork_child   = tl_fork_child_syslog; 
+                self->tl_fork_parent  = tl_fork_parent_syslog; 
+                self->tl_exit         = tl_exit_syslog;                
+                                
         } else if( 0 == strcmp( type, "stdio") ) {
 
                 self->tl_init         = tl_init_stdio;

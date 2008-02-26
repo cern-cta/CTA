@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger_messages.c,v 1.8 2007/09/21 12:36:57 wiebalck Exp $
+** $Id: tplogger_messages.c,v 1.9 2008/02/26 13:27:27 wiebalck Exp $
 */
 
 #include <string.h>
@@ -351,7 +351,7 @@ int DLL_DECL tplogger_nb_messages( tplogger_t *self ) {
 
         if( 0 == strcmp( self->tl_name, "stdio" ) ) {
                 
-                return( ARRAY_ENTRIES( tplogger_messages ) );
+                return( ARRAY_ENTRIES( tplogger_messages_tpdaemon ) );
         }
         
         return 0;
