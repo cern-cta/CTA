@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id: maketar.sh,v 1.71 2008/02/22 07:23:21 waldron Exp $
+# $Id: maketar.sh,v 1.72 2008/02/26 17:24:08 waldron Exp $
 
 if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
   echo "No MAJOR_CASTOR_VERSION environment variable - guessing from debian/changelog"
@@ -59,6 +59,7 @@ curdir=`pwd`
 cd ..
 [ -d "castor-${a}.${b}.${c}" ] && rm -rf castor-${a}.${b}.${c}
 cp -Lr $curdir castor-${a}.${b}.${c}
+rm -rf castor-${a}.${b}.${c}/xroot
 cd castor-${a}.${b}.${c}
 
 echo "### INFO ### Customizing build directory"
