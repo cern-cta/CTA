@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.48 $ $Release$ $Date: 2008/02/21 17:22:56 $ $Author: mmartins $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2008/02/26 14:34:30 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -141,9 +141,9 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     /* StagerDaemon: To DLF_LVL_DEBUG */
     /*************************************/
     
-    { STAGER_DAEMON_START, " StagerDaemon started"},
-    { STAGER_DAEMON_EXECUTION, " StagerDaemon execution"},
-    { STAGER_DAEMON_ERROR_CONFIG, " StagerDaemon configuration error"},
+    { STAGER_DAEMON_START, "StagerDaemon started"},
+    { STAGER_DAEMON_EXECUTION, "StagerDaemon execution"},
+    { STAGER_DAEMON_ERROR_CONFIG, "StagerDaemon configuration error"},
     { STAGER_DAEMON_EXCEPTION, "Exception caught when starting "},
     { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
     { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
