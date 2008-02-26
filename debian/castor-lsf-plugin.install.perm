@@ -1,2 +1,3 @@
-%attr(0755,root,bin) usr/lib/schmod_castor.so
+%attr(0755,root,bin) usr/lib/schmod_shmem.so
+%attr(0755,root,bin) usr/lib/schmod_python.so
 %attr(0644,root,bin) etc/castor/policies/scheduler.py.example
