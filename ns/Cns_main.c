@@ -30,15 +30,16 @@
 #include "Cdomainname.h"
 #include "marshall.h"
 #include "net.h"
+#include "patchlevel.h"
 #include "serrno.h"
 
-int procsessreq(int magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
-int procsessreq(int magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
-int proctransreq(int magic, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
-int procdirreq(int magic, int req_type, char *req_data, char *clienthost, struct Cns_srv_thread_info *thip);
+int procsessreq(int magic, char *req_data, const char *clienthost, struct Cns_srv_thread_info *thip);
+int procsessreq(int magic, char *req_data, const char *clienthost, struct Cns_srv_thread_info *thip);
+int proctransreq(int magic, char *req_data, const char *clienthost, struct Cns_srv_thread_info *thip);
+int procdirreq(int magic, int req_type, char *req_data, const char *clienthost, struct Cns_srv_thread_info *thip);
 int Cns_init_dbpkg();
 
-int being_shutdown;
+int being_shutdown = 0;
 char *cmd;
 char func[16];
 int jid;
@@ -50,6 +51,18 @@ char nsconfigfile[CA_MAXPATHLEN+1];
 int maxfds;
 int rdonly;
 struct Cns_srv_thread_info *Cns_srv_thread_info;
+
+void Cns_signal_handler(int sig)
+{
+	strcpy (func, "Cns_serv");
+	if (sig == SIGINT) {
+		nslogit(func, "Caught SIGINT, immediate stop\n");
+		exit(0);
+	} else if (sig == SIGTERM) {
+		nslogit (func, "Caught SIGTERM, shutting down\n");
+		being_shutdown = 1;
+	}
+}
 
 int Cns_main(main_args)
 struct main_args *main_args;
@@ -118,7 +131,7 @@ struct main_args *main_args;
 		}
 	}
 
-	nslogit (func, "started\n");
+	nslogit (func, "started (%s %d.%d.%d-%d)\n", CNS_SCE, MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
 	if (Cdomainname (localdomain, sizeof(localdomain)) < 0) {
 		nslogit (func, "Unable to get domainname\n");
@@ -189,6 +202,8 @@ struct main_args *main_args;
 	signal (SIGPIPE,SIG_IGN);
 	signal (SIGXFSZ,SIG_IGN);
 #endif
+	signal (SIGTERM,Cns_signal_handler);
+	signal (SIGINT,Cns_signal_handler);
 
 	/* open request socket */
 
@@ -218,7 +233,7 @@ struct main_args *main_args;
 
 	FD_SET (s, &readmask);
 
-		/* main loop */
+	/* main loop */
 
 	while (1) {
 		if (being_shutdown) {
@@ -242,9 +257,9 @@ struct main_args *main_args;
 			rqfd = accept (s, (struct sockaddr *) &from, &fromlen);
 #if (defined(SOL_SOCKET) && defined(SO_KEEPALIVE))
 			{
-			  int on = 1;
-			  /* Set socket option */
-			  setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
+				int on = 1;
+				/* Set socket option */
+				setsockopt(rqfd,SOL_SOCKET,SO_KEEPALIVE,(char *) &on,sizeof(on));
 			}
 #endif
 			if ((thread_index = Cpool_next_index (ipool)) < 0) {
@@ -295,7 +310,7 @@ int getreq(s, magic, req_type, req_data, clienthost)
 int s;
 int *magic;
 int *req_type;
-char *req_data;
+char **req_data;
 char **clienthost;
 {
 	struct sockaddr_in from;
@@ -306,7 +321,7 @@ char **clienthost;
 	int n;
 	char *rbp;
 	char req_hdr[3*LONGSIZE];
-
+	
 	serrno = 0;
 	l = netread_timeout (s, req_hdr, sizeof(req_hdr), CNS_TIMEOUT);
 	if (l == sizeof(req_hdr)) {
@@ -316,12 +331,15 @@ char **clienthost;
 		unmarshall_LONG (rbp, n);
 		*req_type = n;
 		unmarshall_LONG (rbp, msglen);
-		if (msglen > REQBUFSZ) {
-			nslogit (func, NS046, REQBUFSZ);
-			return (-1);
+		if (msglen > ONE_MB) {
+			nslogit (func, NS046, ONE_MB);
+			return (E2BIG);
 		}
 		l = msglen - sizeof(req_hdr);
-		n = netread_timeout (s, req_data, l, CNS_TIMEOUT);
+		if (msglen > REQBUFSZ && (*req_data = malloc (l)) == NULL) {
+			return (ENOMEM);
+		}
+		n = netread_timeout (s, *req_data, l, CNS_TIMEOUT);
 		if (being_shutdown) {
 			return (ENSNACT);
 		}
@@ -330,7 +348,7 @@ char **clienthost;
 			return (SEINTERNAL);
 		}
 		hp = Cgethostbyaddr ((char *)(&from.sin_addr),
-			sizeof(struct in_addr), from.sin_family);
+				     sizeof(struct in_addr), from.sin_family);
 		if (hp == NULL)
 			*clienthost = inet_ntoa (from.sin_addr);
 		else
@@ -349,7 +367,7 @@ int procdirreq(magic, req_type, req_data, clienthost, thip)
 int magic;
 int req_type;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int c;
@@ -362,6 +380,7 @@ struct Cns_srv_thread_info *thip;
 	int rc = 0;
 	fd_set readfd, readmask;
 	struct Cns_file_replica rep_entry;
+	char *req_data2;
 	struct Cns_seg_metadata smd_entry;
 	DBLISTPTR smdlistptr;
 	struct timeval timeval;
@@ -409,52 +428,50 @@ struct Cns_srv_thread_info *thip;
 		timeval.tv_usec = 0;
 		if (select (thip->s+1, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0)
 			endlist = 1;
-		if ((rc = getreq (thip->s, &magic, &new_req_type, req_data, &clienthost)))
+		req_data2 = req_data;
+		if ((rc = getreq (thip->s, &magic, &new_req_type, &req_data2, &clienthost)))
 			endlist = 1;
 		if (req_type == CNS_OPENDIR) {
 			if (new_req_type != CNS_READDIR)
 				endlist = 1;
-			if ((c = Cns_srv_readdir (magic, req_data, clienthost, thip,
-						  &fmd_entry, &smd_entry, &umd_entry,
-						  endlist, &dblistptr, &smdlistptr)))
-				return (c);
+			c = Cns_srv_readdir (magic, req_data2, clienthost, thip,
+					     &fmd_entry, &smd_entry, &umd_entry,
+					     endlist, &dblistptr, &smdlistptr);
 		} else if (req_type == CNS_LISTCLASS) {
 			if (new_req_type != CNS_LISTCLASS)
 				endlist = 1;
-			if ((c = Cns_srv_listclass (magic, req_data, clienthost, thip,
-						    &class_entry, endlist, &dblistptr)))
-				return (c);
+			c = Cns_srv_listclass (magic, req_data2, clienthost, thip,
+					       &class_entry, endlist, &dblistptr);
 		} else if (req_type == CNS_LISTLINKS) {
 			if (new_req_type != CNS_LISTLINKS)
 				endlist = 1;
-			if ((c = Cns_srv_listlinks (magic, req_data, clienthost, thip,
-						    &lnk_entry, endlist, &dblistptr)))
-				return (c);
+			c = Cns_srv_listlinks (magic, req_data2, clienthost, thip,
+					       &lnk_entry, endlist, &dblistptr);
 		} else if (req_type == CNS_LISTREP4GC) {
 			if (new_req_type != CNS_LISTREP4GC)
 				endlist = 1;
-			if ((c = Cns_srv_listrep4gc (magic, req_data, clienthost, thip,
-						     &rep_entry, endlist, &dblistptr)))
-				return (c);
+			c = Cns_srv_listrep4gc (magic, req_data2, clienthost, thip,
+						&rep_entry, endlist, &dblistptr);
 		} else if (req_type == CNS_LISTREPLICA) {
 			if (new_req_type != CNS_LISTREPLICA)
 				endlist = 1;
-			if ((c = Cns_srv_listreplica (magic, req_data, clienthost, thip,
-						      &fmd_entry, &rep_entry, endlist, &dblistptr)))
-				return (c);
+			c = Cns_srv_listreplica (magic, req_data2, clienthost, thip,
+						 &fmd_entry, &rep_entry, endlist, &dblistptr);
 		} else if (req_type == CNS_LISTREPLICAX) {
 			if (new_req_type != CNS_LISTREPLICAX)
 				endlist = 1;
-			if ((c = Cns_srv_listreplicax (magic, req_data, clienthost, thip,
-						       &rep_entry, endlist, &dblistptr)))
-				return (c);
+			c = Cns_srv_listreplicax (magic, req_data2, clienthost, thip,
+						  &rep_entry, endlist, &dblistptr);
 		} else {
 			if (new_req_type != CNS_LISTTAPE)
 				endlist = 1;
-			if ((c = Cns_srv_listtape (magic, req_data, clienthost, thip,
-						   &fmd_entry, &smd_entry, endlist, &dblistptr)))
-				return (c);
+			c = Cns_srv_listtape (magic, req_data2, clienthost, thip,
+					      &fmd_entry, &smd_entry, endlist, &dblistptr);
 		}
+		if (req_data2 != req_data)
+			free (req_data2);
+		if (c)
+			return (c);
 		if (endlist) break;
 		sendrep (thip->s, CNS_IRC, 0);
 	}
@@ -465,7 +482,7 @@ int procreq(magic, req_type, req_data, clienthost, thip)
 int magic;
 int req_type;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int c;
@@ -483,12 +500,13 @@ struct Cns_srv_thread_info *thip;
 			    sstrerror(serrno));
 			return (c);
 		}
-		if (req_type != CNS_SHUTDOWN) {
+		if (!being_shutdown) {
 			if (Cns_opendb (&thip->dbfd) < 0) {
 				c = serrno;
 				sendrep (thip->s, MSG_ERR, "db open error: %d\n", c);
 				return (c);
 			}
+			nslogit (func, "database connection established\n");
 			thip->db_open_done = 1;
 		}
 	}
@@ -600,9 +618,6 @@ struct Cns_srv_thread_info *thip;
 	case CNS_SETSEGAT:
 		c = Cns_srv_setsegattrs (magic, req_data, clienthost, thip);
 		break;
-	case CNS_SHUTDOWN:
-		c = Cns_srv_shutdown (magic, req_data, clienthost, thip);
-		break;
 	case CNS_STAT:
 		c = Cns_srv_stat (magic, req_data, clienthost, thip);
 		break;
@@ -681,6 +696,9 @@ struct Cns_srv_thread_info *thip;
 	case CNS_BULKEXIST:
 	        c = Cns_srv_bulkexist (magic, req_data, clienthost, thip);
 		break;
+	case CNS_TAPESUM:
+		c = Cns_srv_tapesum (magic, req_data, clienthost, thip);
+		break;
 	case CNS_STARTSESS:
 		c = procsessreq (magic, req_data, clienthost, thip);
 		break;
@@ -729,9 +747,12 @@ struct Cns_srv_thread_info *thip;
 	case CNS_ENTUSRMAP:
 		c = Cns_srv_enterusrmap (magic, req_data, clienthost, thip);
 		break;
+	case CNS_PING:
+		c = Cns_srv_ping(magic, req_data, clienthost, thip);
+		break;
 	default:
 		sendrep (thip->s, MSG_ERR, NS003, req_type);
-		c = SEINTERNAL;
+		c = SEOPNOTSUP;
 	}
 	return (c);
 }
@@ -741,9 +762,10 @@ doit(arg)
 void *arg;
 {
 	int c;
-	char *clienthost;
+	const char *clienthost = NULL;
 	int magic;
-	char req_data[REQBUFSZ-3*LONGSIZE];
+	char *req_data;
+	char reqbuf[REQBUFSZ-3*LONGSIZE];
 	int req_type = 0;
 	struct Cns_srv_thread_info *thip = (struct Cns_srv_thread_info *) arg;
 
@@ -799,13 +821,17 @@ void *arg;
 #endif
 	}
 #endif
-	if ((c = getreq (thip->s, &magic, &req_type, req_data, &clienthost)) == 0) {
+	req_data = reqbuf;
+	if ((c = getreq (thip->s, &magic, &req_type, &req_data, &clienthost)) == 0) {
 		c = procreq (magic, req_type, req_data, clienthost, thip);
 		sendrep (thip->s, CNS_RC, c);
-	} else if (c > 0)
+	} else if (c > 0) {
 		sendrep (thip->s, CNS_RC, c);
-	else
+	} else {
 		netclose (thip->s);
+	}
+	if (req_data != reqbuf)
+		free (req_data);
 	thip->s = -1;
 	return (NULL);
 }
@@ -813,19 +839,19 @@ void *arg;
 int procsessreq(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int req_type = -1;
 	int rc = 0;
 	fd_set readfd, readmask;
+	char *req_data2;
 	struct timeval timeval;
 
 	(void) Cns_srv_startsess (magic, req_data, clienthost, thip);
 	sendrep (thip->s, CNS_IRC, 0);
 
 	/* wait for requests and process them */
-
 	FD_ZERO (&readmask);
 	FD_SET (thip->s, &readmask);
 	while (1) {
@@ -835,10 +861,15 @@ struct Cns_srv_thread_info *thip;
 		if (select (thip->s+1, &readfd, (fd_set *)0, (fd_set *)0, &timeval) <= 0) {
 			return (SEINTERNAL);
 		}
-		if ((rc = getreq (thip->s, &magic, &req_type, req_data, &clienthost))) {
+		req_data2 = req_data;
+		if ((rc = getreq (thip->s, &magic, &req_type, &req_data2, &clienthost))) {
+			if (req_data2 != req_data)
+				free (req_data2);
 			return (rc);
 		}
-		rc = procreq (magic, req_type, req_data, clienthost, thip);
+		rc = procreq (magic, req_type, req_data2, clienthost, thip);
+		if (req_data2 != req_data)
+			free (req_data2);
 		if (req_type == CNS_ENDSESS) break;
 		sendrep (thip->s, CNS_IRC, rc);
 	}
@@ -848,12 +879,13 @@ struct Cns_srv_thread_info *thip;
 int proctransreq(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int req_type = -1;
 	int rc = 0;
 	fd_set readfd, readmask;
+	char *req_data2;
 	struct timeval timeval;
 
 	(void) Cns_srv_starttrans (magic, req_data, clienthost, thip);
@@ -871,11 +903,16 @@ struct Cns_srv_thread_info *thip;
 			(void) Cns_srv_aborttrans (magic, req_data, clienthost, thip);
 			return (SEINTERNAL);
 		}
-		if ((rc = getreq (thip->s, &magic, &req_type, req_data, &clienthost))) {
-			(void) Cns_srv_aborttrans (magic, req_data, clienthost, thip);
+		req_data2 = req_data;
+		if ((rc = getreq (thip->s, &magic, &req_type, &req_data2, &clienthost))) {
+			(void) Cns_srv_aborttrans (magic, req_data2, clienthost, thip);
+			if (req_data2 != req_data)
+				free (req_data2);
 			return (rc);
 		}
-		rc = procreq (magic, req_type, req_data, clienthost, thip);
+		rc = procreq (magic, req_type, req_data2, clienthost, thip);
+		if (req_data2 != req_data)
+			free (req_data2);
 		if (req_type == CNS_ENDTRANS || req_type == CNS_ABORTTRANS) break;
 		if (rc && req_type != CNS_ACCESS && req_type != CNS_ACCESSR &&
 		    req_type != CNS_DU && req_type != CNS_GETACL &&
@@ -885,7 +922,9 @@ struct Cns_srv_thread_info *thip;
 		    req_type != CNS_STAT && req_type != CNS_STATG &&
 		    req_type != CNS_STATR && req_type != CNS_GETGRPID &&
 		    req_type != CNS_GETGRPNAM && req_type != CNS_GETUSRID &&
-		    req_type != CNS_GETUSRNAM) break;
+		    req_type != CNS_GETUSRNAM && req_type != CNS_LASTFSEQ &&
+		    req_type != CNS_PING && req_type != CNS_BULKEXIST &&
+		    req_type != CNS_TAPESUM) break;
 		sendrep (thip->s, CNS_IRC, rc);
 	}
 	return (rc);

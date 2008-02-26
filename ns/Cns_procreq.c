@@ -31,6 +31,7 @@
 #include "Cns_server.h"
 #include "Cpwd.h"
 #include "Cupv_api.h"
+#include "patchlevel.h"
 #include "rfcntl.h"
 #include "serrno.h"
 #include "u64subr.h"
@@ -240,7 +241,7 @@ struct Cns_seg_metadata *smd_entry;
 int Cns_srv_aborttrans(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char func[19];
@@ -265,7 +266,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_access(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int amode;
@@ -318,7 +319,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_accessr(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int amode;
@@ -381,7 +382,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_addreplica(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char f_type;
@@ -506,7 +507,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_chclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char class_name[CA_MAXCLASNAMELEN+1];
@@ -617,7 +618,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_chdir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -669,7 +670,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_chmod(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -736,7 +737,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_chown(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -849,7 +850,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_creat(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bof = 1;
@@ -1016,7 +1017,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_delcomment(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -1077,7 +1078,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_delete(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bof = 1;
@@ -1190,7 +1191,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_deleteclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bol = 1;
@@ -1258,7 +1259,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_delreplica(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 fileid;
@@ -1345,7 +1346,7 @@ struct Cns_file_metadata *direntry;
 int Lflag;
 uid_t uid;
 gid_t gid;
-char *clienthost;
+const char *clienthost;
 u_signed64 *nbbytes;
 u_signed64 *nbentries;
 {
@@ -1402,7 +1403,7 @@ u_signed64 *nbentries;
 int Cns_srv_du(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int c;
@@ -1466,7 +1467,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_endsess(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char func[16];
@@ -1489,7 +1490,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_endtrans(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char func[17];
@@ -1514,7 +1515,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_enterclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_class_metadata class_entry;
@@ -1585,7 +1586,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getacl(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -1658,7 +1659,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getcomment(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -1716,7 +1717,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getlinks(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bol = 1;
@@ -1814,7 +1815,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getpath(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int c;
@@ -1855,7 +1856,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getreplica(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bol = 1;
@@ -1959,7 +1960,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getsegattrs(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bof = 1;
@@ -2061,7 +2062,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_lchown(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -2173,7 +2174,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_listclass(magic, req_data, clienthost, thip, class_entry, endlist, dblistptr)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 struct Cns_class_metadata *class_entry;
 int endlist;
@@ -2281,7 +2282,7 @@ reply:
 int Cns_srv_listlinks(magic, req_data, clienthost, thip, lnk_entry, endlist, dblistptr)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 struct Cns_symlinks *lnk_entry;
 int endlist;
@@ -2406,7 +2407,7 @@ DBLISTPTR *dblistptr;
 int Cns_srv_listrep4gc(magic, req_data, clienthost, thip, rep_entry, endlist, dblistptr)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 struct Cns_file_replica *rep_entry;
 int endlist;
@@ -2488,7 +2489,7 @@ DBLISTPTR *dblistptr;
 int Cns_srv_listreplica(magic, req_data, clienthost, thip, fmd_entry, rep_entry, endlist, dblistptr)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 struct Cns_file_metadata *fmd_entry;
 struct Cns_file_replica *rep_entry;
@@ -2605,7 +2606,7 @@ DBLISTPTR *dblistptr;
 int Cns_srv_listreplicax(magic, req_data, clienthost, thip, rep_entry, endlist, dblistptr)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 struct Cns_file_replica *rep_entry;
 int endlist;
@@ -2693,13 +2694,13 @@ DBLISTPTR *dblistptr;
 int Cns_srv_lastfseq(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_seg_metadata smd_entry;
 	char  func[19];
-	char  vid[CA_MAXVIDLEN + 1];
-	char  logbuf[CA_MAXVIDLEN + 12];
+	char  vid[CA_MAXVIDLEN+1];
+	char  logbuf[CA_MAXVIDLEN+12];
 	char  repbuf[REPBUFSZ];
 	char  *rbp;
 	char  *sbp;
@@ -2756,62 +2757,118 @@ struct Cns_srv_thread_info *thip;
 }
 
 int Cns_srv_bulkexist(magic, req_data, clienthost, thip)
-     int magic;
-     char *req_data;
-     char *clienthost;
-     struct Cns_srv_thread_info *thip;
+int magic;
+char *req_data;
+const char *clienthost;
+struct Cns_srv_thread_info *thip;
 {
-  char  func[19];
-  char  *repbuf;
-  char  *rbp;
-  char  *sbp;
-  char  *user;
-  gid_t gid;
-  uid_t uid;
-  u_signed64 *fileIds;
-  int nbFileIds, i, c;
-  
-  strcpy(func, "Cns_srv_bulkexist");
+	char  logbuf[12+21];
+	char  func[19];
+	char  *repbuf;
+	char  *rbp;
+	char  *sbp;
+	char  *user;
+	gid_t gid;
+	uid_t uid;
+	u_signed64 *fileIds;
+	int nbFileIds, i, c;
 	
-  /* Extract and log common request attributes */
-  rbp = req_data;
-  unmarshall_LONG(rbp, uid);
-  unmarshall_LONG(rbp, gid);
-  get_client_actual_id(thip, &uid, &gid, &user);
-  nslogit(func, NS092, "bulkexist", user, uid, gid, clienthost);
+	strcpy(func, "Cns_srv_bulkexist");
 	
-  /* Extract fileIds */
-  unmarshall_LONG(rbp, nbFileIds);
-  fileIds = (u_signed64*) malloc(nbFileIds*sizeof(u_signed64));
-  for (i = 0; i < nbFileIds; i++) {
-    unmarshall_HYPER(rbp, fileIds[i]);
-  }
+	/* Extract and log common request attributes */
+	rbp = req_data;
+	unmarshall_LONG(rbp, uid);
+	unmarshall_LONG(rbp, gid);
+	get_client_actual_id(thip, &uid, &gid, &user);
+	nslogit(func, NS092, "bulkexist", user, uid, gid, clienthost);
+	
+	/* Extract fileIds */
+	unmarshall_LONG(rbp, nbFileIds);
+	fileIds = (u_signed64*) malloc(nbFileIds*sizeof(u_signed64));
+	for (i = 0; i < nbFileIds; i++) {
+		unmarshall_HYPER(rbp, fileIds[i]);
+	}
+	sprintf(logbuf, "bulkexist %d", nbFileIds);
+	Cns_logreq(func, logbuf);
+	
+	/* Check file existence */
+	c = Cns_check_files_exist(&thip->dbfd, fileIds, &nbFileIds);
+	if (c < 0) {
+		free(fileIds);
+		RETURN (serrno);
+	}
+	
+	/* Marshall list of non existent files */
+	repbuf = (char*) malloc(LONGSIZE+nbFileIds*HYPERSIZE);
+	sbp = repbuf;
+	marshall_LONG(sbp, nbFileIds);
+	for (i = 0; i < nbFileIds; i++) {
+		marshall_HYPER(sbp, fileIds[i]);
+	}
+	/* Send response */
+	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+	free(repbuf);
+	free(fileIds);
+	RETURN (0);
+}
 
-  /* check file existence */
-  c = Cns_check_files_exist(&thip->dbfd, fileIds, &nbFileIds);
-  if (c < 0) {
-    free(fileIds);
-    RETURN (serrno);
-  }
+int Cns_srv_tapesum(magic, req_data, clienthost, thip)
+int magic;
+char *req_data;
+const char *clienthost;
+struct Cns_srv_thread_info *thip;
+{
+	char  func[19];
+	char  vid[CA_MAXVIDLEN+1];
+	char  logbuf[CA_MAXVIDLEN+22];
+	char  repbuf[REPBUFSZ];
+	u_signed64 count = 0;
+	u_signed64 size = 0;
+	char  *rbp;
+	char  *sbp;
+	char  *user;
+	int   c;
+	int   deleted;
+	gid_t gid;
+	uid_t uid;
+	
+	strcpy(func, "Cns_srv_tapesum");
+	
+	/* Extract and log common request attributes */
+	rbp = req_data;
+	unmarshall_LONG(rbp, uid);
+	unmarshall_LONG(rbp, gid);
+	get_client_actual_id(thip, &uid, &gid, &user);
+	nslogit(func, NS092, "tapesum", user, uid, gid, clienthost);
+	
+	/* Extract volume id */
+	if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
+		RETURN (EINVAL);
+	}
+	unmarshall_LONG(rbp, deleted);
+	sprintf(logbuf, "tapesum %s %d", vid, deleted);
+	Cns_logreq(func, logbuf);
+	
+	/* Get tape summary information */
+	c = Cns_get_tapesum_by_vid(&thip->dbfd, vid, deleted, &count, &size);
+	if (c < 0) {
+		RETURN (serrno);
+	}
 
-  /* Marshall list of non existent files */
-  repbuf = (char*) malloc(LONGSIZE+nbFileIds*HYPERSIZE);
-  sbp = repbuf;
-  marshall_LONG(sbp, nbFileIds);
-  for (i = 0; i < nbFileIds; i++) {
-    marshall_HYPER(sbp, fileIds[i]);
-  }
-  /* Send response */
-  sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  free(repbuf);
-  free(fileIds);
-  RETURN (0);
+	/* Marshall response */
+	sbp = repbuf;
+	marshall_HYPER(sbp, count);
+	marshall_HYPER(sbp, size);
+ 
+	/* Send response */
+	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+	RETURN (0);
 }
 
 int Cns_srv_listtape(magic, req_data, clienthost, thip, fmd_entry, smd_entry, endlist, dblistptr)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 struct Cns_file_metadata *fmd_entry;
 struct Cns_seg_metadata *smd_entry;
@@ -2824,8 +2881,9 @@ DBLISTPTR *dblistptr;
 	int direntsz;	/* size of client machine dirent structure excluding d_name */
 	int eov = 0;	/* end of volume flag */
 	char func[17];
+	int fseq = 0;   /* file sequence number to filter on */
 	gid_t gid;
-	char logbuf[CA_MAXVIDLEN+12];
+	char logbuf[CA_MAXVIDLEN+12+42];
 	int maxsize;
 	int nbentries = 0;
 	char *p;
@@ -2845,7 +2903,10 @@ DBLISTPTR *dblistptr;
 	if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
 		RETURN (EINVAL);
 	unmarshall_WORD (rbp, bov);
-	sprintf (logbuf, "listtape %s %d", vid, bov);
+	if (magic >= CNS_MAGIC5) {
+		unmarshall_LONG (rbp, fseq);
+	}
+	sprintf (logbuf, "listtape %s %d %d", vid, bov, fseq);
 	Cns_logreq (func, logbuf);
 
 	/* return as many entries as possible to the client */
@@ -2859,10 +2920,10 @@ DBLISTPTR *dblistptr;
 		nbentries++;
 		maxsize -= ((direntsz + strlen (fmd_entry->name) + 8) / 8) * 8;
 	}
-	while ((c = Cns_get_smd_by_vid (&thip->dbfd, bov, vid, smd_entry,
-	    endlist, dblistptr)) == 0) {
+	while ((c = Cns_get_smd_by_vid (&thip->dbfd, bov, vid, fseq, smd_entry,
+					endlist, dblistptr)) == 0) {
 		if (Cns_get_fmd_by_fileid (&thip->dbfd, smd_entry->s_fileid,
-		    fmd_entry, 0, NULL) < 0)
+					   fmd_entry, 0, NULL) < 0)
 			RETURN (serrno);
 		if ((int) strlen (fmd_entry->name) > maxsize) break;
 		marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
@@ -2887,7 +2948,7 @@ DBLISTPTR *dblistptr;
 int Cns_srv_lstat(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -2958,7 +3019,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_mkdir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_class_metadata class_entry;
@@ -3075,7 +3136,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_modifyclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bol = 1;
@@ -3244,7 +3305,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_open(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bof = 1;
@@ -3393,7 +3454,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_opendir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -3461,12 +3522,43 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
+/*      Cns_srv_ping - check server alive and return version number */ 
+
+int Cns_srv_ping(magic, req_data, clienthost, thip) 
+int magic; 
+char *req_data; 
+const char *clienthost; 
+struct Cns_srv_thread_info *thip; 
+{ 
+	char func[16];
+	gid_t gid;
+	char info[256];
+	char *rbp;
+	char repbuf[REPBUFSZ];
+	char *sbp;
+	uid_t uid;
+	char *user;
+	
+	strcpy(func, "Cns_srv_ping");
+	rbp = req_data;
+	unmarshall_LONG (rbp, uid); 
+	unmarshall_LONG (rbp, gid);
+	get_client_actual_id(thip, &uid, &gid, &user);
+	nslogit(func, NS092, "ping", user, uid, gid, clienthost);
+
+	sprintf (info, "%d.%d.%d-%d", MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
+	sbp = repbuf;
+	marshall_STRING (sbp, info);
+	sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
+	RETURN (0);
+} 
+
 /*	Cns_srv_queryclass - query about a file class */
 
 int Cns_srv_queryclass(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bol = 1;
@@ -3552,7 +3644,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_readdir(magic, req_data, clienthost, thip, fmd_entry, smd_entry, umd_entry, endlist, dblistptr, smdlistptr)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 struct Cns_file_metadata *fmd_entry;
 struct Cns_seg_metadata *smd_entry;
@@ -3604,7 +3696,6 @@ DBLISTPTR *smdlistptr;
 		RETURN (EINVAL);
 
 	/* return as many entries as possible to the client */
-
 	if (getattr == 1 || getattr == 4)
 		if (DIRXSIZE > direntsz)
 			direntsz = DIRXSIZE;
@@ -3678,6 +3769,7 @@ DBLISTPTR *smdlistptr;
 			maxsize -= ((direntsz + fnl + 8) / 8) * 8;
 		}
 	}
+
 	while ((c = Cns_get_fmd_by_pfid (&thip->dbfd, bod, dir_fileid,
 	    fmd_entry, getattr, endlist, dblistptr)) == 0) {	/* loop on directory entries */
 		fnl = strlen (fmd_entry->name);
@@ -3764,6 +3856,7 @@ DBLISTPTR *smdlistptr;
 		}
 		bod = 0;
 	}
+
 	if (c < 0)
 		RETURN (serrno);
 	if (c == 1) {
@@ -3775,8 +3868,7 @@ DBLISTPTR *smdlistptr;
 
 		/* update directory access time */
 
-		if (Cns_get_fmd_by_fileid (&thip->dbfd, dir_fileid, &direntry,
-		    1, &rec_addr))
+		if (Cns_get_fmd_by_fileid (&thip->dbfd, dir_fileid, &direntry, 1, &rec_addr))
 			RETURN (serrno);
 		direntry.atime = time (0);
 		if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &direntry))
@@ -3798,7 +3890,7 @@ reply:
 int Cns_srv_readlink(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -3859,7 +3951,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_rename(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bof = 1;
@@ -3869,6 +3961,7 @@ struct Cns_srv_thread_info *thip;
 	u_signed64 fileid;
 	char func[16];
 	gid_t gid;
+	struct Cns_symlinks lnk_entry;
 	char logbuf[2*CA_MAXPATHLEN+9];
 	int new_exists = 0;
 	struct Cns_file_metadata new_fmd_entry;
@@ -3882,6 +3975,7 @@ struct Cns_srv_thread_info *thip;
 	Cns_dbrec_addr old_rec_addrp;
 	char oldpath[CA_MAXPATHLEN+1];
 	char *rbp;
+	Cns_dbrec_addr rec_addrl;       /* symlink record address */
 	Cns_dbrec_addr rec_addrs;	/* segment record address */
 	Cns_dbrec_addr rec_addru;	/* comment record address */
 	struct Cns_file_replica rep_entry;
@@ -4026,6 +4120,16 @@ struct Cns_srv_thread_info *thip;
 				RETURN (serrno);
 		}
 
+		/* if the existing 'new' entry is a symlink, delete it */ 
+
+		if ((new_fmd_entry.filemode & S_IFLNK) == S_IFLNK) { 
+			if (Cns_get_lnk_by_fileid (&thip->dbfd, new_fmd_entry.fileid, 
+						   &lnk_entry, 1, &rec_addrl)) 
+			  RETURN (serrno); 
+			if (Cns_delete_lnk_entry (&thip->dbfd, &rec_addrl)) 
+			  RETURN (serrno); 
+		} 
+
 		/* delete the comment if it exists */
 
 		if (Cns_get_umd_by_fileid (&thip->dbfd, new_fmd_entry.fileid,
@@ -4046,7 +4150,9 @@ struct Cns_srv_thread_info *thip;
 
 		/* update 'new' parent directory entry */
 
-		new_parent_dir.nlink++;
+		if (!new_exists) {
+			new_parent_dir.nlink++;
+		}
 		new_parent_dir.mtime = time (0);
 		new_parent_dir.ctime = new_parent_dir.mtime;
 		if (Cns_update_fmd_entry (&thip->dbfd, &new_rec_addrp, &new_parent_dir))
@@ -4076,7 +4182,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_updateseg_checksum(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int copyno;
@@ -4213,7 +4319,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_replaceseg(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int copyno;
@@ -4361,7 +4467,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_replacetapecopy(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 fileid = 0;
@@ -4576,7 +4682,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_rmdir(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_class_metadata class_entry;
@@ -4680,7 +4786,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setacl(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_acl acl[CA_MAXACLENTRIES];
@@ -4811,7 +4917,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setatime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -4890,7 +4996,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setcomment(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char comment[CA_MAXCOMMENTLEN+1];
@@ -4939,17 +5045,24 @@ struct Cns_srv_thread_info *thip;
 	if (uid != filentry.uid &&
 	    Cns_chkentryperm (&filentry, S_IWRITE, uid, gid, clienthost))
 		RETURN (EACCES);
-
-	/* add the comment or replace the comment if it exists */
-
-	memset ((char *) &umd_entry, 0, sizeof(umd_entry));
-	umd_entry.u_fileid = filentry.fileid;
-	strcpy (umd_entry.comments, comment);
-	if (Cns_insert_umd_entry (&thip->dbfd, &umd_entry)) {
-		if (serrno != EEXIST ||
-		    Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid,
-			&old_umd_entry, 1, &rec_addru) ||
-		    Cns_update_umd_entry (&thip->dbfd, &rec_addru, &umd_entry))
+	
+	if (*comment) {	/* add the comment or replace the comment if it exists */
+		memset ((char *) &umd_entry, 0, sizeof(umd_entry));
+		umd_entry.u_fileid = filentry.fileid;
+		strcpy (umd_entry.comments, comment);
+		if (Cns_insert_umd_entry (&thip->dbfd, &umd_entry)) {
+			if (serrno != EEXIST ||
+			    Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid,
+						   &old_umd_entry, 1, &rec_addru) ||
+			    Cns_update_umd_entry (&thip->dbfd, &rec_addru, &umd_entry))
+				RETURN (serrno);
+		}
+	} else {	/* delete the comment if it exists */
+		if (Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid,
+					   &old_umd_entry, 1, &rec_addru)) {
+			if (serrno != ENOENT)
+				RETURN (serrno);
+		} else if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
 			RETURN (serrno);
 	}
 	RETURN (0);
@@ -4960,7 +5073,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setfsize(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -5045,7 +5158,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setfsizeg(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char csumtype[3];
@@ -5125,7 +5238,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setptime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_file_metadata filentry;
@@ -5191,7 +5304,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setratime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_file_metadata filentry;
@@ -5258,7 +5371,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setrstatus(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_file_metadata filentry;
@@ -5324,7 +5437,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_setsegattrs(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int copyno = 0;
@@ -5480,42 +5593,12 @@ struct Cns_srv_thread_info *thip;
 	RETURN (0);
 }
 
-/*	Cns_srv_shutdown - shutdown the name server */
-
-int Cns_srv_shutdown(magic, req_data, clienthost, thip)
-int magic;
-char *req_data;
-char *clienthost;
-struct Cns_srv_thread_info *thip;
-{
-	int force = 0;
-	char func[17];
-	gid_t gid;
-	char *rbp;
-	uid_t uid;
-	char *user;
-
-	strcpy (func, "Cns_srv_shutdown");
-	rbp = req_data;
-	unmarshall_LONG (rbp, uid);
-	unmarshall_LONG (rbp, gid);
-	get_client_actual_id (thip, &uid, &gid, &user);
-	nslogit (func, NS092, "shutdown", user, uid, gid, clienthost);
-	unmarshall_WORD (rbp, force);
-
-	if (Cupv_check (uid, gid, clienthost, localhost, P_ADMIN))
-		RETURN (serrno);
-
-	being_shutdown = force + 1;
-	RETURN (0);
-}
-
 /*	Cns_srv_startsess - start session */
 
 int Cns_srv_startsess(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char comment[CA_MAXCOMMENTLEN+1];
@@ -5544,7 +5627,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_starttrans(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	char comment[CA_MAXCOMMENTLEN+1];
@@ -5578,7 +5661,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_stat(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -5649,7 +5732,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_statg(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -5724,7 +5807,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_statr(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	struct Cns_file_metadata fmd_entry;
@@ -5783,7 +5866,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_symlink(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	u_signed64 cwd;
@@ -5876,7 +5959,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_undelete(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bof = 1;
@@ -5991,7 +6074,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_unlink(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	int bof = 1;
@@ -6122,7 +6205,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_utime(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost;
+const char *clienthost;
 struct Cns_srv_thread_info *thip;
 {
 	time_t actime;
@@ -6257,7 +6340,7 @@ int Cns_vo_from_dn(const char *dn, char *vo)
 int Cns_srv_entergrpmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[20];
@@ -6307,7 +6390,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_enterusrmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[20];
@@ -6436,7 +6519,7 @@ gid_t *gids;
 int Cns_srv_getidmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	int c;
@@ -6514,7 +6597,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getgrpbygid(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[20];
@@ -6555,7 +6638,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getgrpbynam(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[20];
@@ -6597,7 +6680,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getusrbynam(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[20];
@@ -6639,7 +6722,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_getusrbyuid(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[20];
@@ -6680,7 +6763,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_modgrpmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[18];
@@ -6731,7 +6814,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_modusrmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[18];
@@ -6782,7 +6865,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_rmgrpmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[18];
@@ -6846,7 +6929,7 @@ struct Cns_srv_thread_info *thip;
 int Cns_srv_rmusrmap(magic, req_data, clienthost, thip)
 int magic;
 char *req_data;
-char *clienthost; 
+const char *clienthost; 
 struct Cns_srv_thread_info *thip;
 {
 	char func[18];
