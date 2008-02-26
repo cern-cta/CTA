@@ -39,6 +39,7 @@ int nslogit(char *func, char *msg, ...)
 #else
 	tm = localtime (&current_time);
 #endif
+	memset(prtbuf, 0, sizeof(prtbuf));
 	Cglobals_getTid (&Tid);
 	if (Tid < 0)	/* main thread */
 		Csnprintf (prtbuf, LOGBUFSZ, "%02d/%02d %02d:%02d:%02d %5d %s: ",
@@ -54,7 +55,11 @@ int nslogit(char *func, char *msg, ...)
 		prtbuf[LOGBUFSZ-1] = '\0';
 	}
 	va_end (args);
+#ifdef O_LARGEFILE
+	fd_log = open (logfile, O_WRONLY | O_CREAT | O_APPEND | O_LARGEFILE, 0664);
+#else
 	fd_log = open (logfile, O_WRONLY | O_CREAT | O_APPEND, 0664);
+#endif
 	write (fd_log, prtbuf, strlen(prtbuf));
 	close (fd_log);
 	errno = save_errno;
