@@ -1,1 +1,1 @@
-/bin/service xinetd reload
+/sbin/service xinetd reload
