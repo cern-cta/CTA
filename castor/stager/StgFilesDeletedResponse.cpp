@@ -50,10 +50,10 @@ castor::stager::StgFilesDeletedResponse::StgFilesDeletedResponse() throw() :
 // Destructor
 //------------------------------------------------------------------------------
 castor::stager::StgFilesDeletedResponse::~StgFilesDeletedResponse() throw() {
-  for (unsigned int i = 0; i < m_orphanFilesVector.size(); i++) {
-    delete m_orphanFilesVector[i];
+  for (unsigned int i = 0; i < m_orphanFileIdsVector.size(); i++) {
+    delete m_orphanFileIdsVector[i];
   }
-  m_orphanFilesVector.clear();
+  m_orphanFileIdsVector.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -74,11 +74,11 @@ void castor::stager::StgFilesDeletedResponse::print(std::ostream& stream,
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {
-    stream << indent << "OrphanFiles : " << std::endl;
+    stream << indent << "OrphanFileIds : " << std::endl;
     int i;
     std::vector<GCFile*>::const_iterator it;
-    for (it = m_orphanFilesVector.begin(), i = 0;
-         it != m_orphanFilesVector.end();
+    for (it = m_orphanFileIdsVector.begin(), i = 0;
+         it != m_orphanFileIdsVector.end();
          it++, i++) {
       stream << indent << "  " << i << " :" << std::endl;
       (*it)->print(stream, indent + "    ", alreadyPrinted);

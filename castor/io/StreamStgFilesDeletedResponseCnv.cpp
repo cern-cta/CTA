@@ -138,9 +138,9 @@ void castor::io::StreamStgFilesDeletedResponseCnv::marshalObject(castor::IObject
     createRep(address, obj, true);
     // Mark object as done
     alreadyDone.insert(obj);
-    address->stream() << obj->orphanFiles().size();
-    for (std::vector<castor::stager::GCFile*>::iterator it = obj->orphanFiles().begin();
-         it != obj->orphanFiles().end();
+    address->stream() << obj->orphanFileIds().size();
+    for (std::vector<castor::stager::GCFile*>::iterator it = obj->orphanFileIds().begin();
+         it != obj->orphanFileIds().end();
          it++) {
       cnvSvc()->marshalObject(*it, address, alreadyDone);
     }
@@ -163,12 +163,12 @@ castor::IObject* castor::io::StreamStgFilesDeletedResponseCnv::unmarshalObject(c
   // Fill object with associations
   castor::stager::StgFilesDeletedResponse* obj = 
     dynamic_cast<castor::stager::StgFilesDeletedResponse*>(object);
-  unsigned int orphanFilesNb;
-  ad.stream() >> orphanFilesNb;
-  for (unsigned int i = 0; i < orphanFilesNb; i++) {
+  unsigned int orphanFileIdsNb;
+  ad.stream() >> orphanFileIdsNb;
+  for (unsigned int i = 0; i < orphanFileIdsNb; i++) {
     ad.setObjType(castor::OBJ_INVALID);
-    castor::IObject* objOrphanFiles = cnvSvc()->unmarshalObject(ad, newlyCreated);
-    obj->addOrphanFiles(dynamic_cast<castor::stager::GCFile*>(objOrphanFiles));
+    castor::IObject* objOrphanFileIds = cnvSvc()->unmarshalObject(ad, newlyCreated);
+    obj->addOrphanFileIds(dynamic_cast<castor::stager::GCFile*>(objOrphanFileIds));
   }
   return object;
 }

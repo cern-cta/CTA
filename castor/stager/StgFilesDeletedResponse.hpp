@@ -122,32 +122,32 @@ namespace castor {
       }
 
       /**
-       * Add a GCFile* object to the m_orphanFilesVector list
+       * Add a GCFile* object to the m_orphanFileIdsVector list
        */
-      void addOrphanFiles(GCFile* add_object) {
-        m_orphanFilesVector.push_back(add_object);
+      void addOrphanFileIds(GCFile* add_object) {
+        m_orphanFileIdsVector.push_back(add_object);
       }
 
       /**
-       * Remove a GCFile* object from m_orphanFilesVector
+       * Remove a GCFile* object from m_orphanFileIdsVector
        */
-      void removeOrphanFiles(GCFile* remove_object) {
-        for (unsigned int i = 0; i < m_orphanFilesVector.size(); i++) {
-          GCFile* item = m_orphanFilesVector[i];
+      void removeOrphanFileIds(GCFile* remove_object) {
+        for (unsigned int i = 0; i < m_orphanFileIdsVector.size(); i++) {
+          GCFile* item = m_orphanFileIdsVector[i];
           if (item == remove_object) {
-            std::vector<GCFile*>::iterator it = m_orphanFilesVector.begin() + i;
-            m_orphanFilesVector.erase(it);
+            std::vector<GCFile*>::iterator it = m_orphanFileIdsVector.begin() + i;
+            m_orphanFileIdsVector.erase(it);
             return;
           }
         }
       }
 
       /**
-       * Get the list of GCFile* objects held by m_orphanFilesVector
-       * @return list of GCFile* objects held by m_orphanFilesVector
+       * Get the list of GCFile* objects held by m_orphanFileIdsVector
+       * @return list of GCFile* objects held by m_orphanFileIdsVector
        */
       std::vector<GCFile*>& orphanFileIds() {
-        return m_orphanFilesVector;
+        return m_orphanFileIdsVector;
       }
 
     private:
@@ -155,7 +155,7 @@ namespace castor {
       /// The id of this object
       u_signed64 m_id;
 
-      std::vector<GCFile*> m_orphanFilesVector;
+      std::vector<GCFile*> m_orphanFileIdsVector;
 
     }; /* end of class StgFilesDeletedResponse */
 
