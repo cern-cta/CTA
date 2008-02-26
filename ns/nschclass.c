@@ -62,7 +62,7 @@ int main(int argc,char **argv)
 			break;
 		}
 	}
-	if (optind >= argc - 1) {
+	if (errflg || optind >= argc - 1) {
 		fprintf (stderr,
 		    "usage: %s [-i] [-r] class dirname...\n", argv[0]);
 		exit (USERR);
@@ -145,7 +145,6 @@ int chdirclass (char *dir,int oldclass,int newclass,char *newclass_name)
 	struct dirlist *dlf = NULL;	/* pointer to first directory in the list */
 	struct dirlist *dll;		/* pointer to last directory in the list */
 	struct Cns_direnstat *dxp;
-	//char fullpath[CA_MAXPATHLEN+1];
 
 	classtobechanged = 1;
 	if (iflag) {

@@ -66,7 +66,7 @@ int main(int argc,char **argv)
 			break;
 		}
 	}
-	if (optind >= argc) {
+	if (errflg || optind >= argc) {
 		fprintf (stderr,
 		    "usage: %s [-a] [-c] [-m] [-t time] file...\n", argv[0]);
 		exit (USERR);

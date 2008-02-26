@@ -12,7 +12,6 @@
 #include <sys/types.h>
 #if defined(_WIN32)
 #define W_OK 2
-#define S_IFLNK 0120000 // Symbolic link.
 #include <winsock2.h>
 #else
 #include <unistd.h>
@@ -66,7 +65,7 @@ char **argv;
 			break;
 		}
 	}
-	if (optind >= argc) {
+	if (errflg || optind >= argc) {
 		fprintf (stderr,
 		    "usage: %s [-f] [-i] file...\n\t%s [-f] [-i] -r dirname...\n",
 		    argv[0], argv[0]);
@@ -145,8 +144,8 @@ int isyes()
 	return (fchar == 'y');
 }
 
-int removedir (char *dir)
-//char *dir;
+int removedir (dir)
+char *dir;
 {
 	char curdir[CA_MAXPATHLEN+1];
 	struct dirlist {

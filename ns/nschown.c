@@ -62,7 +62,7 @@ int main(int argc,char **argv)
 			break;
 		}
 	}
-	if (optind >= argc - 1) {
+	if (errflg || optind >= argc - 1) {
 		fprintf (stderr,
 		    "usage: %s [-h] [-R] owner[{.|:}group] file...\n", argv[0]);
 		exit (USERR);
