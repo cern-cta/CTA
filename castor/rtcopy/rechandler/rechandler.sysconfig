@@ -2,7 +2,7 @@
 #   -f             keep process in the foreground, do not fork
 #   -t timeSec     time between two checks  
 #
-# Options ot pass to the recHandlerDaemon
+# Options to pass to the recHandlerDaemon
 #RECHANDLER_OPTIONS=
 
 # Should we run with another limit on the core file size than the default?
