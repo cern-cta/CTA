@@ -1,5 +1,5 @@
 /*
- * $Id: rtcpd.c,v 1.5 2007/08/01 14:00:50 wiebalck Exp $
+ * $Id: rtcpd.c,v 1.6 2008/02/26 14:04:56 wiebalck Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -49,6 +49,8 @@ extern int Debug;
 extern int loglevel;
 extern int rtcp_InitLog _PROTO((char *, FILE *, FILE *, SOCKET *));
 extern int Cinitdaemon _PROTO((char *, void (*)(int)));
+
+char *getconfent();
 
 static int ChdirWorkdir() {
 #if !defined(_WIN32)
@@ -127,9 +129,25 @@ int rtcpd_main(struct main_args *main_args) {
     rtcp_InitLog(NULL,NULL,NULL,NULL);
 
     /* init the tplogger interface */
-    tl_init_handle( &tl_rtcpd, "dlf" );
-    tl_rtcpd.tl_init( &tl_rtcpd, 1 );
+    {
+            mode_t save_mask;
+            char *p;
 
+            save_mask = umask(0);
+
+            p = getconfent ("TAPE", "TPLOGGER", 0);
+            if (0 == strcasecmp(p, "SYSLOG")) {
+                    tl_init_handle( &tl_rtcpd, "syslog" ); 
+            } else {
+                    tl_init_handle( &tl_rtcpd, "dlf" );  
+            }
+            tl_rtcpd.tl_init( &tl_rtcpd, 1 );
+
+            tl_rtcpd.tl_log( &tl_rtcpd, 9, 2,
+                             "func"   , TL_MSG_PARAM_STR, "rtcpd_main",
+                             "Message", TL_MSG_PARAM_STR, "Logging initialized" );
+            umask(save_mask);
+    }
     request_socket = (SOCKET *)calloc(1,sizeof(SOCKET));
     if ( request_socket == NULL ) {
             rtcp_log(LOG_ERR,"main() calloc(SOCKET): %s\n",sstrerror(errno));
