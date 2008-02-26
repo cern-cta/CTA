@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: nsmodifyclass.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:22 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: nsmodifyclass.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:26:45 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSMODIFYCLASS 1 "$Date: 2006/01/26 15:36:22 $" CASTOR "Cns Administrator Commands"
+.TH NSMODIFYCLASS 1 "$Date: 2008/02/26 18:26:45 $" CASTOR "Cns Administrator Commands"
 .SH NAME
 nsmodifyclass \- modify an existing file class
 .SH SYNOPSIS
@@ -112,11 +112,6 @@ The class is restricted to this user uid.
 .SH EXIT STATUS
 This program returns 0 if the operation was successful or >0 if the operation
 failed.
-.SH FILES
-.TP
-.B /etc/group
-.TP
-.B /etc/passwd
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR Cns_modifyclass(3) ,
