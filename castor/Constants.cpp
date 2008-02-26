@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2008/01/28 16:11:08 $ $Author: itglp $
+ * @(#)$RCSfile: Constants.cpp,v $ $Revision: 1.56 $ $Release$ $Date: 2008/02/26 14:36:12 $ $Author: waldron $
  *
  *
  *
@@ -189,7 +189,9 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "ThreadNotification",
   "FirstByteWritten",
 
-  "VdqmTape"
+  "VdqmTape",
+  "StgFilesDeleted",
+  "StgFilesDeletedResponse"
 };
 
 

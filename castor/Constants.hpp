@@ -178,7 +178,11 @@ namespace castor {
     OBJ_FirstByteWritten = 147,
 
     /* VDQM objects to be moved to a different range */
-    OBJ_VdqmTape = 148
+    OBJ_VdqmTape = 148,
+
+    /* Stager GC synchronization */
+    OBJ_StgFilesDeleted = 149,
+    OBJ_StgFilesDeletedResponse = 150
   };
 
   /**
@@ -250,7 +254,7 @@ namespace castor {
   /**
    * Nb of objectIds currently existing
    */
-  static const unsigned int ObjectsIdsNb = 149;
+  static const unsigned int ObjectsIdsNb = 151;
 
   /**
    * Nb of ServicesIds currently existing
@@ -266,7 +270,7 @@ namespace castor {
    * Names of the differents objects, used to display
    * correctly the ObjectsIds enum
    */
-  extern const char* ObjectsIdStrings[149];
+  extern const char* ObjectsIdStrings[151];
 
   /**
    * Names of the differents Services, used to display
