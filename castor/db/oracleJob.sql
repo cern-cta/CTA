@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.638 $ $Date: 2008/02/21 17:03:23 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.639 $ $Date: 2008/02/26 16:20:52 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -13,11 +13,19 @@
    Returns 1 in such a case, 0 else */
 CREATE OR REPLACE FUNCTION checkFailJobsWhenNoSpace(svcClassId NUMBER)
 RETURN NUMBER AS
-  failJobFlag NUMBER;
+  diskOnlyFlag NUMBER;
+  defFileSize NUMBER;
   unused NUMBER;
 BEGIN
-  SELECT hasDiskOnlyBehavior INTO failJobFlag FROM SvcClass WHERE id = svcClassId;
-  IF (failJobFlag = 1) THEN
+  -- Determine if the service class is disk only and the default
+  -- file size. If the default file size is 0 we assume 2G
+  SELECT hasDiskOnlyBehavior, 
+         decode(defaultFileSize, 0, 2000000000, defaultFileSize)
+    INTO diskOnlyFlag, defFileSize
+    FROM SvcClass 
+   WHERE id = svcClassId;
+  -- If diskonly check that the pool has space
+  IF (diskOnlyFlag = 1) THEN
     SELECT count(*) INTO unused
       FROM diskpool2svcclass, FileSystem, DiskServer
      WHERE diskpool2svcclass.child = svcClassId
@@ -25,7 +33,7 @@ BEGIN
        AND FileSystem.diskServer = DiskServer.id
        AND FileSystem.status = 0 -- PRODUCTION
        AND DiskServer.status = 0 -- PRODUCTION
-       AND totalSize * minAllowedFreeSpace < free;
+       AND totalSize * minAllowedFreeSpace < free - defFileSize;
     IF (unused = 0) THEN
       RETURN 1;
     END IF;
@@ -414,14 +422,11 @@ BEGIN
   -- Set the diskcopy status to INVALID so that it will be garbage collected
   -- at a later date.
   fsId := 0;
+  srId := 0;
   UPDATE DiskCopy SET status = 7 -- INVALID
    WHERE status = 1 -- WAITDISK2DISKCOPY
      AND id = dcId
    RETURNING fileSystem INTO fsId;
-  IF fsId = 0 THEN
-    srId := 0;
-    RETURN;
-  END IF;
   -- Fail the corresponding subrequest
   UPDATE SubRequest 
      SET status = 9, -- SUBREQUEST_FAILED_FINISHED
@@ -429,6 +434,9 @@ BEGIN
    WHERE diskCopy = dcId 
      AND status IN (6, 14) -- SUBREQUEST_READY, SUBREQUEST_BEINGSHCED
    RETURNING id INTO srId;
+  IF srId = 0 THEN
+    RETURN;
+  END IF;
   -- Wake up other subrequests waiting on it
   UPDATE SubRequest SET status = 1, -- SUBREQUEST_RESTART
                         lastModificationTime = getTime(),
@@ -676,11 +684,15 @@ PROCEDURE failSchedulerJob(srSubReqId IN VARCHAR2, srErrorCode IN NUMBER, res OU
 BEGIN
   res := 0;
   -- Get the necessary information needed about the request and subrequest
-  SELECT SubRequest.request, SubRequest.id, Id2Type.type
-    INTO reqId, srId, reqType
-    FROM SubRequest, Id2Type
-   WHERE SubRequest.subreqid = srSubReqId
-     AND SubRequest.request = Id2Type.id;
+  BEGIN
+    SELECT SubRequest.request, SubRequest.id, Id2Type.type
+      INTO reqId, srId, reqType
+      FROM SubRequest, Id2Type
+     WHERE SubRequest.subreqid = srSubReqId
+       AND SubRequest.request = Id2Type.id;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN;
+  END;
 
   -- If the request type is a PrepareToGetRequest or PrepareToUpdateRequest 
   -- put the subrequest into SUBREQUEST_FAILED_FINISHED not SUBREQUEST_FAILED
@@ -697,7 +709,7 @@ BEGIN
   -- requests waiting on the failed one as this is done in disk2DiskCopyFailed
   ELSIF reqType = 133 THEN
     SELECT diskcopy INTO dcId FROM SubRequest WHERE id = srId;
-    disk2DiskCopyFailed(dcId, res);
+      disk2DiskCopyFailed(dcId, res);
     RETURN;
   ELSE
     -- Update the subrequest status putting the request into a SUBREQUEST_FAILED
