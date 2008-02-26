@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.24 $ $Release$ $Date: 2008/02/21 17:22:56 $ $Author: mmartins $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2008/02/26 16:26:24 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -321,7 +321,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
     res.setErrorMessage(e.getMessage().str());
   }
   Cns_fileid fileId;
-  strncpy(fileId.server, "noNsHost", CA_MAXHOSTNAMELEN+1);
+  memset(&fileId, 0, sizeof(fileId));
   for(std::vector<u_signed64>::iterator it =
 	orphanDiskCopies.begin();
       it != orphanDiskCopies.end();
@@ -330,7 +330,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
     // to res. Thus we will not reallocate them
     castor::stager::GCFile *gf = new castor::stager::GCFile();
     gf->setDiskCopyId(*it);
-    res.addOrphanFiles(gf);
+    res.addOrphanFileIds(gf);
     // "File to be unlinked since it disappeared from stager"
     fileId.fileid = *it;
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FSTGDEL, 0, 0, &fileId);
