@@ -759,6 +759,7 @@ Cns_dbrec_addr *rec_addr;
 {
 	char fileid_str[21];
 	char func[22];
+	short ln_ind;   /* indicator variable for linkname column */
 	char rowid_value[19];
 	struct sqlca sqlca;
 	EXEC SQL DECLARE lnk_fileid_cursor CURSOR FOR
@@ -782,7 +783,7 @@ Cns_dbrec_addr *rec_addr;
 			return (-1);
 		}
 		EXEC SQL FETCH lnk_fileid_cursor4upd INTO
-		 :rowid_value, :fileid_str, :lnk_entry->linkname;
+		 :rowid_value, :fileid_str, :lnk_entry->linkname:ln_ind;
 	} else {
 		EXEC SQL OPEN lnk_fileid_cursor;
 		if (sqlca.sqlcode) {
@@ -790,13 +791,15 @@ Cns_dbrec_addr *rec_addr;
 			return (-1);
 		}
 		EXEC SQL FETCH lnk_fileid_cursor INTO
-		 :fileid_str, :lnk_entry->linkname;
+		 :fileid_str, :lnk_entry->linkname:ln_ind;
 	}
 	switch (sqlca.sqlcode) {
 	case 0:
 		if (lock)
 			memcpy (rec_addr, rowid_value, sizeof(rowid_value));
 		lnk_entry->fileid = fileid;
+		if (ln_ind == -1) 
+		   	*lnk_entry->linkname = '\0'; 
 		return (0);
 	case 1403:
 		serrno = ENOENT;
@@ -927,7 +930,7 @@ Cns_dbrec_addr *rec_addr;
 
 /* Get segments for a specified tapecopy */
  
-int Cns_get_smd_by_copyno(dbfd, bof, fileid, copyno, smd_entry, lock, rec_addr, endlist,dblistptr)
+int Cns_get_smd_by_copyno(dbfd, bof, fileid, copyno, smd_entry, lock, rec_addr, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bof;
 u_signed64 fileid;
@@ -1269,10 +1272,68 @@ int *nbFileIds;
 	return(0);
 }
 
-int Cns_get_smd_by_vid(dbfd, bov, vid, smd_entry, endlist, dblistptr)
+int Cns_get_tapesum_by_vid(dbfd, vid, deleted, count, size)
+struct Cns_dbfd *dbfd;
+char *vid;
+int deleted;
+u_signed64 *count;
+u_signed64 *size;
+{
+	char func[19];
+	char count_str[21];
+	char size_str[21];
+	int exists = 0;
+	struct sqlca sqlca;
+	
+	strcpy (func, "Cns_get_tapesum_by_vid");
+	EXEC SQL SELECT COUNT(*) INTO :exists 
+		FROM Cns_seg_metadata
+		WHERE vid = :vid;
+	switch (sqlca.sqlcode) {
+	case 0:
+		if (exists > 0) {
+			break;
+		}
+	case 1403:
+		serrno = ENOENT;
+		return(-1);
+	default:
+		Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
+		return(-1);	
+	}
+
+	if (deleted) {
+		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
+			INTO :count_str, :size_str 
+			FROM Cns_seg_metadata 
+			WHERE vid = :vid;
+	} else {
+		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0)) 
+			INTO :count_str, :size_str 
+			FROM Cns_seg_metadata 
+			WHERE vid = :vid
+			AND s_status = '-';
+	}
+	switch (sqlca.sqlcode) {
+	case 0:
+		*count = strtou64 (count_str);
+		*size = strtou64 (size_str);
+		return(0);
+	case 1403:
+		serrno = ENOENT;
+		return(-1);
+	default:
+		Cns_oracle_error (func, "SELECT", dbfd, &sqlca);
+		return(-1);
+	}
+	return(0);
+}
+
+int Cns_get_smd_by_vid(dbfd, bov, vid, fseq, smd_entry, endlist, dblistptr)
 struct Cns_dbfd *dbfd;
 int bov;
 char *vid;
+int fseq;
 struct Cns_seg_metadata *smd_entry;
 int endlist;
 DBLISTPTR *dblistptr;
@@ -1291,30 +1352,58 @@ DBLISTPTR *dblistptr;
 		FROM Cns_seg_metadata
 		WHERE vid = :vid
 		ORDER BY side, fseq;
+	EXEC SQL DECLARE smd_vid_cursor_fseq CURSOR FOR
+		SELECT
+		 TO_CHAR(S_FILEID), COPYNO, FSEC,
+		 TO_CHAR(SEGSIZE), NVL(COMPRESSION,100), S_STATUS,
+		 VID, SIDE, FSEQ, BLOCKID, CHECKSUM_NAME, NVL(CHECKSUM,0)
+		FROM Cns_seg_metadata
+		WHERE vid = :vid
+                AND fseq = :fseq
+		ORDER BY side, fseq;
 
 	strcpy (func, "Cns_get_smd_by_vid");
 	if (endlist)
 		return (1);
 	if (bov) {
-		EXEC SQL OPEN smd_vid_cursor;
+		if (fseq > 0) {
+			EXEC SQL OPEN smd_vid_cursor_fseq;
+		} else {
+			EXEC SQL OPEN smd_vid_cursor;
+		}
 		if (sqlca.sqlcode) {
 			Cns_oracle_error (func, "OPEN CURSOR", dbfd, &sqlca);
 			return (-1);
 		}
 	}
-	EXEC SQL FETCH smd_vid_cursor INTO
-		 :fileid_str, :smd_entry->copyno, :smd_entry->fsec,
-		 :segsize_str, :smd_entry->compression, :smd_entry->s_status,
-		 :smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
-		 :smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
-		 :smd_entry->checksum;
+	if (fseq > 0) {
+		EXEC SQL FETCH smd_vid_cursor_fseq INTO
+			:fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+			:segsize_str, :smd_entry->compression, :smd_entry->s_status,
+		 	:smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+		 	:smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+			:smd_entry->checksum;
+	} else {
+		EXEC SQL FETCH smd_vid_cursor INTO
+			:fileid_str, :smd_entry->copyno, :smd_entry->fsec,
+			:segsize_str, :smd_entry->compression, :smd_entry->s_status,
+		 	:smd_entry->vid, :smd_entry->side, :smd_entry->fseq,
+		 	:smd_entry->blockid, :smd_entry->checksum_name:checksum_name_ind,
+			:smd_entry->checksum;
+	}
+
 	switch (sqlca.sqlcode) {
 	case 0:
 		smd_entry->s_fileid = strtou64 (fileid_str);
 		smd_entry->segsize = strtou64 (segsize_str);
 		return (0);
 	case 1403:
-		return (1);
+		if (*vid && bov) {
+			serrno = ENOENT;
+			return (-1);
+		} else {
+			return (1);
+		}
 	default:
 		Cns_oracle_error (func, "FETCH", dbfd, &sqlca);
 		return (-1);
