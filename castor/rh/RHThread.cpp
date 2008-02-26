@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/02/21 17:46:22 $ $Author: mmartins $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/02/26 16:01:50 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -192,7 +192,7 @@ void castor::rh::RHThread::run(void* param) {
       ack.setStatus(false);
       ack.setErrorCode(e.code());
       ack.setErrorMessage(e.getMessage().str());
-    } 
+    }
   }
   
   // Send acknowledgement. If we fail, rollback the database transaction
@@ -200,36 +200,52 @@ void castor::rh::RHThread::run(void* param) {
   try {
     sock->sendObject(ack);
     svcs()->commit(&ad);
-    sendNotification(fr, cuuid, nbThreads);
-    
-    // If possible convert the request type to a string
-    std::ostringstream iss;
-    if ((fr->type() > 0) && 
-        ((unsigned int)fr->type() < castor::ObjectsIdsNb)) {
-      iss << castor::ObjectsIdStrings[fr->type()]; 
-    } else {
-      iss << fr->type();
-    }
 
-    // "Request stored in DB"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("ID", fr->id())};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 1, params);
+    if (ack.status()) {
+      sendNotification(fr, cuuid, nbThreads);
+      
+      // "Request stored in DB"
+      castor::dlf::Param params[] =
+	{castor::dlf::Param("ID", fr->id())};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, 12, 1, params);
+    }
 
     // Calculate elapsed time
     timeval tv;
     gettimeofday(&tv, NULL);
     signed64 elapsedTime =
       (((tv.tv_sec * 1000000) + tv.tv_usec) - startTime);
-
+    
     // "Reply sent to client"
-    castor::dlf::Param params2[] =
-      {castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-       castor::dlf::Param("Port", port),
-       castor::dlf::Param("Type", iss.str()),
-       castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 4, params2);
+    if (fr == 0) {
+      castor::dlf::Param params2[] =
+	{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	 castor::dlf::Param("Port", port),
+	 castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 3, params2);
+    } else {
 
+      // If possible convert the request type to a string for logging
+      // purposes
+      std::ostringstream type;
+      if ((fr->type() > 0) &&
+	  ((unsigned int)fr->type() < castor::ObjectsIdsNb)) {
+	type << castor::ObjectsIdStrings[fr->type()];
+      } else {
+	type << fr->type();
+      }
+
+      castor::dlf::Param params2[] =
+	{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
+	 castor::dlf::Param("Port", port),
+	 castor::dlf::Param("Type", type.str()),
+	 castor::dlf::Param("Euid", fr->euid()),
+	 castor::dlf::Param("Egid", fr->egid()),
+	 castor::dlf::Param("SvcClass", fr->svcClassName()),
+	 castor::dlf::Param("SubRequests", nbThreads),
+	 castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 8, params2);
+    }
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client"
     castor::dlf::Param params[] =
