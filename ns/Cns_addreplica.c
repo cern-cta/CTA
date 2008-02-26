@@ -99,10 +99,9 @@ Cns_addreplica(const char *guid, struct Cns_fileid *file_uniqueid, const char *s
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL,
-	    (file_uniqueid && *file_uniqueid->server) ? file_uniqueid->server : NULL,
-	    sendbuf, msglen, NULL, 0)) && serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL,
+		      (file_uniqueid && *file_uniqueid->server) ? file_uniqueid->server : NULL,
+		      sendbuf, msglen, NULL, 0);
 	if (c && serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
 	return (c);
 }

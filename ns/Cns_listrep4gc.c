@@ -110,9 +110,7 @@ Cns_listrep4gc(const char *poolname, int flags, Cns_list *listp)
 		msglen = sbp - sendbuf;
 		marshall_LONG (q, msglen);	/* update length field */
 
-		while ((c = send2nsd (&listp->fd, NULL, sendbuf,
-		    msglen, repbuf, sizeof(repbuf))) && serrno == ENSNACT)
-			sleep (RETRYI);
+		c = send2nsd (&listp->fd, NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 		if (c < 0 || flags == CNS_LIST_END) {
 			if (listp->buf)
 				free (listp->buf);

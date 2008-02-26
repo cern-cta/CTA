@@ -106,10 +106,9 @@ Cns_readdirxr(Cns_DIR *dirp, char *se)
 		msglen = sbp - sendbuf;
 		marshall_LONG (q, msglen);	/* update length field */
 
-		while ((c = send2nsdx (&dirp->dd_fd, NULL, sendbuf, msglen,
-		    repbuf, sizeof(repbuf), (void **) &dirp->replicas,
-		    &dirp->nbreplicas)) && serrno == ENSNACT)
-			sleep (RETRYI);
+		c = send2nsdx (&dirp->dd_fd, NULL, sendbuf, msglen,
+			       repbuf, sizeof(repbuf), (void **) 
+			       &dirp->replicas, &dirp->nbreplicas);
 		if (c < 0)
 			return (NULL);
 		rbp = repbuf;

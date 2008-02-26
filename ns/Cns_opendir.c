@@ -111,9 +111,7 @@ Cns_opendirxg(char *host, const char *path, const char *guid)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (&s, actual_server, sendbuf, msglen, repbuf,
-	    sizeof(repbuf))) && serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (&s, actual_server, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c < 0) {
 		if (serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
 		free (dirp);

@@ -86,9 +86,7 @@ Cns_lstat(const char *path, struct Cns_filestat *statbuf)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_HYPER (rbp, statbuf->fileid);
@@ -179,9 +177,7 @@ Cns_statx(const char *path, struct Cns_fileid *file_uniqueid, struct Cns_filesta
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_HYPER (rbp, statbuf->fileid);
@@ -289,9 +285,7 @@ Cns_statg(const char *path, const char *guid, struct Cns_filestatg *statbuf)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, path ? server : NULL, sendbuf, msglen,
-	    repbuf, sizeof(repbuf))) && serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, path ? server : NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_HYPER (rbp, statbuf->fileid);
@@ -369,9 +363,7 @@ Cns_statr(const char *sfn, struct Cns_filestatg *statbuf)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, NULL, sendbuf, msglen, repbuf,
-	    sizeof(repbuf))) && serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_HYPER (rbp, statbuf->fileid);

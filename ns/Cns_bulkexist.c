@@ -54,10 +54,7 @@ Cns_bulkexist(const char* server, u_signed64 *fileIds, int *nbFileIds)
 	}
 	
 	repbuf = (char*) malloc(msglen);
-	while ((c = send2nsd (NULL, (char*)server, sendbuf, msglen, repbuf, msglen)) &&
-	       serrno == ENSNACT)
-		sleep (RETRYI);
-	
+	c = send2nsd (NULL, (char*)server, sendbuf, msglen, repbuf, msglen);
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_LONG (rbp, *nbFileIds);

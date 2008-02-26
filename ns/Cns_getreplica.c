@@ -101,10 +101,9 @@ Cns_getreplica(const char *path, const char *guid, const char *se, int *nbentrie
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsdx (NULL, path ? server : NULL, sendbuf,
-	    msglen, repbuf, sizeof(repbuf), (void **)rep_entries, nbentries)) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsdx (NULL, path ? server : NULL, sendbuf,
+		       msglen, repbuf, sizeof(repbuf), (void **)rep_entries, 
+		       nbentries);
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_LONG (rbp, *nbentries);

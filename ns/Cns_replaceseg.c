@@ -92,8 +92,6 @@ Cns_replaceseg(char *server, u_signed64 fileid, struct Cns_segattrs *oldsegattrs
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0)) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0);
 	return (c);
 }

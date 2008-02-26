@@ -99,9 +99,6 @@ Cns_replacetapecopy(struct Cns_fileid *file_uniqueid, const char* oldvid, const 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0)) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0);
 	return (c);
 }

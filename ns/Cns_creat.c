@@ -89,9 +89,7 @@ Cns_creatc(const char *path, const char *guid, mode_t mode, struct Cns_fileid *f
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		strcpy (file_uniqueid->server, server);

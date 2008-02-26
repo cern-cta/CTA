@@ -94,10 +94,9 @@ Cns_getlinks(const char *path, const char *guid, int *nbentries, struct Cns_link
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsdx (NULL, path ? server : NULL, sendbuf,
-	    msglen, repbuf, sizeof(repbuf), (void **)linkinfos, nbentries)) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsdx (NULL, path ? server : NULL, sendbuf,
+		       msglen, repbuf, sizeof(repbuf), 
+		       (void **)linkinfos, nbentries);
 	if (c && serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
 	return (c);
 }

@@ -83,9 +83,8 @@ Cns_readdirg(Cns_DIR *dirp)
 		msglen = sbp - sendbuf;
 		marshall_LONG (q, msglen);	/* update length field */
 
-		while ((c = send2nsd (&dirp->dd_fd, NULL, sendbuf, msglen,
-		    repbuf, sizeof(repbuf))) && serrno == ENSNACT)
-			sleep (RETRYI);
+		c = send2nsd (&dirp->dd_fd, NULL, sendbuf, msglen,
+			      repbuf, sizeof(repbuf));
 		if (c < 0)
 			return (NULL);
 		rbp = repbuf;

@@ -58,9 +58,7 @@ Cns_getusrbynam(char *username, uid_t *uid)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, NULL, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		unmarshall_LONG (rbp, n);

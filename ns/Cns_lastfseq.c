@@ -37,8 +37,11 @@ Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
 	int   c;
 	gid_t gid;
 	uid_t uid;
-	
+	struct Cns_api_thread_info *thip;
+
 	strcpy (func, "Cns_listfseq");
+	if (Cns_apiinit (&thip))
+		return (-1);
 	Cns_getid(&uid, &gid);
 	
 #if defined(_WIN32)
@@ -77,10 +80,7 @@ Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
 	marshall_LONG(q, msglen);  /* Update the length field */
 	
 	/* Send message to name server daemon */
-	while ((c = send2nsd(NULL, NULL, sendbuf, msglen, repbuf,
-			     sizeof(repbuf))) && serrno == ENSNACT) {
-		sleep(RETRYI);
-	}
+	c = send2nsd(NULL, NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
 		rbp = repbuf;
 		
@@ -96,7 +96,7 @@ Cns_lastfseq(const char *vid, int side, struct Cns_segattrs *segattrs)
 		unmarshall_OPAQUE(rbp, segattrs->blockid, 4);
 		unmarshall_STRINGN(rbp, segattrs->checksum_name, CA_MAXCKSUMNAMELEN);
 		unmarshall_LONG(rbp, segattrs->checksum);
-		return(0);
+		return (0);
 	}
 	if (c && serrno == SENAMETOOLONG) {
 		serrno = ENAMETOOLONG;

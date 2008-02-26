@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_getidmap.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:18 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_getidmap.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:15:31 $ CERN IT-GD/SC Jean-Philippe Baud
 .\" Copyright (C) 2005 by CERN/IT/GD/SC
 .\" All rights reserved
 .\"
-.TH CNS_GETIDMAP 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.TH CNS_GETIDMAP 3 "$Date: 2008/02/26 18:15:31 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_getidmap \- get virtual uid/gid(s) associated with a given dn/role(s)
 .SH SYNOPSIS
@@ -12,7 +12,7 @@ Cns_getidmap \- get virtual uid/gid(s) associated with a given dn/role(s)
 .sp
 .BI "int Cns_getidmap (const char *" username ,
 .BI "int " nbgroups ,
-.BI "char **" groupnames ,
+.BI "const char **" groupnames ,
 .BI "uid_t *" userid ,
 .BI "gid_t *" gids )
 .SH DESCRIPTION

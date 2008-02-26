@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <unistd.h>
 #if defined(_WIN32)
 #include <winsock2.h>
 #else
@@ -52,6 +53,7 @@ int *nbstruct;
 	struct Cns_filereplica *lp;
 	int magic;
 	int n;
+	int nbretry;
 	char *p;
 	char prtbuf[PRTBUFSZ];
 	char *q;
@@ -59,12 +61,15 @@ int *nbstruct;
 	int rep_type;
 	char repbuf[REPBUFSZ];
 	int repbuf2sz;
+	int retrycnt = 0;
+	int retryint;
 	int s;
 	char se[CA_MAXHOSTNAMELEN+1];
 	char sfn[CA_MAXSFNLEN+1];
 	struct sockaddr_in sin; /* internet socket */
 	struct servent *sp;
 	struct Cns_api_thread_info *thip = NULL;
+	int timeout;
 
 	strcpy (func, "send2nsd");
 	if (socketp && *socketp >= 0) {	/* connection opened by Cns_list... */
@@ -108,41 +113,107 @@ int *nbstruct;
 			}
 		}
 
-		if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-			Cns_errmsg (func, NS002, "socket", neterror());
-			serrno = SECOMERR;
-			return (-1);
+		/* get retry environment variables */
+		if ((p = getenv (CNS_CONNTIMEOUT_ENV)) == NULL) {
+			timeout = DEFAULT_CONNTIMEOUT;
+		} else {
+			timeout = atoi (p);
 		}
 
-		if (connect (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-#if defined(_WIN32)
-			if (WSAGetLastError() == WSAECONNREFUSED) {
-#else
-			if (errno == ECONNREFUSED) {
-#endif
-				Cns_errmsg (func, NS000, Cnshost);
-				(void) netclose (s);
-				serrno = ENSNACT;
-				return (-1);
-			} else {
-				Cns_errmsg (func, NS002, "connect", neterror());
-				(void) netclose (s);
+		if ((p = getenv ("CNS_CONRETRY")) == NULL) {
+			nbretry = DEFAULT_RETRYCNT;
+		} else {
+			nbretry = atoi(p);
+		}
+
+		if ((p = getenv (CNS_CONRETRYINT_ENV)) == NULL) {
+			retryint = RETRYI;
+		} else {
+			retryint = atoi(p);
+		}
+
+		/* retry as much as the user wishes */
+	        while (retrycnt <= nbretry) {
+
+			if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
+				Cns_errmsg (func, NS002, "socket", neterror());
 				serrno = SECOMERR;
 				return (-1);
 			}
-		}
+
+			if (netconnect_timeout (s, (struct sockaddr *)&sin,
+						sizeof(struct sockaddr_in), timeout) < 0) {
+
+				if (serrno == SETIMEDOUT) {
+					if (retrycnt == nbretry) {
+						Cns_errmsg (func, NS002, "connect", neterror());
+						(void) netclose(s);
+						return (-1);
+					}
+				} else {
+
+#if defined(_WIN32)
+					if (WSAGetLastError() == WSAECONNREFUSED) {
+#else
+					if (serrno == ECONNREFUSED) {
+#endif
+						if (retrycnt == nbretry) {
+							Cns_errmsg (func, NS000, Cnshost);
+							(void) netclose (s);
+							serrno = ENSNACT;
+							return (-1);
+						}
+					} else {
+						if (retrycnt == nbretry) {
+							Cns_errmsg (func, NS002, "connect", neterror());
+							(void) netclose (s);
+							serrno = SECOMERR;
+							return (-1);
+						}
+					}
+				}
+			} else {
 #ifdef CSEC
-		Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
-		if (Cns_apiinit (&thip) == 0 && thip->use_authorization_id &&
-		    *thip->Csec_mech && *thip->Csec_auth_id)
-			Csec_client_setAuthorizationId (&ctx, thip->Csec_mech,
-			    thip->Csec_auth_id);
-		if (Csec_client_establishContext (&ctx, s) < 0) {
-			Cns_errmsg (func, NS002, "send", "No valid credential found");
-			(void) netclose (s);
-			serrno = ESEC_NO_CONTEXT;
-			return (-1);
+				Csec_client_initContext (&ctx, CSEC_SERVICE_TYPE_HOST, NULL);
+				if (Cns_apiinit (&thip) == 0 && thip->use_authorization_id &&
+				    *thip->Csec_mech && *thip->Csec_auth_id)
+					Csec_client_setAuthorizationId (&ctx, thip->Csec_mech,
+									thip->Csec_auth_id);
+				if (Csec_client_establishContext (&ctx, s) == 0)
+					break;
+				
+				switch (serrno) {
+					case SECOMERR:
+						Cns_errmsg (func, NS002, "send", "Communication error");
+						(void) netclose (s);
+						Csec_clearContext (&ctx);
+						return (-1);
+					case SETIMEDOUT:
+						if (retrycnt == nbretry) {
+							Cns_errmsg (func, NS002, "send", "Operation timed out");
+							(void) netclose (s);
+							Csec_clearContext (&ctx);
+							return (-1);
+						}
+						break;
+					default:
+						Cns_errmsg (func, NS002, "send", "No valid credential found");
+						(void) netclose (s);
+						Csec_clearContext (&ctx);
+						return (-1);
+				}
+				
+				(void) netclose (s);
+				Csec_clearContext (&ctx);			
+#else
+				break;
+#endif
+			}
+			sleep (retryint);
+			retrycnt++;
 		}
+
+#ifdef CSEC
 		Csec_clearContext (&ctx);
 #endif
 		if (socketp)

@@ -40,10 +40,7 @@ Cns_closedir(Cns_DIR *dirp)
 	marshall_LONG (sbp, CNS_CLOSEDIR);
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);
-	while (send2nsd (&dirp->dd_fd, NULL, sendbuf, msglen, NULL, 0) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
-
+	(void) send2nsd (&dirp->dd_fd, NULL, sendbuf, msglen, NULL, 0);
 	if (dirp->replicas) {	/* free previous replica information */
 		ir = (struct Cns_rep_info *) dirp->replicas;
 		for (i = 0; i < dirp->nbreplicas; i++) {

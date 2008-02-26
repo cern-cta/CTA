@@ -80,9 +80,7 @@ Cns_readlink(const char *path, char *buf, size_t bufsiz)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, buf, bufsiz)) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, buf, bufsiz);
 	if (c == 0) {
 		if ((p = memchr (buf, '\0', bufsiz)))
 			c = p - buf + 1;

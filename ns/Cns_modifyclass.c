@@ -93,9 +93,7 @@ Cns_modifyclass(char *server, int classid, char *class_name, struct Cns_fileclas
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0)) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, NULL, 0);
 	if (c && serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
 	return (c);
 }

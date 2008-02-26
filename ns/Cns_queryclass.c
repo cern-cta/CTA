@@ -78,9 +78,7 @@ Cns_queryclass(char *server, int classid, char *class_name, struct Cns_fileclass
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf))) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, server, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c && serrno == SENAMETOOLONG) serrno = ENAMETOOLONG;
 	if (c == 0) {
 		rbp = repbuf;

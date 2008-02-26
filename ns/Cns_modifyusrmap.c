@@ -56,8 +56,6 @@ Cns_modifyusrmap(uid_t uid, char *newname)
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);	/* update length field */
 
-	while ((c = send2nsd (NULL, NULL, sendbuf, msglen, NULL, 0)) &&
-	    serrno == ENSNACT)
-		sleep (RETRYI);
+	c = send2nsd (NULL, NULL, sendbuf, msglen, NULL, 0);
 	return (c);
 }
