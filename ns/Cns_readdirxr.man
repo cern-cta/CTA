@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_readdirxr.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_readdirxr.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:20:59 $ CERN IT-GD/SC Jean-Philippe Baud
 .\" Copyright (C) 2005 by CERN/IT/GD/SC
 .\" All rights reserved
 .\"
-.TH CNS_READDIRXR 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.TH CNS_READDIRXR 3 "$Date: 2008/02/26 18:20:59 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_readdirxr \- read CASTOR directory opened by
 .B Cns_opendir
@@ -57,9 +57,18 @@ allows to restrict the replica entries to a given SE.
 .SH RETURN VALUE
 This routine returns a pointer to a structure containing the current directory
 entry if the operation was successful or NULL if the end of the directory was
-reached or if the operation failed. In the latter case,
+reached or if the operation failed. When the end of the directory is encountered,
+serrno is not changed. If the operation failed,
 .B serrno
 is set appropriately.
+
+As Cns_readdirxr returns a null pointer
+both at the end of the directory and on error, an application wishing to check
+for error situations should set
+.B serrno
+to 0, then call Cns_readdirxr, then check
+.B serrno
+and if it is non-zero, assume an error has occurred.
 .SH ERRORS
 .TP 1.3i
 .B EBADF

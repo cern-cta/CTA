@@ -1,26 +1,26 @@
-.\" @(#)$RCSfile: Cns_modifyusrmap.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:19 $ CERN IT-GD/SC Jean-Philippe Baud
-.\" Copyright (C) 2005 by CERN/IT/GD/SC
+.\" @(#)$RCSfile: Cns_modifyusrmap.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:20:59 $ CERN IT-GD/SC Jean-Philippe Baud
+.\" Copyright (C) 2005-2007 by CERN/IT/GD/SC
 .\" All rights reserved
 .\"
-.TH CNS_MODIFYUSRMAP 3 "$Date: 2006/01/26 15:36:19 $" CASTOR "Cns Library Functions"
+.TH CNS_MODIFYGRPMAP 3 "$Date: 2008/02/26 18:20:59 $" CASTOR "Cns Library Functions"
 .SH NAME
-Cns_modifyusrmap \- modify user entry corresponding to a given virtual uid
+Cns_modifygrpmap \- modify group entry corresponding to a given virtual gid
 .SH SYNOPSIS
 .B #include <sys/types.h>
 .br
 \fB#include "Cns_api.h"\fR
 .sp
-.BI "int Cns_modifyusrmap (uid_t " uid ,
+.BI "int Cns_modifygrpmap (gid_t " gid ,
 .BI "char *" newname )
 .SH DESCRIPTION
-.B Cns_modifyusrmap
-modifies the user entry corresponding to a given virtual uid.
+.B Cns_modifygrpmap
+modifies the group entry corresponding to a given virtual gid.
 .TP
-.I uid
-specifies the Virtual User Id.
+.I gid
+specifies the Virtual Group Id.
 .TP
 .I newname
-specifies the new user name.
+specifies the new group name.
 It must be at most 255 characters long.
 .LP
 This function requires ADMIN privilege.
@@ -31,12 +31,18 @@ failed. In the latter case,
 is set appropriately.
 .SH ERRORS
 .TP 1.3i
+.B EACCES
+The caller does not have ADMIN privilege.
+.TP
 .B EFAULT
 .I newname
 is a NULL pointer.
 .TP
+.B EEXIST
+This group exists already.
+.TP
 .B EINVAL
-This uid does not exist in the internal mapping table or the length of
+This gid does not exist in the internal mapping table or the length of
 .I newname
 exceeds 255.
 .TP

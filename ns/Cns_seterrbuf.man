@@ -1,8 +1,8 @@
-.\" @(#)$RCSfile: Cns_seterrbuf.man,v $ $Revision: 1.2 $ $Date: 2006/01/26 15:36:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: Cns_seterrbuf.man,v $ $Revision: 1.3 $ $Date: 2008/02/26 18:21:00 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETERRBUF 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.TH CNS_SETERRBUF 3 "$Date: 2008/02/26 18:21:00 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_seterrbuf \- set receiving buffer for error messages
 .SH SYNOPSIS
@@ -11,8 +11,9 @@ Cns_seterrbuf \- set receiving buffer for error messages
 .SH DESCRIPTION
 .B Cns_seterrbuf
 tells the name server client API the address and the size of the buffer
-to be used for error messages. If this routine is not called, the messages
-are printed on
+to be used for error messages. If this routine is not called or if
+.I buffer
+is NULL, the messages are printed on
 .BR stderr .
 .SH RETURN VALUE
 This routine returns 0 if the operation was successful or -1 if the operation
