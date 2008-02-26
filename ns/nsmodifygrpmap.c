@@ -62,8 +62,12 @@ char **argv;
 	}
 
 	if (Cns_modifygrpmap (gid, groupname) < 0) {
-		fprintf (stderr, "nsmodifygrpmap %d: %s\n", gid,
-		    (serrno == ENOENT) ? "No such group" : sstrerror(serrno));
+		if (serrno == EEXIST)
+			fprintf (stderr, "nsmodifygrpmap %s: %s\n", groupname,
+			    "Group exists already");
+		else
+			fprintf (stderr, "nsmodifygrpmap %d: %s\n", gid,
+			    (serrno == ENOENT) ? "No such group" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

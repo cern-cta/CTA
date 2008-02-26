@@ -124,7 +124,6 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
   
-  
     rc = Cns_getsegattrs(filename,
                          NULL,
                          &outnb,
@@ -166,15 +165,11 @@ int main(int argc, char *argv[]) {
                     fprintf(stderr, "Cns_replaceseg_checksum error %d : %s\n", 
                             serrno, 
                             sstrerror(serrno));
-                }
-              
+                }     
             }
-                  
-            return EXIT_FAILURE;
-        }
-          
+	    return EXIT_FAILURE;
+        }         
     }
-
   
     if (outnb > 0) {
         free(outsat);

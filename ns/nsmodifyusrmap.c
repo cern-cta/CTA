@@ -62,8 +62,12 @@ char **argv;
 	}
 
 	if (Cns_modifyusrmap (uid, username) < 0) {
-		fprintf (stderr, "nsmodifyusrmap %d: %s\n", uid,
-		    (serrno == ENOENT) ? "No such user" : sstrerror(serrno));
+		if (serrno == EEXIST)
+			fprintf (stderr, "nsmodifyusrmap %s: %s\n", username,
+			    "User exists already");
+		else
+			fprintf (stderr, "nsmodifyusrmap %d: %s\n", uid,
+			    (serrno == ENOENT) ? "No such user" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);
