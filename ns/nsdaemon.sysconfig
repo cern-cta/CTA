@@ -1,13 +1,12 @@
+# Arguments for the nsdaemon
+#   -c <path>      configuration file
+#   -l <logfile>  
+#   -m <mapfile>
+#   -r
+#   -t <nbthreads
 #
-# $Id: nsdaemon.sysconfig,v 1.3 2006/01/26 15:36:22 bcouturi Exp $
-#
-# @(#)$RCSfile: nsdaemon.sysconfig,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:36:22 $ CERN/IT/ADC/CA Jean-Damien Durand
-#
-# should nsdaemon run?
-# any string but "yes" will equivalent to "NO"
-#
-RUN_NSDAEMON="yes"
-#
-# should we run with another limit on the number of file descriptors than the default?
-# any string will be passed to ulimit -n
-#ULIMIT_N=4096
+# Options to pass to the nsdaemon
+#NSDAEMON_OPTIONS=
+
+# Should we run with another limit on the core file size than the default?
+#DAEMON_COREFILE_LIMIT=unlimited
