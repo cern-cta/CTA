@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.636 $ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.637 $ $Date: 2008/02/26 16:22:37 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -610,7 +610,8 @@ END;
 BEGIN
   -- Remove database jobs before recreating them
   FOR a IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('GARBAGECOLLECTJOB', 'TABLESHRINKJOB'))
+             WHERE job_name IN ('GARBAGECOLLECTJOB', 'TABLESHRINKJOB', 
+	                        'BULKCHECKFSINPRODJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
   END LOOP;
@@ -636,5 +637,16 @@ BEGIN
       START_DATE      => SYSDATE,
       REPEAT_INTERVAL => 'FREQ=DAILY; INTERVAL=1',
       ENABLED         => TRUE,
-      COMMENTS        => '');
+      COMMENTS        => 'Database maintenance');
+
+  -- Creates a db job to be run every 5 minutes executing the bulkCheckFSBackInProd
+  -- procedure
+  DBMS_SCHEDULER.CREATE_JOB(
+      JOB_NAME        => 'bulkCheckFSBackInProdJob',
+      JOB_TYPE        => 'PLSQL_BLOCK',
+      JOB_ACTION      => 'BEGIN bulkCheckFSBackInProd(); END;',
+      START_DATE      => SYSDATE,
+      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=5',
+      ENABLED         => TRUE,
+      COMMENTS        => 'Bulk operation to processing filesystem state changes');
 END;
