@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_api.h,v 1.9 2008/01/09 12:26:23 waldron Exp $
+ * $Id: Cns_api.h,v 1.10 2008/02/27 07:18:11 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.9 $ $Date: 2008/01/09 12:26:23 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_api.h,v $ $Revision: 1.10 $ $Date: 2008/02/27 07:18:11 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_API_H
@@ -293,7 +293,7 @@ EXTERN_C int DLL_DECL Cns_getsegattrs _PROTO((const char *, struct Cns_fileid *,
 EXTERN_C int DLL_DECL Cns_getreplica _PROTO((const char *, const char *, const char *, int *, struct Cns_filereplica **));
 EXTERN_C int DLL_DECL Cns_lchown _PROTO((const char *, uid_t, gid_t));
 EXTERN_C struct Cns_fileclass DLL_DECL *Cns_listclass _PROTO((char *, int, Cns_list *));
-EXTERN_C struct Cns_direntape DLL_DECL *Cns_listtape _PROTO((char *, char *, int, Cns_list *));
+EXTERN_C struct Cns_direntape DLL_DECL *Cns_listtape _PROTO((char *, char *, int, Cns_list *, int));
 EXTERN_C struct Cns_linkinfo DLL_DECL *Cns_listlinks _PROTO((const char *, const char *, int, Cns_list *));
 EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listrep4gc _PROTO((const char *, int, Cns_list *));
 EXTERN_C struct Cns_filereplica DLL_DECL *Cns_listreplica _PROTO((const char *, const char *, int, Cns_list *));
@@ -307,6 +307,7 @@ EXTERN_C int DLL_DECL Cns_modifyclass _PROTO((char *, int, char *, struct Cns_fi
 EXTERN_C Cns_DIR DLL_DECL *Cns_opendir _PROTO((const char *));
 EXTERN_C Cns_DIR DLL_DECL *Cns_opendirg _PROTO((const char *, const char *));
 EXTERN_C Cns_DIR DLL_DECL *Cns_opendirxg _PROTO((char *, const char *, const char *));
+EXTERN_C int DLL_DECL Cns_ping _PROTO((char *host, char *info));
 EXTERN_C int DLL_DECL Cns_queryclass _PROTO((char *, int, char *, struct Cns_fileclass *));
 EXTERN_C struct dirent DLL_DECL *Cns_readdir _PROTO((Cns_DIR *));
 EXTERN_C struct Cns_direncomm DLL_DECL *Cns_readdirc _PROTO((Cns_DIR *));
@@ -340,6 +341,7 @@ EXTERN_C int DLL_DECL Cns_statg _PROTO((const char *, const char *, struct Cns_f
 EXTERN_C int DLL_DECL Cns_statr _PROTO((const char *, struct Cns_filestatg *));
 EXTERN_C int DLL_DECL Cns_statx _PROTO((const char *, struct Cns_fileid *, struct Cns_filestat *));
 EXTERN_C int DLL_DECL Cns_symlink _PROTO((const char *, const char *));
+EXTERN_C int DLL_DECL Cns_tapesum _PROTO((const char *, u_signed64 *, u_signed64 *, int));
 EXTERN_C mode_t DLL_DECL Cns_umask _PROTO((mode_t));
 EXTERN_C int DLL_DECL Cns_undelete _PROTO((const char *));
 EXTERN_C int DLL_DECL Cns_unlink _PROTO((const char *));

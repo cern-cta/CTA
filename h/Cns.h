@@ -1,5 +1,5 @@
 /*
- * $Id: Cns.h,v 1.5 2007/11/16 17:46:45 sponcec3 Exp $
+ * $Id: Cns.h,v 1.6 2008/02/27 07:18:11 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns.h,v $ $Revision: 1.5 $ $Date: 2007/11/16 17:46:45 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns.h,v $ $Revision: 1.6 $ $Date: 2008/02/27 07:18:11 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_H
@@ -28,11 +28,15 @@
 #define CNS_HOME_ENV "CASTOR_HOME"
 #define CNS_HOST_ENV "CNS_HOST"
 #define CNS_PORT_ENV "CNS_PORT"
+#define CNS_CONNTIMEOUT_ENV "CNS_CONNTIMEOUT"
+#define CNS_CONRETRY_ENV "CNS_CONRETRY"
+#define CNS_CONRETRYINT_ENV "CNS_CONRETRYINT"
 #endif
 #define CNS_MAGIC	0x030E1301
 #define CNS_MAGIC2	0x030E1302
 #define CNS_MAGIC3	0x030E1303
 #define CNS_MAGIC4	0x030E1304
+#define CNS_MAGIC5	0x030E1305
 #define CNS_DIRTIMEOUT	300	/* timeout while waiting for the next dir sub-req */
 #define CNS_TIMEOUT	5	/* netread timeout while receiving a request */
 #define CNS_TRANSTIMEOUT	60	/* timeout while waiting for the next req in transaction */
@@ -64,7 +68,7 @@
 #define CNS_CLOSE	14
 #define CNS_SETATIME	15
 #define CNS_SETFSIZE	16
-#define CNS_SHUTDOWN	17
+#define CNS_SHUTDOWN	17 /* deprecated */
 #define CNS_GETSEGAT	18
 #define CNS_SETSEGAT	19
 #define CNS_LISTTAPE	20
@@ -125,6 +129,8 @@
 #define CNS_REPLACETAPECOPY 75
 #define CNS_LASTFSEQ    76
 #define CNS_BULKEXIST	77
+#define CNS_TAPESUM     78
+#define CNS_PING        82
 
 			/* name server reply types */
 

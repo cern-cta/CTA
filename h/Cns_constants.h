@@ -1,5 +1,5 @@
 /*
- * $Id: Cns_constants.h,v 1.3 2006/01/26 15:32:41 bcouturi Exp $
+ * $Id: Cns_constants.h,v 1.4 2008/02/27 07:18:11 waldron Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.3 $ $Date: 2006/01/26 15:32:41 $ CERN IT-PDP/DM Jean-Philippe Baud
+ * @(#)$RCSfile: Cns_constants.h,v $ $Revision: 1.4 $ $Date: 2008/02/27 07:18:11 $ CERN IT-PDP/DM Jean-Philippe Baud
  */
 
 #ifndef _CNS_CONSTANTS_H
@@ -71,4 +71,10 @@
 #define	USERR	  1	/* user error */
 #define	SYERR 	  2	/* system error */
 #define	CONFERR	  4	/* configuration error */
+
+			/* timeout constants */
+
+#define DEFAULT_RETRYCNT     38880   /* Default retry count 38880*60 = 1 week  */
+#define DEFAULT_CONNTIMEOUT  (2*60)  /* Default connect timeout limit = 2mins. */
+
 #endif
