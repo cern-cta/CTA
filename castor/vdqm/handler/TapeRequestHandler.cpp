@@ -186,25 +186,43 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(newVdqmHdr_t *hea
      * Valids the requested tape Access for the specific tape model.
      * In case of errors, the return value is NULL
      */
-    tapeAccessSpec = 
-      ptr_IVdqmService->selectTapeAccessSpecification(volumeRequest->mode, 
-                                                      tape_info.density, 
-                                                      tape_info.model);
+    try {
+      tapeAccessSpec = 
+        ptr_IVdqmService->selectTapeAccessSpecification(volumeRequest->mode, 
+          tape_info.density, tape_info.model);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::Internal ie;
+
+      ie.getMessage() << "Failed to select the tape access specification: "
+        << e.getMessage().str();
+
+      throw ie;
+    }
     
     if (0 == tapeAccessSpec) {
       castor::exception::Exception ex(EVQDGNINVL);
-      ex.getMessage() << "The specified tape access mode doesn't exist in the db"
-                      << std::endl;
+      ex.getMessage()
+        << "The specified tape access mode doesn't exist in the db"
+        << std::endl;
       throw ex;
     }
     
-     /**
+    /**
      * The requested device group name. If the entry doesn't yet exist, 
      * it will be created.
      */
-     dgName = ptr_IVdqmService->selectDeviceGroupName(volumeRequest->dgn);
+    try {
+      dgName = ptr_IVdqmService->selectDeviceGroupName(volumeRequest->dgn);
+    } catch(castor::exception::Exception &e) {
+      castor::exception::Internal ie;
+
+      ie.getMessage() << "Failed to select (creating if does not exist) "
+        "the device group name: " << e.getMessage().str();
+
+      throw ie;
+    }
     
-    if ( 0 == dgName) {
+    if(0 == dgName) {
       castor::exception::Exception ex(EVQDGNINVL);
       ex.getMessage() << "DGN " <<  volumeRequest->dgn
                       << " does not exist in the db" << std::endl;
