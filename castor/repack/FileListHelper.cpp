@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.32 $ $Release$ 
- * $Date: 2007/12/14 15:10:58 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.33 $ $Release$ 
+ * $Date: 2008/02/27 12:42:20 $ $Author: gtaur $
  *
  *
  *
@@ -145,7 +145,10 @@ u_signed64 FileListHelper::countFilesOnTape(std::string vid)
     flags = CNS_LIST_BEGIN;
     
     while ((dtp = Cns_listtape ((char*)m_ns.c_str(),(char*) vid.c_str(), flags, &list)) != NULL) {  
-      if (dtp->s_status == 'D') continue;
+      if (dtp->s_status == 'D'){
+	flags = CNS_LIST_CONTINUE;
+	continue;
+      }
       numSegmentLeft++;
       flags = CNS_LIST_CONTINUE;
     }
@@ -190,7 +193,10 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
     
     while ((dtp = Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), flags, &list)) != NULL) {
       
-      if (dtp->s_status == 'D') continue;
+      if (dtp->s_status == 'D'){
+	flags = CNS_LIST_CONTINUE;
+	continue;
+      }
       
       RepackSegment* rseg= new RepackSegment();
       rseg->setRepacksubrequest(subreq);
