@@ -252,7 +252,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
       oldProtInterpreter->sendToOldClient(&header, &volumeRequest, &driveRequest);
       
       //"VdqmServer::handleOldVdqmRequest(): waiting for client acknowledge" message
-      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_SYSTEM, VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK);
+      castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_DEBUG, VDQM_HANDLE_OLD_VDQM_REQUEST_WAITING_FOR_CLIENT_ACK);
       rc = oldProtInterpreter->recvAcknFromOldClient();
 
       /**

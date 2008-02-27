@@ -82,9 +82,10 @@ bool castor::vdqm::OldRequestFacade::checkRequestType(Cuuid_t cuuid)
       (m_reqtype != VDQM_GET_DRVQUEUE) &&
       (m_reqtype != VDQM_PING)) {
 
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("req_string", req_string)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM, VDQM_NEW_VDQM_REQUEST, 1, params);
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("req_string", req_string)};
+    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG, VDQM_NEW_VDQM_REQUEST, 1,
+      params);
   }
   
   if ( !VDQM_VALID_REQTYPE(m_reqtype) ) {
