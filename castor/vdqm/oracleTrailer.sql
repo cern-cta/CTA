@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.19 $ $Release$ $Date: 2008/02/27 13:24:48 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.20 $ $Release$ $Date: 2008/02/27 13:38:32 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -15,9 +15,12 @@ UPDATE CastorVersion SET schemaVersion = '2_1_6_0';
 CREATE SEQUENCE ids_seq CACHE 200;
 
 /* SQL statements for object types */
-CREATE TABLE Id2Type (id INTEGER, type NUMBER);
+CREATE TABLE Id2Type (
+  id   INTEGER,
+  type NUMBER,
+  CONSTRAINT PK_Id2Tape PRIMARY KEY (id)
+);
 CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
-ALTER TABLE Id2Tape ADD CONSTRAINT PK_Id2Tape PRIMARY KEY (id);
 
 /* get current time as a time_t. Not that easy in ORACLE */
 CREATE OR REPLACE FUNCTION getTime RETURN NUMBER IS
