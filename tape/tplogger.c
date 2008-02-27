@@ -19,7 +19,7 @@
 
 
 /*
-** $Id: tplogger.c,v 1.9 2008/02/26 13:27:27 wiebalck Exp $
+** $Id: tplogger.c,v 1.10 2008/02/27 09:29:19 wiebalck Exp $
 */
 
 #include <string.h>
@@ -737,7 +737,7 @@ int DLL_DECL tl_init_syslog( tplogger_t *self, int init ) {
         case 1:
                 self->tl_name = strdup( "rtcpd" );
                 tl_set_msg_tbl_dlf( self, tplogger_messages_rtcpd );
-                openlog("rtcpd", LOG_PID, LOG_LOCAL0);
+                openlog("rtcpd", LOG_PID, LOG_LOCAL1);
                 break;
 
         default:
