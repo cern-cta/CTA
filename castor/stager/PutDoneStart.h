@@ -136,6 +136,26 @@ int Cstager_PutDoneStart_fileSystem(struct Cstager_PutDoneStart_t* instance, con
  */
 int Cstager_PutDoneStart_setFileSystem(struct Cstager_PutDoneStart_t* instance, const char* new_var);
 
+/**
+ * Get the value of fileId
+ */
+int Cstager_PutDoneStart_fileId(struct Cstager_PutDoneStart_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ */
+int Cstager_PutDoneStart_setFileId(struct Cstager_PutDoneStart_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ */
+int Cstager_PutDoneStart_nsHost(struct Cstager_PutDoneStart_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ */
+int Cstager_PutDoneStart_setNsHost(struct Cstager_PutDoneStart_t* instance, const char* new_var);
+
 /********************************************/
 /* Implementation of Request abstract class */
 /********************************************/

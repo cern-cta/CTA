@@ -282,4 +282,24 @@ int Cstager_StartRequest_fileSystem(struct Cstager_StartRequest_t* instance, con
  */
 int Cstager_StartRequest_setFileSystem(struct Cstager_StartRequest_t* instance, const char* new_var);
 
+/**
+ * Get the value of fileId
+ */
+int Cstager_StartRequest_fileId(struct Cstager_StartRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ */
+int Cstager_StartRequest_setFileId(struct Cstager_StartRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ */
+int Cstager_StartRequest_nsHost(struct Cstager_StartRequest_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ */
+int Cstager_StartRequest_setNsHost(struct Cstager_StartRequest_t* instance, const char* new_var);
+
 #endif /* CASTOR_STAGER_STARTREQUEST_H */

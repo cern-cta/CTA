@@ -132,6 +132,38 @@ namespace castor {
         m_fileSystem = new_var;
       }
 
+      /**
+       * Get the value of m_fileId
+       * @return the value of m_fileId
+       */
+      u_signed64 fileId() const {
+        return m_fileId;
+      }
+
+      /**
+       * Set the value of m_fileId
+       * @param new_var the new value of m_fileId
+       */
+      void setFileId(u_signed64 new_var) {
+        m_fileId = new_var;
+      }
+
+      /**
+       * Get the value of m_nsHost
+       * @return the value of m_nsHost
+       */
+      std::string nsHost() const {
+        return m_nsHost;
+      }
+
+      /**
+       * Set the value of m_nsHost
+       * @param new_var the new value of m_nsHost
+       */
+      void setNsHost(std::string new_var) {
+        m_nsHost = new_var;
+      }
+
     private:
 
       /// The id of the subRequest that should be scheduled
@@ -142,6 +174,10 @@ namespace castor {
 
       /// The mount point of the selected filesystem for the given SubRequest
       std::string m_fileSystem;
+
+      u_signed64 m_fileId;
+
+      std::string m_nsHost;
 
     }; /* end of class StartRequest */
 

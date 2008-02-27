@@ -161,6 +161,39 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_fileId
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_fileId(castor::stager::PutStartRequest* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_setFileId
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_setFileId(castor::stager::PutStartRequest* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_nsHost
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_nsHost(castor::stager::PutStartRequest* instance, const char** var) {
+    *var = instance->nsHost().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_PutStartRequest_setNsHost
+  //----------------------------------------------------------------------------
+  int Cstager_PutStartRequest_setNsHost(castor::stager::PutStartRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
   // Cstager_PutStartRequest_flags
   //----------------------------------------------------------------------------
   int Cstager_PutStartRequest_flags(castor::stager::PutStartRequest* instance, u_signed64* var) {
@@ -404,39 +437,6 @@ extern "C" {
   int Cstager_PutStartRequest_clone(castor::stager::PutStartRequest* instance,
                                     castor::IObject** ret) {
     *ret = instance->clone();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_fileId
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_fileId(castor::stager::PutStartRequest* instance, u_signed64* var) {
-    *var = instance->fileId();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_setFileId
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_setFileId(castor::stager::PutStartRequest* instance, u_signed64 new_var) {
-    instance->setFileId(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_nsHost
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_nsHost(castor::stager::PutStartRequest* instance, const char** var) {
-    *var = instance->nsHost().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_PutStartRequest_setNsHost
-  //----------------------------------------------------------------------------
-  int Cstager_PutStartRequest_setNsHost(castor::stager::PutStartRequest* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setNsHost(snew_var);
     return 0;
   }
 

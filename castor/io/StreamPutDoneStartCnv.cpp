@@ -93,6 +93,8 @@ void castor::io::StreamPutDoneStartCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->subreqId();
   ad->stream() << obj->diskServer();
   ad->stream() << obj->fileSystem();
+  ad->stream() << obj->fileId();
+  ad->stream() << obj->nsHost();
   ad->stream() << obj->flags();
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
@@ -127,6 +129,12 @@ castor::IObject* castor::io::StreamPutDoneStartCnv::createObj(castor::IAddress* 
   std::string fileSystem;
   ad->stream() >> fileSystem;
   object->setFileSystem(fileSystem);
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  std::string nsHost;
+  ad->stream() >> nsHost;
+  object->setNsHost(nsHost);
   u_signed64 flags;
   ad->stream() >> flags;
   object->setFlags(flags);

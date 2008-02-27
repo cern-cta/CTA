@@ -41,7 +41,9 @@ castor::stager::StartRequest::StartRequest() throw() :
   Request(),
   m_subreqId(0),
   m_diskServer(""),
-  m_fileSystem("") {
+  m_fileSystem(""),
+  m_fileId(0),
+  m_nsHost("") {
 }
 
 //------------------------------------------------------------------------------
@@ -68,6 +70,8 @@ void castor::stager::StartRequest::print(std::ostream& stream,
   stream << indent << "subreqId : " << m_subreqId << std::endl;
   stream << indent << "diskServer : " << m_diskServer << std::endl;
   stream << indent << "fileSystem : " << m_fileSystem << std::endl;
+  stream << indent << "fileId : " << m_fileId << std::endl;
+  stream << indent << "nsHost : " << m_nsHost << std::endl;
   alreadyPrinted.insert(this);
 }
 

@@ -93,6 +93,8 @@ void castor::io::StreamPutStartRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->subreqId();
   ad->stream() << obj->diskServer();
   ad->stream() << obj->fileSystem();
+  ad->stream() << obj->fileId();
+  ad->stream() << obj->nsHost();
   ad->stream() << obj->flags();
   ad->stream() << obj->userName();
   ad->stream() << obj->euid();
@@ -105,8 +107,6 @@ void castor::io::StreamPutStartRequestCnv::createRep(castor::IAddress* address,
   ad->stream() << obj->reqId();
   ad->stream() << obj->creationTime();
   ad->stream() << obj->lastModificationTime();
-  ad->stream() << obj->fileId();
-  ad->stream() << obj->nsHost();
   ad->stream() << obj->id();
 }
 
@@ -129,6 +129,12 @@ castor::IObject* castor::io::StreamPutStartRequestCnv::createObj(castor::IAddres
   std::string fileSystem;
   ad->stream() >> fileSystem;
   object->setFileSystem(fileSystem);
+  u_signed64 fileId;
+  ad->stream() >> fileId;
+  object->setFileId(fileId);
+  std::string nsHost;
+  ad->stream() >> nsHost;
+  object->setNsHost(nsHost);
   u_signed64 flags;
   ad->stream() >> flags;
   object->setFlags(flags);
@@ -165,12 +171,6 @@ castor::IObject* castor::io::StreamPutStartRequestCnv::createObj(castor::IAddres
   u_signed64 lastModificationTime;
   ad->stream() >> lastModificationTime;
   object->setLastModificationTime(lastModificationTime);
-  u_signed64 fileId;
-  ad->stream() >> fileId;
-  object->setFileId(fileId);
-  std::string nsHost;
-  ad->stream() >> nsHost;
-  object->setNsHost(nsHost);
   u_signed64 id;
   ad->stream() >> id;
   object->setId(id);

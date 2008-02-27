@@ -139,6 +139,26 @@ int Cstager_GetUpdateStartRequest_fileSystem(struct Cstager_GetUpdateStartReques
  */
 int Cstager_GetUpdateStartRequest_setFileSystem(struct Cstager_GetUpdateStartRequest_t* instance, const char* new_var);
 
+/**
+ * Get the value of fileId
+ */
+int Cstager_GetUpdateStartRequest_fileId(struct Cstager_GetUpdateStartRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ */
+int Cstager_GetUpdateStartRequest_setFileId(struct Cstager_GetUpdateStartRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ */
+int Cstager_GetUpdateStartRequest_nsHost(struct Cstager_GetUpdateStartRequest_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ */
+int Cstager_GetUpdateStartRequest_setNsHost(struct Cstager_GetUpdateStartRequest_t* instance, const char* new_var);
+
 /********************************************/
 /* Implementation of Request abstract class */
 /********************************************/
@@ -320,26 +340,6 @@ int Cstager_GetUpdateStartRequest_type(struct Cstager_GetUpdateStartRequest_t* i
  */
 int Cstager_GetUpdateStartRequest_clone(struct Cstager_GetUpdateStartRequest_t* instance,
                                         struct C_IObject_t* ret);
-
-/**
- * Get the value of fileId
- */
-int Cstager_GetUpdateStartRequest_fileId(struct Cstager_GetUpdateStartRequest_t* instance, u_signed64* var);
-
-/**
- * Set the value of fileId
- */
-int Cstager_GetUpdateStartRequest_setFileId(struct Cstager_GetUpdateStartRequest_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of nsHost
- */
-int Cstager_GetUpdateStartRequest_nsHost(struct Cstager_GetUpdateStartRequest_t* instance, const char** var);
-
-/**
- * Set the value of nsHost
- */
-int Cstager_GetUpdateStartRequest_setNsHost(struct Cstager_GetUpdateStartRequest_t* instance, const char* new_var);
 
 /**
  * Get the value of id

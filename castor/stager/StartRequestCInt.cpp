@@ -359,4 +359,37 @@ extern "C" {
     return 0;
   }
 
+  //----------------------------------------------------------------------------
+  // Cstager_StartRequest_fileId
+  //----------------------------------------------------------------------------
+  int Cstager_StartRequest_fileId(castor::stager::StartRequest* instance, u_signed64* var) {
+    *var = instance->fileId();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StartRequest_setFileId
+  //----------------------------------------------------------------------------
+  int Cstager_StartRequest_setFileId(castor::stager::StartRequest* instance, u_signed64 new_var) {
+    instance->setFileId(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StartRequest_nsHost
+  //----------------------------------------------------------------------------
+  int Cstager_StartRequest_nsHost(castor::stager::StartRequest* instance, const char** var) {
+    *var = instance->nsHost().c_str();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_StartRequest_setNsHost
+  //----------------------------------------------------------------------------
+  int Cstager_StartRequest_setNsHost(castor::stager::StartRequest* instance, const char* new_var) {
+    std::string snew_var(new_var, strlen(new_var));
+    instance->setNsHost(snew_var);
+    return 0;
+  }
+
 } // End of extern "C"

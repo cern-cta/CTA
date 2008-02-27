@@ -141,6 +141,26 @@ int Cstager_PutStartRequest_fileSystem(struct Cstager_PutStartRequest_t* instanc
  */
 int Cstager_PutStartRequest_setFileSystem(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 
+/**
+ * Get the value of fileId
+ */
+int Cstager_PutStartRequest_fileId(struct Cstager_PutStartRequest_t* instance, u_signed64* var);
+
+/**
+ * Set the value of fileId
+ */
+int Cstager_PutStartRequest_setFileId(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
+
+/**
+ * Get the value of nsHost
+ */
+int Cstager_PutStartRequest_nsHost(struct Cstager_PutStartRequest_t* instance, const char** var);
+
+/**
+ * Set the value of nsHost
+ */
+int Cstager_PutStartRequest_setNsHost(struct Cstager_PutStartRequest_t* instance, const char* new_var);
+
 /********************************************/
 /* Implementation of Request abstract class */
 /********************************************/
@@ -322,26 +342,6 @@ int Cstager_PutStartRequest_type(struct Cstager_PutStartRequest_t* instance,
  */
 int Cstager_PutStartRequest_clone(struct Cstager_PutStartRequest_t* instance,
                                   struct C_IObject_t* ret);
-
-/**
- * Get the value of fileId
- */
-int Cstager_PutStartRequest_fileId(struct Cstager_PutStartRequest_t* instance, u_signed64* var);
-
-/**
- * Set the value of fileId
- */
-int Cstager_PutStartRequest_setFileId(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
-
-/**
- * Get the value of nsHost
- */
-int Cstager_PutStartRequest_nsHost(struct Cstager_PutStartRequest_t* instance, const char** var);
-
-/**
- * Set the value of nsHost
- */
-int Cstager_PutStartRequest_setNsHost(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 
 /**
  * Get the value of id
