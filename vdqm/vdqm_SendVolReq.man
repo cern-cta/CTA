@@ -1,9 +1,9 @@
 .\"
-.\" @(#)$RCSfile: vdqm_SendVolReq.man,v $ $Revision: 1.7 $ $Date: 2008/02/26 22:06:37 $ CERN IT-PDP/DM O.Barring
+.\" @(#)$RCSfile: vdqm_SendVolReq.man,v $ $Revision: 1.8 $ $Date: 2008/02/27 10:54:18 $ CERN IT-PDP/DM O.Barring
 .\"
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_SENDVOLREQ l "$Date: 2008/02/26 22:06:37 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_SENDVOLREQ l "$Date: 2008/02/27 10:54:18 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_SendVolReq \- queue a volume request in VDQM
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     char *dgn, *VID;
     struct sockaddr_in sin ; /* Internet address */
 
-    if ( argc < 2 ) {
+    if ( argc < 3 ) {
         fprintf(stderr,"Usage: %s dgn vid\\n",argv[0]);
         exit(2);
     }
