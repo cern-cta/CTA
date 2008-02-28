@@ -120,17 +120,17 @@ int *nbstruct;
 			timeout = atoi (p);
 		}
 
-		if ((p = getenv ("CNS_CONRETRY")) == NULL) {
-			nbretry = DEFAULT_RETRYCNT;
-		} else {
+		nbretry = DEFAULT_RETRYCNT;
+		if ((p = getenv (CNS_CONRETRY_ENV)) || 
+		    (p = getconfent (CNS_SCE, "CONRETRY", 0))) {
 			nbretry = atoi(p);
 		}
 
-		if ((p = getenv (CNS_CONRETRYINT_ENV)) == NULL) {
-			retryint = RETRYI;
-		} else {
+		retryint = RETRYI;
+		if ((p = getenv (CNS_CONRETRYINT_ENV)) ||
+		    (p = getconfent (CNS_SCE, "CONRETRYINT", 0))) {
 			retryint = atoi(p);
-		}
+		} 
 
 		/* retry as much as the user wishes */
 	        while (retrycnt <= nbretry) {
