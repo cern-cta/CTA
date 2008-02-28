@@ -86,7 +86,6 @@ MANPAGES = $(MANDIR)/reclaim.$(MANSUFFIX) \
 	   $(MANDIR)/listSvcClass.$(MANSUFFIX) \
 	   $(MANDIR)/printFileClass.$(MANSUFFIX) \
 	   $(MANDIR)/printSvcClass.$(MANSUFFIX) \
-	   $(MANDIR)/nsGetPath.$(MANSUFFIX) \
 	   $(MANDIR)/gcAllFS.$(MANSUFFIX) \
 	   $(MANDIR)/moveDiskServer.$(MANSUFFIX) \
 	   $(MANDIR)/houseKeeping.$(MANSUFFIX) \
@@ -108,7 +107,6 @@ EXPORTMANPAGES = FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),reclaim.$(MANSUF
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),listSvcClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printFileClass.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),printSvcClass.$(MANSUFFIX))) \
-		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),nsGetPath.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),gcAllFS.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),moveDiskServer.$(MANSUFFIX))) \
 		 FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),houseKeeping.$(MANSUFFIX))) \
@@ -131,7 +129,6 @@ PROGS_TO_CLEAN =  ProgramTargetName(reclaim) \
 	 ProgramTargetName(printSvcClass) \
 	 ProgramTargetName(c2probe) \
 	 ProgramTargetName(adler32) \
-	 ProgramTargetName(nsGetPath) \
 	 ProgramTargetName(rfcpupd)
 
 #if BuildVDQMCpp
@@ -168,7 +165,6 @@ IPROGS = FileName($(BIN),ProgramTargetName(reclaim)) \
 	 FileName($(BIN),ProgramTargetName(listSvcClass)) \
 	 FileName($(BIN),ProgramTargetName(printFileClass)) \
 	 FileName($(BIN),ProgramTargetName(printSvcClass)) \
-	 FileName($(BIN),ProgramTargetName(nsGetPath)) \
 	 FileName($(BIN),ProgramTargetName(gcAllFS)) \
 	 FileName($(BIN),ProgramTargetName(moveDiskServer)) \
 	 FileName($(BIN),ProgramTargetName(dedicateTapeDrive)) \
@@ -198,7 +194,6 @@ EPROGS = $(EXPORTBIN)/reclaim \
 	 $(EXPORTBIN)/listSvcClass \
 	 $(EXPORTBIN)/printFileClass \
 	 $(EXPORTBIN)/printSvcClass \
-	 $(EXPORTBIN)/nsGetPath \
 	 $(EXPORTBIN)/gcAllFS \
 	 $(EXPORTBIN)/moveDiskServer \
 	 $(EXPORTBIN)/dedicateTapeDrive \
@@ -230,7 +225,6 @@ NormalProgramTarget(deleteFileClass,deleteFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(deleteSvcClass,deleteSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printFileClass,printFileClass.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(printSvcClass,printSvcClass.Osuf,$(DEPLIB2),$(LIBS2))
-NormalProgramTarget(nsGetPath,nsGetPath.Osuf,$(DEPLIB2),$(LIBS2))
 NormalProgramTarget(adler32,adler32.Osuf,$(DEPLIB2),$(LIBS2) $(CKSUMLIB))
 NormalProgramTarget(c2probe,c2probe.Osuf,$(DEPLIB2),-pthread $(LIBS2))
 
@@ -292,9 +286,6 @@ IEXPORT(listSvcClass,$(EXPORTBIN),755);
 
 InstallProgram(printFileClass,$(BIN),root,bin,755)
 IEXPORT(printFileClass,$(EXPORTBIN),755);
-
-InstallProgram(nsGetPath,$(BIN),root,bin,755)
-IEXPORT(nsGetPath,$(EXPORTBIN),755);
 
 InstallProgram(gcAllFS,$(BIN),root,bin,755)
 IEXPORT(gcAllFS,$(EXPORTBIN),755);
@@ -359,7 +350,6 @@ IMANPAGE(listFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(listSvcClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printFileClass,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(printSvcClass,$(MANDIR),$(MANSUFFIX))
-IMANPAGE(nsGetPath,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(gcAllFS,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(moveDiskServer,$(MANDIR),$(MANSUFFIX))
 IMANPAGE(houseKeeping,$(MANDIR),$(MANSUFFIX))
@@ -381,7 +371,6 @@ EMANPAGE(listFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(listSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printFileClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(printSvcClass,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
-EMANPAGE(nsGetPath,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(gcAllFS,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(moveDiskServer,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
 EMANPAGE(houseKeeping,FileName($(EXPORTMAN),man$(MANSUFFIX)),$(MANSUFFIX))
