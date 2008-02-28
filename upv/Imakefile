@@ -57,13 +57,6 @@ WNT_SYS_INCLUDE = "INCLUDE=$(MSDEVDIR)\..\Vc\Include"
 ORAINC = -I$(ORACLE_HOME)/precomp/public
 #endif
 #else
-#if UseMySQL
-DBOBJS = Cupv_mysql_ifce.Osuf
-MYSFLG = -DUSE_MYSQL
-MYSINC = -I/usr/include/mysql
-MYSLIB = /usr/lib/mysql/libmysqlclient.a
-LIBMYS = -L/usr/lib/mysql -lmysqlclient -lz
-#else
 #if UseRaima
 DBOBJS = Cupv_raima_ifce.Osuf
 #if _WIN32
@@ -81,7 +74,6 @@ LIBRDS = -L$(RDSHOME)/lib -lCadm -lCrdm -lCncp -lCrpc -lCrm -lCenc
 CDBANA = FileName(FileName(..,db),ProgramTargetName(Cdbana))
 DBOBJS = Cupv_db.Osuf Cupv_Cdb_ifce.Osuf
 #endif
-#endif
 #endif 
 #if UseCupv
 USE_CUPV=-DUSE_CUPV
@@ -96,9 +88,9 @@ COMM######################### FLAGS ##############################
 DFLAGS = -DBIN=\"$(BIN)\" -DCUPV_HOST=\"$(CUPV_HOST)\" $(USE_CUPV) \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DCUPVCONFIG=\"$(CUPVCONFIG)\" \
-         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(MYSFLG)
+         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG)
 
-CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(MYSINC) $(SECURITYFLAG)
+CFLAGS = -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
 
@@ -193,7 +185,7 @@ Cupv_db.c Cupv_db.h: $(CDBANA) Cupv_db.des FileName($(INCLUDES),Castor_limits.h)
 Cupvdaemon: $(CUPVDAEMON_OBJS) $(DEPLIB)
 	$(MAKE) -f oralink.mk Cupvdaemon CUPVDAEMON_OBJS="$(CUPVDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
 #else
-NormalProgramTarget(Cupvdaemon,$(CUPVDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS) $(LIBMYS))
+NormalProgramTarget(Cupvdaemon,$(CUPVDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS))
 #endif
 
 NormalProgramTarget(Cupvadd, Cupvadd.Osuf, LibraryTargetName(upv) $(DEPLIB),$(CUPVLIB) $(LIBS))
@@ -206,7 +198,7 @@ NormalLibraryTarget(upv,$(CUPVLIB_OBJS))
 
 MakeDepSharedLibrary(shlib,shift)
 
-#if UseOracle == NO && UseRaima == NO && UseMySQL == NO
+#if UseOracle == NO && UseRaima == NO
 #if defined(_WIN32)
 $(CDBANA): FORCE
 	pushd ..\db & $(MAKE) Cdbana.exe & popd
