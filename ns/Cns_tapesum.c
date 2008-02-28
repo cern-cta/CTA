@@ -42,6 +42,9 @@ Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int filter)
 		return (-1);
 	Cns_getid(&uid, &gid);
 	
+	*count = 0;
+	*size  = 0;
+
 #if defined(_WIN32)
 	if (uid < 0 || gid < 0) {
 		Cns_errmsg(func, NS053);
@@ -49,7 +52,7 @@ Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int filter)
 		return (-1);
 	}
 #endif
-	
+
 	/* Check that VID exists and is not too long */
 	if (!vid) {
 		serrno = EFAULT;
