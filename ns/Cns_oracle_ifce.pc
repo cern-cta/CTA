@@ -1272,10 +1272,10 @@ int *nbFileIds;
 	return(0);
 }
 
-int Cns_get_tapesum_by_vid(dbfd, vid, deleted, count, size)
+int Cns_get_tapesum_by_vid(dbfd, vid, filter, count, size)
 struct Cns_dbfd *dbfd;
 char *vid;
-int deleted;
+int filter;
 u_signed64 *count;
 u_signed64 *size;
 {
@@ -1302,17 +1302,26 @@ u_signed64 *size;
 		return(-1);	
 	}
 
-	if (deleted) {
+	if (filter == 1) {
 		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0))
 			INTO :count_str, :size_str 
 			FROM Cns_seg_metadata 
 			WHERE vid = :vid;
-	} else {
+	} else if (filter == 2) {
 		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0)) 
 			INTO :count_str, :size_str 
 			FROM Cns_seg_metadata 
 			WHERE vid = :vid
 			AND s_status = '-';
+	} else if (filter == 3) {
+		EXEC SQL SELECT TO_CHAR(COUNT(*)), TO_CHAR(NVL(SUM(segsize),0)) 
+			INTO :count_str, :size_str 
+			FROM Cns_seg_metadata 
+			WHERE vid = :vid
+			AND s_status = 'D';
+	} else {
+		serrno = EINVAL;
+		return(-1);
 	}
 	switch (sqlca.sqlcode) {
 	case 0:

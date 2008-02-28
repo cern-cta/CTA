@@ -22,7 +22,7 @@
 #include "serrno.h"
 
 int DLL_DECL 
-Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int deleted)
+Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int filter)
 {
 	/* variables */
 	char  func[16];
@@ -59,7 +59,11 @@ Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int deleted)
 		serrno = EINVAL;
 		return (-1);
 	}
-	
+	if ((filter < 0) || (filter > 3)) {
+		serrno = EINVAL;
+		return (-1);
+	}
+
 	/* Build the request header */
 	sbp = sendbuf;
 	marshall_LONG(sbp, CNS_MAGIC4);
@@ -72,7 +76,7 @@ Cns_tapesum(const char *vid, u_signed64 *count, u_signed64 *size, int deleted)
 	marshall_LONG(sbp, uid);
 	marshall_LONG(sbp, gid);
 	marshall_STRING(sbp, vid);
-	marshall_LONG(sbp, deleted);
+	marshall_LONG(sbp, filter);
 	
 	msglen = sbp - sendbuf;
 	marshall_LONG(q, msglen);  /* Update the length field */

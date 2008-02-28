@@ -28,6 +28,7 @@ int main(int argc,char **argv)
 	static int sumflag = 0;
 	int errflg = 0;
 	int iflag = 0;
+	int dflag = 0;
 	int humanflag = 0;
 	int flags;
 	Cns_list list;
@@ -53,7 +54,7 @@ int main(int argc,char **argv)
 
 	Copterr = 1;
 	Coptind = 1;
-	while ((c = Cgetopt_long (argc, argv, "Hh:V:isf:", longopts, NULL)) != EOF) {
+	while ((c = Cgetopt_long (argc, argv, "Hh:V:isf:D", longopts, NULL)) != EOF) {
 		switch (c) {
 		case 'h':
 			server = Coptarg;
@@ -77,6 +78,9 @@ int main(int argc,char **argv)
 				exit (USERR);
 			}
 			break;
+		case 'D':
+			dflag++;
+			break;
 		case '?':
 			errflg++;
 			break;
@@ -88,7 +92,7 @@ int main(int argc,char **argv)
 		errflg++;
 	}
 	if (errflg) {
-		fprintf (stderr, "usage: %s [-h name_server] [--display_side] [--checksum] [--summarize] [-f fseq] [-H] -V vid\n", argv[0]);
+		fprintf (stderr, "usage: %s [-h name_server] [--display_side] [--checksum] [--summarize] [-f fseq] [-HD] -V vid\n", argv[0]);
 		exit (USERR);
 	}
 #if defined(_WIN32)
@@ -99,7 +103,7 @@ int main(int argc,char **argv)
 #endif
 
 	if (sumflag) {
-		c = Cns_tapesum(vid, &count, &size, 1);
+		c = Cns_tapesum(vid, &count, &size, dflag == 0 ? 1 : 3);
 		if (c < 0) {
 			fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume" : sstrerror(serrno));
 #if defined(_WIN32)
@@ -131,6 +135,10 @@ int main(int argc,char **argv)
 			}
 			parent_fileid = dtp->parent_fileid;
 		}
+		flags = CNS_LIST_CONTINUE;
+		if (dflag && (dtp->s_status != 'D')) {
+			continue;
+		}
 		if (dsflag || dtp->side > 0)
 			printf ("%c %d %3d %-6.6s/%d %5d %02x%02x%02x%02x %s %3d",
 				dtp->s_status, dtp->copyno, dtp->fsec, dtp->vid,
@@ -157,7 +165,6 @@ int main(int argc,char **argv)
 		} else {
 			printf (" %s/%s\n", path, dtp->d_name);  
 		}
-		flags = CNS_LIST_CONTINUE;
 	}
 	if (serrno != 0) {
 		fprintf (stderr, "%s: %s\n", vid, (serrno == ENOENT) ? "No such volume" : sstrerror(serrno)); 

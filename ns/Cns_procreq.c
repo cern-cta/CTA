@@ -2828,7 +2828,7 @@ struct Cns_srv_thread_info *thip;
 	char  *sbp;
 	char  *user;
 	int   c;
-	int   deleted;
+	int   filter;
 	gid_t gid;
 	uid_t uid;
 	
@@ -2845,12 +2845,12 @@ struct Cns_srv_thread_info *thip;
 	if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
 		RETURN (EINVAL);
 	}
-	unmarshall_LONG(rbp, deleted);
-	sprintf(logbuf, "tapesum %s %d", vid, deleted);
+	unmarshall_LONG(rbp, filter);
+	sprintf(logbuf, "tapesum %s %d", vid, filter);
 	Cns_logreq(func, logbuf);
 	
 	/* Get tape summary information */
-	c = Cns_get_tapesum_by_vid(&thip->dbfd, vid, deleted, &count, &size);
+	c = Cns_get_tapesum_by_vid(&thip->dbfd, vid, filter, &count, &size);
 	if (c < 0) {
 		RETURN (serrno);
 	}
