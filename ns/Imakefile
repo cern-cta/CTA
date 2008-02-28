@@ -57,14 +57,6 @@ WNT_SYS_INCLUDE = "INCLUDE=$(MSDEVDIR)\..\Vc\Include"
 #else
 ORAINC = -I$(ORACLE_HOME)/precomp/public
 #endif
-#else
-#if UseMySQL
-DBOBJS = Cns_mysql_ifce.Osuf
-MYSFLG = -DUSE_MYSQL
-MYSINC = -I/usr/include/mysql
-MYSLIB = /usr/lib/mysql/libmysqlclient.a
-LIBMYS = -L/usr/lib/mysql -lmysqlclient -lz
-#endif
 #endif
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
@@ -77,9 +69,9 @@ DFLAGS = -DBIN=\"$(BIN)\" -DCNS_HOST=\"$(CNS_HOST)\" \
          -DLCGDM_MAPFILE=\"$(LCGDM_MAPFILE)\" \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DNSCONFIG=\"$(NSCONFIG)\" \
-         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(MYSFLG)
+         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG)
 
-CFLAGS = -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(MYSINC) $(SECURITYFLAG)
+CFLAGS = -g -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
 
@@ -442,7 +434,7 @@ NormalProgramTarget(nschown,nschown.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB
 nsdaemon: $(NSDAEMON_OBJS) $(DEPLIB)
 	$(MAKE) -f oralink.mk nsdaemon NSDAEMON_OBJS="$(NSDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
 #else
-NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBMYS))
+NormalProgramTarget(nsdaemon,$(NSDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA))
 #endif
 NormalProgramTarget(nsdelcomment,nsdelcomment.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
 NormalProgramTarget(nsdeleteclass,nsdeleteclass.Osuf,LibraryTargetName(ns) $(DEPLIB),$(NSLIB) $(LIBS))
