@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.640 $ $Date: 2008/02/26 16:13:42 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.641 $ $Date: 2008/02/28 14:25:13 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -619,7 +619,7 @@ BEGIN
   -- Create the DiskCopy without filesystem
   buildPathFromFileId(fileId, nsHost, destDcId, rpath);
   INSERT INTO DiskCopy (path, id, filesystem, castorfile, status, creationtime, gcWeight)
-    VALUES (rpath, destDcId, 0, cfId, 1, gettime(), size2gcweight(CF.fileSize));  -- WAITDISK2DISKCOPY  
+    VALUES (rpath, destDcId, 0, cfId, 1, gettime(), size2gcweight(fileSize));  -- WAITDISK2DISKCOPY  
   INSERT INTO Id2Type (id, type) VALUES (destDcId, 5);  -- OBJ_DiskCopy
   COMMIT;
 END;
