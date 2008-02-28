@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.20 $ $Release$ $Date: 2008/02/27 13:38:32 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.21 $ $Release$ $Date: 2008/02/28 15:05:44 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -18,8 +18,7 @@ CREATE SEQUENCE ids_seq CACHE 200;
 CREATE TABLE Id2Type (
   id   INTEGER,
   type NUMBER,
-  CONSTRAINT PK_Id2Tape PRIMARY KEY (id)
-);
+  CONSTRAINT PK_Id2Tape PRIMARY KEY (id));
 CREATE INDEX I_Id2Type_typeId on Id2Type (type, id);
 
 /* get current time as a time_t. Not that easy in ORACLE */
