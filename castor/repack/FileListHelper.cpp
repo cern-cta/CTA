@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.33 $ $Release$ 
- * $Date: 2008/02/27 12:42:20 $ $Author: gtaur $
+ * @(#)$RCSfile: FileListHelper.cpp,v $ $Revision: 1.34 $ $Release$ 
+ * $Date: 2008/02/28 16:24:39 $ $Author: waldron $
  *
  *
  *
@@ -128,32 +128,16 @@ std::vector<std::string>* FileListHelper::getFilePathnames(castor::repack::Repac
 //-----------------------------------------------------------------------------
 
 u_signed64 FileListHelper::countFilesOnTape(std::string vid)
-                                                 throw (castor::exception::Exception)
+  throw (castor::exception::Exception)
 {
-  int flags;
-  struct Cns_direntape *dtp = NULL;
-  Cns_list list;
-  list.fd = list.eol = list.offset = list.len = 0;
-  list.buf = NULL;
-  serrno = SENOERR; 	// Begin:no error
-  u_signed64 numSegmentLeft=0;
+  serrno = SENOERR;  // Begin:no error
+  u_signed64 numSegmentLeft = 0;
+  u_signed64 sizeLeft = 0;
 
   if ( !vid.empty() )
   {
     /** the tape check was before ! */
-    
-    flags = CNS_LIST_BEGIN;
-    
-    while ((dtp = Cns_listtape ((char*)m_ns.c_str(),(char*) vid.c_str(), flags, &list)) != NULL) {  
-      if (dtp->s_status == 'D'){
-	flags = CNS_LIST_CONTINUE;
-	continue;
-      }
-      numSegmentLeft++;
-      flags = CNS_LIST_CONTINUE;
-    }
-    
-    Cns_listtape ((char*)m_ns.c_str(), (char*) vid.c_str(), CNS_LIST_END, &list);               
+    Cns_tapesum(vid.c_str(), &numSegmentLeft, &sizeLeft, 2);        
   }
   else{
       castor::exception::Internal ex;
@@ -162,9 +146,7 @@ u_signed64 FileListHelper::countFilesOnTape(std::string vid)
       throw ex;
   }
   return  numSegmentLeft;
-
 }
-  
 
 
 //------------------------------------------------------------------------------
@@ -191,7 +173,7 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
     flags = CNS_LIST_BEGIN;
     /** all Segments from a tape belong to one Request ! */
     
-    while ((dtp = Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), flags, &list)) != NULL) {
+    while ((dtp = Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), flags, &list, 0)) != NULL) {
       
       if (dtp->s_status == 'D'){
 	flags = CNS_LIST_CONTINUE;
@@ -219,7 +201,7 @@ void FileListHelper::getFileListSegs(castor::repack::RepackSubRequest *subreq)
       flags = CNS_LIST_CONTINUE;
     }
     
-      Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), CNS_LIST_END, &list);
+      Cns_listtape ((char*)m_ns.c_str(), (char*)subreq->vid().c_str(), CNS_LIST_END, &list, 0);
       subreq->setXsize(segs_size);
          
       castor::dlf::Param params[] =
