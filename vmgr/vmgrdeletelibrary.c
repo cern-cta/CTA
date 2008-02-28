@@ -46,10 +46,10 @@ char **argv;
                 fprintf (stderr, "usage: %s --name library_name\n", argv[0]);
                 exit (USERR);
         }
- 
+	
 	if (vmgr_deletelibrary (library_name) < 0) {
 		fprintf (stderr, "vmgrdeletelibrary %s: %s\n", library_name,
-		    (serrno == ENOENT) ? "No such library" : sstrerror(serrno));
+			 (serrno == ENOENT) ? "No such library" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

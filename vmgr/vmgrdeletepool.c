@@ -49,7 +49,7 @@ char **argv;
  
 	if (vmgr_deletepool (pool_name) < 0) {
 		fprintf (stderr, "vmgrdeletepool %s: %s\n", pool_name,
-		    (serrno == ENOENT) ? "No such pool" : sstrerror(serrno));
+			 (serrno == ENOENT) ? "No such pool" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

@@ -123,7 +123,7 @@ char **argv;
         if (Coptind < argc) {
                 errflg++;
         }
-        if (errflg) {
+	if (errflg) {
                 fprintf (stderr, "usage: %s %s%s%s", argv[0],
 		    "[-d density] [-l lbltype] [-P pool_name] -V vid [-v vsn]\n",
 		    "[--library library] [--ma manufacturer] [--pool pool_name]\n",
@@ -134,7 +134,7 @@ char **argv;
 	if (vmgr_modifytape (vid, vsn, library, density, lbltype,
 	    manufacturer, sn, pool_name, status) < 0) {
 		fprintf (stderr, "vmgrmodifytape %s: %s\n", vid,
-		    (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
+			 (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

@@ -66,13 +66,13 @@ char **argv;
         }
         if (errflg) {
 		fprintf (stderr, "usage: %s %s", argv[0],
-		    "--name library_name [--capacity n] [--status]\n");
+			 "--name library_name [--capacity n] [--status]\n");
                 exit (USERR);
         }
  
 	if (vmgr_modifylibrary (library_name, capacity, status) < 0) {
 		fprintf (stderr, "vmgrmodifylibrary %s: %s\n", library_name,
-		    sstrerror(serrno));
+			 sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

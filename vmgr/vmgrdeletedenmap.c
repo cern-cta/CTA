@@ -54,13 +54,13 @@ char **argv;
         }
         if (errflg) {
                 fprintf (stderr, "usage: %s -d density --mo model [--ml media_letter]\n",
-		    argv[0]);
+			 argv[0]);
                 exit (USERR);
         }
- 
+	
 	if (vmgr_deletedenmap (model, media_letter, density) < 0) {
 		fprintf (stderr, "vmgrdeletedenmap %s, %s: %s\n", model, density,
-		    (serrno == ENOENT) ? "No such denmap" : sstrerror(serrno));
+			 (serrno == ENOENT) ? "No such denmap" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

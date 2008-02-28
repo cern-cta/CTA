@@ -49,13 +49,13 @@ char **argv;
         }
         if (errflg) {
                 fprintf (stderr, "usage: %s --li library_name --mo model\n",
-		    argv[0]);
+			 argv[0]);
                 exit (USERR);
         }
- 
+	
 	if (vmgr_deletedgnmap (model, library) < 0) {
 		fprintf (stderr, "vmgrdeletedgnmap %s, %s: %s\n", model, library,
-		    (serrno == ENOENT) ? "No such dgnmap" : sstrerror(serrno));
+			 (serrno == ENOENT) ? "No such dgnmap" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

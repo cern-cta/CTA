@@ -84,15 +84,16 @@ char **argv;
         if (Coptind < argc) {
                 errflg++;
         }
-        if (errflg) {
+	if (errflg) {
 		fprintf (stderr, "usage: %s %s %s", argv[0],
-		    "--name pool_name [--gid pool_gid] [--group pool_group]\n",
-		    "[--uid pool_uid] [--user pool_user]\n");
+			 "--name pool_name [--gid pool_gid] [--group pool_group]\n",
+			 "[--uid pool_uid] [--user pool_user]\n");
                 exit (USERR);
         }
  
 	if (vmgr_modifypool (pool_name, pool_uid, pool_gid) < 0) {
-		fprintf (stderr, "vmgrmodifypool %s: %s\n", pool_name, sstrerror(serrno));
+		fprintf (stderr, "vmgrmodifypool %s: %s\n", pool_name, 
+			 sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);

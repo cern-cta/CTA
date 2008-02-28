@@ -50,13 +50,13 @@ char **argv;
         }
         if (errflg) {
                 fprintf (stderr, "usage: %s --mo model [--ml media_letter]\n",
-		    argv[0]);
+			 argv[0]);
                 exit (USERR);
         }
- 
+	
 	if (vmgr_deletemodel (model, media_letter) < 0) {
 		fprintf (stderr, "vmgrdeletemodel %s: %s\n", model,
-		    (serrno == ENOENT) ? "No such model" : sstrerror(serrno));
+			 (serrno == ENOENT) ? "No such model" : sstrerror(serrno));
 		exit (USERR);
 	}
 	exit (0);
