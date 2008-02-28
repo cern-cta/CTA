@@ -61,7 +61,7 @@ char **argv;
                         break;
                 }
         }
-        if (Coptind < argc) {
+        if (Coptind < argc || library_name == NULL) {
                 errflg++;
         }
         if (errflg) {
