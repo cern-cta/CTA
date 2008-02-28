@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/02/21 16:10:57 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/02/28 16:16:00 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -306,11 +306,15 @@ castor::jobmanager::JobSubmissionRequest
       }
     }
 
-    // Append the host group to the list of required hosts.
-    result->setAskedHosts
-      (result->askedHosts().append(result->svcClass() + "Group"));
-    result->setNumAskedHosts(result->numAskedHosts() + 1);
-    
+    // Append the host group to the list of required hosts, only for
+    // StaeDiskCopyReplicaRequests and PUT requests
+    if ((result->requestType() == OBJ_StageDiskCopyReplicaRequest) ||
+	(result->requestedFileSystems() == "")) {
+      result->setAskedHosts
+	(result->askedHosts().append(result->svcClass() + "Group"));
+      result->setNumAskedHosts(result->numAskedHosts() + 1);
+    }
+
     result->setClientSecure(m_jobToScheduleStatement->getInt(21));
     result->setSourceSvcClass(m_jobToScheduleStatement->getString(22));
 
