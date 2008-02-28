@@ -63,7 +63,7 @@ files = dbcursor.fetchall()
 while len(files) > 0 :
   for f in files:
     print 'fileid =', f[0], ', castorFileId =', f[1]
-    namefd = os.popen('nsGetPath castorns ' + str(f[0]))
+    namefd = os.popen('nsgetpath castorns ' + str(f[0]))
     rc = namefd.close()
     if rc == None:
       dbcursor.execute(createpput, [f[1]]);
@@ -71,7 +71,7 @@ while len(files) > 0 :
       dbcursor.execute(failedcase, [f[1]]);
   dbcursor.execute("commit");
   for f in files:
-    namefd = os.popen('nsGetPath castorns ' + str(f[0]))
+    namefd = os.popen('nsgetpath castorns ' + str(f[0]))
     name = namefd.read().strip('\n')
     rc = namefd.close()
     if rc == None:

@@ -73,7 +73,7 @@ SELECT unique c.fileid, c.id FROM subrequest sr, tapecopy tc, tape t, segment s,
    AND s.copy = tc.id AND s.tape = t.id
    AND d.castorfile = sr.castorfile
    AND c.id = d.castorfile;
--- Then in a shell : for f in <list of fileids>; do nsGetPath castor $f; done
+-- Then in a shell : for f in <list of fileids>; do nsgetpath castor $f; done
 -- 3- For those that report No such file or directory, call cleanLostFiles
 DECLARE
   rawfiles "numList" := "numList"();   -- <-- put your castorfile ids here

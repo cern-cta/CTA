@@ -220,8 +220,8 @@ while (@results) {
   my $readableserver;
 
   if (not ($instager)) {
-    #$filepath = `/afs/cern.ch/project/castor/deployment/tools/bin/nsGetPath castorns $fileid 2>/dev/null`;
-    $filepath = `nsGetPath castorns $fileid 2>/dev/null`;
+    #$filepath = `/afs/cern.ch/project/castor/deployment/tools/bin/nsgetpath castorns $fileid 2>/dev/null`;
+    $filepath = `nsgetpath castorns $fileid 2>/dev/null`;
     print "\nFile ($fileid) ";
     if (length($filepath) != 0 ) {
       chomp $filepath;
@@ -285,8 +285,8 @@ while (@results) {
     if ($fileid != $prevfileid) { 
        printf ("\nNSfileid=%-10lld ",$fileid);
        printf ("Castorfile=%-10lld:\n",$castorfile);
-       #$filepath = `/afs/cern.ch/project/castor/deployment/tools/bin/nsGetPath castorns $fileid 2>/dev/null`;
-       $filepath = `nsGetPath castorns $fileid 2>/dev/null`;
+       #$filepath = `/afs/cern.ch/project/castor/deployment/tools/bin/nsgetpath castorns $fileid 2>/dev/null`;
+       $filepath = `nsgetpath castorns $fileid 2>/dev/null`;
        print "filepath=$filepath\n" if ($debug);
        print "fileid=$fileid\n" if ($debug);
        if (length($filepath) != 0 ) {

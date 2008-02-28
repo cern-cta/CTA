@@ -18,7 +18,7 @@
 # * along with this program; if not, write to the Free Software
 # * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 # *
-# * @(#)$RCSfile: migrateStageOutFiles.py,v $ $Revision: 1.1 $ $Release$ $Date: 2006/11/22 15:20:26 $ $Author: sponcec3 $
+# * @(#)$RCSfile: migrateStageOutFiles.py,v $ $Revision: 1.2 $ $Release$ $Date: 2008/02/28 16:34:34 $ $Author: waldron $
 # *
 # * Tries to resurrect files that are stuck in STAGEOUT after a crash e.g.
 # * in prepareForMigration. These files usually have a 0 size in the nameserver
@@ -110,7 +110,7 @@ files = dbcursor.fetchall()
 while len(files) > 0 :
   for f in files:
     print 'fileid =', f[0], ', castorFileId =', f[1]
-    namefd = os.popen('nsGetPath castorns ' + str(f[0]))
+    namefd = os.popen('nsgetpath castorns ' + str(f[0]))
     rc = namefd.close()
     if rc == None:
       print 'createpput', f[1]
@@ -120,7 +120,7 @@ while len(files) > 0 :
       dbcursor.execute(failedcase, [f[1]]);
   dbcursor.execute("commit");
   for f in files:
-    namefd = os.popen('nsGetPath castorns ' + str(f[0]))
+    namefd = os.popen('nsgetpath castorns ' + str(f[0]))
     name = namefd.read().strip('\n')
     rc = namefd.close()
     if rc == None:
