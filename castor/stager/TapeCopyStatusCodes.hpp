@@ -46,14 +46,15 @@ namespace castor {
       TAPECOPY_SELECTED = 3,
       TAPECOPY_TOBERECALLED = 4,
       TAPECOPY_STAGED = 5,
-      TAPECOPY_FAILED = 6
+      TAPECOPY_FAILED = 6,
+      TAPECOPY_WAITPOLICY
     }; /* end of enum TapeCopyStatusCodes */
 
     /**
      * Names of the differents representations, used to display
      * correctly the TapeCopyStatusCodes enum
      */
-    extern const char* TapeCopyStatusCodesStrings[7];
+    extern const char* TapeCopyStatusCodesStrings[8];
 
 #ifdef __cplusplus
   } /* end of namespace stager */
