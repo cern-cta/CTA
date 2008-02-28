@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.12 $ $Date: 2004/04/01 12:02:09 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: repack.c,v $ $Revision: 1.13 $ $Date: 2008/02/28 16:32:55 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      repack - copy the active segments from a set of volumes to another set */
@@ -327,7 +327,7 @@ char *pool_name;
 	fflush (stdout);
 	serrno = 0;
 	flags = CNS_LIST_BEGIN;
-	while ((dtp = Cns_listtape (host, vid, flags, &list)) != NULL) {
+	while ((dtp = Cns_listtape (host, vid, flags, &list, 0)) != NULL) {
 		flags = CNS_LIST_CONTINUE;
 		if (dtp->s_status == 'D') continue;
 		if ((nbsegs+1) * sizeof(struct Cns_direntape) > seg_list_size) {
@@ -345,7 +345,7 @@ char *pool_name;
 		fprintf (stderr, "repack %s: %s\n", vid, sstrerror(serrno));
 		return (USERR);
 	}
-	(void) Cns_listtape (host, vid, CNS_LIST_END, &list);
+	(void) Cns_listtape (host, vid, CNS_LIST_END, &list, 0);
 
 	printf ("%s Vid %s: %d segments to repack\n", timestamp(), vid, nbsegs);
 	fflush (stdout);

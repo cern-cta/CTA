@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.7 $ $Date: 2007/05/07 06:58:05 $ CERN IT-PDP/DM Jean-Philippe Baud";
+static char sccsid[] = "@(#)$RCSfile: reclaim.c,v $ $Revision: 1.8 $ $Date: 2008/02/28 16:33:16 $ CERN IT-PDP/DM Jean-Philippe Baud";
 #endif /* not lint */
 
 /*      reclaim - reset information concerning a volume */
@@ -98,7 +98,7 @@ char **argv;
 	}
 	while (1) {
 		flags = CNS_LIST_BEGIN;
-		while ((dtp = Cns_listtape (host, vid, flags, &list)) != NULL) {
+		while ((dtp = Cns_listtape (host, vid, flags, &list, 0)) != NULL) {
 			flags = CNS_LIST_CONTINUE;
 			if (dtp->s_status == 'D') {
 				if (Cns_getpath (host, dtp->parent_fileid, path) < 0) {
@@ -117,7 +117,7 @@ char **argv;
 			    sstrerror(serrno));
 			exit (SYERR);
 		}
-		(void) Cns_listtape (host, vid, CNS_LIST_END, &list);
+		(void) Cns_listtape (host, vid, CNS_LIST_END, &list, 0);
 		if (! Cns_hosts) break;
 		host = Cns_hosts;
 		if ((p = strpbrk (Cns_hosts, " \t\n"))) {
