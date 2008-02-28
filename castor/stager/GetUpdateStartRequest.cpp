@@ -41,8 +41,6 @@
 //------------------------------------------------------------------------------
 castor::stager::GetUpdateStartRequest::GetUpdateStartRequest() throw() :
   StartRequest(),
-  m_fileId(0),
-  m_nsHost(""),
   m_id(0) {
 }
 
@@ -67,8 +65,6 @@ void castor::stager::GetUpdateStartRequest::print(std::ostream& stream,
   // Call print on the parent class(es)
   this->StartRequest::print(stream, indent, alreadyPrinted);
   // Output of all members
-  stream << indent << "fileId : " << m_fileId << std::endl;
-  stream << indent << "nsHost : " << m_nsHost << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
 }
