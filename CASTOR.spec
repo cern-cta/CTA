@@ -197,7 +197,7 @@ for i in debian/*CONFIG; do
     install -m 640 ${i} ${RPM_BUILD_ROOT}/etc/castor/`basename ${i}`.example
 done
 # Install the debian+redhat init script
-for i in debian/*.init; do
+for i in `find . -name "*.init"`; do
     install -m 755 ${i} ${RPM_BUILD_ROOT}/etc/init.d/`basename ${i} | sed 's/\.init//g'`
 done
 # Install the sample castor.conf
