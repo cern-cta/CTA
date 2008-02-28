@@ -24,7 +24,7 @@ u_signed64 fileid;
 int mode;
 uid_t uid;
 gid_t gid;
-char *clienthost;
+const char *clienthost;
 {
 	u_signed64 cur_fileid = fileid;
 	struct Cns_file_metadata fmd_entry;
@@ -52,7 +52,7 @@ u_signed64 cwd;
 char *path;
 uid_t uid;
 gid_t gid;
-char *clienthost;
+const char *clienthost;
 struct Cns_file_metadata *parent_dir;
 Cns_dbrec_addr *rec_addrp;
 struct Cns_file_metadata *base_entry;
@@ -227,7 +227,7 @@ struct Cns_file_metadata *fmd_entry;
 int mode;
 uid_t uid;
 gid_t gid;
-char *clienthost;
+const char *clienthost;
 {
 	if (*fmd_entry->acl == 0) {	/* No extended ACL */
 		if (fmd_entry->uid != uid) {
