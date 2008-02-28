@@ -19,15 +19,17 @@
 #include "u64subr.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
+
 extern	char	*optarg;
 extern	int	optind;
 
-void listentry(pool_name, pool_uid, pool_gid, capacity, tot_free_space)
+void listentry(pool_name, pool_uid, pool_gid, capacity, tot_free_space, sflag)
 char *pool_name;
 uid_t pool_uid;
 gid_t pool_gid;
 u_signed64 capacity;
 u_signed64 tot_free_space;
+int sflag;
 {
 	signed64 c64;
 	signed64 f64;
@@ -47,7 +49,7 @@ u_signed64 tot_free_space;
 		else if ((pw = getpwuid (sav_uid)))
 			strcpy (sav_uidstr, pw->pw_name);
 		else
-			sprintf (sav_uidstr, "%-8u", sav_uid);
+			sprintf (sav_uidstr, "%-*u", sflag ? 0 : 8, sav_uid);
 	}
 	if (pool_gid != sav_gid) {
 		sav_gid = pool_gid;
@@ -56,15 +58,21 @@ u_signed64 tot_free_space;
 		else if ((gr = getgrgid (sav_gid)))
 			strcpy (sav_gidstr, gr->gr_name);
 		else
-			sprintf (sav_gidstr, "%-6u", sav_gid);
+			sprintf (sav_gidstr, "%-*u", sflag ? 0 : 6, sav_gid);
 	}
 	c64 = capacity;		/* because C compiler on Windows/NT */
 	f64 = tot_free_space;	/* cannot cast u_signed64 to double */
-	printf ("%-15s %-8.8s %-6.6s CAPACITY %sB FREE %sB (%5.1f%%)\n",
-		pool_name, sav_uidstr, sav_gidstr,
-		u64tostru (capacity, tmpbuf, 8),
-		u64tostru (tot_free_space, tmpbuf2, 8), capacity ?
-		(double)f64 * 100. / (double)c64 : 0);
+	if (sflag)
+		printf ("%s %s %s %llu %llu %.1f\n",
+			pool_name, sav_uidstr, sav_gidstr,
+			capacity, tot_free_space, capacity ?
+			(double)f64 * 100. / (double)c64 : 0);
+	else
+		printf ("%-15s %-8.8s %-6.6s CAPACITY %sB FREE %sB (%5.1f%%)\n",
+			pool_name, sav_uidstr, sav_gidstr,
+			u64tostru (capacity, tmpbuf, 8),
+			u64tostru (tot_free_space, tmpbuf2, 8), capacity ?
+			(double)f64 * 100. / (double)c64 : 0);
 }
 
 int main(argc, argv)
@@ -74,6 +82,7 @@ char **argv;
 	int c;
 	u_signed64 capacity;
 	int errflg = 0;
+	int sflag = 0;
 	int flags;
 	vmgr_list list;
 	struct vmgr_tape_pool *lp;
@@ -85,11 +94,14 @@ char **argv;
 	WSADATA wsadata;
 #endif
 
-        while ((c = getopt (argc, argv, "P:")) != EOF) {
+        while ((c = getopt (argc, argv, "P:s")) != EOF) {
                 switch (c) {
 		case 'P':
 			pool_name = optarg;
                         break;
+		case 's':
+			sflag = 1;
+			break;
                 case '?':
                         errflg++;
                         break;
@@ -101,7 +113,7 @@ char **argv;
                 errflg++;
         }
         if (errflg) {
-                fprintf (stderr, "usage: %s %s", argv[0], "[-P pool_name]\n");
+                fprintf (stderr, "usage: %s %s", argv[0], "[-P pool_name] [-s]\n");
                 exit (USERR);
         }
  
@@ -115,18 +127,18 @@ char **argv;
 		if (vmgr_querypool (pool_name, &pool_uid, &pool_gid, &capacity,
 		    &tot_free_space) < 0) {
 			fprintf (stderr, "vmgrlistpool %s: %s\n", pool_name,
-			    (serrno == ENOENT) ? "No such pool" : sstrerror(serrno));
+				 (serrno == ENOENT) ? "No such pool" : sstrerror(serrno));
 #if defined(_WIN32)
 			WSACleanup();
 #endif
 			exit (USERR);
 		}
-		listentry (pool_name, pool_uid, pool_gid, capacity, tot_free_space);
+		listentry (pool_name, pool_uid, pool_gid, capacity, tot_free_space, sflag);
 	} else {
 		flags = VMGR_LIST_BEGIN;
 		while ((lp = vmgr_listpool (flags, &list)) != NULL) {
 			listentry (lp->name, lp->uid, lp->gid, lp->capacity,
-			    lp->tot_free_space);
+				   lp->tot_free_space, sflag);
 			flags = VMGR_LIST_CONTINUE;
 		}
 		(void) vmgr_listpool (VMGR_LIST_END, &list);

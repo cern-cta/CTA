@@ -1,23 +1,25 @@
-.\" @(#)$RCSfile: vmgrlistpool.man,v $ $Revision: 1.6 $ $Date: 2001/09/26 09:13:58 $ CERN IT-PDP/DM Jean-Philippe Baud
+.\" @(#)$RCSfile: vmgrlistpool.man,v $ $Revision: 1.7 $ $Date: 2008/02/28 14:21:09 $ CERN IT-PDP/DM Jean-Philippe Baud
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTPOOL 1 "$Date: 2001/09/26 09:13:58 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTPOOL 1 "$Date: 2008/02/28 14:21:09 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistpool \- query the CASTOR Volume Manager about a given pool or list all existing tape pools
 .SH SYNOPSIS
 .B vmgrlistpool
 [
 .BI -P "  pool_name"
+] [
+.B -s
 ]
 .SH DESCRIPTION
 .B vmgrlistpool
-queries the CASTOR Volume Manager about a given pool or list all existing tape
+queries the CASTOR Volume Manager about a given pool or lists all existing tape
 pools in tabular form:
 .HP 1.2i
-poolname	name of the tape pool.
+poolname		name of the tape pool.
 .HP
-pool_user	the pool is restricted to this user.
+pool_user		the pool is restricted to this user.
 .HP
 pool_group	the pool is restricted to this group.
 .HP
@@ -29,6 +31,9 @@ free_space	estimated free space in the pool.
 .I pool_name
 is the name of the tape pool.
 It must be at most CA_MAXPOOLNAMELEN characters long.
+.TP
+.I s
+display the output in a simplified format more suited to parsing by scripts.
 .SH EXAMPLES
 .nf
 .ft CW

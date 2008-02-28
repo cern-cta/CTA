@@ -18,12 +18,14 @@
 #include "u64subr.h"
 #include "vmgr.h"
 #include "vmgr_api.h"
+
 extern	char	*optarg;
 extern	int	optind;
 
-void listentry(lp, xflag)
+void listentry(lp, xflag, sflag)
 struct vmgr_tape_info *lp;
 int xflag;
+int sflag;
 {
 	time_t ltime;
 	char p_stat = '\0';
@@ -33,13 +35,23 @@ int xflag;
 
 	u64 = ((u_signed64) lp->estimated_free_space) * 1024;
 	if (lp->nbsides > 1)
-		printf ("%-6s/%d ", lp->vid, lp->side);
+		printf ("%-*s/%d ", sflag ? 0 : 6, lp->vid, lp->side);
+	else if (sflag)
+		printf ("%s ", lp->vid);
 	else
 		printf ("%-6s   ", lp->vid);
-	printf ("%-6s %-8s %-8s %-3s ",
-		lp->vsn, lp->library, lp->density, lp->lbltype);
+	if (sflag)
+		printf ("%s %s %s %s ",
+			lp->vsn, lp->library, lp->density, lp->lbltype);
+	else
+		printf ("%-6s %-8s %-8s %-3s ",
+			lp->vsn, lp->library, lp->density, lp->lbltype);		
 	if (! xflag) {
-		printf ("%-15s %-8sB ", lp->poolname, u64tostru (u64, tmpbuf, 8));
+		if (sflag)
+			printf ("%s %llu ", lp->poolname, u64);
+		else
+			printf ("%-15s %-8sB ", lp->poolname, 
+				u64tostru (u64, tmpbuf, 8));
 		ltime = (lp->wtime < lp->rtime) ? lp->rtime : lp->wtime;
 		if (ltime) {
 			tm = localtime (&ltime);
@@ -48,18 +60,28 @@ int xflag;
 		} else
 			printf ("00000000 ");
 	} else {
-		printf ("%-6s %-2s %-12s %-25s %-15s ",
-			lp->model, lp->media_letter, lp->manufacturer, lp->sn,
-			lp->poolname);
+		if (sflag) 
+			printf ("%s %s %s %s %s ", lp->model, lp->media_letter, 
+				lp->manufacturer, lp->sn, lp->poolname);
+		else
+			printf ("%-6s %-2s %-12s %-25s %-15s ",
+				lp->model, lp->media_letter, lp->manufacturer, 
+				lp->sn, lp->poolname);
 		if (lp->etime) {
 			tm = localtime (&lp->etime);
 			printf ("%04d%02d%02d ",
 				tm->tm_year+1900, tm->tm_mon+1, tm->tm_mday);
 		} else
 			printf ("00000000 ");
-		printf ("%-8sB %6d %5d %5d %-10s %-10s %10d %10d ",
-			u64tostru (u64, tmpbuf, 8), lp->nbfiles, lp->rcount,
-			lp->wcount, lp->rhost, lp->whost, lp->rjid, lp->wjid);
+		if (sflag) 
+			printf ("%llu %d %d %d %s %s %d %d ", 
+				u64, lp->nbfiles, lp->rcount, lp->wcount, 
+				lp->rhost, lp->whost, lp->rjid, lp->wjid);
+		else
+			printf ("%-8sB %6d %5d %5d %-10s %-10s %10d %10d ", 
+				u64tostru (u64, tmpbuf, 8), lp->nbfiles, 
+				lp->rcount, lp->wcount, lp->rhost, lp->whost, 
+				lp->rjid, lp->wjid);
 		if (lp->rtime) {
 			tm = localtime (&lp->rtime);
 			printf ("%04d%02d%02d ",
@@ -115,10 +137,11 @@ char **argv;
 	WSADATA wsadata;
 #endif
 	int xflag = 0;
+	int sflag = 0;
 
 	pool_name[0]= '\0';
 	vid[0]= '\0';
-        while ((c = getopt (argc, argv, "P:V:x")) != EOF) {
+        while ((c = getopt (argc, argv, "P:V:xs")) != EOF) {
                 switch (c) {
 		case 'P':
 			if (strlen (optarg) <= CA_MAXPOOLNAMELEN)
@@ -139,6 +162,9 @@ char **argv;
 		case 'x':
 			xflag = 1;
 			break;
+		case 's':
+			sflag = 1;
+			break;
                 case '?':
                         errflg++;
                         break;
@@ -151,7 +177,7 @@ char **argv;
         }
         if (errflg) {
                 fprintf (stderr, "usage: %s %s", argv[0],
-		    "[-P pool_name] [-V vid] [-x]\n");
+			 "[-P pool_name] [-V vid] [-x]\n");
                 exit (USERR);
         }
  
@@ -164,12 +190,12 @@ char **argv;
 	flags = VMGR_LIST_BEGIN;
 	serrno = 0;
 	while ((lp = vmgr_listtape (vid, pool_name, flags, &list)) != NULL) {
-		listentry (lp, xflag);
+		listentry (lp, xflag, sflag);
 		flags = VMGR_LIST_CONTINUE;
 	}
 	if (serrno && serrno != SENOCONFIG)
 		fprintf (stderr, "vmgrlisttape: %s\n",
-		    (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
+			 (serrno == ENOENT) ? "No such tape" : sstrerror(serrno));
 	else
 		(void) vmgr_listtape (vid, pool_name, VMGR_LIST_END, &list);
 #if defined(_WIN32)
