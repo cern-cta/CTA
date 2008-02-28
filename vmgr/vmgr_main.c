@@ -1,5 +1,5 @@
 /*
- * $Id: vmgr_main.c,v 1.9 2008/02/21 17:15:01 waldron Exp $
+ * $Id: vmgr_main.c,v 1.10 2008/02/28 14:23:00 waldron Exp $
  *
  * Copyright (C) 1999-2003 by CERN/IT/PDP/DM
  * All rights reserved
@@ -30,6 +30,7 @@
 #include "serrno.h"
 #include "vmgr.h"
 #include "vmgr_server.h"
+#include "patchlevel.h"
 #ifdef CSEC
 #include "Csec_api.h"
 #endif
@@ -80,7 +81,7 @@ struct main_args *main_args;
 
 	jid = getpid();
 	strcpy (func, "vmgr_serv");
-	vmgrlogit (func, "started\n");
+	vmgrlogit (func, "started (%d.%d.%d-%d)\n", MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
 	gethostname (localhost, CA_MAXHOSTNAMELEN+1);
 	if (strchr (localhost, '.') == NULL) {
 		if (Cdomainname (domainname, sizeof(domainname)) < 0) {
