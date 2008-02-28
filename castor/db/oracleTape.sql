@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.639 $ $Date: 2008/02/26 16:12:46 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.640 $ $Date: 2008/02/28 15:51:04 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -1024,8 +1024,8 @@ CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_
   svcId NUMBER;
 BEGIN  
   OPEN dbInfo FOR 
-    SELECT tape.id,tape.vid, sum(castorfile.filesize), count(distinct segment.id), 
-           min(segment.creationtime)- gettime() 
+    SELECT tape.id,tape.vid,  count(distinct segment.id), sum(castorfile.filesize),  
+           gettime() - min(segment.creationtime) 
       FROM TapeCopy, CastorFile, Segment, Tape
      WHERE Tape.id = Segment.tape(+) 
        AND TapeCopy.id(+) = Segment.copy
