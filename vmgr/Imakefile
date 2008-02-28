@@ -2,7 +2,7 @@ COMM
 COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 COMM  All rights reserved
 COMM
-COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.8 $ $Date: 2008/02/21 17:09:20 $ CERN IT-PDP/DM Jean-Philippe Baud
+COMM       @(#)$RCSfile: Imakefile,v $ $Revision: 1.9 $ $Date: 2008/02/28 11:04:09 $ CERN IT-PDP/DM Jean-Philippe Baud
 
 COMM    Make volume manager programs.
 
@@ -62,13 +62,6 @@ WNT_SYS_INCLUDE = "INCLUDE=$(MSDEVDIR)\..\Vc\Include"
 ORAINC = -I$(ORACLE_HOME)/precomp/public
 #endif
 #else
-#if UseMySQL
-DBOBJS = vmgr_mysql_ifce.Osuf
-MYSFLG = -DUSE_MYSQL
-MYSINC = -I/usr/include/mysql
-MYSLIB = /usr/lib/mysql/libmysqlclient.a
-LIBMYS = -L/usr/lib/mysql -lmysqlclient -lz
-#else
 #if UseRaima
 DBOBJS = vmgr_raima_ifce.Osuf
 #if _WIN32
@@ -87,7 +80,6 @@ CDBANA = FileName(FileName(..,db),ProgramTargetName(Cdbana))
 DBOBJS = Vmgr_db.Osuf vmgr_Cdb_ifce.Osuf
 #endif
 #endif
-#endif
 #if BuildSecurity
 SECURITYFLAG=-DCSEC
 LIBS+= -ldl
@@ -97,9 +89,9 @@ COMM######################### FLAGS ##############################
 DFLAGS = -DBIN=\"$(BIN)\" -DVMGR_HOST=\"$(VMGR_HOST)\" \
          -DLOGFILE=\"$(LOGFILE)\" \
          -DVMGRCONFIG=\"$(VMGRCONFIG)\" \
-         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG) $(MYSFLG)
+         $(ACCTFLAG) $(ACCTFILE) $(RDSFLG) $(ORAFLG)
 
-CFLAGS =        -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(MYSINC) $(SECURITYFLAG)
+CFLAGS =        -I$(INCLUDES) $(MTCCFLAGS) $(DFLAGS) $(RDSINC) $(ORAINC) $(SECURITYFLAG)
 
 COMM######################### DEPENDENCY LIBRARIES ###############
 
@@ -369,7 +361,7 @@ Vmgr_db.c Vmgr_db.h: $(CDBANA) Vmgr_db.des FileName($(INCLUDES),Castor_limits.h)
 vmgrdaemon: $(VMGRDAEMON_OBJS) $(DEPLIB)
 	$(MAKE) -f oralink.mk vmgrdaemon VMGRDAEMON_OBJS="$(VMGRDAEMON_OBJS)" CLDFLAGS=$(MTLDFLAGS) LIBS="$(LIBS) $(MTLDLIBS)"
 #else
-NormalProgramTarget(vmgrdaemon,$(VMGRDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS) $(LIBMYS))
+NormalProgramTarget(vmgrdaemon,$(VMGRDAEMON_OBJS), $(DEPLIB), $(MTLDFLAGS) $(LIBS) $(MTLDLIBS) $(LIBORA) $(LIBRDS))
 #endif
 NormalProgramTarget(vmgrdeletedenmap,vmgrdeletedenmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
 NormalProgramTarget(vmgrdeletedgnmap,vmgrdeletedgnmap.Osuf,LibraryTargetName(vmgr) $(DEPLIB),$(VMGRLIB) $(LIBS))
@@ -400,7 +392,7 @@ NormalLibraryTarget(vmgr,$(VMGRLIB_OBJS))
 
 MakeDepSharedLibrary(shlib,shift)
 
-#if UseOracle == NO && UseRaima == NO && UseMySQL == NO
+#if UseOracle == NO && UseRaima == NO
 #if defined(_WIN32)
 $(CDBANA): FORCE
 	pushd ..\db & $(MAKE) Cdbana.exe & popd
