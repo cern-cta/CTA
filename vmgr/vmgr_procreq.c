@@ -1971,8 +1971,13 @@ struct vmgr_srv_thread_info *thip;
 				need_update++;
 			}
 			if (vmgr_get_pool_entry (&thip->dbfd, poolname,
-			    &newpool_entry, 1, &newpool_rec_addr))
-				RETURN (serrno);
+			    &newpool_entry, 1, &newpool_rec_addr)) {
+				if (serrno == ENOENT) {
+					sendrep (thip->s, MSG_ERR, "No such pool\n");
+					RETURN (EINVAL);
+				} else
+					RETURN (serrno);
+			}
 			newpool_entry.capacity += denmap_entry.native_capacity;
 			if (status == 0 || (status < 0 && side_entry.status == 0))
 				newpool_entry.tot_free_space += side_entry.estimated_free_space;
