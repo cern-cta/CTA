@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.35 $ $Date: 2007/10/10 08:45:42 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.36 $ $Date: 2008/02/29 14:48:38 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -654,6 +654,47 @@ char sense_bytes[];
 char acsloader[14];
 ALIGNED_BYTES rbuf[MAX_MESSAGE_SIZE/sizeof(ALIGNED_BYTES)];
 
+extern int getconfent_multi();
+
+static int actionChanged(int cc, int rt, short *act, int *slp, int *rtr) {
+        
+        int changed   = 0;
+        int count     = 0;
+        int rc        = 0;
+        char parm[64] = "NULL";
+        char **result = NULL;
+        
+        switch (cc) {
+                
+        case STATUS_LIBRARY_FAILURE:
+                if (0 == rt) {
+                        snprintf(parm, 64, "%s", "ACS_MOUNT_LIBRARY_FAILURE_HANDLING");
+                } else if (1 == rt) {
+                        snprintf(parm, 64, "%s", "ACS_UNMOUNT_LIBRARY_FAILURE_HANDLING");
+                }
+                break;
+        default:
+                return changed;
+        }
+
+        rc = getconfent_multi("TAPE", parm, 1, &result, &count);
+        if (!rc && count) {
+                if ((1 == count) && (0 == strcasecmp("down", result[0]))) {
+                        *act = RBT_CONF_DRV_DN;
+                        changed = 1;
+                } else if ((3 == count) && (0 == strcasecmp("retry", result[0]))) {
+                        *act = RBT_FAST_RETRY;
+                        *rtr = atoi(result[1]);
+                        if (*rtr<0) {*rtr = 0;}
+                        *slp = atoi(result[2]);
+                        if (*slp<60) {*slp = 60;}
+                        changed = 1;
+                }
+        }
+        return changed;
+}
+
+
 int acserr2act(req_type, cc)
 int req_type;	/* 0 --> mount, 1 --> dismount */
 int cc;		/* error returned by the mount/dismount routine */
@@ -682,6 +723,26 @@ int cc;		/* error returned by the mount/dismount routine */
 	  {STATUS_INCOMPATIBLE_MEDIA_TYPE, RBT_NORETRY, RBT_NORETRY},
 	};
 	int i;
+
+        static int ctr = 0;
+        int        slp = 0;
+        int        rtr = 0;
+        short      act = 0;
+
+        if (actionChanged(cc, req_type, &act, &slp, &rtr)) {
+
+                if ((ctr<rtr) && (slp>=60)) {                        
+                        sleep(slp-60); /* RBT_FAST_RETRY will add 60 more seconds */                        
+                        ctr++;
+                } else {
+                        act = RBT_CONF_DRV_DN;
+                        ctr = 0;
+                }
+                return act;
+
+        } else {
+                ctr = 0;
+        }
 
 	for (i = 0; i < sizeof(acserr_acttbl)/sizeof(struct rbterr_codact); i++) {
 		if (cc == acserr_acttbl[i].cc)
@@ -741,16 +802,16 @@ int ring;
                             "R0flag",     TL_MSG_PARAM_INT, use_read_only_flag );
 	if ((status = acs_mount (++myseqnum, NO_LOCK_ID, vol_id, drive_id,
                                 (ring || !use_read_only_flag) ? FALSE : TRUE, 0))) {
-		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
-		usrmsg (func, "%s\n", msg);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                    "func",      TL_MSG_PARAM_STR, func,
-                                    "action",    TL_MSG_PARAM_STR, action,
-                                    "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                    "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
-                                    "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
-		c = acserr2act (0, status);
-		RETURN (c);
+                        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
+                        usrmsg (func, "%s\n", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",      TL_MSG_PARAM_STR, func,
+                                            "action",    TL_MSG_PARAM_STR, action,
+                                            "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
+                                            "acsstatus", TL_MSG_PARAM_STR, acsstatus( status ) );
+                        c = acserr2act (0, status);
+                        RETURN (c);
 	}
 	tplogit (func,"acs_mount Ok - returned %s\n", acs_status(status));
         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
@@ -888,9 +949,10 @@ int acsmountresp()
                             "returned_2", TL_MSG_PARAM_STR, acs_status(status),
                             "reqid",      TL_MSG_PARAM_INT, req_id, 
                             "rtype",      TL_MSG_PARAM_INT, rtype );                                    
+        
 	if (status == STATUS_PENDING)
 		return (0);
-	if (rtype == RT_ACKNOWLEDGE) {
+        if (rtype == RT_ACKNOWLEDGE) {
 		mount_req_id = req_id;
 		tplogit (func, "ACSLS req_id = %d\n", mount_req_id);
                 tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
@@ -899,8 +961,10 @@ int acsmountresp()
                                     "mount req_id", TL_MSG_PARAM_INT, mount_req_id );
 		return (0);
 	}
+
 	/* final status */
 	mount_req_id = 0;
+
 	if (status) {
 		sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (status));
 		usrmsg (func, "%s\n", msg);
