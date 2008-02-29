@@ -10,7 +10,7 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
   
-//         $Id: XrdCS2Req.hh,v 1.1 2008/02/25 15:15:46 apeters Exp $
+//         $Id: XrdCS2Req.hh,v 1.2 2008/02/29 12:12:57 apeters Exp $
 
 #include "XrdOlb/XrdOlbReq.hh"
 #include "XrdSys/XrdSysError.hh"

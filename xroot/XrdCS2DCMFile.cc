@@ -8,7 +8,7 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
   
-//         $Id: XrdCS2DCMFile.cc,v 1.1 2008/02/25 15:15:46 apeters Exp $
+//         $Id: XrdCS2DCMFile.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -125,15 +125,18 @@ int XrdCS2DCMFile::Init(const char *thePath, time_t UpTime)
 /*                                M o d i f y                                 */
 /******************************************************************************/
   
-void XrdCS2DCMFile::Modify(const char *thePath)
+bool XrdCS2DCMFile::Modify(const char *thePath)
 {
     struct utimbuf times;
 
 // Indicate file modified by making access time and modtime zero
 //
    times.actime = times.modtime = 0;
-   if (utime(thePath, (const struct utimbuf *)&times))
+   if (utime(thePath, (const struct utimbuf *)&times)) {
        XrdLog.Emsg("Modified", errno, "update time for file", thePath);
+       return false;
+   }
+   return true;
 }
 
 /******************************************************************************/

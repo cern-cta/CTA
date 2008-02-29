@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2DCM.cc,v 1.1 2008/02/25 15:15:46 apeters Exp $
+//         $Id: XrdCS2DCM.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $
 
-const char *XrdCS2DCM2csCVSID = "$Id: XrdCS2DCM.cc,v 1.1 2008/02/25 15:15:46 apeters Exp $";
+const char *XrdCS2DCM2csCVSID = "$Id: XrdCS2DCM.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $";
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -234,14 +234,23 @@ void XrdCS2DCM::Event(const char *Tid, const char *Eid, const char *Mode,
 
 // Process the event
 //
-        if (!strcmp("closer",  Eid)
-        ||  !strcmp("closew",  Eid)) Release(Tid, Lfn);
+   if (!strcmp("closer",  Eid)
+    || !strcmp("closew",  Eid)) Release(Tid, Lfn, 0); 
    else if (!strcmp("fwrite",  Eid))
-           {char thePath[2048];
-            makeFname(thePath, APath, APlen, Lfn);
-            XrdCS2DCMFile::Modify(thePath);
+           {
+	     char thePath[2048];
+	     makeFname(thePath, APath, APlen, Lfn);
+	     
+	     if (!XrdCS2DCMFile::Modify(thePath)) {
+	       char closePath[2048];
+	       makeFname(closePath, CPath, CPlen, Lfn);
+	       if (!rename(closePath,thePath)) {
+		 XrdLog.Emsg("Event", "Recovered interrupted write operation",Lfn);
+		 XrdCS2DCMFile::Modify(thePath);
+	       }
+	     }
 	    writeMutex.UnLock();
-           }
+	   }
    else if (!strcmp("prep",    Eid)
         ||  !strcmp("addfile", Eid)) Prep(Tid, Lfn);
    else if (!strcmp("addlink", Eid)) addLink(Tid, Lfn);
@@ -409,7 +418,8 @@ int XrdCS2DCM::Release(const char *Tid, const char *Lfn, int Fail)
 // Process the file
 //
    if ((rc = theFile.Init(thePath, (Fail ? UpTime : 0))))
-      {if (rc == ENOENT)
+      {
+       if (rc == ENOENT)
           {TRACE(DEBUG, "Release file gone Tid=" <<Tid <<" path=" <<thePath);}
        return 0;
       }

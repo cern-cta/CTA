@@ -1,6 +1,6 @@
 Summary: xrootd-castor interface
 Name: xrootd-castor2
-Version: 20070802cvs_4_2.1.46.1
+Version: 20070802cvs_4_2.1.46.2
 Release: 1
 URL: none
 Source0: %{name}-%{version}.tar.gz

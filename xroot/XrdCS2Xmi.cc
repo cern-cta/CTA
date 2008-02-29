@@ -8,9 +8,9 @@
 /*              DE-AC02-76-SFO0515 with the Department of Energy              */
 /******************************************************************************/
 
-//         $Id: XrdCS2Xmi.cc,v 1.1 2008/02/25 15:15:46 apeters Exp $
+//         $Id: XrdCS2Xmi.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $
 
-const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.1 2008/02/25 15:15:46 apeters Exp $";
+const char *XrdCS2Xmi2csCVSID = "$Id: XrdCS2Xmi.cc,v 1.2 2008/02/29 12:12:57 apeters Exp $";
 
 #include <stdlib.h>
 #include <string.h>
@@ -732,10 +732,12 @@ int XrdCS2Xmi::Select( XrdOlbReq *Request, const char *path, int opts)
 
 int XrdCS2Xmi::Stat(XrdOlbReq *Request, const char *path)
 {
+   EPNAME("Stat");
    CS2Xmi::XmiHelper myRequest(Request, path);
    struct Cns_filestat cnsbuf;
    struct stat statbuf;
 
+   DEBUG("path=" <<path);
 // Get information about the file
 //
    if (Cns_stat(myRequest.Path(), &cnsbuf)) {
@@ -760,6 +762,7 @@ int XrdCS2Xmi::Stat(XrdOlbReq *Request, const char *path)
 
 // Now send the response (let the request object figure out the format)
 //
+   DEBUG("Reply_OK path" <<path);
    Request->Reply_OK(statbuf);
    return 1;
 }
