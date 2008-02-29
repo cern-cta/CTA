@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.24 $ $Release$ $Date: 2008/02/29 13:58:30 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.25 $ $Release$ $Date: 2008/02/29 14:07:24 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -55,6 +55,75 @@ INSERT INTO TapeRequestStatusCodes VALUES (2, 'REQUEST_BEINGSUBMITTED');
 INSERT INTO TapeRequestStatusCodes VALUES (3, 'REQUEST_SUBMITTED');
 INSERT INTO TapeRequestStatusCodes VALUES (4, 'REQUEST_FAILED');
 COMMIT;
+
+/* Foreign key constraints */
+ALTER TABLE TapeServer
+  ADD CONSTRAINT FK_TapeServer_actingMode
+    FOREIGN KEY (actingMode)
+    REFERENCES TapeServerStatusCodes (id);
+
+ALTER TABLE TapeDriveCompatibility
+  ADD CONSTRAINT FK_TapeDriveComp_accessSpec
+    FOREIGN KEY (tapeAccessSpecification)
+    REFERENCES TapeAccessSpecification (id);
+
+ALTER TABLE TapeDrive
+  ADD CONSTRAINT FK_TapeDrive_tape
+    FOREIGN KEY (tape)
+    REFERENCES VdqmTape (id)
+  ADD CONSTRAINT FK_TapeDrive_runningTapeReq
+    FOREIGN KEY (runningTapeReq)
+    REFERENCES TapeRequest (id)
+  ADD CONSTRAINT FK_TapeDrive_deviceGroupName
+    FOREIGN KEY (deviceGroupName)
+    REFERENCES DeviceGroupName (id)
+  ADD CONSTRAINT FK_TapeDrive_status
+    FOREIGN KEY (status)
+    REFERENCES TapeDriveStatusCodes (id)
+  ADD CONSTRAINT FK_TapeDrive_tapeServer
+    FOREIGN KEY (tapeServer)
+    REFERENCES TapeServer (id);
+
+ALTER TABLE TapeRequest
+  ADD CONSTRAINT FK_TapeRequest_tape
+    FOREIGN KEY (tape)
+    REFERENCES VdqmTape (id)
+  ADD CONSTRAINT FK_TapeRequest_accessSpec
+    FOREIGN KEY (tapeAccessSpecification)
+    REFERENCES TapeAccessSpecification (id)
+  ADD CONSTRAINT FK_TapeRequest_requestedSrv
+    FOREIGN KEY (requestedSrv)
+    REFERENCES TapeServer (id)
+  ADD CONSTRAINT FK_TapeRequest_tapeDrive
+    FOREIGN KEY (tapeDrive)
+    REFERENCES TapeDrive (id)
+  ADD CONSTRAINT FK_TapeRequest_deviceGroupName
+    FOREIGN KEY (deviceGroupName)
+    REFERENCES DeviceGroupName (id)
+  ADD CONSTRAINT FK_TapeRequest_status
+    FOREIGN KEY (status)
+    REFERENCES TapeRequestStatusCodes (id)
+  ADD CONSTRAINT FK_TapeRequest_client
+    FOREIGN KEY (client)
+    REFERENCES ClientIdentification (id);
+
+ALTER TABLE ErrorHistory
+  ADD CONSTRAINT FK_ErrorHistory_tapeDrive
+    FOREIGN KEY (tapeDrive)
+    REFERENCES TapeDrive (id)
+  ADD CONSTRAINT FK_ErrorHistory_tape
+    FOREIGN KEY (tape)
+    REFERENCES VdqmTape (id);
+
+ALTER TABLE TapeDriveDedication
+  ADD CONSTRAINT FK_TapeDriveDedic_tapeDrive
+    FOREIGN KEY (tapeDrive)
+    REFERENCES TapeDrive (id);
+
+ALTER TABLE VdqmTape
+  ADD CONSTRAINT FK_VdqmTape_status
+    FOREIGN KEY (status)
+    REFERENCES TapeStatusCodes (id);
 
 /* A small table used to cross check code and DB versions */
 DECLARE
