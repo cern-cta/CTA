@@ -9,7 +9,7 @@
 import sys
 import os
 
-def defaultStreamPolicy(runningStream,numFiles,dataVolume,maxNumStreams,status):
+def defaultStreamPolicy(runningStream,numFiles,dataVolume,maxNumStreams):
         return 1;
 
 # End-of-File
