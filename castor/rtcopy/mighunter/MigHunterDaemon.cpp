@@ -181,7 +181,7 @@ castor::rtcopy::mighunter::MigHunterDaemon::MigHunterDaemon() : castor::server::
    {8, "Error in attaching tapecopy to stream"},
    {9, "No eligible stream found for the service class"},
    {10, "Executing stream policy"},
-   {11, "Summary of stream policy result"},
+   {11, "Summary of stream policy results"},
    {12, "No Policy file available"},
    {13,"Error in executing the policy script"},
    {-1, ""}

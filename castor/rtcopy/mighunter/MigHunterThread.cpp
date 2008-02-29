@@ -205,9 +205,9 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	// Log in DLF the summary
 	castor::dlf::Param params2[]={  
           castor::dlf::Param("SvcClass",(*svcClassName)),
-	  castor::dlf::Param("tapecopies attached without a policy",withoutPolicy),
-	  castor::dlf::Param("tapecopies allowed by policy",policyYes),
-	  castor::dlf::Param("tapecopies not allowed by policy",policyNo)
+	  castor::dlf::Param("allowed",withoutPolicy),
+	  castor::dlf::Param("allowedByPolicy",policyYes),
+	  castor::dlf::Param("notAllowed",policyNo)
 	  };
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7,4 , params2);
 
@@ -289,7 +289,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	    if (m_strSvc == NULL ||((*infoCandidateStream)->policyName()).empty()){
 	      //no policy
 	      eligibleStreams.push_back(*infoCandidateStream);
-	      if (streamInfo->status() != castor::stager::STREAM_RUNNING ) runningStreams++;
+	      runningStreams++;
 	      withoutPolicy++;
 	     
 	    } else {
@@ -297,13 +297,12 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	      if (m_strSvc->applyPolicy(*infoCandidateStream)) {
 		// policy yes
 		 eligibleStreams.push_back(*infoCandidateStream);
-		if (streamInfo->status() != castor::stager::STREAM_RUNNING ) runningStreams++;
-		policyYes++;
+		 runningStreams++;
+		 policyYes++;
 
 	      } else {
 		// policy no
 		 streamsToRestore.push_back(*infoCandidateStream);
-	         if (streamInfo->status() == castor::stager::STREAM_RUNNING )  runningStreams--;
 		 policyNo++;
 	      }
 	    }
@@ -322,10 +321,10 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
         // log in the dlf with the summary
 	castor::dlf::Param params[]={  
           castor::dlf::Param("SvcClass",(*svcClassName)),
-	  castor::dlf::Param("stream allowed  without a policy",withoutPolicy),
-	  castor::dlf::Param("stream allowed by policy",policyYes),
-	  castor::dlf::Param("stream not  allowed by policy",policyNo),
-	  castor::dlf::Param("potential running streams",runningStreams)
+	  castor::dlf::Param("allowed",withoutPolicy),
+	  castor::dlf::Param("allowedByPolicy",policyYes),
+	  castor::dlf::Param("notAllowed",policyNo),
+	  castor::dlf::Param("runningStreams",runningStreams)
 	  };
 	  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 11,5 , params);
 
