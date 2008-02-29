@@ -121,6 +121,10 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 31, "Synchronizing files with nameserver" },
     { 32, "Nameserver error" },
     { 33, "Cleaned up a number of files from the stager database" },
+    { 40, "Synchronizing files with the Stager"},
+    { 41, "Getting files which dont exist anymore in the Stager"},
+    { 42, "Deleting local file which is not in the Stager"},
+    { 43, "Failed Deletion of orphan file in the Stager"},
     { -1, ""}}; 
   dlfInit(messages);
 }

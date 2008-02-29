@@ -42,7 +42,7 @@ CPPFLAGS = $(DEBUG) $(INCLUDES) $(MTCCFLAGS)
 
 LIBS = -lshift -ldl -lcastorClient -Wl,-rpath-link,../../shlib
 
-GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp SynchronizationThread.cpp
+GCBIN_SRCS = GcDaemon.cpp DeletionThread.cpp BaseSynchronizationThread.cpp StagerSynchronizationThread.cpp NameServerSynchronizationThread.cpp
 
 GCBIN_OBJS = $(GCBIN_SRCS:.cpp=.Osuf)
 
