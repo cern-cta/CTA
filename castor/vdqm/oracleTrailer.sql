@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.23 $ $Release$ $Date: 2008/02/29 10:38:34 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.24 $ $Release$ $Date: 2008/02/29 13:58:30 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -57,6 +57,21 @@ INSERT INTO TapeRequestStatusCodes VALUES (4, 'REQUEST_FAILED');
 COMMIT;
 
 /* A small table used to cross check code and DB versions */
+DECLARE
+  nbTables NUMBER;
+BEGIN
+  SELECT COUNT(*) INTO nbTables FROM USER_TABLES
+    WHERE TABLE_NAME='CASTORVERSION';
+
+  IF nbTables = 0 THEN
+    EXECUTE IMMEDIATE
+      'CREATE TABLE CastorVersion' ||
+      '  (schemaVersion VARCHAR2(20), release VARCHAR2(20))';
+    EXECUTE IMMEDIATE
+      'INSERT INTO CastorVersion VALUES (''-'', ''-'')';
+    COMMIT;
+  END IF;
+END;
 UPDATE CastorVersion SET schemaVersion = '2_1_6_0';
 
 /* Sequence for indices */
