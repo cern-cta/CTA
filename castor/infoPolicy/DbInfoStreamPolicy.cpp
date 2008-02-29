@@ -31,7 +31,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/infoPolicy/DbInfoStreamPolicy.hpp"
-#include "castor/stager/StreamStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -45,8 +44,7 @@ castor::infoPolicy::DbInfoStreamPolicy::DbInfoStreamPolicy() throw() :
   m_numBytes(0),
   m_streamId(0),
   m_maxNumStreams(0),
-  m_id(0),
-  m_status(castor::stager::StreamStatusCodes(0)) {
+  m_id(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -75,7 +73,6 @@ void castor::infoPolicy::DbInfoStreamPolicy::print(std::ostream& stream,
   stream << indent << "maxNumStreams : " << m_maxNumStreams << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
-  stream << indent << "status : " << castor::stager::StreamStatusCodesStrings[m_status] << std::endl;
 }
 
 //------------------------------------------------------------------------------

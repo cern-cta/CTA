@@ -31,7 +31,6 @@
 
 // Include Files
 #include "castor/infoPolicy/DbInfoPolicy.hpp"
-#include "castor/stager/StreamStatusCodes.hpp"
 #include "osdep.h"
 #include <iostream>
 #include <string>
@@ -196,22 +195,6 @@ namespace castor {
         m_id = new_var;
       }
 
-      /**
-       * Get the value of m_status
-       * @return the value of m_status
-       */
-      castor::stager::StreamStatusCodes status() const {
-        return m_status;
-      }
-
-      /**
-       * Set the value of m_status
-       * @param new_var the new value of m_status
-       */
-      void setStatus(castor::stager::StreamStatusCodes new_var) {
-        m_status = new_var;
-      }
-
     private:
 
       u_signed64 m_runningStream;
@@ -226,8 +209,6 @@ namespace castor {
 
       /// The id of this object
       u_signed64 m_id;
-
-      castor::stager::StreamStatusCodes m_status;
 
     }; /* end of class DbInfoStreamPolicy */
 
