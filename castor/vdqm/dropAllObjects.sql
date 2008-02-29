@@ -22,3 +22,4 @@ select 'alter table ' || table_name || ' drop constraint ' || constraint_name ||
 prompt
 prompt -- Drop tables
 select 'drop table ' || table_name || ';' from user_tables order by table_name;
+exit;
