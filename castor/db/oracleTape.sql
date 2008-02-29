@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.641 $ $Date: 2008/02/29 10:47:44 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.642 $ $Date: 2008/02/29 17:00:45 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -823,6 +823,7 @@ BEGIN
   SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool WHERE Stream.TapePool = SvcClass2TapePool.child AND SvcClass2TapePool.parent=svcId AND Stream.status = 3;   
   UPDATE stream SET status=7 WHERE Stream.status IN (4,5,6) AND Stream.id 
        IN (select Stream.id FROM Stream,SvcClass2TapePool WHERE Stream.Tapepool=SvcClass2TapePool.child AND SvcClass2TapePool.parent= svcId ) returning Stream.id BULK COLLECT INTO strIds; 
+  COMMIT;
   --- return for policy
   OPEN dbInfo FOR
     SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize)
@@ -832,7 +833,8 @@ BEGIN
        AND Stream2TapeCopy.child = TapeCopy.id(+)  
        AND TapeCopy.castorfile = CastorFile.id(+) 
        AND Stream.id = Stream2TapeCopy.parent(+)
-     GROUP BY Stream.id, Stream.status;
+       AND Stream.status=7
+     GROUP BY Stream.id;
 END;
 
 /* createOrUpdateStream */ 
@@ -979,12 +981,12 @@ CREATE OR REPLACE PROCEDURE startChosenStreams
 BEGIN	
   FOR i in streamIds.FIRST .. streamIds.LAST LOOP
     UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
-     WHERE Stream.status=8 -- WAITPOLICY
+     WHERE Stream.status=7 -- WAITPOLICY
        AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
        AND id=streamIds(i);
 		 		
     UPDATE Stream SET Stream.status = 0 -- PENDING
-     WHERE Stream.status=8  -- WAITPOLICY
+     WHERE Stream.status=7  -- WAITPOLICY
        AND id=streamIds(i);
   END LOOP;	
   COMMIT;
@@ -996,8 +998,8 @@ CREATE OR REPLACE PROCEDURE stopChosenStreams
         (streamIds IN castor."cnumList") AS
 BEGIN	
   FOR i in streamIds.FIRST .. streamIds.LAST LOOP
-    UPDATE Stream SET Stream.status = 7 -- PENDING
-     WHERE id = streamIds(i) AND Stream.status=8; -- WAITPOLICY
+    UPDATE Stream SET Stream.status = 6 -- STOPPED
+     WHERE id = streamIds(i) AND Stream.status=7; -- WAITPOLICY
   END LOOP;	
   COMMIT;
 END;
@@ -1021,7 +1023,7 @@ CREATE OR REPLACE PROCEDURE invalidateTapeCopies
 AS
 BEGIN
   FOR i IN tapecopyIds.FIRST .. tapecopyIds.LAST LOOP
-    UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status=7; --WAITPOLICY
+    UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status=7;
   END LOOP;
   COMMIT;
 END;
@@ -1029,6 +1031,7 @@ END;
 /** Functions for the RecHandlerDaemon **/
 
 /* Get input for python recall policy */
+
 CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_Cur) AS
   svcId NUMBER;
 BEGIN  
@@ -1044,8 +1047,9 @@ BEGIN
 END;
 
 /* resurrect tapes */
+
 CREATE OR REPLACE PROCEDURE resurrectTapes 
-(tapeIds IN castor."cnumList") -- all candidate before applying the policy
+(tapeIds IN castor."cnumList") 
 AS
 BEGIN
   FOR i IN tapeIds.FIRST .. tapeIds.LAST LOOP

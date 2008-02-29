@@ -99,12 +99,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 
 	if (infoCandidateTapeCopies.empty()){	
 	   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_USAGE, 3, 1, params0);
-
-	  castor::exception::Internal ex;
-	  ex.getMessage()
-	    << "No tape copy found to be attached.";
-
 	}
+
 	// input for stream operation 
 
 	char* p=NULL;
@@ -258,6 +254,7 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	u_signed64 nbDrives=0;
 	u_signed64 runningStreams=0;
 	infoCandidateStream=infoCandidateStreams.begin();
+
 	if (infoCandidateStream != infoCandidateStreams.end()){
 	  streamInfo=dynamic_cast<castor::infoPolicy::DbInfoStreamPolicy*> ((*infoCandidateStream)->dbInfoPolicy()[0]);
 	  // the following information are always the same in all the candidates for the same svcclass
@@ -334,8 +331,8 @@ void castor::rtcopy::mighunter::MigHunterThread::run(void* par)
 	  initialSizeForStream = (u_signed64) initialSizeToTransfer/runningStreams;
 	initialSizeForStream= (initialSizeCeiling > 0 && initialSizeForStream>initialSizeCeiling)?initialSizeCeiling:initialSizeForStream;
 
-	if (initialSizeForStream !=0)
-	  m_policySvc->startChosenStreams(eligibleStreams,initialSizeForStream);
+
+	m_policySvc->startChosenStreams(eligibleStreams,initialSizeForStream);
 
 	m_policySvc->stopChosenStreams(streamsToRestore);
 
