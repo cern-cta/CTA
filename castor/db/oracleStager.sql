@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.641 $ $Date: 2008/02/28 14:25:13 $ $Author: waldron $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.642 $ $Date: 2008/02/29 10:47:44 $ $Author: gtaur $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -92,7 +92,6 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE DbMigrationInfo_Cur IS REF CURSOR RETURN DbMigrationInfo;
   TYPE DbStreamInfo IS RECORD (
     id NUMBER,
-    status INTEGER,
     numFile NUMBER,
     byteVolume NUMBER);
   TYPE DbStreamInfo_Cur IS REF CURSOR RETURN DbStreamInfo;
@@ -103,12 +102,6 @@ CREATE OR REPLACE PACKAGE castor AS
     numbFiles NUMBER,
     expireTime NUMBER);
   TYPE DbRecallInfo_Cur IS REF CURSOR RETURN DbRecallInfo;
-  TYPE StreamPolicyInfo IS RECORD (
-    id INTEGER,
-    status NUMBER,
-    numFile NUMBER,
-    byteVolume NUMBER);
-  TYPE StreamPolicyInfo_Cur IS REF CURSOR RETURN StreamPolicyInfo;
 END castor;
 
 CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;

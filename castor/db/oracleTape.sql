@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.640 $ $Date: 2008/02/28 15:51:04 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.641 $ $Date: 2008/02/29 10:47:44 $ $Author: gtaur $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -763,12 +763,16 @@ CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 BEGIN
   -- do the same operation of getMigrCandidate and return the dbInfoMigrationPolicy
   -- we look first for repack condidates for this svcclass
-  -- we update atomically WAITINSTREAMS
-   UPDATE TapeCopy A set status=2
+  -- we update atomically WAITPOLICY
+  
+   SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
+    FROM SvcClass 
+   WHERE SvcClass.name = svcClassName;
+  
+   UPDATE TapeCopy A set status=7
     WHERE status IN (0, 1) AND
-    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest, SvcClass
-   		WHERE StageRepackRequest.svcclass = SvcClass.id
-     			AND SvcClass.name= svcclassName 
+    EXISTS (SELECT 'x' FROM  SubRequest, StageRepackRequest
+   		WHERE StageRepackRequest.svcclass = svcId 
      			AND SubRequest.request = StageRepackRequest.id
      			AND SubRequest.status = 12  --SUBREQUEST_REPACK
      			AND A.castorfile = SubRequest.castorfile
@@ -777,22 +781,17 @@ BEGIN
      COMMIT;
   -- if we didn't find anything, we look 
   -- the usual svcclass from castorfile table.
-  -- we update atomically WAITINSTREAMS
+  -- we update atomically WAITPOLICY
   IF tcIds.count = 0 THEN
-    UPDATE TapeCopy A set status=2  
+    UPDATE TapeCopy A set status=7  
      WHERE status IN (0, 1) AND
-      EXISTS ( SELECT 'x' FROM  CastorFile, svcclass 
+      EXISTS ( SELECT 'x' FROM  CastorFile 
      	WHERE A.castorFile = CastorFile.id 
-          AND CastorFile.svcClass = SvcClass.id
-          AND SvcClass.name = svcclassName 
+          AND CastorFile.svcClass = svcId 
       ) RETURNING A.id -- CREATED / TOBEMIGRATED
        BULK COLLECT INTO tcIds;
        COMMIT;
   END IF;
-  -- return for Policy
-  SELECT SvcClass.migratorpolicy, SvcClass.id INTO policyName, svcId 
-    FROM SvcClass 
-   WHERE SvcClass.name = svcClassName;
   -- return the full resultset
   OPEN dbInfo FOR
     SELECT TapeCopy.id, TapeCopy.copyNb, CastorFile.lastknownfilename, 
@@ -816,24 +815,27 @@ AS
   tcId NUMBER; -- used in the loop
   streamId NUMBER; -- stream attached to the tapepool
   svcId NUMBER; -- id for the svcclass
+  strIds "numList"; 
 BEGIN	
   -- info for policy
   SELECT streamPolicy, nbDrives, id INTO policyName, maxStream, svcId 
     FROM SvcClass WHERE SvcClass.name = svcClassName;
-  SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool WHERE Stream.TapePool = SvcClass2TapePool.child AND SvcClass2TapePool.parent=svcId AND Stream.status = 3; 
+  SELECT count(*) INTO runningStreams FROM Stream,SvcClass2TapePool WHERE Stream.TapePool = SvcClass2TapePool.child AND SvcClass2TapePool.parent=svcId AND Stream.status = 3;   
+  UPDATE stream SET status=7 WHERE Stream.status IN (4,5,6) AND Stream.id 
+       IN (select Stream.id FROM Stream,SvcClass2TapePool WHERE Stream.Tapepool=SvcClass2TapePool.child AND SvcClass2TapePool.parent= svcId ) returning Stream.id BULK COLLECT INTO strIds; 
   --- return for policy
   OPEN dbInfo FOR
-    SELECT Stream.id, Stream.status, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize)
-      FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream, SvcClass2TapePool
-     WHERE Stream2TapeCopy.child = TapeCopy.id(+)  
+    SELECT Stream.id, count(distinct Stream2TapeCopy.child), sum(CastorFile.filesize)
+      FROM Stream2TapeCopy, TapeCopy, CastorFile, Stream
+     WHERE 
+       Stream.id in (SELECT * FROM table(strIds))
+       AND Stream2TapeCopy.child = TapeCopy.id(+)  
        AND TapeCopy.castorfile = CastorFile.id(+) 
        AND Stream.id = Stream2TapeCopy.parent(+)
-       AND Stream.Tapepool=SvcClass2TapePool.child
-       AND SvcClass2TapePool.parent=svcId 
      GROUP BY Stream.id, Stream.status;
 END;
 
-/* createOrUpdateStream */
+/* createOrUpdateStream */ 
 
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
@@ -931,7 +933,7 @@ BEGIN
 END;
 
 
-/* attach tapecopy to stream */
+/* attach tapecopies to stream */
 
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
 (tapeCopyIds IN castor."cnumList",
@@ -939,69 +941,76 @@ CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
 AS
   streamId NUMBER; -- stream attached to the tapepool
   counter NUMBER := 0;
+  unused NUMBER;
 BEGIN
   -- add choosen tapecopies to all Streams associated to the tapepool used by the policy 
   FOR i IN tapeCopyIds.FIRST .. tapeCopyIds.LAST LOOP
-    FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i)) LOOP
-      DECLARE CONSTRAINT_VIOLATED EXCEPTION;
-      PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
-      BEGIN 
-      	INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
-        counter := counter + 1;
-        IF counter = 100 THEN
-          counter := 0;
-          COMMIT;
-        END IF;
-      EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      	UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
-      END;
-    END LOOP;
+    BEGIN 
+      UPDATE TapeCopy SET Status=2 WHERE Status=7 AND id = tapeCopyIds(i) RETURNING id into unused;
+      FOR streamId IN (SELECT id FROM Stream WHERE Stream.tapepool= tapePoolIds(i)) LOOP
+      	  DECLARE CONSTRAINT_VIOLATED EXCEPTION;
+          PRAGMA EXCEPTION_INIT (CONSTRAINT_VIOLATED,-1);
+          BEGIN 
+          -- check if it is not been resurrected by the start of a new mighunter on the same svcclass
+             INSERT INTO stream2tapecopy (parent ,child) VALUES (streamId.id, tapeCopyIds(i));
+        	counter := counter + 1;
+             IF counter = 100 THEN
+                 counter := 0;
+                 COMMIT;
+             END IF;
+          EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+      	     UPDATE tapecopy set status=1 where id=tapeCopyIds(i);
+          END;
+      END LOOP;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+     -- Go on the tapecopy has been resurrected or migrated
+      NULL;
+    END;
   END LOOP;
   COMMIT;
 END;
 
+
 /* start choosen stream */
+
 CREATE OR REPLACE PROCEDURE startChosenStreams
         (streamIds IN castor."cnumList",
 	initSize IN NUMBER) AS
 BEGIN	
   FOR i in streamIds.FIRST .. streamIds.LAST LOOP
     UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
-     WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
+     WHERE Stream.status=8 -- WAITPOLICY
        AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
        AND id=streamIds(i);
 		 		
     UPDATE Stream SET Stream.status = 0 -- PENDING
-     WHERE Stream.status IN (4,5,6) -- CREATED WAITSPACE STOPPED
+     WHERE Stream.status=8  -- WAITPOLICY
        AND id=streamIds(i);
   END LOOP;	
   COMMIT;
 END;
 
 /* stop chosen stream */
+
 CREATE OR REPLACE PROCEDURE stopChosenStreams
         (streamIds IN castor."cnumList") AS
 BEGIN	
   FOR i in streamIds.FIRST .. streamIds.LAST LOOP
-    UPDATE Stream SET Stream.status = 6 -- PENDING
-     WHERE id = streamIds(i);
+    UPDATE Stream SET Stream.status = 7 -- PENDING
+     WHERE id = streamIds(i) AND Stream.status=8; -- WAITPOLICY
   END LOOP;	
   COMMIT;
 END;
 
 /* resurrect Candidates */
+
 CREATE OR REPLACE PROCEDURE resurrectCandidates
 (migrationCandidates IN castor."cnumList") -- all candidate before applying the policy
 AS
   unused "numList";
 BEGIN
-  FOR i IN migrationCandidates.FIRST .. migrationCandidates.LAST LOOP
-    SELECT child BULK COLLECT INTO unused FROM Stream2TapeCopy WHERE child = migrationCandidates(i);
-    IF unused.COUNT = 0 THEN
-      -- We only delete id the tapecopy is not attached to any stream
-      UPDATE TapeCopy SET status = 1 WHERE status = 2 AND id = migrationCandidates(i);
-    END IF;
-  END LOOP;
+  FORALL i in migrationCandidates.FIRST .. migrationCandidates.LAST
+  UPDATE TapeCopy SET Status=1 WHERE Status=7 AND id=migrationCandidates(i);
   COMMIT;
 END;
 
@@ -1012,7 +1021,7 @@ CREATE OR REPLACE PROCEDURE invalidateTapeCopies
 AS
 BEGIN
   FOR i IN tapecopyIds.FIRST .. tapecopyIds.LAST LOOP
-    UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status=2;
+    UPDATE TapeCopy SET status = 6 WHERE id = tapecopyIds(i) AND status=7; --WAITPOLICY
   END LOOP;
   COMMIT;
 END;
