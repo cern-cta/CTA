@@ -221,6 +221,9 @@ struct vmgr_srv_thread_info *thip;
 	if (vmgr_get_library_entry (&thip->dbfd, library,
 	    &library_entry, 1, &rec_addr))
 		RETURN (serrno);
+	if (library_entry.capacity != library_entry.nb_free_slots)
+		sendrep (thip->s, MSG_ERR, "Cannot remove a library which has tapes associated to it\n");
+		RETURN (EEXIST);
 	if (vmgr_delete_library_entry (&thip->dbfd, &rec_addr))
 		RETURN (serrno);
 	RETURN (0);
