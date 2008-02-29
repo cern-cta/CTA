@@ -353,7 +353,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
     castor::dlf::Param params[] =
       {castor::dlf::Param("tapeRequest ID", volumeRequest->VolReqID),
        castor::dlf::Param("function", "castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest()"),
-       castor::dlf::Param("Message", e.getMessage().str().c_str())};
+       castor::dlf::Param("Message", e.getMessage().str())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, VDQM_TAPE_REQUEST_NOT_FOUND_IN_DB, 2, params);
     
     if ( tapeReq ) {

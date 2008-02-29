@@ -100,7 +100,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
         
         // "Exception caught" message
         castor::dlf::Param params[] =
-          {castor::dlf::Param("Message", e.getMessage().str().c_str()),
+          {castor::dlf::Param("Message", e.getMessage().str()),
            castor::dlf::Param("errorCode", e.code())};      
         castor::dlf::dlf_writep(*m_cuuid, DLF_LVL_ERROR, VDQM_EXCEPTION, 2, params);        
       }
@@ -190,7 +190,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 
   } catch (castor::exception::Exception e) { 
     castor::dlf::Param params2[] =
-      {castor::dlf::Param("Message", e.getMessage().str().c_str()),
+      {castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("errorCode", e.code())};   
 
     // "Exception caught" message 
