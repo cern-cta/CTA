@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StreamPySvc.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2007/11/14 16:53:31 $ $Author: gtaur $
+ * @(#)$RCSfile: StreamPySvc.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/29 10:49:21 $ $Author: gtaur $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -47,7 +47,7 @@ bool castor::infoPolicy::StreamPySvc::applyPolicy(castor::infoPolicy::PolicyObj*
   // K must be used for unsigned (feature not documented at all but available)
 
   PyObject *inputScript;
-  inputScript = Py_BuildValue("(K,K,K,K,i)",dbObj->runningStream(),dbObj->numFiles(),dbObj->numBytes(),dbObj->maxNumStreams(),(int)dbObj->status());
+  inputScript = Py_BuildValue("(K,K,K,K)",dbObj->runningStream(),dbObj->numFiles(),dbObj->numBytes(),dbObj->maxNumStreams());
 
   bool ret=callPolicyFunction( pObj->policyName().c_str(), inputScript);
   return ret;

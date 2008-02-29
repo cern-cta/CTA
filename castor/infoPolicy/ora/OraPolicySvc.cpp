@@ -474,9 +474,8 @@ std::vector<castor::infoPolicy::PolicyObj*> castor::infoPolicy::ora::OraPolicySv
       resultItem->setPolicyName(policyName);
       item->setMaxNumStreams(nbDrives);
       item->setStreamId((u_signed64)rs->getDouble(1));
-      item->setStatus((castor::stager::StreamStatusCodes)rs->getInt(2));
-      item->setNumFiles((u_signed64)rs->getDouble(3));
-      item->setNumBytes((u_signed64)rs->getDouble(4));
+      item->setNumFiles((u_signed64)rs->getDouble(2));
+      item->setNumBytes((u_signed64)rs->getDouble(3));
       item->setRunningStream(runningStream);
       resultItem->addDbInfoPolicy(item); 
       result.push_back(resultItem);
