@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.22 $ $Release$ $Date: 2008/02/29 09:36:05 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.23 $ $Release$ $Date: 2008/02/29 10:38:34 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -31,7 +31,30 @@ INSERT INTO TapeDriveStatusCodes VALUES (6, 'WAIT_FOR_UNMOUNT');
 INSERT INTO TapeDriveStatusCodes VALUES (7, 'STATUS_UNKNOWN');
 COMMIT;
 
-/* Foreign key constraints */
+CREATE TABLE TapeStatusCodes (
+  id   NUMBER,
+  name VARCHAR2(30),
+  CONSTRAINT PK_TapeStatusCodes PRIMARY KEY (id));
+INSERT INTO TapeStatusCodes VALUES (0, 'TAPE_USED');
+INSERT INTO TapeStatusCodes VALUES (1, 'TAPE_PENDING');
+INSERT INTO TapeStatusCodes VALUES (2, 'TAPE_WAITDRIVE');
+INSERT INTO TapeStatusCodes VALUES (3, 'TAPE_WAITMOUNT');
+INSERT INTO TapeStatusCodes VALUES (4, 'TAPE_MOUNTED');
+INSERT INTO TapeStatusCodes VALUES (5, 'TAPE_FINISHED');
+INSERT INTO TapeStatusCodes VALUES (6, 'TAPE_FAILED');
+INSERT INTO TapeStatusCodes VALUES (7, 'TAPE_UNKNOWN');
+COMMIT;
+
+CREATE TABLE TapeRequestStatusCodes (
+  id NUMBER,
+  name VARCHAR2(30),
+  CONSTRAINT PK_TapeRequestStatusCodes PRIMARY KEY (id));
+INSERT INTO TapeRequestStatusCodes VALUES (0, 'REQUEST_PENDING');
+INSERT INTO TapeRequestStatusCodes VALUES (1, 'REQUEST_MATCHED');
+INSERT INTO TapeRequestStatusCodes VALUES (2, 'REQUEST_BEINGSUBMITTED');
+INSERT INTO TapeRequestStatusCodes VALUES (3, 'REQUEST_SUBMITTED');
+INSERT INTO TapeRequestStatusCodes VALUES (4, 'REQUEST_FAILED');
+COMMIT;
 
 /* A small table used to cross check code and DB versions */
 UPDATE CastorVersion SET schemaVersion = '2_1_6_0';
