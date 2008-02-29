@@ -1,12 +1,37 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.21 $ $Release$ $Date: 2008/02/28 15:05:44 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.22 $ $Release$ $Date: 2008/02/29 09:36:05 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
+
+/* Enumerations */
+CREATE TABLE TapeServerStatusCodes (
+  id   NUMBER,
+  name VARCHAR2(30),
+  CONSTRAINT PK_TapeServerStatusCodes PRIMARY KEY (id));
+INSERT INTO TapeServerStatusCodes VALUES (0, 'TAPESERVER_ACTIVE');
+INSERT INTO TapeServerStatusCodes VALUES (1, 'TAPESERVER_INACTIVE');
+COMMIT;
+
+CREATE TABLE TapeDriveStatusCodes (
+  id   NUMBER,
+  name VARCHAR2(30),
+  CONSTRAINT PK_TapeDriveStatusCodes PRIMARY KEY (id));
+INSERT INTO TapeDriveStatusCodes VALUES (0, 'UNIT_UP');
+INSERT INTO TapeDriveStatusCodes VALUES (1, 'UNIT_STARTING');
+INSERT INTO TapeDriveStatusCodes VALUES (2, 'UNIT_ASSIGNED');
+INSERT INTO TapeDriveStatusCodes VALUES (3, 'VOL_MOUNTED');
+INSERT INTO TapeDriveStatusCodes VALUES (4, 'FORCED_UNMOUNT');
+INSERT INTO TapeDriveStatusCodes VALUES (5, 'UNIT_DOWN');
+INSERT INTO TapeDriveStatusCodes VALUES (6, 'WAIT_FOR_UNMOUNT');
+INSERT INTO TapeDriveStatusCodes VALUES (7, 'STATUS_UNKNOWN');
+COMMIT;
+
+/* Foreign key constraints */
 
 /* A small table used to cross check code and DB versions */
 UPDATE CastorVersion SET schemaVersion = '2_1_6_0';
