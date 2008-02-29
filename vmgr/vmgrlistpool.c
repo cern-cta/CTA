@@ -63,9 +63,10 @@ int sflag;
 	c64 = capacity;		/* because C compiler on Windows/NT */
 	f64 = tot_free_space;	/* cannot cast u_signed64 to double */
 	if (sflag)
-		printf ("%s %s %s %llu %llu %.1f\n",
+		printf ("%s %s %s %s %s %.1f\n",
 			pool_name, sav_uidstr, sav_gidstr,
-			capacity, tot_free_space, capacity ?
+			u64tostr(capacity, tmpbuf, 0), 
+			u64tostr(tot_free_space, tmpbuf2, 0), capacity ?
 			(double)f64 * 100. / (double)c64 : 0);
 	else
 		printf ("%-15s %-8.8s %-6.6s CAPACITY %sB FREE %sB (%5.1f%%)\n",

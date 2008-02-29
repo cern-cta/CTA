@@ -48,7 +48,7 @@ int sflag;
 			lp->vsn, lp->library, lp->density, lp->lbltype);		
 	if (! xflag) {
 		if (sflag)
-			printf ("%s %llu ", lp->poolname, u64);
+			printf ("%s %s ", lp->poolname, u64tostr (u64, tmpbuf, 0));
 		else
 			printf ("%-15s %-8sB ", lp->poolname, 
 				u64tostru (u64, tmpbuf, 8));
@@ -74,9 +74,10 @@ int sflag;
 		} else
 			printf ("00000000 ");
 		if (sflag) 
-			printf ("%llu %d %d %d %s %s %d %d ", 
-				u64, lp->nbfiles, lp->rcount, lp->wcount, 
-				lp->rhost, lp->whost, lp->rjid, lp->wjid);
+			printf ("%s %d %d %d %s %s %d %d ", 
+				u64tostr (u64, tmpbuf, 0) , lp->nbfiles, 
+				lp->rcount, lp->wcount, lp->rhost, lp->whost, 
+				lp->rjid, lp->wjid);
 		else
 			printf ("%-8sB %6d %5d %5d %-10s %-10s %10d %10d ", 
 				u64tostru (u64, tmpbuf, 8), lp->nbfiles, 

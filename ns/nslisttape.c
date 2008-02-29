@@ -43,6 +43,7 @@ int main(int argc,char **argv)
 	char path[CA_MAXPATHLEN+1];
 	char *server = NULL;
 	char tmpbuf[21];
+	char tmpbuf2[21];
 	char *vid = NULL;
 	int fseq = 0;
 	u_signed64 count = 0;
@@ -112,9 +113,9 @@ int main(int argc,char **argv)
 			exit (USERR);
 		}
 		if (humanflag) {
-			printf("%llu %s\n", count, u64tostru (size, tmpbuf, 0));
+			printf("%s %s\n", u64tostr (count, tmpbuf, 0), u64tostru (size, tmpbuf2, 0));
 		} else {
-			printf("%llu %llu\n", count, size);
+			printf("%s %s\n", u64tostr (count, tmpbuf, 0), u64tostr (size, tmpbuf2, 0));
 		}
 #if defined(_WIN32)
 		WSACleanup();
