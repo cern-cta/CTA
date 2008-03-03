@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/26 14:39:24 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteGCSvc.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/03 11:05:18 $ $Author: waldron $
  *
  *
  *
@@ -76,40 +76,40 @@ const char* castor::stager::RMTGCSVC_CATEGORY_CONF = "REMOTEGCSVC";
 const int   castor::stager::DEFAULT_REMOTEGCSVC_TIMEOUT = 1800;
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::stager::RemoteGCSvc>* s_factoryRemoteGCSvc =
   new castor::SvcFactory<castor::stager::RemoteGCSvc>();
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // RemoteGCSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::RemoteGCSvc::RemoteGCSvc(const std::string name) :
   BaseSvc(name) {}
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~RemoteGCSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::RemoteGCSvc::~RemoteGCSvc() throw() {}
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::stager::RemoteGCSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::stager::RemoteGCSvc::ID() {
   return castor::SVC_REMOTEGCSVC;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectTape
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Tape*
 castor::stager::RemoteGCSvc::selectTape
 (const std::string vid,
@@ -123,9 +123,9 @@ castor::stager::RemoteGCSvc::selectTape
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // requestToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Request*
 castor::stager::RemoteGCSvc::requestToDo(std::string service)
   throw (castor::exception::Exception) {
@@ -136,9 +136,9 @@ castor::stager::RemoteGCSvc::requestToDo(std::string service)
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectSvcClass
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::SvcClass*
 castor::stager::RemoteGCSvc::selectSvcClass
 (const std::string name)
@@ -150,9 +150,9 @@ castor::stager::RemoteGCSvc::selectSvcClass
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFileClass
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::FileClass*
 castor::stager::RemoteGCSvc::selectFileClass
 (const std::string name)
@@ -164,9 +164,9 @@ castor::stager::RemoteGCSvc::selectFileClass
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFileSystem
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::FileSystem*
 castor::stager::RemoteGCSvc::selectFileSystem
 (const std::string mountPoint,
@@ -179,9 +179,9 @@ castor::stager::RemoteGCSvc::selectFileSystem
   throw ex;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getRemoteGCClientTimeout
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::stager::RemoteGCSvc::getRemoteGCClientTimeout() {
 
   int ret_timeout = castor::stager::DEFAULT_REMOTEGCSVC_TIMEOUT;
@@ -202,9 +202,9 @@ int castor::stager::RemoteGCSvc::getRemoteGCClientTimeout() {
   return ret_timeout;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Files2DeleteResponseHandler
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /**
  * A dedicated little response handler for the Files2Delete
  * requests
@@ -248,9 +248,9 @@ private:
   std::vector<castor::stager::GCLocalFile*>* m_result;
 };
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFiles2Delete
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<castor::stager::GCLocalFile*>*
 castor::stager::RemoteGCSvc::selectFiles2Delete
 (std::string diskServer)
@@ -270,9 +270,9 @@ castor::stager::RemoteGCSvc::selectFiles2Delete
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // filesDeleted
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteGCSvc::filesDeleted
 (std::vector<u_signed64*>& diskCopyIds)
   throw (castor::exception::Exception) {
@@ -300,9 +300,9 @@ void castor::stager::RemoteGCSvc::filesDeleted
   // was transmitted to req and the deletion of req will delete it !
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // filesDeletionFailed
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteGCSvc::filesDeletionFailed
 (std::vector<u_signed64*>& diskCopyIds)
   throw (castor::exception::Exception) {
@@ -330,9 +330,9 @@ void castor::stager::RemoteGCSvc::filesDeletionFailed
   // was transmitted to req and the deletion of req will delete it !
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // NsFilesDeletedResponseHandler
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /**
  * A dedicated little response handler for the nsFilesDeleted
  * requests
@@ -375,9 +375,9 @@ private:
   std::vector<u_signed64>* m_result;
 };
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // nsFilesDeleted
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
 (std::vector<u_signed64> &fileIds,
  std::string nsHost) throw() {
@@ -408,7 +408,7 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
     // Exception caught in RemoteGCSvc::nsFilesDeleted
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Error", strerror(errno))};
+       castor::dlf::Param("Error", sstrerror(e.code()))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 0, 2, params);
   }
   // no need to cleanup fileIds since the ownership of its content
@@ -416,9 +416,9 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::nsFilesDeleted
   return result;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // StgFilesDeletedResponseHandler
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /**
  * A dedicated little response handler for the stgFilesDeleted
  * requests
@@ -461,9 +461,9 @@ private:
   std::vector<u_signed64>* m_result;
 };
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // stgFilesDeleted
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
 (std::vector<u_signed64> &diskCopyIds) throw() {
   // Build the stgFilesDeleted Request
@@ -489,11 +489,11 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
     client.setOption(NULL, &req);
     client.sendRequest(&req, &rh);
   } catch (castor::exception::Exception e) {
-   
+    // Exception caught in RemoteGCSvc::stgFilesDeleted
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage().str()),
-       castor::dlf::Param("Error", strerror(errno))};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 0, 2, params);
+       castor::dlf::Param("Error", sstrerror(e.code()))};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 1, 2, params);
   }
   // no need to cleanup fileIds since the ownership of its content
   // was transmitted to req and the deletion of req will delete it !

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.17 $ $Release$ $Date: 2008/01/10 14:32:26 $ $Author: itglp $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/03/03 11:05:18 $ $Author: waldron $
  *
  *
  *
@@ -525,9 +525,9 @@ void castor::stager::RemoteJobSvc::putFailed
   client.sendRequest(&req, &rh);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // firstByteWritten
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::firstByteWritten
 (u_signed64 subRequestId)
   throw (castor::exception::Exception) {
