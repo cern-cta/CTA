@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/02/21 16:21:01 $ $Author: waldron $
+ * @(#)$RCSfile: ManagementThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/03 13:20:17 $ $Author: waldron $
  *
  * Cancellation thread used to cancel jobs in the LSF with have been in a 
  * PENDING status for too long 
@@ -435,7 +435,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
       if (iss.fail()) {
 	continue;
       }
-      
+
       // Diskserver and or requested filesystem is disabled ?
       std::map<std::string, 
 	castor::jobmanager::DiskServerResource *>::const_iterator it =
@@ -444,15 +444,17 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 	DiskServerResource *ds = (*it).second;
 	for (unsigned int i = 0; i < ds->fileSystems().size(); i++) {
 	  FileSystemResource *fs = ds->fileSystems()[i];
-	  if (fs->mountPoint() != fileSystem) {
+	  if (ds->status() == castor::stager::DISKSERVER_DISABLED) {
+	    disabled = rfs.size();
+	    break;
+	  } else if (fs->mountPoint() != fileSystem) {
 	    continue;
-	  } else if (ds->status() == castor::stager::DISKSERVER_DISABLED) {
-	    disabled++;
 	  } else if (requestType == OBJ_StageDiskCopyReplicaRequest) {
 	    if (fs->status() == castor::stager::FILESYSTEM_DISABLED) {
 	      disabled++;
 	    }
-	  } else if (fs->status() != castor::stager::FILESYSTEM_PRODUCTION) {
+	  } else if ((fs->status() != castor::stager::FILESYSTEM_PRODUCTION) ||
+		     (ds->status() != castor::stager::DISKSERVER_PRODUCTION )){
 	    disabled++;
 	  }
 	}
@@ -489,7 +491,7 @@ void castor::jobmanager::ManagementThread::processJob(jobInfoEnt *job) {
 
   // Handle cases whereby the diskpool/svcclass has no enabled filesystems
   // for requests which do not force a set of requested filesystems. e.g. PUTs
-  else {
+  if ((!rfs.size()) || (requestType == OBJ_StageDiskCopyReplicaRequest)) {
 
     // Map the default queue name to the default svcclass.
     std::string queue = job->submit.queue;
