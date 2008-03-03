@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.25 $ $Release$ $Date: 2008/02/26 16:26:24 $ $Author: waldron $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2008/03/03 11:06:22 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -252,7 +252,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
     castor::stager::GCFile *gf = new castor::stager::GCFile();
     gf->setDiskCopyId(*it);
     res.addOrphanFileIds(gf);
-    // "File deleted since it disappeared from nameServer"
+    // "File deleted since it disappeared from nameserver"
     fileId.fileid = *it;
     castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FNSDEL, 0, 0, &fileId);
   }
@@ -272,13 +272,8 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
   }
 }
 
-
-
-
 //-----------------------------------------------------------------------------
 // handleStgFilesDeleted
-// the main difference with the NameServer part
-// is that we dont need information about the nsHost
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
 (castor::stager::Request* req,
@@ -350,7 +345,6 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_EXCEPT, 3, params);
   }
 }
-
 
 //-----------------------------------------------------------------------------
 // process

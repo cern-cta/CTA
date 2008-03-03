@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.49 $ $Release$ $Date: 2008/02/26 14:34:30 $ $Author: waldron $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2008/03/03 11:06:22 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -180,31 +180,31 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     /* after calling the corresponding stagerService function, to show the decision taken */
     { STAGER_SUBREQ_SELECTED, "Request selected by subRequestToDo"},
     { STAGER_REQ_PROCESSED, "Request processed"},
-    {STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
-    {STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
-    {STAGER_WAITSUBREQ, "Request moved to Wait"},
-    {STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
-    {STAGER_GET_REPLICATION, "Triggering internal DiskCopy replication"},
-    {STAGER_PREPARETOGET_DISK2DISKCOPY, "Triggering DiskCopy replication"},
-    {STAGER_TAPE_RECALL, "Triggering Tape Recall"},
-    {STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
-    {STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
-    {STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
+    { STAGER_ARCHIVE_SUBREQ, "Archiving subrequest"},
+    { STAGER_NOTHING_TOBEDONE, "Diskcopy available, nothing to be done"},
+    { STAGER_WAITSUBREQ, "Request moved to Wait"},
+    { STAGER_REPACK_MIGRATION, "Starting Repack Migration"},
+    { STAGER_GET_REPLICATION, "Triggering internal DiskCopy replication"},
+    { STAGER_PREPARETOGET_DISK2DISKCOPY, "Triggering DiskCopy replication"},
+    { STAGER_TAPE_RECALL, "Triggering Tape Recall"},
+    { STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
+    { STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
+    { STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
     
     /* DLF_LVL_ERROR */
-    {STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
-    {STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
-    {STAGER_USER_INVALID, "Invalid user"},
-    {STAGER_USER_PERMISSION, "User doesn't have the right permission"},
-    {STAGER_USER_NONFILE, "User asking for a non existing file"},
-    {STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
-    {STAGER_UNABLETOPERFORM, "Unable to perform request, notifying user"},
-    {STAGER_EXPERT_EXCEPTION, "Error while asking the Expert System"},
-    {STAGER_CNS_EXCEPTION, "Error on the Name Server"},
-    {STAGER_SUBREQUESTUUID_EXCEPTION, "Impossible to get the subrequest Uuid"},
-    {STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},
-    {STAGER_CASTORFILE_EXCEPTION, "Impossible to get the CastorFile"},
-    {STAGER_INVALID_TYPE, "Request type not valid for this thread pool"},
+    { STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
+    { STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
+    { STAGER_USER_INVALID, "Invalid user"},
+    { STAGER_USER_PERMISSION, "User doesn't have the right permission"},
+    { STAGER_USER_NONFILE, "User asking for a non existing file"},
+    { STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
+    { STAGER_UNABLETOPERFORM, "Unable to perform request, notifying user"},
+    { STAGER_EXPERT_EXCEPTION, "Error while asking the Expert System"},
+    { STAGER_CNS_EXCEPTION, "Error on the Name Server"},
+    { STAGER_SUBREQUESTUUID_EXCEPTION, "Impossible to get the subrequest Uuid"},
+    { STAGER_REQUESTUUID_EXCEPTION, "Impossible to get the request Uuid"},
+    { STAGER_CASTORFILE_EXCEPTION, "Impossible to get the CastorFile"},
+    { STAGER_INVALID_TYPE, "Request type not valid for this thread pool"},
 
     /*******************/
     /* QueryRequestSvc */
@@ -232,7 +232,8 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_GCSVC_NSFILDEL,"Invoking nsFilesDeleted"},
     { STAGER_GCSVC_STGFILDEL, "Invoking stgFilesDeleted"},
     { STAGER_GCSVC_FSTGDEL, "File to be unlinked since it dissapeared from the stager"},
-    
+    { STAGER_GCSVC_FNSDEL, "File deleted since it disappeared from nameserver"},
+
     /************/
     /* ErrorSvc */
     { STAGER_ERRSVC_GETSVC,  "Could not get Svc"},

@@ -111,7 +111,7 @@ namespace castor{
 	STAGER_GCSVC_SELF2DEL = 117, /* "Invoking selectFiles2Delete" */
 	STAGER_GCSVC_FSEL4DEL = 118, /* "File selected for deletion" */
 	STAGER_GCSVC_NSFILDEL = 119, /* "Invoking nsFilesDeleted" */
-	STAGER_GCSVC_FNSDEL = 120, /* "File deleted since it disappeared from nameServer" */
+	STAGER_GCSVC_FNSDEL = 120, /* "File deleted since it disappeared from nameserver" */
 	STAGER_GCSVC_STGFILDEL = 125, /* "Invoking stgFilesDeleted" */
 	STAGER_GCSVC_FSTGDEL = 126 , /* "File to be unlinked since it dissapeared from the stager" */
 
