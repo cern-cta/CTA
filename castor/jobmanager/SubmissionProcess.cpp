@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.13 $ $Release$ $Date: 2008/02/21 16:32:33 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/03 13:13:01 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -390,6 +390,7 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	<< " -D " << request->destDiskCopyId()
 	<< " -X " << request->sourceDiskCopyId()
 	<< " -S " << request->svcClass()
+	<< " -t " << request->requestCreationTime()
 	<< " -R " << m_sharedLSFResource << "/$LSB_JOBID";
   } else {
     cmd << "/usr/bin/stagerJob "
@@ -414,7 +415,8 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	<< ((request->ipAddress() & 0x0000FF00) >> 8)  << "."
 	<< ((request->ipAddress() & 0x000000FF))
 	<< ":" << request->port() << "\""
-	<< " " << request->clientSecure() ;
+	<< " " << request->clientSecure()
+	<< " " << request->requestCreationTime();
   }
   strncpy(command, cmd.str().c_str(), CA_MAXLINELEN);
   command[CA_MAXLINELEN] = '\0';
@@ -439,7 +441,8 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	 castor::dlf::Param("SvcClass", request->svcClass()),
 	 castor::dlf::Param("AskedHosts", m_job.numAskedHosts),
 	 castor::dlf::Param("SourceDiskCopyId", request->sourceDiskCopyId()),
-	 castor::dlf::Param("SubmissionTime", submissionTime * 0.000001),
+	 castor::dlf::Param("SubmissionTime", 
+			    submissionTime != 0 ? submissionTime * 0.000001 : 0),
 	 castor::dlf::Param(m_subRequestId)};
       castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 45, 8, params, &m_fileId);
       
