@@ -270,27 +270,27 @@ void* castor::server::_signalThread_run(void* arg)
       }
 
       switch (sig_number) {       
-        case SIGABRT:
-        case SIGTERM:
-          daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
-          break;
+      case SIGABRT:
+      case SIGTERM:
+	daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
+	break;
         
-        case SIGINT:
-          daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
-          break;
-          
-        case SIGCHLD:
-          daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
-          break;
-	 
-        case SIGPIPE:
-          // ignore
-          break;
-
-        default:
-          // all other signals
-          daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
-          break;
+      case SIGINT:
+	daemon->m_signalMutex->setValueNoMutex(castor::server::STOP_NOW);
+	break;
+        
+      case SIGCHLD:
+	daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
+	break;
+	
+      case SIGPIPE:
+	// ignore
+	break;
+	
+      default:
+	// all other signals
+	daemon->m_signalMutex->setValueNoMutex(-1*sig_number);
+	break;
       }
       // signal the main thread to process the signal we got
       daemon->m_signalMutex->signal();

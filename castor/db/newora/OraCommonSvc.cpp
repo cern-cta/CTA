@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.30 $ $Release$ $Date: 2008/02/19 09:40:04 $ $Author: itglp $
+ * @(#)$RCSfile: OraCommonSvc.cpp,v $ $Revision: 1.31 $ $Release$ $Date: 2008/03/03 11:00:28 $ $Author: waldron $
  *
  * Implementation of the ICommonSvc for Oracle - CDBC version
  *
@@ -60,9 +60,9 @@
 
 #define NS_SEGMENT_NOTOK (' ')
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Instantiation of a static factory class
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 static castor::SvcFactory<castor::db::ora::OraCommonSvc>* s_factoryOraCommonSvc =
   new castor::SvcFactory<castor::db::ora::OraCommonSvc>();
 
@@ -90,9 +90,9 @@ const std::string castor::db::ora::OraCommonSvc::s_selectFileSystemStatementStri
   "SELECT d.id, d.status, d.adminStatus, d.readRate, d.writeRate, d.nbReadStreams, d.nbWriteStreams, d.nbReadWriteStreams, d.nbMigratorStreams, d.nbRecallerStreams, f.id, f.free, f.minFreeSpace, f.minAllowedFreeSpace, f.maxFreeSpace, f.spaceToBeFreed, f.totalSize, f.readRate, f.writeRate, f.nbReadStreams, f.nbWriteStreams, f.nbReadWriteStreams, f.nbMigratorStreams, f.nbRecallerStreams, f.status, f.adminStatus FROM FileSystem f, DiskServer d WHERE d.name = :1 AND f.mountPoint = :2 AND f.diskserver = d.id";
 
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // OraCommonSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   BaseSvc(name), DbBaseObj(0),
   m_requestToDoStatement(0),
@@ -102,23 +102,23 @@ castor::db::ora::OraCommonSvc::OraCommonSvc(const std::string name) :
   m_selectFileSystemStatement(0) {
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ~OraCommonSvc
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::db::ora::OraCommonSvc::~OraCommonSvc() throw() {
   reset();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // id
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraCommonSvc::id() const {
   return ID();
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // ID
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 const unsigned int castor::db::ora::OraCommonSvc::ID() {
   return castor::SVC_ORACOMMONSVC;
 }
@@ -127,7 +127,7 @@ const unsigned int castor::db::ora::OraCommonSvc::ID() {
 // reset
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCommonSvc::reset() throw() {
-  //Here we attempt to delete the statements correctly
+  // Here we attempt to delete the statements correctly
   // If something goes wrong, we just ignore it
   try {
     if (m_requestToDoStatement) deleteStatement(m_requestToDoStatement);
@@ -144,9 +144,9 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
   m_selectFileSystemStatement = 0;
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // requestToDo
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Request*
 castor::db::ora::OraCommonSvc::requestToDo(std::string service)
   throw (castor::exception::Exception) {
@@ -201,9 +201,9 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectTape
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::Tape*
 castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
                                           const int side,
@@ -238,7 +238,7 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
         return tape;
       } catch (castor::exception::Exception e) {
         delete tape;
-        // XXX  Change createRep in CodeGenerator to forward the oracle errorcode 
+        // XXX Change createRep in CodeGenerator to forward the oracle errorcode 
         if ( e.getMessage().str().find("ORA-00001", 0) != std::string::npos ) {
           // if violation of unique constraint, ie means that
           // some other thread was quicker than us on the insertion
@@ -306,9 +306,9 @@ castor::db::ora::OraCommonSvc::selectTape(const std::string vid,
   // We should never reach this point
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectSvcClass
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::SvcClass*
 castor::db::ora::OraCommonSvc::selectSvcClass
 (const std::string name)
@@ -352,9 +352,9 @@ castor::db::ora::OraCommonSvc::selectSvcClass
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFileClass
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::FileClass*
 castor::db::ora::OraCommonSvc::selectFileClass
 (const std::string name)
@@ -392,9 +392,9 @@ castor::db::ora::OraCommonSvc::selectFileClass
   }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // selectFileSystem
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::stager::FileSystem*
 castor::db::ora::OraCommonSvc::selectFileSystem
 (const std::string mountPoint,
@@ -466,25 +466,22 @@ castor::db::ora::OraCommonSvc::selectFileSystem
   }
 }
 
-
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // commit
-// -----------------------------------------------------------------------
-void
-castor::db::ora::OraCommonSvc::commit() {
-	try {
-	  cnvSvc()->commit();
-	} catch (castor::exception::Exception) {
-	  // commit failed, let's rollback
-	  rollback();
-	}
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCommonSvc::commit() {
+  try {
+    cnvSvc()->commit();
+  } catch (castor::exception::Exception) {
+    // commit failed, let's rollback
+    rollback();
+  }
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // rollback
-// -----------------------------------------------------------------------
-void
-castor::db::ora::OraCommonSvc::rollback() {
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCommonSvc::rollback() {
   try {
     cnvSvc()->rollback();
   } catch (castor::exception::Exception) {
@@ -493,31 +490,29 @@ castor::db::ora::OraCommonSvc::rollback() {
   }
 }
 
-// -------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //  handleException
-// -------------------------------------------------------------------------
-void
-castor::db::ora::OraCommonSvc::handleException(oracle::occi::SQLException& e) {
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCommonSvc::handleException
+(oracle::occi::SQLException& e) {
   dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->handleException(e);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createStatement - for Oracle specific statements
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 oracle::occi::Statement*
 castor::db::ora::OraCommonSvc::createStatement (const std::string &stmtString)
   throw (castor::exception::Exception) {
     return dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->createOraStatement(stmtString);
 }
 
-// -----------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // deleteStatement - for Oracle specific statements
-// -----------------------------------------------------------------------
-void
-castor::db::ora::OraCommonSvc::deleteStatement(oracle::occi::Statement* stmt)
+//------------------------------------------------------------------------------
+void castor::db::ora::OraCommonSvc::deleteStatement(oracle::occi::Statement* stmt)
   throw (castor::exception::Exception) {
-    castor::db::ora::OraStatement* oraStmt =
-        new castor::db::ora::OraStatement(stmt, dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc()));
-    delete oraStmt;
+  castor::db::ora::OraStatement* oraStmt =
+    new castor::db::ora::OraStatement(stmt, dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc()));
+  delete oraStmt;
 }
-
