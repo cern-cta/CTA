@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:03 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/03 13:54:20 $ $Author: waldron $
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
@@ -87,16 +87,9 @@ void castor::gc::DeletionThread::run(void *param) {
     return;
   }
 
-  // Retrieve DiskServerName, first attempt is environment, second attempt
-  // using castor.conf and finally gethostname
-  char *value;
+  // Determine the name of the diskserver
   try {
-    if ((value = getenv("GC_TARGET")) ||
-	(value = getconfent("GC", "TARGET", 0))) {
-      m_diskServerName = value;
-    } else {
-      m_diskServerName = castor::System::getHostName();
-    }
+    m_diskServerName = castor::System::getHostName();
   } catch (castor::exception::Exception e) {
     // "Exception caught trying to getHostName"
     castor::dlf::Param params[] =
@@ -107,8 +100,9 @@ void castor::gc::DeletionThread::run(void *param) {
   }
 
   // Get the GC Interval
+  char *value = 0;
   if ((value = getenv("GC_INTERVAL")) ||
-      (value = getconfent("GC", "INTERVAL", 0))) {
+      (value = getconfent("GC", "Interval", 0))) {
     m_interval = atoi(value);
   }
 
@@ -118,7 +112,7 @@ void castor::gc::DeletionThread::run(void *param) {
   // oscillation in incoming network traffic due to deletions.
   int delay = 1;
   if ((value = getenv("GC_IMMEDIATESTART")) ||
-      (value = getconfent("GC", "IMMEDIATESTART", 0))) {
+      (value = getconfent("GC", "ImmediateStart", 0))) {
     if (!strcasecmp(value, "yes") || !strcmp(value, "1")) {
       delay = 0;
     }
@@ -132,10 +126,9 @@ void castor::gc::DeletionThread::run(void *param) {
 
   // "Garbage Collector started successfully"
   castor::dlf::Param params[] =
-    {castor::dlf::Param("Machine", m_diskServerName),
-     castor::dlf::Param("Interval", m_interval),
+    {castor::dlf::Param("Interval", m_interval),
      castor::dlf::Param("Delay", delay)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 3, params);
+  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 2, params);
 
   // Sleep a bit
   if (delay) {
@@ -145,23 +138,20 @@ void castor::gc::DeletionThread::run(void *param) {
   // Endless loop
   for (;;) {
     // "Checking for garbage"
-    castor::dlf::Param params[] =
-      {castor::dlf::Param("Machine", m_diskServerName)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 6, 1, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 6);
 
     // Get new sleep interval if the environment has been changed
     int intervalnew;
     if ((value = getenv("GC_INTERVAL")) ||
-	(value = getconfent("GC", "INTERVAL", 0))) {
+	(value = getconfent("GC", "Interval", 0))) {
       intervalnew = atoi(value);
       if (intervalnew != m_interval) {
 	m_interval = intervalnew;
 
 	// "Sleep interval changed"
 	castor::dlf::Param params[] =
-	  {castor::dlf::Param("Machine", m_diskServerName),
-	   castor::dlf::Param("Interval", m_interval)};
-	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7, 2, params);
+	  {castor::dlf::Param("Interval", m_interval)};
+	castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 7, 1, params);
       }
     }
 
