@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.34 $ $Release$ $Date: 2008/02/22 14:56:54 $ $Author: mmartins $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2008/03/03 10:59:37 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -578,15 +578,13 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
     handleException(e);
     // "Error caught in nsFilesDeleted"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message", e.getMessage())};
+      {castor::dlf::Param("Message", e.getMessage())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 15, 1, params);
     if (0 != lens) free(lens);
     if (0 != buffer) free(buffer);
   }
   return orphans;
 }
-
-
 
 //------------------------------------------------------------------------------
 // stgFilesDeleted
@@ -604,7 +602,7 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
       m_stgFilesDeletedStatement =
         createStatement(s_stgFilesDeletedStatementString);
       m_stgFilesDeletedStatement->registerOutParam
-        (3, oracle::occi::OCCICURSOR);
+        (2, oracle::occi::OCCICURSOR);
     }
     // Deal with the list of diskCopyIds
     unsigned int nb = diskCopyIds.size();
@@ -618,14 +616,14 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
     }
     ub4 unused = nb;
     m_stgFilesDeletedStatement->setDataBufferArray
-      (2, buffer, oracle::occi::OCCI_SQLT_NUM,
+      (1, buffer, oracle::occi::OCCI_SQLT_NUM,
        nb, &unused, 21, lens);
     // execute the statement
     m_stgFilesDeletedStatement->executeUpdate();
     // get the result, that is a cursor on the diskCopyIds that were not
     // present in the stager
     oracle::occi::ResultSet *rset =
-      m_stgFilesDeletedStatement->getCursor(3);
+      m_stgFilesDeletedStatement->getCursor(2);
     // Loop over the files returned
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       orphans.push_back((u_signed64)rset->getDouble(1));
@@ -637,8 +635,8 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
     handleException(e);
     // "Error caught in stgFilesDeleted"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("message", e.getMessage())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 15, 1, params);
+      {castor::dlf::Param("Message", e.getMessage())};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_ORACLELIB + 16, 1, params);
     if (0 != lens) free(lens);
     if (0 != buffer) free(buffer);
   }
