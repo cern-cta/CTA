@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.642 $ $Date: 2008/02/29 10:47:44 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.643 $ $Date: 2008/03/03 13:11:41 $ $Author: waldron $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -117,8 +117,7 @@ CREATE OR REPLACE TYPE "numList" IS TABLE OF INTEGER;
  *   - Dealing with files that are STAGEOUT on the fileSystem
  *     coming back but already exist on another one
  */
-CREATE OR REPLACE
-PROCEDURE checkFSBackInProd(fsId NUMBER) AS
+CREATE OR REPLACE PROCEDURE checkFSBackInProd(fsId NUMBER) AS
   srId NUMBER;
   srIds "numList";
 BEGIN

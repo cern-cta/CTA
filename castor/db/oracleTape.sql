@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.642 $ $Date: 2008/02/29 17:00:45 $ $Author: gtaur $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.643 $ $Date: 2008/03/03 13:11:33 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -716,7 +716,7 @@ BEGIN
   IF segs.COUNT > 0 THEN
      UPDATE Tape SET status = 4 -- MOUNTED
        WHERE id = tapeId;
-     FORALL j in segs.FIRST..segs.LAST -- bulk update with the forall..
+     FORALL j IN segs.FIRST..segs.LAST -- bulk update with the forall..
        UPDATE Segment set status = 7 -- SELECTED
        WHERE id = segs(j);
   END IF;
@@ -979,7 +979,7 @@ CREATE OR REPLACE PROCEDURE startChosenStreams
         (streamIds IN castor."cnumList",
 	initSize IN NUMBER) AS
 BEGIN	
-  FOR i in streamIds.FIRST .. streamIds.LAST LOOP
+  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
     UPDATE Stream SET initialSizeToTransfer = initSize -- PENDING
      WHERE Stream.status=7 -- WAITPOLICY
        AND Stream.initialSizeToTransfer = 0 -- I overwrite it only if it is NULL
@@ -997,7 +997,7 @@ END;
 CREATE OR REPLACE PROCEDURE stopChosenStreams
         (streamIds IN castor."cnumList") AS
 BEGIN	
-  FOR i in streamIds.FIRST .. streamIds.LAST LOOP
+  FOR i IN streamIds.FIRST .. streamIds.LAST LOOP
     UPDATE Stream SET Stream.status = 6 -- STOPPED
      WHERE id = streamIds(i) AND Stream.status=7; -- WAITPOLICY
   END LOOP;	
@@ -1011,7 +1011,7 @@ CREATE OR REPLACE PROCEDURE resurrectCandidates
 AS
   unused "numList";
 BEGIN
-  FORALL i in migrationCandidates.FIRST .. migrationCandidates.LAST
+  FORALL i IN migrationCandidates.FIRST .. migrationCandidates.LAST
   UPDATE TapeCopy SET Status=1 WHERE Status=7 AND id=migrationCandidates(i);
   COMMIT;
 END;

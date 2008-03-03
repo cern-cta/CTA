@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.638 $ $Date: 2008/02/26 16:11:24 $ $Author: waldron $
+ * @(#)$RCSfile: oracleCommon.sql,v $ $Revision: 1.639 $ $Date: 2008/03/03 13:11:38 $ $Author: waldron $
  *
  * This file contains all schema definitions which are not generated automatically
  * and some common PL/SQL utilities, appended at the end of the generated code
@@ -171,13 +171,10 @@ CREATE GLOBAL TEMPORARY TABLE NsFilesDeletedOrphans
   (fileid NUMBER)
   ON COMMIT DELETE ROWS;
 
-
 /* Global temporary table to handle output of the stgFilesDeletedProc procedure */
 CREATE GLOBAL TEMPORARY TABLE StgFilesDeletedOrphans
   (diskCopyId NUMBER)
   ON COMMIT DELETE ROWS;
-
-
 
 /* Global temporary tables for the cleanup procedures */
 CREATE GLOBAL TEMPORARY TABLE ArchivedRequestCleaning
@@ -299,7 +296,6 @@ INSERT INTO LockTable SELECT id, id FROM DiskServer;
 /* FileSystemsToCheck used to optimise the processing of filesystems */
 /* when they change status                                           */
 /*********************************************************************/
-
 CREATE TABLE FileSystemsToCheck (FileSystem NUMBER PRIMARY KEY, ToBeChecked NUMBER);
 INSERT INTO FileSystemsToCheck SELECT id, 0 FROM FileSystem;
 
