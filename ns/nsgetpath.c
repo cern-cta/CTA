@@ -21,7 +21,8 @@ int main(int argc, char**argv) {
 	u_signed64 fileid = 0;
 	char *server = NULL;
 	char filepath[CA_MAXPATHLEN + 1];
-	
+	char tmpbuf[21];
+
 	if (argc >= 3) {
 		server = argv[1];
 		fileid = strtou64(argv[2]);
@@ -51,8 +52,8 @@ int main(int argc, char**argv) {
 	}
 	
 	if (Cns_getpath(server, fileid, filepath) != 0) {
-		fprintf(stderr, "server %s fileid %llu: %s\n",
-			server, fileid, sstrerror(serrno));
+		fprintf(stderr, "server %s fileid %s: %s\n",
+			server, u64tostr (fileid, tmpbuf, 0), sstrerror(serrno));
 		exit(USERR);
 	}
 	
