@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.639 $ $Date: 2008/02/26 16:20:52 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.640 $ $Date: 2008/03/03 13:08:34 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -744,7 +744,8 @@ CREATE OR REPLACE PROCEDURE jobToSchedule(srId OUT INTEGER, srSubReqId OUT VARCH
                         reqUsername OUT VARCHAR2, srOpenFlags OUT VARCHAR2, clientIp OUT INTEGER,
                         clientPort OUT INTEGER, clientVersion OUT INTEGER, clientType OUT INTEGER,
                         reqSourceDiskCopyId OUT INTEGER, reqDestDiskCopyId OUT INTEGER, 
-                        clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2) AS
+                        clientSecure OUT INTEGER, reqSourceSvcClass OUT VARCHAR2, 
+                        reqCreationTime OUT INTEGER) AS
   dsId INTEGER;
   nuId INTEGER;                   
 BEGIN
@@ -761,39 +762,39 @@ BEGIN
   SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
          Request.reqId, Request.euid, Request.egid, Request.username, 
 	 Request.direction, Request.sourceDiskCopyId, Request.destDiskCopyId,
-	 Client.ipAddress, Client.port, Client.version,
+	 Client.ipAddress, Client.port, Client.version, Request.creationTime,
 	 (SELECT type 
             FROM Id2type 
            WHERE id = Client.id) clientType, Client.secure
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, clientType, clientSecure
+         clientVersion, reqCreationTime, clientType, clientSecure, reqCreationTime
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
-         (SELECT id, username, euid, egid, reqid, client, 
+         (SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
             FROM StagePutRequest 
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 
+          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'r' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
             FROM StageGetRequest 
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 
+          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'r' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
             FROM StagePrepareToGetRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 
+          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'o' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
             FROM StageUpdateRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 
+          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'o' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
             FROM StagePrepareToUpdateRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 
+          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'r' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
             FROM StageRepackRequest
            UNION ALL
-          SELECT id, username, euid, egid, reqid, client, 
+          SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, sourceDiskCopyId, destDiskCopyId
             FROM StageDiskCopyReplicaRequest) Request
    WHERE SubRequest.id = srId
