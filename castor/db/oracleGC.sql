@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.637 $ $Date: 2008/02/26 16:22:37 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.638 $ $Date: 2008/03/03 13:10:26 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -170,7 +170,7 @@ END;
 CREATE OR REPLACE PROCEDURE updateFiles2Delete
 (dcIds IN castor."cnumList") AS
 BEGIN
-  FORALL i in dcIds.FIRST .. dcIds.LAST
+  FORALL i IN dcIds.FIRST..dcIds.LAST
     UPDATE DiskCopy
        set status = 9, -- BEING_DELETED
            creationTime = getTime()
@@ -294,7 +294,7 @@ BEGIN
   isFirst := 1;
   IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
-  FOR i in dcIds.FIRST .. dcIds.LAST LOOP
+  FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
     SELECT castorFile, fileSystem INTO cfId, fsId
       FROM DiskCopy WHERE id = dcIds(i);
     LOOP
@@ -371,7 +371,7 @@ BEGIN
     -- Lock the Castor File and retrieve size
     SELECT fileSize INTO fsize FROM CastorFile WHERE id = cfIds(i);
     -- delete the DiskCopies
-    FOR d in (SELECT id FROM Diskcopy WHERE castorfile = cfIds(i)) LOOP
+    FOR d IN (SELECT id FROM Diskcopy WHERE castorfile = cfIds(i)) LOOP
       DELETE FROM Id2Type WHERE id = d.id;
       DELETE FROM DiskCopy WHERE id = d.id
         RETURNING fileSystem INTO fsId;
@@ -421,7 +421,7 @@ BEGIN
   isFirst := 1;
   IF dcIds.COUNT > 0 THEN
   -- Loop over the deleted files
-  FOR i in dcIds.FIRST .. dcIds.LAST LOOP
+  FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
     -- set status of DiskCopy to FAILED
     UPDATE DiskCopy SET status = 4 -- FAILED
      WHERE id = dcIds(i)
@@ -449,10 +449,7 @@ BEGIN
 END;
 
 
-/*
- * PL/SQL method implementing the core part of stage queries
-/* PL/SQL method implementing nsFilesDeletedProc
- */
+/* PL/SQL method implementing nsFilesDeletedProc */
 CREATE OR REPLACE PROCEDURE nsFilesDeletedProc
 (nsh IN VARCHAR2,
  fileIds IN castor."cnumList",
@@ -464,7 +461,7 @@ BEGIN
   END IF;
   -- Loop over the deleted files and split the orphan ones
   -- from the normal ones
-  FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
+  FOR fid IN fileIds.FIRST .. fileIds.LAST LOOP
     BEGIN
       SELECT id INTO unused FROM CastorFile
        WHERE fileid = fileIds(fid) AND nsHost = nsh;
@@ -481,26 +478,27 @@ BEGIN
 END;
 
 
-
-
-/* PL/SQL method implementing stgFilesDeletedProc
- */
+/* PL/SQL method implementing stgFilesDeletedProc */
 CREATE OR REPLACE PROCEDURE stgFilesDeletedProc
-(diskCopyIds IN castor."cnumList",
+(dcIds IN castor."cnumList",
  stgOrphans OUT castor.IdRecord_Cur) AS
   unused NUMBER;
 BEGIN
-  INSERT INTO StgDeletedOrphans VALUES(diskCopyIds);
+  -- Nothing to do
+  IF dcIds.COUNT <= 0 THEN
+    RETURN;
+  END IF;
+  -- Insert diskcopy ids into a temporary table
+  FOR i IN dcIds.FIRST..dcIds.LAST LOOP
+    INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
+  END LOOP;
+  -- Return a list of diskcopy ids which no longer exist
   OPEN stgOrphans FOR
-	SELECT tmpDiskCopyId FROM StgDeletedOrphans
-         WHERE NOT EXIST(
-		SELECT id FROM DiskCopy 
-		 WHERE id = tmpDiskCopyId);
-END;	
-
-
-
-
+    SELECT diskCopyId FROM StgFilesDeletedOrphans
+     WHERE NOT EXISTS (
+        SELECT id FROM DiskCopy
+         WHERE id = diskCopyId);
+END;
 
 
 /*
