@@ -551,6 +551,24 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_requestCreationTime
+       * The time the request was created in the database
+       * @return the value of m_requestCreationTime
+       */
+      u_signed64 requestCreationTime() const {
+        return m_requestCreationTime;
+      }
+
+      /**
+       * Set the value of m_requestCreationTime
+       * The time the request was created in the database
+       * @param new_var the new value of m_requestCreationTime
+       */
+      void setRequestCreationTime(u_signed64 new_var) {
+        m_requestCreationTime = new_var;
+      }
+
+      /**
        * Get the value of m_id
        * The id of this object
        * @return the value of m_id
@@ -644,6 +662,9 @@ namespace castor {
 
       /// The service class name of the source diskcopy
       std::string m_sourceSvcClass;
+
+      /// The time the request was created in the database
+      u_signed64 m_requestCreationTime;
 
       /// The id of this object
       u_signed64 m_id;
