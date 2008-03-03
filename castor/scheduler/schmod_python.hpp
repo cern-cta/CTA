@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/22 08:57:52 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:50 $ $Author: waldron $
  *
  * Header file for the Castor LSF External Plugin - Phase 2 (Python)
  *

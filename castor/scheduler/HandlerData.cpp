@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/22 08:57:52 $ $Author: waldron $
+ * @(#)$RCSfile: HandlerData.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:49 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -112,7 +112,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
       std::istringstream buf(requestedFileSystems);
       buf.exceptions(std::ios_base::failbit);
       try {
-
+	
 	// For StageDiskCopyReplicaRequest's the RFS is actually the source
 	// diskserver and filesystem which holds the copy of the castor file
 	// to be replicated
@@ -124,7 +124,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
 	    std::string diskServer, fileSystem;
 	    std::getline(buf, diskServer, ':');
 	    std::getline(buf, fileSystem, '|');
-
+	    
 	    // We store information in the requested filesystems vector both
 	    // in terms of diskservers and diskserver:filesystem combination
 	    // for search convenience later.
@@ -141,7 +141,7 @@ castor::scheduler::HandlerData::HandlerData(void *resreq)
   } catch (std::ios_base::failure e) {
     castor::exception::Exception ex(EINVAL);
     ex.getMessage() << "Unable to parse external scheduler option: "
-		   << "'" << msgArray[1] << "'" << "Error was : " << e.what();
+		    << "'" << msgArray[1] << "'" << "Error was : " << e.what();
     throw e;
-  }  
+  }
 }
