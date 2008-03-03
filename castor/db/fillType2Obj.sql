@@ -125,4 +125,6 @@ INSERT INTO Type2Obj (type, object) VALUES (145, 'Disk2DiskCopyStartResponse');
 INSERT INTO Type2Obj (type, object) VALUES (146, 'ThreadNotification');
 INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
 INSERT INTO Type2Obj (type, object) VALUES (148, 'VdqmTape');
+INSERT INTO Type2Obj (type, object) VALUES (149, 'StgFilesDeleted');
+INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');
 
