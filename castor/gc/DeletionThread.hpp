@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/09/04 12:38:44 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:03 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -38,9 +38,9 @@ namespace castor {
      * Deletion Thread
      */
     class DeletionThread: public castor::server::IThread {
-      
+
     public:
-      
+
       /**
        * Default constructor
        */
@@ -59,20 +59,20 @@ namespace castor {
 
       /// Not implemented
       virtual void stop() {};
-      
+
     private:
-      
+
       /**
-       * get size (in bytes) of a file
+       * Get size (in bytes) of a file
        * @param filepath the path of the file
        * @return the size (in bytes) of the file
        * @exception when the internal stat64 failed
        */
       u_signed64 gcGetFileSize (std::string& filepath)
 	throw (castor::exception::Exception);
-      
+
       /**
-       * actually remove the file from local filesystem.
+       * Actually remove the file from local filesystem.
        * @param filepath the path of the file to remove
        * @return the size (in bytes) of the removed file
        * @exception when the removing failed

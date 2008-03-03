@@ -19,9 +19,9 @@
  *
  * @(#)GcDaemon.cpp,v 1.10 $Release$ 2005/03/31 15:17:24 sponcec3
  *
- * Garbage collector daemon handling the deletion of local
- * files on a filesystem. Makes remote calls to the stager
- * to know what to delete and to update the catalog
+ * Garbage collector daemon handling the deletion of local files on a
+ * filesystem. Makes remote calls to the stager to know what to delete and to
+ * update the catalog
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -90,7 +90,6 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     {  1, "Starting Garbage Collector Daemon" },
     {  2, "Could not get RemoteStagerSvc" },
     {  3, "Got a bad RemoteStagerSvc" },
-    {  4, "Cannot get disk server name" },
     {  5, "Garbage Collector started successfully" },
     {  6, "Checking for garbage" },
     {  7, "Sleep interval changed" },
@@ -106,25 +105,22 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 17, "Exception caught trying to getHostName" },
     { 17, "Exception caught when starting GcDaemon" },
     { 18, "Starting synchronization thread" },
-    { 19, "Invalid value for synchronization interval. Used previous or default" },
-    { 20, "Invalid value for chunk size. Used previous or default" },
+    { 19, "Invalid GC/SyncInterval option, using default" },
+    { 20, "Invalid GC/ChunkSize option, using default" },
     { 21, "New synchronization interval" },
     { 22, "New synchronization chunk size" },
-    { 23, "Unable to retrieve mountPoints, giving up with synchronization" },
+    { 23, "Unable to retrieve mountpoints, giving up with synchronization" },
     { 24, "Could not list filesystem directories, giving up with filesystem's synchronisation" },
     { 25, "Could not list filesystem subdirectory, ignoring it for synchronization" },
-    { 26, "Synchronization configuration" },
-    { 27, "Deleting local file that was not in nameserver neither in stager catalog" },
-    { 28, "Deletion of orphan local file failed" },
-    { 29, "Malloc failure" },
-    { 30, "Synchronization configuration" },
-    { 31, "Synchronizing files with nameserver" },
-    { 32, "Nameserver error" },
-    { 33, "Cleaned up a number of files from the stager database" },
-    { 40, "Synchronizing files with the Stager"},
-    { 41, "Getting files which dont exist anymore in the Stager"},
-    { 42, "Deleting local file which is not in the Stager"},
-    { 43, "Failed Deletion of orphan file in the Stager"},
-    { -1, ""}}; 
+    { 27, "Deleting local file which is no longer in the nameserver" }, 
+    { 28, "Deletion of orphaned local file failed" },
+    { 29, "Memory allocation failure" },
+    { 30, "Synchronization configuration" }, 
+    { 31, "Synchronizing files with nameserver and stager catalog" },
+    { 32, "Error calling nameserver function Cns_bulkexist" },
+    { 33, "Summary of files removed by stager synchronization" },
+    { 35, "Summary of files removed by nameserver synchronization" },
+    { 36, "Deleting local file which is no longer in the stager catalog" },
+    { -1, ""}};
   dlfInit(messages);
 }
