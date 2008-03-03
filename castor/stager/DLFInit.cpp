@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2007/11/20 17:20:34 $ $Author: sponcec3 $
+ * @(#)$RCSfile: DLFInit.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 11:04:34 $ $Author: waldron $
  *
  * Initialization of the DLF messages for the stager common part
  *
@@ -48,6 +48,7 @@ namespace castor {
 castor::stager::DLFInit::DLFInit() {
   castor::dlf::Message messages[] =
     {{ 0, "Exception caught in RemoteGCSvc::nsFilesDeleted"},
+     { 1, "Exception caught in RemoteGCSvc::stgFilesDeleted"},
      { -1, ""} };
   try {
     castor::dlf::dlf_addMessages(DLF_BASE_STAGERLIB, messages);
