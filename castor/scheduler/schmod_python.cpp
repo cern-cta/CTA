@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.1 $ $Release$ $Date: 2008/02/22 08:57:52 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:29:01 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -505,6 +505,9 @@ extern "C" {
     // avoided!
     candHostGroup *candGroupEntry = lsb_cand_getnextgroup(candGroupList);
     while (candGroupEntry != NULL) {
+      if (candGroupEntry->numOfMembers <= 0) {
+	return 0; // No candidate hosts provided
+      }
       int index = 0, reason = 0;
       while (index < candGroupEntry->numOfMembers) {
 	candHost *candHost = &(candGroupEntry->candHost[index]);
@@ -519,7 +522,7 @@ extern "C" {
 	  clusterStatus->find(*smDiskServer);
 
 	if (it == clusterStatus->end()) {
-	  continue;                    // Host not listed in shared memory
+	  reason = PEND_HOST_CUNKNOWN; // Host not listed in shared memory
 	} else if (python == NULL) {
 	  reason = PEND_HOST_PYERR;    // Embedded python interpreter error
 	} else {
@@ -662,7 +665,7 @@ extern "C" {
       } 
       candGroupEntry = lsb_cand_getnextgroup(NULL);
     }
-
+    
     // At this point we have made our final decision on which diskserver and
     // filesystem to use so we notify LSF of the result and increase the
     // deltas for our choice in the shared memory
@@ -863,15 +866,24 @@ extern "C" {
     fin << ipath.str() << std::endl;
     fin.close();
     
+    // Calculate statistics. Note the submission time of the job is only
+    // measured to the accuracy of 1 second 
+    timeval tv;
+    gettimeofday(&tv, NULL);
+    signed64 queueTime = ((tv.tv_sec * 1000000) + tv.tv_usec) - 
+      (j->submitTime * 1000000);
+
     // "Wrote notification file"
     castor::dlf::Param param[] = 
       {castor::dlf::Param("JobID", handler->jobId),
-       castor::dlf::Param("File", handler->notifyFile),
+       castor::dlf::Param("Filename", handler->notifyFile),
        castor::dlf::Param("OpenFlags", handler->openFlags),
        castor::dlf::Param("Content", ipath.str()),
        castor::dlf::Param("Matches", handler->matches),
+       castor::dlf::Param("QueueTime", 
+			  queueTime > 0 ? queueTime * 0.000001 : 0),
        castor::dlf::Param(handler->subReqId)};
-    castor::dlf::dlf_writep(handler->reqId, DLF_LVL_SYSTEM, 34, 6, param, 
+    castor::dlf::dlf_writep(handler->reqId, DLF_LVL_SYSTEM, 34, 7, param, 
 			    &handler->fileId);
 
     return 0;
@@ -982,7 +994,7 @@ extern "C" {
 	  python->pySet("TotalNbRecallerStreams", it->second.nbRecallerStreams());
 	  python->pySet("TotalNbMigratorStreams", it->second.nbMigratorStreams());
 
-	  // Update the ratings of the filesystem for all ratin groups
+	  // Update the ratings of the filesystem for all rating groups
 	  for (castor::monitoring::FileSystemStatus::iterator it3 = 
 		 it2->second.begin();
 	       it3 != it2->second.end(); it3++) {
