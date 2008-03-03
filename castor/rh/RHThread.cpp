@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/02/26 16:01:50 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/03/03 11:07:34 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -237,14 +237,13 @@ void castor::rh::RHThread::run(void* param) {
 
       castor::dlf::Param params2[] =
 	{castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
-	 castor::dlf::Param("Port", port),
 	 castor::dlf::Param("Type", type.str()),
 	 castor::dlf::Param("Euid", fr->euid()),
 	 castor::dlf::Param("Egid", fr->egid()),
 	 castor::dlf::Param("SvcClass", fr->svcClassName()),
 	 castor::dlf::Param("SubRequests", nbThreads),
 	 castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001)};
-      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 8, params2);
+      castor::dlf::dlf_writep(cuuid, DLF_LVL_MONITORING, 10, 7, params2);
     }
   } catch (castor::exception::Exception e) {
     // "Unable to send Ack to client"
