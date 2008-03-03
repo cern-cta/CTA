@@ -18,7 +18,7 @@
  ******************************************************************************************************/
 
 /**
- * $Id: dlf_lib.c,v 1.27 2008/01/09 12:47:04 waldron Exp $
+ * $Id: dlf_lib.c,v 1.28 2008/03/03 14:07:02 waldron Exp $
  */
 
 /* headers */
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -1347,6 +1348,7 @@ int DLL_DECL dlf_init(const char *facility, char *errptr, int usethreads) {
 			else {
 				if (sscanf(buffer, "%1023[^:]:%o", tmp, &perm) == 2) {
 					strcpy(buffer, tmp);
+					perm |= umask(0);
 				} else {
 					perm = 0644;
 				}
