@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.5 $ $Release$ $Date: 2008/02/21 16:05:28 $ $Author: waldron $
+ * @(#)$RCSfile: DiskCopyTransfer.cpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/03/03 13:22:01 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
         (freopen("/dev/null", "w", stderr) == NULL)) {
       castor::exception::Exception e(errno);
       e.getMessage() << "Failed to redirect standard file descriptors to "
-		      << "/dev/null" << std::endl;
+		     << "/dev/null" << std::endl;
       throw e;
     }
 

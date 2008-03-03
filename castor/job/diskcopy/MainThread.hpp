@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/02/21 16:05:28 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/03 13:22:01 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -158,6 +158,9 @@ namespace castor {
 	/// The location of the file to retrieve containing the diskserver and
 	/// filesystem to write too
 	std::string m_resourceFile;
+
+	/// The creation time of the original request in seconds since EPOCH
+	u_signed64 m_requestCreationTime;
 
       };
       

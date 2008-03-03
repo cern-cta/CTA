@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/02/21 16:05:28 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/03 13:22:01 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -53,7 +53,8 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
   m_svcClass(""),
   m_diskCopyId(0),
   m_sourceDiskCopyId(0),
-  m_resourceFile("") {
+  m_resourceFile(""),
+  m_requestCreationTime(0) {
 
   // Initialize the Cns_fileid structure
   memset(&m_fileId, 0, sizeof(m_fileId));
@@ -61,7 +62,7 @@ castor::job::diskcopy::MainThread::MainThread(int argc, char *argv[])
   // For statistical purposes
   timeval tv;
   gettimeofday(&tv, NULL);
-  m_startTime = tv.tv_sec * 1000000 + tv.tv_usec;
+  m_startTime = (tv.tv_sec * 1000000) + tv.tv_usec;
   
   // Process the command line arguments. Note: we log the error to stderr here
   // and not DLF as the most probable cause for this to fail is user error
@@ -207,6 +208,9 @@ void castor::job::diskcopy::MainThread::parseCommandLine
     // Resources
     { "svcclass",   REQUIRED_ARGUMENT, NULL, 'S' },
     { "resfile",    REQUIRED_ARGUMENT, NULL, 'R' },
+
+    // Logging/statistics
+    { "rstarttime", REQUIRED_ARGUMENT, NULL, 't' },
     { NULL,         0,                 NULL, 0   }
   };
 
@@ -216,7 +220,7 @@ void castor::job::diskcopy::MainThread::parseCommandLine
 
   // Parse command line arguments
   char c;
-  while ((c = Cgetopt_long(argc, argv, "c:hr:s:F:H:D:X:S:R:", longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, "c:hr:s:F:H:D:X:S:R:t:", longopts, NULL)) != -1) {
     switch (c) {
     case 'c':
     case 'h':
@@ -245,6 +249,9 @@ void castor::job::diskcopy::MainThread::parseCommandLine
       break;
     case 'R':
       m_resourceFile = Coptarg;
+      break;
+    case 't':
+      m_requestCreationTime = strutou64(Coptarg);
       break;
     default:
       help(argv[0]);
@@ -288,6 +295,7 @@ void castor::job::diskcopy::MainThread::help(std::string programName) {
     "\t--srcdc <id>            or -X  \tThe diskcopy id of the source file to be copied\n"
     "\t--svcclass <name>       or -S  \tThe service class of the file to be created\n"
     "\t--resfile <location>    or -R  \tThe location of the SharedLSFResource\n"
+    "\t--rcreationtime <time>  or -t  \tThe creation time of the disk copy replication request\n"
     "\n"
     "Comments to: Castor.Support@cern.ch\n";
 }
@@ -393,7 +401,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
 
     // "Source end of mover terminated"
     castor::dlf::Param params2[] =
-      {castor::dlf::Param("ElapsedTime", elapsedTime  * 0.000001),
+      {castor::dlf::Param("ElapsedTime", elapsedTime * 0.000001),
        castor::dlf::Param(m_subRequestId)};
     castor::dlf::dlf_writep(m_requestId, DLF_LVL_DEBUG, 34, 2, params2, &m_fileId);
  
@@ -401,15 +409,23 @@ void castor::job::diskcopy::MainThread::run(void *param) {
     exit(0);
   }
 
+  // Calculate the amount of time that the user has had to wait since the 
+  // creation of the original request.
+  timeval tv;
+  gettimeofday(&tv, NULL);
+  signed64 totalWaitTime = ((tv.tv_sec - m_requestCreationTime) * 1000000) + tv.tv_usec;
+
   // "DiskCopyTransfer started"
   castor::dlf::Param params[] =
     {castor::dlf::Param("JobId", getenv("LSB_JOBID") != NULL ? getenv("LSB_JOBID") : "Unknown"),
      castor::dlf::Param("DiskCopy", m_diskCopyId),
      castor::dlf::Param("SourceDiskCopy", m_sourceDiskCopyId),
      castor::dlf::Param("Protocol", m_protocol),
+     castor::dlf::Param("TotalWaitTime", 
+			totalWaitTime > 0 ? totalWaitTime * 0.000001 : 0),
      castor::dlf::Param(m_subRequestId)};
-  castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 25, 5, params, &m_fileId);
- 
+  castor::dlf::dlf_writep(m_requestId, DLF_LVL_SYSTEM, 25, 6, params, &m_fileId);
+
   // Call the disk2DiskCopyStart function to find out the information about the
   // destination and source diskcopy's. Note: disk2DiskCopyFailed will be
   // called automatically by the stager in case of exception.
@@ -495,7 +511,6 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   }
 
   // Calculate statistics
-  timeval tv;
   gettimeofday(&tv, NULL);
   signed64 elapsedTime =
     (((tv.tv_sec * 1000000) + tv.tv_usec) - m_startTime);
