@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.638 $ $Date: 2008/03/03 13:10:26 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.639 $ $Date: 2008/03/04 16:28:01 $ $Author: waldron $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -609,7 +609,7 @@ BEGIN
   -- Remove database jobs before recreating them
   FOR a IN (SELECT job_name FROM user_scheduler_jobs
              WHERE job_name IN ('GARBAGECOLLECTJOB', 'TABLESHRINKJOB', 
-	                        'BULKCHECKFSINPRODJOB'))
+	                        'BULKCHECKFSBACKINPRODJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
   END LOOP;
