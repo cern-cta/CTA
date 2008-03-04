@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/03 13:26:03 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/03/04 16:26:17 $ $Author: waldron $
  *
  * Synchronization thread used to check periodically whether files need to be
  * deleted
@@ -107,10 +107,10 @@ void castor::gc::SynchronizationThread::run(void *param) {
       }
       struct dirent *dir;
       while ((dir = readdir(dirs))) {
-	struct stat file;
+	struct stat64 file;
 	std::ostringstream filepath;
 	filepath << fs[fsIt] << dir->d_name;
-	if (stat(filepath.str().c_str(), &file) < 0) {
+	if (stat64(filepath.str().c_str(), &file) < 0) {
 	  continue;
 	} else if (!(file.st_mode & S_IFDIR)) {
 	  continue;  // not a directory
@@ -148,16 +148,17 @@ void castor::gc::SynchronizationThread::run(void *param) {
         struct dirent *file;
         std::map<std::string, std::vector<u_signed64> > diskCopyIds;
         std::map<std::string, std::map<u_signed64, std::string> > paths;
-        while ((file = readdir(files))) {
+	while ((file = readdir(files))) {
 
           // Ignore non regular files
-	  struct stat filebuf;
+	  struct stat64 filebuf;
 	  std::string filepath (*it + "/" + file->d_name);
-	  if (stat(filepath.c_str(), &filebuf) < 0) {
+	  if (stat64(filepath.c_str(), &filebuf) < 0) {
 	    continue;
 	  } else if (!(filebuf.st_mode & S_IFREG)) {
 	    continue;  // not a file
 	  }
+
           try {
             std::pair<std::string, u_signed64> fid =
               diskCopyIdFromFileName(file->d_name);
