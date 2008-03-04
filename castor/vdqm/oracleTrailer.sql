@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.26 $ $Release$ $Date: 2008/03/04 11:00:15 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.27 $ $Release$ $Date: 2008/03/04 17:06:20 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -67,103 +67,184 @@ COMMIT;
 ALTER TABLE ClientIdentification
   ADD CONSTRAINT FK_ClientIdentification_id
     FOREIGN KEY (id)
-    REFERENCES Id2Type(id);
+    REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE DeviceGroupName
   ADD CONSTRAINT FK_DeviceGroupName_id
     FOREIGN KEY (id)
-    REFERENCES Id2Type(id);
+    REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE ErrorHistory
   ADD CONSTRAINT FK_ErrorHistory_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_ErrorHistory_tape
     FOREIGN KEY (tape)
-    REFERENCES VdqmTape (id);
+    REFERENCES VdqmTape (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT FK_TapeAccessSpecification_id
     FOREIGN KEY (id)
-    REFERENCES Id2Type (id);
+    REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE TapeDrive
   ADD CONSTRAINT FK_TapeDrive_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeDrive_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeDrive_runningTapeReq
     FOREIGN KEY (runningTapeReq)
     REFERENCES TapeRequest (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeDrive_deviceGroupName
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeDrive_status
     FOREIGN KEY (status)
     REFERENCES TapeDriveStatusCodes (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeDrive_tapeServer
     FOREIGN KEY (tapeServer)
-    REFERENCES TapeServer (id);
+    REFERENCES TapeServer (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE TapeDriveCompatibility
   ADD CONSTRAINT FK_TapeDriveCompatibility_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeDriveComp_accessSpec
     FOREIGN KEY (tapeAccessSpecification)
-    REFERENCES TapeAccessSpecification (id);
+    REFERENCES TapeAccessSpecification (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE TapeDriveDedication
   ADD CONSTRAINT FK_TapeDriveDedication_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeDriveDedic_tapeDrive
     FOREIGN KEY (tapeDrive)
-    REFERENCES TapeDrive (id);
+    REFERENCES TapeDrive (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE TapeRequest
   ADD CONSTRAINT FK_TapeRequest_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeRequest_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeRequest_accessSpec
     FOREIGN KEY (tapeAccessSpecification)
     REFERENCES TapeAccessSpecification (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeRequest_requestedSrv
     FOREIGN KEY (requestedSrv)
     REFERENCES TapeServer (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeRequest_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeRequest_deviceGroupName
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeRequest_status
     FOREIGN KEY (status)
     REFERENCES TapeRequestStatusCodes (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeRequest_client
     FOREIGN KEY (client)
-    REFERENCES ClientIdentification (id);
+    REFERENCES ClientIdentification (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE TapeServer
   ADD CONSTRAINT FK_TapeServer_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_TapeServer_actingMode
     FOREIGN KEY (actingMode)
-    REFERENCES TapeServerStatusCodes (id);
+    REFERENCES TapeServerStatusCodes (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 ALTER TABLE VdqmTape
   ADD CONSTRAINT FK_VdqmTape_id
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE
   ADD CONSTRAINT FK_VdqmTape_status
     FOREIGN KEY (status)
-    REFERENCES TapeStatusCodes (id);
+    REFERENCES TapeStatusCodes (id)
+    DEFERRABLE
+    INITIALLY IMMEDIATE
+    DISABLE;
 
 /* A small table used to cross check code and DB versions */
 DECLARE
