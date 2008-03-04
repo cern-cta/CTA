@@ -1,1 +1,1 @@
-/sbin/service xinetd reload
+/sbin/service xinetd reload > /dev/null 2>&1 || :
