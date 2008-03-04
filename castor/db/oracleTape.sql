@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.643 $ $Date: 2008/03/03 13:11:33 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.644 $ $Date: 2008/03/04 16:33:31 $ $Author: waldron $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -749,11 +749,9 @@ BEGIN
 END;
 
 
-
 /** Functions for the MigHunterDaemon **/
 
 /* Get input for python migration policy */
-
 CREATE OR REPLACE PROCEDURE inputForMigrationPolicy
 (svcclassName IN VARCHAR2,
  policyName OUT VARCHAR2,
@@ -803,7 +801,6 @@ END;
 
 
 /* Get input for python Stream Policy */
-
 CREATE OR REPLACE PROCEDURE inputForStreamPolicy
 (svcClassName IN VARCHAR2,
  policyName OUT VARCHAR2,
@@ -837,8 +834,7 @@ BEGIN
      GROUP BY Stream.id;
 END;
 
-/* createOrUpdateStream */ 
-
+/* createOrUpdateStream */
 CREATE OR REPLACE PROCEDURE createOrUpdateStream
 (svcClassName IN VARCHAR2,
  initialSizeToTransfer IN NUMBER, -- total initialSizeToTransfer for the svcClass
@@ -936,7 +932,6 @@ END;
 
 
 /* attach tapecopies to stream */
-
 CREATE OR REPLACE PROCEDURE attachTapeCopiesToStreams
 (tapeCopyIds IN castor."cnumList",
  tapePoolIds IN castor."cnumList")
@@ -974,7 +969,6 @@ END;
 
 
 /* start choosen stream */
-
 CREATE OR REPLACE PROCEDURE startChosenStreams
         (streamIds IN castor."cnumList",
 	initSize IN NUMBER) AS
@@ -1005,7 +999,6 @@ BEGIN
 END;
 
 /* resurrect Candidates */
-
 CREATE OR REPLACE PROCEDURE resurrectCandidates
 (migrationCandidates IN castor."cnumList") -- all candidate before applying the policy
 AS
@@ -1017,7 +1010,6 @@ BEGIN
 END;
 
 /* invalidate tape copies */
-
 CREATE OR REPLACE PROCEDURE invalidateTapeCopies
 (tapecopyIds IN castor."cnumList") -- tapecopies not in the nameserver
 AS
@@ -1031,7 +1023,6 @@ END;
 /** Functions for the RecHandlerDaemon **/
 
 /* Get input for python recall policy */
-
 CREATE OR REPLACE PROCEDURE inputForRecallPolicy(dbInfo OUT castor.DbRecallInfo_Cur) AS
   svcId NUMBER;
 BEGIN  
@@ -1047,7 +1038,6 @@ BEGIN
 END;
 
 /* resurrect tapes */
-
 CREATE OR REPLACE PROCEDURE resurrectTapes 
 (tapeIds IN castor."cnumList") 
 AS
