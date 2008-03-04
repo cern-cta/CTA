@@ -1,5 +1,5 @@
 /*
- * $Id: rtcpd.c,v 1.6 2008/02/26 14:04:56 wiebalck Exp $
+ * $Id: rtcpd.c,v 1.7 2008/03/04 15:00:51 wiebalck Exp $
  *
  * Copyright (C) 1999-2004 by CERN IT
  * All rights reserved
@@ -136,7 +136,7 @@ int rtcpd_main(struct main_args *main_args) {
             save_mask = umask(0);
 
             p = getconfent ("TAPE", "TPLOGGER", 0);
-            if (0 == strcasecmp(p, "SYSLOG")) {
+            if (p && (0 == strcasecmp(p, "SYSLOG"))) {
                     tl_init_handle( &tl_rtcpd, "syslog" ); 
             } else {
                     tl_init_handle( &tl_rtcpd, "dlf" );  

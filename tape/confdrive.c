@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.10 $ $Date: 2008/02/26 13:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.11 $ $Date: 2008/03/04 15:00:49 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -66,7 +66,7 @@ char	**argv;
 	ENTRY (confdrive);
 
         p = getconfent ("TAPE", "TPLOGGER", 0);
-        if (0 == strcasecmp(p, "SYSLOG")) {
+        if (p && (0 == strcasecmp(p, "SYSLOG"))) {
                 tl_init_handle( &tl_tpdaemon, "syslog" ); 
         } else {
                 tl_init_handle( &tl_tpdaemon, "dlf" );  

@@ -1,12 +1,12 @@
 /*
- * $Id: tpdaemon.c,v 1.15 2008/02/26 13:40:46 wiebalck Exp $
+ * $Id: tpdaemon.c,v 1.16 2008/03/04 15:00:48 wiebalck Exp $
  *
  * Copyright (C) 1990-2003 by CERN/IT/PDP/DM
  * All rights reserved
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.15 $ $Date: 2008/02/26 13:40:46 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: tpdaemon.c,v $ $Revision: 1.16 $ $Date: 2008/03/04 15:00:48 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -151,7 +151,7 @@ struct main_args *main_args;
 #endif
         /* initialize tplogger */ 
         p = getconfent ("TAPE", "TPLOGGER", 0);
-        if (0 == strcasecmp(p, "SYSLOG")) {
+        if (p && (0 == strcasecmp(p, "SYSLOG"))) {
                 tl_init_handle( &tl_tpdaemon, "syslog" ); 
         } else {
                 tl_init_handle( &tl_tpdaemon, "dlf" );  
