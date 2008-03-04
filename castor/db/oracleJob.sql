@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.640 $ $Date: 2008/03/03 13:08:34 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.641 $ $Date: 2008/03/04 06:55:03 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -762,13 +762,13 @@ BEGIN
   SELECT CastorFile.fileId, CastorFile.nsHost, SvcClass.name, Id2type.type,
          Request.reqId, Request.euid, Request.egid, Request.username, 
 	 Request.direction, Request.sourceDiskCopyId, Request.destDiskCopyId,
-	 Client.ipAddress, Client.port, Client.version, Request.creationTime,
+	 Client.ipAddress, Client.port, Client.version, 
 	 (SELECT type 
             FROM Id2type 
-           WHERE id = Client.id) clientType, Client.secure
+           WHERE id = Client.id) clientType, Client.secure, Request.creationTime
     INTO cfFileId, cfNsHost, reqSvcClass, reqType, reqId, reqEuid, reqEgid, reqUsername, 
          srOpenFlags, reqSourceDiskCopyId, reqDestDiskCopyId, clientIp, clientPort, 
-         clientVersion, reqCreationTime, clientType, clientSecure, reqCreationTime
+         clientVersion, clientType, clientSecure, reqCreationTime
     FROM SubRequest, CastorFile, SvcClass, Id2type, Client,
          (SELECT id, username, euid, egid, reqid, client, creationTime,
                  'w' direction, svcClass, NULL sourceDiskCopyId, NULL destDiskCopyId
