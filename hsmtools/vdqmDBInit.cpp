@@ -103,8 +103,8 @@ void handleRequest(castor::IObject* fr, castor::Services* svcs)
     castor::vdqm::DeviceGroupName *dgName =
       dynamic_cast<castor::vdqm::DeviceGroupName*>(fr);    
     if ( 0 != dgName ) {
-      std::cerr << "Unable to insert a new DeviceGroupName into db."
-                << std::endl;
+      std::cerr << "Unable to insert a new DeviceGroupName into db: "
+        << e.getMessage().str() << std::endl;
                       
       dgName = 0;
     }
@@ -113,8 +113,8 @@ void handleRequest(castor::IObject* fr, castor::Services* svcs)
       dynamic_cast<castor::vdqm::TapeAccessSpecification*>(fr);
       
     if ( 0 != tapeAccessSpec ) {
-      std::cerr << "Unable to insert a new TapeAccessSpecification into db."
-                << std::endl;          
+      std::cerr << "Unable to insert a new TapeAccessSpecification into db: "
+        << e.getMessage().str() << std::endl;          
       
       tapeAccessSpec = 0;
     }
