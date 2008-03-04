@@ -1,7 +1,7 @@
 ######################################################################################
 #
 # CASTOR2 LSF Plugin - Sample Policy File
-# $Id: scheduler.py,v 1.1 2007/12/04 12:43:12 waldron Exp $
+# $Id: scheduler.py,v 1.2 2008/03/04 06:57:06 waldron Exp $
 #
 ######################################################################################
 
@@ -30,50 +30,40 @@ import random
 #   rmMasterDaemon the predicated values are reset to 0.
 
 # General identifiers
-key                   = "" # The LSF job name, aka subrequest id
-hostname              = "" 
-filesystem            = "" 
+Diskserver              = "" 
+Filesystem              = "" 
 
-# The total number of LSF job slots allocated to the machine
-slotsAlloc            = 0
+# The total size of the file system in bytes, the total number of bytes free and the
+# total number of file systems.
+TotalSize               = 0
+FreeSpace               = 0
+TotalNbFilesystems      = 0
 
-# The size of the file to be scheduled and the direction of its associated stream. The 
-# 'filesDirection' can be one of [r/w/o] representing read, write and read write 
-# directions respectively. 
-#
-# Note:
-#   A file size of 0 is normal for jobs which are classified as reads.
-#
-fileDirection         = ""
-fileSize              = 0
+# The 'OpenFlags' can be one of [r/w/o] representing read, write and read write 
+# directions respectively.
+OpenFlags               = ""
 
 # The following variables define how many streams of various types are running on a 
 # given file system.
-migratorStreams       = 0
-readStreams           = 0
-readWriteStreams      = 0
-recallerStreams       = 0
-writeStreams          = 0
+NbMigratorStreams       = 0
+NbReadStreams           = 0
+NbReadWriteStreams      = 0
+NbRecallerStreams       = 0
+NbWriteStreams          = 0
 
-# The number of kilobytes being written too and read from the given filesystem per 
+# The number of kilobytes being written too and read from the given file system per 
 # second.
-readRate              = 0
-writeRate             = 0
-
-# The total size of the file system in bytes and the total number of bytes free.
-totalSize             = 0
-freeSpace             = 0
+ReadRate                = 0
+WriteRate               = 0
 
 # The aggregate values for all file systems
-totalMigratorStreams  = 0
-totalReadStreams      = 0
-totalReadWriteStreams = 0
-totalRecallerStreams  = 0
-totalWriteStreams     = 0
-
-totalFileSystems      = 0
-totalReadRate         = 0
-totalWriteRate        = 0
+TotalNbMigratorStreams  = 0
+TotalNbReadStreams      = 0
+TotalNbReadWriteStreams = 0
+TotalNbRecallerStreams  = 0
+TotalNbWriteStreams     = 0
+TotalReadRate           = 0
+TotalWriteRate          = 0
 
 #
 # All functions in the module matching the same name as a svcclass or diskpool must 
@@ -106,10 +96,10 @@ totalWriteRate        = 0
 #
 def default():
     weight  = 0.0
-    weight -= readStreams + readWriteStreams + writeStreams
+    weight -= NbReadStreams + NbReadWriteStreams + NbWriteStreams
 	
     # We add a little bit of randomness to the weight to given us a better distribution
-    # across disk servers	
+    # across disk servers
     weight -= random.random()
 
     # If the randomness is excluded above then it is possible that the weight value is 
@@ -131,12 +121,12 @@ def export():
     # If the direction of the stream is a write or readWrite check to see if any 
     # migrators are present. If so, restrict the number of writers on the file system 
     # to 1
-    if fileDirection == "w" or fileDirection == "o":
-	if migratorStreams > 0 and writeStreams + readWriteStreams > 1:
+    if OpenFlags == "w" or OpenFlags == "o":
+	if NbMigratorStreams > 0 and NbWriteStreams + NbReadWriteStreams > 1:
 	    return 1.0
 
     # Add some randomness and streams
-    weight -= readStreams + readWriteStreams + writeStreams
+    weight -= NbReadStreams + NbReadWriteStreams + NbWriteStreams
     weight -= random.random()
 
     return weight
