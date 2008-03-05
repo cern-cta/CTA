@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.27 $ $Release$ $Date: 2008/03/04 17:06:20 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.28 $ $Release$ $Date: 2008/03/05 14:44:21 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -63,7 +63,7 @@ INSERT INTO TapeRequestStatusCodes VALUES (3, 'REQUEST_SUBMITTED');
 INSERT INTO TapeRequestStatusCodes VALUES (4, 'REQUEST_FAILED');
 COMMIT;
 
-/* Foreign key constraints */
+/* Foreign key constraints with an index for each*/
 ALTER TABLE ClientIdentification
   ADD CONSTRAINT FK_ClientIdentification_id
     FOREIGN KEY (id)
@@ -93,6 +93,7 @@ ALTER TABLE ErrorHistory
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE;
+CREATE INDEX I_FK_ErrorHistory_tape ON ErrorHistory (tape);
 
 ALTER TABLE TapeAccessSpecification
   ADD CONSTRAINT FK_TapeAccessSpecification_id
@@ -139,6 +140,11 @@ ALTER TABLE TapeDrive
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE;
+CREATE INDEX I_FK_TapeDrive_tape            ON TapeDrive (tape);
+CREATE INDEX I_FK_TapeDrive_runningTapeReq  ON TapeDrive (runningTapeReq);
+CREATE INDEX I_FK_TapeDrive_deviceGroupName ON TapeDrive (deviceGroupName);
+CREATE INDEX I_FK_TapeDrive_status          ON TapeDrive (status);
+CREATE INDEX I_FK_TapeDrive_tapeServer      ON TapeDrive (tapeServer);
 
 ALTER TABLE TapeDriveCompatibility
   ADD CONSTRAINT FK_TapeDriveCompatibility_id
@@ -153,6 +159,7 @@ ALTER TABLE TapeDriveCompatibility
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE;
+CREATE INDEX I_FK_TapeDriveComp_accessSpec ON TapeDriveCompatibility (tapeAccessSpecification);
 
 ALTER TABLE TapeDriveDedication
   ADD CONSTRAINT FK_TapeDriveDedication_id
@@ -167,6 +174,7 @@ ALTER TABLE TapeDriveDedication
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE;
+CREATE INDEX I_FK_TapeDriveDedic_tapeDrive ON TapeDriveDedication (tapeDrive);
 
 ALTER TABLE TapeRequest
   ADD CONSTRAINT FK_TapeRequest_id
@@ -199,7 +207,7 @@ ALTER TABLE TapeRequest
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE
-  ADD CONSTRAINT FK_TapeRequest_deviceGroupName
+  ADD CONSTRAINT FK_TapeRequest_dgn
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
     DEFERRABLE
@@ -217,6 +225,13 @@ ALTER TABLE TapeRequest
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE;
+CREATE INDEX I_FK_TapeRequest_tape         ON TapeRequest (tape);
+CREATE INDEX I_FK_TapeRequest_accessSpec   ON TapeRequest (tapeAccessSpecification);
+CREATE INDEX I_FK_TapeRequest_requestedSrv ON TapeRequest (requestedSrv);
+CREATE INDEX I_FK_TapeRequest_tapeDrive    ON TapeRequest (tapeDrive);
+CREATE INDEX I_FK_TapeRequest_dgn          ON TapeRequest (deviceGroupName);
+CREATE INDEX I_FK_TapeRequest_status       ON TapeRequest (status);
+CREATE INDEX I_FK_TapeRequest_client       ON TapeRequest (client);
 
 ALTER TABLE TapeServer
   ADD CONSTRAINT FK_TapeServer_id
@@ -231,6 +246,7 @@ ALTER TABLE TapeServer
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE;
+CREATE INDEX I_FK_TapeServer_actingMode ON TapeServer (actingMode);
 
 ALTER TABLE VdqmTape
   ADD CONSTRAINT FK_VdqmTape_id
@@ -245,6 +261,7 @@ ALTER TABLE VdqmTape
     DEFERRABLE
     INITIALLY IMMEDIATE
     DISABLE;
+CREATE INDEX I_FK_VdqmTape_status ON VdqmTape (status);
 
 /* A small table used to cross check code and DB versions */
 DECLARE
