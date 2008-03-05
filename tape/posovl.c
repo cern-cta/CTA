@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.33 $ $Date: 2008/03/04 15:00:49 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: posovl.c,v $ $Revision: 1.34 $ $Date: 2008/03/05 10:15:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <errno.h>
@@ -99,6 +99,7 @@ char	**argv;
 	void cleanup();
 	void positkilled();
         void configdown( char* );
+        char *getconfent();
 
 	ENTRY (posovl);
 

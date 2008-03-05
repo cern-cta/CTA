@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.11 $ $Date: 2008/03/04 15:00:49 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: confdrive.c,v $ $Revision: 1.12 $ $Date: 2008/03/05 10:15:22 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include "tplogger_api.h"
 #if defined(linux)
+#include <sys/ioctl.h>
 #include <linux/mtio.h>
 #endif
 int jid;
