@@ -58,7 +58,7 @@ int *need_user_check) {
       internal_context->subrequest_id = subrequest_id;
   
       /*Extracting the fileId and nshost from the pfl*/
-      char *cpfn=calloc(strlen(internal_context->pfn),sizeof(char));//not 1 but lenght of cadena
+      char *cpfn=calloc(strlen(internal_context->pfn),sizeof(char));
 
       if( strcpy(cpfn,internal_context->pfn) != NULL){
         *cpfn++  = '\0';
@@ -71,11 +71,12 @@ int *need_user_check) {
           internal_context->fileId= strtou64(cpfn);
           if ((p = strchr(pnh,'.')) != NULL) {
             *p++='\0';
-             internal_context->nsHost= (char *) calloc(1,sizeof(char));
+             internal_context->nsHost= (char *) calloc(strlen(pnh),sizeof(char));
              strncpy(internal_context->nsHost,pnh,strlen(pnh));
 	     internal_context->nsHost[strlen(pnh)]='\0';
            }
          free(cpfn);
+       
         }
       }else{
          log(LOG_ERR, "rfio_handle_open : error parsing the physical filename (%s)\n", strerror(errno));
