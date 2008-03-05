@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.36 $ $Date: 2008/02/29 14:48:38 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
+/* static char sccsid[] = "@(#)$RCSfile: rbtsubr.c,v $ $Revision: 1.37 $ $Date: 2008/03/05 11:37:32 $ CERN IT-PDP/DM Jean-Philippe Baud"; */
 #endif /* not lint */
 
 /*	rbtsubr - control routines for robot devices */
@@ -917,11 +917,11 @@ unsigned int force;
 	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
 	    usrmsg (func, "%s\n", msg);
             tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                "func",      TL_MSG_PARAM_STR, func,
-                                "action",    TL_MSG_PARAM_STR, action,
-                                "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
-                                "acsstatus", TL_MSG_PARAM_STR, acsstatus (dr->dismount_status) );           
+                                "func",             TL_MSG_PARAM_STR, func,
+                                "action",           TL_MSG_PARAM_STR, action,
+                                "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
+                                "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus (dr->dismount_status) );           
 	    c = acserr2act (1, dr->dismount_status);
 	    RETURN (c);
 	  }
@@ -988,12 +988,12 @@ int acsmountresp()
 	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
 	    usrmsg (func, "%s\n", msg);
             tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                "func",      TL_MSG_PARAM_STR, func,
-                                "action",    TL_MSG_PARAM_STR, action,
-                                "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
-                                "acsstatus", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
-	    c = acserr2act (1, dr->mount_status);
+                                "func",             TL_MSG_PARAM_STR, func,
+                                "action",           TL_MSG_PARAM_STR, action,
+                                "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
+                                "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
+	    c = acserr2act (0, dr->mount_status);
 	    RETURN (c);
 	  }
 	}
@@ -1048,24 +1048,44 @@ int wait4acsfinalresp()
 	}
 
 	/* Added by BC 20050317 to process status code inside the rbuf */
-	{
-	  ACS_MOUNT_RESPONSE *dr;
+        
+        if (*action == 'm') {
 
-	  dr = (ACS_MOUNT_RESPONSE *)rbuf;
+                ACS_MOUNT_RESPONSE *dr;                        
+                dr = (ACS_MOUNT_RESPONSE *)rbuf;
+                
+                if (dr->mount_status) {
+                        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
+                        usrmsg (func, "%s\n", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",             TL_MSG_PARAM_STR, func,
+                                            "action",           TL_MSG_PARAM_STR, action,
+                                            "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                            "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
+                        c = acserr2act (0, dr->mount_status);
+                        RETURN (c);
+                }
 
-	  if (dr->mount_status) {
-	    sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->mount_status));
-	    usrmsg (func, "%s\n", msg);
-            tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
-                                "func",      TL_MSG_PARAM_STR, func,
-                                "action",    TL_MSG_PARAM_STR, action,
-                                "cur_vid",   TL_MSG_PARAM_STR, cur_vid,
-                                "cur_unm",   TL_MSG_PARAM_STR, cur_unm,
-                                "acsstatus", TL_MSG_PARAM_STR, acsstatus( dr->mount_status ) );
-	    c = acserr2act (1, dr->mount_status);
-	    RETURN (c);
-	  }
-	}
+	} else if (*action == 'd') {
+
+                ACS_DISMOUNT_RESPONSE *dr;                        
+                dr = (ACS_DISMOUNT_RESPONSE *)rbuf;
+                
+                if (dr->dismount_status) {
+                        sprintf (msg, TP041, action, cur_vid, cur_unm, acsstatus (dr->dismount_status));
+                        usrmsg (func, "%s\n", msg);
+                        tl_tpdaemon.tl_log( &tl_tpdaemon, 41, 5,
+                                            "func",             TL_MSG_PARAM_STR, func,
+                                            "action",           TL_MSG_PARAM_STR, action,
+                                            "cur_vid",          TL_MSG_PARAM_STR, cur_vid,
+                                            "cur_unm",          TL_MSG_PARAM_STR, cur_unm,
+                                            "acsstatus (rbuf)", TL_MSG_PARAM_STR, acsstatus( dr->dismount_status ) );
+                        c = acserr2act (1, dr->dismount_status);
+                        RETURN (c);
+                }
+        }
+
 	return (0);
 }
 
