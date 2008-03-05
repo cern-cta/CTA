@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.8 $ $Release$ $Date: 2008/03/03 13:22:01 $ $Author: waldron $
+ * @(#)$RCSfile: MainThread.cpp,v $ $Revision: 1.9 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -438,7 +438,9 @@ void castor::job::diskcopy::MainThread::run(void *param) {
 				 diskserver, 
 				 filesystem, 
 				 diskCopy, 
-				 sourceDiskCopy);
+				 sourceDiskCopy,
+				 m_fileId.fileid,
+				 m_fileId.server);
   } catch (castor::exception::Exception e) {
     
     // "Exception caught trying to get information on destination and source
@@ -489,7 +491,7 @@ void castor::job::diskcopy::MainThread::run(void *param) {
   // Transfer successful. Note: we don't need to call disk2DiskCopyFailed if
   // an exception is thrown here. The stager will do this automatically for us.
   try {
-    m_jobSvc->disk2DiskCopyDone(m_diskCopyId, m_sourceDiskCopyId);
+    m_jobSvc->disk2DiskCopyDone(m_diskCopyId, m_sourceDiskCopyId, m_fileId.fileid,m_fileId.server);
   } catch (castor::exception::Exception e) {
 
     // "Exception caught trying to finalize disk2disk copy transfer, transfer 
@@ -613,7 +615,7 @@ void castor::job::diskcopy::MainThread::terminate
   // Notify the stager to the failure in this transfer attempt
   try {
     if (diskCopyId != 0) {
-      m_jobSvc->disk2DiskCopyFailed(diskCopyId);
+      m_jobSvc->disk2DiskCopyFailed(diskCopyId, m_fileId.fileid,m_fileId.server );
     }
   } catch (castor::exception::Exception e) {
 

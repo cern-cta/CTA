@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.18 $ $Release$ $Date: 2008/03/03 11:05:18 $ $Author: waldron $
+ * @(#)$RCSfile: RemoteJobSvc.cpp,v $ $Revision: 1.19 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
  *
  *
  *
@@ -180,7 +180,9 @@ castor::stager::DiskCopy*
 castor::stager::RemoteJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
- bool* emptyFile)
+ bool* emptyFile,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // placeholders for the result
   castor::stager::DiskCopy* result;
@@ -192,6 +194,8 @@ castor::stager::RemoteJobSvc::getUpdateStart
   req.setSubreqId(subreq->id());
   req.setDiskServer(fileSystem->diskserver()->name());
   req.setFileSystem(fileSystem->mountPoint());
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
   client.setOption(NULL, &req);
@@ -203,7 +207,7 @@ castor::stager::RemoteJobSvc::getUpdateStart
 //------------------------------------------------------------------------------
 // getUpdateStart old signature (to be dropped)
 //------------------------------------------------------------------------------
-castor::stager::DiskCopy*
+/*castor::stager::DiskCopy*
 castor::stager::RemoteJobSvc::getUpdateStart
 (castor::stager::SubRequest* subreq,
  castor::stager::FileSystem* fileSystem,
@@ -212,7 +216,7 @@ castor::stager::RemoteJobSvc::getUpdateStart
   throw (castor::exception::Exception) {
   return getUpdateStart(subreq, fileSystem, emptyFile);
 }
-
+*/
 //------------------------------------------------------------------------------
 // putStartResponseHandler
 //------------------------------------------------------------------------------
@@ -257,7 +261,9 @@ private:
 castor::stager::DiskCopy*
 castor::stager::RemoteJobSvc::putStart
 (castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem)
+ castor::stager::FileSystem* fileSystem,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // placeholders for the result
   castor::stager::DiskCopy* result;
@@ -268,6 +274,8 @@ castor::stager::RemoteJobSvc::putStart
   req.setSubreqId(subreq->id());
   req.setDiskServer(fileSystem->diskserver()->name());
   req.setFileSystem(fileSystem->mountPoint());
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Uses a BaseClient to handle the request
   castor::client::BaseClient client(getRemoteJobClientTimeout());
   client.setOption(NULL, &req);
@@ -377,7 +385,9 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyStart
  const std::string diskServer,
  const std::string fileSystem,
  castor::stager::DiskCopyInfo* &diskCopy,
- castor::stager::DiskCopyInfo* &sourceDiskCopy) 
+ castor::stager::DiskCopyInfo* &sourceDiskCopy,
+ u_signed64 fileId,
+ const std::string nsHost) 
   throw(castor::exception::Exception) {
   // Build the Disk2DiskCopyStartRequest
   castor::stager::Disk2DiskCopyStartRequest req;
@@ -386,6 +396,8 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyStart
   req.setDestSvcClass(destSvcClass);
   req.setDiskServer(diskServer);
   req.setMountPoint(fileSystem);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Build a response Handler
   DiskCopyStartResponseHandler rh(diskCopy, sourceDiskCopy);
   // Uses a BaseClient to handle the request
@@ -399,12 +411,16 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyStart
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 (u_signed64 diskCopyId,
- u_signed64 sourceDiskCopyId)
+ u_signed64 sourceDiskCopyId,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // Build the Disk2DiskCopyDoneRequest
   castor::stager::Disk2DiskCopyDoneRequest req;
   req.setDiskCopyId(diskCopyId);
   req.setSourceDiskCopyId(sourceDiskCopyId);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
@@ -417,12 +433,16 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyDone
 // disk2DiskCopyFailed
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
-(u_signed64 diskCopyId)
+(u_signed64 diskCopyId,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // Build the Disk2DiskCopyDoneRequest
   castor::stager::Disk2DiskCopyDoneRequest req;
   req.setDiskCopyId(diskCopyId);
   req.setSourceDiskCopyId(0);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
@@ -431,18 +451,24 @@ void castor::stager::RemoteJobSvc::disk2DiskCopyFailed
   client.sendRequest(&req, &rh);
 }
 
+//
 //------------------------------------------------------------------------------
 // prepareForMigration
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::prepareForMigration
 (castor::stager::SubRequest *subreq,
- u_signed64 fileSize,u_signed64 timeStamp)
+ u_signed64 fileSize,
+ u_signed64 timeStamp,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // Build the MoverCloseRequest
   castor::stager::MoverCloseRequest req;
   req.setSubReqId(subreq->id());
   req.setFileSize(fileSize);
   req.setTimeStamp(timeStamp);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);  
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
@@ -478,11 +504,15 @@ int castor::stager::RemoteJobSvc::getRemoteJobClientTimeout() {
 // getUpdateDone
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::getUpdateDone
-(u_signed64 subReqId)
-  throw (castor::exception::Exception) {
+(u_signed64 subReqId,
+ u_signed64 fileId,
+ const std::string nsHost)
+   throw (castor::exception::Exception) {
   // Build the GetUpdateDoneRequest
   castor::stager::GetUpdateDone req;
   req.setSubReqId(subReqId);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
@@ -495,11 +525,15 @@ void castor::stager::RemoteJobSvc::getUpdateDone
 // getUpdateFailed
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::getUpdateFailed
-(u_signed64 subReqId)
+(u_signed64 subReqId,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // Build the GetUpdateFailedRequest
   castor::stager::GetUpdateFailed req;
   req.setSubReqId(subReqId);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
@@ -512,11 +546,15 @@ void castor::stager::RemoteJobSvc::getUpdateFailed
 // putFailed
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::putFailed
-(u_signed64 subReqId)
+(u_signed64 subReqId,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // Build the PutFailedRequest
   castor::stager::PutFailed req;
   req.setSubReqId(subReqId);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request
@@ -529,11 +567,15 @@ void castor::stager::RemoteJobSvc::putFailed
 // firstByteWritten
 //------------------------------------------------------------------------------
 void castor::stager::RemoteJobSvc::firstByteWritten
-(u_signed64 subRequestId)
+(u_signed64 subRequestId,
+ u_signed64 fileId,
+ const std::string nsHost)
   throw (castor::exception::Exception) {
   // Build the FirstByteWrittenRequest
   castor::stager::FirstByteWritten req;
   req.setSubReqId(subRequestId);
+  req.setFileId(fileId);
+  req.setNsHost(nsHost);
   // Build a response Handler
   castor::client::BasicResponseHandler rh;
   // Uses a BaseClient to handle the request

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/01/10 14:32:26 $ $Author: itglp $
+ * @(#)$RCSfile: OraJobSvc.hpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -48,7 +48,7 @@ namespace castor {
        * Implementation of the IJobSvc for Oracle
        */
       class OraJobSvc : public OraCommonSvc,
-                        public virtual castor::stager::IJobSvc {
+                       	public virtual castor::stager::IJobSvc {
 
       public:
 
@@ -123,20 +123,22 @@ namespace castor {
         virtual castor::stager::DiskCopy* getUpdateStart
         (castor::stager::SubRequest* subreq,
          castor::stager::FileSystem* fileSystem,
-         bool* emptyFile)
+         bool* emptyFile,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
          * Same as above, with the old signature for backward compatibility.
          * This method is DEPRECATED and should be removed at some stage
          */
-        virtual castor::stager::DiskCopy* getUpdateStart
+        /*virtual castor::stager::DiskCopy* getUpdateStart
         (castor::stager::SubRequest* subreq,
          castor::stager::FileSystem* fileSystem,
          std::list<castor::stager::DiskCopyForRecall*>& sources,
          bool* emptyFile)
           throw (castor::exception::Exception);
-  
+  */
         /**
          * Handles the start of a Put job.
          * Links the DiskCopy associated to the SubRequest to
@@ -151,7 +153,9 @@ namespace castor {
          */
         virtual castor::stager::DiskCopy* putStart
         (castor::stager::SubRequest* subreq,
-         castor::stager::FileSystem* fileSystem)
+         castor::stager::FileSystem* fileSystem,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -178,7 +182,9 @@ namespace castor {
          const std::string diskServer,
          const std::string fileSystem,
          castor::stager::DiskCopyInfo* &diskCopy,
-         castor::stager::DiskCopyInfo* &sourceDiskCopy)
+         castor::stager::DiskCopyInfo* &sourceDiskCopy,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw(castor::exception::Exception);
 
         /**
@@ -193,7 +199,9 @@ namespace castor {
          */
         virtual void disk2DiskCopyDone
         (u_signed64 diskCopyId,
-         u_signed64 sourceDiskCopyId)
+         u_signed64 sourceDiskCopyId,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -203,7 +211,9 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void disk2DiskCopyFailed
-        (u_signed64 diskCopyId)
+        (u_signed64 diskCopyId,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -224,7 +234,9 @@ namespace castor {
          */
         virtual void prepareForMigration
         (castor::stager::SubRequest* subreq,
-         u_signed64 fileSize, u_signed64 timeStamp)
+         u_signed64 fileSize, u_signed64 timeStamp,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -234,7 +246,10 @@ namespace castor {
          * Request will thus be removed from the DataBase
          * @param subReqId the id of the finished SubRequest
          */
-        virtual void getUpdateDone(u_signed64 subReqId)
+        virtual void getUpdateDone
+	(u_signed64 subReqId,
+	 u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -243,7 +258,10 @@ namespace castor {
          * The SubRequest's status will thus be set to FAILED
          * @param subReqId the id of the failing SubRequest
          */
-        virtual void getUpdateFailed(u_signed64 subReqId)
+        virtual void getUpdateFailed
+	(u_signed64 subReqId,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -251,7 +269,10 @@ namespace castor {
          * The SubRequest's status will thus be set to FAILED
          * @param subReqId the id of the failing SubRequest
          */
-        virtual void putFailed(u_signed64 subReqId)
+        virtual void putFailed
+	(u_signed64 subReqId,
+	 u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
         /**
@@ -262,7 +283,10 @@ namespace castor {
          * @param subReqId the id of the SubRequest concerned
          * @exception Exception in case of error
          */
-        virtual void firstByteWritten(u_signed64 subRequestId)
+        virtual void firstByteWritten
+	(u_signed64 subRequestId,
+         u_signed64 fileId,
+         const std::string nsHost)
           throw (castor::exception::Exception);
 
       private:

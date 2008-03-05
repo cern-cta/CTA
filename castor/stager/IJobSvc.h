@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.10 $ $Release$ $Date: 2008/01/09 10:32:28 $ $Author: itglp $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
  *
  *
  *
@@ -129,7 +129,9 @@ int Cstager_IJobSvc_getUpdateStart
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,
  int *emptyFile,
- struct Cstager_DiskCopy_t** diskCopy);
+ struct Cstager_DiskCopy_t** diskCopy,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Handles the start of a Put job.
@@ -151,7 +153,9 @@ int Cstager_IJobSvc_putStart
 (struct Cstager_IJobSvc_t* jobSvc,
  struct Cstager_SubRequest_t* subreq,
  struct Cstager_FileSystem_t* fileSystem,
- struct Cstager_DiskCopy_t** diskCopy);
+ struct Cstager_DiskCopy_t** diskCopy,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Handles the start of a PutDone job.
@@ -173,7 +177,9 @@ int Cstager_IJobSvc_putStart
 int Cstager_IJobSvc_putDoneStart
 (struct Cstager_IJobSvc_t* jobSvc,
  u_signed64 subreqId,
- struct Cstager_DiskCopy_t** diskCopy);
+ struct Cstager_DiskCopy_t** diskCopy,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Returns the error message associated to the last error.
@@ -236,7 +242,9 @@ int Cstager_IJobSvc_selectFileSystem
 int Cstager_IJobSvc_disk2DiskCopyDone
 (struct Cstager_IJobSvc_t* jobSvc,
  u_signed64 diskCopyId,
- u_signed64 sourceDiskCopyId);
+ u_signed64 sourceDiskCopyId,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Updates database after a failure of a disk to disk copy.
@@ -250,7 +258,9 @@ int Cstager_IJobSvc_disk2DiskCopyDone
  */
 int Cstager_IJobSvc_disk2DiskCopyFailed
 (struct Cstager_IJobSvc_t* jobSvc,
- u_signed64 diskCopyId);
+ u_signed64 diskCopyId,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Prepares a file for migration, when needed.
@@ -275,7 +285,10 @@ int Cstager_IJobSvc_disk2DiskCopyFailed
 int Cstager_IJobSvc_prepareForMigration
 (struct Cstager_IJobSvc_t* jobSvc,
  struct Cstager_SubRequest_t* subreq,
- u_signed64 fileSize, u_signed64 timeStamp);
+ u_signed64 fileSize,
+ u_signed64 timeStamp,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Informs the stager the a Get or Update SubRequest
@@ -291,7 +304,9 @@ int Cstager_IJobSvc_prepareForMigration
  */
 int Cstager_IJobSvc_getUpdateDone
 (struct Cstager_IJobSvc_t* jobSvc,
- u_signed64 subReqId);
+ u_signed64 subReqId,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Informs the stager the a Get or Update SubRequest
@@ -306,7 +321,9 @@ int Cstager_IJobSvc_getUpdateDone
  */
 int Cstager_IJobSvc_getUpdateFailed
 (struct Cstager_IJobSvc_t* jobSvc,
- u_signed64 subReqId);
+ u_signed64 subReqId,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Informs the stager the a Put or PutDone SubRequest failed.
@@ -320,7 +337,9 @@ int Cstager_IJobSvc_getUpdateFailed
  */
 int Cstager_IJobSvc_putFailed
 (struct Cstager_IJobSvc_t* jobSvc,
- u_signed64 subReqId);
+ u_signed64 subReqId,
+ u_signed64 fileId,
+ const char* nsHost);
 
 /**
  * Informs the stager that an update subrequest has written
@@ -336,6 +355,8 @@ int Cstager_IJobSvc_putFailed
  */
 int Cstager_IJobSvc_firstByteWritten
 (struct Cstager_IJobSvc_t* jobSvc,
- u_signed64 subRequestId);
+ u_signed64 subRequestId,
+ u_signed64 fileId,
+ const char* nsHost);
 
 #endif /* CASTOR_IJOBSVC_H */
