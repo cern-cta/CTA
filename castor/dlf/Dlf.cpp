@@ -94,6 +94,29 @@ throw () {
     dlf_getPendingMessages().push_back(std::pair<int, Message*>(offset, lmessages));
   }
 }
+void pp (int i){
+  i++;
+}
+// -----------------------------------------------------------------------
+// dlf_writep
+// wrapper of the dlf writep that compounds the Cns_fileid struct
+// -----------------------------------------------------------------------
+void castor::dlf::dlf_writep
+(Cuuid_t uuid,
+ int severity,
+ int message_no,
+ u_signed64 fileId,
+ std::string nsHost,
+ int numparams,
+ castor::dlf::Param params[])
+throw() {
+ 
+ struct Cns_fileid ns_invariant;
+ ns_invariant.fileid = fileId;
+ strncpy(ns_invariant.server,nsHost.c_str(),sizeof(ns_invariant.server)-1);
+
+ castor::dlf::dlf_writep(uuid, severity, message_no, numparams,params,&ns_invariant);
+}
 
 // -----------------------------------------------------------------------
 // dlf_writep
