@@ -111,7 +111,6 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 
   castor::vdqm::TapeRequest* request =
     dynamic_cast<castor::vdqm::TapeRequest*>(param);
-  bool driveUnlinked = false;
 
   // If the dynamic cast failed
   if(request == NULL) {
@@ -147,9 +146,8 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     // Un-link the associated tape drive
     request->setTapeDrive(0);
     drive->setRunningTapeReq(0);
-    driveUnlinked = true;
 
-    // Free the associated tape drive
+    // The associated tape drive is now free
     drive->setStatus(UNIT_UP);
 
     // Set the status of the request to pending
@@ -175,7 +173,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 
     // If the associated drive was un-linked from the request then update
     // the DB
-    if(driveUnlinked) {
+    if(request->tapeDrive() == 0) {
       services()->fillRep(&ad, request, OBJ_TapeDrive, false);
       services()->fillRep(&ad, drive, OBJ_TapeRequest, false);
     }
@@ -185,9 +183,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 
     // Clean up
     delete request;
-    if(driveUnlinked) {  // If we un-linked the associated tape drive
-      delete drive;
-    }
+    delete drive;
 
   } catch(castor::exception::Exception &e) {
 
@@ -198,6 +194,10 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
     };
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
       VDQM_DRIVE_ALLOCATION_ERROR, 3, params);
+
+    // Clean up
+    delete request;
+    delete drive;
   }
 }
 
