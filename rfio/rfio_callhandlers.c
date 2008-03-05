@@ -28,6 +28,8 @@ struct internal_context {
   int flags;
   u_signed64 subrequest_id;
   char *pfn;
+  u_signed64 fileId;
+  char *nsHost;
 };
 
 extern u_signed64 subrequest_id;
@@ -41,6 +43,9 @@ gid_t gid,
 char **pfn, 
 void **ctx,
 int *need_user_check) {
+
+
+  char *pnh,*p;
   
   if (subrequest_id > 0) {
     /* rfiod started with -Z option and option value > 0 */
@@ -51,6 +56,30 @@ int *need_user_check) {
       internal_context->flags = flags;
       internal_context->pfn = strdup(lfn);
       internal_context->subrequest_id = subrequest_id;
+  
+      /*Extracting the fileId and nshost from the pfl*/
+      char *cpfn=calloc(strlen(internal_context->pfn),sizeof(char));//not 1 but lenght of cadena
+
+      if( strcpy(cpfn,internal_context->pfn) != NULL){
+        *cpfn++  = '\0';
+      }
+      if (cpfn=strrchr(cpfn,'/')){
+        cpfn =cpfn + 1; // the first element of the string is the "/" 
+
+        if ((pnh = strchr(cpfn,'@')) != NULL) {
+          *pnh++='\0';
+          internal_context->fileId= strtou64(cpfn);
+          if ((p = strchr(pnh,'.')) != NULL) {
+            *p++='\0';
+             internal_context->nsHost= (char *) calloc(1,sizeof(char));
+             strncpy(internal_context->nsHost,pnh,strlen(pnh));
+	     internal_context->nsHost[strlen(pnh)]='\0';
+           }
+         free(cpfn);
+        }
+      }else{
+         log(LOG_ERR, "rfio_handle_open : error parsing the physical filename (%s)\n", strerror(errno));
+      }
     } else {
       log(LOG_ERR, "rfio_handle_open : calloc error (%s)\n", strerror(errno));
     }
@@ -89,7 +118,7 @@ int rfio_handle_firstwrite(void *ctx) {
         log(LOG_INFO,
             "rfio_handle_firstwrite : Calling Cstager_IJobSvc_firstByteWritten on subrequest_id=%s\n",
             u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-        rc = Cstager_IJobSvc_firstByteWritten(*jobSvc,internal_context->subrequest_id);
+        rc = Cstager_IJobSvc_firstByteWritten(*jobSvc,internal_context->subrequest_id,internal_context->fileId, internal_context->nsHost);
         if (rc != 0) {
           log(LOG_ERR,
               "rfio_handle_firstwrite : Cstager_IJobSvc_firstByteWritten error for subrequest_id=%s (%s)\n",
@@ -129,7 +158,7 @@ int close_status) {
           if (Cstager_SubRequest_create(&subrequest) == 0) {
             if (Cstager_SubRequest_setId(subrequest,internal_context->subrequest_id) == 0) {
               log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-              if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size, (u_signed64) time(NULL)) != 0) {
+              if (Cstager_IJobSvc_prepareForMigration(*jobSvc,subrequest,(u_signed64) statbuf.st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost) != 0) {
                 log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
               } else {
                 forced_mover_exit_error = 0;
@@ -140,7 +169,7 @@ int close_status) {
           /* File does not exist !? */
           log(LOG_ERR, "rfio_handle_close : stat64() error (%s)\n", strerror(errno));
           log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_putFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-          if (Cstager_IJobSvc_putFailed(*jobSvc,subrequest_id) != 0) {
+          if (Cstager_IJobSvc_putFailed(*jobSvc,subrequest_id,internal_context->fileId, internal_context->nsHost) != 0) {
             log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_putFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
           } else {
             forced_mover_exit_error = 0;
@@ -150,14 +179,14 @@ int close_status) {
         /* This is a read: the close() status is enough to decide on a getUpdateDone/Failed */
         if (close_status == 0) {
           log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_getUpdateDone on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-          if (Cstager_IJobSvc_getUpdateDone(*jobSvc,internal_context->subrequest_id) != 0) {
+          if (Cstager_IJobSvc_getUpdateDone(*jobSvc,internal_context->subrequest_id,internal_context->fileId, internal_context->nsHost) != 0) {
             log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_getUpdateDone error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
           } else {
             forced_mover_exit_error = 0;
           }
         } else {
           log(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_getUpdateFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-          if (Cstager_IJobSvc_getUpdateFailed(*jobSvc,subrequest_id) != 0) {
+          if (Cstager_IJobSvc_getUpdateFailed(*jobSvc,subrequest_id,internal_context->fileId, internal_context->nsHost) != 0) {
             log(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_getUpdateFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), Cstager_IJobSvc_errorMsg(*jobSvc));
           } else {
             forced_mover_exit_error = 0;
