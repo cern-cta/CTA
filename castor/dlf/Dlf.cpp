@@ -116,6 +116,8 @@ throw() {
  strncpy(ns_invariant.server,nsHost.c_str(),sizeof(ns_invariant.server)-1);
 
  castor::dlf::dlf_writep(uuid, severity, message_no, numparams,params,&ns_invariant);
+ free(ns_invariant.server); 
+
 }
 
 // -----------------------------------------------------------------------
