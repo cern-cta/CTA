@@ -71,7 +71,7 @@ int *need_user_check) {
           internal_context->fileId= strtou64(cpfn);
           if ((p = strchr(pnh,'.')) != NULL) {
             *p++='\0';
-             internal_context->nsHost= (char *) calloc(strlen(pnh),sizeof(char));
+             internal_context->nsHost= (char *) calloc(strlen(pnh)+1,sizeof(char));
              strncpy(internal_context->nsHost,pnh,strlen(pnh));
 	     internal_context->nsHost[strlen(pnh)]='\0';
            }
