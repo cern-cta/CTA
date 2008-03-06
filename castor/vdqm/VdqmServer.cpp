@@ -170,8 +170,8 @@ int main(int argc, char *argv[]) {
 castor::vdqm::VdqmServer::VdqmServer()
   throw():
   castor::server::BaseDaemon("Vdqm"),
-  m_requestHandlerThreadNumber(1),
-  m_RTCPJobSubmitterThreadNumber(1)
+  m_requestHandlerThreadNumber(20),
+  m_RTCPJobSubmitterThreadNumber(20)
 {
   initDlf();
 }
