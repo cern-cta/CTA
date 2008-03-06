@@ -1195,6 +1195,8 @@ std::vector<newVdqmVolReq_t>*
       volReqs->push_back(volReq);
     }
 
+    m_selectTapeRequestQueueStatement->closeResultSet(rs)
+
     return volReqs;
 
   } catch(oracle::occi::SQLException &e) {
@@ -1296,6 +1298,8 @@ std::vector<newVdqmDrvReq_t>*
 
       drvReqs->push_back(drvReq);
     }
+
+    m_selectTapeDriveQueueStatement->closeResultSet(rs)
 
     return drvReqs;
 
