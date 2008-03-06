@@ -1195,7 +1195,7 @@ std::vector<newVdqmVolReq_t>*
       volReqs->push_back(volReq);
     }
 
-    m_selectTapeRequestQueueStatement->closeResultSet(rs)
+    m_selectTapeRequestQueueStatement->closeResultSet(rs);
 
     return volReqs;
 
@@ -1299,7 +1299,7 @@ std::vector<newVdqmDrvReq_t>*
       drvReqs->push_back(drvReq);
     }
 
-    m_selectTapeDriveQueueStatement->closeResultSet(rs)
+    m_selectTapeDriveQueueStatement->closeResultSet(rs);
 
     return drvReqs;
 
