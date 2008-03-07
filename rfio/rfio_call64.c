@@ -176,7 +176,7 @@ static int daemonv3_wrmt, daemonv3_wrmt_nbuf, daemonv3_wrmt_bufsize;
 static struct element {
   char *p;
   int len;
-} *array;
+} *array = NULL;
 
 /* The two semaphores to synchonize accesses to the circular buffer */
 CSemaphore empty64, full64;
@@ -189,7 +189,7 @@ int consumed64 = 0;
 static int write_error;
 /* Variable set by the main thread reading from the network
    to tell the disk reader thread to stop */
-static int stop_read;
+static volatile int stop_read;
 #endif   /* !HPSS */
 
 extern char *getconfent() ;
@@ -2486,16 +2486,9 @@ static void *produce64_thread(int *ptr)
 
 
    while ((! error) && (byte_read != 0)) {
-      if (Cthread_mutex_lock(&stop_read)) {
-         log(LOG_ERR,"produce64_thread: Cannot get mutex : serrno=%d\n", serrno);
-         return(NULL);
-      }
       if (stop_read)
          return (NULL);
-      if (Cthread_mutex_unlock(&stop_read)) {
-         log(LOG_ERR,"produce64_thread: Cannot release mutex : serrno=%d\n", serrno);
-         return(NULL);
-      }
+
 	   log(LOG_DEBUG, "produce64_thread: calling Csemaphore_down(&empty64)\n");
       Csemaphore_down(&empty64);
       
@@ -2654,9 +2647,11 @@ static void *consume64_thread(int *ptr)
    return(NULL);
 }
 
-static void wait_consumer64_thread(int cid)
+static void wait_consumer64_thread(int *cidp)
 {
    log(LOG_DEBUG,"wait_consumer64_thread: Entering wait_consumer64_thread\n");
+   if (*cidp<0) return;
+
    /* Indicate to the consumer thread that an error has occured */
    /* The consumer thread will then terminate */
    Csemaphore_down(&empty64);
@@ -2665,10 +2660,29 @@ static void wait_consumer64_thread(int cid)
    Csemaphore_up(&full64);    
 
    log(LOG_INFO, "wait_consumer64_thread: Joining thread\n");
-   if (Cthread_join(cid,NULL) < 0) {
-      log(LOG_ERR,"wait_consumer64_thread: Error joining consumer thread after error in main thread, serrno=%d\n",serrno);
+   if (Cthread_join(*cidp,NULL) < 0) {
+      log(LOG_ERR,"wait_consumer64_thread: Error joining consumer thread, serrno=%d\n",serrno);
       return;
    }
+   *cidp = -1;
+}
+
+static void wait_producer64_thread(int *cidp)
+{
+   log(LOG_DEBUG,"wait_producer64_thread: Entering wait_producer64_thread\n");
+   if (*cidp<0) return;
+
+   if (!stop_read) {
+      stop_read = 1;
+      Csemaphore_up(&empty64);
+   }
+
+   log(LOG_INFO, "wait_producer64_thread: Joining thread\n");
+   if (Cthread_join(*cidp,NULL) < 0) {
+       log(LOG_ERR,"wait_producer64_thread: Error joining producer thread, serrno=%d\n",serrno);
+       return;
+   }
+   *cidp = -1;
 }
 #endif /* !HPSS */
 
@@ -2677,13 +2691,14 @@ static void wait_consumer64_thread(int cid)
    - Close the data stream
    - Trace statistics
 */
-static int   readerror64_v3(s, infop)
+static int   readerror64_v3(s, infop, cidp)
 #if defined(_WIN32)
 SOCKET         s;
 #else    /* WIN32 */
 int            s;
 #endif   /* else WIN32 */
 struct rfiostat* infop;
+int           *cidp;
 {
 
 char tmpbuf[21], tmpbuf2[21];
@@ -2731,6 +2746,7 @@ char tmpbuf[21], tmpbuf2[21];
       }
    }
    else {
+      wait_producer64_thread(cidp);
       if (array) {
          int      el;
          for (el=0; el < daemonv3_rdmt_nbuf; el++) {
@@ -2791,14 +2807,13 @@ struct rfiostat* infop;
    struct stat64 st;
    char        rfio_buf[BUFSIZ];
    int         eof_met;
-   int         join_done;
 #if defined(HPSS)
    extern int  DISKBUFSIZE_READ;
 #else    /* HPSS */
    int         DISKBUFSIZE_READ = (1 * 1024 * 1024); 
 #endif   /* else HPSS */
    int         n;
-   int         cid1;
+   int         cid1 = -1;
    int         el;
    char        tmpbuf[21];
 
@@ -2820,7 +2835,6 @@ struct rfiostat* infop;
       char *p;
       first_read = 0;
       eof_met = 0;
-      join_done = 0;
 
 #if !defined(HPSS)
       if( (p = getconfent("RFIO", "DAEMONV3_RDSIZE", 0)) != NULL ) {
@@ -2858,7 +2872,7 @@ struct rfiostat* infop;
          array = (struct element *)malloc(sizeof(struct element) * daemonv3_rdmt_nbuf);
          if (array == NULL)  {
             log(LOG_ERR, "rread64_v3: malloc array: ERROR occured (errno=%d)\n", errno);
-            readerror64_v3(ctrl_sock, &myinfo);
+            readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return -1 ;
          }
          log(LOG_DEBUG, "rread64_v3: malloc array allocated : 0X%X\n", array);      
@@ -2875,7 +2889,7 @@ struct rfiostat* infop;
             if ( array[el].p == NULL)  {
                log(LOG_ERR, "rread64_v3: malloc array element %d, size %d: ERROR %d occured\n",
                   el, daemonv3_rdmt_bufsize, errno);
-               readerror64_v3(ctrl_sock, &myinfo);
+               readerror64_v3(ctrl_sock, &myinfo, &cid1);
                return -1 ;
             }
             log(LOG_DEBUG, "rread64_v3: malloc array element %d allocated : 0X%X\n",
@@ -2891,7 +2905,7 @@ struct rfiostat* infop;
          }
          if ( iobuffer == NULL)  {
             log(LOG_ERR, "rread64_v3: malloc: ERROR occured (errno=%d)\n", errno);
-            readerror64_v3(ctrl_sock, &myinfo);
+            readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return -1 ;
          }
          log(LOG_DEBUG, "rread64_v3: malloc buffer allocated : 0X%X\n", iobuffer);      
@@ -2912,7 +2926,7 @@ struct rfiostat* infop;
          log(LOG_DEBUG, "rread64_v3: allocating malloc buffer : %d bytes\n", DISKBUFSIZE_READ);
          if ((iobuffer = (char *)malloc(DISKBUFSIZE_READ)) == NULL)  {
             log(LOG_ERR, "rread64_v3: malloc: ERROR occured (errno=%d)\n", errno);
-            readerror64_v3(ctrl_sock, &myinfo);
+            readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return -1 ;
          }
          log(LOG_DEBUG, "rread64_v3: malloc buffer allocated : 0X%X\n", iobuffer);      
@@ -2922,7 +2936,7 @@ struct rfiostat* infop;
 
       if (fstat64(fd,&st) < 0) {
          log(LOG_ERR, "rread64_v3: fstat(): ERROR occured (errno=%d)\n", errno);
-         readerror64_v3(ctrl_sock, &myinfo);
+         readerror64_v3(ctrl_sock, &myinfo, &cid1);
          return -1 ;
       }
       
@@ -2934,7 +2948,7 @@ struct rfiostat* infop;
 #else        
          log(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, strerror(errno)) ;
 #endif   /* WIN32 */
-         readerror64_v3(ctrl_sock, &myinfo);
+         readerror64_v3(ctrl_sock, &myinfo, &cid1);
          return -1 ;
       }
       bytes2send = st.st_size - offsetout;
@@ -2954,7 +2968,7 @@ struct rfiostat* infop;
 #else    /* WIN32 */
          log(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", strerror(errno)) ;
 #endif   /* else WIN32 */
-         readerror64_v3(ctrl_sock, &myinfo);
+         readerror64_v3(ctrl_sock, &myinfo, &cid1);
          return -1 ;
       }
 
@@ -2971,11 +2985,12 @@ struct rfiostat* infop;
       if (daemonv3_rdmt) {
          Csemaphore_init(&empty64,daemonv3_rdmt_nbuf);
          Csemaphore_init(&full64,0);
+         stop_read = 0;
 
          if ((cid1 = Cthread_create((void *(*)(void *))produce64_thread,(void *)&fd)) < 0) {
             log(LOG_ERR,"rread64_v3: Cannot create producer thread : serrno=%d,errno=%d\n",
                serrno, errno);
-            readerror64_v3(ctrl_sock, &myinfo);
+            readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return(-1);       
          }
       }
@@ -3008,12 +3023,13 @@ struct rfiostat* infop;
 #if defined(_WIN32)
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) == SOCKET_ERROR ) {
          log(LOG_ERR, "srread64_v3: select failed: %s\n", geterr());
+         readerror64_v3(ctrl_sock, &myinfo, &cid1);
          return -1;
       }
 #else      
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) < 0 ) {
          log(LOG_ERR, "srread64_v3: select failed: %s\n", strerror(errno));
-         readerror64_v3(ctrl_sock, &myinfo);
+         readerror64_v3(ctrl_sock, &myinfo, &cid1);
          return -1;
       }
 #endif
@@ -3033,7 +3049,7 @@ struct rfiostat* infop;
             log(LOG_ERR, "srread64_v3: read ctrl socket %d: read(): %s\n",
                ctrl_sock, strerror(errno));
 #endif
-            readerror64_v3(ctrl_sock, &myinfo);
+            readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return -1 ;
          }
          p = rqstbuf ; 
@@ -3057,22 +3073,11 @@ struct rfiostat* infop;
                }
             }
             else {
-               if(!join_done) {
-                  if (Cthread_mutex_lock(&stop_read)) {
-                     log(LOG_ERR,"srread64_v3: Cannot get mutex : serrno=%d\n", serrno);
-                     return(-1);
-                  }
-                  stop_read = 1;
-                  if (Cthread_mutex_unlock(&stop_read)) {
-                     log(LOG_ERR,"srread64_v3: Cannot release mutex : serrno=%d\n", serrno);
-                     return(-1);
-                  }
-                  Csemaphore_up(&empty64);
-                  if (Cthread_join(cid1,NULL) < 0) {       
-                     log(LOG_ERR,"srread64_v3: Error joining producer, serrno=%d\n", serrno);
-                     readerror64_v3(ctrl_sock, &myinfo);
-                     return(-1);
-                  }
+               wait_producer64_thread(&cid1);
+               if(cid1 >= 0) {
+                  log(LOG_ERR,"srread64_v3: Error joining producer, serrno=%d\n", serrno);
+                  readerror64_v3(ctrl_sock, &myinfo, &cid1);
+                  return(-1);
                }
                for (el=0; el < daemonv3_rdmt_nbuf; el++) {
                   log(LOG_DEBUG,"srread64_v3: freeing array element %d at 0X%X\n", el,array[el].p);
@@ -3100,7 +3105,7 @@ struct rfiostat* infop;
          }
          else  {
             log(LOG_ERR,"srread64_v3: unknown request:  magic: %x code: %x\n", magic,code);
-            readerror64_v3(ctrl_sock, &myinfo);
+            readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return(-1);
          }
       }  /* if( FD_ISSET(ctrl_sock, &fdvar) ) */
@@ -3127,10 +3132,10 @@ struct rfiostat* infop;
                   log(LOG_DEBUG,"srread64_v3: Waiting for producer thread\n");
                   if (Cthread_join(cid1,NULL) < 0) {       
                      log(LOG_ERR,"srread64_v3: Error joining producer, serrno=%d\n", serrno);
-                     readerror64_v3(ctrl_sock, &myinfo);
+                     readerror64_v3(ctrl_sock, &myinfo, &cid1);
                      return(-1);
                   }
-                  join_done = 1;
+                  cid1 = -1;
                }
             else
                if (array[consumed64 % daemonv3_rdmt_nbuf].len < 0) {
@@ -3165,7 +3170,7 @@ struct rfiostat* infop;
 #else    /* WIN32 */          
                log(LOG_ERR,"rread64_v3: netwrite(): %s\n", strerror(errno)) ;
 #endif   /* else WIN32 */              
-               readerror64_v3(ctrl_sock, &myinfo);
+               readerror64_v3(ctrl_sock, &myinfo, &cid1);
                return -1 ; 
             }
          }  /*  status == 0 */
@@ -3188,7 +3193,7 @@ struct rfiostat* infop;
 #else                
                   log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno)) ;
 #endif  /* WIN32 */
-                  readerror64_v3(ctrl_sock, &myinfo);
+                  readerror64_v3(ctrl_sock, &myinfo, &cid1);
                   return -1 ; 
                }
                log(LOG_DEBUG, "read64_v3: waiting ack for error\n");
@@ -3208,9 +3213,8 @@ struct rfiostat* infop;
                   log(LOG_ERR, "read64_v3: read ctrl socket %d: read(): %s\n",
                      ctrl_sock, strerror(errno));
 #endif   /* else WIN32 */
-                  readerror64_v3(ctrl_sock, &myinfo);
-                  return -1;
                }  /* n != RQSTSIZE */
+               readerror64_v3(ctrl_sock, &myinfo, &cid1);
                return(-1);
             }  /* status < 0  */
             else  {
@@ -3220,14 +3224,14 @@ struct rfiostat* infop;
                WSASetLastError(WSAECONNRESET);
                if( (n = send(data_sock, iobuffer, status, 0)) != status )  {
                   log(LOG_ERR, "rread64_v3: send() (to data sock): %s\n", geterr() );
-                  readerror64_v3(ctrl_sock, &myinfo);
+                  readerror64_v3(ctrl_sock, &myinfo, &cid1);
                   return -1;
                }
 #else    /* WIN32 */
                errno = ECONNRESET;  
                if( (n = netwrite(data_sock, iobuffer, status)) != status ) {
                   log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
-                  readerror64_v3(ctrl_sock, &myinfo);
+                  readerror64_v3(ctrl_sock, &myinfo, &cid1);
                   return -1 ; 
                }
 #endif   /* else WIN32 */
@@ -3248,7 +3252,7 @@ struct rfiostat* infop;
    - empty the DATA stream
    - wait for acknowledge on control stream
 */
-static int   writerror64_v3(s, rcode, infop)
+static int   writerror64_v3(s, rcode, infop, cidp)
 #if defined(_WIN32)
 SOCKET         s;
 #else    /* WIN32 */
@@ -3256,6 +3260,7 @@ int            s;
 #endif   /* else WIN32 */
 int            rcode;  
 struct rfiostat   *infop;
+int           *cidp;
 {
    char        *p;            /* Pointer to buffer          */
    int         status;
@@ -3423,6 +3428,7 @@ struct rfiostat   *infop;
       iobufsiz = 0;
    }
    else {
+      wait_consumer64_thread(cidp);
       if (array) {
          for (el=0; el < daemonv3_wrmt_nbuf; el++) {
             log(LOG_DEBUG,"writerror64_v3: freeing array element %d at 0X%X\n",
@@ -3482,7 +3488,7 @@ struct rfiostat   *infop;
    int         DISKBUFSIZE_WRITE = (1*1024*1024); 
 #endif /* HPSS */
    int         el;
-   int         cid2;
+   int         cid2 = -1;
    int         saved_errno;
    char        tmpbuf[21], tmpbuf2[21];
 #if defined(_WIN32)
@@ -3633,7 +3639,7 @@ struct rfiostat   *infop;
       if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) == SOCKET_ERROR ) {
          log(LOG_ERR, "rwrite64_v3: select: %s\n", geterr());
          if (daemonv3_wrmt)
-            wait_consumer64_thread(cid2);
+            wait_consumer64_thread(&cid2);
          return -1;
       }
 #else    /* WIN32 */     
@@ -3641,7 +3647,7 @@ struct rfiostat   *infop;
          log(LOG_ERR, "rwrite64_v3: select: %s\n", strerror(errno));
 #if !defined(HPSS)
          if (daemonv3_wrmt)
-            wait_consumer64_thread(cid2);
+            wait_consumer64_thread(&cid2);
 #endif   /* !HPSS */
          return -1 ;
       }
@@ -3663,7 +3669,7 @@ struct rfiostat   *infop;
 #endif      /* WIN32 */
 #if !defined(HPSS)
             if (daemonv3_wrmt)
-               wait_consumer64_thread(cid2);
+               wait_consumer64_thread(&cid2);
 #endif   /* !HPSS */
             return -1;
          }
@@ -3678,7 +3684,7 @@ struct rfiostat   *infop;
          }
          else {
             log(LOG_ERR,"rwrite64_v3: unknown request:  magic: %x code: %x\n", magic, code) ;
-            writerror64_v3(ctrl_sock, EINVAL, &myinfo);
+            writerror64_v3(ctrl_sock, EINVAL, &myinfo, &cid2);
             return -1;
          }
          
@@ -3719,7 +3725,7 @@ struct rfiostat   *infop;
 #endif      /* WIN32 */              
 #if !defined(HPSS)
             if (daemonv3_wrmt)
-               wait_consumer64_thread(cid2);
+               wait_consumer64_thread(&cid2);
 #endif   /* !HPSS */
             return -1;
          }
@@ -3792,7 +3798,7 @@ struct rfiostat   *infop;
          rcode = (status < 0) ? errno:0;
          if (status < 0)  {
             /* Error in writting buffer                                 */
-            writerror64_v3(ctrl_sock, rcode, &myinfo );
+            writerror64_v3(ctrl_sock, rcode, &myinfo, &cid2);
             return -1;
          }  /* if (status < 0) */
          
@@ -3833,6 +3839,7 @@ struct rfiostat   *infop;
                log(LOG_ERR,"Error joining consumer, serrno=%d\n", serrno);
                return(-1);
             }
+            cid2 = -1;
             
             /* Get the last write status within a mutex transaction     */
             if (Cthread_mutex_lock(&write_error)) {
@@ -3853,7 +3860,7 @@ struct rfiostat   *infop;
             
             /* If status is bad, bad news....                           */
             if (status < 0) {
-               writerror64_v3(ctrl_sock, rcode, &myinfo );
+               writerror64_v3(ctrl_sock, rcode, &myinfo, &cid2);
                return -1;
             }  /* if (status < 0) */
             
