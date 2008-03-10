@@ -21,6 +21,7 @@
 #include "castor/Constants.h"
 #include "castor/stager/SubRequest.h"
 #include "RemoteJobSvc.h"
+#include "serrno.h"
 
 struct internal_context {
   int one_byte_at_least;
@@ -44,55 +45,76 @@ char **pfn,
 void **ctx,
 int *need_user_check) {
 
-
-  char *pnh,*p;
-  
   if (subrequest_id > 0) {
     /* rfiod started with -Z option and option value > 0 */
-    struct internal_context *internal_context = calloc(1,sizeof(struct internal_context));
+    struct internal_context *internal_context = calloc(1, sizeof(struct internal_context));
     
     if (internal_context != NULL) {
       internal_context->mode = (mode_t) mode;
       internal_context->flags = flags;
       internal_context->pfn = strdup(lfn);
       internal_context->subrequest_id = subrequest_id;
-  
-      /*Extracting the fileId and nshost from the pfl*/
-      char *cpfn=calloc(strlen(internal_context->pfn),sizeof(char));
+      internal_context->nsHost = NULL;
+      internal_context->fileId = 0;
+      
+      /* Extract the file id and name server host from the pfn */
+      char *cpfn = strdup(internal_context->pfn);
+      if (cpfn != NULL) {
+	
+	/* Get the filename from the path */
+	if ((cpfn = strrchr(cpfn, '/')) != NULL){
+	  cpfn = cpfn + 1; 
+	  
+	  /* Extract the file id */
+	  char *pnh = strchr(cpfn, '@');
+	  if (pnh != NULL) {
+	    *pnh++ = '\0';
+	    internal_context->fileId = strtou64(cpfn);
+	    
+	    /* Extract the name server host */
+	    char *p = strchr(pnh, '.');
+	    if (p != NULL) {
+	      *p++ = '\0';
+	      internal_context->nsHost = strdup(pnh);
+	      if (internal_context->nsHost == NULL) {
+		log(LOG_ERR, "rfio_handle_open : memory allocation error duplicating "
+		    "nameserver host (%s)\n", strerror(errno));	
+		serrno = errno;
+		return -1;
+	      }
+	    }
+	  }
+	} 
+	free(cpfn);
 
-      if( strcpy(cpfn,internal_context->pfn) != NULL){
-        *cpfn++  = '\0';
-      }
-      if (cpfn=strrchr(cpfn,'/')){
-        cpfn =cpfn + 1; // the first element of the string is the "/" 
-
-        if ((pnh = strchr(cpfn,'@')) != NULL) {
-          *pnh++='\0';
-          internal_context->fileId= strtou64(cpfn);
-          if ((p = strchr(pnh,'.')) != NULL) {
-            *p++='\0';
-             internal_context->nsHost= (char *) calloc(strlen(pnh)+1,sizeof(char));
-             strncpy(internal_context->nsHost,pnh,strlen(pnh));
-	     internal_context->nsHost[strlen(pnh)]='\0';
-           }
-         free(cpfn);
-       
-        }
-      }else{
-         log(LOG_ERR, "rfio_handle_open : error parsing the physical filename (%s)\n", strerror(errno));
+	/* If we got this far and the name server host is not defined then the
+	 * pfn was not as we expected
+	 */
+	if (internal_context->nsHost == NULL) {
+	  log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (format unknown)\n", 
+	      internal_context->pfn);
+	  serrno = EINVAL;
+	  return -1;
+	}
+      } else {
+	log(LOG_ERR, "rfio_handle_open : error parsing the physical filename %s: (%s)\n", 
+	    internal_context->pfn, strerror(errno));
+	serrno = errno;
+	return -1;
       }
     } else {
       log(LOG_ERR, "rfio_handle_open : calloc error (%s)\n", strerror(errno));
+      serrno = errno;
+      return -1;
     }
     
     struct stat64 statbuf;
-    if(stat64(internal_context->pfn,&statbuf) < 0) {
+    if (stat64(internal_context->pfn,&statbuf) < 0) {
       /* local file does not exist: here we assume that it's going to be created,
          and this is equivalent to a write operation regardless the mode bits.
          So we set one_byte_at_least to 1 */
       internal_context->one_byte_at_least = 1;
-    }
-    else {
+    } else {
       internal_context->one_byte_at_least = 0;
     }
 
@@ -195,8 +217,9 @@ int close_status) {
         }
       }
     }
+  } else {
+    return 0;
   }
-  else {return 0;}
 
   if (forced_mover_exit_error != 0){
     return -1;
