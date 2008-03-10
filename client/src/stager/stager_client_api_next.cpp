@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_next.cpp,v 1.9 2007/12/07 11:40:53 sponcec3 Exp $
+ * $Id: stager_client_api_next.cpp,v 1.10 2008/03/10 17:27:14 itglp Exp $
  */
 
 /*
@@ -19,7 +19,6 @@
 #include "errno.h"
 #include "stager_client_api_common.hpp"
 #include "stager_client_api.h"
-#include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
@@ -50,7 +49,7 @@ static int _processReqIdRequest(const char *func,
   int ret=0;
 
   if (prevRequestId == NULL) {    serrno = EINVAL;
-    stage_errmsg(func, "Invalid input parameter");
+    stager_errmsg(func, "Invalid input parameter");
     return -1;
   }
 
@@ -82,7 +81,7 @@ static int _processReqIdRequest(const char *func,
     if (nbResponses <= 0) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
+      stager_errmsg(func, "No responses received");
       return -1;
     }
     
@@ -94,7 +93,7 @@ static int _processReqIdRequest(const char *func,
     
     if (*response == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
     
@@ -123,7 +122,7 @@ static int _processReqIdRequest(const char *func,
 
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   

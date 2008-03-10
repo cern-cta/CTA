@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_put.cpp,v 1.32 2007/12/07 11:40:53 sponcec3 Exp $
+ * $Id: stager_client_api_put.cpp,v 1.33 2008/03/10 17:27:14 itglp Exp $
  */
 
 /*
@@ -18,7 +18,6 @@
 /* ============= */
 #include "errno.h"
 #include "stager_client_api.h"
-#include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
@@ -65,7 +64,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
       || responses == NULL
       || nbresps == NULL) {
     serrno = EINVAL;
-    stage_errmsg(func, "Invalid input parameter");
+    stager_errmsg(func, "Invalid input parameter");
     return -1;
   }
 
@@ -99,7 +98,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
       
       if (!(requests[i].filename)) {
         serrno = EINVAL;
-        stage_errmsg(func, "filename in request %d is NULL", i);
+        stager_errmsg(func, "filename in request %d is NULL", i);
         return -1;
       }
 
@@ -130,7 +129,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     if (nbResponses <= 0) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
+      stager_errmsg(func, "No responses received");
       return -1;
     }
     
@@ -142,7 +141,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
 
     if (*responses == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
     *nbresps = nbResponses;
@@ -173,7 +172,7 @@ EXTERN_C int DLL_DECL stage_prepareToPut(const char *userTag,
     
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   
@@ -203,7 +202,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
   if (0 == filename
       || 0 ==  response) {
     serrno = EINVAL;
-    stage_errmsg(func, "Invalid input parameter");
+    stager_errmsg(func, "Invalid input parameter");
     return -1;
   }
 
@@ -260,7 +259,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     if (nbResponses <= 0) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
+      stager_errmsg(func, "No responses received");
       return -1;
     }
     
@@ -272,7 +271,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
     
     if (*response == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
     
@@ -301,7 +300,7 @@ EXTERN_C int DLL_DECL stage_put(const char *userTag,
 
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   
@@ -331,7 +330,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
       || responses == NULL
       || nbresps == NULL) {
     serrno = EINVAL;
-    stage_errmsg(func, "Invalid input parameter");
+    stager_errmsg(func, "Invalid input parameter");
     return -1;
   }
 
@@ -368,7 +367,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
       
       if (!(requests[i].filename)) {
         serrno = EINVAL;
-        stage_errmsg(func, "filename in request %d is NULL", i);
+        stager_errmsg(func, "filename in request %d is NULL", i);
         return -1;
       }
 
@@ -400,7 +399,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
     if (nbResponses <= 0) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
+      stager_errmsg(func, "No responses received");
       return -1;
     }
     
@@ -411,7 +410,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
                                                   * nbResponses);
     if (*responses == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
     *nbresps = nbResponses;
@@ -444,7 +443,7 @@ EXTERN_C int DLL_DECL stage_putDone(char *putRequestId,
     
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   

@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_setFileGCWeight.cpp,v 1.7 2007/12/07 11:40:53 sponcec3 Exp $
+ * $Id: stager_client_api_setFileGCWeight.cpp,v 1.8 2008/03/10 17:27:14 itglp Exp $
  */
 
 /*
@@ -19,7 +19,6 @@
 #include "errno.h"
 #include "stager_client_api.h"
 #include "stager_client_api_common.hpp"
-#include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
@@ -54,7 +53,7 @@ static int _processFileRequest(const char *func,
       || responses == NULL
       || nbresps == NULL) {
     serrno = EINVAL;
-    stage_errmsg(func, "Invalid input parameter");
+    stager_errmsg(func, "Invalid input parameter");
     return -1;
   }
 
@@ -75,7 +74,7 @@ static int _processFileRequest(const char *func,
       
       if (!(requests[i].filename)) {
         serrno = EINVAL;
-        stage_errmsg(func, "filename in request %d is NULL", i);
+        stager_errmsg(func, "filename in request %d is NULL", i);
         return -1;
       }
 
@@ -103,7 +102,7 @@ static int _processFileRequest(const char *func,
     if (nbResponses <= 0) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
+      stager_errmsg(func, "No responses received");
       return -1;
     }
     
@@ -114,7 +113,7 @@ static int _processFileRequest(const char *func,
                                                   * nbResponses);
     if (*responses == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
     *nbresps = nbResponses;
@@ -145,7 +144,7 @@ static int _processFileRequest(const char *func,
     
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   

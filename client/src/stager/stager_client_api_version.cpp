@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_version.cpp,v 1.3 2007/12/07 11:40:54 sponcec3 Exp $
+ * $Id: stager_client_api_version.cpp,v 1.4 2008/03/10 17:27:14 itglp Exp $
  */
 
 /* ============= */
@@ -8,7 +8,6 @@
 #include "errno.h"
 #include "stager_client_api_common.hpp"
 #include "stager_client_api.h"
-#include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/VectorResponseHandler.hpp"
@@ -73,11 +72,11 @@ EXTERN_C int DLL_DECL stage_version(int *majorVersion,
     *minorRelease = vr->minorRelease();
     rc = 0;
   } catch (castor::exception::Communication e) {
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     rc = -1;
     saved_serrno = e.code();
   } catch (castor::exception::Exception e) {
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     rc = -1;
     saved_serrno = e.code();
   }

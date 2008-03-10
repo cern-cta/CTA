@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_query.cpp,v 1.35 2007/12/07 11:40:53 sponcec3 Exp $
+ * $Id: stager_client_api_query.cpp,v 1.36 2008/03/10 17:27:14 itglp Exp $
  */
 
 /*
@@ -17,7 +17,6 @@
 #include "errno.h"
 #include "u64subr.h"
 #include "stager_client_api.h"
-#include "stager_admin_api.h"
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
 #include "castor/client/IResponseHandler.hpp"
@@ -61,7 +60,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       || responses == NULL
       || nbresps == NULL) {
     serrno = EINVAL;
-    stage_errmsg(func, "Invalid input parameter");
+    stager_errmsg(func, "Invalid input parameter");
     return -1;
   }
 
@@ -82,7 +81,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
       
       if (!(requests[i].param)) {
         serrno = EINVAL;
-        stage_errmsg(func, "Parameter in request %d is NULL", i);
+        stager_errmsg(func, "Parameter in request %d is NULL", i);
         return -1;
       }
       
@@ -108,7 +107,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     if (nbResponses <= 0) {
       // We got no replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
+      stager_errmsg(func, "No responses received");
       return -1;
     }
     
@@ -120,7 +119,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
 
     if (*responses == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
     *nbresps = nbResponses;
@@ -165,7 +164,7 @@ EXTERN_C int DLL_DECL stage_filequery(struct stage_query_req *requests,
     
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   return 0;
@@ -191,7 +190,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
       || responses == NULL
       || nbresps == NULL) {
     serrno = EINVAL;
-    stage_errmsg(func, "Invalid input parameter");
+    stager_errmsg(func, "Invalid input parameter");
     return -1;
   }
   
@@ -211,7 +210,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
       
       if (!(requests[i].param)) {
         serrno = EINVAL;
-        stage_errmsg(func, "Parameter in request %d is NULL", i);
+        stager_errmsg(func, "Parameter in request %d is NULL", i);
         return -1;
       }
       
@@ -234,7 +233,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     if (nbResponses <= 0) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No responses received");
+      stager_errmsg(func, "No responses received");
       return -1;
     }
     
@@ -245,7 +244,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
 
     if (*responses == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
     *nbresps = nbResponses;
@@ -268,7 +267,7 @@ EXTERN_C int DLL_DECL stage_requestquery(struct stage_query_req *requests,
     
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   return 0;
@@ -371,7 +370,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     if (nbResponses <= 0) {
       // We got not replies, this is not normal !
       serrno = SEINTERNAL;
-      stage_errmsg(func, "No diskpool found");
+      stager_errmsg(func, "No diskpool found");
       return -1;
     }
 
@@ -402,7 +401,7 @@ EXTERN_C int DLL_DECL stage_diskpoolquery
     
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   return 0;
@@ -451,7 +450,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
     }
     if (*responses == NULL) {
       serrno = ENOMEM;
-      stage_errmsg(func, "Could not allocate memory for responses");
+      stager_errmsg(func, "Could not allocate memory for responses");
       return -1;
     }
 
@@ -504,7 +503,7 @@ EXTERN_C int DLL_DECL stage_diskpoolsquery
 
   } catch (castor::exception::Exception e) {
     serrno = e.code();
-    stage_errmsg(func, (char *)(e.getMessage().str().c_str()));
+    stager_errmsg(func, (e.getMessage().str().c_str()));
     return -1;
   }
   return 0;

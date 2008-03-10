@@ -1,5 +1,5 @@
 /*
- * $Id: stager_client_api_common.cpp,v 1.33 2008/02/18 11:49:00 itglp Exp $
+ * $Id: stager_client_api_common.cpp,v 1.34 2008/03/10 17:27:14 itglp Exp $
  */
 
 /*
@@ -224,7 +224,7 @@ EXTERN_C char* DLL_DECL stage_geturl(struct stage_io_fileresp *io) {
   
   if (io == NULL) {
     serrno = EINVAL;
-    stage_errmsg(func, "io is NULL");
+    stager_errmsg(func, "io is NULL");
     return NULL;
   }
   
