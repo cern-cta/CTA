@@ -101,7 +101,7 @@ NFSROOT  = -DNFSROOT=\"$(NFSROOT0)\"
 CSEC = -DCSEC
 #endif
 
-CFLAGS = $(DEBUG) -I$(INCLUDES) -I.. $(HPSSINCLUDES) $(CTHREAD_FLAGS) $(CLIENTLOG) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(HPSSOPTS) $(HPSSCOPTS) $(NFSROOT) $(CSEC)
+CFLAGS = $(DEBUG) -I$(INCLUDES) -I.. $(HPSSINCLUDES) $(CTHREAD_FLAGS) $(CLIENTLOG) $(CCOPTFLAGS) $(DEFCFLAGS) $(RFIOFLAGS) $(ACCTFLAG) -DFORTRAN $(SUPPORT_CS2) $(CPPUFL) $(HPSSOPTS) $(HPSSCOPTS) $(NFSROOT) $(CSEC) -DSTAGEHOST=\"$(STAGEHOST)\"
 
 FIOO=fio.Osuf
 #if _WIN32
@@ -309,13 +309,24 @@ EPROGS = FileName($(EXPORTBIN),rfiod)
 SRVOBJS = $(NTSERVICEO) Csemaphore.Osuf rfio_serv.Osuf rfio_calls.Osuf \
 		rfio_call64.Osuf rfio_fcalls.Osuf rfio_callhandlers.Osuf switch_req.Osuf \
 		checkkey.Osuf $(FIOO) $(CRAYFORTRANO) rfstatfs.Osuf alrm.Osuf \
-		rfioacct.Osuf ../job/RemoteJobSvc.Osuf
+		rfioacct.Osuf ../job/RemoteJobSvc.Osuf ../job/stager_catalogInterface.Osuf \
+		../job/stager_util.Osuf ../job/stager_messages.Osuf ../job/stager_extern_globals.Osuf \
+		../job/stager_uuid.Osuf 
 
 #if defined(linux)
 #if UseXFSPrealloc
 SRVOBJS += rfio_alignedbuf.Osuf rfio_xfsprealloc.Osuf
 #endif
 #endif
+
+OBSOLETE_OBJS = \
+            ../client/src/rfio/buildupath.Osuf \
+	    ../client/src/rfio/send2stgd_api.Osuf \
+	    ../client/src/rfio/send2stgd_compat.Osuf \
+	    ../client/src/rfio/stage_api.Osuf \
+	    ../client/src/rfio/stage_errmsg.Osuf \
+	    ../client/src/rfio/stage_updc.Osuf \
+	    ../client/src/rfio/stage_util.Osuf
 
 RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		chown.Osuf close.Osuf closedir.Osuf connect.Osuf error.Osuf \
@@ -333,7 +344,7 @@ RFIOLIB_OBJS = access.Osuf alrm.Osuf chdir.Osuf checkkey.Osuf chmod.Osuf \
 		xyread.Osuf xywrite.Osuf \
 		fopen64.Osuf fseeko64.Osuf fstat64.Osuf ftello64.Osuf \
 		lockf64.Osuf lseek64.Osuf open64.Osuf \
-		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf
+		preseek64.Osuf read64.Osuf stream64.Osuf write64.Osuf RfioTURL.Osuf $(OBSOLETE_OBJS)
 
 all:    $(RFIOLIBTARGET) $(CLIENT) $(SERVER) $(DUMPLOG)
 
