@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm.h,v 1.1 2004/07/30 13:11:17 motiakov Exp $
+ * $Id: vdqm.h,v 1.2 2008/03/10 20:17:16 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.1 $ $Date: 2004/07/30 13:11:17 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm.h,v $ $Revision: 1.2 $ $Date: 2008/03/10 20:17:16 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -108,6 +108,26 @@ typedef struct vdqmDrvAckn {
     int status;
 } vdqmDrvAckn_t;
 
+/*
+ * Message used to send the priority of a volume to the VDQM2.
+ *
+ * Note that this message will be sent with VDQM magic number: VDQM2
+ */
+typedef struct vdqmVolPriority {
+    int  priority;
+    int  clientUID;
+    int  clientGID;
+    char client_host[CA_MAXHOSTNAMELEN+1];
+    char volid[CA_MAXVIDLEN+1];
+    int  nbVolRequests;
+} vdqmVolPriority_t;
+/*
+ * Length of marshalled structure. Don't forget to update
+ * if entries are added
+ */
+#define VDQM_VOLPRIORITYLEN(X) ( 4*LONGSIZE + \
+    strlen(X->client_host) + strlen(X->volid))
+
 
 /*
  * Network definitions
@@ -146,6 +166,8 @@ int vdqm_SendToRTCP _PROTO((SOCKET, vdqmVolReq_t *, vdqmDrvReq_t *));
 int vdqm_GetRTCPReq _PROTO((char *, vdqmVolReq_t *, vdqmDrvReq_t *));
 int vdqm_SendRTCPAckn _PROTO((SOCKET, int *, int *, char *));
 int vdqm_GetRTCPPort _PROTO((void));
+int vdqm_SendVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
+int vdqm_RecvVolPriority_Transfer _PROTO((vdqmnw_t *, vdqmVolPriority_t *));
 
 #if defined(VDQMSERV)
 /*

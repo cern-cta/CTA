@@ -1,5 +1,5 @@
 /*
- * $Id: vdqm_constants.h,v 1.2 2004/08/12 16:12:47 motiakov Exp $
+ * $Id: vdqm_constants.h,v 1.3 2008/03/10 20:17:16 murrayc3 Exp $
  */
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /*
- * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.2 $ $Date: 2004/08/12 16:12:47 $ CERN IT-PDP/DM Olof Barring
+ * @(#)$RCSfile: vdqm_constants.h,v $ $Revision: 1.3 $ $Date: 2008/03/10 20:17:16 $ CERN IT-PDP/DM Olof Barring
  */
 
 /*
@@ -18,12 +18,13 @@
 #ifndef _VDQM_CONSTANTS_H
 #define _VDQM_CONSTANTS_H
 /*
- * VDQM magic number
+ * VDQM magic numbers
  */
-#define VDQM_MAGIC (0x8537)
+#define VDQM_MAGIC  (0x8537)
+#define VDQM_MAGIC2 (0x8538)
 
 /*
- * Request types
+ * Request types for magic number: VDQM_MAGIC
  */
 #define VDQM_BASE_REQTYPE (0x3100)
 #define VDQM_REQ_MIN      (VDQM_BASE_REQTYPE)
@@ -47,6 +48,18 @@
 #define VDQM_HANGUP       (VDQM_BASE_REQTYPE+0x12)
 #define VDQM_REQ_MAX      (VDQM_BASE_REQTYPE+0x13)
 #define VDQM_VALID_REQTYPE(X) ((X)>VDQM_REQ_MIN && (X)<VDQM_REQ_MAX)
+
+/*
+ * Request types for magic number: VDQM_MAGIC2
+ *
+ * Note that the VDQM2_ prefix refers to the protocol version of the VDQM
+ * messages and not to the VDQM2 server.
+ */
+#define VDQM2_BASE_REQTYPE     (0x4100)
+#define VDQM2_REQ_MIN          (VDQM2_BASE_REQTYPE)
+#define VDQM2_SET_VOL_PRIORITY (VDQM2_BASE_REQTYPE+0x01)
+#define VDQM2_REQ_MAX          (VDQM2_BASE_REQTYPE+0x02)
+#define VDQM2_VALID_REQTYPE(X) ((X)>VDQM2_REQ_MIN && (X)<VDQM2_REQ_MAX)
 
 /*
  * Privileged requests. Note that VDQM_DEL_VOLREQ and VDQM_DEL_DRVREQ

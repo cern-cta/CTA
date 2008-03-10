@@ -764,3 +764,193 @@ int vdqm_SendToRTCP(SOCKET connect_socket, vdqmVolReq_t *VolReq,
     }
     return(rc);
 }
+
+int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw,
+  vdqmVolPriority_t *volpriority) {
+    
+    char hdrbuf[VDQM_HDRBUFSIZ], buf[VDQM_MSGBUFSIZ];
+    char servername[CA_MAXHOSTNAMELEN+1];
+    char *p;
+    int magic,reqtype,len,local_access; 
+    int rc;
+    SOCKET s;
+    
+    /*
+     * Sanity checks
+     */
+    if ( nw == NULL                                   ||
+        (nw->accept_socket == INVALID_SOCKET          &&
+        nw->connect_socket == INVALID_SOCKET) ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    
+    *servername = '\0';
+    local_access = 0;
+    magic = len = 0;
+    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+        rc = gethostname(servername,CA_MAXHOSTNAMELEN);
+        s = nw->connect_socket;
+    }
+    
+    if ( *servername != '\0' ) {
+        strncpy(volpriority->client_host, servername,
+            sizeof(volpriority->client_host));
+        volpriority->client_host[sizeof(volpriority->client_host)-1] = '\0';
+    }
+
+    p = buf;
+    DO_MARSHALL(LONG,p,volpriority->priority,SendTo);
+    DO_MARSHALL(LONG,p,volpriority->clientUID,SendTo);
+    DO_MARSHALL(LONG,p,volpriority->clientGID,SendTo);
+    DO_MARSHALL_STRING(p,volpriority->client_host,SendTo, sizeof(volpriority->client_host));
+    DO_MARSHALL_STRING(p,volpriority->volid,SendTo, sizeof(volpriority->volid));
+ 
+    magic   = VDQM_MAGIC2;
+    reqtype = VDQM2_SET_VOL_PRIORITY;
+    len     = VDQM_VOLPRIORITYLEN(volpriority);
+    p = hdrbuf;
+    DO_MARSHALL(LONG,p,magic,SendTo);
+    DO_MARSHALL(LONG,p,reqtype,SendTo);
+    DO_MARSHALL(LONG,p,len,SendTo);
+    rc = netwrite_timeout(s,hdrbuf,VDQM_HDRBUFSIZ,VDQM_TIMEOUT);
+    switch (rc) {
+    case -1:
+#if defined(VDQMSERV)
+        log(LOG_ERR,"vdqm_Transfer() netwrite(HDR): %s\n", neterror());
+#endif /* VDQMSERV */
+        serrno = SECOMERR;
+        return(-1);
+    case 0:
+#if defined(VDQMSERV)
+        log(LOG_ERR,"vdqm_Transfer() netwrite(HDR): connection dropped\n");
+#endif /*VDQMSERV */
+        serrno = SECONNDROP;
+        return(-1);
+    }
+    if ( len > 0 ) {
+        rc = netwrite_timeout(s,buf,len,VDQM_TIMEOUT);
+        switch (rc) {
+        case -1:
+#if defined(VDQMSERV)
+            log(LOG_ERR,"vdqm_Transfer() netwrite(REQ): %s\n", neterror());
+#endif /* VDQMSERV */
+            serrno = SECOMERR;
+            return(-1);
+        case 0:
+#if defined(VDQMSERV)
+            log(LOG_ERR,"vdqm_Transfer() netwrite(REQ): connection dropped\n");
+#endif /*VDQMSERV */
+            serrno = SECONNDROP;
+            return(-1);
+        }
+    }
+
+    return(reqtype);
+}
+
+int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw,
+  vdqmVolPriority_t *volpriority) {
+    
+    char hdrbuf[VDQM_HDRBUFSIZ], buf[VDQM_MSGBUFSIZ];
+    char servername[CA_MAXHOSTNAMELEN+1];
+    char *p;
+    struct sockaddr_in from;
+    struct hostent *hp;
+    socklen_t fromlen;
+    int magic,reqtype,len,local_access; 
+    int rc;
+    SOCKET s;
+    
+    /*
+     * Sanity checks
+     */
+    if ( nw == NULL                                   ||
+        (nw->accept_socket == INVALID_SOCKET          &&
+        nw->connect_socket == INVALID_SOCKET) ) {
+        serrno = EINVAL;
+        return(-1);
+    }
+    
+    reqtype = -1;
+    *servername = '\0';
+    local_access = 0;
+    magic = len = 0;
+    if ( (s = nw->accept_socket) == INVALID_SOCKET ) {
+        rc = gethostname(servername,CA_MAXHOSTNAMELEN);
+        s = nw->connect_socket;
+    }
+    
+    rc = netread_timeout(s,hdrbuf,VDQM_HDRBUFSIZ,VDQM_TIMEOUT);
+    switch (rc) {
+    case -1: 
+#if defined(VDQMSERV)
+        log(LOG_ERR,"vdqm_Transfer() netread(HDR): %s\n", neterror());
+#endif /* VDQMSERV */
+        serrno = SECOMERR;
+        return(-1);
+    case 0:
+#if defined(VDQMSERV)
+        log(LOG_ERR,"vdqm_Transfer() netread(HDR): connection dropped\n");
+#endif /* VDQMSERV */
+        serrno = SECONNDROP;
+        return(-1);
+    }
+    p = hdrbuf;
+    DO_MARSHALL(LONG,p,magic,ReceiveFrom);
+    DO_MARSHALL(LONG,p,reqtype,ReceiveFrom);
+    DO_MARSHALL(LONG,p,len,ReceiveFrom);
+    if ( VALID_VDQM_MSGLEN(len) ) {
+        rc = netread_timeout(s,buf,len,VDQM_TIMEOUT);
+        switch (rc) {
+        case -1:
+#if defined(VDQMSERV)
+            log(LOG_ERR,"vdqm_Transfer() netread(REQ): %s\n", neterror());
+#endif /* VDQMSERV */
+            serrno = SECOMERR;
+            return(-1);
+        case 0:
+#if defined(VDQMSERV)
+            log(LOG_ERR,"vdqm_Transfer() netread(REQ): connection dropped\n");
+#endif /* VDQMSERV */
+            serrno = SECONNDROP;
+            return(-1);
+        }
+    } else if ( len > 0 ) {
+#if defined(VDQMSERV)
+        log(LOG_ERR,"vdqm_Transfer() netread(REQ): invalid message length %d\n",
+            len);
+#endif /* VDQMSERV */
+        serrno = SEUMSG2LONG;
+        return(-1);
+    }
+        
+    fromlen = sizeof(from);
+    if ( (rc = getpeername(s,(struct sockaddr *)&from,&fromlen)) ==
+        SOCKET_ERROR ) {
+#if defined(VDQMSERV)
+        log(LOG_ERR,"vdqm_Transfer(): getpeername() %s\n",neterror());
+#endif /* VDQMSERV */
+        return(-1);
+    } 
+    if ( (hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
+        from.sin_family)) == NULL ) {
+#if defined(VDQMSERV)
+        log(LOG_ERR,"vdqm_Transfer(): Cgethostbyaddr() h_errno=%d, %s\n",
+            h_errno,neterror());
+#endif /* VDQMSERV */
+        return(-1);
+    }
+
+    p = buf;
+    DO_MARSHALL(LONG,p,volpriority->priority,ReceiveFrom);
+    DO_MARSHALL(LONG,p,volpriority->clientUID,ReceiveFrom);
+    DO_MARSHALL(LONG,p,volpriority->clientGID,ReceiveFrom);
+    DO_MARSHALL_STRING(p,volpriority->client_host,ReceiveFrom,
+        sizeof(volpriority->client_host));
+    DO_MARSHALL_STRING(p,volpriority->volid,ReceiveFrom,
+        sizeof(volpriority->volid));
+    DO_MARSHALL(LONG,p,volpriority->nbVolRequests,ReceiveFrom);
+ 
+    return(reqtype);
+}

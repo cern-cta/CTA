@@ -1,5 +1,5 @@
 /*
- * $Id: vdqmapi.c,v 1.6 2007/12/07 13:54:33 sponcec3 Exp $
+ * $Id: vdqmapi.c,v 1.7 2008/03/10 20:17:17 murrayc3 Exp $
  *
  * Copyright (C) 1999 by CERN IT-PDP/DM
  * All rights reserved
@@ -885,3 +885,46 @@ int DLL_DECL vdqm_PingServer(vdqmnw_t *nw, char *dgn, int reqID) {
     VDQM_API_RETURN(rc);
 }
 
+int DLL_DECL vdqm_SendVolPriority(vdqmnw_t *nw, char *VID, int priority) {
+    vdqmVolPriority_t volpriority;
+    vdqmnw_t *tmpnw = NULL;
+    int save_serrno = 0;
+    int rc = 0;
+    VDQM_API_ENTER(vdqm_setVolPriority);
+
+    memset(&volpriority,'\0',sizeof(volpriority));
+    if ( (nw != NULL && nw->connect_socket == INVALID_SOCKET) ||
+        VID == NULL) {
+        TRACE(1,"vdqm","vdqm_SetVolPriority() called with invalid argument");
+        serrno = EINVAL;
+        VDQM_API_RETURN(-1);
+    }
+    if ( nw == NULL ) {
+        rc = vdqm_Connect(&tmpnw);
+        if ( rc < 0 ) VDQM_API_RETURN(rc);
+    } else tmpnw = nw;
+    volpriority.priority = priority;
+    strncpy(volpriority.volid, VID, sizeof(volpriority.volid));
+    volpriority.volid[sizeof(volpriority.volid)-1] = '\0';
+    volpriority.clientUID = geteuid();
+    volpriority.clientGID = getegid();
+    rc = vdqm_SendVolPriority_Transfer(tmpnw,&volpriority);
+    if ( rc != -1 ) {
+        rc = vdqm_RecvAckn(tmpnw);
+        TRACE(1,"vdqm","vdqm_setVolPriority() vdqm_RecvAckn() rc = 0x%x",rc);
+        if ( rc == VDQM_COMMIT ) {
+            memset(&volpriority,'\0',sizeof(volpriority));
+            rc = vdqm_RecvVolPriority_Transfer(tmpnw,&volpriority);
+            if ( rc != -1 ) {
+                rc = vdqm_AcknCommit(tmpnw);
+                rc = 0;
+            }
+        } else {
+            if ( rc > 0 ) save_serrno = rc;
+            rc = -1;
+        }
+    }
+    if ( nw == NULL ) vdqm_Disconnect(&tmpnw);
+    if ( rc == -1 && save_serrno > 0 ) serrno = save_serrno;
+    VDQM_API_RETURN(rc);
+}
