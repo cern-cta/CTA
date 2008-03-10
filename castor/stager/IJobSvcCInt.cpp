@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
+ * @(#)$RCSfile: IJobSvcCInt.cpp,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/10 09:25:16 $ $Author: waldron $
  *
  *
  *
@@ -90,7 +90,7 @@ extern "C" {
       bool ef;
       std::list<castor::stager::DiskCopyForRecall*> sourceslist;
       *diskCopy = jobSvc->jobSvc->getUpdateStart
-        (subreq, fileSystem, &ef,fileId,nsHost);
+        (subreq, fileSystem, &ef, fileId, nsHost);
       *emptyFile = ef ? 1 : 0;
     } catch (castor::exception::Exception e) {
       serrno = e.code();
@@ -113,7 +113,7 @@ extern "C" {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       *diskCopy =
-        jobSvc->jobSvc->putStart(subreq, fileSystem,fileId,nsHost);
+        jobSvc->jobSvc->putStart(subreq, fileSystem, fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -133,8 +133,8 @@ extern "C" {
   // Cstager_IJobSvc_selectSvcClass
   //-------------------------------------------------------------------------
   int Cstager_IJobSvc_selectSvcClass(struct Cstager_IJobSvc_t* jobSvc,
-                                        castor::stager::SvcClass** svcClass,
-                                        const char* name) {
+				     castor::stager::SvcClass** svcClass,
+				     const char* name) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
       *svcClass = jobSvc->jobSvc->selectSvcClass(name);
@@ -156,7 +156,8 @@ extern "C" {
    const char* diskServer) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      *fileSystem = jobSvc->jobSvc->selectFileSystem(mountPoint, diskServer);
+      *fileSystem = jobSvc->jobSvc->selectFileSystem
+	(mountPoint, diskServer);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -176,7 +177,8 @@ extern "C" {
    const char* nsHost) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      jobSvc->jobSvc->disk2DiskCopyDone(diskCopyId, sourceDiskCopyId,fileId,nsHost);
+      jobSvc->jobSvc->disk2DiskCopyDone
+	(diskCopyId, sourceDiskCopyId, fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -195,7 +197,7 @@ extern "C" {
    const char* nsHost) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      jobSvc->jobSvc->disk2DiskCopyFailed(diskCopyId,fileId,nsHost);
+      jobSvc->jobSvc->disk2DiskCopyFailed(diskCopyId, fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -216,7 +218,8 @@ extern "C" {
    const char* nsHost) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      jobSvc->jobSvc->prepareForMigration(subreq, fileSize, timeStamp,fileId,nsHost);
+      jobSvc->jobSvc->prepareForMigration
+	(subreq, fileSize, timeStamp, fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -254,7 +257,7 @@ extern "C" {
    const char* nsHost) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      jobSvc->jobSvc->getUpdateFailed(subReqId,fileId,nsHost);
+      jobSvc->jobSvc->getUpdateFailed(subReqId, fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -273,7 +276,7 @@ extern "C" {
    const char* nsHost) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      jobSvc->jobSvc->putFailed(subReqId,fileId,nsHost);
+      jobSvc->jobSvc->putFailed(subReqId, fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -292,7 +295,7 @@ extern "C" {
    const char* nsHost) {
     if (!checkIJobSvc(jobSvc)) return -1;
     try {
-      jobSvc->jobSvc->firstByteWritten(subRequestId,fileId,nsHost);
+      jobSvc->jobSvc->firstByteWritten(subRequestId, fileId, nsHost);
     } catch (castor::exception::Exception e) {
       serrno = e.code();
       jobSvc->errorMsg = e.getMessage().str();
@@ -300,5 +303,4 @@ extern "C" {
     }
     return 0;
   }
-
 }

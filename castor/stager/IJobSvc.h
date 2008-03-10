@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
+ * @(#)$RCSfile: IJobSvc.h,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/10 09:25:16 $ $Author: waldron $
  *
  *
  *
@@ -119,6 +119,8 @@ int Cstager_IJobSvc_requestToDo
  * wait for a disk to disk copy if the returned DiskCopy
  * is in DISKCOPY_WAITDISKTODISKCOPY status. This
  * disk to disk copy is the responsability of the caller.
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -144,6 +146,8 @@ int Cstager_IJobSvc_getUpdateStart
  * @param subreq  the SubRequest to consider
  * @param fileSystem the selected FileSystem
  * @param diskCopy the DiskCopy to use for the data access
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -169,6 +173,8 @@ int Cstager_IJobSvc_putStart
  * @param subreqId the if of the SubRequest to consider
  * @param diskCopy the DiskCopy to use for the data access or
  * 0 if the PutDone should wait
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -202,8 +208,8 @@ const char* Cstager_IJobSvc_errorMsg(struct Cstager_IJobSvc_t* jobSvc);
  * Cstager_IJobSvc_errorMsg
  */
 int Cstager_IJobSvc_selectSvcClass(struct Cstager_IJobSvc_t* jobSvc,
-                                      struct Cstager_SvcClass_t** svcClass,
-                                      const char* name);
+				   struct Cstager_SvcClass_t** svcClass,
+				   const char* name);
 
 /**
  * Retrieves a FileSystem from the database based on its
@@ -234,6 +240,8 @@ int Cstager_IJobSvc_selectFileSystem
  * @param jobSvc the IJobSvc used
  * @param diskcopyId the id of the new DiskCopy
  * @param sourceDiskCopyId the id of the source diskCopy
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -251,6 +259,8 @@ int Cstager_IJobSvc_disk2DiskCopyDone
  * Changes are commited
  * @param jobSvc the IJobSvc used
  * @param diskcopyId the id of the new DiskCopy
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -277,6 +287,8 @@ int Cstager_IJobSvc_disk2DiskCopyFailed
  * @param subreq The SubRequest handling the file to prepare
  * @param fileSize The actual size of the castor file 
  * @param timeStamp To know if the fileSize is still valid
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -297,6 +309,8 @@ int Cstager_IJobSvc_prepareForMigration
  * Request will thus be removed from the DataBase
  * @param jobSvc the IJobSvc used
  * @param subReqId the id of the finished SubRequest
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -314,6 +328,8 @@ int Cstager_IJobSvc_getUpdateDone
  * The SubRequest's status will thus be set to FAILED
  * @param jobSvc the IJobSvc used
  * @param subReqId the id of the failing SubRequest
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -330,6 +346,8 @@ int Cstager_IJobSvc_getUpdateFailed
  * The SubRequest's status will thus be set to FAILED
  * @param jobSvc the IJobSvc used
  * @param subReqId the id of the failing SubRequest
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
@@ -348,6 +366,8 @@ int Cstager_IJobSvc_putFailed
  * CastorFile will be invalidated
  * @param jobSvc the IJobSvc used
  * @param subRequestId the id of the SubRequest concerned
+ * @param fileId the id of the castorFile
+ * @param nsHost the name server hosting this castorFile
  * @return 0 : OK.
  * -1 : an error occurred and serrno is set to the corresponding error code
  * A detailed error message can be retrieved by calling
