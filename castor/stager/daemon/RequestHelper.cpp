@@ -272,8 +272,7 @@ namespace castor{
         fileRequest->setSvcClass(svcClass);
 
         /* fill the svcClass object using the request as a key  */
-        dbSvc->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, true);
-
+        dbSvc->fillRep(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
       }
 
 
@@ -306,7 +305,7 @@ namespace castor{
 
           // create links in db and in memory
 
-          dbSvc->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, true);
+          dbSvc->fillRep(baseAddr, subrequest, castor::OBJ_CastorFile, false);
           dbSvc->fillRep(baseAddr, castorFile, castor::OBJ_FileClass, true);
         }
         catch(castor::exception::Exception e){
