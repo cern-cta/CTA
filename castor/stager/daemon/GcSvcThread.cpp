@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.26 $ $Release$ $Date: 2008/03/03 11:06:22 $ $Author: waldron $
+ * @(#)$RCSfile: GcSvcThread.cpp,v $ $Revision: 1.27 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
  *
  * Service thread for garbage collection related requests
  *
@@ -174,7 +174,7 @@ void castor::stager::daemon::GcSvcThread::handleFiles2Delete
       fileId.fileid = (*it)->fileId();
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskServer", uReq->diskServer()),
-         castor::dlf::Param("FileName", (*it)->fileName())};
+         castor::dlf::Param("Filename", (*it)->fileName())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_GCSVC_FSEL4DEL, 2, params, &fileId);
     }
   }
@@ -228,7 +228,7 @@ void castor::stager::daemon::GcSvcThread::handleNsFilesDeleted
     }
     // "Invoking nsFilesDeleted"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("nbFiles", uReq->files().size())};
+      {castor::dlf::Param("NbFiles", uReq->files().size())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_NSFILDEL, 1, params);
     result = gcSvc->nsFilesDeleted(input, uReq->nsHost());
   } catch (castor::exception::Exception e) {
@@ -302,7 +302,7 @@ void castor::stager::daemon::GcSvcThread::handleStgFilesDeleted
     }
     // "Invoking stgFilesDeleted"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("nbFiles", uReq->files().size())};
+      {castor::dlf::Param("NbFiles", uReq->files().size())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_GCSVC_STGFILDEL, 1, params);
     orphanDiskCopies = gcSvc->stgFilesDeleted(diskCopies);
   } catch (castor::exception::Exception e) {
@@ -425,7 +425,7 @@ void castor::stager::daemon::GcSvcThread::process
   default:
     // "Unknown Request type"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("type", req->type())};
+      {castor::dlf::Param("Type", req->type())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_GCSVC_UNKREQ, 1, params);
     if (req) {delete req; req=0;}
     if (gcSvc) gcSvc->release();

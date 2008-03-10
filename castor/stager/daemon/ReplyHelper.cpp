@@ -33,14 +33,14 @@
 namespace castor{
   namespace stager{
     namespace daemon{
-      
-      
+
+
       ReplyHelper::ReplyHelper() throw(castor::exception::Exception)
       {
         try{
           this->ioResponse = new castor::rh::IOResponse;
           this->requestReplier = castor::replier::RequestReplier::getInstance();
-          
+
         }catch(castor::exception::Exception ex){
           if( ioResponse != NULL){
             delete ioResponse;
@@ -48,16 +48,16 @@ namespace castor{
           }
           throw ex;
         }
-        
+
       }
-      
-      
+
+
       ReplyHelper::~ReplyHelper() throw()
       {
         if(ioResponse) delete ioResponse;
       }
-      
-      
+
+
       /****************************************************************************/
       /* set fileId, reqAssociated (reqId()), castorFileName,newSubReqStatus,    */
       /**************************************************************************/
@@ -76,24 +76,24 @@ namespace castor{
 
         if(cnsFileid)
           ioResponse->setFileId((u_signed64) cnsFileid->fileid);
-        
+
         if(!stgRequestHelper->fileRequest->reqId().empty()){
           this->ioResponse->setReqAssociated(stgRequestHelper->fileRequest->reqId());
         }else{
           // no UUID?? at this stage just log it and try to go on
           castor::dlf::Param params[]={ castor::dlf::Param(stgRequestHelper->subrequestUuid),
-            castor::dlf::Param("fileName",stgRequestHelper->subrequest->fileName()),
-            castor::dlf::Param("UserName",stgRequestHelper->username),
-            castor::dlf::Param("GroupName", stgRequestHelper->groupname),
+            castor::dlf::Param("Filename",stgRequestHelper->subrequest->fileName()),
+            castor::dlf::Param("Username",stgRequestHelper->username),
+            castor::dlf::Param("Groupname", stgRequestHelper->groupname),
             castor::dlf::Param("Function", "ReplyHelper.setAndSendIoResponse")
           };
           castor::dlf::dlf_writep(stgRequestHelper->requestUuid, DLF_LVL_WARNING, STAGER_REQUESTUUID_EXCEPTION, 5, params);
         }
-        
+
         ioResponse->setCastorFileName(stgRequestHelper->subrequest->fileName());
         ioResponse->setStatus(stgRequestHelper->subrequest->status() == SUBREQUEST_FAILED_FINISHED ? SUBREQUEST_FAILED : SUBREQUEST_READY);
         ioResponse->setId(stgRequestHelper->subrequest->id());
-        
+
         /* errorCode = exception.code() */
         if(errorCode != 0){
           this->ioResponse->setErrorCode(errorCode);
@@ -101,15 +101,15 @@ namespace castor{
           if((errorMessage.empty()) == true){
             ioRespErrorMessage = strerror(errorCode);
           }
-          
+
           /* ioRespErrorMessage = ex.message() */
           this->ioResponse->setErrorMessage(ioRespErrorMessage);
         }
-        
+
         this->requestReplier->sendResponse(stgRequestHelper->fileRequest->client(), ioResponse, false);
       }
-      
-      
+
+
       /*********************************************************************************************/
       /* check if there is any subrequest left and send the endResponse to client if it is needed */
       /*******************************************************************************************/
@@ -118,11 +118,11 @@ namespace castor{
         bool requestLeft = stgRequestHelper->stagerService->updateAndCheckSubRequest(stgRequestHelper->subrequest);
         if(!requestLeft && stgRequestHelper->fileRequest != 0) {
           requestReplier->sendEndResponse(stgRequestHelper->fileRequest->client(), stgRequestHelper->fileRequest->reqId());
-        }        
+        }
       }
-      
-      
-      
+
+
+
     }//end namespace daemon
   }//end namespace stager
 }//end namespace castor

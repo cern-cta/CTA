@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.22 $ $Release$ $Date: 2008/03/03 11:07:34 $ $Author: waldron $
+ * @(#)$RCSfile: RHThread.cpp,v $ $Revision: 1.23 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
  *
  * @author Sebastien Ponce
  *****************************************************************************/
@@ -401,7 +401,7 @@ void castor::rh::RHThread::sendNotification
     // We should not go this way, this would not be optimal
     // "Waked up all services at once"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("Request type", fr->type())};
+      {castor::dlf::Param("Type", fr->type())};
     castor::dlf::dlf_writep(cuuid, DLF_LVL_WARNING, 13, 1, params);
     // XXX not supported for the time being in the new framework,
     // XXX to be seen if needed.

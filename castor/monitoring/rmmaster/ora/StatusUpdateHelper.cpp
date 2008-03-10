@@ -132,7 +132,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleStateUpdate
     if ((*itFs)->mountPoint().size() == 0) {
       // "Ignored state report for filesystem with empty name"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("MachineName", state->name())};
+        {castor::dlf::Param("DiskServer", state->name())};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 27, 1, params);
       continue;
     }
@@ -383,17 +383,17 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
   // it in the ClusterStatus map. This is safe because the difference in the
   // types is only the allocator and because the 2 allocators have identical
   // members
-  std::string machineName = admin->diskServerName();
-  castor::monitoring::SharedMemoryString *smMachineName =
-    (castor::monitoring::SharedMemoryString*)(&machineName);
+  std::string diskServerName = admin->diskServerName();
+  castor::monitoring::SharedMemoryString *smDiskServerName =
+    (castor::monitoring::SharedMemoryString*)(&diskServerName);
 
   // Take care of DiskServer creation
   castor::monitoring::ClusterStatus::iterator it =
-    m_clusterStatus->find(*smMachineName);
+    m_clusterStatus->find(*smDiskServerName);
   if (it == m_clusterStatus->end()) {
     // "Ignored admin diskServer report for unknown machine"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("MachineName", admin->diskServerName()),
+      {castor::dlf::Param("DiskServer", admin->diskServerName()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 29, 2, params);
 
@@ -426,7 +426,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       it->second.setAdminStatus(ADMIN_DELETED);
       // "Admin change request detected, diskserver DELETED"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	{castor::dlf::Param("DiskServer", admin->diskServerName()),
 	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 42, 2, params);
     } else {
@@ -438,7 +438,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleDiskServerAdmi
       }
       // "Admin change request detected for diskserver, setting new status"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	{castor::dlf::Param("DiskServerName", admin->diskServerName()),
 	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
 	 castor::dlf::Param("Status",
 	   castor::stager::DiskServerStatusCodeStrings[admin->status()]),
@@ -519,16 +519,16 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
   // it in the ClusterStatus map. This is safe because the difference in the
   // types is only the allocator and because the 2 allocators have identical
   // members
-  std::string machineName = admin->diskServerName();
-  castor::monitoring::SharedMemoryString *smMachineName =
-    (castor::monitoring::SharedMemoryString*)(&machineName);
+  std::string diskServerName = admin->diskServerName();
+  castor::monitoring::SharedMemoryString *smDiskServerName =
+    (castor::monitoring::SharedMemoryString*)(&diskServerName);
   // Find out DiskServer
   castor::monitoring::ClusterStatus::iterator it =
-    m_clusterStatus->find(*smMachineName);
+    m_clusterStatus->find(*smDiskServerName);
   if (it == m_clusterStatus->end()) {
     // "Ignored admin fileSystem report for unknown machine"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("MachineName", admin->diskServerName()),
+      {castor::dlf::Param("DiskServer", admin->diskServerName()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 30, 2, params);
 
@@ -553,7 +553,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
   if (it2 == it->second.end()) {
     // "Ignored admin fileSystem report for unknown mountPoint"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("MachineName", admin->diskServerName()),
+      {castor::dlf::Param("DiskServer", admin->diskServerName()),
        castor::dlf::Param("MountPoint", admin->mountPoint()),
        castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, 31, 3, params);
@@ -599,7 +599,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       it2->second.setAdminStatus(ADMIN_DELETED);
       // "Admin change request detected, filesystem DELETED"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	{castor::dlf::Param("DiskServer", admin->diskServerName()),
 	 castor::dlf::Param("MountPoint", admin->mountPoint()),
 	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip))};
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 40, 3, params);
@@ -612,7 +612,7 @@ void castor::monitoring::rmmaster::ora::StatusUpdateHelper::handleFileSystemAdmi
       }
       // "Admin change request detected for filesystem, setting new status"
       castor::dlf::Param params[] =
-	{castor::dlf::Param("MachineName", admin->diskServerName()),
+	{castor::dlf::Param("DiskServer", admin->diskServerName()),
 	 castor::dlf::Param("MountPoint", admin->mountPoint()),
 	 castor::dlf::Param("IP", castor::dlf::IPAddress(ip)),
 	 castor::dlf::Param("Status",

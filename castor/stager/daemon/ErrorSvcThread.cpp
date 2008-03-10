@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.20 $ $Release$ $Date: 2008/01/18 16:01:06 $ $Author: itglp $
+ * @(#)$RCSfile: ErrorSvcThread.cpp,v $ $Revision: 1.21 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
  *
  * Service thread for dealing with requests that failed
  *
@@ -126,7 +126,8 @@ void castor::stager::daemon::ErrorSvcThread::process
     req = subReq->request();
     if (0 == req) {
       // "No request associated with subrequest ! Cannot answer !"
-      castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+      castor::dlf::Param params[] =
+	{castor::dlf::Param(suuid)};
       castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOREQ, 1, params);
     } else {
       string2Cuuid(&uuid, (char*)req->reqId().c_str());
@@ -135,7 +136,8 @@ void castor::stager::daemon::ErrorSvcThread::process
       client = req->client();
       if (0 == client) {
         // "No client associated with request ! Cannot answer !"
-        castor::dlf::Param params[] = {castor::dlf::Param(suuid)};
+        castor::dlf::Param params[] =
+	  {castor::dlf::Param(suuid)};
         castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_ERRSVC_NOCLI, 1, params);
       }
     }
@@ -213,7 +215,7 @@ void castor::stager::daemon::ErrorSvcThread::process
     }
   } else {
     // still update the DB to put the subrequest in FAILED_FINISHED
-    try {      
+    try {
       svcs->updateRep(&ad, subReq, true);
     } catch (castor::exception::Exception e) {
       // "Unexpected exception caught"

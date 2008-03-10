@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.69 $ $Release$ $Date: 2008/02/19 14:43:46 $ $Author: gtaur $
+ * @(#)$RCSfile: QueryRequestSvcThread.cpp,v $ $Revision: 1.70 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
  *
  * Service thread for StageQueryRequest requests
  *
@@ -158,9 +158,9 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
  std::string reqId,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
-  // Processing File Query by fileName
+  // "Processing File Query by Filename"
   castor::dlf::Param params[] =
-    {castor::dlf::Param("fileName", fileName)};
+    {castor::dlf::Param("Filename", fileName)};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_FQUERY, 1, params);
   // List diskCopies
   std::list<castor::stager::DiskCopyInfo*>* result =
@@ -237,10 +237,10 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
  std::string reqId,
  Cuuid_t uuid)
   throw (castor::exception::Exception) {
-  // Processing File Query by fileId
+  // Processing File Query by fileid
   castor::dlf::Param params[] =
-    {castor::dlf::Param("fileId", fid.c_str()),
-     castor::dlf::Param("nsHost", nshost.c_str())};
+    {castor::dlf::Param("FileId", fid.c_str()),
+     castor::dlf::Param("NsHost", nshost.c_str())};
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, 1, params);
   std::list<castor::stager::DiskCopyInfo*>* result =
     qrySvc->diskCopies4File(fid, nshost, svcClassId);
@@ -440,9 +440,9 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
 	if (pval.at(0)!='/'){
 	  castor::exception::Exception ex(EINVAL);
             ex.getMessage() << "Invalid file path";
-            throw ex;	
+            throw ex;
 	}
-   
+
         struct Cns_filestat Cnsfilestat;
         if (Cns_stat(pval.c_str(), &Cnsfilestat) < 0) {
           castor::exception::Exception e(serrno);
@@ -495,7 +495,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
          castor::dlf::Param("Code", e.code()),
          castor::dlf::Param("Message", e.getMessage().str())};
       switch(e.code()) {
-        case ENOENT:     
+        case ENOENT:
           castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_USER_NONFILE, 3, params);
           break;
         case EINVAL:
@@ -728,7 +728,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     cleanup(req, qrySvc);
     return;
   }
-  
+
   try {
     // We call the adequate method
     switch (req->type()) {
@@ -755,10 +755,10 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     default:
       // "Unknown Request type"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("type", req->type())};
+        {castor::dlf::Param("Type", req->type())};
       castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_QRYSVC_UNKREQ, 1, params);
     }
-  
+
     // Delete Request From the database
     svcs->deleteRep(&ad, req, true);
   } catch (castor::exception::Exception e) {

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.50 $ $Release$ $Date: 2008/03/03 11:06:22 $ $Author: waldron $
+ * @(#)$RCSfile: StagerDaemon.cpp,v $ $Revision: 1.51 $ $Release$ $Date: 2008/03/10 09:38:59 $ $Author: waldron $
  *
  * Main stager daemon
  *
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
   try{
 
     castor::stager::daemon::StagerDaemon stagerDaemon;
-    
+
     castor::stager::IStagerSvc* stgService =
       dynamic_cast<castor::stager::IStagerSvc*>(
         castor::BaseObject::services()->service("DbStagerSvc", castor::SVC_DBSTAGERSVC));
@@ -68,32 +68,32 @@ int main(int argc, char* argv[]){
     /* thread pools for the stager */
     /*******************************/
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("JobRequestSvcThread", 
+      new castor::server::SignalThreadPool("JobRequestSvcThread",
         new castor::stager::daemon::JobRequestSvcThread()));
-    
+
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("PrepRequestSvcThread", 
+      new castor::server::SignalThreadPool("PrepRequestSvcThread",
         new castor::stager::daemon::PrepRequestSvcThread()));
 
 
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("StageRequestSvcThread", 
+      new castor::server::SignalThreadPool("StageRequestSvcThread",
         new castor::stager::daemon::StageRequestSvcThread()));
-     
+
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("QueryRequestSvcThread", 
+      new castor::server::SignalThreadPool("QueryRequestSvcThread",
         new castor::stager::daemon::QueryRequestSvcThread()));
-     
+
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("ErrorSvcThread", 
+      new castor::server::SignalThreadPool("ErrorSvcThread",
         new castor::stager::daemon::ErrorSvcThread(), 2));   // those threads poll the db every 2 secs.
 
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("jobSvcThread", 
+      new castor::server::SignalThreadPool("jobSvcThread",
         new castor::stager::daemon::JobSvcThread()));
 
     stagerDaemon.addThreadPool(
-      new castor::server::SignalThreadPool("GcSvcThread", 
+      new castor::server::SignalThreadPool("GcSvcThread",
         new castor::stager::daemon::GcSvcThread()));
 
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
@@ -103,13 +103,13 @@ int main(int argc, char* argv[]){
     stagerDaemon.getThreadPool('E')->setNbThreads(3);
     stagerDaemon.getThreadPool('j')->setNbThreads(10);
     stagerDaemon.getThreadPool('G')->setNbThreads(6);
-    
+
     stagerDaemon.addNotifierThreadPool(
       castor::PortsConfig::getInstance()->getNotifPort(castor::CASTOR_STAGER));
-    
+
     stagerDaemon.parseCommandLine(argc, argv);
 
-    stagerDaemon.start();  
+    stagerDaemon.start();
 
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception: "
@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
   } catch (...) {
     std::cerr << "Caught general exception!" << std::endl;
   }
-  
+
   return 0;
 }// end main
 
@@ -134,20 +134,20 @@ int main(int argc, char* argv[]){
 /****************************************************************************************/
 castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::Exception)
   : castor::server::BaseDaemon("Stager") {
-	
+
   castor::dlf::Message stagerDlfMessages[]={
-    
+
     /***************************************/
     /* StagerDaemon: To DLF_LVL_DEBUG */
     /*************************************/
-    
+
     { STAGER_DAEMON_START, "StagerDaemon started"},
     { STAGER_DAEMON_EXECUTION, "StagerDaemon execution"},
     { STAGER_DAEMON_ERROR_CONFIG, "StagerDaemon configuration error"},
     { STAGER_DAEMON_EXCEPTION, "Exception caught when starting "},
     { STAGER_CONFIGURATION, "Got wrong configuration, using default"}, /* DLF_LVL_USAGE */
     { STAGER_CONFIGURATION_ERROR, "Impossible to get (right) configuration"}, /* DLF_LVL_ERROR */
-    
+
     /*******************************************************************************************************/
     /* Constants related with the DBService SvcThreads: JobRequestSvc, PreRequestSvc, StgRequestSvc */
     /*****************************************************************************************************/
@@ -156,8 +156,8 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_GET, "Get Request"},
     { STAGER_UPDATE, "Update Request"},
     { STAGER_PUT,"Put Request"},
-    
-    
+
+
     /************************/
     /* PreRequestSvcThread */
     { STAGER_PREREQSVC_CREATION,"Created new PreRequestSvc Thread"},
@@ -165,8 +165,8 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_PREPARETOGET,"PrepareToGet Request"},
     { STAGER_PREPARETOUPDATE,"PrepareToUpdate Request"},
     { STAGER_PREPARETOPUT,"PrepareToPut Request"},
-    
-    
+
+
     /*************************/
     /* StgRequestSvcThread  */
     { STAGER_STGREQSVC_CREATION,"Created new StgRequestSvc Thread"},
@@ -175,7 +175,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_RM, "Rm Request"},
     { STAGER_RM_DETAILS, "Rm details"},/* SYSTEM LEVEL ALSO */
     { STAGER_PUTDONE,"PutDone Request"},
-    
+
     /*  SYSTEM LEVEL */
     /* after calling the corresponding stagerService function, to show the decision taken */
     { STAGER_SUBREQ_SELECTED, "Request selected by subRequestToDo"},
@@ -190,7 +190,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_CASTORFILE_RECREATION, "Recreating CastorFile"},
     { STAGER_RECREATION_IMPOSSIBLE, "Impossible to recreate CastorFile"},
     { STAGER_SCHEDULINGJOB, "Diskcopy available, scheduling job"},
-    
+
     /* DLF_LVL_ERROR */
     { STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
     { STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
@@ -215,10 +215,10 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_QRYSVC_UNKREQ, "Unknown request type"},
     { STAGER_QRYSVC_INVARG, "Invalid argument"},
     { STAGER_QRYSVC_FQNOPAR,"StageFileQueryRequest has no parameters"},
-    { STAGER_QRYSVC_FQUERY ,"Processing File Query by fileName"},
-    { STAGER_QRYSVC_IQUERY ,"Processing File Query by fileId"},
+    { STAGER_QRYSVC_FQUERY ,"Processing File Query by filename"},
+    { STAGER_QRYSVC_IQUERY ,"Processing File Query by fileid"},
     { STAGER_QRYSVC_RQUERY ,"Processing File Query by Request"},
-    
+
     /*********/
     /* GcSvc */
     { STAGER_GCSVC_GETSVC,  "Could not get GCSvc"},
@@ -240,7 +240,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_ERRSVC_EXCEPT,  "Unexpected exception caught"},
     { STAGER_ERRSVC_NOREQ,   "No request associated with subrequest ! Cannot answer !"},
     { STAGER_ERRSVC_NOCLI,   "No client associated with request ! Cannot answer !"},
-    
+
     /**********/
     /* JobSvc */
     { STAGER_JOBSVC_GETSVC,  "Could not get JobSvc"},
@@ -262,10 +262,10 @@ castor::stager::daemon::StagerDaemon::StagerDaemon() throw (castor::exception::E
     { STAGER_JOBSVC_DELWWR,  "File was removed by another user while being modified"},
 
     { -1, "" }
-    
+
   };
   dlfInit(stagerDlfMessages);
-  
+
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, STAGER_DAEMON_START, 0, NULL);
 }
 
