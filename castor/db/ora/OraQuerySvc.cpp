@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.45 $ $Release$ $Date: 2007/12/14 16:56:20 $ $Author: itglp $
+ * @(#)$RCSfile: OraQuerySvc.cpp,v $ $Revision: 1.46 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
  *
  * Implementation of the IQuerySvc for Oracle
  *
@@ -430,6 +430,7 @@ castor::db::ora::OraQuerySvc::describeDiskPools (std::string svcClass)
 	}
       }
     }
+    m_describeDiskPoolsStatement->closeResultSet(rset);
     // If no answer, send an error
     if (0 == result->size()) {
       delete result;
@@ -503,6 +504,7 @@ castor::db::ora::OraQuerySvc::describeDiskPool (std::string diskPool)
         dsd->addFileSystems(fsd);
       }
     }
+    m_describeDiskPoolStatement->closeResultSet(rset);
     // if nothing found, send error
     if (0 == result) {
       castor::exception::InvalidArgument ex;

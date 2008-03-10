@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/03/03 13:16:49 $ $Author: waldron $
+ * @(#)$RCSfile: OraJobManagerSvc.cpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
  *
  * Implementation of the IJobManagerSvc for Oracle
  *
@@ -39,7 +39,7 @@
 //-----------------------------------------------------------------------------
 // Instantiation of a static factory class
 //-----------------------------------------------------------------------------
-static castor::SvcFactory<castor::jobmanager::ora::OraJobManagerSvc> 
+static castor::SvcFactory<castor::jobmanager::ora::OraJobManagerSvc>
   *s_factoryOraJobManagerSvc =
 new castor::SvcFactory<castor::jobmanager::ora::OraJobManagerSvc>();
 
@@ -127,7 +127,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::reset() throw() {
   } catch (oracle::occi::SQLException e) {
     // Do nothing
   }
-  
+
   // Now reset all pointers to 0
   m_failSchedulerJobStatement      = 0;
   m_jobToScheduleStatement         = 0;
@@ -152,18 +152,18 @@ bool castor::jobmanager::ora::OraJobManagerSvc::failSchedulerJob
 	(3, oracle::occi::OCCIDOUBLE);
       m_failSchedulerJobStatement->setAutoCommit(true);
     }
-    
+
     // Prepare and execute the statement
     m_failSchedulerJobStatement->setString(1, subReqId);
     m_failSchedulerJobStatement->setInt(2, errorCode);
     m_failSchedulerJobStatement->executeUpdate();
-    
+
     // Return the result of the output parameter, this is an indicator to
     // notify the callee as to whether or not the job was cancelled i.e.
     // a change was made to the subrequest table.
     if (m_failSchedulerJobStatement->getDouble(3) > 0) {
       return true;
-    } 
+    }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -179,7 +179,7 @@ bool castor::jobmanager::ora::OraJobManagerSvc::failSchedulerJob
 //-----------------------------------------------------------------------------
 // jobToSchedule
 //-----------------------------------------------------------------------------
-castor::jobmanager::JobSubmissionRequest 
+castor::jobmanager::JobSubmissionRequest
 *castor::jobmanager::ora::OraJobManagerSvc::jobToSchedule()
   throw(castor::exception::Exception) {
 
@@ -235,7 +235,7 @@ castor::jobmanager::JobSubmissionRequest
 	(23, oracle::occi::OCCIDOUBLE);
       m_jobToScheduleStatement->setAutoCommit(true);
     }
-    
+
     // Prepare the execute the statement
     unsigned int nb = m_jobToScheduleStatement->executeUpdate();
     if (nb == 0) {
@@ -248,7 +248,7 @@ castor::jobmanager::JobSubmissionRequest
     if (srId == 0) {
       return 0;  // Nothing to do
     }
-    
+
     // Return a new JobSubmissionRequest object for scheduling
     castor::jobmanager::JobSubmissionRequest *result =
       new castor::jobmanager::JobSubmissionRequest();
@@ -272,7 +272,7 @@ castor::jobmanager::JobSubmissionRequest
     result->setClientType((u_signed64)m_jobToScheduleStatement->getDouble(18));
     result->setSourceDiskCopyId((u_signed64)m_jobToScheduleStatement->getDouble(19));
     result->setDestDiskCopyId((u_signed64)m_jobToScheduleStatement->getDouble(20));
-    
+
     // Append the hosts from the requested filesystems attribute to the asked
     // hosts list.
     result->setNumAskedHosts(0);
@@ -290,20 +290,20 @@ castor::jobmanager::JobSubmissionRequest
 			  << "replication request";
 	  throw ex;
 	}
-	
+
 	// Append an exclamation mark to the end of the execution hostname. This
 	// instructs LSF that the requested/asked host is a 'headnode' and that
 	// the job must start on this host before any other.
 	result->setAskedHosts(buf + "! ");
 	result->setNumAskedHosts(result->numAskedHosts() + 1);
-      } 
+      }
       // Non StageDiskCopyReplicaRequest's can have 1..N number of requested
       // filesystems.
       else {
 	while (std::getline(iss, buf, ':')) {
 	  result->setAskedHosts(result->askedHosts().append(buf + " "));
 	  result->setNumAskedHosts(result->numAskedHosts() + 1);
-	  std::getline(iss, buf, '|');  
+	  std::getline(iss, buf, '|');
 	}
       }
     }
@@ -333,7 +333,7 @@ castor::jobmanager::JobSubmissionRequest
     // Ignore ORA-01403: no data found, this is expected when there is nothing
     // to be scheduled.
     if (e.getErrorCode() == 1403) {
-      return NULL; 
+      return NULL;
     }
     castor::exception::Internal ex;
     ex.getMessage()
@@ -359,7 +359,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
       m_updateSchedulerJobStatement = createStatement(s_updateSchedulerJobString);
       m_updateSchedulerJobStatement->setAutoCommit(true);
     }
-    
+
     // Prepare and execute the statement
     m_updateSchedulerJobStatement->setDouble(1, status);
     m_updateSchedulerJobStatement->setDouble(2, request->id());
@@ -388,7 +388,7 @@ void castor::jobmanager::ora::OraJobManagerSvc::updateSchedulerJob
 std::map<std::string, castor::jobmanager::DiskServerResource *>*
 castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
   throw(castor::exception::Exception) {
-  
+
   // Initialize statements
   try {
     if (m_getSchedulerResourcesStatement == NULL) {
@@ -406,7 +406,7 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
         << "getSchedulerResources did not do anything.";
       throw ex;
     }
-    
+
     // Loop over the cursor
     std::map<std::string, castor::jobmanager::DiskServerResource *> *result =
       new std::map<std::string, castor::jobmanager::DiskServerResource *>;
@@ -414,11 +414,11 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
     oracle::occi::ResultSet *rs = m_getSchedulerResourcesStatement->getCursor(1);
     while (oracle::occi::ResultSet::END_OF_FETCH != rs->next()) {
 
-      // Attempt to find the diskserver in the map. If it doesn't exists the
+      // Attempt to find the diskserver in the map. If it doesn't exist then
       // a new diskserver needs to be created.
       std::map<std::string, castor::jobmanager::DiskServerResource *>::const_iterator it =
 	result->find(rs->getString(1));
-      
+
       // New diskserver ?
       if (it == result->end()) {
 	castor::jobmanager::DiskServerResource *ds =
@@ -440,8 +440,9 @@ castor::jobmanager::ora::OraJobManagerSvc::getSchedulerResources()
       fs->setSvcClassName(rs->getString(8));
       it->second->addFileSystems(fs);
     }
+    m_getSchedulerResourcesStatement->closeResultSet(rs);
     return result;
-    
+
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -468,16 +469,16 @@ bool castor::jobmanager::ora::OraJobManagerSvc::disk2DiskCopyCheck
 	(2, oracle::occi::OCCIDOUBLE);
       m_disk2DiskCopyCheckStatement->setAutoCommit(true);
     }
-    
+
     // Prepare and execute the statement
     m_disk2DiskCopyCheckStatement->setString(1, subReqId);
     m_disk2DiskCopyCheckStatement->executeUpdate();
-    
+
     // Return the result of the output parameter, this is an indicator to
     // notify the callee as to whether or not the disk2disk copy failed
     if (m_disk2DiskCopyCheckStatement->getDouble(2) > 0) {
       return true;
-    } 
+    }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     // Ignore ORA-01403: no data found

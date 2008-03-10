@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: sponcec3 $
+ * @(#)$RCSfile: OraCleanSvc.cpp,v $ $Author: waldron $
  *
  * @author Giulia Taurelli
  *****************************************************************************/
@@ -275,7 +275,8 @@ void castor::db::ora::OraCleanSvc::removeOutOfDateStageOutDCs(int timeout)
         // "File was dropped by Cleaning Daemon"
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 12, 0, 0, &fileid);
         status = rs->next();
-      }      
+      }
+      m_removeOutOfDateStageOutDCsStatement->closeResultSet(rs);
       // Run through the files for which a putDone was issued
       oracle::occi::ResultSet *rs2 =
         m_removeOutOfDateStageOutDCsStatement->getCursor(3);
@@ -287,7 +288,8 @@ void castor::db::ora::OraCleanSvc::removeOutOfDateStageOutDCs(int timeout)
         // "PutDone enforced by Cleaning Daemon"
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 13, 0, 0, &fileid);
         status2 = rs2->next();
-      }      
+      }
+      m_removeOutOfDateStageOutDCsStatement->closeResultSet(rs2);
     } catch (oracle::occi::SQLException e) {
       handleException(e);
       if (e.getErrorCode() != 24338) {
@@ -345,7 +347,8 @@ void castor::db::ora::OraCleanSvc::removeOutOfDateRecallDCs(int timeout)
         // "Recall canceled by Cleaning Daemon"
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 14, 0, 0, &fileid);
         status = rs->next();
-      }      
+      }
+      m_removeOutOfDateRecallDCsStatement->closeResultSet(rs);
     } catch (oracle::occi::SQLException e) {
       handleException(e);
       if (e.getErrorCode() != 24338) {

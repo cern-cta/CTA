@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.238 $ $Release$ $Date: 2008/02/11 10:38:51 $ $Author: murrayc3 $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.239 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -443,10 +443,10 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
     int status = m_getDiskCopiesForJobStatement->getInt(2);
 
     if (castor::stager::DISKCOPY_STAGED == status ||
-        castor::stager::DISKCOPY_WAITDISK2DISKCOPY == status) {  
+        castor::stager::DISKCOPY_WAITDISK2DISKCOPY == status) {
       // diskcopies are available, list them
       try {
-        oracle::occi::ResultSet *rs = 
+        oracle::occi::ResultSet *rs =
           m_getDiskCopiesForJobStatement->getCursor(3);
         // Run through the cursor
         oracle::occi::ResultSet::Status status = rs->next();
@@ -462,6 +462,7 @@ int castor::db::ora::OraStagerSvc::getDiskCopiesForJob
           sources.push_back(item);
           status = rs->next();
         }
+	m_getDiskCopiesForJobStatement->closeResultSet(rs);
       } catch (oracle::occi::SQLException e) {
         handleException(e);
         if (e.getErrorCode() != 24338) {
@@ -518,7 +519,7 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
      /* -2 = SubRequest put in WAITSUBREQ
       * -1 = user error
       *  0 = DISKCOPY_STAGED, disk copies available
-      *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */ 
+      *  2 = DISKCOPY_WAITTAPERECALL, a tape recall is needed */
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -570,7 +571,7 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
 // createDiskCopyReplicaRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
-(castor::stager::SubRequest* subreq, castor::stager::DiskCopyForRecall* srcDiskCopy, 
+(castor::stager::SubRequest* subreq, castor::stager::DiskCopyForRecall* srcDiskCopy,
  castor::stager::SvcClass* destSc)
   throw (castor::exception::Exception) {
   try {
@@ -615,7 +616,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
   ad.setCnvSvcType(castor::SVC_DBCNV);
   ad.setTarget(subreq->id());
   castor::stager::DiskCopy* dc = 0;
- 
+
   try {
       castor::stager::CastorFile* cf = subreq->castorFile();
 
@@ -632,7 +633,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       // create DiskCopy
       dc = new castor::stager::DiskCopy();
       dc->setCastorFile(cf);
-      
+
       // we need to create this object now, so we have the DB id for
       // the following operation
       cnvSvc()->createRep(&ad, dc, false);
@@ -646,7 +647,7 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       spath << cf->fileId() % 100 << "/" << cf->fileId()
             << "@" << cf->nsHost() << "." << dc->id();
 
-      // set the diskcopy to WAITTAPERECALL and the creationtime 
+      // set the diskcopy to WAITTAPERECALL and the creationtime
       dc->setPath(spath.str());
       dc->setStatus(castor::stager::DISKCOPY_WAITTAPERECALL);
       dc->setCreationTime(time(NULL));
@@ -655,15 +656,15 @@ int castor::db::ora::OraStagerSvc::createRecallCandidate
       // we link the subreq with the diskcopy
       subreq->setDiskcopy(dc);
       cnvSvc()->fillRep(&ad, subreq, OBJ_DiskCopy, false);
-      
+
       // set SubRequest to WAITTAPERECALL
       subreq->setStatus(castor::stager::SUBREQUEST_WAITTAPERECALL);
-      cnvSvc()->updateRep(&ad, subreq, false); 
-      
-      cnvSvc()->commit();   
+      cnvSvc()->updateRep(&ad, subreq, false);
+
+      cnvSvc()->commit();
       subreq->setDiskcopy(NULL);
       delete dc;
-      
+
       return 1;
   }
   catch (castor::exception::NoSegmentFound &e) {
@@ -728,7 +729,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile
     m_selectCastorFileStatement->setDouble(4, fileClass);
     m_selectCastorFileStatement->setDouble(5, fileSize);
     m_selectCastorFileStatement->setString(6, fileName);
-   
+
     int nb  = m_selectCastorFileStatement->executeUpdate();
     if (0 == nb) {
       // Nothing found, throw exception
@@ -847,7 +848,7 @@ castor::db::ora::OraStagerSvc::recreateCastorFile
       << "Error caught in recreateCastorFile."
       << std::endl << e.what();
     throw ex;
-  }  
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -981,11 +982,11 @@ int castor::db::ora::OraStagerSvc::stageRm
         (cnvSvc()->getObjFromId((u_signed64)rset->getDouble(1)));
       m_getCFByNameStatement->closeResultSet(rset);
       char nspath[CA_MAXPATHLEN+1];
-      
-      if(Cns_getpath((char*)cf->nsHost().c_str(), cf->fileId(), nspath) != 0 
+
+      if(Cns_getpath((char*)cf->nsHost().c_str(), cf->fileId(), nspath) != 0
          && serrno == ENOENT) {
         // indeed the file exists only in the stager db,
-        // execute stageForcedRm (cf. ns synch performed in gcDaemon) 
+        // execute stageForcedRm (cf. ns synch performed in gcDaemon)
         m_stageForcedRmStatement->setDouble(1, cf->fileId());
         m_stageForcedRmStatement->setString(2, cf->nsHost());
         unsigned int nb = m_stageForcedRmStatement->executeUpdate();
@@ -1186,7 +1187,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     castor::exception::NoSegmentFound e;
     throw e;
   }
-    
+
   // Sort segments
   qsort((void *)nsSegmentAttrs,
         (size_t)nbNsSegments,
@@ -1220,7 +1221,7 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
     }
   }
   if (useCopyNb == -1) {  //something went bad.
-    if (nsSegmentAttrs != NULL ) free(nsSegmentAttrs); 
+    if (nsSegmentAttrs != NULL ) free(nsSegmentAttrs);
     // No valid tape copy found. Here it means that we
     // really lost a file on tape!
     castor::exception::SegmentNotAccessible e;
@@ -1300,8 +1301,8 @@ int castor::db::ora::OraStagerSvc::createTapeCopySegmentsForRecall
   // cleanup
 
   for(unsigned i = 0;i<tapeCopy.segments().size();i++)
-    delete tapeCopy.segments()[i]->tape(); 
- 
+    delete tapeCopy.segments()[i]->tape();
+
   if (nsSegmentAttrs != NULL) free(nsSegmentAttrs);
 
   return 0;

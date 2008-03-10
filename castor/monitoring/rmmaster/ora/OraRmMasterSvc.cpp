@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2007/12/04 13:25:56 $ $Author: waldron $
+ * @(#)$RCSfile: OraRmMasterSvc.cpp,v $ $Revision: 1.16 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
  *
  * Implementation of the IRmMasterSvc for Oracle
  *
@@ -449,6 +449,7 @@ void castor::monitoring::rmmaster::ora::OraRmMasterSvc::retrieveClusterStatus
       updater->handleStateUpdate(dsReport, master);
       delete dsReport;
     }
+    m_getDiskServersStatement->closeResultSet(dsRset);
     delete updater;
   } catch (oracle::occi::SQLException e) {
     if(updater)

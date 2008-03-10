@@ -145,11 +145,11 @@ const std::string castor::db::ora::OraTapeSvc::s_failedSegmentsStatementString =
   "BEGIN failedSegments(:1); END;";
 
 /// SQL statement for checkFileForRepack
-const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString = 
+const std::string castor::db::ora::OraTapeSvc::s_checkFileForRepackStatementString =
   "BEGIN checkFileForRepack(:1, :2); END;";
 
 /// SQL statement for getNumFilesByStream
-const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementString = 
+const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementString =
   "BEGIN getNumFilesByStream(:1,:2); END;";
 
 
@@ -157,8 +157,8 @@ const std::string castor::db::ora::OraTapeSvc::s_getNumFilesByStreamStatementStr
 // OraTapeSvc
 // -----------------------------------------------------------------------
 castor::db::ora::OraTapeSvc::OraTapeSvc(const std::string name) :
-  BaseTapeSvc(),  
-  OraCommonSvc(name), 
+  BaseTapeSvc(),
+  OraCommonSvc(name),
   m_tapesToDoStatement(0),
   m_streamsToDoStatement(0),
   m_anyTapeCopyForStreamStatement(0),
@@ -322,6 +322,7 @@ castor::db::ora::OraTapeSvc::segmentsForTape
       result.push_back(item);
       status = rs->next();
     }
+    m_segmentsForTapeStatement->closeResultSet(rs);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -577,7 +578,7 @@ void castor::db::ora::OraTapeSvc::streamsForTapePool
          it != streamsList.end();
          it++) {
       IObject* item = cnvSvc()->getObjFromId(*it);
-      castor::stager::Stream* remoteObj = 
+      castor::stager::Stream* remoteObj =
         dynamic_cast<castor::stager::Stream*>(item);
       tapePool->addStreams(remoteObj);
       remoteObj->setTapePool(tapePool);
@@ -677,6 +678,7 @@ castor::db::ora::OraTapeSvc::tapesToDo()
       castor::stager::Tape* tape =
         dynamic_cast<castor::stager::Tape*>(obj);
       if (0 == tape) {
+	m_tapesToDoStatement->closeResultSet(rset);
         castor::exception::Internal ex;
         ex.getMessage()
           << "In method OraTapeSvc::tapesToDo, got a non tape object";
@@ -738,9 +740,10 @@ castor::db::ora::OraTapeSvc::streamsToDo()
       tapePool->setName(rs->getString(5));
       stream->setTapePool(tapePool);
       tapePool->addStreams(stream);
-      result.push_back(stream);      
+      result.push_back(stream);
       status = rs->next();
     }
+    m_streamsToDoStatement->closeResultSet(rs);
   } catch (oracle::occi::SQLException e) {
     // cleanup memory if needed
     for (std::vector<castor::stager::Stream*>::iterator it = result.begin();
@@ -878,6 +881,7 @@ castor::db::ora::OraTapeSvc::failedSegments ()
       result.push_back(item);
       status = rs->next();
     }
+    m_failedSegmentsStatement->closeResultSet(rs);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -903,17 +907,17 @@ std::string castor::db::ora::OraTapeSvc::checkFileForRepack
       m_checkFileForRepackStatement->registerOutParam
         (2, oracle::occi::OCCISTRING, 2048);
     }
-    m_checkFileForRepackStatement->setDouble(1, fileId); 
+    m_checkFileForRepackStatement->setDouble(1, fileId);
     m_checkFileForRepackStatement->setAutoCommit(true);
     m_checkFileForRepackStatement->executeUpdate();
 
     repackvid = m_checkFileForRepackStatement->getString(2);
-    
+
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in checkFileForRepack(): Fileid (" 
+      << "Error caught in checkFileForRepack(): Fileid ("
       << fileId << ","
       << repackvid<< ")"
       << std::endl << e.what();
@@ -936,16 +940,16 @@ u_signed64 castor::db::ora::OraTapeSvc::getNumFilesByStream
       m_getNumFilesByStreamStatement->registerOutParam
         (2, oracle::occi::OCCIDOUBLE);
     }
-    m_getNumFilesByStreamStatement->setDouble(1, streamId); 
+    m_getNumFilesByStreamStatement->setDouble(1, streamId);
     m_getNumFilesByStreamStatement->executeUpdate();
 
     numFile = (u_signed64)m_getNumFilesByStreamStatement->getDouble(2);
-    
+
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
     ex.getMessage()
-      << "Error caught in  getNumFilesByStream(): Fileid (" 
+      << "Error caught in  getNumFilesByStream(): Fileid ("
       << streamId <<")"
       << std::endl << e.what();
     throw ex;

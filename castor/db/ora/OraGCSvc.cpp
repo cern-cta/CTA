@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.35 $ $Release$ $Date: 2008/03/03 10:59:37 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.cpp,v $ $Revision: 1.36 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -337,7 +337,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
       ex.getMessage() << "filesDeleted : no rows returned.";
       //free allocated memory
       free(lens);
-      free(buffer); 
+      free(buffer);
       throw ex;
     }
     // get the result, that is a cursor on the files to
@@ -442,7 +442,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
         } else {
           if (0 != Cns_unlink(castorFileName)) {
 	    if (!strcmp((char *)errBuf, "")) {
-	      strncpy((char *)errBuf, sstrerror(serrno), errBufLen);  
+	      strncpy((char *)errBuf, sstrerror(serrno), errBufLen);
 	    }
             clog() << ERROR
                    << "Error caught when unlinking "
@@ -572,6 +572,7 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::nsFilesDeleted
       orphans.push_back((u_signed64)rset->getDouble(1));
     }
     commit();
+    m_nsFilesDeletedStatement->closeResultSet(rset);
     if (0 != lens) free(lens);
     if (0 != buffer) free(buffer);
   } catch (oracle::occi::SQLException e) {
@@ -628,6 +629,7 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
     while (oracle::occi::ResultSet::END_OF_FETCH != rset->next()) {
       orphans.push_back((u_signed64)rset->getDouble(1));
     }
+    m_stgFilesDeletedStatement->closeResultSet(rset);
     commit();
     if (0 != lens) free(lens);
     if (0 != buffer) free(buffer);
