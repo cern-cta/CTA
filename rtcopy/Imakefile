@@ -210,10 +210,8 @@ EMANPAGES_S =FileName($(EXPORTMAN),FileName(man$(MANSUFFIX),rtcpd.$(MANSUFFIX)))
 #endif
 
 #if BuildRtcpclientd
-PROGS_C += ProgramTargetName(rtcpcldCleanupDB) \
-	  ProgramTargetName(MigHunter)
-IPROGS_C += FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB)) \
-	   FileName($(BIN),ProgramTargetName(MigHunter))
+PROGS_C += ProgramTargetName(rtcpcldCleanupDB)
+IPROGS_C += FileName($(BIN),ProgramTargetName(rtcpcldCleanupDB))
 PROGS_D += ProgramTargetName(rtcpclientd) \
 	   ProgramTargetName(recaller) \
 	   ProgramTargetName(migrator) \
@@ -223,7 +221,6 @@ IPROGS_D += FileName($(BIN),ProgramTargetName(rtcpclientd)) \
 	    FileName($(BIN),ProgramTargetName(migrator)) \
 	    FileName($(BIN),ProgramTargetName(TapeErrorHandler)) 
 EPROGS_C += FileName($(EXPORTBIN),rtcpcldCleanupDB) \
-	   FileName($(EXPORTBIN),MigHunter) \
 	   FileName($(EXPORTBIN),rtcpclientd) \
 	   FileName($(EXPORTBIN),recaller) \
 	   FileName($(EXPORTBIN),migrator) \
@@ -254,7 +251,6 @@ RTCPCLD_OBJS =	rtcpcldcommon.Osuf rtcpcldCatalogueInterface.Osuf \
 		rtcpcldVmgrInterface.Osuf rtcpcldNsInterface.Osuf
 RTCPCLD_MT_OBJS =	rtcpcldcommon_mt.Osuf
 RTCPCLD_CLEANUP_OBJS = rtcpcldCleanupDB.Osuf
-MIGHUNTER_OBJS =	MigHunter.Osuf
 DUMPTAPE_OBJS =	dumptape.Osuf
 #if BuildRtstat
 RTSTAT_OBJS = rtstat.Osuf
@@ -310,8 +306,6 @@ NormalProgramTarget(TapeErrorHandler,$(TAPEERRORHANDLER_OBJS) $(RTCPCLD_OBJS) $(
 
 NormalProgramTarget(rtcpclientd,$(RTCPCLIENTD_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
-NormalProgramTarget(MigHunter,$(MIGHUNTER_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
-
 NormalProgramTarget(rtcpcldCleanupDB,$(RTCPCLD_CLEANUP_OBJS) $(RTCPCLD_OBJS) $(RTCPLIB_OBJS),$(DEPLIB) $(DBLIBS),$(GLOBLIB) $(DBLIBS) $(LDLIBS))
 
 NormalProgramTarget(dumptape,$(DUMPTAPE_OBJS) $(RTCPLIB_OBJS),$(DEPLIB),$(MTLDFLAGS) $(GLOBLIB) $(LDLIBS) $(MTLDLIBS))
@@ -346,7 +340,6 @@ InstallProgram(recaller,$(BIN),root,bin,0750)
 InstallProgram(migrator,$(BIN),root,bin,0750)
 InstallProgram(TapeErrorHandler,$(BIN),root,bin,0750)
 InstallProgram(rtcpcldCleanupDB,$(BIN),root,bin,0750)
-InstallProgram(MigHunter,$(BIN),root,bin,0755)
 #if BuildRtstat
 InstallProgram(rtstat,$(BIN),root,bin,0755)
 #endif
@@ -399,7 +392,6 @@ IEXPORT(recaller,$(EXPORTBIN),750)
 IEXPORT(migrator,$(EXPORTBIN),750)
 IEXPORT(TapeErrorHandler,$(EXPORTBIN),750)
 IEXPORT(rtcpcldCleanupDB,$(EXPORTBIN),750)
-IEXPORT(MigHunter,$(EXPORTBIN),755)
 #if BuildRtstat
 IEXPORT(rtstat,$(EXPORTBIN),755)
 #endif
