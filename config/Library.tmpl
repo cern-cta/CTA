@@ -4,7 +4,7 @@
  */
 
 /*
- * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.34 $ $Date: 2008/02/21 19:06:04 $ CERN IT-ADC/CA Jean-Damien Durand
+ * @(#)$RCSfile: Library.tmpl,v $ $Revision: 1.35 $ $Date: 2008/03/10 17:28:25 $ CERN IT-ADC/CA Jean-Damien Durand
  */
 
 #include <Project.tmpl>
@@ -32,7 +32,7 @@ RMCLIB = DepLibraryTargetName(rmc,rmc)
 RTCOPYLIB = DepLibraryTargetName(rtcopy,rtcpapi)
 #endif
 #if BuildStageLibrary
-STGLIB = DepLibraryTargetName(stager,stager)
+STGLIB = DepLibraryTargetName(client/src/stager,stager)
 #endif
 #if BuildTapeLibrary
 TAPELIB = DepLibraryTargetName(tape,tape)

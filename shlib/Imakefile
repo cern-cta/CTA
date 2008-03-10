@@ -303,7 +303,7 @@ MakeDepLibrary(msg,msg)
 
 MakeDepLibrary(ns,ns)
 
-MakeDepLibrary(stager,stager)
+MakeDepLibrary(client/src/stager,stager)
 
 MakeDepLibrary(vmgr,vmgr)
 
