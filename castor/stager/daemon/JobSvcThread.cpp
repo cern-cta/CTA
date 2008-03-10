@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.54 $ $Release$ $Date: 2008/03/05 16:14:33 $ $Author: riojac3 $
+ * @(#)$RCSfile: JobSvcThread.cpp,v $ $Revision: 1.55 $ $Release$ $Date: 2008/03/10 09:34:53 $ $Author: waldron $
  *
  * Service thread for job related requests
  *
@@ -91,29 +91,34 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
   Cuuid_t suuid = nullCuuid;
   castor::rh::GetUpdateStartResponse res;
   bool failed = false;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     sReq = dynamic_cast<castor::stager::StartRequest*> (req);
+    fileId = sReq->fileId();
+    nsHost = sReq->nsHost();
     // Loading the subrequest from db
     ad.setTarget(sReq->subreqId());
     castor::IObject *obj = svcs->createObj(&ad);
     if (0 == obj) {
       // "Could not find subrequest associated to Request"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("SubRequest DbId", sReq->subreqId()),
-         castor::dlf::Param("Request Type", "StartRequest")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ,sReq->fileId(),sReq->nsHost(), 2, params);
+        {castor::dlf::Param("SubReqId", sReq->subreqId()),
+         castor::dlf::Param("Type", "StartRequest")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ,
+			      fileId, nsHost, 2, params);
       return;
     }
     subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
     if (0 == subreq) {
       // "Expected SubRequest in Request but found another type"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("Type", obj->type()),
-         castor::dlf::Param("Request Type", "StartRequest")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT, 2, params);
+        {castor::dlf::Param("Type", obj->type())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT,
+			      fileId, nsHost, 1, params);
       delete obj;
       return;
     }
@@ -127,33 +132,36 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
         {castor::dlf::Param("DiskServer", sReq->diskServer()),
          castor::dlf::Param("FileSystem", sReq->fileSystem()),
          castor::dlf::Param(suuid)};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOFSOK, 3, params);
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOFSOK,
+			      fileId, nsHost, 3, params);
       delete obj;
       return;
     }
     // Invoking the method
     if (castor::OBJ_GetUpdateStartRequest == sReq->type()) {
       // "Invoking getUpdateStart"
-      castor::dlf::Param params[] = {
-        castor::dlf::Param(suuid)
-      };
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS,sReq->fileId(),sReq->nsHost(), 1, params);
-      dc = jobSvc->getUpdateStart(subreq, fs, &emptyFile,sReq->fileId(),sReq->nsHost());
+      castor::dlf::Param params[] =
+	{castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDS,
+			      fileId, nsHost, 1, params);
+      dc = jobSvc->getUpdateStart(subreq, fs, &emptyFile, fileId, nsHost);
     } else {
       // "Invoking PutStart"
-      castor::dlf::Param params[] = {
-        castor::dlf::Param(suuid)
-      };
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS,sReq->fileId(),sReq->nsHost(), 1, params);
-      dc = jobSvc->putStart(subreq, fs,sReq->fileId(),sReq->nsHost());
+      castor::dlf::Param params[] =
+	{castor::dlf::Param(suuid)};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTS,
+			      fileId, nsHost, 1, params);
+      dc = jobSvc->putStart(subreq, fs, fileId, nsHost);
     }
   } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleStartRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 4, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
     failed = true;
@@ -176,7 +184,8 @@ void castor::stager::daemon::JobSvcThread::handleStartRequest
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 4, params);
   }
   // Cleanup
   if (0 != fs) {
@@ -204,11 +213,15 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
   castor::stager::DiskCopyInfo *dc = 0;
   castor::stager::DiskCopyInfo *srcDc = 0;
   bool failed = false;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     uReq = dynamic_cast<castor::stager::Disk2DiskCopyStartRequest*> (req);
+    fileId = uReq->fileId();
+    nsHost = uReq->nsHost();
     // "Invoking disk2DiskCopyStart"
     castor::dlf::Param params[] = {
       castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
@@ -216,20 +229,21 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
       castor::dlf::Param("SvcClassName", uReq->destSvcClass()),
       castor::dlf::Param("DiskServer", uReq->diskServer()),
       castor::dlf::Param("FileSystem", uReq->mountPoint())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCS,uReq->fileId(),uReq->nsHost(), 5, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCS,
+			    fileId, nsHost, 5, params);
     jobSvc->disk2DiskCopyStart(uReq->diskCopyId(),
 			       uReq->sourceDiskCopyId(),
 			       uReq->destSvcClass(),
 			       uReq->diskServer(),
-			       uReq->mountPoint(), dc, srcDc,
-			       uReq->fileId(),uReq->nsHost());
+			       uReq->mountPoint(), dc, srcDc, fileId, nsHost);
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
     failed = true;
@@ -238,19 +252,22 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
     // This allows the client to just exit without having to manually call
     // disk2DiskCopyFailed
     try {
-      // "Invoking disk2DiskCopyFailed"
-      castor::dlf::Param params[] =
-	{castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD,uReq->fileId(),uReq->nsHost(), 1, params);
-      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(),uReq->fileId(),uReq->nsHost());
+      if (!nsHost.empty()) {
+	// "Invoking disk2DiskCopyFailed"
+	castor::dlf::Param params[] =
+	  {castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
+	castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD,
+				fileId, nsHost, 1, params);
+	jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), fileId, nsHost);
+      }
     } catch (castor::exception::Exception e) {
-
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest"),
 	 castor::dlf::Param("Message", e.getMessage().str()),
 	 castor::dlf::Param("Code", e.code())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			      fileId, nsHost, 3, params);
     }
   }
   // Build the response
@@ -270,7 +287,8 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyStartRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyStartRequest.reply"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
   }
   // Cleanup
   if (0 != dc)
@@ -292,24 +310,32 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
   // Useful Variables
   castor::stager::Disk2DiskCopyDoneRequest *uReq;
   castor::rh::BasicResponse res;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     uReq = dynamic_cast<castor::stager::Disk2DiskCopyDoneRequest*> (req);
+    fileId = uReq->fileId();
+    nsHost = uReq->nsHost();
     // Invoking the method
     u_signed64 srcDcId = uReq->sourceDiskCopyId();
     if (0 == srcDcId) {
+      // "Invoking disk2DiskCopyFailed"
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskCopyId", uReq->diskCopyId())};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD,uReq->fileId(),uReq->nsHost(), 1, params);
-      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(),uReq->fileId(),uReq->nsHost());
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCBAD,
+			      fileId, nsHost, 1, params);
+      jobSvc->disk2DiskCopyFailed(uReq->diskCopyId(), fileId, nsHost);
     } else {
+      // "Invoking disk2DiskCopyDone"
       castor::dlf::Param params[] =
         {castor::dlf::Param("DiskCopyId", uReq->diskCopyId()),
          castor::dlf::Param("SourceDcId", srcDcId)};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCOK,uReq->fileId(),uReq->nsHost(), 2, params);
-      jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId,uReq->fileId(),uReq->nsHost());
+      castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_D2DCOK,
+			      fileId, nsHost, 2, params);
+      jobSvc->disk2DiskCopyDone(uReq->diskCopyId(), srcDcId, fileId, nsHost);
     }
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
@@ -317,7 +343,8 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -333,7 +360,8 @@ void castor::stager::daemon::JobSvcThread::handleDisk2DiskCopyDoneRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleDisk2DiskCopyDoneRequest.reply"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
   }
 }
 
@@ -353,45 +381,52 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
   castor::IObject *obj = 0;
   Cuuid_t suuid = nullCuuid;
   castor::rh::BasicResponse res;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     mcReq = dynamic_cast<castor::stager::MoverCloseRequest*> (req);
+    fileId = mcReq->fileId();
+    nsHost = mcReq->nsHost();
     ad.setTarget(mcReq->subReqId());
     obj = svcs->createObj(&ad);
     if (0 == obj) {
       // "Could not find subrequest associated to Request"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("SubRequest DbId", mcReq->subReqId()),
-         castor::dlf::Param("Request Type", "MoverCloseRequest")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ,mcReq->fileId(),mcReq->nsHost(), 2, params);
+        {castor::dlf::Param("SubReqId", mcReq->subReqId()),
+         castor::dlf::Param("Type", "MoverCloseRequest")};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_NOSREQ,
+			      fileId, nsHost, 2, params);
       return;
     }
     subreq = dynamic_cast<castor::stager::SubRequest*>(obj);
     if (0 == subreq) {
       // "Expected SubRequest in Request but found another type"
       castor::dlf::Param params[] =
-        {castor::dlf::Param("Type", obj->type()),
-         castor::dlf::Param("Request Type", "MoverCloseRequest")};
-      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT,mcReq->fileId(),mcReq->nsHost(), 2, params);
+        {castor::dlf::Param("Type", obj->type())};
+      castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_BADSRT,
+			      fileId, nsHost, 1, params);
       delete obj;
       return;
     }
     string2Cuuid(&suuid, (char*)subreq->subreqId().c_str());
     // "Invoking prepareForMigration"
-    castor::dlf::Param params[] = 
+    castor::dlf::Param params[] =
       {castor::dlf::Param(suuid)};
-       castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PFMIG,mcReq->fileId(),mcReq->nsHost(), 1, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PFMIG,
+			    fileId, nsHost, 1, params);
     try {
-      jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp(),mcReq->fileId(),mcReq->nsHost());
+      jobSvc->prepareForMigration(subreq, mcReq->fileSize(), mcReq->timeStamp(), fileId, nsHost);
     } catch (castor::exception::Exception e) {
       if (e.code() == ENOENT) {
-	// File was removed by another user while being modified
+	// "File was removed by another user while being modified"
 	castor::dlf::Param params[] =
 	  {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
 	   castor::dlf::Param(suuid)};
-	castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_JOBSVC_DELWWR, 2, params);
+	castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR, STAGER_JOBSVC_DELWWR,
+				fileId, nsHost, 2, params);
 	res.setErrorCode(e.code());
 	res.setErrorMessage("File was removed by another user while being modified");
       } else {
@@ -401,13 +436,14 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
     // Cleaning
     delete obj;
   } catch (castor::exception::Exception e) {
-    // Unexpected exception caught
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleMoverCloseRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 4, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
     if (obj != 0) delete obj;
@@ -425,7 +461,8 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code()),
        castor::dlf::Param(suuid)};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 4, params);
   }
 }
 
@@ -442,22 +479,29 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
   // Useful Variables
   castor::stager::GetUpdateDone *uReq;
   castor::rh::BasicResponse res;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     uReq = dynamic_cast<castor::stager::GetUpdateDone*> (req);
-    // Invoking the method
+    fileId = uReq->fileId();
+    nsHost = uReq->nsHost();
+    // "Invoking getUpdateDone"
     castor::dlf::Param params[] =
       {castor::dlf::Param("SubReqId", uReq->subReqId())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDO,uReq->fileId(),uReq->nsHost(), 1, params);
-    jobSvc->getUpdateDone(uReq->subReqId(),uReq->fileId(),uReq->nsHost());
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPDO,
+			    fileId, nsHost, 1, params);
+    jobSvc->getUpdateDone(uReq->subReqId(), fileId, nsHost);
   } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateDoneRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -473,7 +517,8 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateDoneRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateDoneRequest.reply"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
   }
 }
 
@@ -490,22 +535,29 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
   // Useful Variables
   castor::stager::GetUpdateFailed *uReq;
   castor::rh::BasicResponse res;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     uReq = dynamic_cast<castor::stager::GetUpdateFailed*> (req);
-    // Invoking the method
+    fileId = uReq->fileId();
+    nsHost = uReq->nsHost();
+    // "Invoking getUpdateFailed"
     castor::dlf::Param params[] =
       {castor::dlf::Param("SubReqId", uReq->subReqId())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPFA,uReq->fileId(),uReq->nsHost(), 1, params);
-    jobSvc->getUpdateFailed(uReq->subReqId(),uReq->fileId(),uReq->nsHost());
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_GETUPFA,
+			    fileId, nsHost, 1, params);
+    jobSvc->getUpdateFailed(uReq->subReqId(), fileId, nsHost);
   } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateFailedRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -521,7 +573,8 @@ void castor::stager::daemon::JobSvcThread::handleGetUpdateFailedRequest
       {castor::dlf::Param("Function", "JobSvcThread::handleGetUpdateFailedRequest.reply"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
   }
 }
 
@@ -538,22 +591,29 @@ void castor::stager::daemon::JobSvcThread::handlePutFailedRequest
   // Useful Variables
   castor::stager::PutFailed *uReq;
   castor::rh::BasicResponse res;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     uReq = dynamic_cast<castor::stager::PutFailed*> (req);
+    fileId = uReq->fileId();
+    nsHost = uReq->nsHost();
     // "Invoking putFailed"
     castor::dlf::Param params[] =
       {castor::dlf::Param("SubReqId", uReq->subReqId())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTFAIL,uReq->fileId(),uReq->nsHost(), 1, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_PUTFAIL,
+			    fileId, nsHost, 1, params);
     jobSvc->putFailed(uReq->subReqId(),uReq->fileId(),uReq->nsHost());
   } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -569,7 +629,8 @@ void castor::stager::daemon::JobSvcThread::handlePutFailedRequest
       {castor::dlf::Param("Function", "JobSvcThread::handlePutFailedRequest.reply"),
        castor::dlf::Param("Message", e.getMessage().str()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
   }
 }
 
@@ -586,23 +647,30 @@ void castor::stager::daemon::JobSvcThread::handleFirstByteWrittenRequest
   // Useful Variables
   castor::stager::FirstByteWritten *uReq;
   castor::rh::BasicResponse res;
+  u_signed64 fileId;
+  std::string nsHost;
   try {
     // Retrieving request from the database
     // Note that casting the request will never be
     // null since select returns one for sure
     uReq = dynamic_cast<castor::stager::FirstByteWritten*> (req);
+    fileId = uReq->fileId();
+    nsHost = uReq->nsHost();
     // "Invoking firstByteWritten"
     castor::dlf::Param params[] =
       {castor::dlf::Param("SubReqId", uReq->subReqId())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_1STBWR,uReq->fileId(),uReq->nsHost(), 1, params);
-    jobSvc->firstByteWritten(uReq->subReqId(),uReq->fileId(),uReq->nsHost());
+    castor::dlf::dlf_writep(uuid, DLF_LVL_USAGE, STAGER_JOBSVC_1STBWR,
+			    fileId, nsHost, 1, params);
+    jobSvc->firstByteWritten(uReq->subReqId(), fileId, nsHost);
   } catch (castor::exception::Exception e) {
+    // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleFirstByteWrittenRequest"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code()),
+      {castor::dlf::Param("Function", "JobSvcThread::handleFirstByteWrittenRequest"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code()),
        castor::dlf::Param("SubReqId", uReq->subReqId())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 4, params);
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
   }
@@ -615,10 +683,11 @@ void castor::stager::daemon::JobSvcThread::handleFirstByteWrittenRequest
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("function", "JobSvcThread::handleFirstByteWrittenRequest.reply"),
-       castor::dlf::Param("message", e.getMessage().str()),
-       castor::dlf::Param("code", e.code())};
-    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 3, params);
+      {castor::dlf::Param("Function", "JobSvcThread::handleFirstByteWrittenRequest.reply"),
+       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Code", e.code())};
+    castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+			    fileId, nsHost, 3, params);
   }
 }
 
@@ -717,7 +786,7 @@ void castor::stager::daemon::JobSvcThread::process
   default:
     // "Unknown Request type"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("type", req->type())};
+      {castor::dlf::Param("Type", req->type())};
     castor::dlf::dlf_writep(uuid, DLF_LVL_ERROR, STAGER_JOBSVC_UNKREQ, 1, params);
     // Inform client
     castor::rh::BasicResponse res;
@@ -739,7 +808,7 @@ void castor::stager::daemon::JobSvcThread::process
     }
   }
   try {
-    // Delete Request from the database, even when it failed 
+    // Delete Request from the database, even when it failed
     svcs->deleteRep(&ad, req, true);
   } catch (castor::exception::Exception e) {
     // "Unexpected exception caught"
