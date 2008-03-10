@@ -151,27 +151,15 @@ int Cstager_SvcClass_setMaxReplicaNb(struct Cstager_SvcClass_t* instance, int ne
 
 /**
  * Get the value of replicationPolicy
- * Policy ruling the replication of files in the diskpools.
+ * Policy ruling the internal replication of files in the diskpools.
  */
 int Cstager_SvcClass_replicationPolicy(struct Cstager_SvcClass_t* instance, const char** var);
 
 /**
  * Set the value of replicationPolicy
- * Policy ruling the replication of files in the diskpools.
+ * Policy ruling the internal replication of files in the diskpools.
  */
 int Cstager_SvcClass_setReplicationPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
-
-/**
- * Get the value of gcPolicy
- * Policy ruling the garbage collection of files
- */
-int Cstager_SvcClass_gcPolicy(struct Cstager_SvcClass_t* instance, const char** var);
-
-/**
- * Set the value of gcPolicy
- * Policy ruling the garbage collection of files
- */
-int Cstager_SvcClass_setGcPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
  * Get the value of migratorPolicy
@@ -198,10 +186,48 @@ int Cstager_SvcClass_recallerPolicy(struct Cstager_SvcClass_t* instance, const c
 int Cstager_SvcClass_setRecallerPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
+ * Get the value of streamPolicy
+ * Policy ruling the behavior of the streams to migrate files.
+ */
+int Cstager_SvcClass_streamPolicy(struct Cstager_SvcClass_t* instance, const char** var);
+
+/**
+ * Set the value of streamPolicy
+ * Policy ruling the behavior of the streams to migrate files.
+ */
+int Cstager_SvcClass_setStreamPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
+
+/**
+ * Get the value of gcWeightForAccess
+ * Weight in days that is added for each access to diskCopy.gcWeight for all
+ * diskCopies belonging to diskPools under this service class.
+ */
+int Cstager_SvcClass_gcWeightForAccess(struct Cstager_SvcClass_t* instance, int* var);
+
+/**
+ * Set the value of gcWeightForAccess
+ * Weight in days that is added for each access to diskCopy.gcWeight for all
+ * diskCopies belonging to diskPools under this service class.
+ */
+int Cstager_SvcClass_setGcWeightForAccess(struct Cstager_SvcClass_t* instance, int new_var);
+
+/**
+ * Get the value of gcEnabled
+ * Whether the diskpools under this serviceClass should be garbage collected.
+ */
+int Cstager_SvcClass_gcEnabled(struct Cstager_SvcClass_t* instance, int* var);
+
+/**
+ * Set the value of gcEnabled
+ * Whether the diskpools under this serviceClass should be garbage collected.
+ */
+int Cstager_SvcClass_setGcEnabled(struct Cstager_SvcClass_t* instance, int new_var);
+
+/**
  * Get the value of hasDiskOnlyBehavior
  * Whether the diskpools under this serviceClass should behave like disk only
  * pools. This include failing jobs that want to allocate space when no space is
- * available and forcing the fileClass of files if forcedFileClass is not empty
+ * available and forcing the fileClass of files if forcedFileClass is not empty.
  */
 int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int* var);
 
@@ -209,19 +235,9 @@ int Cstager_SvcClass_hasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, in
  * Set the value of hasDiskOnlyBehavior
  * Whether the diskpools under this serviceClass should behave like disk only
  * pools. This include failing jobs that want to allocate space when no space is
- * available and forcing the fileClass of files if forcedFileClass is not empty
+ * available and forcing the fileClass of files if forcedFileClass is not empty.
  */
 int Cstager_SvcClass_setHasDiskOnlyBehavior(struct Cstager_SvcClass_t* instance, int new_var);
-
-/**
- * Get the value of streamPolicy
- */
-int Cstager_SvcClass_streamPolicy(struct Cstager_SvcClass_t* instance, const char** var);
-
-/**
- * Set the value of streamPolicy
- */
-int Cstager_SvcClass_setStreamPolicy(struct Cstager_SvcClass_t* instance, const char* new_var);
 
 /**
  * Get the value of id

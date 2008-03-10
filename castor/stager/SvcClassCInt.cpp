@@ -183,23 +183,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_gcPolicy
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_gcPolicy(castor::stager::SvcClass* instance, const char** var) {
-    *var = instance->gcPolicy().c_str();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setGcPolicy
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setGcPolicy(castor::stager::SvcClass* instance, const char* new_var) {
-    std::string snew_var(new_var, strlen(new_var));
-    instance->setGcPolicy(snew_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SvcClass_migratorPolicy
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_migratorPolicy(castor::stager::SvcClass* instance, const char** var) {
@@ -234,22 +217,6 @@ extern "C" {
   }
 
   //----------------------------------------------------------------------------
-  // Cstager_SvcClass_hasDiskOnlyBehavior
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_hasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool* var) {
-    *var = instance->hasDiskOnlyBehavior();
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
-  // Cstager_SvcClass_setHasDiskOnlyBehavior
-  //----------------------------------------------------------------------------
-  int Cstager_SvcClass_setHasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool new_var) {
-    instance->setHasDiskOnlyBehavior(new_var);
-    return 0;
-  }
-
-  //----------------------------------------------------------------------------
   // Cstager_SvcClass_streamPolicy
   //----------------------------------------------------------------------------
   int Cstager_SvcClass_streamPolicy(castor::stager::SvcClass* instance, const char** var) {
@@ -263,6 +230,54 @@ extern "C" {
   int Cstager_SvcClass_setStreamPolicy(castor::stager::SvcClass* instance, const char* new_var) {
     std::string snew_var(new_var, strlen(new_var));
     instance->setStreamPolicy(snew_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_gcWeightForAccess
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_gcWeightForAccess(castor::stager::SvcClass* instance, int* var) {
+    *var = instance->gcWeightForAccess();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setGcWeightForAccess
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setGcWeightForAccess(castor::stager::SvcClass* instance, int new_var) {
+    instance->setGcWeightForAccess(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_gcEnabled
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_gcEnabled(castor::stager::SvcClass* instance, bool* var) {
+    *var = instance->gcEnabled();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setGcEnabled
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setGcEnabled(castor::stager::SvcClass* instance, bool new_var) {
+    instance->setGcEnabled(new_var);
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_hasDiskOnlyBehavior
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_hasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool* var) {
+    *var = instance->hasDiskOnlyBehavior();
+    return 0;
+  }
+
+  //----------------------------------------------------------------------------
+  // Cstager_SvcClass_setHasDiskOnlyBehavior
+  //----------------------------------------------------------------------------
+  int Cstager_SvcClass_setHasDiskOnlyBehavior(castor::stager::SvcClass* instance, bool new_var) {
+    instance->setHasDiskOnlyBehavior(new_var);
     return 0;
   }
 

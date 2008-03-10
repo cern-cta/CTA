@@ -48,11 +48,12 @@ castor::stager::SvcClass::SvcClass() throw() :
   m_defaultFileSize(0),
   m_maxReplicaNb(0),
   m_replicationPolicy(""),
-  m_gcPolicy(""),
   m_migratorPolicy(""),
   m_recallerPolicy(""),
-  m_hasDiskOnlyBehavior(false),
   m_streamPolicy(""),
+  m_gcWeightForAccess(0),
+  m_gcEnabled(false),
+  m_hasDiskOnlyBehavior(false),
   m_id(0),
   m_forcedFileClass(0) {
 }
@@ -89,11 +90,12 @@ void castor::stager::SvcClass::print(std::ostream& stream,
   stream << indent << "defaultFileSize : " << m_defaultFileSize << std::endl;
   stream << indent << "maxReplicaNb : " << m_maxReplicaNb << std::endl;
   stream << indent << "replicationPolicy : " << m_replicationPolicy << std::endl;
-  stream << indent << "gcPolicy : " << m_gcPolicy << std::endl;
   stream << indent << "migratorPolicy : " << m_migratorPolicy << std::endl;
   stream << indent << "recallerPolicy : " << m_recallerPolicy << std::endl;
-  stream << indent << "hasDiskOnlyBehavior : " << m_hasDiskOnlyBehavior << std::endl;
   stream << indent << "streamPolicy : " << m_streamPolicy << std::endl;
+  stream << indent << "gcWeightForAccess : " << m_gcWeightForAccess << std::endl;
+  stream << indent << "gcEnabled : " << m_gcEnabled << std::endl;
+  stream << indent << "hasDiskOnlyBehavior : " << m_hasDiskOnlyBehavior << std::endl;
   stream << indent << "id : " << m_id << std::endl;
   alreadyPrinted.insert(this);
   {

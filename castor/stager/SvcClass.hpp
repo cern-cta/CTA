@@ -189,7 +189,7 @@ namespace castor {
 
       /**
        * Get the value of m_replicationPolicy
-       * Policy ruling the replication of files in the diskpools.
+       * Policy ruling the internal replication of files in the diskpools.
        * @return the value of m_replicationPolicy
        */
       std::string replicationPolicy() const {
@@ -198,29 +198,11 @@ namespace castor {
 
       /**
        * Set the value of m_replicationPolicy
-       * Policy ruling the replication of files in the diskpools.
+       * Policy ruling the internal replication of files in the diskpools.
        * @param new_var the new value of m_replicationPolicy
        */
       void setReplicationPolicy(std::string new_var) {
         m_replicationPolicy = new_var;
-      }
-
-      /**
-       * Get the value of m_gcPolicy
-       * Policy ruling the garbage collection of files
-       * @return the value of m_gcPolicy
-       */
-      std::string gcPolicy() const {
-        return m_gcPolicy;
-      }
-
-      /**
-       * Set the value of m_gcPolicy
-       * Policy ruling the garbage collection of files
-       * @param new_var the new value of m_gcPolicy
-       */
-      void setGcPolicy(std::string new_var) {
-        m_gcPolicy = new_var;
       }
 
       /**
@@ -260,10 +242,66 @@ namespace castor {
       }
 
       /**
+       * Get the value of m_streamPolicy
+       * Policy ruling the behavior of the streams to migrate files.
+       * @return the value of m_streamPolicy
+       */
+      std::string streamPolicy() const {
+        return m_streamPolicy;
+      }
+
+      /**
+       * Set the value of m_streamPolicy
+       * Policy ruling the behavior of the streams to migrate files.
+       * @param new_var the new value of m_streamPolicy
+       */
+      void setStreamPolicy(std::string new_var) {
+        m_streamPolicy = new_var;
+      }
+
+      /**
+       * Get the value of m_gcWeightForAccess
+       * Weight in days that is added for each access to diskCopy.gcWeight for all
+       * diskCopies belonging to diskPools under this service class.
+       * @return the value of m_gcWeightForAccess
+       */
+      int gcWeightForAccess() const {
+        return m_gcWeightForAccess;
+      }
+
+      /**
+       * Set the value of m_gcWeightForAccess
+       * Weight in days that is added for each access to diskCopy.gcWeight for all
+       * diskCopies belonging to diskPools under this service class.
+       * @param new_var the new value of m_gcWeightForAccess
+       */
+      void setGcWeightForAccess(int new_var) {
+        m_gcWeightForAccess = new_var;
+      }
+
+      /**
+       * Get the value of m_gcEnabled
+       * Whether the diskpools under this serviceClass should be garbage collected.
+       * @return the value of m_gcEnabled
+       */
+      bool gcEnabled() const {
+        return m_gcEnabled;
+      }
+
+      /**
+       * Set the value of m_gcEnabled
+       * Whether the diskpools under this serviceClass should be garbage collected.
+       * @param new_var the new value of m_gcEnabled
+       */
+      void setGcEnabled(bool new_var) {
+        m_gcEnabled = new_var;
+      }
+
+      /**
        * Get the value of m_hasDiskOnlyBehavior
        * Whether the diskpools under this serviceClass should behave like disk only
        * pools. This include failing jobs that want to allocate space when no space is
-       * available and forcing the fileClass of files if forcedFileClass is not empty
+       * available and forcing the fileClass of files if forcedFileClass is not empty.
        * @return the value of m_hasDiskOnlyBehavior
        */
       bool hasDiskOnlyBehavior() const {
@@ -274,27 +312,11 @@ namespace castor {
        * Set the value of m_hasDiskOnlyBehavior
        * Whether the diskpools under this serviceClass should behave like disk only
        * pools. This include failing jobs that want to allocate space when no space is
-       * available and forcing the fileClass of files if forcedFileClass is not empty
+       * available and forcing the fileClass of files if forcedFileClass is not empty.
        * @param new_var the new value of m_hasDiskOnlyBehavior
        */
       void setHasDiskOnlyBehavior(bool new_var) {
         m_hasDiskOnlyBehavior = new_var;
-      }
-
-      /**
-       * Get the value of m_streamPolicy
-       * @return the value of m_streamPolicy
-       */
-      std::string streamPolicy() const {
-        return m_streamPolicy;
-      }
-
-      /**
-       * Set the value of m_streamPolicy
-       * @param new_var the new value of m_streamPolicy
-       */
-      void setStreamPolicy(std::string new_var) {
-        m_streamPolicy = new_var;
       }
 
       /**
@@ -406,11 +428,8 @@ namespace castor {
       /// Maximum number of replicas for a file created with this service class. If 0, the replication is ruled by the replication policy. If there is none, then 0 means infinity.
       int m_maxReplicaNb;
 
-      /// Policy ruling the replication of files in the diskpools.
+      /// Policy ruling the internal replication of files in the diskpools.
       std::string m_replicationPolicy;
-
-      /// Policy ruling the garbage collection of files
-      std::string m_gcPolicy;
 
       /// Policy ruling the migration of files.
       std::string m_migratorPolicy;
@@ -418,10 +437,17 @@ namespace castor {
       /// Policy ruling the recall of files.
       std::string m_recallerPolicy;
 
-      /// Whether the diskpools under this serviceClass should behave like disk only pools. This include failing jobs that want to allocate space when no space is available and forcing the fileClass of files if forcedFileClass is not empty
-      bool m_hasDiskOnlyBehavior;
-
+      /// Policy ruling the behavior of the streams to migrate files.
       std::string m_streamPolicy;
+
+      /// Weight in days that is added for each access to diskCopy.gcWeight for all diskCopies belonging to diskPools under this service class.
+      int m_gcWeightForAccess;
+
+      /// Whether the diskpools under this serviceClass should be garbage collected.
+      bool m_gcEnabled;
+
+      /// Whether the diskpools under this serviceClass should behave like disk only pools. This include failing jobs that want to allocate space when no space is available and forcing the fileClass of files if forcedFileClass is not empty.
+      bool m_hasDiskOnlyBehavior;
 
       /// The id of this object
       u_signed64 m_id;
