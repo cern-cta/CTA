@@ -280,21 +280,25 @@ int Cstager_GetUpdateDone_setSubReqId(struct Cstager_GetUpdateDone_t* instance, 
 
 /**
  * Get the value of fileId
+ * The id of the castor file
  */
 int Cstager_GetUpdateDone_fileId(struct Cstager_GetUpdateDone_t* instance, u_signed64* var);
 
 /**
  * Set the value of fileId
+ * The id of the castor file
  */
 int Cstager_GetUpdateDone_setFileId(struct Cstager_GetUpdateDone_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_GetUpdateDone_nsHost(struct Cstager_GetUpdateDone_t* instance, const char** var);
 
 /**
  * Set the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_GetUpdateDone_setNsHost(struct Cstager_GetUpdateDone_t* instance, const char* new_var);
 

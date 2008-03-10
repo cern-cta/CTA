@@ -294,21 +294,25 @@ int Cstager_Disk2DiskCopyDoneRequest_setSourceDiskCopyId(struct Cstager_Disk2Dis
 
 /**
  * Get the value of fileId
+ * The id of the castor file
  */
 int Cstager_Disk2DiskCopyDoneRequest_fileId(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64* var);
 
 /**
  * Set the value of fileId
+ * The id of the castor file
  */
 int Cstager_Disk2DiskCopyDoneRequest_setFileId(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_Disk2DiskCopyDoneRequest_nsHost(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, const char** var);
 
 /**
  * Set the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_Disk2DiskCopyDoneRequest_setNsHost(struct Cstager_Disk2DiskCopyDoneRequest_t* instance, const char* new_var);
 

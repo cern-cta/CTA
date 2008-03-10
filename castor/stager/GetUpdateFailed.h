@@ -279,21 +279,25 @@ int Cstager_GetUpdateFailed_setSubReqId(struct Cstager_GetUpdateFailed_t* instan
 
 /**
  * Get the value of fileId
+ * The id of the castor file
  */
 int Cstager_GetUpdateFailed_fileId(struct Cstager_GetUpdateFailed_t* instance, u_signed64* var);
 
 /**
  * Set the value of fileId
+ * The id of the castor file
  */
 int Cstager_GetUpdateFailed_setFileId(struct Cstager_GetUpdateFailed_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_GetUpdateFailed_nsHost(struct Cstager_GetUpdateFailed_t* instance, const char** var);
 
 /**
  * Set the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_GetUpdateFailed_setNsHost(struct Cstager_GetUpdateFailed_t* instance, const char* new_var);
 

@@ -143,21 +143,25 @@ int Cstager_PutStartRequest_setFileSystem(struct Cstager_PutStartRequest_t* inst
 
 /**
  * Get the value of fileId
+ * The id of the castor file
  */
 int Cstager_PutStartRequest_fileId(struct Cstager_PutStartRequest_t* instance, u_signed64* var);
 
 /**
  * Set the value of fileId
+ * The id of the castor file
  */
 int Cstager_PutStartRequest_setFileId(struct Cstager_PutStartRequest_t* instance, u_signed64 new_var);
 
 /**
  * Get the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_PutStartRequest_nsHost(struct Cstager_PutStartRequest_t* instance, const char** var);
 
 /**
  * Set the value of nsHost
+ * The name server hosting this castor file
  */
 int Cstager_PutStartRequest_setNsHost(struct Cstager_PutStartRequest_t* instance, const char* new_var);
 

@@ -154,6 +154,7 @@ namespace castor {
 
       /**
        * Get the value of m_fileId
+       * The id of the castor file
        * @return the value of m_fileId
        */
       u_signed64 fileId() const {
@@ -162,6 +163,7 @@ namespace castor {
 
       /**
        * Set the value of m_fileId
+       * The id of the castor file
        * @param new_var the new value of m_fileId
        */
       void setFileId(u_signed64 new_var) {
@@ -170,6 +172,7 @@ namespace castor {
 
       /**
        * Get the value of m_nsHost
+       * The name server hosting this castor file
        * @return the value of m_nsHost
        */
       std::string nsHost() const {
@@ -178,6 +181,7 @@ namespace castor {
 
       /**
        * Set the value of m_nsHost
+       * The name server hosting this castor file
        * @param new_var the new value of m_nsHost
        */
       void setNsHost(std::string new_var) {
@@ -212,8 +216,10 @@ namespace castor {
 
       u_signed64 m_timeStamp;
 
+      /// The id of the castor file
       u_signed64 m_fileId;
 
+      /// The name server hosting this castor file
       std::string m_nsHost;
 
       /// The id of this object
