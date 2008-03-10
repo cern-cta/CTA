@@ -33,6 +33,7 @@
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "Cgetopt.h"
+#include "getconfent.h"
 
 
 //-----------------------------------------------------------------------------
@@ -42,19 +43,39 @@ int main(int argc, char *argv[]) {
 
   try {
     castor::gc::GcDaemon daemon;
+    
+    // Randomize the start0up of the daemon between 1 and 15 minutes.
+    char *value;
+    int startDelay = 1;
+    if ((value = getenv("GC_IMMEDIATESTART")) ||
+	(value = getconfent("GC", "ImmediateStart", 0))) {
+      if (!strcasecmp(value, "yes") || !strcmp(value, "1")) {
+	startDelay = 0;
+      }
+    }
+    if (startDelay){
+      timeval tv;
+      srand(tv.tv_usec * tv.tv_sec);
+      startDelay = 60 + (int) (900.0 * rand() / (RAND_MAX + 60.0));
+    }
+
+    // "Garbage Collector started successfully"
+    castor::dlf::Param params[] =
+      {castor::dlf::Param("StartDelay", startDelay)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 1, params);
 
     // Create the deletion thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Deletion",
-	new castor::gc::DeletionThread()));
+	new castor::gc::DeletionThread(startDelay)));
     daemon.getThreadPool('D')->setNbThreads(1);
-
+    
     // Create the Synchronization thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Synchronization",
-	new castor::gc::SynchronizationThread()));
+	new castor::gc::SynchronizationThread(startDelay)));
     daemon.getThreadPool('S')->setNbThreads(1);
 
     // Start daemon
@@ -87,7 +108,7 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {
-    {  1, "Starting Garbage Collector Daemon" },
+    {  1, "Starting deletion thread" },
     {  2, "Could not get RemoteStagerSvc" },
     {  3, "Got a bad RemoteStagerSvc" },
     {  5, "Garbage Collector started successfully" },
@@ -112,15 +133,17 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("GC") {
     { 23, "Unable to retrieve mountpoints, giving up with synchronization" },
     { 24, "Could not list filesystem directories, giving up with filesystem's synchronisation" },
     { 25, "Could not list filesystem subdirectory, ignoring it for synchronization" },
-    { 27, "Deleting local file which is no longer in the nameserver" }, 
+    { 27, "Deleting local file which is no longer in the nameserver" },
     { 28, "Deletion of orphaned local file failed" },
     { 29, "Memory allocation failure" },
-    { 30, "Synchronization configuration" }, 
+    { 30, "Synchronization configuration" },
     { 31, "Synchronizing files with nameserver and stager catalog" },
     { 32, "Error calling nameserver function Cns_bulkexist" },
     { 33, "Summary of files removed by stager synchronization" },
     { 35, "Summary of files removed by nameserver synchronization" },
     { 36, "Deleting local file which is no longer in the stager catalog" },
+    { 37, "New chunk interval" },
+    { 38, "Invalid GC/ChunkInterval option, using default" },
     { -1, ""}};
   dlfInit(messages);
 }

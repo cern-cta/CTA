@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/03 13:54:20 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.cpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/10 09:33:13 $ $Author: waldron $
  *
  * Deletion thread used to check periodically whether files need to be deleted
  *
@@ -51,8 +51,9 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::gc::DeletionThread::DeletionThread():
-  m_interval(DEFAULT_GCINTERVAL) {};
+castor::gc::DeletionThread::DeletionThread(int startDelay):
+  m_interval(DEFAULT_GCINTERVAL),
+  m_startDelay(startDelay) {};
 
 
 //-----------------------------------------------------------------------------
@@ -60,8 +61,9 @@ castor::gc::DeletionThread::DeletionThread():
 //-----------------------------------------------------------------------------
 void castor::gc::DeletionThread::run(void *param) {
 
-  // "Starting Garbage Collector Daemon"
+  // "Starting deletion thread"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 1);
+  sleep(m_startDelay);
 
   // Get RemoteGCSvc
   castor::IService* svc =
@@ -104,35 +106,6 @@ void castor::gc::DeletionThread::run(void *param) {
   if ((value = getenv("GC_INTERVAL")) ||
       (value = getconfent("GC", "Interval", 0))) {
     m_interval = atoi(value);
-  }
-
-  // By default the first poll to the stager is deliberately offset by a random
-  // interval between 1 and 15 minutes. This randomised delay should prevent all
-  // GC's in an instance/setup from deleting files at the same time causing an
-  // oscillation in incoming network traffic due to deletions.
-  int delay = 1;
-  if ((value = getenv("GC_IMMEDIATESTART")) ||
-      (value = getconfent("GC", "ImmediateStart", 0))) {
-    if (!strcasecmp(value, "yes") || !strcmp(value, "1")) {
-      delay = 0;
-    }
-  }
-  if (delay) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    srand(tv.tv_usec * tv.tv_sec);
-    delay = 60 + (int) (900.0 * rand() / (RAND_MAX + 60.0));
-  }
-
-  // "Garbage Collector started successfully"
-  castor::dlf::Param params[] =
-    {castor::dlf::Param("Interval", m_interval),
-     castor::dlf::Param("Delay", delay)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 5, 2, params);
-
-  // Sleep a bit
-  if (delay) {
-    sleep(delay);
   }
 
   // Endless loop

@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:26:03 $ $Author: waldron $
+ * @(#)$RCSfile: DeletionThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/10 09:33:13 $ $Author: waldron $
  *
  * @author Dennis Waldron
  *****************************************************************************/
@@ -45,6 +45,12 @@ namespace castor {
        * Default constructor
        */
       DeletionThread();
+
+      /**
+       * Constructor 
+       * @param startDelay
+       */
+      DeletionThread(int startDelay);
 
       /**
        * Default destructor
@@ -87,6 +93,9 @@ namespace castor {
 
       /// The interval at which the GC's main loop runs
       int m_interval;
+
+      /// The number of seconds to delay the first invocation of the run method
+      int m_startDelay;
 
     };
 
