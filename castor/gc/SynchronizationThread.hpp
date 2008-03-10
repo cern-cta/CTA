@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/03 13:26:03 $ $Author: waldron $
+ * @(#)$RCSfile: SynchronizationThread.hpp,v $ $Revision: 1.4 $ $Release$ $Date: 2008/03/10 09:30:08 $ $Author: waldron $
  *
  * Thread going through the files stored on the CASTOR related filesystem and
  * checking their existence in the nameserver and in the stager catalog. In
@@ -52,6 +52,12 @@ namespace castor {
       SynchronizationThread();
 
       /**
+       * Constructor 
+       * @param startDelay
+       */
+      SynchronizationThread(int startDelay);
+
+      /**
        * Default destructor
        */
       virtual ~SynchronizationThread() throw() {};
@@ -69,13 +75,15 @@ namespace castor {
 
       /**
        * Read config file values
-       * @param syncInterval a pointer to the synchronization interval values
+       * @param syncInterval a pointer to the synchronization interval value
+       * @param chunkInterval a pointer to the chunk interval value
        * @param chunkSize a pointer to the chunk size value
        * @param firstTime whether this is a first call. used only for logging
        * purposes
        */
       void readConfigFile(unsigned int *syncInterval,
-                          unsigned int * chunkSize,
+			  unsigned int *chunkInterval,
+                          unsigned int *chunkSize,
                           bool firstTime = false) throw();
 
       /**
@@ -98,7 +106,7 @@ namespace castor {
        */
       u_signed64 fileIdFromFilePath(std::string filePath)
         throw (castor::exception::Exception);
-      
+
       /**
        * Synchronizes a list of files with the nameserver and stager catalog
        * @param nameServer the nameserver to use
@@ -109,6 +117,11 @@ namespace castor {
                             const std::vector<u_signed64> &diskCopyIds,
                             const std::map<u_signed64, std::string> &paths)
         throw();
+
+    private:
+
+      /// The number of seconds to delay the first invocation of the run method
+      int m_startDelay;
 
     };
 
