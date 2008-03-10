@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.14 $ $Release$ $Date: 2008/03/03 13:13:01 $ $Author: waldron $
+ * @(#)$RCSfile: SubmissionProcess.cpp,v $ $Revision: 1.15 $ $Release$ $Date: 2008/03/10 09:17:16 $ $Author: waldron $
  *
  * The Submission Process is used to submit new jobs into the scheduler. It is
  * run inside a separate process allowing for setuid and setgid calls to take
@@ -418,8 +418,8 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	<< " " << request->clientSecure()
 	<< " " << request->requestCreationTime();
   }
-  strncpy(command, cmd.str().c_str(), CA_MAXLINELEN);
-  command[CA_MAXLINELEN] = '\0';
+  strncpy(command, cmd.str().c_str(), CA_MAXLINELEN + 1);
+  command[CA_MAXLINELEN + 1] = '\0';
   m_job.command = command;
 
   // Submit the job into LSF 
@@ -439,7 +439,8 @@ void castor::jobmanager::SubmissionProcess::submitJob
 	 castor::dlf::Param("Type", castor::ObjectsIdStrings[request->requestType()]),
 	 castor::dlf::Param("Username", request->username()),
 	 castor::dlf::Param("SvcClass", request->svcClass()),
-	 castor::dlf::Param("AskedHosts", m_job.numAskedHosts),
+	 castor::dlf::Param("AskedHosts", 
+			    request->requestType() == 40 ? 0 : m_job.numAskedHosts),
 	 castor::dlf::Param("SourceDiskCopyId", request->sourceDiskCopyId()),
 	 castor::dlf::Param("SubmissionTime", 
 			    submissionTime != 0 ? submissionTime * 0.000001 : 0),
