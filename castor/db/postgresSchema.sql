@@ -5,16 +5,16 @@ CREATE TABLE BaseAddress (objType INT4, cnvSvcName VARCHAR(2048), cnvSvcType INT
 CREATE TABLE Client (ipAddress INT4, port INT4, version INT4, secure INT4, id INT8 CONSTRAINT I_Client_Id PRIMARY KEY);
 
 /* SQL statements for type Disk2DiskCopyDoneRequest */
-CREATE TABLE Disk2DiskCopyDoneRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, sourceDiskCopyId INT8, id INT8 CONSTRAINT I_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE Disk2DiskCopyDoneRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, sourceDiskCopyId INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_Disk2DiskCopyDoneRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type GetUpdateDone */
-CREATE TABLE GetUpdateDone (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, id INT8 CONSTRAINT I_GetUpdateDone_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE GetUpdateDone (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_GetUpdateDone_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type GetUpdateFailed */
-CREATE TABLE GetUpdateFailed (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, id INT8 CONSTRAINT I_GetUpdateFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE GetUpdateFailed (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_GetUpdateFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type PutFailed */
-CREATE TABLE PutFailed (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, id INT8 CONSTRAINT I_PutFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE PutFailed (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_PutFailed_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type Files2Delete */
 CREATE TABLE Files2Delete (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskServer VARCHAR(2048), id INT8 CONSTRAINT I_Files2Delete_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
@@ -32,16 +32,16 @@ CREATE TABLE GCFile (diskCopyId INT8, id INT8 CONSTRAINT I_GCFile_Id PRIMARY KEY
 CREATE TABLE GCLocalFile (fileName VARCHAR(2048), diskCopyId INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_GCLocalFile_Id PRIMARY KEY);
 
 /* SQL statements for type MoverCloseRequest */
-CREATE TABLE MoverCloseRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileSize INT8, timeStamp INT8, id INT8 CONSTRAINT I_MoverCloseRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE MoverCloseRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileSize INT8, timeStamp INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_MoverCloseRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type PutStartRequest */
-CREATE TABLE PutStartRequest (subreqId INT8, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_PutStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE PutStartRequest (subreqId INT8, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), fileId INT8, nsHost VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_PutStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type PutDoneStart */
-CREATE TABLE PutDoneStart (subreqId INT8, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_PutDoneStart_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE PutDoneStart (subreqId INT8, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), fileId INT8, nsHost VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_PutDoneStart_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type GetUpdateStartRequest */
-CREATE TABLE GetUpdateStartRequest (subreqId INT8, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_GetUpdateStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE GetUpdateStartRequest (subreqId INT8, diskServer VARCHAR(2048), fileSystem VARCHAR(2048), fileId INT8, nsHost VARCHAR(2048), flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_GetUpdateStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type QueryParameter */
 CREATE TABLE QueryParameter (value VARCHAR(2048), id INT8 CONSTRAINT I_QueryParameter_Id PRIMARY KEY, query INTEGER, queryType INTEGER);
@@ -116,7 +116,7 @@ CREATE TABLE DiskCopy (path VARCHAR(2048), gcWeight float, creationTime INT8, id
 CREATE TABLE FileSystem (free INT8, mountPoint VARCHAR(2048), minFreeSpace float, minAllowedFreeSpace float, maxFreeSpace float, spaceToBeFreed INT8, totalSize INT8, readRate INT8, writeRate INT8, nbReadStreams INT4, nbWriteStreams INT4, nbReadWriteStreams INT4, nbMigratorStreams INT4, nbRecallerStreams INT4, id INT8 CONSTRAINT I_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER, adminStatus INTEGER);
 
 /* SQL statements for type SvcClass */
-CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), gcPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), hasDiskOnlyBehavior INT4, streamPolicy VARCHAR(2048), id INT8 CONSTRAINT I_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER);
+CREATE TABLE SvcClass (nbDrives INT4, name VARCHAR(2048), defaultFileSize INT8, maxReplicaNb INT4, replicationPolicy VARCHAR(2048), migratorPolicy VARCHAR(2048), recallerPolicy VARCHAR(2048), streamPolicy VARCHAR(2048), gcWeightForAccess INT4, gcEnabled INT4, hasDiskOnlyBehavior INT4, id INT8 CONSTRAINT I_SvcClass_Id PRIMARY KEY, forcedFileClass INTEGER);
 CREATE TABLE SvcClass2TapePool (Parent INTEGER, Child INTEGER);
 CREATE INDEX I_SvcClass2TapePool_C on SvcClass2TapePool (child);
 CREATE INDEX I_SvcClass2TapePool_P on SvcClass2TapePool (parent);
@@ -152,13 +152,16 @@ CREATE TABLE StageDiskCopyReplicaRequest (flags INT8, userName VARCHAR(2048), eu
 CREATE TABLE NsFilesDeleted (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_NsFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type Disk2DiskCopyStartRequest */
-CREATE TABLE Disk2DiskCopyStartRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, sourceDiskCopyId INT8, destSvcClass VARCHAR(2048), diskServer VARCHAR(2048), mountPoint VARCHAR(2048), id INT8 CONSTRAINT I_Disk2DiskCopyStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE Disk2DiskCopyStartRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskCopyId INT8, sourceDiskCopyId INT8, destSvcClass VARCHAR(2048), diskServer VARCHAR(2048), mountPoint VARCHAR(2048), fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_Disk2DiskCopyStartRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type FirstByteWritten */
-CREATE TABLE FirstByteWritten (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, id INT8 CONSTRAINT I_FirstByteWritten_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+CREATE TABLE FirstByteWritten (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, subReqId INT8, fileId INT8, nsHost VARCHAR(2048), id INT8 CONSTRAINT I_FirstByteWritten_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type StageGetRequest */
 CREATE TABLE StageGetRequest (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
+
+/* SQL statements for type StgFilesDeleted */
+CREATE TABLE StgFilesDeleted (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, id INT8 CONSTRAINT I_StgFilesDeleted_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
 
 /* SQL statements for type DiskPoolQuery */
 CREATE TABLE DiskPoolQuery (flags INT8, userName VARCHAR(2048), euid INT4, egid INT4, mask INT4, pid INT4, machine VARCHAR(2048), svcClassName VARCHAR(2048), userTag VARCHAR(2048), reqId VARCHAR(2048), creationTime INT8, lastModificationTime INT8, diskPoolName VARCHAR(2048), id INT8 CONSTRAINT I_DiskPoolQuery_Id PRIMARY KEY, svcClass INTEGER, client INTEGER);
