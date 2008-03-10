@@ -175,7 +175,7 @@ int DLL_DECL stager_errmsg(const char *func, const char *msg, ...) {
 
 /* stager_outmsg - send output message to user defined client buffer or to stdout */
 
-int DLL_DECL stager_outmsg(char *func, char *msg, ...) {
+int DLL_DECL stager_outmsg(const char *func, const char *msg, ...) {
 	va_list args;
 	char prtbuf[STAGER_PRTBUFSZ];
 	int save_errno;
