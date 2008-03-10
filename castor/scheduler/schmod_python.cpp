@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.2 $ $Release$ $Date: 2008/03/03 13:29:01 $ $Author: waldron $
+ * @(#)$RCSfile: schmod_python.cpp,v $ $Revision: 1.3 $ $Release$ $Date: 2008/03/10 09:12:24 $ $Author: waldron $
  *
  * Castor LSF External Plugin - Phase 2 (Python)
  *
@@ -111,6 +111,11 @@ extern "C" {
     } catch (castor::exception::Exception e) {
       // Ignored. DLF failure is not a reason to halt the module loading
     }
+    
+    // Create the dlf thread for remote server logging. Normally this is done
+    // automatically by the BaseDaemon after daemonization. However, as the
+    // plugin does not daemonize we must call the dlf api ourselves
+    dlf_create_threads(0);
 
     // "LSF plugin initialization started"
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 0, 0, 0);
@@ -853,7 +858,7 @@ extern "C" {
       // "Failed to open notification file"
       castor::dlf::Param params[] =
 	{castor::dlf::Param("JobID", handler->jobId),
-	 castor::dlf::Param("File", handler->notifyFile),
+	 castor::dlf::Param("Filename", handler->notifyFile),
 	 castor::dlf::Param(handler->subReqId)};
       castor::dlf::dlf_writep(handler->reqId, DLF_LVL_ERROR, 33, 3, params, 
 			      &handler->fileId);
