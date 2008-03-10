@@ -128,7 +128,7 @@ namespace castor{
             stgReplyHelper->setAndSendIoResponse(stgRequestHelper,&(stgCnsHelper->cnsFileid), 0, "No error");
             stgReplyHelper->endReplyToClient(stgRequestHelper);
             delete stgReplyHelper; 
-	    stgReplyHelper = NULL;
+            stgReplyHelper = NULL;
             stgRequestHelper->stagerService->archiveSubReq(stgRequestHelper->subrequest->id());
           }
           else {  // user error, log it
