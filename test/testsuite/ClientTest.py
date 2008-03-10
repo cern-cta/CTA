@@ -13,7 +13,8 @@ ticket= UtilityForCastorTest.getTicket()
 myScen=""
 
 # files and directories
-inputFile="" 
+inputFile=""
+updInputFile=""
 localDir=""
 dirCastor=outputDir+"/tmpClientTest"+ticket+"/"
 
@@ -40,13 +41,15 @@ class PreRequisitesCase(unittest.TestCase):
     def mainScenarium(self):
         assert (UtilityForCastorTest.checkUser() != -1), "you don't have acccess to directory \"" + outputDir + "\" where you wanted to run the test"
         try:
-            global localDir, inputFile, myScen
+            global localDir, inputFile, myScen, updInputFile
             params = UtilityForCastorTest.parseConfigFile(configFile, "Client")
             localDir = params["LOG_DIR"]
             localDir=localDir+ticket+"/"
             os.system("mkdir "+localDir)
             inputFile = params["INPUT_FILE"]
-            myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
+            updInputFile = localDir+"rfcpupdFile"
+	    os.system("cat "+inputFile+" > "+updInputFile)
+	    myScen=UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerSvcClass,stagerVersion,None,[["STAGER_TRACE","3"]])
             UtilityForCastorTest.runOnShell(["nsmkdir "+dirCastor],myScen)
         except IOError:
             assert 0==-1, "An error in the preparation of the main setting occurred ... test is not valid"
@@ -517,7 +520,7 @@ class StagerUpdCase(unittest.TestCase):
         assert buffOut.find("STAGED") != -1 or buffOut.find("CANBEMIGR") != -1 , "stager_update doesn't work on replicated files"
 
     def updExistingFile(self):
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientupdExistingFile"+ticket,"rfcpupd "+inputFile+" "+dirCastor+"fileClientupdExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFile"+ticket]
+        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientupdExistingFile"+ticket,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientupdExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFile"+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"ClientupdExistingFile",cmd,myScen)
 
         fi=open(localDir+"ClientupdExistingFile1","r")
@@ -531,7 +534,7 @@ class StagerUpdCase(unittest.TestCase):
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "update doesn't work on an existing file"
 
     def updNonExistingFile(self):
-        cmd=["rfcpupd "+inputFile+" "+dirCastor+"fileClientupdNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientupdNonExistingFile"+ticket]
+        cmd=["rfcpupd "+updInputFile+" "+dirCastor+"fileClientupdNonExistingFile"+ticket,"stager_qry -M "+dirCastor+"fileClientupdNonExistingFile"+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"ClientupdNonExistingFile",cmd,myScen)
 
         fi=open(localDir+"ClientupdNonExistingFile","r")
@@ -546,7 +549,7 @@ class StagerUpdCase(unittest.TestCase):
 
     def updExistingFileReplicated(self):
         replEnv = UtilityForCastorTest.createScenarium(stagerHost,stagerPort,stagerExtraSvcClass,stagerVersion)
-        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" "+localDir+"fileClientupdExistingFileReplicated","stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass,"rfcpupd "+inputFile+" "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass]
+        cmd=["rfcp "+inputFile+" "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,replEnv+"rfcp "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" "+localDir+"fileClientupdExistingFileReplicated","stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket,"stager_qry -M "+dirCastor+"fileClientupdExistingFileReplicated"+ticket+" -S "+stagerExtraSvcClass]
         UtilityForCastorTest.saveOnFile(localDir+"ClientupdExistingFileReplicated",cmd,myScen)
 
         fi=open(localDir+"ClientupdExistingFileReplicated","r")
@@ -585,7 +588,7 @@ class StagerUpdCase(unittest.TestCase):
         assert buffOut.find("INVALID") != -1 , "update doesn't work on a replicated file"
 
     def pupdUpdPutDone(self):
-        cmd=["stager_update -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"rfcpupd "+inputFile+" "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"rfcpupd "+inputFile+" "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket]
+        cmd=["stager_update -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpupdUpdPutDone"+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"ClientpupdUpdPutDone",cmd,myScen)
         
         fi=open(localDir+"ClientpupdUpdPutDone","r")
@@ -629,7 +632,7 @@ class StagerUpdCase(unittest.TestCase):
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "stager_update cycle doesn't work"
 
     def pputUpdPutDone(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"rfcpupd "+inputFile+" "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"rfcpupd "+inputFile+" "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket]
+        cmd=["stager_put -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpputUpdPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpputUpdPutDone"+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"ClientpputUpdPutDone",cmd,myScen)
         
         fi=open(localDir+"ClientpputUpdPutDone","r")
@@ -717,7 +720,7 @@ class StagerUpdCase(unittest.TestCase):
         assert buffOut.find("STAGED") != -1 or  buffOut.find("CANBEMIGR") != -1 , "puts on prepareToUpdate do not work"
 
     def pPutUpdPutPutDone(self):
-        cmd=["stager_put -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcpupd "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcpupd "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket]
+        cmd=["stager_put -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcpupd "+updInputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"rfcp "+inputFile+" "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_putdone -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket,"stager_qry -M "+dirCastor+"fileClientpPutUpdPutPutDone"+ticket]
         UtilityForCastorTest.saveOnFile(localDir+"ClientpPutUpdPutPutDone",cmd,myScen)
         
         fi=open(localDir+"ClientpPutUpdPutPutDone","r")

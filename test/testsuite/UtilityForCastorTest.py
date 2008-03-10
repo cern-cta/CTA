@@ -112,7 +112,7 @@ class configuration:
                         if not self.quietMode:
                                 print 'Configuration file used is "'+ self.configFile + '", leading to :'
                                 print "        stagerHost : ", self.stagerHost
-                                print "        output directory : ", self.outputDir                                
+                                print "        outputDirectory : ", self.outputDir                                
                                 print "        stagerSvcClass : ", self.stagerSvcClass
                                 print "        stagerExtraSvcClass : ", self.stagerExtraSvcClass
                                 print "        stagerDiskOnlySvcClass : ", self.stagerDiskOnlySvcClass
