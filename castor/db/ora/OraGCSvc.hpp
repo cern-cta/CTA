@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.10 $ $Release$ $Date: 2008/02/26 14:38:35 $ $Author: waldron $
+ * @(#)$RCSfile: OraGCSvc.hpp,v $ $Revision: 1.11 $ $Release$ $Date: 2008/03/10 17:32:48 $ $Author: itglp $
  *
  * Implementation of the IGCSvc for Oracle
  *
@@ -80,8 +80,9 @@ namespace castor {
 
         /**
          * List files to be deleted on a given diskServer.
-         * These are the files corresponding to DiskCopies
-         * in GCCANDIDATE status. This status is changed
+         * These are the files corresponding to DiskCopies in
+         * STAGED status and eligible for garbage collection,
+         * plus the INVALID ones. This status is changed
          * to BEINGDELETED atomically.
          * @param diskServer the name of the DiskServer
          * involved
@@ -141,17 +142,11 @@ namespace castor {
 	
       private:
 
-        /// SQL statement for function selectFiles2Delete (select part)
+        /// SQL statement for function selectFiles2Delete
         static const std::string s_selectFiles2DeleteStatementString;
 
-        /// SQL statement object for function selectFiles2Delete (select part)
+        /// SQL statement object for function selectFiles2Delete
         oracle::occi::Statement *m_selectFiles2DeleteStatement;
-
-        /// SQL statement for function selectFiles2Delete (update part)
-        static const std::string s_selectFiles2DeleteStatementString2;
-
-        /// SQL statement object for function selectFiles2Delete (update part)
-        oracle::occi::Statement *m_selectFiles2DeleteStatement2;
 
         /// SQL statement for function filesDeleted
         static const std::string s_filesDeletedStatementString;

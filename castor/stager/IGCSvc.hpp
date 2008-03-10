@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.6 $ $Release$ $Date: 2008/02/26 14:39:24 $ $Author: waldron $
+ * @(#)$RCSfile: IGCSvc.hpp,v $ $Revision: 1.7 $ $Release$ $Date: 2008/03/10 17:32:38 $ $Author: itglp $
  *
  * This class provides stager methods related to Garbage Collection
  *
@@ -57,8 +57,9 @@ namespace castor {
 
       /**
        * List files to be deleted on a given diskServer.
-       * These are the files corresponding to DiskCopies
-       * in GCCANDIDATE status. This status is changed
+       * These are the files corresponding to DiskCopies in
+       * STAGED status and eligible for garbage collection,
+       * plus the INVALID ones. This status is changed
        * to BEINGDELETED atomically.
        * @param diskServer the name of the DiskServer
        * involved
