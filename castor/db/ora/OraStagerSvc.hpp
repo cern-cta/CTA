@@ -305,14 +305,18 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Updates the gcWeight of all copies a a given file.
+         * Updates the gcWeight of some copies of a given file.
+         * The passed weight (in seconds) is added to the current one,
+         * resulting in the diskcopies being 'younger'.
          * @param fileId the fileId of the CastorFile
          * @param nsHost the name server to use
+         * @param svcClassId the service class id to be affected
          * @param weight the new gcWeight for the file
          * @exception in case of error
          */
         virtual void setFileGCWeight
-        (const u_signed64 fileId, const std::string nsHost, const float weight)
+        (const u_signed64 fileId, const std::string nsHost, 
+         const u_signed64 svcClassId, const float weight)
           throw (castor::exception::Exception);
        
         /**

@@ -58,7 +58,8 @@ namespace castor{
           /* basically a call to the corresponding stagerService method */
           /* passing the SetFileGCWeight object                        */
           castor::stager::SetFileGCWeight* setGCWeightReq = dynamic_cast<castor::stager::SetFileGCWeight*>(stgRequestHelper->fileRequest);
-          stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server, setGCWeightReq->weight());
+          stgRequestHelper->stagerService->setFileGCWeight(stgCnsHelper->cnsFileid.fileid, stgCnsHelper->cnsFileid.server,
+                                                           stgRequestHelper->svcClass->id(), setGCWeightReq->weight());
           
           stgRequestHelper->subrequest->setStatus(SUBREQUEST_ARCHIVED);
           

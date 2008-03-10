@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.88 $ $Release$ $Date: 2007/12/19 16:45:03 $ $Author: itglp $
+ * @(#)$RCSfile: IStagerSvc.hpp,v $ $Revision: 1.89 $ $Release$ $Date: 2008/03/10 17:30:42 $ $Author: itglp $
  *
  * This class provides specific stager methods and includes scheduler
  * and error related methods
@@ -301,14 +301,18 @@ namespace castor {
         throw (castor::exception::Exception) = 0;
 
       /**
-       * Updates the gcWeight of all copies a a given file.
+       * Updates the gcWeight of some copies of a given file.
+       * The passed weight (in seconds) is added to the current one,
+       * resulting in the diskcopies being 'younger'.
        * @param fileId the fileId of the CastorFile
        * @param nsHost the name server to use
+       * @param svcClassId the service class id to be affected
        * @param weight the new gcWeight for the file
        * @exception in case of error
        */
       virtual void setFileGCWeight
-      (const u_signed64 fileId, const std::string nsHost, const float weight)
+      (const u_signed64 fileId, const std::string nsHost, 
+       const u_signed64 svcClassId, const float weight)
         throw (castor::exception::Exception) = 0;
 
       /**

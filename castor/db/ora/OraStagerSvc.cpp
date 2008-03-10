@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.239 $ $Release$ $Date: 2008/03/10 10:59:14 $ $Author: waldron $
+ * @(#)$RCSfile: OraStagerSvc.cpp,v $ $Revision: 1.240 $ $Release$ $Date: 2008/03/10 17:30:42 $ $Author: itglp $
  *
  * Implementation of the IStagerSvc for Oracle
  *
@@ -154,7 +154,7 @@ const std::string castor::db::ora::OraStagerSvc::s_getCFByNameStatementString =
 
 /// SQL statement for setFileGCWeight
 const std::string castor::db::ora::OraStagerSvc::s_setFileGCWeightStatementString =
-  "UPDATE DiskCopy SET gcWeight = :1 WHERE castorfile = (SELECT id FROM castorfile WHERE fileId = :2 and nsHost = :3)";
+  "BEGIN setFileGCWeight(:1, :2, :3, :4); END;";
 
 /// SQL statement for selectDiskPool
 const std::string castor::db::ora::OraStagerSvc::s_selectDiskPoolStatementString =
@@ -1038,26 +1038,21 @@ int castor::db::ora::OraStagerSvc::stageRm
 // setFileGCWeight
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::setFileGCWeight
-(const u_signed64 fileId, const std::string nsHost, const float weight)
+(const u_signed64 fileId, const std::string nsHost, const u_signed64 svcClassId, const float weight)
   throw (castor::exception::Exception) {
   try {
-    // Check whether the statements are ok
+    // Check whether the statement is ok
     if (0 == m_setFileGCWeightStatement) {
       m_setFileGCWeightStatement =
         createStatement(s_setFileGCWeightStatementString);
       m_setFileGCWeightStatement->setAutoCommit(true);
     }
-    // execute the statement and see whether we found something
-    m_setFileGCWeightStatement->setFloat(1, weight);
-    m_setFileGCWeightStatement->setDouble(2, fileId);
-    m_setFileGCWeightStatement->setString(3, nsHost);
-    unsigned int nb = m_setFileGCWeightStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "setFileGCWeightStatement : No return code after PL/SQL call.";
-      throw ex;
-    }
+    // execute the statement; there's no return code
+    m_setFileGCWeightStatement->setDouble(1, fileId);
+    m_setFileGCWeightStatement->setString(2, nsHost);
+    m_setFileGCWeightStatement->setDouble(3, svcClassId);
+    m_setFileGCWeightStatement->setFloat(4, weight);
+    m_setFileGCWeightStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
