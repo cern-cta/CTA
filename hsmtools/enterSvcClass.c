@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.11 $ $Release$ $Date: 2008/01/08 14:42:01 $ $Author: itglp $
+ * @(#)$RCSfile: enterSvcClass.c,v $ $Revision: 1.12 $ $Release$ $Date: 2008/03/10 16:12:16 $ $Author: itglp $
  *
  * 
  *
@@ -58,7 +58,8 @@ enum SvcClassAttributes {
   DefaultFileSize,
   MaxReplicaNb,
   ReplicationPolicy,
-  GcPolicy,
+  GcEnabled,
+  GcWeightForAccess,
   MigratorPolicy,
   RecallerPolicy,
   TapePools,
@@ -75,7 +76,8 @@ static struct Coptions longopts[] = {
   {"MaxReplicaNb",REQUIRED_ARGUMENT,0,MaxReplicaNb},
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
   {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
-  {"GcPolicy",REQUIRED_ARGUMENT,0,GcPolicy},
+  {"GcEnabled",REQUIRED_ARGUMENT,0,GcEnabled},
+  {"GcWeightForAccess",REQUIRED_ARGUMENT,0,GcWeightForAccess},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"TapePools",REQUIRED_ARGUMENT,0,TapePools},
@@ -167,7 +169,7 @@ int main(int argc, char *argv[])
   char *cmd, *name = NULL;
   char *tapePoolsStr = NULL, *diskPoolsStr = NULL;
   char **tapePoolsArray = NULL, **diskPoolsArray = NULL;
-  char *gcPolicy = NULL;
+  char *gcEnabled = NULL, *gcWeightForAccess = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int defaultReplicaNb = 1, maxReplicaNb = -1;
   struct C_BaseAddress_t *baseAddr = NULL;
@@ -180,7 +182,6 @@ int main(int argc, char *argv[])
   struct Cstager_SvcClass_t *svcClass = NULL, *svcClassOld = NULL;
   struct Cstager_TapePool_t *tapePool = NULL;
   struct Cstager_DiskPool_t *diskPool = NULL;
-  const char* gcPolicyConst = NULL;
   
   Coptind = 1;
   Copterr = 1;
@@ -225,8 +226,21 @@ int main(int argc, char *argv[])
     case ReplicationPolicy:
       Cstager_SvcClass_setReplicationPolicy(svcClass,Coptarg);
       break;
-    case GcPolicy:
-      Cstager_SvcClass_setGcPolicy(svcClass,Coptarg);
+    case GcEnabled:
+      if (!strcasecmp(Coptarg, "yes") ||
+          !strcasecmp(Coptarg, "1")) {
+        Cstager_SvcClass_setGcEnabled(svcClass, 1);
+      } else if (!strcasecmp(Coptarg, "no") ||
+                 !strcasecmp(Coptarg, "0")) {
+        Cstager_SvcClass_setGcEnabled(svcClass, 0);
+      } else {
+        fprintf(stdout,
+        "Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
+        return(1);
+      }
+      break;
+    case GcWeightForAccess:
+      Cstager_SvcClass_setGcWeightForAccess(svcClass,strtou64(Coptarg));
       break;
     case MigratorPolicy:
       Cstager_SvcClass_setMigratorPolicy(svcClass,Coptarg);
@@ -298,14 +312,9 @@ int main(int argc, char *argv[])
                                      defaultReplicaNb
                                      );
   }
-  gcPolicyConst = gcPolicy;
-  Cstager_SvcClass_gcPolicy(svcClass, &gcPolicyConst);
-  if ( NULL == gcPolicy ) {
-    Cstager_SvcClass_setGcPolicy(
-                                 svcClass,
-                                 "defaultGCPolicy"
-                                 );
-    fprintf(stdout,"No gc policy given, using default\n");    
+  if ( NULL == gcEnabled ) {
+    Cstager_SvcClass_setGcEnabled(svcClass, 1);
+    fprintf(stdout,"No gcEnabled parameter given, setting to true by default\n");    
   }
 
   fprintf(stdout,"Adding SvcClass: %s\n",name);

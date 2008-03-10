@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.17 $ $Release$ $Date: 2008/01/08 14:44:40 $ $Author: itglp $
+ * @(#)$RCSfile: modifySvcClass.c,v $ $Revision: 1.18 $ $Release$ $Date: 2008/03/10 16:12:16 $ $Author: itglp $
  *
  * @author Olof Barring
  *****************************************************************************/
@@ -56,7 +56,7 @@ enum SvcClassAttributes {
   DefaultFileSize,
   MaxReplicaNb,
   ReplicationPolicy,
-  GcPolicy,
+  GcEnabled,
   MigratorPolicy,
   RecallerPolicy,
   AddTapePools,
@@ -75,7 +75,7 @@ static struct Coptions longopts[] = {
   {"MaxReplicaNb",REQUIRED_ARGUMENT,0,MaxReplicaNb},
   {"NbDrives",REQUIRED_ARGUMENT,0,NbDrives},
   {"ReplicationPolicy",REQUIRED_ARGUMENT,0,ReplicationPolicy},
-  {"GcPolicy",REQUIRED_ARGUMENT,0,GcPolicy},
+  {"GcEnabled",REQUIRED_ARGUMENT,0,GcEnabled},
   {"MigratorPolicy",REQUIRED_ARGUMENT,0,MigratorPolicy},
   {"RecallerPolicy",REQUIRED_ARGUMENT,0,RecallerPolicy},
   {"AddTapePools",REQUIRED_ARGUMENT,0,AddTapePools},
@@ -391,7 +391,7 @@ int main(int argc, char *argv[])
   char **addTapePoolsArray = NULL, **addDiskPoolsArray = NULL;
   char *removeTapePoolsStr = NULL, *removeDiskPoolsStr = NULL;
   char **removeTapePoolsArray = NULL, **removeDiskPoolsArray = NULL;
-  char *diskOnlyBehavior = NULL, *forcedFileClass = NULL;
+  char *gcEnabled = NULL, *diskOnlyBehavior = NULL, *forcedFileClass = NULL;
   char *streamPolicy = NULL;
   int nbDiskPools = 0, nbTapePools = 0;
   int nbAddTapePools = 0, nbRemoveTapePools = 0, nbAddDiskPools = 0, nbRemoveDiskPools = 0;
@@ -407,8 +407,7 @@ int main(int argc, char *argv[])
   struct Cstager_DiskPool_t **diskPoolsArray = NULL;
   u_signed64 defaultFileSize = 0;
   int maxReplicaNb = -1, nbDrives = -1;
-  char *replicationPolicy = NULL, *migratorPolicy = NULL, *gcPolicy = NULL;
-  char *recallerPolicy = NULL;
+  char *replicationPolicy = NULL, *migratorPolicy = NULL, *recallerPolicy = NULL;
   
   Coptind = 1;
   Copterr = 1;
@@ -450,8 +449,8 @@ int main(int argc, char *argv[])
     case ReplicationPolicy:
       replicationPolicy = strdup(Coptarg);
       break;
-    case GcPolicy:
-      gcPolicy = strdup(Coptarg);
+    case GcEnabled:
+      gcEnabled = strdup(Coptarg);
       break;
     case MigratorPolicy:
       migratorPolicy = strdup(Coptarg);
@@ -503,11 +502,21 @@ int main(int argc, char *argv[])
   if ( nbDrives >= 0 ) Cstager_SvcClass_setNbDrives(svcClass,nbDrives);
   if ( maxReplicaNb >= 0 ) Cstager_SvcClass_setMaxReplicaNb(svcClass,maxReplicaNb);
   if ( defaultFileSize > 0 ) Cstager_SvcClass_setDefaultFileSize(svcClass,defaultFileSize);
+  if ( gcEnabled != NULL) {
+    if (!strcasecmp(gcEnabled, "yes") ||
+        !strcasecmp(gcEnabled, "1")) {
+      Cstager_SvcClass_setGcEnabled(svcClass, 1);
+    } else if (!strcasecmp(gcEnabled, "no") ||
+	             !strcasecmp(gcEnabled, "0")) {
+      Cstager_SvcClass_setGcEnabled(svcClass, 0);
+    } else {
+      fprintf(stdout,
+	      "Invalid option for GcEnabled, value must be 'yes' or 'no'\n");
+      return(1);
+    }
+  }
   if ( replicationPolicy != NULL ) {
     Cstager_SvcClass_setReplicationPolicy(svcClass,replicationPolicy);
-  }
-  if ( gcPolicy != NULL ) {
-    Cstager_SvcClass_setGcPolicy(svcClass,gcPolicy);
   }
   if ( migratorPolicy != NULL ) {
     Cstager_SvcClass_setMigratorPolicy(svcClass,migratorPolicy);
@@ -541,10 +550,10 @@ int main(int argc, char *argv[])
   }
   if ( diskOnlyBehavior != NULL) {
     if (!strcasecmp(diskOnlyBehavior, "yes") ||
-	!strcasecmp(diskOnlyBehavior, "1")) {
+        !strcasecmp(diskOnlyBehavior, "1")) {
       Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 1);
     } else if (!strcasecmp(diskOnlyBehavior, "no") ||
-	       !strcasecmp(diskOnlyBehavior, "0")) {
+	             !strcasecmp(diskOnlyBehavior, "0")) {
       Cstager_SvcClass_setHasDiskOnlyBehavior(svcClass, 0);
     } else {
       fprintf(stdout,
