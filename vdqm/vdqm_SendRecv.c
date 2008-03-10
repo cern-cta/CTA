@@ -765,8 +765,8 @@ int vdqm_SendToRTCP(SOCKET connect_socket, vdqmVolReq_t *VolReq,
     return(rc);
 }
 
-int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw,
-  vdqmVolPriority_t *volpriority) {
+int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
+    {
     
     char hdrbuf[VDQM_HDRBUFSIZ], buf[VDQM_MSGBUFSIZ];
     char servername[CA_MAXHOSTNAMELEN+1];
@@ -803,7 +803,8 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw,
     DO_MARSHALL(LONG,p,volpriority->priority,SendTo);
     DO_MARSHALL(LONG,p,volpriority->clientUID,SendTo);
     DO_MARSHALL(LONG,p,volpriority->clientGID,SendTo);
-    DO_MARSHALL_STRING(p,volpriority->client_host,SendTo, sizeof(volpriority->client_host));
+    DO_MARSHALL_STRING(p,volpriority->client_host,SendTo,
+        sizeof(volpriority->client_host));
     DO_MARSHALL_STRING(p,volpriority->volid,SendTo, sizeof(volpriority->volid));
  
     magic   = VDQM_MAGIC2;
@@ -817,13 +818,15 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw,
     switch (rc) {
     case -1:
 #if defined(VDQMSERV)
-        log(LOG_ERR,"vdqm_Transfer() netwrite(HDR): %s\n", neterror());
+        log(LOG_ERR,"vdqm_SendVolPriority_Transfer() netwrite(HDR): %s\n",
+            neterror());
 #endif /* VDQMSERV */
         serrno = SECOMERR;
         return(-1);
     case 0:
 #if defined(VDQMSERV)
-        log(LOG_ERR,"vdqm_Transfer() netwrite(HDR): connection dropped\n");
+        log(LOG_ERR,
+         "vdqm_SendVolPriority_Transfer() netwrite(HDR): connection dropped\n");
 #endif /*VDQMSERV */
         serrno = SECONNDROP;
         return(-1);
@@ -833,13 +836,15 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw,
         switch (rc) {
         case -1:
 #if defined(VDQMSERV)
-            log(LOG_ERR,"vdqm_Transfer() netwrite(REQ): %s\n", neterror());
+            log(LOG_ERR,"vdqm_SendVolPriority_Transfer() netwrite(REQ): %s\n",
+                neterror());
 #endif /* VDQMSERV */
             serrno = SECOMERR;
             return(-1);
         case 0:
 #if defined(VDQMSERV)
-            log(LOG_ERR,"vdqm_Transfer() netwrite(REQ): connection dropped\n");
+            log(LOG_ERR,
+         "vdqm_SendVolPriority_Transfer() netwrite(REQ): connection dropped\n");
 #endif /*VDQMSERV */
             serrno = SECONNDROP;
             return(-1);
@@ -849,8 +854,8 @@ int vdqm_SendVolPriority_Transfer(vdqmnw_t *nw,
     return(reqtype);
 }
 
-int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw,
-  vdqmVolPriority_t *volpriority) {
+int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw, vdqmVolPriority_t *volpriority)
+    {
     
     char hdrbuf[VDQM_HDRBUFSIZ], buf[VDQM_MSGBUFSIZ];
     char servername[CA_MAXHOSTNAMELEN+1];
@@ -885,13 +890,15 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw,
     switch (rc) {
     case -1: 
 #if defined(VDQMSERV)
-        log(LOG_ERR,"vdqm_Transfer() netread(HDR): %s\n", neterror());
+        log(LOG_ERR,"vdqm_RecvVolPriority_Transfer() netread(HDR): %s\n",
+            neterror());
 #endif /* VDQMSERV */
         serrno = SECOMERR;
         return(-1);
     case 0:
 #if defined(VDQMSERV)
-        log(LOG_ERR,"vdqm_Transfer() netread(HDR): connection dropped\n");
+        log(LOG_ERR,
+          "vdqm_RecvVolPriority_Transfer() netread(HDR): connection dropped\n");
 #endif /* VDQMSERV */
         serrno = SECONNDROP;
         return(-1);
@@ -905,20 +912,23 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw,
         switch (rc) {
         case -1:
 #if defined(VDQMSERV)
-            log(LOG_ERR,"vdqm_Transfer() netread(REQ): %s\n", neterror());
+            log(LOG_ERR,"vdqm_RecvVolPriority_Transfer() netread(REQ): %s\n",
+                neterror());
 #endif /* VDQMSERV */
             serrno = SECOMERR;
             return(-1);
         case 0:
 #if defined(VDQMSERV)
-            log(LOG_ERR,"vdqm_Transfer() netread(REQ): connection dropped\n");
+            log(LOG_ERR,
+          "vdqm_RecvVolPriority_Transfer() netread(REQ): connection dropped\n");
 #endif /* VDQMSERV */
             serrno = SECONNDROP;
             return(-1);
         }
     } else if ( len > 0 ) {
 #if defined(VDQMSERV)
-        log(LOG_ERR,"vdqm_Transfer() netread(REQ): invalid message length %d\n",
+        log(LOG_ERR,
+    "vdqm_RecvVolPriority_Transfer() netread(REQ): invalid message length %d\n",
             len);
 #endif /* VDQMSERV */
         serrno = SEUMSG2LONG;
@@ -929,14 +939,16 @@ int vdqm_RecvVolPriority_Transfer(vdqmnw_t *nw,
     if ( (rc = getpeername(s,(struct sockaddr *)&from,&fromlen)) ==
         SOCKET_ERROR ) {
 #if defined(VDQMSERV)
-        log(LOG_ERR,"vdqm_Transfer(): getpeername() %s\n",neterror());
+        log(LOG_ERR,"vdqm_RecvVolPriority_Transfer(): getpeername() %s\n",
+            neterror());
 #endif /* VDQMSERV */
         return(-1);
     } 
     if ( (hp = Cgethostbyaddr((void *)&(from.sin_addr),sizeof(struct in_addr),
         from.sin_family)) == NULL ) {
 #if defined(VDQMSERV)
-        log(LOG_ERR,"vdqm_Transfer(): Cgethostbyaddr() h_errno=%d, %s\n",
+        log(LOG_ERR,
+           "vdqm_RecvVolPriority_Transfer(): Cgethostbyaddr() h_errno=%d, %s\n",
             h_errno,neterror());
 #endif /* VDQMSERV */
         return(-1);
