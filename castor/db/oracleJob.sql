@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.641 $ $Date: 2008/03/04 06:55:03 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.642 $ $Date: 2008/03/10 09:13:53 $ $Author: waldron $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -122,7 +122,7 @@ END;
 CREATE OR REPLACE PROCEDURE handleProtoNoUpd
 (srId IN INTEGER, protocol VARCHAR2) AS
 BEGIN
-  IF protocol != 'rfio' THEN
+  IF protocol != 'rfio' AND protocol != 'rfio3' THEN
     firstByteWrittenProc(srId);
   END IF;
 END;
