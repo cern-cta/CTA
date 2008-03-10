@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.40 $ $Release$ $Date: 2008/03/05 16:14:32 $ $Author: riojac3 $
+ * @(#)$RCSfile: OraJobSvc.cpp,v $ $Revision: 1.41 $ $Release$ $Date: 2008/03/10 09:11:07 $ $Author: waldron $
  *
  * Implementation of the IJobSvc for Oracle
  *
@@ -273,20 +273,6 @@ castor::db::ora::OraJobSvc::getUpdateStart
     throw ex;
   }
 }
-
-//------------------------------------------------------------------------------
-// getUpdateStart old signature (to be dropped)
-//------------------------------------------------------------------------------
-/*castor::stager::DiskCopy*
-castor::db::ora::OraJobSvc::getUpdateStart
-(castor::stager::SubRequest* subreq,
- castor::stager::FileSystem* fileSystem,
- std::list<castor::stager::DiskCopyForRecall*>& sources,
- bool* emptyFile)
-  throw (castor::exception::Exception) {
-  return getUpdateStart(subreq, fileSystem, emptyFile);
-}
-*/
 
 //------------------------------------------------------------------------------
 // putStart
