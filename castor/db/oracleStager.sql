@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.644 $ $Date: 2008/03/11 16:16:14 $ $Author: itglp $
+ * @(#)$RCSfile: oracleStager.sql,v $ $Revision: 1.645 $ $Date: 2008/03/11 16:20:16 $ $Author: itglp $
  *
  * PL/SQL code for the stager and resource monitoring
  *
@@ -432,6 +432,40 @@ BEGIN
 
   -- Check that we don't have too many requests for this file in the DB
   -- XXX dropped for the time being as it introduced deadlocks with itself and with selectFiles2Delete!
+END;
+
+
+/* PL/SQL method checking whether a given service class
+   is declared disk only and had only full diskpools.
+   Returns 1 in such a case, 0 else */
+CREATE OR REPLACE FUNCTION checkFailJobsWhenNoSpace(svcClassId NUMBER)
+RETURN NUMBER AS
+  diskOnlyFlag NUMBER;
+  defFileSize NUMBER;
+  unused NUMBER;
+BEGIN
+  -- Determine if the service class is disk only and the default
+  -- file size. If the default file size is 0 we assume 2G
+  SELECT hasDiskOnlyBehavior, 
+         decode(defaultFileSize, 0, 2000000000, defaultFileSize)
+    INTO diskOnlyFlag, defFileSize
+    FROM SvcClass 
+   WHERE id = svcClassId;
+  -- If diskonly check that the pool has space
+  IF (diskOnlyFlag = 1) THEN
+    SELECT count(*) INTO unused
+      FROM diskpool2svcclass, FileSystem, DiskServer
+     WHERE diskpool2svcclass.child = svcClassId
+       AND diskpool2svcclass.parent = FileSystem.diskPool
+       AND FileSystem.diskServer = DiskServer.id
+       AND FileSystem.status = 0 -- PRODUCTION
+       AND DiskServer.status = 0 -- PRODUCTION
+       AND totalSize * minAllowedFreeSpace < free - defFileSize;
+    IF (unused = 0) THEN
+      RETURN 1;
+    END IF;
+  END IF;
+  RETURN 0;
 END;
 
 

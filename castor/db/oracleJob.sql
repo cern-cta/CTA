@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.643 $ $Date: 2008/03/11 16:13:21 $ $Author: itglp $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.644 $ $Date: 2008/03/11 16:20:16 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -8,37 +8,29 @@
  *******************************************************************/
 
  
-/* PL/SQL method checking whether a given service class
-   is declared disk only and had only full diskpools.
-   Returns 1 in such a case, 0 else */
-CREATE OR REPLACE FUNCTION checkFailJobsWhenNoSpace(svcClassId NUMBER)
-RETURN NUMBER AS
-  diskOnlyFlag NUMBER;
-  defFileSize NUMBER;
-  unused NUMBER;
+/* PL/SQL method to update FileSystem nb of streams when files are opened */
+CREATE OR REPLACE PROCEDURE updateFsFileOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
 BEGIN
-  -- Determine if the service class is disk only and the default
-  -- file size. If the default file size is 0 we assume 2G
-  SELECT hasDiskOnlyBehavior, 
-         decode(defaultFileSize, 0, 2000000000, defaultFileSize)
-    INTO diskOnlyFlag, defFileSize
-    FROM SvcClass 
-   WHERE id = svcClassId;
-  -- If diskonly check that the pool has space
-  IF (diskOnlyFlag = 1) THEN
-    SELECT count(*) INTO unused
-      FROM diskpool2svcclass, FileSystem, DiskServer
-     WHERE diskpool2svcclass.child = svcClassId
-       AND diskpool2svcclass.parent = FileSystem.diskPool
-       AND FileSystem.diskServer = DiskServer.id
-       AND FileSystem.status = 0 -- PRODUCTION
-       AND DiskServer.status = 0 -- PRODUCTION
-       AND totalSize * minAllowedFreeSpace < free - defFileSize;
-    IF (unused = 0) THEN
-      RETURN 1;
-    END IF;
-  END IF;
-  RETURN 0;
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbReadWriteStreams = nbReadWriteStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
+                        free = free - fileSize   -- just an evaluation, monitoring will update it
+   WHERE id = fs;
+END;
+
+/* PL/SQL method to update FileSystem nb of streams when files are closed */
+CREATE OR REPLACE PROCEDURE updateFsFileClosed(fs IN INTEGER) AS
+  ds INTEGER;
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
+  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) WHERE id = ds;
+  /* now we can safely go */
+  UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
+  WHERE id = fs;
 END;
 
 

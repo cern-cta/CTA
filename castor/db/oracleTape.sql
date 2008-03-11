@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.644 $ $Date: 2008/03/04 16:33:31 $ $Author: waldron $
+ * @(#)$RCSfile: oracleTape.sql,v $ $Revision: 1.645 $ $Date: 2008/03/11 16:20:16 $ $Author: itglp $
  *
  * PL/SQL code for the interface to the tape system
  *
@@ -121,52 +121,6 @@ BEGIN
 END;
 
 
-/* PL/SQL method to update FileSystem weight for new streams */
-CREATE OR REPLACE PROCEDURE updateFsFileOpened
-(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
-BEGIN
-  /* We lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way */
-  UPDATE DiskServer SET nbReadWriteStreams = nbReadWriteStreams + 1 WHERE id = ds;
-  UPDATE FileSystem SET nbReadWriteStreams = nbReadWriteStreams + 1,
-                        free = free - fileSize   -- just an evaluation, monitoring will update it
-   WHERE id = fs;
-END;
-
-CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
-(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
-BEGIN
-  /* We lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way */
-  UPDATE DiskServer SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = ds;
-  UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
-END;
-
-CREATE OR REPLACE PROCEDURE updateFsRecallerOpened
-(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
-BEGIN
-  /* We lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way */
-  UPDATE DiskServer SET nbRecallerStreams = nbRecallerStreams + 1 WHERE id = ds;
-  UPDATE FileSystem SET nbRecallerStreams = nbRecallerStreams + 1,
-                        free = free - fileSize   -- just an evaluation, monitoring will update it
-   WHERE id = fs;
-END;
-
-/* PL/SQL method to update FileSystem nb of streams when files are closed */
-CREATE OR REPLACE PROCEDURE updateFsFileClosed(fs IN INTEGER) AS
-  ds INTEGER;
-BEGIN
-  /* We lock first the diskserver in order to lock all the
-     filesystems of this DiskServer in an atomical way */
-  SELECT DiskServer INTO ds FROM FileSystem WHERE id = fs;
-  UPDATE DiskServer SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1) WHERE id = ds;
-  /* now we can safely go */
-  UPDATE FileSystem SET nbReadWriteStreams = decode(sign(nbReadWriteStreams-1),-1,0,nbReadWriteStreams-1)
-  WHERE id = fs;
-END;
-
-
 /* Used to create a row INTO LockTable whenever a new
    DiskServer is created */
 CREATE OR REPLACE TRIGGER tr_DiskServer_Insert
@@ -184,6 +138,30 @@ BEFORE DELETE ON DiskServer
 FOR EACH ROW
 BEGIN
   DELETE FROM LockTable WHERE DiskServerId = :old.id;
+END;
+
+
+
+/* PL/SQL methods to update FileSystem weight for new migrator streams */
+CREATE OR REPLACE PROCEDURE updateFsMigratorOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbMigratorStreams = nbMigratorStreams + 1 WHERE id = fs;
+END;
+
+/* PL/SQL methods to update FileSystem weight for new recaller streams */
+CREATE OR REPLACE PROCEDURE updateFsRecallerOpened
+(ds IN INTEGER, fs IN INTEGER, fileSize IN INTEGER) AS
+BEGIN
+  /* We lock first the diskserver in order to lock all the
+     filesystems of this DiskServer in an atomical way */
+  UPDATE DiskServer SET nbRecallerStreams = nbRecallerStreams + 1 WHERE id = ds;
+  UPDATE FileSystem SET nbRecallerStreams = nbRecallerStreams + 1,
+                        free = free - fileSize   -- just an evaluation, monitoring will update it
+   WHERE id = fs;
 END;
 
 
