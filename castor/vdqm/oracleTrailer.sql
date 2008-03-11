@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.29 $ $Release$ $Date: 2008/03/10 20:56:53 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.30 $ $Release$ $Date: 2008/03/11 10:38:03 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -69,7 +69,7 @@ ALTER TABLE ClientIdentification
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 
 ALTER TABLE DeviceGroupName
@@ -77,7 +77,7 @@ ALTER TABLE DeviceGroupName
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 
 ALTER TABLE ErrorHistory
@@ -85,13 +85,13 @@ ALTER TABLE ErrorHistory
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_ErrorHistory_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 CREATE INDEX I_FK_ErrorHistory_tape ON ErrorHistory (tape);
 
@@ -100,7 +100,7 @@ ALTER TABLE TapeAccessSpecification
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 
 ALTER TABLE TapeDrive
@@ -108,37 +108,37 @@ ALTER TABLE TapeDrive
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeDrive_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeDrive_runningTapeReq
     FOREIGN KEY (runningTapeReq)
     REFERENCES TapeRequest (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeDrive_deviceGroupName
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeDrive_status
     FOREIGN KEY (status)
     REFERENCES TapeDriveStatusCodes (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     ENABLE
   ADD CONSTRAINT FK_TapeDrive_tapeServer
     FOREIGN KEY (tapeServer)
     REFERENCES TapeServer (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 CREATE INDEX I_FK_TapeDrive_tape            ON TapeDrive (tape);
 CREATE INDEX I_FK_TapeDrive_runningTapeReq  ON TapeDrive (runningTapeReq);
@@ -151,13 +151,13 @@ ALTER TABLE TapeDriveCompatibility
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeDriveComp_accessSpec
     FOREIGN KEY (tapeAccessSpecification)
     REFERENCES TapeAccessSpecification (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 CREATE INDEX I_FK_TapeDriveComp_accessSpec ON TapeDriveCompatibility (tapeAccessSpecification);
 
@@ -166,13 +166,13 @@ ALTER TABLE TapeDriveDedication
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeDriveDedic_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 CREATE INDEX I_FK_TapeDriveDedic_tapeDrive ON TapeDriveDedication (tapeDrive);
 
@@ -181,49 +181,49 @@ ALTER TABLE TapeRequest
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeRequest_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeRequest_accessSpec
     FOREIGN KEY (tapeAccessSpecification)
     REFERENCES TapeAccessSpecification (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeRequest_requestedSrv
     FOREIGN KEY (requestedSrv)
     REFERENCES TapeServer (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeRequest_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeRequest_dgn
     FOREIGN KEY (deviceGroupName)
     REFERENCES DeviceGroupName (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeRequest_status
     FOREIGN KEY (status)
     REFERENCES TapeRequestStatusCodes (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     ENABLE
   ADD CONSTRAINT FK_TapeRequest_client
     FOREIGN KEY (client)
     REFERENCES ClientIdentification (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE;
 CREATE INDEX I_FK_TapeRequest_tape         ON TapeRequest (tape);
 CREATE INDEX I_FK_TapeRequest_accessSpec   ON TapeRequest (tapeAccessSpecification);
@@ -238,13 +238,13 @@ ALTER TABLE TapeServer
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_TapeServer_actingMode
     FOREIGN KEY (actingMode)
     REFERENCES TapeServerStatusCodes (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     ENABLE;
 CREATE INDEX I_FK_TapeServer_actingMode ON TapeServer (actingMode);
 
@@ -253,13 +253,13 @@ ALTER TABLE VdqmTape
     FOREIGN KEY (id)
     REFERENCES Id2Type (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     DISABLE
   ADD CONSTRAINT FK_VdqmTape_status
     FOREIGN KEY (status)
     REFERENCES TapeStatusCodes (id)
     DEFERRABLE
-    INITIALLY IMMEDIATE
+    INITIALLY DEFERRED
     ENABLE;
 CREATE INDEX I_FK_VdqmTape_status ON VdqmTape (status);
 
