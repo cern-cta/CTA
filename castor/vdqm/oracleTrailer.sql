@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.30 $ $Release$ $Date: 2008/03/11 10:38:03 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.31 $ $Release$ $Date: 2008/03/11 10:48:53 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -70,7 +70,7 @@ ALTER TABLE ClientIdentification
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE;
+    ENABLE;
 
 ALTER TABLE DeviceGroupName
   ADD CONSTRAINT FK_DeviceGroupName_id
@@ -78,7 +78,7 @@ ALTER TABLE DeviceGroupName
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE;
+    ENABLE;
 
 ALTER TABLE ErrorHistory
   ADD CONSTRAINT FK_ErrorHistory_tapeDrive
@@ -101,7 +101,7 @@ ALTER TABLE TapeAccessSpecification
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE;
+    ENABLE;
 
 ALTER TABLE TapeDrive
   ADD CONSTRAINT FK_TapeDrive_id
@@ -109,7 +109,7 @@ ALTER TABLE TapeDrive
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeDrive_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
@@ -152,7 +152,7 @@ ALTER TABLE TapeDriveCompatibility
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeDriveComp_accessSpec
     FOREIGN KEY (tapeAccessSpecification)
     REFERENCES TapeAccessSpecification (id)
@@ -167,7 +167,7 @@ ALTER TABLE TapeDriveDedication
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeDriveDedic_tapeDrive
     FOREIGN KEY (tapeDrive)
     REFERENCES TapeDrive (id)
@@ -182,7 +182,7 @@ ALTER TABLE TapeRequest
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeRequest_tape
     FOREIGN KEY (tape)
     REFERENCES VdqmTape (id)
@@ -239,7 +239,7 @@ ALTER TABLE TapeServer
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeServer_actingMode
     FOREIGN KEY (actingMode)
     REFERENCES TapeServerStatusCodes (id)
@@ -254,7 +254,7 @@ ALTER TABLE VdqmTape
     REFERENCES Id2Type (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_VdqmTape_status
     FOREIGN KEY (status)
     REFERENCES TapeStatusCodes (id)
