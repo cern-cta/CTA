@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.31 $ $Release$ $Date: 2008/03/11 10:48:53 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.32 $ $Release$ $Date: 2008/03/11 12:35:55 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -132,7 +132,7 @@ ALTER TABLE TapeDrive
     FOREIGN KEY (status)
     REFERENCES TapeDriveStatusCodes (id)
     DEFERRABLE
-    INITIALLY DEFERRED
+    INITIALLY IMMEDIATE
     ENABLE
   ADD CONSTRAINT FK_TapeDrive_tapeServer
     FOREIGN KEY (tapeServer)
@@ -217,7 +217,7 @@ ALTER TABLE TapeRequest
     FOREIGN KEY (status)
     REFERENCES TapeRequestStatusCodes (id)
     DEFERRABLE
-    INITIALLY DEFERRED
+    INITIALLY IMMEDIATE
     ENABLE
   ADD CONSTRAINT FK_TapeRequest_client
     FOREIGN KEY (client)
@@ -244,7 +244,7 @@ ALTER TABLE TapeServer
     FOREIGN KEY (actingMode)
     REFERENCES TapeServerStatusCodes (id)
     DEFERRABLE
-    INITIALLY DEFERRED
+    INITIALLY IMMEDIATE
     ENABLE;
 CREATE INDEX I_FK_TapeServer_actingMode ON TapeServer (actingMode);
 
@@ -259,7 +259,7 @@ ALTER TABLE VdqmTape
     FOREIGN KEY (status)
     REFERENCES TapeStatusCodes (id)
     DEFERRABLE
-    INITIALLY DEFERRED
+    INITIALLY IMMEDIATE
     ENABLE;
 CREATE INDEX I_FK_VdqmTape_status ON VdqmTape (status);
 
