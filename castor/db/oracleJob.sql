@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.642 $ $Date: 2008/03/10 09:13:53 $ $Author: waldron $
+ * @(#)$RCSfile: oracleJob.sql,v $ $Revision: 1.643 $ $Date: 2008/03/11 16:13:21 $ $Author: itglp $
  *
  * PL/SQL code for scheduling and job handling
  *
@@ -109,8 +109,7 @@ BEGIN
        AND status IN (0, 10);
     -- except the one we are dealing with that goes to STAGEOUT
     UPDATE DiskCopy 
-       SET status = 6, -- STAGEOUT
-           gcWeight = 0     -- reset any previous value for the GC
+       SET status = 6 -- STAGEOUT
      WHERE id = dcid;
     -- Suppress all Tapecopies (avoid migration of previous version of the file)
     deleteTapeCopies(cfId);
@@ -213,12 +212,11 @@ BEGIN
     -- It might happen that we have more than one, because LSF may have
     -- scheduled a replication on a fileSystem which already had a previous diskcopy.
     -- We don't care and we randomly take the first one.
-    wAccess := 1;   -- XXX to be replaced by:
-    --SELECT weigthAccess INTO wAccess 
-    --  FROM SvcClass, DiskPool2SvcClass D2S, FileSystem
-    -- WHERE FileSystem.id = fileSystemId
-    --   AND FileSystem.diskPool = D2S.parent
-    --   AND D2S.child = SvcClass.id;
+    SELECT gcWeigthForAccess INTO wAccess 
+      FROM SvcClass, DiskPool2SvcClass D2S, FileSystem
+     WHERE FileSystem.id = fileSystemId
+       AND FileSystem.diskPool = D2S.parent
+       AND D2S.child = SvcClass.id;
     UPDATE DiskCopy
        SET gcWeight = gcWeight + wAccess*86400
      WHERE id = dcIds(1)
@@ -606,9 +604,9 @@ CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
   cfId INTEGER;
   unused INTEGER;
 BEGIN
-  -- Set SubRequest in FAILED status
+  -- Fail SubRequest
   UPDATE SubRequest
-     SET status = 7 -- FAILED
+     SET status = 9 -- FAILED_FINISHED
    WHERE id = srId
   RETURNING diskCopy, castorFile
     INTO dcId, cfId;
@@ -670,7 +668,7 @@ BEGIN
        WHERE FileSystem.diskServer = DiskServer.id
          AND FileSystem.diskPool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
-	 AND DiskPool2SvcClass.parent = DiskPool.id;
+         AND DiskPool2SvcClass.parent = DiskPool.id;
 END;
 
 
