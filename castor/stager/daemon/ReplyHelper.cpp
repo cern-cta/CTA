@@ -99,7 +99,7 @@ namespace castor{
           this->ioResponse->setErrorCode(errorCode);
           std::string ioRespErrorMessage = errorMessage;
           if((errorMessage.empty()) == true){
-            ioRespErrorMessage = strerror(errorCode);
+            ioRespErrorMessage = sstrerror(errorCode);
           }
 
           /* ioRespErrorMessage = ex.message() */

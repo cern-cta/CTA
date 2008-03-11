@@ -67,7 +67,7 @@ namespace castor{
         if(Cns_queryclass(stgCnsHelper->cnsFileid.server, stgCnsHelper->cnsFilestat.fileclass, NULL, &(stgCnsHelper->cnsFileclass)) != 0) {
           castor::dlf::Param params[]={	
             castor::dlf::Param("Function","Cns_queryclass"),
-            castor::dlf::Param("Error", strerror(serrno))};
+            castor::dlf::Param("Error", sstrerror(serrno))};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
           castor::exception::Exception ex(SEINTERNAL);

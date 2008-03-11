@@ -61,7 +61,7 @@ namespace castor{
         if(Cns_queryclass(cnsFileid.server, cnsFilestat.fileclass, NULL, &cnsFileclass) != 0) {
           castor::dlf::Param params[]={
             castor::dlf::Param("Function","Cns_queryclass"),
-            castor::dlf::Param("Error", strerror(serrno))};
+            castor::dlf::Param("Error", sstrerror(serrno))};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
@@ -79,7 +79,7 @@ namespace castor{
         if (Cns_setid(euid,egid) != 0) {
           castor::dlf::Param params[]={
             castor::dlf::Param("Function","Cns_umask"),
-            castor::dlf::Param("Error", strerror(serrno))};
+            castor::dlf::Param("Error", sstrerror(serrno))};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
@@ -90,7 +90,7 @@ namespace castor{
         if (Cns_umask(fileRequest->mask()) < 0) {
           castor::dlf::Param params[]={
             castor::dlf::Param("Function","Cns_umask"),
-            castor::dlf::Param("Error", strerror(serrno))};
+            castor::dlf::Param("Error", sstrerror(serrno))};
           castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
@@ -154,7 +154,7 @@ namespace castor{
           if(newFile && (0 != Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &cnsFileid)) && (serrno != EEXIST)) {
             castor::dlf::Param params[]={
               castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.1"),
-              castor::dlf::Param("Error", strerror(serrno))};
+              castor::dlf::Param("Error", sstrerror(serrno))};
             castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
             
             castor::exception::Exception ex(SEINTERNAL);
@@ -177,7 +177,7 @@ namespace castor{
             if(Cns_chclass(subReq->fileName().c_str(), 0, (char*)forcedFileClassName.c_str())) {
               castor::dlf::Param params[]={
                 castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.2"),
-                castor::dlf::Param("Error", strerror(serrno))};
+                castor::dlf::Param("Error", sstrerror(serrno))};
               castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
               
               castor::exception::Exception ex(SEINTERNAL);
@@ -193,7 +193,7 @@ namespace castor{
           if(Cns_statx(subReq->fileName().c_str(), &cnsFileid, &cnsFilestat) != 0) {
             castor::dlf::Param params[]={
               castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.3"),
-              castor::dlf::Param("Error", strerror(serrno))};
+              castor::dlf::Param("Error", sstrerror(serrno))};
             castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
             
             castor::exception::Exception ex(SEINTERNAL);
