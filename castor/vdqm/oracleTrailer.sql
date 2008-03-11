@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.32 $ $Release$ $Date: 2008/03/11 12:35:55 $ $Author: murrayc3 $
+ * @(#)$RCSfile: oracleTrailer.sql,v $ $Revision: 1.33 $ $Release$ $Date: 2008/03/11 14:55:54 $ $Author: murrayc3 $
  *
  * This file contains SQL code that is not generated automatically
  * and is inserted at the end of the generated code
@@ -158,7 +158,7 @@ ALTER TABLE TapeDriveCompatibility
     REFERENCES TapeAccessSpecification (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE;
+    ENABLE;
 CREATE INDEX I_FK_TapeDriveComp_accessSpec ON TapeDriveCompatibility (tapeAccessSpecification);
 
 ALTER TABLE TapeDriveDedication
@@ -173,7 +173,7 @@ ALTER TABLE TapeDriveDedication
     REFERENCES TapeDrive (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE;
+    ENABLE;
 CREATE INDEX I_FK_TapeDriveDedic_tapeDrive ON TapeDriveDedication (tapeDrive);
 
 ALTER TABLE TapeRequest
@@ -188,13 +188,13 @@ ALTER TABLE TapeRequest
     REFERENCES VdqmTape (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeRequest_accessSpec
     FOREIGN KEY (tapeAccessSpecification)
     REFERENCES TapeAccessSpecification (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE
+    ENABLE
   ADD CONSTRAINT FK_TapeRequest_requestedSrv
     FOREIGN KEY (requestedSrv)
     REFERENCES TapeServer (id)
@@ -224,7 +224,7 @@ ALTER TABLE TapeRequest
     REFERENCES ClientIdentification (id)
     DEFERRABLE
     INITIALLY DEFERRED
-    DISABLE;
+    ENABLE;
 CREATE INDEX I_FK_TapeRequest_tape         ON TapeRequest (tape);
 CREATE INDEX I_FK_TapeRequest_accessSpec   ON TapeRequest (tapeAccessSpecification);
 CREATE INDEX I_FK_TapeRequest_requestedSrv ON TapeRequest (requestedSrv);
