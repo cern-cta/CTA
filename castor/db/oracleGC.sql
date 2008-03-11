@@ -1,6 +1,6 @@
 /*******************************************************************
  *
- * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.639 $ $Date: 2008/03/04 16:28:01 $ $Author: waldron $
+ * @(#)$RCSfile: oracleGC.sql,v $ $Revision: 1.640 $ $Date: 2008/03/11 16:28:52 $ $Author: itglp $
  *
  * PL/SQL code for stager cleanup and garbage collecting
  *
@@ -13,8 +13,6 @@ CREATE OR REPLACE PACKAGE castorGC AS
   TYPE GCItem IS RECORD (dcId INTEGER, fileSize NUMBER, utility NUMBER);
   TYPE GCItem_Table is TABLE OF GCItem;
   TYPE GCItem_Cur IS REF CURSOR RETURN GCItem;
-  --TYPE GCItem_CurTable is VARRAY(10) OF GCItem_Cur;
-  TYPE policiesList IS TABLE OF VARCHAR2(2048);
   TYPE SelectFiles2DeleteLine IS RECORD (
         path VARCHAR2(2048),
         id NUMBER,
@@ -23,6 +21,248 @@ CREATE OR REPLACE PACKAGE castorGC AS
   TYPE SelectFiles2DeleteLine_Cur IS REF CURSOR RETURN SelectFiles2DeleteLine;
 END castorGC;
 
+
+/* PL/SQL method implementing selectFiles2Delete
+   This is the standard garbage collector: it sorts STAGED
+   diskcopies by gcWeight and selects them for deletion up to
+   the desired free space watermark */
+CREATE OR REPLACE PROCEDURE selectFiles2Delete(diskServerName IN VARCHAR2,
+                                               files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
+  dcIds "numList";
+  freed INTEGER;
+  deltaFree INTEGER;
+  toBeFreed INTEGER;
+  dontGC INTEGER;
+BEGIN
+  -- First of all, check if we have GC enabled
+  dontGC := 0;
+  FOR sc IN (SELECT gcEnabled FROM SvcClass, DiskPool2SvcClass D2S, DiskServer
+              WHERE SvcClass.id = D2S.child
+                AND D2S.parent = DiskServer.diskPool
+                AND DiskServer.name = diskServerName) LOOP
+    -- if any of the service classes to which we belong (normally a single one)
+    -- says don't GC, we don't GC STAGED files.
+    IF sc.gcEnabled = 0 THEN
+      dontGC := 1;
+      EXIT;
+    END IF;
+  END LOOP;
+  -- Loop on all concerned fileSystems
+  FOR fs IN (SELECT FileSystem.id
+               FROM FileSystem, DiskServer
+              WHERE FileSystem.diskServer = DiskServer.id
+                AND DiskServer.name = diskServerName) LOOP
+    -- First take the INVALID diskcopies, they have to go in any case
+    UPDATE DiskCopy
+       SET status = 9, -- BEING_DELETED
+           creationTime = getTime()   -- see comment below on the status = 9 condition
+     WHERE fileSystem = fs.id 
+       AND (
+             (status = 7 AND NOT EXISTS  -- INVALID
+               (SELECT 'x' FROM SubRequest
+                 WHERE SubRequest.diskcopy = DiskCopy.id
+                   AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14)))  -- All but FINISHED, FAILED*, ARCHIVED
+          OR (status = 9 AND creationTime < getTime() - 1800))
+             -- for failures recovery we also take all DiskCopies which were already
+             -- selected but got stuck somehow and didn't get removed after 30 mins. 
+    RETURNING id BULK COLLECT INTO dcIds;
+    COMMIT;
+    IF dontGC = 1 THEN
+      -- nothing else to do, exit the loop and eventually return the list of INVALID
+      EXIT;
+    END IF;
+    IF dcIds.COUNT > 0 THEN
+      SELECT SUM(fileSize) INTO freed
+        FROM CastorFile, DiskCopy
+       WHERE DiskCopy.castorFile = CastorFile.id
+         AND DiskCopy.id IN (SELECT * FROM TABLE(dcIds));
+    ELSE
+      freed := 0;
+    END IF;
+    -- Get the amount of space to liberate
+    SELECT maxFreeSpace * totalSize - free
+      INTO toBeFreed
+      FROM FileSystem
+     WHERE id = fs.id;
+    -- Check whether we're done with the INVALID
+    IF toBeFreed <= freed THEN
+      EXIT;
+    END IF;
+    -- Loop on file deletions
+    FOR dc IN (SELECT id, castorFile FROM DiskCopy
+                WHERE fileSystem = fs.id
+                  AND status = 0  -- STAGED
+                  AND NOT EXISTS (
+                      SELECT 'x' FROM SubRequest 
+                       WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
+                         AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))   -- All but FINISHED, FAILED*, ARCHIVED
+                  ORDER BY creationTime + gcWeight ASC) LOOP
+      -- Mark the DiskCopy
+      UPDATE DiskCopy SET status = 9  -- BEINGDELETED
+       WHERE id = dc.id;
+      -- Update toBeFreed
+      SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
+      freed := freed + deltaFree;
+      -- Shall we continue ?
+      IF toBeFreed <= freed THEN
+        EXIT;
+      END IF;
+    END LOOP;
+    COMMIT;
+  END LOOP;
+  
+  -- now select all the BEINGDELETED diskcopies in this diskserver for the gcDaemon
+  OPEN files FOR
+    SELECT FileSystem.mountPoint||DiskCopy.path, DiskCopy.id,
+	         Castorfile.fileid, Castorfile.nshost
+      FROM CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE DiskCopy.status = 9  -- BEINGDELETED
+       AND DiskCopy.castorfile = CastorFile.id
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskServer = DiskServer.id
+       AND DiskServer.name = diskServerName;
+END;
+
+/*
+ * PL/SQL method implementing filesDeleted
+ * Note that we don't increase the freespace of the fileSystem.
+ * This is done by the monitoring daemon, that knows the
+ * exact amount of free space.
+ * dcIds gives the list of diskcopies to delete.
+ * fileIds returns the list of castor files to be removed
+ * from the name server
+ */
+CREATE OR REPLACE PROCEDURE filesDeletedProc
+(dcIds IN castor."cnumList",
+ fileIds OUT castor.FileList_Cur) AS
+  cfId NUMBER;
+BEGIN
+  IF dcIds.COUNT > 0 THEN
+    -- Loop over the deleted files; first use FORALL for bulk operation
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      DELETE FROM Id2Type WHERE id = dcIds(i);
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      DELETE FROM DiskCopy WHERE id = dcIds(i);
+    -- then use a normal loop to clean castorFiles
+    FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
+      SELECT castorFile INTO cfId
+        FROM DiskCopy
+       WHERE id = dcIds(i);
+      deleteCastorFile(cfId);
+    END LOOP;
+  END IF;
+  OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
+END;
+
+/*
+ * PL/SQL method removing completely a file from the stager
+ * including all its related objects (diskcopy, tapecopy, segments...)
+ * The given files are supposed to already have been removed from the
+ * name server
+ * Note that we don't increase the freespace of the fileSystem.
+ * This is done by the monitoring daemon, that knows the
+ * exact amount of free space.
+ * cfIds gives the list of files to delete.
+ */
+CREATE OR REPLACE PROCEDURE filesClearedProc(cfIds IN castor."cnumList") AS
+  dcIds "numList";
+BEGIN
+  IF cfIds.COUNT <= 0 THEN
+    RETURN;
+  END IF;
+  -- delete the DiskCopies in bulk
+  SELECT id BULK COLLECT INTO dcIds
+    FROM Diskcopy WHERE castorfile IN (SELECT * FROM TABLE(cfIds);
+  FORALL i IN dcIds.FIRST .. dcIds.LAST
+    DELETE FROM Id2Type WHERE id = dcIds(i);
+  FORALL i IN dcIds.FIRST .. dcIds.LAST
+    DELETE FROM DiskCopy WHERE id = dcIds(i);
+  -- put SubRequests into FAILED (for non FINISHED ones)
+  UPDATE SubRequest
+     SET status = 7,  -- FAILED
+         errorCode = 16,  -- EBUSY
+         errorMessage = 'Request canceled by another user request'
+   WHERE castorfile IN (SELECT * FROM TABLE(cfIds))
+     AND status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14));
+  -- Loop over the deleted files for cleaning the tape copies
+  FOR i in cfIds.FIRST .. cfIds.LAST LOOP
+    deleteTapeCopies(cfIds(i));
+  END LOOP;
+  -- Finally drop castorFiles in bulk
+  FORALL i IN cfIds.FIRST .. cfIds.LAST
+    DELETE FROM Id2Type WHERE id = cfIds(i);
+  FORALL i IN cfIds.FIRST .. cfIds.LAST
+    DELETE FROM CastorFile WHERE id = cfIds(i);
+END;
+
+/* PL/SQL method implementing filesDeletionFailedProc */
+CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
+(dcIds IN castor."cnumList") AS
+  cfId NUMBER;
+BEGIN
+  IF dcIds.COUNT > 0 THEN
+    -- Loop over the files
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      UPDATE DiskCopy SET status = 4 -- FAILED
+       WHERE id = dcIds(i);
+  END IF;
+END;
+
+
+
+/* PL/SQL method implementing nsFilesDeletedProc */
+CREATE OR REPLACE PROCEDURE nsFilesDeletedProc
+(nsh IN VARCHAR2,
+ fileIds IN castor."cnumList",
+ orphans OUT castor.IdRecord_Cur) AS
+  unused NUMBER;
+BEGIN
+  IF fileIds.COUNT <= 0 THEN
+    RETURN;
+  END IF;
+  -- Loop over the deleted files and split the orphan ones
+  -- from the normal ones
+  FOR fid in fileIds.FIRST .. fileIds.LAST LOOP
+    BEGIN
+      SELECT id INTO unused FROM CastorFile
+       WHERE fileid = fileIds(fid) AND nsHost = nsh;
+      stageForcedRm(fileIds(fid), nsh, unused);
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- this file was dropped from nameServer AND stager
+      -- and still exists on disk. We put it into the list
+      -- of orphan fileids to return
+      INSERT INTO NsFilesDeletedOrphans VALUES(fileIds(fid));
+    END;
+  END LOOP;
+  -- return orphan ones
+  OPEN orphans FOR SELECT * FROM NsFilesDeletedOrphans;
+END;
+
+
+/* PL/SQL method implementing stgFilesDeletedProc */
+CREATE OR REPLACE PROCEDURE stgFilesDeletedProc
+(dcIds IN castor."cnumList",
+ stgOrphans OUT castor.IdRecord_Cur) AS
+  unused NUMBER;
+BEGIN
+  -- Nothing to do
+  IF dcIds.COUNT <= 0 THEN
+    RETURN;
+  END IF;
+  -- Insert diskcopy ids into a temporary table
+  FORALL i IN dcIds.FIRST..dcIds.LAST LOOP
+    INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
+  END LOOP;
+  -- Return a list of diskcopy ids which no longer exist
+  OPEN stgOrphans FOR
+    SELECT diskCopyId FROM StgFilesDeletedOrphans
+     WHERE NOT EXISTS (
+        SELECT 'x' FROM DiskCopy
+         WHERE id = diskCopyId);
+END;
+
+
+/** Cleanup job **/
 
 /* A little generic method to delete efficiently */
 CREATE OR REPLACE PROCEDURE bulkDelete(sel IN VARCHAR2, tab IN VARCHAR2) AS
@@ -141,44 +381,6 @@ BEGIN
 END;
 
 
-/* PL/SQL method implementing selectFiles2Delete */
-CREATE OR REPLACE PROCEDURE selectFiles2Delete
-(diskServerName IN VARCHAR2,
- files OUT castorGC.SelectFiles2DeleteLine_Cur) AS
-BEGIN
-  INSERT INTO SelectFiles2DeleteProcHelper
-    SELECT FileSystem.id, FileSystem.mountPoint
-      FROM FileSystem, DiskServer
-     WHERE FileSystem.diskServer = DiskServer.id
-       AND DiskServer.name = diskServerName;
-  OPEN files FOR
-    SELECT SelectFiles2DeleteProcHelper.path||DiskCopy.path, DiskCopy.id,
-	   Castorfile.fileid, Castorfile.nshost
-      FROM DiskCopy, SelectFiles2DeleteProcHelper, Castorfile
-     WHERE (DiskCopy.status = 8
-           OR DiskCopy.status = 9 AND DiskCopy.creationTime < getTime() - 1800)
-           -- for failures recovery we also take all DiskCopies which were
-           -- already selected but got stuck somehow and didn't get removed
-           -- after 30 mins. The creationTime field is actually updated
-           -- for this purpose when status changes to 9 in updateFiles2Delete.
-       AND DiskCopy.fileSystem = SelectFiles2DeleteProcHelper.id
-       AND DiskCopy.castorfile = Castorfile.id
-       FOR UPDATE;
-END;
-
-/* PL/SQL method implementing updateFiles2Delete */
-CREATE OR REPLACE PROCEDURE updateFiles2Delete
-(dcIds IN castor."cnumList") AS
-BEGIN
-  FORALL i IN dcIds.FIRST..dcIds.LAST
-    UPDATE DiskCopy
-       set status = 9, -- BEING_DELETED
-           creationTime = getTime()
-           -- note that this is an over-use of the field, but it's needed in selectFiles2Delete
-     WHERE id = dcIds(i);
-END;
-
-
 /* Search and delete old diskCopies in bad states */
 CREATE OR REPLACE PROCEDURE deleteFailedDiskCopies(timeOut IN NUMBER) AS
   dcIds "numList";
@@ -268,316 +470,6 @@ BEGIN
   OPEN dropped FOR SELECT * FROM OutOfDateRecallDropped;
 END;
 
-/*
- * PL/SQL method implementing filesDeleted
- * Note that we don't increase the freespace of the fileSystem.
- * This is done by the monitoring daemon, that knows the
- * exact amount of free space. However, we decrease the
- * spaceToBeFreed counter so that a next GC knows the status
- * of the FileSystem.
- * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
- * THAT ALL BELONG TO THE SAME DISKSERVER.
- * Otherwise, deadlocks will be created. Between 2 calls
- * for different diskservers, a commit should be done.
- * dcIds gives the list of diskcopies to delete.
- * fileIds returns the list of castor files to be removed
- * from the name server
- */
-CREATE OR REPLACE PROCEDURE filesDeletedProc
-(dcIds IN castor."cnumList",
- fileIds OUT castor.FileList_Cur) AS
-  cfId NUMBER;
-  fsId NUMBER;
-  fsize NUMBER;
-  isFirst NUMBER;
-BEGIN
-  isFirst := 1;
-  IF dcIds.COUNT > 0 THEN
-  -- Loop over the deleted files
-  FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
-    SELECT castorFile, fileSystem INTO cfId, fsId
-      FROM DiskCopy WHERE id = dcIds(i);
-    LOOP
-      DECLARE
-        LockError EXCEPTION;
-        PRAGMA EXCEPTION_INIT (LockError, -54);
-      BEGIN
-        -- Try to lock the Castor File and retrieve size
-        SELECT fileSize INTO fsize FROM CastorFile where id = cfID FOR UPDATE NOWAIT;
-        -- we got the lock, exit the loop
-        EXIT;
-      EXCEPTION WHEN LockError THEN
-        -- then commit what we did to remove the dead lock
-        COMMIT;
-        -- and try again after some time
-        dbms_lock.sleep(0.2);
-      END;
-    END LOOP;
-    -- delete the DiskCopy
-    DELETE FROM Id2Type WHERE id = dcIds(i);
-    DELETE FROM DiskCopy WHERE id = dcIds(i);
-    -- against deadlock
-    -- I need a lock on the diskserver if I need more than one filesystem on it
-    IF isFirst = 1 THEN
-      DECLARE
-        dsId NUMBER;
-        unused NUMBER;
-      BEGIN
-        SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
-        SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
-        isFirst := 0;	
-      END;
-    END IF; 
-    -- update the FileSystem
-    UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed - fsize
-     WHERE id = fsId;
-    -- clean the CastorFile
-    deleteCastorFile(cfId);
-  END LOOP;
- END IF;
- OPEN fileIds FOR SELECT * FROM FilesDeletedProcOutput;
-END;
-
-
-/*
- * PL/SQL method removing completely a file from the stager
- * including all its related objects (diskcopy, tapecopy, segments...)
- * The given files are supposed to already have been removed from the
- * name server
- * Note that we don't increase the freespace of the fileSystem.
- * This is done by the monitoring daemon, that knows the
- * exact amount of free space. However, we decrease the
- * spaceToBeFreed counter so that a next GC knows the status
- * of the FileSystem
- * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
- * THAT ALL BELONG TO THE SAME DISKSERVER.
- * Otherwise, deadlocks will be created. Between 2 calls
- * for different diskservers, a commit should be done.
- * fsIds gives the list of files to delete.
- */
-CREATE OR REPLACE PROCEDURE filesClearedProc
-(cfIds IN castor."cnumList") AS
-  fsize NUMBER;
-  fsid NUMBER;
-  isFirst NUMBER;
-BEGIN
-  isFirst := 1;
-  IF cfIds.COUNT <= 0 THEN
-    RETURN;
-  END IF;
-  -- Loop over the deleted files
-  FOR i in cfIds.FIRST .. cfIds.LAST LOOP
-    -- Lock the Castor File and retrieve size
-    SELECT fileSize INTO fsize FROM CastorFile WHERE id = cfIds(i);
-    -- delete the DiskCopies
-    FOR d IN (SELECT id FROM Diskcopy WHERE castorfile = cfIds(i)) LOOP
-      DELETE FROM Id2Type WHERE id = d.id;
-      DELETE FROM DiskCopy WHERE id = d.id
-        RETURNING fileSystem INTO fsId;
-      if fsId != 0 THEN
-        -- against deadlock
-        -- I need a lock on the diskserver if I need more than one filesystem on it
-        IF isFirst = 1 THEN
-          DECLARE
-            dsId NUMBER;
-            unused NUMBER;
-          BEGIN
-            SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
-            SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
-            isFirst := 0;	
-          END;
-        END IF; 
-        -- update the FileSystem
-        UPDATE FileSystem
-           SET spaceToBeFreed = spaceToBeFreed - fsize
-         WHERE id = fsId;
-      END IF;
-    END LOOP;
-    -- put SubRequests into FAILED (for non FINISHED ONES)
-    UPDATE SubRequest SET status = 7, parent = 0 WHERE castorfile = cfIds(i) AND status < 7;
-    -- TapeCopy part
-    deleteTapeCopies(cfIds(i));
-    -- Castorfile
-    DELETE FROM Id2Type WHERE id = cfIds(i);
-    DELETE FROM CastorFile WHERE id = cfIds(i);
-  END LOOP;
-END;
-
-
-/* PL/SQL method implementing filesDeletionFailedProc
- * THIS PROCEDURE SHOULD ONLY BE CALLED FOR DiskCopies
- * THAT ALL BELONG TO THE SAME DISKSERVER.
- * Otherwise, deadlocks will be created. Between 2 calls
- * for different diskservers, a commit should be done.
- */
-CREATE OR REPLACE PROCEDURE filesDeletionFailedProc
-(dcIds IN castor."cnumList") AS
-  cfId NUMBER;
-  fsId NUMBER;
-  fsize NUMBER;
-  isFirst NUMBER;
-BEGIN
-  isFirst := 1;
-  IF dcIds.COUNT > 0 THEN
-  -- Loop over the deleted files
-  FOR i IN dcIds.FIRST .. dcIds.LAST LOOP
-    -- set status of DiskCopy to FAILED
-    UPDATE DiskCopy SET status = 4 -- FAILED
-     WHERE id = dcIds(i)
-    RETURNING fileSystem, castorFile INTO fsId, cfId;
-    -- Retrieve the file size
-    SELECT fileSize INTO fsize FROM CastorFile where id = cfId;
-    -- against deadlock
-    -- I need a lock on the diskserver if I need more than one filesystem on it
-    IF isFirst = 1 THEN
-      DECLARE
-        dsId NUMBER;
-        unused NUMBER;
-      BEGIN
-        SELECT diskServer INTO dsId FROM FileSystem WHERE id = fsId;
-        SELECT id INTO unused FROM DiskServer WHERE id=dsId FOR UPDATE;
-        isFirst := 0;	
-      END;
-    END IF; 
-    -- update the FileSystem
-    UPDATE FileSystem
-       SET spaceToBeFreed = spaceToBeFreed - fsize
-     WHERE id = fsId;
-  END LOOP;
- END IF;
-END;
-
-
-/* PL/SQL method implementing nsFilesDeletedProc */
-CREATE OR REPLACE PROCEDURE nsFilesDeletedProc
-(nsh IN VARCHAR2,
- fileIds IN castor."cnumList",
- orphans OUT castor.IdRecord_Cur) AS
-  unused NUMBER;
-BEGIN
-  IF fileIds.COUNT <= 0 THEN
-    RETURN;
-  END IF;
-  -- Loop over the deleted files and split the orphan ones
-  -- from the normal ones
-  FOR fid IN fileIds.FIRST .. fileIds.LAST LOOP
-    BEGIN
-      SELECT id INTO unused FROM CastorFile
-       WHERE fileid = fileIds(fid) AND nsHost = nsh;
-      stageForcedRm(fileIds(fid), nsh, unused);
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- this file was dropped from nameServer AND stager
-      -- and still exists on disk. We put it into the list
-      -- of orphan fileids to return
-      INSERT INTO NsFilesDeletedOrphans VALUES(fileIds(fid));
-    END;
-  END LOOP;
-  -- return orphan ones
-  OPEN orphans FOR SELECT * FROM NsFilesDeletedOrphans;
-END;
-
-
-/* PL/SQL method implementing stgFilesDeletedProc */
-CREATE OR REPLACE PROCEDURE stgFilesDeletedProc
-(dcIds IN castor."cnumList",
- stgOrphans OUT castor.IdRecord_Cur) AS
-  unused NUMBER;
-BEGIN
-  -- Nothing to do
-  IF dcIds.COUNT <= 0 THEN
-    RETURN;
-  END IF;
-  -- Insert diskcopy ids into a temporary table
-  FOR i IN dcIds.FIRST..dcIds.LAST LOOP
-    INSERT INTO StgFilesDeletedOrphans VALUES(dcIds(i));
-  END LOOP;
-  -- Return a list of diskcopy ids which no longer exist
-  OPEN stgOrphans FOR
-    SELECT diskCopyId FROM StgFilesDeletedOrphans
-     WHERE NOT EXISTS (
-        SELECT id FROM DiskCopy
-         WHERE id = diskCopyId);
-END;
-
-
-/*
- * Runs Garbage collection on the specified FileSystem
- */
-CREATE OR REPLACE PROCEDURE garbageCollectFS(fsId INTEGER) AS
-  toBeFreed INTEGER;
-  freed INTEGER := 0;
-  deltaFree INTEGER;
-BEGIN
-  -- get the amount of space to liberate
-  SELECT maxFreeSpace * totalSize - free
-    INTO toBeFreed
-    FROM FileSystem
-   WHERE FileSystem.id = fsId;
-  -- Don't do anything if toBeFreed <= 0
-  IF toBeFreed <= 0 THEN
-    RETURN;
-  END IF;
-  -- Loop on file deletions
-  FOR dc IN (SELECT id, castorfile FROM DiskCopy
-              WHERE fileSystem = fsId
-                AND status = 0  -- STAGED
-                AND NOT EXISTS (
-                    SELECT 'x' FROM SubRequest 
-                     WHERE DiskCopy.status = 0 AND diskcopy = DiskCopy.id 
-                       AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14))   -- All but FINISHED, FAILED*, ARCHIVED
-                ORDER BY creationTime + gcWeight ASC) LOOP
-    -- Mark the DiskCopy
-    UPDATE DISKCOPY SET status = 8 -- GCCANDIDATE
-     WHERE id = dc.id;
-    -- Update toBeFreed
-    SELECT fileSize INTO deltaFree FROM CastorFile WHERE id = dc.castorFile;
-    freed := freed + deltaFree;
-    -- Shall we continue ?
-    IF toBeFreed <= freed THEN
-      EXIT;
-    END IF;
-  END LOOP;
-  COMMIT;
-END;
-
-/*
- * Runs Garbage collection of invalid DiskCopies on the given FileSystem
- */
-CREATE OR REPLACE PROCEDURE garbageCollectInvalidDC(fsId INTEGER) AS
-BEGIN
-  -- GC the INVALID unused diskCopies on this filesystem
-  UPDATE DiskCopy
-     SET status = 8  -- GCCANDIDATE
-   WHERE fileSystem = fsId
-     AND status = 7  -- INVALID
-     AND NOT EXISTS (
-       SELECT 'x' FROM SubRequest
-        WHERE SubRequest.diskcopy = DiskCopy.id
-          AND SubRequest.status IN (0, 1, 2, 3, 4, 5, 6, 12, 13, 14));  -- All but FINISHED, FAILED*, ARCHIVED
-  -- commit the cleanup of this filesystem 
-  COMMIT;
-END;
-
-
-/*
- * Runs Garbage collection anywhere needed.
- * This is continuously run as a DBMS JOB.
- */
-CREATE OR REPLACE PROCEDURE garbageCollect AS
-BEGIN
-  FOR fs IN (SELECT id FROM FileSystem) LOOP
-    BEGIN
-      -- run the GCs
-      garbageCollectInvalidDC(fs.id);
-      garbageCollectFS(fs.id);
-      -- yield to other jobs/transactions
-      DBMS_LOCK.sleep(seconds => 1.0);
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      NULL;            -- ignore and go on
-    END;
-  END LOOP;
-END;
 
 
 /*
@@ -599,7 +491,7 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE '||a.table_name||' SHRINK SPACE CASCADE';
   END LOOP;
 END;
-
+  
 
 
 /*
@@ -608,24 +500,11 @@ END;
 BEGIN
   -- Remove database jobs before recreating them
   FOR a IN (SELECT job_name FROM user_scheduler_jobs
-             WHERE job_name IN ('GARBAGECOLLECTJOB', 'TABLESHRINKJOB', 
+             WHERE job_name IN ('TABLESHRINKJOB', 
 	                        'BULKCHECKFSBACKINPRODJOB'))
   LOOP
     DBMS_SCHEDULER.DROP_JOB(a.job_name, TRUE);
   END LOOP;
-
-  -- Creates a db job to be run every 15 mins for the garbage collector.
-  -- Such interval allows for ~300 filesystem to be processed for each round
-  -- under normal conditions.
-  -- XXX In case more are present, jobs will overlap during their run
-  DBMS_SCHEDULER.CREATE_JOB(
-      JOB_NAME        => 'garbageCollectJob',
-      JOB_TYPE        => 'PLSQL_BLOCK',
-      JOB_ACTION      => 'BEGIN garbageCollect(); END;',
-      START_DATE      => SYSDATE,
-      REPEAT_INTERVAL => 'FREQ=MINUTELY; INTERVAL=15',
-      ENABLED         => TRUE,
-      COMMENTS        => 'Castor Garbage Collector');
 
   -- Creates a db job to be run every day executing the tableShrink procedure
   DBMS_SCHEDULER.CREATE_JOB(
