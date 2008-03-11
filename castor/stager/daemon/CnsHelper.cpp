@@ -57,14 +57,15 @@ namespace castor{
       /****************************************************************************************/
       /* get the Cns_fileclass needed to create the fileClass object using cnsFileClass.name */
       void CnsHelper::getCnsFileclass() throw(castor::exception::Exception){
-        memset(&(cnsFileclass),0, sizeof(cnsFileclass));
-        if( Cns_queryclass((cnsFileid.server),(cnsFilestat.fileclass), NULL, &(cnsFileclass)) != 0 ){
-          
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","Cns_queryclass")};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+        memset(&(cnsFileclass), 0, sizeof(cnsFileclass));
+        if(Cns_queryclass(cnsFileid.server, cnsFilestat.fileclass, NULL, &cnsFileclass) != 0) {
+          castor::dlf::Param params[]={
+            castor::dlf::Param("Function","Cns_queryclass"),
+            castor::dlf::Param("Error", strerror(serrno))};
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Error on the Name Server";
+          ex.getMessage()<<"Failed to query the fileclass on the Name Server";
           throw ex;
         }
       }
@@ -76,20 +77,24 @@ namespace castor{
         euid = fileRequest->euid();
         egid = fileRequest->egid();
         if (Cns_setid(euid,egid) != 0) {
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","Cns_setid")};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+          castor::dlf::Param params[]={
+            castor::dlf::Param("Function","Cns_umask"),
+            castor::dlf::Param("Error", strerror(serrno))};
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Cannot set the user on the Name Server";
+          ex.getMessage()<<"Failed to set the user for the Name Server";
           throw ex;
         }
         
         if (Cns_umask(fileRequest->mask()) < 0) {
-          castor::dlf::Param params[]={	castor::dlf::Param("Function","Cns_umask")};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+          castor::dlf::Param params[]={
+            castor::dlf::Param("Function","Cns_umask"),
+            castor::dlf::Param("Error", strerror(serrno))};
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
           
           castor::exception::Exception ex(SEINTERNAL);
-          ex.getMessage()<<"Cannot set the mask on the Name Server";
+          ex.getMessage()<<"Failed to set the mask for the Name Server";
           throw ex;
         }
       }
@@ -102,13 +107,12 @@ namespace castor{
         throw(castor::exception::Exception) {
         int type = subReq->request()->type();
         
-       // check if the filename is valid (it has to start with /)
-
-	if (subReq->fileName().at(0)!='/'){
-	  castor::exception::Exception ex(EINVAL);
-            ex.getMessage() << "Invalid file path";
-            throw ex;	
-	}
+        // check if the filename is valid (it has to start with /)
+        if (subReq->fileName().at(0)!='/'){
+          castor::exception::Exception ex(EINVAL);
+          ex.getMessage() << "Invalid file path";
+          throw ex;	
+        }
         
         // check if the required file exists
         memset(&(cnsFileid), '\0', sizeof(cnsFileid));
@@ -116,6 +120,7 @@ namespace castor{
         
         // deny any request on a directory
         if(!newFile && (cnsFilestat.filemode & S_IFDIR) == S_IFDIR) {
+          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_UNABLETOPERFORM, 0);
           serrno = EISDIR;
           castor::exception::Exception ex(serrno);
           ex.getMessage() << "Cannot perform this request on a directory";
@@ -133,23 +138,27 @@ namespace castor{
             struct Cns_segattrs *nsSegmentAttrs = 0;
             int nbNsSegments = 0;
             serrno = 0;
-            int rc = Cns_getsegattrs(0, &cnsFileid, &nbNsSegments, &nsSegmentAttrs);
-            if (rc != -1 && nbNsSegments == 0) {
-              // This file has no copy on tape, so we force recreation
-              newFile = true;
+            if(Cns_getsegattrs(0, &cnsFileid, &nbNsSegments, &nsSegmentAttrs) == 0) {
+            // we ignore here the case of a nameserver failure: we are still able to carry on if the failure is transient
+              if(nbNsSegments == 0) {
+                // This file has no copy on tape, so we force recreation
+                newFile = true;
+              }
+              free(nsSegmentAttrs);
             }
-            free(nsSegmentAttrs);
           }
           
           // create the file and update cnsFileid and cnsFilestat structures
           memset(&(cnsFileid), 0, sizeof(cnsFileid));
           serrno = 0;
           if(newFile && (0 != Cns_creatx(subReq->fileName().c_str(), subReq->modeBits(), &cnsFileid)) && (serrno != EEXIST)) {
-            castor::dlf::Param params[]={castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.1")};
-            castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+            castor::dlf::Param params[]={
+              castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.1"),
+              castor::dlf::Param("Error", strerror(serrno))};
+            castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
             
-            castor::exception::Exception ex(serrno);
-            ex.getMessage() << "Cannot (re)create the file";
+            castor::exception::Exception ex(SEINTERNAL);
+            ex.getMessage() << "Failed to (re)create the file";
             throw ex;
           }
           else if(serrno == EEXIST) {
@@ -164,22 +173,33 @@ namespace castor{
           // in case of Disk1 pool, force the fileClass of the file
           if(newFile && svcClass->hasDiskOnlyBehavior() && svcClass->forcedFileClass()) {
             std::string forcedFileClassName = svcClass->forcedFileClass()->name();
-            Cns_unsetid();
+            Cns_unsetid();           // local call, ignore result
             if(Cns_chclass(subReq->fileName().c_str(), 0, (char*)forcedFileClassName.c_str())) {
-              castor::dlf::Param params[]={castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.2")};
-              castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 1 ,params);	  
+              castor::dlf::Param params[]={
+                castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.2"),
+                castor::dlf::Param("Error", strerror(serrno))};
+              castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
               
-              castor::exception::Exception ex(serrno);
-              ex.getMessage() << "Cannot force file class for this file";
-              // before giving up we unlink the just created file
-              Cns_delete(subReq->fileName().c_str());
+              castor::exception::Exception ex(SEINTERNAL);
+              ex.getMessage() << "Failed to force the fileclass on this file";
+              // before giving up we unlink the just created file, and we ignore ns errors
+              Cns_unlink(subReq->fileName().c_str());
               throw ex;
             }
-            Cns_setid(euid, egid);    // at this stage this call won't fail, so we ignore its result
+            Cns_setid(euid, egid);   // local call, ignore result
           }
           
           // update cns structures
-          Cns_statx(subReq->fileName().c_str(), &cnsFileid, &cnsFilestat);
+          if(Cns_statx(subReq->fileName().c_str(), &cnsFileid, &cnsFilestat) != 0) {
+            castor::dlf::Param params[]={
+              castor::dlf::Param("Function","CnsHelper->checkFileOnNameServer.3"),
+              castor::dlf::Param("Error", strerror(serrno))};
+            castor::dlf::dlf_writep(requestUuid, DLF_LVL_ERROR, STAGER_CNS_EXCEPTION, 2, params);	  
+            
+            castor::exception::Exception ex(SEINTERNAL);
+            ex.getMessage() << "Failed to stat the file in the Name Server";
+            throw ex;
+          }
         }
         else {
           // other requests go through only on existing files
